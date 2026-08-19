@@ -23,6 +23,18 @@ export interface InputFrame {
   /** Front montant déjà consommé (jamais `isDown`) : un appui = un saut. */
   jump: boolean;
   sprint: boolean;
+  /**
+   * Front montant déjà consommé depuis `Mouse0`, même contrat que `jump` : un
+   * clic = un tir. Couvre le cas semi-auto par défaut (pied-de-biche, pompe).
+   * Si un tir automatique est un jour voulu, la couche arme reste libre de
+   * lire `isDown("Mouse0")` directement au lieu de ce champ — ce n'est pas le
+   * rôle d'`InputFrame` de trancher la cadence de tir.
+   */
+  fire: boolean;
+  /** Front montant consommé, même contrat que `jump` : sélection pied-de-biche. */
+  switchToMelee: boolean;
+  /** Front montant consommé, même contrat que `jump` : sélection fusil à pompe. */
+  switchToShotgun: boolean;
   /** Orientation de la vue au moment du pas fixe, en radians. */
   yaw: number;
   pitch: number;
@@ -55,6 +67,9 @@ export function emptyInputFrame(): InputFrame {
     right: false,
     jump: false,
     sprint: false,
+    fire: false,
+    switchToMelee: false,
+    switchToShotgun: false,
     yaw: 0,
     pitch: 0,
     dx: 0,

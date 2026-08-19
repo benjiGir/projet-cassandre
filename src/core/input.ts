@@ -43,7 +43,10 @@ class InputManager {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("mousemove", this.onMouseMove);
+    window.addEventListener("mousedown", this.onMouseDown);
+    window.addEventListener("mouseup", this.onMouseUp);
     canvas.addEventListener("click", this.requestPointerLock);
+    canvas.addEventListener("contextmenu", this.onContextMenu);
     document.addEventListener("pointerlockchange", this.onPointerLockChange);
   }
 
@@ -65,6 +68,41 @@ class InputManager {
     if (!this.pointerLocked) return;
     this.mouseDeltaX += e.movementX;
     this.mouseDeltaY += e.movementY;
+  };
+
+  /**
+   * Les boutons souris alimentent les MÊMES `keysDown` / `edgesPendingFixedStep`
+   * / `edgesThisDisplayFrame` que le clavier, sous des codes synthétiques
+   * (`"Mouse0"`, `"Mouse2"`) : le pattern à deux sets est déjà générique sur une
+   * clé `string`, dupliquer un mécanisme parallèle pour la souris n'apporterait
+   * rien. `isDown`, `consumeJustPressed` et `wasJustPressed` fonctionnent donc
+   * immédiatement avec ces codes, sans méthode publique supplémentaire.
+   */
+  private onMouseDown = (e: MouseEvent) => {
+    // Comme `onMouseMove` : ignoré hors pointer lock, sinon le clic qui
+    // déclenche `requestPointerLock` compterait lui-même comme un tir.
+    if (!this.pointerLocked) return;
+    const code = e.button === 0 ? "Mouse0" : e.button === 2 ? "Mouse2" : null;
+    if (!code) return;
+    if (!this.keysDown.has(code)) {
+      this.edgesPendingFixedStep.add(code);
+      this.edgesThisDisplayFrame.add(code);
+    }
+    this.keysDown.add(code);
+  };
+
+  private onMouseUp = (e: MouseEvent) => {
+    const code = e.button === 0 ? "Mouse0" : e.button === 2 ? "Mouse2" : null;
+    if (!code) return;
+    // Inconditionnel, contrairement à `onMouseDown` : on veut toujours pouvoir
+    // relâcher un bouton, jamais rester bloqué "appuyé" (ex. pointer lock perdu
+    // entre le down et le up).
+    this.keysDown.delete(code);
+  };
+
+  /** Le clic droit (Mouse2) ouvrirait sinon le menu contextuel du navigateur. */
+  private onContextMenu = (e: Event) => {
+    e.preventDefault();
   };
 
   private requestPointerLock = () => {

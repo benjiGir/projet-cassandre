@@ -3,6 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
+import { initAudio, playImpactSfx, playWeaponFireSfx } from "./core/audio";
 import { input } from "./core/input";
 import { FIXED_DT, startLoop } from "./core/loop";
 import { GameClock } from "./core/time";
@@ -24,6 +25,16 @@ import {
   moveConfig,
   type MoveConfig,
 } from "./game/player/moveConfig";
+import { WeaponSystem } from "./game/player/weapons";
+import {
+  RECOIL_VARIANTS,
+  weaponConfig,
+  type RecoilVariant,
+  type WeaponConfig,
+} from "./game/player/weaponConfig";
+import { FxSystem } from "./render/fx";
+import { Viewmodel } from "./render/viewmodel";
+import { createWireframeToggle } from "./render/debugView";
 import { useGameStore } from "./game/state";
 import { App } from "./ui/App";
 
@@ -38,6 +49,11 @@ async function main() {
 
   createRoot(uiRoot).render(createElement(App));
   input.attach(canvas);
+  // Pools de SFX (tir, impact) : voir core/audio.ts. Aucun asset audio
+  // n'existe encore dans le dépôt — c'est l'état attendu (invariant #9),
+  // géré silencieusement (un seul console.warn par id manquant, jamais de
+  // throw). Initialisé avant startLoop, comme les autres systèmes globaux.
+  initAudio();
 
   const scene = new THREE.Scene();
   // Far plane : la gym expose une ligne de vue dégagée du fond de l'aile
@@ -58,6 +74,15 @@ async function main() {
   );
 
   const renderer = createRenderer(canvas);
+
+  // Le viewmodel (`render/viewmodel.ts`) est un ENFANT de la caméra : sans
+  // que la caméra fasse elle-même partie du graphe de scène, ses enfants ne
+  // sont jamais traversés au rendu (three.js parcourt `scene`, pas
+  // `camera`) — resteraient positionnés correctement mais invisibles. Ajout
+  // sans effet de bord : une caméra n'a pas de géométrie propre à dessiner,
+  // `camera.position`/`camera.quaternion` restent posés directement dans
+  // `interpolateVisuals` comme avant.
+  scene.add(camera);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.4));
   const sun = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -108,6 +133,21 @@ async function main() {
 
   // --- Vue : lue au taux d'affichage, jamais interpolée (invariant #3) -------
   const clock = new GameClock();
+  // Construit juste après `clock` : le constructeur de `WeaponSystem` en
+  // garde une référence pour déclencher le hitstop (`clock.triggerHitstop`)
+  // à l'impact. Ordre minimal, rien d'autre n'a besoin d'être déplacé.
+  const weapons = new WeaponSystem(physics, clock);
+  // Rendu de l'impact de tir (muzzle flash, decals, particules, douilles,
+  // screenshake) et mesh d'arme affiché à l'écran — voir `render/fx.ts` et
+  // `render/viewmodel.ts` pour les choix documentés. Purement cosmétiques :
+  // aucun des deux ne touche au pas fixe ni à `weapons`/`player`.
+  const fx = new FxSystem(scene);
+  const viewmodel = new Viewmodel(camera);
+  // Debug visuel rétro : wireframe togglable à chaud sur toute la géométrie
+  // de la scène (voir `render/debugView.ts`) — utile pour repérer le pavage
+  // de boîtes/jonctions de la gym à l'œil. Touche dédiée KeyV, gérée plus bas
+  // dans `updateFx` à côté du pattern F9/F10 existant.
+  const wireframeToggle = createWireframeToggle(scene);
   // yaw initial = gym.spawnYaw. Convention vérifiée par calcul (voir
   // gltf-level-conventions / commentaire de gym.ts) : avec l'Euler 'YXZ' de
   // la caméra ci-dessous et la dérivation de wishX/wishZ dans
@@ -123,6 +163,12 @@ async function main() {
   const cameraEuler = new THREE.Euler(0, 0, 0, "YXZ");
   // Scratch du head bob : réutilisé à chaque frame, zéro allocation en régime établi.
   const viewBobOffset = new THREE.Vector3();
+  // Origine de tir AUTHENTIQUE du pas fixe courant (position + eyeOffset, PAS
+  // `player.eyePosition(alpha, …)` qui est interpolée pour le rendu) — voir
+  // la note de déterminisme dans `WeaponSystem.update`.
+  const weaponEyeOrigin = new THREE.Vector3();
+  // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
+  const shakeOffsetScratch = new THREE.Vector3();
 
   /** Capture l'input du pas fixe courant. Le saut est CONSOMMÉ ici, une seule fois. */
   function captureInputFrame(): InputFrame {
@@ -132,6 +178,9 @@ async function main() {
     liveFrame.right = input.isDown("KeyD");
     liveFrame.sprint = input.isDown("ShiftLeft");
     liveFrame.jump = input.consumeJustPressed("Space");
+    liveFrame.fire = input.consumeJustPressed("Mouse0");
+    liveFrame.switchToMelee = input.consumeJustPressed("Digit1");
+    liveFrame.switchToShotgun = input.consumeJustPressed("Digit2");
     liveFrame.yaw = look.yaw;
     liveFrame.pitch = look.pitch;
     liveFrame.dx = lookDelta.dx;
@@ -172,6 +221,7 @@ async function main() {
   startLoop({
     snapshotPrevious() {
       player.snapshotPrevious();
+      weapons.snapshotPrevious();
       ballPrevPos.copy(ballCurrPos);
       ballPrevQuat.copy(ballCurrQuat);
     },
@@ -193,7 +243,20 @@ async function main() {
         if (inputRecorder.isRecording()) inputRecorder.record(frame);
       }
 
-      player.update(gameplayDt, frame ?? emptyInputFrame());
+      const activeFrame = frame ?? emptyInputFrame();
+      player.update(gameplayDt, activeFrame);
+
+      // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
+      // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
+      // position interpolée pour le rendu. Voir la note de déterminisme dans
+      // `WeaponSystem.update` — une origine interpolée casserait le rejeu
+      // exact du raycast d'arme.
+      weaponEyeOrigin.set(
+        player.position.x,
+        player.position.y + player.eyeOffset,
+        player.position.z,
+      );
+      weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
     },
 
     stepPhysics(dt) {
@@ -251,12 +314,51 @@ async function main() {
         camera.fov = fov;
         camera.updateProjectionMatrix();
       }
+
+      // Viewmodel : APRÈS que position/rotation/FOV de la caméra sont posés
+      // ci-dessus — l'offset de `weapons.viewmodelPose` est purement local à
+      // la caméra (voir `render/viewmodel.ts`), il n'a pas besoin de les lire,
+      // mais reste cohérent dans la même frame en s'appliquant après eux.
+      viewmodel.update(alpha, weapons);
     },
 
     updateFx(realDt, stats) {
       if (realDt > 0) {
         fpsSmoothed += (1 / realDt - fpsSmoothed) * 0.1;
       }
+
+      fx.update(realDt);
+
+      // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
+      // files s'accumulent au fil des pas fixes de la frame et ne se vident
+      // jamais toutes seules. clearFrameEvents() est appelé par `shell`, en
+      // dernier, après consommation audio — ne JAMAIS l'appeler ici.
+      for (const event of weapons.fireEvents) {
+        fx.spawnMuzzleFlash(event.muzzlePosition, event.muzzleDirection, event.weapon);
+        if (event.weapon === "shotgun") {
+          fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
+        }
+        playWeaponFireSfx(event.weapon);
+      }
+      for (const hit of weapons.hitEvents) {
+        fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
+        fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon);
+        fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
+        playImpactSfx(hit.material);
+      }
+      // Clôture de la frame d'affichage pour les événements d'armes : TOUS
+      // les lecteurs (`retro-render` ci-dessus, l'audio ci-dessus) ont fini
+      // de lire `fireEvents`/`hitEvents` pour cette frame. Même principe que
+      // `input.endFrame()` dans `core/loop.ts` — dernier appel de la chaîne,
+      // jamais plus tôt (voir la doc de `clearFrameEvents` dans
+      // `game/player/weapons.ts`).
+      weapons.clearFrameEvents();
+
+      // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
+      // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
+      // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
+      // `player.eyePosition`/`camera.position` de base.
+      camera.position.add(fx.currentShakeOffset(shakeOffsetScratch));
 
       // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
       // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
@@ -272,6 +374,12 @@ async function main() {
       if (input.wasJustPressed("F10") && lastRecording) {
         startPlayback(lastRecording);
         console.info(`[recorder] rejeu de ${lastRecording.frames.length} pas fixes`);
+      }
+      // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
+      // (invariant #2 — pas de lecture continue, pas de setState par frame).
+      if (input.wasJustPressed("KeyV")) {
+        const enabled = wireframeToggle.toggle();
+        console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
       }
 
       debugAccumulator += realDt;
@@ -300,7 +408,7 @@ async function main() {
     },
   });
 
-  exposeDebugApi(player, () => lastRecording, startPlayback);
+  exposeDebugApi(player, weapons, () => lastRecording, startPlayback);
 }
 
 /**
@@ -400,6 +508,10 @@ declare global {
       checkDeterminism: (rec: Recording) => ReturnType<typeof checkDeterminism>;
       feelVariants: typeof FEEL_VARIANTS;
       applyFeelVariant: (name: keyof typeof FEEL_VARIANTS) => FeelVariantReport;
+      weapons: WeaponSystem;
+      weaponConfig: WeaponConfig;
+      recoilVariants: typeof RECOIL_VARIANTS;
+      applyRecoilVariant: (name: keyof typeof RECOIL_VARIANTS) => RecoilVariantReport;
     };
   }
 }
@@ -438,9 +550,34 @@ function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantReport {
   return report;
 }
 
+interface RecoilVariantReport {
+  variant: keyof typeof RECOIL_VARIANTS;
+  meleeRecoil: RecoilVariant["meleeRecoil"];
+  shotgunRecoil: RecoilVariant["shotgunRecoil"];
+}
+
+/**
+ * Applique une variante de recul d'arme, à chaud — même protocole que
+ * `applyFeelVariant` : F9 enregistre une séquence de tir, `applyRecoilVariant`
+ * change la variante, F10 rejoue EXACTEMENT la même séquence (`InputFrame.fire`
+ * est un front enregistré comme un autre), seul le recul diffère à l'écran.
+ * Aucun `applyConfig()` nécessaire : le recul n'est lu par Rapier nulle part.
+ */
+function applyRecoilVariant(name: keyof typeof RECOIL_VARIANTS): RecoilVariantReport {
+  Object.assign(weaponConfig, RECOIL_VARIANTS[name]);
+  const report: RecoilVariantReport = {
+    variant: name,
+    meleeRecoil: weaponConfig.meleeRecoil,
+    shotgunRecoil: weaponConfig.shotgunRecoil,
+  };
+  console.info(`[feel] variante de recul ${name} appliquée`, report);
+  return report;
+}
+
 /** Point d'entrée console pour l'A/B de `feel-tuner` et les preuves de `qa-evidence`. */
 function exposeDebugApi(
   player: PlayerController,
+  weapons: WeaponSystem,
   lastRecording: () => Recording | null,
   playRecording: (rec: Recording) => void,
 ) {
@@ -456,6 +593,10 @@ function exposeDebugApi(
     checkDeterminism,
     feelVariants: FEEL_VARIANTS,
     applyFeelVariant,
+    weapons,
+    weaponConfig,
+    recoilVariants: RECOIL_VARIANTS,
+    applyRecoilVariant,
   };
 }
 

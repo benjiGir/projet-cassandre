@@ -108,13 +108,19 @@ const SLIDER_GROUPS: ReadonlyArray<{ title: string; fields: readonly SliderField
       { key: "jumpHeight", label: "Hauteur de saut", min: 0, max: 3, step: 0.05, decimals: 2, unit: "m" },
       { key: "coyoteTime", label: "Coyote time", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
       { key: "jumpBufferTime", label: "Jump buffer", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
+      // Plage resserrée suite à mesure (cf. commentaire `groundStickSpeed`,
+      // moveConfig.ts) : au-delà de ~0.5-1 m/s ce champ combiné à une grande
+      // vitesse horizontale axée-axe fait dégénérer la résolution Rapier —
+      // stutter mesuré jusqu'à 35% des pas fixes en ligne droite dans le hub.
+      // 0.6 laisse 3× la valeur par défaut (0.2) sans franchir la falaise
+      // mesurée entre 0.5 et 1.0.
       {
         key: "groundStickSpeed",
         label: "Collage au sol",
         min: 0,
-        max: 5,
-        step: 0.1,
-        decimals: 1,
+        max: 0.6,
+        step: 0.02,
+        decimals: 2,
         unit: "m/s",
       },
       {

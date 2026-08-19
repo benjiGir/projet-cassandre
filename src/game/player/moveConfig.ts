@@ -64,6 +64,32 @@ export interface MoveConfig {
    * Vitesse descendante appliquée en permanence quand le joueur est au sol, m/s.
    * Maintient le contact (évite un `isGrounded` qui clignote et aide le
    * snap-to-ground en descente de pente). Doit rester < snapToGroundDistance / dt.
+   *
+   * PLAFONNÉ BAS, et c'est mesuré, pas esthétique : à grande vitesse
+   * horizontale et sur un déplacement AXÉ-AXE (droit devant, pas en
+   * diagonale), un `desired` combinant ce creep vertical constant avec un
+   * grand déplacement horizontal fait dégénérer `computeColliderMovement` de
+   * Rapier sur sol plat — `computedMovement` ressort mesurablement plus court
+   * que voulu alors que `isGrounded` est vrai et la normale plate, sans mur ni
+   * collision réelle. C'est le stutter en ligne droite dans le hub (44×44 m
+   * ouvert, seul endroit du niveau où on court longtemps plein axe) :
+   *
+   *   groundStickSpeed=2 (ancienne valeur) : hub 35.1% de pas fixes affectés,
+   *     KCC brut isolé en plein +X 41-49% (indépendant d'autostep/snap,
+   *     indépendant de colliderOffset — testé 0.01 à 0.2 m, aucun effet).
+   *   groundStickSpeed=0.2 (valeur actuelle) : hub 2.1-2.4%, comparable au
+   *     bruit de fond déjà mesuré aux coutures géométriques du niveau
+   *     (2.4-4.3%). En diagonale (yaw non aligné) l'ancienne valeur ne
+   *     montrait déjà quasi aucun artefact : c'est bien l'axe-alignement +
+   *     magnitude du creep qui déclenche la dégénérescence, pas la géométrie.
+   *   Testé jusqu'à 0.02 sans le moindre flicker de `isGrounded` sur la vraie
+   *   gym (hub, escaliers 0.45 m, rampe 45°) : la marge de sécurité au-dessus
+   *   de 0.2 est large avant de retoucher au risque que ce champ existe pour
+   *   éviter.
+   *
+   * Diagnostic et mesures : harnais Rapier headless jetables, jeu réel
+   * (`gym.ts` + `PlayerController`) et KCC brut isolé, session de debug du
+   * stutter dans la gym (ne pas re-régresser sans ces mêmes harnais).
    */
   groundStickSpeed: number;
   /** Vitesse de chute maximale, m/s. Garde-fou anti-tunneling après une longue chute. */
@@ -185,7 +211,7 @@ export const moveConfig: MoveConfig = {
   jumpHeight: 1.1,
   coyoteTime: 0,
   jumpBufferTime: 0,
-  groundStickSpeed: 2,
+  groundStickSpeed: 0.2,
   maxFallSpeed: 60,
 
   capsuleRadius: 0.4,
@@ -345,6 +371,33 @@ export function groundDeceleration(cfg: MoveConfig): number {
 /** Hauteur totale de la capsule, en mètres. */
 export function capsuleTotalHeight(cfg: MoveConfig): number {
   return 2 * (cfg.capsuleHalfHeight + cfg.capsuleRadius);
+}
+
+/**
+ * Seuil (cosinus) qui distingue un MUR d'un simple contact de sol/pente pour
+ * le reclip anti-vitesse-fantôme de `PlayerController.update`. Une collision
+ * dont |normale.y| tombe SOUS ce seuil est plus raide que ce que le
+ * controller sait gravir (`maxSlopeClimbAngleDeg`) : un mur quasi vertical,
+ * ou une pente au-delà du seuil (y compris volontairement infranchissable,
+ * comme la rampe à 55° de la gym).
+ *
+ * Ancien bug corrigé par ce seuil : Rapier compte le sol lui-même comme une
+ * collision (`numComputedCollisions() > 0`) à quasiment CHAQUE pas fixe où
+ * le joueur est au sol — pas seulement contre un mur. Reclipper sans filtrer
+ * réécrivait `velocity` sur `movement / dt` dès qu'une pente, une marche
+ * (autostep) ou même un sol plat fait de plusieurs boîtes adjacentes (gym.ts
+ * n'utilise que ça, jamais un mesh continu) résolvait un pas fixe donné avec
+ * un mouvement ponctuellement un peu plus court que voulu — sans blocage
+ * réel. La vitesse retombait, l'accélération (`timeToMaxSpeed`) la faisait
+ * remonter, un pas fixe suivant la refaisait chuter : la sensation de
+ * « quelque chose qui bloque » en playtest (saccades sur rampes/marches/sol
+ * multi-boîtes). Réutilise `maxSlopeClimbAngleDeg` plutôt qu'un second
+ * champ : c'est déjà LA frontière que Rapier applique en interne entre
+ * franchissable et non franchissable, donc la source unique de vérité pour
+ * ce qui compte comme un mur.
+ */
+export function wallNormalYThreshold(cfg: MoveConfig): number {
+  return Math.cos((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);
 }
 
 /**

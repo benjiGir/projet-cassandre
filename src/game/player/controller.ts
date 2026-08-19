@@ -12,6 +12,7 @@ import {
   jumpVelocity,
   landingDipFor,
   moveConfig,
+  wallNormalYThreshold,
   type MoveConfig,
 } from "./moveConfig";
 
@@ -40,8 +41,13 @@ const TAU = Math.PI * 2;
  *
  * Ce qu'on y perd — le coude à l'arrivée — est invisible : ces grandeurs sont
  * des enveloppes, elles multiplient une sinusoïde qui reste continue.
+ *
+ * EXPORTÉE : `weapons.ts` (Phase 2) réutilise exactement cette fonction pour
+ * la récupération de recul du viewmodel — même contrat (dt de gameplay,
+ * jamais d'horloge murale), donc pas de raison d'en dupliquer une deuxième
+ * version qui pourrait diverger.
  */
-function approach(
+export function approach(
   current: number,
   target: number,
   responseTime: number,
@@ -337,7 +343,11 @@ export class PlayerController {
     this.velocity.y += gravityY * dt;
     if (this.isGrounded && this.velocity.y < 0) {
       // Poussée descendante constante : maintient le contact et stabilise
-      // `computedGrounded` (sinon il clignote sur terrain plat).
+      // `computedGrounded` (sinon il clignote sur terrain plat). Ne PAS
+      // remonter cette valeur sans mesurer : un creep trop fort combiné à une
+      // grande vitesse horizontale axée-axe fait dégénérer
+      // `computeColliderMovement` (stutter). Détail et chiffres dans le
+      // commentaire de `groundStickSpeed`, moveConfig.ts.
       this.velocity.y = -cfg.groundStickSpeed;
     }
 
@@ -376,18 +386,24 @@ export class PlayerController {
     this.numCollisions = this.kcc.numComputedCollisions();
     const grounded = this.kcc.computedGrounded();
 
-    // Normale du sol : la collision dont la normale pointe le plus vers le haut.
+    // Un seul passage sur les collisions du pas fixe pour deux besoins :
+    //  - normale du sol : la collision dont la normale pointe le plus vers le
+    //    haut, seulement si `grounded` (sinon `groundNormal` reste (0,1,0)) ;
+    //  - détection de MUR pour le reclip de vitesse plus bas : au moins une
+    //    collision dont la normale est plus raide que `maxSlopeClimbAngleDeg`
+    //    (quasi verticale), qu'on soit au sol ou en l'air.
     this.groundNormal.set(0, 1, 0);
-    if (grounded) {
-      let bestUp = -Infinity;
-      for (let i = 0; i < this.numCollisions; i++) {
-        const collision = this.kcc.computedCollision(i, this.collisionScratch);
-        if (!collision) continue;
-        if (collision.normal1.y > bestUp) {
-          bestUp = collision.normal1.y;
-          this.groundNormal.set(collision.normal1.x, collision.normal1.y, collision.normal1.z);
-        }
+    let bestUp = -Infinity;
+    let hitWall = false;
+    const wallThreshold = wallNormalYThreshold(cfg);
+    for (let i = 0; i < this.numCollisions; i++) {
+      const collision = this.kcc.computedCollision(i, this.collisionScratch);
+      if (!collision) continue;
+      if (grounded && collision.normal1.y > bestUp) {
+        bestUp = collision.normal1.y;
+        this.groundNormal.set(collision.normal1.x, collision.normal1.y, collision.normal1.z);
       }
+      if (Math.abs(collision.normal1.y) < wallThreshold) hitWall = true;
     }
 
     // Vitesse verticale : plafond puis atterrissage.
@@ -396,7 +412,7 @@ export class PlayerController {
     }
     // Vitesse d'impact, lue AVANT la remise à zéro : c'est la seule fenêtre où
     // elle existe encore. Conditionnée à la TRANSITION air -> sol, sinon
-    // `groundStickSpeed` (−2 m/s en permanence au sol) déclencherait un
+    // `groundStickSpeed` (appliqué en permanence au sol) déclencherait un
     // enfoncement de réception à chaque pas de marche.
     let impactSpeed = 0;
     if (grounded && this.velocity.y < 0) {
@@ -404,10 +420,15 @@ export class PlayerController {
       this.velocity.y = 0; // atterrissage
     }
 
-    // Vitesse horizontale reclippée sur le mouvement réellement effectué : sans
-    // ça, courir contre un mur conserve une vitesse fantôme qui se libère d'un
-    // coup quand on s'en écarte. On ne touche à rien s'il n'y a pas eu de contact.
-    if (this.numCollisions > 0 && dt > 0) {
+    // Vitesse horizontale reclippée sur le mouvement réellement effectué,
+    // SEULEMENT si un vrai MUR a été touché (`hitWall`, calculé ci-dessus) :
+    // sans ce reclip, courir contre un mur conserverait une vitesse fantôme
+    // qui se libère d'un coup quand on s'en écarte. Le filtre sur la normale
+    // est nécessaire : un simple contact de sol/pente/marche compte aussi
+    // comme collision pour Rapier (`numComputedCollisions() > 0` à quasiment
+    // chaque pas fixe au sol) — reclipper sur CETTE seule condition avait
+    // pénalisé sol, pentes et marches, voir `wallNormalYThreshold`.
+    if (hitWall && dt > 0) {
       this.velocity.x = this.movement.x / dt;
       this.velocity.z = this.movement.z / dt;
     }

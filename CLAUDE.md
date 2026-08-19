@@ -55,7 +55,26 @@ src/ui/       React overlay
 
 ## Phase courante
 
-> Phase 0 — Socle technique.
+> Phase 2 — Armes et feel de tir.
+> Codée et fonctionnelle : pied-de-biche, fusil à pompe (raycasts en cône,
+> PRNG seedé), viewmodel avec bob/recul, muzzle flash, decals, douilles,
+> hitstop, screenshake. Critère humain de cette phase ("vider un chargeur sur
+> un mur vide est satisfaisant") pas encore constaté.
+> Phase 0 (socle) et Phase 1 (déplacement) codées et fonctionnelles ; le
+> critère humain de la Phase 1 est validé ("Quake / Half-Life 1"). Deux bugs
+> de déplacement trouvés en playtest après coup et corrigés : (1) le reclip
+> de vitesse horizontale se déclenchait sur toute collision, y compris le
+> simple contact au sol, pas seulement un mur — corrigé en le limitant aux
+> normales de collision « mur » (`wallNormalYThreshold`) ; (2) `groundStickSpeed`
+> trop fort (-2 m/s) faisait dégénérer `computeColliderMovement` de Rapier à
+> haute vitesse sur mouvement aligné aux axes, perdant du mouvement horizontal
+> sans raison — mesuré, ramené à -0.2 m/s. Voir `.claude/docs/RAPIER_GUIDE.MD`
+> (skill `threejs-rapier-fieldguide`) pour la référence Rapier qui a orienté
+> le diagnostic, et la doc du reste du pack de skills.
+> Outil de debug : touche `V` bascule le wireframe de toute la scène.
+> Aucune des trois phases n'est passée par le gate `qa-evidence` (build/
+> console/déterminisme/perf) — dette assumée, sautée sur décision explicite
+> de l'utilisateur.
 > Mettre à jour cette ligne à chaque passage de phase.
 
 Les critères de validation et de rollback de chaque phase sont dans
