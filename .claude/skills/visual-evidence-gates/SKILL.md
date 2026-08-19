@@ -21,7 +21,8 @@ devrait marcher » et « j'ai implémenté X » ne sont pas des preuves.
 | Check canvas non vide | toujours |
 | Capture Playwright caméra fixe + seed fixe | changement visuel |
 | **Hash de pixels exact** vs référence | changement visuel |
-| Test de déterminisme de la boucle | changement `core/` ou `physics/` |
+| Hash du snapshot Rapier vs référence | changement `core/` ou `physics/` |
+| `renderer.info.memory` stable après rechargement de niveau | changement `level/` |
 | `frameTime` p50 / p99 sur 30 s | rendu, entités, physique |
 | Draw calls, triangles, textures en mémoire | changement de rendu |
 | Profiling React (re-renders/s) | changement UI |
@@ -66,7 +67,7 @@ diagnostiquer, pas une raison de passer au diff perceptuel.
 | Métrique | Seuil |
 |---|---|
 | `frameTime` p99 | < 16.6 ms |
-| Draw calls | < 150 |
+| Draw calls | < 100 |
 | Triangles | < 200 k |
 | Allocations par frame en régime établi | 0 |
 

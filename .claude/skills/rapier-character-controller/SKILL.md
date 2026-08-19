@@ -5,10 +5,15 @@ description: Configuration du KinematicCharacterController de Rapier, groupes de
 
 # Rapier — controller et collisions
 
+> Ce skill couvre l'essentiel. Pour l'API exacte, les pièges trimesh et le
+> déterminisme, charger `threejs-rapier-fieldguide`.
+
 ## Ne jamais réimplémenter
 
 Rapier fournit `KinematicCharacterController` avec pentes, marches, autostep
-et snap-to-ground. Écrire un controller capsule-vs-monde maison est le trou
+et snap-to-ground. Trois limites à connaître : il ne gère **aucune rotation**,
+il n'applique **pas la gravité** (à ajouter soi-même au vecteur désiré), et il
+ne stocke aucune référence vers le collider qu'il déplace. Écrire un controller capsule-vs-monde maison est le trou
 noir classique du développement de FPS. C'est un invariant du projet.
 
 ## Configuration de référence
@@ -27,20 +32,56 @@ Yeux à `1.6` m du sol.
 
 ## Groupes de collision
 
-Rapier utilise des bitmasks 32 bits : 16 bits de membership, 16 bits de filtre.
+> Charger `threejs-rapier-fieldguide` §2 pour l'encodage complet.
 
-| Groupe | Bit | Collisionne avec |
-|---|---|---|
-| `WORLD` | 0 | tout |
-| `PLAYER` | 1 | WORLD, ENEMY, PICKUP, TRIGGER |
-| `ENEMY` | 2 | WORLD, PLAYER, PLAYER_SHOT |
-| `PLAYER_SHOT` | 3 | WORLD, ENEMY |
-| `ENEMY_SHOT` | 4 | WORLD, PLAYER |
-| `DEBRIS` | 5 | WORLD uniquement |
-| `TRIGGER` | 6 | PLAYER uniquement (sensor) |
+Un groupe de collision est **une seule valeur 32 bits** : `membership << 16 | filter`.
+Ne jamais écrire les masques à la main.
+
+```ts
+const GROUP = {
+  WORLD: 1 << 0, PLAYER: 1 << 1, ENEMY: 1 << 2,
+  PLAYER_SHOT: 1 << 3, ENEMY_SHOT: 1 << 4,
+  DEBRIS: 1 << 5, TRIGGER: 1 << 6,
+} as const;
+
+const groups = (membership: number, filter: number) =>
+  ((membership & 0xffff) << 16) | (filter & 0xffff);
+```
+
+| Groupe | Collisionne avec |
+|---|---|
+| `WORLD` | tout |
+| `PLAYER` | WORLD, ENEMY, PICKUP, TRIGGER |
+| `ENEMY` | WORLD, PLAYER, PLAYER_SHOT |
+| `PLAYER_SHOT` | WORLD, ENEMY |
+| `ENEMY_SHOT` | WORLD, PLAYER |
+| `DEBRIS` | WORLD uniquement |
+| `TRIGGER` | PLAYER uniquement (sensor) |
 
 Les débris ne collisionnent qu'avec le monde : sinon les douilles et gibs
 bloquent les tirs et coûtent cher pour zéro gameplay.
+
+## Colliders de niveau — deux obligations
+
+```ts
+RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES)
+```
+
+Sans `FIX_INTERNAL_EDGES`, le joueur accroche sur les arêtes entre triangles
+coplanaires : le classique « je me bloque sur un sol plat », qui sera
+diagnostiqué à tort comme un bug de character controller.
+
+Pour les triggers, le joueur étant kinématique et le décor fixe, la détection
+est **désactivée par défaut** entre les deux :
+
+```ts
+triggerDesc.setSensor(true)
+  .setActiveCollisionTypes(
+    RAPIER.ActiveCollisionTypes.DEFAULT | RAPIER.ActiveCollisionTypes.KINEMATIC_FIXED)
+  .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+```
+
+Sans ces deux lignes, les triggers ne se déclenchent jamais, silencieusement.
 
 ## Raycast d'arme hitscan
 

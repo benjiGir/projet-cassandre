@@ -5,26 +5,27 @@ description: Audio du jeu avec Howler — pooling de sources, variation de pitch
 
 # Audio
 
-## Pooling
+## Ce que Howler fait déjà
 
-Un boomer shooter tire vite. Rejouer la même instance de son coupe le son
-précédent ; en créer une nouvelle à chaque tir sature la mémoire.
-
-Pool de N instances par SFX (N = 4 à 8 pour les armes), rotation circulaire :
+Ne pas écrire de pool maison : `pool` et les audio sprites sont natifs.
 
 ```ts
-class SfxPool {
-  private sounds: Howl[];
-  private i = 0;
-  play(volume = 1) {
-    const s = this.sounds[this.i];
-    this.i = (this.i + 1) % this.sounds.length;
-    s.rate(0.92 + Math.random() * 0.16);   // ±8 %
-    s.volume(volume);
-    s.play();
-  }
-}
+const sfx = new Howl({
+  src: ['sfx.ogg', 'sfx.m4a'],
+  sprite: { shot: [0, 420], reload: [500, 780], impact: [1400, 260] },
+  pool: 12,
+});
+sfx.play('shot');
 ```
+
+Les **audio sprites** empaquettent tous les SFX courts dans un fichier unique :
+un seul décodage, une seule requête, latence minimale. C'est le pattern
+recommandé pour un jeu.
+
+`html5: true` pour la musique (streaming, économise la mémoire), **jamais pour
+les SFX** — ça casse la latence.
+
+Repère : 50 sons superposés passent, 500 glitchent.
 
 ## Variation de pitch
 
