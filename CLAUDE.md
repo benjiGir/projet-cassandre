@@ -55,28 +55,46 @@ src/ui/       React overlay
 
 ## Phase courante
 
-> Phase 2 — Armes et feel de tir.
-> Codée et fonctionnelle : pied-de-biche, fusil à pompe (raycasts en cône,
-> PRNG seedé), viewmodel avec bob/recul, muzzle flash, decals, douilles,
-> hitstop, screenshake. Critère humain de cette phase ("vider un chargeur sur
-> un mur vide est satisfaisant") pas encore constaté.
-> Phase 0 (socle) et Phase 1 (déplacement) codées et fonctionnelles ; le
-> critère humain de la Phase 1 est validé ("Quake / Half-Life 1"). Deux bugs
-> de déplacement trouvés en playtest après coup et corrigés : (1) le reclip
-> de vitesse horizontale se déclenchait sur toute collision, y compris le
-> simple contact au sol, pas seulement un mur — corrigé en le limitant aux
-> normales de collision « mur » (`wallNormalYThreshold`) ; (2) `groundStickSpeed`
-> trop fort (-2 m/s) faisait dégénérer `computeColliderMovement` de Rapier à
-> haute vitesse sur mouvement aligné aux axes, perdant du mouvement horizontal
-> sans raison — mesuré, ramené à -0.2 m/s. Voir `.claude/docs/RAPIER_GUIDE.MD`
-> (skill `threejs-rapier-fieldguide`) pour la référence Rapier qui a orienté
-> le diagnostic, et la doc du reste du pack de skills.
-> Outil de debug : touche `V` bascule le wireframe de toute la scène.
-> Aucune des trois phases n'est passée par le gate `qa-evidence` (build/
-> console/déterminisme/perf) — dette assumée, sautée sur décision explicite
-> de l'utilisateur.
+> Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
+> Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet
+> `col_*`/`spawn_player`/`spawn_suit_*`/`trig_*`/`door_*`/`use_*`/`secret_*`,
+> transforms monde appliqués avant Rapier, reconversion forcée en
+> `MeshLambertMaterial`/`NearestFilter` — sinon `GLTFLoader` viole l'invariant
+> #5 silencieusement), `src/game/level/hotReload.ts` (sondage HTTP HEAD
+> ETag/Last-Modified, 400ms, préserve la position du joueur au reload).
+> Câblage additif dans `main.ts` : `gym.ts` reste le niveau par défaut au
+> boot, le pipeline glTF s'active via `?level=<nom>` ou
+> `window.cassandre.level.load(name)` — rien de cassé côté Phases 1-3.
+> Critère humain de cette phase ("déplacer un mur dans Blender, exporter, le
+> voir en jeu en moins de 60 secondes, chronométré") pas encore constaté —
+> hors de portée d'un agent, à tester par l'utilisateur dans son propre
+> Blender.
+>
+> **Phases 0-3 codées, fonctionnelles, et validées humainement.** Phase 3
+> ("l'ennemi Costard" — machine à états, billboard, hitscan télégraphié,
+> gibs) est le **point de décision majeur du plan** : combat contre plusieurs
+> Costards dans la gym jugé fun par l'utilisateur ("Franchement c'est fun
+> même si ça ressemble à rien, je valide") — le proto continue. Feedback de
+> hit retravaillé après coup (son placeholder synthétique ajouté, crosshair
+> permanent, gizmos balistiques touche `B`, fix d'un vrai bug de portée sur
+> le pied-de-biche, compteur de munitions du pompe affiché). Phase 1
+> (déplacement) validée dès son passage ("Quake / Half-Life 1"), deux bugs de
+> stutter post-playtest corrigés (reclip de vélocité sur mur uniquement,
+> `groundStickSpeed` réduit à -0.2 m/s — voir `.claude/docs/RAPIER_GUIDE.MD`
+> / skill `threejs-rapier-fieldguide` pour la référence qui a orienté le
+> diagnostic). Outils de debug : `V` wireframe, `B` gizmos balistiques.
+>
+> **Gate `qa-evidence` : abandonné par défaut, pas par phase — décision
+> explicite de l'utilisateur (2026-08-20).** Ne pas le lancer à chaque phase ;
+> il sera lancé une seule fois, à la toute fin du proto, si besoin.
+>
 > Mettre à jour cette ligne à chaque passage de phase.
 
 Les critères de validation et de rollback de chaque phase sont dans
-`PLAN_PROTO_BOOMER_SHOOTER.md`. Ne pas avancer de phase sans que
-`qa-evidence` ait validé la précédente.
+`PLAN_PROTO_BOOMER_SHOOTER.md`.
+
+**Gate `qa-evidence` abandonné (décision explicite de l'utilisateur,
+2026-08-19).** Le passage de phase ne dépend plus d'une validation formelle
+par preuve (build/console/hash pixel/déterminisme/perf) — seul le critère
+humain de fun/lisibilité du plan compte. Le `director` ne doit plus bloquer
+une phase suivante en attendant `qa-evidence`.

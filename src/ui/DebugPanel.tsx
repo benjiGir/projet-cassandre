@@ -33,6 +33,13 @@ export function DebugPanel() {
 
   const normalColor = debug.groundNormal.y >= FLAT_NORMAL_Y_THRESHOLD ? OK_COLOR : WARN_COLOR;
 
+  const hpRatio = debug.playerMaxHp > 0 ? debug.playerHp / debug.playerMaxHp : 0;
+  const hpColor = hpRatio <= 0.25 ? AIRBORNE_COLOR : hpRatio <= 0.5 ? WARN_COLOR : OK_COLOR;
+
+  const ammoEmpty = debug.shotgunAmmo <= 0;
+  const ammoLow = debug.shotgunAmmo <= debug.shotgunMaxAmmo * 0.2;
+  const ammoColor = ammoEmpty ? AIRBORNE_COLOR : ammoLow ? WARN_COLOR : OK_COLOR;
+
   return (
     <div
       style={{
@@ -52,6 +59,19 @@ export function DebugPanel() {
       <div>{`FPS: ${debug.fps.toFixed(0).padStart(3, " ")}`}</div>
       <div>{`Pos: ${fmt(debug.position.x)}, ${fmt(debug.position.y)}, ${fmt(debug.position.z)}`}</div>
       <div>{`Entities: ${String(debug.entityCount).padStart(3, " ")}`}</div>
+      <div>
+        {"HP: "}
+        <span style={{ color: hpColor, fontWeight: "bold" }}>
+          {`${String(debug.playerHp).padStart(3, " ")} / ${debug.playerMaxHp}`}
+        </span>
+      </div>
+      <div>
+        {"Pompe: "}
+        <span style={{ color: ammoColor, fontWeight: "bold" }}>
+          {`${String(debug.shotgunAmmo).padStart(3, " ")} / ${debug.shotgunMaxAmmo}`}
+        </span>
+        {ammoEmpty ? "  ⚠ à sec" : ""}
+      </div>
       <div>
         <span style={{ color: groundedColor, fontWeight: "bold" }}>
           {`${groundedGlyph} ${groundedLabel}`}

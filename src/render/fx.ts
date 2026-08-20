@@ -2,10 +2,10 @@ import * as THREE from "three";
 
 /**
  * Effets visuels de tir : screenshake, muzzle flash, decals + particules
- * d'impact, douilles éjectées. Module PUREMENT cosmétique, tourne en temps
- * réel (`update(realDt)`, appelé depuis `updateFx` de `main.ts`), JAMAIS sur
- * le pas fixe — voir la note de tête de `core/loop.ts` sur pourquoi `updateFx`
- * reçoit `realDt` et pas `FIXED_DT`.
+ * d'impact, douilles éjectées, gibs de mise à mort à bout portant. Module
+ * PUREMENT cosmétique, tourne en temps réel (`update(realDt)`, appelé depuis
+ * `updateFx` de `main.ts`), JAMAIS sur le pas fixe — voir la note de tête de
+ * `core/loop.ts` sur pourquoi `updateFx` reçoit `realDt` et pas `FIXED_DT`.
  *
  * DÉCOUPLAGE DÉLIBÉRÉ de `game/player/weapons.ts` : ce module n'importe rien
  * de la couche gameplay, il ne reçoit que des primitives (`THREE.Vector3`,
@@ -24,10 +24,13 @@ import * as THREE from "three";
  *  - Decals : pool à taille fixe (`DECAL_POOL_SIZE`), round-robin — un
  *    joueur qui vide un chargeur ne doit pas accumuler des dizaines de quads
  *    invisibles pour toujours.
- *  - Particules d'impact et douilles : tableaux simples filtrés à chaque
- *    `update()`, PAS de pool — leur durée de vie est courte (< 2 s) et le
- *    volume par tir est faible (quelques unités), un vrai pool serait de la
- *    sur-ingénierie pour un prototype à cette échelle.
+ *  - Particules d'impact, douilles et gibs : tableaux simples filtrés à
+ *    chaque `update()`, PAS de pool — leur durée de vie est courte (< 2 s) et
+ *    le volume par tir/mise à mort est faible (quelques unités), un vrai pool
+ *    serait de la sur-ingénierie pour un prototype à cette échelle. Les gibs
+ *    (`spawnGibs`) réutilisent la MÊME infrastructure `ToyParticle`/
+ *    `updateToyPhysics` que les particules d'impact et les douilles — voir la
+ *    section dédiée plus bas, aucune duplication du pattern générique.
  */
 
 // ---------------------------------------------------------------------------
@@ -142,6 +145,28 @@ const SHELL_FRICTION = 0.6;
  */
 const SHELL_GROUND_Y = 0;
 
+// ---------------------------------------------------------------------------
+// Gibs — mort à bout portant (pompe). Même « physique jouet » que les
+// particules d'impact ci-dessus, RÉUTILISE `ToyParticle`/`updateToyPhysics`
+// tel quel : seuls géométrie/couleur/quantité/vitesse/dispersion diffèrent.
+// `bounce: false` comme `spawnImpactParticles` (pas comme les douilles) :
+// pas de rebond au sol, donc pas besoin de l'approximation `SHELL_GROUND_Y`
+// ici — une durée de vie plus longue que les particules d'impact suffit à
+// rendre la chute des chunks visible avant qu'ils disparaissent.
+// ---------------------------------------------------------------------------
+
+const GIB_LIFETIME = 0.9; // s, plus long que PARTICLE_LIFETIME (chunks plus gros, chute plus lisible)
+const GIBS_PER_KILL = 8;
+const GIB_SIZE = 0.08; // m, cube de base — voir le scale non uniforme dans spawnGibs pour casser la silhouette
+const GIB_SPEED_MIN = 3; // m/s
+const GIB_SPEED_MAX = 7; // m/s
+/** Cône jouet plus large que `PARTICLE_SPREAD` : « explosion » bout portant plutôt qu'un ricochet de plomb. */
+const GIB_SPREAD = 0.9;
+const GIB_COLOR = 0x3a120f; // rouge/brun sombre, nettement plus sombre que PARTICLE_MATERIAL
+
+const GIB_GEOMETRY = new THREE.BoxGeometry(GIB_SIZE, GIB_SIZE, GIB_SIZE);
+const GIB_MATERIAL = new THREE.MeshLambertMaterial({ color: GIB_COLOR });
+
 interface ToyParticle {
   mesh: THREE.Mesh;
   velocity: THREE.Vector3;
@@ -179,6 +204,7 @@ export class FxSystem {
   // --- Listes filtrées ---------------------------------------------------------
   private readonly particles: ToyParticle[] = [];
   private readonly casings: ToyParticle[] = [];
+  private readonly gibs: ToyParticle[] = [];
 
   // --- Scratch, zéro allocation en régime établi --------------------------------
   private readonly scratchDir = new THREE.Vector3();
@@ -387,6 +413,51 @@ export class FxSystem {
   }
 
   // ---------------------------------------------------------------------------
+  // Gibs — mort à bout portant
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Gibs pour une mise à mort à bout portant (pompe). RÉUTILISE
+   * l'infrastructure `ToyParticle`/`updateToyPhysics` déjà en place pour
+   * `spawnImpactParticles`/`spawnShellCasing` ci-dessus (même gravité jouet,
+   * même boucle de mise à jour dans `update`) — seuls géométrie, couleur,
+   * quantité, vitesse et dispersion changent pour lire « chunk de viscère »
+   * plutôt que « éclat d'impact ».
+   *
+   * @param point Point d'origine de l'explosion de gibs (position de
+   *   l'entité tuée au moment du coup fatal), en coordonnées MONDE.
+   * @param direction Direction du coup fatal (typiquement `muzzleDirection`
+   *   du tir qui a tué), vecteur normalisé — sert de direction DE BASE pour
+   *   la dispersion des chunks, comme `normal` dans `spawnImpactParticles`,
+   *   mais n'a pas besoin d'être une normale de surface : une explosion de
+   *   gibs n'a pas de surface de rebond.
+   */
+  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3) {
+    for (let i = 0; i < GIBS_PER_KILL; i++) {
+      const mesh = new THREE.Mesh(GIB_GEOMETRY, GIB_MATERIAL);
+      mesh.position.copy(point);
+      // Scale non uniforme, purement cosmétique : casse la silhouette de
+      // cube parfait pour lire « chunk » plutôt que « particule » à l'œil,
+      // sans allouer de géométrie par gib (GIB_GEOMETRY reste partagée,
+      // comme PARTICLE_GEOMETRY/SHELL_GEOMETRY plus haut).
+      mesh.scale.set(0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8);
+      this.scene.add(mesh);
+
+      // Cône jouet autour de `direction`, plus large que celui des particules
+      // d'impact (GIB_SPREAD > PARTICLE_SPREAD) et légèrement plus ascendant :
+      // `Math.random()` ordinaire — cosmétique, hors harnais de déterminisme
+      // (voir la doc de tête du fichier).
+      const vx = direction.x + (Math.random() * 2 - 1) * GIB_SPREAD;
+      const vy = direction.y + (Math.random() * 2 - 1) * GIB_SPREAD + 0.8;
+      const vz = direction.z + (Math.random() * 2 - 1) * GIB_SPREAD;
+      const speed = GIB_SPEED_MIN + Math.random() * (GIB_SPEED_MAX - GIB_SPEED_MIN);
+      const velocity = new THREE.Vector3(vx, vy, vz).normalize().multiplyScalar(speed);
+
+      this.gibs.push({ mesh, velocity, life: GIB_LIFETIME, bounce: false });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Update temps réel — jamais appelé depuis le pas fixe
   // ---------------------------------------------------------------------------
 
@@ -404,6 +475,7 @@ export class FxSystem {
 
     this.updateToyPhysics(this.particles, realDt);
     this.updateToyPhysics(this.casings, realDt);
+    this.updateToyPhysics(this.gibs, realDt);
   }
 
   private updateToyPhysics(list: ToyParticle[], realDt: number) {

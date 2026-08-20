@@ -3,23 +3,35 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { InputFrame } from "../../core/inputRecorder";
 import type { GameClock } from "../../core/time";
-import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
+import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../physics/world";
 import { approach } from "./controller";
 import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig";
 
 const TAU = Math.PI * 2;
 
 /**
- * Matériau d'impact placeholder. La gym est en boîtes blanches (invariant
- * #9) : il n'existe aucun système de tag de matériau et il n'y en aura pas
- * cette phase. Le champ `HitEvent.material` reste un `string` libre pour
- * qu'un futur système puisse le peupler SANS changer l'API — construire ce
- * système maintenant serait de la sur-ingénierie hors scope Phase 2.
+ * Matériau de repli pour tout ce qui n'est pas un ennemi. La gym est en
+ * boîtes blanches (invariant #9) : il n'existe aucun système de tag de
+ * matériau par collider et il n'y en aura pas cette phase. Le champ
+ * `HitEvent.material` reste un `string` libre pour qu'un futur système
+ * puisse le peupler plus finement SANS changer l'API — construire un vrai
+ * système de tags maintenant serait de la sur-ingénierie hors scope.
+ * Phase 3 introduit la seule distinction qui compte déjà : ENEMY vs le
+ * reste (voir `materialForCollider`).
  */
 const PLACEHOLDER_MATERIAL = "concrete";
 
-/** Rotation identité, structurellement compatible avec `Rotation` de Rapier ({x,y,z,w}). */
-const IDENTITY_ROTATION = { x: 0, y: 0, z: 0, w: 1 };
+/**
+ * SFX déclaré dans `core/audio.ts` pour un impact sur un ennemi (chair).
+ * EXPORTÉE : `main.ts` en a besoin pour brancher le canal de feedback
+ * ENEMY-vs-générique (hitstop/shake renforcés, `IMPACT_VARIANTS`) sur le
+ * même critère que `materialForCollider` ci-dessous, sans dupliquer la
+ * chaîne `"flesh"` en dur dans deux fichiers.
+ */
+export const FLESH_MATERIAL = "flesh";
+
+/** Axe local le long duquel `RAPIER.Capsule` place sa demi-hauteur (voir sa doc) — sert à orienter la capsule de test du pied-de-biche sur la direction de visée dans `fireMelee`. */
+const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
 /** Une arme effectivement déclenchée (jamais poussé sur tentative à sec/cooldown). */
 export interface FireEvent {
@@ -28,6 +40,18 @@ export interface FireEvent {
   muzzlePosition: THREE.Vector3;
   /** Direction de visée unitaire au moment du tir. */
   muzzleDirection: THREE.Vector3;
+  /**
+   * DEBUG UNIQUEMENT (gizmos balistiques, `render/ballisticsDebug.ts`) : un
+   * point de fin par plomb du pompe, dans l'ordre des raycasts de
+   * `fireShotgun` — le point d'impact réel s'il y en a un, sinon
+   * `muzzlePosition + direction dispersée * shotgunRange`. Toujours de
+   * longueur `shotgunPelletCount` pour un tir de pompe, `undefined` pour le
+   * pied-de-biche (sa géométrie de test se déduit de `muzzlePosition` +
+   * `muzzleDirection` + `weaponConfig.meleeRange`/`meleeHitRadius`, inutile
+   * de dupliquer ces nombres ici). Zéro rôle dans le gameplay/déterminisme :
+   * uniquement consommé par le rendu de debug dans `main.ts`.
+   */
+  pelletEndpoints?: THREE.Vector3[];
 }
 
 /** Un point d'impact réel. Jusqu'à `shotgunPelletCount` par tir de pompe dans UN pas fixe. */
@@ -36,6 +60,15 @@ export interface HitEvent {
   normal: THREE.Vector3;
   material: string;
   weapon: "melee" | "shotgun";
+  /**
+   * Handle Rapier (`RAPIER.Collider.handle`) du collider RÉELLEMENT touché.
+   * Permet de router un dégât vers l'entité propriétaire sans dupliquer la
+   * logique de tir (PRNG seedé, cône de dispersion) hors de ce fichier —
+   * toute duplication casserait le déterminisme du rejeu F9/F10.
+   */
+  colliderHandle: number;
+  /** Distance en mètres entre l'origine du tir et `point`. */
+  distance: number;
 }
 
 /**
@@ -122,6 +155,8 @@ export class WeaponSystem {
   private readonly aimRight = new THREE.Vector3();
   private readonly aimUp = new THREE.Vector3();
   private readonly meleeCenterScratch = new THREE.Vector3();
+  private readonly meleeAxisPointScratch = new THREE.Vector3();
+  private readonly meleeCapsuleQuat = new THREE.Quaternion();
   private readonly meleeHitScratch: RAPIER.Collider[] = [];
   private readonly pelletDirScratch = new THREE.Vector3();
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
@@ -241,6 +276,38 @@ export class WeaponSystem {
     this.aimUp.set(0, 1, 0).applyQuaternion(this.aimQuat);
   }
 
+  /**
+   * Matériau perçu d'un collider touché : `"flesh"` si son appartenance
+   * inclut `GROUP.ENEMY`, `PLACEHOLDER_MATERIAL` sinon. `collisionGroups()`
+   * renvoie le masque `membership << 16 | filter` posé par
+   * `setCollisionGroups` (voir les commentaires d'`interactionGroups` dans
+   * `physics/world.ts`) — on ne lit ici QUE les 16 bits de poids fort
+   * (appartenance), jamais le filtre.
+   */
+  private materialForCollider(collider: RAPIER.Collider): string {
+    const membership = (collider.collisionGroups() >>> 16) & 0xffff;
+    return (membership & GROUP.ENEMY) !== 0 ? FLESH_MATERIAL : PLACEHOLDER_MATERIAL;
+  }
+
+  /**
+   * Déclenche le hitstop, en distinguant hit ENEMY (`FLESH_MATERIAL`) vs
+   * générique — voir `IMPACT_VARIANTS` dans `weaponConfig.ts` pour le
+   * contexte playtest (« aucun signal renforcé sur un hit ennemi ») et le
+   * FAIT MÉCANIQUE vérifié : `clock.triggerHitstop` n'accumule JAMAIS entre
+   * plusieurs appels du même pas fixe (dernier appel gagne), donc appeler
+   * cette méthode jusqu'à `shotgunPelletCount` fois par tir ne « sur-arme »
+   * rien — au pire les derniers pellets d'un même tir réécrivent la même
+   * durée/échelle.
+   */
+  private triggerHitstopFor(material: string) {
+    const cfg = this.cfg;
+    if (material === FLESH_MATERIAL) {
+      this.clock.triggerHitstop(cfg.enemyHitstopDuration, cfg.enemyHitstopScale);
+    } else {
+      this.clock.triggerHitstop(cfg.hitstopDuration, cfg.hitstopScale);
+    }
+  }
+
   private applyKick(kick: RecoilKick) {
     this.recoilEnvelope = 1;
     this.recoilKickPosition.set(kick.kickX, kick.kickY, kick.kickZ);
@@ -249,28 +316,54 @@ export class WeaponSystem {
   }
 
   /**
-   * Pied-de-biche : requête de FORME sphérique (rayon `meleeHitRadius`),
-   * centrée à `eyeOrigin + direction * meleeRange`, contre
-   * `COLLISION_GROUPS.PLAYER_SHOT` (interagit avec WORLD + ENEMY, jamais
-   * PLAYER — le joueur ne peut pas se toucher lui-même par construction des
-   * groupes, aucun filtre d'exclusion supplémentaire n'est nécessaire).
+   * Pied-de-biche : requête de FORME capsule — le produit de Minkowski d'un
+   * SEGMENT (`eyeOrigin` → `eyeOrigin + direction * meleeRange`) et d'une
+   * boule de rayon `meleeHitRadius` — contre `COLLISION_GROUPS.PLAYER_SHOT`
+   * (interagit avec WORLD + ENEMY, jamais PLAYER — le joueur ne peut pas se
+   * toucher lui-même par construction des groupes).
+   *
+   * FIX DE PORTÉE, pas un choix de feel (retour playtest : « je n'ai pas
+   * l'impression de toucher à bout portant »). L'ANCIENNE implémentation
+   * testait une SEULE sphère centrée à `eyeOrigin + direction * meleeRange` —
+   * une bande fixe `[meleeRange − meleeHitRadius, meleeRange + meleeHitRadius]`
+   * devant les yeux (≈1.55–2.45 m avec les valeurs de départ). Une cible
+   * collée au joueur à moins de 1.55 m tombait ENTIÈREMENT hors de cette
+   * bande : le coup ne pouvait GÉOMÉTRIQUEMENT pas toucher à bout portant,
+   * quelle que soit la valeur de `meleeHitRadius`. La capsule ci-dessous
+   * couvre tout le segment entre les yeux et la portée max, pas seulement son
+   * extrémité.
+   *
+   * `RAPIER.Capsule(halfHeight, radius)` place son axe le long du Y LOCAL et
+   * ses deux calottes sphériques à ±`halfHeight` de son centre (voir sa
+   * doc) : avec `halfHeight = meleeRange / 2` et le centre de la capsule à
+   * `eyeOrigin + direction * meleeRange / 2`, ses deux calottes tombent
+   * EXACTEMENT sur `eyeOrigin` (t=0) et `eyeOrigin + direction * meleeRange`
+   * (t=meleeRange) — c'est la définition géométrique EXACTE d'une sphère de
+   * rayon `meleeHitRadius` balayée le long de ce segment, pas une
+   * approximation par échantillonnage de points.
    *
    * `intersectionsWithShape` ne donne QUE les colliders touchés, pas de
-   * point/normale d'impact. Pour chacun, `projectPoint(…, solid=false)`
-   * projette le centre de la sphère sur la surface du collider (jamais à
-   * l'intérieur, même si le centre y est) : c'est le point d'impact. La
-   * normale est APPROXIMÉE par `normalize(centre − point)` — direction du
-   * point de surface vers le centre de la sphère de frappe, inversée : une
-   * approximation standard et correcte pour une surface convexe (murs/boîtes
-   * de la gym), documentée ici pour que personne ne la prenne pour une
-   * normale géométrique exacte issue du solveur de contact.
+   * point/normale d'impact. Pour chacun, on calcule le point de l'AXE de
+   * visée (le segment ci-dessus) le plus proche de CE collider — projection
+   * clampée de son centre (`collider.translation()`) sur `[0, meleeRange]` —
+   * puis `projectPoint(…, solid=false)` projette CE point sur la surface du
+   * collider (jamais à l'intérieur, même si le point y est) : c'est le point
+   * d'impact. La normale est APPROXIMÉE par `normalize(axisPoint − point)` —
+   * direction du point de surface vers l'axe de frappe, même convention que
+   * l'ancienne version (juste recalculée PAR COLLIDER plutôt qu'à partir d'un
+   * centre fixe unique) : une approximation standard et correcte pour une
+   * surface convexe (murs/boîtes de la gym, capsule d'un Costard), documentée
+   * ici pour que personne ne la prenne pour une normale géométrique exacte
+   * issue du solveur de contact.
    */
   private fireMelee(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 
-    const center = this.meleeCenterScratch
-      .copy(eyeOrigin)
-      .addScaledVector(this.aimForward, this.cfg.meleeRange);
+    const range = this.cfg.meleeRange;
+    const halfRange = range / 2;
+    const radius = this.cfg.meleeHitRadius;
+
+    const center = this.meleeCenterScratch.copy(eyeOrigin).addScaledVector(this.aimForward, halfRange);
 
     this._fireEvents.push({
       weapon: "melee",
@@ -279,13 +372,22 @@ export class WeaponSystem {
     });
 
     const shapePos = { x: center.x, y: center.y, z: center.z };
-    const ball = new RAPIER.Ball(this.cfg.meleeHitRadius);
+    // Rotation qui envoie l'axe local Y de la capsule (convention Rapier,
+    // voir la doc ci-dessus) sur la direction de visée courante.
+    this.meleeCapsuleQuat.setFromUnitVectors(UNIT_Y, this.aimForward);
+    const shapeRot = {
+      x: this.meleeCapsuleQuat.x,
+      y: this.meleeCapsuleQuat.y,
+      z: this.meleeCapsuleQuat.z,
+      w: this.meleeCapsuleQuat.w,
+    };
+    const capsule = new RAPIER.Capsule(halfRange, radius);
 
     this.meleeHitScratch.length = 0;
     this.physics.world.intersectionsWithShape(
       shapePos,
-      IDENTITY_ROTATION,
-      ball,
+      shapeRot,
+      capsule,
       (collider) => {
         this.meleeHitScratch.push(collider);
         return true; // continue : on veut TOUS les colliders touchés, pas seulement le premier.
@@ -295,9 +397,23 @@ export class WeaponSystem {
     );
 
     for (const collider of this.meleeHitScratch) {
+      // Point de l'axe de visée le plus proche de CE collider : projection de
+      // son centre monde sur le segment [eyeOrigin, eyeOrigin+direction*range],
+      // clampée aux deux bouts. Remplace le centre fixe unique de l'ancienne
+      // implémentation par un centre recalculé PAR COLLIDER — nécessaire
+      // maintenant que la requête couvre tout un segment, pas un seul point.
+      const colliderPos = collider.translation();
+      const alongAxis =
+        (colliderPos.x - eyeOrigin.x) * this.aimForward.x +
+        (colliderPos.y - eyeOrigin.y) * this.aimForward.y +
+        (colliderPos.z - eyeOrigin.z) * this.aimForward.z;
+      const t = Math.max(0, Math.min(range, alongAxis));
+      const axisPoint = this.meleeAxisPointScratch.copy(eyeOrigin).addScaledVector(this.aimForward, t);
+      const axisPos = { x: axisPoint.x, y: axisPoint.y, z: axisPoint.z };
+
       const projection = this.physics.world.projectPoint(
-        shapePos,
-        false, // hollow : force la projection sur la surface même si le centre est dedans.
+        axisPos,
+        false, // hollow : force la projection sur la surface même si le point est dedans.
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
         COLLISION_GROUPS.PLAYER_SHOT,
         undefined,
@@ -307,17 +423,25 @@ export class WeaponSystem {
       if (!projection) continue;
 
       const point = new THREE.Vector3(projection.point.x, projection.point.y, projection.point.z);
-      const normal = new THREE.Vector3().subVectors(center, point);
+      const normal = new THREE.Vector3().subVectors(axisPoint, point);
       if (normal.lengthSq() < 1e-8) {
-        // Dégénéré (centre exactement sur la surface) : repli sur l'inverse
-        // de la direction de visée plutôt qu'un vecteur nul.
+        // Dégénéré (point d'axe exactement sur la surface) : repli sur
+        // l'inverse de la direction de visée plutôt qu'un vecteur nul.
         normal.copy(this.aimForward).negate();
       } else {
         normal.normalize();
       }
 
-      this._hitEvents.push({ point, normal, material: PLACEHOLDER_MATERIAL, weapon: "melee" });
-      this.clock.triggerHitstop(this.cfg.hitstopDuration, this.cfg.hitstopScale);
+      const material = this.materialForCollider(collider);
+      this._hitEvents.push({
+        point,
+        normal,
+        material,
+        weapon: "melee",
+        colliderHandle: collider.handle,
+        distance: eyeOrigin.distanceTo(point),
+      });
+      this.triggerHitstopFor(material);
     }
   }
 
@@ -331,10 +455,17 @@ export class WeaponSystem {
   private fireShotgun(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 
+    // DEBUG UNIQUEMENT (voir la doc de `FireEvent.pelletEndpoints`) : la
+    // RÉFÉRENCE au tableau est poussée dans `_fireEvents` immédiatement (même
+    // point d'insertion que le pied-de-biche), son CONTENU est rempli au fil
+    // de la boucle ci-dessous — sûr, car aucun lecteur (`main.ts`) ne
+    // consulte `fireEvents` avant la fin de ce pas fixe.
+    const pelletEndpoints: THREE.Vector3[] = [];
     this._fireEvents.push({
       weapon: "shotgun",
       muzzlePosition: eyeOrigin.clone(),
       muzzleDirection: this.aimForward.clone(),
+      pelletEndpoints,
     });
 
     const thetaMax = THREE.MathUtils.degToRad(this.cfg.shotgunSpreadConeDeg);
@@ -369,7 +500,20 @@ export class WeaponSystem {
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
         COLLISION_GROUPS.PLAYER_SHOT,
       );
-      if (!hit) continue;
+      if (!hit) {
+        // Aucun collider touché : le gizmo balistique de debug dessine quand
+        // même ce rayon jusqu'à sa portée max (voir la doc de
+        // `pelletEndpoints`) — bout de trajectoire = origine + direction
+        // dispersée * portée.
+        pelletEndpoints.push(
+          new THREE.Vector3(
+            ox + this.pelletDirScratch.x * this.cfg.shotgunRange,
+            oy + this.pelletDirScratch.y * this.cfg.shotgunRange,
+            oz + this.pelletDirScratch.z * this.cfg.shotgunRange,
+          ),
+        );
+        continue;
+      }
 
       const point = new THREE.Vector3(
         ox + this.pelletDirScratch.x * hit.timeOfImpact,
@@ -377,9 +521,22 @@ export class WeaponSystem {
         oz + this.pelletDirScratch.z * hit.timeOfImpact,
       );
       const normal = new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z);
+      pelletEndpoints.push(point.clone());
 
-      this._hitEvents.push({ point, normal, material: PLACEHOLDER_MATERIAL, weapon: "shotgun" });
-      this.clock.triggerHitstop(this.cfg.hitstopDuration, this.cfg.hitstopScale);
+      // `hit.timeOfImpact` EST la distance : `pelletDirScratch` est normalisé
+      // ci-dessus avant le `castRayAndGetNormal`, donc le paramètre du rayon
+      // (`dir`) est un vecteur unitaire — `origin + dir * timeOfImpact` avance
+      // de `timeOfImpact` mètres exactement.
+      const material = this.materialForCollider(hit.collider);
+      this._hitEvents.push({
+        point,
+        normal,
+        material,
+        weapon: "shotgun",
+        colliderHandle: hit.collider.handle,
+        distance: hit.timeOfImpact,
+      });
+      this.triggerHitstopFor(material);
     }
   }
 }

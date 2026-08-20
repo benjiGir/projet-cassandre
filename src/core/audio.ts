@@ -2,8 +2,10 @@ import { Howl } from "howler";
 
 /**
  * Wrapper minimal autour de Howler pour les effets sonores PONCTUELS du jeu
- * (tir, impact). Scope strict de la Phase 2 (`PLAN_PROTO_BOOMER_SHOOTER.md`) :
- * aucune musique, aucune nappe d'ambiance, aucune réplique du héros ici — ces
+ * (tir, impact, et depuis la Phase 3 le feedback sonore de l'ennemi
+ * « Costard » — alerte, télégraphie d'attaque, dégât encaissé, mort).
+ * Scope strict des Phases 2-3 (`PLAN_PROTO_BOOMER_SHOOTER.md`) : aucune
+ * musique, aucune nappe d'ambiance, aucune réplique du héros ici — ces
  * trois-là sont explicitement Phase 6 (« Habillage ») et n'ont pas leur place
  * dans ce module.
  *
@@ -12,21 +14,15 @@ import { Howl } from "howler";
  * `fireEvents`/`hitEvents` déjà produits par le pas fixe qui vient de tourner
  * — jamais de `setState` React ici (ce n'est de toute façon pas du React).
  *
- * ASSETS — AUCUN FICHIER AUDIO N'EXISTE ENCORE DANS LE DÉPÔT, et c'est l'état
- * ATTENDU à ce stade du projet (invariant #9, boîtes blanches jusqu'à la
- * Phase 5 — le son suit la même discipline que le visuel). Chaque id de la
- * table `SFX_TABLE` ci-dessous documente le chemin de fichier qu'un humain
- * pourra déposer plus tard, au format
- *
- *     assets/audio/sfx/<file>.ogg   (principal, cf. skill audio-sfx-pipeline)
- *     assets/audio/sfx/<file>.m4a   (repli Safari)
- *
- * suivant l'arborescence `assets/audio/` du plan (section 1, structure de
- * dossiers). Pour que Vite serve effectivement ce dossier à l'URL utilisée
- * ici (`/assets/audio/sfx/...`), il faudra soit déplacer les fichiers sous
- * `public/assets/audio/sfx/`, soit configurer `publicDir: "assets"` dans
- * `vite.config.ts` — hors scope de ce fichier, laissé à la Phase où les
- * assets audio réels arrivent.
+ * ASSETS — les 9 ids de `SFX_TABLE` ont chacun un placeholder SYNTHÉTIQUE
+ * (bruit/sinus générés par script, pas d'enregistrement, pas de source
+ * externe) sous `public/assets/audio/sfx/<file>.{ogg,m4a}`, ajoutés le
+ * 2026-08-20 pour permettre de juger le feedback de hit avec du son plutôt
+ * qu'en silence total. Ce sont des boîtes blanches sonores, au même titre que
+ * les meshes non texturés (invariant #9) — À REMPLACER par de vrais assets à
+ * la Phase 5, pas des choix de sound design arrêtés. `public/` est déjà le
+ * `publicDir` par défaut de Vite (non reconfiguré), donc `/assets/audio/sfx/...`
+ * résout correctement tel quel, en dev comme en build.
  *
  * Un fichier absent (404, cas normal aujourd'hui) ne doit JAMAIS faire
  * planter le jeu : `onloaderror` log un SEUL `console.warn` par id (pas un
@@ -65,7 +61,11 @@ export type SfxId =
   | "shotgun_fire"
   | "impact_concrete"
   | "impact_metal"
-  | "impact_flesh";
+  | "impact_flesh"
+  | "enemy_alert"
+  | "enemy_telegraph"
+  | "enemy_hurt"
+  | "enemy_death";
 
 interface SfxDef {
   /** Nom de fichier SANS extension, résolu en `${SFX_BASE_PATH}/<file>.{ogg,m4a}`. */
@@ -92,6 +92,22 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // n'ait qu'à déposer les fichiers, sans toucher au code.
   impact_metal: { file: "impact_metal", volume: 0.8 },
   impact_flesh: { file: "impact_flesh", volume: 0.8 },
+  // Feedback ennemi Costard (Phase 3, voir `enemy-state-machine`). Les
+  // quatre se répètent potentiellement plusieurs fois par scène (plusieurs
+  // Costards, plusieurs coups encaissés, plusieurs télégraphies avant un
+  // kill) : aucun n'est le genre de son « unique et signifiant » que le
+  // skill `audio-sfx-pipeline` exempte de variation de pitch (clé
+  // ramassée, secret trouvé, réplique du héros) — les quatre passent donc
+  // par `SfxPool.play()` sans traitement spécial, qui applique déjà la
+  // variation ±8 % à tout ce qu'il joue (voir plus bas).
+  enemy_alert: { file: "enemy_alert", volume: 0.9 },
+  // Volume le plus haut du lot : c'est le canal de lisibilité critique
+  // (skill `audio-sfx-pipeline` — « la télégraphie d'attaque ennemie doit
+  // être audible et directionnelle »). Doit rester timbralement distinct
+  // des trois autres, PAS une variation d'un même sample.
+  enemy_telegraph: { file: "enemy_telegraph", volume: 1.0 },
+  enemy_hurt: { file: "enemy_hurt", volume: 0.7 },
+  enemy_death: { file: "enemy_death", volume: 0.9 },
 };
 
 /** Son de tir par arme. */
@@ -214,4 +230,25 @@ export function playWeaponFireSfx(weapon: "melee" | "shotgun") {
  */
 export function playImpactSfx(material: string) {
   playSfx(MATERIAL_IMPACT_SFX[material] ?? DEFAULT_IMPACT_SFX);
+}
+
+/** Événement de feedback sonore ennemi — un par transition observable de la state machine du Costard. */
+type EnemySfxEvent = "alert" | "telegraph" | "hurt" | "death";
+
+/** Son de feedback ennemi par événement — lookup encapsulé, voir `ENEMY_SFX`. */
+const ENEMY_SFX: Record<EnemySfxEvent, SfxId> = {
+  alert: "enemy_alert",
+  telegraph: "enemy_telegraph",
+  hurt: "enemy_hurt",
+  death: "enemy_death",
+};
+
+/**
+ * Son de feedback pour un événement `event` de la state machine ennemie
+ * (« Costard »). `"telegraph"` doit être déclenché à l'ANTICIPATION d'une
+ * attaque, avant que les dégâts ne partent — jamais en même temps ni après
+ * (voir skill `audio-sfx-pipeline`, lisibilité de la télégraphie).
+ */
+export function playEnemySfx(event: EnemySfxEvent) {
+  playSfx(ENEMY_SFX[event]);
 }

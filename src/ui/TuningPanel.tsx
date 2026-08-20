@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../game/player/moveConfig";
+import {
+  CROSSHAIR_VARIANTS,
+  HITMARKER_VARIANTS,
+  IMPACT_VARIANTS,
+  weaponConfig,
+  type WeaponConfig,
+} from "../game/player/weaponConfig";
+import {
+  FLASH_VARIANTS,
+  KNOCKBACK_VARIANTS,
+  suitConfig,
+  type SuitConfig,
+} from "../game/entities/suitConfig";
 
 /**
  * Sliders à chaud pour `moveConfig` — livrable #2 du harnais de tuning
@@ -22,7 +35,8 @@ import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../game/player/moveC
  * de clic) tant qu'il n'est pas ouvert par la touche dédiée `` ` `` (Backquote,
  * coin haut-gauche du clavier) — libre de tout conflit avec ZQSD/WASD
  * (KeyW/A/S/D, des CODES physiques, indépendants du layout clavier), Shift,
- * Espace, F9 et F10. L'ouverture appelle `document.exitPointerLock()`. La
+ * Espace, F9, F10, KeyV (wireframe) et KeyB (gizmos balistiques).
+ * L'ouverture appelle `document.exitPointerLock()`. La
  * fermeture ne fait volontairement RIEN de plus côté pointer lock : le canvas
  * a déjà un écouteur `click → requestPointerLock` dans `core/input.ts`, donc
  * reprendre la main est un simple clic dans la fenêtre de jeu — dupliquer
@@ -36,7 +50,8 @@ import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../game/player/moveC
 
 // Touche dédiée : Backquote (`/~), jamais utilisée ailleurs dans le projet
 // (WASD/ZQSD = KeyW/KeyA/KeyS/KeyD, sprint = ShiftLeft, saut = Space,
-// recorder = F9/F10 — cf. src/main.ts, src/core/input.ts).
+// recorder = F9/F10, wireframe = KeyV, gizmos balistiques = KeyB —
+// cf. src/main.ts, src/core/input.ts).
 const TOGGLE_KEY = "Backquote";
 
 // Au-delà de ce délai entre deux appels, un nouvel `applyConfig()` est
@@ -344,12 +359,178 @@ const SLIDER_GROUPS: ReadonlyArray<{ title: string; fields: readonly SliderField
 
 const VARIANT_NAMES = Object.keys(FEEL_VARIANTS) as (keyof typeof FEEL_VARIANTS)[];
 
+// ---------------------------------------------------------------------------
+// Harnais de feedback de hit (retour playtest Phase 3 — « la sensation de tir
+// et de touché n'est pas bonne »). Même discipline que `SLIDER_GROUPS`
+// ci-dessus : ce panneau EXPOSE et VARIE, il ne tranche rien (skill
+// `game-feel-tuning`). Bornes dérivées des commentaires de `weaponConfig.ts`/
+// `suitConfig.ts` (plage défendable autour du point de départ), jamais la
+// valeur elle-même.
+// ---------------------------------------------------------------------------
+
+const DEFAULT_WEAPON_CONFIG: WeaponConfig = { ...weaponConfig };
+const DEFAULT_SUIT_CONFIG: SuitConfig = { ...suitConfig };
+
+/** Champs numériques de `WeaponConfig` couverts par ce panneau — volontairement un SOUS-ENSEMBLE : cadence/dégâts/munitions/recul restent hors scope de ce harnais (leviers de gameplay ou déjà couverts par `RECOIL_VARIANTS`/la console). */
+type WeaponSliderKey =
+  | "hitstopDuration"
+  | "hitstopScale"
+  | "enemyHitstopDuration"
+  | "enemyHitstopScale"
+  | "shakeAmplitude"
+  | "shakeDuration"
+  | "enemyShakeAmplitude"
+  | "enemyShakeDuration"
+  | "hitmarkerDuration"
+  | "hitmarkerSize"
+  | "hitmarkerThickness"
+  | "hitmarkerKillDuration"
+  | "hitmarkerKillSize"
+  | "hitmarkerKillThickness";
+
+interface WeaponSliderField {
+  key: WeaponSliderKey;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  decimals: number;
+  unit?: string;
+}
+
+const WEAPON_IMPACT_FIELDS: readonly WeaponSliderField[] = [
+  { key: "hitstopDuration", label: "Hitstop — durée (mur/générique)", min: 0, max: 0.15, step: 0.005, decimals: 3, unit: "s" },
+  { key: "hitstopScale", label: "Hitstop — échelle dt (mur/générique)", min: 0, max: 1, step: 0.01, decimals: 2 },
+  { key: "enemyHitstopDuration", label: "Hitstop — durée (ennemi)", min: 0, max: 0.2, step: 0.005, decimals: 3, unit: "s" },
+  { key: "enemyHitstopScale", label: "Hitstop — échelle dt (ennemi)", min: 0, max: 1, step: 0.01, decimals: 2 },
+  { key: "shakeAmplitude", label: "Shake — amplitude (mur/générique)", min: 0, max: 0.4, step: 0.01, decimals: 2, unit: "m" },
+  { key: "shakeDuration", label: "Shake — durée (mur/générique)", min: 0, max: 0.4, step: 0.01, decimals: 2, unit: "s" },
+  { key: "enemyShakeAmplitude", label: "Shake — amplitude (ennemi)", min: 0, max: 0.4, step: 0.01, decimals: 2, unit: "m" },
+  { key: "enemyShakeDuration", label: "Shake — durée (ennemi)", min: 0, max: 0.4, step: 0.01, decimals: 2, unit: "s" },
+];
+
+const WEAPON_HITMARKER_FIELDS: readonly WeaponSliderField[] = [
+  { key: "hitmarkerDuration", label: "Durée (hit)", min: 0.02, max: 0.4, step: 0.01, decimals: 2, unit: "s" },
+  { key: "hitmarkerSize", label: "Taille (hit)", min: 2, max: 20, step: 1, decimals: 0, unit: "px" },
+  { key: "hitmarkerThickness", label: "Épaisseur (hit)", min: 1, max: 6, step: 1, decimals: 0, unit: "px" },
+  { key: "hitmarkerKillDuration", label: "Durée (kill)", min: 0.02, max: 0.6, step: 0.01, decimals: 2, unit: "s" },
+  { key: "hitmarkerKillSize", label: "Taille (kill)", min: 2, max: 30, step: 1, decimals: 0, unit: "px" },
+  { key: "hitmarkerKillThickness", label: "Épaisseur (kill)", min: 1, max: 8, step: 1, decimals: 0, unit: "px" },
+];
+
+/**
+ * Champs numériques de `WeaponConfig` couverts par le harnais de réticule
+ * (retour playtest son — « le tir est hasardeux, pas de crosshair », voir
+ * `CROSSHAIR_VARIANTS`). `crosshairEnabled`/`crosshairStyle` sont hors de
+ * cette liste : gérés par une checkbox et une paire de boutons dédiées
+ * (valeurs non numériques), pas des sliders.
+ */
+type CrosshairSliderKey =
+  | "crosshairSize"
+  | "crosshairGap"
+  | "crosshairThickness"
+  | "crosshairDotRadius"
+  | "crosshairPulseScale"
+  | "crosshairPulseDuration";
+
+interface CrosshairSliderField {
+  key: CrosshairSliderKey;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  decimals: number;
+  unit?: string;
+}
+
+const CROSSHAIR_FIELDS: readonly CrosshairSliderField[] = [
+  { key: "crosshairSize", label: "Taille (croix)", min: 1, max: 16, step: 1, decimals: 0, unit: "px" },
+  { key: "crosshairGap", label: "Espace central (croix)", min: 0, max: 8, step: 1, decimals: 0, unit: "px" },
+  { key: "crosshairThickness", label: "Épaisseur", min: 1, max: 4, step: 1, decimals: 0, unit: "px" },
+  { key: "crosshairDotRadius", label: "Rayon (point)", min: 1, max: 6, step: 1, decimals: 0, unit: "px" },
+  { key: "crosshairPulseScale", label: "Pulsation — échelle au pic", min: 1, max: 2, step: 0.05, decimals: 2 },
+  {
+    key: "crosshairPulseDuration",
+    label: "Pulsation — retour à 0",
+    min: 0.02,
+    max: 0.3,
+    step: 0.01,
+    decimals: 2,
+    unit: "s",
+  },
+];
+
+/** Champs numériques de `SuitConfig` couverts par ce panneau (knockback + flash de dégât uniquement — le reste de la machine à états est hors scope). */
+type SuitSliderKey = "knockbackSpeed" | "knockbackDecayTime" | "knockbackUpBoost" | "hitFlashDuration";
+
+interface SuitSliderField {
+  key: SuitSliderKey;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  decimals: number;
+  unit?: string;
+}
+
+const SUIT_FEEDBACK_FIELDS: readonly SuitSliderField[] = [
+  { key: "knockbackSpeed", label: "Knockback — vitesse", min: 0, max: 12, step: 0.5, decimals: 1, unit: "m/s" },
+  { key: "knockbackDecayTime", label: "Knockback — retour à 0", min: 0.05, max: 0.8, step: 0.01, decimals: 2, unit: "s" },
+  { key: "knockbackUpBoost", label: "Knockback — pop vertical", min: 0, max: 5, step: 0.1, decimals: 1, unit: "m/s" },
+  { key: "hitFlashDuration", label: "Flash de dégât — durée", min: 0.05, max: 0.6, step: 0.01, decimals: 2, unit: "s" },
+];
+
+const IMPACT_VARIANT_NAMES = Object.keys(IMPACT_VARIANTS) as (keyof typeof IMPACT_VARIANTS)[];
+const HITMARKER_VARIANT_NAMES = Object.keys(HITMARKER_VARIANTS) as (keyof typeof HITMARKER_VARIANTS)[];
+const CROSSHAIR_VARIANT_NAMES = Object.keys(CROSSHAIR_VARIANTS) as (keyof typeof CROSSHAIR_VARIANTS)[];
+const KNOCKBACK_VARIANT_NAMES = Object.keys(KNOCKBACK_VARIANTS) as (keyof typeof KNOCKBACK_VARIANTS)[];
+const FLASH_VARIANT_NAMES = Object.keys(FLASH_VARIANTS) as (keyof typeof FLASH_VARIANTS)[];
+
+/** Une ligne slider générique (label + valeur + `<input type="range">`), réutilisée pour `moveConfig`/`weaponConfig`/`suitConfig` sans dupliquer le balisage trois fois. */
+function renderSliderRow(
+  key: string,
+  label: string,
+  unit: string | undefined,
+  decimals: number,
+  min: number,
+  max: number,
+  step: number,
+  value: number,
+  onChange: (raw: string) => void,
+) {
+  return (
+    <div key={key} style={{ marginBottom: 4 }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <span>{label}</span>
+        <span style={{ color: "#0f0" }}>
+          {value.toFixed(decimals)}
+          {unit ? ` ${unit}` : ""}
+        </span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ width: "100%" }}
+      />
+    </div>
+  );
+}
+
 export function TuningPanel() {
   const [open, setOpen] = useState(false);
   // Miroir React de `moveConfig`, resynchronisé uniquement à l'ouverture, au
   // reset et à l'application d'une variante — jamais en continu (voir
   // commentaire de tête).
   const [values, setValues] = useState<MoveConfig>(() => ({ ...moveConfig }));
+  // Miroirs React du harnais de feedback de hit — même règle de
+  // resynchronisation que `values` ci-dessus (ouverture / reset / variante
+  // uniquement, jamais en continu).
+  const [weaponValues, setWeaponValues] = useState<WeaponConfig>(() => ({ ...weaponConfig }));
+  const [suitValues, setSuitValues] = useState<SuitConfig>(() => ({ ...suitConfig }));
   const lastApplyConfigAt = useRef(0);
 
   useEffect(() => {
@@ -366,6 +547,8 @@ export function TuningPanel() {
     // Resynchronisation ponctuelle à l'ouverture : reflète toute mutation
     // faite pendant que le panneau était fermé (console, `applyFeelVariant`).
     setValues({ ...moveConfig });
+    setWeaponValues({ ...weaponConfig });
+    setSuitValues({ ...suitConfig });
     // Un slider a besoin du pointeur ; le rendre au canvas casserait le lock
     // de toute façon dès le premier clic. On le relâche explicitement pour
     // que la souris soit immédiatement utilisable sur les sliders.
@@ -414,6 +597,83 @@ export function TuningPanel() {
     // dans `src/main.ts`).
     window.cassandre?.applyFeelVariant(name);
     setValues({ ...moveConfig });
+  }
+
+  // --- Harnais de feedback de hit --------------------------------------------
+
+  function handleWeaponSliderChange(field: WeaponSliderField, raw: string) {
+    const value = Number(raw);
+    weaponConfig[field.key] = value;
+    setWeaponValues((prev) => ({ ...prev, [field.key]: value }));
+  }
+
+  function handleSuitSliderChange(field: SuitSliderField, raw: string) {
+    const value = Number(raw);
+    suitConfig[field.key] = value;
+    setSuitValues((prev) => ({ ...prev, [field.key]: value }));
+  }
+
+  function handleHitmarkerToggle(checked: boolean) {
+    weaponConfig.hitmarkerEnabled = checked;
+    setWeaponValues((prev) => ({ ...prev, hitmarkerEnabled: checked }));
+  }
+
+  function handleWeaponReset() {
+    Object.assign(weaponConfig, DEFAULT_WEAPON_CONFIG);
+    setWeaponValues({ ...weaponConfig });
+  }
+
+  function handleSuitReset() {
+    Object.assign(suitConfig, DEFAULT_SUIT_CONFIG);
+    setSuitValues({ ...suitConfig });
+  }
+
+  function handleImpactVariant(name: keyof typeof IMPACT_VARIANTS) {
+    // Même chemin unique de vérité que `handleVariant` : réutilise la
+    // fonction déjà exposée à la console (`cassandre.applyImpactVariant`).
+    window.cassandre?.applyImpactVariant(name);
+    setWeaponValues({ ...weaponConfig });
+  }
+
+  function handleHitmarkerVariant(name: keyof typeof HITMARKER_VARIANTS) {
+    window.cassandre?.applyHitmarkerVariant(name);
+    setWeaponValues({ ...weaponConfig });
+  }
+
+  function handleCrosshairToggle(checked: boolean) {
+    weaponConfig.crosshairEnabled = checked;
+    setWeaponValues((prev) => ({ ...prev, crosshairEnabled: checked }));
+  }
+
+  function handleCrosshairStyle(style: "cross" | "dot") {
+    weaponConfig.crosshairStyle = style;
+    setWeaponValues((prev) => ({ ...prev, crosshairStyle: style }));
+  }
+
+  function handleCrosshairPulseToggle(checked: boolean) {
+    weaponConfig.crosshairPulseEnabled = checked;
+    setWeaponValues((prev) => ({ ...prev, crosshairPulseEnabled: checked }));
+  }
+
+  function handleCrosshairSliderChange(field: CrosshairSliderField, raw: string) {
+    const value = Number(raw);
+    weaponConfig[field.key] = value;
+    setWeaponValues((prev) => ({ ...prev, [field.key]: value }));
+  }
+
+  function handleCrosshairVariant(name: keyof typeof CROSSHAIR_VARIANTS) {
+    window.cassandre?.applyCrosshairVariant(name);
+    setWeaponValues({ ...weaponConfig });
+  }
+
+  function handleKnockbackVariant(name: keyof typeof KNOCKBACK_VARIANTS) {
+    window.cassandre?.applyKnockbackVariant(name);
+    setSuitValues({ ...suitConfig });
+  }
+
+  function handleFlashVariant(name: keyof typeof FLASH_VARIANTS) {
+    window.cassandre?.applyFlashVariant(name);
+    setSuitValues({ ...suitConfig });
   }
 
   if (!open) {
@@ -508,7 +768,178 @@ export function TuningPanel() {
         </label>
       </div>
 
-      <div style={{ color: "#666", marginTop: 6 }}>⚙ = recalcul physique (applyConfig) appliqué automatiquement.</div>
+      <div style={{ color: "#666", marginTop: 6, marginBottom: 10 }}>
+        ⚙ = recalcul physique (applyConfig) appliqué automatiquement.
+      </div>
+
+      <div style={{ borderTop: "1px solid #444", paddingTop: 8, marginBottom: 4 }}>
+        <div style={{ color: "#0f0", fontWeight: "bold", marginBottom: 2 }}>
+          Tuning — feedback de hit (Phase 3)
+        </div>
+        <div style={{ color: "#888", marginBottom: 8 }}>
+          {'Retour playtest : "le feedback est mauvais sur un hit". Harnais A/B — aucune valeur ici n\'est un choix tranché.'}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ color: "#6cf", fontWeight: "bold", marginBottom: 2 }}>
+          Impact — hitstop / shake (mur vs ennemi)
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+          <button onClick={handleWeaponReset}>Défauts</button>
+          {IMPACT_VARIANT_NAMES.map((name) => (
+            <button key={`impact-${name}`} onClick={() => handleImpactVariant(name)}>
+              {`Variante ${name}`}
+            </button>
+          ))}
+        </div>
+        {WEAPON_IMPACT_FIELDS.map((field) =>
+          renderSliderRow(
+            field.key,
+            field.label,
+            field.unit,
+            field.decimals,
+            field.min,
+            field.max,
+            field.step,
+            weaponValues[field.key],
+            (raw) => handleWeaponSliderChange(field, raw),
+          ),
+        )}
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ color: "#6cf", fontWeight: "bold", marginBottom: 2 }}>
+          Hitmarker (canal absent avant cette intervention)
+        </div>
+        <div style={{ marginBottom: 4 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={weaponValues.hitmarkerEnabled}
+              onChange={(e) => handleHitmarkerToggle(e.target.checked)}
+            />
+            {" Activé"}
+          </label>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+          {HITMARKER_VARIANT_NAMES.map((name) => (
+            <button key={`hitmarker-${name}`} onClick={() => handleHitmarkerVariant(name)}>
+              {`Variante ${name}`}
+            </button>
+          ))}
+        </div>
+        {WEAPON_HITMARKER_FIELDS.map((field) =>
+          renderSliderRow(
+            field.key,
+            field.label,
+            field.unit,
+            field.decimals,
+            field.min,
+            field.max,
+            field.step,
+            weaponValues[field.key],
+            (raw) => handleWeaponSliderChange(field, raw),
+          ),
+        )}
+      </div>
+
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ color: "#6cf", fontWeight: "bold", marginBottom: 2 }}>
+          Réticule (retour playtest — tir hasardeux, pas de repère de visée)
+        </div>
+        <div style={{ marginBottom: 4 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={weaponValues.crosshairEnabled}
+              onChange={(e) => handleCrosshairToggle(e.target.checked)}
+            />
+            {" Activé (position = correctitude, jamais une variante)"}
+          </label>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+          <button
+            onClick={() => handleCrosshairStyle("cross")}
+            style={{ fontWeight: weaponValues.crosshairStyle === "cross" ? "bold" : "normal" }}
+          >
+            Croix
+          </button>
+          <button
+            onClick={() => handleCrosshairStyle("dot")}
+            style={{ fontWeight: weaponValues.crosshairStyle === "dot" ? "bold" : "normal" }}
+          >
+            Point
+          </button>
+        </div>
+        <div style={{ marginBottom: 4 }}>
+          <label>
+            <input
+              type="checkbox"
+              checked={weaponValues.crosshairPulseEnabled}
+              onChange={(e) => handleCrosshairPulseToggle(e.target.checked)}
+            />
+            {" Pulsation au tir"}
+          </label>
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+          {CROSSHAIR_VARIANT_NAMES.map((name) => (
+            <button key={`crosshair-${name}`} onClick={() => handleCrosshairVariant(name)}>
+              {`Variante ${name}`}
+            </button>
+          ))}
+        </div>
+        {CROSSHAIR_FIELDS.map((field) =>
+          renderSliderRow(
+            field.key,
+            field.label,
+            field.unit,
+            field.decimals,
+            field.min,
+            field.max,
+            field.step,
+            weaponValues[field.key],
+            (raw) => handleCrosshairSliderChange(field, raw),
+          ),
+        )}
+      </div>
+
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ color: "#6cf", fontWeight: "bold", marginBottom: 2 }}>
+          Costard — knockback &amp; flash de dégât
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+          <button onClick={handleSuitReset}>Défauts</button>
+          {KNOCKBACK_VARIANT_NAMES.map((name) => (
+            <button key={`knockback-${name}`} onClick={() => handleKnockbackVariant(name)}>
+              {`Knockback ${name}`}
+            </button>
+          ))}
+          {FLASH_VARIANT_NAMES.map((name) => (
+            <button key={`flash-${name}`} onClick={() => handleFlashVariant(name)}>
+              {`Flash ${name}`}
+            </button>
+          ))}
+        </div>
+        {SUIT_FEEDBACK_FIELDS.map((field) =>
+          renderSliderRow(
+            field.key,
+            field.label,
+            field.unit,
+            field.decimals,
+            field.min,
+            field.max,
+            field.step,
+            suitValues[field.key],
+            (raw) => handleSuitSliderChange(field, raw),
+          ),
+        )}
+      </div>
+
+      <div style={{ color: "#666", marginTop: 6 }}>
+        F9/F10 : le recorder ne restaure QUE l'état du joueur, pas les PV/positions des Costards
+        — voir la doc de `IMPACT_VARIANTS`/`KNOCKBACK_VARIANTS`.
+      </div>
     </div>
   );
 }

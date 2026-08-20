@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
-import { initAudio, playImpactSfx, playWeaponFireSfx } from "./core/audio";
+import { initAudio, playEnemySfx, playImpactSfx, playWeaponFireSfx } from "./core/audio";
 import { input } from "./core/input";
 import { FIXED_DT, startLoop } from "./core/loop";
 import { GameClock } from "./core/time";
@@ -18,6 +18,8 @@ import {
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "./render/renderer";
 import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
 import { buildGym } from "./game/level/gym";
+import { createLevelSession, type LevelSession } from "./game/level/hotReload";
+import type { LevelStats } from "./game/level/loader";
 import { PlayerController } from "./game/player/controller";
 import {
   FEEL_VARIANTS,
@@ -25,8 +27,11 @@ import {
   moveConfig,
   type MoveConfig,
 } from "./game/player/moveConfig";
-import { WeaponSystem } from "./game/player/weapons";
+import { FLESH_MATERIAL, WeaponSystem } from "./game/player/weapons";
 import {
+  CROSSHAIR_VARIANTS,
+  HITMARKER_VARIANTS,
+  IMPACT_VARIANTS,
   RECOIL_VARIANTS,
   weaponConfig,
   type RecoilVariant,
@@ -35,6 +40,13 @@ import {
 import { FxSystem } from "./render/fx";
 import { Viewmodel } from "./render/viewmodel";
 import { createWireframeToggle } from "./render/debugView";
+import { HitmarkerOverlay } from "./render/hitmarker";
+import { CrosshairOverlay } from "./render/crosshair";
+import { BallisticsDebugOverlay } from "./render/ballisticsDebug";
+import { BILLBOARD_COLUMNS, BillboardSprite, createPlaceholderAtlas } from "./render/billboard";
+import { Suit, SUIT_ATLAS_ROWS } from "./game/entities/suit";
+import { SuitManager } from "./game/entities/suitManager";
+import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "./game/entities/suitConfig";
 import { useGameStore } from "./game/state";
 import { App } from "./ui/App";
 
@@ -143,6 +155,79 @@ async function main() {
   // aucun des deux ne touche au pas fixe ni à `weapons`/`player`.
   const fx = new FxSystem(scene);
   const viewmodel = new Viewmodel(camera);
+  // Réticule permanent (retour playtest son, voir `render/crosshair.ts`) :
+  // overlay canvas 2D indépendant de React, même conteneur/config que le
+  // hitmarker ci-dessous. Construit AVANT le hitmarker pour que celui-ci soit
+  // ajouté APRÈS dans le DOM — un flash de hit reste donc visuellement
+  // au-dessus du réticule statique, jamais masqué par lui.
+  const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
+  // Hitmarker (retour playtest Phase 3, voir `render/hitmarker.ts`) : overlay
+  // canvas 2D indépendant de React, monté sur `#app` (même conteneur que
+  // `canvas#game`/`#ui-root`). Reçoit `weaponConfig` directement — SOURCE
+  // UNIQUE DE VÉRITÉ déjà tunable à chaud, aucune copie de config nécessaire.
+  const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
+  // Gizmos balistiques de debug (retour playtest : « rajouter ... des gizmos
+  // pour voir sur quoi on tire »), voir `render/ballisticsDebug.ts`. Objets
+  // 3D RÉELS ajoutés à `scene`, pas un overlay canvas — actif PAR DÉFAUT,
+  // bascule à chaud via `KeyB` plus bas dans `updateFx`.
+  const ballisticsDebug = new BallisticsDebugOverlay(scene);
+
+  // --- Ennemi « Costard » (Phase 3) -----------------------------------------
+  // `SuitManager` possède `Suit[]` + le `KinematicCharacterController` PARTAGÉ
+  // (voir la doc de tête de `game/entities/suit.ts`) ; `main.ts` possède le
+  // pont vers le rendu/l'audio/le store (`BillboardSprite` par Costard,
+  // `fx`/`playEnemySfx`/`setPlayerHp`), jamais l'inverse — même séparation que
+  // `weapons`/`fx`/`audio` pour les armes du joueur.
+  const suitManager = new SuitManager(physics);
+  // Atlas UNIQUE, partagé par tous les Costards : `BillboardSprite` clone en
+  // interne l'objet `THREE.Texture` par instance (voir « LE PIÈGE DU PARTAGE
+  // DE TEXTURE » dans `render/billboard.ts`), donc réutiliser cette même
+  // texture source pour chaque `new BillboardSprite(...)` est le pattern
+  // attendu, pas un raccourci.
+  const suitAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, SUIT_ATLAS_ROWS);
+  const suitSprites = new Map<number, BillboardSprite>();
+  // Capsule Costard : demi-hauteur 0.5 + rayon 0.4 -> hauteur totale 1.8 m,
+  // choisie pour matcher EXACTEMENT `DEFAULT_HEIGHT` de `BillboardSprite`
+  // (voir `suitConfig.ts`) : `verticalAnchor: 0.5` fait donc coïncider le
+  // centre du sprite avec le centre de la capsule que `Suit` interpole,
+  // sans calcul de décalage supplémentaire.
+  const SUIT_SPRITE_HEIGHT = 1.8;
+
+  /**
+   * Fait apparaître un Costard ET son `BillboardSprite`, toujours ensemble
+   * (jamais l'un sans l'autre — un Costard sans sprite serait invisible mais
+   * actif, un bug de lisibilité silencieux). `facing` par défaut : vise la
+   * position COURANTE du joueur au moment du spawn (pratique aussi bien pour
+   * les 3 spawns initiaux que pour `cassandre.spawnSuit` en cours de partie).
+   */
+  function spawnSuitAt(x: number, feetY: number, z: number): Suit {
+    const facing = new THREE.Vector3(player.position.x - x, 0, player.position.z - z);
+    if (facing.lengthSq() < 1e-6) facing.set(0, 0, 1);
+    facing.normalize();
+
+    const suit = suitManager.spawnSuit(x, feetY, z, facing);
+    const sprite = new BillboardSprite(scene, suitAtlas, {
+      rows: SUIT_ATLAS_ROWS,
+      height: SUIT_SPRITE_HEIGHT,
+      verticalAnchor: 0.5,
+    });
+    suitSprites.set(suit.id, sprite);
+    return suit;
+  }
+
+  // 3 points de spawn dans le hub (>= 40x40 m, zone explicitement dédiée au
+  // combat, voir `HUB_HALF`/`HUB_SIZE` de `game/level/gym.ts`) : dispersés
+  // autour du spawn joueur (0, 0, -10), à 15-22 m (largement au-delà de la
+  // portée de mêlée, en-deçà de `suitConfig.sightRange`), et à >= 8 m de
+  // n'importe quel mur du hub (murs à x,z = ±22) pour ne jamais spawner
+  // fusionné dans le décor.
+  // `SPAWN_FEET_GUARD` : même garde anti-interpénétration que le spawn du
+  // joueur ci-dessus — le sol du hub a sa surface exactement à y=0
+  // (`gym.ts`), poser les pieds pile dessus violerait la marge de
+  // `colliderOffset` du KCC dès le tout premier pas fixe.
+  spawnSuitAt(-9, SPAWN_FEET_GUARD, 5);
+  spawnSuitAt(9, SPAWN_FEET_GUARD, 5);
+  spawnSuitAt(0, SPAWN_FEET_GUARD, 13);
   // Debug visuel rétro : wireframe togglable à chaud sur toute la géométrie
   // de la scène (voir `render/debugView.ts`) — utile pour repérer le pavage
   // de boîtes/jonctions de la gym à l'œil. Touche dédiée KeyV, gérée plus bas
@@ -158,6 +243,45 @@ async function main() {
   // Delta souris agrégé depuis le dernier pas fixe, pour l'enregistrement.
   const lookDelta = { dx: 0, dy: 0 };
 
+  // --- Pipeline de niveau glTF (Phase 4) — capacité ADDITIVE, dev-only -----
+  // `gym.ts` reste le niveau par défaut au boot (décision explicite du plan,
+  // voir CLAUDE.md) : ce bloc ne remplace RIEN, il ajoute la possibilité de
+  // charger un `.glb` par-dessus pour exercer le pipeline loader/hot-reload
+  // (voir `game/level/loader.ts`/`hotReload.ts`). Activation choisie pour
+  // rester dans le budget des 60 s du critère de validation :
+  //   - `?level=<nom>` dans l'URL au boot : le cas d'usage réel, la page
+  //     reste ouverte pendant que Blender exporte vers
+  //     `public/assets/levels/<nom>.glb`, le hot reload fait le reste ;
+  //   - `window.cassandre.level.load("<nom>")` depuis la console, pour
+  //     changer de fixture sans recharger la page.
+  let gltfLevelSession: LevelSession | null = null;
+
+  function loadGltfLevel(name: string): void {
+    gltfLevelSession?.stop();
+    const url = `/assets/levels/${name}.glb`;
+    gltfLevelSession = createLevelSession(url, scene, physics, {
+      onLoaded: (handle, info) => {
+        console.info(
+          `[level] "${name}.glb" chargé — colliders ${handle.stats.colliderCount}, ` +
+            `spawns Costard ${handle.stats.spawnSuitCount}, triggers ${handle.stats.triggerCount}, ` +
+            `portes ${handle.stats.doorCount}, use ${handle.stats.useCount}, ` +
+            `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}`,
+        );
+        // Seul le TOUT PREMIER chargement déplace le joueur : un hot reload
+        // ne doit JAMAIS respawn (voir la doc de tête de `hotReload.ts`) —
+        // c'est le critère central de ce pipeline (<60 s, joueur en place).
+        if (info.isFirstLoad && handle.spawnPlayer) {
+          player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
+          look.yaw = handle.spawnPlayer.yaw;
+          look.pitch = 0;
+        }
+      },
+    });
+  }
+
+  const levelParam = new URLSearchParams(window.location.search).get("level");
+  if (levelParam) loadGltfLevel(levelParam);
+
   const liveFrame = emptyInputFrame();
   const eyePosition = new THREE.Vector3();
   const cameraEuler = new THREE.Euler(0, 0, 0, "YXZ");
@@ -169,6 +293,15 @@ async function main() {
   const weaponEyeOrigin = new THREE.Vector3();
   // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
   const shakeOffsetScratch = new THREE.Vector3();
+  // Scratch d'interpolation des Costards, réutilisés séquentiellement pour
+  // chaque `Suit` (consommés immédiatement par `sprite.updatePose`, jamais
+  // retenus — sûr malgré le partage, comme `movementScratch` dans `suit.ts`).
+  const suitPositionScratch = new THREE.Vector3();
+  const suitForwardScratch = new THREE.Vector3();
+  // PV courants du joueur, suivis localement : `setPlayerHp` prend une
+  // valeur absolue, pas un delta (voir `game/state.ts`) — `main.ts` est le
+  // seul endroit qui connaît le dégât infligé par une attaque de Costard.
+  let playerHp = useGameStore.getState().debug.playerMaxHp;
 
   /** Capture l'input du pas fixe courant. Le saut est CONSOMMÉ ici, une seule fois. */
   function captureInputFrame(): InputFrame {
@@ -216,12 +349,13 @@ async function main() {
   let fpsSmoothed = 60;
   let debugAccumulator = 0;
   const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
-  const ENTITY_COUNT = 1; // la balle ; pas encore de système d'entités (Phase 3)
+  const ENTITY_COUNT = 1; // la balle ; les Costards s'ajoutent dynamiquement via `suitManager.suits.length`
 
   startLoop({
     snapshotPrevious() {
       player.snapshotPrevious();
       weapons.snapshotPrevious();
+      suitManager.snapshotPrevious();
       ballPrevPos.copy(ballCurrPos);
       ballPrevQuat.copy(ballCurrQuat);
     },
@@ -257,6 +391,14 @@ async function main() {
         player.position.z,
       );
       weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
+
+      // APRÈS `weapons.update` : les `hitEvents` du pas courant existent déjà
+      // (voir la doc de `SuitManager.update`). `player.position` sert de
+      // cible de poursuite (XZ), `weaponEyeOrigin` — la même origine
+      // AUTHENTIQUE que celle qui vient de servir aux raycasts d'armes,
+      // jamais une position interpolée — sert de cible de ligne de
+      // vue/visée pour les Costards.
+      suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents);
     },
 
     stepPhysics(dt) {
@@ -320,6 +462,17 @@ async function main() {
       // la caméra (voir `render/viewmodel.ts`), il n'a pas besoin de les lire,
       // mais reste cohérent dans la même frame en s'appliquant après eux.
       viewmodel.update(alpha, weapons);
+
+      // Costards : position/forward interpolés (jamais les valeurs brutes du
+      // pas fixe, voir la doc de `BillboardSprite.updatePose`), une fois par
+      // Costard vivant OU cadavre (le cadavre reste affiché, figé).
+      for (const suit of suitManager.suits) {
+        const sprite = suitSprites.get(suit.id);
+        if (!sprite) continue;
+        const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
+        const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
+        sprite.updatePose(camera, pos, fwd, suit.spriteRow);
+      }
     },
 
     updateFx(realDt, stats) {
@@ -328,6 +481,15 @@ async function main() {
       }
 
       fx.update(realDt);
+      // Décroissance temps réel des minuteurs du hitmarker/réticule/gizmos —
+      // même régime que `fx.update(realDt)` juste au-dessus, jamais le pas
+      // fixe. `render()` (le dessin effectif des canvas 2D) est appelé en
+      // tout dernier dans cette fonction, APRÈS les boucles ci-dessous qui
+      // peuvent encore déclencher `hitmarker.trigger(...)`/`crosshair.notifyFire(...)`
+      // pour CETTE frame.
+      hitmarker.update(realDt);
+      crosshair.update(realDt);
+      ballisticsDebug.update(realDt);
 
       // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
       // files s'accumulent au fil des pas fixes de la frame et ne se vident
@@ -339,11 +501,44 @@ async function main() {
           fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
         }
         playWeaponFireSfx(event.weapon);
+        // Réticule : pulsation à CHAQUE tir déclenché (indépendant d'un hit,
+        // voir `CrosshairOverlay.notifyFire`), no-op si désactivée en config.
+        crosshair.notifyFire();
+        // Gizmos balistiques de debug : la forme RÉELLEMENT testée par ce
+        // tir (voir `render/ballisticsDebug.ts`). Pompe : un rayon par
+        // plomb, jusqu'à son impact ou `shotgunRange` (voir
+        // `FireEvent.pelletEndpoints`). Pied-de-biche : la capsule de
+        // `WeaponSystem.fireMelee`, reconstruite ici à partir de
+        // `weaponConfig.meleeRange`/`meleeHitRadius` — mêmes nombres que la
+        // requête Rapier, aucune duplication de valeur en dur.
+        if (event.weapon === "shotgun" && event.pelletEndpoints) {
+          ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
+        } else if (event.weapon === "melee") {
+          ballisticsDebug.recordMeleeFire(
+            event.muzzlePosition,
+            event.muzzleDirection,
+            weaponConfig.meleeRange,
+            weaponConfig.meleeHitRadius,
+          );
+        }
       }
       for (const hit of weapons.hitEvents) {
         fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
         fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon);
-        fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
+        // Distinction mur/ennemi (retour playtest Phase 3, `IMPACT_VARIANTS`
+        // dans `weaponConfig.ts`) : un hit ENEMY confirmé (matière `"flesh"`,
+        // voir `FLESH_MATERIAL`/`materialForCollider` dans `weapons.ts`)
+        // déclenche le shake `enemy*`, tout le reste (murs, décor) garde le
+        // shake générique. Le hitstop, lui, est déjà branché à la source
+        // dans `weapons.ts` (`triggerHitstopFor`) — pas dupliqué ici.
+        const isEnemyHit = hit.material === FLESH_MATERIAL;
+        fx.triggerShake(
+          isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
+          isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
+        );
+        // Hitmarker : uniquement sur un hit ENEMY confirmé — un hit mur n'a
+        // pas vocation à alimenter ce canal (voir doc de `hitmarker.ts`).
+        if (isEnemyHit) hitmarker.trigger("hit");
         playImpactSfx(hit.material);
       }
       // Clôture de la frame d'affichage pour les événements d'armes : TOUS
@@ -353,6 +548,60 @@ async function main() {
       // jamais plus tôt (voir la doc de `clearFrameEvents` dans
       // `game/player/weapons.ts`).
       weapons.clearFrameEvents();
+
+      // Décroissance TEMPS RÉEL du flash de dégâts de chaque Costard — jamais
+      // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
+      for (const sprite of suitSprites.values()) sprite.updateFlash(realDt);
+
+      // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
+      // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs
+      // d'abord, `suitManager.clearFrameEvents()` en tout dernier.
+      for (const event of suitManager.alertEvents) {
+        void event; // pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
+        playEnemySfx("alert");
+      }
+      for (const event of suitManager.telegraphEvents) {
+        void event;
+        // Règle non négociable du skill : le son de télégraphie part AVANT
+        // les dégâts (`suitConfig.attackTelegraphDuration` >= 0.2 s sépare ce
+        // point de la résolution de l'attaque dans `Suit.runAttack`).
+        playEnemySfx("telegraph");
+      }
+      for (const event of suitManager.hurtEvents) {
+        // Triple feedback (skill enemy-state-machine) : flash blanc + son ici,
+        // knockback déjà appliqué dans `Suit.applyDamage` (vélocité pilotée,
+        // le Costard étant kinématique — voir sa doc). Durée du flash lue
+        // depuis `suitConfig.hitFlashDuration` (tunable à chaud, voir sa doc
+        // et `FLASH_VARIANTS`) au lieu de l'ancienne constante en dur.
+        suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
+        playEnemySfx("hurt");
+      }
+      for (const event of suitManager.deathEvents) {
+        if (event.gibs) {
+          // Bout portant au pompe : gibs À LA PLACE de l'animation de mort
+          // normale (le Costard reste en état "dead"/"corpse" côté simulation
+          // pour la persistance du cadavre — seul le RENDU change ici).
+          fx.spawnGibs(event.point, event.direction);
+        }
+        // Kill = sa propre fenêtre de hitmarker, distincte du hit simple (voir
+        // `HitmarkerOverlay.trigger`) — confirmation visuelle qu'un Costard
+        // vient d'être tué, indépendamment du sprite (qui peut être remplacé
+        // par des gibs, donc potentiellement moins lisible ce pas-ci).
+        hitmarker.trigger("kill");
+        playEnemySfx("death");
+      }
+      for (const event of suitManager.playerHitEvents) {
+        playerHp = Math.max(0, playerHp - event.amount);
+        useGameStore.getState().setPlayerHp(playerHp);
+        // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
+        // modification de `render/fx.ts` : decal + particules au point
+        // d'impact sur le joueur, léger screenshake dédié (`suitConfig`, pas
+        // `weaponConfig` — c'est le coup encaissé, pas un tir du joueur).
+        fx.spawnImpactDecal(event.point, event.normal, "flesh");
+        fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+        fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
+      }
+      suitManager.clearFrameEvents();
 
       // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
       // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
@@ -381,6 +630,13 @@ async function main() {
         const enabled = wireframeToggle.toggle();
         console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
       }
+      // KeyB (ballistics) : gizmos balistiques de debug, actifs PAR DÉFAUT
+      // (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
+      // de bascule ponctuelle que KeyV ci-dessus.
+      if (input.wasJustPressed("KeyB")) {
+        const enabled = ballisticsDebug.toggle();
+        console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
+      }
 
       debugAccumulator += realDt;
       if (debugAccumulator >= DEBUG_UPDATE_INTERVAL) {
@@ -388,7 +644,7 @@ async function main() {
         useGameStore.getState().setDebug({
           fps: fpsSmoothed,
           position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
-          entityCount: ENTITY_COUNT,
+          entityCount: ENTITY_COUNT + suitManager.suits.length,
           steps: stats.steps,
           isGrounded: player.isGrounded,
           horizontalSpeed: player.horizontalSpeed,
@@ -399,8 +655,19 @@ async function main() {
             y: player.groundNormal.y,
             z: player.groundNormal.z,
           },
+          shotgunAmmo: weapons.shotgunAmmo,
+          shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
         });
       }
+
+      // Dessin du réticule/hitmarker EN TOUT DERNIER : après toutes les
+      // boucles ci-dessus qui ont pu appeler `crosshair.notifyFire(...)`/
+      // `hitmarker.trigger(...)` pour cette frame (tir, hit ennemi, kill) —
+      // voir la note plus haut. Le réticule d'abord (repère permanent), le
+      // hitmarker ensuite (flash de confirmation, doit rester visible
+      // par-dessus — voir la note de construction des deux overlays).
+      crosshair.render();
+      hitmarker.render();
     },
 
     render() {
@@ -408,7 +675,16 @@ async function main() {
     },
   });
 
-  exposeDebugApi(player, weapons, () => lastRecording, startPlayback);
+  exposeDebugApi(
+    player,
+    weapons,
+    suitManager,
+    spawnSuitAt,
+    () => lastRecording,
+    startPlayback,
+    loadGltfLevel,
+    () => gltfLevelSession?.current?.stats ?? null,
+  );
 }
 
 /**
@@ -512,6 +788,34 @@ declare global {
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       applyRecoilVariant: (name: keyof typeof RECOIL_VARIANTS) => RecoilVariantReport;
+      // --- Harnais de feedback de hit (retour playtest Phase 3) -------------
+      impactVariants: typeof IMPACT_VARIANTS;
+      applyImpactVariant: (name: keyof typeof IMPACT_VARIANTS) => ImpactVariantReport;
+      hitmarkerVariants: typeof HITMARKER_VARIANTS;
+      applyHitmarkerVariant: (name: keyof typeof HITMARKER_VARIANTS) => HitmarkerVariantReport;
+      crosshairVariants: typeof CROSSHAIR_VARIANTS;
+      applyCrosshairVariant: (name: keyof typeof CROSSHAIR_VARIANTS) => CrosshairVariantReport;
+      knockbackVariants: typeof KNOCKBACK_VARIANTS;
+      applyKnockbackVariant: (name: keyof typeof KNOCKBACK_VARIANTS) => KnockbackVariantReport;
+      flashVariants: typeof FLASH_VARIANTS;
+      applyFlashVariant: (name: keyof typeof FLASH_VARIANTS) => FlashVariantReport;
+      /** Référence directe, LECTURE/ÉCRITURE — pratique pour forcer `suits[i].state` depuis la console (mosaïque de diagnostic états × directions). */
+      suits: Suit[];
+      suitConfig: SuitConfig;
+      /** Fait apparaître un Costard supplémentaire à la volée (pieds à `y`). Critère de rollback du plan : pousser jusqu'à 10-20 sans interface graphique dédiée. */
+      spawnSuit: (x: number, y: number, z: number) => Suit;
+      /** Nombre de Costards jamais spawnés (vivants + cadavres). */
+      suitCount: () => number;
+      /** Nombre de Costards encore en jeu (hors `dead`/`corpse`). */
+      suitAliveCount: () => number;
+      /** Pipeline de niveau glTF (Phase 4), capacité ADDITIVE dev-only — voir
+       * la doc de tête du bloc `loadGltfLevel` dans `main.ts`. */
+      level: {
+        /** Charge (ou recharge) `public/assets/levels/<name>.glb`, avec hot reload. */
+        load: (name: string) => void;
+        /** Compteurs du niveau glTF actuellement chargé, `null` si aucun. */
+        stats: () => LevelStats | null;
+      };
     };
   }
 }
@@ -574,12 +878,133 @@ function applyRecoilVariant(name: keyof typeof RECOIL_VARIANTS): RecoilVariantRe
   return report;
 }
 
+interface ImpactVariantReport {
+  variant: keyof typeof IMPACT_VARIANTS;
+  hitstop: string;
+  enemyHitstop: string;
+  shake: string;
+  enemyShake: string;
+}
+
+/**
+ * Applique une variante de feedback d'impact (hitstop + screenshake,
+ * distinction mur/ennemi) — retour playtest Phase 3, voir `IMPACT_VARIANTS`
+ * dans `weaponConfig.ts` pour le contexte complet. Aucun `applyConfig()`
+ * nécessaire (rien n'est lu par Rapier). Protocole F9/F10 : voir la note de
+ * `IMPACT_VARIANTS` — viser un Costard à PV pleins pour une comparaison
+ * propre, le recorder ne restaure pas l'état des Costards.
+ */
+function applyImpactVariant(name: keyof typeof IMPACT_VARIANTS): ImpactVariantReport {
+  Object.assign(weaponConfig, IMPACT_VARIANTS[name]);
+  const report: ImpactVariantReport = {
+    variant: name,
+    hitstop: `${(weaponConfig.hitstopDuration * 1000).toFixed(0)} ms @ ×${weaponConfig.hitstopScale}`,
+    enemyHitstop: `${(weaponConfig.enemyHitstopDuration * 1000).toFixed(0)} ms @ ×${weaponConfig.enemyHitstopScale}`,
+    shake: `${weaponConfig.shakeAmplitude} m / ${(weaponConfig.shakeDuration * 1000).toFixed(0)} ms`,
+    enemyShake: `${weaponConfig.enemyShakeAmplitude} m / ${(weaponConfig.enemyShakeDuration * 1000).toFixed(0)} ms`,
+  };
+  console.info(`[feel] variante d'impact ${name} appliquée`, report);
+  return report;
+}
+
+interface HitmarkerVariantReport {
+  variant: keyof typeof HITMARKER_VARIANTS;
+  enabled: boolean;
+  hit: string;
+  kill: string;
+}
+
+/**
+ * Applique une variante de hitmarker, à chaud — voir `HITMARKER_VARIANTS`
+ * dans `weaponConfig.ts`. Le marqueur lit `weaponConfig` en DIRECT (même
+ * objet que la config passée à `HitmarkerOverlay`), donc l'effet est visible
+ * dès le prochain hit ennemi, sans rien réinstancier.
+ */
+function applyHitmarkerVariant(name: keyof typeof HITMARKER_VARIANTS): HitmarkerVariantReport {
+  Object.assign(weaponConfig, HITMARKER_VARIANTS[name]);
+  const report: HitmarkerVariantReport = {
+    variant: name,
+    enabled: weaponConfig.hitmarkerEnabled,
+    hit: `${weaponConfig.hitmarkerSize}px @ ${(weaponConfig.hitmarkerDuration * 1000).toFixed(0)} ms`,
+    kill: `${weaponConfig.hitmarkerKillSize}px @ ${(weaponConfig.hitmarkerKillDuration * 1000).toFixed(0)} ms`,
+  };
+  console.info(`[feel] variante de hitmarker ${name} appliquée`, report);
+  return report;
+}
+
+interface CrosshairVariantReport {
+  variant: keyof typeof CROSSHAIR_VARIANTS;
+  style: "cross" | "dot";
+  pulse: string;
+}
+
+/**
+ * Applique une variante de réticule, à chaud — voir `CROSSHAIR_VARIANTS`
+ * dans `weaponConfig.ts`. Le réticule lit `weaponConfig` en DIRECT (même
+ * objet que la config passée à `CrosshairOverlay`), donc l'effet est visible
+ * dès la prochaine frame, sans rien réinstancier.
+ */
+function applyCrosshairVariant(name: keyof typeof CROSSHAIR_VARIANTS): CrosshairVariantReport {
+  Object.assign(weaponConfig, CROSSHAIR_VARIANTS[name]);
+  const report: CrosshairVariantReport = {
+    variant: name,
+    style: weaponConfig.crosshairStyle,
+    pulse: weaponConfig.crosshairPulseEnabled
+      ? `×${weaponConfig.crosshairPulseScale} @ ${(weaponConfig.crosshairPulseDuration * 1000).toFixed(0)} ms`
+      : "désactivée",
+  };
+  console.info(`[feel] variante de réticule ${name} appliquée`, report);
+  return report;
+}
+
+interface KnockbackVariantReport {
+  variant: keyof typeof KNOCKBACK_VARIANTS;
+  knockbackSpeed: number;
+  knockbackDecayTime: number;
+  knockbackUpBoost: number;
+}
+
+/**
+ * Applique une variante de knockback Costard, à chaud — voir
+ * `KNOCKBACK_VARIANTS` dans `suitConfig.ts`. `Suit` lit `this.cfg` (référence
+ * partagée vers `suitConfig` par défaut), donc l'effet s'applique au PROCHAIN
+ * coup encaissé par n'importe quel Costard, sans recréer aucun corps Rapier.
+ */
+function applyKnockbackVariant(name: keyof typeof KNOCKBACK_VARIANTS): KnockbackVariantReport {
+  Object.assign(suitConfig, KNOCKBACK_VARIANTS[name]);
+  const report: KnockbackVariantReport = {
+    variant: name,
+    knockbackSpeed: suitConfig.knockbackSpeed,
+    knockbackDecayTime: suitConfig.knockbackDecayTime,
+    knockbackUpBoost: suitConfig.knockbackUpBoost,
+  };
+  console.info(`[feel] variante de knockback ${name} appliquée`, report);
+  return report;
+}
+
+interface FlashVariantReport {
+  variant: keyof typeof FLASH_VARIANTS;
+  hitFlashDuration: number;
+}
+
+/** Applique une variante de durée de flash de dégât, à chaud — voir `FLASH_VARIANTS` dans `suitConfig.ts`. */
+function applyFlashVariant(name: keyof typeof FLASH_VARIANTS): FlashVariantReport {
+  Object.assign(suitConfig, FLASH_VARIANTS[name]);
+  const report: FlashVariantReport = { variant: name, hitFlashDuration: suitConfig.hitFlashDuration };
+  console.info(`[feel] variante de flash ${name} appliquée`, report);
+  return report;
+}
+
 /** Point d'entrée console pour l'A/B de `feel-tuner` et les preuves de `qa-evidence`. */
 function exposeDebugApi(
   player: PlayerController,
   weapons: WeaponSystem,
+  suitManager: SuitManager,
+  spawnSuit: (x: number, feetY: number, z: number) => Suit,
   lastRecording: () => Recording | null,
   playRecording: (rec: Recording) => void,
+  loadGltfLevel: (name: string) => void,
+  gltfLevelStats: () => LevelStats | null,
 ) {
   window.cassandre = {
     moveConfig,
@@ -597,6 +1022,25 @@ function exposeDebugApi(
     weaponConfig,
     recoilVariants: RECOIL_VARIANTS,
     applyRecoilVariant,
+    impactVariants: IMPACT_VARIANTS,
+    applyImpactVariant,
+    hitmarkerVariants: HITMARKER_VARIANTS,
+    applyHitmarkerVariant,
+    crosshairVariants: CROSSHAIR_VARIANTS,
+    applyCrosshairVariant,
+    knockbackVariants: KNOCKBACK_VARIANTS,
+    applyKnockbackVariant,
+    flashVariants: FLASH_VARIANTS,
+    applyFlashVariant,
+    suits: suitManager.suits,
+    suitConfig,
+    spawnSuit,
+    suitCount: () => suitManager.suits.length,
+    suitAliveCount: () => suitManager.suits.filter((s) => s.isAlive).length,
+    level: {
+      load: loadGltfLevel,
+      stats: gltfLevelStats,
+    },
   };
 }
 
