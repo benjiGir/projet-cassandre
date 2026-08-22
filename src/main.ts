@@ -1091,6 +1091,8 @@ declare global {
       suitAliveCount: () => number;
       /** Mêmes rôles que `suits`/`suitConfig`/`spawnSuit`, pour le Directeur (boss Zone E) — voir `director.ts`/`directorManager.ts`. Aucun spawn de niveau ne l'appelle encore ; test manuel en console uniquement. */
       directors: Director[];
+      /** Référence directe au manager complet (badge, files d'événements) — même précédent que `weapons` ci-dessus, utile pour du débogage console (ex. `cassandre.directorManager.badge`). */
+      directorManager: DirectorManager;
       directorConfig: DirectorConfig;
       spawnDirector: (x: number, y: number, z: number) => Director;
       directorCount: () => number;
@@ -1327,6 +1329,7 @@ function exposeDebugApi(
     suitCount: () => suitManager.suits.length,
     suitAliveCount: () => suitManager.suits.filter((s) => s.isAlive).length,
     directors: directorManager.directors,
+    directorManager,
     directorConfig,
     spawnDirector,
     directorCount: () => directorManager.directors.length,

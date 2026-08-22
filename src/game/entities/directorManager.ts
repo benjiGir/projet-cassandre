@@ -171,6 +171,8 @@ export class DirectorManager {
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
   ) {
+    this._badge?.tick(dt);
+
     const aggregated = this.consumeNewHits(hitEvents);
 
     const ctx: DirectorUpdateContext = {
@@ -201,7 +203,7 @@ export class DirectorManager {
    * tâche de câbler cet appel dans `main.ts` (voir le rapport de la tâche).
    */
   tryCollectBadge(playerPosition: THREE.Vector3): boolean {
-    return this._badge?.tryCollect(playerPosition, this.cfg.badgePickupRadius) ?? false;
+    return this._badge?.tryCollect(playerPosition, this.cfg.badgePickupRadius, this.cfg.badgePickupDelay) ?? false;
   }
 
   private applyAggregatedHit(director: Director, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {
@@ -227,11 +229,18 @@ export class DirectorManager {
         point: hit.anyPoint.clone(),
         direction: this.scratchKnockback.clone(),
       });
-      // Drop du badge : position du Directeur au moment de sa mort. Un seul
-      // badge suivi à la fois (`_badge`) — cohérent avec un boss unique ;
-      // si un futur niveau spawnait plusieurs Directeurs, ce champ ne
-      // suivrait que le DERNIER mort, choix non retravaillé ici (hors scope).
-      this._badge = new DirectorBadge(director.position);
+      // Drop du badge : AUX PIEDS du Directeur au moment de sa mort, pas au
+      // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol —
+      // sinon le badge apparaît flottant en l'air, pas posé). +0.15 = demi-
+      // hauteur du mesh placeholder (0.3m, voir `main.ts`), pour qu'il repose
+      // sur le sol plutôt que d'y être à moitié enfoncé.
+      const feetY = director.position.y - (this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius);
+      // Un seul badge suivi à la fois (`_badge`) — cohérent avec un boss
+      // unique ; si un futur niveau spawnait plusieurs Directeurs, ce champ
+      // ne suivrait que le DERNIER mort, choix non retravaillé ici (hors scope).
+      this._badge = new DirectorBadge(
+        new THREE.Vector3(director.position.x, feetY + 0.15, director.position.z),
+      );
     } else {
       this._hurtEvents.push({ director, knockbackDirection: this.scratchKnockback.clone() });
     }

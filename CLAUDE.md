@@ -251,6 +251,23 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > `interactive.ts`/`main.ts`, même contrat que `use_crowbar`, posé dans la
 > Zone B du niveau combiné (pas dans `zone_b_caisses.glb` seule).
 >
+> **Bug de drop du badge corrigé (2026-08-22)** : signalé par l'utilisateur
+> après avoir joué ("on dirait que le drop le fait buggé"). Deux vrais bugs
+> trouvés en relisant `directorManager.ts`, tous deux liés au fait qu'un
+> kill se fait souvent à bout portant (mêlée/pompe au contact) : (1) le
+> badge apparaissait au CENTRE de la capsule du Directeur (~1.05m en l'air),
+> pas à ses pieds — flottait visiblement au lieu d'être posé au sol ; (2)
+> aucun délai avant ramassage — un joueur déjà à moins de 1.5m au moment du
+> kill (typique à bout portant) le ramassait sur le MÊME pas fixe que sa
+> création, donc jamais visible, ce qui se lit comme "il a disparu"/"ça a
+> buggé" plutôt que comme un drop. Corrigé : position aux pieds (+0.15 pour
+> reposer sur le sol), `badgePickupDelay` (0.6s, `directorConfig.ts`) avant
+> que `tryCollect` n'accepte quoi que ce soit. Vérifié via le vrai chemin de
+> code (`directorManager.update()` avec un `HitEvent` synthétique, pas de
+> mock) : badge à Y=0.15 confirmé, ramassage refusé avant 0.6s puis accepté
+> après, aucune exception. `directorManager` exposé sur `cassandre.` pour ce
+> genre de test (même précédent que `cassandre.weapons`).
+>
 > Secrets, porte à badge : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).

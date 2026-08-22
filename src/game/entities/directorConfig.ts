@@ -155,6 +155,18 @@ export interface DirectorConfig {
    * avec `use_crowbar`.
    */
   badgePickupRadius: number;
+  /**
+   * Délai minimum, en secondes, entre l'apparition du badge et le premier
+   * pas fixe où il peut être ramassé. Sans ce délai, un kill à bout portant
+   * (mêlée, pompe au contact) place le joueur DÉJÀ dans `badgePickupRadius`
+   * au moment même où le badge apparaît — il se ramasserait alors sur le
+   * MÊME pas fixe que sa création, donc jamais visible, ce qui se lit comme
+   * un bug ("le drop plante"/"il disparaît tout de suite") plutôt que comme
+   * un ramassage. 0.6s : assez long pour que le joueur voie le badge
+   * apparaître, assez court pour ne pas sembler être un temps d'attente
+   * artificiel.
+   */
+  badgePickupDelay: number;
 
   // ------------------------------------------- feedback visuel d'un coup reçu par le JOUEUR
   /** Amplitude du screenshake quand une attaque du Directeur touche le joueur, en mètres — plus haute que `SuitConfig.playerHitShakeAmplitude` (0.08) : un coup de boss doit se sentir plus lourd qu'un coup de Costard. */
@@ -212,6 +224,7 @@ export const directorConfig: DirectorConfig = {
   revealShakeDuration: 0.25,
 
   badgePickupRadius: 1.5,
+  badgePickupDelay: 0.6,
 
   playerHitShakeAmplitude: 0.1,
   playerHitShakeDuration: 0.12,

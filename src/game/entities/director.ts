@@ -683,18 +683,28 @@ export class DirectorBadge {
   readonly position: THREE.Vector3;
   collected = false;
 
+  /** Secondes écoulées depuis l'apparition — voir `DirectorConfig.badgePickupDelay`. */
+  private age = 0;
+
   constructor(position: THREE.Vector3) {
     this.position = position.clone();
   }
 
+  /** Avance l'âge du badge d'un pas fixe — appelé par `DirectorManager.update`, jamais par une horloge murale. */
+  tick(dt: number): void {
+    this.age += dt;
+  }
+
   /**
    * Un pas fixe. Retourne `true` UNE SEULE FOIS, au pas fixe où
-   * `playerPosition` entre dans `pickupRadius` pour la première fois — les
-   * appels suivants renvoient toujours `false` (déjà ramassé, ou toujours
-   * hors de portée). Zéro allocation.
+   * `playerPosition` entre dans `pickupRadius` pour la première fois APRÈS
+   * `minAge` secondes écoulées depuis le drop — les appels suivants
+   * renvoient toujours `false` (déjà ramassé, encore hors de portée, ou
+   * encore trop tôt). Zéro allocation.
    */
-  tryCollect(playerPosition: THREE.Vector3, pickupRadius: number): boolean {
+  tryCollect(playerPosition: THREE.Vector3, pickupRadius: number, minAge: number): boolean {
     if (this.collected) return false;
+    if (this.age < minAge) return false;
     if (this.position.distanceToSquared(playerPosition) > pickupRadius * pickupRadius) return false;
     this.collected = true;
     return true;
