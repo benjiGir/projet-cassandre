@@ -206,7 +206,18 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > rapidement mais jamais avant ce temps d'alerte — comportement voulu, pas
 > le bug d'embuscade des Zones C/D.
 >
-> Secrets, badge, directeur : pas commencés.
+> **Directeur (2026-08-22)** : entité codée (`src/game/entities/director.ts`
+> + `directorConfig.ts` + `directorManager.ts`, miroir de `Suit`), câblée
+> dans `main.ts` (rendu billboard, dégâts via `weapons.hitEvents` partagé,
+> sfx `enemy_*` réutilisés, badge droppé à la mort avec mesh placeholder).
+> Testable en console : `cassandre.spawnDirector(x,y,z)`. `pnpm build` OK,
+> spawn/état/rendu vérifiés en jeu ; tir de confirmation pas testé jusqu'au
+> bout (pointer lock capricieux en automatisation navigateur, sans rapport
+> avec le code) — à valider en jouant réellement. Pas encore câblé dans
+> Zone E (garde son Costard placeholder), pas de porte verrouillée par
+> badge : toujours hors scope, prochaine étape.
+>
+> Secrets, porte à badge : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet

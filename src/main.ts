@@ -49,6 +49,9 @@ import { BILLBOARD_COLUMNS, BillboardSprite, createPlaceholderAtlas } from "./re
 import { Suit, SUIT_ATLAS_ROWS } from "./game/entities/suit";
 import { SuitManager } from "./game/entities/suitManager";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "./game/entities/suitConfig";
+import { Director, DIRECTOR_ATLAS_ROWS } from "./game/entities/director";
+import { DirectorManager } from "./game/entities/directorManager";
+import { directorConfig, type DirectorConfig } from "./game/entities/directorConfig";
 import { useGameStore } from "./game/state";
 import { App } from "./ui/App";
 import { LevelMenu } from "./ui/LevelMenu";
@@ -305,6 +308,39 @@ async function main() {
     return suit;
   }
 
+  // --- Ennemi « Directeur » (boss de fin, Zone E) ---------------------------
+  // Même séparation simulation/rendu que `SuitManager` ci-dessus. Câblage
+  // MINIMAL de test (pas de spawn dans un niveau — la Zone E garde son
+  // Costard placeholder, câblage niveau hors scope de cette passe) :
+  // uniquement `cassandre.spawnDirector(x, y, z)` en console.
+  const directorManager = new DirectorManager(physics);
+  const directorAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, DIRECTOR_ATLAS_ROWS);
+  const directorSprites = new Map<number, BillboardSprite>();
+  // capsuleHalfHeight(0.6) + capsuleRadius(0.45) = 1.05 -> hauteur totale
+  // 2.1 m, même règle de correspondance exacte que `SUIT_SPRITE_HEIGHT`.
+  const DIRECTOR_SPRITE_HEIGHT = 2.1;
+  // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager
+  // restent purs de tout rendu, voir leur doc de tête) — placeholder simple
+  // (invariant #9), retiré de la scène au ramassage.
+  const badgeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+  const badgeMaterial = new THREE.MeshLambertMaterial({ color: 0xffd54a });
+  let badgeMesh: THREE.Mesh | null = null;
+
+  function spawnDirectorAt(x: number, feetY: number, z: number): Director {
+    const facing = new THREE.Vector3(player.position.x - x, 0, player.position.z - z);
+    if (facing.lengthSq() < 1e-6) facing.set(0, 0, 1);
+    facing.normalize();
+
+    const director = directorManager.spawnDirector(x, feetY, z, facing);
+    const sprite = new BillboardSprite(scene, directorAtlas, {
+      rows: DIRECTOR_ATLAS_ROWS,
+      height: DIRECTOR_SPRITE_HEIGHT,
+      verticalAnchor: 0.5,
+    });
+    directorSprites.set(director.id, sprite);
+    return director;
+  }
+
   // 3 points de spawn dans le hub (>= 40x40 m, zone explicitement dédiée au
   // combat, voir `HUB_HALF`/`HUB_SIZE` de `game/level/gym.ts`) : dispersés
   // autour du spawn joueur (0, 0, -10), à 15-22 m (largement au-delà de la
@@ -450,6 +486,9 @@ async function main() {
   // retenus — sûr malgré le partage, comme `movementScratch` dans `suit.ts`).
   const suitPositionScratch = new THREE.Vector3();
   const suitForwardScratch = new THREE.Vector3();
+  // Même rôle, pour le Directeur.
+  const directorPositionScratch = new THREE.Vector3();
+  const directorForwardScratch = new THREE.Vector3();
   // PV courants du joueur, suivis localement : `setPlayerHp` prend une
   // valeur absolue, pas un delta (voir `game/state.ts`) — `main.ts` est le
   // seul endroit qui connaît le dégât infligé par une attaque de Costard.
@@ -562,6 +601,21 @@ async function main() {
       // jamais une position interpolée — sert de cible de ligne de
       // vue/visée pour les Costards.
       suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents);
+      directorManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents);
+
+      // Badge du Directeur : apparition (mesh) à la mort, une seule fois ;
+      // ramassage par proximité SEULE (pas de touche E, voir la doc de
+      // `DirectorBadge`) — même discipline de mutation directe en pas fixe
+      // que `interaction.update` ci-dessus pour `use_crowbar`.
+      if (directorManager.badge && !badgeMesh) {
+        badgeMesh = new THREE.Mesh(badgeGeometry, badgeMaterial);
+        badgeMesh.position.copy(directorManager.badge.position);
+        scene.add(badgeMesh);
+      }
+      if (directorManager.tryCollectBadge(player.position) && badgeMesh) {
+        scene.remove(badgeMesh);
+        badgeMesh = null;
+      }
     },
 
     stepPhysics(dt) {
@@ -641,6 +695,16 @@ async function main() {
         const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
         const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
         sprite.updatePose(camera, pos, fwd, suit.spriteRow);
+      }
+
+      // Même chose pour le Directeur (au plus un, mais `directors` reste un
+      // tableau — voir la doc de `DirectorManager`).
+      for (const director of directorManager.directors) {
+        const sprite = directorSprites.get(director.id);
+        if (!sprite) continue;
+        const pos = director.interpolatedPosition(alpha, directorPositionScratch);
+        const fwd = director.interpolatedForward(alpha, directorForwardScratch);
+        sprite.updatePose(camera, pos, fwd, director.spriteRow);
       }
     },
 
@@ -772,6 +836,45 @@ async function main() {
       }
       suitManager.clearFrameEvents();
 
+      // Même contrat (lecture non destructive, `clearFrameEvents()` en tout
+      // dernier) pour le Directeur. Pas de réutilisation des sons `enemy_*` en
+      // tant que "faits exprès pour le boss" — ce sont les mêmes placeholders
+      // génériques que pour le Costard (invariant #9, aucun son dédié encore).
+      for (const sprite of directorSprites.values()) sprite.updateFlash(realDt);
+
+      for (const event of directorManager.alertEvents) {
+        void event;
+        playEnemySfx("alert");
+      }
+      for (const event of directorManager.telegraphEvents) {
+        void event;
+        playEnemySfx("telegraph");
+      }
+      for (const event of directorManager.hurtEvents) {
+        directorSprites.get(event.director.id)?.setFlash(1, directorConfig.hitFlashDuration);
+        playEnemySfx("hurt");
+      }
+      for (const event of directorManager.revealEvents) {
+        // Bascule costume humain -> reptilien : teinte appliquée UNE FOIS ici
+        // (événement discret), jamais reposée à chaque frame dans
+        // `interpolateVisuals` — voir `Director.tintColor`/`revealed`.
+        directorSprites.get(event.director.id)?.setTint(event.director.tintColor);
+        fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
+      }
+      for (const event of directorManager.deathEvents) {
+        void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
+        hitmarker.trigger("kill");
+        playEnemySfx("death");
+      }
+      for (const event of directorManager.playerHitEvents) {
+        playerHp = Math.max(0, playerHp - event.amount);
+        useGameStore.getState().setPlayerHp(playerHp);
+        fx.spawnImpactDecal(event.point, event.normal, "flesh");
+        fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+        fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
+      }
+      directorManager.clearFrameEvents();
+
       // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
       // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
       // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
@@ -849,6 +952,8 @@ async function main() {
     weapons,
     suitManager,
     spawnSuitAt,
+    directorManager,
+    spawnDirectorAt,
     () => lastRecording,
     startPlayback,
     loadGltfLevel,
@@ -977,6 +1082,12 @@ declare global {
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`). */
       suitAliveCount: () => number;
+      /** Mêmes rôles que `suits`/`suitConfig`/`spawnSuit`, pour le Directeur (boss Zone E) — voir `director.ts`/`directorManager.ts`. Aucun spawn de niveau ne l'appelle encore ; test manuel en console uniquement. */
+      directors: Director[];
+      directorConfig: DirectorConfig;
+      spawnDirector: (x: number, y: number, z: number) => Director;
+      directorCount: () => number;
+      directorAliveCount: () => number;
       /** Pipeline de niveau glTF (Phase 4), capacité ADDITIVE dev-only — voir
        * la doc de tête du bloc `loadGltfLevel` dans `main.ts`. */
       level: {
@@ -1170,6 +1281,8 @@ function exposeDebugApi(
   weapons: WeaponSystem,
   suitManager: SuitManager,
   spawnSuit: (x: number, feetY: number, z: number) => Suit,
+  directorManager: DirectorManager,
+  spawnDirector: (x: number, feetY: number, z: number) => Director,
   lastRecording: () => Recording | null,
   playRecording: (rec: Recording) => void,
   loadGltfLevel: (name: string) => void,
@@ -1206,6 +1319,11 @@ function exposeDebugApi(
     spawnSuit,
     suitCount: () => suitManager.suits.length,
     suitAliveCount: () => suitManager.suits.filter((s) => s.isAlive).length,
+    directors: directorManager.directors,
+    directorConfig,
+    spawnDirector,
+    directorCount: () => directorManager.directors.length,
+    directorAliveCount: () => directorManager.directors.filter((d) => d.isAlive).length,
     level: {
       load: loadGltfLevel,
       stats: gltfLevelStats,

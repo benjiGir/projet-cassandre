@@ -252,6 +252,32 @@ export class BillboardSprite {
   }
 
   /**
+   * Change la teinte du sprite après construction (`material.color`),
+   * MULTIPLIÉE avec les pixels de l'atlas au rendu — PAS un nouveau système
+   * de shader (invariant #5, `MeshLambertMaterial` uniquement, déjà le
+   * matériau de ce mesh). Usage introduit par le Directeur (2ᵉ type
+   * d'ennemi, `game/entities/director.ts`) : bascule visuelle « costume
+   * humain -> reptilien » quand les PV passent sous un seuil, sans créer de
+   * seconde ligne d'atlas ni de shader dédié — voir
+   * `DirectorConfig.humanTintColor`/`revealedTintColor` et
+   * `Director.tintColor`.
+   *
+   * Combinable SANS CONFLIT avec `setFlash`/`updateFlash` : la teinte de base
+   * (`material.color`) et le flash de dégâts (`material.emissive`) sont deux
+   * canaux distincts de `MeshLambertMaterial`, appliqués indépendamment par
+   * three.js au rendu (l'un module les texels, l'autre s'additionne dessus).
+   *
+   * Idempotente et bon marché (une mutation numérique, zéro allocation) :
+   * peut être appelée à chaque frame sans souci de performance si l'appelant
+   * préfère ne pas suivre l'état de révélation lui-même, mais le pattern
+   * attendu (comme `setFlash`) est de l'appeler UNE FOIS, au moment de
+   * l'événement de transition — pas à chaque frame par défaut.
+   */
+  setTint(color: number): void {
+    this.mesh.material.color.set(color);
+  }
+
+  /**
    * Déclenche (ou renforce) le flash blanc de dégâts. `amount` dans [0, 1] :
    * 0 = aucun effet, 1 = blanc plein. PUREMENT COSMÉTIQUE — à appeler au
    * moment du dégât côté gameplay (pas fixe), la décroissance visuelle est
