@@ -125,8 +125,34 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > `spawn_suit_2` inflige déjà des dégâts après quelques secondes d'immobilité
 > du joueur — effet de l'agressivité/vitesse de l'IA à cette distance, pas
 > de la géométrie (distance vérifiée exacte à 18m). À évaluer en jouant.
-> Zones C-E, secrets, caddies, micro d'annonces, porte à badge : pas
-> commencés.
+>
+> **Zone C — Rayons (2026-08-22)** : sol + périmètre 24×28m, trois rangées de
+> `kit_gondola_4m` (+ `kit_gondola_end` en bout de rangée) parallèles à l'axe
+> de déplacement, créant deux allées centrales de 3m (combat en couloir) et
+> deux couloirs latéraux ouverts. Nouvelle fonction `build_gondolas` dans
+> `build_level.py` (tiling le long d'un axe unique, orientation par rotation
+> 90°). 4 `spawn_suit_*`, démarre ARMÉE. `validate_level.py --strict` : 0
+> erreur, 0 warning (aucune exception nécessaire, contrairement au
+> `use_crowbar` de la Zone A).
+> **Piège level design découvert et corrigé en jeu** : les deux premiers
+> `spawn_suit_*` posés au milieu des allées centrales (Y=12) se sont révélés
+> déjà en état `attack` dès le spawn (`window.cassandre.suits`, 12.2m, sous
+> `attackRange`=16m) — une allée est par construction une ligne droite
+> dégagée d'un bout à l'autre, `hasClearWorldPath` n'y est jamais coupé par
+> les rangées qui la bordent sans jamais la traverser ; contrairement aux
+> rangées de la Zone B, la géométrie d'allée parallèle NE PEUT PAS produire
+> une embuscade par occlusion pour un Costard posé en son centre — seule la
+> distance protège la fenêtre d'approche ici. Corrigé en les déplaçant à la
+> sortie nord des allées (Y=18, ~18.1m, au-delà d'`attackRange` avec la même
+> marge que le fix de Zone B) ; revérifié en jeu, les 4 Costards passent
+> `idle` → `alert` sans jamais `attack` au spawn. `col_*` reste inchangé
+> (aucun impact sur la géométrie/le bake, seuls les points de spawn ont
+> bougé). Caddies (`kit_cart`, extras `dynamic`/`mass` déjà posés dans le
+> kit) et micro d'annonces : géométrie/props pas encore posés, systèmes
+> (physique dynamique, audio interactif) pas écrits — travail futur
+> `level-pipeline`/`shell`.
+>
+> Zones D-E, secrets, porte à badge : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet

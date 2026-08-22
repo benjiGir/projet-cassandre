@@ -9,8 +9,12 @@ Assemblage d'un niveau à partir du kit modulaire — PROJET_CASSANDRE.
         --zone b --kit assets_src/blender/kit_hypermarche.blend \\
         --out assets_src/blender/zone_b_caisses.blend
 
+    blender -b --factory-startup -P tools/blender/build_level.py -- \\
+        --zone c --kit assets_src/blender/kit_hypermarche.blend \\
+        --out assets_src/blender/zone_c_rayons.blend
+
 Options :
-    --zone a|b          quelle entrée de `level_spec.ZONES` construire
+    --zone a|b|c        quelle entrée de `level_spec.ZONES` construire
     --kit PATH          .blend source du kit (défaut assets_src/blender/kit_hypermarche.blend)
     --out PATH          .blend produit (défaut assets_src/blender/<nom de la zone>.blend)
     --light-energy W    puissance des area lights de plafond (défaut 180 —
@@ -323,6 +327,82 @@ def build_checkouts(checkout_spec: dict | None, mesh_lookup, proxy_map,
 
 
 # ---------------------------------------------------------------------------
+# Gondoles (Zone C)
+# ---------------------------------------------------------------------------
+
+def build_gondolas(gondola_spec: dict | None, mesh_lookup, proxy_map,
+                    props_coll, col_coll) -> int:
+    """Rangées de `kit_gondola_4m` (+ capuchons `kit_gondola_end`), orientées
+    le long de Y — perpendiculaire à leur orientation par défaut dans le kit.
+
+    `kit_spec._gondola_parts(length, depth, height)` construit la géométrie
+    locale avec `length` le long de l'axe X et `depth` le long de l'axe Y
+    (`box(0, 0, 0, length, depth, height)` — voir `kit_spec.py`) : pour
+    aligner la longueur sur Y (allées nord-sud), chaque pièce est tournée de
+    +90° en Z — même mécanique que `plan_wall_run`/`_rotate90` pour les murs
+    (l'axe local X suit alors la direction du run).
+
+    Grille 0.25 m — décision MÉCANIQUE, pas de layout : `row["x"]` est
+    utilisé TEL QUEL comme coordonnée d'un COIN de la pièce (convention
+    « origine = coin » du kit, `kit_spec.py` en-tête), jamais comme centre
+    de sa profondeur. Centrer une pièce profonde de 1.25 m pile sur
+    `row["x"]` demanderait un décalage de 0.625 m (1.25 / 2), qui n'est PAS
+    un multiple de 0.25 m et ferait échouer `validate_level.py` (warning
+    « hors grille », bloquant sous `--strict` — la Zone C ne doit avoir
+    AUCUNE exception, contrairement à `use_crowbar` en Zone A). Utiliser
+    `row["x"]` comme bord (pas comme centre) garde chaque coin sur la
+    grille (0.25 et 1.25 sont tous deux multiples de 0.25 m) tout en
+    préservant EXACTEMENT l'allée de 3 m entre rangées adjacentes (les trois
+    rangées décalées du même côté donnent des allées centrales à 3.0 m pile,
+    vérifié par calcul). Conséquence mécanique acceptée : les deux couloirs
+    latéraux ne sont plus rigoureusement symétriques (6.5 m / 7.75 m, contre
+    ~7 m / ~7 m si on centrait) — sous-produit du choix « 0 warning », pas
+    une décision de layout (l'écart, 0.625 m, ne change aucun placement
+    donné par `level_spec.py`).
+    """
+    if gondola_spec is None:
+        return 0
+
+    piece_name = gondola_spec["piece"]
+    end_name = gondola_spec["end_piece"]
+    piece_len = spec.find_piece(piece_name)["dims"][0]
+    end_len = spec.find_piece(end_name)["dims"][0]
+    ROT_DEG = 90.0   # aligne la longueur (axe local X) sur l'axe monde Y
+
+    count = 0
+    for row in gondola_spec["rows"]:
+        x = row["x"]
+        y0, y1 = row["y"]
+        run_len = y1 - y0
+        n_f = run_len / piece_len
+        if abs(n_f - round(n_f)) > 1e-6:
+            raise ValueError(
+                f"[build_level] rangée de gondoles x={x} : longueur {run_len:.3f} m "
+                f"ne se divise pas en modules de {piece_len} m sans reste "
+                f"(n={n_f:.4f}) — corriger level_spec.py, pas de reste silencieux"
+            )
+        n = int(round(n_f))
+
+        cursor = y0
+        for _ in range(n):
+            place_kit_piece(piece_name, mesh_lookup, proxy_map,
+                             (x, cursor, 0.0), ROT_DEG, props_coll, col_coll)
+            cursor += piece_len
+            count += 1
+
+        # Capuchons : accolés à chaque extrémité (bloquent la vue latérale
+        # depuis l'allée voisine), même bord X que le corps de la rangée —
+        # aucun jour entre le dernier `kit_gondola_4m` et son capuchon.
+        place_kit_piece(end_name, mesh_lookup, proxy_map,
+                         (x, y0 - end_len, 0.0), ROT_DEG, props_coll, col_coll)
+        place_kit_piece(end_name, mesh_lookup, proxy_map,
+                         (x, y1, 0.0), ROT_DEG, props_coll, col_coll)
+        count += 2
+
+    return count
+
+
+# ---------------------------------------------------------------------------
 # Spawns et objets interactifs
 # ---------------------------------------------------------------------------
 
@@ -470,6 +550,9 @@ def main() -> None:
     needed_pieces = ["kit_wall_4m", "kit_wall_2m", "kit_wall_1m", "kit_floor_4x4"]
     if zone.get("checkouts"):
         needed_pieces.append(zone["checkouts"]["piece"])
+    if zone.get("gondolas"):
+        needed_pieces.append(zone["gondolas"]["piece"])
+        needed_pieces.append(zone["gondolas"]["end_piece"])
     mesh_names, proxy_map = gather_kit_mesh_names(needed_pieces)
 
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
@@ -478,6 +561,7 @@ def main() -> None:
     wall_counts, wall_remainder = build_walls(zone["walls"], mesh_lookup, proxy_map, shell, col_coll)
     vitrine_count = build_vitrine(zone.get("vitrine"), materials_lookup, shell, col_coll)
     checkout_count = build_checkouts(zone.get("checkouts"), mesh_lookup, proxy_map, props_coll, col_coll)
+    gondola_count = build_gondolas(zone.get("gondolas"), mesh_lookup, proxy_map, props_coll, col_coll)
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
     light_count, spacing_x, spacing_y = build_lighting(zone, zone["floor"], lights_coll, energy=light_energy)
@@ -493,6 +577,7 @@ def main() -> None:
     print("  Murs               " + "  ".join(f"{k}:{v}" for k, v in sorted(wall_counts.items())))
     print(f"  Bandes de vitrine  {vitrine_count}")
     print(f"  Caisses            {checkout_count}")
+    print(f"  Gondoles+capuchons {gondola_count}")
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
     print(f"  Lampes             {light_count}  (espacement ~{spacing_x:.2f} x {spacing_y:.2f} m)")

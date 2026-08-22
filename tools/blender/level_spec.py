@@ -1,5 +1,5 @@
 """
-Spécification des niveaux Zone A / Zone B — PROJET_CASSANDRE.
+Spécification des niveaux Zone A / Zone B / Zone C — PROJET_CASSANDRE.
 
 Données pures (aucune dépendance à `bpy`, comme `kit_spec.py`), consommées
 par `build_level.py`. Ce fichier ne prend AUCUNE décision de level design :
@@ -144,4 +144,87 @@ ZONE_B = {
 }
 
 
-ZONES = {"a": ZONE_A, "b": ZONE_B}
+# -----------------------------------------------------------------------------
+# ZONE C — Rayons
+# -----------------------------------------------------------------------------
+
+ZONE_C = {
+    "name": "zone_c_rayons",
+
+    "floor": {"x": (-12.0, 12.0), "y": (-2.0, 26.0), "tile": 4.0},
+
+    "walls": [
+        wall_run((-12.0, -2.0), (12.0, -2.0), (0.0, -1.0)),   # sud
+        wall_run((-12.0, 26.0), (12.0, 26.0), (0.0, 1.0)),    # nord
+        wall_run((-12.0, -2.0), (-12.0, 26.0), (-1.0, 0.0)),  # ouest
+        wall_run((12.0, -2.0), (12.0, 26.0), (1.0, 0.0)),     # est
+    ],
+
+    "vitrine": None,
+    "checkouts": None,
+
+    # Trois rangées de gondoles parallèles à l'axe Y (axe de déplacement
+    # principal du joueur, du spawn sud vers le fond nord), créant des allées
+    # nord-sud. Chaque rangée : 8 m de kit_gondola_4m (2 pièces, tiling exact,
+    # AUCUN reste — si ça ne tombe pas juste, c'est une erreur à signaler
+    # comme le fait déjà `wall_remainder` dans build_level.py), avec un
+    # kit_gondola_end accolé à CHAQUE extrémité — bloque la vue à TRAVERS une
+    # rangée (une allée voisine, un couloir latéral) et occulte réellement
+    # `spawn_suit_3`/`spawn_suit_4` depuis le spawn (vérifié en jeu). Ça ne
+    # bloque PAS la vue LE LONG d'une allée elle-même : une allée est par
+    # construction une ligne droite dégagée d'un bout à l'autre, donc un
+    # Costard posé en son centre reste visible dès le spawn qui la regarde
+    # en face — voir la correction de `spawn_suits` ci-dessous, qui documente
+    # le bug réel que ça a produit.
+    #
+    # Espacement centre-à-centre 4.25 m entre rangées adjacentes = 1.25 m de
+    # profondeur de gondole + 3.0 m d'allée (valeur documentée dans
+    # `kit_spec.py::kit_gondola_4m` : "allée de 3 m entre deux gondoles").
+    # Rangées à X = -4.25 / 0.0 / 4.25 → deux allées centrales de 3 m entre
+    # rangées (combat resserré, "couloir") + deux couloirs latéraux ouverts
+    # entre rangée extérieure et mur (~7 m chacun, pour circuler/reculer).
+    "gondolas": {
+        "piece": "kit_gondola_4m",
+        "end_piece": "kit_gondola_end",
+        "rows": [
+            {"x": -4.25, "y": (8.0, 16.0)},
+            {"x": 0.0,   "y": (8.0, 16.0)},
+            {"x": 4.25,  "y": (8.0, 16.0)},
+        ],
+    },
+
+    "spawn_player": (0.0, 0.0, 0.0),
+    # PREMIER JET CORRIGÉ (vérifié en jeu, `window.cassandre.suits`) :
+    # `spawn_suit_1`/`spawn_suit_2` étaient posés à mi-rangée (Y=12), dans
+    # l'axe même de l'allée qu'ils sont censés garder — or une allée est par
+    # construction une ligne DROITE et DÉGAGÉE d'un bout à l'autre : depuis
+    # `spawn_player`, `hasClearWorldPath` n'est jamais coupé par une rangée
+    # de gondoles qui longe l'allée sans jamais la traverser. Résultat mesuré
+    # au premier chargement : `spawn_suit_2` était déjà en état `attack` dès
+    # le spawn (12.2 m, sous `attackRange`=16 m) — aucune fenêtre d'approche,
+    # exactement le défaut déjà corrigé une fois en Zone B
+    # (`spawn_suit_2` 15 m → 18 m). Un placement centré dans une allée
+    # rectiligne ne peut PAS être cette embuscade masquée par occlusion (la
+    # ligne de vue existe par définition dès qu'on regarde dans l'allée) —
+    # seule la distance protège la fenêtre d'approche ici, comme en Zone B.
+    # Déplacés au-delà des rangées (Y=18, zone ouverte au nord du bloc de
+    # gondoles) : 18.1 m, au-delà d'`attackRange` avec la même marge que le
+    # fix de Zone B, `chase` et non `attack` au spawn (revérifié en jeu).
+    "spawn_suits": [
+        ("spawn_suit_1", (-2.125, 18.0, 0.0)),  # sortie de l'allée centrale ouest
+        ("spawn_suit_2", (2.125, 18.0, 0.0)),   # sortie de l'allée centrale est
+        # Zone dégagée au nord du bloc de gondoles, combat ouvert avant la
+        # sortie — à ~21.8 m du spawn, au-delà d'attackRange=16m (voir
+        # suitConfig.ts:178), pour laisser une fenêtre d'approche.
+        ("spawn_suit_3", (-6.0, 21.0, 0.0)),
+        ("spawn_suit_4", (6.0, 21.0, 0.0)),
+    ],
+
+    "use_objects": [],
+
+    # Intérieur, pas de vitrine — pas de sun (même choix que Zone B).
+    "lighting": {"sun": False},
+}
+
+
+ZONES = {"a": ZONE_A, "b": ZONE_B, "c": ZONE_C}

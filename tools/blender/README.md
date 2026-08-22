@@ -5,7 +5,7 @@ Scripts headless. Aucun ne nécessite d'interface.
 | Script | Usage |
 |---|---|
 | `kit_spec.py` | **données** du kit modulaire (pièces, dimensions, proxies) — pas exécutable seul |
-| `level_spec.py` | **données** des niveaux Zone A / Zone B (murs, sol, spawns, vitrine, caisses) — pas exécutable seul |
+| `level_spec.py` | **données** des niveaux Zone A / Zone B / Zone C (murs, sol, spawns, vitrine, caisses, gondoles) — pas exécutable seul |
 | `geo_utils.py` | fonctions bpy partagées (boîtes subdivisées, proxies, scène) — importé par `build_kit.py` ET `build_level.py`, pas exécutable seul |
 | `build_kit.py` | génère `kit_hypermarche.blend` à partir de `kit_spec.py` |
 | `build_level.py` | assemble un niveau (`zone_a_parking.blend` / `zone_b_caisses.blend`) à partir du kit + `level_spec.py` |
@@ -33,6 +33,11 @@ blender -b assets_src/blender/zone_a_parking.blend -P tools/blender/export_level
 blender -b assets_src/blender/zone_b_caisses.blend -P tools/blender/bake_vertex_lighting.py -- --save
 blender -b assets_src/blender/zone_b_caisses.blend -P tools/blender/validate_level.py -- --strict
 blender -b assets_src/blender/zone_b_caisses.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_b_caisses.glb
+
+blender -b --factory-startup -P tools/blender/build_level.py -- --zone c --kit assets_src/blender/kit_hypermarche.blend --out assets_src/blender/zone_c_rayons.blend
+blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/bake_vertex_lighting.py -- --save
+blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/validate_level.py -- --strict
+blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_c_rayons.glb
 ```
 
 `--strict` fait échouer sur les warnings. À utiliser en CI, pas en itération.
@@ -178,3 +183,73 @@ de la pièce.
 `loader.ts::buildUseObject` lit `extras.target` (custom property Blender
 `target`). Corrigé — le check n'a de valeur que s'il regarde la même clé que
 le runtime.
+
+### Niveau Zone C (Rayons)
+
+**Construit avec le vrai kit modulaire (2026-08-22)**, sur le même schéma que
+Zone A/B — `level_spec.py::ZONE_C` transcrit littéralement le plan fourni
+(aucune décision de layout prise ici), `build_level.py` l'exécute
+mécaniquement. Nouvelle fonction `build_gondolas` (sur le modèle de
+`build_checkouts`) : tile `kit_gondola_4m` le long de chaque rangée et
+accole un `kit_gondola_end` à chaque extrémité.
+
+**Comptes obtenus** (`BUILD LEVEL — zone_c_rayons`) :
+
+| Élément | Compte |
+|---|---|
+| Tuiles de sol (24 × 28 m / 4 m) | 42 |
+| Murs (`kit_wall_4m` uniquement — 24/24/28/28 m, tous multiples de 4 m, 0 reste) | 26 |
+| Gondoles + capuchons (3 rangées × (2 `kit_gondola_4m` + 2 `kit_gondola_end`)) | 12 |
+| Spawns (1 joueur + 4 Costards) | 5 |
+| Objets `use_*` | 0 |
+| Lampes de secteur (grille 3 × 4, espacement ~8.00 × 7.00 m) | 12 (pas de sun) |
+
+Bake (`bake_vertex_lighting.py --save`) : **0 mesh noir, 0 dégradé plat** sur
+80 meshes, luminance moyenne globale 0.204. 16 sommets écrêtés sur les
+gondoles de la rangée centrale (proches des lampes de plafond, `--light-energy`
+par défaut 180 W comme A/B) — cosmétique, sans conséquence sur le verdict.
+
+`validate_level.py -- --strict` : **`VERDICT : CONFORME (0 erreurs,
+0 warnings)`** — contrairement à la Zone A, aucune exception n'a été
+nécessaire ici (voir piège grille ci-dessous, résolu en amont plutôt que
+documenté comme dérogation). 177 objets (160 meshes), 10648 triangles,
+2 matériaux, colliders `cuboid:80`.
+
+Export (`export_level.py`) : `public/assets/levels/zone_c_rayons.glb`,
+465 Ko. Rechargé dans Blender (`import_scene.gltf`) pour vérification
+indépendante du fichier produit : 165 objets (`col_*`:80, `kit_floor_4x4`
+rendu:42, `kit_wall_4m` rendu:26, `kit_gondola_*` rendu:12, `spawn_player`:1,
+`spawn_suit_*`:4 — comptes identiques au `.blend` source), `COLOR_0`
+(attribut `Color`, domaine `CORNER`) non vide sur un mesh de rendu
+échantillonné, positions des 5 spawns et bounding box d'un collider de
+gondole revérifiées bit à bit contre `level_spec.ZONE_C`.
+
+**Piège de grille rencontré et résolu (nouveau, propre à Zone C — pas dans
+A/B) :** le plan donné centre chaque rangée de gondoles sur X (-4.25 / 0.0 /
+4.25, espacement centre-à-centre 4.25 m). Mais l'origine d'une pièce de kit
+est un COIN, jamais un centre (`kit_spec.py`) : centrer une pièce profonde de
+1.25 m sur ces coordonnées demanderait un décalage de 0.625 m (1.25 / 2), qui
+n'est PAS un multiple de la grille 0.25 m — et aurait fait échouer
+`validate_level.py` sous `--strict` (`check_transforms` avertit sur tout
+mesh hors grille, sans distinction de classe SHELL/PROP). Contrairement à
+`use_crowbar` en Zone A, la consigne pour cette zone était explicitement
+« 0 warning, aucune exception » : `build_gondolas` utilise donc `row["x"]`
+TEL QUEL comme coordonnée d'un bord de la pièce (pas son centre visuel),
+ROT 90° pour aligner la longueur (axe local X du kit) sur l'axe monde Y.
+Résultat vérifié par calcul et par relecture des bounding box des colliders
+exportés : les allées centrales restent à EXACTEMENT 3.0 m (valeur ferme du
+plan, préservée), et validate_level passe à 0 warning. Conséquence
+mécanique acceptée, pas un changement de plan : les deux couloirs latéraux
+ne sont plus rigoureusement symétriques (6.5 m à l'ouest / 7.75 m à l'est,
+au lieu de ~7 m des deux côtés si on avait centré) — l'écart, 0.625 m, ne
+change aucun placement donné par `level_spec.py`, seulement l'implémentation
+mécanique du centrage. Documenté en détail dans le docstring de
+`build_gondolas`.
+
+**Observation, hors scope de cette tâche (notée, pas traitée)** : `export_level.py`
+documente en tête « Valide d'abord, exporte ensuite » mais son code
+n'appelle en réalité jamais `validate_level.py` — l'export se lance
+directement. Sans conséquence ici puisque la chaîne documentée exécute
+`validate_level.py` en étape séparée avant `export_level.py`, mais l'écart
+entre la docstring et le code existe déjà pour Zone A/B, pas introduit par
+Zone C.

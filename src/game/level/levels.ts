@@ -33,4 +33,8 @@ export const LEVEL_CHOICES: LevelDef[] = [
   // Costard scellé hors `attackRange` de la Zone A) — démarre ARMÉE, pas de
   // `startUnarmed` : le pied-de-biche/pompe sont déjà acquis en Zone A.
   { id: "zone_b_caisses", label: "Zone B — Caisses", kind: "gltf", gltfName: "zone_b_caisses" },
+  // Combat en couloirs entre les rangées de gondoles (embuscades latérales
+  // dès qu'une ligne de vue s'ouvre dans une allée) — démarre ARMÉE, même
+  // logique que la Zone B : le pied-de-biche/pompe sont déjà acquis avant.
+  { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },
 ];
