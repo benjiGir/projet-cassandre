@@ -5,10 +5,10 @@ Scripts headless. Aucun ne nécessite d'interface.
 | Script | Usage |
 |---|---|
 | `kit_spec.py` | **données** du kit modulaire (pièces, dimensions, proxies) — pas exécutable seul |
-| `level_spec.py` | **données** des niveaux Zone A / Zone B / Zone C (murs, sol, spawns, vitrine, caisses, gondoles) — pas exécutable seul |
+| `level_spec.py` | **données** des niveaux Zone A / Zone B / Zone C / Zone D / Zone E (murs, sol, spawns, vitrine, caisses, gondoles, racks, mezzanine, porte) — pas exécutable seul |
 | `geo_utils.py` | fonctions bpy partagées (boîtes subdivisées, proxies, scène) — importé par `build_kit.py` ET `build_level.py`, pas exécutable seul |
 | `build_kit.py` | génère `kit_hypermarche.blend` à partir de `kit_spec.py` |
-| `build_level.py` | assemble un niveau (`zone_a_parking.blend` / `zone_b_caisses.blend`) à partir du kit + `level_spec.py` |
+| `build_level.py` | assemble un niveau (`zone_a_parking.blend` / `zone_b_caisses.blend` / ... / `zone_e_bureau.blend`) à partir du kit + `level_spec.py` |
 | `inspect_kit.py` | vérifie le kit produit contre le contrat du projet |
 | `bake_vertex_lighting.py` | bake d'éclairage en vertex colors + rapport de plausibilité |
 | `validate_level.py` | vérifie un `.blend` de niveau contre le contrat du projet |
@@ -43,6 +43,11 @@ blender -b --factory-startup -P tools/blender/build_level.py -- --zone d --kit a
 blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/bake_vertex_lighting.py -- --save
 blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/validate_level.py   # PAS --strict, voir note (palettes empilées)
 blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_d_reserve.glb
+
+blender -b --factory-startup -P tools/blender/build_level.py -- --zone e --kit assets_src/blender/kit_hypermarche.blend --out assets_src/blender/zone_e_bureau.blend
+blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/bake_vertex_lighting.py -- --save
+blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/validate_level.py -- --strict
+blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_e_bureau.glb
 ```
 
 `--strict` fait échouer sur les warnings. À utiliser en CI, pas en itération.
@@ -397,3 +402,87 @@ vide soit un chevauchement entre palettes — pire qu'un warning de
 validateur. Exactement la même famille de dérogation que `use_crowbar` en
 Zone A (Z=0.15, déjà documenté plus haut) : accepté et documenté, pas corrigé
 — le critère réel du projet est « 0 erreur », pas « 0 warning ».
+
+### Niveau Zone E (Bureau)
+
+**Construit avec le vrai kit modulaire (2026-08-22), scope volontairement
+restreint — voir CLAUDE.md.** Cette passe ne construit QUE la géométrie de
+la salle + un ennemi placeholder standard (`spawn_suit_1`, le même Costard
+que Zone A-D). **Le "directeur" en tant que vrai boss (nouveau type
+d'entité, effet de peau qui se déchire/révèle reptilien), le badge à
+ramasser et la porte de sortie VERROUILLÉE par ce badge restent À FAIRE dans
+une tâche séparée ultérieure** — aucun nouveau type d'entité, aucun système
+de badge, aucune porte animée n'a été introduit ici. Aucun fichier `src/**`
+n'a été touché.
+
+`level_spec.py::ZONE_E` transcrit littéralement le plan fourni (aucune
+décision de layout prise ici) : une salle principale 16×16 m + une alcôve de
+sortie sans issue (couloir 2×4 m), reliées par une brèche murale de 2 m au
+nord dans laquelle est posé `kit_door_2m` — un encadrement de porte avec
+découpe intégrée (compound de 3 cuboids : 2 jambages + linteau, voir
+`kit_spec.py::_wall_opening_parts`), **pas** un `kit_door_leaf`/`door_*`
+animé : la brèche reste un simple passage traversable dès le départ.
+
+Nouvelle clé de zone optionnelle `"door_frame"` (comme `"racks"` ou
+`"mezzanine"`) et nouvelle fonction `build_door_frame` dans
+`build_level.py` (posée entre `build_checkouts` et `build_gondolas`) :
+pose `zone["door_frame"]["piece"]` via `place_kit_piece`, à `(x, y, 0.0)`,
+**rotation 0°**. Aucune rotation n'a été nécessaire : `kit_door_2m` partage
+la même convention d'origine que `kit_wall_2m` (coin, x∈[0,W], y∈[0,WALL_T])
+et la brèche court le long de l'axe X exactement comme les `wall_run` nord
+adjacents (`theta_deg=0°` calculé par `plan_wall_run` pour ces mêmes
+segments) — vérifié par calcul avant l'implémentation, puis confirmé par la
+bounding box réimportée (voir plus bas). `needed_pieces` inclut
+`kit_door_2m` quand `zone.get("door_frame")` existe ; le récapitulatif
+final affiche `Porte : 1`.
+
+**Comptes obtenus** (`BUILD LEVEL — zone_e_bureau`) :
+
+| Élément | Compte |
+|---|---|
+| Tuiles de sol (rectangle englobant 16 × 20 m / 4 m — le sol déborde sous l'alcôve, sans conséquence) | 20 |
+| Murs (`kit_wall_4m`:16, `kit_wall_2m`:3, `kit_wall_1m`:2 — les deux tronçons nord de 7 m tilent chacun en 4+2+1, aucun reste) | 21 |
+| Porte (`kit_door_2m`, encadrement, PAS de `door_*` animé) | 1 |
+| Spawns (1 joueur + 1 Costard placeholder) | 2 |
+| Objets `use_*` | 0 |
+| Lampes de secteur (grille 2 × 3, espacement 8.00 × 6.67 m) | 6 (pas de sun) |
+
+Bake (`bake_vertex_lighting.py --save`) : **0 mesh noir, 0 dégradé plat**
+sur 42 meshes, luminance moyenne globale 0.178, 0 sommet écrêté.
+
+`validate_level.py -- --strict` : **`VERDICT : CONFORME (0 erreurs,
+0 warnings)`** — comme la Zone C (et contrairement à A/D), aucune exception
+n'a été nécessaire ici, tout tombe sur la grille 0.25 m par construction.
+94 objets (86 meshes), 4728 triangles / 200000, 1 matériau utilisé
+(`mat_kit_shell` — aucun mobilier de vente/réserve dans cette zone),
+colliders `cuboid:44` (41 murs+sol + 3 pour le compound de la porte).
+
+Export (`export_level.py`) : `public/assets/levels/zone_e_bureau.glb`,
+201 Ko. Rechargé dans Blender (`import_scene.gltf`) pour vérification
+indépendante du fichier produit : 88 objets (86 meshes — les 6 lampes de
+bake sont exclues de l'export, `_LIGHTS["gltf_export"] = False`), comptes
+par préfixe identiques au `.blend` source (`kit_floor_4x4`:20,
+`kit_wall_4m`:16, `kit_wall_2m`:3, `kit_wall_1m`:2, `kit_door_2m`:1,
+`col_box_*`:44 dont `col_box_door_2m_l/r/top`:1 chacun, `spawn_player`:1,
+`spawn_suit_1`:1), `COLOR_0` (attribut `Color`, domaine `CORNER`) non vide
+sur une tuile de sol échantillonnée, et surtout **bounding box de
+`kit_door_2m` revérifiée bit à bit : X[-1.000, 1.000] Y[14.000, 14.250]
+Z[0.000, 5.000]** — exactement la brèche X∈[-1,1] à Y=14 (face intérieure)
+prescrite par `level_spec.ZONE_E`, épaisseur 0.25 m (`WALL_T`) et hauteur
+5 m (`WALL_H`) comme les murs adjacents.
+
+**Aucun piège nouveau rencontré** — contrairement à Zone C (asymétrie de
+grille) et Zone D (rotation d'escalier), `kit_door_2m` se comporte en tout
+point comme un `kit_wall_2m` du point de vue du placement mécanique
+(origine, orientation par défaut), donc `build_door_frame` n'a eu besoin
+d'aucune compensation.
+
+**Rappel de scope, à ne pas perdre de vue** : ce qui suit N'EST PAS fait et
+reste dans le périmètre d'une tâche dédiée séparée, comparable en ampleur à
+la Phase 3 (l'ennemi Costard) — (1) le directeur comme vrai boss (nouveau
+type d'entité, peau qui se déchire pour révéler un reptilien), (2) le badge
+à ramasser, (3) la porte de sortie verrouillée par ce badge (remplacerait
+`kit_door_2m` par un vrai `door_*`/`kit_door_leaf` + logique de
+verrouillage). Le Costard placeholder posé ici (`spawn_suit_1`) n'a aucune
+des propriétés du directeur — c'est un ennemi standard, identique à ceux
+des zones A-D.

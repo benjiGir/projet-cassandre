@@ -1,5 +1,5 @@
 """
-Spécification des niveaux Zone A / Zone B / Zone C / Zone D — PROJET_CASSANDRE.
+Spécification des niveaux Zone A / Zone B / Zone C / Zone D / Zone E — PROJET_CASSANDRE.
 
 Données pures (aucune dépendance à `bpy`, comme `kit_spec.py`), consommées
 par `build_level.py`. Ce fichier ne prend AUCUNE décision de level design :
@@ -382,4 +382,90 @@ ZONE_D = {
 }
 
 
-ZONES = {"a": ZONE_A, "b": ZONE_B, "c": ZONE_C, "d": ZONE_D}
+
+
+# -----------------------------------------------------------------------------
+# ZONE E — Bureau
+# -----------------------------------------------------------------------------
+#
+# SCOPE (voir CLAUDE.md / tâche dédiée) : cette zone ne construit QUE la
+# géométrie + un ennemi placeholder standard (`spawn_suit_*`, le même Costard
+# que Zone A-D). Le "directeur" en tant que vrai boss (nouveau type
+# d'entité, peau qui se déchire/révèle reptilien), le badge à ramasser et la
+# porte de sortie VERROUILLÉE par ce badge sont HORS SCOPE ici, réservés à
+# une tâche séparée ultérieure. `door_frame` ci-dessous pose `kit_door_2m`
+# (un encadrement de porte, PAS un `kit_door_leaf`/`door_*` animé) : un
+# simple passage ouvert dès le départ vers une alcôve de sortie sans issue,
+# aucune interactivité nouvelle.
+
+ZONE_E = {
+    "name": "zone_e_bureau",
+
+    # Salle principale (bureau) + alcôve de sortie (couloir sans issue,
+    # symbolise "la sortie" en attendant la vraie séquence de fin de niveau
+    # — hors scope ici). Un seul rectangle englobant pour tile_floor, comme
+    # la Zone A (le sol déborde sous les zones hors des murs, ce qui est
+    # sans conséquence — les murs bloquent déjà l'accès, voir CLAUDE.md).
+    "floor": {"x": (-8.0, 8.0), "y": (-2.0, 18.0), "tile": 4.0},
+
+    "walls": [
+        # Salle principale (16x16m)
+        wall_run((-8.0, -2.0), (8.0, -2.0), (0.0, -1.0)),    # sud
+        wall_run((-8.0, -2.0), (-8.0, 14.0), (-1.0, 0.0)),   # ouest
+        wall_run((8.0, -2.0), (8.0, 14.0), (1.0, 0.0)),      # est
+        # Nord, par morceaux — la brèche X∈[-1,1] est la porte (kit_door_2m,
+        # posée à part ci-dessous, PAS un wall_run, même convention que la
+        # vitrine de la Zone A).
+        wall_run((-8.0, 14.0), (-1.0, 14.0), (0.0, 1.0)),
+        wall_run((1.0, 14.0), (8.0, 14.0), (0.0, 1.0)),
+        # Alcôve de sortie : couloir de 2m de large (aligné pile sur la
+        # largeur de la porte, aucun mur de flanc nécessaire — contrairement
+        # à l'alcôve de la Zone A qui était plus large que sa vitrine),
+        # 4m de profondeur, sans issue.
+        wall_run((-1.0, 18.0), (1.0, 18.0), (0.0, 1.0)),     # fond du couloir
+        wall_run((-1.0, 14.0), (-1.0, 18.0), (-1.0, 0.0)),   # flanc ouest
+        wall_run((1.0, 14.0), (1.0, 18.0), (1.0, 0.0)),      # flanc est
+    ],
+
+    "vitrine": None,
+    "checkouts": None,
+    "gondolas": None,
+    "racks": None,
+    "mezzanine": None,
+    "storage_props": None,
+
+    # Porte de sortie : `kit_door_2m` (encadrement avec découpe de porte
+    # intégrée — PAS un `kit_door_leaf`/`door_*` animé, voir le scope
+    # ci-dessus) posée exactement dans la brèche des wall_run nord,
+    # X∈[-1,1], Y=14 (même ligne que les segments de mur adjacents), même
+    # convention d'origine que les autres pièces de mur.
+    "door_frame": {
+        "piece": "kit_door_2m",
+        "x": -1.0,
+        "y": 14.0,
+    },
+
+    "spawn_player": (0.0, 0.0, 0.0),
+    # Un seul Costard STANDARD (placeholder du "directeur", voir scope) au
+    # centre de la salle, face au joueur à l'entrée — confrontation courte
+    # et immédiate plutôt qu'une approche longue (c'est la dernière salle du
+    # jeu, la "révélation" doit être immédiate, pas une embuscade cachée).
+    # 9m du spawn : sous attackRange=16m par choix assumé ici (contrairement
+    # aux embuscades des zones précédentes, ce n'est pas un couloir/une
+    # allée traversée par surprise, c'est une salle unique où le joueur
+    # entre en sachant qu'il y a un ennemi en face — le state machine garde
+    # de toute façon un temps `alertDuration` (0.45s, voir
+    # suitConfig.ts:175) avant tout tir possible, quelle que soit la
+    # distance). Vérifié en jeu par l'humain (pas ici, voir CLAUDE.md) que
+    # ce n'est pas déjà en état `attack` au tout premier pas fixe.
+    "spawn_suits": [
+        ("spawn_suit_1", (0.0, 9.0, 0.0)),
+    ],
+
+    "use_objects": [],
+
+    "lighting": {"sun": False},
+}
+
+
+ZONES = {"a": ZONE_A, "b": ZONE_B, "c": ZONE_C, "d": ZONE_D, "e": ZONE_E}

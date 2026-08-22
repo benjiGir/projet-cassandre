@@ -17,8 +17,12 @@ Assemblage d'un niveau à partir du kit modulaire — PROJET_CASSANDRE.
         --zone d --kit assets_src/blender/kit_hypermarche.blend \\
         --out assets_src/blender/zone_d_reserve.blend
 
+    blender -b --factory-startup -P tools/blender/build_level.py -- \\
+        --zone e --kit assets_src/blender/kit_hypermarche.blend \\
+        --out assets_src/blender/zone_e_bureau.blend
+
 Options :
-    --zone a|b|c|d       quelle entrée de `level_spec.ZONES` construire
+    --zone a|b|c|d|e     quelle entrée de `level_spec.ZONES` construire
     --kit PATH          .blend source du kit (défaut assets_src/blender/kit_hypermarche.blend)
     --out PATH          .blend produit (défaut assets_src/blender/<nom de la zone>.blend)
     --light-energy W    puissance des area lights de plafond (défaut 180 —
@@ -333,6 +337,29 @@ def build_checkouts(checkout_spec: dict | None, mesh_lookup, proxy_map,
         place_kit_piece(piece, mesh_lookup, proxy_map, (x, y, 0.0), 0.0, props_coll, col_coll)
         count += 1
     return count
+
+
+# ---------------------------------------------------------------------------
+# Porte de sortie (Zone E) — encadrement, PAS une porte animée
+# ---------------------------------------------------------------------------
+
+def build_door_frame(door_spec: dict | None, mesh_lookup, proxy_map,
+                      shell_coll, col_coll) -> int:
+    """`kit_door_2m` : un encadrement de mur avec découpe de porte intégrée
+    (compound de 3 cuboids, voir `kit_spec.py::_wall_opening_parts`), PAS un
+    `kit_door_leaf`/`door_*` animé — le badge/la porte verrouillée sont hors
+    scope (voir CLAUDE.md / `level_spec.py::ZONE_E`). Posée dans la brèche
+    laissée par les `wall_run` nord de la Zone E.
+
+    Même origine (coin, x∈[0,W], y∈[0,WALL_T]) et même orientation par
+    défaut que `kit_wall_2m` : aucune rotation nécessaire ici — vérifié
+    contre `plan_wall_run` pour les segments de mur adjacents à cette même
+    brèche (run le long de +X, theta_deg=0°). Une ligne suffit, rot_deg=0.0."""
+    if door_spec is None:
+        return 0
+    place_kit_piece(door_spec["piece"], mesh_lookup, proxy_map,
+                     (door_spec["x"], door_spec["y"], 0.0), 0.0, shell_coll, col_coll)
+    return 1
 
 
 # ---------------------------------------------------------------------------
@@ -708,6 +735,8 @@ def main() -> None:
     if zone.get("storage_props"):
         needed_pieces.append("kit_pallet")
         needed_pieces.append("kit_crate")
+    if zone.get("door_frame"):
+        needed_pieces.append(zone["door_frame"]["piece"])
     mesh_names, proxy_map = gather_kit_mesh_names(needed_pieces)
 
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
@@ -730,6 +759,7 @@ def main() -> None:
 
     pallet_count, crate_count = build_storage_props(zone.get("storage_props"), mesh_lookup, proxy_map,
                                                       props_coll, col_coll)
+    door_count = build_door_frame(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
 
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
@@ -753,6 +783,7 @@ def main() -> None:
     print(f"  Rambarde mezzanine {railing_count}")
     print(f"  Palettes           {pallet_count}")
     print(f"  Caisses (crates)   {crate_count}")
+    print(f"  Porte              {door_count}")
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
     print(f"  Lampes             {light_count}  (espacement ~{spacing_x:.2f} x {spacing_y:.2f} m)")

@@ -187,7 +187,26 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > Revérifié en jeu : les 5 Costards passent `idle`→`alert`→`chase` sans
 > jamais `attack` au spawn.
 >
-> Zone E, secrets, porte à badge : pas commencés.
+> **Zone E — Bureau, géométrie seule (2026-08-22)** : décision de scope
+> explicite avec l'utilisateur avant construction — cette passe ne fait QUE
+> la salle + un Costard placeholder standard. Le vrai directeur (nouveau
+> type d'entité, peau qui se déchire pour révéler un reptilien), le badge à
+> ramasser, et la porte de sortie verrouillée par ce badge sont **une tâche
+> séparée non commencée**, comparable en ampleur à la Phase 3. Salle
+> 16×16m + petit couloir de sortie sans issue (2×4m) via `kit_door_2m` (un
+> encadrement de porte avec découpe intégrée — PAS un `kit_door_leaf`/
+> `door_*` animé, aucune interactivité). `validate_level.py --strict` :
+> 0 erreur, 0 warning — première zone sans aucune exception de grille.
+> Un seul `spawn_suit_1` à 9m du spawn, volontairement SOUS `attackRange`
+> (contrairement aux zones précédentes) : c'est la salle de confrontation
+> finale, la "révélation" doit être immédiate, pas une embuscade en couloir
+> — le state machine garde de toute façon un temps `alertDuration` (0.45s)
+> avant tout tir possible, quelle que soit la distance. Vérifié en jeu :
+> comptes exacts (colliders 44, spawns Costard 1, use 0), le Costard engage
+> rapidement mais jamais avant ce temps d'alerte — comportement voulu, pas
+> le bug d'embuscade des Zones C/D.
+>
+> Secrets, badge, directeur : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet
