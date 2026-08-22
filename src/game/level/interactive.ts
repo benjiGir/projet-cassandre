@@ -30,6 +30,8 @@ import type { UseObject } from "./loader";
 export interface InteractionHandlers {
   /** `use_crowbar` : ramasse le pied-de-biche. Appelle `weapons.pickUpMelee()` côté `main.ts`. */
   onCrowbarPickup(): void;
+  /** `use_shotgun` : ramasse le pompe (niveau complet, Zone B). Appelle `weapons.pickUpShotgun()` côté `main.ts`. */
+  onShotgunPickup(): void;
 }
 
 export class InteractionSystem {
@@ -113,6 +115,14 @@ export class InteractionSystem {
         // tant que le joueur reste à portée avec la touche maintenue (`use`
         // est un front consommé côté InputRecorder, mais rester APPUYÉ sur
         // plusieurs pas fixes distincts produit plusieurs fronts distincts).
+        this.consumed.add(useObject.object);
+        break;
+
+      case "use_shotgun":
+        // Même contrat exact que `use_crowbar` ci-dessus (pickup autoportant,
+        // pas de `targetName`).
+        handlers.onShotgunPickup();
+        useObject.object.visible = false;
         this.consumed.add(useObject.object);
         break;
 

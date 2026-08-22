@@ -139,6 +139,18 @@ export class WeaponSystem {
    */
   private hasMelee = true;
 
+  /**
+   * Le joueur possède-t-il le pompe ? `true` par défaut — même raison que
+   * `hasMelee` (ne rien casser pour `gym.ts`/les zones B-E qui démarrent
+   * déjà "armées" sans jamais appeler `startUnarmed()`). Passe à `false`
+   * via `startUnarmed()`, revient à `true` via `pickUpShotgun()`. Comble un
+   * écart documenté (le pompe n'avait jusqu'ici AUCUNE contrainte de
+   * ramassage, toujours utilisable via `frame.switchToShotgun` même joueur
+   * désarmé) — nécessaire pour que le niveau complet ait une vraie
+   * progression (pied-de-biche en Zone A, pompe ramassé en Zone B).
+   */
+  private hasShotgun = true;
+
   private readonly physics: PhysicsWorld;
   private readonly clock: GameClock;
   private readonly cfg: WeaponConfig;
@@ -236,6 +248,7 @@ export class WeaponSystem {
    */
   startUnarmed(): void {
     this.hasMelee = false;
+    this.hasShotgun = false;
     this.activeWeapon = "none";
   }
 
@@ -249,6 +262,12 @@ export class WeaponSystem {
   pickUpMelee(): void {
     this.hasMelee = true;
     this.activeWeapon = "melee";
+  }
+
+  /** Ramassage du pompe : `hasShotgun = true`, équipé immédiatement — même contrat que `pickUpMelee`. Idempotente. */
+  pickUpShotgun(): void {
+    this.hasShotgun = true;
+    this.activeWeapon = "shotgun";
   }
 
   /**
@@ -289,7 +308,7 @@ export class WeaponSystem {
     // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
     // pied-de-biche pendant que le joueur est censé être désarmé.
     if (frame.switchToMelee && this.hasMelee) this.activeWeapon = "melee";
-    if (frame.switchToShotgun) this.activeWeapon = "shotgun";
+    if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
 
     // Récupération d'abord (comme `landingDip` dans `controller.ts`) : elle
     // décroît la valeur héritée du pas PRÉCÉDENT. Si ce pas-ci déclenche un
@@ -310,7 +329,7 @@ export class WeaponSystem {
         }
         // Sinon : cooldown non écoulé, tentative à sec — ne fait RIEN. Pas
         // de crash, pas d'animation bloquante (invariant #10).
-      } else if (this.activeWeapon === "shotgun") {
+      } else if (this.activeWeapon === "shotgun" && this.hasShotgun) {
         if (this.shotgunCooldownRemaining <= 0 && this.shotgunAmmo > 0) {
           this.fireShotgun(eyeOrigin, yaw, pitch);
           this.shotgunCooldownRemaining = cfg.shotgunCooldown;

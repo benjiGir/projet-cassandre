@@ -586,6 +586,7 @@ async function main() {
       // tableau (voir `interactive.ts`/`hotReload.ts`).
       interaction.update(activeFrame.use, gltfLevelSession?.current?.useObjects ?? [], player.position, {
         onCrowbarPickup: () => weapons.pickUpMelee(),
+        onShotgunPickup: () => weapons.pickUpShotgun(),
       });
 
       // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
