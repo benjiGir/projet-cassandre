@@ -19,7 +19,9 @@ import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "./render/render
 import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
 import { buildGym } from "./game/level/gym";
 import { createLevelSession, type LevelSession } from "./game/level/hotReload";
+import { InteractionSystem } from "./game/level/interactive";
 import type { LevelStats } from "./game/level/loader";
+import { LEVEL_CHOICES, type LevelDef } from "./game/level/levels";
 import { PlayerController } from "./game/player/controller";
 import {
   FEEL_VARIANTS,
@@ -49,17 +51,74 @@ import { SuitManager } from "./game/entities/suitManager";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "./game/entities/suitConfig";
 import { useGameStore } from "./game/state";
 import { App } from "./ui/App";
+import { LevelMenu } from "./ui/LevelMenu";
 
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
 const SPAWN_FEET_GUARD = 0.1;
 
+/**
+ * Résout le `LevelDef` choisi pour ce boot, AVANT toute construction de scène
+ * Three.js/monde Rapier — voir l'appel tout en haut de `main()`.
+ *
+ * Deux voies, dans cet ordre :
+ *   1. `?level=<id>` dans l'URL. Si `<id>` correspond à une entrée du
+ *      registre (`LEVEL_CHOICES`), elle est utilisée directement, SANS
+ *      afficher le menu. Sinon (nom qui ne matche aucune entrée), il est
+ *      traité comme un nom de fichier glTF BRUT à charger tel quel
+ *      (`kind: "gltf"` implicite, pas de `startUnarmed`) — c'est le mode
+ *      d'itération actuel pour tester une zone en cours d'export, avant
+ *      qu'elle ait une entrée officielle dans le registre. Flexibilité
+ *      délibérément préservée, ne pas la retirer.
+ *   2. Sinon, affiche `LevelMenu` (voir `src/ui/LevelMenu.tsx`, composant
+ *      purement présentationnel, non modifié ici) et attend le clic de
+ *      l'utilisateur.
+ */
+function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
+  const levelParam = new URLSearchParams(window.location.search).get("level");
+  if (levelParam) {
+    const registered = LEVEL_CHOICES.find((entry) => entry.id === levelParam);
+    if (registered) return Promise.resolve(registered);
+    return Promise.resolve({
+      id: levelParam,
+      label: levelParam,
+      kind: "gltf",
+      gltfName: levelParam,
+    });
+  }
+
+  return new Promise((resolve) => {
+    root.render(
+      createElement(LevelMenu, {
+        options: LEVEL_CHOICES.map((entry) => ({ id: entry.id, label: entry.label })),
+        onChoose: (id) => {
+          const chosen = LEVEL_CHOICES.find((entry) => entry.id === id);
+          // `LevelMenu` n'appelle `onChoose` qu'avec un `id` qu'il a lui-même
+          // reçu dans `options`, donc toujours résolvable ici — le fallback
+          // ne sert qu'à satisfaire le type, jamais atteint en pratique.
+          resolve(chosen ?? LEVEL_CHOICES[0]);
+        },
+      }),
+    );
+  });
+}
+
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const uiRoot = document.getElementById("ui-root") as HTMLDivElement;
 
-  createRoot(uiRoot).render(createElement(App));
+  // --- Choix du niveau (Phase 5) — TOUT EN HAUT de `main()`, avant absolument
+  // tout le reste du boot (avant `root.render(App)`, avant `input.attach`,
+  // avant `initAudio`, avant la scène/caméra/renderer/physique). Invariant #2
+  // (React ne touche jamais la boucle) est trivialement respecté ici : il n'y
+  // a même pas encore de boucle à ce stade. Voir `game/level/levels.ts` pour
+  // le registre — remplace l'ancien hardcode `levelParam === "zone_a_parking"`
+  // documenté comme dette dans CLAUDE.md.
+  const root = createRoot(uiRoot);
+  const choice = await resolveLevelChoice(root);
+  root.render(createElement(App));
+
   input.attach(canvas);
   // Pools de SFX (tir, impact) : voir core/audio.ts. Aucun asset audio
   // n'existe encore dans le dépôt — c'est l'état attendu (invariant #9),
@@ -103,10 +162,33 @@ async function main() {
 
   await initPhysics();
   const physics = new PhysicsWorld();
-  const gym = buildGym(scene, physics);
 
   const player = new PlayerController(physics);
-  player.spawn(gym.spawn.x, gym.spawn.y + SPAWN_FEET_GUARD, gym.spawn.z);
+  // `buildGym` (géométrie + colliders de la gym) n'est appelé QUE sur le
+  // chemin "gym" : sur le chemin "gltf", zéro géométrie/collider de la gym ne
+  // doit exister en mémoire, pas juste être caché (contrainte explicite de ce
+  // slice) — les deux chemins sont mutuellement exclusifs.
+  let initialYaw = 0;
+  if (choice.kind === "gym") {
+    const gym = buildGym(scene, physics);
+    player.spawn(gym.spawn.x, gym.spawn.y + SPAWN_FEET_GUARD, gym.spawn.z);
+    initialYaw = gym.spawnYaw;
+  } else {
+    // Chemin glTF : pas de `gym.spawn` disponible ici (le tout premier
+    // chargement de `loadGltfLevel`, plus bas, est asynchrone et n'a même pas
+    // encore démarré). Position transitoire sûre et documentée : le joueur
+    // tombe quelques pas fixes dans le vide (gravité −25 m/s², invariant #7)
+    // jusqu'à ce que le callback `onLoaded` de `loadGltfLevel` le repositionne
+    // sur `spawn_player` du `.glb` (déjà gaté par `info.isFirstLoad &&
+    // handle.spawnPlayer`, inchangé).
+    //
+    // Volontairement PAS de `await gltfLevelSession.ready` ici pour éliminer
+    // ce délai : `ready` (voir `hotReload.ts`) ne se résout JAMAIS si ce
+    // premier chargement échoue (glb 404 ou invalide pendant un export en
+    // cours), ce qui bloquerait indéfiniment tout le boot du jeu pour un gain
+    // purement cosmétique — décision assumée, pas un oubli.
+    player.spawn(0, 2, 0);
+  }
 
   // Balle dynamique : témoin de non-régression des colliders, et témoin de
   // `setApplyImpulsesToDynamicBodies` — le joueur doit pouvoir la pousser.
@@ -118,30 +200,38 @@ async function main() {
   // la fait heurter le segment ouest du mur nord du hub vers t≈7.3 s, avant
   // d'atteindre l'ouverture du couloir (x∈[-3,3]) : elle reste contenue dans
   // le hub, jamais éjectée vers une autre aile.
+  //
+  // OBJET DE TEST DE LA GYM (pas du contenu générique de moteur) : construite
+  // UNIQUEMENT sur le chemin "gym", ses coordonnées n'ayant aucun sens sur le
+  // chemin glTF. `ballMesh`/`ballBody` restent `null` sinon ; `stepPhysics`/
+  // `interpolateVisuals` plus bas gardent ces cas sûrs (rien à mettre à jour).
   const ballRadius = 0.4;
-  const ballMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(ballRadius, 16, 12),
-    new THREE.MeshLambertMaterial({ color: 0x4488cc }),
-  );
-  scene.add(ballMesh);
-
-  const ballBody = physics.world.createRigidBody(
-    RAPIER.RigidBodyDesc.dynamic().setTranslation(3, 4, 0).setLinvel(-2, 0, 3),
-  );
-  physics.world.createCollider(
-    RAPIER.ColliderDesc.ball(ballRadius)
-      .setRestitution(0.7)
-      // Groupe WORLD : elle doit rester heurtable par le joueur (un groupe
-      // DEBRIS ne collisionnerait qu'avec le décor, et le témoin de poussée
-      // ne servirait plus à rien).
-      .setCollisionGroups(COLLISION_GROUPS.WORLD),
-    ballBody,
-  );
-
+  let ballMesh: THREE.Mesh | null = null;
+  let ballBody: RAPIER.RigidBody | null = null;
   const ballPrevPos = new THREE.Vector3();
   const ballPrevQuat = new THREE.Quaternion();
   const ballCurrPos = new THREE.Vector3(3, 4, 0);
   const ballCurrQuat = new THREE.Quaternion();
+  if (choice.kind === "gym") {
+    ballMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(ballRadius, 16, 12),
+      new THREE.MeshLambertMaterial({ color: 0x4488cc }),
+    );
+    scene.add(ballMesh);
+
+    ballBody = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic().setTranslation(3, 4, 0).setLinvel(-2, 0, 3),
+    );
+    physics.world.createCollider(
+      RAPIER.ColliderDesc.ball(ballRadius)
+        .setRestitution(0.7)
+        // Groupe WORLD : elle doit rester heurtable par le joueur (un groupe
+        // DEBRIS ne collisionnerait qu'avec le décor, et le témoin de poussée
+        // ne servirait plus à rien).
+        .setCollisionGroups(COLLISION_GROUPS.WORLD),
+      ballBody,
+    );
+  }
 
   // --- Vue : lue au taux d'affichage, jamais interpolée (invariant #3) -------
   const clock = new GameClock();
@@ -225,35 +315,48 @@ async function main() {
   // joueur ci-dessus — le sol du hub a sa surface exactement à y=0
   // (`gym.ts`), poser les pieds pile dessus violerait la marge de
   // `colliderOffset` du KCC dès le tout premier pas fixe.
-  spawnSuitAt(-9, SPAWN_FEET_GUARD, 5);
-  spawnSuitAt(9, SPAWN_FEET_GUARD, 5);
-  spawnSuitAt(0, SPAWN_FEET_GUARD, 13);
+  //
+  // POSITIONS DE TEST DE LA GYM (pas du contenu générique de moteur) :
+  // n'apparaissent QUE sur le chemin "gym" — les niveaux glTF ont leurs
+  // propres `spawn_suit_*` (collectés dans `handle.spawnSuits` par
+  // `loader.ts`), consommés séparément dans le callback `onLoaded` de
+  // `loadGltfLevel` plus bas (voir sa doc pour la sémantique face au hot
+  // reload). Effet de bord attendu : le Costard de la Zone A
+  // (`spawn_suit_1`, scellé dans son alcôve) apparaît désormais réellement en
+  // jeu — jusqu'ici jamais spawné malgré le compteur `spawns Costard 1`
+  // affiché par `[level]`.
+  if (choice.kind === "gym") {
+    spawnSuitAt(-9, SPAWN_FEET_GUARD, 5);
+    spawnSuitAt(9, SPAWN_FEET_GUARD, 5);
+    spawnSuitAt(0, SPAWN_FEET_GUARD, 13);
+  }
   // Debug visuel rétro : wireframe togglable à chaud sur toute la géométrie
   // de la scène (voir `render/debugView.ts`) — utile pour repérer le pavage
   // de boîtes/jonctions de la gym à l'œil. Touche dédiée KeyV, gérée plus bas
   // dans `updateFx` à côté du pattern F9/F10 existant.
   const wireframeToggle = createWireframeToggle(scene);
-  // yaw initial = gym.spawnYaw. Convention vérifiée par calcul (voir
-  // gltf-level-conventions / commentaire de gym.ts) : avec l'Euler 'YXZ' de
-  // la caméra ci-dessous et la dérivation de wishX/wishZ dans
-  // PlayerController.update, yaw=0 -> avant = -Z, donc yaw=π -> avant = +Z.
-  // gym.ts vise "regarder vers le couloir (nord, +Z)" avec SPAWN_YAW = π :
+  // yaw initial = `initialYaw` (gym.spawnYaw sur le chemin "gym", 0 sur le
+  // chemin glTF — voir sa résolution plus haut, à côté de `player.spawn`).
+  // Convention vérifiée par calcul (voir gltf-level-conventions / commentaire
+  // de gym.ts) : avec l'Euler 'YXZ' de la caméra ci-dessous et la dérivation
+  // de wishX/wishZ dans PlayerController.update, yaw=0 -> avant = -Z, donc
+  // yaw=π -> avant = +Z. gym.ts vise "regarder vers le couloir (nord, +Z)"
+  // avec SPAWN_YAW = π :
   // c'est la valeur correcte, aucune correction de signe nécessaire.
-  const look = { yaw: gym.spawnYaw, pitch: 0 };
+  const look = { yaw: initialYaw, pitch: 0 };
   // Delta souris agrégé depuis le dernier pas fixe, pour l'enregistrement.
   const lookDelta = { dx: 0, dy: 0 };
 
-  // --- Pipeline de niveau glTF (Phase 4) — capacité ADDITIVE, dev-only -----
-  // `gym.ts` reste le niveau par défaut au boot (décision explicite du plan,
-  // voir CLAUDE.md) : ce bloc ne remplace RIEN, il ajoute la possibilité de
-  // charger un `.glb` par-dessus pour exercer le pipeline loader/hot-reload
-  // (voir `game/level/loader.ts`/`hotReload.ts`). Activation choisie pour
-  // rester dans le budget des 60 s du critère de validation :
-  //   - `?level=<nom>` dans l'URL au boot : le cas d'usage réel, la page
-  //     reste ouverte pendant que Blender exporte vers
-  //     `public/assets/levels/<nom>.glb`, le hot reload fait le reste ;
-  //   - `window.cassandre.level.load("<nom>")` depuis la console, pour
-  //     changer de fixture sans recharger la page.
+  // --- Pipeline de niveau glTF (Phase 4/5) ---------------------------------
+  // `loadGltfLevel` est défini INCONDITIONNELLEMENT : `window.cassandre.level.load(name)`
+  // (raccourci dev existant, voir `exposeDebugApi` plus bas) doit pouvoir
+  // charger n'importe quel `.glb` à la volée depuis la console, quel que soit
+  // le niveau choisi au boot — comportement inchangé, hors scope de ce
+  // slice. Le déclenchement AU BOOT, lui, est gaté par `choice.kind`
+  // juste plus bas : exécuter le pipeline loader/hot-reload (voir
+  // `game/level/loader.ts`/`hotReload.ts`) seulement si "Zone A — Parking" (ou
+  // une fixture `?level=<nom>` non enregistrée) a été choisi — jamais en plus
+  // de `gym.ts`, jamais par défaut.
   let gltfLevelSession: LevelSession | null = null;
 
   function loadGltfLevel(name: string): void {
@@ -275,12 +378,61 @@ async function main() {
           look.yaw = handle.spawnPlayer.yaw;
           look.pitch = 0;
         }
+
+        // `handle.spawnSuits` (Empties `spawn_suit_*`, voir `loader.ts`) :
+        // MÊME garde `isFirstLoad` que `spawn_player` juste au-dessus, et pour
+        // la même raison profonde — mais pas seulement par symétrie de style.
+        // Deux sémantiques étaient possibles ici : vider `suitManager` et
+        // re-spawn à CHAQUE `onLoaded` (y compris les hot reloads, cohérent
+        // avec le reste de la géométrie qui se recharge à chaud), ou spawn
+        // UNE SEULE FOIS au tout premier chargement. `SuitManager` n'expose
+        // d'ailleurs aucun retrait en masse aujourd'hui (seul un retrait par
+        // mort individuelle) — il aurait donc fallu l'ajouter pour la première
+        // option, pour un bénéfice qui reste cosmétique en pratique (voir un
+        // Costard bouger de 2 m dans Blender). Choix : `isFirstLoad` only.
+        // Un hot reload pendant un playtest ne duplique donc jamais de
+        // Costards et n'interrompt jamais un combat en cours — exactement la
+        // même philosophie que la préservation de la position du joueur
+        // documentée en tête de `hotReload.ts`. Contrepartie assumée :
+        // déplacer un `spawn_suit_*` dans Blender et exporter n'est visible
+        // qu'après un rechargement complet de page, pas en <60 s comme le
+        // reste du pipeline — seule la géométrie/les triggers/les `use_*`
+        // profitent du hot reload à chaud, pas le placement des ennemis.
+        if (info.isFirstLoad) {
+          for (const spawn of handle.spawnSuits) {
+            spawnSuitAt(spawn.position.x, spawn.position.y, spawn.position.z);
+          }
+        }
       },
     });
   }
 
-  const levelParam = new URLSearchParams(window.location.search).get("level");
-  if (levelParam) loadGltfLevel(levelParam);
+  // Chargement au boot : QUE si le choix résolu tout en haut de `main()` est
+  // du glTF (menu "Zone A — Parking", raccourci `?level=<id>` enregistré, ou
+  // `?level=<nom>` NON enregistré traité comme fixture brute — voir
+  // `resolveLevelChoice`). Sur le chemin "gym", `loadGltfLevel` n'est PAS
+  // appelé du tout : zéro géométrie/collider/session glTF en mémoire, les
+  // deux chemins restent mutuellement exclusifs comme pour `buildGym`
+  // plus haut.
+  if (choice.kind === "gltf" && choice.gltfName) {
+    loadGltfLevel(choice.gltfName);
+  }
+
+  // Loadout de départ : remplace l'ancien hardcode `levelParam ===
+  // "zone_a_parking"` (dette explicitement documentée dans CLAUDE.md) par la
+  // métadonnée `LevelDef.startUnarmed` du registre (`game/level/levels.ts`).
+  // Calculé et appliqué SYNCHRONEMENT ici, AVANT `startLoop` plus bas —
+  // jamais depuis un callback asynchrone comme `onLoaded` d'une session de
+  // niveau (qui arrive après un nombre indéterminé de frames et laisserait
+  // le joueur armé pendant ce délai).
+  if (choice.startUnarmed) {
+    weapons.startUnarmed();
+  }
+
+  // Interaction (`use_*`, touche E) — voir `game/level/interactive.ts`. Une
+  // seule instance, appelée à chaque pas fixe dans `updateGameplay` ci-dessous
+  // (même discipline de déterminisme que `weapons`/`suitManager`).
+  const interaction = new InteractionSystem();
 
   const liveFrame = emptyInputFrame();
   const eyePosition = new THREE.Vector3();
@@ -314,6 +466,7 @@ async function main() {
     liveFrame.fire = input.consumeJustPressed("Mouse0");
     liveFrame.switchToMelee = input.consumeJustPressed("Digit1");
     liveFrame.switchToShotgun = input.consumeJustPressed("Digit2");
+    liveFrame.use = input.consumeJustPressed("KeyE");
     liveFrame.yaw = look.yaw;
     liveFrame.pitch = look.pitch;
     liveFrame.dx = lookDelta.dx;
@@ -349,7 +502,7 @@ async function main() {
   let fpsSmoothed = 60;
   let debugAccumulator = 0;
   const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
-  const ENTITY_COUNT = 1; // la balle ; les Costards s'ajoutent dynamiquement via `suitManager.suits.length`
+  const ENTITY_COUNT = ballBody ? 1 : 0; // la balle SI présente (chemin "gym" uniquement) ; les Costards s'ajoutent dynamiquement via `suitManager.suits.length`
 
   startLoop({
     snapshotPrevious() {
@@ -380,6 +533,16 @@ async function main() {
       const activeFrame = frame ?? emptyInputFrame();
       player.update(gameplayDt, activeFrame);
 
+      // Interaction (`use_*`, touche E) — APRÈS `player.update` (donc
+      // `player.position` déjà avancée ce pas-ci) et AVANT `weapons.update`
+      // pour qu'un ramassage et un tir puissent se produire dans le même pas
+      // fixe (raffinement, pas une exigence). `useObjects` est RELUE ici à
+      // chaque appel, jamais mise en cache : un hot reload remplace tout le
+      // tableau (voir `interactive.ts`/`hotReload.ts`).
+      interaction.update(activeFrame.use, gltfLevelSession?.current?.useObjects ?? [], player.position, {
+        onCrowbarPickup: () => weapons.pickUpMelee(),
+      });
+
       // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
       // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
       // position interpolée pour le rendu. Voir la note de déterminisme dans
@@ -403,15 +566,21 @@ async function main() {
 
     stepPhysics(dt) {
       physics.step(dt);
-      const t = ballBody.translation();
-      const r = ballBody.rotation();
-      ballCurrPos.set(t.x, t.y, t.z);
-      ballCurrQuat.set(r.x, r.y, r.z, r.w);
+      // `ballBody` n'existe que sur le chemin "gym" (voir sa construction
+      // plus haut) — rien à mettre à jour sinon, pas un bug.
+      if (ballBody) {
+        const t = ballBody.translation();
+        const r = ballBody.rotation();
+        ballCurrPos.set(t.x, t.y, t.z);
+        ballCurrQuat.set(r.x, r.y, r.z, r.w);
+      }
     },
 
     interpolateVisuals(alpha) {
-      ballMesh.position.lerpVectors(ballPrevPos, ballCurrPos, alpha);
-      ballMesh.quaternion.slerpQuaternions(ballPrevQuat, ballCurrQuat, alpha);
+      if (ballMesh) {
+        ballMesh.position.lerpVectors(ballPrevPos, ballCurrPos, alpha);
+        ballMesh.quaternion.slerpQuaternions(ballPrevQuat, ballCurrQuat, alpha);
+      }
 
       // Rotation vue lue au taux d'affichage, jamais interpolée (latence de visée sinon).
       const { dx, dy } = input.consumeMouseDelta();

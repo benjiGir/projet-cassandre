@@ -114,11 +114,30 @@ const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
  * Phase 6 (HUD) s'il s'avère nécessaire au feel — pas trancher ici.
  */
 export class WeaponSystem {
-  /** Arme sélectionnée. Lecture publique pour le débogage (`window.cassandre`, futur panneau). */
-  activeWeapon: "melee" | "shotgun" = "melee";
+  /**
+   * Arme sélectionnée. Lecture publique pour le débogage (`window.cassandre`,
+   * futur panneau). `"none"` = joueur désarmé (voir `startUnarmed`) : le
+   * bloc de tir de `update()` ne fait alors RIEN sur `frame.fire`, même
+   * discipline que les tentatives à sec (cooldown, munitions à 0).
+   *
+   * Valeur de DÉPART inchangée (`"melee"`) : `gym.ts` (terrain de test Phase
+   * 1-3) construit un `WeaponSystem` sans jamais appeler `startUnarmed()`, et
+   * doit donc démarrer EXACTEMENT comme avant, armé du pied-de-biche.
+   */
+  activeWeapon: "none" | "melee" | "shotgun" = "melee";
 
   /** Munitions de pompe restantes. Lecture publique pour le débogage. */
   shotgunAmmo: number;
+
+  /**
+   * Le joueur possède-t-il le pied-de-biche ? `true` par défaut — encore une
+   * fois pour ne rien casser pour `gym.ts`, qui n'appelle jamais
+   * `startUnarmed()`. Passe à `false` via `startUnarmed()`, revient à `true`
+   * via `pickUpMelee()`. Contrôle uniquement si `frame.switchToMelee` peut
+   * (ré)armer le pied-de-biche et si le tir mêlée peut s'exécuter — voir
+   * `update()`.
+   */
+  private hasMelee = true;
 
   private readonly physics: PhysicsWorld;
   private readonly clock: GameClock;
@@ -202,6 +221,37 @@ export class WeaponSystem {
   }
 
   /**
+   * Démarre le joueur désarmé : `hasMelee = false`, `activeWeapon = "none"`.
+   * Level design (Zone A "Parking") : le pied-de-biche est un ramassage au
+   * sol, donc le joueur ne peut pas commencer déjà équipé.
+   *
+   * CONTRAINTE D'APPEL, critique pour le déterminisme : DOIT être appelée de
+   * façon SYNCHRONE par l'appelant, AVANT que `startLoop()` (`main.ts`) ne
+   * commence à faire tourner le pas fixe — jamais depuis un callback
+   * asynchrone de chargement de niveau (ex. résolution de promesse glTF), qui
+   * arriverait après un nombre INDÉTERMINÉ de pas fixes déjà exécutés avec
+   * l'arme par défaut (`"melee"`) active. Appeler cette méthode en retard ne
+   * crashe rien mais désarme le joueur en cours de partie au lieu qu'il
+   * démarre désarmé — un bug de timing silencieux, pas une erreur visible.
+   */
+  startUnarmed(): void {
+    this.hasMelee = false;
+    this.activeWeapon = "none";
+  }
+
+  /**
+   * Ramassage du pied-de-biche : `hasMelee = true`, et l'équipe immédiatement
+   * (`activeWeapon = "melee"`) — cohérent avec le comportement par défaut de
+   * `gym.ts` (toujours équipé) et avec l'attente boomer-shooter classique
+   * (ramasser une arme l'équipe). Idempotente : rappeler cette méthode alors
+   * que le pied-de-biche est déjà possédé et actif ne change rien.
+   */
+  pickUpMelee(): void {
+    this.hasMelee = true;
+    this.activeWeapon = "melee";
+  }
+
+  /**
    * Pose de recul du viewmodel interpolée pour le rendu, EXACTEMENT sur le
    * modèle de `PlayerController.viewBob(alpha, out)` (prev/current + lerp).
    * `retro-render` l'utilise pour positionner son mesh/sprite d'arme — ce ne
@@ -235,7 +285,10 @@ export class WeaponSystem {
     this.meleeCooldownRemaining = Math.max(0, this.meleeCooldownRemaining - dt);
     this.shotgunCooldownRemaining = Math.max(0, this.shotgunCooldownRemaining - dt);
 
-    if (frame.switchToMelee) this.activeWeapon = "melee";
+    // Le joueur ne peut pas se rééquiper d'une arme qu'il n'a pas ramassée en
+    // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
+    // pied-de-biche pendant que le joueur est censé être désarmé.
+    if (frame.switchToMelee && this.hasMelee) this.activeWeapon = "melee";
     if (frame.switchToShotgun) this.activeWeapon = "shotgun";
 
     // Récupération d'abord (comme `landingDip` dans `controller.ts`) : elle
@@ -246,7 +299,10 @@ export class WeaponSystem {
     this.recoilEnvelope = approach(this.recoilEnvelope, 0, this.recoilRecoverTime, dt, 1);
 
     if (frame.fire) {
-      if (this.activeWeapon === "melee") {
+      // Garde défensive explicite sur `hasMelee` : en théorie le garde du
+      // switch ci-dessus empêche déjà `activeWeapon` de valoir `"melee"`
+      // sans `hasMelee`, mais explicite vaut mieux qu'implicite ici.
+      if (this.activeWeapon === "melee" && this.hasMelee) {
         if (this.meleeCooldownRemaining <= 0) {
           this.fireMelee(eyeOrigin, yaw, pitch);
           this.meleeCooldownRemaining = cfg.meleeCooldown;
@@ -254,7 +310,7 @@ export class WeaponSystem {
         }
         // Sinon : cooldown non écoulé, tentative à sec — ne fait RIEN. Pas
         // de crash, pas d'animation bloquante (invariant #10).
-      } else {
+      } else if (this.activeWeapon === "shotgun") {
         if (this.shotgunCooldownRemaining <= 0 && this.shotgunAmmo > 0) {
           this.fireShotgun(eyeOrigin, yaw, pitch);
           this.shotgunCooldownRemaining = cfg.shotgunCooldown;
@@ -264,6 +320,9 @@ export class WeaponSystem {
         // Sinon : cooldown non écoulé OU munitions à 0 — clic à sec, RAF.
         // (Un futur son de clic à sec est un stretch, cf. `weaponConfig.ts`.)
       }
+      // Sinon (`activeWeapon === "none"`, joueur désarmé) : ne fait RIEN —
+      // même discipline que les tentatives à sec ci-dessus. Pas de crash,
+      // pas d'animation.
     }
   }
 

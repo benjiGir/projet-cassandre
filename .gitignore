@@ -13,3 +13,5 @@ yarn-error.log*
 
 .DS_Store
 .claude/settings.local.json
+__pycache__/
+*.blend1

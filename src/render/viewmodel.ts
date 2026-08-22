@@ -77,18 +77,40 @@ export class Viewmodel {
   update(alpha: number, weapons: WeaponSystem) {
     weapons.viewmodelPose(alpha, this.scratchPosition, this.scratchEuler);
 
-    const isMelee = weapons.activeWeapon === "melee";
-    const active = isMelee ? this.meleeMesh : this.shotgunMesh;
-    const inactive = isMelee ? this.shotgunMesh : this.meleeMesh;
-    const base = isMelee ? MELEE_BASE_OFFSET : SHOTGUN_BASE_OFFSET;
+    // Trois états explicites, PAS un ternaire binaire : `activeWeapon` peut
+    // valoir "none" (pied-de-biche pas encore ramassé, Zone A du niveau —
+    // voir CLAUDE.md, préfixe glTF `use_*`). Un ternaire melee/shotgun
+    // afficherait le pompe par défaut sur "none" (arme fantôme à l'écran
+    // pour un joueur censé être désarmé) — bug visuel silencieux évité ici
+    // en énumérant les trois cas plutôt qu'en inversant une condition binaire.
+    switch (weapons.activeWeapon) {
+      case "melee":
+        this.shotgunMesh.visible = false;
+        this.meleeMesh.visible = true;
+        this.applyPose(this.meleeMesh, MELEE_BASE_OFFSET);
+        break;
+      case "shotgun":
+        this.meleeMesh.visible = false;
+        this.shotgunMesh.visible = true;
+        this.applyPose(this.shotgunMesh, SHOTGUN_BASE_OFFSET);
+        break;
+      case "none":
+        // Aucune arme équipée : les deux meshes cachés, aucune pose à
+        // calculer. Pas de troisième mesh « mains nues » pour ce slice —
+        // invariant #9 (boîtes blanches), un viewmodel vide est honnête tant
+        // que le gameplay de ramassage n'est pas validé humainement.
+        this.meleeMesh.visible = false;
+        this.shotgunMesh.visible = false;
+        break;
+    }
+  }
 
-    inactive.visible = false;
-    active.visible = true;
-    active.position.set(
+  private applyPose(mesh: THREE.Mesh, base: THREE.Vector3) {
+    mesh.position.set(
       base.x + this.scratchPosition.x,
       base.y + this.scratchPosition.y,
       base.z + this.scratchPosition.z,
     );
-    active.rotation.x = this.scratchEuler.x;
+    mesh.rotation.x = this.scratchEuler.x;
   }
 }

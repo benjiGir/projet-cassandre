@@ -35,6 +35,8 @@ export interface InputFrame {
   switchToMelee: boolean;
   /** Front montant consommé, même contrat que `jump` : sélection fusil à pompe. */
   switchToShotgun: boolean;
+  /** Front montant déjà consommé, même contrat que `jump` : interaction (`use_*`, `KeyE`). */
+  use: boolean;
   /** Orientation de la vue au moment du pas fixe, en radians. */
   yaw: number;
   pitch: number;
@@ -70,6 +72,7 @@ export function emptyInputFrame(): InputFrame {
     fire: false,
     switchToMelee: false,
     switchToShotgun: false,
+    use: false,
     yaw: 0,
     pitch: 0,
     dx: 0,

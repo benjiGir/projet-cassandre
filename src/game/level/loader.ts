@@ -13,13 +13,24 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
  *
  * | Préfixe          | Effet                                              |
  * |-------------------|-----------------------------------------------------|
- * | `col_*`           | collider trimesh statique, mesh invisible           |
+ * | `col_box_*`       | collider CUBOID statique, mesh invisible            |
+ * | `col_hull_*`      | collider CONVEX HULL statique, mesh invisible       |
+ * | `col_mesh_*`      | collider TRIMESH statique (dernier recours), invisible|
+ * | `col_*` (nu)      | rétrocompat : trimesh, sauf boîte détectée → cuboid |
  * | `spawn_player`    | position + orientation de départ (Empty)            |
  * | `spawn_suit_*`    | point d'apparition ennemi (Empty)                   |
  * | `trig_*`          | volume de trigger box, sensor Rapier, mesh invisible|
  * | `door_*`          | porte animée, collider dynamique                    |
  * | `use_*`           | objet interactif, portée 2 m                        |
  * | `secret_*`        | zone comptée dans le compteur de secrets            |
+ *
+ * Voir le skill `collision-proxy-authoring` pour la hiérarchie de choix des
+ * proxies (`cuboid` en tête — un niveau d'hypermarché est ~95 % de boîtes,
+ * `trimesh` en dernier recours seulement). Les sous-préfixes `col_box_*`/
+ * `col_hull_*`/`col_mesh_*` sont testés AVANT le `col_*` générique dans le
+ * traverse principal : un sous-préfixe est aussi un `col_*` valide
+ * (`"col_box_test".startsWith("col_")`), l'ordre de test évite un mauvais
+ * routage silencieux.
  *
  * Un mesh SANS préfixe reconnu est rendu tel quel, SANS collider,
  * SILENCIEUSEMENT — c'est le comportement par défaut voulu (le décor non
@@ -35,7 +46,10 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
  *     un blocage) ;
  *   - `spawn_player` absent ou en double ;
  *   - `trig_*` dont la géométrie n'est pas une box ;
- *   - `use_*` sans cible référencée dans ses `extras` (`userData.target`).
+ *   - `use_*` sans cible référencée dans ses `extras` (`userData.target`) ;
+ *   - `col_hull_*` dont le hull convexe est dégénéré (`RAPIER.ColliderDesc
+ *     .convexHull` retourne `null`) — repli sur trimesh pour ce mesh, jamais
+ *     de collider manquant silencieusement.
  *
  * ## Le piège des transforms (documenté par le skill, à ne pas re-découvrir)
  *
@@ -68,6 +82,17 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
  * qui en résulterait est silencieuse (le niveau importé "a l'air" normal en
  * dev, juste avec des reflets spéculaires qui ne devraient jamais exister à
  * l'écran dans ce projet).
+ *
+ * ## Vertex colors (`COLOR_0`) — éclairage de secteur baké
+ *
+ * Voir le skill `vertex-color-sector-lighting`. `GLTFLoader` mappe l'attribut
+ * glTF `COLOR_0` sur l'attribut de géométrie Three.js `"color"` et positionne
+ * lui-même `vertexColors = true` sur le `MeshStandardMaterial` qu'il
+ * construit — un flag que `convertToLambert`/`toLambert` doivent relire et
+ * reporter sur le `MeshLambertMaterial` de remplacement, sous peine de le
+ * perdre silencieusement (le mesh resterait éclairé de façon plate). Le
+ * colorspace linéaire de `COLOR_0` est déjà géré en interne par `GLTFLoader`,
+ * rien à faire de plus ici.
  */
 
 // ---------------------------------------------------------------------------
@@ -142,6 +167,14 @@ export interface SecretZone {
 
 export interface LevelStats {
   colliderCount: number;
+  /** Répartition de `colliderCount` par forme physique — voir le skill
+   * `collision-proxy-authoring`. Additif : la somme des trois vaut toujours
+   * `colliderCount`. */
+  colliderKindCounts: {
+    cuboid: number;
+    convexHull: number;
+    trimesh: number;
+  };
   spawnSuitCount: number;
   triggerCount: number;
   doorCount: number;
@@ -186,7 +219,17 @@ const MAX_COLLIDER_TRIANGLES = 50_000;
 // Conversion de matériau — invariant #5 (voir doc de tête du fichier)
 // ---------------------------------------------------------------------------
 
-function toLambert(mat: THREE.Material): THREE.MeshLambertMaterial {
+/**
+ * `hasVertexColors` : présence de l'attribut de géométrie `"color"` (mappé
+ * depuis `COLOR_0` par `GLTFLoader` — voir le skill
+ * `vertex-color-sector-lighting` et sa doc de tête). `GLTFLoader` positionne
+ * déjà `vertexColors = true` sur le `MeshStandardMaterial` qu'il construit
+ * lui-même dans ce cas ; ce flag serait perdu si on reconstruisait le
+ * matériau sans jamais le relire, exactement ce que fait ce fichier pour
+ * respecter l'invariant #5. Le colorspace (`COLOR_0` linéaire) est déjà géré
+ * en interne par `GLTFLoader` — rien à faire de plus ici.
+ */
+function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLambertMaterial {
   const src = mat as THREE.MeshStandardMaterial;
   const lambert = new THREE.MeshLambertMaterial({
     color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
@@ -195,6 +238,7 @@ function toLambert(mat: THREE.Material): THREE.MeshLambertMaterial {
     opacity: src.opacity,
     side: src.side,
     alphaTest: src.alphaTest,
+    vertexColors: hasVertexColors,
     // volontairement absents : roughnessMap/metalnessMap/normalMap/envMap —
     // c'est exactement ce que l'invariant #5 demande de jeter.
   });
@@ -212,10 +256,11 @@ function toLambert(mat: THREE.Material): THREE.MeshLambertMaterial {
 }
 
 function convertToLambert(mesh: THREE.Mesh): void {
+  const hasVertexColors = mesh.geometry.hasAttribute("color");
   if (Array.isArray(mesh.material)) {
-    mesh.material = mesh.material.map(toLambert);
+    mesh.material = mesh.material.map((mat) => toLambert(mat, hasVertexColors));
   } else {
-    mesh.material = toLambert(mesh.material);
+    mesh.material = toLambert(mesh.material, hasVertexColors);
   }
 }
 
@@ -359,6 +404,100 @@ function buildStaticCollider(
 
   worldGeometry.dispose();
   return true;
+}
+
+/**
+ * `col_box_*` : cuboid inconditionnel — voir le skill `collision-proxy-
+ * authoring` ("hiérarchie de choix", cuboid en tête, coût minimal, pas
+ * d'arêtes internes donc pas de ghost collisions). Contrairement à `trig_*`,
+ * on fait CONFIANCE au sous-préfixe donné par l'artiste : pas de revalidation
+ * géométrique avant d'émettre le cuboid ("un proxy peut légèrement mentir sur
+ * la forme, c'est un outil de gameplay" — skill). Pattern de décomposition
+ * IDENTIQUE à `buildTrigger`/`buildDoor` : bounding box LOCALE + matrice
+ * monde décomposée en position/rotation/échelle, demi-étendues = taille
+ * locale × échelle monde. Corps FIXED (jamais dynamique, contrairement à
+ * `door_*`), groupe `COLLISION_GROUPS.WORLD` (jamais `TRIGGER`, jamais de
+ * `.setSensor(true)` — un `col_box_*` est un mur, pas un volume logique).
+ */
+function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RAPIER.RigidBody[]): void {
+  mesh.geometry.computeBoundingBox();
+  const bb = mesh.geometry.boundingBox!;
+  const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+  const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
+
+  const worldQuat = new THREE.Quaternion();
+  const worldScale = new THREE.Vector3();
+  const discardedPosition = new THREE.Vector3();
+  mesh.matrixWorld.decompose(discardedPosition, worldQuat, worldScale);
+
+  const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
+  const halfExtents = new THREE.Vector3(
+    Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+    Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+    Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+  );
+
+  const body = physics.world.createRigidBody(
+    RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+      .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+  );
+  physics.world.createCollider(
+    RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
+      COLLISION_GROUPS.WORLD,
+    ),
+    body,
+  );
+  bodies.push(body);
+}
+
+/**
+ * `col_hull_*` : convex hull — voir le skill `collision-proxy-authoring`
+ * ("rampes, formes convexes irrégulières", coût faible). Sommets en espace
+ * MONDE via `worldSpaceGeometry` (même pattern que le chemin trimesh de
+ * `buildStaticCollider` : le corps reste à l'origine, la forme porte déjà la
+ * transformation monde). `RAPIER.ColliderDesc.convexHull` retourne `null`
+ * pour un hull dégénéré (ex. sommets coplanaires) — dans ce cas, avertissement
+ * bruyant PUIS repli sur `buildStaticCollider` (trimesh) pour ce même mesh :
+ * un `col_hull_*` ne doit jamais rester silencieusement sans AUCUN collider.
+ * Retourne la forme réellement construite (`null` si même le repli trimesh a
+ * échoué — géométrie invalide, déjà signalée par `buildStaticCollider`).
+ */
+function buildConvexHullCollider(
+  mesh: THREE.Mesh,
+  name: string,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): "convexHull" | "trimesh" | null {
+  const worldGeometry = worldSpaceGeometry(mesh);
+  const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
+
+  if (!positionAttr || positionAttr.count === 0) {
+    console.error(`[level] "${name}" (col_hull_*) sans géométrie valide — aucun collider créé.`);
+    worldGeometry.dispose();
+    return null;
+  }
+
+  const points =
+    positionAttr.array instanceof Float32Array
+      ? positionAttr.array
+      : Float32Array.from(positionAttr.array as ArrayLike<number>);
+  worldGeometry.dispose();
+
+  const desc = RAPIER.ColliderDesc.convexHull(points);
+  if (!desc) {
+    console.error(
+      `[level] "${name}" (col_hull_*) : hull convexe dégénéré ` +
+        `(RAPIER.ColliderDesc.convexHull a retourné null, sommets probablement coplanaires) ` +
+        `— repli sur un collider trimesh pour ce mesh.`,
+    );
+    return buildStaticCollider(mesh, name, physics, bodies) ? "trimesh" : null;
+  }
+
+  const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+  physics.world.createCollider(desc.setCollisionGroups(COLLISION_GROUPS.WORLD), body);
+  bodies.push(body);
+  return "convexHull";
 }
 
 /** `spawn_player` (Empty) : position + yaw. Voir la doc de `SpawnPoint` pour
@@ -578,6 +717,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
   const secrets: SecretZone[] = [];
 
   let colliderCount = 0;
+  const colliderKindCounts = { cuboid: 0, convexHull: 0, trimesh: 0 };
   let unprefixedMeshCount = 0;
 
   root.traverse((obj) => {
@@ -604,8 +744,54 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
     // chose, pour CHAQUE mesh, préfixé ou non — voir la doc de tête de fichier.
     convertToLambert(obj);
 
+    // Sous-préfixes de `col_*` — voir le skill `collision-proxy-authoring`.
+    // DOIVENT être testés AVANT le `col_` générique ci-dessous : sinon
+    // `"col_box_test".startsWith("col_")` (vrai aussi) fait tomber le
+    // routage dans le mauvais cas, silencieusement.
+    if (name.startsWith("col_box_")) {
+      buildCuboidCollider(obj, physics, bodies);
+      colliderCount++;
+      colliderKindCounts.cuboid++;
+      obj.visible = false;
+      return;
+    }
+
+    if (name.startsWith("col_hull_")) {
+      const kind = buildConvexHullCollider(obj, name, physics, bodies);
+      if (kind) {
+        colliderCount++;
+        colliderKindCounts[kind]++;
+      }
+      obj.visible = false;
+      return;
+    }
+
+    if (name.startsWith("col_mesh_")) {
+      // Alias explicite du dernier recours (trimesh) — aucune nouvelle
+      // logique, juste un branchement nommé plutôt qu'un fallthrough
+      // implicite dans le `col_*` générique.
+      if (buildStaticCollider(obj, name, physics, bodies)) {
+        colliderCount++;
+        colliderKindCounts.trimesh++;
+      }
+      obj.visible = false;
+      return;
+    }
+
     if (name.startsWith("col_")) {
-      if (buildStaticCollider(obj, name, physics, bodies)) colliderCount++;
+      // Rétrocompatibilité (Zone A/B actuelles) : comportement INCHANGÉ
+      // (trimesh), SAUF gain silencieux si la géométrie LOCALE s'avère être
+      // une boîte axis-aligned — même test que `trig_*`, réutilisé tel quel.
+      // Pas d'avertissement dans ce cas : c'est un pur gain de perf/stabilité,
+      // pas une anomalie signalée.
+      if (isAxisAlignedBox(obj.geometry)) {
+        buildCuboidCollider(obj, physics, bodies);
+        colliderCount++;
+        colliderKindCounts.cuboid++;
+      } else if (buildStaticCollider(obj, name, physics, bodies)) {
+        colliderCount++;
+        colliderKindCounts.trimesh++;
+      }
       obj.visible = false;
       return;
     }
@@ -648,6 +834,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
 
   const stats: LevelStats = {
     colliderCount,
+    colliderKindCounts,
     spawnSuitCount: spawnSuits.length,
     triggerCount: triggers.length,
     doorCount: doors.length,

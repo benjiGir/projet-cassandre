@@ -51,10 +51,83 @@ src/render/   renderer billboard fx
 src/physics/  world
 src/game/     player entities level state
 src/ui/       React overlay
+
+tools/blender/        scripts headless (kit, niveaux, bake, validation, export)
+assets_src/blender/   sources .blend (kit + niveaux), jamais servi en runtime
+public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 ```
 
 ## Phase courante
 
+> Phase 5 — Le niveau (l'hypermarché), en cours zone par zone.
+> **Écran de choix de niveau** au boot (`src/ui/LevelMenu.tsx` + registre
+> `src/game/level/levels.ts`) : "Gym (test)" / "Zone A — Parking", chemins
+> MUTUELLEMENT EXCLUSIFS (plus de coexistence additive gym+niveau par
+> défaut — ça produisait du z-fighting réel, constaté). `?level=<id
+> enregistré>` saute le menu ; `?level=<nom>` non enregistré retombe sur
+> l'ancien comportement additif brut (outil de test isolé du loader, pas un
+> chemin joueur). `window.cassandre.level.load(name)` en console peut
+> toujours recréer l'additif volontairement, pour ce même usage de test.
+> **Zone A — Parking** codée et fonctionnelle : géométrie construite et
+> exportée directement depuis Blender (`public/assets/levels/zone_a_parking.glb`,
+> géométrie visible en plus des colliders — voir piège ci-dessous). Parking
+> clos, vitrine (fente horizontale 1.2-2.0m — ligne de vue dégagée, aucun
+> chemin au sol), un Costard scellé dans une alcôve à 20m (au-delà
+> d'`attackRange`, en-deçà de `sightRange` : visible, jamais punitif, aucun
+> code IA nouveau nécessaire — vérifié par décodage direct du `.glb`). Pied-
+> de-biche au sol (`use_crowbar`) : le joueur démarre désarmé dans cette
+> zone uniquement (`WeaponSystem.startUnarmed()` / `pickUpMelee()`,
+> `activeWeapon: "none"|"melee"|"shotgun"`), ramassé via
+> `src/game/level/interactive.ts` (touche `E`, dispatch par nom d'objet
+> Blender — le contrat `use_*`/`extras.target` est pensé pour un
+> interrupteur-vers-porte, pas pour un pickup autoportant, décision
+> documentée dans le fichier). `gym.ts` démarre toujours armé, zéro
+> régression (vérifié, les deux chemins testés en navigateur).
+> **Pipeline de niveau v2 (2026-08-21/22)** : nouvel agent `level-forge` +
+> 6 skills Blender (`blender-level-conventions`, `blender-python-automation`,
+> `collision-proxy-authoring`, `modular-kit-design`, `retro-texture-density`,
+> `vertex-color-sector-lighting`). Vrai kit modulaire de 25 pièces
+> (`assets_src/blender/kit_hypermarche.blend`, VERDICT CONFORME), scripts
+> headless sous `tools/blender/` (`build_kit.py`, `build_level.py`,
+> `bake_vertex_lighting.py`, `validate_level.py`, `export_level.py`,
+> `inspect_kit.py` — voir leur `README.md`). Proxies de collision cuboid
+> (pas trimesh, perf/stabilité — `loader.ts` détecte maintenant `col_box_*`
+> ET tout `col_*` géométriquement boîte) et éclairage baké en vertex colors
+> (`COLOR_0`, `material.vertexColors = true`). **Zones A et B reconstruites
+> avec ce vrai kit**, remplaçant les prototypes en boîtes plates du premier
+> jet — 56 et 64 colliders cuboid respectivement (vs ~9 boîtes brutes
+> avant), murs à 5m (hauteur "salle de vente" du kit, pas 3.2m), éclairage
+> visible en jeu. Contrat runtime inchangé (mêmes noms d'objets, mêmes
+> comptes `spawns`/`use`/`colliders` vérifiés en jeu après reconstruction).
+> **Piège Blender découvert** (premier jet, avant le kit) : `col_*` est
+> rendu INVISIBLE par convention (collider seul) — un mur voulu à la fois
+> visible et solide a besoin de DEUX objets superposés. Oublié dans le tout
+> premier jet de Zone A ; corrigé, puis structurellement résolu par le kit
+> (chaque pièce porte son rendu + son proxy ensemble).
+> `spawn_suit_*` → vrai `Suit` : corrigé, le Costard scellé de la Zone A est
+> réellement présent en jeu (`Entities: 1`, état ALERTE en continu, jamais
+> TIR — revérifié après la reconstruction au kit, distance inchangée). Le
+> registre `levels.ts` a remplacé le hardcode par id.
+>
+> **Zone B — Caisses** : sol + périmètre 24×24m, 4 `kit_checkout` en ligne
+> à Y≈9.5 (trouées de 2m), 3 `spawn_suit_*` à 18m du spawn (`spawn_suit_2`
+> était à 15m dans le premier jet — sous `attackRange`, aucune fenêtre
+> d'approche, signalé par `entity-designer` et corrigé lors de la
+> reconstruction). Démarre ARMÉE (pas de `startUnarmed`). Vérifié en jeu :
+> 3 Costards visibles, positions exactes, état ALERTE.
+> **Écart encore ouvert, jugement humain requis** : les caisses (`kit_checkout`,
+> 1.10m) restent sous `eyeHeight` (1.6m, joueur ET Costard) utilisé par tous
+> les raycasts de vision/tir — la "couverture" du plan reste purement
+> visuelle, ne bloque aucun hitscan (et il n'y a pas de crouch dans
+> `moveConfig.ts`). Pas corrigé par la reconstruction au kit (question de
+> layout, pas de géométrie).
+> **Observation non traitée, hors scope de la reconstruction** : en Zone B,
+> `spawn_suit_2` inflige déjà des dégâts après quelques secondes d'immobilité
+> du joueur — effet de l'agressivité/vitesse de l'IA à cette distance, pas
+> de la géométrie (distance vérifiée exacte à 18m). À évaluer en jouant.
+> Zones C-E, secrets, caddies, micro d'annonces, porte à badge : pas
+> commencés.
+>
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet
 > `col_*`/`spawn_player`/`spawn_suit_*`/`trig_*`/`door_*`/`use_*`/`secret_*`,
