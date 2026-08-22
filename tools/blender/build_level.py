@@ -586,11 +586,23 @@ def _make_empty(name: str, location: tuple[float, float, float], logic_coll) -> 
     return obj
 
 
-def build_spawns(zone: dict, logic_coll) -> int:
-    _make_empty("spawn_player", zone["spawn_player"], logic_coll)
+def build_spawns(zone: dict, logic_coll, include_player: bool = True) -> int:
+    """`include_player=False` : utilisé par `build_combined_level.py` — un
+    niveau combiné n'a qu'UN SEUL `spawn_player` pour tout le fichier (celui
+    de la Zone A), les autres zones ne doivent pas en émettre un second sous
+    peine de dupliquer le nom (Blender suffixerait silencieusement en
+    `spawn_player.001`, que `validate_level.py::check_naming` compte quand
+    même via `base_name` — `len(spawns) > 1` ferait échouer la validation).
+    Défaut `True` : comportement inchangé pour tout appel `--zone a|b|c|d|e`
+    existant, un spawn_player par fichier de zone individuelle."""
+    count = 0
+    if include_player:
+        _make_empty("spawn_player", zone["spawn_player"], logic_coll)
+        count += 1
     for name, loc in zone["spawn_suits"]:
         _make_empty(name, loc, logic_coll)
-    return 1 + len(zone["spawn_suits"])
+        count += 1
+    return count
 
 
 def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:

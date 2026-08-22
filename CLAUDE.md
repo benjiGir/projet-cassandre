@@ -214,9 +214,42 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > Testable en console : `cassandre.spawnDirector(x,y,z)`. `pnpm build` OK,
 > spawn/état/rendu vérifiés en jeu ; tir de confirmation pas testé jusqu'au
 > bout (pointer lock capricieux en automatisation navigateur, sans rapport
-> avec le code) — à valider en jouant réellement. Pas encore câblé dans
-> Zone E (garde son Costard placeholder), pas de porte verrouillée par
-> badge : toujours hors scope, prochaine étape.
+> avec le code) — à valider en jouant réellement. Depuis, câblé dans
+> Zone E via une nouvelle convention `spawn_director_*` (`loader.ts`,
+> miroir de `spawn_suit_*`) : la Zone E a désormais un vrai `spawn_director_1`
+> à la place du Costard placeholder. Pas de porte verrouillée par badge :
+> toujours hors scope, prochaine étape.
+>
+> **Niveau complet — les 5 zones fusionnées (2026-08-22)**, décision
+> explicite de l'utilisateur (option "vraie carte unique" plutôt qu'un
+> enchaînement par transition, coût assumé). `zone_a_parking`..`zone_e_bureau`
+> restent intacts et sélectionnables individuellement (test ciblé) ; un
+> nouveau fichier `hypermarche_complet.glb` (`tools/blender/
+> build_combined_level.py`) recompose les 5 zones (copies traduites, jamais
+> les dicts `ZONE_A..E` originaux) en un seul niveau connecté A→B→C→D→E, par
+> de vrais couloirs — aucune coupure de chargement. Translations et brèches
+> choisies par `level-forge` par inspection directe des bbox déjà exportées
+> (détail complet dans `tools/blender/README.md`) ; Zone D connectée à la
+> Zone E par son mur EST (pas le nord — bord de la mezzanine, contrainte
+> respectée). Spawns/`use_*` renommés par suffixe de zone pour éviter les
+> collisions de noms (`spawn_suit_c1`, `spawn_director_e1`, `use_shotgun`...) ;
+> un seul `spawn_player` (celui de la Zone A). `validate_level.py --strict` :
+> 0 erreur, 12 warnings tous connus (palettes hors grille ×8, crowbar/shotgun
+> sans `target` ×4). Enregistré dans `levels.ts` (`hypermarche_complet`,
+> démarre DÉSARMÉE comme la Zone A). Vérifié en jeu : comptes exacts
+> (colliders 382, spawns Costard 13, spawns Directeur 1, use 2), les 14
+> positions d'ennemis recoupées une par une contre le rapport (translations
+> confirmées à l'unité près), un seul en `chase` au chargement (le Costard
+> scellé de Zone A, comportement historique inchangé), tous les autres
+> `idle` (hors de portée du spawn unique, normal). Téléportation de test
+> dans la Zone B combinée : rendu correct (rangée de caisses, 3 Costards
+> actifs et engageant réellement le joueur).
+>
+> **Nouveau : le pompe se ramasse vraiment.** `WeaponSystem.hasShotgun`/
+> `pickUpShotgun()` ajoutés (comblent un écart déjà documenté : le pompe
+> n'avait aucune contrainte de ramassage). `use_shotgun` câblé dans
+> `interactive.ts`/`main.ts`, même contrat que `use_crowbar`, posé dans la
+> Zone B du niveau combiné (pas dans `zone_b_caisses.glb` seule).
 >
 > Secrets, porte à badge : pas commencés.
 >

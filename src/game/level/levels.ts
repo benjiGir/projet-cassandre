@@ -47,4 +47,19 @@ export const LEVEL_CHOICES: LevelDef[] = [
   // Directeur (`spawn_director_1`) y est désormais présent, plus un Costard
   // placeholder. Démarre ARMÉE.
   { id: "zone_e_bureau", label: "Zone E — Bureau", kind: "gltf", gltfName: "zone_e_bureau" },
+  // Niveau complet (2026-08-22) : Zones A-E fusionnées en un seul fichier
+  // connecté (couloirs réels entre chaque zone, aucune coupure de
+  // chargement) — voir tools/blender/build_combined_level.py et le README
+  // Blender pour le détail des translations/brèches. Un seul spawn_player
+  // (celui de la Zone A) ; démarre DÉSARMÉE comme la Zone A seule, le pompe
+  // se ramasse maintenant réellement via use_shotgun en Zone B
+  // (WeaponSystem.pickUpShotgun()/hasShotgun). Les 5 entrées individuelles
+  // ci-dessus restent disponibles pour du test ciblé, inchangées.
+  {
+    id: "hypermarche_complet",
+    label: "Niveau complet — L'Hypermarché",
+    kind: "gltf",
+    gltfName: "hypermarche_complet",
+    startUnarmed: true,
+  },
 ];

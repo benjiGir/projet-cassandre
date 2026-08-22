@@ -9,6 +9,7 @@ Scripts headless. Aucun ne nécessite d'interface.
 | `geo_utils.py` | fonctions bpy partagées (boîtes subdivisées, proxies, scène) — importé par `build_kit.py` ET `build_level.py`, pas exécutable seul |
 | `build_kit.py` | génère `kit_hypermarche.blend` à partir de `kit_spec.py` |
 | `build_level.py` | assemble un niveau (`zone_a_parking.blend` / `zone_b_caisses.blend` / ... / `zone_e_bureau.blend`) à partir du kit + `level_spec.py` |
+| `build_combined_level.py` | fusionne les 5 zones en UN SEUL niveau connecté (`hypermarche_complet.blend`) — copies traduites de `ZONE_A`..`ZONE_E`, jamais les originaux ; voir « Niveau complet » ci-dessous |
 | `inspect_kit.py` | vérifie le kit produit contre le contrat du projet |
 | `bake_vertex_lighting.py` | bake d'éclairage en vertex colors + rapport de plausibilité |
 | `validate_level.py` | vérifie un `.blend` de niveau contre le contrat du projet |
@@ -48,6 +49,12 @@ blender -b --factory-startup -P tools/blender/build_level.py -- --zone e --kit a
 blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/bake_vertex_lighting.py -- --save
 blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/validate_level.py -- --strict
 blender -b assets_src/blender/zone_e_bureau.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_e_bureau.glb
+
+# Niveau complet (fusion des 5 zones, voir "Niveau complet (hypermarche_complet)" ci-dessous)
+blender -b --factory-startup -P tools/blender/build_combined_level.py -- --kit assets_src/blender/kit_hypermarche.blend --out assets_src/blender/hypermarche_complet.blend
+blender -b assets_src/blender/hypermarche_complet.blend -P tools/blender/bake_vertex_lighting.py -- --save
+blender -b assets_src/blender/hypermarche_complet.blend -P tools/blender/validate_level.py   # PAS --strict, voir note (palettes + crowbar + shotgun)
+blender -b assets_src/blender/hypermarche_complet.blend -P tools/blender/export_level.py -- --out public/assets/levels/hypermarche_complet.glb
 ```
 
 `--strict` fait échouer sur les warnings. À utiliser en CI, pas en itération.
@@ -486,3 +493,255 @@ type d'entité, peau qui se déchire pour révéler un reptilien), (2) le badge
 verrouillage). Le Costard placeholder posé ici (`spawn_suit_1`) n'a aucune
 des propriétés du directeur — c'est un ennemi standard, identique à ceux
 des zones A-D.
+
+### Niveau complet (hypermarche_complet)
+
+**Fusion des Zones A, B, C, D, E en UN SEUL niveau connecté (2026-08-22)**,
+sans coupure de chargement — un vrai plan continu, pas cinq boîtes
+indépendantes. Tâche de grande ampleur, décidée explicitement par
+l'utilisateur (« vraie carte unique fusionnée », coût assumé plutôt qu'un
+enchaînement par écrans de transition). Nouveau script
+`build_combined_level.py` : importe `level_spec.ZONE_A`..`ZONE_E` **sans les
+muter**, construit pour B/C/D/E une COPIE traduite + renommée (jamais
+l'original), taille une brèche de 4 m dans un mur de chaque zone concernée,
+construit un couloir de connexion de 4 × 4 m entre chaque paire, et
+réutilise TELS QUELS les builders de `build_level.py` (`tile_floor`,
+`build_walls`, `build_checkouts`, `build_gondolas`, `build_racks`,
+`build_mezzanine_stairs`/`_railing`, `build_storage_props`, `build_door_frame`,
+`build_use_objects`, `build_lighting`) dans les mêmes collections partagées —
+un seul appareil de scène (`wipe_scene()` une fois, pas par zone) pour tout
+le niveau. **Vérifié : `--zone a` à `--zone e` produisent toujours exactement
+les mêmes comptes qu'avant cette tâche** (rebuild de contrôle des 5 zones,
+comptes `Spawns`/`Objets use_*` identiques à la lettre près à ceux déjà
+documentés plus haut dans ce fichier) — le seul changement dans
+`build_level.py` est un paramètre `include_player: bool = True` ajouté à
+`build_spawns` (défaut inchangé, voir plus bas).
+
+#### Ordre, translations et brèches choisies
+
+A (ancre, ORIGINALE, non traduite) → B → C → D → E, imposé par la tâche. Pour
+chaque paire, la position exacte de la brèche est **vérifiée dégagée** par
+lecture directe des bounding box déjà déclarées dans `level_spec.py` (pas
+devinée) — voir le docstring de chaque `prepare_zone_*` dans
+`build_combined_level.py` pour le calcul complet.
+
+| Zone | dx | dy | Brèche amont (repère local, avant dx/dy) | Brèche aval (repère local) |
+|---|---:|---:|---|---|
+| A (ancre) | 0 | 0 | — | **est**, x=10, y∈[2,6] |
+| B | +26 | 0 | **ouest**, x=-12, y∈[2,6] | **nord**, y=22, x∈[-2,2] |
+| C | +26 | +28 | **sud**, y=-2, x∈[-2,2] | **nord**, y=26, x∈[-2,2] |
+| D | +26 | +60 | **sud**, y=-2, x∈[-2,2] | **est**, x=14, y∈[10,14] |
+| E | +52 | +64 | **ouest**, x=-8, y∈[6,10] | (cul-de-sac, aucune sortie) |
+
+Les 4 couloirs qui en résultent (coordonnées MONDE, après translation, tous
+des dalles 4 × 4 m — le plus petit connecteur qui tile sans reste avec
+`kit_floor_4x4`, une pièce fixe non redimensionnable) :
+
+| Connecteur | Dalle (monde) | Murs de flanc |
+|---|---|---|
+| A-B | x∈[10,14], y∈[2,6] | y=2 et y=6 (le couloir avance selon X) |
+| B-C | x∈[24,28], y∈[22,26] | x=24 et x=28 (le couloir avance selon Y) |
+| C-D | x∈[24,28], y∈[54,58] | x=24 et x=28 |
+| D-E | x∈[40,44], y∈[70,74] | y=70 et y=74 |
+
+**Justification de chaque mur choisi**, avec les distances réelles relues
+dans `level_spec.py` (jamais devinées) :
+
+- **A→B, mur EST de A.** Le nord de la Zone A est occupé par la
+  vitrine/l'alcôve (contrainte déjà actée, hors scope de redécision) : est et
+  ouest sont les deux seuls murs francs. Le mur est est un run continu de
+  x=10, y=-2 à 22 (24 m), jamais recoupé par la vitrine (qui vit en x∈[-6,6]
+  au NORD, sans rapport avec le mur est) — n'importe quel y du mur est donc
+  dégagé. y∈[2,6] retenu loin à la fois du crowbar (2,2) et de l'alcôve
+  (y≥18), sans autre contrainte que « au milieu, dégagé ».
+- **B, brèche OUEST (entrée).** Les caisses sont à y∈[9.5,10.5],
+  x∈[-9,9] — 3.5 m au nord de la brèche retenue (y∈[2,6]), aucun contact.
+  **B, brèche NORD (sortie).** Aucune caisse n'atteint y=22 (8 m de marge) :
+  n'importe quel x est dégagé. x∈[-2,2] choisi pour retomber, une fois
+  translaté par dx=26, exactement sur la colonne x∈[24,28] du monde —
+  garde les connecteurs B-C et C-D alignés en une seule colonne verticale.
+- **C, brèche SUD (entrée).** Les gondoles commencent à y=6.75 (rangées
+  y∈[8,16] + capuchons ±1.25) — 8.75 m de marge. **C, brèche NORD (sortie).**
+  Les gondoles finissent à y=17.25 — 8.75 m de marge aussi. Même colonne
+  x∈[-2,2] reprise par simplicité (alignement, pas une contrainte de C
+  elle-même).
+- **D, brèche SUD (entrée).** Les racks commencent à y=4 — 6 m de marge,
+  n'importe quel x dégagé, même colonne x∈[-2,2] reprise.
+  **D, brèche EST (sortie) — PAS le nord.** Contrainte explicite de
+  l'énoncé : le mur nord de la Zone D (y=30) est en réalité le bord de la
+  mezzanine (Z=2 m, flush contre les murs est/ouest/nord) — une brèche au
+  sol y déboucherait 2 m sous le niveau de marche réel. La rangée est de
+  racks s'arrête à x=4.0 (empreinte réelle X∈[2.8,4.0] — voir la note
+  mécanique déjà documentée pour la Zone D plus haut dans ce fichier),
+  soit 10 m avant le mur est (x=14) : **n'importe quel y du flanc est**
+  [4,20] est dégagé, pas seulement une sous-plage. y∈[10,14] retenu au
+  centre de cette bande par symétrie, sans autre contrainte. Conséquence :
+  la Zone E se retrouve à l'EST de D plutôt qu'au nord — « un niveau qui
+  tourne », anticipé et accepté explicitement dans l'énoncé de la tâche.
+- **E, brèche OUEST (entrée, cul-de-sac — pas de sortie).** Aucune
+  géométrie intérieure de E n'approche le mur ouest : le seul élément posé
+  (`door_frame`, `kit_door_2m`) est au NORD (x∈[-1,1], y=14), à 9 m au moins
+  du mur ouest sur toute sa longueur (y∈[-2,14]). y∈[6,10] retenu au centre
+  par symétrie.
+
+Chaque `dx`/`dy` est un **entier de mètres** — un entier est automatiquement
+un multiple de la grille 0.25 m du projet, donc aucune translation n'a
+introduit de nouveau warning de grille (seuls les warnings déjà connus et
+documentés plus haut, palette Z + crowbar, réapparaissent inchangés — voir
+comptes ci-dessous).
+
+#### Renommage
+
+Toutes les zones SAUF A (inchangée, y compris `use_crowbar`) : `spawn_suit_N`
+→ `spawn_suit_<lettre>N` (B/C/D) et `spawn_director_N` → `spawn_director_<lettre>N`
+(E). `loader.ts` ne fait qu'un `startsWith(...)` sur le préfixe complet —
+aucune modification runtime nécessaire, vérifié en relisant le `.glb`
+réimporté (voir comptes ci-dessous).
+
+#### Nouvel objet : `use_shotgun` (Zone B, copie combinée SEULEMENT)
+
+Ajouté uniquement dans la copie traduite de la Zone B utilisée par ce
+niveau — **absent** de `zone_b_caisses.glb` (vérifié : ce fichier individuel
+n'a pas été reconstruit par cette tâche). Position monde `(15.5, 4.0, 0.15)`
+: à 1.5 m de la brèche ouest translatée (x=14, l'entrée depuis la Zone A) et
+5.5 m du mur sud, dans la première case de sol franchie en entrant, très
+largement avant la première caisse (y=9.5) — dégagé de toute géométrie,
+non manqué. Même schéma exact que `use_crowbar` (custom property `target`
+volontairement absente — pickup autoportant, pas une porte à cibler),
+donc les deux mêmes 2 warnings (grille + `target` manquant), déjà connus et
+acceptés pour `use_crowbar` depuis la Zone A, réapparaissent à l'identique
+pour `use_shotgun`.
+
+#### Comptes obtenus (`BUILD COMBINED LEVEL — hypermarche_complet`)
+
+| Zone | sol | murs | vitrine | caisses | gondoles | racks | mezz. sol | escalier | rambarde | palettes | caisses (crates) | porte | spawns | use_* | lampes |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| A | 30 | 23 | 2 | 0 | 0 | 0 | — | — | — | 0 | 0 | 0 | 2 | 1 | 10 |
+| B | 36 | 23 | 0 | 4 | 0 | 0 | — | — | — | 0 | 0 | 0 | 3 | 1 | 9 |
+| C | 42 | 26 | 0 | 0 | 12 | 0 | — | — | — | 0 | 0 | 0 | 4 | 0 | 12 |
+| D | 56 | 28 | 0 | 0 | 0 | 8 | 14 | 2 | 12 | 6 | 3 | 0 | 5 | 0 | 20 |
+| E | 20 | 20 | 0 | 0 | 0 | 0 | — | — | — | 0 | 0 | 1 | 1 | 0 | 6 |
+
+Connecteurs : A-B (sol 1, murs 2), B-C (sol 1, murs 2), C-D (sol 1, murs 2),
+D-E (sol 1, murs 2) — 4 dalles + 8 murs de flanc au total.
+
+**Totaux** : sol 188 (+ 14 dalles de mezzanine, comptées à part comme pour la
+Zone D seule), murs 128 (`kit_wall_4m`:117, `kit_wall_2m`:9, `kit_wall_1m`:2
+— recompté indépendamment sur le `.glb` réimporté, voir plus bas),
+vitrine 2, caisses 4, gondoles+capuchons 12, racks 8, escalier 2,
+rambarde 12, palettes 6, caisses (crates) 3, porte 1, **spawns 15** (1
+`spawn_player` + 13 `spawn_suit_*` + 1 `spawn_director_e1`), **use_* 2**
+(`use_crowbar` + `use_shotgun`), lampes 57. 5 mondes Blender orphelins
+supprimés après coup (le `World` par défaut de `--factory-startup`, jamais
+nettoyé par `geo_utils.wipe_scene()`, + les 4 mondes créés par les zones
+A/B/C/D — seul celui de la Zone E, le dernier assigné, reste actif ; les
+cinq partagent de toute façon la même couleur/force de fond, donc lequel
+reste actif est sans conséquence sur le bake).
+
+Bake (`bake_vertex_lighting.py --save`) : **382 meshes, 57 lampes, 0 mesh
+noir, 0 dégradé plat**, luminance moyenne globale 0.224, 178 sommets
+écrêtés (cosmétique, proches des lampes de plafond — même famille que
+chaque zone individuelle).
+
+`validate_level.py` (sans `--strict`) : **`VERDICT : CONFORME (0 erreurs,
+12 warnings)`**. Sous `--strict` : `ECHEC` avec les MÊMES 12 warnings, tous
+déjà connus et acceptés individuellement avant cette tâche — 8 palettes
+(`kit_pallet`/`col_box_pallet` ×4 chacun, empilement Z=0.15/0.30 de la Zone
+D, famille déjà documentée), `use_crowbar` (grille + `target` manquant,
+Zone A) et `use_shotgun` (même famille que `use_crowbar`, voir ci-dessus).
+**0 warning nouveau** que ceux déjà attendus d'après le contenu inchangé de
+chaque zone — la fusion elle-même n'introduit aucune irrégularité. 836
+objets (764 meshes), 46 372 triangles / 200 000, 4 matériaux utilisés
+(`mat_kit_shell`, `mat_kit_props`, `mat_kit_storage`, `mat_kit_detail`),
+colliders `cuboid:380 convexHull:2` (382 total — les 2 convexHull sont les
+rampes d'escalier de la Zone D, inchangées).
+
+Export (`export_level.py`) : `public/assets/levels/hypermarche_complet.glb`,
+**1994 Ko**. Rechargé dans Blender (`import_scene.gltf`) pour vérification
+indépendante :
+- **779 objets, 764 meshes** (836 − 57 lampes non exportées, `export_lights=
+  False` — écart exactement égal au compte de lampes, confirmé) ;
+- **exactement 1 `spawn_player`**, à `(0, 0, 0)` — identique à celui de la
+  Zone A d'origine ;
+- **13 `spawn_suit_*`** tous uniques : `spawn_suit_1` (Zone A, INCHANGÉ),
+  `spawn_suit_b1/b2/b3`, `spawn_suit_c1/c2/c3/c4`, `spawn_suit_d1..d5` — 0
+  doublon de nom de base ;
+- **1 `spawn_director_e1`** (Zone E) ;
+- **2 `use_*`** : `use_crowbar` (2,2,0.15 — inchangé) et `use_shotgun`
+  (15.5,4,0.15) ;
+- **`kit_wall_4m`:117, `kit_wall_2m`:9, `kit_wall_1m`:2** — recompté à la
+  main par zone à partir des longueurs de brèche (B : 2× segments de 10 m
+  après la brèche nord → 2 `kit_wall_2m` ; C : 4× segments de 10 m après les
+  brèches sud+nord → 4 `kit_wall_2m` ; E : 3 `kit_wall_2m` + 2 `kit_wall_1m`
+  déjà documentés pour la Zone E seule, INCHANGÉS par la nouvelle brèche
+  ouest qui, elle, tile en 8 m + 4 m sans reste) — total 2+4+3=9
+  `kit_wall_2m`, exactement le compte réel : confirme qu'aucune brèche
+  n'introduit un reste de tiling imprévu ;
+- **`COLOR_0` non vide** (attribut réimporté sous le nom `Color`) sur un
+  mesh de rendu échantillonné dans CHACUNE des 5 zones d'origine
+  (`kit_floor_4x4` pour A, `kit_checkout` pour B, `kit_gondola_4m` pour C,
+  `kit_rack_4m` pour D, `kit_door_2m` pour E) ;
+- **bounding box monde globale** x∈[-10.25, 60.25], y∈[-2.25, 90.25] —
+  cohérente avec un plan en L/zigzag (les zones ne couvrent chacune qu'une
+  sous-partie de cette boîte, pas un rectangle plein) ;
+- **`kit_door_2m` (Zone E) à x∈[51,53], y∈[78,78.25]** — exactement la
+  brèche translatée (x=-1+52 à 1+52, y=14+64) prescrite par la translation
+  ci-dessus, confirmant que la Zone E est bien posée à l'endroit calculé.
+
+Pas de chevauchement ni de trou détecté entre zones : chaque paire de zones
+adjacentes est séparée par un gap EXACTEMENT comblé par son connecteur
+4 × 4 m (vérifié par calcul sur les 5 empreintes traduites — Zone A
+x∈[-10,10]/y∈[-2,22], B x∈[14,38]/y∈[-2,22], C x∈[14,38]/y∈[26,54], D
+x∈[12,40]/y∈[58,90], E x∈[44,60]/y∈[62,82] — et confirmé par le compte de
+tuiles de sol : 202 `kit_floor_4x4` au total, dont 188 attribués aux
+5 zones + 4 connecteurs et 14 à la dalle de mezzanine, aucune tuile en trop
+ni manquante).
+
+#### Pièges rencontrés
+
+**Le monde de bake orphelin (nouveau, propre à la fusion).**
+`build_level.py::build_lighting` crée un `bpy.data.worlds` et le rend actif
+à CHAQUE appel — correct pour un fichier de zone isolée (un seul appel),
+mais appelé 5 fois ici. Pire : `geo_utils.wipe_scene()` ne touche jamais
+`bpy.data.worlds` (il ne nettoie que collections/objets/meshes/matériaux/
+lampes/images) — le fichier partait donc déjà avec le `World` par défaut de
+`--factory-startup` en plus. Résultat mesuré : **6** mondes après les 5
+zones, pas 5. Les cinq mondes de zone partagent la même couleur/force de
+fond (seul le `sun` optionnel de la Zone A diffère, et c'est un OBJET lampe
+distinct, pas une propriété du monde) : lequel reste actif ne change rien
+au bake. `build_combined_level.py` supprime après coup tout monde dont le
+nom ne correspond pas à `bpy.context.scene.world` (comparaison par nom,
+plus simple qu'une comparaison d'identité d'objet Python) — vérifié en
+rechargeant le fichier produit : exactement 1 monde restant
+(`zone_e_bureau_world`), correctement actif.
+
+**Aucun piège de géométrie/collision.** Contrairement aux zones
+individuelles (asymétrie de grille en Zone C, collision escalier/rambarde
+en Zone D), la fusion elle-même n'a nécessité AUCUNE correction de ce
+genre : chaque brèche a été choisie avec une marge d'au moins 3.5 m par
+rapport à la géométrie intérieure la plus proche (voir le tableau de
+justification ci-dessus), et chaque translation est un entier de mètres —
+la grille 0.25 m ne pouvait donc pas être cassée par construction. Les 4
+couloirs de connexion, en dalles 4 × 4 m tuilées par les mêmes fonctions que
+le reste du kit, n'ont produit aucun reste de tiling (vérifié par calcul
+avant l'implémentation ET recompté indépendamment sur le `.glb` exporté,
+voir `kit_wall_2m`/`kit_wall_1m` ci-dessus).
+
+**Le seul changement dans `build_level.py`** : `build_spawns(zone,
+logic_coll, include_player: bool = True)` — paramètre ajouté avec une
+valeur par défaut qui préserve EXACTEMENT le comportement précédent.
+Vérifié par reconstruction de contrôle des 5 `--zone a|b|c|d|e` après cette
+modification : mêmes comptes `Spawns`/`Objets use_*` que ceux déjà
+documentés plus haut dans ce fichier pour chaque zone, aucune régression.
+
+#### Ce qui n'a pas été touché (hors scope, rappel)
+
+Aucune décision de layout n'a été prise ici : l'ORDRE des zones (A→B→C→D→E),
+le CONTENU de chaque zone (murs intérieurs, gondoles, racks, mezzanine,
+caisses, spawns d'origine) et les 5 fichiers individuels
+(`zone_{a_parking,b_caisses,c_rayons,d_reserve,e_bureau}.glb`) restent
+EXACTEMENT ce qu'ils étaient — seule la position dans un espace monde
+partagé, l'ouverture d'une brèche de connexion, le renommage des noms en
+collision, et l'ajout du pickup `use_shotgun` (dans la copie combinée
+SEULEMENT) ont été ajoutés. `src/game/level/levels.ts`, l'entrée de menu, et
+la vérification en jeu restent à faire par l'humain (voir CLAUDE.md).
