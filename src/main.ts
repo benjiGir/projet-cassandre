@@ -402,7 +402,8 @@ async function main() {
       onLoaded: (handle, info) => {
         console.info(
           `[level] "${name}.glb" chargé — colliders ${handle.stats.colliderCount}, ` +
-            `spawns Costard ${handle.stats.spawnSuitCount}, triggers ${handle.stats.triggerCount}, ` +
+            `spawns Costard ${handle.stats.spawnSuitCount}, spawns Directeur ${handle.stats.spawnDirectorCount}, ` +
+            `triggers ${handle.stats.triggerCount}, ` +
             `portes ${handle.stats.doorCount}, use ${handle.stats.useCount}, ` +
             `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}`,
         );
@@ -437,6 +438,11 @@ async function main() {
         if (info.isFirstLoad) {
           for (const spawn of handle.spawnSuits) {
             spawnSuitAt(spawn.position.x, spawn.position.y, spawn.position.z);
+          }
+          // `handle.spawnDirectors` (Empties `spawn_director_*`) : même garde
+          // `isFirstLoad`, même raison exacte que `spawn_suit_*` ci-dessus.
+          for (const spawn of handle.spawnDirectors) {
+            spawnDirectorAt(spawn.position.x, spawn.position.y, spawn.position.z);
           }
         }
       },

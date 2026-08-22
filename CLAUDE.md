@@ -37,7 +37,8 @@ explication**, pas contournée.
 |---|---|
 | `col_*` | collider trimesh statique, mesh rendu invisible |
 | `spawn_player` | position/orientation de départ |
-| `spawn_suit_*` | point d'apparition ennemi |
+| `spawn_suit_*` | point d'apparition Costard |
+| `spawn_director_*` | point d'apparition Directeur (boss unique) |
 | `trig_*` | volume de trigger (box), mesh invisible |
 | `door_*` | porte animée, collider dynamique |
 | `use_*` | objet interactif (portée 2 m) |

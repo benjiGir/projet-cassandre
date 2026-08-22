@@ -18,7 +18,8 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
  * | `col_mesh_*`      | collider TRIMESH statique (dernier recours), invisible|
  * | `col_*` (nu)      | rétrocompat : trimesh, sauf boîte détectée → cuboid |
  * | `spawn_player`    | position + orientation de départ (Empty)            |
- * | `spawn_suit_*`    | point d'apparition ennemi (Empty)                   |
+ * | `spawn_suit_*`    | point d'apparition Costard (Empty)                  |
+ * | `spawn_director_*`| point d'apparition Directeur, boss unique (Empty)   |
  * | `trig_*`          | volume de trigger box, sensor Rapier, mesh invisible|
  * | `door_*`          | porte animée, collider dynamique                    |
  * | `use_*`           | objet interactif, portée 2 m                        |
@@ -176,6 +177,7 @@ export interface LevelStats {
     trimesh: number;
   };
   spawnSuitCount: number;
+  spawnDirectorCount: number;
   triggerCount: number;
   doorCount: number;
   useCount: number;
@@ -191,6 +193,7 @@ export interface LevelHandle {
   /** `null` si absent du fichier — voir l'avertissement bruyant correspondant. */
   spawnPlayer: SpawnPoint | null;
   spawnSuits: NamedSpawn[];
+  spawnDirectors: NamedSpawn[];
   triggers: TriggerVolume[];
   doors: DoorInfo[];
   useObjects: UseObject[];
@@ -711,6 +714,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
   let spawnPlayer: SpawnPoint | null = null;
   let spawnPlayerCount = 0;
   const spawnSuits: NamedSpawn[] = [];
+  const spawnDirectors: NamedSpawn[] = [];
   const triggers: TriggerVolume[] = [];
   const doors: DoorInfo[] = [];
   const useObjects: UseObject[] = [];
@@ -735,6 +739,12 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
       const position = new THREE.Vector3();
       obj.getWorldPosition(position);
       spawnSuits.push({ name, position });
+      return;
+    }
+    if (name.startsWith("spawn_director_")) {
+      const position = new THREE.Vector3();
+      obj.getWorldPosition(position);
+      spawnDirectors.push({ name, position });
       return;
     }
 
@@ -836,6 +846,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
     colliderCount,
     colliderKindCounts,
     spawnSuitCount: spawnSuits.length,
+    spawnDirectorCount: spawnDirectors.length,
     triggerCount: triggers.length,
     doorCount: doors.length,
     useCount: useObjects.length,
@@ -861,7 +872,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
     });
   }
 
-  return { root, gltf, spawnPlayer, spawnSuits, triggers, doors, useObjects, secrets, stats, dispose };
+  return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, dispose };
 }
 
 /**

@@ -446,20 +446,27 @@ ZONE_E = {
     },
 
     "spawn_player": (0.0, 0.0, 0.0),
-    # Un seul Costard STANDARD (placeholder du "directeur", voir scope) au
-    # centre de la salle, face au joueur à l'entrée — confrontation courte
-    # et immédiate plutôt qu'une approche longue (c'est la dernière salle du
-    # jeu, la "révélation" doit être immédiate, pas une embuscade cachée).
-    # 9m du spawn : sous attackRange=16m par choix assumé ici (contrairement
-    # aux embuscades des zones précédentes, ce n'est pas un couloir/une
-    # allée traversée par surprise, c'est une salle unique où le joueur
-    # entre en sachant qu'il y a un ennemi en face — le state machine garde
-    # de toute façon un temps `alertDuration` (0.45s, voir
-    # suitConfig.ts:175) avant tout tir possible, quelle que soit la
-    # distance). Vérifié en jeu par l'humain (pas ici, voir CLAUDE.md) que
-    # ce n'est pas déjà en état `attack` au tout premier pas fixe.
+    # Le vrai Directeur (plus un Costard placeholder, voir CLAUDE.md pour
+    # l'historique) au centre de la salle, face au joueur à l'entrée —
+    # confrontation courte et immédiate plutôt qu'une approche longue (c'est
+    # la dernière salle du jeu, la "révélation" doit être immédiate, pas une
+    # embuscade cachée). 9m du spawn : sous attackRange=16m par choix assumé
+    # ici (contrairement aux embuscades des zones précédentes, ce n'est pas
+    # un couloir/une allée traversée par surprise, c'est une salle unique où
+    # le joueur entre en sachant qu'il y a un ennemi en face — le state
+    # machine garde de toute façon un temps `alertDuration` (0.45s, voir
+    # directorConfig.ts) avant tout tir possible, quelle que soit la
+    # distance).
+    #
+    # Le nom de clé Python `"spawn_suits"` reste tel quel : `build_spawns`
+    # (build_level.py) ne fait qu'itérer des paires (nom, position) et créer
+    # une Empty par nom donné, sans connaître la sémantique du nom — c'est le
+    # PRÉFIXE de la CHAÎNE ci-dessous (`spawn_director_`, pas `spawn_suit_`)
+    # qui détermine le contrat runtime lu par `loader.ts`, pas la clé du
+    # dict Python. Renommer la clé aurait exigé de toucher `build_level.py`
+    # pour un bénéfice purement cosmétique.
     "spawn_suits": [
-        ("spawn_suit_1", (0.0, 9.0, 0.0)),
+        ("spawn_director_1", (0.0, 9.0, 0.0)),
     ],
 
     "use_objects": [],

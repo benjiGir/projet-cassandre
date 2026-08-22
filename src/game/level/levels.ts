@@ -42,10 +42,9 @@ export const LEVEL_CHOICES: LevelDef[] = [
   // (3 rayons d'évitement local), un Costard là-haut resterait bloqué
   // contre la rambarde. Démarre ARMÉE, même logique que B/C.
   { id: "zone_d_reserve", label: "Zone D — Réserve", kind: "gltf", gltfName: "zone_d_reserve" },
-  // Géométrie seule (2026-08-22) : passage de sortie ouvert (kit_door_2m,
-  // pas de door_* animé), un Costard placeholder pour le directeur. Le
-  // vrai directeur (nouveau type d'entité, reveal reptilien), le badge, et
-  // la porte verrouillée restent une tâche séparée non commencée. Démarre
-  // ARMÉE.
+  // Passage de sortie ouvert (kit_door_2m, pas de door_* animé) — la porte
+  // verrouillée par badge reste une tâche séparée non commencée. Le vrai
+  // Directeur (`spawn_director_1`) y est désormais présent, plus un Costard
+  // placeholder. Démarre ARMÉE.
   { id: "zone_e_bureau", label: "Zone E — Bureau", kind: "gltf", gltfName: "zone_e_bureau" },
 ];
