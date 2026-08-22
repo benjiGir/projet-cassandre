@@ -1,5 +1,5 @@
 """
-Spécification des niveaux Zone A / Zone B / Zone C — PROJET_CASSANDRE.
+Spécification des niveaux Zone A / Zone B / Zone C / Zone D — PROJET_CASSANDRE.
 
 Données pures (aucune dépendance à `bpy`, comme `kit_spec.py`), consommées
 par `build_level.py`. Ce fichier ne prend AUCUNE décision de level design :
@@ -227,4 +227,159 @@ ZONE_C = {
 }
 
 
-ZONES = {"a": ZONE_A, "b": ZONE_B, "c": ZONE_C}
+# -----------------------------------------------------------------------------
+# ZONE D — Réserve
+# -----------------------------------------------------------------------------
+
+ZONE_D = {
+    "name": "zone_d_reserve",
+
+    "floor": {"x": (-14.0, 14.0), "y": (-2.0, 30.0), "tile": 4.0},
+
+    "walls": [
+        wall_run((-14.0, -2.0), (14.0, -2.0), (0.0, -1.0)),   # sud
+        wall_run((-14.0, 30.0), (14.0, 30.0), (0.0, 1.0)),    # nord
+        wall_run((-14.0, -2.0), (-14.0, 30.0), (-1.0, 0.0)),  # ouest
+        wall_run((14.0, -2.0), (14.0, 30.0), (1.0, 0.0)),     # est
+    ],
+
+    "vitrine": None,
+    "checkouts": None,
+    "gondolas": None,
+
+    # Deux rangées de kit_rack_4m (4x1.2x6m, PLUS haut que les murs 5m —
+    # voulu, aucune dalle de plafond n'existe dans ce pipeline, donc pas de
+    # conflit de collision, juste un rack qui dépasse visuellement la
+    # hauteur des murs, cohérent avec un vrai rayonnage d'entrepôt). PAS de
+    # capuchon de bout (aucune pièce d'about pour kit_rack_4m dans le kit,
+    # contrairement aux gondoles — les rangées finissent à nu, c'est
+    # réaliste pour du rayonnage industriel). Même convention "row.x = coin,
+    # pas centre" que build_gondolas pour rester sur la grille 0.25m.
+    "racks": {
+        "piece": "kit_rack_4m",
+        "rows": [
+            {"x": -6.0, "y": (4.0, 20.0)},   # rangée ouest, 4 modules de 4m = 16m exact
+            {"x": 4.0,  "y": (4.0, 20.0)},   # rangée est, symétrique
+        ],
+    },
+    # Travée centrale ~8.8m entre les deux rangées, couloirs latéraux ouverts
+    # entre chaque rangée et le mur le plus proche. NOTE MÉCANIQUE (voir
+    # `build_level.py::build_racks`/`_build_row_run`) : comme pour les
+    # gondoles de la Zone C, `row["x"]` est un COIN de la pièce, et la
+    # rotation +90° (qui aligne la longueur locale du rack sur l'axe Y)
+    # décale l'empreinte de la profondeur (1.2m) vers -X, pas vers +X —
+    # l'empreinte réelle des rangées est donc X∈[-7.2,-6.0] (ouest) et
+    # X∈[2.8,4.0] (est), pas centrée symétriquement autour de X=0 malgré
+    # des coordonnées d'origine symétriques (-6.0/4.0). Largeur de travée
+    # réelle : 2.8 - (-6.0) = 8.8m, conforme. Conséquence mécanique
+    # acceptée, identique en nature à l'asymétrie de couloirs de la Zone C.
+
+    # Mezzanine : dalle à Z=2.0 (kit_floor_4x4, origine = surface de marche,
+    # poser à z=2.0 fait marcher à z=2.0), pleine largeur de la salle
+    # (flush avec les murs est/ouest/nord comme le sol au sol), occupant le
+    # quart nord de la salle (Y de 22 à 30 = 8m = 2 modules de 4m). Un
+    # escalier DOUBLE (deux kit_stairs_2m côte à côte, X∈[-2,2], Y∈[20,22] —
+    # chaque pièce fait 2m de large, la paire comble exactement le vide
+    # entre la fin des rangées (Y=20) et le bord sud de la mezzanine
+    # (Y=22)) monte du sol (Z=0) au niveau de la mezzanine (Z=2.0), pente
+    # 45° (8 marches de 0.25m, sous l'autostep 0.35m, proxy = rampe convexe
+    # — voir kit_spec.py::kit_stairs_2m). Rambarde (kit_railing_2m, 2m
+    # chacune) SEULEMENT sur le bord sud exposé (Y=22, Z=2.0) — les bords
+    # est/ouest/nord de la mezzanine sont flush contre les murs déjà
+    # existants (comme le sol), pas besoin de rambarde là. Ouverture de 4m
+    # (X∈[-2,2]) laissée sans rambarde pile là où monte l'escalier double ;
+    # le reste (12m de chaque côté = 6 segments de 2m, aucun reste) est
+    # rambardé. Total : 12 segments de rambarde.
+    "mezzanine": {
+        "floor": {"x": (-14.0, 14.0), "y": (22.0, 30.0), "tile": 4.0, "z": 2.0},
+        "stairs": {
+            "piece": "kit_stairs_2m",
+            # Coordonnées TELLES QUE fournies par le plan (coin bas Blender
+            # de la pièce, AVANT rotation). NOTE MÉCANIQUE (voir
+            # `build_level.py::build_mezzanine_stairs`) : `kit_stairs_2m` ne
+            # monte vers +Y que sous rotation +90° (vérifié empiriquement —
+            # sans rotation la pente est le long de X), et cette même
+            # rotation décale l'empreinte de la largeur locale (2m) vers -X
+            # à partir de l'origine, exactement comme pour les gondoles/
+            # racks. Un placement naïf de ces coordonnées ferait donc
+            # atterrir les deux marches sur X∈[-4,0] au lieu de X∈[-2,2] —
+            # précisément SOUS le segment de rambarde solide voisin
+            # (`x_runs` s'arrête à X=-2), ce qui bloquerait le haut de
+            # l'escalier contre une rambarde pleine. `build_mezzanine_stairs`
+            # compense donc l'origine de +largeur (2m) pour que l'empreinte
+            # RÉELLE tombe exactement sur X∈[-2,2] comme le veut le plan
+            # (voir son docstring pour le calcul complet) — mécanique, pas
+            # une décision de layout : la position/taille de la brèche ne
+            # change pas, seule la valeur intermédiaire passée à Blender
+            # est ajustée pour l'obtenir.
+            "positions": [(-2.0, 20.0, 0.0), (0.0, 20.0, 0.0)],  # côte à côte, montent vers +Y
+        },
+        "railing": {
+            "piece": "kit_railing_2m",
+            "y": 22.0,
+            "z": 2.0,
+            "x_runs": [(-14.0, -2.0), (2.0, 14.0)],  # 6+6 = 12 segments de 2m, la brèche [-2,2] = l'escalier
+        },
+    },
+
+    # "Palettes empilées" + caisses : flaveur "réserve", obstacles de
+    # déplacement (aucune ne dépasse eyeHeight=1.6m, comme kit_checkout en
+    # Zone B — couverture visuelle seulement, connu et accepté, pas un bug
+    # nouveau). Piles de 3 kit_pallet (0.15m chacune, empilées en Z) posées
+    # dans les couloirs latéraux ; 3 kit_crate isolées dans la partie sud de
+    # la travée centrale, à l'écart des trajectoires évidentes.
+    "storage_props": {
+        "pallet_stacks": [
+            {"x": -10.0, "y": 16.0, "count": 3},   # couloir latéral ouest
+            {"x": 10.0,  "y": 16.0, "count": 3},   # couloir latéral est
+        ],
+        "crates": [
+            (-2.0, 8.0, 0.0),
+            (2.0, 6.0, 0.0),
+            (3.0, 12.0, 0.0),
+        ],
+    },
+
+    "spawn_player": (0.0, 0.0, 0.0),
+    # CONTRAINTE D'IA (voir suit.ts::computeAvoidedDirection, aucun vrai
+    # pathfinding — un Costard sur la mezzanine ne pourrait pas rejoindre un
+    # joueur au sol via l'escalier hors de son axe direct) : AUCUN
+    # spawn_suit_* sur la mezzanine, tous au sol.
+    #
+    # BUG CONSTATÉ EN JEU (premier jet, corrigé ici) : `spawn_suit_1`/
+    # `spawn_suit_2` étaient posés à Y=10 dans les couloirs latéraux, en
+    # théorie occultés par la rangée adjacente (occlusion confirmée par
+    # calcul géométrique côté ouest, X∈[-7.2,-6.0] croisé à Y∈[6.0,7.2],
+    # et géométrie/colliders re-vérifiés indépendamment en rechargeant le
+    # `.glb` dans Blender — bbox exactes, col_box_rack_4m bien co-localisé
+    # avec le rendu). Pourtant `window.cassandre.suits` montre les DEUX en
+    # état `chase` puis `attack` dès le spawn, distance ~13.8m sous
+    # `attackRange`=16m — la rangée ne bloque PAS le rayon de vue de
+    # `hasClearWorldPath` en pratique, malgré une géométrie et des groupes
+    # de collision (`COLLISION_GROUPS.WORLD`, identiques pour tout `col_*`
+    # y compris les rangées) qui semblent corrects par lecture du code.
+    # Cause racine NON identifiée (pas de repro headless tenté) — possible
+    # gap général sur l'occlusion des `PROP` du kit pour les rayons de vue
+    # des Costards, pas spécifique à cette zone. Contournement appliqué ici,
+    # PAS une solution : `spawn_suit_1`/`spawn_suit_2` déplacés à Y=16
+    # (toujours dans le couloir latéral, même flaveur visuelle) mais à une
+    # distance qui les met hors d'`attackRange` QUELLE QUE SOIT l'occlusion
+    # réelle — même stratégie de secours que les fix Zone B/C.
+    # spawn_suit_3/4/5 dans la travée centrale ou près de l'escalier, à
+    # découvert mais au-delà d'attackRange=16m, même marge.
+    "spawn_suits": [
+        ("spawn_suit_1", (-10.0, 16.0, 0.0)),  # couloir latéral ouest, ~18.9m
+        ("spawn_suit_2", (10.0, 16.0, 0.0)),   # couloir latéral est, ~18.9m
+        ("spawn_suit_3", (0.0, 18.0, 0.0)),    # travée centrale, ouvert, 18m
+        ("spawn_suit_4", (-4.0, 21.0, 0.0)),   # near pied d'escalier, ouvert, ~21.4m
+        ("spawn_suit_5", (4.0, 21.0, 0.0)),    # near pied d'escalier, ouvert, ~21.4m (symétrique)
+    ],
+
+    "use_objects": [],
+
+    # Intérieur, pas de vitrine — pas de sun (même choix que Zone B/C).
+    "lighting": {"sun": False},
+}
+
+
+ZONES = {"a": ZONE_A, "b": ZONE_B, "c": ZONE_C, "d": ZONE_D}

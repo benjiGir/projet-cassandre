@@ -152,7 +152,42 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (physique dynamique, audio interactif) pas écrits — travail futur
 > `level-pipeline`/`shell`.
 >
-> Zones D-E, secrets, porte à badge : pas commencés.
+> **Zone D — Réserve (2026-08-22)** : sol + périmètre 28×32m, deux rangées
+> de `kit_rack_4m` (8 pièces, cover réel — 6m de haut) créant une travée
+> centrale ~8.8m + deux couloirs latéraux, 6 palettes empilées (`kit_pallet`
+> ×3 en 2 piles) + 3 `kit_crate` pour la flaveur "réserve". **Première vraie
+> verticalité du jeu** : mezzanine à Z=2m (quart nord de la salle), escalier
+> double (`kit_stairs_2m` ×2, pente 45°) + rambarde (`kit_railing_2m` ×12)
+> sur le bord exposé. `validate_level.py --strict` : 0 erreur, 8 warnings
+> attendus (empilement des palettes à 0.15m, incompatible avec la grille
+> 0.25m — même famille d'exception que `use_crowbar` en Zone A). 5
+> `spawn_suit_*`, démarre ARMÉE.
+> **Décision d'IA actée avant la construction** : `suit.ts::runChase` n'a
+> aucun vrai pathfinding (`computeAvoidedDirection` = 3 rayons d'évitement
+> local, vélocité nulle si les trois sont bloqués) — un Costard sur la
+> mezzanine chassant un joueur au sol via l'escalier resterait bloqué contre
+> la rambarde. Décision : **aucun `spawn_suit_*` sur la mezzanine**, les 5
+> sont au sol ; la mezzanine reste un élément de traversée/point de vue pour
+> le joueur uniquement.
+> **Piste d'occlusion tentée puis abandonnée, en jeu (pas en théorie)** :
+> `spawn_suit_1`/`spawn_suit_2` étaient posés dans les couloirs latéraux en
+> espérant une occlusion réelle par la rangée adjacente — géométrie/colliders
+> revérifiés indépendamment (bbox exactes, `col_box_rack_4m` co-localisé
+> avec le rendu, groupes de collision identiques à tout `col_*`), calcul
+> géométrique du croisement correct côté ouest. Pourtant vérifié en jeu
+> (`window.cassandre.suits`) : les DEUX passent `attack` dès le spawn
+> (~13.8m, sous `attackRange`=16m) — la rangée ne bloque PAS
+> `hasClearWorldPath` en pratique. **Cause racine non identifiée**, cf.
+> [[project_cassandre_boomer_shooter]] mémoire pour le détail de
+> l'investigation ; possible gap général sur l'occlusion des pièces `PROP`
+> du kit pour les rayons de vue, pas spécifique à cette zone — mérite un
+> repro headless dédié, pas creusé plus ici. Contournement appliqué (pas une
+> correction) : les deux repositionnés à Y=16 (~18.9m), hors `attackRange`
+> quelle que soit l'occlusion réelle, même stratégie de secours que B/C.
+> Revérifié en jeu : les 5 Costards passent `idle`→`alert`→`chase` sans
+> jamais `attack` au spawn.
+>
+> Zone E, secrets, porte à badge : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet

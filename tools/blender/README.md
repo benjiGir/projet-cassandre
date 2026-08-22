@@ -38,6 +38,11 @@ blender -b --factory-startup -P tools/blender/build_level.py -- --zone c --kit a
 blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/bake_vertex_lighting.py -- --save
 blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/validate_level.py -- --strict
 blender -b assets_src/blender/zone_c_rayons.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_c_rayons.glb
+
+blender -b --factory-startup -P tools/blender/build_level.py -- --zone d --kit assets_src/blender/kit_hypermarche.blend --out assets_src/blender/zone_d_reserve.blend
+blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/bake_vertex_lighting.py -- --save
+blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/validate_level.py   # PAS --strict, voir note (palettes empilées)
+blender -b assets_src/blender/zone_d_reserve.blend -P tools/blender/export_level.py -- --out public/assets/levels/zone_d_reserve.glb
 ```
 
 `--strict` fait échouer sur les warnings. À utiliser en CI, pas en itération.
@@ -253,3 +258,142 @@ directement. Sans conséquence ici puisque la chaîne documentée exécute
 `validate_level.py` en étape séparée avant `export_level.py`, mais l'écart
 entre la docstring et le code existe déjà pour Zone A/B, pas introduit par
 Zone C.
+
+### Niveau Zone D (Réserve)
+
+**Construit avec le vrai kit modulaire (2026-08-22)**, sur le même schéma que
+Zone A/B/C — `level_spec.py::ZONE_D` transcrit littéralement le plan fourni
+(montée en intensité, 5 Costards, verticalité mezzanine/escalier/rambarde,
+racks et palettes de réserve). Première zone avec une VRAIE verticalité :
+mezzanine (dalle à Z=2.0) accessible par un escalier double, MAIS aucun
+`spawn_suit_*` posé dessus — contrainte d'IA actée en amont (`suit.ts::
+computeAvoidedDirection` ne fait aucun vrai pathfinding, un Costard sur la
+mezzanine resterait bloqué contre la rambarde en cherchant un joueur au sol
+hors de son axe direct). Les 5 Costards sont au sol.
+
+Nouvelles fonctions dans `build_level.py` :
+- `_build_row_run` : logique PARTAGÉE entre `build_gondolas` (Zone C, avec
+  capuchons `kit_gondola_end`) et `build_racks` (Zone D, sans capuchon —
+  `kit_rack_4m` n'a pas de pièce d'about dans le kit, `end_name=None`).
+  `build_gondolas` a été refactorée pour déléguer à cette fonction commune ;
+  son comportement (donc les comptes déjà validés de la Zone C) est
+  inchangé, seule l'implémentation est partagée.
+- `tile_floor` : nouveau paramètre optionnel `z: float = 0.0`, réutilisé tel
+  quel pour la dalle de mezzanine (`z=2.0`) sans dupliquer la logique de
+  tiling.
+- `build_mezzanine_stairs` : pose l'escalier double (voir piège ci-dessous).
+- `build_mezzanine_railing` : tile `kit_railing_2m` (2 m, aucun module plus
+  petit) le long de chaque `x_runs`, sans rotation (la longueur locale de la
+  pièce est déjà alignée sur l'axe des runs).
+- `build_storage_props` : empile `kit_pallet` en Z (`z = i × 0.15`) et pose
+  les `kit_crate` isolées.
+
+**Comptes obtenus** (`BUILD LEVEL — zone_d_reserve`) :
+
+| Élément | Compte |
+|---|---|
+| Tuiles de sol (28 × 32 m / 4 m) | 56 |
+| Dalle de mezzanine (28 × 8 m / 4 m, Z=2.0) | 14 |
+| Murs (`kit_wall_4m` uniquement — 28/28/32/32 m, tous multiples de 4 m, 0 reste) | 30 |
+| Rayonnages (`kit_rack_4m`, 2 rangées × 4 modules, sans capuchon) | 8 |
+| Escalier (`kit_stairs_2m` ×2) | 2 |
+| Rambarde (`kit_railing_2m`, 6+6 segments de 2 m, brèche de 4 m pour l'escalier) | 12 |
+| Palettes (`kit_pallet`, 2 piles × 3) | 6 |
+| Caisses (`kit_crate` isolées) | 3 |
+| Spawns (1 joueur + 5 Costards, tous au sol) | 6 |
+| Objets `use_*` | 0 |
+| Lampes de secteur (grille 4 × 5, espacement 7.00 × 6.40 m) | 20 (pas de sun) |
+
+Bake (`bake_vertex_lighting.py --save`) : **0 mesh noir, 0 dégradé plat** sur
+131 meshes, luminance moyenne globale 0.212, 62 sommets écrêtés (proches des
+lampes de plafond, `--light-energy` par défaut 180 W — cosmétique, sans
+conséquence sur le verdict, même schéma que B/C).
+
+`validate_level.py -- --strict` : **`ECHEC` avec exactement 8 warnings**
+(voir piège grille ci-dessous), **0 erreur**. Sans `--strict` :
+**`VERDICT : CONFORME (0 erreurs, 8 warnings)`** — c'est le critère réel
+(« 0 erreur »), même politique que Zone A. 288 objets (262 meshes), 16472
+triangles / 200000, 3 matériaux utilisés (`mat_kit_shell`, `mat_kit_storage`,
+`mat_kit_detail` — `mat_kit_props` n'apparaît pas, aucun mobilier de vente
+en Zone D), colliders `convexHull:2 cuboid:129` (les 2 convexHull sont les
+rampes d'escalier, `kit_stairs_2m`).
+
+Export (`export_level.py`) : `public/assets/levels/zone_d_reserve.glb`,
+746 Ko. Rechargé dans Blender (`import_scene.gltf`) pour vérification
+indépendante : 268 objets (`col_*`:131, `kit_floor_4x4`:70, `kit_wall_4m`:30,
+`kit_rack_4m`:8, `kit_stairs_2m`:2, `kit_railing_2m`:12, `kit_pallet`:6,
+`kit_crate`:3, `spawn_player`:1, `spawn_suit_*`:5 — comptes identiques au
+`.blend` source), `COLOR_0` (attribut `Color`, domaine `CORNER`, 288 entrées)
+non vide sur une tuile de la dalle de mezzanine échantillonnée, rotation +90°
+de l'escalier et des racks préservée après export/réimport (vérifiée via
+`matrix_world.to_quaternion()`, pas seulement `rotation_euler` — voir piège
+ci-dessous), positions des 6 spawns revérifiées bit à bit contre
+`level_spec.ZONE_D`.
+
+**Piège de rotation découvert (nouveau, plus sérieux que l'asymétrie de
+grille de la Zone C) : l'escalier double atterrissait sous la rambarde
+solide.** `kit_stairs_2m` ne monte vers +Y que sous rotation +90° en Z
+(vérifié empiriquement en instanciant la pièce et en lisant sa bounding box
+monde — sans rotation la pente est le long de X). Mais cette même rotation,
+comme pour les gondoles/racks, décale l'empreinte de la LARGEUR locale de la
+pièce (2 m) vers **-X** à partir de l'origine Blender, pas vers +X. Un
+placement naïf des positions données par le plan (`(-2.0, 20.0, 0.0)` et
+`(0.0, 20.0, 0.0)`, coin bas AVANT rotation) fait donc atterrir les deux
+marches sur X∈[-4,0] au lieu de X∈[-2,2] — précisément SOUS le segment de
+rambarde solide voisin (`x_runs` s'arrête à X=-2), bloquant le haut de
+l'escalier contre une rambarde pleine. Contrairement à l'asymétrie de
+couloirs de la Zone C (cosmétique, acceptée), ceci est une VRAIE collision
+entre deux pièces que le plan place bord à bord ailleurs (la brèche de
+rambarde est calculée pour loger l'escalier). Corrigé mécaniquement dans
+`build_mezzanine_stairs` : chaque abscisse reçoit `+ largeur locale (2 m)`
+avant l'appel à `place_kit_piece`, ce qui fait tomber l'empreinte réelle
+exactement sur X∈[-2,2] — vérifié par bounding box monde après le build
+(`kit_stairs_2m` : X[-2,0] ; `kit_stairs_2m.001` : X[0,2]) ET par
+comparaison avec les 12 segments de rambarde exportés (la brèche entre le
+6ᵉ segment ouest, qui finit à X=-2, et le 7ᵉ segment est, qui commence à
+X=2, coïncide exactement avec l'empreinte de l'escalier). Aucune position du
+plan n'a été modifiée — seule la valeur intermédiaire passée à Blender est
+ajustée pour compenser l'effet de la rotation, mécanique pure, documentée en
+détail dans le docstring de `build_mezzanine_stairs`.
+
+**Même mécanique de rotation appliquée aux racks (`build_racks`), avec une
+conséquence acceptée plutôt que corrigée** : les deux rangées sont données à
+des abscisses symétriques (X=-6.0 / X=4.0), mais la même rotation +90°
+décale chaque empreinte de 1.2 m vers -X, PAS vers le mur le plus proche —
+donc la rangée est (X∈[2.8,4.0]) est en réalité plus proche du centre que la
+rangée ouest (X∈[-7.2,-6.0]) ne l'est du sien. La travée centrale réelle
+(2.8 à -6.0 = 8.8 m) correspond bien à la valeur du plan (« ~8.8 m »), mais
+ses bornes exactes diffèrent des coordonnées illustratives du plan
+(X=-4.8/4.0). Traité comme l'asymétrie de couloirs de la Zone C : conséquence
+MÉCANIQUE de la convention « row.x = coin, rotation +90° toujours vers -X »
+explicitement demandée pour cette tâche (réutiliser `build_gondolas` tel
+quel), pas une décision de layout — non corrigé, documenté dans
+`level_spec.py::ZONE_D`.
+
+**Conséquence sur l'occlusion de `spawn_suit_2` — signalé, non corrigé
+(vérification en jeu nécessaire, comme le bug équivalent de la Zone C).**
+Le plan affirme que `spawn_suit_1`/`spawn_suit_2` sont occultés depuis le
+spawn par la rangée de racks adjacente. Recalculé avec l'empreinte RÉELLE
+(pas les bornes illustratives du plan) : côté ouest, le segment
+spawn(0,0)→suit_1(-10,10) croise bien X∈[-7.2,-6.0] à Y∈[6.0,7.2] (dans
+l'étendue Y de la rangée [4,20]) — occlusion confirmée. Côté est, le segment
+spawn(0,0)→suit_2(10,10) (droite y=x) ne croise l'empreinte réelle de la
+rangée est (X∈[2.8,4.0], Y∈[4,20]) qu'au point unique (4,4) — un
+effleurement de coin, pas une occlusion robuste. Position NON modifiée ici
+(décision de layout, hors périmètre de cette tâche) — à vérifier en jeu via
+`window.cassandre.suits` comme indiqué dans le rapport ; si `spawn_suit_2`
+sort en état `attack`/visible immédiatement, c'est la cause géométrique
+exacte.
+
+**Piège de grille — nouvelle famille, propre à la Zone D (empilement
+vertical, pas tiling horizontal).** Les 8 warnings restants viennent tous de
+l'empilement des palettes (`kit_pallet`, épaisseur 0.15 m) : `z = i × 0.15`
+donne 0 / 0.15 / 0.30 par pile, et 0.15/0.30 ne sont pas des multiples de la
+grille 0.25 m — `check_transforms` avertit sur X **et** Z, pas seulement le
+plan horizontal. Mécaniquement inévitable : la hauteur de `kit_pallet` est
+une donnée déjà figée du kit (`kit_spec.py`, construit et baké avant cette
+tâche), et empiler à un pas différent de sa hauteur réelle créerait soit un
+vide soit un chevauchement entre palettes — pire qu'un warning de
+validateur. Exactement la même famille de dérogation que `use_crowbar` en
+Zone A (Z=0.15, déjà documenté plus haut) : accepté et documenté, pas corrigé
+— le critère réel du projet est « 0 erreur », pas « 0 warning ».

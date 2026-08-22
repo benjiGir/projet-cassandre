@@ -13,8 +13,12 @@ Assemblage d'un niveau à partir du kit modulaire — PROJET_CASSANDRE.
         --zone c --kit assets_src/blender/kit_hypermarche.blend \\
         --out assets_src/blender/zone_c_rayons.blend
 
+    blender -b --factory-startup -P tools/blender/build_level.py -- \\
+        --zone d --kit assets_src/blender/kit_hypermarche.blend \\
+        --out assets_src/blender/zone_d_reserve.blend
+
 Options :
-    --zone a|b|c        quelle entrée de `level_spec.ZONES` construire
+    --zone a|b|c|d       quelle entrée de `level_spec.ZONES` construire
     --kit PATH          .blend source du kit (défaut assets_src/blender/kit_hypermarche.blend)
     --out PATH          .blend produit (défaut assets_src/blender/<nom de la zone>.blend)
     --light-energy W    puissance des area lights de plafond (défaut 180 —
@@ -250,7 +254,12 @@ def build_walls(wall_specs: list[dict], mesh_lookup, proxy_map,
 # Sol
 # ---------------------------------------------------------------------------
 
-def tile_floor(floor_spec: dict, mesh_lookup, proxy_map, shell_coll, col_coll) -> int:
+def tile_floor(floor_spec: dict, mesh_lookup, proxy_map, shell_coll, col_coll,
+                z: float = 0.0) -> int:
+    """`z` optionnel (défaut 0.0, le sol au sol) : la Zone D réutilise cette
+    même fonction pour la dalle de mezzanine (`kit_floor_4x4` posé à z=2.0 —
+    son origine est le coin de la SURFACE DE MARCHE, poser à z=2.0 fait donc
+    marcher à z=2.0, voir kit_spec.py), sans dupliquer la logique de tiling."""
     x0, x1 = floor_spec["x"]
     y0, y1 = floor_spec["y"]
     tile = floor_spec["tile"]
@@ -265,7 +274,7 @@ def tile_floor(floor_spec: dict, mesh_lookup, proxy_map, shell_coll, col_coll) -
     nx, ny = int(round(nx_f)), int(round(ny_f))
     for i in range(nx):
         for j in range(ny):
-            loc = (x0 + i * tile, y0 + j * tile, 0.0)
+            loc = (x0 + i * tile, y0 + j * tile, z)
             place_kit_piece("kit_floor_4x4", mesh_lookup, proxy_map, loc, 0.0, shell_coll, col_coll)
     return nx * ny
 
@@ -330,76 +339,211 @@ def build_checkouts(checkout_spec: dict | None, mesh_lookup, proxy_map,
 # Gondoles (Zone C)
 # ---------------------------------------------------------------------------
 
+def _build_row_run(piece_name: str, end_name: str | None, x: float,
+                    y_range: tuple[float, float], mesh_lookup, proxy_map,
+                    props_coll, col_coll, rot_deg: float = 90.0) -> int:
+    """Tile `piece_name` le long de Y (de `y_range[0]` à `y_range[1]`) à
+    l'abscisse monde `x`, en tournant chaque instance de `rot_deg` pour
+    aligner sa longueur locale (axe X du kit) sur l'axe monde Y — même
+    mécanique que `plan_wall_run`/`_rotate90` pour les murs.
+
+    Logique PARTAGÉE entre `build_gondolas` (Zone C, `end_name` fourni : un
+    `kit_gondola_end` accolé à chaque extrémité, bloque la vue latérale) et
+    `build_racks` (Zone D, `end_name=None` : `kit_rack_4m` n'a pas de pièce
+    d'about dans le kit, la rangée finit à nu — réaliste pour du rayonnage
+    industriel).
+
+    Grille 0.25 m — décision MÉCANIQUE, pas de layout : `x` est utilisé TEL
+    QUEL comme coordonnée d'un COIN de la pièce (convention « origine =
+    coin » du kit, `kit_spec.py` en-tête), jamais comme centre de sa
+    profondeur. Centrer une pièce profonde de 1.25 m (gondole) ou 1.2 m
+    (rack) pile sur `x` demanderait un décalage qui n'est pas forcément un
+    multiple de 0.25 m et ferait échouer `validate_level.py` (warning
+    « hors grille », bloquant sous `--strict`). Utiliser `x` comme bord
+    (pas comme centre) garde chaque coin sur la grille tout en préservant
+    EXACTEMENT l'espacement centre-à-centre donné par `level_spec.py`.
+    Conséquence mécanique acceptée (documentée à l'appel, pas ici) : la
+    rotation +90° décale l'empreinte de la profondeur locale vers -X, donc
+    deux rangées à des abscisses symétriques (ex. -6.0 / 4.0) ne produisent
+    PAS des empreintes miroir l'une de l'autre — sous-produit du choix
+    « grille exacte, pas de reste silencieux », pas une décision de layout.
+    """
+    piece_len = spec.find_piece(piece_name)["dims"][0]
+    y0, y1 = y_range
+    run_len = y1 - y0
+    n_f = run_len / piece_len
+    if abs(n_f - round(n_f)) > 1e-6:
+        raise ValueError(
+            f"[build_level] rangée x={x} : longueur {run_len:.3f} m "
+            f"ne se divise pas en modules de {piece_len} m sans reste "
+            f"(n={n_f:.4f}) — corriger level_spec.py, pas de reste silencieux"
+        )
+    n = int(round(n_f))
+
+    count = 0
+    cursor = y0
+    for _ in range(n):
+        place_kit_piece(piece_name, mesh_lookup, proxy_map,
+                         (x, cursor, 0.0), rot_deg, props_coll, col_coll)
+        cursor += piece_len
+        count += 1
+
+    if end_name:
+        end_len = spec.find_piece(end_name)["dims"][0]
+        # Capuchons : accolés à chaque extrémité (bloquent la vue latérale
+        # depuis l'allée voisine), même bord X que le corps de la rangée —
+        # aucun jour entre le dernier module et son capuchon.
+        place_kit_piece(end_name, mesh_lookup, proxy_map,
+                         (x, y0 - end_len, 0.0), rot_deg, props_coll, col_coll)
+        place_kit_piece(end_name, mesh_lookup, proxy_map,
+                         (x, y1, 0.0), rot_deg, props_coll, col_coll)
+        count += 2
+
+    return count
+
+
 def build_gondolas(gondola_spec: dict | None, mesh_lookup, proxy_map,
                     props_coll, col_coll) -> int:
     """Rangées de `kit_gondola_4m` (+ capuchons `kit_gondola_end`), orientées
     le long de Y — perpendiculaire à leur orientation par défaut dans le kit.
-
-    `kit_spec._gondola_parts(length, depth, height)` construit la géométrie
-    locale avec `length` le long de l'axe X et `depth` le long de l'axe Y
-    (`box(0, 0, 0, length, depth, height)` — voir `kit_spec.py`) : pour
-    aligner la longueur sur Y (allées nord-sud), chaque pièce est tournée de
-    +90° en Z — même mécanique que `plan_wall_run`/`_rotate90` pour les murs
-    (l'axe local X suit alors la direction du run).
-
-    Grille 0.25 m — décision MÉCANIQUE, pas de layout : `row["x"]` est
-    utilisé TEL QUEL comme coordonnée d'un COIN de la pièce (convention
-    « origine = coin » du kit, `kit_spec.py` en-tête), jamais comme centre
-    de sa profondeur. Centrer une pièce profonde de 1.25 m pile sur
-    `row["x"]` demanderait un décalage de 0.625 m (1.25 / 2), qui n'est PAS
-    un multiple de 0.25 m et ferait échouer `validate_level.py` (warning
-    « hors grille », bloquant sous `--strict` — la Zone C ne doit avoir
-    AUCUNE exception, contrairement à `use_crowbar` en Zone A). Utiliser
-    `row["x"]` comme bord (pas comme centre) garde chaque coin sur la
-    grille (0.25 et 1.25 sont tous deux multiples de 0.25 m) tout en
-    préservant EXACTEMENT l'allée de 3 m entre rangées adjacentes (les trois
-    rangées décalées du même côté donnent des allées centrales à 3.0 m pile,
-    vérifié par calcul). Conséquence mécanique acceptée : les deux couloirs
-    latéraux ne sont plus rigoureusement symétriques (6.5 m / 7.75 m, contre
-    ~7 m / ~7 m si on centrait) — sous-produit du choix « 0 warning », pas
-    une décision de layout (l'écart, 0.625 m, ne change aucun placement
-    donné par `level_spec.py`).
-    """
+    Voir `_build_row_run` pour la mécanique (rotation, convention de coin,
+    asymétrie acceptée). Deux allées centrales à EXACTEMENT 3.0 m entre les
+    trois rangées de la Zone C (vérifié par calcul), couloirs latéraux
+    6.5 m / 7.75 m (pas rigoureusement symétriques, conséquence acceptée)."""
     if gondola_spec is None:
         return 0
-
     piece_name = gondola_spec["piece"]
     end_name = gondola_spec["end_piece"]
-    piece_len = spec.find_piece(piece_name)["dims"][0]
-    end_len = spec.find_piece(end_name)["dims"][0]
-    ROT_DEG = 90.0   # aligne la longueur (axe local X) sur l'axe monde Y
-
     count = 0
     for row in gondola_spec["rows"]:
-        x = row["x"]
-        y0, y1 = row["y"]
-        run_len = y1 - y0
+        count += _build_row_run(piece_name, end_name, row["x"], row["y"],
+                                 mesh_lookup, proxy_map, props_coll, col_coll)
+    return count
+
+
+def build_racks(racks_spec: dict | None, mesh_lookup, proxy_map,
+                 props_coll, col_coll) -> int:
+    """Rangées de `kit_rack_4m`, SANS capuchon de bout (aucune pièce d'about
+    pour ce module dans le kit — les rangées finissent à nu, réaliste pour
+    du rayonnage industriel). Même mécanique que `build_gondolas`, voir
+    `_build_row_run`."""
+    if racks_spec is None:
+        return 0
+    piece_name = racks_spec["piece"]
+    count = 0
+    for row in racks_spec["rows"]:
+        count += _build_row_run(piece_name, None, row["x"], row["y"],
+                                 mesh_lookup, proxy_map, props_coll, col_coll)
+    return count
+
+
+# ---------------------------------------------------------------------------
+# Mezzanine (Zone D) — escalier double + rambarde
+# ---------------------------------------------------------------------------
+
+def build_mezzanine_stairs(stairs_spec: dict | None, mesh_lookup, proxy_map,
+                            props_coll, col_coll) -> int:
+    """Escalier double : deux `kit_stairs_2m` posés côte à côte.
+
+    PIÈGE DÉCOUVERT (vérifié empiriquement en instanciant la pièce et en
+    lisant sa bounding box monde après rotation, pas seulement par calcul) :
+    `kit_stairs_2m` ne monte vers +Y QUE sous rotation +90° en Z (sans
+    rotation, la pente est le long de X — inutile ici, la mezzanine est au
+    nord). Or cette même rotation +90°, comme pour les gondoles/racks
+    (`_build_row_run`), décale l'empreinte de la LARGEUR locale de la pièce
+    (`dims[1]`, 2 m) vers -X à partir de l'origine Blender, PAS vers +X.
+
+    Un placement naïf des positions telles que données par `level_spec.py`
+    (coin bas Blender AVANT rotation, ex. x=-2.0 et x=0.0) ferait donc
+    atterrir les deux marches sur X∈[-4,0] au lieu de X∈[-2,2] — précisément
+    SOUS le segment de rambarde solide voisin (`x_runs` s'arrête à X=-2,
+    voir `build_mezzanine_railing`), bloquant le haut de l'escalier contre
+    une rambarde pleine. Ce n'est pas une asymétrie cosmétique acceptable
+    (comme les couloirs de gondoles/racks) : c'est une collision entre deux
+    pièces que le plan lui-même place bord à bord ailleurs (la brèche de
+    rambarde EST calculée pour loger l'escalier).
+
+    Correction MÉCANIQUE (pas une décision de layout — la position de la
+    brèche ne change pas, seule la valeur intermédiaire passée à Blender est
+    ajustée pour l'atteindre) : on ajoute `dims[1]` (largeur locale) à
+    chaque abscisse donnée avant l'appel à `place_kit_piece`, ce qui fait
+    tomber l'empreinte réelle exactement sur X∈[x, x+largeur] au lieu de
+    X∈[x-largeur, x] — soit X∈[-2,0] et X∈[0,2], combiné X∈[-2,2], comme le
+    veut le plan.
+    """
+    if stairs_spec is None:
+        return 0
+    piece_name = stairs_spec["piece"]
+    width = spec.find_piece(piece_name)["dims"][1]
+    ROT_DEG = 90.0
+    count = 0
+    for (x, y, z) in stairs_spec["positions"]:
+        place_kit_piece(piece_name, mesh_lookup, proxy_map,
+                         (x + width, y, z), ROT_DEG, props_coll, col_coll)
+        count += 1
+    return count
+
+
+def build_mezzanine_railing(railing_spec: dict | None, mesh_lookup, proxy_map,
+                             props_coll, col_coll) -> int:
+    """Tile `kit_railing_2m` (2 m, aucun module plus petit) le long de chaque
+    `x_runs`. La longueur locale de la pièce (axe X) est DÉJÀ alignée sur
+    l'axe monde X des runs (rambarde le long d'un mur nord-sud constant en
+    Y) : aucune rotation nécessaire, contrairement aux murs/gondoles/racks/
+    escalier. Chaque run DOIT tomber juste (multiple de 2 m) — échec bruyant
+    sinon, même contrat que les autres tilings de ce fichier."""
+    if railing_spec is None:
+        return 0
+    piece_name = railing_spec["piece"]
+    piece_len = spec.find_piece(piece_name)["dims"][0]
+    y = railing_spec["y"]
+    z = railing_spec["z"]
+    count = 0
+    for x0, x1 in railing_spec["x_runs"]:
+        run_len = x1 - x0
         n_f = run_len / piece_len
         if abs(n_f - round(n_f)) > 1e-6:
             raise ValueError(
-                f"[build_level] rangée de gondoles x={x} : longueur {run_len:.3f} m "
+                f"[build_level] rambarde x={x0}->{x1} : longueur {run_len:.3f} m "
                 f"ne se divise pas en modules de {piece_len} m sans reste "
                 f"(n={n_f:.4f}) — corriger level_spec.py, pas de reste silencieux"
             )
         n = int(round(n_f))
-
-        cursor = y0
+        cursor = x0
         for _ in range(n):
             place_kit_piece(piece_name, mesh_lookup, proxy_map,
-                             (x, cursor, 0.0), ROT_DEG, props_coll, col_coll)
+                             (cursor, y, z), 0.0, props_coll, col_coll)
             cursor += piece_len
             count += 1
-
-        # Capuchons : accolés à chaque extrémité (bloquent la vue latérale
-        # depuis l'allée voisine), même bord X que le corps de la rangée —
-        # aucun jour entre le dernier `kit_gondola_4m` et son capuchon.
-        place_kit_piece(end_name, mesh_lookup, proxy_map,
-                         (x, y0 - end_len, 0.0), ROT_DEG, props_coll, col_coll)
-        place_kit_piece(end_name, mesh_lookup, proxy_map,
-                         (x, y1, 0.0), ROT_DEG, props_coll, col_coll)
-        count += 2
-
     return count
+
+
+# ---------------------------------------------------------------------------
+# Palettes et caisses (Zone D)
+# ---------------------------------------------------------------------------
+
+def build_storage_props(storage_spec: dict | None, mesh_lookup, proxy_map,
+                         props_coll, col_coll) -> tuple[int, int]:
+    """Piles de `kit_pallet` (empilées en Z, `z = i * hauteur_palette`) et
+    `kit_crate` isolées (une instance chacune, pas de pile) — flaveur
+    « réserve », obstacles de déplacement, pas de couverture réelle (aucune
+    ne dépasse eyeHeight=1.6 m, connu et accepté, voir kit_checkout Zone B)."""
+    if storage_spec is None:
+        return 0, 0
+    pallet_h = spec.find_piece("kit_pallet")["dims"][2]
+    pallet_count = 0
+    for stack in storage_spec.get("pallet_stacks", []):
+        x, y, n = stack["x"], stack["y"], stack["count"]
+        for i in range(n):
+            place_kit_piece("kit_pallet", mesh_lookup, proxy_map,
+                             (x, y, i * pallet_h), 0.0, props_coll, col_coll)
+            pallet_count += 1
+    crate_count = 0
+    for (x, y, z) in storage_spec.get("crates", []):
+        place_kit_piece("kit_crate", mesh_lookup, proxy_map,
+                         (x, y, z), 0.0, props_coll, col_coll)
+        crate_count += 1
+    return pallet_count, crate_count
 
 
 # ---------------------------------------------------------------------------
@@ -553,6 +697,17 @@ def main() -> None:
     if zone.get("gondolas"):
         needed_pieces.append(zone["gondolas"]["piece"])
         needed_pieces.append(zone["gondolas"]["end_piece"])
+    if zone.get("racks"):
+        needed_pieces.append(zone["racks"]["piece"])
+    mezzanine = zone.get("mezzanine")
+    if mezzanine:
+        if mezzanine.get("stairs"):
+            needed_pieces.append(mezzanine["stairs"]["piece"])
+        if mezzanine.get("railing"):
+            needed_pieces.append(mezzanine["railing"]["piece"])
+    if zone.get("storage_props"):
+        needed_pieces.append("kit_pallet")
+        needed_pieces.append("kit_crate")
     mesh_names, proxy_map = gather_kit_mesh_names(needed_pieces)
 
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
@@ -562,6 +717,20 @@ def main() -> None:
     vitrine_count = build_vitrine(zone.get("vitrine"), materials_lookup, shell, col_coll)
     checkout_count = build_checkouts(zone.get("checkouts"), mesh_lookup, proxy_map, props_coll, col_coll)
     gondola_count = build_gondolas(zone.get("gondolas"), mesh_lookup, proxy_map, props_coll, col_coll)
+    rack_count = build_racks(zone.get("racks"), mesh_lookup, proxy_map, props_coll, col_coll)
+
+    mezz_floor_count = stairs_count = railing_count = 0
+    if mezzanine:
+        mezz_floor_count = tile_floor(mezzanine["floor"], mesh_lookup, proxy_map, shell, col_coll,
+                                       z=mezzanine["floor"]["z"])
+        stairs_count = build_mezzanine_stairs(mezzanine.get("stairs"), mesh_lookup, proxy_map,
+                                               props_coll, col_coll)
+        railing_count = build_mezzanine_railing(mezzanine.get("railing"), mesh_lookup, proxy_map,
+                                                  props_coll, col_coll)
+
+    pallet_count, crate_count = build_storage_props(zone.get("storage_props"), mesh_lookup, proxy_map,
+                                                      props_coll, col_coll)
+
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
     light_count, spacing_x, spacing_y = build_lighting(zone, zone["floor"], lights_coll, energy=light_energy)
@@ -578,6 +747,12 @@ def main() -> None:
     print(f"  Bandes de vitrine  {vitrine_count}")
     print(f"  Caisses            {checkout_count}")
     print(f"  Gondoles+capuchons {gondola_count}")
+    print(f"  Rayonnages (racks) {rack_count}")
+    print(f"  Dalle mezzanine    {mezz_floor_count}")
+    print(f"  Escalier mezzanine {stairs_count}")
+    print(f"  Rambarde mezzanine {railing_count}")
+    print(f"  Palettes           {pallet_count}")
+    print(f"  Caisses (crates)   {crate_count}")
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
     print(f"  Lampes             {light_count}  (espacement ~{spacing_x:.2f} x {spacing_y:.2f} m)")

@@ -37,4 +37,9 @@ export const LEVEL_CHOICES: LevelDef[] = [
   // dès qu'une ligne de vue s'ouvre dans une allée) — démarre ARMÉE, même
   // logique que la Zone B : le pied-de-biche/pompe sont déjà acquis avant.
   { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },
+  // Verticalité (mezzanine + escalier) — traversée joueur uniquement, aucun
+  // spawn_suit_* dessus : suit.ts::runChase n'a pas de vrai pathfinding
+  // (3 rayons d'évitement local), un Costard là-haut resterait bloqué
+  // contre la rambarde. Démarre ARMÉE, même logique que B/C.
+  { id: "zone_d_reserve", label: "Zone D — Réserve", kind: "gltf", gltfName: "zone_d_reserve" },
 ];
