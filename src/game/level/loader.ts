@@ -135,6 +135,11 @@ export interface DoorInfo {
   object: THREE.Object3D;
   body: RAPIER.RigidBody;
   collider: RAPIER.Collider;
+  /** Demi-étendues MONDE (après scale) du cuboid généré depuis la bounding
+   * box locale — évite à l'appelant (`interactive.ts`/`main.ts`) de refaire
+   * ce calcul pour animer une ouverture (ex. glissement vertical sur sa
+   * propre hauteur, voir la porte à badge de la Zone E). */
+  halfExtents: THREE.Vector3;
   /** Clip d'animation glTF associé à ce nœud, s'il existe. PARSÉ, PAS JOUÉ —
    * lire un mixer et déclencher l'ouverture est le scope de
    * `game/level/interactive.ts` (hors Phase 4). */
@@ -637,6 +642,7 @@ function buildDoor(
     object: mesh,
     body,
     collider,
+    halfExtents,
     clip: findClipForObject(clips, mesh),
     extras: cleanExtras(mesh),
   };

@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
-import { initAudio, playEnemySfx, playImpactSfx, playWeaponFireSfx } from "./core/audio";
+import { initAudio, playDoorSfx, playEnemySfx, playImpactSfx, playWeaponFireSfx } from "./core/audio";
 import { input } from "./core/input";
 import { FIXED_DT, startLoop } from "./core/loop";
 import { GameClock } from "./core/time";
@@ -20,7 +20,7 @@ import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
 import { buildGym } from "./game/level/gym";
 import { createLevelSession, type LevelSession } from "./game/level/hotReload";
 import { InteractionSystem } from "./game/level/interactive";
-import type { LevelStats } from "./game/level/loader";
+import type { DoorInfo, LevelStats } from "./game/level/loader";
 import { LEVEL_CHOICES, type LevelDef } from "./game/level/levels";
 import { PlayerController } from "./game/player/controller";
 import {
@@ -325,6 +325,46 @@ async function main() {
   const badgeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
   const badgeMaterial = new THREE.MeshLambertMaterial({ color: 0xffd54a });
   let badgeMesh: THREE.Mesh | null = null;
+  // Progression joueur (survit à un hot reload de niveau, contrairement au
+  // `LevelHandle` — voir `interactive.ts` pour la même discipline sur
+  // `consumed`) : possession du badge du Directeur, condition d'ouverture de
+  // `door_e_exit` (Zone E, `use_exit_door`).
+  let hasBadge = false;
+
+  // --- Porte de sortie verrouillée par badge (Zone E) -----------------------
+  // `door_e_exit` (voir tools/blender/level_spec.py::ZONE_E) est verrouillée
+  // par défaut (corps dynamique, translations/rotations lockées — voir
+  // `loader.ts::buildDoor`). `use_exit_door` (portée 2m, touche E) la
+  // déverrouille SEULEMENT si `hasBadge`. Le collider est désactivé
+  // IMMÉDIATEMENT au déverrouillage (pas à la fin du glissement) : un joueur
+  // qui vient de déverrouiller en restant devant ne doit jamais se sentir
+  // bloqué par une porte qui "n'a pas fini son animation". Le glissement
+  // lui-même (vers le bas, sur sa propre hauteur — `halfExtents.y * 2`) est
+  // donc purement cosmétique, réalisé en écrivant directement `body.setTranslation`
+  // chaque pas fixe (les locks de la porte contraignent le solveur physique,
+  // pas une écriture directe de position — même principe que le KCC du
+  // joueur qui ignore, lui aussi, tout lock).
+  const DOOR_OPEN_DURATION = 0.6;
+  interface OpeningDoor {
+    body: RAPIER.RigidBody;
+    startY: number;
+    targetY: number;
+    t: number;
+  }
+  let openingDoor: OpeningDoor | null = null;
+  const unlockedDoors = new Set<string>();
+
+  const HUD_MESSAGE_DURATION_MS = 1800;
+  /** Affiche un message HUD transitoire, effacé après `HUD_MESSAGE_DURATION_MS`
+   * (sauf s'il a déjà été remplacé par un autre message entre-temps). */
+  function showHudMessage(text: string): void {
+    useGameStore.getState().showHudMessage(text);
+    window.setTimeout(() => {
+      if (useGameStore.getState().hudMessage === text) {
+        useGameStore.getState().showHudMessage(null);
+      }
+    }, HUD_MESSAGE_DURATION_MS);
+  }
 
   function spawnDirectorAt(x: number, feetY: number, z: number): Director {
     const facing = new THREE.Vector3(player.position.x - x, 0, player.position.z - z);
@@ -587,6 +627,25 @@ async function main() {
       interaction.update(activeFrame.use, gltfLevelSession?.current?.useObjects ?? [], player.position, {
         onCrowbarPickup: () => weapons.pickUpMelee(),
         onShotgunPickup: () => weapons.pickUpShotgun(),
+        onExitDoorUse: (targetName) => {
+          if (unlockedDoors.has(targetName)) return; // déjà déverrouillée
+          if (!hasBadge) {
+            showHudMessage("Badge du Directeur requis");
+            playDoorSfx("locked");
+            return;
+          }
+          const door = (gltfLevelSession?.current?.doors ?? []).find((d) => d.name === targetName);
+          if (!door) {
+            console.error(`[main] use_exit_door référence une porte introuvable ("${targetName}").`);
+            return;
+          }
+          unlockedDoors.add(targetName);
+          const t = door.body.translation();
+          openingDoor = { body: door.body, startY: t.y, targetY: t.y - door.halfExtents.y * 2, t: 0 };
+          door.collider.setEnabled(false);
+          showHudMessage("Porte déverrouillée");
+          playDoorSfx("unlock");
+        },
       });
 
       // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
@@ -622,6 +681,19 @@ async function main() {
       if (directorManager.tryCollectBadge(player.position) && badgeMesh) {
         scene.remove(badgeMesh);
         badgeMesh = null;
+        hasBadge = true;
+        showHudMessage("Badge du Directeur récupéré");
+      }
+
+      // Glissement cosmétique de la porte débloquée (voir sa doc plus haut) —
+      // le collider est déjà désactivé depuis le déverrouillage, ceci ne fait
+      // que déplacer le mesh hors du passage.
+      if (openingDoor) {
+        openingDoor.t = Math.min(1, openingDoor.t + gameplayDt / DOOR_OPEN_DURATION);
+        const y = openingDoor.startY + (openingDoor.targetY - openingDoor.startY) * openingDoor.t;
+        const current = openingDoor.body.translation();
+        openingDoor.body.setTranslation({ x: current.x, y, z: current.z }, true);
+        if (openingDoor.t >= 1) openingDoor = null;
       }
     },
 
@@ -965,6 +1037,11 @@ async function main() {
     startPlayback,
     loadGltfLevel,
     () => gltfLevelSession?.current?.stats ?? null,
+    () => hasBadge,
+    () => {
+      hasBadge = true;
+    },
+    () => gltfLevelSession?.current?.doors ?? [],
   );
 }
 
@@ -1105,6 +1182,10 @@ declare global {
         /** Compteurs du niveau glTF actuellement chargé, `null` si aucun. */
         stats: () => LevelStats | null;
       };
+      /** Porte à badge (Zone E, `use_exit_door`/`door_e_exit`) : lecture/forçage de la possession du badge, pour tester sans tuer le Directeur en console. */
+      hasBadge: () => boolean;
+      giveBadge: () => void;
+      doors: () => DoorInfo[];
     };
   }
 }
@@ -1296,6 +1377,9 @@ function exposeDebugApi(
   playRecording: (rec: Recording) => void,
   loadGltfLevel: (name: string) => void,
   gltfLevelStats: () => LevelStats | null,
+  hasBadge: () => boolean,
+  giveBadge: () => void,
+  doors: () => DoorInfo[],
 ) {
   window.cassandre = {
     moveConfig,
@@ -1338,6 +1422,14 @@ function exposeDebugApi(
       load: loadGltfLevel,
       stats: gltfLevelStats,
     },
+    /** Porte à badge (Zone E) : `hasBadge()` lit l'état réel, `giveBadge()`
+     * force la possession pour tester `use_exit_door` sans devoir tuer le
+     * Directeur en console (même précédent que `directorManager` pour ce
+     * genre de test direct). */
+    hasBadge,
+    giveBadge,
+    /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
+    doors,
   };
 }
 

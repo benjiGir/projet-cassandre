@@ -59,7 +59,7 @@ const ALL_GROUPS =
  * |---------------|-----------------------------------------|
  * | WORLD         | tout                                    |
  * | PLAYER        | WORLD, ENEMY, ENEMY_SHOT, TRIGGER       |
- * | ENEMY         | WORLD, PLAYER, PLAYER_SHOT              |
+ * | ENEMY         | WORLD, PLAYER, PLAYER_SHOT, ENEMY       |
  * | PLAYER_SHOT   | WORLD, ENEMY                            |
  * | ENEMY_SHOT    | WORLD, PLAYER                           |
  * | DEBRIS        | WORLD uniquement                        |
@@ -67,6 +67,19 @@ const ALL_GROUPS =
  *
  * Les débris ne collisionnent qu'avec le monde : sinon douilles et gibs
  * bloquent les tirs pour zéro gameplay.
+ *
+ * ENEMY s'inclut lui-même depuis 2026-08-23 (voir [[project_cassandre_boomer_shooter]]
+ * mémoire pour la trouvaille) : sans ça, deux ennemis (Costard-Costard ou
+ * Costard-Directeur) peuvent s'interpénétrer entièrement en convergeant sur
+ * le même point (les 3 rayons d'évitement de `computeAvoidedDirection` ne
+ * testent QUE `WORLD`, jamais les autres ennemis) — invisible en combat épars,
+ * mais produit un z-fighting franc (billboards presque coplanaires, quasi la
+ * même distance caméra) une fois plusieurs ennemis massés au même endroit
+ * (typiquement autour du joueur mort). Le `KinematicCharacterController`
+ * partagé de `SuitManager`/`DirectorManager` gère déjà la réponse de
+ * collision pour n'importe quel handle autre que soi-même
+ * (`(other) => other.handle !== collider.handle` dans `suit.ts`/`director.ts`)
+ * — élargir ce masque suffit, aucun autre code à toucher.
  *
  * Seuls WORLD et PLAYER sont utilisés en Phase 1 ; les autres sont déclarés
  * pour les phases suivantes.
@@ -77,7 +90,7 @@ export const COLLISION_GROUPS = {
     GROUP.PLAYER,
     GROUP.WORLD | GROUP.ENEMY | GROUP.ENEMY_SHOT | GROUP.TRIGGER,
   ),
-  ENEMY: interactionGroups(GROUP.ENEMY, GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT),
+  ENEMY: interactionGroups(GROUP.ENEMY, GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT | GROUP.ENEMY),
   PLAYER_SHOT: interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD | GROUP.ENEMY),
   ENEMY_SHOT: interactionGroups(GROUP.ENEMY_SHOT, GROUP.WORLD | GROUP.PLAYER),
   DEBRIS: interactionGroups(GROUP.DEBRIS, GROUP.WORLD),

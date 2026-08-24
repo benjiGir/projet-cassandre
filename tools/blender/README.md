@@ -484,15 +484,128 @@ point comme un `kit_wall_2m` du point de vue du placement mécanique
 (origine, orientation par défaut), donc `build_door_frame` n'a eu besoin
 d'aucune compensation.
 
-**Rappel de scope, à ne pas perdre de vue** : ce qui suit N'EST PAS fait et
-reste dans le périmètre d'une tâche dédiée séparée, comparable en ampleur à
-la Phase 3 (l'ennemi Costard) — (1) le directeur comme vrai boss (nouveau
-type d'entité, peau qui se déchire pour révéler un reptilien), (2) le badge
-à ramasser, (3) la porte de sortie verrouillée par ce badge (remplacerait
-`kit_door_2m` par un vrai `door_*`/`kit_door_leaf` + logique de
-verrouillage). Le Costard placeholder posé ici (`spawn_suit_1`) n'a aucune
-des propriétés du directeur — c'est un ennemi standard, identique à ceux
-des zones A-D.
+**Rappel de scope, historique** : au moment de cette construction (2026-08-22),
+trois choses restaient hors scope — (1) le directeur comme vrai boss, (2) le
+badge à ramasser, (3) la porte de sortie verrouillée par ce badge. (1) et (2)
+ont été faits dans des tâches séparées ultérieures (voir CLAUDE.md —
+`director.ts`/`directorManager.ts`, `spawn_suit_1` remplacé par
+`spawn_director_1`). (3) est traité ci-dessous.
+
+### Zone E — vantail de porte + déclencheur (2026-08-23)
+
+**Ferme le dernier écart de la Zone E** : `kit_door_2m` restait un simple
+encadrement traversable (aucun vantail, aucune interactivité). Le câblage
+runtime de la porte à badge était déjà fait et testé côté build
+(`loader.ts::buildDoor`, `interactive.ts`, `main.ts` — voir CLAUDE.md) ;
+cette tâche fournit UNIQUEMENT la géométrie manquante côté Blender, aucun
+fichier `src/**` touché.
+
+**Le kit n'a pas eu besoin d'être reconstruit.** `kit_door_leaf` (dims
+1.5 × 0.15 × 2.5, `proxies=[]`) était déjà présent dans `kit_spec.py` ET dans
+`kit_hypermarche.blend` (vérifié directement : `bpy.data.meshes` contient
+`kit_door_leaf`, 52 sommets, bbox locale x∈[0,1.5] y∈[0,0.15] z∈[0,2.5],
+attribut couleur `Col` déjà baké) — un ajout antérieur au kit, jamais encore
+utilisé par un niveau.
+
+**Nouvelle fonction `build_door_leaf`** (`build_level.py`, juste après
+`build_door_frame`) : pose `kit_door_leaf` renommé `door_*` (piloté par une
+nouvelle clé optionnelle `zone["door_frame"]["leaf_name"]`, `"door_e_exit"`
+pour la Zone E), centré dans l'ouverture du `kit_door_2m` posé juste avant.
+`build_use_objects` étendue pour propager une clé optionnelle `"target"` du
+dict `use` comme custom property Blender `obj["target"] = ...` (jusqu'ici
+aucun `use_*` n'en avait besoin — `use_crowbar`/`use_shotgun` sont des
+pickups autoportants). `level_spec.ZONE_E` gagne `"leaf_name": "door_e_exit"`
+dans `door_frame` et un nouvel objet `use_exit_door` (`target:
+"door_e_exit"`) dans `use_objects`. `build_combined_level.py` mis à jour en
+miroir (`_t_door_frame` préserve `leaf_name` à la translation,
+`gather_needed_pieces` ajoute `kit_door_leaf` si besoin, le vantail est posé
+dans la même boucle par zone que `build_door_frame`) — une seule zone pose un
+`door_frame` à ce jour, `door_e_exit` est déjà zone-scopé par son nom, aucun
+renommage supplémentaire nécessaire (contrairement à `spawn_suit_*`).
+
+**Piège découvert, propre à `door_*` (nouveau, absent de tout `col_*`
+jusqu'ici) : `loader.ts::buildDoor` ne recentre PAS la géométrie.** Il pose
+le corps Rapier dynamique à la position DÉCOMPOSÉE DIRECTEMENT de
+`mesh.matrixWorld` (donc l'origine locale de l'objet), et calcule les
+demi-étendues depuis la bounding box LOCALE du mesh — contrairement à
+`buildCuboidCollider` (tout `col_box_*`), qui calcule explicitement
+`localCenter` et le reprojette en repère monde avant de poser le corps. Si
+`door_e_exit` gardait la convention du reste du kit (origine à un COIN,
+x∈[0,1.5] etc., comme le mesh-datablock `kit_door_leaf` lui-même), le corps
+physique se serait retrouvé centré sur ce coin : la moitié du collider
+serait tombée hors du battant rendu. `loader.ts` est hors scope de cette
+tâche (contrat déjà câblé côté TypeScript, non modifié) — c'est donc la
+géométrie qui s'y conforme : `build_door_leaf` copie le mesh du kit
+(`.copy()`, même règle anti-partage que `place_kit_piece`) puis DÉCALE
+CHAQUE SOMMET pour recentrer l'origine locale sur le centre de la boîte
+englobante, avant de poser l'objet à son centre monde. `door_e_exit` est
+donc le seul objet posé par `build_level.py` dont l'origine locale n'est pas
+un coin — uniquement sur cette INSTANCE de niveau ; le mesh-datablock
+`kit_door_leaf` dans `kit_hypermarche.blend` reste inchangé (convention
+coin, cohérent avec `inspect_kit.py`).
+
+**Choix de placement (grille 0.25 m, aucune exception)** : centrer le
+vantail (épaisseur 0.15 m) dans l'épaisseur du mur (0.25 m) demanderait un
+décalage Y de `door_spec["y"] + (0.25 − 0.15) / 2 = door_spec["y"] + 0.05` —
+pour la Zone E, `14.0 + 0.05 = 14.125`, PAS un multiple de 0.25 m (aurait
+fait échouer `validate_level.py --strict`, une régression sur une zone
+jusqu'ici à 0 warning). Calé à la place sur la FACE INTÉRIEURE du cadre
+(`door_spec["y"] = 14.0`, la même face de référence que tout `wall_run` du
+projet) : le vantail dépasse légèrement (0.075 m) côté salle plutôt que
+d'être centré dans l'épaisseur — cohérent avec la convention déjà en place,
+zéro exception introduite. `use_exit_door` posé à `(0.0, 12.75, 1.0)`
+(1.25 m au sud du centre du vantail, ≈1.28 m de distance réelle, sous les
+2 m d'`USE_RANGE_METERS`), CÔTÉ SALLE (y<14, jamais dans l'alcôve sans
+issue), coordonnées elles aussi pile sur la grille — aucune des deux
+exceptions déjà connues (`use_crowbar`/`use_shotgun`, Z=0.15 hors grille +
+`target` manquant) ne s'applique ici.
+
+**Comptes `zone_e_bureau` avant / après** (`validate_level.py --strict`) :
+
+| | avant | après |
+|---|---:|---:|
+| Objets (meshes) | 94 (86) | 96 (88) |
+| Triangles | 4728 | 4784 |
+| Matériaux | 1 (`mat_kit_shell`) | 2 (+ `mat_kit_detail`, `use_exit_door`) |
+| Colliders | cuboid:44 | cuboid:44 (inchangé — `door_e_exit` n'ajoute AUCUN `col_*`, contrat volontaire, voir plus haut) |
+| Warnings (`--strict`) | 0 | 0 |
+
+`bake_vertex_lighting.py --save` : 44 meshes, **0 mesh noir, 0 dégradé
+plat** (luminance moyenne 0.181), `door_e_exit`/`use_exit_door` bakés
+correctement (17/52 et 0/24 sommets écrêtés, dans la norme des autres
+pièces).
+
+Export (`export_level.py`) : `public/assets/levels/zone_e_bureau.glb`,
+207 Ko. Rechargé dans Blender pour vérification indépendante :
+**`door_e_exit` bbox monde X[-0.75,0.75] Y[13.925,14.075] Z[0,2.5]**
+(exactement centré sur X/Z dans l'ouverture, calé sur la face intérieure en
+Y comme voulu) ; **`use_exit_door`** à `(0.0, 12.75, 1.0)` avec
+`extras.target == "door_e_exit"` confirmé sur le fichier réimporté (pas
+seulement sur le `.blend` source).
+
+**Comptes `hypermarche_complet` avant / après** (`validate_level.py`, sans
+`--strict` — le critère réel du projet) :
+
+| | avant | après |
+|---|---:|---:|
+| Objets (meshes) | 836 (764) | 838 (766) |
+| Triangles | 46 372 | 46 428 |
+| Matériaux | 4 | 4 (inchangé — `mat_kit_detail` déjà utilisé par `use_crowbar`) |
+| Colliders | cuboid:380 convexHull:2 | cuboid:380 convexHull:2 (inchangé) |
+| Spawns | 15 | 15 (inchangé) |
+| `use_*` | 2 (`use_crowbar`, `use_shotgun`) | 3 (+ `use_exit_door`) |
+| Warnings | 12 (8 palettes + crowbar + shotgun, tous déjà connus) | 12 — **exactement les mêmes**, aucun nouveau |
+
+`--strict` : `ECHEC` avec les mêmes 12 warnings qu'avant cette tâche (0
+erreur dans les deux cas). Bake : 384 meshes (+2), **0 mesh noir, 0 dégradé
+plat**, luminance moyenne 0.225. Export : `public/assets/levels/
+hypermarche_complet.glb`, 1999 Ko. Rechargé pour vérification indépendante :
+**`door_e_exit` à `(52.0, 78.0, 1.25)`**, bbox monde X[51.25,52.75]
+Y[77.925,78.075] Z[0,2.5] — exactement la translation attendue
+(0+52, 14+64, 1.25) ; **`use_exit_door` à `(52.0, 76.75, 1.0)`**,
+`extras.target == "door_e_exit"` confirmé ; **15 spawns** (`spawn_player`,
+`spawn_director_e1`, 13 `spawn_suit_*`) et **3 `use_*`** recomptés un par un
+sur le fichier réimporté, identiques au `.blend` source.
 
 ### Niveau complet (hypermarche_complet)
 

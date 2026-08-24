@@ -362,6 +362,91 @@ def build_door_frame(door_spec: dict | None, mesh_lookup, proxy_map,
     return 1
 
 
+# Géométrie de l'ouverture de `kit_door_2m`, dupliquée depuis l'appel
+# `_wall_opening_parts(2.0, 0.25, 1.5, 2.5)` dans `kit_spec.py` (jamb=0.25,
+# ouverture 1.5 x 2.5) — même politique de duplication déjà en place pour
+# `level_spec.WALL_THICKNESS`/`WALL_HEIGHT` (un commentaire qui pointe vers
+# la source plutôt qu'un import d'un nombre magique non nommé).
+DOOR_JAMB = 0.25
+DOOR_OPEN_W = 1.5
+DOOR_OPEN_H = 2.5
+
+
+def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
+                     shell_coll, col_coll) -> int:
+    """Pose `kit_door_leaf` (renommé `door_*` en niveau) centré dans
+    l'ouverture du `kit_door_2m` posé juste avant par `build_door_frame`.
+    `door_spec` doit porter une clé optionnelle `"leaf_name"` (ex.
+    `"door_e_exit"`) ; sans elle, aucun vantail n'est posé — un `door_frame`
+    reste alors un simple encadrement traversable, comportement inchangé.
+
+    PIÈGE DÉCOUVERT, propre à `door_*` (nouveau, absent de tout `col_*`
+    jusqu'ici) : `loader.ts::buildDoor` pose le corps Rapier dynamique à la
+    position DÉCOMPOSÉE DIRECTEMENT de `mesh.matrixWorld` (donc l'origine
+    locale de l'OBJET), et calcule les demi-étendues depuis la bounding box
+    LOCALE du mesh — CONTRAIREMENT à `buildCuboidCollider` (tout
+    `col_box_*`), qui recentre explicitement (`localCenter` calculé puis
+    reprojeté en repère monde, voir `loader.ts`). Si le vantail gardait la
+    convention du reste du kit (origine à un COIN, x∈[0,1.5] etc. — c'est le
+    cas du mesh-datablock `kit_door_leaf` dans `kit_hypermarche.blend`), le
+    corps physique se retrouverait centré sur ce COIN : la moitié du
+    collider tomberait hors du battant rendu. `loader.ts` est hors scope de
+    cette tâche (contrat déjà câblé, non modifié) : c'est donc la géométrie
+    qui doit s'y conformer. `kit_door_leaf` est le SEUL objet posé par ce
+    script dont l'origine locale est recentrée sur le centre de sa boîte
+    englobante plutôt que laissée au coin — uniquement sur l'INSTANCE de
+    NIVEAU (mesh copié, voir `.copy()` ci-dessous) ; le mesh-datablock du kit
+    lui-même reste inchangé (convention coin, cohérent avec le reste du kit
+    et `inspect_kit.py`).
+
+    Centre monde choisi : X et Z au centre exact de l'ouverture (jambage +
+    moitié de la largeur d'ouverture ; moitié de la hauteur d'ouverture,
+    vantail posé au sol). Y CALÉ SUR LA FACE INTÉRIEURE du cadre
+    (`door_spec["y"]`, la même face de référence que tout `wall_run` du
+    projet) plutôt que centré dans l'épaisseur du mur (0.25 m) : un centrage
+    dans l'épaisseur donnerait un Y à `door_spec["y"] + (WALL_T - leaf_d)/2`,
+    qui n'est PAS un multiple de la grille 0.25 m pour les dimensions de ce
+    kit (0.25 et 0.15 ne produisent pas un tel multiple) —
+    `validate_level.py` avertirait sans qu'il s'agisse d'une contrainte
+    figée d'un kit déjà construit (contrairement à `use_crowbar`). Caler sur
+    la face retombe exactement sur la grille, sans aucune exception."""
+    if door_spec is None or not door_spec.get("leaf_name"):
+        return 0
+
+    piece_name = "kit_door_leaf"
+    leaf_w, leaf_d, leaf_h = spec.find_piece(piece_name)["dims"]
+    if abs(leaf_w - DOOR_OPEN_W) > 1e-6 or abs(leaf_h - DOOR_OPEN_H) > 1e-6:
+        raise ValueError(
+            "[build_level] kit_door_leaf ne correspond plus à l'ouverture de "
+            "kit_door_2m — mettre à jour DOOR_OPEN_W/DOOR_OPEN_H"
+        )
+
+    frame_x, frame_y = door_spec["x"], door_spec["y"]
+    center = (
+        frame_x + DOOR_JAMB + DOOR_OPEN_W / 2.0,
+        frame_y,
+        DOOR_OPEN_H / 2.0,
+    )
+
+    # `.copy()` : même règle que `place_kit_piece` (piège instancing-vs-bake,
+    # voir tête de fichier) — cette instance doit porter son propre bake.
+    unique_mesh = mesh_lookup[piece_name].copy()
+    for v in unique_mesh.vertices:
+        v.co.x -= leaf_w / 2.0
+        v.co.y -= leaf_d / 2.0
+        v.co.z -= leaf_h / 2.0
+
+    leaf_obj = bpy.data.objects.new(door_spec["leaf_name"], unique_mesh)
+    leaf_obj.location = center
+    leaf_obj.rotation_euler = (0.0, 0.0, 0.0)
+    shell_coll.objects.link(leaf_obj)
+    # Pas de proxy : `kit_door_leaf.proxies == []` (kit_spec.py) — le
+    # collider dynamique vient de `loader.ts::buildDoor`, jamais d'un `col_*`
+    # compagnon (qui resterait STATIQUE et bloquerait même une fois la porte
+    # "ouverte"/déplacée par le jeu — voir la note du kit).
+    return 1
+
+
 # ---------------------------------------------------------------------------
 # Gondoles (Zone C)
 # ---------------------------------------------------------------------------
@@ -609,7 +694,14 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
     """`use_*` : un vrai `THREE.Mesh` (jamais une Empty — `buildUseObject`
     l'exige, voir `loader.ts`). Convention "comme avant" vérifiée sur le
     prototype remplacé : `center` est le CENTRE du prop (cohérent avec
-    `mesh.getWorldPosition()`), pas un coin — contrairement aux pièces du kit."""
+    `mesh.getWorldPosition()`), pas un coin — contrairement aux pièces du kit.
+
+    Clé optionnelle `"target"` (nouveau, Zone E) : propagée telle quelle
+    comme custom property Blender `obj["target"] = ...`, exportée dans
+    `extras.target` (export_extras=True, voir export_level.py) et lue par
+    `loader.ts::buildUseObject`. Absente pour un pickup autoportant
+    (`use_crowbar`/`use_shotgun`), présente pour un déclencheur qui vise un
+    `door_*` (`use_exit_door` -> `door_e_exit`)."""
     count = 0
     for use in zone["use_objects"]:
         cx, cy, cz = use["center"]
@@ -618,6 +710,8 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
         parts = [{"o": origin, "s": (sx, sy, sz), "mat": spec.MAT_DETAIL}]
         obj = geo_utils.build_multi_box_mesh(use["name"], parts, spec.MAT_DETAIL, materials_lookup)
         obj.location = (cx, cy, cz)
+        if "target" in use:
+            obj["target"] = use["target"]
         logic_coll.objects.link(obj)
         count += 1
     return count
@@ -749,6 +843,8 @@ def main() -> None:
         needed_pieces.append("kit_crate")
     if zone.get("door_frame"):
         needed_pieces.append(zone["door_frame"]["piece"])
+        if zone["door_frame"].get("leaf_name"):
+            needed_pieces.append("kit_door_leaf")
     mesh_names, proxy_map = gather_kit_mesh_names(needed_pieces)
 
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
@@ -772,6 +868,7 @@ def main() -> None:
     pallet_count, crate_count = build_storage_props(zone.get("storage_props"), mesh_lookup, proxy_map,
                                                       props_coll, col_coll)
     door_count = build_door_frame(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
+    leaf_count = build_door_leaf(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
 
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
@@ -796,6 +893,7 @@ def main() -> None:
     print(f"  Palettes           {pallet_count}")
     print(f"  Caisses (crates)   {crate_count}")
     print(f"  Porte              {door_count}")
+    print(f"  Vantail de porte   {leaf_count}")
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
     print(f"  Lampes             {light_count}  (espacement ~{spacing_x:.2f} x {spacing_y:.2f} m)")

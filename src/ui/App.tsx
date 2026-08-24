@@ -1,4 +1,5 @@
 import { DebugPanel } from "./DebugPanel";
+import { HudMessage } from "./HudMessage";
 import { TuningPanel } from "./TuningPanel";
 
 export function App() {
@@ -6,6 +7,7 @@ export function App() {
     <>
       <DebugPanel />
       <TuningPanel />
+      <HudMessage />
     </>
   );
 }

@@ -16,14 +16,12 @@ import type { UseObject } from "./loader";
  * `InputFrame.use` (voir `core/inputRecorder.ts`) : les rejouer au taux
  * d'affichage romprait le rejeu F9/F10 exactement comme pour les armes.
  *
- * DISPATCH PAR NOM, pas par `targetName` : `use_crowbar` est un pickup
- * autoportant (aucune cible dans ses `extras`, c'est un `console.error`
- * ATTENDU émis par `loader.ts`, pas un bug — voir sa doc). Le `switch`
- * ci-dessous est structuré pour qu'un futur cas générique
- * "`targetName` renseigné -> ouvre le `door_*` correspondant" soit un ajout
- * trivial (zones B-E, hors scope ici) — mais AUCUN `door_*` n'existe dans ce
- * niveau, donc cette branche n'est PAS implémentée (invariant #9 / pas de
- * système générique avant que la douleur soit réelle).
+ * DISPATCH PAR NOM, pas par `targetName` : `use_crowbar`/`use_shotgun` sont
+ * des pickups autoportants (aucune cible dans leurs `extras`). `use_exit_door`
+ * (Zone E, porte à badge) EST un cas à `targetName` (`door_e_exit`), mais le
+ * dispatch reste par nom exact d'objet Blender, pas par un système générique
+ * indexé sur `targetName` — un seul `use_*` référence un `door_*` à ce jour,
+ * généraliser maintenant serait de l'abstraction prématurée (invariant #8/#9).
  */
 
 /** Un appelant `main.ts` fournit une callback par effet nommé reconnu. Étendre cette interface au fur et à mesure que de nouveaux `use_*` nommés gagnent un effet — jamais un système générique de callbacks indexé par nom. */
@@ -32,6 +30,11 @@ export interface InteractionHandlers {
   onCrowbarPickup(): void;
   /** `use_shotgun` : ramasse le pompe (niveau complet, Zone B). Appelle `weapons.pickUpShotgun()` côté `main.ts`. */
   onShotgunPickup(): void;
+  /** `use_exit_door` (Zone E) : tentative d'ouverture de la porte de sortie.
+   * `targetName` = nom du `door_*` visé (lu dans `extras.target`, voir
+   * `loader.ts::buildUseObject`) — `main.ts` décide seul si le badge est en
+   * poche (déverrouille) ou non (juste un refus, feedback côté `main.ts`). */
+  onExitDoorUse(targetName: string): void;
 }
 
 export class InteractionSystem {
@@ -126,10 +129,13 @@ export class InteractionSystem {
         this.consumed.add(useObject.object);
         break;
 
-      // Futur cas générique (zones B-E, PAS implémenté ici — aucun `door_*`
-      // n'existe dans ce niveau) : un `use_*` avec `useObject.targetName`
-      // renseigné ouvrirait le `door_*` du même nom. Ajout trivial une fois
-      // qu'un vrai `door_*` existera à cibler — ne pas anticiper avant.
+      case "use_exit_door":
+        // PAS marqué consommé, contrairement aux pickups ci-dessus : un
+        // essai refusé (pas de badge) doit rester réessayable tant que le
+        // joueur reste à portée, et `main.ts` a sa propre garde pour ignorer
+        // un ré-essai une fois la porte déjà déverrouillée.
+        handlers.onExitDoorUse(useObject.targetName ?? useObject.name);
+        break;
 
       default:
         // Nom sans handler reconnu : aucun effet, aucun warning. Un `use_*`

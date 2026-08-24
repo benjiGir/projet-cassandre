@@ -268,7 +268,81 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > après, aucune exception. `directorManager` exposé sur `cassandre.` pour ce
 > genre de test (même précédent que `cassandre.weapons`).
 >
-> Secrets, porte à badge : pas commencés.
+> **Porte à badge, Zone E (2026-08-23)** : `door_e_exit` remplace l'alcôve
+> de sortie sans issue — vrai vantail (`kit_door_leaf`, déjà présent dans le
+> kit sans être utilisé), verrouillé par défaut (`loader.ts::buildDoor`,
+> inchangé : corps dynamique, translations/rotations lockées), déverrouillé
+> par `use_exit_door` (portée 2m, touche E) SEULEMENT si le joueur a le
+> badge du Directeur. Travail Blender délégué à `level-forge` (géométrie
+> précise hors de portée d'une extension mécanique) : a trouvé un vrai piège
+> — `loader.ts::buildDoor` positionne le corps Rapier sur la translation
+> BRUTE du mesh sans le recentrer (contrairement à `buildCuboidCollider`
+> pour les `col_box_*`), donc poser `kit_door_leaf` avec l'origine-coin
+> standard du kit aurait mis le collider à moitié hors du vantail visible ;
+> corrigé côté Blender (recentrage des vertices de la COPIE posée en niveau,
+> le datablock du kit reste intact) plutôt que de toucher `loader.ts` (hors
+> scope du niveau). Vantail collé à la face intérieure du mur (Y=14.0,
+> centre monde (0, 14, 1.25)) plutôt que centré dans l'épaisseur (aurait
+> donné Y=14.125, hors grille 0.25m — Zone E gardait jusqu'ici 0 warning).
+> `validate_level.py --strict` : toujours 0 erreur/0 warning sur
+> `zone_e_bureau`, aucun nouveau warning sur `hypermarche_complet` (les 12
+> déjà connus, inchangés). Vérifié en jeu (`cassandre.level.stats()` +
+> `cassandre.doors()`) sur les deux fichiers : `doorCount`/`useCount`
+> corrects, `door_e_exit` retrouvé par nom, position et `halfExtents`
+> cohérents avec l'export (Y-centre = 1.25 = moitié de la hauteur 2.5m,
+> posé au sol, pas flottant).
+>
+> Côté jeu : `hasBadge` (survit à un hot reload, contrairement au
+> `LevelHandle`), glissement cosmétique de la porte vers le bas sur sa
+> propre hauteur (`body.setTranslation` direct — les locks du corps
+> contraignent le solveur, pas une écriture de position manuelle, même
+> principe que le KCC du joueur), collider désactivé IMMÉDIATEMENT au
+> déverrouillage (pas en fin de glissement, pour ne jamais bloquer un joueur
+> qui vient de déverrouiller en restant devant). Refus (pas de badge) et
+> succès ont chacun un son placeholder synthétique dédié (`door_locked`/
+> `door_unlock`, même pipeline que les 9 sons existants) et un message HUD
+> transitoire (`HudMessage.tsx`, nouveau — premier vrai texte HUD du jeu,
+> jusqu'ici seulement un panneau de debug). Vérifié : la manipulation Rapier
+> réelle (glissement + désactivation du collider) testée directement contre
+> le VRAI corps/collider du niveau chargé (`cassandre.doors()[0]`, pas un
+> mock) — aucune exception, position finale et état du collider corrects.
+> **Non vérifié en conditions réelles** : le déclenchement par une vraie
+> touche E en jeu (`InteractionSystem.update` → `onExitDoorUse` → HUD/son) —
+> l'environnement d'automation navigateur utilisé ici met la page en
+> `visibilitystate: hidden`, ce qui coupe la boucle à pas fixe entière (pas
+> seulement le rendu, comme pour le tir du Directeur déjà noté plus haut) ;
+> même limitation que la confirmation de tir du Directeur, à valider en
+> jouant réellement. `cassandre.doors()`/`cassandre.hasBadge()`/
+> `cassandre.giveBadge()` exposés en console pour ce genre de test futur.
+>
+> **Bug de billboards qui clignotent, signalé après avoir joué (2026-08-23)** :
+> "il y a 2 billboard qui sont à moitié transparent et qui shake" près du
+> joueur mort. Cause réelle, indépendante de la porte : `COLLISION_GROUPS.ENEMY`
+> (`src/physics/world.ts`) n'incluait pas `ENEMY` dans son propre filtre — les
+> ennemis ne se bloquent JAMAIS entre eux (seuls les 3 rayons d'évitement de
+> `computeAvoidedDirection` testent `WORLD`, jamais les autres ennemis).
+> Plusieurs Costards/le Directeur convergeant sur le même point (le joueur
+> mort) peuvent donc interpénétrer entièrement leurs capsules ; leurs
+> billboards, toujours face caméra, se retrouvent alors à une profondeur
+> quasi identique → z-fighting franc. Choix soumis à l'utilisateur
+> (`AskUserQuestion`, collision réelle vs correctif cosmétique vs report) :
+> **collision ennemi-ennemi activée** (`ENEMY` ajouté à son propre filtre) —
+> le `KinematicCharacterController` partagé gère déjà la réponse pour
+> n'importe quel handle autre que soi-même, un seul bit à changer. Vérifié
+> directement (deux Directeurs de test spawnés à 5cm l'un de l'autre, ciblant
+> le même point, `directorManager.update()` + `physics.step()` appelés
+> manuellement en boucle pour contourner le gel de la boucle à pas fixe en
+> automatisation navigateur déjà noté plus haut) : SANS le fix, distance
+> reste exactement 0 sur 300 pas ; AVEC, une vraie réponse de collision
+> s'engage (pic à 0.25m) puis oscille proche de 0 en régime établi — les deux
+> directeurs de test visaient le MÊME point fixe sans aucune conscience l'un
+> de l'autre, un pire cas artificiel (le joueur réel est une cible mobile,
+> les ennemis l'approchent sous des angles différents). Accepté comme
+> compromis explicite : les ennemis groupés se bousculeront désormais entre
+> eux au lieu de se traverser silencieusement, un changement de feel pour
+> TOUTES les zones (B/C/D), pas seulement la Zone E.
+>
+> Secrets : pas commencés.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet

@@ -59,6 +59,17 @@ interface GameState {
    * respecte cette règle.
    */
   setPlayerHp: (hp: number) => void;
+
+  /**
+   * Message HUD transitoire (feedback ponctuel : badge ramassé, porte
+   * verrouillée/déverrouillée...). `null` = rien affiché. Écrit à
+   * l'occurrence de l'événement (pas au pas fixe, même discipline que
+   * `setPlayerHp`) ; l'auto-effacement après un délai est géré côté
+   * appelant (`main.ts`, `setTimeout`), pas ici — ce store reste un simple
+   * conteneur d'état, aucune logique de timing.
+   */
+  hudMessage: string | null;
+  showHudMessage: (text: string | null) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -79,4 +90,7 @@ export const useGameStore = create<GameState>((set) => ({
   },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
+
+  hudMessage: null,
+  showHudMessage: (text) => set({ hudMessage: text }),
 }));

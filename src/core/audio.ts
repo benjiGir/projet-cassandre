@@ -14,15 +14,16 @@ import { Howl } from "howler";
  * `fireEvents`/`hitEvents` déjà produits par le pas fixe qui vient de tourner
  * — jamais de `setState` React ici (ce n'est de toute façon pas du React).
  *
- * ASSETS — les 9 ids de `SFX_TABLE` ont chacun un placeholder SYNTHÉTIQUE
+ * ASSETS — les ids de `SFX_TABLE` ont chacun un placeholder SYNTHÉTIQUE
  * (bruit/sinus générés par script, pas d'enregistrement, pas de source
- * externe) sous `public/assets/audio/sfx/<file>.{ogg,m4a}`, ajoutés le
- * 2026-08-20 pour permettre de juger le feedback de hit avec du son plutôt
- * qu'en silence total. Ce sont des boîtes blanches sonores, au même titre que
- * les meshes non texturés (invariant #9) — À REMPLACER par de vrais assets à
- * la Phase 5, pas des choix de sound design arrêtés. `public/` est déjà le
- * `publicDir` par défaut de Vite (non reconfiguré), donc `/assets/audio/sfx/...`
- * résout correctement tel quel, en dev comme en build.
+ * externe) sous `public/assets/audio/sfx/<file>.{ogg,m4a}` : les 9 premiers
+ * ajoutés le 2026-08-20 pour juger le feedback de hit avec du son plutôt
+ * qu'en silence total, `door_locked`/`door_unlock` ajoutés le 2026-08-23
+ * (porte à badge, Zone E). Ce sont des boîtes blanches sonores, au même titre
+ * que les meshes non texturés (invariant #9) — À REMPLACER par de vrais
+ * assets à la Phase 5, pas des choix de sound design arrêtés. `public/` est
+ * déjà le `publicDir` par défaut de Vite (non reconfiguré), donc
+ * `/assets/audio/sfx/...` résout correctement tel quel, en dev comme en build.
  *
  * Un fichier absent (404, cas normal aujourd'hui) ne doit JAMAIS faire
  * planter le jeu : `onloaderror` log un SEUL `console.warn` par id (pas un
@@ -65,7 +66,9 @@ export type SfxId =
   | "enemy_alert"
   | "enemy_telegraph"
   | "enemy_hurt"
-  | "enemy_death";
+  | "enemy_death"
+  | "door_locked"
+  | "door_unlock";
 
 interface SfxDef {
   /** Nom de fichier SANS extension, résolu en `${SFX_BASE_PATH}/<file>.{ogg,m4a}`. */
@@ -108,6 +111,13 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   enemy_telegraph: { file: "enemy_telegraph", volume: 1.0 },
   enemy_hurt: { file: "enemy_hurt", volume: 0.7 },
   enemy_death: { file: "enemy_death", volume: 0.9 },
+  // Porte à badge (Zone E, `use_exit_door`) : événements rares et ponctuels
+  // (un refus par essai sans badge, un déverrouillage UNE SEULE fois par
+  // partie) — passent quand même par `SfxPool`/±8% comme tout le reste, la
+  // variation de pitch est inoffensive sur un son qui ne se répète presque
+  // jamais.
+  door_locked: { file: "door_locked", volume: 0.8 },
+  door_unlock: { file: "door_unlock", volume: 0.9 },
 };
 
 /** Son de tir par arme. */
@@ -251,4 +261,17 @@ const ENEMY_SFX: Record<EnemySfxEvent, SfxId> = {
  */
 export function playEnemySfx(event: EnemySfxEvent) {
   playSfx(ENEMY_SFX[event]);
+}
+
+/** Événement sonore de la porte à badge (Zone E, `use_exit_door`). */
+type DoorSfxEvent = "locked" | "unlock";
+
+const DOOR_SFX: Record<DoorSfxEvent, SfxId> = {
+  locked: "door_locked",
+  unlock: "door_unlock",
+};
+
+/** Son de feedback pour un essai d'ouverture de la porte à badge. */
+export function playDoorSfx(event: DoorSfxEvent) {
+  playSfx(DOOR_SFX[event]);
 }

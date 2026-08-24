@@ -165,7 +165,15 @@ def _t_storage(s: dict | None, dx: float, dy: float) -> dict | None:
 def _t_door_frame(d: dict | None, dx: float, dy: float) -> dict | None:
     if d is None:
         return None
-    return {"piece": d["piece"], "x": d["x"] + dx, "y": d["y"] + dy}
+    out = {"piece": d["piece"], "x": d["x"] + dx, "y": d["y"] + dy}
+    if "leaf_name" in d:
+        # Nom déjà zone-scopé (`door_e_exit`) par `level_spec.py` — aucun
+        # renommage supplémentaire nécessaire ici, contrairement à
+        # `spawn_suit_*`/`spawn_director_*` (voir `rename_prefix`) : une
+        # seule zone pose un `door_frame` à ce jour, pas de collision
+        # possible.
+        out["leaf_name"] = d["leaf_name"]
+    return out
 
 
 def translate_zone(zone: dict, dx: float, dy: float) -> dict:
@@ -466,6 +474,8 @@ def gather_needed_pieces(zones: dict[str, dict]) -> list[str]:
             needed.update(["kit_pallet", "kit_crate"])
         if zone.get("door_frame"):
             needed.add(zone["door_frame"]["piece"])
+            if zone["door_frame"].get("leaf_name"):
+                needed.add("kit_door_leaf")
     return sorted(needed)
 
 
@@ -532,6 +542,7 @@ def main() -> None:
         z_totals["pallets"] = pallet_count
         z_totals["crates"] = crate_count
         z_totals["door"] = bl.build_door_frame(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
+        z_totals["leaf"] = bl.build_door_leaf(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
 
         include_player = (letter == "a")
         z_totals["spawns"] = bl.build_spawns(zone, logic_coll, include_player=include_player)

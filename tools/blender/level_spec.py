@@ -388,15 +388,19 @@ ZONE_D = {
 # ZONE E — Bureau
 # -----------------------------------------------------------------------------
 #
-# SCOPE (voir CLAUDE.md / tâche dédiée) : cette zone ne construit QUE la
-# géométrie + un ennemi placeholder standard (`spawn_suit_*`, le même Costard
-# que Zone A-D). Le "directeur" en tant que vrai boss (nouveau type
-# d'entité, peau qui se déchire/révèle reptilien), le badge à ramasser et la
-# porte de sortie VERROUILLÉE par ce badge sont HORS SCOPE ici, réservés à
-# une tâche séparée ultérieure. `door_frame` ci-dessous pose `kit_door_2m`
-# (un encadrement de porte, PAS un `kit_door_leaf`/`door_*` animé) : un
-# simple passage ouvert dès le départ vers une alcôve de sortie sans issue,
-# aucune interactivité nouvelle.
+# HISTORIQUE DE SCOPE (voir CLAUDE.md) : la première passe sur cette zone ne
+# construisait QUE la géométrie + un ennemi placeholder standard. Le
+# Directeur (vrai boss, entité dédiée `director.ts`/`directorManager.ts`) et
+# le badge qu'il droppe à sa mort ont été câblés depuis, dans des tâches
+# séparées — `spawn_suit_1` a été remplacé par `spawn_director_1` ci-dessous.
+# Cette tâche-ci ferme le DERNIER écart documenté : la porte de sortie
+# verrouillée par ce badge. Le câblage runtime (`loader.ts::buildDoor`,
+# `interactive.ts`, `main.ts`) est déjà fait ET testé côté build — cette
+# tâche ne fournit QUE la géométrie manquante côté Blender : `door_frame`
+# ci-dessous pose toujours `kit_door_2m` (l'encadrement), mais y ajoute
+# maintenant un vrai vantail (`kit_door_leaf` renommé `door_e_exit`, voir
+# `build_level.py::build_door_leaf`) et un déclencheur `use_exit_door` (voir
+# `use_objects` ci-dessous) — la brèche n'est plus un simple passage ouvert.
 
 ZONE_E = {
     "name": "zone_e_bureau",
@@ -443,6 +447,12 @@ ZONE_E = {
         "piece": "kit_door_2m",
         "x": -1.0,
         "y": 14.0,
+        # Vantail réel (badge du Directeur câblé côté TS, voir CLAUDE.md) :
+        # `build_door_leaf` (build_level.py) pose `kit_door_leaf` centré dans
+        # cette ouverture et le nomme `door_e_exit` — convention `door_*` du
+        # projet (`loader.ts::buildDoor` lui crée un corps Rapier dynamique,
+        # verrouillé tant qu'aucune logique de jeu ne le débloque).
+        "leaf_name": "door_e_exit",
     },
 
     "spawn_player": (0.0, 0.0, 0.0),
@@ -469,7 +479,23 @@ ZONE_E = {
         ("spawn_director_1", (0.0, 9.0, 0.0)),
     ],
 
-    "use_objects": [],
+    # `use_exit_door` : déclencheur de la porte verrouillée par badge (voir
+    # CLAUDE.md — câblage TS déjà en place : `loader.ts::buildUseObject` lit
+    # `extras.target`, `interactive.ts` dispatch "use_exit_door" vers
+    # `handlers.onExitDoorUse(targetName)`, `main.ts` décide seul si le badge
+    # est en poche). `target` pointe sur `door_e_exit` (voir `door_frame`
+    # ci-dessus). Position choisie CÔTÉ SALLE (y=12.75 < 14, jamais dans
+    # l'alcôve sans issue à y>14), à 1.25 m au sud du centre du vantail
+    # (0.0, 14.0, 1.25) : distance sqrt(1.25² + 0.25²) ≈ 1.28 m, largement
+    # sous les 2 m d'`USE_RANGE_METERS` (loader.ts). Coordonnées choisies
+    # pile sur la grille 0.25 m (0.0 / 12.75 / 1.0) : aucune exception
+    # nécessaire, comme le reste de cette zone (contrairement à
+    # `use_crowbar`/`use_shotgun`, dont le Z=0.15 est une contrainte du prop
+    # reprise du prototype, documentée ailleurs).
+    "use_objects": [
+        {"name": "use_exit_door", "center": (0.0, 12.75, 1.0), "size": (0.3, 0.1, 0.3),
+         "target": "door_e_exit"},
+    ],
 
     "lighting": {"sun": False},
 }
