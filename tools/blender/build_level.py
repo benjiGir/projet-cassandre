@@ -322,6 +322,53 @@ def build_vitrine(vitrine_spec: dict | None, materials_lookup: dict,
     return count
 
 
+def build_floor_patches(patches: list[dict] | None, materials_lookup: dict,
+                         shell_coll, col_coll) -> int:
+    """Dalle(s) de sol SUR-MESURE, même rigueur que `build_vitrine` juste
+    au-dessus (subdivision au mètre, UV 64 px/m, proxy cuboid, transforms
+    appliqués en coordonnées MONDE), pour une empreinte qui NE TILE PAS
+    proprement en 4 m avec `kit_floor_4x4` (ex. l'alcôve 3×2 m du secret 1,
+    Zone B — voir `level_spec.py`). Même convention d'origine que
+    `kit_floor_4x4` (surface de marche, la dalle descend sous `z`,
+    épaisseur `kit_spec.SLAB_T`).
+
+    PIÈGE DÉCOUVERT (nouveau, propre à cette tâche) : étendre le rectangle
+    englobant du `"floor"` d'une zone pour couvrir une alcôve qui déborde
+    HORS de son empreinte existante (contrairement à la vitrine/l'alcôve de
+    sortie de la Zone A/E, qui restent DANS l'empreinte) semble anodin sur
+    la zone seule, mais une fois cette zone TRANSLATÉE dans le niveau
+    combiné (`build_combined_level.py`), l'extension peut retomber
+    exactement sur la géométrie d'une autre zone ou d'un connecteur — mesuré
+    en assemblant `hypermarche_complet` : la Zone B étendue à l'ouest
+    (X0=-16) chevauchait EXACTEMENT le connecteur A-B une fois translatée
+    par dx=26, dupliquant une tuile de sol au même endroit (auto-occultation
+    au bake, 2 meshes noirs). Une dalle sur-mesure, limitée à l'empreinte
+    réelle du besoin, ne peut par construction chevaucher rien d'autre."""
+    if not patches:
+        return 0
+    slab_t = spec.SLAB_T
+    count = 0
+    for patch in patches:
+        x0, x1 = patch["x"]
+        y0, y1 = patch["y"]
+        z = patch.get("z", 0.0)
+        name = patch["name"]
+        width, depth = x1 - x0, y1 - y0
+        origin = (x0, y0, z - slab_t)
+        size = (width, depth, slab_t)
+
+        parts = [{"o": origin, "s": size, "mat": spec.MAT_SHELL}]
+        render_obj = geo_utils.build_multi_box_mesh(name, parts, spec.MAT_SHELL, materials_lookup)
+        render_obj.location = (0.0, 0.0, 0.0)
+        shell_coll.objects.link(render_obj)
+
+        proxy_obj = geo_utils.build_proxy_object(f"col_box_{name}", "box", origin, size)
+        col_coll.objects.link(proxy_obj)
+
+        count += 1
+    return count
+
+
 # ---------------------------------------------------------------------------
 # Caisses (Zone B)
 # ---------------------------------------------------------------------------
@@ -346,19 +393,27 @@ def build_checkouts(checkout_spec: dict | None, mesh_lookup, proxy_map,
 def build_door_frame(door_spec: dict | None, mesh_lookup, proxy_map,
                       shell_coll, col_coll) -> int:
     """`kit_door_2m` : un encadrement de mur avec découpe de porte intégrée
-    (compound de 3 cuboids, voir `kit_spec.py::_wall_opening_parts`), PAS un
-    `kit_door_leaf`/`door_*` animé — le badge/la porte verrouillée sont hors
-    scope (voir CLAUDE.md / `level_spec.py::ZONE_E`). Posée dans la brèche
-    laissée par les `wall_run` nord de la Zone E.
+    (compound de 3 cuboids, voir `kit_spec.py::_wall_opening_parts`), PAS
+    forcément un `kit_door_leaf`/`door_*` animé (voir `door_spec["leaf_name"]`,
+    `build_door_leaf` ci-dessous — absent = encadrement traversable, comme
+    la Zone E avant sa porte à badge). Posée dans une brèche de `wall_run`.
 
-    Même origine (coin, x∈[0,W], y∈[0,WALL_T]) et même orientation par
-    défaut que `kit_wall_2m` : aucune rotation nécessaire ici — vérifié
-    contre `plan_wall_run` pour les segments de mur adjacents à cette même
-    brèche (run le long de +X, theta_deg=0°). Une ligne suffit, rot_deg=0.0."""
+    `door_spec["rot_deg"]` (optionnel, défaut 0.0) : même origine (coin,
+    x∈[0,W], y∈[0,WALL_T]) et même orientation par défaut que `kit_wall_2m`,
+    donc `rot_deg=0.0` convient telle quelle pour une brèche dans un mur
+    HORIZONTAL (run le long de +X, theta_deg=0° — cas de la Zone E, aucune
+    rotation nécessaire, vérifié contre `plan_wall_run`). Une brèche dans un
+    mur VERTICAL (ex. la porte du secret 1, Zone B, mur ouest) a besoin de
+    `rot_deg=90.0`, EXACTEMENT comme n'importe quel `kit_wall_2m` posé par
+    `plan_wall_run` sur ce même run — `door_spec["x"]`/`["y"]` doivent alors
+    être le coin (avant rotation) qu'aurait ce run à cet endroit, pas une
+    coordonnée devinée (voir le commentaire de `level_spec.ZONE_B["door_frame"]`
+    pour le calcul)."""
     if door_spec is None:
         return 0
     place_kit_piece(door_spec["piece"], mesh_lookup, proxy_map,
-                     (door_spec["x"], door_spec["y"], 0.0), 0.0, shell_coll, col_coll)
+                     (door_spec["x"], door_spec["y"], 0.0),
+                     door_spec.get("rot_deg", 0.0), shell_coll, col_coll)
     return 1
 
 
@@ -399,9 +454,10 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
     lui-même reste inchangé (convention coin, cohérent avec le reste du kit
     et `inspect_kit.py`).
 
-    Centre monde choisi : X et Z au centre exact de l'ouverture (jambage +
-    moitié de la largeur d'ouverture ; moitié de la hauteur d'ouverture,
-    vantail posé au sol). Y CALÉ SUR LA FACE INTÉRIEURE du cadre
+    Centre monde choisi : Z au centre exact de l'ouverture (moitié de la
+    hauteur d'ouverture, vantail posé au sol). Dans le repère LOCAL du cadre
+    (avant rotation), X est au centre exact de l'ouverture (jambage + moitié
+    de la largeur d'ouverture) et Y est CALÉ SUR LA FACE INTÉRIEURE du cadre
     (`door_spec["y"]`, la même face de référence que tout `wall_run` du
     projet) plutôt que centré dans l'épaisseur du mur (0.25 m) : un centrage
     dans l'épaisseur donnerait un Y à `door_spec["y"] + (WALL_T - leaf_d)/2`,
@@ -409,7 +465,19 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
     kit (0.25 et 0.15 ne produisent pas un tel multiple) —
     `validate_level.py` avertirait sans qu'il s'agisse d'une contrainte
     figée d'un kit déjà construit (contrairement à `use_crowbar`). Caler sur
-    la face retombe exactement sur la grille, sans aucune exception."""
+    la face retombe exactement sur la grille, sans aucune exception.
+
+    `door_spec["rot_deg"]` (optionnel, défaut 0.0, voir `build_door_frame`) :
+    ce centre LOCAL (calculé comme si le cadre n'était pas tourné) est
+    tourné de `rot_deg` autour de Z avant d'être ajouté à `(frame_x, frame_y)`
+    — exactement la même géométrie que `place_kit_piece`/`plan_wall_run`
+    appliquerait à n'importe quelle pièce posée à ce coin avec cette
+    rotation. Pour `rot_deg=0.0` (Zone E), cette rotation est un no-op et le
+    résultat est identique à l'ancien calcul non généralisé (X décalé,
+    Y = frame_y). Pour `rot_deg=90.0` (Zone B, mur ouest vertical), l'offset
+    local (le long de l'axe X du cadre) se retrouve le long de l'axe Y
+    MONDE, et `frame_x` devient la face intérieure — cohérent avec la façon
+    dont `plan_wall_run` fait pivoter tout module de mur sur ce même run."""
     if door_spec is None or not door_spec.get("leaf_name"):
         return 0
 
@@ -422,9 +490,12 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
         )
 
     frame_x, frame_y = door_spec["x"], door_spec["y"]
+    rot_deg = door_spec.get("rot_deg", 0.0)
+    theta = math.radians(rot_deg)
+    local_offset = DOOR_JAMB + DOOR_OPEN_W / 2.0
     center = (
-        frame_x + DOOR_JAMB + DOOR_OPEN_W / 2.0,
-        frame_y,
+        frame_x + local_offset * math.cos(theta),
+        frame_y + local_offset * math.sin(theta),
         DOOR_OPEN_H / 2.0,
     )
 
@@ -438,7 +509,7 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
 
     leaf_obj = bpy.data.objects.new(door_spec["leaf_name"], unique_mesh)
     leaf_obj.location = center
-    leaf_obj.rotation_euler = (0.0, 0.0, 0.0)
+    leaf_obj.rotation_euler = (0.0, 0.0, theta)
     shell_coll.objects.link(leaf_obj)
     # Pas de proxy : `kit_door_leaf.proxies == []` (kit_spec.py) — le
     # collider dynamique vient de `loader.ts::buildDoor`, jamais d'un `col_*`
@@ -717,6 +788,37 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
     return count
 
 
+def build_secret_zones(zone: dict, materials_lookup: dict, logic_coll) -> int:
+    """`secret_*` : zone comptée dans le compteur de secrets côté runtime
+    (`loader.ts::buildSecretZone`/`LevelStats.secretCount`). Même mécanique
+    géométrique que `build_use_objects` juste au-dessus (un vrai `THREE.Mesh`
+    au `center`/`size` donné — `buildSecretZone` calcule sa bounding box
+    MONDE et n'exige AUCUNE forme particulière, mais on réutilise
+    `build_multi_box_mesh` par cohérence avec le reste du kit : subdivision,
+    UV, attribut couleur "Col" déjà prêts pour le bake, comme n'importe quel
+    autre mesh de niveau — sans ça, `validate_level.py::check_vertex_colors`
+    avertirait sur un mesh sans préfixe `col_*`/`trig_*` dépourvu de vertex
+    colors).
+
+    Contrairement à `"target"` sur un `use_*` (optionnel), `"secret_id"` est
+    attendu pour CHAQUE entrée de `zone["secrets"]` — `validate_level.py::
+    check_naming` avertit sur son absence, et c'est la seule donnée stable
+    qui permette à la détection côté TS de distinguer un secret d'un autre
+    sans parser le nom Blender."""
+    count = 0
+    for secret in zone.get("secrets", []):
+        cx, cy, cz = secret["center"]
+        sx, sy, sz = secret["size"]
+        origin = (-sx / 2.0, -sy / 2.0, -sz / 2.0)
+        parts = [{"o": origin, "s": (sx, sy, sz), "mat": spec.MAT_DETAIL}]
+        obj = geo_utils.build_multi_box_mesh(secret["name"], parts, spec.MAT_DETAIL, materials_lookup)
+        obj.location = (cx, cy, cz)
+        obj["secret_id"] = secret["secret_id"]
+        logic_coll.objects.link(obj)
+        count += 1
+    return count
+
+
 # ---------------------------------------------------------------------------
 # Éclairage de secteur — `vertex-color-sector-lighting`
 # ---------------------------------------------------------------------------
@@ -850,6 +952,7 @@ def main() -> None:
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
 
     floor_count = tile_floor(zone["floor"], mesh_lookup, proxy_map, shell, col_coll)
+    floor_patch_count = build_floor_patches(zone.get("floor_patches"), materials_lookup, shell, col_coll)
     wall_counts, wall_remainder = build_walls(zone["walls"], mesh_lookup, proxy_map, shell, col_coll)
     vitrine_count = build_vitrine(zone.get("vitrine"), materials_lookup, shell, col_coll)
     checkout_count = build_checkouts(zone.get("checkouts"), mesh_lookup, proxy_map, props_coll, col_coll)
@@ -872,6 +975,7 @@ def main() -> None:
 
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
+    secret_count = build_secret_zones(zone, materials_lookup, logic_coll)
     light_count, spacing_x, spacing_y = build_lighting(zone, zone["floor"], lights_coll, energy=light_energy)
 
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -882,6 +986,7 @@ def main() -> None:
     print("=" * 62)
     print(f"  Fichier            {out}")
     print(f"  Tuiles de sol      {floor_count}")
+    print(f"  Dalles sur-mesure  {floor_patch_count}")
     print("  Murs               " + "  ".join(f"{k}:{v}" for k, v in sorted(wall_counts.items())))
     print(f"  Bandes de vitrine  {vitrine_count}")
     print(f"  Caisses            {checkout_count}")
@@ -896,6 +1001,7 @@ def main() -> None:
     print(f"  Vantail de porte   {leaf_count}")
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
+    print(f"  Secrets            {secret_count}")
     print(f"  Lampes             {light_count}  (espacement ~{spacing_x:.2f} x {spacing_y:.2f} m)")
     if wall_remainder > 1e-6:
         print(f"  ERREUR reste non tilé cumulé : {wall_remainder:.3f} m")

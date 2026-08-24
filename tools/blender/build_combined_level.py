@@ -112,6 +112,15 @@ def _t_floor(floor: dict, dx: float, dy: float) -> dict:
     return out
 
 
+def _t_floor_patches(patches: list[dict] | None, dx: float, dy: float) -> list[dict]:
+    """Traduit chaque dalle sur-mesure (`build_level.py::build_floor_patches`)
+    — même mécanique que `_t_vitrine`/`_t_storage` : `x`/`y` sont des
+    intervalles (bornes min/max), pas des points, les deux bornes reçoivent
+    le même décalage."""
+    return [dict(p, x=(p["x"][0] + dx, p["x"][1] + dx), y=(p["y"][0] + dy, p["y"][1] + dy))
+            for p in (patches or [])]
+
+
 def _t_vitrine(v: dict | None, dx: float, dy: float) -> dict | None:
     if v is None:
         return None
@@ -163,17 +172,31 @@ def _t_storage(s: dict | None, dx: float, dy: float) -> dict | None:
 
 
 def _t_door_frame(d: dict | None, dx: float, dy: float) -> dict | None:
+    """`rot_deg` (voir `build_level.py::build_door_frame`/`build_door_leaf`,
+    généralisés pour la porte du secret 1, Zone B) est une ORIENTATION, pas
+    une position — invariante par translation pure, propagée telle quelle."""
     if d is None:
         return None
     out = {"piece": d["piece"], "x": d["x"] + dx, "y": d["y"] + dy}
+    if "rot_deg" in d:
+        out["rot_deg"] = d["rot_deg"]
     if "leaf_name" in d:
-        # Nom déjà zone-scopé (`door_e_exit`) par `level_spec.py` — aucun
-        # renommage supplémentaire nécessaire ici, contrairement à
-        # `spawn_suit_*`/`spawn_director_*` (voir `rename_prefix`) : une
-        # seule zone pose un `door_frame` à ce jour, pas de collision
-        # possible.
+        # Nom déjà zone-scopé (`door_e_exit`, `door_b_frozen`) par
+        # `level_spec.py` — aucun renommage supplémentaire nécessaire ici,
+        # contrairement à `spawn_suit_*`/`spawn_director_*` (voir
+        # `rename_prefix`) : DEUX zones posent désormais un `door_frame`
+        # (B et E), mais leurs `leaf_name` sont distincts par construction,
+        # pas de collision possible.
         out["leaf_name"] = d["leaf_name"]
     return out
+
+
+def _t_secrets(secrets: list[dict], dx: float, dy: float) -> list[dict]:
+    """Même mécanique que `_t_checkouts`/`_t_storage` — traduit `center`,
+    laisse `size`/`secret_id`/`name` inchangés (déjà zone-scopés par
+    `level_spec.py`, ex. `secret_1b`/`secret_2c`, comme `door_e_exit`)."""
+    return [dict(s, center=(s["center"][0] + dx, s["center"][1] + dy, s["center"][2]))
+            for s in secrets]
 
 
 def translate_zone(zone: dict, dx: float, dy: float) -> dict:
@@ -182,6 +205,7 @@ def translate_zone(zone: dict, dx: float, dy: float) -> dict:
     y compris pour les listes (`walls`, `spawn_suits`, `use_objects`)."""
     z = dict(zone)
     z["floor"] = _t_floor(zone["floor"], dx, dy)
+    z["floor_patches"] = _t_floor_patches(zone.get("floor_patches"), dx, dy)
     z["walls"] = [_t_wall_run(r, dx, dy) for r in zone["walls"]]
     z["vitrine"] = _t_vitrine(zone.get("vitrine"), dx, dy)
     z["checkouts"] = _t_checkouts(zone.get("checkouts"), dx, dy)
@@ -190,6 +214,7 @@ def translate_zone(zone: dict, dx: float, dy: float) -> dict:
     z["mezzanine"] = _t_mezzanine(zone.get("mezzanine"), dx, dy)
     z["storage_props"] = _t_storage(zone.get("storage_props"), dx, dy)
     z["door_frame"] = _t_door_frame(zone.get("door_frame"), dx, dy)
+    z["secrets"] = _t_secrets(zone.get("secrets", []), dx, dy)
     sp = zone["spawn_player"]
     z["spawn_player"] = (sp[0] + dx, sp[1] + dy, sp[2])
     z["spawn_suits"] = [(name, (x + dx, y + dy, zz)) for name, (x, y, zz) in zone["spawn_suits"]]
@@ -287,9 +312,15 @@ def prepare_zone_a() -> dict:
 def prepare_zone_b(dx: float, dy: float) -> dict:
     """Deux brèches : OUEST (entrée depuis A) et NORD (sortie vers C).
 
-    OUEST, y∈[2,6] (mur plein x=-12, y=-2..22) : les caisses sont à y=9.5
+    OUEST, y∈[2,6] (mur ouest x=-12) : les caisses sont à y=9.5
     (bande y∈[9.5,10.5], x∈[-9,9]) — 3.5 m au nord de la brèche la plus
     proche, aucun contact. Les 3 spawn_suit_* sont à y=18, encore plus loin.
+    Le mur ouest N'EST PLUS un `wall_run` unique depuis la tâche « secrets »
+    (`level_spec.ZONE_B`) : il est déjà scindé en deux segments pour loger la
+    porte du secret 1 (brèche y∈[10,12]) — (-12,-2)->(-12,10) puis
+    (-12,12)->(-12,22). La brèche A-B (y∈[2,6]) tombe entièrement dans le
+    PREMIER segment (2,6 ⊂ [-2,10]), c'est donc lui qu'on carve ici, pas
+    l'ancien run 24 m d'un seul tenant.
 
     NORD, x∈[-2,2] (mur plein y=22, x=-12..12) : aucune caisse/rack n'atteint
     y=22 (les caisses sont à y=9.5-10.5), donc n'importe quel x conviendrait ;
@@ -298,7 +329,7 @@ def prepare_zone_b(dx: float, dy: float) -> dict:
     connecteurs alignés en une colonne verticale unique à travers B et C.
     """
     zone = dict(level_spec.ZONE_B)
-    walls = carve_wall(zone["walls"], (-12.0, -2.0), (-12.0, 22.0), 2.0, 6.0)
+    walls = carve_wall(zone["walls"], (-12.0, -2.0), (-12.0, 10.0), 2.0, 6.0)
     walls = carve_wall(walls, (-12.0, 22.0), (12.0, 22.0), -2.0, 2.0)
     zone = dict(zone, walls=walls)
     zone = translate_zone(zone, dx, dy)
@@ -518,6 +549,7 @@ def main() -> None:
         z_totals: Counter = Counter()
 
         z_totals["floor"] = bl.tile_floor(zone["floor"], mesh_lookup, proxy_map, shell, col_coll)
+        z_totals["floor_patches"] = bl.build_floor_patches(zone.get("floor_patches"), materials_lookup, shell, col_coll)
         wall_counts, wall_remainder = bl.build_walls(zone["walls"], mesh_lookup, proxy_map, shell, col_coll)
         if wall_remainder > 1e-6:
             print(f"[build_combined_level] ERREUR zone {letter} : reste de mur non tilé {wall_remainder:.3f} m")
@@ -547,6 +579,7 @@ def main() -> None:
         include_player = (letter == "a")
         z_totals["spawns"] = bl.build_spawns(zone, logic_coll, include_player=include_player)
         z_totals["use"] = bl.build_use_objects(zone, materials_lookup, logic_coll)
+        z_totals["secrets"] = bl.build_secret_zones(zone, materials_lookup, logic_coll)
         light_count, spacing_x, spacing_y = bl.build_lighting(zone, zone["floor"], lights_coll, energy=light_energy)
         z_totals["lights"] = light_count
 

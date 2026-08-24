@@ -342,7 +342,68 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > eux au lieu de se traverser silencieusement, un changement de feel pour
 > TOUTES les zones (B/C/D), pas seulement la Zone E.
 >
-> Secrets : pas commencés.
+> **Secrets 1 et 2 livrés (2026-08-24)**, critère de validation du plan
+> ("trouve au moins 1 secret sur 2"). Scope volontairement réduit par
+> rapport au plan complet : les deux secrets sont livrés, mais "rayon
+> surgelés qui explose en verre + givre" (item séparé de la liste des objets
+> interactifs) ne l'est PAS — `door_b_frozen` s'ouvre comme n'importe quelle
+> porte (`use_frozen_storage`, touche E, aucune condition contrairement à
+> `door_e_exit`), pas de bris de verre animé, décision assumée pour ne pas
+> ajouter un système "prop destructible" dans la même passe que tout le
+> reste (invariant #9, pas de système avant que la douleur soit réelle).
+> **Secret 1, Zone B** : alcôve 2×3m derrière le mur ouest (brèche entre
+> deux segments de `wall_run`, même mécanique que la brèche de Zone E),
+> `door_b_frozen` (vrai vantail `kit_door_leaf`, même recentrage que
+> `door_e_exit`) + `use_frozen_storage` (`extras.target` générique, déjà
+> supporté par `build_use_objects` depuis la Zone E), `secret_1b` dedans.
+> **Secret 2, Zone C** : un `kit_crate` (posé STATIQUE via le pipeline
+> normal — ses extras `dynamic`/`mass` existent dans le kit mais aucun code
+> ne les lit encore, ignorés ici délibérément) au pied de la rangée ouest de
+> gondoles sert de marche : sol → caisse (1.0m, sous `jumpHeight`=1.1m) →
+> sommet de la gondole (2.0m, encore 1.0m de saut depuis la caisse, même
+> marge). `secret_2c` posé sur le toit de la rangée, à l'extrémité opposée à
+> la caisse d'accès — le joueur grimpe puis marche sur le toit pour le
+> trouver. Aucune géométrie neuve nécessaire pour le "toit" lui-même : le
+> dessus du collider de gondole était déjà marchable.
+> **Piège Blender trouvé par `level-forge`** : élargir le `floor` de la
+> Zone B vers l'ouest pour couvrir l'alcôve (même technique que le
+> débordement de sol déjà utilisé en Zone A/E) semblait correct isolément,
+> mais une fois traduit dans le niveau combiné, ce débordement atterrissait
+> EXACTEMENT sur la dalle du connecteur A↔B — deux meshes coïncidents,
+> `bake_vertex_lighting.py` les bakait entièrement noirs (auto-occultation,
+> même classe de bug que le kit_crate noir documenté plus haut). Corrigé en
+> remplaçant l'extension par une dalle sur-mesure dédiée (`build_floor_patches`,
+> même technique que `build_vitrine` : coordonnées MONDE, bornée exactement
+> à l'empreinte réelle de l'alcôve) — ne peut plus chevaucher quoi que ce
+> soit par construction. `validate_level.py --strict` : `zone_b_caisses`/
+> `zone_c_rayons` restent CONFORME (0 erreur, 0 warning) après ajout ;
+> `hypermarche_complet` garde ses 12 warnings déjà connus, aucun nouveau.
+> Détection/compteur/HUD/son côté jeu faits directement (pas d'agent,
+> extension mécanique de conventions déjà posées) : `foundSecrets`
+> (WeakSet, même discipline que `InteractionSystem.consumed`), test AABB
+> générique sur `handle.secrets` (fonctionne pour N'IMPORTE QUEL `secret_*`,
+> pas seulement ceux-ci), `debug.secretsFound`/`secretsTotal` dans
+> `DebugPanel`, message HUD "Secret trouvé ! (n/total)" + son placeholder
+> dédié `secret_found` (même pipeline synthétique que les sons de porte).
+> `unlockDoor()` factorisé entre `onExitDoorUse` (Zone E, gardé par badge)
+> et `onFrozenStorageUse` (Zone B, sans garde) — même mécanique de porte,
+> seule la condition d'appel diffère. Vérifié en jeu (`cassandre.level.stats()`,
+> `cassandre.doors()`, `cassandre.secrets()`) sur les trois fichiers
+> (`zone_b_caisses`, `zone_c_rayons`, `hypermarche_complet`) : comptes exacts,
+> positions/bbox cohérentes avec l'export, glissement+désactivation du
+> collider de `door_b_frozen` vérifié contre le vrai corps Rapier (même
+> méthode que `door_e_exit`), aucune exception, aucune erreur console
+> nouvelle. **Non vérifié en conditions réelles** : le déclenchement par une
+> vraie entrée dans la zone (marche jusqu'au secret, saut caisse→gondole) —
+> même limitation de boucle gelée en automatisation navigateur déjà notée
+> pour la porte à badge et le tir du Directeur, à valider en jouant
+> réellement, en particulier le timing du double-saut de la Zone C (marge
+> de seulement 0.1m à chaque étage).
+>
+> **Reste du contenu Phase 5, pas commencé** : caddies poussables, micro
+> d'annonces (réplique du héros), toilettes utilisables (+1 PV), l'animation
+> de bris de verre du rayon surgelés (voir ci-dessus), écrans de
+> surveillance, machine à pinces.
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet

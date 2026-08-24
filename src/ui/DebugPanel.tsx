@@ -72,6 +72,7 @@ export function DebugPanel() {
         </span>
         {ammoEmpty ? "  ⚠ à sec" : ""}
       </div>
+      <div>{`Secrets: ${debug.secretsFound} / ${debug.secretsTotal}`}</div>
       <div>
         <span style={{ color: groundedColor, fontWeight: "bold" }}>
           {`${groundedGlyph} ${groundedLabel}`}

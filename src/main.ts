@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
-import { initAudio, playDoorSfx, playEnemySfx, playImpactSfx, playWeaponFireSfx } from "./core/audio";
+import { initAudio, playDoorSfx, playEnemySfx, playImpactSfx, playSfx, playWeaponFireSfx } from "./core/audio";
 import { input } from "./core/input";
 import { FIXED_DT, startLoop } from "./core/loop";
 import { GameClock } from "./core/time";
@@ -20,7 +20,7 @@ import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
 import { buildGym } from "./game/level/gym";
 import { createLevelSession, type LevelSession } from "./game/level/hotReload";
 import { InteractionSystem } from "./game/level/interactive";
-import type { DoorInfo, LevelStats } from "./game/level/loader";
+import type { DoorInfo, LevelStats, SecretZone } from "./game/level/loader";
 import { LEVEL_CHOICES, type LevelDef } from "./game/level/levels";
 import { PlayerController } from "./game/player/controller";
 import {
@@ -354,6 +354,15 @@ async function main() {
   let openingDoor: OpeningDoor | null = null;
   const unlockedDoors = new Set<string>();
 
+  // --- Secrets (Phase 5, critère de validation du plan) ---------------------
+  // Détection PASSIVE (pas de touche E, pas de `use_*`) : le joueur entre
+  // dans le volume AABB d'un `secret_*`, c'est trouvé. Par RÉFÉRENCE DE MESH
+  // dans un `WeakSet`, même discipline que `InteractionSystem.consumed`
+  // (`interactive.ts`) — un hot reload remplace `handle.secrets` par de
+  // nouveaux objets, donc un secret déjà trouvé avant un hot reload redevient
+  // trouvable après (cas limite dev-only, pas un chemin joueur réel).
+  const foundSecrets = new WeakSet<THREE.Object3D>();
+
   const HUD_MESSAGE_DURATION_MS = 1800;
   /** Affiche un message HUD transitoire, effacé après `HUD_MESSAGE_DURATION_MS`
    * (sauf s'il a déjà été remplacé par un autre message entre-temps). */
@@ -364,6 +373,28 @@ async function main() {
         useGameStore.getState().showHudMessage(null);
       }
     }, HUD_MESSAGE_DURATION_MS);
+  }
+
+  /** Déverrouille le `door_*` nommé `targetName` (glissement + collider désactivé,
+   * voir la doc de `openingDoor` plus haut) — factorisé entre `onExitDoorUse`
+   * (Zone E, gardé par badge) et `onFrozenStorageUse` (Zone B, sans garde) :
+   * même mécanique de porte, seule la CONDITION d'appel diffère, décidée par
+   * l'appelant avant d'invoquer cette fonction. Retourne `false` sans effet
+   * si `targetName` ne correspond à aucun `door_*` du niveau courant (erreur
+   * de données Blender, pas un état de jeu valide). */
+  function unlockDoor(targetName: string, successMessage: string): boolean {
+    const door = (gltfLevelSession?.current?.doors ?? []).find((d) => d.name === targetName);
+    if (!door) {
+      console.error(`[main] use_* référence une porte introuvable ("${targetName}").`);
+      return false;
+    }
+    unlockedDoors.add(targetName);
+    const t = door.body.translation();
+    openingDoor = { body: door.body, startY: t.y, targetY: t.y - door.halfExtents.y * 2, t: 0 };
+    door.collider.setEnabled(false);
+    showHudMessage(successMessage);
+    playDoorSfx("unlock");
+    return true;
   }
 
   function spawnDirectorAt(x: number, feetY: number, z: number): Director {
@@ -485,6 +516,12 @@ async function main() {
             spawnDirectorAt(spawn.position.x, spawn.position.y, spawn.position.z);
           }
         }
+
+        // Compteur de secrets (`debug.secretsTotal`) : fixé à CHAQUE chargement
+        // (pas seulement `isFirstLoad`) puisque `handle.secrets` change avec le
+        // niveau chargé — contrairement aux spawns, ce n'est pas un événement
+        // ponctuel de partie mais une propriété du niveau courant.
+        useGameStore.getState().setSecretsTotal(handle.stats.secretCount);
       },
     });
   }
@@ -634,17 +671,11 @@ async function main() {
             playDoorSfx("locked");
             return;
           }
-          const door = (gltfLevelSession?.current?.doors ?? []).find((d) => d.name === targetName);
-          if (!door) {
-            console.error(`[main] use_exit_door référence une porte introuvable ("${targetName}").`);
-            return;
-          }
-          unlockedDoors.add(targetName);
-          const t = door.body.translation();
-          openingDoor = { body: door.body, startY: t.y, targetY: t.y - door.halfExtents.y * 2, t: 0 };
-          door.collider.setEnabled(false);
-          showHudMessage("Porte déverrouillée");
-          playDoorSfx("unlock");
+          unlockDoor(targetName, "Porte déverrouillée");
+        },
+        onFrozenStorageUse: (targetName) => {
+          if (unlockedDoors.has(targetName)) return; // déjà ouverte
+          unlockDoor(targetName, "Rayon surgelés ouvert");
         },
       });
 
@@ -694,6 +725,29 @@ async function main() {
         const current = openingDoor.body.translation();
         openingDoor.body.setTranslation({ x: current.x, y, z: current.z }, true);
         if (openingDoor.t >= 1) openingDoor = null;
+      }
+
+      // Secrets : présence dans le volume AABB, voir la doc de `foundSecrets`
+      // plus haut. `secrets` est RELUE ici à chaque appel, jamais mise en
+      // cache — même discipline que `useObjects`/`doors` ci-dessus (hot
+      // reload remplace tout le tableau).
+      for (const secret of gltfLevelSession?.current?.secrets ?? []) {
+        if (foundSecrets.has(secret.object)) continue;
+        const p = player.position;
+        const inside =
+          p.x >= secret.min.x &&
+          p.x <= secret.max.x &&
+          p.y >= secret.min.y &&
+          p.y <= secret.max.y &&
+          p.z >= secret.min.z &&
+          p.z <= secret.max.z;
+        if (!inside) continue;
+        foundSecrets.add(secret.object);
+        useGameStore.getState().incrementSecretsFound();
+        const found = useGameStore.getState().debug.secretsFound;
+        const total = useGameStore.getState().debug.secretsTotal;
+        showHudMessage(`Secret trouvé ! (${found}/${total})`);
+        playSfx("secret_found");
       }
     },
 
@@ -1042,6 +1096,7 @@ async function main() {
       hasBadge = true;
     },
     () => gltfLevelSession?.current?.doors ?? [],
+    () => gltfLevelSession?.current?.secrets ?? [],
   );
 }
 
@@ -1186,6 +1241,7 @@ declare global {
       hasBadge: () => boolean;
       giveBadge: () => void;
       doors: () => DoorInfo[];
+      secrets: () => SecretZone[];
     };
   }
 }
@@ -1380,6 +1436,7 @@ function exposeDebugApi(
   hasBadge: () => boolean,
   giveBadge: () => void,
   doors: () => DoorInfo[],
+  secrets: () => SecretZone[],
 ) {
   window.cassandre = {
     moveConfig,
@@ -1430,6 +1487,8 @@ function exposeDebugApi(
     giveBadge,
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors,
+    /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
+    secrets,
   };
 }
 

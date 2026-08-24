@@ -100,6 +100,9 @@ ZONE_A = {
 
     "checkouts": None,
 
+    # Aucun secret dans cette zone — voir Zone B (secret 1) / Zone C (secret 2).
+    "secrets": [],
+
     # "Parking" : sun optionnel pertinent, lumière du jour qui filtre par la
     # fente de la vitrine — pas une décision de layout, un choix d'éclairage.
     "lighting": {"sun": True},
@@ -115,11 +118,40 @@ ZONE_B = {
 
     "floor": {"x": (-12.0, 12.0), "y": (-2.0, 22.0), "tile": 4.0},
 
+    # Dalle de sol SUR-MESURE (comme la vitrine de la Zone A — voir
+    # `build_level.py::build_floor_patches`) pour l'alcôve du secret 1,
+    # X∈[-15,-12] Y∈[10,12] (3×2 m) : NE tile PAS en 4 m avec
+    # `kit_floor_4x4`, et étendre le rectangle englobant du `"floor"`
+    # ci-dessus pour la couvrir a été TENTÉ puis abandonné — une fois cette
+    # zone translatée dans le niveau combiné (dx=26), l'extension retombait
+    # exactement sur le connecteur A-B (x∈[10,14], y∈[2,6]), dupliquant une
+    # tuile de sol au même endroit (2 meshes noirs au bake, auto-occultation
+    # — voir README). Une dalle limitée à l'empreinte réelle de l'alcôve ne
+    # peut par construction chevaucher aucune autre géométrie du niveau.
+    "floor_patches": [
+        {"name": "floor_secret_1b", "x": (-15.0, -12.0), "y": (10.0, 12.0)},
+    ],
+
     "walls": [
         wall_run((-12.0, -2.0), (12.0, -2.0), (0.0, -1.0)),   # sud
         wall_run((-12.0, 22.0), (12.0, 22.0), (0.0, 1.0)),    # nord
-        wall_run((-12.0, -2.0), (-12.0, 22.0), (-1.0, 0.0)),  # ouest
+        # Ouest, par morceaux — la brèche Y∈[10,12] est la porte du secret 1
+        # (mur cassable / rayon surgelés, voir "door_frame"/"secrets"
+        # ci-dessous), posée à part, PAS un wall_run, même convention que la
+        # vitrine de la Zone A / la brèche nord de la Zone E. Les caisses
+        # (X∈[-9,-6], voir "checkouts") sont à 3 m au moins de X=-12 : cette
+        # portion du mur ouest est dégagée quel que soit Y choisi ici.
+        wall_run((-12.0, -2.0), (-12.0, 10.0), (-1.0, 0.0)),
+        wall_run((-12.0, 12.0), (-12.0, 22.0), (-1.0, 0.0)),
         wall_run((12.0, -2.0), (12.0, 22.0), (1.0, 0.0)),     # est
+        # Alcôve du secret 1 (surgelés), derrière la brèche ouest — 3 m (X,
+        # profondeur) × 2 m (Y, alignée pile sur la largeur de la brèche),
+        # murs sur les 3 côtés extérieurs, pas de mur côté brèche (c'est
+        # l'ouverture par laquelle on entre) — même pattern que l'alcôve de
+        # la Zone A (fond + 2 flancs tournés vers l'extérieur).
+        wall_run((-15.0, 10.0), (-15.0, 12.0), (-1.0, 0.0)),  # fond (ouest)
+        wall_run((-15.0, 10.0), (-12.0, 10.0), (0.0, -1.0)),  # flanc sud
+        wall_run((-15.0, 12.0), (-12.0, 12.0), (0.0, 1.0)),   # flanc nord
     ],
 
     "vitrine": None,
@@ -130,6 +162,27 @@ ZONE_B = {
         "x_origins": [-9.0, -4.0, 1.0, 6.0],
     },
 
+    # Porte du secret 1 (surgelés), SANS verrou (contrairement à
+    # `door_e_exit`, aucun badge/gate — voir CLAUDE.md). Brèche OUEST : un
+    # mur VERTICAL (contrairement à la brèche nord horizontale de la
+    # Zone E), donc `kit_door_2m`/`kit_door_leaf` doivent tourner de 90°
+    # pour suivre le mur — même mécanique de rotation que les murs
+    # ouest/est de tout `wall_run` (voir `build_level.py::plan_wall_run`/
+    # `_rotate90`). `x`/`y` = coin de la pièce AVANT rotation, choisi
+    # EXACTEMENT comme le ferait `plan_wall_run` pour un segment de 2 m
+    # inséré à la place de la brèche dans le run ouest d'origine (parcouru
+    # depuis start y=-2, run_dir=(0,1) ; au cursor=12, y=-2+12=10 ; theta=90°
+    # pour ce run — voir `build_door_frame`/`build_door_leaf`, généralisés
+    # pour cette tâche à un `rot_deg` optionnel, 0° par défaut = comportement
+    # Zone E inchangé).
+    "door_frame": {
+        "piece": "kit_door_2m",
+        "x": -12.0,
+        "y": 10.0,
+        "rot_deg": 90.0,
+        "leaf_name": "door_b_frozen",
+    },
+
     "spawn_player": (0.0, 0.0, 0.0),
     "spawn_suits": [
         ("spawn_suit_1", (-6.0, 18.0, 0.0)),
@@ -137,7 +190,33 @@ ZONE_B = {
         ("spawn_suit_3", (6.0, 18.0, 0.0)),
     ],
 
-    "use_objects": [],
+    # `use_frozen_storage` : déclencheur de la porte du secret 1, SANS
+    # verrou (mêmes mécanismes `loader.ts`/`interactive.ts` que
+    # `use_exit_door`, mais `main.ts` ne doit lui poser aucune condition —
+    # câblage TS hors scope ici, voir la tâche). Posé CÔTÉ SALLE PRINCIPALE
+    # (x=-10.75 > -12, jamais dans l'alcôve), à 1.25 m du centre du vantail
+    # (-12.0, 11.0, 1.25) — distance réelle 1.25 m, sous les 2 m
+    # d'`USE_RANGE_METERS`, même marge que `use_exit_door` en Zone E.
+    # Coordonnées pile sur la grille 0.25 m : aucune exception, contrairement
+    # à `use_crowbar`/`use_shotgun`.
+    "use_objects": [
+        {"name": "use_frozen_storage", "center": (-10.75, 11.0, 1.0), "size": (0.3, 0.1, 0.3),
+         "target": "door_b_frozen"},
+    ],
+
+    # Secret 1 (mur cassable, surgelés — voir PLAN_PROTO_BOOMER_SHOOTER.md).
+    # Zone de détection par présence dans l'alcôve, aucune interactivité
+    # (contrairement à `use_frozen_storage` qui ouvre la porte qui y mène).
+    # Centrée dans l'alcôve (X∈[-15,-12], Y∈[10,12]) avec une marge de
+    # 0.25-0.5 m de chaque côté (n'effleure aucun mur) : X∈[-14.5,-12.5],
+    # Y∈[10.25,11.75], Z∈[0,1.5] (du sol jusqu'à un peu au-dessus de la tête,
+    # couvre tout le volume qu'occupe un joueur qui entre). `secret_id`
+    # obligatoire (voir `validate_level.py::check_naming`) : "1", reprend la
+    # numérotation du plan.
+    "secrets": [
+        {"name": "secret_1b", "center": (-13.5, 11.0, 0.75), "size": (2.0, 1.5, 1.5),
+         "secret_id": "1"},
+    ],
 
     # Intérieur, pas de vitrine — pas de sun.
     "lighting": {"sun": False},
@@ -162,6 +241,24 @@ ZONE_C = {
 
     "vitrine": None,
     "checkouts": None,
+
+    # Marche d'accès au secret 2 (toit de la rangée ouest, voir "secrets"
+    # ci-dessous) : une seule `kit_crate` (1 m de haut, sous `jumpHeight`
+    # 1.1 m — marge 0.1 m) posée STATIQUE via `build_storage_props` (les
+    # extras dynamic/mass de la pièce existent mais aucun loader ne les lit
+    # encore, voir kit_spec.py — ignorés ici comme n'importe quel autre prop).
+    # Empreinte réelle de la rangée ouest (row x=-4.25, rotation +90° comme
+    # documenté ci-dessous dans "gondolas") : X∈[-5.5,-4.25]. Caisse posée à
+    # l'OUEST de cette empreinte (couloir latéral, PAS l'allée centrale),
+    # décalée de 0.25 m (grille) de la face ouest de la rangée — assez pour
+    # sauter proprement dessus puis, de son sommet (Z=1.0), sauter sur le
+    # toit de la gondole (Z=2.0, gain 1.0 m, à nouveau sous 1.1 m). Origine
+    # coin (convention crate/pallet) : X∈[-6.75,-5.75], Y∈[7.5,8.5] — centrée
+    # sur l'extrémité SUD de la rangée (y0=8.0), près du capuchon
+    # `kit_gondola_end` qui commence à Y=6.75.
+    "storage_props": {
+        "crates": [(-6.75, 7.5, 0.0)],
+    },
 
     # Trois rangées de gondoles parallèles à l'axe Y (axe de déplacement
     # principal du joueur, du spawn sud vers le fond nord), créant des allées
@@ -221,6 +318,24 @@ ZONE_C = {
     ],
 
     "use_objects": [],
+
+    # Secret 2 (toit, via palettes/caisse — voir PLAN_PROTO_BOOMER_SHOOTER.md).
+    # Zone de détection sur le DESSUS de la rangée ouest (toit du collider
+    # `col_box_gondola_4m`, Z=2.0, déjà marchable tel quel — aucune géométrie
+    # neuve nécessaire pour le "toit" lui-même). Placée à l'extrémité NORD
+    # de la rangée (proche Y=16), à l'opposé de la caisse d'accès (Y≈8) :
+    # le joueur grimpe au sud puis marche vers le nord pour le trouver.
+    # Centre choisi sur la grille 0.25 m, strictement À L'INTÉRIEUR de
+    # l'empreinte réelle de la rangée (X∈[-5.5,-4.25], voir "storage_props"
+    # ci-dessus) : X=-4.75 (marge 0.375 m côté est, 0.5 m côté ouest),
+    # Y=15.5 (marge de ~0.5 m avec la fin du corps de rangée à Y=16, avant
+    # le capuchon nord). Z centré à 2.5 (taille 1.0 m) : le volume commence
+    # pile au niveau du sol du toit (Z=2.0) et couvre l'espace qu'occupe un
+    # joueur debout dessus.
+    "secrets": [
+        {"name": "secret_2c", "center": (-4.75, 15.5, 2.5), "size": (0.75, 0.75, 1.0),
+         "secret_id": "2"},
+    ],
 
     # Intérieur, pas de vitrine — pas de sun (même choix que Zone B).
     "lighting": {"sun": False},
@@ -377,6 +492,9 @@ ZONE_D = {
 
     "use_objects": [],
 
+    # Aucun secret dans cette zone — voir Zone B (secret 1) / Zone C (secret 2).
+    "secrets": [],
+
     # Intérieur, pas de vitrine — pas de sun (même choix que Zone B/C).
     "lighting": {"sun": False},
 }
@@ -496,6 +614,9 @@ ZONE_E = {
         {"name": "use_exit_door", "center": (0.0, 12.75, 1.0), "size": (0.3, 0.1, 0.3),
          "target": "door_e_exit"},
     ],
+
+    # Aucun secret dans cette zone — voir Zone B (secret 1) / Zone C (secret 2).
+    "secrets": [],
 
     "lighting": {"sun": False},
 }

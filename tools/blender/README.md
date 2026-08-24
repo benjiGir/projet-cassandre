@@ -5,7 +5,7 @@ Scripts headless. Aucun ne nécessite d'interface.
 | Script | Usage |
 |---|---|
 | `kit_spec.py` | **données** du kit modulaire (pièces, dimensions, proxies) — pas exécutable seul |
-| `level_spec.py` | **données** des niveaux Zone A / Zone B / Zone C / Zone D / Zone E (murs, sol, spawns, vitrine, caisses, gondoles, racks, mezzanine, porte) — pas exécutable seul |
+| `level_spec.py` | **données** des niveaux Zone A / Zone B / Zone C / Zone D / Zone E (murs, sol, spawns, vitrine, caisses, gondoles, racks, mezzanine, portes, secrets) — pas exécutable seul |
 | `geo_utils.py` | fonctions bpy partagées (boîtes subdivisées, proxies, scène) — importé par `build_kit.py` ET `build_level.py`, pas exécutable seul |
 | `build_kit.py` | génère `kit_hypermarche.blend` à partir de `kit_spec.py` |
 | `build_level.py` | assemble un niveau (`zone_a_parking.blend` / `zone_b_caisses.blend` / ... / `zone_e_bureau.blend`) à partir du kit + `level_spec.py` |
@@ -858,3 +858,183 @@ partagé, l'ouverture d'une brèche de connexion, le renommage des noms en
 collision, et l'ajout du pickup `use_shotgun` (dans la copie combinée
 SEULEMENT) ont été ajoutés. `src/game/level/levels.ts`, l'entrée de menu, et
 la vérification en jeu restent à faire par l'humain (voir CLAUDE.md).
+
+### Secrets — Zone B (surgelés) et Zone C (toit de gondole) (2026-08-24)
+
+**Les deux secrets prévus par le plan** (`PLAN_PROTO_BOOMER_SHOOTER.md` :
+« secret 1, mur cassable, surgelés » en Zone B, « secret 2, toit, via
+palettes » en Zone C) **ont leur géométrie côté Blender.** Design entièrement
+pré-décidé par l'humain (placement, dimensions, mécanique de saut) — cette
+tâche l'exécute mécaniquement, comme toute zone précédente. Le contrat
+runtime `secret_*` (zone AABB comptée dans `LevelStats.secretCount`/
+`LevelHandle.secrets`, `loader.ts::buildSecretZone`) existait déjà mais
+n'était utilisé par aucun objet du niveau avant cette tâche — c'est la
+première fois qu'un `secret_*` réel existe dans un `.glb` du projet.
+**Aucun fichier `src/**` touché** : la détection/le compteur/le HUD sont
+câblés en parallèle par l'humain, hors scope de cette tâche.
+
+#### Secret 1 (Zone B, surgelés) — porte SANS verrou
+
+Contrairement à `door_e_exit` (Zone E, verrouillée par badge), la porte du
+secret 1 est un simple `door_*` que `use_frozen_storage` ouvre sans aucune
+condition côté jeu (câblage TS hors scope ici). Brèche de 2 m dans le mur
+OUEST de la Zone B (`level_spec.ZONE_B`, mur désormais scindé en deux
+`wall_run` — sud 12 m, nord 10 m — pour loger la brèche Y∈[10,12], juste au
+nord de la rangée de caisses X∈[-9,-6], sans contact avec elle), menant à une
+alcôve 3×2 m (X∈[-15,-12], Y∈[10,12]) avec murs sur ses 3 côtés extérieurs.
+
+**Généralisation nécessaire de `door_frame`/`build_door_leaf` (nouveau,
+absent des zones précédentes) : brèche dans un mur VERTICAL, pas
+horizontal.** La Zone E posait son unique `kit_door_2m`/`kit_door_leaf` avec
+une rotation figée à 0° (documenté « aucune rotation nécessaire », vrai
+uniquement parce que sa brèche était dans un mur nord-sud le long de X). La
+porte du secret 1 est dans le mur OUEST (le long de Y) : `build_door_frame`
+et `build_door_leaf` (`build_level.py`) acceptent maintenant un
+`door_spec["rot_deg"]` optionnel (défaut 0.0, comportement Zone E
+inchangé — revalidé, toujours 0 warning), qui fait tourner la pièce ET
+recalcule le centre du vantail par rotation du même offset local
+(`DOOR_JAMB + DOOR_OPEN_W/2`) utilisé par la Zone E, généralisé en
+`(cos θ, sin θ)` plutôt que codé en dur sur l'axe X. `x`/`y` du `door_frame`
+restent le coin AVANT rotation, choisi EXACTEMENT comme le ferait
+`plan_wall_run` pour un segment de 2 m inséré à la place de la brèche dans
+le run ouest d'origine (`x=-12.0, y=10.0, rot_deg=90.0`) — vérifié après
+export en rechargeant le `.glb` : **`door_b_frozen` bbox monde
+X[-12.075,-11.925] Y[10.250,11.750] Z[0,2.5]**, symétrique autour de la face
+intérieure du mur (X=-12) exactement comme `door_e_exit` l'est autour de
+Y=14, et centré sur la brèche Y∈[10.25,11.75] (jambages 0.25 m de chaque
+côté de l'ouverture 1.5 m). `build_combined_level.py::_t_door_frame`
+propage `rot_deg` tel quel (une rotation est invariante par translation
+pure, aucun recalcul nécessaire) ; deux zones (B et E) posent désormais un
+`door_frame`, `leaf_name` reste zone-scopé par construction
+(`door_b_frozen`/`door_e_exit`), aucune collision de nom.
+
+**`use_frozen_storage`** (`target: "door_b_frozen"`, même mécanique que
+`use_exit_door`) posé côté salle principale à `(-10.75, 11.0, 1.0)`,
+1.25 m du centre du vantail — vérifié réimporté : `extras.target ==
+"door_b_frozen"`.
+
+**Piège découvert et corrigé : étendre le rectangle englobant du `"floor"`
+de la Zone B pour couvrir l'alcôve créait un CHEVAUCHEMENT avec le
+connecteur A-B, une fois la zone fusionnée.** Premier essai : élargir
+`"floor"` à `x∈[-16,12]` (au lieu de `[-12,12]`) pour que `tile_floor`
+couvre l'alcôve X∈[-15,-12] sans casser le tiling 4 m — même schéma que la
+vitrine/l'alcôve de sortie des Zones A/E (« le sol déborde sous les zones
+hors-mur, sans conséquence »). Sauf que cette fois l'alcôve déborde à
+l'OUEST du mur ouest EXISTANT (pas au nord, dans l'empreinte déjà couverte,
+comme A/E) : `bake_vertex_lighting.py --save` sur `hypermarche_complet`
+sortait alors **2 meshes entièrement noirs**
+(`kit_floor_4x4.031`/`.204`, tous deux à la MÊME position monde
+`(10.0, 2.0, 0.0)`) — auto-occultation par géométrie coïncidente, même
+famille de symptôme que le `kit_crate` à tasseaux avant sa correction.
+Cause : la Zone B (translatée par dx=26 dans le niveau combiné) a son
+ancien bord ouest (x local -12) qui atterrit exactement sur le bord EST du
+connecteur A-B (x monde 14) ; étendre le sol de la Zone B 4 m plus à l'ouest
+(x local -16 → x monde 10) fait retomber une tuile de sol EXACTEMENT sur
+celle du connecteur A-B (x∈[10,14], y∈[2,6]) — deux meshes coïncidents au
+même endroit. Corrigé en **abandonnant l'extension du rectangle englobant**
+au profit d'une dalle SUR-MESURE, nouvelle fonction `build_floor_patches`
+(`build_level.py`, même rigueur que `build_vitrine` : subdivision au mètre,
+UV 64 px/m, proxy cuboid, origine-surface-de-marche comme `kit_floor_4x4`),
+limitée à l'empreinte réelle de l'alcôve (`level_spec.ZONE_B["floor_patches"]`,
+X∈[-15,-12] Y∈[10,12]) — par construction, une dalle bornée à un besoin
+précis ne peut chevaucher aucune autre géométrie du niveau, où qu'elle soit
+translatée. Revérifié : `bake_vertex_lighting.py --save` sur
+`hypermarche_complet` reconstruit → **0 mesh noir, 0 dégradé plat**. Nouvelle
+clé `"floor_patches"` (liste) propagée par `build_combined_level.py::
+_t_floor_patches`/`translate_zone`, symétrique à `_t_storage`.
+
+**Secret 1** (`secret_1b`, `secret_id="1"`) : zone de présence dans
+l'alcôve, X∈[-14.5,-12.5] Y∈[10.25,11.75] Z∈[0,1.5] (marge de 0.25-0.5 m de
+chaque mur), posée via une nouvelle fonction `build_secret_zones`
+(`build_level.py`, même mécanique que `build_use_objects` : un
+`THREE.Mesh` réel avec `center`/`size`, `secret_id` propagé en custom
+property → `extras.secret_id`).
+
+#### Secret 2 (Zone C, toit de gondole) — caisse d'accès + zone sur le toit
+
+Aucune géométrie neuve pour le « toit » lui-même : le dessus du collider de
+la rangée ouest de gondoles (`kit_gondola_4m`, Z=2.0) est déjà marchable tel
+quel. Empreinte RÉELLE de cette rangée relue directement dans
+`_build_row_run`/le commentaire de `ZONE_C["gondolas"]` (pas redérivée à la
+main, comme demandé) : X∈[-5.5,-4.25] (décalage -X dû à la rotation +90°,
+même mécanique que Zone D). Une `kit_crate` (nouvelle entrée
+`ZONE_C["storage_props"]`, réutilise `build_storage_props` tel quel — aucun
+code nouveau nécessaire) posée à l'ouest de cette empreinte (couloir
+latéral, pas l'allée centrale), origine `(-6.75, 7.5, 0.0)` → bbox
+X[-6.75,-5.75] Y[7.5,8.5] Z[0,1.0], à 0.25 m de la face ouest de la rangée
+(X=-5.5), près de son extrémité sud (Y=8, jonction avec le capuchon
+`kit_gondola_end`).
+
+**Vérification du saut, par calcul ET par bbox exportée (pas seulement
+visuellement, comme demandé) :** sol → sommet caisse = 1.0 m de gain
+(`jumpHeight` 1.1 m, marge 0.1 m) ; sommet caisse → toit de la gondole =
+encore 1.0 m de gain (marge 0.1 m identique) ; écart horizontal caisse →
+gondole = 0.25 m (bord est de la caisse à bord ouest de la rangée),
+largement franchissable pendant la montée. **Le saut est géométriquement
+faisable avec la seule caisse — aucun step intermédiaire (pile de palettes)
+n'a été nécessaire.**
+
+**Secret 2** (`secret_2c`, `secret_id="2"`) posé sur le dessus de la rangée,
+à l'extrémité NORD (proche Y=16, à l'opposé de la caisse d'accès à Y≈8) :
+centre `(-4.75, 15.5, 2.5)`, taille `(0.75, 0.75, 1.0)` → bbox
+X[-5.125,-4.375] Y[15.125,15.875] Z[2.0,3.0], strictement à l'intérieur de
+l'empreinte de la rangée (marge 0.125-0.375 m) et posé pile au niveau du
+sol du toit (Z=2.0). Aucun `use_*` — détection par simple présence, comme
+demandé.
+
+#### Comptes exacts, avant / après (`validate_level.py`)
+
+| Fichier | | avant | après |
+|---|---|---:|---:|
+| `zone_b_caisses` | Objets (meshes) | 141 (128) | 160 (147) |
+| | Triangles | 7280 | 7912 |
+| | Matériaux | 3 | 3 |
+| | Colliders (cuboid) | 64 | 73 |
+| | Spawns (joueur+Costards) | 4 | 4 (inchangé) |
+| | `door_*` | 0 | 1 (`door_b_frozen`) |
+| | `use_*` | 0 | 1 (`use_frozen_storage`) |
+| | `secret_*` | 0 | 1 (`secret_1b`) |
+| | `--strict` | CONFORME (0,0) | CONFORME (0,0) — inchangé |
+| `zone_c_rayons` | Objets (meshes) | 177 (160) | 180 (163) |
+| | Triangles | 10648 | 10684 |
+| | Matériaux | 2 | 4 (+`mat_kit_storage` pour `kit_crate`, +`mat_kit_detail` pour `secret_2c`) |
+| | Colliders (cuboid) | 80 | 81 (+`col_box_crate`) |
+| | Spawns | 5 | 5 (inchangé) |
+| | `secret_*` | 0 | 1 (`secret_2c`) |
+| | `--strict` | CONFORME (0,0) | CONFORME (0,0) — inchangé |
+| `hypermarche_complet` | Objets (meshes) | 836 (764) | 860 (788) |
+| | Triangles | 46372 | 47096 |
+| | Matériaux | 4 | 4 (inchangé) |
+| | Colliders | cuboid:380 convexHull:2 | cuboid:390 convexHull:2 |
+| | Spawns | 15 | 15 (inchangé) |
+| | `door_*` | 1 (`door_e_exit`) | 2 (+`door_b_frozen`) |
+| | `use_*` | 3 | 4 (+`use_frozen_storage`) |
+| | `secret_*` | 0 | 2 (`secret_1b`, `secret_2c`) |
+| | Warnings (sans `--strict`) | 12 | 12 — **exactement les mêmes** (8 palettes + crowbar + shotgun), aucun nouveau |
+| | `--strict` | ECHEC (0 erreur, 12 warn) | ECHEC (0 erreur, 12 warn) — inchangé |
+
+Bake (`bake_vertex_lighting.py --save`) sur les trois fichiers : **0 mesh
+noir, 0 dégradé plat** (après correction du piège de chevauchement
+ci-dessus — voir la mesure « 2 meshes noirs » avant correction). Combiné :
+394 meshes (+10 sur 384), luminance moyenne globale 0.223.
+
+Export (`export_level.py`) : `public/assets/levels/zone_b_caisses.glb`
+(347 Ko), `zone_c_rayons.glb` (459 Ko), `hypermarche_complet.glb`
+(2038 Ko). Les trois rechargés indépendamment dans Blender
+(`import_scene.gltf`) pour vérification bit à bit des bounding box citées
+ci-dessus (pas seulement sur le `.blend` source) : `door_b_frozen`,
+`use_frozen_storage`, `secret_1b`, `floor_secret_1b`, `secret_2c`,
+`kit_crate`/`col_box_crate` tous confirmés à leur position/`extras` exacts,
+y compris après translation dans `hypermarche_complet.glb`
+(`secret_1b` → `(12.5, 11.0, 0.75)` = `(-13.5+26, 11.0, 0.75)` ;
+`secret_2c` → `(21.25, 43.5, 2.5)` = `(-4.75+26, 15.5+28, 2.5)` — dx/dy de
+Zone B et C inchangés, appliqués automatiquement par `translate_zone` sans
+aucun ajustement manuel de coordonnée, comme voulu).
+
+#### Objets créés (noms exacts)
+
+`door_b_frozen` (vantail), `use_frozen_storage` (`target:
+"door_b_frozen"`), `secret_1b` (`secret_id: "1"`), `floor_secret_1b` +
+`col_box_floor_secret_1b` (dalle sur-mesure de l'alcôve) — Zone B.
+`secret_2c` (`secret_id: "2"`) — Zone C, plus une `kit_crate`/`col_box_crate`
+supplémentaire (pas de nom custom, pièce de kit standard).

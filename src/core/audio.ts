@@ -18,8 +18,8 @@ import { Howl } from "howler";
  * (bruit/sinus générés par script, pas d'enregistrement, pas de source
  * externe) sous `public/assets/audio/sfx/<file>.{ogg,m4a}` : les 9 premiers
  * ajoutés le 2026-08-20 pour juger le feedback de hit avec du son plutôt
- * qu'en silence total, `door_locked`/`door_unlock` ajoutés le 2026-08-23
- * (porte à badge, Zone E). Ce sont des boîtes blanches sonores, au même titre
+ * qu'en silence total, `door_locked`/`door_unlock`/`secret_found` ajoutés le
+ * 2026-08-23 (porte à badge Zone E, puis secrets). Ce sont des boîtes blanches sonores, au même titre
  * que les meshes non texturés (invariant #9) — À REMPLACER par de vrais
  * assets à la Phase 5, pas des choix de sound design arrêtés. `public/` est
  * déjà le `publicDir` par défaut de Vite (non reconfiguré), donc
@@ -68,7 +68,8 @@ export type SfxId =
   | "enemy_hurt"
   | "enemy_death"
   | "door_locked"
-  | "door_unlock";
+  | "door_unlock"
+  | "secret_found";
 
 interface SfxDef {
   /** Nom de fichier SANS extension, résolu en `${SFX_BASE_PATH}/<file>.{ogg,m4a}`. */
@@ -118,6 +119,11 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // jamais.
   door_locked: { file: "door_locked", volume: 0.8 },
   door_unlock: { file: "door_unlock", volume: 0.9 },
+  // Secret trouvé (Phase 5, critère de validation du plan) : événement RARE
+  // et SIGNIFIANT au sens du skill `audio-sfx-pipeline` (au plus 2 fois par
+  // partie) — passe quand même par le même `SfxPool`/±8% que tout le reste
+  // par simplicité, la variation de pitch est inoffensive ici aussi.
+  secret_found: { file: "secret_found", volume: 0.9 },
 };
 
 /** Son de tir par arme. */

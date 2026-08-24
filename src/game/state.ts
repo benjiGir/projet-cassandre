@@ -39,6 +39,13 @@ interface DebugState {
   // `setDebug` déjà throttlé à 10 Hz dans `main.ts`, pas de setter dédié.
   shotgunAmmo: number;
   shotgunMaxAmmo: number;
+
+  // Compteur de secrets (Phase 5, critère de validation du plan : "trouve au
+  // moins 1 secret sur 2"). Même discipline que `playerHp`/`shotgunAmmo` :
+  // écrit ponctuellement à l'événement (un secret trouvé n'arrive pas à
+  // 60 Hz), pas au pas fixe.
+  secretsFound: number;
+  secretsTotal: number;
 }
 
 interface GameState {
@@ -59,6 +66,10 @@ interface GameState {
    * respecte cette règle.
    */
   setPlayerHp: (hp: number) => void;
+  /** Incrémente `debug.secretsFound` de 1 — même discipline ponctuelle que `setPlayerHp`, appelé UNE FOIS par secret nouvellement trouvé. */
+  incrementSecretsFound: () => void;
+  /** Fixe `debug.secretsTotal` — appelé une fois au chargement d'un niveau (voir `LevelStats.secretCount`). */
+  setSecretsTotal: (total: number) => void;
 
   /**
    * Message HUD transitoire (feedback ponctuel : badge ramassé, porte
@@ -87,9 +98,14 @@ export const useGameStore = create<GameState>((set) => ({
     playerMaxHp: 100,
     shotgunAmmo: 0,
     shotgunMaxAmmo: 0,
+    secretsFound: 0,
+    secretsTotal: 0,
   },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
+  incrementSecretsFound: () =>
+    set((state) => ({ debug: { ...state.debug, secretsFound: state.debug.secretsFound + 1 } })),
+  setSecretsTotal: (total) => set((state) => ({ debug: { ...state.debug, secretsTotal: total } })),
 
   hudMessage: null,
   showHudMessage: (text) => set({ hudMessage: text }),

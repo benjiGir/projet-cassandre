@@ -18,10 +18,11 @@ import type { UseObject } from "./loader";
  *
  * DISPATCH PAR NOM, pas par `targetName` : `use_crowbar`/`use_shotgun` sont
  * des pickups autoportants (aucune cible dans leurs `extras`). `use_exit_door`
- * (Zone E, porte à badge) EST un cas à `targetName` (`door_e_exit`), mais le
+ * (Zone E, porte à badge) et `use_frozen_storage` (Zone B, secret 1, porte
+ * SANS condition) référencent chacun un `door_*` via `targetName`, mais le
  * dispatch reste par nom exact d'objet Blender, pas par un système générique
- * indexé sur `targetName` — un seul `use_*` référence un `door_*` à ce jour,
- * généraliser maintenant serait de l'abstraction prématurée (invariant #8/#9).
+ * indexé sur `targetName` — deux cas concrets, pas encore la douleur de
+ * duplication qui justifierait une généralisation (invariant #8/#9).
  */
 
 /** Un appelant `main.ts` fournit une callback par effet nommé reconnu. Étendre cette interface au fur et à mesure que de nouveaux `use_*` nommés gagnent un effet — jamais un système générique de callbacks indexé par nom. */
@@ -35,6 +36,10 @@ export interface InteractionHandlers {
    * `loader.ts::buildUseObject`) — `main.ts` décide seul si le badge est en
    * poche (déverrouille) ou non (juste un refus, feedback côté `main.ts`). */
   onExitDoorUse(targetName: string): void;
+  /** `use_frozen_storage` (Zone B, secret 1) : ouvre `door_b_frozen` SANS
+   * condition (pas de badge, contrairement à `onExitDoorUse`) — même
+   * mécanique de porte/glissement côté `main.ts`, juste aucune garde. */
+  onFrozenStorageUse(targetName: string): void;
 }
 
 export class InteractionSystem {
@@ -135,6 +140,12 @@ export class InteractionSystem {
         // joueur reste à portée, et `main.ts` a sa propre garde pour ignorer
         // un ré-essai une fois la porte déjà déverrouillée.
         handlers.onExitDoorUse(useObject.targetName ?? useObject.name);
+        break;
+
+      case "use_frozen_storage":
+        // Même non-consommation que `use_exit_door` : `main.ts` a sa propre
+        // garde (`unlockedDoors`) pour ignorer un ré-essai une fois ouverte.
+        handlers.onFrozenStorageUse(useObject.targetName ?? useObject.name);
         break;
 
       default:
