@@ -363,6 +363,15 @@ async function main() {
   // trouvable après (cas limite dev-only, pas un chemin joueur réel).
   const foundSecrets = new WeakSet<THREE.Object3D>();
 
+  // Objets interactifs "signature Duke" (micro d'annonces, toilettes) —
+  // répliques du héros en texte HUD PLACEHOLDER (invariant #9, aucune VO
+  // réelle cette passe, voir Phase 6 pour les vraies répliques). PV rendus
+  // par les toilettes : "+1 PV" au sens LITTÉRAL du plan (blague assumée sur
+  // la valeur dérisoire, pas un vrai levier de gameplay).
+  const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
+  const HERO_LINE_TOILET = "Ça va mieux.";
+  const TOILET_HEAL_AMOUNT = 1;
+
   const HUD_MESSAGE_DURATION_MS = 1800;
   /** Affiche un message HUD transitoire, effacé après `HUD_MESSAGE_DURATION_MS`
    * (sauf s'il a déjà été remplacé par un autre message entre-temps). */
@@ -676,6 +685,19 @@ async function main() {
         onFrozenStorageUse: (targetName) => {
           if (unlockedDoors.has(targetName)) return; // déjà ouverte
           unlockDoor(targetName, "Rayon surgelés ouvert");
+        },
+        onPaMicUse: () => {
+          showHudMessage(HERO_LINE_PA_MIC);
+        },
+        onToiletUse: () => {
+          const maxHp = useGameStore.getState().debug.playerMaxHp;
+          if (playerHp >= maxHp) {
+            showHudMessage("Vous êtes déjà en pleine forme.");
+            return;
+          }
+          playerHp = Math.min(maxHp, playerHp + TOILET_HEAL_AMOUNT);
+          useGameStore.getState().setPlayerHp(playerHp);
+          showHudMessage(`+${TOILET_HEAL_AMOUNT} PV. ${HERO_LINE_TOILET}`);
         },
       });
 

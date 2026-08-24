@@ -40,6 +40,14 @@ export interface InteractionHandlers {
    * condition (pas de badge, contrairement à `onExitDoorUse`) — même
    * mécanique de porte/glissement côté `main.ts`, juste aucune garde. */
   onFrozenStorageUse(targetName: string): void;
+  /** `use_pa_mic` (Zone C) : déclenche une réplique du héros (texte HUD
+   * placeholder — invariant #9, pas de vraie VO cette passe). Répétable à
+   * volonté, contrairement aux pickups ci-dessus. */
+  onPaMicUse(): void;
+  /** `use_toilet` (Zone D) : +1 PV. Répétable (plafonné au PV max côté
+   * `main.ts`), pas un pickup à usage unique — la blague de la valeur
+   * dérisoire (+1 PV) fonctionne mieux en libre-service. */
+  onToiletUse(): void;
 }
 
 export class InteractionSystem {
@@ -146,6 +154,14 @@ export class InteractionSystem {
         // Même non-consommation que `use_exit_door` : `main.ts` a sa propre
         // garde (`unlockedDoors`) pour ignorer un ré-essai une fois ouverte.
         handlers.onFrozenStorageUse(useObject.targetName ?? useObject.name);
+        break;
+
+      case "use_pa_mic":
+        handlers.onPaMicUse();
+        break;
+
+      case "use_toilet":
+        handlers.onToiletUse();
         break;
 
       default:

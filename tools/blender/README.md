@@ -1038,3 +1038,36 @@ aucun ajustement manuel de coordonnée, comme voulu).
 `col_box_floor_secret_1b` (dalle sur-mesure de l'alcôve) — Zone B.
 `secret_2c` (`secret_id: "2"`) — Zone C, plus une `kit_crate`/`col_box_crate`
 supplémentaire (pas de nom custom, pièce de kit standard).
+
+### Micro d'annonces + toilettes (2026-08-24)
+
+Deux objets interactifs "signature Duke" du plan (PAS des secrets, aucune
+géométrie neuve de kit nécessaire — `build_use_objects` gère déjà n'importe
+quel `use_*` autoportant depuis `center`/`size`, exactement comme
+`use_crowbar`/`use_shotgun`). Fait directement (pas de délégation
+`level-forge` : ajout mécanique de deux entrées `use_objects` dans
+`level_spec.py`, aucune fonction `build_level.py` neuve).
+
+`use_pa_mic` (Zone C, zone dégagée nord du bloc de gondoles, X=0.0/Y=24.0,
+à l'écart de `spawn_suit_3`/`spawn_suit_4` à Y=21) : `center=(0.0, 24.0, 0.5)`,
+`size=(0.15, 0.15, 1.0)`. `use_toilet` (Zone D, coin sud-est dégagé,
+X=12.0/Y=2.0, au sud des rangées) : `center=(12.0, 2.0, 0.25)`,
+`size=(0.5, 0.5, 0.5)`.
+
+**Piège de grille rencontré et corrigé avant le premier export propre** :
+un centre Z = moitié de la hauteur choisie initialement (0.6 pour le micro,
+0.2 pour les toilettes) n'était PAS un multiple de 0.25 m — `validate_level.py`
+l'a signalé (`hors grille 0.25 m`) dès la première passe. Corrigé en
+choisissant des hauteurs dont la moitié tombe sur la grille (1.0 m → centre
+0.5 ; 0.5 m → centre 0.25), pas en ignorant l'avertissement.
+
+Rebuild complet des trois fichiers concernés (`zone_c_rayons`,
+`zone_d_reserve`, `hypermarche_complet`) : `use_*` Zone C 0→1, Zone D 0→1,
+niveau combiné 4→6. Bake : 0 mesh noir sur les trois. `validate_level.py --strict`
+sur `zone_c_rayons`/`zone_d_reserve` : seul le warning attendu "sans
+`target`" (même classe que crowbar/shotgun) — Zone D reste non-strict
+(warnings de palettes déjà connus, inchangés à 8). Niveau combiné (sans
+`--strict`, comme d'habitude) : 12→14 warnings, les 2 nouveaux étant
+exactement les "sans `target`" attendus pour `use_pa_mic`/`use_toilet`,
+aucun autre nouveau. Vérifié en jeu (`cassandre.level.stats()`) sur les
+trois fichiers : comptes `useCount` exacts.

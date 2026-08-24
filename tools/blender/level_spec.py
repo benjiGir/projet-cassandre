@@ -317,7 +317,17 @@ ZONE_C = {
         ("spawn_suit_4", (6.0, 21.0, 0.0)),
     ],
 
-    "use_objects": [],
+    # Micro d'annonces (objet interactif "signature Duke" du plan, PAS un
+    # secret) : déclenche une réplique du héros dans les haut-parleurs
+    # (texte HUD placeholder côté jeu, aucune VO réelle pour l'instant —
+    # invariant #9). Posé contre le mur nord, X=0 (centré), à l'écart des
+    # spawns `spawn_suit_3`/`spawn_suit_4` (Y=21, X=±6.0) et de tout mobilier
+    # — zone dégagée entre le bloc de gondoles (fin Y=16) et le mur nord
+    # (Y=26). Aucune cible (`target`) : effet autoportant, même contrat que
+    # `use_crowbar`/`use_shotgun`, pas celui de `use_frozen_storage`.
+    "use_objects": [
+        {"name": "use_pa_mic", "center": (0.0, 24.0, 0.5), "size": (0.15, 0.15, 1.0)},
+    ],
 
     # Secret 2 (toit, via palettes/caisse — voir PLAN_PROTO_BOOMER_SHOOTER.md).
     # Zone de détection sur le DESSUS de la rangée ouest (toit du collider
@@ -490,7 +500,14 @@ ZONE_D = {
         ("spawn_suit_5", (4.0, 21.0, 0.0)),    # near pied d'escalier, ouvert, ~21.4m (symétrique)
     ],
 
-    "use_objects": [],
+    # Toilettes utilisables (+1 PV, objet interactif "signature Duke" du
+    # plan, PAS un secret) : coin sud-est, X=12.0/Y=2.0 — au sud des rangées
+    # (Y∈[4,20]), à l'écart des piles de palettes (X=±10.0, Y=16.0) et des
+    # caisses isolées (X∈[-2,3], Y∈[6,12]), zone entièrement dégagée. Aucune
+    # cible : effet autoportant (soin), même contrat que `use_crowbar`.
+    "use_objects": [
+        {"name": "use_toilet", "center": (12.0, 2.0, 0.25), "size": (0.5, 0.5, 0.5)},
+    ],
 
     # Aucun secret dans cette zone — voir Zone B (secret 1) / Zone C (secret 2).
     "secrets": [],

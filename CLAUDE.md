@@ -400,10 +400,33 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > réellement, en particulier le timing du double-saut de la Zone C (marge
 > de seulement 0.1m à chaque étage).
 >
-> **Reste du contenu Phase 5, pas commencé** : caddies poussables, micro
-> d'annonces (réplique du héros), toilettes utilisables (+1 PV), l'animation
-> de bris de verre du rayon surgelés (voir ci-dessus), écrans de
-> surveillance, machine à pinces.
+> **Micro d'annonces + toilettes livrés (2026-08-24)**, deux des objets
+> interactifs "signature Duke" du plan. Faits directement (pas de
+> `level-forge` : `build_use_objects` gère déjà n'importe quel `use_*`
+> autoportant depuis `center`/`size`, aucune fonction Blender neuve
+> nécessaire — juste deux entrées ajoutées à `level_spec.py` + rebuild).
+> `use_pa_mic` (Zone C, zone dégagée nord des gondoles) déclenche une
+> réplique du héros en **texte HUD placeholder** (`HudMessage`, aucune VO
+> réelle cette passe — invariant #9, la vraie VO reste Phase 6),
+> répétable à volonté. `use_toilet` (Zone D, coin sud-est dégagé) rend
+> `+1 PV` (valeur LITTÉRALE du plan, blague assumée sur sa dérision),
+> répétable mais plafonné au PV max — pas un pickup à usage unique.
+> Piège de grille rencontré et corrigé avant le premier export propre :
+> un centre Z à moitié de la hauteur choisie initialement n'était pas un
+> multiple de 0.25m (`validate_level.py` l'a signalé immédiatement) — corrigé
+> en choisissant des hauteurs dont la moitié tombe sur la grille, pas en
+> ignorant l'avertissement. Rebuild vérifié sur les trois fichiers
+> concernés (`zone_c_rayons`, `zone_d_reserve`, `hypermarche_complet`) :
+> `useCount` exact (6 sur le niveau combiné), 0 mesh noir au bake, aucun
+> warning nouveau au-delà des "sans target" attendus (même classe que
+> crowbar/shotgun).
+>
+> **Reste du contenu Phase 5, pas commencé** : caddies poussables (kit_cart
+> existe déjà dans le kit avec des extras `dynamic`/`mass` non lus par le
+> loader — nécessite une vraie nouvelle catégorie de collision pour un
+> prop poussable, pas juste du placement), l'animation de bris de verre du
+> rayon surgelés (voir plus haut, secret 1), écrans de surveillance
+> (render-to-texture, non trivial), machine à pinces (secret dérisoire).
 >
 > Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
 > Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet
