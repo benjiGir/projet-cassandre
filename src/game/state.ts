@@ -21,10 +21,9 @@ interface DebugState {
   /** Normale du sol sous les pieds. */
   groundNormal: { x: number; y: number; z: number };
 
-  // État de vie du joueur (Phase 3, ennemi Costard). Affiché UNIQUEMENT dans
-  // ce panneau de debug pour l'instant — pas un HUD Phase 6, un chiffre
-  // suffit pour évaluer le critère humain de fin de phase ("on recule, on
-  // circule, on ne reste pas planté"). 100/100 est un point de départ
+  // État de vie du joueur (Phase 3, ennemi Costard). Affiché dans le panneau
+  // de debug ET, depuis la Phase 6, dans le vrai HUD de prod (`ui/Hud.tsx`,
+  // sélecteur fin dédié — voir sa doc). 100/100 est un point de départ
   // ARBITRAIRE pour rendre les dégâts observables en playtest, PAS un choix
   // de tuning arrêté : le tuning (PV max, dégâts par attaque, régénération
   // éventuelle...) appartient à l'humain, pas à cette tâche.
@@ -40,12 +39,34 @@ interface DebugState {
   shotgunAmmo: number;
   shotgunMaxAmmo: number;
 
+  // Arme active (Phase 6) — `WeaponSystem.activeWeapon` recopié tel quel
+  // (même union de types, dupliquée ici plutôt qu'importée : `game/state.ts`
+  // ne dépend d'aucun autre module de `src/game/*`, comme le reste de ce
+  // fichier — voir le même choix pour `playerHp`/`shotgunAmmo` qui ne
+  // dépendent pas non plus des types de `weapons.ts`). Écrit dans le même
+  // `setDebug` throttlé à 10 Hz que `shotgunAmmo` ci-dessus ; le HUD de prod
+  // s'en sert pour savoir QUOI afficher comme munitions ("PIED-DE-BICHE",
+  // "À MAINS NUES", ou un compte de cartouches).
+  activeWeapon: "none" | "melee" | "shotgun";
+
   // Compteur de secrets (Phase 5, critère de validation du plan : "trouve au
   // moins 1 secret sur 2"). Même discipline que `playerHp`/`shotgunAmmo` :
   // écrit ponctuellement à l'événement (un secret trouvé n'arrive pas à
   // 60 Hz), pas au pas fixe.
   secretsFound: number;
   secretsTotal: number;
+
+  // Compteur de « vues » (Phase 6, HUD façon overlay de stream — voir
+  // `ui/Hud.tsx`). C'est la BLAGUE du HUD, pas un score neutre : le
+  // personnage est un youtubeur complotiste à 200 abonnés, ses kills
+  // deviennent des "clips qui buzzent". Incrémenté PONCTUELLEMENT dans les
+  // boucles `deathEvents` de `main.ts` (Costard + Directeur confondus dans
+  // le même compteur — le plan ne demande qu'UN compteur), jamais au pas
+  // fixe. Valeur de départ ARBITRAIRE (quelques spectateurs en direct,
+  // cohérent avec "200 abonnés" plutôt qu'un flatteur zéro) — comme
+  // `playerHp: 100`, un point de départ à confirmer par l'humain, pas un
+  // choix de tuning arrêté.
+  views: number;
 }
 
 interface GameState {
@@ -70,17 +91,60 @@ interface GameState {
   incrementSecretsFound: () => void;
   /** Fixe `debug.secretsTotal` — appelé une fois au chargement d'un niveau (voir `LevelStats.secretCount`). */
   setSecretsTotal: (total: number) => void;
+  /** Incrémente `debug.views` de `amount` — même discipline ponctuelle que `incrementSecretsFound`, appelé UNE FOIS par kill (Costard ou Directeur) dans les boucles `deathEvents` de `main.ts`. `amount` est décidé par l'appelant (le gag du "clip qui buzz" varie le gain, voir `main.ts`), pas fixé ici. */
+  incrementViews: (amount: number) => void;
 
   /**
-   * Message HUD transitoire (feedback ponctuel : badge ramassé, porte
-   * verrouillée/déverrouillée...). `null` = rien affiché. Écrit à
-   * l'occurrence de l'événement (pas au pas fixe, même discipline que
-   * `setPlayerHp`) ; l'auto-effacement après un délai est géré côté
-   * appelant (`main.ts`, `setTimeout`), pas ici — ce store reste un simple
-   * conteneur d'état, aucune logique de timing.
+   * Message HUD transitoire SYSTÈME (feedback ponctuel factuel : badge
+   * ramassé, porte verrouillée/déverrouillée, secret trouvé n/total...).
+   * `null` = rien affiché. Écrit à l'occurrence de l'événement (pas au pas
+   * fixe, même discipline que `setPlayerHp`) ; l'auto-effacement après un
+   * délai est géré côté appelant (`main.ts`, `setTimeout`), pas ici — ce
+   * store reste un simple conteneur d'état, aucune logique de timing.
+   *
+   * DISTINCT de `heroLine` ci-dessous : ce canal n'a AUCUN cooldown — un
+   * refus de porte doit s'afficher immédiatement à chaque essai, pas être
+   * avalé par le cooldown de 15 s des répliques du héros (skill
+   * `audio-sfx-pipeline`). C'est la ligne de partage : de l'INFORMATION
+   * (ce qui vient de se passer, objectivement) vs. une RÉPLIQUE (la
+   * réaction du personnage, qui peut légitimement être sacrifiée si une
+   * autre vient de parler).
    */
   hudMessage: string | null;
   showHudMessage: (text: string | null) => void;
+
+  /**
+   * Réplique du héros — canal DÉDIÉ, séparé de `hudMessage` (voir sa doc
+   * juste au-dessus pour la ligne de partage information/réplique). Le
+   * COOLDOWN GLOBAL DE 15 S (skill `audio-sfx-pipeline`) est appliqué côté
+   * appelant (`main.ts::triggerHeroLine`), jamais ici — même principe que
+   * `hudMessage` : ce store reste un conteneur d'état passif, toute la
+   * logique de timing (cooldown, auto-effacement) vit dans `main.ts`.
+   */
+  heroLine: string | null;
+  showHeroLine: (text: string | null) => void;
+
+  /**
+   * Écran de mort (Phase 6). `false` → `true` UNE SEULE FOIS par partie, à
+   * l'instant où `playerHp` atteint 0 (voir les boucles `playerHitEvents`
+   * dans `main.ts::updateFx`) — jamais réécrit ensuite dans la même partie
+   * (pas de résurrection en place, voir `ui/DeathScreen.tsx` pour le
+   * mécanisme de "Rejouer" — un rechargement de page complet, qui repart
+   * naturellement de `false` ici).
+   */
+  isDead: boolean;
+  setDead: (dead: boolean) => void;
+
+  /**
+   * Écran de fin de niveau (Phase 6). `true` quand le joueur a franchi
+   * `door_e_exit` APRÈS l'avoir déverrouillée (badge du Directeur) — voir
+   * `main.ts` pour la détection par volume (même famille que la détection
+   * AABB des secrets). N'existe que sur les niveaux qui ont réellement cette
+   * porte (le déclencheur lui-même est gaté côté `main.ts`, ce champ ne
+   * fait que refléter l'état une fois déclenché).
+   */
+  isLevelComplete: boolean;
+  setLevelComplete: (complete: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -98,15 +162,27 @@ export const useGameStore = create<GameState>((set) => ({
     playerMaxHp: 100,
     shotgunAmmo: 0,
     shotgunMaxAmmo: 0,
+    activeWeapon: "melee",
     secretsFound: 0,
     secretsTotal: 0,
+    views: 12,
   },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
   incrementSecretsFound: () =>
     set((state) => ({ debug: { ...state.debug, secretsFound: state.debug.secretsFound + 1 } })),
   setSecretsTotal: (total) => set((state) => ({ debug: { ...state.debug, secretsTotal: total } })),
+  incrementViews: (amount) => set((state) => ({ debug: { ...state.debug, views: state.debug.views + amount } })),
 
   hudMessage: null,
   showHudMessage: (text) => set({ hudMessage: text }),
+
+  heroLine: null,
+  showHeroLine: (text) => set({ heroLine: text }),
+
+  isDead: false,
+  setDead: (dead) => set({ isDead: dead }),
+
+  isLevelComplete: false,
+  setLevelComplete: (complete) => set({ isLevelComplete: complete }),
 }));

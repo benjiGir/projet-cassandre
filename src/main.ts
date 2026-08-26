@@ -5,6 +5,7 @@ import { createRoot } from "react-dom/client";
 
 import { initAudio, playDoorSfx, playEnemySfx, playImpactSfx, playSfx, playWeaponFireSfx } from "./core/audio";
 import { input } from "./core/input";
+import { duckMusicForHeroLine, initMusic, restoreMusicVolume } from "./core/music";
 import { FIXED_DT, startLoop } from "./core/loop";
 import { GameClock } from "./core/time";
 import {
@@ -55,6 +56,8 @@ import { directorConfig, type DirectorConfig } from "./game/entities/directorCon
 import { useGameStore } from "./game/state";
 import { App } from "./ui/App";
 import { LevelMenu } from "./ui/LevelMenu";
+import { MainMenu } from "./ui/MainMenu";
+import { RebindScreen } from "./ui/RebindScreen";
 
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -107,6 +110,56 @@ function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise<LevelD
   });
 }
 
+/**
+ * Porte d'entrée du jeu (Phase 6, plan section F — menu principal). Enrobe
+ * `resolveLevelChoice` ci-dessus (INCHANGÉE) d'un nouveau menu principal,
+ * SANS jamais l'afficher quand `?level=` est présent dans l'URL : LES DEUX
+ * CHEMINS HISTORIQUES DOIVENT CONTINUER À FONCTIONNER EXACTEMENT COMME AVANT
+ * (contrainte dure de la tâche) —
+ *   1. `?level=<id enregistré>` : bypass total, aucun menu, jamais montré ;
+ *   2. `?level=<nom>` non enregistré : fixture brute, idem.
+ * Cette fonction délègue PUREMENT à `resolveLevelChoice` dans les deux cas
+ * (return immédiat, `MainMenu` n'est même pas importé dans ce chemin) — la
+ * logique elle-même n'est pas dupliquée, seulement enrobée.
+ *
+ * Absent de `?level=` : affiche `MainMenu` (Jouer / Options / Quitter).
+ * "Jouer" résout DIRECTEMENT sur `hypermarche_complet` (le niveau complet,
+ * chemin joueur normal) — SANS passer par `LevelMenu` (resté un outil de
+ * DEV pour choisir une zone individuelle, voir son en-tête). `LevelMenu`
+ * reste atteignable via le lien discret "Choisir une zone (dev)" de
+ * `MainMenu`, qui délègue lui-même à `resolveLevelChoice` — c'est donc le
+ * MÊME composant historique, jamais dupliqué ni réimplémenté. "Options"
+ * affiche `RebindScreen` (plan section G), avec un retour vers ce même menu
+ * principal (pas de pile de navigation : un seul niveau d'imbrication).
+ */
+function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
+  const levelParam = new URLSearchParams(window.location.search).get("level");
+  if (levelParam) return resolveLevelChoice(root);
+
+  const fullLevel = LEVEL_CHOICES.find((entry) => entry.id === "hypermarche_complet");
+  // Filet de sécurité de TYPAGE uniquement, jamais atteint en pratique tant
+  // que `levels.ts` garde cette entrée enregistrée — sans lui, "Jouer"
+  // retomberait sur le tout premier choix du registre plutôt que de planter.
+  const playChoice = fullLevel ?? LEVEL_CHOICES[0];
+
+  return new Promise((resolve) => {
+    function showMainMenu() {
+      root.render(
+        createElement(MainMenu, {
+          onPlay: () => resolve(playChoice),
+          onOptions: () => {
+            root.render(createElement(RebindScreen, { onBack: showMainMenu }));
+          },
+          onChooseZone: () => {
+            resolveLevelChoice(root).then(resolve);
+          },
+        }),
+      );
+    }
+    showMainMenu();
+  });
+}
+
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const uiRoot = document.getElementById("ui-root") as HTMLDivElement;
@@ -119,15 +172,24 @@ async function main() {
   // le registre — remplace l'ancien hardcode `levelParam === "zone_a_parking"`
   // documenté comme dette dans CLAUDE.md.
   const root = createRoot(uiRoot);
-  const choice = await resolveLevelChoice(root);
+  // `resolveBootChoice` enrobe `resolveLevelChoice` d'un nouveau menu
+  // principal (Phase 6) SANS jamais toucher son comportement historique
+  // (`?level=`) — voir sa doc juste au-dessus.
+  const choice = await resolveBootChoice(root);
   root.render(createElement(App));
 
   input.attach(canvas);
-  // Pools de SFX (tir, impact) : voir core/audio.ts. Aucun asset audio
-  // n'existe encore dans le dépôt — c'est l'état attendu (invariant #9),
-  // géré silencieusement (un seul console.warn par id manquant, jamais de
-  // throw). Initialisé avant startLoop, comme les autres systèmes globaux.
+  // Pools de SFX (tir, impact) : voir core/audio.ts. Placeholders
+  // synthétiques présents depuis la Phase 3 (invariant #9 — pas des choix de
+  // sound design arrêtés), géré silencieusement (un seul console.warn par id
+  // manquant, jamais de throw). Initialisé avant startLoop, comme les autres
+  // systèmes globaux.
   initAudio();
+  // Musique + nappe d'ambiance (Phase 6) : voir core/music.ts pour la
+  // séparation avec `audio.ts` (SFX ponctuels) — même discipline de
+  // placeholder synthétique, module distinct car le pattern Howler diffère
+  // (streaming en boucle, pas un pool de sources courtes).
+  initMusic();
 
   const scene = new THREE.Scene();
   // Far plane : la gym expose une ligne de vue dégagée du fond de l'aile
@@ -363,18 +425,99 @@ async function main() {
   // trouvable après (cas limite dev-only, pas un chemin joueur réel).
   const foundSecrets = new WeakSet<THREE.Object3D>();
 
-  // Objets interactifs "signature Duke" (micro d'annonces, toilettes) —
-  // répliques du héros en texte HUD PLACEHOLDER (invariant #9, aucune VO
-  // réelle cette passe, voir Phase 6 pour les vraies répliques). PV rendus
-  // par les toilettes : "+1 PV" au sens LITTÉRAL du plan (blague assumée sur
-  // la valeur dérisoire, pas un vrai levier de gameplay).
+  // --- Fin de niveau (Zone E, `door_e_exit`) — Phase 6 ----------------------
+  // Détection GÉNÉRIQUE, sans AUCUNE coordonnée monde en dur (marche sur
+  // n'importe quel niveau qui a réellement `door_e_exit`, y compris une
+  // future refonte de la Zone E) : au moment où la porte est déverrouillée,
+  // le joueur est nécessairement du côté "intérieur" (portée de 2 m de
+  // `use_exit_door`, voir `interactive.ts`) — on retient l'AXE le plus fin du
+  // vantail (perpendiculaire au plan de la porte, donc l'axe de
+  // franchissement) et le SIGNE observé à cet instant pour "intérieur". Un
+  // franchissement vers le signe opposé, au-delà d'une marge, déclenche la
+  // fin de niveau. Alternative envisagée puis écartée : inspecter le `.glb`
+  // pour coder les coordonnées exactes en dur — plus fragile (cassé au
+  // moindre remaniement Blender de la Zone E) et hors scope (le plan demande
+  // explicitement de ne PAS toucher aux fichiers Blender pour ce livrable).
+  interface ExitDoorTracking {
+    /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `openingDoor`). */
+    doorPosition: THREE.Vector3;
+    /** Direction MONDE unitaire perpendiculaire au plan du vantail (axe de franchissement) — PAS supposée alignée sur X ou Z du monde : `door.halfExtents` est en repère LOCAL (voir `loader.ts::buildDoor`), donc l'axe local le plus fin est transformé par la rotation RÉELLE du corps avant d'être comparé à une position monde. Une porte tournée de 30°, 90° ou 0° est traitée identiquement. */
+    crossingAxis: THREE.Vector3;
+    insideSign: 1 | -1;
+    /** Demi-épaisseur LOCALE le long de l'axe choisi — valide malgré la rotation : c'est une longueur, pas une position, elle ne dépend pas du repère de lecture. */
+    halfExtentOnAxis: number;
+  }
+  let exitDoorTracking: ExitDoorTracking | null = null;
+  // Marge au-delà du vantail, m — évite un déclenchement au ras de la porte
+  // (le joueur doit être VISIBLEMENT sorti, pas juste avoir franchi le plan).
+  const EXIT_CROSSING_MARGIN = 1.0;
+  // Scratch réutilisé par la vérification de franchissement (un pas fixe,
+  // potentiellement plusieurs secondes durant) — zéro allocation en régime
+  // établi, même discipline que les autres scratch de ce fichier
+  // (`suitPositionScratch`, etc.). `setupExitDoorTracking`, elle, ne tourne
+  // QU'UNE FOIS (au déverrouillage) : allouer un `Vector3`/`Quaternion` là-bas
+  // n'a pas besoin d'un scratch dédié.
+  const exitDoorOffsetScratch = new THREE.Vector3();
+
+  /** Arme le suivi de franchissement pour `doorName` — voir la doc de `exitDoorTracking` ci-dessus. Appelé UNIQUEMENT depuis `onExitDoorUse` pour `"door_e_exit"`, jamais pour `door_b_frozen` (le secret 1 n'est pas une sortie de niveau). */
+  function setupExitDoorTracking(doorName: string): void {
+    const door = (gltfLevelSession?.current?.doors ?? []).find((d) => d.name === doorName);
+    if (!door) return; // défensif : `unlockDoor` a déjà loggé une erreur si absent, rien à ajouter ici.
+
+    // Axe LOCAL le plus fin (hors hauteur) = l'épaisseur du vantail, donc sa
+    // normale — même heuristique que `buildCuboidCollider`/`buildDoor`
+    // (les deux ne connaissent que des demi-étendues, jamais un "axe de
+    // porte" explicite côté données Blender).
+    const localThinIsX = Math.abs(door.halfExtents.x) <= Math.abs(door.halfExtents.z);
+    const localAxis = localThinIsX ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
+    const r = door.body.rotation();
+    const crossingAxis = localAxis.applyQuaternion(new THREE.Quaternion(r.x, r.y, r.z, r.w)).normalize();
+
+    const t = door.body.translation();
+    const doorPosition = new THREE.Vector3(t.x, t.y, t.z);
+    const playerOffset = new THREE.Vector3().subVectors(player.position, doorPosition);
+    const insideSign: 1 | -1 = playerOffset.dot(crossingAxis) >= 0 ? 1 : -1;
+
+    exitDoorTracking = {
+      doorPosition,
+      crossingAxis,
+      insideSign,
+      halfExtentOnAxis: localThinIsX ? door.halfExtents.x : door.halfExtents.z,
+    };
+  }
+
+  /** Bascule `isLevelComplete` UNE SEULE FOIS (idempotent) — voir sa doc dans `game/state.ts`. Libère le pointeur (même geste que `handlePlayerHit` à la mort) : l'écran de fin de niveau a besoin du curseur pour ses boutons. */
+  function triggerLevelComplete(): void {
+    if (useGameStore.getState().isLevelComplete) return;
+    useGameStore.getState().setLevelComplete(true);
+    document.exitPointerLock();
+  }
+
+  // Objets interactifs "signature Duke" (micro d'annonces, toilettes) — PV
+  // rendus par les toilettes : "+1 PV" au sens LITTÉRAL du plan (blague
+  // assumée sur la valeur dérisoire, pas un vrai levier de gameplay). Leurs
+  // répliques (`HERO_LINE_PA_MIC`/`HERO_LINE_TOILET`) passent par
+  // `triggerHeroLine` ci-dessous, EXACTEMENT comme les répliques ajoutées
+  // cette passe — un seul canal, une seule discipline de cooldown, jamais un
+  // chemin parallèle.
   const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
   const HERO_LINE_TOILET = "Ça va mieux.";
   const TOILET_HEAL_AMOUNT = 1;
+  // Nouvelles répliques (Phase 6) — avec les deux ci-dessus, 5 au total,
+  // dans la fourchette du plan (3 à 5). Ton : satire de la CULTURE de la
+  // croyance, jamais de cible réelle — l'ennemi est explicitement un
+  // "lézard" (reptilien fictif, cohérent avec la révélation du Directeur),
+  // l'absurde est assumé (voir la "Note d'écriture" du plan).
+  const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
+  const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
+  const HERO_LINE_LOW_HP = "Ça va, ÇA VA. Continuez de me suivre, c'est important.";
 
   const HUD_MESSAGE_DURATION_MS = 1800;
-  /** Affiche un message HUD transitoire, effacé après `HUD_MESSAGE_DURATION_MS`
-   * (sauf s'il a déjà été remplacé par un autre message entre-temps). */
+  /** Affiche un message HUD transitoire SYSTÈME, effacé après `HUD_MESSAGE_DURATION_MS`
+   * (sauf s'il a déjà été remplacé par un autre message entre-temps). Canal
+   * FACTUEL (porte, badge, secret n/total...), voir la doc de `hudMessage`
+   * dans `game/state.ts` pour la ligne de partage avec `triggerHeroLine`
+   * ci-dessous — AUCUN cooldown ici, contrairement aux répliques. */
   function showHudMessage(text: string): void {
     useGameStore.getState().showHudMessage(text);
     window.setTimeout(() => {
@@ -382,6 +525,97 @@ async function main() {
         useGameStore.getState().showHudMessage(null);
       }
     }, HUD_MESSAGE_DURATION_MS);
+  }
+
+  // Cooldown global de 15 s MINIMUM entre deux répliques du héros, quelle
+  // que soit la source (règle explicite du skill `audio-sfx-pipeline` — Duke
+  // 3D lui-même souffre de l'enchaînement de one-liners). Durée d'affichage
+  // volontairement plus longue que `HUD_MESSAGE_DURATION_MS` (1.8 s) : une
+  // réplique "parlée" se lit plus lentement qu'un toast factuel court —
+  // valeur de confort, pas un choix de tuning arrêté.
+  const HERO_LINE_COOLDOWN_MS = 15000;
+  const HERO_LINE_DISPLAY_MS = 4000;
+  let lastHeroLineAt = -Infinity;
+
+  /**
+   * Tente d'afficher une réplique du héros sur le canal DÉDIÉ
+   * (`state.heroLine`, voir `ui/HeroLine.tsx`) — TOUTES les répliques du jeu
+   * passent par cette fonction (micro d'annonces, toilettes, premier kill,
+   * secret trouvé, PV bas), aucun chemin parallèle. Respecte le cooldown
+   * global ci-dessus ; retourne `false` sans effet si non écoulé (silencieux
+   * : une réplique ratée par saturation n'est pas une erreur).
+   *
+   * Ducking musique (-6 dB, remontée sur 400 ms, skill `audio-sfx-pipeline`)
+   * déclenché ICI, au même instant que l'affichage — voir `core/music.ts`.
+   * Symbolique tant que la réplique reste du texte HUD (invariant #9, aucune
+   * vraie VO cette passe), mais c'est le comportement audio que demande le
+   * plan ; il prendra tout son sens le jour où une vraie voix remplace ce
+   * texte.
+   */
+  function triggerHeroLine(text: string): boolean {
+    const now = performance.now();
+    if (now - lastHeroLineAt < HERO_LINE_COOLDOWN_MS) return false;
+    lastHeroLineAt = now;
+    useGameStore.getState().showHeroLine(text);
+    duckMusicForHeroLine();
+    window.setTimeout(() => {
+      if (useGameStore.getState().heroLine === text) {
+        useGameStore.getState().showHeroLine(null);
+      }
+      restoreMusicVolume();
+    }, HERO_LINE_DISPLAY_MS);
+    return true;
+  }
+
+  // Compteur de "vues" (Phase 6, voir `debug.views` dans `game/state.ts`) —
+  // gain ALÉATOIRE par kill (le gag du "clip qui buzz" disproportionné),
+  // plage et multiplicateur ARBITRAIRES, point de départ pour playtest
+  // humain, pas un choix de tuning arrêté (même discipline documentée que
+  // `playerHp: 100`). `Math.random()` ici est SANS CONSÉQUENCE sur le
+  // déterminisme du pas fixe : cette fonction n'est appelée que depuis les
+  // boucles `deathEvents`, lues au TAUX D'AFFICHAGE dans `updateFx` (jamais
+  // depuis `updateGameplay`), exactement comme les particules de `fx.ts`.
+  const VIEWS_GAIN_MIN = 40;
+  const VIEWS_GAIN_MAX = 200;
+  const VIEWS_DIRECTOR_MULTIPLIER = 4; // "la plus grosse révélation de la chaîne" mérite un pic plus marqué qu'un Costard ordinaire.
+  function grantKillViews(multiplier = 1): void {
+    const gain = Math.round((VIEWS_GAIN_MIN + Math.random() * (VIEWS_GAIN_MAX - VIEWS_GAIN_MIN)) * multiplier);
+    useGameStore.getState().incrementViews(gain);
+  }
+
+  // Seuil de la réplique "PV bas" — fraction de `playerMaxHp`, PREMIER
+  // franchissement de la partie seulement (`lowHpLineTriggered` ci-dessous
+  // n'est jamais réarmé, même si le joueur se soigne puis redescend). Valeur
+  // ARBITRAIRE, point de départ pour playtest humain — même discipline que
+  // `playerHp: 100` dans `game/state.ts`, PAS un choix de tuning arrêté.
+  const LOW_HP_HERO_LINE_THRESHOLD = 0.3;
+  let firstKillTriggered = false;
+  let lowHpLineTriggered = false;
+  let deathHandled = false;
+
+  /**
+   * Appelée juste après CHAQUE décrément de `playerHp` (boucles
+   * `playerHitEvents` du Costard ET du Directeur, même contrat) — factorisé
+   * pour ne pas dupliquer cette logique entre les deux. Détecte, dans
+   * l'ordre : la réplique "PV bas" (premier franchissement de la partie), et
+   * la mort (`isDead`, écrit UNE FOIS). Un coup qui amène `playerHp` à 0
+   * pile sous le seuil ne déclenche PAS la réplique "PV bas" en plus de
+   * l'écran de mort (`playerHp > 0` dans la condition ci-dessous) — la mort
+   * prime, afficher les deux en même temps serait incohérent.
+   */
+  function handlePlayerHit(): void {
+    const maxHp = useGameStore.getState().debug.playerMaxHp;
+    if (!lowHpLineTriggered && playerHp > 0 && playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
+      lowHpLineTriggered = true;
+      triggerHeroLine(HERO_LINE_LOW_HP);
+    }
+    if (!deathHandled && playerHp <= 0) {
+      deathHandled = true;
+      useGameStore.getState().setDead(true);
+      // Libère le pointeur : l'écran de mort a besoin du curseur pour ses
+      // boutons "Rejouer"/"Retour au menu principal" (voir `DeathScreen.tsx`).
+      document.exitPointerLock();
+    }
   }
 
   /** Déverrouille le `door_*` nommé `targetName` (glissement + collider désactivé,
@@ -586,18 +820,24 @@ async function main() {
   // seul endroit qui connaît le dégât infligé par une attaque de Costard.
   let playerHp = useGameStore.getState().debug.playerMaxHp;
 
-  /** Capture l'input du pas fixe courant. Le saut est CONSOMMÉ ici, une seule fois. */
+  /**
+   * Capture l'input du pas fixe courant. Le saut est CONSOMMÉ ici, une seule
+   * fois. Lit par NOM D'ACTION (`core/input.ts::GameAction`), pas par code
+   * brut : la table de bindings est rebindable/persistée dans `InputManager`,
+   * `InputFrame` reste inchangé (mêmes champs, même sémantique) quel que soit
+   * le binding physique réellement pressé.
+   */
   function captureInputFrame(): InputFrame {
-    liveFrame.forward = input.isDown("KeyW");
-    liveFrame.back = input.isDown("KeyS");
-    liveFrame.left = input.isDown("KeyA");
-    liveFrame.right = input.isDown("KeyD");
-    liveFrame.sprint = input.isDown("ShiftLeft");
-    liveFrame.jump = input.consumeJustPressed("Space");
-    liveFrame.fire = input.consumeJustPressed("Mouse0");
-    liveFrame.switchToMelee = input.consumeJustPressed("Digit1");
-    liveFrame.switchToShotgun = input.consumeJustPressed("Digit2");
-    liveFrame.use = input.consumeJustPressed("KeyE");
+    liveFrame.forward = input.isActionDown("moveForward");
+    liveFrame.back = input.isActionDown("moveBack");
+    liveFrame.left = input.isActionDown("moveLeft");
+    liveFrame.right = input.isActionDown("moveRight");
+    liveFrame.sprint = input.isActionDown("sprint");
+    liveFrame.jump = input.consumeActionJustPressed("jump");
+    liveFrame.fire = input.consumeActionJustPressed("fire");
+    liveFrame.switchToMelee = input.consumeActionJustPressed("switchMelee");
+    liveFrame.switchToShotgun = input.consumeActionJustPressed("switchShotgun");
+    liveFrame.use = input.consumeActionJustPressed("use");
     liveFrame.yaw = look.yaw;
     liveFrame.pitch = look.pitch;
     liveFrame.dx = lookDelta.dx;
@@ -647,6 +887,18 @@ async function main() {
     // Décide le mouvement AVANT le step : la translation cible est consommée
     // par le `world.step()` du même pas fixe (voir l'ordre dans core/loop.ts).
     updateGameplay(dt) {
+      // Mort / niveau terminé (Phase 6) : le pas fixe continue de tourner
+      // (invariant #1, la boucle ne s'arrête JAMAIS), mais tout le gameplay
+      // est ignoré une fois l'un des deux vrai — déplacement, tir, dégâts,
+      // interactions. PAS une violation de l'invariant #10 ("aucune
+      // animation ne bloque le joueur") : cet invariant vise les animations
+      // NON LÉTALES (un rechargement qui figerait le joueur à tort), pas une
+      // fin de partie légitime. Rien n'est mis à jour ce pas-ci : le monde
+      // reste visuellement figé sur son dernier état (prev === curr à chaque
+      // pas suivant), aucun jitter d'interpolation.
+      const partyFlags = useGameStore.getState();
+      if (partyFlags.isDead || partyFlags.isLevelComplete) return;
+
       const gameplayDt = clock.tick(dt);
 
       let frame: InputFrame | null;
@@ -680,14 +932,20 @@ async function main() {
             playDoorSfx("locked");
             return;
           }
-          unlockDoor(targetName, "Porte déverrouillée");
+          // `targetName === "door_e_exit"` : seule cette porte arme le suivi
+          // de fin de niveau (voir la doc de `exitDoorTracking`) —
+          // `door_b_frozen` (secret 1, `onFrozenStorageUse` ci-dessous)
+          // partage la même mécanique de porte mais n'est jamais une sortie.
+          if (unlockDoor(targetName, "Porte déverrouillée") && targetName === "door_e_exit") {
+            setupExitDoorTracking(targetName);
+          }
         },
         onFrozenStorageUse: (targetName) => {
           if (unlockedDoors.has(targetName)) return; // déjà ouverte
           unlockDoor(targetName, "Rayon surgelés ouvert");
         },
         onPaMicUse: () => {
-          showHudMessage(HERO_LINE_PA_MIC);
+          triggerHeroLine(HERO_LINE_PA_MIC);
         },
         onToiletUse: () => {
           const maxHp = useGameStore.getState().debug.playerMaxHp;
@@ -697,7 +955,11 @@ async function main() {
           }
           playerHp = Math.min(maxHp, playerHp + TOILET_HEAL_AMOUNT);
           useGameStore.getState().setPlayerHp(playerHp);
-          showHudMessage(`+${TOILET_HEAL_AMOUNT} PV. ${HERO_LINE_TOILET}`);
+          // Info FACTUELLE (canal système, sans cooldown) + réplique
+          // (canal dédié, cooldownée) — voir la ligne de partage documentée
+          // sur `hudMessage`/`heroLine` dans `game/state.ts`.
+          showHudMessage(`+${TOILET_HEAL_AMOUNT} PV`);
+          triggerHeroLine(HERO_LINE_TOILET);
         },
       });
 
@@ -749,6 +1011,21 @@ async function main() {
         if (openingDoor.t >= 1) openingDoor = null;
       }
 
+      // Fin de niveau : franchissement du vantail déverrouillé — voir la
+      // doc de `exitDoorTracking` plus haut. `exitDoorTracking` reste `null`
+      // tant que `door_e_exit` n'a jamais été déverrouillée sur CE niveau
+      // (armé uniquement dans `onExitDoorUse` ci-dessus) : ce bloc ne se
+      // déclenche donc JAMAIS sur un niveau qui n'a pas cette porte (`gym`,
+      // n'importe quelle zone individuelle A-D), exactement la garde
+      // demandée par le plan.
+      if (exitDoorTracking) {
+        exitDoorOffsetScratch.subVectors(player.position, exitDoorTracking.doorPosition);
+        const signedInsideDistance = exitDoorOffsetScratch.dot(exitDoorTracking.crossingAxis) * exitDoorTracking.insideSign;
+        if (signedInsideDistance < -(exitDoorTracking.halfExtentOnAxis + EXIT_CROSSING_MARGIN)) {
+          triggerLevelComplete();
+        }
+      }
+
       // Secrets : présence dans le volume AABB, voir la doc de `foundSecrets`
       // plus haut. `secrets` est RELUE ici à chaque appel, jamais mise en
       // cache — même discipline que `useObjects`/`doors` ci-dessus (hot
@@ -768,8 +1045,11 @@ async function main() {
         useGameStore.getState().incrementSecretsFound();
         const found = useGameStore.getState().debug.secretsFound;
         const total = useGameStore.getState().debug.secretsTotal;
+        // Info FACTUELLE (n/total, sans cooldown) + réplique de réaction
+        // (canal dédié, cooldownée) — même partage que `onToiletUse`.
         showHudMessage(`Secret trouvé ! (${found}/${total})`);
         playSfx("secret_found");
+        triggerHeroLine(HERO_LINE_SECRET_REACTION);
       }
     },
 
@@ -977,6 +1257,14 @@ async function main() {
         // par des gibs, donc potentiellement moins lisible ce pas-ci).
         hitmarker.trigger("kill");
         playEnemySfx("death");
+        // Compteur de "vues" (Phase 6) + réplique "premier kill" (une seule
+        // fois par partie, Costard OU Directeur confondus — voir la doc de
+        // `firstKillTriggered`).
+        grantKillViews();
+        if (!firstKillTriggered) {
+          firstKillTriggered = true;
+          triggerHeroLine(HERO_LINE_FIRST_KILL);
+        }
       }
       for (const event of suitManager.playerHitEvents) {
         playerHp = Math.max(0, playerHp - event.amount);
@@ -988,6 +1276,8 @@ async function main() {
         fx.spawnImpactDecal(event.point, event.normal, "flesh");
         fx.spawnImpactParticles(event.point, event.normal, "shotgun");
         fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
+        // PV bas / mort (Phase 6) — voir la doc de `handlePlayerHit`.
+        handlePlayerHit();
       }
       suitManager.clearFrameEvents();
 
@@ -1020,6 +1310,14 @@ async function main() {
         void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
         hitmarker.trigger("kill");
         playEnemySfx("death");
+        // Multiplicateur dédié : voir `VIEWS_DIRECTOR_MULTIPLIER`. Même garde
+        // `firstKillTriggered` que le Costard — un seul flag, peu importe qui
+        // décroche le tout premier kill de la partie.
+        grantKillViews(VIEWS_DIRECTOR_MULTIPLIER);
+        if (!firstKillTriggered) {
+          firstKillTriggered = true;
+          triggerHeroLine(HERO_LINE_FIRST_KILL);
+        }
       }
       for (const event of directorManager.playerHitEvents) {
         playerHp = Math.max(0, playerHp - event.amount);
@@ -1027,6 +1325,7 @@ async function main() {
         fx.spawnImpactDecal(event.point, event.normal, "flesh");
         fx.spawnImpactParticles(event.point, event.normal, "shotgun");
         fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
+        handlePlayerHit();
       }
       directorManager.clearFrameEvents();
 
@@ -1084,6 +1383,10 @@ async function main() {
           },
           shotgunAmmo: weapons.shotgunAmmo,
           shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
+          // HUD de prod (Phase 6, `ui/Hud.tsx`) : quel libellé afficher pour
+          // "munitions" dépend de l'arme active, pas seulement du compte de
+          // cartouches. Même throttle 10 Hz que le reste de ce bloc.
+          activeWeapon: weapons.activeWeapon,
         });
       }
 

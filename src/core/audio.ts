@@ -5,9 +5,12 @@ import { Howl } from "howler";
  * (tir, impact, et depuis la Phase 3 le feedback sonore de l'ennemi
  * « Costard » — alerte, télégraphie d'attaque, dégât encaissé, mort).
  * Scope strict des Phases 2-3 (`PLAN_PROTO_BOOMER_SHOOTER.md`) : aucune
- * musique, aucune nappe d'ambiance, aucune réplique du héros ici — ces
- * trois-là sont explicitement Phase 6 (« Habillage ») et n'ont pas leur place
- * dans ce module.
+ * musique, aucune nappe d'ambiance ici — ces deux-là sont couvertes depuis la
+ * Phase 6 (« Habillage ») par `core/music.ts`, un module SÉPARÉ (pooling par
+ * `Howl` + pitch ±8 % n'ont aucun sens pour une piste en boucle streamée,
+ * voir sa doc de tête). Les répliques du héros, elles, restent du TEXTE HUD
+ * (invariant #9, pas de vraie VO cette phase) — câblées dans `main.ts`, pas
+ * ici, pas dans `music.ts` non plus.
  *
  * APPELANT : ce module ne touche jamais le pas fixe (invariant #2). Il est
  * consommé exclusivement depuis `updateFx` dans `main.ts`, sur des
