@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { Effect, Exit, Schema, Scope } from "effect";
 
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
+import { GameRuntime } from "../../core/runtime";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -94,6 +96,55 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
  * perdre silencieusement (le mesh resterait éclairé de façon plate). Le
  * colorspace linéaire de `COLOR_0` est déjà géré en interne par `GLTFLoader`,
  * rien à faire de plus ici.
+ *
+ * ## Jalon M2 (PLAN_EFFECT_XSTATE.md) — retrofit Effect
+ *
+ * Les 7 cas de dégradation ci-dessus (les 6 premiers + le hull dégénéré) sont
+ * désormais modélisés comme des `Schema.TaggedError` (section "Erreurs
+ * typées" plus bas), pour que leur existence et leurs champs soient vérifiés
+ * par le compilateur plutôt que déduits d'un `console.error` en texte libre.
+ * **Patron choisi et appliqué UNIFORMÉMENT aux 7 cas** (voir le "point de
+ * vigilance" de PLAN_EFFECT_XSTATE.md §4) : chaque cas est un `Effect.fail`
+ * (ou un `return yield* new XError(...)` équivalent, idiome documenté par
+ * `node_modules/effect/AGENTS.md`) IMMÉDIATEMENT rattrapé via
+ * `Effect.catch`/`Effect.catchTags` au point même de sa détection — jamais
+ * laissé remonter au-delà de la fonction qui l'a détecté. Conséquence
+ * assumée : le type d'erreur RÉEL de `buildLevelFromGltf`/
+ * `buildLevelFromGltfEffect` est `never` (toujours un succès, aucun de ces 7
+ * cas n'est bloquant pour la construction du niveau, exactement comme avant
+ * cette migration) — les 7 classes d'erreur existent pour la documentation
+ * de compilation, la testabilité en isolation (chaque fonction "brute" est
+ * testée séparément de sa version "récupérée"), et pour permettre à un futur
+ * appelant de choisir une politique différente s'il le souhaite, PAS parce
+ * qu'elles se propagent réellement dans ce fichier. Seule vraie erreur qui
+ * traverse une frontière publique : `LevelFetchError`, sur `loadLevel` (échec
+ * réseau/parsing, un cas qui N'A JAMAIS été un "warning" — `loadLevel` a
+ * toujours propagé cette erreur brute avant cette migration, voir plus bas).
+ *
+ * **Cycle de vie de `LevelHandle`** : `Effect.acquireRelease`/`Scope`
+ * remplacent le flag `disposed` manuel — voir `disposeLevelResource`,
+ * `acquireLevelResourceEffect`, et `toLevelHandle`. `Scope.close` est
+ * garanti idempotent par la bibliothèque elle-même (`scopeCloseUnsafe`
+ * retourne immédiatement si l'état est déjà `"Closed"`, voir
+ * `node_modules/effect/src/internal/effect.ts`) : plus besoin de dupliquer
+ * cette garantie à la main, `LevelHandle.dispose()` peut être appelée
+ * plusieurs fois sans second effet par CONSTRUCTION du type, pas par
+ * discipline de code.
+ *
+ * **Frontière Effect→Promise/plain-JS** : `buildLevelFromGltf`/`loadLevel`
+ * gardent EXACTEMENT leur signature d'avant (fonction synchrone qui retourne
+ * `LevelHandle`, fonction async qui retourne `Promise<LevelHandle>`) —
+ * `main.ts` ne change pas d'une ligne. En interne, les deux sont de fins
+ * appels à `GameRuntime.runSync`/`GameRuntime.runPromise` (racine de
+ * composition posée en M1, `src/core/runtime.ts`) sur un Effect exporté à
+ * côté (`buildLevelFromGltfEffect`/`loadLevelEffect`) — ce module n'a besoin
+ * d'aucun service de `GameLayer` (pas de PRNG ici), mais réutilise quand même
+ * `GameRuntime` plutôt que de créer une deuxième notion de runtime
+ * concurrente, comme demandé par le plan. Les deux variantes `*Effect` sont
+ * exportées en plus de la façade, UNIQUEMENT pour que les tests puissent
+ * vérifier le comportement Effect directement (`@effect/vitest`) sans
+ * dépendre de `console.error` comme unique point d'observation — `main.ts`
+ * ne les importe jamais et ignore leur existence.
  */
 
 // ---------------------------------------------------------------------------
@@ -209,7 +260,8 @@ export interface LevelHandle {
    * pour ce niveau (un `world.removeRigidBody` par corps suffit : Rapier
    * retire automatiquement les colliders attachés, voir sa doc). Géométries
    * et matériaux clonés sont aussi disposés côté GPU. Sûr à appeler plusieurs
-   * fois (no-op après le premier appel réel — voir l'implémentation).
+   * fois (no-op après le premier appel réel — GARANTI par `Scope.close`,
+   * jalon M2, pas par un flag `disposed` maintenu à la main comme avant).
    *
    * C'est la brique de base du hot reload (`hotReload.ts`) : dispose puis
    * `buildLevelFromGltf` à nouveau, sans jamais toucher au joueur.
@@ -222,6 +274,122 @@ const USE_RANGE_METERS = 2;
 
 /** Signe d'un mesh `col_*` oublié en high-poly (skill `gltf-level-conventions`). */
 const MAX_COLLIDER_TRIANGLES = 50_000;
+
+// ---------------------------------------------------------------------------
+// Erreurs typées (jalon M2, PLAN_EFFECT_XSTATE.md §4) — une par cas de
+// dégradation déjà documenté plus haut. Voir la doc de tête de fichier pour
+// le patron "fail immédiatement rattrapé" appliqué uniformément aux 7 cas.
+// ---------------------------------------------------------------------------
+
+/** `col_*`/`col_hull_*`/`col_mesh_*` sans géométrie valide (position absente)
+ * ou avec 0 triangle. `prefixLabel` reproduit le libellé EXACT du message
+ * d'origine (`"col_*"` pour le chemin trimesh générique — utilisé aussi par
+ * `col_mesh_*`, un alias de ce même chemin — `"col_hull_*"` pour le chemin
+ * convex hull) : ce n'est PAS forcément le préfixe réel de l'objet, c'est un
+ * héritage assumé du comportement d'avant cette migration (`col_mesh_test`
+ * affichait déjà "(col_*)", pas "(col_mesh_*)"). */
+export class MissingColliderGeometryError extends Schema.TaggedError<MissingColliderGeometryError>()(
+  "MissingColliderGeometryError",
+  {
+    name: Schema.String,
+    prefixLabel: Schema.Literals(["col_*", "col_hull_*"]),
+    reason: Schema.Literals(["missing-geometry", "zero-triangles"]),
+  },
+) {}
+
+/** `col_*` dépassant `MAX_COLLIDER_TRIANGLES` — jamais bloquant, le collider
+ * est créé quand même (diagnostic de mesh oublié en high-poly). */
+export class OversizedColliderWarning extends Schema.TaggedError<OversizedColliderWarning>()(
+  "OversizedColliderWarning",
+  {
+    name: Schema.String,
+    triangleCount: Schema.Number,
+  },
+) {}
+
+/** `spawn_player` absent du niveau. */
+export class MissingSpawnPlayerError extends Schema.TaggedError<MissingSpawnPlayerError>()(
+  "MissingSpawnPlayerError",
+  {},
+) {}
+
+/** `spawn_player` présent plus d'une fois — seul le premier rencontré compte. */
+export class DuplicateSpawnPlayerError extends Schema.TaggedError<DuplicateSpawnPlayerError>()(
+  "DuplicateSpawnPlayerError",
+  { count: Schema.Number },
+) {}
+
+/** `trig_*` dont la géométrie n'est pas une box axis-aligned (locale). */
+export class NonBoxTriggerError extends Schema.TaggedError<NonBoxTriggerError>()("NonBoxTriggerError", {
+  name: Schema.String,
+}) {}
+
+/** `use_*` sans `extras.target` — jamais bloquant, l'objet est quand même
+ * retourné avec `targetName: null`. */
+export class UntargetedUseObjectWarning extends Schema.TaggedError<UntargetedUseObjectWarning>()(
+  "UntargetedUseObjectWarning",
+  { name: Schema.String },
+) {}
+
+/** `col_hull_*` dont `RAPIER.ColliderDesc.convexHull` retourne `null`
+ * (sommets dégénérés) — toujours suivi d'un repli sur un collider trimesh
+ * pour ce même mesh, jamais d'absence totale de collider. */
+export class DegenerateConvexHullError extends Schema.TaggedError<DegenerateConvexHullError>()(
+  "DegenerateConvexHullError",
+  { name: Schema.String },
+) {}
+
+/** Échec réseau/parsing lors du chargement d'un `.glb`/`.gltf` par URL — la
+ * SEULE des 7 erreurs de ce fichier qui n'a jamais été un "warning" :
+ * `loadLevel` a toujours laissé cette erreur remonter à son appelant
+ * (`hotReload.ts` la rattrape, PAS ce fichier). `cause` porte la valeur
+ * brute rejetée par `GLTFLoader.loadAsync`/`fetch` (`Schema.Defect`, comme
+ * les exemples `SmtpError`/`DatabaseError` de `node_modules/effect/AGENTS.md`
+ * — une valeur de rejet non typée, jamais un domaine métier). */
+export class LevelFetchError extends Schema.TaggedError<LevelFetchError>()("LevelFetchError", {
+  url: Schema.String,
+  cause: Schema.Defect(),
+}) {}
+
+function formatMissingColliderGeometry(error: MissingColliderGeometryError): string {
+  const detail = error.reason === "missing-geometry" ? "sans géométrie valide" : "a 0 triangle";
+  return `[level] "${error.name}" (${error.prefixLabel}) ${detail} — aucun collider créé.`;
+}
+
+function formatOversizedCollider(error: OversizedColliderWarning): string {
+  return (
+    `[level] "${error.name}" (col_*) : ${error.triangleCount} triangles, au-delà du seuil de ` +
+    `${MAX_COLLIDER_TRIANGLES} — signe probable d'un mesh oublié en high-poly. ` +
+    `Collider créé quand même.`
+  );
+}
+
+function formatMissingSpawnPlayer(): string {
+  return "[level] spawn_player absent du niveau — le joueur ne peut pas être positionné au chargement.";
+}
+
+function formatDuplicateSpawnPlayer(error: DuplicateSpawnPlayerError): string {
+  return `[level] spawn_player en double (${error.count} occurrences) — seule la première rencontrée est utilisée.`;
+}
+
+function formatNonBoxTrigger(error: NonBoxTriggerError): string {
+  return `[level] "${error.name}" (trig_*) n'est pas une géométrie box — trigger ignoré.`;
+}
+
+function formatUntargetedUseObject(error: UntargetedUseObjectWarning): string {
+  return (
+    `[level] "${error.name}" (use_*) n'a pas de cible référencée dans ses extras ` +
+    `(custom property Blender "target" attendue) — objet interactif sans effet exploitable.`
+  );
+}
+
+function formatDegenerateConvexHull(error: DegenerateConvexHullError): string {
+  return (
+    `[level] "${error.name}" (col_hull_*) : hull convexe dégénéré ` +
+    `(RAPIER.ColliderDesc.convexHull a retourné null, sommets probablement coplanaires) ` +
+    `— repli sur un collider trimesh pour ce mesh.`
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Conversion de matériau — invariant #5 (voir doc de tête du fichier)
@@ -362,56 +530,82 @@ function isAxisAlignedBox(geometry: THREE.BufferGeometry, epsilon = 1e-4): boole
 // Extraction par préfixe
 // ---------------------------------------------------------------------------
 
-/** `col_*` : collider trimesh statique, mesh rendu invisible. Retourne `true`
- * si un collider a bien été créé (faux pour une géométrie invalide/0 triangle,
- * voir l'avertissement bruyant émis dans ce cas). */
-function buildStaticCollider(
+/** `col_*` : collider trimesh statique, mesh rendu invisible. Version "brute"
+ * (raising) : échoue avec `MissingColliderGeometryError` pour une géométrie
+ * invalide/0 triangle plutôt que de logguer elle-même — voir
+ * `buildStaticColliderSafe` pour la version rattrapée utilisée par le
+ * traverse principal. L'avertissement "oversized" (non bloquant) est, lui,
+ * loggué directement ICI via `warnIfOversizedEffect` : il ne change jamais la
+ * valeur de retour, ce n'est pas un cas d'échec/récupération. */
+function buildStaticColliderEffect(
   mesh: THREE.Mesh,
   name: string,
+  prefixLabel: "col_*" | "col_hull_*",
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
-): boolean {
-  const worldGeometry = worldSpaceGeometry(mesh);
-  const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
+): Effect.Effect<boolean, MissingColliderGeometryError> {
+  return Effect.gen(function* () {
+    const worldGeometry = worldSpaceGeometry(mesh);
+    const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
 
-  if (!positionAttr || positionAttr.count === 0) {
-    console.error(`[level] "${name}" (col_*) sans géométrie valide — aucun collider créé.`);
-    worldGeometry.dispose();
-    return false;
-  }
+    if (!positionAttr || positionAttr.count === 0) {
+      worldGeometry.dispose();
+      return yield* new MissingColliderGeometryError({ name, prefixLabel, reason: "missing-geometry" });
+    }
 
-  const indexAttr = worldGeometry.getIndex();
-  const rawIndices = indexAttr ? indexAttr.array : buildSequentialIndex(positionAttr.count);
-  const triangleCount = Math.floor(rawIndices.length / 3);
+    const indexAttr = worldGeometry.getIndex();
+    const rawIndices = indexAttr ? indexAttr.array : buildSequentialIndex(positionAttr.count);
+    const triangleCount = Math.floor(rawIndices.length / 3);
 
-  if (triangleCount === 0) {
-    console.error(`[level] "${name}" (col_*) a 0 triangle — aucun collider créé.`);
-    worldGeometry.dispose();
-    return false;
-  }
-  if (triangleCount > MAX_COLLIDER_TRIANGLES) {
-    console.error(
-      `[level] "${name}" (col_*) : ${triangleCount} triangles, au-delà du seuil de ` +
-        `${MAX_COLLIDER_TRIANGLES} — signe probable d'un mesh oublié en high-poly. ` +
-        `Collider créé quand même.`,
+    if (triangleCount === 0) {
+      worldGeometry.dispose();
+      return yield* new MissingColliderGeometryError({ name, prefixLabel, reason: "zero-triangles" });
+    }
+    if (triangleCount > MAX_COLLIDER_TRIANGLES) {
+      // Avertissement non bloquant : loggué immédiatement, la construction
+      // continue juste après (voir la doc de tête de fichier, patron
+      // "fail immédiatement rattrapé" appliqué même à ce cas non bloquant).
+      yield* Effect.fail(new OversizedColliderWarning({ name, triangleCount })).pipe(
+        Effect.catch((error) => Effect.sync(() => console.error(formatOversizedCollider(error)))),
+      );
+    }
+
+    const vertices =
+      positionAttr.array instanceof Float32Array
+        ? positionAttr.array
+        : Float32Array.from(positionAttr.array as ArrayLike<number>);
+    const indices = rawIndices instanceof Uint32Array ? rawIndices : Uint32Array.from(rawIndices as ArrayLike<number>);
+
+    const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+    physics.world.createCollider(
+      RAPIER.ColliderDesc.trimesh(vertices, indices).setCollisionGroups(COLLISION_GROUPS.WORLD),
+      body,
     );
-  }
+    bodies.push(body);
 
-  const vertices =
-    positionAttr.array instanceof Float32Array
-      ? positionAttr.array
-      : Float32Array.from(positionAttr.array as ArrayLike<number>);
-  const indices = rawIndices instanceof Uint32Array ? rawIndices : Uint32Array.from(rawIndices as ArrayLike<number>);
+    worldGeometry.dispose();
+    return true;
+  });
+}
 
-  const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-  physics.world.createCollider(
-    RAPIER.ColliderDesc.trimesh(vertices, indices).setCollisionGroups(COLLISION_GROUPS.WORLD),
-    body,
+/** Version rattrapée de `buildStaticColliderEffect` : ne fait jamais échouer
+ * l'appelant, logue et retourne `false` (comme l'ancien retour booléen) sur
+ * `MissingColliderGeometryError`. */
+function buildStaticColliderSafe(
+  mesh: THREE.Mesh,
+  name: string,
+  prefixLabel: "col_*" | "col_hull_*",
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<boolean> {
+  return buildStaticColliderEffect(mesh, name, prefixLabel, physics, bodies).pipe(
+    Effect.catch((error) =>
+      Effect.sync(() => {
+        console.error(formatMissingColliderGeometry(error));
+        return false;
+      }),
+    ),
   );
-  bodies.push(body);
-
-  worldGeometry.dispose();
-  return true;
 }
 
 /**
@@ -420,12 +614,14 @@ function buildStaticCollider(
  * d'arêtes internes donc pas de ghost collisions). Contrairement à `trig_*`,
  * on fait CONFIANCE au sous-préfixe donné par l'artiste : pas de revalidation
  * géométrique avant d'émettre le cuboid ("un proxy peut légèrement mentir sur
- * la forme, c'est un outil de gameplay" — skill). Pattern de décomposition
- * IDENTIQUE à `buildTrigger`/`buildDoor` : bounding box LOCALE + matrice
- * monde décomposée en position/rotation/échelle, demi-étendues = taille
- * locale × échelle monde. Corps FIXED (jamais dynamique, contrairement à
- * `door_*`), groupe `COLLISION_GROUPS.WORLD` (jamais `TRIGGER`, jamais de
- * `.setSensor(true)` — un `col_box_*` est un mur, pas un volume logique).
+ * la forme, c'est un outil de gameplay" — skill). Pas de cas d'échec
+ * documenté pour ce chemin : reste une fonction plane, pas un Effect.
+ * Pattern de décomposition IDENTIQUE à `buildTrigger`/`buildDoor` : bounding
+ * box LOCALE + matrice monde décomposée en position/rotation/échelle,
+ * demi-étendues = taille locale × échelle monde. Corps FIXED (jamais
+ * dynamique, contrairement à `door_*`), groupe `COLLISION_GROUPS.WORLD`
+ * (jamais `TRIGGER`, jamais de `.setSensor(true)` — un `col_box_*` est un
+ * mur, pas un volume logique).
  */
 function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RAPIER.RigidBody[]): void {
   mesh.geometry.computeBoundingBox();
@@ -463,49 +659,82 @@ function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RA
  * `col_hull_*` : convex hull — voir le skill `collision-proxy-authoring`
  * ("rampes, formes convexes irrégulières", coût faible). Sommets en espace
  * MONDE via `worldSpaceGeometry` (même pattern que le chemin trimesh de
- * `buildStaticCollider` : le corps reste à l'origine, la forme porte déjà la
- * transformation monde). `RAPIER.ColliderDesc.convexHull` retourne `null`
- * pour un hull dégénéré (ex. sommets coplanaires) — dans ce cas, avertissement
- * bruyant PUIS repli sur `buildStaticCollider` (trimesh) pour ce même mesh :
- * un `col_hull_*` ne doit jamais rester silencieusement sans AUCUN collider.
- * Retourne la forme réellement construite (`null` si même le repli trimesh a
- * échoué — géométrie invalide, déjà signalée par `buildStaticCollider`).
- */
-function buildConvexHullCollider(
+ * `buildStaticColliderEffect` : le corps reste à l'origine, la forme porte
+ * déjà la transformation monde). `RAPIER.ColliderDesc.convexHull` retourne
+ * `null` pour un hull dégénéré (ex. sommets coplanaires) — dans ce cas,
+ * `DegenerateConvexHullError`, PUIS repli sur `buildStaticColliderEffect`
+ * (trimesh) pour ce même mesh : un `col_hull_*` ne doit jamais rester
+ * silencieusement sans AUCUN collider. Version "brute" : `buildConvexHullColliderSafe`
+ * ci-dessous fait le double rattrapage (géométrie manquante / hull dégénéré). */
+function buildConvexHullColliderEffect(
   mesh: THREE.Mesh,
   name: string,
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
-): "convexHull" | "trimesh" | null {
-  const worldGeometry = worldSpaceGeometry(mesh);
-  const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
+): Effect.Effect<"convexHull", MissingColliderGeometryError | DegenerateConvexHullError> {
+  return Effect.gen(function* () {
+    const worldGeometry = worldSpaceGeometry(mesh);
+    const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
 
-  if (!positionAttr || positionAttr.count === 0) {
-    console.error(`[level] "${name}" (col_hull_*) sans géométrie valide — aucun collider créé.`);
+    if (!positionAttr || positionAttr.count === 0) {
+      worldGeometry.dispose();
+      return yield* new MissingColliderGeometryError({ name, prefixLabel: "col_hull_*", reason: "missing-geometry" });
+    }
+
+    const points =
+      positionAttr.array instanceof Float32Array
+        ? positionAttr.array
+        : Float32Array.from(positionAttr.array as ArrayLike<number>);
     worldGeometry.dispose();
-    return null;
-  }
 
-  const points =
-    positionAttr.array instanceof Float32Array
-      ? positionAttr.array
-      : Float32Array.from(positionAttr.array as ArrayLike<number>);
-  worldGeometry.dispose();
+    const desc = RAPIER.ColliderDesc.convexHull(points);
+    if (!desc) {
+      return yield* new DegenerateConvexHullError({ name });
+    }
 
-  const desc = RAPIER.ColliderDesc.convexHull(points);
-  if (!desc) {
-    console.error(
-      `[level] "${name}" (col_hull_*) : hull convexe dégénéré ` +
-        `(RAPIER.ColliderDesc.convexHull a retourné null, sommets probablement coplanaires) ` +
-        `— repli sur un collider trimesh pour ce mesh.`,
-    );
-    return buildStaticCollider(mesh, name, physics, bodies) ? "trimesh" : null;
-  }
+    const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+    physics.world.createCollider(desc.setCollisionGroups(COLLISION_GROUPS.WORLD), body);
+    bodies.push(body);
+    return "convexHull" as const;
+  });
+}
 
-  const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-  physics.world.createCollider(desc.setCollisionGroups(COLLISION_GROUPS.WORLD), body);
-  bodies.push(body);
-  return "convexHull";
+/** Version rattrapée de `buildConvexHullColliderEffect` : `Effect.catchTags`
+ * (voir `node_modules/effect/ai-docs/src/01_effect/04_errors/10_catch-tags.ts`)
+ * traite les deux cas d'échec différemment, exactement comme avant cette
+ * migration — géométrie manquante -> `null` ; hull dégénéré -> repli trimesh
+ * via `buildStaticColliderSafe` (déjà lui-même sans échec possible). */
+function buildConvexHullColliderSafe(
+  mesh: THREE.Mesh,
+  name: string,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<"convexHull" | "trimesh" | null> {
+  return buildConvexHullColliderEffect(mesh, name, physics, bodies).pipe(
+    Effect.catchTags({
+      MissingColliderGeometryError: (error) =>
+        Effect.sync(() => {
+          console.error(formatMissingColliderGeometry(error));
+          return null;
+        }),
+      DegenerateConvexHullError: (error) =>
+        Effect.gen(function* () {
+          console.error(formatDegenerateConvexHull(error));
+          // "col_*", PAS "col_hull_*" : reproduit fidèlement le comportement
+          // d'avant cette migration, où le repli appelait l'ancien
+          // `buildStaticCollider` — une fonction qui codait TOUJOURS
+          // "(col_*)" en dur dans ses propres messages, quel que soit
+          // l'appelant (jamais paramétrée par le préfixe réel de l'objet).
+          // Ne se manifeste que dans le cas extrême, non observé en
+          // pratique, où le repli lui-même échoue aussi (géométrie
+          // invalide/0 triangle) — voir `tmp/harness-forced-null-hull.ts`,
+          // qui confirme empiriquement que `col_hull_*` a toujours assez de
+          // sommets pour que ce repli réussisse en pratique.
+          const created = yield* buildStaticColliderSafe(mesh, name, "col_*", physics, bodies);
+          return created ? ("trimesh" as const) : null;
+        }),
+    }),
+  );
 }
 
 /** `spawn_player` (Empty) : position + yaw. Voir la doc de `SpawnPoint` pour
@@ -525,56 +754,77 @@ function extractSpawnPoint(obj: THREE.Object3D): SpawnPoint {
   return { position, yaw };
 }
 
-/** `trig_*` : volume box, sensor Rapier. `null` si la géométrie n'est pas une
- * box (avertissement bruyant déjà émis par l'appelant dans ce cas). */
-function buildTrigger(
+/** `trig_*` : volume box, sensor Rapier. Version "brute" : échoue avec
+ * `NonBoxTriggerError` si la géométrie n'est pas une box — voir
+ * `buildTriggerSafe` pour la version rattrapée (retourne `null`, même
+ * comportement observable qu'avant cette migration). */
+function buildTriggerEffect(
   mesh: THREE.Mesh,
   name: string,
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
-): TriggerVolume | null {
-  if (!isAxisAlignedBox(mesh.geometry)) {
-    console.error(`[level] "${name}" (trig_*) n'est pas une géométrie box — trigger ignoré.`);
-    return null;
-  }
+): Effect.Effect<TriggerVolume, NonBoxTriggerError> {
+  return Effect.gen(function* () {
+    if (!isAxisAlignedBox(mesh.geometry)) {
+      return yield* new NonBoxTriggerError({ name });
+    }
 
-  mesh.geometry.computeBoundingBox();
-  const bb = mesh.geometry.boundingBox!;
-  const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
-  const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+    const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
 
-  const worldPosition = new THREE.Vector3();
-  const worldQuat = new THREE.Quaternion();
-  const worldScale = new THREE.Vector3();
-  mesh.matrixWorld.decompose(worldPosition, worldQuat, worldScale);
+    const worldPosition = new THREE.Vector3();
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+    mesh.matrixWorld.decompose(worldPosition, worldQuat, worldScale);
 
-  const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
-  const halfExtents = new THREE.Vector3(
-    Math.abs((localSize.x * worldScale.x) / 2),
-    Math.abs((localSize.y * worldScale.y) / 2),
-    Math.abs((localSize.z * worldScale.z) / 2),
+    const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
+    const halfExtents = new THREE.Vector3(
+      Math.abs((localSize.x * worldScale.x) / 2),
+      Math.abs((localSize.y * worldScale.y) / 2),
+      Math.abs((localSize.z * worldScale.z) / 2),
+    );
+
+    const body = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+        .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+    );
+    physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
+        .setSensor(true)
+        .setCollisionGroups(COLLISION_GROUPS.TRIGGER),
+      body,
+    );
+    bodies.push(body);
+
+    return {
+      name,
+      object: mesh,
+      min: worldCenter.clone().sub(halfExtents),
+      max: worldCenter.clone().add(halfExtents),
+      extras: cleanExtras(mesh),
+    };
+  });
+}
+
+/** Version rattrapée de `buildTriggerEffect` : logue et retourne `null` sur
+ * `NonBoxTriggerError` — comportement observable inchangé. */
+function buildTriggerSafe(
+  mesh: THREE.Mesh,
+  name: string,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<TriggerVolume | null> {
+  return buildTriggerEffect(mesh, name, physics, bodies).pipe(
+    Effect.catch((error) =>
+      Effect.sync(() => {
+        console.error(formatNonBoxTrigger(error));
+        return null;
+      }),
+    ),
   );
-
-  const body = physics.world.createRigidBody(
-    RAPIER.RigidBodyDesc.fixed()
-      .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
-      .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
-  );
-  physics.world.createCollider(
-    RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
-      .setSensor(true)
-      .setCollisionGroups(COLLISION_GROUPS.TRIGGER),
-    body,
-  );
-  bodies.push(body);
-
-  return {
-    name,
-    object: mesh,
-    min: worldCenter.clone().sub(halfExtents),
-    max: worldCenter.clone().add(halfExtents),
-    extras: cleanExtras(mesh),
-  };
 }
 
 /** Cherche le clip glTF dont une piste cible ce nœud (par nom — voir
@@ -598,7 +848,8 @@ function findClipForObject(clips: THREE.AnimationClip[], object: THREE.Object3D)
  * rotations, gravité neutralisée) tant qu'aucune logique de jeu ne le pilote
  * : une porte non pilotée ne doit ni tomber sous la gravité −25 m/s² ni
  * dériver au moindre contact avant que `game/level/interactive.ts` (hors
- * scope Phase 4) ne la débloque explicitement pour l'animer. */
+ * scope Phase 4) ne la débloque explicitement pour l'animer. Aucun cas
+ * d'échec documenté pour ce chemin : reste une fonction plane. */
 function buildDoor(
   mesh: THREE.Mesh,
   name: string,
@@ -650,28 +901,32 @@ function buildDoor(
 
 /** `use_*` : objet interactif, portée 2 m. Cible lue dans `extras.target`
  * (custom property Blender `target`, string — nom d'un autre nœud du même
- * niveau, typiquement un `door_*`). Absence de cible = avertissement bruyant,
- * PAS un blocage : l'objet est quand même retourné avec `targetName: null`. */
-function buildUseObject(mesh: THREE.Mesh, name: string): UseObject {
-  const position = new THREE.Vector3();
-  mesh.getWorldPosition(position);
+ * niveau, typiquement un `door_*`). Absence de cible = `UntargetedUseObjectWarning`,
+ * loggué immédiatement (jamais bloquant) : l'objet est quand même retourné
+ * avec `targetName: null`, donc cette fonction ne peut jamais échouer côté
+ * appelant (`Effect.Effect<UseObject>`, pas de canal d'erreur visible). */
+function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<UseObject> {
+  return Effect.gen(function* () {
+    const position = new THREE.Vector3();
+    mesh.getWorldPosition(position);
 
-  const extras = cleanExtras(mesh);
-  const targetName = typeof extras.target === "string" ? extras.target : null;
-  if (!targetName) {
-    console.error(
-      `[level] "${name}" (use_*) n'a pas de cible référencée dans ses extras ` +
-        `(custom property Blender "target" attendue) — objet interactif sans effet exploitable.`,
-    );
-  }
+    const extras = cleanExtras(mesh);
+    const targetName = typeof extras.target === "string" ? extras.target : null;
+    if (!targetName) {
+      yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
+        Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
+      );
+    }
 
-  return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, extras };
+  });
 }
 
 /** `secret_*` : zone comptée dans le compteur de secrets. Même traitement
  * géométrique qu'un `trig_*` côté extraction (bounding box monde), mais AUCUNE
  * exigence de forme box ici — un secret peut être une zone irrégulière, sa
- * détection appartiendra à `interactive.ts`, pas à ce loader. */
+ * détection appartiendra à `interactive.ts`, pas à ce loader. Aucun cas
+ * d'échec documenté : reste une fonction plane. */
 function buildSecretZone(mesh: THREE.Mesh, name: string): SecretZone {
   mesh.geometry.computeBoundingBox();
   const bb = mesh.geometry.boundingBox!;
@@ -694,9 +949,298 @@ function buildSecretZone(mesh: THREE.Mesh, name: string): SecretZone {
   return { name, object: mesh, min, max, extras: cleanExtras(mesh) };
 }
 
+/** Validation post-traversal du nombre de `spawn_player` rencontrés — même
+ * patron "fail immédiatement rattrapé" que les cas par-mesh ci-dessus, juste
+ * exécuté une fois après la boucle plutôt que par nœud. */
+function validateSpawnPlayerCountEffect(count: number): Effect.Effect<void> {
+  if (count === 0) {
+    return Effect.fail(new MissingSpawnPlayerError({})).pipe(
+      Effect.catch(() => Effect.sync(() => console.error(formatMissingSpawnPlayer()))),
+    );
+  }
+  if (count > 1) {
+    return Effect.fail(new DuplicateSpawnPlayerError({ count })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatDuplicateSpawnPlayer(error)))),
+    );
+  }
+  return Effect.void;
+}
+
 // ---------------------------------------------------------------------------
 // Point d'entrée
 // ---------------------------------------------------------------------------
+
+/** Résultat brut de la construction, AVANT emballage en `LevelHandle` public
+ * (qui ajoute `dispose()`, lié à un `Scope` géré par l'appelant — voir
+ * `acquireLevelResourceEffect`/`toLevelHandle`). `bodies` est gardé ici, pas
+ * dans `LevelStats`, parce que c'est une donnée de CYCLE DE VIE (nécessaire à
+ * la libération), pas une statistique destinée à `main.ts`/`DebugPanel`. */
+interface LevelResource extends Omit<LevelHandle, "dispose"> {
+  readonly bodies: readonly RAPIER.RigidBody[];
+}
+
+/**
+ * Construit un `LevelResource` à partir d'un résultat `GLTFLoader` déjà
+ * parsé. Effect PURE côté entrée/sortie (aucun accès réseau/DOM ici, même
+ * garantie qu'avant cette migration) : réutilisable aussi bien depuis
+ * `loadLevelEffect` (navigateur, via `GLTFLoader.loadAsync`) que depuis un
+ * harnais Node headless qui appelle `GLTFLoader.parse` directement sur des
+ * octets lus par `fs` — voir `tools/blender/README.md`/les harnais sous `tmp/`.
+ *
+ * Le parcours de la hiérarchie glTF (`root.traverse`) est collecté dans un
+ * tableau AVANT le `Effect.gen` principal : `Object3D.traverse` est une API à
+ * callback synchrone sans point d'entrée generator, donc plutôt que
+ * d'imbriquer des `Effect.runSync` locaux à chaque nœud « à risque » (ce qui
+ * fonctionnerait aussi, ces effets ne suspendant jamais, mais mélangerait
+ * deux styles d'exécution dans la même fonction), la hiérarchie est d'abord
+ * aplatie en un tableau ordinaire, puis parcourue par un `for` classique DANS
+ * le générateur — un seul style de composition Effect pour toute la
+ * fonction, `yield*` uniquement là où un des 7 cas peut se produire.
+ */
+function buildLevelResourceEffect(
+  gltf: GLTF,
+  scene: THREE.Scene,
+  physics: PhysicsWorld,
+): Effect.Effect<LevelResource> {
+  return Effect.gen(function* () {
+    const root = gltf.scene;
+    scene.add(root);
+    // Un seul passage sur tout le sous-arbre AVANT toute lecture de
+    // `matrixWorld` ci-dessous (voir « le piège des transforms » en tête de
+    // fichier) : équivalent au `obj.updateWorldMatrix(true, false)` par-objet
+    // du skill, amorti sur toute la hiérarchie en un seul appel.
+    root.updateWorldMatrix(true, true);
+
+    const nodes: THREE.Object3D[] = [];
+    root.traverse((obj) => nodes.push(obj));
+
+    const bodies: RAPIER.RigidBody[] = [];
+
+    let spawnPlayer: SpawnPoint | null = null;
+    let spawnPlayerCount = 0;
+    const spawnSuits: NamedSpawn[] = [];
+    const spawnDirectors: NamedSpawn[] = [];
+    const triggers: TriggerVolume[] = [];
+    const doors: DoorInfo[] = [];
+    const useObjects: UseObject[] = [];
+    const secrets: SecretZone[] = [];
+
+    let colliderCount = 0;
+    const colliderKindCounts = { cuboid: 0, convexHull: 0, trimesh: 0 };
+    let unprefixedMeshCount = 0;
+
+    for (const obj of nodes) {
+      // Nom "tel que tapé dans Blender", PAS `obj.name` — voir la doc de
+      // `blenderName` (piège `GLTFLoader.createUniqueName`).
+      const name = blenderName(obj);
+
+      // --- Empties : jamais un THREE.Mesh, traités avant le filtre `instanceof` ---
+      if (name === "spawn_player") {
+        spawnPlayerCount++;
+        if (spawnPlayerCount === 1) spawnPlayer = extractSpawnPoint(obj);
+        continue;
+      }
+      if (name.startsWith("spawn_suit_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnSuits.push({ name, position });
+        continue;
+      }
+      if (name.startsWith("spawn_director_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnDirectors.push({ name, position });
+        continue;
+      }
+
+      if (!(obj instanceof THREE.Mesh)) continue;
+
+      // Invariant #5 (+ #4 pour les textures survivantes) : AVANT toute autre
+      // chose, pour CHAQUE mesh, préfixé ou non — voir la doc de tête de fichier.
+      convertToLambert(obj);
+
+      // Sous-préfixes de `col_*` — voir le skill `collision-proxy-authoring`.
+      // DOIVENT être testés AVANT le `col_` générique ci-dessous : sinon
+      // `"col_box_test".startsWith("col_")` (vrai aussi) fait tomber le
+      // routage dans le mauvais cas, silencieusement.
+      if (name.startsWith("col_box_")) {
+        buildCuboidCollider(obj, physics, bodies);
+        colliderCount++;
+        colliderKindCounts.cuboid++;
+        obj.visible = false;
+        continue;
+      }
+
+      if (name.startsWith("col_hull_")) {
+        const kind = yield* buildConvexHullColliderSafe(obj, name, physics, bodies);
+        if (kind) {
+          colliderCount++;
+          colliderKindCounts[kind]++;
+        }
+        obj.visible = false;
+        continue;
+      }
+
+      if (name.startsWith("col_mesh_")) {
+        // Alias explicite du dernier recours (trimesh) — aucune nouvelle
+        // logique, juste un branchement nommé plutôt qu'un fallthrough
+        // implicite dans le `col_*` générique.
+        const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies);
+        if (created) {
+          colliderCount++;
+          colliderKindCounts.trimesh++;
+        }
+        obj.visible = false;
+        continue;
+      }
+
+      if (name.startsWith("col_")) {
+        // Rétrocompatibilité (Zone A/B actuelles) : comportement INCHANGÉ
+        // (trimesh), SAUF gain silencieux si la géométrie LOCALE s'avère être
+        // une boîte axis-aligned — même test que `trig_*`, réutilisé tel quel.
+        // Pas d'avertissement dans ce cas : c'est un pur gain de perf/stabilité,
+        // pas une anomalie signalée.
+        if (isAxisAlignedBox(obj.geometry)) {
+          buildCuboidCollider(obj, physics, bodies);
+          colliderCount++;
+          colliderKindCounts.cuboid++;
+        } else {
+          const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies);
+          if (created) {
+            colliderCount++;
+            colliderKindCounts.trimesh++;
+          }
+        }
+        obj.visible = false;
+        continue;
+      }
+
+      if (name.startsWith("trig_")) {
+        const trigger = yield* buildTriggerSafe(obj, name, physics, bodies);
+        if (trigger) triggers.push(trigger);
+        obj.visible = false;
+        continue;
+      }
+
+      if (name.startsWith("door_")) {
+        doors.push(buildDoor(obj, name, physics, bodies, gltf.animations));
+        continue; // reste visible : c'est un panneau de décor animé, pas un volume logique
+      }
+
+      if (name.startsWith("use_")) {
+        useObjects.push(yield* buildUseObjectEffect(obj, name));
+        continue; // reste visible (objet interactif physique, ex. un terminal)
+      }
+
+      if (name.startsWith("secret_")) {
+        secrets.push(buildSecretZone(obj, name));
+        obj.visible = false; // volume logique, comme trig_*
+        continue;
+      }
+
+      // Mesh sans préfixe reconnu : rendu tel quel, SANS collider,
+      // SILENCIEUSEMENT (voir la doc de tête de fichier — ne rien logger ici).
+      unprefixedMeshCount++;
+    }
+
+    yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
+
+    const stats: LevelStats = {
+      colliderCount,
+      colliderKindCounts,
+      spawnSuitCount: spawnSuits.length,
+      spawnDirectorCount: spawnDirectors.length,
+      triggerCount: triggers.length,
+      doorCount: doors.length,
+      useCount: useObjects.length,
+      secretCount: secrets.length,
+      unprefixedMeshCount,
+    };
+
+    return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, bodies };
+  });
+}
+
+/** Libère un `LevelResource` : retire `root` de la scène, retire tous les
+ * corps Rapier (et donc leurs colliders attachés, voir sa doc), dispose
+ * géométries/matériaux clonés côté GPU. Fonction de RELEASE pour
+ * `Effect.acquireRelease` (voir `acquireLevelResourceEffect`) — appelée
+ * exactement une fois par `Scope`, garantie par la bibliothèque (voir la doc
+ * de tête de fichier). */
+function disposeLevelResource(resource: LevelResource, scene: THREE.Scene, physics: PhysicsWorld): void {
+  scene.remove(resource.root);
+  for (const body of resource.bodies) physics.world.removeRigidBody(body); // retire aussi les colliders attachés (doc Rapier)
+  resource.root.traverse((obj) => {
+    if (!(obj instanceof THREE.Mesh)) return;
+    obj.geometry.dispose();
+    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+    for (const mat of mats) {
+      const lambert = mat as THREE.MeshLambertMaterial;
+      lambert.map?.dispose();
+      lambert.dispose();
+    }
+  });
+}
+
+/** `LevelResource` géré par `Scope` : la libération (`disposeLevelResource`)
+ * est enregistrée comme finalizer du `Scope` ambiant plutôt que déclenchée
+ * par un flag `disposed` maintenu à la main (jalon M2 — voir la doc de tête
+ * de fichier). Requiert un `Scope` dans son contexte ; `buildLevelFromGltfEffect`/
+ * `loadLevelEffect` en fournissent chacun un GÉRÉ MANUELLEMENT (pas
+ * `Effect.scoped`, qui fermerait le scope — donc libérerait le niveau —
+ * immédiatement après sa construction, ce qui n'est PAS ce qu'on veut : le
+ * niveau doit rester vivant jusqu'à un appel explicite à `dispose()`, qui
+ * peut arriver bien plus tard, voire jamais avant la fin de partie). */
+function acquireLevelResourceEffect(
+  gltf: GLTF,
+  scene: THREE.Scene,
+  physics: PhysicsWorld,
+): Effect.Effect<LevelResource, never, Scope.Scope> {
+  return Effect.acquireRelease(buildLevelResourceEffect(gltf, scene, physics), (resource) =>
+    Effect.sync(() => disposeLevelResource(resource, scene, physics)),
+  );
+}
+
+/** Emballe un `LevelResource` acquis sous `scope` en `LevelHandle` public :
+ * `dispose()` ferme CE `scope` précis (créé manuellement par l'appelant, voir
+ * `buildLevelFromGltfEffect`/`loadLevelEffect`), ce qui déclenche le
+ * finalizer enregistré par `acquireLevelResourceEffect`. */
+function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
+  return {
+    root: resource.root,
+    gltf: resource.gltf,
+    spawnPlayer: resource.spawnPlayer,
+    spawnSuits: resource.spawnSuits,
+    spawnDirectors: resource.spawnDirectors,
+    triggers: resource.triggers,
+    doors: resource.doors,
+    useObjects: resource.useObjects,
+    secrets: resource.secrets,
+    stats: resource.stats,
+    dispose: () => GameRuntime.runSync(Scope.close(scope, Exit.void)),
+  };
+}
+
+/**
+ * Version Effect de `buildLevelFromGltf` — voir la doc de tête de fichier
+ * ("Frontière Effect→Promise/plain-JS"). Exportée UNIQUEMENT pour les tests
+ * (`@effect/vitest`) ; `main.ts` n'importe jamais ce nom. Ne requiert aucun
+ * service de `GameLayer` (le `Scope` de cycle de vie est créé et fourni ICI,
+ * pas laissé à la charge de l'appelant — contrairement à
+ * `acquireLevelResourceEffect`), donc directement exécutable par
+ * `GameRuntime.runSync`/`runPromise` sans rien à fournir de plus.
+ */
+export function buildLevelFromGltfEffect(
+  gltf: GLTF,
+  scene: THREE.Scene,
+  physics: PhysicsWorld,
+): Effect.Effect<LevelHandle> {
+  return Effect.gen(function* () {
+    const scope = Scope.makeUnsafe();
+    const resource = yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(Scope.provide(scope));
+    return toLevelHandle(resource, scope);
+  });
+}
 
 /**
  * Construit un `LevelHandle` à partir d'un résultat `GLTFLoader` déjà parsé.
@@ -704,191 +1248,48 @@ function buildSecretZone(mesh: THREE.Mesh, name: string): SecretZone {
  * qui la rend utilisable aussi bien depuis `loadLevel` (navigateur, via
  * `GLTFLoader.loadAsync`) que depuis un harnais Node headless qui appelle
  * `GLTFLoader.parse` directement sur des octets lus par `fs` — voir le script
- * de validation de la fixture.
+ * de validation de la fixture. Signature INCHANGÉE par le jalon M2 (voir la
+ * doc de tête de fichier) : synchrone, ne suspend jamais (`GameRuntime.runSync`
+ * ne peut donc jamais déclencher son garde-fou de suspension ici).
  */
 export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: PhysicsWorld): LevelHandle {
-  const root = gltf.scene;
-  scene.add(root);
-  // Un seul passage sur tout le sous-arbre AVANT toute lecture de
-  // `matrixWorld` ci-dessous (voir « le piège des transforms » en tête de
-  // fichier) : équivalent au `obj.updateWorldMatrix(true, false)` par-objet
-  // du skill, amorti sur toute la hiérarchie en un seul appel.
-  root.updateWorldMatrix(true, true);
+  return GameRuntime.runSync(buildLevelFromGltfEffect(gltf, scene, physics));
+}
 
-  const bodies: RAPIER.RigidBody[] = [];
-
-  let spawnPlayer: SpawnPoint | null = null;
-  let spawnPlayerCount = 0;
-  const spawnSuits: NamedSpawn[] = [];
-  const spawnDirectors: NamedSpawn[] = [];
-  const triggers: TriggerVolume[] = [];
-  const doors: DoorInfo[] = [];
-  const useObjects: UseObject[] = [];
-  const secrets: SecretZone[] = [];
-
-  let colliderCount = 0;
-  const colliderKindCounts = { cuboid: 0, convexHull: 0, trimesh: 0 };
-  let unprefixedMeshCount = 0;
-
-  root.traverse((obj) => {
-    // Nom "tel que tapé dans Blender", PAS `obj.name` — voir la doc de
-    // `blenderName` (piège `GLTFLoader.createUniqueName`).
-    const name = blenderName(obj);
-
-    // --- Empties : jamais un THREE.Mesh, traités avant le filtre `instanceof` ---
-    if (name === "spawn_player") {
-      spawnPlayerCount++;
-      if (spawnPlayerCount === 1) spawnPlayer = extractSpawnPoint(obj);
-      return;
-    }
-    if (name.startsWith("spawn_suit_")) {
-      const position = new THREE.Vector3();
-      obj.getWorldPosition(position);
-      spawnSuits.push({ name, position });
-      return;
-    }
-    if (name.startsWith("spawn_director_")) {
-      const position = new THREE.Vector3();
-      obj.getWorldPosition(position);
-      spawnDirectors.push({ name, position });
-      return;
-    }
-
-    if (!(obj instanceof THREE.Mesh)) return;
-
-    // Invariant #5 (+ #4 pour les textures survivantes) : AVANT toute autre
-    // chose, pour CHAQUE mesh, préfixé ou non — voir la doc de tête de fichier.
-    convertToLambert(obj);
-
-    // Sous-préfixes de `col_*` — voir le skill `collision-proxy-authoring`.
-    // DOIVENT être testés AVANT le `col_` générique ci-dessous : sinon
-    // `"col_box_test".startsWith("col_")` (vrai aussi) fait tomber le
-    // routage dans le mauvais cas, silencieusement.
-    if (name.startsWith("col_box_")) {
-      buildCuboidCollider(obj, physics, bodies);
-      colliderCount++;
-      colliderKindCounts.cuboid++;
-      obj.visible = false;
-      return;
-    }
-
-    if (name.startsWith("col_hull_")) {
-      const kind = buildConvexHullCollider(obj, name, physics, bodies);
-      if (kind) {
-        colliderCount++;
-        colliderKindCounts[kind]++;
-      }
-      obj.visible = false;
-      return;
-    }
-
-    if (name.startsWith("col_mesh_")) {
-      // Alias explicite du dernier recours (trimesh) — aucune nouvelle
-      // logique, juste un branchement nommé plutôt qu'un fallthrough
-      // implicite dans le `col_*` générique.
-      if (buildStaticCollider(obj, name, physics, bodies)) {
-        colliderCount++;
-        colliderKindCounts.trimesh++;
-      }
-      obj.visible = false;
-      return;
-    }
-
-    if (name.startsWith("col_")) {
-      // Rétrocompatibilité (Zone A/B actuelles) : comportement INCHANGÉ
-      // (trimesh), SAUF gain silencieux si la géométrie LOCALE s'avère être
-      // une boîte axis-aligned — même test que `trig_*`, réutilisé tel quel.
-      // Pas d'avertissement dans ce cas : c'est un pur gain de perf/stabilité,
-      // pas une anomalie signalée.
-      if (isAxisAlignedBox(obj.geometry)) {
-        buildCuboidCollider(obj, physics, bodies);
-        colliderCount++;
-        colliderKindCounts.cuboid++;
-      } else if (buildStaticCollider(obj, name, physics, bodies)) {
-        colliderCount++;
-        colliderKindCounts.trimesh++;
-      }
-      obj.visible = false;
-      return;
-    }
-
-    if (name.startsWith("trig_")) {
-      const trigger = buildTrigger(obj, name, physics, bodies);
-      if (trigger) triggers.push(trigger);
-      obj.visible = false;
-      return;
-    }
-
-    if (name.startsWith("door_")) {
-      doors.push(buildDoor(obj, name, physics, bodies, gltf.animations));
-      return; // reste visible : c'est un panneau de décor animé, pas un volume logique
-    }
-
-    if (name.startsWith("use_")) {
-      useObjects.push(buildUseObject(obj, name));
-      return; // reste visible (objet interactif physique, ex. un terminal)
-    }
-
-    if (name.startsWith("secret_")) {
-      secrets.push(buildSecretZone(obj, name));
-      obj.visible = false; // volume logique, comme trig_*
-      return;
-    }
-
-    // Mesh sans préfixe reconnu : rendu tel quel, SANS collider,
-    // SILENCIEUSEMENT (voir la doc de tête de fichier — ne rien logger ici).
-    unprefixedMeshCount++;
-  });
-
-  if (spawnPlayerCount === 0) {
-    console.error("[level] spawn_player absent du niveau — le joueur ne peut pas être positionné au chargement.");
-  } else if (spawnPlayerCount > 1) {
-    console.error(
-      `[level] spawn_player en double (${spawnPlayerCount} occurrences) — seule la première rencontrée est utilisée.`,
-    );
-  }
-
-  const stats: LevelStats = {
-    colliderCount,
-    colliderKindCounts,
-    spawnSuitCount: spawnSuits.length,
-    spawnDirectorCount: spawnDirectors.length,
-    triggerCount: triggers.length,
-    doorCount: doors.length,
-    useCount: useObjects.length,
-    secretCount: secrets.length,
-    unprefixedMeshCount,
-  };
-
-  let disposed = false;
-  function dispose() {
-    if (disposed) return;
-    disposed = true;
-    scene.remove(root);
-    for (const body of bodies) physics.world.removeRigidBody(body); // retire aussi les colliders attachés (doc Rapier)
-    root.traverse((obj) => {
-      if (!(obj instanceof THREE.Mesh)) return;
-      obj.geometry.dispose();
-      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-      for (const mat of mats) {
-        const lambert = mat as THREE.MeshLambertMaterial;
-        lambert.map?.dispose();
-        lambert.dispose();
-      }
+/**
+ * Version Effect de `loadLevel` — voir `buildLevelFromGltfEffect` pour la
+ * même remarque sur l'usage réservé aux tests. Seule fonction de ce fichier
+ * dont le canal d'erreur n'est PAS `never` : un échec réseau/parsing
+ * (`LevelFetchError`) est une vraie erreur qui n'a jamais été un
+ * "warning" — voir la doc de la classe.
+ */
+export function loadLevelEffect(
+  url: string,
+  scene: THREE.Scene,
+  physics: PhysicsWorld,
+): Effect.Effect<LevelHandle, LevelFetchError> {
+  return Effect.gen(function* () {
+    const loader = new GLTFLoader();
+    const gltf = yield* Effect.tryPromise({
+      try: () => loader.loadAsync(url),
+      catch: (cause) => new LevelFetchError({ url, cause }),
     });
-  }
-
-  return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, dispose };
+    return yield* buildLevelFromGltfEffect(gltf, scene, physics);
+  });
 }
 
 /**
  * Charge un `.glb`/`.gltf` par URL (navigateur, via `fetch` interne à
  * `GLTFLoader`/`FileLoader`) et construit son `LevelHandle`. C'est la seule
  * fonction de ce fichier qui touche le réseau — `buildLevelFromGltf`
- * au-dessus reste testable hors navigateur.
+ * au-dessus reste testable hors navigateur. Signature INCHANGÉE par le
+ * jalon M2 : async, retourne `Promise<LevelHandle>`, rejette avec
+ * `LevelFetchError` en cas d'échec réseau/parsing (avant cette migration,
+ * rejetait avec l'erreur brute de `GLTFLoader.loadAsync` — `hotReload.ts`,
+ * seul appelant, logue de toute façon l'objet d'erreur tel quel dans les
+ * deux cas, voir sa doc de tête ; `LevelFetchError.cause` porte la valeur
+ * d'origine, rien n'est perdu).
  */
 export async function loadLevel(url: string, scene: THREE.Scene, physics: PhysicsWorld): Promise<LevelHandle> {
-  const loader = new GLTFLoader();
-  const gltf = await loader.loadAsync(url);
-  return buildLevelFromGltf(gltf, scene, physics);
+  return GameRuntime.runPromise(loadLevelEffect(url, scene, physics));
 }

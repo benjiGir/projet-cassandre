@@ -110,6 +110,69 @@ Ces règles priment sur toute commodité locale. Toute dérogation doit être do
 
 ## 4. Jalon M2 — Retrofit complet `loader.ts` / `hotReload.ts`
 
+> **✅ Livré (2026-08-31).** Les 7 cas de dégradation sont modélisés en
+> `Schema.TaggedError` (`MissingColliderGeometryError`, `OversizedColliderWarning`,
+> `MissingSpawnPlayerError`, `DuplicateSpawnPlayerError`, `NonBoxTriggerError`,
+> `UntargetedUseObjectWarning`, `DegenerateConvexHullError`, + `LevelFetchError`
+> pour l'échec réseau de `loadLevel`). **Patron warning-vs-échec retenu :
+> un seul et même patron pour les 7 cas** — chacun est un `Effect.fail`
+> (ou `return yield* new XError(...)`) immédiatement rattrapé via
+> `Effect.catch`/`Effect.catchTags` AU POINT MÊME de sa détection, jamais
+> laissé remonter plus haut. Conséquence assumée et documentée dans le
+> fichier : le type d'erreur réel de `buildLevelFromGltf`/
+> `buildLevelFromGltfEffect` est `never` (aucun des 7 cas n'est bloquant,
+> exactement comme avant ce jalon) — les classes existent pour la
+> vérification de compilation et la testabilité en isolation, pas parce
+> qu'elles se propagent réellement. Seule vraie erreur qui traverse une
+> frontière publique : `LevelFetchError` sur `loadLevel` (jamais un
+> "warning", ce chemin a toujours propagé son échec).
+> **Cycle de vie** : `Effect.acquireRelease`/`Scope` remplacent le flag
+> `disposed` manuel — un `Scope.Closeable` créé manuellement par
+> `buildLevelFromGltfEffect`/`loadLevelEffect` (PAS `Effect.scoped`, qui
+> fermerait — donc libérerait — le niveau immédiatement après sa
+> construction), fermé explicitement par `LevelHandle.dispose()`.
+> Idempotence de `dispose()` garantie par `Scope.close` lui-même
+> (`scopeCloseUnsafe` no-op si déjà `"Closed"`), plus besoin de dupliquer
+> cette garantie à la main.
+> **Mutex de rechargement** : le plan suggérait un `Effect.Semaphore(1)`
+> "autour de `performLoad`" — un Semaphore seul SÉRIALISE des appels
+> concurrents (chacun finit par déclencher un vrai rechargement) plutôt que
+> de les COALESCER (un seul rechargement réseau pour N appels concurrents),
+> qui est la garantie réellement attendue par le critère d'acceptation. Les
+> deux mécanismes sont donc conservés : la garde JS `reloadInFlight`
+> (inchangée, déjà correcte en JS mono-thread) assure le coalescing
+> observable ; le `Semaphore(1)` enveloppe `performLoadEffect` en plus,
+> comme garde-fou structurel documenté (ceinture et bretelles) — voir la
+> doc de tête de `hotReload.ts` pour le détail complet du raisonnement.
+> **Polling** : `setTimeout` récursif remplacé par
+> `Effect.repeat(Schedule.spaced(pollIntervalMs))`, forké en tâche de fond
+> via `GameRuntime.runFork` (jamais attendu), interrompu dans `stop()` via
+> `fiber.interruptUnsafe()` (point d'entrée plain-JS, pas de générateur
+> ambiant pour la variante Effect-idiomatique).
+> **`main.ts` inchangé** (vérifié par `git diff` — zéro ligne touchée) :
+> `LevelSession.current` reste un getter JS brut lu à chaque pas fixe par
+> `main.ts`, jamais indirecté par Effect (principe transverse #1). Les deux
+> harnais `tmp/harness.ts`/`tmp/harness-forced-null-hull.ts` fonctionnent
+> sans modification.
+> Tests : `test/game/level/loader.test.ts` (chemin heureux complet + les 7
+> cas, vitest nu — même style frontière-plain-JS que `runGameplaySync` en
+> M1) et `test/game/level/hotReload.test.ts` (coalescing du mutex, reload
+> après complétion, `stop()`, échec réseau) — 20/20 tests verts,
+> `pnpm build` vert. Comportement vérifié IDENTIQUE avant/après par diff
+> strict des logs `console.error`/`console.info`/stats produits par les
+> harnais Node headless existants sur `tmp/fixture.glb` (chemin heureux +
+> hull forcé dégénéré) et un nouveau harnais jetable couvrant les 5 autres
+> cas non exercés par cette fixture — diff vide dans les deux sens, avant
+> et après migration. Non vérifié : le critère humain "déplacer un mur dans
+> Blender, exporter, le voir en jeu en <60s" en conditions réelles (pas de
+> serveur dev/navigateur dans cet environnement) — le mécanisme de sondage
+> (400ms par défaut) et son timing ne sont pas modifiés par ce jalon.
+> **Écart de style non corrigé, documenté ici** : `node_modules/effect/AGENTS.md`
+> recommande `Effect.fn("name")(function*...)` plutôt que des fonctions qui
+> retournent un `Effect.gen(...)` — ce fichier utilise le second style
+> partout (cohérent avec `runtime.ts`/`random.ts` de M1), par prudence sur
+> un fichier de cette taille plutôt que pour une raison technique.
+
 **Objectif.** Remplacer le pattern "console.error + valeur null/booléenne + continuation" par des erreurs Effect typées, **en préservant exactement** le comportement de dégradation déjà documenté.
 
 **Recherche requise.** `node_modules/effect/AGENTS.md`, sections erreurs taguées / `Schema.TaggedError` et `Schedule` (remplacement du `setTimeout` récursif de hot-reload) ; suivre ses liens vers `node_modules/effect/src` pour le détail d'API.
