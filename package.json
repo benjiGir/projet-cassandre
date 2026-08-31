@@ -7,23 +7,29 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",
+    "effect": "4.0.0-rc.112",
     "howler": "2.2.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "three": "0.185.1",
+    "xstate": "5.32.6",
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@effect/vitest": "4.0.0-rc.112",
     "@types/howler": "2.2.13",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@types/three": "0.185.4",
     "@vitejs/plugin-react": "6.0.5",
     "typescript": "7.0.2",
-    "vite": "8.2.1"
+    "vite": "8.2.1",
+    "vitest": "4.1.11"
   }
 }

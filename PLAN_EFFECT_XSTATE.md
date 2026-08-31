@@ -1,0 +1,291 @@
+# PLAN — Fondations Effect-TS + XState (`PROJET_CASSANDRE`)
+
+> Chantier d'architecture, pas de contenu. Le proto (Phases 0-6) est livré et validé humainement ("Franchement c'est fun"). L'objectif ici n'est pas d'ajouter du gameplay mais de **remplacer les patterns faits main** (validation ad hoc, duplication assumée, évitement local, flow d'écran par rechargement de page) par une base typée, testable et réutilisable pour la suite du développement (plus de types d'ennemis, plus de niveaux).
+
+---
+
+## 0. Cadrage
+
+### Décisions actées (issues des échanges du 2026-08-31)
+
+| Question | Décision |
+|---|---|
+| Moteur du chantier | Erreurs typées **+** testabilité **+** dédup Suit/Director **+** flow d'écran — les quatre à la fois |
+| Frontière Effect | **Aucune** — Effect orchestre toute la boucle jeu : gameplay, raycasting, pathfinding, **et le rendu** |
+| Risque de perf (coût `Effect.gen`/`runSync` à 60 Hz) | **Assumé** — pas de spike de perf dédié, on avance et on ajuste si un problème apparaît en jeu |
+| `loader.ts` / `hotReload.ts` | **Retrofit complet** vers Effect, pas seulement le code neuf |
+| Pathfinding | **Vrai système construit maintenant** (il n'en existe aucun aujourd'hui — juste 3 rayons d'évitement local), pas juste une interface de façade |
+| Suit / Director | **Dédupliqués maintenant** via une machine XState partagée — revient sur la décision "duplication assumée" documentée dans `CLAUDE.md` |
+| Forme du plan | Un seul plan, jalons ordonnés, chacun mergeable et vérifiable indépendamment |
+
+### Registre de risques assumés explicitement
+
+Ce chantier va délibérément à l'encontre de plusieurs habitudes du projet (`CLAUDE.md` invariant #9 : *"pas d'abstraction avant que la douleur soit réelle"*, et la note explicite sur Suit/Director : *"douleur pas encore réelle"*). Ce n'est pas un oubli — c'est un choix produit assumé par l'utilisateur, noté ici pour que personne ne le redécouvre par surprise plus tard :
+
+1. **Perf non mesurée à l'avance.** `Effect.gen`/`Runtime.runSync` alloue un générateur/une fibre par appel. À 60 Hz avec plusieurs entités, plusieurs rayons (armes + vision + pathfinding) et maintenant le rendu lui-même dans l'arbre Effect, le coût cumulé est inconnu. Le jalon M6/M7 ajoute un instrumenting minimal (compteur de temps par phase dans `DebugPanel`) pour que toute dégradation soit visible **immédiatement** en jeu plutôt que découverte tard — mais aucun budget n'est fixé à l'avance, conformément au choix "on ajustera si besoin".
+2. **Comportement de duplication Suit/Director abandonné.** La note de `CLAUDE.md` documentant la duplication comme choix délibéré devient obsolète après M5 — à retirer/mettre à jour (voir jalon M9).
+3. **Rendu enveloppé dans Effect.** Le rendu Three.js et l'interpolation (`interpolateVisuals`) passent par des services Effect. Le seul point non négociable préservé explicitement : la **lecture de la rotation caméra reste un accès brut, sans indirection de service**, pour ne pas réintroduire de latence de visée (invariant #3). C'est une exception documentée, pas un oubli — voir M7.
+4. **Un vrai pathfinding est une fonctionnalité nouvelle**, pas seulement une préparation de terrain. Il change le comportement des ennemis (ils pourront désormais suivre un chemin réel, y compris dans les escaliers de la Zone D où c'était explicitement évité jusqu'ici). Aucune zone existante n'est retouchée par ce chantier — l'usage level-design de cette nouvelle capacité (ex. placer des ennemis sur la mezzanine) reste une décision séparée, hors scope ici.
+
+### Hors scope (explicitement)
+
+Nouveaux types d'ennemis · nouveaux niveaux · pathfinding 3D complet (navmesh volumétrique) — un graphe de praticabilité 2.5D suffit à la géométrie actuelle (zones à plat + un escalier) · migration de l'outillage Blender (`tools/blender/*.py`, Python, hors sujet TypeScript) · réseau/multijoueur · sauvegarde de partie (peut réutiliser les patterns Effect posés ici plus tard, mais n'est pas construite maintenant).
+
+---
+
+## 1. Principes transverses (valables sur TOUS les jalons)
+
+Ces règles priment sur toute commodité locale. Toute dérogation doit être documentée en commentaire à l'endroit précis, comme le fait déjà le reste du projet pour ses exceptions (`use_crowbar`, grille 0.25m, etc.).
+
+1. **Deux modes d'exécution Effect, jamais mélangés :**
+   - **Synchrone strict** (`Runtime.runSync`) pour tout ce qui vit dans le pas fixe ou dans la boucle d'affichage (gameplay, raycasting, pathfinding, rendu, interpolation). **Zéro** `Effect.tryPromise`/`Effect.promise`/`Effect.async`/`Effect.sleep` dans ces arbres — s'il en apparaît un, `runSync` lève un defect. Le jalon M1 pose un garde-fou qui transforme ce defect en erreur console explicite et actionnable plutôt qu'un crash muet (cohérent avec "on ajustera si besoin" : l'échec doit être bruyant, pas silencieux).
+   - **Asynchrone à la frontière** (`Runtime.runFork`/`Runtime.runPromise`) réservé au chargement de niveau, au hot-reload, et à tout futur I/O (config, sauvegarde). Ces effets tournent **en dehors** du pas fixe, exactement comme aujourd'hui (`loadLevel`/`hotReload` ne sont jamais appelés depuis `updateGameplay`).
+2. **Aucun hasard non déterministe.** Ni `Math.random()`, ni le service `Random` par défaut d'Effect. Un seul `DeterministicRandomService` (Context.Tag), qui enveloppe le PRNG mulberry32 déjà utilisé (`weapons.ts`, `suit.ts`, `director.ts`), fourni par une seule `Layer` construite au boot. Contrainte dure : le rejeu d'input (F9/F10, `core/inputRecorder.ts`) dépend de cette continuité — toute régression ici casse silencieusement une fonctionnalité déjà validée.
+3. **XState sans temps mural.** Interdiction d'utiliser les transitions retardées `after` (basées sur `setTimeout` réel). Toute durée d'état (`alertDuration`, `attackTelegraphDuration`, `staggerDuration`, `lostContactTimeout`) reste un `stateTimer` dans le `context` de la machine, décrémenté manuellement par un évènement `TICK` envoyé une fois par pas fixe avec le `gameplayDt` réel (celui qui inclut le hitstop — `GameClock.tick()`). Sinon, le hitstop ne ralentirait plus les ennemis, régression invisible mais réelle.
+4. **Comportement observable préservé sauf mention contraire explicite.** Le retrofit de `loader.ts` (M2) doit reproduire à l'identique chaque cas de "validate-and-continue" déjà documenté (liste complète en M2) — Effect apporte de la visibilité de compilation sur ces chemins d'erreur, pas un changement de comportement en jeu. Si un comportement doit changer, ce doit être une décision explicite notée dans l'acceptance du jalon, pas un effet de bord de la migration.
+5. **Recherche avant implémentation, comme l'exige le skill `effect-ts` (version actuelle du skill, revue le 2026-08-31).** Le skill a changé de forme depuis la rédaction initiale de ce plan : plus de checkout vendoré ni de guides locaux (`references/*.md` supprimés) — la source de vérité devient `node_modules/effect/AGENTS.md` (une fois `effect` installé, voir M0) et, pour le détail d'API, `node_modules/effect/src` directement. Chaque jalon qui touche services/layers/erreurs/schedule/test doit lire `node_modules/effect/AGENTS.md` **en entier** (et suivre ses liens internes si besoin) avant d'écrire du code — ce plan ne réinvente pas les patterns Effect, il localise où aller les chercher.
+6. **Un jalon = un commit (ou une petite série), buildable et vérifiable seul.** `pnpm build` propre + tests Vitest verts + vérification en jeu (capture/console) avant de passer au jalon suivant. Le blast radius de ce chantier est grand (il touche quasiment tout `src/core` et `src/game`) ; ne pas empiler plusieurs jalons dans un seul changement non testé.
+
+---
+
+## 2. Jalon M0 — Bootstrap (dépendances + prérequis du skill)
+
+> **✅ Livré (2026-08-31).** `effect@4.0.0-rc.112` était déjà installé (par l'utilisateur, avant ce jalon). Ajoutés : `xstate@5.32.6`, `vitest@4.1.11`, `@effect/vitest@4.0.0-rc.112` (même canal `rc` que `effect`, confirmé aligné). `node_modules/effect/AGENTS.md` lu en entier — confirme `Context.Service` (pas `Context.Tag`, terminologie Effect 4) comme façon standard de définir un service, `Schema.TaggedError` pour les erreurs, `ManagedRuntime` pour le pont vers du code non-Effect (exactement le rôle prévu pour `GameRuntime` en M1), et `@effect/vitest`/`it.effect` confirmé comme pattern de test. Section "Learning more about Effect" ajoutée dans `CLAUDE.md`. `vitest.config.ts` (environnement `node`) + `test/bootstrap.test.ts` (smoke test `it.effect`, à retirer une fois M1 apporte de vrais tests) + scripts `pnpm test`/`pnpm test:watch` + `test`/`vitest.config.ts` ajoutés à l'`include` de `tsconfig.json`. `pnpm build` et `pnpm test` vérifiés verts.
+>
+> **Note terminologique pour M1+** : partout où ce plan dit `Context.Tag`, lire `Context.Service` (idiome Effect 4 confirmé par `AGENTS.md`) — le plan a été écrit avant l'installation réelle de la version `rc` et employait encore le vocabulaire Effect 3.
+
+**Objectif.** Installer Effect et XState, et poser la référence de recherche que tous les jalons suivants doivent lire avant d'écrire du code — sans écrire de logique métier.
+
+**Actions** (skill `effect-ts` revu le 2026-08-31 — plus léger que la version consultée à l'écriture initiale de ce plan : plus de checkout vendoré `.repos/effect`, plus de guides locaux, seulement deux étapes) :
+1. `pnpm add effect@rc` à la racine (pas `effect@beta` — le skill actuel pointe vers le tag `rc`). Ce projet n'étant pas un monorepo, l'installer en dépendance normale suffit (le skill ne demande le `-D` racine que pour un monorepo qui veut exposer `node_modules/effect/src` à tous les paquets — ici il n'y a qu'un seul paquet).
+2. Mettre à jour `CLAUDE.md` avec la section exacte exigée par le skill :
+   ```md
+   # Learning more about Effect
+
+   This repository uses the Effect Typescript library.
+
+   Before writing any Effect code, first read `node_modules/effect/AGENTS.md`
+   **completely**, and follow the links in the file when required.
+
+   If you need to learn more about particular Effect apis and concepts that the
+   guide doesn't cover, search through the source code in `node_modules/effect/src`.
+   ```
+   C'est désormais la seule source de vérité Effect pour ce projet — tous les "Recherche requise" des jalons suivants pointent vers ce fichier plutôt que vers d'anciens guides locaux.
+3. Installer `xstate` (v5, dernière stable). Ne PAS installer `@xstate/react` — le pont vers React reste zustand (invariant #2, voir M8).
+4. Installer `vitest` (dernière stable) et ajouter les scripts `pnpm test` / `pnpm test:watch`. Le skill ne prescrit plus de package de test Effect dédié (l'ancien `@effect/vitest` a disparu de ses recommandations) — lire `node_modules/effect/AGENTS.md` une fois installé pour vérifier s'il recommande un package de test spécifique pour le tag `rc` ; sinon, tester directement avec `Effect.runPromise`/`Effect.runSync` dans des tests Vitest nus, sans dépendance supplémentaire.
+5. Garder `pnpm build` inchangé (`tsc --noEmit && vite build`).
+6. Un test Vitest trivial (`1 + 1`) pour prouver que la chaîne CI locale tourne avant d'investir dans quoi que ce soit d'autre.
+
+**Critères d'acceptation.**
+- `pnpm install` propre, `effect`/`xstate`/`vitest` présents dans `package.json` avec les versions ci-dessus.
+- `node_modules/effect/AGENTS.md` existe et a été lu en entier au moins une fois avant M1.
+- `CLAUDE.md` contient la section "Learning more about Effect" exacte du skill.
+- `pnpm build` toujours vert (aucune régression — ce jalon n'importe encore rien dans `src/`).
+- `pnpm test` exécute et passe le test trivial.
+
+---
+
+## 3. Jalon M1 — Fondations déterministes + `GameRuntime`
+
+**Objectif.** Poser la racine de composition Effect et le service PRNG déterministe, avec un filet de sécurité "jamais async" testé.
+
+**Recherche requise.** `node_modules/effect/AGENTS.md`, sections runtime/provisioning et services/`Context.Tag`/`Layer` ; suivre ses liens internes. Pour le détail exact des signatures, `node_modules/effect/src`.
+
+**Conception.**
+- `src/core/runtime.ts` (nouveau) : une seule `Layer` racine (`GameLayer`), assemblée au boot, exposant au minimum le service `DeterministicRandom` dans cette étape (les autres services rejoignent la layer au fil des jalons suivants — M2 à M4). Un `ManagedRuntime` unique (`GameRuntime`), construit une fois dans `main.ts`, jamais recréé pendant la partie.
+- `DeterministicRandom` (`Context.Tag`) : mêmes méthodes que le PRNG mulberry32 actuel (`next()`, `range()`, etc. — signature exacte à reprendre depuis `weapons.ts`/`suit.ts`), implémentation = wrapper direct de l'algorithme existant, **pas une réécriture** — le but est de centraliser l'usage, pas de changer la séquence produite (test de régression obligatoire : même seed → même sortie, comparée byte-à-byte à l'implémentation actuelle).
+- Garde-fou "jamais async" : un petit wrapper `runGameplaySync(effect)` autour de `Runtime.runSync` qui, en cas de defect de suspension, produit un `console.error` explicite ("un Effect gameplay a tenté de suspendre — vérifier qu'aucun Effect.tryPromise/async n'a été introduit dans cet arbre") avant de relancer. Utilisé par tous les jalons suivants qui exécutent du code dans le pas fixe.
+
+**Tests Vitest.**
+- `DeterministicRandom` : séquence identique à l'implémentation actuelle pour un même seed (non-régression du rejeu d'input).
+- `runGameplaySync` : un effet purement synchrone passe ; un effet contenant un `Effect.tryPromise` déclenche bien le message d'erreur explicite (test qui vérifie le garde-fou lui-même, pas juste le cas nominal).
+
+**Critères d'acceptation.** `pnpm build` vert, tests verts, aucun changement de comportement en jeu (rien n'est encore branché dans `main.ts`).
+
+---
+
+## 4. Jalon M2 — Retrofit complet `loader.ts` / `hotReload.ts`
+
+**Objectif.** Remplacer le pattern "console.error + valeur null/booléenne + continuation" par des erreurs Effect typées, **en préservant exactement** le comportement de dégradation déjà documenté.
+
+**Recherche requise.** `node_modules/effect/AGENTS.md`, sections erreurs taguées / `Schema.TaggedError` et `Schedule` (remplacement du `setTimeout` récursif de hot-reload) ; suivre ses liens vers `node_modules/effect/src` pour le détail d'API.
+
+**Conception.**
+- `buildLevelFromGltf` (déjà une fonction pure synchrone, sans I/O — cf. cartographie initiale) devient un `Effect<LevelHandle, LevelBuildError>` synchrone. `loadLevel` (le seul point avec un vrai I/O réseau, `GLTFLoader.loadAsync`) devient un `Effect<LevelHandle, LevelBuildError | LevelFetchError>` qui enveloppe l'appel réseau via `Effect.tryPromise`.
+- Erreurs taguées à créer, une par cas déjà documenté dans le fichier actuel (liste exhaustive à conserver comme check-list d'acceptation) :
+  - `MissingColliderGeometryError` (`col_*` sans géométrie / 0 triangle)
+  - `OversizedColliderWarning` (> `MAX_COLLIDER_TRIANGLES` — actuellement non bloquant, doit le rester : voir note ci-dessous)
+  - `MissingSpawnPlayerError` / `DuplicateSpawnPlayerError`
+  - `NonBoxTriggerError` (`trig_*` non-box)
+  - `UntargetedUseObjectWarning` (`use_*` sans cible)
+  - `DegenerateConvexHullError` (repli automatique sur trimesh)
+  - `LevelFetchError` (échec réseau/HEAD)
+- **Point de vigilance explicite** : plusieurs de ces cas ne sont PAS des échecs bloquants aujourd'hui (le niveau continue de se construire en dégradé). Il ne faut pas les modéliser comme des `Effect.fail` qui interrompent le pipeline — soit ce sont des **warnings** portés dans une liste accumulée en sortie de l'Effect (succès avec un journal d'anomalies), soit des `Effect.fail` immédiatement rattrapés en interne via `Effect.catchTag(..., () => Effect.succeed(fallback))` avant de continuer la construction. Choisir l'un des deux patterns et l'appliquer uniformément (recherche recommandée dans `node_modules/effect/AGENTS.md` sur ce point précis) — ne pas laisser une erreur "warning" se propager jusqu'à l'appelant comme un vrai échec, ce serait une régression de comportement.
+- Gestion de ressource : `LevelHandle` (corps Rapier + géométries/matériaux GPU) construit via `Effect.acquireRelease`/`Scope` au lieu du flag `disposed` manuel. Le hot-reload (`LevelSession`) devient un `Scope` enfant recréé à chaque rechargement, fermé (libère l'ancien niveau) seulement après que le nouveau soit prêt — même séquence qu'aujourd'hui (`currentHandle?.dispose()` après succès du nouveau chargement), mais garantie par le type plutôt que par l'ordre des lignes.
+- Mutex de rechargement (`reloadInFlight` fait main) remplacé par un `Effect.Semaphore(1)` autour de `performLoad`.
+- Polling HTTP (`setTimeout` récursif, 400 ms) remplacé par `Effect.repeat(Schedule.spaced("400 millis"))`, avec le même comportement de non-throw sur échec réseau transitoire (`catch` silencieux actuel → `Effect.catchAll` qui logue et laisse le `Schedule` continuer).
+
+**Tests Vitest.** `buildLevelFromGltf` est déjà testable en Node sans réseau (fonction pure) — couvrir chacun des 7 cas de dégradation listés ci-dessus avec des fixtures glTF synthétiques minimales (le dossier `tmp/` contient déjà des générateurs de fixtures — `tmp/fixture-gen.ts` — à réutiliser/adapter plutôt que dupliquer). Un test d'intégration pour le mutex de rechargement (deux appels concurrents à `reload()` ne doivent produire qu'un seul chargement en vol).
+
+**Vérification en jeu.** Charger un niveau valide, un niveau avec un `col_*` dégénéré volontaire (le fixture `tmp/harness-forced-null-hull.ts` existe déjà pour ce cas), vérifier les mêmes logs qu'avant dans la console, vérifier le hot-reload (modifier le `.glb`, constater le rechargement sous 400 ms, position joueur préservée).
+
+**Critères d'acceptation.** Comportement en jeu strictement identique à avant migration (mêmes logs, mêmes reprises, mêmes reprises sur erreur) ; tests verts ; `pnpm build` vert.
+
+---
+
+## 5. Jalon M3 — `RaycastService`
+
+**Objectif.** Isoler tout appel à `THREE.Raycaster` derrière un service Effect synchrone, testable sans scène WebGL réelle (le `Raycaster` de Three.js opère sur des structures de données, pas sur un contexte GPU — testable tel quel en Node/Vitest).
+
+**Recherche requise.** `node_modules/effect/AGENTS.md`, section services/`Layer` (cas d'un service à une seule implémentation).
+
+**Conception.**
+- `RaycastService` (`Context.Tag`) : une méthode par usage actuel identifié — hitscan d'arme (`weapons.ts`), ligne de vue Suit/Director (`suit.ts`/`director.ts`), gizmos balistiques de debug (touche `B`). Retour typé (`RaycastHit | null` ou une petite ADT `RaycastResult`), pas un tableau brut Three.js.
+- Implémentation unique = wrapper `Effect.sync` direct autour de `raycaster.intersectObjects(...)` — aucune logique nouvelle, seulement un point d'indirection.
+- Bénéfice immédiat : une `Layer` de test peut fournir des résultats scriptés (« ce rayon touche un mur à 3m », « ce rayon ne touche rien ») sans construire de vraie scène Three.js — précondition pour tester M5 (comportement Suit/Director) de façon déterministe.
+
+**Tests Vitest.** RaycastService réel contre une scène Three.js minimale construite en mémoire (quelques meshes, pas de renderer) : vérifie qu'un rayon connu touche/ne touche pas comme attendu. Une `Layer` de test scriptée, réutilisée par M5.
+
+**Vérification en jeu.** Tir au pompe/pied-de-biche inchangé, vision des Costards inchangée, gizmos balistiques (`B`) toujours affichés correctement.
+
+**Critères d'acceptation.** Aucune régression de portée/précision des tirs ni de la détection de ligne de vue ; tests verts.
+
+---
+
+## 6. Jalon M4 — `PathfindingService` (vrai système, pas une façade)
+
+**Objectif.** Remplacer les 3 rayons d'évitement local (`computeAvoidedDirection`) par un vrai suivi de chemin, capable de traverser l'escalier de la Zone D — la limite documentée qui a jusqu'ici empêché de placer des ennemis sur la mezzanine.
+
+**Recherche requise.** `node_modules/effect/AGENTS.md`, section composition d'Effects — pas de guide dédié au pathfinding, c'est de l'algorithmique pure, Effect ne fait que l'encapsuler proprement.
+
+**Conception — graphe de praticabilité 2.5D, baké au chargement du niveau :**
+1. **Échantillonnage** : une grille horizontale (pas de 0.5 m — multiple de la grille de construction Blender 0.25 m déjà en place) sur l'emprise AABB du niveau chargé.
+2. **Hauteur de sol par cellule** : un rayon vertical descendant (via `RaycastService`, M3) depuis un point haut jusqu'au premier collider statique touché → donne la hauteur de sol praticable à cette cellule, ou "aucune" si rien n'est touché (vide/hors niveau). Cette approche générique gère nativement la mezzanine de la Zone D (Z=2m) et l'escalier (pente continue) sans code spécifique à une zone.
+3. **Élagage** : une cellule est rejetée si un test de capsule/AABB (colliders `col_*` étant des proxies cuboid par convention du kit — cf. `collision-proxy-authoring`) chevauche la position debout du joueur/ennemi à cette hauteur.
+4. **Arêtes** : deux cellules adjacentes (4 ou 8-connectées) sont reliées si (a) la différence de hauteur de sol est franchissable (seuil type "marche", cohérent avec la géométrie des escaliers du kit) et (b) un rayon horizontal à hauteur de "tête" d'ennemi entre les deux cellules ne touche aucun mur (`RaycastService`).
+5. **Requête** : A* déterministe sur ce graphe (tie-break stable par index de grille, jamais par ordre d'itération d'une `Map`/`Set` — condition dure du déterminisme de rejeu). `PathfindingService.findPath(from, to): Effect<ReadonlyArray<Vector3>, PathNotFoundError>`.
+6. **Cycle de vie** : le graphe est reconstruit une fois par (re)chargement de niveau (hook sur le même point que `onLoaded` du hot-reload, M2), jamais par pas fixe. Coût du bake assumé au chargement, pas dans la boucle 60 Hz.
+7. **Fréquence de requête runtime** : un chemin n'est recalculé que si la cible (le joueur) s'est déplacée au-delà d'un seuil depuis la dernière requête — pas à chaque pas fixe, indépendamment du débat de perf Effect (c'est juste inutile de refaire un A* complet 60 fois par seconde pour une cible qui n'a pas bougé).
+
+**Intégration Suit/Director (prépare M5).** `runChase` interroge `PathfindingService` et pilote l'entité vers le prochain waypoint plutôt que vers la position brute du joueur + évitement local. `computeAvoidedDirection` est retiré une fois la parité de comportement constatée en jeu (pas de suppression prématurée avant validation).
+
+**Tests Vitest.** Fixtures synthétiques (grilles de colliders construites à la main, pas de vrai `.glb`) : couloir simple, obstacle contournable, **cas de l'escalier de la Zone D reproduit en fixture** (le cas documenté comme bloqué aujourd'hui) — le test doit prouver qu'un chemin est trouvé entre le rez-de-chaussée et la mezzanine.
+
+**Vérification en jeu.** `window.cassandre.pathfinding` (nouvel objet exposé en console, même précédent que `cassandre.doors()`/`cassandre.secrets()`) pour visualiser un chemin calculé en direct. Un Costard de test placé volontairement derrière un obstacle en dur doit désormais le contourner en suivant le graphe, pas seulement par rayons locaux.
+
+**Critères d'acceptation.** Le cas de test "escalier Zone D" passe ; le comportement de poursuite des 5 zones existantes reste au moins aussi bon qu'avant (pas de régression visible — Costards qui restent coincés, qui tremblent contre un mur, etc.) ; tests verts.
+
+---
+
+## 7. Jalon M5 — Machine XState partagée Suit/Director
+
+**Objectif.** Une seule définition de machine à états pour Suit et Director, paramétrée par configuration, remplaçant les deux fichiers texto-identiques.
+
+**Recherche requise.** `node_modules/effect/AGENTS.md` ne couvre pas XState (bibliothèque séparée, sans lien avec Effect) — utiliser la documentation XState v5 directement (actor model, `context`, `guards`).
+
+**Conception.**
+- `src/game/entities/enemyMachine.ts` (nouveau) : une machine XState avec les 7 états existants (`idle`, `alert`, `chase`, `attack`, `stagger`, `dead`, `corpse`) et **exactement** les transitions déjà documentées et testées en jeu :
+  - `idle → alert` : ligne de vue dégagée (via `RaycastService`, M3) + distance < `sightRange`.
+  - `alert → chase` : inconditionnel après `alertDuration` — **sans** re-vérifier la ligne de vue (décision déjà actée, à préserver explicitement, sinon régression comportementale silencieuse).
+  - `chase → attack` : en vue + distance ≤ `attackRange` + cooldown écoulé.
+  - `chase → idle` : perte de contact pendant `lostContactTimeout`.
+  - `attack → chase` : après `attackTelegraphDuration` tenu, résolution du tir avec re-vérification de ligne de vue.
+  - `stagger → chase` : après `staggerDuration`.
+  - `* → dead → corpse` : déclenché par `applyDamage`, transition automatique différée par timer (pas `after` — règle transverse #3).
+- **Toutes les durées** (`alertDuration`, `attackTelegraphDuration`, `lostContactTimeout`, `staggerDuration`) vivent dans le `context` de la machine comme `stateTimer`, décrémentées par un évènement `TICK({ dt })` envoyé une fois par pas fixe avec le `gameplayDt` réel (incluant hitstop).
+- **Config différentielle Suit vs Director** : un objet de config passé à la création de l'acteur (`sightRange`, `attackRange`, cooldowns, PRNG dérivé du `DeterministicRandom`, callbacks de résolution de tir spécifiques). Le `revealed` du Director (actuellement un booléen orthogonal piloté par un seuil de PV, PAS un état à part) reste un champ de `context` mis à jour par une action sur `applyDamage`, pas une région d'état parallèle — ne pas sur-ingénierer au-delà du comportement actuel.
+- `Suit`/`Director` deviennent de fines classes wrapper (position, mesh, collider Rapier — tout ce qui n'est PAS la state machine) qui possèdent un acteur XState et lui délèguent `state`/transitions. `SuitManager`/`DirectorManager` (`src/game/entities/*Manager.ts`) restent des `Entity[]` + `update(dt)` — invariant #8 intact, aucun ECS introduit, seule la state machine interne change de représentation.
+
+**Tests Vitest.** Table de transition complète rejouée avec `RaycastService` de test (M3) et un `DeterministicRandom` de test : chaque transition documentée ci-dessus doit être couverte par au moins un test (état de départ + condition → état d'arrivée attendu). Cas Director spécifique : `revealed` bascule au bon seuil de PV, indépendamment de l'état courant de la machine.
+
+**Vérification en jeu.** Les 5 zones existantes + Zone E (Directeur) : mêmes transitions observées qu'avant (`window.cassandre.suits`/`cassandre.director` déjà exposés), mêmes timings de télégraphie, aucun Costard qui reste bloqué dans un état.
+
+**Critères d'acceptation.** Parité comportementale complète avec `suit.ts`/`director.ts` actuels (checklist des transitions ci-dessus, toutes vérifiées) ; `director.ts`/`suit.ts` réduits à leur seule partie "présentation/physique", la logique d'état dupliquée a disparu ; tests verts.
+
+---
+
+## 8. Jalon M6 — Orchestration Effect du pas fixe (gameplay)
+
+**Objectif.** Convertir le câblage géant et procédural de `updateGameplay` (`src/main.ts`, ~500 lignes) en un Effect composé, exécuté via `runGameplaySync` (M1) à chaque pas fixe.
+
+**Recherche requise.** `node_modules/effect/AGENTS.md`, sections composition de plusieurs services dans une `Layer` finale et séquencement `Effect.gen`.
+
+**Conception.**
+- Services introduits pour les systèmes déjà existants mais aujourd'hui de simples classes appelées à la main : `PlayerService`, `WeaponService`, `EntityManagerService` (englobe `SuitManager`/`DirectorManager`). Chacun rejoint `GameLayer` (M1).
+- `updateGameplay` devient : lire l'état de flux de partie (voir M8 — remplace le double flag `isDead`/`isLevelComplete` par une lecture d'état de la machine de flux d'écran), puis un seul `Effect.gen` séquençant `player.update → weapons.update (RaycastService) → entities.update (PathfindingService + machines XState, M4/M5) → résolution des événements de frame (tirs/hits/alertes)`. Même ordre qu'aujourd'hui, aucune réorganisation de séquence.
+- Les files d'événements par frame (`fireEvents`/`hitEvents` de `WeaponSystem`, événements de `SuitManager`/`DirectorManager`) restent des files simples consommées par curseur — **pas** de `Queue`/`Stream` Effect ici : c'est un système qui fonctionne déjà et le risque de régression (le bug historique `hitCursor` documenté dans `CLAUDE.md`) ne vaut pas la peine d'être rouvert dans ce chantier. Ne pas migrer ce qui n'est pas cassé.
+
+**Tests Vitest.** Test d'intégration : un pas fixe complet exécuté hors navigateur (Rapier compat fonctionne en Node via WASM), avec un joueur/un Costard synthétiques, vérifie qu'un tir résout un dégât et qu'un changement d'état de machine se propage — preuve que `runGameplaySync` ne suspend jamais sur le chemin réel.
+
+**Vérification en jeu.** Partie complète jouée (les 5 zones), aucun changement de sensation (invariant de non-régression du feel — `feel-tuner`/`game-feel-tuning` restent la référence si un doute apparaît).
+
+**Critères d'acceptation.** `pnpm build` vert, `runGameplaySync` ne déclenche jamais le garde-fou de suspension pendant une partie complète, aucune régression de gameplay observée.
+
+---
+
+## 9. Jalon M7 — Orchestration Effect du rendu et de l'interpolation
+
+**Objectif.** Envelopper `interpolateVisuals`/`updateFx`/`render` dans Effect, avec l'exception documentée pour la rotation caméra.
+
+**Conception.**
+- `RenderService` (Context.Tag) : wrap synchrone de `WebGLRenderer.render(scene, camera)` et de l'interpolation billboard/position (`interpolateVisuals(alpha)`).
+- **Exception explicite, à commenter dans le code exactement comme les autres exceptions du projet** : la lecture de `camera.rotation`/l'application du yaw/pitch brut de la souris reste un accès JS direct, en dehors de toute indirection de service — au pire enveloppée dans un `Effect.sync` feuille sans générateur imbriqué autour, pour ne pas ajouter de latence de visée (invariant #3, non négociable même dans ce chantier).
+- Instrumentation : un compteur de temps par phase (gameplay / physique / rendu) ajouté à `DebugPanel` (existant), lisible en jeu (touche déjà utilisée pour le debug). C'est le filet de sécurité concret pour le risque de perf assumé en §0 — la régression sera visible dans l'overlay de dev dès qu'elle apparaît, sans instrumentation externe à construire.
+
+**Tests Vitest.** Peu de valeur à tester le rendu lui-même (pas de WebGL en Node) — se limiter à vérifier que `RenderService` ne fait rien d'autre qu'appeler le renderer (test de contrat, pas de rendu réel).
+
+**Vérification en jeu.** Capture d'écran avant/après, FPS affiché dans `DebugPanel` comparé à une baseline notée avant ce jalon (même si aucun budget n'est fixé a priori, avoir le chiffre "avant" est nécessaire pour juger "on ajuste" plus tard). Test de latence de visée subjectif (le "feel" de la souris ne doit percivablement pas changer).
+
+**Critères d'acceptation.** Rendu visuellement identique, FPS noté (pas nécessairement inchangé — juste mesuré et documenté), aucune latence de visée perceptible ajoutée.
+
+---
+
+## 10. Jalon M8 — Machine XState de flux d'écran + reset en place
+
+**Objectif.** Remplacer les `root.render()` impératifs + `window.location.reload()`/`assign()` par une machine de flux (`boot → mainMenu → options → levelSelect → playing → dead|levelComplete → …`), avec un vrai reset en jeu.
+
+**Conception.**
+- `src/ui/gameFlowMachine.ts` : états `boot`, `mainMenu`, `options`, `levelSelect`, `playing`, `dead`, `levelComplete`. Pas de `@xstate/react` — l'acteur pousse son état courant dans le store zustand existant (`useGameStore`) via un `subscribe()`, exactement comme le reste de l'état de jeu déjà exposé au HUD (invariant #2 : React ne s'abonne qu'à zustand, throttlé).
+- `dead`/`levelComplete → playing` (rejouer) et `→ mainMenu` (retour menu) déclenchent désormais un **vrai reset en place** : dispose + reconstruction de `PhysicsWorld`, `SuitManager`, `DirectorManager`, `WeaponSystem`, et rechargement du niveau via `LevelSession` (M2) — sans `window.location.reload()`. C'est une capacité nouvelle (jusqu'ici jugée disproportionnée en Phase 6, faute d'un chemin de reset) ; documentée comme telle, pas comme un simple refactor.
+- Les deux flags `isDead`/`isLevelComplete` de `state.ts` sont retirés au profit d'une lecture directe de l'état de la machine (le garde en tête d'`updateGameplay`, M6, lit cet état plutôt que deux booléens indépendants).
+
+**Tests Vitest.** Table de transitions du flux d'écran (boot→menu→jeu→mort→rejouer→jeu, boot→menu→jeu→fin→menu, etc.) testée en isolation de tout rendu React/Three.js — l'acteur XState est une machine pure.
+
+**Vérification en jeu.** Parcours complet : boot → menu → options → retour → jouer → mourir → rejouer (doit relancer sans rechargement de page, chronométré) → terminer un niveau → retour menu.
+
+**Critères d'acceptation.** Aucun `window.location.reload()`/`assign()` restant dans le chemin nominal ; un reset complet observable sans rechargement de page ; toutes les combinaisons de la table de transition couvertes par un test.
+
+---
+
+## 11. Jalon M9 — Documentation et verrouillage des conventions
+
+**Objectif.** Mettre à jour `CLAUDE.md` et les skills concernés pour que tout agent (ou session future) respecte ces nouvelles règles sans avoir à relire ce plan en entier.
+
+**Actions.**
+1. Ajouter les règles de la section 1 de ce plan comme nouveaux invariants numérotés dans `CLAUDE.md` (frontière synchrone stricte, PRNG déterministe unique, XState sans `after`).
+2. Retirer/mettre à jour la note documentant la duplication Suit/Director comme choix délibéré (obsolète après M5).
+3. Mettre à jour la ligne "Phase courante" de `CLAUDE.md` pour référencer ce chantier et son état d'avancement, comme fait pour chaque phase précédente.
+4. Vérifier si les skills `enemy-state-machine`, `fixed-timestep-loop`, `react-hud-bridge`, `gltf-level-conventions` ont besoin d'une mention des nouveaux patterns (Effect/XState) — mise à jour ciblée, pas de réécriture complète.
+5. Décider si un nouveau skill dédié (`effect-xstate-cassandre` ou similaire) documentant les patterns spécifiques à ce projet (le garde-fou `runGameplaySync`, le pattern "timer manuel au lieu de `after`") vaut la peine, pour que les agents spécialisés (`core-loop`, `entity-designer`, `level-pipeline`, `shell`) les suivent sans redécouvrir ce plan à chaque fois.
+
+**Critères d'acceptation.** `CLAUDE.md` reflète l'état réel du code après M0-M8, sans contradiction entre la doc et l'implémentation.
+
+---
+
+## 12. Ordre d'exécution suggéré et rattachement aux agents existants
+
+Ce chantier touche plusieurs domaines déjà couverts par des agents spécialisés. Suggestion de routage, cohérente avec le fonctionnement déjà établi du projet (`director` → agent spécialisé) :
+
+| Jalon | Domaine | Agent suggéré |
+|---|---|---|
+| M0, M1 | Infra, runtime, déterminisme | `core-loop` |
+| M2 | Chargement de niveau | `level-pipeline` |
+| M3 | Raycasting | `core-loop` (partagé par armes + IA + rendu) |
+| M4 | Pathfinding | `level-pipeline` (consomme les données de niveau) ou `entity-designer` (consommateur principal) — à trancher selon qui écrit le bake du graphe |
+| M5 | Machine à états ennemis | `entity-designer` |
+| M6 | Orchestration gameplay | `core-loop` |
+| M7 | Rendu/interpolation | `retro-render` |
+| M8 | Flux d'écran, reset | `shell` |
+| M9 | Documentation | `director` (ou directement, sans agent) |
+
+Chaque jalon reste petit et vérifiable seul — pas besoin d'attendre la fin du chantier complet pour merger et jouer.

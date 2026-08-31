@@ -6,7 +6,18 @@ Prototype : 1 niveau, 2 armes, 1 type d'ennemi, 8-10 minutes de jeu.
 ## Stack
 
 Vite + TypeScript · three (vanilla) · @dimforge/rapier3d-compat · React DOM
-en overlay uniquement · zustand · howler · Blender → glTF
+en overlay uniquement · zustand · howler · Blender → glTF · effect · xstate
+(chantier d'architecture en cours, voir `PLAN_EFFECT_XSTATE.md`)
+
+## Learning more about Effect
+
+This repository uses the Effect Typescript library.
+
+Before writing any Effect code, first read `node_modules/effect/AGENTS.md`
+**completely**, and follow the links in the file when required.
+
+If you need to learn more about particular Effect apis and concepts that the
+guide doesn't cover, search through the source code in `node_modules/effect/src`.
 
 ## Invariants — non négociables
 
