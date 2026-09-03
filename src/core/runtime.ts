@@ -1,5 +1,6 @@
 import { Cause, Effect, Layer, ManagedRuntime } from "effect";
 import { DeterministicRandom } from "./random";
+import { RaycastService } from "../physics/raycast";
 
 /**
  * Racine de composition Effect du jeu. Chaque service ajouté par les
@@ -7,7 +8,7 @@ import { DeterministicRandom } from "./random";
  * rejoint cette Layer via Layer.provideMerge/Layer.merge — jamais une
  * Layer ad hoc construite ailleurs.
  */
-export const GameLayer = DeterministicRandom.layer;
+export const GameLayer = Layer.merge(DeterministicRandom.layer, RaycastService.layer);
 
 type GameServices = Layer.Success<typeof GameLayer>;
 

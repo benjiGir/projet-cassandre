@@ -3,6 +3,8 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { InputFrame } from "../../core/inputRecorder";
 import type { GameClock } from "../../core/time";
+import { runGameplaySync } from "../../core/runtime";
+import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../physics/world";
 import { approach } from "./controller";
 import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig";
@@ -188,7 +190,6 @@ export class WeaponSystem {
   private readonly meleeCenterScratch = new THREE.Vector3();
   private readonly meleeAxisPointScratch = new THREE.Vector3();
   private readonly meleeCapsuleQuat = new THREE.Quaternion();
-  private readonly meleeHitScratch: RAPIER.Collider[] = [];
   private readonly pelletDirScratch = new THREE.Vector3();
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
 
@@ -461,20 +462,25 @@ export class WeaponSystem {
     };
     const capsule = new RAPIER.Capsule(halfRange, radius);
 
-    this.meleeHitScratch.length = 0;
-    this.physics.world.intersectionsWithShape(
-      shapePos,
-      shapeRot,
-      capsule,
-      (collider) => {
-        this.meleeHitScratch.push(collider);
-        return true; // continue : on veut TOUS les colliders touchés, pas seulement le premier.
-      },
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      COLLISION_GROUPS.PLAYER_SHOT,
+    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`
+    // (`src/physics/raycast.ts`), point d'entrée synchrone isolé — le
+    // service collecte lui-même les colliders touchés dans un tableau
+    // (plus besoin d'un scratch dédié ici, cet appel n'est pas un point
+    // chaud à 60Hz, seulement à chaque coup de pied-de-biche).
+    const meleeHits = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.intersectionsWithShape(
+          this.physics,
+          shapePos,
+          shapeRot,
+          capsule,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          COLLISION_GROUPS.PLAYER_SHOT,
+        ),
+      ),
     );
 
-    for (const collider of this.meleeHitScratch) {
+    for (const collider of meleeHits) {
       // Point de l'axe de visée le plus proche de CE collider : projection de
       // son centre monde sur le segment [eyeOrigin, eyeOrigin+direction*range],
       // clampée aux deux bouts. Remplace le centre fixe unique de l'ancienne
@@ -571,12 +577,20 @@ export class WeaponSystem {
       this.scratchRay.dir.y = this.pelletDirScratch.y;
       this.scratchRay.dir.z = this.pelletDirScratch.z;
 
-      const hit = this.physics.world.castRayAndGetNormal(
-        this.scratchRay,
-        this.cfg.shotgunRange,
-        true,
-        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-        COLLISION_GROUPS.PLAYER_SHOT,
+      // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`, un
+      // point d'entrée synchrone isolé PAR PLOMB (pas de restructuration de
+      // la boucle en un seul Effect composé — ça, c'est le rôle de M6).
+      const hit = runGameplaySync(
+        RaycastService.use((raycast) =>
+          raycast.castRayAndGetNormal(
+            this.physics,
+            this.scratchRay,
+            this.cfg.shotgunRange,
+            true,
+            RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+            COLLISION_GROUPS.PLAYER_SHOT,
+          ),
+        ),
       );
       if (!hit) {
         // Aucun collider touché : le gizmo balistique de debug dessine quand

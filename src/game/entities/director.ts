@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import { runGameplaySync } from "../../core/runtime";
+import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
 import { allocateEntityId, type Entity } from "./entity";
 import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
@@ -142,12 +144,21 @@ function hasClearWorldPath(
   ray.dir.y = dy / dist;
   ray.dir.z = dz / dist;
 
-  const hit = physics.world.castRay(
-    ray,
-    Math.max(0, dist - 0.05),
-    true,
-    RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-    WORLD_ONLY_RAY_GROUPS,
+  // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`, point
+  // d'entrée synchrone isolé (même migration que `suit.ts`, duplication
+  // volontaire — la dédup Suit/Director est M5, sur la state machine, pas
+  // ici).
+  const hit = runGameplaySync(
+    RaycastService.use((raycast) =>
+      raycast.castRay(
+        physics,
+        ray,
+        Math.max(0, dist - 0.05),
+        true,
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+        WORLD_ONLY_RAY_GROUPS,
+      ),
+    ),
   );
   return hit === null;
 }
@@ -493,12 +504,18 @@ export class Director implements Entity {
     this.scratchRay.dir.y = this.scratchJitteredDir.y;
     this.scratchRay.dir.z = this.scratchJitteredDir.z;
 
-    const hit = ctx.physics.world.castRayAndGetNormal(
-      this.scratchRay,
-      maxDist,
-      true,
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      COLLISION_GROUPS.ENEMY_SHOT,
+    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`.
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castRayAndGetNormal(
+          ctx.physics,
+          this.scratchRay,
+          maxDist,
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          COLLISION_GROUPS.ENEMY_SHOT,
+        ),
+      ),
     );
     if (!hit || !isPlayerCollider(hit.collider)) return;
 
@@ -566,12 +583,18 @@ export class Director implements Entity {
     this.scratchRay.dir.x = dir.x;
     this.scratchRay.dir.y = 0;
     this.scratchRay.dir.z = dir.z;
-    const hit = physics.world.castRay(
-      this.scratchRay,
-      this.cfg.avoidanceRayLength,
-      true,
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      WORLD_ONLY_RAY_GROUPS,
+    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`.
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castRay(
+          physics,
+          this.scratchRay,
+          this.cfg.avoidanceRayLength,
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          WORLD_ONLY_RAY_GROUPS,
+        ),
+      ),
     );
     return hit === null;
   }

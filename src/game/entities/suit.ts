@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import { runGameplaySync } from "../../core/runtime";
+import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
 import { allocateEntityId, type Entity } from "./entity";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
@@ -155,12 +157,21 @@ function hasClearWorldPath(
   // Petite marge sous la distance réelle : évite qu'un contact quasi-tangent
   // pile à la distance cible (imprécision flottante) ne compte comme un
   // blocage alors qu'il n'y a rien entre les deux points.
-  const hit = physics.world.castRay(
-    ray,
-    Math.max(0, dist - 0.05),
-    true,
-    RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-    WORLD_ONLY_RAY_GROUPS,
+  //
+  // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`, point
+  // d'entrée synchrone isolé — pas de restructuration de `update(dt)` en un
+  // seul Effect composé (rôle de M6).
+  const hit = runGameplaySync(
+    RaycastService.use((raycast) =>
+      raycast.castRay(
+        physics,
+        ray,
+        Math.max(0, dist - 0.05),
+        true,
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+        WORLD_ONLY_RAY_GROUPS,
+      ),
+    ),
   );
   return hit === null;
 }
@@ -493,12 +504,18 @@ export class Suit implements Entity {
     this.scratchRay.dir.y = this.scratchJitteredDir.y;
     this.scratchRay.dir.z = this.scratchJitteredDir.z;
 
-    const hit = ctx.physics.world.castRayAndGetNormal(
-      this.scratchRay,
-      maxDist,
-      true,
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      COLLISION_GROUPS.ENEMY_SHOT,
+    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`.
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castRayAndGetNormal(
+          ctx.physics,
+          this.scratchRay,
+          maxDist,
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          COLLISION_GROUPS.ENEMY_SHOT,
+        ),
+      ),
     );
     if (!hit || !isPlayerCollider(hit.collider)) return; // mur touché en premier (jitter, ou joueur sorti du couloir de tir) : raté silencieux.
 
@@ -572,12 +589,18 @@ export class Suit implements Entity {
     this.scratchRay.dir.x = dir.x;
     this.scratchRay.dir.y = 0;
     this.scratchRay.dir.z = dir.z;
-    const hit = physics.world.castRay(
-      this.scratchRay,
-      this.cfg.avoidanceRayLength,
-      true,
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      WORLD_ONLY_RAY_GROUPS,
+    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`.
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castRay(
+          physics,
+          this.scratchRay,
+          this.cfg.avoidanceRayLength,
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          WORLD_ONLY_RAY_GROUPS,
+        ),
+      ),
     );
     return hit === null;
   }
