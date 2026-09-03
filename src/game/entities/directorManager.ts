@@ -4,6 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weapons";
 import { weaponConfig } from "../player/weaponConfig";
+import type { NavGraph } from "../level/pathfinding";
 import {
   Director,
   DirectorBadge,
@@ -164,12 +165,17 @@ export class DirectorManager {
    * `hitCursor` local et sa propre `colliderTo*` map — sûr, exactement le
    * même schéma que les lecteurs multiples de `fireEvents`/`hitEvents` dans
    * `main.ts`, voir sa doc).
+   *
+   * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : voir la doc identique
+   * dans `SuitManager.update` — MÊME graphe (baké sur le gabarit
+   * `suitConfig`, voir `level/pathfinding.ts`), simplement transmis.
    */
   update(
     dt: number,
     playerTargetPosition: THREE.Vector3,
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
+    navGraph: NavGraph | null = null,
   ) {
     this._badge?.tick(dt);
 
@@ -180,6 +186,7 @@ export class DirectorManager {
       kcc: this.kcc,
       playerTargetPosition,
       playerEyePosition,
+      navGraph,
     };
 
     for (const director of this.directors) {

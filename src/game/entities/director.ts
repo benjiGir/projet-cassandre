@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
+import { Effect } from "effect";
 
 import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
+import { PathfindingService, type NavGraph } from "../level/pathfinding";
 import { allocateEntityId, type Entity } from "./entity";
 import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
 
@@ -56,6 +58,18 @@ const WORLD_ONLY_RAY_GROUPS = interactionGroups(GROUP.ENEMY, GROUP.WORLD);
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const WORLD_RIGHT_FALLBACK = new THREE.Vector3(1, 0, 0);
 
+/** Suivi de chemin (jalon M4) — mêmes valeurs et même raison que `suit.ts` (duplication assumée, voir la doc de tête). */
+const PATH_REQUERY_DISTANCE = 1.5;
+/** Voir la doc identique dans `suit.ts`. */
+const WAYPOINT_REACHED_DISTANCE = 0.6;
+
+/** Distance horizontale au carré (X/Z, Y ignoré) — voir la doc identique dans `suit.ts`. */
+function horizontalDistanceSq(a: THREE.Vector3, b: THREE.Vector3): number {
+  const dx = a.x - b.x;
+  const dz = a.z - b.z;
+  return dx * dx + dz * dz;
+}
+
 /** Nombre de frames de l'animation de mort — même choix que `Suit` (4 frames), voir `DEATH_FRAME_COUNT` dans `suit.ts`. */
 export const DIRECTOR_DEATH_FRAME_COUNT = 4;
 
@@ -99,12 +113,14 @@ export const DIRECTOR_STATE_ROWS = {
   deathBase: DEATH_ROW_BASE,
 } as const;
 
-/** Contexte partagé injecté à chaque `Director.update()` — même forme que `SuitUpdateContext`, voir sa doc dans `suit.ts`. */
+/** Contexte partagé injecté à chaque `Director.update()` — même forme que `SuitUpdateContext`, voir sa doc dans `suit.ts` (y compris `navGraph`, jalon M4 PLAN_EFFECT_XSTATE.md). */
 export interface DirectorUpdateContext {
   physics: PhysicsWorld;
   kcc: RAPIER.KinematicCharacterController;
   playerTargetPosition: THREE.Vector3;
   playerEyePosition: THREE.Vector3;
+  /** Voir `SuitUpdateContext.navGraph` dans `suit.ts` — même graphe PARTAGÉ (baké sur le gabarit `suitConfig`, pas `directorConfig`, voir `level/pathfinding.ts`), même filet de sécurité `computeAvoidedDirection` si `null`/requête échouée. */
+  navGraph: NavGraph | null;
 }
 
 /** PRNG déterministe, MÊME algorithme que `suit.ts`/`weapons.ts` (mulberry32) — une instance PAR ENTITÉ. */
@@ -222,6 +238,17 @@ export class Director implements Entity {
 
   private readonly cfg: DirectorConfig;
   private readonly nextRandom: () => number;
+
+  // --- Suivi de chemin (jalon M4, PLAN_EFFECT_XSTATE.md) — voir la doc
+  // identique dans `suit.ts` (duplication assumée). `computeAvoidedDirection`
+  // reste un filet de sécurité EXPLICITE, pas retiré.
+  private currentPath: ReadonlyArray<THREE.Vector3> = [];
+  private currentWaypointIndex = 0;
+  private readonly lastPathQueryTarget = new THREE.Vector3(
+    Number.POSITIVE_INFINITY,
+    0,
+    Number.POSITIVE_INFINITY,
+  );
 
   // --- Scratch, zéro allocation en régime établi ----------------------------
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
@@ -459,9 +486,57 @@ export class Director implements Entity {
       return;
     }
 
+    // Jalon M4 (PLAN_EFFECT_XSTATE.md) : voir la doc identique dans
+    // `suit.ts::runChase` — suivi de chemin réel en priorité, repli EXPLICITE
+    // sur l'évitement local historique sinon.
+    if (this.tryComputeChaseDirectionFromPath(ctx, this.scratchMoveDir)) {
+      this.velocityHorizontal.copy(this.scratchMoveDir).multiplyScalar(this.cfg.chaseSpeed);
+      this.turnTowards(this.scratchMoveDir.lengthSq() > 1e-8 ? this.scratchMoveDir : this.scratchToPlayer, dt);
+      return;
+    }
+
     const avoided = this.computeAvoidedDirection(ctx.physics, this.scratchToPlayer, this.scratchMoveDir);
     this.velocityHorizontal.copy(avoided).multiplyScalar(this.cfg.chaseSpeed);
     this.turnTowards(this.scratchToPlayer.lengthSq() > 1e-8 ? this.scratchToPlayer : avoided, dt);
+  }
+
+  /** Voir la doc identique dans `suit.ts::tryComputeChaseDirectionFromPath` (duplication assumée). */
+  private tryComputeChaseDirectionFromPath(ctx: DirectorUpdateContext, out: THREE.Vector3): boolean {
+    const navGraph = ctx.navGraph;
+    if (!navGraph) return false;
+
+    const target = ctx.playerTargetPosition;
+    const pathExhausted = this.currentWaypointIndex >= this.currentPath.length;
+    const targetMovedEnough =
+      this.lastPathQueryTarget.distanceToSquared(target) >= PATH_REQUERY_DISTANCE * PATH_REQUERY_DISTANCE;
+
+    if (pathExhausted || targetMovedEnough) {
+      this.lastPathQueryTarget.copy(target);
+      const fromPosition = this.position;
+      const path = runGameplaySync(
+        PathfindingService.use((pf) => pf.findPath(navGraph, fromPosition, target)).pipe(
+          Effect.catch(() => Effect.succeed(null)),
+        ),
+      );
+      this.currentPath = path ?? [];
+      this.currentWaypointIndex = 0;
+    }
+
+    if (this.currentWaypointIndex >= this.currentPath.length) return false;
+
+    while (
+      this.currentWaypointIndex < this.currentPath.length - 1 &&
+      horizontalDistanceSq(this.position, this.currentPath[this.currentWaypointIndex]!) <
+        WAYPOINT_REACHED_DISTANCE * WAYPOINT_REACHED_DISTANCE
+    ) {
+      this.currentWaypointIndex++;
+    }
+
+    const waypoint = this.currentPath[this.currentWaypointIndex]!;
+    out.set(waypoint.x - this.position.x, 0, waypoint.z - this.position.z);
+    if (out.lengthSq() < 1e-8) return true;
+    out.normalize();
+    return true;
   }
 
   private runAttack(ctx: DirectorUpdateContext, dt: number) {

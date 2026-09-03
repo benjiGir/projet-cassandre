@@ -4,6 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weapons";
 import { weaponConfig } from "../player/weaponConfig";
+import type { NavGraph } from "../level/pathfinding";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 
@@ -168,12 +169,19 @@ export class SuitManager {
    * `playerTargetPosition`/`playerEyePosition` : origines AUTHENTIQUES du pas
    * fixe courant (jamais interpolées pour le rendu), même discipline que
    * `WeaponSystem.update`.
+   *
+   * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : graphe de praticabilité
+   * du niveau COURANT, `null` tant qu'aucun bake n'a encore eu lieu — voir
+   * `main.ts` (`currentNavGraph`, rebaké dans le callback `onLoaded` de
+   * `createLevelSession`). Simplement transmis à chaque `Suit` via
+   * `SuitUpdateContext`, ce manager ne l'interprète jamais lui-même.
    */
   update(
     dt: number,
     playerTargetPosition: THREE.Vector3,
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
+    navGraph: NavGraph | null = null,
   ) {
     const aggregated = this.consumeNewHits(hitEvents);
 
@@ -182,6 +190,7 @@ export class SuitManager {
       kcc: this.kcc,
       playerTargetPosition,
       playerEyePosition,
+      navGraph,
     };
 
     for (const suit of this.suits) {

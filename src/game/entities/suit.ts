@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
+import { Effect } from "effect";
 
 import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
+import { PathfindingService, type NavGraph } from "../level/pathfinding";
 import { allocateEntityId, type Entity } from "./entity";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 
@@ -58,6 +60,25 @@ const WORLD_ONLY_RAY_GROUPS = interactionGroups(GROUP.ENEMY, GROUP.WORLD);
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const WORLD_RIGHT_FALLBACK = new THREE.Vector3(1, 0, 0);
 
+/**
+ * Distance (m) parcourue par la cible depuis la dernière requête
+ * `PathfindingService.findPath` au-delà de laquelle une nouvelle requête est
+ * justifiée — jalon M4 (PLAN_EFFECT_XSTATE.md, point 7) : un A* complet à
+ * chaque pas fixe pour une cible qui n'a pas bougé serait un travail
+ * strictement perdu.
+ */
+const PATH_REQUERY_DISTANCE = 1.5;
+
+/** Distance (m) sous laquelle un waypoint du chemin courant est considéré atteint et le suivi passe au suivant. Volontairement > `NAV_CELL_SIZE` (0.5 m, voir `level/pathfinding.ts`) pour ne jamais osciller pile à la frontière d'une cellule. */
+const WAYPOINT_REACHED_DISTANCE = 0.6;
+
+/** Distance horizontale au carré (X/Z, Y ignoré) — le steering vers un waypoint reste horizontal (voir la doc de `NavGraph`, le KCC gère le Y). */
+function horizontalDistanceSq(a: THREE.Vector3, b: THREE.Vector3): number {
+  const dx = a.x - b.x;
+  const dz = a.z - b.z;
+  return dx * dx + dz * dz;
+}
+
 /** Nombre de frames de l'animation de mort (deliverable Phase 3 : 4 frames). */
 export const DEATH_FRAME_COUNT = 4;
 
@@ -110,6 +131,16 @@ export interface SuitUpdateContext {
   playerTargetPosition: THREE.Vector3;
   /** Origine AUTHENTIQUE des yeux du joueur au pas fixe courant (jamais interpolée) — cible de la ligne de vue et de l'attaque. */
   playerEyePosition: THREE.Vector3;
+  /**
+   * Graphe de praticabilité baké au chargement du niveau courant (jalon M4,
+   * PLAN_EFFECT_XSTATE.md), `null` tant qu'aucun bake n'a encore eu lieu
+   * (niveau "gym" qui n'en construit jamais, ou avant le premier `onLoaded`
+   * d'un niveau glTF). `runChase` l'utilise pour un suivi de chemin réel ;
+   * voir `tryComputeChaseDirectionFromPath` pour le filet de sécurité
+   * explicite (`computeAvoidedDirection`, INCHANGÉ) quand ce champ est
+   * `null` ou que la requête échoue.
+   */
+  navGraph: NavGraph | null;
 }
 
 /** PRNG déterministe, MÊME algorithme que `weapons.ts` (mulberry32) — une instance PAR ENTITÉ, jamais partagée, jamais `Math.random()` dans `update()`. */
@@ -215,6 +246,20 @@ export class Suit implements Entity {
 
   private readonly cfg: SuitConfig;
   private readonly nextRandom: () => number;
+
+  // --- Suivi de chemin (jalon M4, PLAN_EFFECT_XSTATE.md) --------------------
+  // `computeAvoidedDirection` (plus bas) reste un FILET DE SÉCURITÉ EXPLICITE,
+  // PAS retiré : voir `tryComputeChaseDirectionFromPath` et la doc de
+  // `SuitUpdateContext.navGraph`. Son retrait n'est prévu qu'après constat de
+  // parité de comportement en jeu réel — jamais dans ce jalon.
+  private currentPath: ReadonlyArray<THREE.Vector3> = [];
+  private currentWaypointIndex = 0;
+  /** Cible interrogée à la dernière requête `findPath` — sentinelle loin de tout niveau réel pour garantir une première requête dès le premier pas fixe en `chase`. */
+  private readonly lastPathQueryTarget = new THREE.Vector3(
+    Number.POSITIVE_INFINITY,
+    0,
+    Number.POSITIVE_INFINITY,
+  );
 
   // --- Scratch, zéro allocation en régime établi ----------------------------
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
@@ -451,9 +496,72 @@ export class Suit implements Entity {
       return;
     }
 
+    // Jalon M4 (PLAN_EFFECT_XSTATE.md) : suivi de chemin réel en priorité,
+    // repli EXPLICITE sur l'évitement local historique si aucun graphe n'est
+    // encore baké ou si aucun chemin n'a pu être trouvé — voir la doc de
+    // `tryComputeChaseDirectionFromPath`.
+    if (this.tryComputeChaseDirectionFromPath(ctx, this.scratchMoveDir)) {
+      this.velocityHorizontal.copy(this.scratchMoveDir).multiplyScalar(this.cfg.chaseSpeed);
+      this.turnTowards(this.scratchMoveDir.lengthSq() > 1e-8 ? this.scratchMoveDir : this.scratchToPlayer, dt);
+      return;
+    }
+
     const avoided = this.computeAvoidedDirection(ctx.physics, this.scratchToPlayer, this.scratchMoveDir);
     this.velocityHorizontal.copy(avoided).multiplyScalar(this.cfg.chaseSpeed);
     this.turnTowards(this.scratchToPlayer.lengthSq() > 1e-8 ? this.scratchToPlayer : avoided, dt);
+  }
+
+  /**
+   * Direction horizontale (X/Z, Y=0) vers le prochain waypoint du chemin
+   * baké courant, écrite dans `out`. Retourne `false` (n'écrit RIEN dans
+   * `out`) si aucun pathfinding exploitable n'est disponible ce pas-ci —
+   * `runChase` retombe alors sur `computeAvoidedDirection`, INCHANGÉ (filet
+   * de sécurité explicite, voir la doc de tête du fichier et
+   * `SuitUpdateContext.navGraph`).
+   *
+   * Ne relance PAS un `PathfindingService.findPath` à chaque pas fixe : une
+   * nouvelle requête n'a lieu que si la cible a bougé au-delà de
+   * `PATH_REQUERY_DISTANCE` depuis la dernière (ou si le chemin courant est
+   * épuisé) — voir PLAN_EFFECT_XSTATE.md, jalon M4, point 7.
+   */
+  private tryComputeChaseDirectionFromPath(ctx: SuitUpdateContext, out: THREE.Vector3): boolean {
+    const navGraph = ctx.navGraph;
+    if (!navGraph) return false;
+
+    const target = ctx.playerTargetPosition;
+    const pathExhausted = this.currentWaypointIndex >= this.currentPath.length;
+    const targetMovedEnough =
+      this.lastPathQueryTarget.distanceToSquared(target) >= PATH_REQUERY_DISTANCE * PATH_REQUERY_DISTANCE;
+
+    if (pathExhausted || targetMovedEnough) {
+      this.lastPathQueryTarget.copy(target);
+      const fromPosition = this.position;
+      const path = runGameplaySync(
+        PathfindingService.use((pf) => pf.findPath(navGraph, fromPosition, target)).pipe(
+          Effect.catch(() => Effect.succeed(null)),
+        ),
+      );
+      this.currentPath = path ?? [];
+      this.currentWaypointIndex = 0;
+    }
+
+    if (this.currentWaypointIndex >= this.currentPath.length) return false; // aucun chemin exploitable — repli.
+
+    // Avance jusqu'au premier waypoint pas encore atteint (peut en sauter
+    // plusieurs d'un coup si le pas fixe précédent a beaucoup progressé).
+    while (
+      this.currentWaypointIndex < this.currentPath.length - 1 &&
+      horizontalDistanceSq(this.position, this.currentPath[this.currentWaypointIndex]!) <
+        WAYPOINT_REACHED_DISTANCE * WAYPOINT_REACHED_DISTANCE
+    ) {
+      this.currentWaypointIndex++;
+    }
+
+    const waypoint = this.currentPath[this.currentWaypointIndex]!;
+    out.set(waypoint.x - this.position.x, 0, waypoint.z - this.position.z);
+    if (out.lengthSq() < 1e-8) return true; // déjà sur le waypoint : pathfinding "actif" mais rien à déplacer ce pas-ci.
+    out.normalize();
+    return true;
   }
 
   private runAttack(ctx: SuitUpdateContext, dt: number) {

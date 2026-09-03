@@ -18,11 +18,14 @@ import {
 } from "./core/inputRecorder";
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "./render/renderer";
 import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
+import { Effect } from "effect";
+import { runGameplaySync } from "./core/runtime";
 import { buildGym } from "./game/level/gym";
 import { createLevelSession, type LevelSession } from "./game/level/hotReload";
 import { InteractionSystem } from "./game/level/interactive";
 import type { DoorInfo, LevelStats, SecretZone } from "./game/level/loader";
 import { LEVEL_CHOICES, type LevelDef } from "./game/level/levels";
+import { PathfindingService, navGraphStats, type NavGraph } from "./game/level/pathfinding";
 import { PlayerController } from "./game/player/controller";
 import {
   FEEL_VARIANTS,
@@ -709,11 +712,32 @@ async function main() {
   // de `gym.ts`, jamais par défaut.
   let gltfLevelSession: LevelSession | null = null;
 
+  // Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau
+  // COURANT, rebaké à chaque `onLoaded` (premier chargement ET hot reloads —
+  // contrairement aux spawns d'ennemis, la géométrie change potentiellement
+  // à chaque hot reload, donc le graphe doit suivre). `PathfindingService`
+  // ne stocke rien lui-même (voir sa doc de tête) : c'est cette simple
+  // variable JS qui joue ce rôle, même schéma que `gltfLevelSession`
+  // ci-dessus. `null` sur le chemin "gym" (aucun bake déclenché) — `Suit`/
+  // `Director` retombent alors intégralement sur `computeAvoidedDirection`
+  // (voir `SuitUpdateContext.navGraph`).
+  let currentNavGraph: NavGraph | null = null;
+
   function loadGltfLevel(name: string): void {
     gltfLevelSession?.stop();
     const url = `/assets/levels/${name}.glb`;
     gltfLevelSession = createLevelSession(url, scene, physics, {
       onLoaded: (handle, info) => {
+        const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
+        currentNavGraph = runGameplaySync(
+          PathfindingService.use((pf) => pf.bake(physics, navGraphBounds)),
+        );
+        const navStats = navGraphStats(currentNavGraph);
+        console.info(
+          `[pathfinding] graphe baké — ${navStats.walkableCount}/${navStats.cellCount} cellules praticables, ` +
+            `${navStats.edgeCount} arêtes (grille ${navStats.cols}×${navStats.rows}, pas ${navStats.cellSize} m)`,
+        );
+
         console.info(
           `[level] "${name}.glb" chargé — colliders ${handle.stats.colliderCount}, ` +
             `spawns Costard ${handle.stats.spawnSuitCount}, spawns Directeur ${handle.stats.spawnDirectorCount}, ` +
@@ -767,6 +791,22 @@ async function main() {
         useGameStore.getState().setSecretsTotal(handle.stats.secretCount);
       },
     });
+  }
+
+  /**
+   * Jalon M4 (PLAN_EFFECT_XSTATE.md) : wrapper console pour
+   * `PathfindingService.findPath` sur le graphe COURANT (`currentNavGraph`),
+   * pour visualiser/vérifier un chemin en direct (`cassandre.pathfinding.
+   * findPath(...)`). `null` si aucun graphe n'est encore baké ou si aucun
+   * chemin n'a été trouvé — jamais d'exception qui remonterait à la console.
+   */
+  function debugFindPath(from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] | null {
+    const graph = currentNavGraph;
+    if (!graph) return null;
+    const result = runGameplaySync(
+      PathfindingService.use((pf) => pf.findPath(graph, from, to)).pipe(Effect.catch(() => Effect.succeed(null))),
+    );
+    return result ? Array.from(result) : null;
   }
 
   // Chargement au boot : QUE si le choix résolu tout en haut de `main()` est
@@ -981,8 +1021,8 @@ async function main() {
       // AUTHENTIQUE que celle qui vient de servir aux raycasts d'armes,
       // jamais une position interpolée — sert de cible de ligne de
       // vue/visée pour les Costards.
-      suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents);
-      directorManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents);
+      suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
+      directorManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
 
       // Badge du Directeur : apparition (mesh) à la mort, une seule fois ;
       // ramassage par proximité SEULE (pas de touche E, voir la doc de
@@ -1422,6 +1462,8 @@ async function main() {
     },
     () => gltfLevelSession?.current?.doors ?? [],
     () => gltfLevelSession?.current?.secrets ?? [],
+    () => currentNavGraph,
+    debugFindPath,
   );
 }
 
@@ -1567,6 +1609,12 @@ declare global {
       giveBadge: () => void;
       doors: () => DoorInfo[];
       secrets: () => SecretZone[];
+      /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */
+      pathfinding: {
+        graph: () => NavGraph | null;
+        stats: () => ReturnType<typeof navGraphStats> | null;
+        findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[] | null;
+      };
     };
   }
 }
@@ -1762,6 +1810,8 @@ function exposeDebugApi(
   giveBadge: () => void,
   doors: () => DoorInfo[],
   secrets: () => SecretZone[],
+  navGraph: () => NavGraph | null,
+  findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[] | null,
 ) {
   window.cassandre = {
     moveConfig,
@@ -1814,6 +1864,15 @@ function exposeDebugApi(
     doors,
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets,
+    /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant. `graph()` expose le `NavGraph` brut (tableaux typés, voir sa doc), `stats()` un résumé lisible, `findPath(from, to)` calcule un chemin en direct (`null` si pas de graphe/chemin) — même précédent console que `doors`/`secrets`. */
+    pathfinding: {
+      graph: navGraph,
+      stats: () => {
+        const graph = navGraph();
+        return graph ? navGraphStats(graph) : null;
+      },
+      findPath,
+    },
   };
 }
 
