@@ -417,14 +417,26 @@ Ces règles priment sur toute commodité locale. Toute dérogation doit être do
 > changement de code, hors scope d'un jalon documentation, et n'a pas été
 > demandé.
 >
+> **Corrigé le 2026-09-05, en tâche de suivi séparée** (demande explicite
+> de l'utilisateur : "nettoie le PRNG partagé"). `weapons.ts` et
+> `enemyMachine.ts::createEnemyPrng` routent maintenant vers
+> `DeterministicRandom.forSeed` via `runGameplaySync(DeterministicRandom.useSync(...))`
+> — même pattern que les `RaycastService.use(...)` déjà en place ailleurs
+> dans ces deux fichiers, aucune nouvelle indirection inventée. `mulberry32`
+> n'existe plus qu'à un seul endroit (`src/core/random.ts`). `CLAUDE.md`
+> mis à jour en conséquence.
+>
 > `pnpm build` propre, `pnpm test` vert (116/116, aucun test touché par ce
 > jalon — uniquement des fichiers `.md`) vérifiés avant et après les
 > modifications.
 >
-> **Non fait — jugé hors scope de ce jalon, pas un oubli** : le "vrai"
-> nettoyage de l'écart RNG ci-dessus (router `weapons.ts`/`enemyMachine.ts`
-> vers `DeterministicRandom`), qui serait un changement de code review-able
-> séparément, pas une action de documentation.
+> **Initialement non fait — jugé hors scope de ce jalon, pas un oubli** : le
+> "vrai" nettoyage de l'écart RNG ci-dessus (router
+> `weapons.ts`/`enemyMachine.ts` vers `DeterministicRandom`), qui aurait été
+> un changement de code review-able séparément, pas une action de
+> documentation. Fait le 2026-09-05 dans une tâche de suivi dédiée (voir la
+> note "Corrigé le 2026-09-05" ci-dessus) — cette section reste ici comme
+> trace du raisonnement initial, pas parce que l'écart persiste.
 >
 > **Ordre d'exécution suggéré (§12) noté pour référence** : M9 était la
 > dernière ligne du tableau de routage. Le chantier M0-M9 est maintenant

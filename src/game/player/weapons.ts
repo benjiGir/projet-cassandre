@@ -2,6 +2,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { InputFrame } from "../../core/inputRecorder";
+import { DeterministicRandom } from "../../core/random";
 import type { GameClock } from "../../core/time";
 import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
@@ -74,22 +75,15 @@ export interface HitEvent {
 }
 
 /**
- * PRNG déterministe (mulberry32), SEEDÉ par une constante fixe — jamais
- * `Math.random()` : la dispersion du pompe doit être rejouable à l'identique
- * par le harnais d'enregistrement/rejeu (F9/F10) et par tout futur harnais de
- * déterminisme. L'état n'avance qu'au fil des tirs réellement déclenchés,
- * donc deux rejeux de la même séquence d'`InputFrame` production exactement
- * la même dispersion, tir après tir.
+ * PRNG déterministe, SEEDÉ par une constante fixe — jamais `Math.random()` :
+ * la dispersion du pompe doit être rejouable à l'identique par le harnais
+ * d'enregistrement/rejeu (F9/F10) et par tout futur harnais de déterminisme.
+ * L'état n'avance qu'au fil des tirs réellement déclenchés, donc deux
+ * rejeux de la même séquence d'`InputFrame` production exactement la même
+ * dispersion, tir après tir. Générateur obtenu via `DeterministicRandom`
+ * (`core/random.ts`, invariant #12 de `CLAUDE.md`) — plus de copie locale
+ * de mulberry32 ici depuis le nettoyage du 2026-09-05.
  */
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return function next() {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** Graine fixe et arbitraire — seule contrainte : ne JAMAIS dériver du temps réel ou de `Math.random`. */
 const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
@@ -193,7 +187,9 @@ export class WeaponSystem {
   private readonly pelletDirScratch = new THREE.Vector3();
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
 
-  private readonly nextRandom = mulberry32(SHOTGUN_SPREAD_SEED);
+  private readonly nextRandom = runGameplaySync(
+    DeterministicRandom.useSync((random) => random.forSeed(SHOTGUN_SPREAD_SEED)),
+  );
 
   constructor(physics: PhysicsWorld, clock: GameClock, cfg: WeaponConfig = weaponConfig) {
     this.physics = physics;

@@ -3,6 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 import { type Actor, createActor, setup } from "xstate";
 
+import { DeterministicRandom } from "../../core/random";
 import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
@@ -385,15 +386,15 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
   };
 }
 
-/** PRNG déterministe, MÊME algorithme que `weapons.ts` (mulberry32) — une instance PAR ENTITÉ, jamais partagée, jamais `Math.random()`. Partagé : les deux fichiers en avaient une copie strictement identique. */
+/**
+ * PRNG déterministe — une instance PAR ENTITÉ, jamais partagée, jamais
+ * `Math.random()`. Générateur obtenu via `DeterministicRandom`
+ * (`core/random.ts`, invariant #12 de `CLAUDE.md`) — plus de copie locale
+ * de mulberry32 ici depuis le nettoyage du 2026-09-05 (même source
+ * canonique que `weapons.ts`).
+ */
 export function createEnemyPrng(seed: number): () => number {
-  let a = seed >>> 0;
-  return function next() {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  return runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)));
 }
 
 /** Bit d'appartenance PLAYER lu directement sur un collider — même technique que `weapons.ts`. */

@@ -1,11 +1,13 @@
 import { Context, Layer } from "effect";
 
 /**
- * Algorithme mulberry32 — copie exacte de celui dupliqué dans
- * `weapons.ts`/`suit.ts`/`director.ts`. Ce fichier en devient la source
- * canonique ; faire pointer ces trois call sites ici est prévu pour le
- * jalon M6 (PLAN_EFFECT_XSTATE.md), pas ici — ne pas les toucher tant
- * qu'ils n'ont pas de raison de bouger.
+ * Algorithme mulberry32 — SOURCE CANONIQUE UNIQUE (nettoyage du
+ * 2026-09-05, `PLAN_EFFECT_XSTATE.md` §11 : écart trouvé au jalon M9,
+ * jamais corrigé quand M6 l'avait promis). `weapons.ts` (dispersion du
+ * pompe) et `game/entities/enemyMachine.ts::createEnemyPrng` (PRNG par
+ * entité, Costard/Directeur) routent désormais tous les deux vers
+ * `DeterministicRandom.forSeed` plutôt que de garder leur propre copie de
+ * cette fonction — plus aucune duplication de l'algorithme dans le repo.
  */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;

@@ -116,17 +116,21 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > déjà mis à jour AU jalon M5 lui-même ("dédupliqué avec lui au jalon M5").
 > Rien à retirer dans ce fichier.
 >
-> **Écart trouvé pendant M9, non corrigé (hors scope d'un jalon
-> documentation) :** le RNG déterministe n'est pas unifié derrière le
-> service `DeterministicRandom` malgré l'invariant #12 — `weapons.ts`
-> (dispersion du pompe) et `enemyMachine.ts::createEnemyPrng` gardent
-> chacun leur propre copie locale de mulberry32 plutôt que d'obtenir leur
-> générateur via ce service. Aucune régression de déterminisme constatée
-> (les trois implémentations sont identiques bit à bit, toutes seedées,
-> jamais `Math.random()`) — seulement une centralisation non terminée,
-> détaillée dans le nouveau skill `effect-xstate-cassandre`. À finir dans
-> une tâche de suivi dédiée si la duplication de code devient gênante, pas
-> un blocage.
+> **Écart trouvé pendant M9, corrigé le 2026-09-05** (tâche de suivi
+> dédiée, hors scope du jalon documentation lui-même) : le RNG déterministe
+> n'était pas unifié derrière le service `DeterministicRandom` malgré
+> l'invariant #12 — `weapons.ts` (dispersion du pompe) et
+> `enemyMachine.ts::createEnemyPrng` gardaient chacun leur propre copie
+> locale de mulberry32 plutôt que d'obtenir leur générateur via ce service.
+> Les deux routent maintenant vers `DeterministicRandom.forSeed` (via
+> `runGameplaySync(DeterministicRandom.useSync(...))`, même pattern que les
+> appels `RaycastService.use(...)` déjà en place) ; `mulberry32` n'existe
+> plus qu'à un seul endroit, `src/core/random.ts`. Aucune régression de
+> déterminisme (même algorithme, mêmes graines) : `pnpm build`/`pnpm test`
+> verts (116/116) avant et après, y compris les tests à valeurs de
+> référence de `random.test.ts`/`suit.test.ts`/`director.test.ts` qui
+> recalculent l'algorithme indépendamment plutôt que de comparer le code à
+> lui-même.
 >
 > `pnpm build` propre, `pnpm test` vert (116/116) au moment de ce jalon.
 > Skills mis à jour pour refléter ces patterns : `enemy-state-machine`

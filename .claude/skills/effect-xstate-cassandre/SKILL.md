@@ -44,14 +44,23 @@ par `DeterministicRandom.layer` dans `GameLayer`. Jamais `Math.random()`,
 jamais le service `Random` par défaut d'Effect — le rejeu d'input (F9/F10,
 `core/inputRecorder.ts`) dépend de cette continuité.
 
-**Écart connu (trouvé au jalon M9, pas corrigé) :** `weapons.ts` (dispersion
-du pompe) et `enemyMachine.ts::createEnemyPrng` gardent chacun leur propre
-copie locale de l'algorithme mulberry32 plutôt que d'obtenir leur générateur
-via `DeterministicRandom`. Aucune régression de déterminisme (implémentations
-identiques bit à bit, toutes seedées) — seulement une centralisation non
-terminée. Si tu touches l'un de ces deux fichiers pour une autre raison,
-router vers le service canonique est un bon petit nettoyage de passage ; ce
-n'est pas un prérequis bloquant pour du travail sans rapport.
+`weapons.ts` (dispersion du pompe) et `enemyMachine.ts::createEnemyPrng`
+(PRNG par entité, Costard/Directeur) routent tous les deux vers
+`DeterministicRandom.forSeed` — pas de copie locale de mulberry32 dans ces
+fichiers, `mulberry32` n'existe qu'à un seul endroit (`src/core/random.ts`).
+Pattern pour un nouveau call site qui a besoin d'un générateur construit une
+seule fois (pas à chaque appel, comme un champ de classe ou un contexte
+d'entité) :
+
+```ts
+const nextRandom = runGameplaySync(
+  DeterministicRandom.useSync((random) => random.forSeed(SOME_SEED)),
+);
+```
+
+`useSync` (pas `use`) parce que `forSeed` retourne une valeur brute
+(`() => number`), pas un `Effect` — mêmes deux variantes que sur tout
+`Context.Service` de ce projet.
 
 ## XState sans temps mural
 
