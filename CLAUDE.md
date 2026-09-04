@@ -7,7 +7,8 @@ Prototype : 1 niveau, 2 armes, 1 type d'ennemi, 8-10 minutes de jeu.
 
 Vite + TypeScript · three (vanilla) · @dimforge/rapier3d-compat · React DOM
 en overlay uniquement · zustand · howler · Blender → glTF · effect · xstate
-(chantier d'architecture en cours, voir `PLAN_EFFECT_XSTATE.md`)
+(chantier d'architecture livré, voir `PLAN_EFFECT_XSTATE.md` et invariants
+#11-13 ci-dessous)
 
 ## Learning more about Effect
 
@@ -41,6 +42,26 @@ explication**, pas contournée.
 9. **Boîtes blanches jusqu'à la Phase 5.** Pas d'assets finaux avant que le
    gameplay soit validé.
 10. **Aucune animation ne bloque le joueur.** Pas de rechargement immobilisant.
+11. **Frontière Effect synchrone stricte.** Le pas fixe ET le rendu/
+    l'interpolation passent exclusivement par `runGameplaySync`
+    (`src/core/runtime.ts`, `Runtime.runSync` sur `GameRuntime`) : zéro
+    `Effect.tryPromise`/`Effect.promise`/`Effect.async`/`Effect.sleep` dans
+    ces arbres — sinon `runSync` lève un defect (le garde-fou le rend
+    bruyant en console plutôt que silencieux). Le chargement de niveau et le
+    hot-reload restent à la frontière asynchrone (`GameRuntime.runPromise`/
+    `runFork`, `game/level/loader.ts`/`hotReload.ts`), jamais appelés depuis
+    `updateGameplay`.
+12. **RNG déterministe uniquement.** Jamais `Math.random()`, jamais le
+    service `Random` par défaut d'Effect. Service canonique :
+    `DeterministicRandom` (`src/core/random.ts`), qui enveloppe mulberry32.
+    Contrainte dure : le rejeu d'input (F9/F10, `core/inputRecorder.ts`)
+    dépend de cette continuité.
+13. **XState sans temps mural.** Interdiction des transitions retardées
+    `after` (`setTimeout` réel). Toute durée d'état vit dans
+    `context.stateTimer`, décrémentée par un évènement `TICK` envoyé une
+    fois par pas fixe avec le `gameplayDt` réel (hitstop inclus) — voir
+    `game/entities/enemyMachine.ts`. Sinon le hitstop ne ralentirait plus
+    les ennemis, régression invisible mais réelle.
 
 ## Conventions de nommage glTF
 
@@ -71,6 +92,53 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
+> **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
+> par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute
+> la boucle jeu — gameplay (M6), raycasting (M3), pathfinding (M4), rendu et
+> interpolation (M7) — derrière une frontière synchrone stricte unique
+> (`runGameplaySync`, invariant #11 ci-dessus) ; `loader.ts`/`hotReload.ts`
+> sont entièrement retrofités vers Effect (M2, erreurs typées, mêmes
+> comportements observables qu'avant — principe transverse #4 du plan).
+> Costard et Directeur partagent désormais une seule machine XState
+> (`enemyMachine.ts`, M5) au lieu de deux implémentations dupliquées. Le
+> flux d'écran (menu → jeu → mort/fin de niveau → reset) tourne sur une
+> machine XState dédiée (`gameFlowMachine.ts`, M8) au lieu de
+> `window.location.reload()` — vrai reset en place, plus de rechargement de
+> page. Un vrai pathfinding 2.5D existe maintenant (`PathfindingService`,
+> M4) ; aucune zone existante n'a été retouchée pour l'exploiter (hors
+> scope, décision actée en §0 du plan) — poser un ennemi sur une mezzanine
+> reste une décision de level design séparée à prendre consciemment.
+>
+> **Action §11.2 du plan ("retirer la note de duplication Suit/Director de
+> CLAUDE.md") vérifiée sans effet à faire ici** : aucune note de ce type
+> n'existe littéralement dans ce fichier — le seul endroit qui la
+> documentait était les commentaires de tête de `suit.ts`/`director.ts`,
+> déjà mis à jour AU jalon M5 lui-même ("dédupliqué avec lui au jalon M5").
+> Rien à retirer dans ce fichier.
+>
+> **Écart trouvé pendant M9, non corrigé (hors scope d'un jalon
+> documentation) :** le RNG déterministe n'est pas unifié derrière le
+> service `DeterministicRandom` malgré l'invariant #12 — `weapons.ts`
+> (dispersion du pompe) et `enemyMachine.ts::createEnemyPrng` gardent
+> chacun leur propre copie locale de mulberry32 plutôt que d'obtenir leur
+> générateur via ce service. Aucune régression de déterminisme constatée
+> (les trois implémentations sont identiques bit à bit, toutes seedées,
+> jamais `Math.random()`) — seulement une centralisation non terminée,
+> détaillée dans le nouveau skill `effect-xstate-cassandre`. À finir dans
+> une tâche de suivi dédiée si la duplication de code devient gênante, pas
+> un blocage.
+>
+> `pnpm build` propre, `pnpm test` vert (116/116) au moment de ce jalon.
+> Skills mis à jour pour refléter ces patterns : `enemy-state-machine`
+> (pathfinding + machine XState partagée), `fixed-timestep-loop`
+> (`runGameplaySync`), `react-hud-bridge` (pont XState → zustand, même
+> discipline que le reste du HUD), `gltf-level-conventions` (retrofit
+> Effect de `loader.ts`/`hotReload.ts`) ; nouveau skill dédié
+> `effect-xstate-cassandre` pour les deux patterns propres à ce projet
+> (frontière synchrone stricte, timer manuel au lieu de `after`) que les
+> agents spécialisés (`core-loop`, `entity-designer`, `level-pipeline`,
+> `shell`) peuvent charger sans redécouvrir le plan à chaque fois.
+>
 > Phase 6 — Habillage, livrée (2026-08-24). Décomposée et routée par l'agent
 > `director` vers `core-loop` (rebinding) puis `shell` (tout le reste) — voir
 > `PLAN_PROTO_BOOMER_SHOOTER.md`, section "Phase 6", pour les 6 livrables du

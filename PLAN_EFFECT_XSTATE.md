@@ -377,6 +377,63 @@ Ces règles priment sur toute commodité locale. Toute dérogation doit être do
 
 ## 11. Jalon M9 — Documentation et verrouillage des conventions
 
+> **✅ Livré (2026-09-04), fait directement (pas d'agent — routage suggéré
+> en §12 : "director, ou directement, sans agent").** Les 5 actions listées
+> ci-dessous sont faites : (1) invariants #11-13 ajoutés à `CLAUDE.md`
+> (frontière synchrone stricte `runGameplaySync`, RNG déterministe unique
+> `DeterministicRandom`, XState sans `after`) ; (2) **vérifié sans effet à
+> faire** — aucune note de duplication Suit/Director n'existe littéralement
+> dans `CLAUDE.md` (recherché dans tout l'historique git du fichier : zéro
+> occurrence) ; le seul endroit qui la documentait était les commentaires de
+> tête de `suit.ts`/`director.ts`, déjà mis à jour AU jalon M5 lui-même
+> ("dédupliqué avec lui au jalon M5") — noté dans `CLAUDE.md` pour que ça ne
+> soit pas redécouvert comme un oubli plus tard ; (3) nouvelle entrée en
+> tête de "Phase courante" résumant M0-M9 ; (4) les 4 skills mis à jour par
+> des ajouts CIBLÉS (pas de réécriture) — `enemy-state-machine` (le pathfinding
+> réel de M4 contredisait littéralement son "pas de navmesh, un système à
+> maintenir ne l'est pas" ; ajout de la machine XState partagée de M5),
+> `fixed-timestep-loop` (`runGameplaySync` enveloppe `updateGameplay` ET
+> `interpolateVisuals`, un seul garde-fou pour les deux), `react-hud-bridge`
+> (le pont `actor.subscribe(...)` du flux d'écran, même discipline que le
+> reste du HUD, pas `@xstate/react`), `gltf-level-conventions` (retrofit
+> Effect de M2, erreurs typées, comportement observable inchangé) ; (5)
+> nouveau skill créé, `effect-xstate-cassandre` — les deux patterns cités en
+> action 5 (`runGameplaySync`, timer manuel au lieu de `after`) plus le RNG
+> déterministe et où poser un nouveau service Effect (`GameLayer`).
+>
+> **Écart trouvé en vérifiant l'état réel du code avant d'écrire l'invariant
+> #12** (pas une régression de ce jalon — un état déjà présent, jamais
+> vérifié explicitement avant) : `DeterministicRandom` (`src/core/random.ts`)
+> existe bien comme service Effect, mais `weapons.ts` (dispersion du pompe)
+> et `enemyMachine.ts::createEnemyPrng` gardent chacun leur propre copie
+> locale de mulberry32 plutôt que d'obtenir leur générateur via ce service —
+> la note de tête de `random.ts` elle-même documentait déjà cette
+> centralisation comme "prévue pour M6, pas ici", jamais faite. Aucune
+> régression de déterminisme (les trois implémentations sont identiques bit
+> à bit, toutes seedées, jamais `Math.random()`) : le comportement observable
+> par l'invariant #12 ("aucun hasard non déterministe") tient déjà. Documenté
+> comme écart connu dans `CLAUDE.md` et le nouveau skill plutôt que corrigé
+> silencieusement ici — un vrai retrofit de deux call sites est un
+> changement de code, hors scope d'un jalon documentation, et n'a pas été
+> demandé.
+>
+> `pnpm build` propre, `pnpm test` vert (116/116, aucun test touché par ce
+> jalon — uniquement des fichiers `.md`) vérifiés avant et après les
+> modifications.
+>
+> **Non fait — jugé hors scope de ce jalon, pas un oubli** : le "vrai"
+> nettoyage de l'écart RNG ci-dessus (router `weapons.ts`/`enemyMachine.ts`
+> vers `DeterministicRandom`), qui serait un changement de code review-able
+> séparément, pas une action de documentation.
+>
+> **Ordre d'exécution suggéré (§12) noté pour référence** : M9 était la
+> dernière ligne du tableau de routage. Le chantier M0-M9 est maintenant
+> complet du point de vue de ce plan — toute évolution future du code
+> touché ici (nouveaux services Effect, nouvelles machines XState) doit
+> suivre les invariants #11-13 de `CLAUDE.md` et le skill
+> `effect-xstate-cassandre`, pas redécouvrir les principes transverses de
+> la section 1 de ce plan à chaque fois.
+
 **Objectif.** Mettre à jour `CLAUDE.md` et les skills concernés pour que tout agent (ou session future) respecte ces nouvelles règles sans avoir à relire ce plan en entier.
 
 **Actions.**

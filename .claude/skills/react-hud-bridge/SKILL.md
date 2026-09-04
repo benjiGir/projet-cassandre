@@ -64,6 +64,16 @@ if (now - lastPublish > 100) { publish(); lastPublish = now; }
 
 Personne ne perçoit une barre de vie mise à jour 60 fois par seconde.
 
+## Machines XState : même pont, pas `@xstate/react`
+
+Le flux d'écran (`src/ui/gameFlowMachine.ts`, jalon M8 de
+`PLAN_EFFECT_XSTATE.md`) pousse son état dans ce même store via
+`actor.subscribe((snapshot) => useGameStore.getState().setFlowState(snapshot.value))`
+— React ne s'abonne toujours qu'au store zustand, jamais directement à
+l'acteur (`@xstate/react` est interdit). Un changement d'état de flux est un
+évènement DISCRET (clic, mort, sortie de niveau), pas un flux à 60 Hz :
+aucun throttle nécessaire pour ce pont-là, contrairement à `setDebug`.
+
 ## Le panneau de debug est l'exception
 
 Il peut afficher à 30 Hz — mais il doit être **démontable en une ligne** et

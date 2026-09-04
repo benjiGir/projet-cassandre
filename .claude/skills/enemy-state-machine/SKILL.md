@@ -1,6 +1,6 @@
 ---
 name: enemy-state-machine
-description: Machine à états des ennemis, télégraphie d'attaque, lisibilité du combat, navigation sans navmesh, mort et gibs. Charger pour toute tâche sur les entités hostiles ou l'IA de combat.
+description: Machine à états des ennemis (XState partagée Suit/Director), télégraphie d'attaque, lisibilité du combat, pathfinding 2.5D + évitement local, mort et gibs. Charger pour toute tâche sur les entités hostiles ou l'IA de combat.
 ---
 
 # Ennemis et lisibilité du combat
@@ -26,6 +26,16 @@ IDLE ──(vue joueur)──> ALERTE ──> POURSUITE ──> TIR
 **Chaque état a une pose de sprite distincte.** Un état invisible pour le
 joueur est un état inutile : supprime-le plutôt que de l'implémenter.
 
+Implémentée comme une **seule machine XState partagée** entre Costard et
+Directeur (`src/game/entities/enemyMachine.ts`, jalon M5 de
+`PLAN_EFFECT_XSTATE.md` — avant, deux implémentations dupliquées). Aucune
+transition retardée par `after` (`setTimeout` réel) : toute durée d'état
+(`alertDuration`, `attackTelegraphDuration`, `staggerDuration`,
+`deathFrameDuration`...) vit dans `context.stateTimer`, décrémentée par un
+évènement `TICK` envoyé une fois par pas fixe avec le `gameplayDt` réel —
+sinon le hitstop ne ralentirait plus les ennemis. Voir invariant #13 de
+`CLAUDE.md` et le skill `effect-xstate-cassandre`.
+
 ## Les quatre règles de lisibilité
 
 1. **Toute attaque a une télégraphie.** Au moins une frame d'anticipation
@@ -41,16 +51,24 @@ joueur est un état inutile : supprime-le plutôt que de l'implémenter.
 
 ## Navigation
 
-**Pas de navmesh.** Ligne droite vers le joueur + raycast d'évitement latéral :
+**Un vrai pathfinding 2.5D existe** (`PathfindingService`,
+`src/game/level/pathfinding.ts`, jalon M4 de `PLAN_EFFECT_XSTATE.md`) : un
+graphe de praticabilité baké par niveau, pas seulement l'évitement local
+d'avant. L'évitement à 3 rayons (avant, avant-gauche 30°, avant-droit 30°)
+décrit ci-dessous **reste utilisé** pour l'esquive fine à courte portée —
+les deux coexistent, ce n'est pas un remplacement.
 
 ```ts
 // 3 rays : avant, avant-gauche 30°, avant-droit 30°
 // si l'avant est bloqué, dévier vers le côté le plus dégagé
 ```
 
-Un ennemi coincé derrière une gondole est acceptable au stade prototype. Un
-système de navigation à maintenir ne l'est pas. Si le level design produit
-trop de blocages, c'est le niveau qu'on corrige, pas l'IA.
+Un ennemi coincé derrière une gondole reste acceptable au stade prototype.
+Si le level design produit trop de blocages, c'est d'abord le niveau qu'on
+corrige. Aucune zone existante n'a été retouchée pour exploiter le vrai
+pathfinding (décision explicite, hors scope de M4) — poser un ennemi sur une
+mezzanine ou dans un escalier reste une décision de level design séparée à
+prendre consciemment, pas un acquis automatique du nouveau système.
 
 ## Contraintes techniques
 
