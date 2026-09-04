@@ -1,21 +1,31 @@
 import { useGameStore } from "../game/state";
-import { reloadSamePage, reloadToMainMenu } from "./screenNav";
 
 /**
  * Écran de mort plein cadre (Phase 6). Purement présentationnel : lit
- * `state.isDead` (écrit UNE FOIS par `main.ts`, voir sa doc dans
- * `game/state.ts`) et retourne `null` tant qu'il est faux — même pattern que
+ * `state.flowState` (Jalon M8, `ui/gameFlowMachine.ts` — poussé ici via
+ * `actor.subscribe(...)` dans `main.ts`, remplace l'ancien booléen `isDead`)
+ * et retourne `null` tant qu'il ne vaut pas `"dead"` — même pattern que
  * `HudMessage.tsx`. Aucune logique de jeu ici : l'arrêt réel du gameplay
  * (dégâts/tir/interactions qui ne font plus rien) est une garde dans
  * `main.ts::updateGameplay`, pas un effet de ce composant.
  *
- * Boutons "Rejouer"/"Retour au menu principal" : voir `screenNav.ts` pour la
- * décision (rechargement de page complet, pas de reset en place).
+ * Boutons "Rejouer"/"Retour au menu principal" : `onReplay`/`onReturnToMenu`
+ * sont de VRAIES fonctions de reset passées par `App.tsx` (voir sa doc) —
+ * `main.ts::replay`/`returnToMenu`, un dispose + reconstruction complète de
+ * `PhysicsWorld`/`SuitManager`/`DirectorManager`/`WeaponSystem`/la session de
+ * niveau, PAS `window.location.reload()`/`assign()` (`ui/screenNav.ts`,
+ * supprimé par ce jalon — plus aucun appelant).
  */
-export function DeathScreen() {
-  const isDead = useGameStore((s) => s.isDead);
+export interface DeathScreenProps {
+  onReplay: () => void;
+  onReturnToMenu: () => void;
+}
+
+export function DeathScreen(props: DeathScreenProps) {
+  const { onReplay, onReturnToMenu } = props;
+  const flowState = useGameStore((s) => s.flowState);
   const views = useGameStore((s) => s.debug.views);
-  if (!isDead) return null;
+  if (flowState !== "dead") return null;
 
   return (
     <div
@@ -41,7 +51,7 @@ export function DeathScreen() {
       <div style={{ fontSize: 13, color: "#999" }}>{`Spectateurs au moment de la coupure : ${views.toLocaleString("fr-FR")}`}</div>
       <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
         <button
-          onClick={reloadSamePage}
+          onClick={onReplay}
           style={{
             padding: "10px 20px",
             fontFamily: "monospace",
@@ -56,7 +66,7 @@ export function DeathScreen() {
           Rejouer
         </button>
         <button
-          onClick={reloadToMainMenu}
+          onClick={onReturnToMenu}
           style={{
             padding: "10px 20px",
             fontFamily: "monospace",

@@ -1,20 +1,28 @@
 import { useGameStore } from "../game/state";
-import { reloadSamePage, reloadToMainMenu } from "./screenNav";
 
 /**
  * Écran de fin de niveau plein cadre (Phase 6). Même pattern que
- * `DeathScreen.tsx` : lit `state.isLevelComplete` (écrit UNE FOIS par
- * `main.ts` quand le joueur franchit `door_e_exit` déjà déverrouillée — voir
- * sa doc dans `game/state.ts`), retourne `null` sinon. Aucun chrono (le plan
- * le marque explicitement optionnel — pas construit ici, voir le rapport de
- * tâche).
+ * `DeathScreen.tsx` : lit `state.flowState` (Jalon M8, remplace l'ancien
+ * booléen `isLevelComplete` — voir sa doc dans `game/state.ts`), retourne
+ * `null` tant qu'il ne vaut pas `"levelComplete"`. Aucun chrono (le plan le
+ * marque explicitement optionnel — pas construit ici).
+ *
+ * `onReplay`/`onReturnToMenu` : voir la doc de `DeathScreenProps` — mêmes
+ * fonctions de reset réel, partagées entre les deux écrans (comme
+ * `ui/screenNav.ts` avant ce jalon, désormais supprimé).
  */
-export function LevelCompleteScreen() {
-  const isLevelComplete = useGameStore((s) => s.isLevelComplete);
+export interface LevelCompleteScreenProps {
+  onReplay: () => void;
+  onReturnToMenu: () => void;
+}
+
+export function LevelCompleteScreen(props: LevelCompleteScreenProps) {
+  const { onReplay, onReturnToMenu } = props;
+  const flowState = useGameStore((s) => s.flowState);
   const views = useGameStore((s) => s.debug.views);
   const secretsFound = useGameStore((s) => s.debug.secretsFound);
   const secretsTotal = useGameStore((s) => s.debug.secretsTotal);
-  if (!isLevelComplete) return null;
+  if (flowState !== "levelComplete") return null;
 
   return (
     <div
@@ -43,7 +51,7 @@ export function LevelCompleteScreen() {
       </div>
       <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
         <button
-          onClick={reloadSamePage}
+          onClick={onReplay}
           style={{
             padding: "10px 20px",
             fontFamily: "monospace",
@@ -58,7 +66,7 @@ export function LevelCompleteScreen() {
           Rejouer
         </button>
         <button
-          onClick={reloadToMainMenu}
+          onClick={onReturnToMenu}
           style={{
             padding: "10px 20px",
             fontFamily: "monospace",

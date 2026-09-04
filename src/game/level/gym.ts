@@ -84,7 +84,7 @@ function materialFor(materials: Map<number, THREE.MeshLambertMaterial>, color: n
 
 /** Boîte axis-aligned : mesh + collider fixe cuboid, centrés sur (cx,cy,cz). */
 function addBox(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld,
   materials: Map<number, THREE.MeshLambertMaterial>,
   color: number,
@@ -110,7 +110,7 @@ function addBox(
  * qui monte selon X, les rampes de la zone sud montent selon Z).
  */
 function addRampBetween(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld,
   materials: Map<number, THREE.MeshLambertMaterial>,
   color: number,
@@ -153,7 +153,7 @@ const CORRIDOR_OPENING = 6; // largeur de l'ouverture nord, doit matcher CORRIDO
 const RAMPS_OPENING = 20; // largeur de l'ouverture sud, doit matcher RAMPS_WIDTH
 const EAST_OPENING = 20; // largeur de l'ouverture est, doit matcher EAST_WING_WIDTH
 
-function buildOpenArea(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildOpenArea(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   addBox(scene, physics, materials, darken(OPEN_AREA_COLOR, 0.6), 0, -FLOOR_THICK / 2, 0, HUB_SIZE, FLOOR_THICK, HUB_SIZE);
 
   const wallY = WALL_HEIGHT / 2;
@@ -188,7 +188,7 @@ const CORRIDOR_Z_START = HUB_HALF; // 22, mur nord du hub
 const CORRIDOR_Z_END = CORRIDOR_Z_START + CORRIDOR_LENGTH; // 66
 const CORRIDOR_MARKER_SPACING = 5;
 
-function buildCorridor(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildCorridor(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (CORRIDOR_Z_START + CORRIDOR_Z_END) / 2;
   addBox(scene, physics, materials, darken(CORRIDOR_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, CORRIDOR_WIDTH, FLOOR_THICK, CORRIDOR_LENGTH);
 
@@ -224,7 +224,7 @@ const RAMP_WIDTH = 4;
 const RAMP_THICKNESS = 0.4;
 const RAMP_LANDING_DEPTH = 2.5;
 
-function buildRampsZone(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildRampsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (RAMPS_Z_START + RAMPS_Z_END) / 2;
   const depth = RAMPS_Z_START - RAMPS_Z_END;
   addBox(scene, physics, materials, darken(RAMPS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
@@ -281,7 +281,7 @@ const PLATFORM_WIDTH = 4;
 const PLATFORM_DEPTH = 3;
 const PLATFORM_Z = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2; // -45, ~4 m de recul depuis la limite de l'aile rampes
 
-function buildPlatformsZone(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildPlatformsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2;
   const depth = PLATFORMS_Z_START - PLATFORMS_Z_END;
   addBox(scene, physics, materials, darken(PLATFORMS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
@@ -331,7 +331,7 @@ const PIT_DEPTH = 1.5; // fond de fosse, avec rampe de remontée : pas punitif
 const PIT_Z_CENTER = EAST_WING_HALF / 2; // centre de la bande gouffres, dans z in [0, 10] -> centre à z=5
 const RECOVERY_RAMP_RUN = 3;
 
-function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const wallY = WALL_HEIGHT / 2;
 
   // --- sol + murs de la section escaliers --------------------------------
@@ -458,9 +458,20 @@ const SPAWN_YAW = Math.PI; // face +Z, vers l'entrée du couloir
 // ---------------------------------------------------------------------------
 
 /** Gym boîte blanche : rampes, escaliers, plateformes, gouffres, couloir
- * long, espace ouvert. Construit à la main, aucune abstraction glTF. */
+ * long, espace ouvert. Construit à la main, aucune abstraction glTF.
+ *
+ * `scene` accepte n'importe quel `THREE.Object3D` (typé large depuis le
+ * jalon M8, PLAN_EFFECT_XSTATE.md — avant, restreint à `THREE.Scene`) :
+ * cette fonction n'appelle jamais rien de spécifique à `Scene` (background,
+ * fog...), seulement `.add(mesh)`. `main.ts::bootGameSession` passe
+ * désormais un `THREE.Group` dédié à la partie courante plutôt que la scène
+ * globale, pour pouvoir retirer TOUTE la géométrie de la gym en un seul
+ * `remove()` lors d'un reset ("Rejouer"/"Retour au menu") — sans ce
+ * changement, un reset sur le chemin `?level=gym` dupliquerait
+ * indéfiniment les boîtes de la gym à chaque partie (aucun autre code de ce
+ * fichier ne garde de référence vers les meshes qu'il crée). */
 export function buildGym(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld
 ): {
   spawn: THREE.Vector3;

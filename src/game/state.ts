@@ -1,5 +1,25 @@
 import { create } from "zustand";
 
+/**
+ * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — états de la machine de flux d'écran
+ * (`src/ui/gameFlowMachine.ts`). Définie ICI (pas dans `ui/gameFlowMachine.ts`
+ * puis importée) pour garder le sens de dépendance établi dans ce fichier :
+ * `game/state.ts` est la source de vocabulaire partagée, `src/ui/*` en
+ * dépend (jamais l'inverse, voir `DeathScreen.tsx`/`Hud.tsx` qui importent
+ * déjà `useGameStore` d'ici) — un import `game/state.ts -> ui/*` inverserait
+ * ce sens sans raison. `ui/gameFlowMachine.ts` réutilise ce type tel quel
+ * pour ses clés d'état ; TypeScript vérifie la correspondance structurelle
+ * sans qu'aucun des deux fichiers n'ait besoin de dupliquer la liste.
+ */
+export type GameFlowState =
+  | "boot"
+  | "mainMenu"
+  | "options"
+  | "levelSelect"
+  | "playing"
+  | "dead"
+  | "levelComplete";
+
 interface DebugState {
   fps: number;
   /** Position des yeux du joueur, m. */
@@ -141,44 +161,66 @@ interface GameState {
    * mécanisme de "Rejouer" — un rechargement de page complet, qui repart
    * naturellement de `false` ici).
    */
-  isDead: boolean;
-  setDead: (dead: boolean) => void;
+  /**
+   * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — état COURANT de la machine de
+   * flux d'écran (`ui/gameFlowMachine.ts`), poussé ici via `actor.subscribe(...)`
+   * dans `main.ts` (pas de `@xstate/react` — invariant #2, même pont zustand
+   * que le reste de l'état exposé au HUD). REMPLACE les deux booléens
+   * `isDead`/`isLevelComplete` qui vivaient ici avant ce jalon : `DeathScreen`/
+   * `LevelCompleteScreen` lisent désormais `flowState === "dead"`/
+   * `"levelComplete"` ; le garde en tête d'`updateGameplay` (`main.ts`) lit
+   * `flowState === "playing"` directement sur l'acteur (pas via ce champ du
+   * store — l'acteur est déjà synchrone et disponible côté `main.ts`, un
+   * aller-retour zustand serait un détour inutile pour une lecture au pas
+   * fixe). Ce champ du store n'a donc qu'UN SEUL rôle : permettre aux
+   * composants React de réagir à un changement d'écran.
+   */
+  flowState: GameFlowState;
+  setFlowState: (state: GameFlowState) => void;
 
   /**
-   * Écran de fin de niveau (Phase 6). `true` quand le joueur a franchi
-   * `door_e_exit` APRÈS l'avoir déverrouillée (badge du Directeur) — voir
-   * `main.ts` pour la détection par volume (même famille que la détection
-   * AABB des secrets). N'existe que sur les niveaux qui ont réellement cette
-   * porte (le déclencheur lui-même est gaté côté `main.ts`, ce champ ne
-   * fait que refléter l'état une fois déclenché).
+   * Jalon M8 — remet `debug` à ses valeurs de boot et efface les messages
+   * transitoires (`hudMessage`/`heroLine`), sans toucher `flowState` (géré
+   * séparément par l'acteur de flux). Appelé par `main.ts::bootGameSession`
+   * à CHAQUE nouvelle partie (boot initial ET reset "Rejouer"/"Retour au
+   * menu") — avant ce jalon, aucun reset n'existait donc ce besoin n'avait
+   * jamais existé (`CLAUDE.md` documente ce trou comme jugé disproportionné
+   * en Phase 6). `debug` est reconstruit en un nouvel objet à chaque appel
+   * (jamais `INITIAL_DEBUG` partagé par référence) : `setDebug`/`setPlayerHp`
+   * etc. ne mutent jamais leur cible en place, mais repartir d'une copie
+   * fraîche reste la garantie la plus simple à vérifier.
    */
-  isLevelComplete: boolean;
-  setLevelComplete: (complete: boolean) => void;
+  resetGameStore: () => void;
 }
 
+/** Valeurs de boot de `debug` — voir `resetGameStore`. Extrait en constante
+ * plutôt que répété dans l'initialiseur ET dans `resetGameStore` (les deux
+ * doivent rester identiques par construction, pas par discipline manuelle). */
+const INITIAL_DEBUG: DebugState = {
+  fps: 0,
+  position: { x: 0, y: 0, z: 0 },
+  entityCount: 0,
+  steps: 0,
+  gameplayMs: 0,
+  physicsMs: 0,
+  renderMs: 0,
+  isGrounded: false,
+  horizontalSpeed: 0,
+  verticalSpeed: 0,
+  numCollisions: 0,
+  groundNormal: { x: 0, y: 1, z: 0 },
+  playerHp: 100,
+  playerMaxHp: 100,
+  shotgunAmmo: 0,
+  shotgunMaxAmmo: 0,
+  activeWeapon: "melee",
+  secretsFound: 0,
+  secretsTotal: 0,
+  views: 12,
+};
+
 export const useGameStore = create<GameState>((set) => ({
-  debug: {
-    fps: 0,
-    position: { x: 0, y: 0, z: 0 },
-    entityCount: 0,
-    steps: 0,
-    gameplayMs: 0,
-    physicsMs: 0,
-    renderMs: 0,
-    isGrounded: false,
-    horizontalSpeed: 0,
-    verticalSpeed: 0,
-    numCollisions: 0,
-    groundNormal: { x: 0, y: 1, z: 0 },
-    playerHp: 100,
-    playerMaxHp: 100,
-    shotgunAmmo: 0,
-    shotgunMaxAmmo: 0,
-    activeWeapon: "melee",
-    secretsFound: 0,
-    secretsTotal: 0,
-    views: 12,
-  },
+  debug: { ...INITIAL_DEBUG },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
   incrementSecretsFound: () =>
@@ -192,9 +234,8 @@ export const useGameStore = create<GameState>((set) => ({
   heroLine: null,
   showHeroLine: (text) => set({ heroLine: text }),
 
-  isDead: false,
-  setDead: (dead) => set({ isDead: dead }),
+  flowState: "boot",
+  setFlowState: (state) => set({ flowState: state }),
 
-  isLevelComplete: false,
-  setLevelComplete: (complete) => set({ isLevelComplete: complete }),
+  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, hudMessage: null, heroLine: null }),
 }));
