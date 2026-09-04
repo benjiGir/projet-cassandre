@@ -936,173 +936,210 @@ async function main() {
       // fin de partie légitime. Rien n'est mis à jour ce pas-ci : le monde
       // reste visuellement figé sur son dernier état (prev === curr à chaque
       // pas suivant), aucun jitter d'interpolation.
+      //
+      // Ce flag reste un accès direct au store (PAS une lecture de machine de
+      // flux d'écran) — jalon M8 (PLAN_EFFECT_XSTATE.md), pas celui-ci : voir
+      // la réduction de périmètre notée en tête du §8 (jalon M6) du plan.
       const partyFlags = useGameStore.getState();
       if (partyFlags.isDead || partyFlags.isLevelComplete) return;
 
-      const gameplayDt = clock.tick(dt);
+      // Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : le corps du pas fixe devient un
+      // seul Effect composé, séquencé en phases nommées — EXACTEMENT le même
+      // ordre et les mêmes appels qu'avant ce jalon, aucune réorganisation.
+      // `updateGameplay` reste EN PLACE dans cette fermeture (pas d'extraction
+      // hors de `main.ts` — voir la réduction de périmètre documentée dans le
+      // plan : ~25 variables locales mutables de `main()` rendraient une
+      // extraction propre disproportionnée pour ce jalon).
+      runGameplaySync(
+        Effect.gen(function* () {
+          const gameplayDt = clock.tick(dt);
 
-      let frame: InputFrame | null;
-      if (inputRecorder.isPlaying()) {
-        frame = inputRecorder.nextFrame();
-        if (frame) {
-          look.yaw = frame.yaw;
-          look.pitch = frame.pitch;
-        }
-      } else {
-        frame = captureInputFrame();
-        if (inputRecorder.isRecording()) inputRecorder.record(frame);
-      }
+          const activeFrame = yield* Effect.sync((): InputFrame => {
+            let frame: InputFrame | null;
+            if (inputRecorder.isPlaying()) {
+              frame = inputRecorder.nextFrame();
+              if (frame) {
+                look.yaw = frame.yaw;
+                look.pitch = frame.pitch;
+              }
+            } else {
+              frame = captureInputFrame();
+              if (inputRecorder.isRecording()) inputRecorder.record(frame);
+            }
+            return frame ?? emptyInputFrame();
+          });
 
-      const activeFrame = frame ?? emptyInputFrame();
-      player.update(gameplayDt, activeFrame);
+          yield* Effect.sync(() => player.update(gameplayDt, activeFrame));
 
-      // Interaction (`use_*`, touche E) — APRÈS `player.update` (donc
-      // `player.position` déjà avancée ce pas-ci) et AVANT `weapons.update`
-      // pour qu'un ramassage et un tir puissent se produire dans le même pas
-      // fixe (raffinement, pas une exigence). `useObjects` est RELUE ici à
-      // chaque appel, jamais mise en cache : un hot reload remplace tout le
-      // tableau (voir `interactive.ts`/`hotReload.ts`).
-      interaction.update(activeFrame.use, gltfLevelSession?.current?.useObjects ?? [], player.position, {
-        onCrowbarPickup: () => weapons.pickUpMelee(),
-        onShotgunPickup: () => weapons.pickUpShotgun(),
-        onExitDoorUse: (targetName) => {
-          if (unlockedDoors.has(targetName)) return; // déjà déverrouillée
-          if (!hasBadge) {
-            showHudMessage("Badge du Directeur requis");
-            playDoorSfx("locked");
-            return;
-          }
-          // `targetName === "door_e_exit"` : seule cette porte arme le suivi
-          // de fin de niveau (voir la doc de `exitDoorTracking`) —
-          // `door_b_frozen` (secret 1, `onFrozenStorageUse` ci-dessous)
-          // partage la même mécanique de porte mais n'est jamais une sortie.
-          if (unlockDoor(targetName, "Porte déverrouillée") && targetName === "door_e_exit") {
-            setupExitDoorTracking(targetName);
-          }
-        },
-        onFrozenStorageUse: (targetName) => {
-          if (unlockedDoors.has(targetName)) return; // déjà ouverte
-          unlockDoor(targetName, "Rayon surgelés ouvert");
-        },
-        onPaMicUse: () => {
-          triggerHeroLine(HERO_LINE_PA_MIC);
-        },
-        onToiletUse: () => {
-          const maxHp = useGameStore.getState().debug.playerMaxHp;
-          if (playerHp >= maxHp) {
-            showHudMessage("Vous êtes déjà en pleine forme.");
-            return;
-          }
-          playerHp = Math.min(maxHp, playerHp + TOILET_HEAL_AMOUNT);
-          useGameStore.getState().setPlayerHp(playerHp);
-          // Info FACTUELLE (canal système, sans cooldown) + réplique
-          // (canal dédié, cooldownée) — voir la ligne de partage documentée
-          // sur `hudMessage`/`heroLine` dans `game/state.ts`.
-          showHudMessage(`+${TOILET_HEAL_AMOUNT} PV`);
-          triggerHeroLine(HERO_LINE_TOILET);
-        },
-      });
+          // Interaction (`use_*`, touche E) — APRÈS `player.update` (donc
+          // `player.position` déjà avancée ce pas-ci) et AVANT `weapons.update`
+          // pour qu'un ramassage et un tir puissent se produire dans le même pas
+          // fixe (raffinement, pas une exigence). `useObjects` est RELUE ici à
+          // chaque appel, jamais mise en cache : un hot reload remplace tout le
+          // tableau (voir `interactive.ts`/`hotReload.ts`).
+          yield* Effect.sync(() =>
+            interaction.update(activeFrame.use, gltfLevelSession?.current?.useObjects ?? [], player.position, {
+              onCrowbarPickup: () => weapons.pickUpMelee(),
+              onShotgunPickup: () => weapons.pickUpShotgun(),
+              onExitDoorUse: (targetName) => {
+                if (unlockedDoors.has(targetName)) return; // déjà déverrouillée
+                if (!hasBadge) {
+                  showHudMessage("Badge du Directeur requis");
+                  playDoorSfx("locked");
+                  return;
+                }
+                // `targetName === "door_e_exit"` : seule cette porte arme le suivi
+                // de fin de niveau (voir la doc de `exitDoorTracking`) —
+                // `door_b_frozen` (secret 1, `onFrozenStorageUse` ci-dessous)
+                // partage la même mécanique de porte mais n'est jamais une sortie.
+                if (unlockDoor(targetName, "Porte déverrouillée") && targetName === "door_e_exit") {
+                  setupExitDoorTracking(targetName);
+                }
+              },
+              onFrozenStorageUse: (targetName) => {
+                if (unlockedDoors.has(targetName)) return; // déjà ouverte
+                unlockDoor(targetName, "Rayon surgelés ouvert");
+              },
+              onPaMicUse: () => {
+                triggerHeroLine(HERO_LINE_PA_MIC);
+              },
+              onToiletUse: () => {
+                const maxHp = useGameStore.getState().debug.playerMaxHp;
+                if (playerHp >= maxHp) {
+                  showHudMessage("Vous êtes déjà en pleine forme.");
+                  return;
+                }
+                playerHp = Math.min(maxHp, playerHp + TOILET_HEAL_AMOUNT);
+                useGameStore.getState().setPlayerHp(playerHp);
+                // Info FACTUELLE (canal système, sans cooldown) + réplique
+                // (canal dédié, cooldownée) — voir la ligne de partage documentée
+                // sur `hudMessage`/`heroLine` dans `game/state.ts`.
+                showHudMessage(`+${TOILET_HEAL_AMOUNT} PV`);
+                triggerHeroLine(HERO_LINE_TOILET);
+              },
+            }),
+          );
 
-      // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
-      // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
-      // position interpolée pour le rendu. Voir la note de déterminisme dans
-      // `WeaponSystem.update` — une origine interpolée casserait le rejeu
-      // exact du raycast d'arme.
-      weaponEyeOrigin.set(
-        player.position.x,
-        player.position.y + player.eyeOffset,
-        player.position.z,
+          // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
+          // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
+          // position interpolée pour le rendu. Voir la note de déterminisme dans
+          // `WeaponSystem.update` — une origine interpolée casserait le rejeu
+          // exact du raycast d'arme.
+          yield* Effect.sync(() => {
+            weaponEyeOrigin.set(
+              player.position.x,
+              player.position.y + player.eyeOffset,
+              player.position.z,
+            );
+            weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
+          });
+
+          // APRÈS `weapons.update` : les `hitEvents` du pas courant existent déjà
+          // (voir la doc de `SuitManager.update`). `player.position` sert de
+          // cible de poursuite (XZ), `weaponEyeOrigin` — la même origine
+          // AUTHENTIQUE que celle qui vient de servir aux raycasts d'armes,
+          // jamais une position interpolée — sert de cible de ligne de
+          // vue/visée pour les Costards.
+          yield* Effect.sync(() => {
+            suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
+            directorManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
+          });
+
+          // Résolution badge / porte / sortie de niveau / secrets — même
+          // ordre et mêmes corps qu'avant ce jalon, regroupés en une seule
+          // phase finale (aucun de ces blocs ne dépend d'un Effect en soi).
+          yield* Effect.sync(() => {
+            // Badge du Directeur : apparition (mesh) à la mort, une seule fois ;
+            // ramassage par proximité SEULE (pas de touche E, voir la doc de
+            // `DirectorBadge`) — même discipline de mutation directe en pas fixe
+            // que `interaction.update` ci-dessus pour `use_crowbar`.
+            if (directorManager.badge && !badgeMesh) {
+              badgeMesh = new THREE.Mesh(badgeGeometry, badgeMaterial);
+              badgeMesh.position.copy(directorManager.badge.position);
+              scene.add(badgeMesh);
+            }
+            if (directorManager.tryCollectBadge(player.position) && badgeMesh) {
+              scene.remove(badgeMesh);
+              badgeMesh = null;
+              hasBadge = true;
+              showHudMessage("Badge du Directeur récupéré");
+            }
+
+            // Glissement cosmétique de la porte débloquée (voir sa doc plus haut) —
+            // le collider est déjà désactivé depuis le déverrouillage, ceci ne fait
+            // que déplacer le mesh hors du passage.
+            if (openingDoor) {
+              openingDoor.t = Math.min(1, openingDoor.t + gameplayDt / DOOR_OPEN_DURATION);
+              const y = openingDoor.startY + (openingDoor.targetY - openingDoor.startY) * openingDoor.t;
+              const current = openingDoor.body.translation();
+              openingDoor.body.setTranslation({ x: current.x, y, z: current.z }, true);
+              if (openingDoor.t >= 1) openingDoor = null;
+            }
+
+            // Fin de niveau : franchissement du vantail déverrouillé — voir la
+            // doc de `exitDoorTracking` plus haut. `exitDoorTracking` reste `null`
+            // tant que `door_e_exit` n'a jamais été déverrouillée sur CE niveau
+            // (armé uniquement dans `onExitDoorUse` ci-dessus) : ce bloc ne se
+            // déclenche donc JAMAIS sur un niveau qui n'a pas cette porte (`gym`,
+            // n'importe quelle zone individuelle A-D), exactement la garde
+            // demandée par le plan.
+            if (exitDoorTracking) {
+              exitDoorOffsetScratch.subVectors(player.position, exitDoorTracking.doorPosition);
+              const signedInsideDistance =
+                exitDoorOffsetScratch.dot(exitDoorTracking.crossingAxis) * exitDoorTracking.insideSign;
+              if (signedInsideDistance < -(exitDoorTracking.halfExtentOnAxis + EXIT_CROSSING_MARGIN)) {
+                triggerLevelComplete();
+              }
+            }
+
+            // Secrets : présence dans le volume AABB, voir la doc de `foundSecrets`
+            // plus haut. `secrets` est RELUE ici à chaque appel, jamais mise en
+            // cache — même discipline que `useObjects`/`doors` ci-dessus (hot
+            // reload remplace tout le tableau).
+            for (const secret of gltfLevelSession?.current?.secrets ?? []) {
+              if (foundSecrets.has(secret.object)) continue;
+              const p = player.position;
+              const inside =
+                p.x >= secret.min.x &&
+                p.x <= secret.max.x &&
+                p.y >= secret.min.y &&
+                p.y <= secret.max.y &&
+                p.z >= secret.min.z &&
+                p.z <= secret.max.z;
+              if (!inside) continue;
+              foundSecrets.add(secret.object);
+              useGameStore.getState().incrementSecretsFound();
+              const found = useGameStore.getState().debug.secretsFound;
+              const total = useGameStore.getState().debug.secretsTotal;
+              // Info FACTUELLE (n/total, sans cooldown) + réplique de réaction
+              // (canal dédié, cooldownée) — même partage que `onToiletUse`.
+              showHudMessage(`Secret trouvé ! (${found}/${total})`);
+              playSfx("secret_found");
+              triggerHeroLine(HERO_LINE_SECRET_REACTION);
+            }
+          });
+        }),
       );
-      weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
-
-      // APRÈS `weapons.update` : les `hitEvents` du pas courant existent déjà
-      // (voir la doc de `SuitManager.update`). `player.position` sert de
-      // cible de poursuite (XZ), `weaponEyeOrigin` — la même origine
-      // AUTHENTIQUE que celle qui vient de servir aux raycasts d'armes,
-      // jamais une position interpolée — sert de cible de ligne de
-      // vue/visée pour les Costards.
-      suitManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
-      directorManager.update(gameplayDt, player.position, weaponEyeOrigin, weapons.hitEvents, currentNavGraph);
-
-      // Badge du Directeur : apparition (mesh) à la mort, une seule fois ;
-      // ramassage par proximité SEULE (pas de touche E, voir la doc de
-      // `DirectorBadge`) — même discipline de mutation directe en pas fixe
-      // que `interaction.update` ci-dessus pour `use_crowbar`.
-      if (directorManager.badge && !badgeMesh) {
-        badgeMesh = new THREE.Mesh(badgeGeometry, badgeMaterial);
-        badgeMesh.position.copy(directorManager.badge.position);
-        scene.add(badgeMesh);
-      }
-      if (directorManager.tryCollectBadge(player.position) && badgeMesh) {
-        scene.remove(badgeMesh);
-        badgeMesh = null;
-        hasBadge = true;
-        showHudMessage("Badge du Directeur récupéré");
-      }
-
-      // Glissement cosmétique de la porte débloquée (voir sa doc plus haut) —
-      // le collider est déjà désactivé depuis le déverrouillage, ceci ne fait
-      // que déplacer le mesh hors du passage.
-      if (openingDoor) {
-        openingDoor.t = Math.min(1, openingDoor.t + gameplayDt / DOOR_OPEN_DURATION);
-        const y = openingDoor.startY + (openingDoor.targetY - openingDoor.startY) * openingDoor.t;
-        const current = openingDoor.body.translation();
-        openingDoor.body.setTranslation({ x: current.x, y, z: current.z }, true);
-        if (openingDoor.t >= 1) openingDoor = null;
-      }
-
-      // Fin de niveau : franchissement du vantail déverrouillé — voir la
-      // doc de `exitDoorTracking` plus haut. `exitDoorTracking` reste `null`
-      // tant que `door_e_exit` n'a jamais été déverrouillée sur CE niveau
-      // (armé uniquement dans `onExitDoorUse` ci-dessus) : ce bloc ne se
-      // déclenche donc JAMAIS sur un niveau qui n'a pas cette porte (`gym`,
-      // n'importe quelle zone individuelle A-D), exactement la garde
-      // demandée par le plan.
-      if (exitDoorTracking) {
-        exitDoorOffsetScratch.subVectors(player.position, exitDoorTracking.doorPosition);
-        const signedInsideDistance = exitDoorOffsetScratch.dot(exitDoorTracking.crossingAxis) * exitDoorTracking.insideSign;
-        if (signedInsideDistance < -(exitDoorTracking.halfExtentOnAxis + EXIT_CROSSING_MARGIN)) {
-          triggerLevelComplete();
-        }
-      }
-
-      // Secrets : présence dans le volume AABB, voir la doc de `foundSecrets`
-      // plus haut. `secrets` est RELUE ici à chaque appel, jamais mise en
-      // cache — même discipline que `useObjects`/`doors` ci-dessus (hot
-      // reload remplace tout le tableau).
-      for (const secret of gltfLevelSession?.current?.secrets ?? []) {
-        if (foundSecrets.has(secret.object)) continue;
-        const p = player.position;
-        const inside =
-          p.x >= secret.min.x &&
-          p.x <= secret.max.x &&
-          p.y >= secret.min.y &&
-          p.y <= secret.max.y &&
-          p.z >= secret.min.z &&
-          p.z <= secret.max.z;
-        if (!inside) continue;
-        foundSecrets.add(secret.object);
-        useGameStore.getState().incrementSecretsFound();
-        const found = useGameStore.getState().debug.secretsFound;
-        const total = useGameStore.getState().debug.secretsTotal;
-        // Info FACTUELLE (n/total, sans cooldown) + réplique de réaction
-        // (canal dédié, cooldownée) — même partage que `onToiletUse`.
-        showHudMessage(`Secret trouvé ! (${found}/${total})`);
-        playSfx("secret_found");
-        triggerHeroLine(HERO_LINE_SECRET_REACTION);
-      }
     },
 
     stepPhysics(dt) {
-      physics.step(dt);
-      // `ballBody` n'existe que sur le chemin "gym" (voir sa construction
-      // plus haut) — rien à mettre à jour sinon, pas un bug.
-      if (ballBody) {
-        const t = ballBody.translation();
-        const r = ballBody.rotation();
-        ballCurrPos.set(t.x, t.y, t.z);
-        ballCurrQuat.set(r.x, r.y, r.z, r.w);
-      }
+      // Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : fait partie du pas fixe au
+      // sens de l'invariant #1 (comme `updateGameplay` ci-dessus), donc du
+      // même périmètre — trivial, un seul `Effect.sync`, aucune séquence à
+      // composer.
+      runGameplaySync(
+        Effect.sync(() => {
+          physics.step(dt);
+          // `ballBody` n'existe que sur le chemin "gym" (voir sa construction
+          // plus haut) — rien à mettre à jour sinon, pas un bug.
+          if (ballBody) {
+            const t = ballBody.translation();
+            const r = ballBody.rotation();
+            ballCurrPos.set(t.x, t.y, t.z);
+            ballCurrQuat.set(r.x, r.y, r.z, r.w);
+          }
+        }),
+      );
     },
 
     interpolateVisuals(alpha) {
