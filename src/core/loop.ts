@@ -11,6 +11,24 @@ export interface LoopStats {
   accumulator: number;
   /** Facteur d'interpolation passé au rendu. */
   alpha: number;
+  /**
+   * Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : compteurs de temps par phase, en
+   * millisecondes, pour `DebugPanel` — le filet de sécurité concret du
+   * risque de perf assumé dans ce chantier (§0 du plan : aucun budget fixé
+   * à l'avance, mais toute dégradation doit être visible immédiatement).
+   * `gameplayMs`/`physicsMs` sont la SOMME sur tous les pas fixes exécutés
+   * PENDANT cette frame d'affichage (`steps` peut dépasser 1). `renderMs`
+   * couvre `interpolateVisuals` + `updateFx` + `render` ensemble (tout ce
+   * qui tourne au taux d'affichage) — MESURÉ SUR LA FRAME PRÉCÉDENTE : la
+   * durée réelle de ces trois callbacks n'est connue qu'après leur propre
+   * exécution, dont `updateFx` (qui reçoit ces `stats`) fait partie — un
+   * décalage d'une frame, sans conséquence pour un indicateur de debug lissé
+   * (même principe que `fpsSmoothed` dans `main.ts`, déjà lissé sur
+   * plusieurs frames).
+   */
+  gameplayMs: number;
+  physicsMs: number;
+  renderMs: number;
 }
 
 export interface LoopCallbacks {
@@ -70,6 +88,11 @@ export interface LoopCallbacks {
 export function startLoop(callbacks: LoopCallbacks) {
   let accumulator = 0;
   let last = performance.now();
+  // Voir la doc de `LoopStats.renderMs` : durée de la frame d'affichage
+  // PRÉCÉDENTE (interpolateVisuals + updateFx + render), reportée au tour
+  // suivant faute de pouvoir se mesurer elle-même avant que `updateFx` (qui
+  // consomme ces stats) n'ait fini de s'exécuter.
+  let lastRenderMs = 0;
 
   function frame(now: number) {
     requestAnimationFrame(frame);
@@ -82,19 +105,27 @@ export function startLoop(callbacks: LoopCallbacks) {
     input.beginFrame();
 
     let steps = 0;
+    let gameplayMs = 0;
+    let physicsMs = 0;
     while (accumulator >= FIXED_DT) {
       input.beginFixedStep();
       callbacks.snapshotPrevious();
+      const gameplayStart = performance.now();
       callbacks.updateGameplay(FIXED_DT);
+      gameplayMs += performance.now() - gameplayStart;
+      const physicsStart = performance.now();
       callbacks.stepPhysics(FIXED_DT);
+      physicsMs += performance.now() - physicsStart;
       accumulator -= FIXED_DT;
       steps++;
     }
 
     const alpha = accumulator / FIXED_DT;
+    const renderStart = performance.now();
     callbacks.interpolateVisuals(alpha);
-    callbacks.updateFx(frameTime, { steps, accumulator, alpha });
+    callbacks.updateFx(frameTime, { steps, accumulator, alpha, gameplayMs, physicsMs, renderMs: lastRenderMs });
     callbacks.render();
+    lastRenderMs = performance.now() - renderStart;
 
     // Clôture de la frame d'affichage : DOIT rester le dernier appel. Les
     // callbacks ci-dessus tournent au taux d'affichage et lisent des fronts

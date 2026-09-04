@@ -20,6 +20,7 @@ import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "./render/render
 import { COLLISION_GROUPS, initPhysics, PhysicsWorld } from "./physics/world";
 import { Effect } from "effect";
 import { runGameplaySync } from "./core/runtime";
+import { RenderService } from "./render/renderService";
 import { buildGym } from "./game/level/gym";
 import { createLevelSession, type LevelSession } from "./game/level/hotReload";
 import { InteractionSystem } from "./game/level/interactive";
@@ -1143,342 +1144,393 @@ async function main() {
     },
 
     interpolateVisuals(alpha) {
-      if (ballMesh) {
-        ballMesh.position.lerpVectors(ballPrevPos, ballCurrPos, alpha);
-        ballMesh.quaternion.slerpQuaternions(ballPrevQuat, ballCurrQuat, alpha);
-      }
+      // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : ce callback tourne au TAUX
+      // D'AFFICHAGE (pas le pas fixe) — même frontière synchrone stricte
+      // (principe transverse #1 du plan : "pour tout ce qui vit dans le pas
+      // fixe OU dans la boucle d'affichage"), donc même garde-fou
+      // `runGameplaySync`. Composé en phases nommées, même discipline que
+      // M6 pour `updateGameplay`.
+      runGameplaySync(
+        Effect.gen(function* () {
+          yield* Effect.sync(() => {
+            if (ballMesh) {
+              ballMesh.position.lerpVectors(ballPrevPos, ballCurrPos, alpha);
+              ballMesh.quaternion.slerpQuaternions(ballPrevQuat, ballCurrQuat, alpha);
+            }
+          });
 
-      // Rotation vue lue au taux d'affichage, jamais interpolée (latence de visée sinon).
-      const { dx, dy } = input.consumeMouseDelta();
-      if (!inputRecorder.isPlaying()) {
-        lookDelta.dx += dx;
-        lookDelta.dy += dy;
-        look.yaw -= dx * moveConfig.lookSensitivity;
-        look.pitch -= dy * moveConfig.lookSensitivity;
-        const pitchLimit = (moveConfig.pitchLimitDeg * Math.PI) / 180;
-        look.pitch = Math.max(-pitchLimit, Math.min(pitchLimit, look.pitch));
-      }
-      cameraEuler.set(look.pitch, look.yaw, 0);
-      camera.quaternion.setFromEuler(cameraEuler);
+          // EXCEPTION EXPLICITE, non négociable (invariant #3, voir
+          // PLAN_EFFECT_XSTATE.md §9) : la rotation caméra reste un
+          // Effect.sync FEUILLE, sans aucune indirection de service — un
+          // enveloppement plus profond (générateur imbriqué, service)
+          // ajouterait de la latence de visée. Rotation lue au taux
+          // d'affichage, jamais interpolée (latence de visée sinon).
+          yield* Effect.sync(() => {
+            const { dx, dy } = input.consumeMouseDelta();
+            if (!inputRecorder.isPlaying()) {
+              lookDelta.dx += dx;
+              lookDelta.dy += dy;
+              look.yaw -= dx * moveConfig.lookSensitivity;
+              look.pitch -= dy * moveConfig.lookSensitivity;
+              const pitchLimit = (moveConfig.pitchLimitDeg * Math.PI) / 180;
+              look.pitch = Math.max(-pitchLimit, Math.min(pitchLimit, look.pitch));
+            }
+            cameraEuler.set(look.pitch, look.yaw, 0);
+            camera.quaternion.setFromEuler(cameraEuler);
+          });
 
-      // Position caméra : capsule interpolée + hauteur des yeux.
-      camera.position.copy(player.eyePosition(alpha, eyePosition));
+          yield* Effect.sync(() => {
+            // Position caméra : capsule interpolée + hauteur des yeux.
+            camera.position.copy(player.eyePosition(alpha, eyePosition));
 
-      // Head bob + enfoncement de réception : ajoutés à la POSITION de la
-      // caméra, jamais à sa rotation. La visée garde donc exactement la latence
-      // et la stabilité qu'elle avait (invariant #3), et `player.eyePosition`
-      // reste disponible non bobée comme origine de tir pour la Phase 2.
-      const bob = player.viewBob(alpha, viewBobOffset);
-      if (bob.x !== 0 || bob.y !== 0) {
-        // Vecteur « droite » du joueur dans le plan horizontal. Avec l'Euler
-        // 'YXZ' et un roll nul, l'axe droite de la caméra EST horizontal quel
-        // que soit le pitch : (cos yaw, 0, −sin yaw), même convention que la
-        // dérivation de wishX/wishZ dans PlayerController.update.
-        camera.position.x += bob.x * Math.cos(look.yaw);
-        camera.position.z += bob.x * -Math.sin(look.yaw);
-        camera.position.y += bob.y;
-      }
+            // Head bob + enfoncement de réception : ajoutés à la POSITION de la
+            // caméra, jamais à sa rotation. La visée garde donc exactement la latence
+            // et la stabilité qu'elle avait (invariant #3), et `player.eyePosition`
+            // reste disponible non bobée comme origine de tir pour la Phase 2.
+            const bob = player.viewBob(alpha, viewBobOffset);
+            if (bob.x !== 0 || bob.y !== 0) {
+              // Vecteur « droite » du joueur dans le plan horizontal. Avec l'Euler
+              // 'YXZ' et un roll nul, l'axe droite de la caméra EST horizontal quel
+              // que soit le pitch : (cos yaw, 0, −sin yaw), même convention que la
+              // dérivation de wishX/wishZ dans PlayerController.update.
+              camera.position.x += bob.x * Math.cos(look.yaw);
+              camera.position.z += bob.x * -Math.sin(look.yaw);
+              camera.position.y += bob.y;
+            }
 
-      // FOV : suit la vitesse horizontale RÉELLE (déjà reclippée sur le
-      // mouvement effectivement réalisé — courir contre un mur n'élargit rien),
-      // pas l'état de la touche sprint. Le facteur est lissé au pas fixe et
-      // interpolé ici, donc la transition est continue à n'importe quel taux
-      // d'affichage. `updateProjectionMatrix` n'est appelée que si la valeur
-      // change vraiment : le lissage se colle exactement à sa cible, donc les
-      // appels cessent dès que la vitesse est stable.
-      const fov = fovForRunFactor(moveConfig, player.runFactorAt(alpha));
-      if (camera.fov !== fov) {
-        camera.fov = fov;
-        camera.updateProjectionMatrix();
-      }
+            // FOV : suit la vitesse horizontale RÉELLE (déjà reclippée sur le
+            // mouvement effectivement réalisé — courir contre un mur n'élargit rien),
+            // pas l'état de la touche sprint. Le facteur est lissé au pas fixe et
+            // interpolé ici, donc la transition est continue à n'importe quel taux
+            // d'affichage. `updateProjectionMatrix` n'est appelée que si la valeur
+            // change vraiment : le lissage se colle exactement à sa cible, donc les
+            // appels cessent dès que la vitesse est stable.
+            const fov = fovForRunFactor(moveConfig, player.runFactorAt(alpha));
+            if (camera.fov !== fov) {
+              camera.fov = fov;
+              camera.updateProjectionMatrix();
+            }
 
-      // Viewmodel : APRÈS que position/rotation/FOV de la caméra sont posés
-      // ci-dessus — l'offset de `weapons.viewmodelPose` est purement local à
-      // la caméra (voir `render/viewmodel.ts`), il n'a pas besoin de les lire,
-      // mais reste cohérent dans la même frame en s'appliquant après eux.
-      viewmodel.update(alpha, weapons);
+            // Viewmodel : APRÈS que position/rotation/FOV de la caméra sont posés
+            // ci-dessus — l'offset de `weapons.viewmodelPose` est purement local à
+            // la caméra (voir `render/viewmodel.ts`), il n'a pas besoin de les lire,
+            // mais reste cohérent dans la même frame en s'appliquant après eux.
+            viewmodel.update(alpha, weapons);
+          });
 
-      // Costards : position/forward interpolés (jamais les valeurs brutes du
-      // pas fixe, voir la doc de `BillboardSprite.updatePose`), une fois par
-      // Costard vivant OU cadavre (le cadavre reste affiché, figé).
-      for (const suit of suitManager.suits) {
-        const sprite = suitSprites.get(suit.id);
-        if (!sprite) continue;
-        const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
-        const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
-        sprite.updatePose(camera, pos, fwd, suit.spriteRow);
-      }
+          yield* Effect.sync(() => {
+            // Costards : position/forward interpolés (jamais les valeurs brutes du
+            // pas fixe, voir la doc de `BillboardSprite.updatePose`), une fois par
+            // Costard vivant OU cadavre (le cadavre reste affiché, figé).
+            for (const suit of suitManager.suits) {
+              const sprite = suitSprites.get(suit.id);
+              if (!sprite) continue;
+              const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
+              const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
+              sprite.updatePose(camera, pos, fwd, suit.spriteRow);
+            }
 
-      // Même chose pour le Directeur (au plus un, mais `directors` reste un
-      // tableau — voir la doc de `DirectorManager`).
-      for (const director of directorManager.directors) {
-        const sprite = directorSprites.get(director.id);
-        if (!sprite) continue;
-        const pos = director.interpolatedPosition(alpha, directorPositionScratch);
-        const fwd = director.interpolatedForward(alpha, directorForwardScratch);
-        sprite.updatePose(camera, pos, fwd, director.spriteRow);
-      }
+            // Même chose pour le Directeur (au plus un, mais `directors` reste un
+            // tableau — voir la doc de `DirectorManager`).
+            for (const director of directorManager.directors) {
+              const sprite = directorSprites.get(director.id);
+              if (!sprite) continue;
+              const pos = director.interpolatedPosition(alpha, directorPositionScratch);
+              const fwd = director.interpolatedForward(alpha, directorForwardScratch);
+              sprite.updatePose(camera, pos, fwd, director.spriteRow);
+            }
+          });
+        }),
+      );
     },
 
     updateFx(realDt, stats) {
-      if (realDt > 0) {
-        fpsSmoothed += (1 / realDt - fpsSmoothed) * 0.1;
-      }
+      // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : même frontière synchrone que
+      // `interpolateVisuals` ci-dessus (taux d'affichage, principe
+      // transverse #1) — composé en phases nommées, mêmes statements et même
+      // ordre qu'avant ce jalon, aucune logique changée.
+      runGameplaySync(
+        Effect.gen(function* () {
+          yield* Effect.sync(() => {
+            if (realDt > 0) {
+              fpsSmoothed += (1 / realDt - fpsSmoothed) * 0.1;
+            }
 
-      fx.update(realDt);
-      // Décroissance temps réel des minuteurs du hitmarker/réticule/gizmos —
-      // même régime que `fx.update(realDt)` juste au-dessus, jamais le pas
-      // fixe. `render()` (le dessin effectif des canvas 2D) est appelé en
-      // tout dernier dans cette fonction, APRÈS les boucles ci-dessous qui
-      // peuvent encore déclencher `hitmarker.trigger(...)`/`crosshair.notifyFire(...)`
-      // pour CETTE frame.
-      hitmarker.update(realDt);
-      crosshair.update(realDt);
-      ballisticsDebug.update(realDt);
+            fx.update(realDt);
+            // Décroissance temps réel des minuteurs du hitmarker/réticule/gizmos —
+            // même régime que `fx.update(realDt)` juste au-dessus, jamais le pas
+            // fixe. `render()` (le dessin effectif des canvas 2D) est appelé en
+            // tout dernier dans cette fonction, APRÈS les boucles ci-dessous qui
+            // peuvent encore déclencher `hitmarker.trigger(...)`/`crosshair.notifyFire(...)`
+            // pour CETTE frame.
+            hitmarker.update(realDt);
+            crosshair.update(realDt);
+            ballisticsDebug.update(realDt);
+          });
 
-      // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
-      // files s'accumulent au fil des pas fixes de la frame et ne se vident
-      // jamais toutes seules. clearFrameEvents() est appelé par `shell`, en
-      // dernier, après consommation audio — ne JAMAIS l'appeler ici.
-      for (const event of weapons.fireEvents) {
-        fx.spawnMuzzleFlash(event.muzzlePosition, event.muzzleDirection, event.weapon);
-        if (event.weapon === "shotgun") {
-          fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
-        }
-        playWeaponFireSfx(event.weapon);
-        // Réticule : pulsation à CHAQUE tir déclenché (indépendant d'un hit,
-        // voir `CrosshairOverlay.notifyFire`), no-op si désactivée en config.
-        crosshair.notifyFire();
-        // Gizmos balistiques de debug : la forme RÉELLEMENT testée par ce
-        // tir (voir `render/ballisticsDebug.ts`). Pompe : un rayon par
-        // plomb, jusqu'à son impact ou `shotgunRange` (voir
-        // `FireEvent.pelletEndpoints`). Pied-de-biche : la capsule de
-        // `WeaponSystem.fireMelee`, reconstruite ici à partir de
-        // `weaponConfig.meleeRange`/`meleeHitRadius` — mêmes nombres que la
-        // requête Rapier, aucune duplication de valeur en dur.
-        if (event.weapon === "shotgun" && event.pelletEndpoints) {
-          ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
-        } else if (event.weapon === "melee") {
-          ballisticsDebug.recordMeleeFire(
-            event.muzzlePosition,
-            event.muzzleDirection,
-            weaponConfig.meleeRange,
-            weaponConfig.meleeHitRadius,
-          );
-        }
-      }
-      for (const hit of weapons.hitEvents) {
-        fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
-        fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon);
-        // Distinction mur/ennemi (retour playtest Phase 3, `IMPACT_VARIANTS`
-        // dans `weaponConfig.ts`) : un hit ENEMY confirmé (matière `"flesh"`,
-        // voir `FLESH_MATERIAL`/`materialForCollider` dans `weapons.ts`)
-        // déclenche le shake `enemy*`, tout le reste (murs, décor) garde le
-        // shake générique. Le hitstop, lui, est déjà branché à la source
-        // dans `weapons.ts` (`triggerHitstopFor`) — pas dupliqué ici.
-        const isEnemyHit = hit.material === FLESH_MATERIAL;
-        fx.triggerShake(
-          isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
-          isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
-        );
-        // Hitmarker : uniquement sur un hit ENEMY confirmé — un hit mur n'a
-        // pas vocation à alimenter ce canal (voir doc de `hitmarker.ts`).
-        if (isEnemyHit) hitmarker.trigger("hit");
-        playImpactSfx(hit.material);
-      }
-      // Clôture de la frame d'affichage pour les événements d'armes : TOUS
-      // les lecteurs (`retro-render` ci-dessus, l'audio ci-dessus) ont fini
-      // de lire `fireEvents`/`hitEvents` pour cette frame. Même principe que
-      // `input.endFrame()` dans `core/loop.ts` — dernier appel de la chaîne,
-      // jamais plus tôt (voir la doc de `clearFrameEvents` dans
-      // `game/player/weapons.ts`).
-      weapons.clearFrameEvents();
+          yield* Effect.sync(() => {
+            // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
+            // files s'accumulent au fil des pas fixes de la frame et ne se vident
+            // jamais toutes seules. clearFrameEvents() est appelé par `shell`, en
+            // dernier, après consommation audio — ne JAMAIS l'appeler ici.
+            for (const event of weapons.fireEvents) {
+              fx.spawnMuzzleFlash(event.muzzlePosition, event.muzzleDirection, event.weapon);
+              if (event.weapon === "shotgun") {
+                fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
+              }
+              playWeaponFireSfx(event.weapon);
+              // Réticule : pulsation à CHAQUE tir déclenché (indépendant d'un hit,
+              // voir `CrosshairOverlay.notifyFire`), no-op si désactivée en config.
+              crosshair.notifyFire();
+              // Gizmos balistiques de debug : la forme RÉELLEMENT testée par ce
+              // tir (voir `render/ballisticsDebug.ts`). Pompe : un rayon par
+              // plomb, jusqu'à son impact ou `shotgunRange` (voir
+              // `FireEvent.pelletEndpoints`). Pied-de-biche : la capsule de
+              // `WeaponSystem.fireMelee`, reconstruite ici à partir de
+              // `weaponConfig.meleeRange`/`meleeHitRadius` — mêmes nombres que la
+              // requête Rapier, aucune duplication de valeur en dur.
+              if (event.weapon === "shotgun" && event.pelletEndpoints) {
+                ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
+              } else if (event.weapon === "melee") {
+                ballisticsDebug.recordMeleeFire(
+                  event.muzzlePosition,
+                  event.muzzleDirection,
+                  weaponConfig.meleeRange,
+                  weaponConfig.meleeHitRadius,
+                );
+              }
+            }
+            for (const hit of weapons.hitEvents) {
+              fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
+              fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon);
+              // Distinction mur/ennemi (retour playtest Phase 3, `IMPACT_VARIANTS`
+              // dans `weaponConfig.ts`) : un hit ENEMY confirmé (matière `"flesh"`,
+              // voir `FLESH_MATERIAL`/`materialForCollider` dans `weapons.ts`)
+              // déclenche le shake `enemy*`, tout le reste (murs, décor) garde le
+              // shake générique. Le hitstop, lui, est déjà branché à la source
+              // dans `weapons.ts` (`triggerHitstopFor`) — pas dupliqué ici.
+              const isEnemyHit = hit.material === FLESH_MATERIAL;
+              fx.triggerShake(
+                isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
+                isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
+              );
+              // Hitmarker : uniquement sur un hit ENEMY confirmé — un hit mur n'a
+              // pas vocation à alimenter ce canal (voir doc de `hitmarker.ts`).
+              if (isEnemyHit) hitmarker.trigger("hit");
+              playImpactSfx(hit.material);
+            }
+            // Clôture de la frame d'affichage pour les événements d'armes : TOUS
+            // les lecteurs (`retro-render` ci-dessus, l'audio ci-dessus) ont fini
+            // de lire `fireEvents`/`hitEvents` pour cette frame. Même principe que
+            // `input.endFrame()` dans `core/loop.ts` — dernier appel de la chaîne,
+            // jamais plus tôt (voir la doc de `clearFrameEvents` dans
+            // `game/player/weapons.ts`).
+            weapons.clearFrameEvents();
+          });
 
-      // Décroissance TEMPS RÉEL du flash de dégâts de chaque Costard — jamais
-      // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
-      for (const sprite of suitSprites.values()) sprite.updateFlash(realDt);
+          yield* Effect.sync(() => {
+            // Décroissance TEMPS RÉEL du flash de dégâts de chaque Costard — jamais
+            // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
+            for (const sprite of suitSprites.values()) sprite.updateFlash(realDt);
 
-      // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
-      // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs
-      // d'abord, `suitManager.clearFrameEvents()` en tout dernier.
-      for (const event of suitManager.alertEvents) {
-        void event; // pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
-        playEnemySfx("alert");
-      }
-      for (const event of suitManager.telegraphEvents) {
-        void event;
-        // Règle non négociable du skill : le son de télégraphie part AVANT
-        // les dégâts (`suitConfig.attackTelegraphDuration` >= 0.2 s sépare ce
-        // point de la résolution de l'attaque dans `Suit.runAttack`).
-        playEnemySfx("telegraph");
-      }
-      for (const event of suitManager.hurtEvents) {
-        // Triple feedback (skill enemy-state-machine) : flash blanc + son ici,
-        // knockback déjà appliqué dans `Suit.applyDamage` (vélocité pilotée,
-        // le Costard étant kinématique — voir sa doc). Durée du flash lue
-        // depuis `suitConfig.hitFlashDuration` (tunable à chaud, voir sa doc
-        // et `FLASH_VARIANTS`) au lieu de l'ancienne constante en dur.
-        suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
-        playEnemySfx("hurt");
-      }
-      for (const event of suitManager.deathEvents) {
-        if (event.gibs) {
-          // Bout portant au pompe : gibs À LA PLACE de l'animation de mort
-          // normale (le Costard reste en état "dead"/"corpse" côté simulation
-          // pour la persistance du cadavre — seul le RENDU change ici).
-          fx.spawnGibs(event.point, event.direction);
-        }
-        // Kill = sa propre fenêtre de hitmarker, distincte du hit simple (voir
-        // `HitmarkerOverlay.trigger`) — confirmation visuelle qu'un Costard
-        // vient d'être tué, indépendamment du sprite (qui peut être remplacé
-        // par des gibs, donc potentiellement moins lisible ce pas-ci).
-        hitmarker.trigger("kill");
-        playEnemySfx("death");
-        // Compteur de "vues" (Phase 6) + réplique "premier kill" (une seule
-        // fois par partie, Costard OU Directeur confondus — voir la doc de
-        // `firstKillTriggered`).
-        grantKillViews();
-        if (!firstKillTriggered) {
-          firstKillTriggered = true;
-          triggerHeroLine(HERO_LINE_FIRST_KILL);
-        }
-      }
-      for (const event of suitManager.playerHitEvents) {
-        playerHp = Math.max(0, playerHp - event.amount);
-        useGameStore.getState().setPlayerHp(playerHp);
-        // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
-        // modification de `render/fx.ts` : decal + particules au point
-        // d'impact sur le joueur, léger screenshake dédié (`suitConfig`, pas
-        // `weaponConfig` — c'est le coup encaissé, pas un tir du joueur).
-        fx.spawnImpactDecal(event.point, event.normal, "flesh");
-        fx.spawnImpactParticles(event.point, event.normal, "shotgun");
-        fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
-        // PV bas / mort (Phase 6) — voir la doc de `handlePlayerHit`.
-        handlePlayerHit();
-      }
-      suitManager.clearFrameEvents();
+            // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
+            // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs
+            // d'abord, `suitManager.clearFrameEvents()` en tout dernier.
+            for (const event of suitManager.alertEvents) {
+              void event; // pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
+              playEnemySfx("alert");
+            }
+            for (const event of suitManager.telegraphEvents) {
+              void event;
+              // Règle non négociable du skill : le son de télégraphie part AVANT
+              // les dégâts (`suitConfig.attackTelegraphDuration` >= 0.2 s sépare ce
+              // point de la résolution de l'attaque dans `Suit.runAttack`).
+              playEnemySfx("telegraph");
+            }
+            for (const event of suitManager.hurtEvents) {
+              // Triple feedback (skill enemy-state-machine) : flash blanc + son ici,
+              // knockback déjà appliqué dans `Suit.applyDamage` (vélocité pilotée,
+              // le Costard étant kinématique — voir sa doc). Durée du flash lue
+              // depuis `suitConfig.hitFlashDuration` (tunable à chaud, voir sa doc
+              // et `FLASH_VARIANTS`) au lieu de l'ancienne constante en dur.
+              suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
+              playEnemySfx("hurt");
+            }
+            for (const event of suitManager.deathEvents) {
+              if (event.gibs) {
+                // Bout portant au pompe : gibs À LA PLACE de l'animation de mort
+                // normale (le Costard reste en état "dead"/"corpse" côté simulation
+                // pour la persistance du cadavre — seul le RENDU change ici).
+                fx.spawnGibs(event.point, event.direction);
+              }
+              // Kill = sa propre fenêtre de hitmarker, distincte du hit simple (voir
+              // `HitmarkerOverlay.trigger`) — confirmation visuelle qu'un Costard
+              // vient d'être tué, indépendamment du sprite (qui peut être remplacé
+              // par des gibs, donc potentiellement moins lisible ce pas-ci).
+              hitmarker.trigger("kill");
+              playEnemySfx("death");
+              // Compteur de "vues" (Phase 6) + réplique "premier kill" (une seule
+              // fois par partie, Costard OU Directeur confondus — voir la doc de
+              // `firstKillTriggered`).
+              grantKillViews();
+              if (!firstKillTriggered) {
+                firstKillTriggered = true;
+                triggerHeroLine(HERO_LINE_FIRST_KILL);
+              }
+            }
+            for (const event of suitManager.playerHitEvents) {
+              playerHp = Math.max(0, playerHp - event.amount);
+              useGameStore.getState().setPlayerHp(playerHp);
+              // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
+              // modification de `render/fx.ts` : decal + particules au point
+              // d'impact sur le joueur, léger screenshake dédié (`suitConfig`, pas
+              // `weaponConfig` — c'est le coup encaissé, pas un tir du joueur).
+              fx.spawnImpactDecal(event.point, event.normal, "flesh");
+              fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+              fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
+              // PV bas / mort (Phase 6) — voir la doc de `handlePlayerHit`.
+              handlePlayerHit();
+            }
+            suitManager.clearFrameEvents();
+          });
 
-      // Même contrat (lecture non destructive, `clearFrameEvents()` en tout
-      // dernier) pour le Directeur. Pas de réutilisation des sons `enemy_*` en
-      // tant que "faits exprès pour le boss" — ce sont les mêmes placeholders
-      // génériques que pour le Costard (invariant #9, aucun son dédié encore).
-      for (const sprite of directorSprites.values()) sprite.updateFlash(realDt);
+          yield* Effect.sync(() => {
+            // Même contrat (lecture non destructive, `clearFrameEvents()` en tout
+            // dernier) pour le Directeur. Pas de réutilisation des sons `enemy_*` en
+            // tant que "faits exprès pour le boss" — ce sont les mêmes placeholders
+            // génériques que pour le Costard (invariant #9, aucun son dédié encore).
+            for (const sprite of directorSprites.values()) sprite.updateFlash(realDt);
 
-      for (const event of directorManager.alertEvents) {
-        void event;
-        playEnemySfx("alert");
-      }
-      for (const event of directorManager.telegraphEvents) {
-        void event;
-        playEnemySfx("telegraph");
-      }
-      for (const event of directorManager.hurtEvents) {
-        directorSprites.get(event.director.id)?.setFlash(1, directorConfig.hitFlashDuration);
-        playEnemySfx("hurt");
-      }
-      for (const event of directorManager.revealEvents) {
-        // Bascule costume humain -> reptilien : teinte appliquée UNE FOIS ici
-        // (événement discret), jamais reposée à chaque frame dans
-        // `interpolateVisuals` — voir `Director.tintColor`/`revealed`.
-        directorSprites.get(event.director.id)?.setTint(event.director.tintColor);
-        fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
-      }
-      for (const event of directorManager.deathEvents) {
-        void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
-        hitmarker.trigger("kill");
-        playEnemySfx("death");
-        // Multiplicateur dédié : voir `VIEWS_DIRECTOR_MULTIPLIER`. Même garde
-        // `firstKillTriggered` que le Costard — un seul flag, peu importe qui
-        // décroche le tout premier kill de la partie.
-        grantKillViews(VIEWS_DIRECTOR_MULTIPLIER);
-        if (!firstKillTriggered) {
-          firstKillTriggered = true;
-          triggerHeroLine(HERO_LINE_FIRST_KILL);
-        }
-      }
-      for (const event of directorManager.playerHitEvents) {
-        playerHp = Math.max(0, playerHp - event.amount);
-        useGameStore.getState().setPlayerHp(playerHp);
-        fx.spawnImpactDecal(event.point, event.normal, "flesh");
-        fx.spawnImpactParticles(event.point, event.normal, "shotgun");
-        fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
-        handlePlayerHit();
-      }
-      directorManager.clearFrameEvents();
+            for (const event of directorManager.alertEvents) {
+              void event;
+              playEnemySfx("alert");
+            }
+            for (const event of directorManager.telegraphEvents) {
+              void event;
+              playEnemySfx("telegraph");
+            }
+            for (const event of directorManager.hurtEvents) {
+              directorSprites.get(event.director.id)?.setFlash(1, directorConfig.hitFlashDuration);
+              playEnemySfx("hurt");
+            }
+            for (const event of directorManager.revealEvents) {
+              // Bascule costume humain -> reptilien : teinte appliquée UNE FOIS ici
+              // (événement discret), jamais reposée à chaque frame dans
+              // `interpolateVisuals` — voir `Director.tintColor`/`revealed`.
+              directorSprites.get(event.director.id)?.setTint(event.director.tintColor);
+              fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
+            }
+            for (const event of directorManager.deathEvents) {
+              void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
+              hitmarker.trigger("kill");
+              playEnemySfx("death");
+              // Multiplicateur dédié : voir `VIEWS_DIRECTOR_MULTIPLIER`. Même garde
+              // `firstKillTriggered` que le Costard — un seul flag, peu importe qui
+              // décroche le tout premier kill de la partie.
+              grantKillViews(VIEWS_DIRECTOR_MULTIPLIER);
+              if (!firstKillTriggered) {
+                firstKillTriggered = true;
+                triggerHeroLine(HERO_LINE_FIRST_KILL);
+              }
+            }
+            for (const event of directorManager.playerHitEvents) {
+              playerHp = Math.max(0, playerHp - event.amount);
+              useGameStore.getState().setPlayerHp(playerHp);
+              fx.spawnImpactDecal(event.point, event.normal, "flesh");
+              fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+              fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
+              handlePlayerHit();
+            }
+            directorManager.clearFrameEvents();
+          });
 
-      // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
-      // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
-      // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
-      // `player.eyePosition`/`camera.position` de base.
-      camera.position.add(fx.currentShakeOffset(shakeOffsetScratch));
+          yield* Effect.sync(() => {
+            // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
+            // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
+            // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
+            // `player.eyePosition`/`camera.position` de base.
+            camera.position.add(fx.currentShakeOffset(shakeOffsetScratch));
 
-      // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
-      // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
-      if (input.wasJustPressed("F9")) {
-        if (inputRecorder.isRecording()) {
-          lastRecording = inputRecorder.stopRecording();
-          console.info(`[recorder] ${lastRecording?.frames.length ?? 0} pas fixes enregistrés`);
-        } else {
-          startRecording();
-          console.info("[recorder] enregistrement démarré");
-        }
-      }
-      if (input.wasJustPressed("F10") && lastRecording) {
-        startPlayback(lastRecording);
-        console.info(`[recorder] rejeu de ${lastRecording.frames.length} pas fixes`);
-      }
-      // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
-      // (invariant #2 — pas de lecture continue, pas de setState par frame).
-      if (input.wasJustPressed("KeyV")) {
-        const enabled = wireframeToggle.toggle();
-        console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
-      }
-      // KeyB (ballistics) : gizmos balistiques de debug, actifs PAR DÉFAUT
-      // (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
-      // de bascule ponctuelle que KeyV ci-dessus.
-      if (input.wasJustPressed("KeyB")) {
-        const enabled = ballisticsDebug.toggle();
-        console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
-      }
+            // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
+            // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
+            if (input.wasJustPressed("F9")) {
+              if (inputRecorder.isRecording()) {
+                lastRecording = inputRecorder.stopRecording();
+                console.info(`[recorder] ${lastRecording?.frames.length ?? 0} pas fixes enregistrés`);
+              } else {
+                startRecording();
+                console.info("[recorder] enregistrement démarré");
+              }
+            }
+            if (input.wasJustPressed("F10") && lastRecording) {
+              startPlayback(lastRecording);
+              console.info(`[recorder] rejeu de ${lastRecording.frames.length} pas fixes`);
+            }
+            // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
+            // (invariant #2 — pas de lecture continue, pas de setState par frame).
+            if (input.wasJustPressed("KeyV")) {
+              const enabled = wireframeToggle.toggle();
+              console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
+            }
+            // KeyB (ballistics) : gizmos balistiques de debug, actifs PAR DÉFAUT
+            // (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
+            // de bascule ponctuelle que KeyV ci-dessus.
+            if (input.wasJustPressed("KeyB")) {
+              const enabled = ballisticsDebug.toggle();
+              console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
+            }
 
-      debugAccumulator += realDt;
-      if (debugAccumulator >= DEBUG_UPDATE_INTERVAL) {
-        debugAccumulator = 0;
-        useGameStore.getState().setDebug({
-          fps: fpsSmoothed,
-          position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
-          entityCount: ENTITY_COUNT + suitManager.suits.length,
-          steps: stats.steps,
-          isGrounded: player.isGrounded,
-          horizontalSpeed: player.horizontalSpeed,
-          verticalSpeed: player.velocity.y,
-          numCollisions: player.numCollisions,
-          groundNormal: {
-            x: player.groundNormal.x,
-            y: player.groundNormal.y,
-            z: player.groundNormal.z,
-          },
-          shotgunAmmo: weapons.shotgunAmmo,
-          shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
-          // HUD de prod (Phase 6, `ui/Hud.tsx`) : quel libellé afficher pour
-          // "munitions" dépend de l'arme active, pas seulement du compte de
-          // cartouches. Même throttle 10 Hz que le reste de ce bloc.
-          activeWeapon: weapons.activeWeapon,
-        });
-      }
+            debugAccumulator += realDt;
+            if (debugAccumulator >= DEBUG_UPDATE_INTERVAL) {
+              debugAccumulator = 0;
+              useGameStore.getState().setDebug({
+                fps: fpsSmoothed,
+                position: { x: camera.position.x, y: camera.position.y, z: camera.position.z },
+                entityCount: ENTITY_COUNT + suitManager.suits.length,
+                steps: stats.steps,
+                // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : voir la doc de
+                // `LoopStats` (`core/loop.ts`) pour la définition exacte.
+                gameplayMs: stats.gameplayMs,
+                physicsMs: stats.physicsMs,
+                renderMs: stats.renderMs,
+                isGrounded: player.isGrounded,
+                horizontalSpeed: player.horizontalSpeed,
+                verticalSpeed: player.velocity.y,
+                numCollisions: player.numCollisions,
+                groundNormal: {
+                  x: player.groundNormal.x,
+                  y: player.groundNormal.y,
+                  z: player.groundNormal.z,
+                },
+                shotgunAmmo: weapons.shotgunAmmo,
+                shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
+                // HUD de prod (Phase 6, `ui/Hud.tsx`) : quel libellé afficher pour
+                // "munitions" dépend de l'arme active, pas seulement du compte de
+                // cartouches. Même throttle 10 Hz que le reste de ce bloc.
+                activeWeapon: weapons.activeWeapon,
+              });
+            }
+          });
 
-      // Dessin du réticule/hitmarker EN TOUT DERNIER : après toutes les
-      // boucles ci-dessus qui ont pu appeler `crosshair.notifyFire(...)`/
-      // `hitmarker.trigger(...)` pour cette frame (tir, hit ennemi, kill) —
-      // voir la note plus haut. Le réticule d'abord (repère permanent), le
-      // hitmarker ensuite (flash de confirmation, doit rester visible
-      // par-dessus — voir la note de construction des deux overlays).
-      crosshair.render();
-      hitmarker.render();
+          // Dessin du réticule/hitmarker EN TOUT DERNIER : après toutes les
+          // phases ci-dessus qui ont pu appeler `crosshair.notifyFire(...)`/
+          // `hitmarker.trigger(...)` pour cette frame (tir, hit ennemi, kill) —
+          // voir la note plus haut. Le réticule d'abord (repère permanent), le
+          // hitmarker ensuite (flash de confirmation, doit rester visible
+          // par-dessus — voir la note de construction des deux overlays).
+          yield* Effect.sync(() => {
+            crosshair.render();
+            hitmarker.render();
+          });
+        }),
+      );
     },
 
     render() {
-      renderer.render(scene, camera);
+      // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : seul appel qui touche
+      // vraiment une API externe dans le chemin de rendu — voir
+      // `RenderService` (`render/renderService.ts`).
+      runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
     },
   });
 

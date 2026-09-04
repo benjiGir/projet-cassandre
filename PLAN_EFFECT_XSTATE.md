@@ -327,7 +327,13 @@ Ces règles priment sur toute commodité locale. Toute dérogation doit être do
 
 ## 9. Jalon M7 — Orchestration Effect du rendu et de l'interpolation
 
-**Objectif.** Envelopper `interpolateVisuals`/`updateFx`/`render` dans Effect, avec l'exception documentée pour la rotation caméra.
+> **✅ Livré (2026-09-03), fait directement (même raison qu'M6 : transformation mécanique de fonctions déjà lues, pas de nouvelle conception).** `src/render/renderService.ts` : `RenderService` enveloppe SEULEMENT `WebGLRenderer.render(scene, camera)` — le seul appel du chemin de rendu qui touche vraiment une API externe substituable. `interpolateVisuals`/`updateFx` (`main.ts`) réorganisés en place en phases nommées (`Effect.gen`/`yield* Effect.sync`), exécutées via `runGameplaySync` — même statements, même ordre exact. **Exception invariant #3 respectée à la lettre** : le bloc de rotation caméra (lecture souris, `look.yaw`/`look.pitch`, `camera.quaternion`) reste un `Effect.sync` FEUILLE isolé, sans service ni générateur imbriqué autour.
+>
+> Instrumentation : `LoopStats` (`core/loop.ts`) gagne `gameplayMs`/`physicsMs` (somme sur tous les pas fixes de la frame) et `renderMs` (frame PRÉCÉDENTE — décalage d'une frame documenté, sans conséquence pour un indicateur lissé comme `fpsSmoothed`). Propagé jusqu'à `DebugPanel` via `DebugState`/`setDebug`. Test de contrat pour `RenderService` (transmission fidèle des arguments, rien d'autre appelé).
+>
+> **Vérification en jeu réelle cette fois** (Browser pane disponible dans cet environnement, contrairement à tous les jalons précédents) : niveau Gym chargé, rendu visuellement correct (géométrie, Costards, viewmodel, HUD), nouvelle ligne `Jeu:/Phys:/Rendu:` affichée et se mettant à jour frame par frame, boucle toujours vivante après une touche de déplacement (physique de balle animée, compteur de pas incrémenté), zéro erreur console. `pnpm build`/`pnpm test` verts (100/100).
+>
+> **Objectif.** Envelopper `interpolateVisuals`/`updateFx`/`render` dans Effect, avec l'exception documentée pour la rotation caméra.
 
 **Conception.**
 - `RenderService` (Context.Tag) : wrap synchrone de `WebGLRenderer.render(scene, camera)` et de l'interpolation billboard/position (`interpolateVisuals(alpha)`).

@@ -2,17 +2,20 @@ import { Cause, Effect, Layer, ManagedRuntime } from "effect";
 import { DeterministicRandom } from "./random";
 import { RaycastService } from "../physics/raycast";
 import { PathfindingService } from "../game/level/pathfinding";
+import { RenderService } from "../render/renderService";
 
 /**
  * Racine de composition Effect du jeu. Chaque service ajouté par les
- * jalons suivants (RaycastService en M3, PathfindingService en M4, ...)
- * rejoint cette Layer via Layer.provideMerge/Layer.merge — jamais une
- * Layer ad hoc construite ailleurs.
+ * jalons suivants (RaycastService en M3, PathfindingService en M4,
+ * RenderService en M7, ...) rejoint cette Layer via
+ * Layer.provideMerge/Layer.merge — jamais une Layer ad hoc construite
+ * ailleurs.
  */
 export const GameLayer = Layer.mergeAll(
   DeterministicRandom.layer,
   RaycastService.layer,
   PathfindingService.layer,
+  RenderService.layer,
 );
 
 type GameServices = Layer.Success<typeof GameLayer>;

@@ -8,6 +8,15 @@ interface DebugState {
   /** Pas fixes exécutés pendant la dernière frame d'affichage (spirale de rattrapage si > 2 durablement). */
   steps: number;
 
+  // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : compteurs de temps par phase, ms —
+  // voir `LoopStats` (`core/loop.ts`) pour la définition exacte (somme sur
+  // tous les pas fixes de la frame pour les deux premiers, frame PRÉCÉDENTE
+  // pour le troisième). Seul filet de sécurité posé pour le risque de perf
+  // assumé du chantier Effect/XState (aucun budget fixé à l'avance).
+  gameplayMs: number;
+  physicsMs: number;
+  renderMs: number;
+
   // Diagnostic du character controller — imposé en permanence par le skill
   // `rapier-character-controller`. Un `isGrounded` qui clignote sur terrain
   // plat signale un problème de snap-to-ground.
@@ -153,6 +162,9 @@ export const useGameStore = create<GameState>((set) => ({
     position: { x: 0, y: 0, z: 0 },
     entityCount: 0,
     steps: 0,
+    gameplayMs: 0,
+    physicsMs: 0,
+    renderMs: 0,
     isGrounded: false,
     horizontalSpeed: 0,
     verticalSpeed: 0,
