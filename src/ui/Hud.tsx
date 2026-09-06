@@ -1,35 +1,9 @@
 import { useGameStore } from "../game/state";
 
 /**
- * HUD DE PRODUCTION (Phase 6) — distinct de `DebugPanel` (outil de DEV,
- * inchangé, reste monté à côté). Direction artistique du plan : un overlay
- * de STREAM, pas un HUD de FPS classique — le héros est un youtubeur
- * complotiste, le HUD raconte le personnage plutôt que d'afficher des
- * chiffres neutres (webcam factice, compteur de "vues" qui monte à chaque
- * kill plutôt qu'un score de frags).
- *
- * SÉLECTEURS FINS PAR CHAMP (skill `react-hud-bridge`, anti-pattern "objet
- * complet en sélecteur") : chaque `useGameStore((s) => s.debug.xxx)` ne
- * re-render CE composant que si CE champ précis change — contrairement à
- * `DebugPanel` qui lit `state.debug` en entier (acceptable pour un panneau
- * de dev démontable, pas pour ce HUD). Toutes les valeurs lues ici sont déjà
- * écrites côté `main.ts` avec la discipline attendue : `playerHp`/
- * `shotgunAmmo`/`activeWeapon` via le `setDebug` throttlé à 10 Hz max
- * (`DEBUG_UPDATE_INTERVAL`), `views`/`secretsFound` PONCTUELLEMENT à
- * l'événement réel (un kill, un secret trouvé) — jamais un `setState` par
- * pas fixe pour une valeur qui ne change pas à 60 Hz (invariant #2).
- *
- * WEBCAM + COMPTEUR DE VUES EN HAUT-DROITE, pas haut-gauche : `DebugPanel`
- * (dev, toujours monté à côté, jamais démonté pendant ce prototype — voir
- * son en-tête) occupe le coin haut-gauche depuis la Phase 1. Un premier jet
- * de ce HUD les avait superposés là — constaté illisible en jeu (texte des
- * deux composants entrelacé). Corrigé en déplaçant CE bloc, jamais en
- * touchant `DebugPanel` (outil de dev établi, pas le sujet de cette tâche).
- *
- * 5 éléments, pas un design system (contrainte du plan) : PV, munitions,
- * compteur de vues, webcam factice, badge "EN DIRECT". Pas de bibliothèque
- * de composants, pas de thème — un objet de style inline par bloc, comme le
- * reste du HUD du projet (`HudMessage.tsx`, `LevelMenu.tsx`).
+ * HUD de production — overlay de STREAM, pas un HUD de FPS classique.
+ * Distinct de `DebugPanel` (outil de dev, toujours monté à côté).
+ * see: docs/systems/hud.md#hud-de-production
  */
 
 const HUD_TEXT_SHADOW = "1px 1px 2px #000";
@@ -68,9 +42,10 @@ export function Hud() {
 
   return (
     <>
-      {/* Webcam factice + badge "EN DIRECT" — coin haut-gauche, signature de
-          l'overlay de stream. Pur placeholder graphique (invariant #9) : un
-          cadre et un silhouette générique, pas un vrai portrait. */}
+      {/* Webcam factice + badge "EN DIRECT" — coin HAUT-DROITE (jamais
+          haut-gauche, occupé par DebugPanel). Pur placeholder graphique
+          (invariant #9).
+          see: docs/systems/hud.md#hud-de-production */}
       <div
         style={{
           position: "fixed",
@@ -158,9 +133,8 @@ export function Hud() {
         </div>
       </div>
 
-      {/* Compteur de "vues" — LA blague du HUD (voir la doc de tête). Sous la
-          webcam, gros caractères, façon compteur de spectateurs en direct
-          d'une plateforme de stream. */}
+      {/* Compteur de "vues" — sous la webcam, façon compteur de spectateurs
+          en direct d'une plateforme de stream. */}
       <div
         style={{
           position: "fixed",

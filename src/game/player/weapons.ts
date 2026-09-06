@@ -74,16 +74,10 @@ export interface HitEvent {
   distance: number;
 }
 
-/**
- * PRNG déterministe, SEEDÉ par une constante fixe — jamais `Math.random()` :
- * la dispersion du pompe doit être rejouable à l'identique par le harnais
- * d'enregistrement/rejeu (F9/F10) et par tout futur harnais de déterminisme.
- * L'état n'avance qu'au fil des tirs réellement déclenchés, donc deux
- * rejeux de la même séquence d'`InputFrame` production exactement la même
- * dispersion, tir après tir. Générateur obtenu via `DeterministicRandom`
- * (`core/random.ts`, invariant #12 de `CLAUDE.md`) — plus de copie locale
- * de mulberry32 ici depuis le nettoyage du 2026-09-05.
- */
+// PRNG déterministe pour la dispersion du pompe, obtenu via
+// `DeterministicRandom` (jamais une copie locale de mulberry32) — raison
+// d'être de `forSeed` en fabrique plutôt qu'un flux partagé :
+// see: docs/decisions/0007-rng-deterministe.md
 
 /** Graine fixe et arbitraire — seule contrainte : ne JAMAIS dériver du temps réel ou de `Math.random`. */
 const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
@@ -92,6 +86,8 @@ const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
  * Armes du joueur : sélection, cooldowns, munitions du pompe, raycasts/tests
  * de forme, hitstop, et l'état de recul du viewmodel (nombres seulement,
  * aucun mesh/matériau/texture créé ici — c'est le travail de `retro-render`).
+ * Architecture munitions (pool unique, pas de magasin) :
+ * see: docs/systems/armes.md#architecture-munitions-un-seul-pool
  *
  * DISCIPLINE DE DÉTERMINISME (critique) : `update()` doit recevoir l'origine
  * de tir AUTHENTIQUE du pas fixe courant (`player.position` + `player.eyeOffset`)
@@ -99,15 +95,6 @@ const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
  * valeurs interpolées pour le rendu (`player.eyePosition(alpha, …)`). Une
  * origine interpolée dépend du taux d'affichage et casserait silencieusement
  * le rejeu déterministe du raycast d'arme.
- *
- * ARCHITECTURE MUNITIONS : un seul pool (`shotgunAmmo`), pas de distinction
- * magasin/réserve. `shotgunMagazineSize` (config) reste informatif — il n'y
- * a pas de mécanique de rechargement à construire cette phase : chaque tir
- * se « réarme » automatiquement via `shotgunCooldown`, ce qui satisfait déjà
- * le piège du plan (« le pompe se réarme pendant qu'on bouge », invariant
- * #10) sans machine à états de rechargement. Un système de chargeur réel
- * (rechargement manuel, munitions par lot) est un candidat naturel pour
- * Phase 6 (HUD) s'il s'avère nécessaire au feel — pas trancher ici.
  */
 export class WeaponSystem {
   /**
@@ -154,10 +141,10 @@ export class WeaponSystem {
   private meleeCooldownRemaining = 0;
   private shotgunCooldownRemaining = 0;
 
-  // --- Recul : enveloppe 0..1, MÊME PATTERN que `bobIntensity` -------------
-  // (approach() vers 0, range=1). La FORME du kick (position + tangage) est
-  // celle de la dernière arme tirée, snapshotée à l'instant du tir : elle ne
-  // varie qu'au moment d'un nouveau tir, jamais entre deux pas fixes.
+  // Recul : enveloppe 0..1, même pattern que `bobIntensity` (approach() vers
+  // 0, range=1). La FORME du kick (position + tangage) est celle de la
+  // dernière arme tirée, snapshotée à l'instant du tir : elle ne varie qu'au
+  // moment d'un nouveau tir, jamais entre deux pas fixes.
   private recoilEnvelope = 0;
   private previousRecoilEnvelope = 0;
   private readonly recoilKickPosition = new THREE.Vector3();
@@ -166,16 +153,13 @@ export class WeaponSystem {
   private previousRecoilKickPitch = 0; // radians
   private recoilRecoverTime = 0;
 
-  // --- Files d'événements de la frame d'affichage courante ------------------
-  // ACCUMULÉES au fil des pas fixes d'une même frame (une frame lente peut
-  // exécuter plusieurs pas fixes = plusieurs tirs). Ne s'auto-vident JAMAIS à
-  // la lecture : `retro-render` ET `shell` lisent le même contenu dans la
-  // même frame. Seul `clearFrameEvents()` les vide, et seul `shell` doit
-  // l'appeler, en tout dernier — voir sa doc plus bas.
+  // Files d'événements de la frame d'affichage courante, accumulées au fil
+  // des pas fixes (une frame lente peut en exécuter plusieurs) : contrat
+  // complet (qui lit, qui vide, dans quel ordre) —
+  // see: docs/systems/armes.md#files-dévénements-de-frame-fireeventshitevents
   private readonly _fireEvents: FireEvent[] = [];
   private readonly _hitEvents: HitEvent[] = [];
 
-  // --- Scratch, zéro allocation en régime établi ----------------------------
   private readonly aimEuler = new THREE.Euler(0, 0, 0, "YXZ");
   private readonly aimQuat = new THREE.Quaternion();
   private readonly aimForward = new THREE.Vector3();
@@ -210,12 +194,11 @@ export class WeaponSystem {
 
   /**
    * Vide `fireEvents`/`hitEvents`. À appeler UNE SEULE FOIS par frame
-   * d'affichage, EN TOUT DERNIER, par le dernier agent de la chaîne
-   * d'événements (`shell`, après `retro-render`) — même principe que
-   * `input.endFrame()`. `WeaponSystem` ne s'appelle JAMAIS elle-même : tant
-   * que personne d'autre ne l'appelle, les événements s'accumulent, et
-   * c'est le comportement ATTENDU en sortie de Phase 2 (personne ne lit
-   * encore ces files).
+   * d'affichage, EN TOUT DERNIER, après que tous les lecteurs ont fini —
+   * même principe que `input.endFrame()`. Aujourd'hui, c'est `updateFx()`
+   * (`src/game/loop/updateFx.ts`) qui tient ce rôle. `WeaponSystem` ne
+   * s'appelle jamais elle-même : tant que personne d'autre ne l'appelle,
+   * les événements s'accumulent sans déborder (juste plus de mémoire retenue).
    */
   clearFrameEvents() {
     this._fireEvents.length = 0;
@@ -391,45 +374,14 @@ export class WeaponSystem {
   }
 
   /**
-   * Pied-de-biche : requête de FORME capsule — le produit de Minkowski d'un
-   * SEGMENT (`eyeOrigin` → `eyeOrigin + direction * meleeRange`) et d'une
-   * boule de rayon `meleeHitRadius` — contre `COLLISION_GROUPS.PLAYER_SHOT`
-   * (interagit avec WORLD + ENEMY, jamais PLAYER — le joueur ne peut pas se
-   * toucher lui-même par construction des groupes).
-   *
-   * FIX DE PORTÉE, pas un choix de feel (retour playtest : « je n'ai pas
-   * l'impression de toucher à bout portant »). L'ANCIENNE implémentation
-   * testait une SEULE sphère centrée à `eyeOrigin + direction * meleeRange` —
-   * une bande fixe `[meleeRange − meleeHitRadius, meleeRange + meleeHitRadius]`
-   * devant les yeux (≈1.55–2.45 m avec les valeurs de départ). Une cible
-   * collée au joueur à moins de 1.55 m tombait ENTIÈREMENT hors de cette
-   * bande : le coup ne pouvait GÉOMÉTRIQUEMENT pas toucher à bout portant,
-   * quelle que soit la valeur de `meleeHitRadius`. La capsule ci-dessous
-   * couvre tout le segment entre les yeux et la portée max, pas seulement son
-   * extrémité.
-   *
-   * `RAPIER.Capsule(halfHeight, radius)` place son axe le long du Y LOCAL et
-   * ses deux calottes sphériques à ±`halfHeight` de son centre (voir sa
-   * doc) : avec `halfHeight = meleeRange / 2` et le centre de la capsule à
-   * `eyeOrigin + direction * meleeRange / 2`, ses deux calottes tombent
-   * EXACTEMENT sur `eyeOrigin` (t=0) et `eyeOrigin + direction * meleeRange`
-   * (t=meleeRange) — c'est la définition géométrique EXACTE d'une sphère de
-   * rayon `meleeHitRadius` balayée le long de ce segment, pas une
-   * approximation par échantillonnage de points.
-   *
-   * `intersectionsWithShape` ne donne QUE les colliders touchés, pas de
-   * point/normale d'impact. Pour chacun, on calcule le point de l'AXE de
-   * visée (le segment ci-dessus) le plus proche de CE collider — projection
-   * clampée de son centre (`collider.translation()`) sur `[0, meleeRange]` —
-   * puis `projectPoint(…, solid=false)` projette CE point sur la surface du
-   * collider (jamais à l'intérieur, même si le point y est) : c'est le point
-   * d'impact. La normale est APPROXIMÉE par `normalize(axisPoint − point)` —
-   * direction du point de surface vers l'axe de frappe, même convention que
-   * l'ancienne version (juste recalculée PAR COLLIDER plutôt qu'à partir d'un
-   * centre fixe unique) : une approximation standard et correcte pour une
-   * surface convexe (murs/boîtes de la gym, capsule d'un Costard), documentée
-   * ici pour que personne ne la prenne pour une normale géométrique exacte
-   * issue du solveur de contact.
+   * Pied-de-biche : requête de FORME capsule couvrant tout le segment
+   * `eyeOrigin` → `eyeOrigin + direction * meleeRange`, contre
+   * `COLLISION_GROUPS.PLAYER_SHOT` (interagit avec WORLD + ENEMY, jamais
+   * PLAYER). FIX DE PORTÉE constaté en playtest, pas un choix de feel :
+   * l'ancienne sphère unique ne pouvait géométriquement pas toucher à bout
+   * portant. Dérivation géométrique complète (construction de la capsule,
+   * projection du point d'impact, approximation de la normale) :
+   * see: docs/systems/armes.md#pied-de-biche-portée-en-capsule
    */
   private fireMelee(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);

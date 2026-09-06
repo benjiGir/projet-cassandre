@@ -20,26 +20,10 @@ import { type GameFlowActor } from "../../ui/gameFlowMachine";
 import type { GameSession } from "./gameSession";
 
 /**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `GameEngine` est le PENDANT PERSISTANT de `GameSession` (`gameSession.ts`)
- * — tout ce que `main()` construisait UNE SEULE FOIS, avant ce jalon, en
- * variables locales fermées par ~15 fonctions imbriquées et les 5 callbacks
- * de la boucle. Ce jalon ne change AUCUN comportement observable : chaque
- * champ ci-dessous existait déjà, sous forme de `const`/`let` de `main()`,
- * documenté comme "PERSISTANT (Jalon M8)" — cette interface ne fait que
- * leur donner un nom collectif pour pouvoir les passer en paramètre
- * explicite aux fonctions désormais extraites, au lieu d'une fermeture.
- *
- * Ce qui N'EST PAS ici (déplacé en constantes/scratch MODULE-LOCAUX dans le
- * seul fichier qui les utilise, `game/loop/*.ts`/`game/session/*.ts`) :
- * tous les scratch vectors qui ne servent qu'à UNE SEULE phase de boucle
- * (ex. `eyePosition`/`cameraEuler` — uniquement `interpolateVisuals.ts`),
- * et toutes les constantes de réplique/porte/vue (`HERO_LINE_*`, `VIEWS_*`,
- * `DOOR_OPEN_DURATION`...) — aucune de ces valeurs ne change au fil d'une
- * partie, les rendre "persistantes" via `GameEngine` n'apporterait rien.
- * Seul `ballPrevPos`/`ballPrevQuat`/`ballCurrPos`/`ballCurrQuat` reste ici :
- * partagé entre DEUX fichiers (`loop/stepPhysics.ts` écrit `ballCurr*`,
- * `loop/interpolateVisuals.ts` lit les deux pour interpoler).
+ * État PERSISTANT du process (construit une fois, survit à un reset de
+ * partie) — pendant de `GameSession` (`gameSession.ts`), l'état PROPRE À
+ * une partie.
+ * see: docs/systems/session.md#létat-persistant-du-process-gameengine
  */
 export interface GameEngine {
   scene: THREE.Scene;
@@ -94,16 +78,10 @@ export interface GameEngine {
 }
 
 /**
- * `GameEngine` MOINS `session` — résout un ordre de construction circulaire :
- * `buildGameEngine` ci-dessous doit exister AVANT que la toute première
- * `GameSession` puisse être construite (`lifecycle.ts::bootGameSession` lit
- * `scene`/`look`/`clock`/etc.), mais `GameEngine` exige `session` non-null.
- * `bootGameSession` est donc typée pour accepter `PersistentEngine` (elle ne
- * lit jamais `engine.session` — voir sa doc, elle EN CONSTRUIT une, elle ne
- * lit jamais la courante) : un `GameEngine` complet reste assignable ici par
- * sous-typage structurel (champ `session` en trop, ignoré), donc les
- * rappels ultérieurs (`replay`/`returnToMenu`, qui passent le `GameEngine`
- * complet) fonctionnent avec la MÊME fonction, sans caster quoi que ce soit.
+ * `GameEngine` moins `session` — rompt un ordre de construction circulaire
+ * entre `buildGameEngine` et la toute première `GameSession`.
+ * see: docs/systems/session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
+ * see: docs/decisions/0014-gameengine-persistentengine-separes.md
  */
 export type PersistentEngine = Omit<GameEngine, "session">;
 
@@ -113,25 +91,11 @@ export const SUIT_SPRITE_HEIGHT = 1.8;
 export const DIRECTOR_SPRITE_HEIGHT = 2.1;
 
 /**
- * `true` ssi `engine.session.physics.world` est GARANTI vivant — càd ni pas
- * encore construit (`boot`/`mainMenu`/`options`/`levelSelect`, avant le tout
- * premier `bootGameSession`), ni déjà `free()`-é (fenêtre transitoire de
- * `returnToMenu()` : `teardownGameSession` libère le monde PUIS attend,
- * potentiellement plusieurs secondes le temps que l'utilisateur navigue le
- * menu, avant que `bootGameSession` n'en construise un nouveau —
- * `engine.session` continue de POINTER vers l'ancien pendant cette fenêtre,
- * un objet JS valide mais dont le `physics.world` Rapier sous-jacent est
- * détruit côté WASM).
- *
- * Utilisé UNIQUEMENT par `loop/stepPhysics.ts` : `loop/updateGameplay.ts` a
- * déjà sa propre garde stricte (`=== "playing"` seulement, voir sa doc) ;
- * `interpolateVisuals`/`updateFx`/`render` ne touchent jamais Rapier
- * directement (vérifié : `PlayerController.eyePosition`/`viewBob`/
- * `runFactorAt`, l'interpolation des Costards/Directeur, `viewmodel.update`
- * ne lisent que des champs JS déjà calculés, jamais `this.kcc`/`this.body`)
- * — les laisser tourner sans garde pendant cette fenêtre est sans risque
- * (au pire, un rendu de scène momentanément vide derrière le menu, déjà
- * masqué par son fond opaque).
+ * `true` ssi le monde Rapier de `engine.session` est garanti vivant — pas
+ * encore construit, ou déjà `free()`-é pendant la fenêtre transitoire de
+ * `returnToMenu()`. À ne pas confondre avec la garde `flowActor`.
+ * see: docs/systems/session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
+ * see: docs/decisions/0013-garde-flux-vs-monde-physique.md
  */
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
   const value = engine.flowActor.getSnapshot().value;
@@ -139,20 +103,10 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
 }
 
 /**
- * Construit TOUT l'état PERSISTANT du jeu — scène/caméra/renderer, horloge,
- * systèmes de rendu cosmétiques (fx/viewmodel/crosshair/hitmarker/gizmos
- * balistiques/wireframe), atlas/géométries partagés, visée, interaction.
- * Appelée UNE SEULE FOIS par `main()`, avant le tout premier
- * `lifecycle.ts::bootGameSession` (qui construit `engine.session` et doit
- * donc recevoir cet `engine` déjà prêt).
- *
- * `root`/`flowActor` sont construits par `main()` (avant le choix du niveau,
- * voir sa doc) et passés ici plutôt que reconstruits — `resolveBootChoice`
- * a déjà besoin de `root` avant que cette fonction ne soit appelable.
- * Retourne `PersistentEngine` (PAS `GameEngine`) : `session` n'existe pas
- * encore à ce stade — `main()` appelle `lifecycle.ts::bootGameSession` juste
- * après pour la construire, puis assemble le `GameEngine` complet (voir la
- * doc de `PersistentEngine` ci-dessus).
+ * Construit TOUT l'état PERSISTANT du jeu, appelée UNE SEULE FOIS par
+ * `main()` avant le tout premier `bootGameSession`. Retourne
+ * `PersistentEngine`, pas `GameEngine` : `session` n'existe pas encore.
+ * see: docs/systems/session.md#létat-persistant-du-process-gameengine
  */
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
@@ -188,7 +142,6 @@ export function buildGameEngine(
   sun.position.set(5, 10, 5);
   scene.add(sun);
 
-  // --- Vue : lue au taux d'affichage, jamais interpolée (invariant #3) -------
   // `clock` : PURE ACCUMULATEUR DE HITSTOP, aucun état de partie (Jalon M8) —
   // reste vivant à travers un reset, jamais reconstruit par
   // `bootGameSession`/`teardownGameSession`.
@@ -217,7 +170,6 @@ export function buildGameEngine(
   // bascule à chaud via `KeyB` dans `loop/updateFx.ts`.
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
 
-  // --- Ennemi « Costard » (Phase 3) — atlas PARTAGÉ, PERSISTANT -------------
   // `BillboardSprite` clone en interne l'objet `THREE.Texture` par instance
   // (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`),
   // donc réutiliser cette même texture source pour chaque `new
@@ -225,7 +177,6 @@ export function buildGameEngine(
   // besoin de la reconstruire à chaque `bootGameSession`.
   const suitAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, SUIT_ATLAS_ROWS);
 
-  // --- Ennemi « Directeur » (boss de fin, Zone E) — même discipline --------
   const directorAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, DIRECTOR_ATLAS_ROWS);
   // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager
   // restent purs de tout rendu, voir leur doc de tête) — placeholder simple

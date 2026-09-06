@@ -7,17 +7,16 @@ import { runGameplaySync } from "../../core/runtime";
 import { fovForRunFactor, moveConfig } from "../player/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `interpolateVisuals` (callback de `startLoop`, `core/loop.ts`) déplacée
- * telle quelle, `engine` en paramètre explicite au lieu d'une fermeture sur
- * le scope de `main()`. Les scratch vectors ci-dessous ne servent QU'À ce
- * fichier (contrairement à `ballPrevPos`/`ballCurrPos`, partagés avec
- * `loop/stepPhysics.ts` — voir `session/gameEngine.ts`) : rester des `const`
- * module-locaux plutôt que des champs de `GameEngine` a le même effet
- * (persistants, zéro allocation en régime établi) sans gonfler l'interface
- * partagée.
- */
+// `engine` est injecté en paramètre explicite (jamais une fermeture sur
+// `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
+// see: docs/systems/boucle-de-jeu.md#origine-des-modules
+
+// Scratch vectors ci-dessous : locaux à CE fichier (contrairement à
+// `ballPrevPos`/`ballCurrPos`, partagés avec `loop/stepPhysics.ts` via
+// `GameEngine` — voir `session/gameEngine.ts`) — rester des `const`
+// module-locaux plutôt que des champs de `GameEngine` donne le même effet
+// (persistants, zéro allocation en régime établi) sans gonfler l'interface
+// partagée.
 const eyePosition = new THREE.Vector3();
 const cameraEuler = new THREE.Euler(0, 0, 0, "YXZ");
 // Scratch du head bob : réutilisé à chaque frame, zéro allocation en régime établi.
@@ -31,14 +30,9 @@ const suitForwardScratch = new THREE.Vector3();
 const directorPositionScratch = new THREE.Vector3();
 const directorForwardScratch = new THREE.Vector3();
 
-/**
- * Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : ce callback tourne au TAUX
- * D'AFFICHAGE (pas le pas fixe) — même frontière synchrone stricte
- * (principe transverse #1 du plan : "pour tout ce qui vit dans le pas
- * fixe OU dans la boucle d'affichage"), donc même garde-fou
- * `runGameplaySync`. Composé en phases nommées, même discipline que
- * M6 pour `updateGameplay`.
- */
+// Tourne au taux d'affichage, pas le pas fixe — même frontière Effect
+// synchrone stricte (`runGameplaySync`) que le pas fixe.
+// see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 export function interpolateVisuals(engine: GameEngine, alpha: number): void {
   const session = engine.session;
   runGameplaySync(

@@ -3,34 +3,15 @@ import * as THREE from "three";
 import type { WeaponSystem } from "../game/player/weapons";
 
 /**
- * Le mesh d'arme affiché à l'écran (le « gun » en bas de l'écran). Invariant
- * #9 (boîtes blanches jusqu'à la Phase 5) : AUCUN asset de sprite d'arme
- * n'existe encore, donc pas de texture chargée ni générée ici — deux boîtes
- * `MeshLambertMaterial` colorées, une par arme, dans le même esprit que la
- * palette de zone de `game/level/gym.ts` (une teinte = une identité visuelle,
- * pas de détail). C'est le choix ATTENDU à ce stade, pas un raccourci : le
- * critère de validation de la Phase 2 porte sur le FEEL du tir, pas sur le
- * rendu de l'arme.
+ * Le mesh d'arme affiché à l'écran. Invariant #9 : aucun asset de sprite
+ * d'arme n'existe encore, deux boîtes `MeshLambertMaterial` colorées en
+ * tiennent lieu (choix ATTENDU — la Phase 2 valide le FEEL du tir, pas le
+ * rendu de l'arme).
  *
- * HIÉRARCHIE DE SCÈNE — choix ASSUMÉ : les deux meshes sont ajoutés en ENFANT
- * de la caméra (`camera.add`), pas recalculés en world-space à chaque frame.
- * Deux raisons :
- *  1. `weapons.viewmodelPose()` renvoie déjà translation + tangage « dans le
- *     repère local de la caméra » (voir sa doc dans `weapons.ts`) — en enfant
- *     de caméra, cette pose s'applique TELLE QUELLE en position/rotation
- *     locales, sans reconstruire de matrice à partir de
- *     `camera.position`/`camera.quaternion` chaque frame ;
- *  2. conséquence ASSUMÉE, pas un oubli : le viewmodel hérite du FOV
- *     dynamique de la caméra (élargi en course, voir `moveConfig.fovRunBoost`)
- *     et semble très légèrement « zoomer » pendant un sprint. C'est le
- *     comportement HABITUEL d'un FPS (le viewmodel bouge avec le FOV de
- *     l'arme), pas une régression à corriger.
- *
- * PRÉREQUIS côté appelant : la caméra doit être ajoutée à la scène
- * (`scene.add(camera)`) pour que ses enfants soient traversés au rendu — une
- * caméra qui n'est PAS un descendant de `scene` rend ses propres enfants
- * invisibles, même correctement positionnés. Voir le commentaire au point
- * d'appel dans `main.ts`.
+ * Hiérarchie de scène (enfant de caméra), prérequis `scene.add(camera)`, et
+ * FOV hérité pendant un sprint (comportement HABITUEL d'un FPS, pas une
+ * régression) :
+ * see: docs/systems/rendu.md#le-mesh-darme-affiché-à-lécran-viewmodel
  */
 
 const MELEE_COLOR = 0x8a5a34; // brun/rouille, pied-de-biche
@@ -77,12 +58,8 @@ export class Viewmodel {
   update(alpha: number, weapons: WeaponSystem) {
     weapons.viewmodelPose(alpha, this.scratchPosition, this.scratchEuler);
 
-    // Trois états explicites, PAS un ternaire binaire : `activeWeapon` peut
-    // valoir "none" (pied-de-biche pas encore ramassé, Zone A du niveau —
-    // voir CLAUDE.md, préfixe glTF `use_*`). Un ternaire melee/shotgun
-    // afficherait le pompe par défaut sur "none" (arme fantôme à l'écran
-    // pour un joueur censé être désarmé) — bug visuel silencieux évité ici
-    // en énumérant les trois cas plutôt qu'en inversant une condition binaire.
+    // Trois états explicites, PAS un ternaire binaire (voir la doc de tête) :
+    // un ternaire melee/shotgun afficherait le pompe par défaut sur "none".
     switch (weapons.activeWeapon) {
       case "melee":
         this.shotgunMesh.visible = false;

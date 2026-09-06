@@ -6,60 +6,20 @@ Données pures, aucune dépendance à `bpy`. Importable depuis un script Blender
 
     python3 tools/blender/kit_spec.py          # imprime la table du kit
 
-------------------------------------------------------------------------------
-CONVENTIONS ENCODÉES ICI
-------------------------------------------------------------------------------
+Repère Blender, Z vers le haut, 1 unité = 1 mètre. Origine à un coin au sol
+pour chaque pièce (coordonnées locales positives, x∈[0,W] y∈[0,D] z∈[0,H]),
+classes de pièce (SHELL/PROP/DETAIL) et leurs contraintes de grille, exceptions
+d'origine (sol/plafond) : voir
+docs/reference/conventions-nommage.md#classes-de-pièce-du-kit-modulaire-toolsblenderkit_specpy
 
-Repère Blender, Z vers le haut, 1 unité = 1 mètre.
+Proxies de collision : `col_box_*` cuboid, `col_hull_*` convexHull,
+`col_mesh_*` trimesh (aucun dans ce kit — c'est le but) — voir le skill
+`collision-proxy-authoring`. Plusieurs `col_box_*` sur une même pièce =
+compound (décomposition d'une forme concave, jamais un trimesh pour ça).
 
-**Origine à un coin au sol.** Chaque pièce est décrite en coordonnées locales
-positives : la géométrie occupe x∈[0,W], y∈[0,D], z∈[0,H]. L'origine (0,0,0)
-est donc le coin bas «avant-gauche», jamais le centre — poser la pièce sur la
-grille revient à poser son origine sur un nœud de grille.
-
-Deux exceptions assumées, pour la même raison ergonomique :
-  - `kit_floor_4x4`   : la dalle descend en z∈[-0.25, 0]. L'origine est le coin
-                        de la **surface de marche**, donc poser le sol à z=0
-                        fait marcher le joueur à z=0.
-  - `kit_ceiling_4x4` : la dalle monte en z∈[0, 0.25]. L'origine est le coin de
-                        la **sous-face**, donc poser le plafond à z=5 donne une
-                        hauteur libre de 5 m exactement.
-
-**Classes de pièce** (`cls`), qui décident des contrôles de grille appliqués :
-
-| Classe   | Contrainte dimensionnelle                          |
-|----------|----------------------------------------------------|
-| `SHELL`  | empreinte X multiple de 1 m, hauteur multiple de 0.5 |
-| `PROP`   | grille fine 0.25 m sur X et Y                       |
-| `DETAIL` | exempt (petit élément collé à une surface)          |
-
-Écart documenté par rapport à une lecture littérale de `modular-kit-design`
-(«empreinte multiple de 1 m, hauteur multiple de 0.5 m») : la table de
-dimensions du même skill viole elle-même cette règle sur presque tous les
-props — gondole profonde de 1.25, palette 1.2 × 0.8, caisse à 1.1 de haut.
-La règle vaut pour ce qui se **carrelle** (la coque), pas pour ce qui se
-**pose** (le mobilier). Les dimensions du skill font foi et sont reprises au
-chiffre près ; c'est la règle générique qui est relâchée par classe, pas les
-dimensions qui sont arrondies.
-
-**Proxies de collision** (`collision-proxy-authoring`) :
-  `col_box_*`  → cuboid       (8 sommets, aucune arête interne)
-  `col_hull_*` → convexHull   (rampe d'escalier)
-  `col_mesh_*` → trimesh      (aucun dans ce kit — c'est le but)
-
-Plusieurs `col_box_*` sur une même pièce = **compound** : décomposition d'une
-forme concave en cuboids (angle rentrant, encadrement de porte). Jamais un
-trimesh pour ça.
-
-**Subdivision** (`vertex-color-sector-lighting`) : `SEG_TARGET` = 1 m. Chaque
-face est découpée en `max(1, round(longueur / 1 m))` segments par axe. Une face
-de 4 × 5 donne donc 5 × 6 = 30 sommets, exactement le chiffre du skill. La
-subdivision est une **propriété du kit**, pas une retouche après coup.
-
-**Densité de texels** (`retro-texture-density`) : `UV_TILE` = 2 m par tuile,
-soit 64 px/m avec les textures 128 × 128 du projet. Les UV sont une projection
-en boîte des coordonnées locales, donc la densité est exacte sur les six faces
-sans dépaquetage manuel.
+Subdivision (`SEG_TARGET`, skill `vertex-color-sector-lighting`) et densité de
+texels (`UV_TILE`, skill `retro-texture-density`) sont des propriétés du kit,
+pas des retouches après coup — voir les constantes ci-dessous.
 """
 
 from __future__ import annotations
@@ -206,19 +166,9 @@ def _checkout_parts(length=3.0, depth=1.0, height=1.1):
 
 
 def _crate_parts(side=1.0):
-    """Caisse : cube plein, SANS tasseaux d'angle.
-
-    OPTION A (décision actée, 2026-08-21) : les quatre tasseaux d'angle
-    précédents étaient posés au ras du cube, leurs faces extérieures
-    exactement coplanaires avec celles du cube (16 paires de faces
-    coïncidentes, mesuré). Résultat : `kit_crate` bakait entièrement noir
-    (auto-occultation, pas un défaut d'éclairage — voir
-    `bake_vertex_lighting.py::count_coincident_faces` et le README). Corriger
-    en décollant les tasseaux de quelques mm aurait résolu le bake mais fait
-    déborder l'empreinte hors de 1 × 1, désynchronisant le proxy cuboid du
-    rendu. Option retenue : supprimer les tasseaux. Empreinte 1 × 1 conservée
-    à l'identique, proxy cuboid toujours exact, bake propre par construction
-    (plus aucune face coïncidente à supprimer).
+    """Caisse : cube plein, SANS tasseaux d'angle — des tasseaux au ras du
+    cube bakaient entièrement noir (faces coïncidentes, auto-occultation).
+    see: docs/pipeline/niveau-blender.md#diagnostic-dun-mesh-entièrement-noir
     """
     return [box(0.0, 0.0, 0.0, side, side, side, MAT_STORAGE)]
 

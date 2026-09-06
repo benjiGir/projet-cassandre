@@ -6,20 +6,11 @@ import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
 /**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `unlockDoor`/`setupExitDoorTracking`/`triggerLevelComplete` déplacées
- * telles quelles, `session`/`engine` en paramètres explicites au lieu d'une
- * fermeture sur le scope de `main()`.
- */
-
-/**
  * Déverrouille le `door_*` nommé `targetName` (glissement + collider
- * désactivé, voir la doc de `OpeningDoor` dans `gameSession.ts`) — factorisé
- * entre `onExitDoorUse` (Zone E, gardé par badge) et `onFrozenStorageUse`
- * (Zone B, sans garde) : même mécanique de porte, seule la CONDITION
- * d'appel diffère, décidée par l'appelant avant d'invoquer cette fonction.
- * Retourne `false` sans effet si `targetName` ne correspond à aucun `door_*`
- * du niveau courant (erreur de données Blender, pas un état de jeu valide).
+ * désactivé, voir `OpeningDoor` dans `gameSession.ts`). Retourne `false`
+ * sans effet si `targetName` ne correspond à aucun `door_*` du niveau
+ * courant (erreur de données Blender, pas un état de jeu valide).
+ * see: docs/systems/session.md#portes-et-fin-de-niveau
  */
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
   const door = (session.gltfLevelSession?.current?.doors ?? []).find((d) => d.name === targetName);
@@ -69,12 +60,11 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
 }
 
 /**
- * Bascule vers l'écran de fin de niveau (Jalon M8 : envoie `LEVEL_COMPLETED`
- * à l'acteur de flux, remplace `state.setLevelComplete(true)`) — voir
- * `feedback.ts::handlePlayerHit` pour la même discussion sur
- * `session.levelCompleteHandled` face à la garde `flowState !== "playing"`
- * d'`updateGameplay`. Libère le pointeur (même geste qu'à la mort) : l'écran
- * de fin de niveau a besoin du curseur pour ses boutons.
+ * Bascule vers l'écran de fin de niveau (`LEVEL_COMPLETED` envoyé à
+ * l'acteur de flux) et libère le pointeur, même geste qu'à la mort — voir
+ * `feedback.ts::handlePlayerHit` pour la même discussion d'idempotence
+ * appliquée à `session.levelCompleteHandled`.
+ * see: docs/systems/session.md#portes-et-fin-de-niveau
  */
 export function triggerLevelComplete(engine: GameEngine, session: GameSession): void {
   if (session.levelCompleteHandled) return;

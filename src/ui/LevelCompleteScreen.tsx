@@ -1,15 +1,10 @@
 import { useGameStore } from "../game/state";
 
 /**
- * Écran de fin de niveau plein cadre (Phase 6). Même pattern que
- * `DeathScreen.tsx` : lit `state.flowState` (Jalon M8, remplace l'ancien
- * booléen `isLevelComplete` — voir sa doc dans `game/state.ts`), retourne
- * `null` tant qu'il ne vaut pas `"levelComplete"`. Aucun chrono (le plan le
- * marque explicitement optionnel — pas construit ici).
- *
- * `onReplay`/`onReturnToMenu` : voir la doc de `DeathScreenProps` — mêmes
- * fonctions de reset réel, partagées entre les deux écrans (comme
- * `ui/screenNav.ts` avant ce jalon, désormais supprimé).
+ * Écran de fin de niveau plein cadre. Même pattern que `DeathScreen.tsx` :
+ * lit `state.flowState`, retourne `null` hors de l'état "levelComplete".
+ * Aucun chrono — le plan le marque explicitement optionnel.
+ * see: docs/systems/hud.md#écrans-de-mort-et-de-fin-de-niveau
  */
 export interface LevelCompleteScreenProps {
   onReplay: () => void;

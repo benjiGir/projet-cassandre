@@ -1,35 +1,15 @@
 /**
- * Réticule permanent — repère de visée au centre exact de l'écran, absent du
- * jeu jusqu'au retour playtest (son ajouté juste avant) : « le tir est assez
- * hasardeux ... j'ai l'impression de ne pas toucher à bout portant ». Sans
- * réticule, le seul indicateur visuel de visée était le viewmodel
- * (`render/viewmodel.ts`), affiché en bas-droit de l'écran — décalé du
- * centre réel, donc trompeur pour estimer où pointe réellement `aimForward`.
+ * Réticule permanent — repère de visée au centre exact de l'écran, ajouté
+ * après un retour playtest (« le tir est assez hasardeux ... j'ai
+ * l'impression de ne pas toucher à bout portant » — le seul repère visuel
+ * avant lui était le viewmodel, décalé bas-droit, trompeur pour estimer où
+ * pointe réellement `aimForward`).
  *
- * POURQUOI PAS REACT (invariant #2) : même raisonnement que
- * `render/hitmarker.ts` — ce module dessine directement sur un `<canvas>` 2D
- * dédié, mis à jour depuis `updateFx(realDt)`, jamais le pas fixe. Un
- * `setState` React ne changerait rien ici (le réticule est statique la
- * plupart du temps), mais le pattern doit rester cohérent avec le reste du
- * pipeline de rendu temps réel.
- *
- * CORRECTITUDE DE LA POSITION (pas un axe de variante — voir la doc de
- * `WeaponConfig.crosshairEnabled` dans `game/player/weaponConfig.ts`) : ce
- * module dessine TOUJOURS au centre géométrique exact du canvas interne
- * (`INTERNAL_WIDTH`×`INTERNAL_HEIGHT`, invariant #4). La caméra utilise une
- * projection perspective symétrique à ce même ratio d'aspect (aucun
- * `camera.setViewOffset` nulle part dans le projet), donc son axe optique
- * (`camera.getWorldDirection`, dérivé de la MÊME convention Euler 'YXZ' que
- * `WeaponSystem.computeAimBasis`) se projette TOUJOURS exactement au centre
- * du viewport — c'est une propriété géométrique de la projection, pas
- * quelque chose que ce module doit recalculer ou pourrait désaligner. Seul
- * le STYLE (croix/point, taille, épaisseur, couleur, pulsation au tir) est
- * tunable, voir `CROSSHAIR_VARIANTS`.
- *
- * DÉCOUPLAGE DÉLIBÉRÉ, même discipline que `hitmarker.ts`/`render/fx.ts` : ce
- * module n'importe rien de `game/*`, uniquement des nombres de config
- * (`CrosshairConfig`, structurellement compatible avec `WeaponConfig`).
- * `main.ts` fait le pont en appelant `notifyFire()` sur `weapons.fireEvents`.
+ * Découplage de `game/*` (invariant #2, canvas 2D hors React), position
+ * garantie géométriquement (pas une valeur tunable — seul le style l'est,
+ * `CROSSHAIR_VARIANTS`) :
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/systems/rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
  */
 
 import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";

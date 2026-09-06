@@ -4,13 +4,9 @@ import { moveConfig } from "../player/moveConfig";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `startRecording`/`startPlayback` (harnais F9/F10, voir `game/loop/updateFx.ts`
- * et `game/devtools/consoleApi.ts`) déplacées telles quelles, `engine`/
- * `session` en paramètres explicites au lieu d'une fermeture sur le scope
- * de `main()`.
- */
+// Harnais F9/F10 (voir `game/loop/updateFx.ts` pour la détection des
+// touches, `game/devtools/consoleApi.ts` pour l'exposition console).
+// see: docs/systems/session.md#harnais-f9-et-f10
 
 export function startRecording(engine: GameEngine, session: GameSession): void {
   inputRecorder.startRecording(

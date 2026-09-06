@@ -1,27 +1,13 @@
+// Deux vues d'un même appui (pas fixe vs taux d'affichage), deux Sets, deux
+// règles de vidage différentes — voir la doc pour le pourquoi.
+// see: docs/systems/boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
+
 /**
- * Un appui produit UN événement physique, mais deux couches le lisent à des
- * cadences différentes, et leurs besoins sont incompatibles :
+ * Actions de GAMEPLAY rebindables. Les touches de debug (`F9`/`F10`/`KeyV`/
+ * `KeyB` dans `game/loop/updateFx.ts`) sont volontairement absentes — jamais
+ * montrées au joueur, jamais persistées, jamais rebindables via cette API.
  *
- *  - le pas fixe tourne 0, 1 ou N fois par frame d'affichage. Il lui faut un
- *    front RETENU jusqu'à ce qu'un pas fixe puisse le voir, et CONSOMMÉ pour
- *    qu'un seul pas fixe l'obtienne ;
- *  - le code au taux d'affichage tourne exactement une fois par frame. Il lui
- *    faut un front qui décrive la frame COURANTE, ni retenu ni consommé.
- *
- * Un seul set ne peut pas satisfaire les deux : la rétention (nécessaire au pas
- * fixe) fait rejouer l'appui sur plusieurs frames d'affichage, et le nettoyage
- * par frame (nécessaire à l'affichage) avale les appuis des frames sans pas
- * fixe. D'où deux sets, alimentés par le même keydown, vidés selon deux règles.
- */
-/**
- * Actions de GAMEPLAY rebindables — une par élément d'`InputFrame`
- * (`core/inputRecorder.ts`) qui provient d'une touche/bouton, pas d'une
- * lecture continue de souris (`yaw`/`pitch`/`dx`/`dy` restent hors de cette
- * table, ce ne sont pas des bindings discrets).
- *
- * Les touches de DEBUG (`F9`, `F10`, `KeyV`, `KeyB` dans `main.ts`) sont
- * volontairement absentes : ce sont des outils de dev, jamais montrées au
- * joueur, jamais persistées, jamais rebindables via cette API.
+ * see: docs/reference/controles.md
  */
 export type GameAction =
   | "moveForward"
@@ -36,47 +22,13 @@ export type GameAction =
   | "use";
 
 /**
- * Table de bindings par défaut — IDENTIQUE aux codes qu'avait en dur
- * `captureInputFrame` dans `main.ts` avant cette API. Aucune régression de
- * comportement par défaut : un joueur qui ne touche jamais au rebinding a
- * exactement le jeu d'avant.
+ * Table de bindings par défaut — identique aux codes historiques de
+ * `captureInputFrame` (aucune régression de comportement). Fonctionne déjà
+ * en AZERTY (ZQSD) tel quel : `KeyboardEvent.code` identifie la position
+ * physique de la touche, indépendante du layout — voir la doc pour le détail
+ * vérifié et les mécanismes de remapping.
  *
- * ## Pourquoi ces codes fonctionnent déjà en AZERTY (ZQSD), vérifié et pas supposé
- *
- * `KeyboardEvent.code` identifie la touche par sa POSITION PHYSIQUE sur le
- * clavier — nommée par convention d'après la disposition QWERTY US, mais
- * INDÉPENDANTE du layout système réellement actif. `KeyboardEvent.key`, à
- * l'inverse, dépend du layout : c'est le caractère produit, ce que
- * l'utilisateur voit imprimé sur sa touche. C'est la définition du spec W3C
- * UI Events KeyboardEvent code (https://www.w3.org/TR/uievents-code/) : les
- * valeurs de `code` sont choisies pour rester stables quel que soit le
- * layout, précisément pour permettre ce genre de contrôle "par position"
- * (jeux, raccourcis). Ce comportement est implémenté de façon cohérente par
- * tous les navigateurs evergreen (Chrome, Firefox, Safari, Edge) sur
- * Windows/macOS/Linux pour un layout installé normalement (via les
- * réglages système, pas un remap au niveau pilote type Karabiner, qui sort
- * du cadre du spec DOM et n'est de toute façon pas un cas à couvrir ici).
- *
- * Concrètement, sur un clavier AZERTY français : la touche physiquement à
- * l'emplacement du "W" QWERTY (étiquetée "Z" sur le capuchon AZERTY)
- * déclenche quand même `code === "KeyW"`. Ce moteur d'input a TOUJOURS lu
- * `.code`, jamais `.key` (voir `onKeyDown`/`onKeyUp` plus haut, présents
- * avant cette table) — un joueur AZERTY utilisant ZQSD obtient donc déjà,
- * structurellement, le bon binding physique, SANS AUCUN changement de
- * table par défaut.
- *
- * `Digit1`/`Digit2`/`KeyE` ne posent pas davantage de problème : seules
- * Q/A et W/Z sont interverties entre QWERTY et AZERTY, E occupe la même
- * position physique sur les deux ; la rangée de chiffres est à une
- * position identique sur les deux layouts (le fait qu'elle nécessite Shift
- * pour produire un chiffre en AZERTY est sans importance : `.code`
- * identifie la touche pressée, jamais le caractère qu'elle produit).
- *
- * Le vrai livrable de cette table n'est donc PAS un correctif AZERTY (déjà
- * acquis structurellement, avant même ce fichier) : ce sont les mécanismes
- * de REMAPPING par-dessus une base déjà correcte — un joueur DVORAK, BÉPO,
- * gaucher côté souris, ou qui préfère simplement d'autres touches, a
- * toujours besoin d'un vrai rebind, indépendamment de la question AZERTY.
+ * see: docs/reference/controles.md#pourquoi-ça-marche-déjà-en-azerty
  */
 export const DEFAULT_BINDINGS: Record<GameAction, string> = {
   moveForward: "KeyW",
@@ -115,21 +67,15 @@ export const ACTION_LABELS: Record<GameAction, string> = {
 };
 
 /**
- * Libellés courts pour quelques codes fréquents ("Espace" plutôt que
- * "Space"), utilisés par `formatKeyCode` ci-dessous. Volontairement limité
- * aux codes qui n'ont pas de lettre imprimée évidente — `KeyW`/`Digit1`
- * etc. sont dérivés génériquement, voir `formatKeyCode`.
+ * Libellés courts pour les codes sans lettre imprimée évidente — `KeyW`/
+ * `Digit1` etc. sont dérivés génériquement par `formatKeyCode`.
  *
- * LIMITE CONNUE, documentée pour `shell` : ce libellé est dérivé du NOM du
- * code (convention QWERTY), pas du caractère réellement imprimé sur la
- * touche physique du joueur. `formatKeyCode("KeyW")` renvoie `"W"` même
- * pour un joueur AZERTY, qui voit "Z" sur ce capuchon. Corriger ça
- * précisément demanderait soit `navigator.keyboard.getLayoutMap()`
- * (async, non supporté partout — absent de Firefox), soit de capturer
- * `KeyboardEvent.key` (dépendant du layout, donc correct pour l'affichage)
- * AU MOMENT du rebind, en plus de `.code` (indépendant du layout, utilisé
- * pour la logique) — un flux d'UI que `shell` est mieux placé pour
- * implémenter, puisqu'il construit l'écran "appuie sur une touche".
+ * LIMITE CONNUE (pour `shell`) : ces libellés sont dérivés du NOM du code
+ * (convention QWERTY), pas du glyphe réel affiché sur la touche physique —
+ * `formatKeyCode("KeyW")` reste `"W"` même en AZERTY. Alternatives et
+ * pourquoi ce n'est pas corrigé ici : voir la doc.
+ *
+ * see: docs/reference/controles.md#limite-libellés-de-touches-en-azerty
  */
 const CODE_LABELS: Record<string, string> = {
   Space: "Espace",
@@ -360,16 +306,9 @@ class InputManager {
     return { dx, dy };
   }
 
-  // ===== Couche par ACTION (rebindable) =====
-  //
-  // Pure traduction action -> code par-dessus les méthodes ci-dessus : même
-  // contrat destructif/non-destructif, mêmes garanties de déterminisme
-  // (aucune lecture de `localStorage` ici, seulement de `this.bindings` déjà
-  // résolu en mémoire — rebinder pendant une partie ne lit jamais le disque
-  // au milieu d'un pas fixe). C'est la surface que `captureInputFrame`
-  // (`main.ts`) doit utiliser pour toute action de GAMEPLAY ; les touches de
-  // debug (F9/F10/V/B) restent sur les méthodes par code ci-dessus, elles ne
-  // font pas partie de `GameAction`.
+  // Couche par ACTION (rebindable), pure traduction vers les méthodes par
+  // code ci-dessus — voir la doc pour le contrat de déterminisme.
+  // see: docs/reference/controles.md#persistance-et-couche-par-action
 
   /** Miroir de `isDown`, indexé par action plutôt que par code. */
   isActionDown(action: GameAction): boolean {
@@ -444,24 +383,13 @@ class InputManager {
   }
 
   /**
-   * Clôture la frame d'affichage.
+   * Clôture la frame d'affichage. DOIT être le DERNIER appel de la frame,
+   * après `interpolateVisuals`/`updateFx`/`render` — sinon ces callbacks
+   * perdraient les fronts montants qu'ils doivent lire. Les deux sets ont
+   * des règles de vidage différentes (l'un inconditionnel, l'autre
+   * conditionné aux pas fixes exécutés) : voir la doc.
    *
-   * DOIT être appelée en DERNIER dans la frame, après `interpolateVisuals`,
-   * `updateFx` et `render` — tout code lu au taux d'affichage doit s'exécuter
-   * avant. Voir l'ordre commenté dans `core/loop.ts`.
-   *
-   * Deux durées de vie, une par vue :
-   *
-   * - fronts de la frame d'affichage : vidés INCONDITIONNELLEMENT. Ils
-   *   décrivent « ce que le joueur a pressé pendant cette frame » ; les retenir
-   *   au-delà ferait rejouer le même appui sur les frames suivantes (à 144 Hz,
-   *   un appui resterait visible 2 ou 3 frames d'affichage d'affilée).
-   *
-   * - fronts en attente d'un pas fixe : vidés SEULEMENT si au moins un pas fixe
-   *   a tourné. À 144 Hz, la majorité des frames n'exécute aucun pas fixe ;
-   *   effacer inconditionnellement avalerait les appuis tombés dans ces
-   *   frames-là. Le front reste donc armé jusqu'à ce qu'un pas fixe puisse le
-   *   voir.
+   * see: docs/systems/boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
    */
   endFrame() {
     this.edgesThisDisplayFrame.clear();

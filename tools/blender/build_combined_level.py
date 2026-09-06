@@ -48,21 +48,13 @@ et les murs de chaque zone, aucune pièce sur-mesure inventée pour l'occasion.
 
 ## Le piège du monde/lampe partagé (nouveau, propre à la fusion)
 
-`build_level.py::build_lighting` crée un nouveau `bpy.data.worlds` ET le
-rend actif à CHAQUE appel — correct pour un fichier de zone isolée (un seul
-appel), mais appelé cinq fois ici. Pire : `geo_utils.wipe_scene()` ne
-touche jamais `bpy.data.worlds` (il ne nettoie que collections/objets/
-meshes/matériaux/lampes/images), donc le fichier part déjà avec le "World"
-par défaut de `--factory-startup` en plus. Résultat mesuré : SIX mondes
-après les cinq zones, pas cinq. Les cinq mondes de zone ont la même
-couleur/force de fond (0.30, 0.32, 0.36 / 0.35 — seul le sun optionnel de la
-Zone A diffère, et c'est un OBJET lampe distinct, pas une propriété du
-monde), donc lequel reste actif n'affecte pas le bake. Ce script supprime
-les cinq mondes inutilisés après coup (par nom, voir plus bas), par
-propreté, pas par nécessité de correction. Même chose pour les noms
-`ceiling_light_N` : chaque zone recompte depuis 0, Blender suffixe
-automatiquement les doublons (`.001`...) — cosmétique, les lampes ne sont de
-toute façon jamais exportées (`export_lights=False`).
+`build_level.py::build_lighting` crée un nouveau monde à CHAQUE appel — sans
+conséquence pour un fichier de zone isolée, mais appelé cinq fois ici ; voir
+le nettoyage en fin de `main()` pour le détail (mondes orphelins, aussi
+documenté dans docs/pipeline/niveau-blender.md#mondes-orphelins-dans-le-niveau-combiné).
+Même chose, cosmétique, pour les noms `ceiling_light_N` (chaque zone
+recompte depuis 0, Blender suffixe les doublons) — sans conséquence, les
+lampes ne sont jamais exportées (`export_lights=False`).
 """
 
 from __future__ import annotations
@@ -594,19 +586,14 @@ def main() -> None:
         totals["walls"] += wall_count
         connector_report.append((name, floor_count, wall_count))
 
-    # --- Nettoyage des mondes orphelins (voir docstring de tête) -----------
-    # 6 mondes existent à ce stade, pas 5 : `geo_utils.wipe_scene()` ne
-    # touche jamais `bpy.data.worlds` (il ne nettoie que collections/objets/
-    # meshes/matériaux/lampes/images) — le "World" par défaut livré par
-    # `--factory-startup` survit donc en plus des 5 mondes créés par les 5
-    # appels à `build_lighting`. Seul le DERNIER assigné (`bpy.context.scene
-    # .world`, celui de la Zone E) doit rester ; les 5 autres (le défaut +
-    # A/B/C/D) sont supprimés. Comparaison par NOM (chaîne stable) plutôt que
-    # par identité Python d'objet — pas de raison de faire confiance à `is`
-    # pour comparer des wrappers RNA capturés à des moments différents,
-    # le nom est un identifiant simple et suffisant ici. Vérifié après coup
-    # en rechargeant le .blend produit : exactement 1 monde restant
-    # (`zone_e_bureau_world`), `scene.world` valide et pointant dessus.
+    # --- Nettoyage des mondes orphelins -------------------------------------
+    # 6 mondes existent à ce stade, pas 5 (wipe_scene() ne touche jamais
+    # bpy.data.worlds) : voir
+    # docs/pipeline/niveau-blender.md#mondes-orphelins-dans-le-niveau-combiné
+    # pour le détail. Seul le DERNIER assigné (celui de la Zone E) doit
+    # rester ; comparaison par NOM plutôt que par identité Python d'objet —
+    # pas de raison de faire confiance à `is` pour des wrappers RNA capturés
+    # à des moments différents.
     active_world_name = bpy.context.scene.world.name if bpy.context.scene.world else None
     removed_worlds = 0
     for w in list(bpy.data.worlds):

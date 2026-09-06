@@ -7,106 +7,16 @@ import { RaycastService } from "../../physics/raycast";
 import { suitConfig } from "../entities/suitConfig";
 
 /**
- * Jalon M4 (PLAN_EFFECT_XSTATE.md) : `PathfindingService`, premier VRAI
- * système de pathfinding du jeu. Jusqu'ici, `Suit`/`Director`
- * (`suit.ts`/`director.ts`) ne connaissent que 3 rayons d'évitement local
- * (`computeAvoidedDirection`) — aucune notion de chemin, incapables de
- * contourner un obstacle en dur autrement que par une déviation ponctuelle,
- * et incapables en pratique de traverser l'escalier de la Zone D (aucun
- * `spawn_suit_*` n'y a jamais été posé sur la mezzanine pour cette raison
- * précise, voir la note "Décision d'IA actée avant la construction" de
- * CLAUDE.md).
- *
- * ## Conception — graphe de praticabilité 2.5D, baké au chargement du niveau
- *
- * 1. **Échantillonnage** : une grille horizontale de pas `CELL_SIZE` (0.5 m,
- *    multiple de la grille de construction Blender 0.25 m) sur l'AABB fournie
- *    par l'appelant (`bounds` — voir la doc de `bake` plus bas, ce service ne
- *    lit JAMAIS `LevelHandle`/`THREE.Object3D` lui-même).
- * 2. **Hauteur de sol par cellule** : un rayon vertical descendant (via
- *    `RaycastService`, M3) depuis un point haut jusqu'au premier collider
- *    STATIQUE touché (membership ENEMY, filtre WORLD — même filtre que
- *    `WORLD_ONLY_RAY_GROUPS` de `suit.ts`/`director.ts`, reconstruit ICI
- *    localement plutôt qu'importé : ces deux fichiers ne l'exportent pas,
- *    même choix de duplication assumée qu'entre eux). Une normale de hit
- *    trop inclinée (`normal.y < MIN_FLOOR_NORMAL_Y`) est traitée comme "pas
- *    un sol" — évite qu'un rayon parfaitement vertical qui effleure l'arête
- *    d'un mur ne soit compté comme praticable.
- * 3. **Élagage** : une cellule est rejetée si une capsule du gabarit d'un
- *    Costard (`suitConfig.capsuleRadius`/`capsuleHalfHeight`, voir la note de
- *    dimensionnement plus bas) posée DEBOUT sur ce sol chevauche un autre
- *    collider statique (`RaycastService.intersectionsWithShape`, le collider
- *    de sol lui-même étant exclu via `filterExcludeCollider`) — pas assez de
- *    dégagement vertical pour qu'un ennemi s'y tienne.
- * 4. **Arêtes** (8-connectées) : deux cellules praticables adjacentes sont
- *    reliées si (a) leur différence de hauteur de sol est sous
- *    `MAX_STEP_HEIGHT` (voir sa doc — le réglage qui conditionne le passage
- *    du test "escalier Zone D") ET (b) un rayon HORIZONTAL à hauteur de tête
- *    d'ennemi (`suitConfig.eyeHeight` au-dessus de la moyenne des deux sols)
- *    entre les deux cellules ne touche aucun mur. Chaque paire n'est testée
- *    qu'UNE SEULE FOIS (voir `FORWARD_DIR_INDICES`), le résultat étant
- *    appliqué symétriquement aux deux cellules — la géométrie testée est la
- *    même dans les deux sens, retester serait un travail redondant.
- * 5. **Requête** : A* déterministe (voir `astar` — tas binaire, tie-break
- *    stable PAR INDEX DE GRILLE croissant, jamais par ordre d'itération
- *    d'une `Map`/`Set` — condition dure du déterminisme de rejeu d'input,
- *    `core/inputRecorder.ts`).
- *
- * ## Dimensionnement du gabarit — `suitConfig`, PAS `directorConfig`
- *
- * Un seul graphe est baké par niveau, partagé par `Suit` ET `Director` (voir
- * l'intégration dans `runChase` des deux fichiers). Il est dimensionné sur le
- * gabarit du Costard (`suitConfig.capsuleRadius: 0.4`,
- * `capsuleHalfHeight: 0.5`, `eyeHeight: 1.6`) plutôt que sur celui,
- * légèrement plus grand, du Directeur (`directorConfig`:
- * `capsuleRadius: 0.45`, `capsuleHalfHeight: 0.6`, `eyeHeight: 1.8`) — choix
- * EXPLICITEMENT demandé pour ce jalon. Conséquence assumée : un couloir tout
- * juste assez large pour un Costard mais pas pour un Directeur serait marqué
- * praticable alors qu'il ne l'est pas vraiment pour ce dernier. Risque jugé
- * faible en pratique : le Directeur est un boss UNIQUE, posé dans une seule
- * salle ouverte (Zone E), jamais dans un couloir étroit — mais si un futur
- * niveau pose un Directeur dans un passage exigu, ce sera le premier endroit
- * à vérifier.
- *
- * ## `MAX_STEP_HEIGHT` — le réglage qui fait passer l'escalier de la Zone D
- *
- * Le KCC (`RAPIER.KinematicCharacterController`, PARTAGÉ, invariant #6) gère
- * DÉJÀ la traversée verticale réelle (autostep + gravité + résolution de
- * pente, voir `Suit.integratePhysics`/`Director.integratePhysics`) — ce
- * graphe n'a donc PAS besoin de simuler une trajectoire Y : il doit
- * seulement décider si DEUX CELLULES ADJACENTES DE LA GRILLE sont reliées
- * par une surface que le KCC peut gravir, sans jamais produire lui-même de Y.
- * Seuil retenu : 1.0 m, calculé pour couvrir confortablement la montée
- * verticale d'UNE cellule (0.5 m) sur la pente la plus raide déjà documentée
- * du kit (escalier à 45°, CLAUDE.md — 45° sur 0.5 m horizontal ≈ 0.5 m de
- * dénivelé, une diagonale à 45° depuis une cellule voisine ajoute une marge
- * supplémentaire) tout en restant NETTEMENT inférieur à la hauteur de la
- * mezzanine de la Zone D (2 m) : deux cellules situées de part et d'autre
- * d'un simple rebord (rez-de-chaussée / mezzanine, sans rampe entre les deux)
- * ne doivent jamais être reliées directement, seule une vraie suite de
- * cellules d'escalier doit permettre la montée. Hypothèse documentée, PAS
- * vérifiée en jeu réel (voir le rapport de tâche) : si le KCC n'arrive PAS
- * à gravir la vraie pente malgré un chemin de graphe correct, c'est un
- * réglage du KCC (`autostepMaxHeight`/`maxSlopeClimbAngleDeg`) à ajuster
- * séparément, PAS un défaut de ce graphe.
- *
- * ## Stateless — même philosophie que `DeterministicRandom`/`RaycastService`
- *
- * `PathfindingService` ne stocke JAMAIS le graphe courant : `bake` le
- * construit et le RETOURNE, `findPath` le reçoit en paramètre. C'est à
- * l'appelant (`main.ts`) de garder une variable JS simple
- * (`let currentNavGraph: NavGraph | null = null`), rebâtie dans le callback
- * `onLoaded` déjà passé à `createLevelSession` — exactement le schéma déjà en
- * place pour `gltfLevelSession`/`currentHandle`. `physics: PhysicsWorld` est
- * un PARAMÈTRE de `bake`, jamais stocké, pour la même raison que
- * `RaycastService` (M3) : `PhysicsWorld` naît après `GameLayer`/
- * `GameRuntime`, et une `Layer` de test doit pouvoir scripter un résultat
- * sans jamais construire de monde Rapier réel.
+ * `PathfindingService` (jalon M4) : premier VRAI système de pathfinding du
+ * jeu, en complément des 3 rayons d'évitement local de `Suit`/`Director`
+ * (`computeAvoidedDirection`). Graphe de praticabilité 2.5D, baké au
+ * chargement du niveau (échantillonnage, élagage, arêtes, A* déterministe),
+ * dimensionné sur le gabarit du Costard, jamais celui du Directeur, et
+ * stateless comme `RaycastService`/`DeterministicRandom`.
+ * see: docs/systems/pathfinding.md
  */
 
-// ---------------------------------------------------------------------------
-// Constantes de bake
-// ---------------------------------------------------------------------------
+// Constantes de bake.
 
 /** Pas de la grille horizontale, mètres — multiple de la grille de construction Blender (0.25 m). */
 export const NAV_CELL_SIZE = 0.5;
@@ -123,12 +33,9 @@ const RAY_MARGIN_DOWN = 2;
  */
 const MIN_FLOOR_NORMAL_Y = 0.5;
 
-/**
- * Différence de hauteur de sol maximale entre deux cellules adjacentes pour
- * qu'une arête soit créée, mètres — voir la doc de tête du fichier pour le
- * calcul complet. Valeur GÉNÉREUSE délibérée (le plan de délégation demande
- * "viser large plutôt qu'étroit").
- */
+/** Différence de hauteur de sol maximale entre deux cellules adjacentes pour
+ * qu'une arête soit créée, mètres — le réglage qui fait passer l'escalier de
+ * la Zone D. see: docs/systems/pathfinding.md#la-marche-verticale-maximale-entre-deux-cellules-reliées-max_step_height */
 const MAX_STEP_HEIGHT = 1.0;
 
 /** Décalage vertical du centre de la capsule de test d'élagage au-dessus du sol détecté — évite qu'une capsule tangente au sol touche par accident un collider adjacent qui affleure aussi au niveau du sol (ex. le pied d'un mur). */
@@ -137,23 +44,15 @@ const STAND_CLEARANCE = 0.05;
 /** Rayon de recherche (en cellules) d'une cellule praticable la plus proche d'une position monde quelconque — voir `nearestWalkableCellIndex`. */
 const NEAREST_CELL_SEARCH_RADIUS = 6;
 
-/**
- * Filtre « rayon d'ENEMY qui ne teste QUE la géométrie du niveau » —
- * DUPLIQUÉ depuis `suit.ts`/`director.ts` (ni l'un ni l'autre ne l'exporte,
- * même choix de duplication assumée que celui déjà documenté entre ces deux
- * fichiers). Membership ENEMY, filtre WORLD SEUL : ne touche jamais le
- * joueur ni un autre ennemi.
- */
+/** Filtre « rayon d'ENEMY qui ne teste QUE la géométrie du niveau » —
+ * DUPLIQUÉ depuis `suit.ts`/`director.ts` (aucun des deux ne l'exporte). */
 const WORLD_ONLY_RAY_GROUPS = interactionGroups(GROUP.ENEMY, GROUP.WORLD);
 
 /** Rotation identité, réutilisée pour `intersectionsWithShape` (capsule verticale, axe local Y déjà vertical — pas de rotation nécessaire, contrairement à la capsule horizontale du pied-de-biche dans `weapons.ts`). */
 const IDENTITY_ROTATION: RAPIER.Rotation = { x: 0, y: 0, z: 0, w: 1 };
 
-// ---------------------------------------------------------------------------
 // Directions canoniques — ORDRE FIXE, jamais dérivé d'une itération de
-// Map/Set (déterminisme, voir la doc de tête). Index = bit dans
-// `NavGraph.neighborMask`.
-// ---------------------------------------------------------------------------
+// Map/Set (déterminisme). Index = bit dans `NavGraph.neighborMask`.
 
 interface Dir {
   readonly dx: number;
@@ -183,24 +82,11 @@ const DIRS: ReadonlyArray<Dir> = [
  */
 const FORWARD_DIR_INDICES: ReadonlyArray<number> = [2, 3, 4, 5];
 
-// ---------------------------------------------------------------------------
-// Types publics
-// ---------------------------------------------------------------------------
-
 /**
- * Graphe de praticabilité 2.5D immuable. Représentation en tableaux typés
- * indexés directement par `iz * cols + ix` — délibérément PAS une
- * `Map`/`Set` : zéro question de déterminisme d'itération à se poser, accès
- * O(1) direct, et trivialement inspectable depuis la console
- * (`cassandre.pathfinding.stats()` / `graph()`, voir `main.ts`).
- *
- * Limite 2.5D ACCEPTÉE (hors scope du jalon, voir PLAN_EFFECT_XSTATE.md §0) :
- * une seule hauteur de sol par cellule XZ — le premier collider statique
- * touché par le rayon vertical DESCENDANT. Une zone au sol entièrement
- * recouverte par un étage supérieur (ex. sous une mezzanine) ressort donc
- * comme la surface DU DESSUS, jamais celle du dessous — un vrai navmesh
- * volumétrique serait nécessaire pour lever cette limite, explicitement hors
- * scope de ce chantier.
+ * Graphe de praticabilité 2.5D immuable. Tableaux typés indexés par
+ * `iz * cols + ix`, délibérément PAS une `Map`/`Set` (déterminisme
+ * d'itération, accès O(1), inspectable depuis `cassandre.pathfinding`).
+ * see: docs/systems/pathfinding.md#limite-verticale-acceptée
  */
 export interface NavGraph {
   readonly cellSize: number;
@@ -239,26 +125,15 @@ export class PathNotFoundError extends Schema.TaggedError<PathNotFoundError>()("
 
 export interface PathfindingServiceShape {
   /**
-   * Construit un `NavGraph` à partir de la géométrie STATIQUE du monde
-   * physique donné, sur l'emprise `bounds` (voir la doc de tête pour
-   * l'algorithme complet). `bounds` est fourni par l'APPELANT — ce service
-   * ne touche jamais `THREE.Object3D`/`LevelHandle` lui-même (voir
-   * `main.ts` : `new THREE.Box3().setFromObject(handle.root)`).
+   * Construit un `NavGraph` sur l'emprise `bounds`, fournie par l'APPELANT —
+   * ce service ne touche jamais `THREE.Object3D`/`LevelHandle` lui-même.
+   * Coût assumé au CHARGEMENT du niveau, jamais dans le pas fixe.
    *
-   * Coût assumé au CHARGEMENT du niveau, jamais dans le pas fixe (voir
-   * PLAN_EFFECT_XSTATE.md §6, jalon M4, point 6) — un niveau de la taille du
-   * niveau combiné (`hypermarche_complet.glb`) peut représenter plusieurs
-   * dizaines de milliers de cellules ; non mesuré en conditions réelles de
-   * navigateur (voir le rapport de tâche).
-   *
-   * TYPE ENTIÈREMENT RÉSOLU (`Effect<NavGraph>`, aucun `R` visible) : bien
-   * que l'implémentation réelle consulte `RaycastService` en interne, cette
-   * dépendance est fournie PAR LE SERVICE LUI-MÊME (`Effect.provide` autour
-   * de `bakeNavGraphEffect`, voir `PathfindingService.layer`) plutôt
-   * qu'exposée à l'appelant — un consommateur (`main.ts`, un futur test de
-   * `Suit`/`Director` scriptant `PathfindingService.test()`) n'a jamais
-   * besoin de savoir que `bake` utilise du raycasting sous le capot, ni de
-   * fournir `RaycastService` lui-même pour que le type vérifie.
+   * Type ENTIÈREMENT RÉSOLU (`Effect<NavGraph>`, aucun `R` visible) : bien
+   * que l'implémentation consulte `RaycastService` en interne, cette
+   * dépendance est fournie PAR LE SERVICE LUI-MÊME (voir
+   * `PathfindingService.layer`), jamais exposée à l'appelant.
+   * see: docs/systems/pathfinding.md
    */
   readonly bake: (physics: PhysicsWorld, bounds: THREE.Box3) => Effect.Effect<NavGraph>;
 
@@ -277,10 +152,6 @@ export interface PathfindingServiceShape {
     to: THREE.Vector3,
   ) => Effect.Effect<ReadonlyArray<THREE.Vector3>, PathNotFoundError>;
 }
-
-// ---------------------------------------------------------------------------
-// Bake
-// ---------------------------------------------------------------------------
 
 function cellIndex(graph: NavGraph, ix: number, iz: number): number {
   return iz * graph.cols + ix;
@@ -319,13 +190,9 @@ export function navGraphStats(graph: NavGraph): {
   return { cellSize: graph.cellSize, cols: graph.cols, rows: graph.rows, cellCount: graph.walkable.length, walkableCount, edgeCount };
 }
 
-/**
- * Implémentation réelle de `PathfindingServiceShape.bake` — voir la doc de
- * tête du fichier pour l'algorithme complet (échantillonnage, élagage,
- * arêtes). Toutes les requêtes physiques passent par `RaycastService` (M3),
- * jamais un accès direct à `physics.world.*` — conforme au point 1 de la
- * délégation de ce jalon.
- */
+/** Implémentation réelle de `PathfindingServiceShape.bake`. Toutes les
+ * requêtes physiques passent par `RaycastService`, jamais un accès direct à
+ * `physics.world.*`. see: docs/systems/pathfinding.md#comment-le-graphe-est-construit */
 const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.Effect<NavGraph, never, RaycastService> =>
   Effect.gen(function* () {
     const raycast = yield* RaycastService;
@@ -349,7 +216,7 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
     const verticalRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 });
     const horizontalRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 });
 
-    // --- Passe 1 : hauteur de sol + élagage, cellule par cellule. ---------
+    // Passe 1 : hauteur de sol + élagage, cellule par cellule.
     for (let iz = 0; iz < rows; iz++) {
       for (let ix = 0; ix < cols; ix++) {
         const idx = iz * cols + ix;
@@ -389,7 +256,7 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
       }
     }
 
-    // --- Passe 2 : arêtes, une seule fois par paire (voir `FORWARD_DIR_INDICES`). ---
+    // Passe 2 : arêtes, une seule fois par paire (voir FORWARD_DIR_INDICES).
     for (let iz = 0; iz < rows; iz++) {
       for (let ix = 0; ix < cols; ix++) {
         const idx = iz * cols + ix;
@@ -443,10 +310,7 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
     return { cellSize, cols, rows, originX, originZ, groundY, walkable, neighborMask };
   });
 
-// ---------------------------------------------------------------------------
-// A* — tas binaire array-based, AUCUNE Map/Set, tie-break stable par index
-// de grille croissant (déterminisme, voir la doc de tête du fichier).
-// ---------------------------------------------------------------------------
+// A* — tas binaire array-based, AUCUNE Map/Set, tie-break stable par index de grille croissant (déterminisme).
 
 interface HeapNode {
   readonly index: number;
@@ -658,19 +522,13 @@ const findPathEffect = (
     return indices.slice(1).map((idx) => cellWorldPosition(graph, idx));
   });
 
-// ---------------------------------------------------------------------------
-// Service
-// ---------------------------------------------------------------------------
-
 export class PathfindingService extends Context.Service<PathfindingService, PathfindingServiceShape>()(
   "cassandre/game/level/PathfindingService",
 ) {
   static readonly layer = Layer.succeed(
     PathfindingService,
     PathfindingService.of({
-      // `RaycastService.layer` fourni ICI, à l'implémentation — voir la doc
-      // de `PathfindingServiceShape.bake` : le type public exposé aux
-      // appelants reste `Effect<NavGraph>`, sans `RaycastService` visible.
+      // RaycastService.layer fourni ICI, à l'implémentation — voir la doc de `bake` ci-dessus.
       bake: (physics, bounds) => bakeNavGraphEffect(physics, bounds).pipe(Effect.provide(RaycastService.layer)),
       findPath: findPathEffect,
     }),

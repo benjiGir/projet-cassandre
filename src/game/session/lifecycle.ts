@@ -16,16 +16,6 @@ import { resolveBootChoice } from "./bootChoice";
 import { type GameSession } from "./gameSession";
 import { type GameEngine, type PersistentEngine } from "./gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `bootGameSession`/`teardownGameSession`/`replay`/`returnToMenu` déplacées
- * telles quelles, `engine`/`session` en paramètres explicites au lieu d'une
- * fermeture sur le scope de `main()`. `bootGameSession`/`teardownGameSession`
- * prennent `PersistentEngine` (pas `GameEngine`) : elles ne lisent jamais
- * `engine.session`, ce qui leur permet d'être appelées AVANT que la toute
- * première session n'existe — voir `gameEngine.ts::PersistentEngine`.
- */
-
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
@@ -33,39 +23,20 @@ const SPAWN_FEET_GUARD = 0.1;
 
 /**
  * Rayon de la balle de test (chemin "gym" seulement) — témoin de
- * non-régression des colliders, et témoin de `setApplyImpulsesToDynamicBodies`
- * (le joueur doit pouvoir la pousser). Position vérifiée pour le hub de la
- * gym (44x44 m, murs à x,z = ±22) : au repos elle tombe vers (~1.9, ~0.4,
- * ~1.6) en ~0.54 s, bien dégagée de tout mur et directement dans le champ de
- * vision du spawn (au spawn (0, ~1.7, -10) regardant +Z, la balle est à ~17°
- * hors axe, très en deçà du demi-FOV ~54°). Sa dérive horizontale constante
- * (pas d'amortissement) la fait heurter le segment ouest du mur nord du hub
- * vers t≈7.3 s, avant d'atteindre l'ouverture du couloir (x∈[-3,3]) : elle
- * reste contenue dans le hub, jamais éjectée vers une autre aile.
- *
- * OBJET DE TEST DE LA GYM (pas du contenu générique de moteur) : construite
- * UNIQUEMENT sur le chemin "gym", ses coordonnées n'ayant aucun sens sur le
- * chemin glTF.
+ * non-régression des colliders et de `setApplyImpulsesToDynamicBodies`.
+ * Trajectoire vérifiée par calcul pour rester contenue dans le hub.
+ * see: docs/systems/session.md#construire-une-partie
  */
 const BALL_RADIUS = 0.4;
 
 /**
- * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — construit une PARTIE complète :
- * `PhysicsWorld` (donc `player`/`weapons`/`suitManager`/`directorManager`,
- * tous construits À PARTIR de `physics`), la géométrie du niveau (gym ou
- * session glTF), tout l'état de suivi par partie (badge/porte/secrets...),
- * et remet `game/state.ts` (`debug`, `hudMessage`, `heroLine`) à ses
- * valeurs de boot. Appelée UNE FOIS au tout premier boot ET à nouveau à
- * chaque "Rejouer"/"Retour au menu" (`replay`/`returnToMenu` plus bas) —
- * c'est ce réemploi qui rend le reset possible.
- *
- * Ce qui N'EST PAS reconstruit ici (voir la doc de `GameSession`) :
- * `scene`/`camera`/`renderer`, `clock`, `fx`/`viewmodel`/`crosshair`/
- * `hitmarker`/`ballisticsDebug`/`wireframeToggle`, `look`/`lookDelta`,
- * `interaction`, tous les atlas/géométries/matériaux partagés — ces
- * systèmes sont STATELESS vis-à-vis d'une partie précise (ou leur état
- * interne, comme le `WeakSet` d'`interaction`, s'auto-invalide sans code
- * de reset dédié, voir sa doc).
+ * Construit une PARTIE complète : `PhysicsWorld` (donc `player`/`weapons`/
+ * `suitManager`/`directorManager`, tous construits à partir de `physics`),
+ * la géométrie du niveau (gym ou session glTF), tout l'état de suivi par
+ * partie. Appelée une fois au tout premier boot ET à nouveau à chaque
+ * "Rejouer"/"Retour au menu" — ce réemploi est ce qui rend le reset
+ * possible.
+ * see: docs/systems/session.md#construire-une-partie
  */
 export function bootGameSession(engine: PersistentEngine, choice: LevelDef): GameSession {
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
@@ -174,24 +145,12 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
 }
 
 /**
- * Jalon M8 — détruit une PARTIE complète : dispose la session de niveau
- * glTF (retire sa géométrie de `scene`, libère GPU — voir
- * `loader.ts::disposeLevelResource`, déjà correct, inchangé), retire toute
- * la géométrie propre à `session` de `scene` (gym + balle de test, en un
- * seul `scene.remove(gymRoot)` — voir la doc de `GameSession.gymRoot` —
- * puis dispose leurs géométries/matériaux, gym étant un chemin dev
- * potentiellement rejoué plusieurs fois de suite), dispose les sprites
- * billboard (Costards + Directeur, `BillboardSprite.dispose()` gère déjà
- * retrait de scène + libération géométrie/matériau/texture propres à
- * l'instance), retire le mesh du badge s'il traînait, puis
- * `physics.world.free()` EN DERNIER — API Rapier brute déjà utilisée ainsi
- * dans `simulateRecording` (`game/devtools/testHarness.ts`), confirmée par
- * `node_modules/.../pipeline/world.d.ts` : libérer le monde libère TOUS
- * ses corps/colliders/`KinematicCharacterController` d'un coup, "no need
- * to call their `.free()` methods individually" — donc aucun nettoyage
- * Rapier séparé n'est nécessaire pour `player`/`suitManager`/
- * `directorManager`/`weapons`, qui deviennent simplement inatteignables et
- * seront ramassés par le GC JS normal.
+ * Détruit une PARTIE complète, dans un ordre précis : session de niveau
+ * glTF, géométrie propre à `session` (gym + balle de test), sprites
+ * billboard, mesh du badge, puis `physics.world.free()` EN DERNIER —
+ * libérer le monde Rapier libère tous ses corps/colliders d'un coup, voir
+ * pourquoi l'ordre compte.
+ * see: docs/systems/session.md#démolir-une-partie
  */
 export function teardownGameSession(engine: PersistentEngine, session: GameSession): void {
   session.gltfLevelSession?.stop();
@@ -221,12 +180,11 @@ export function teardownGameSession(engine: PersistentEngine, session: GameSessi
 }
 
 /**
- * "Rejouer" (`dead`/`levelComplete -> playing`) — reconstruit EXACTEMENT
- * le même `LevelDef` que la partie qui vient de se terminer
- * (`session.choice`). Aucun `root.render()` ici : `App` reste monté tout
- * du long (voir `main.ts`), seul `state.flowState` change (`DeathScreen`/
- * `LevelCompleteScreen` redeviennent `null`) — c'est ce qui rend "Rejouer"
- * instantané, sans le moindre rechargement de page.
+ * "Rejouer" — reconstruit EXACTEMENT le même `LevelDef` que la partie qui
+ * vient de se terminer. Aucun `root.render()` ici : `App` reste monté tout
+ * du long, seul `state.flowState` change — c'est ce qui rend "Rejouer"
+ * instantané, sans rechargement de page.
+ * see: docs/systems/session.md#rejouer-et-retour-au-menu
  */
 export function replay(engine: GameEngine): void {
   const choice = engine.session.choice;
@@ -236,19 +194,15 @@ export function replay(engine: GameEngine): void {
 }
 
 /**
- * "Retour au menu principal" (`dead`/`levelComplete -> mainMenu`) —
- * détruit la partie courante puis réaffiche `MainMenu` en réutilisant
- * `resolveBootChoice` TEL QUEL (même fonction que le tout premier boot,
- * non dupliquée).
+ * "Retour au menu principal" — détruit la partie courante puis réaffiche
+ * `MainMenu` en réutilisant `resolveBootChoice` telle quelle.
  *
- * Réplique la garantie de l'ancien `reloadToMainMenu()` (`ui/screenNav.ts`,
- * supprimé au jalon M8) : peu importe comment CETTE partie a démarré
- * (`?level=...` ou le vrai menu), "Retour au menu principal" doit
- * toujours retomber sur le VRAI menu principal, jamais rejouer
- * silencieusement le même `?level=` bypass. `resolveBootChoice` relit
- * `window.location.search` FRAÎCHEMENT à chaque appel (voir sa doc) — on
- * retire donc `level` de l'URL AVANT de la rappeler, via `history.replaceState`
- * (pas de rechargement de page, contrairement à l'ancienne implémentation).
+ * PIÈGE : `resolveBootChoice` relit `window.location.search` fraîchement à
+ * chaque appel — retirer `level` de l'URL (`history.replaceState`, sans
+ * rechargement) doit donc se faire AVANT de la rappeler, sinon une partie
+ * démarrée via `?level=...` reviendrait silencieusement au même niveau au
+ * lieu du vrai menu principal.
+ * see: docs/systems/session.md#rejouer-et-retour-au-menu
  */
 export function returnToMenu(engine: GameEngine): void {
   teardownGameSession(engine, engine.session);

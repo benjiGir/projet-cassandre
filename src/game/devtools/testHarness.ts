@@ -15,13 +15,8 @@ import {
 } from "../player/weaponConfig";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../entities/suitConfig";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `simulateRecording`/`checkDeterminism`/les 7 `applyXVariant` vivaient déjà
- * à PORTÉE MODULE dans `main.ts` (donc, par construction du langage, sans
- * aucune fermeture sur le scope de `main()`) — déplacées TELLES QUELLES,
- * aucun paramètre ajouté.
- */
+// Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
+// see: docs/systems/debug.md#origine-du-module-gamedevtools
 
 /**
  * Simulation hors écran d'une séquence enregistrée : même monde minimal, même
@@ -47,10 +42,8 @@ export function simulateRecording(rec: Recording, cfg: MoveConfig) {
     world.step(rec.fixedDt);
   }
 
-  // Décalage de bob effectivement rendu au dernier pas (alpha = 1, soit la
-  // frame d'affichage alignée sur le pas fixe). C'est la grandeur qui finit en
-  // pixels : la comparer, et pas seulement ses entrées, est ce qui rend la
-  // preuve de déterminisme utile pour `qa-evidence`.
+  // alpha = 1 : décalage de bob EFFECTIVEMENT RENDU au dernier pas fixe.
+  // see: docs/systems/debug.md#simulation-hors-écran-et-preuve-de-déterminisme
   sim.viewBob(1, simBobScratch);
 
   const result = {
@@ -70,16 +63,10 @@ export function simulateRecording(rec: Recording, cfg: MoveConfig) {
 const simBobScratch = new THREE.Vector3();
 
 /**
- * Test de déterminisme : la même séquence d'input rejouée deux fois doit
- * produire le même état final à 1e-6 près. Un échec signale une source de
- * non-déterminisme dans le pas fixe (`Math.random` non seedé, `Date.now`,
- * ou une lecture d'input hors accumulateur).
- *
- * L'écart couvre aussi les grandeurs de VUE (bob, FOV, réception) : elles
- * finissent en pixels et doivent donc être reproductibles au même titre que la
- * position. Une horloge murale glissée dans le bob se verrait immédiatement
- * ici, sous forme d'un écart non nul sur `bobOffset` malgré des positions
- * identiques.
+ * Rejoue deux fois la même séquence : écart max doit rester sous 1e-6,
+ * position/vitesse ET grandeurs de vue (bob/FOV/réception) comprises — ces
+ * dernières finissent en pixels au même titre que la position.
+ * see: docs/systems/debug.md#simulation-hors-écran-et-preuve-de-déterminisme
  */
 export function checkDeterminism(rec: Recording) {
   const a = simulateRecording(rec, moveConfig);
@@ -116,16 +103,7 @@ interface FeelVariantReport {
 
 /**
  * Applique une variante de feel de la VUE, à chaud.
- *
- * `player.applyConfig()` n'est délibérément PAS appelé : aucun champ de vue
- * n'est lu par Rapier, ils sont relus à chaque pas fixe et à chaque frame.
- * L'appeler recréerait la capsule pour rien.
- *
- * Protocole de comparaison, trois lignes :
- *   1. F9, cours et saute ~15 s dans le couloir nord, F9 pour arrêter ;
- *   2. `cassandre.applyFeelVariant("A")` puis F10 — recommence avec "B", "C" ;
- *   3. la course rejouée est identique au pas fixe près, seule la vue change :
- *      c'est la variante, pas ta façon de jouer, que tu compares.
+ * see: docs/systems/joueur.md#harnais-ab-feel_variants
  */
 export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantReport {
   Object.assign(moveConfig, FEEL_VARIANTS[name]);
@@ -173,12 +151,8 @@ interface ImpactVariantReport {
 }
 
 /**
- * Applique une variante de feedback d'impact (hitstop + screenshake,
- * distinction mur/ennemi) — retour playtest Phase 3, voir `IMPACT_VARIANTS`
- * dans `weaponConfig.ts` pour le contexte complet. Aucun `applyConfig()`
- * nécessaire (rien n'est lu par Rapier). Protocole F9/F10 : voir la note de
- * `IMPACT_VARIANTS` — viser un Costard à PV pleins pour une comparaison
- * propre, le recorder ne restaure pas l'état des Costards.
+ * Applique une variante de feedback d'impact, à chaud.
+ * see: docs/systems/armes.md#hitstop-et-shake-murennemi-impact_variants
  */
 export function applyImpactVariant(name: keyof typeof IMPACT_VARIANTS): ImpactVariantReport {
   Object.assign(weaponConfig, IMPACT_VARIANTS[name]);

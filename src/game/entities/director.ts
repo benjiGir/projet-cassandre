@@ -27,26 +27,12 @@ import {
 
 /**
  * L'ennemi « Directeur » — boss unique de fin (Zone E), 2ᵉ type d'ennemi du
- * jeu après `Suit`, dédupliqué avec lui au jalon M5 (PLAN_EFFECT_XSTATE.md,
- * §7) : ce fichier ne contient plus sa PROPRE copie de la logique de
- * décision (elle vit UNE SEULE FOIS dans `enemyMachine.ts`, partagée avec
- * `suit.ts`) — `Director` est désormais un fin wrapper qui possède le
- * corps/collider Rapier, le PRNG dérivé de sa graine, l'acteur XState
- * partagé, ET, propre à ce type d'ennemi, `revealed`/`justRevealed` (la
- * bascule costume humain -> reptilien) et le badge droppé à la mort
- * (`DirectorBadge`) — restés HORS de la machine partagée sur demande
- * explicite de la tâche : un champ de contexte ANNEXE porté par CETTE
- * classe, pas une région d'état parallèle de `enemyMachine`.
- *
- * PURETÉ DU CŒUR DE SIMULATION (même discipline qu'avant ce jalon) : ce
- * fichier n'importe RIEN de `render/billboard.ts`, `render/fx.ts`,
- * `core/audio.ts`, ni `game/state.ts`.
- *
- * DÉTERMINISME : PRNG mulberry32 seedé PAR ENTITÉ (`createEnemyPrng`,
- * `enemyMachine.ts`), jamais `Math.random()`.
- *
- * DÉPLACEMENT : `RAPIER.KinematicCharacterController` PARTAGÉ — voir
- * `DirectorManager` (une seule instance, comme `SuitManager`).
+ * jeu après `Suit`. Fin wrapper autour de la machine XState partagée
+ * (`enemyMachine.ts`) : possède le corps/collider Rapier, son PRNG, l'acteur
+ * XState, ET, propre à ce type d'ennemi seulement, `revealed`/`justRevealed`
+ * (bascule costume humain -> reptilien) et le badge droppé à la mort.
+ * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+ * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 
 /** Nombre de frames de l'animation de mort — même choix que `Suit` (4 frames). */
@@ -93,9 +79,9 @@ export class Director implements Entity {
    * `true` dès que les PV sont passés sous le seuil de révélation — jamais
    * remis à `false` (pas de mécanique de soin dans ce prototype). Pilote
    * l'apparence (teinte) via ce champ, pas via `state` : orthogonal à la
-   * machine à états PARTAGÉE (un Directeur révélé continue de traverser
-   * idle/alert/chase/attack/stagger normalement) — champ de contexte ANNEXE
-   * propre à `Director`, voir la doc de tête du fichier.
+   * machine à états partagée (un Directeur révélé continue de traverser
+   * idle/alert/chase/attack/stagger normalement).
+   * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
    */
   revealed = false;
 
@@ -201,10 +187,7 @@ export class Director implements Entity {
     return value !== "dead" && value !== "corpse";
   }
 
-  /** Voir la doc identique dans `suit.ts` (`Suit.velocityHorizontal`/`Suit.knockbackVelocity`) — accès direct par cast depuis `test/game/entities/director.test.ts`, préservé au caractère près. */
-  // Voir la doc identique dans `suit.ts` sur le choix de ne pas marquer ces
-  // deux accesseurs `private` (`tsc --noEmit`/`noUnusedLocals` les signale
-  // comme morts sinon, faute de lecture interne à la classe).
+  /** Même contrat que `Suit.velocityHorizontal`/`Suit.knockbackVelocity` (accès par cast depuis `director.test.ts`, pas `private` pour la même raison — voir `suit.ts`). */
   get velocityHorizontal(): THREE.Vector3 {
     return this.ctx.velocityHorizontal;
   }
@@ -242,12 +225,13 @@ export class Director implements Entity {
    * de `DirectorDamageResult`. Ne touche à AUCUN système de rendu/audio/state,
    * même discipline que `Suit.applyDamage`.
    *
-   * ORDRE (préservé à l'identique depuis avant ce jalon) : le garde-fou
-   * `isAlive`/la soustraction de `hp` sont délégués à `applyEnemyDamageCore`
-   * (`enemyMachine.ts`, cœur PARTAGÉ avec `Suit`) ; le calcul de
-   * `revealed`/`justRevealed`, propre au Directeur, lit `this.hp` JUSTE
-   * APRÈS cette soustraction — donc AVANT que l'action `enterDead` (côté
-   * machine partagée) ne le remette à 0 en cas de coup fatal.
+   * ORDRE À PRÉSERVER : le garde-fou `isAlive`/la soustraction de `hp` sont
+   * délégués à `applyEnemyDamageCore` (cœur PARTAGÉ avec `Suit`) ; le calcul
+   * de `revealed`/`justRevealed` lit `this.hp` JUSTE APRÈS cette
+   * soustraction — donc AVANT que l'action `enterDead` (machine partagée) ne
+   * le remette à 0 en cas de coup fatal. Inverser casse `justRevealed` sur un
+   * coup qui tue et révèle en même temps.
+   * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
    */
   applyDamage(amount: number, physics: PhysicsWorld, knockbackDirection: THREE.Vector3): DirectorDamageResult {
     const wasRevealed = this.revealed;
@@ -293,16 +277,10 @@ export function configureDirectorCharacterController(
 }
 
 /**
- * Badge droppé par le Directeur à sa mort — pur objet de LOGIQUE (position +
- * rayon + état ramassé/non ramassé), AUCUNE référence à `THREE.Scene`/
- * `THREE.Object3D` ici : même séparation que `Director`/`DirectorManager`
- * vis-à-vis du rendu. Inchangé par le jalon M5 (n'a jamais fait partie de la
- * duplication Suit/Director — `Suit` n'a pas de badge).
- *
- * PAS de contrat `use_*`/`UseObject` (`game/level/interactive.ts`) : ce
- * contrat est pensé pour des objets PRÉ-AUTORISÉS dans Blender, pas pour un
- * pickup généré à RUNTIME par la mort d'une entité. Ramassage par
- * PROXIMITÉ SEULE (pas de touche E).
+ * Badge droppé par le Directeur à sa mort — pur objet de logique (position +
+ * rayon + état ramassé/non ramassé), aucune référence à `THREE.Scene`/
+ * `THREE.Object3D`. Pas de contrat `use_*` : ramassage par proximité seule.
+ * see: docs/systems/entites.md#badge-du-directeur
  */
 export class DirectorBadge {
   readonly position: THREE.Vector3;

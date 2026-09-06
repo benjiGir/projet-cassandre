@@ -11,16 +11,6 @@ import { type SuitManager } from "../entities/suitManager";
 import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `GameSession`/`OpeningDoor`/`ExitDoorTracking` vivaient à portée module
- * dans `main.ts` depuis le jalon M8 (`PLAN_EFFECT_XSTATE.md`, §10) — ce
- * fichier les déplace tels quels, sans changement de forme. Voir
- * `game/session/gameEngine.ts` pour le pendant PERSISTANT (`GameEngine`,
- * survit à un reset) — `GameSession` reste l'état PROPRE À UNE PARTIE,
- * détruit/reconstruit à chaque `bootGameSession`/`teardownGameSession`.
- */
-
 /** Porte de sortie en cours de glissement cosmétique (voir la doc dans `game/loop/updateGameplay.ts`). */
 export interface OpeningDoor {
   body: RAPIER.RigidBody;
@@ -42,19 +32,9 @@ export interface ExitDoorTracking {
 
 /**
  * TOUT l'état d'UNE PARTIE — ce qui est détruit et reconstruit à chaque
- * `bootGameSession`/`teardownGameSession` (Jalon M8). Ce qui N'EST PAS ici
- * (`scene`/`camera`/`renderer`, `clock`, `fx`/`viewmodel`/`crosshair`/
- * `hitmarker`/`ballisticsDebug`/`wireframeToggle`, `look`/`lookDelta`,
- * `interaction`, `input`/`inputRecorder`, tous les atlas/géométries/matériaux
- * partagés) RESTE VIVANT à travers un reset — voir `game/session/gameEngine.ts`
- * (`GameEngine`) pour la frontière exacte et sa justification.
- *
- * Avant ce jalon, TOUT ce qui suit vivait en variables locales de `main()`,
- * construites UNE SEULE FOIS au boot (`CLAUDE.md` documentait explicitement
- * qu'aucun chemin de reset n'existait — jugé disproportionné en Phase 6).
- * Ce jalon construit ce chemin ; `GameSession` est la structure qui le rend
- * possible : au lieu de ~20 variables mutables indépendantes de `main()`,
- * UN SEUL objet remplacé d'un bloc à chaque reset (`engine.session = ...`).
+ * `bootGameSession`/`teardownGameSession`. Ce qui reste vivant à travers un
+ * reset vit sur `GameEngine` (`gameEngine.ts`), pas ici.
+ * see: docs/systems/session.md#létat-propre-à-une-partie-gamesession
  */
 export interface GameSession {
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */

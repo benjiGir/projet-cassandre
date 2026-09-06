@@ -1,14 +1,8 @@
 import { Context, Layer } from "effect";
 
-/**
- * Algorithme mulberry32 — SOURCE CANONIQUE UNIQUE (nettoyage du
- * 2026-09-05, `PLAN_EFFECT_XSTATE.md` §11 : écart trouvé au jalon M9,
- * jamais corrigé quand M6 l'avait promis). `weapons.ts` (dispersion du
- * pompe) et `game/entities/enemyMachine.ts::createEnemyPrng` (PRNG par
- * entité, Costard/Directeur) routent désormais tous les deux vers
- * `DeterministicRandom.forSeed` plutôt que de garder leur propre copie de
- * cette fonction — plus aucune duplication de l'algorithme dans le repo.
- */
+// Source canonique unique de mulberry32 — ne pas en dupliquer une copie
+// ailleurs (voir l'ADR pour l'historique de la duplication déjà corrigée).
+// see: docs/decisions/0007-rng-deterministe.md
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return function next() {
@@ -20,20 +14,14 @@ function mulberry32(seed: number): () => number {
 }
 
 /**
- * Fabrique de générateurs déterministes indépendants — PAS un flux
- * partagé. `weapons.ts` seed une instance unique pour la dispersion du
- * pompe ; `suitManager.ts`/`directorManager.ts` seedent une instance PAR
- * ENTITÉ à partir d'un compteur de spawn. Ces flux ne doivent jamais
- * s'entrelacer : si `forSeed` renvoyait un seul flux global, la sortie de
- * chaque appelant dépendrait de l'ordre d'appel des autres, cassant le
- * rejeu d'input déterministe (F9/F10, `core/inputRecorder.ts`).
+ * Fabrique de générateurs indépendants, jamais un flux partagé : chaque
+ * appel à `forSeed` isole ses appelants les uns des autres (sinon l'ordre
+ * d'appel romprait le rejeu d'input déterministe). Le générateur retourné
+ * est une fonction synchrone brute, pas un `Effect` — appelée plusieurs
+ * fois par pas fixe (jitter de tir), l'envelopper coûterait par appel pour
+ * aucun bénéfice ici.
  *
- * `forSeed` passe par le service Effect pour rester injectable en test
- * (un double scripté peut remplacer mulberry32 sans toucher les
- * appelants) ; le générateur qu'elle retourne reste une fonction
- * synchrone brute, appelée plusieurs fois par pas fixe (jitter de visée
- * par ennemi, dispersion de tir) — l'envelopper dans un Effect à chaque
- * `next()` ajouterait un coût par appel pour aucun bénéfice ici.
+ * see: docs/decisions/0007-rng-deterministe.md
  */
 export class DeterministicRandom extends Context.Service<
   DeterministicRandom,

@@ -28,15 +28,15 @@ type GameServices = Layer.Success<typeof GameLayer>;
 export const GameRuntime = ManagedRuntime.make(GameLayer);
 
 /**
- * Frontière synchrone stricte du pas fixe (PLAN_EFFECT_XSTATE.md, principe
- * transverse #1) : tout Effect exécuté ici DOIT être purement synchrone —
- * zéro Effect.tryPromise/Effect.promise/Effect.async/Effect.sleep dans
- * l'arbre. Si un tel Effect suspend, `Effect.runSync` lève un
+ * Frontière synchrone stricte du pas fixe (invariant #11, CLAUDE.md) : tout
+ * Effect exécuté ici DOIT être purement synchrone — zéro
+ * Effect.tryPromise/Effect.promise/Effect.async/Effect.sleep dans l'arbre.
+ * Si un tel Effect suspend, `Effect.runSync` lève un
  * `Cause.AsyncFiberError` ; on le laisse remonter (ne JAMAIS l'avaler),
- * mais avec un message explicite en console, pour qu'un bug de ce genre
- * soit bruyant plutôt que silencieux — cohérent avec le choix assumé "on
- * ajustera si besoin" plutôt qu'un budget de perf fixé à l'avance
- * (PLAN_EFFECT_XSTATE.md, §0).
+ * avec un message explicite en console pour qu'un bug de ce genre soit
+ * bruyant plutôt que silencieux.
+ *
+ * see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
  */
 export function runGameplaySync<A, E>(
   effect: Effect.Effect<A, E, GameServices>,

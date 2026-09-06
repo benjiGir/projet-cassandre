@@ -26,30 +26,13 @@ import {
 } from "./enemyMachine";
 
 /**
- * L'ennemi « Costard » — Phase 3 (`enemy-state-machine`, `billboard-sprites-8dir`),
- * dédupliqué avec `Director` au jalon M5 (PLAN_EFFECT_XSTATE.md, §7).
- *
- * Ce fichier ne contient plus la logique de décision (elle vit UNE SEULE
- * FOIS dans `enemyMachine.ts`, partagée avec `director.ts`) : `Suit` est
- * désormais un fin wrapper qui possède la partie qui n'a PAS de sens de
- * partager — le corps/collider Rapier (construits via des helpers partagés,
- * mais l'instance elle-même est propre à ce Costard), le PRNG dérivé de sa
- * graine, et l'acteur XState (`enemyMachine`) qui porte tout le reste
- * (état, timers, vélocités, pending*, scratch...).
- *
- * PURETÉ DU CŒUR DE SIMULATION (même discipline qu'avant ce jalon) : ce
- * fichier n'importe RIEN de `render/billboard.ts`, `render/fx.ts`,
- * `core/audio.ts`, ni `game/state.ts`. `Suit.update()` ne fait qu'avancer sa
- * propre machine à états et sa physique ; il expose des champs `pending*`
- * que `SuitManager` lit et traduit en événements accumulés.
- *
- * DÉTERMINISME : tout ici tourne au pas fixe, avec le `dt` de GAMEPLAY reçu
- * en paramètre. La seule source de hasard (`aimJitterDeg`) passe par un
- * PRNG mulberry32 seedé PAR ENTITÉ (`createEnemyPrng`, `enemyMachine.ts`).
- *
- * DÉPLACEMENT : `RAPIER.KinematicCharacterController` (invariant #6),
- * PARTAGÉ entre tous les Costards — voir `SuitManager` (une seule instance
- * pour tous, passée dans `SuitUpdateContext.kcc` à chaque appel).
+ * L'ennemi « Costard » — Phase 3 (skills `enemy-state-machine`,
+ * `billboard-sprites-8dir`). Fin wrapper autour de la machine XState
+ * partagée avec `Director` (`enemyMachine.ts`) : ne possède que le
+ * corps/collider Rapier, sa config, son PRNG et son acteur XState — voir la
+ * frontière exacte et la discipline de pureté/déterminisme tenue ici.
+ * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+ * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 
 /** Nombre de frames de l'animation de mort (deliverable Phase 3 : 4 frames). */
@@ -197,21 +180,14 @@ export class Suit implements Entity {
   }
 
   /**
-   * Vélocité horizontale de poursuite/évitement du pas fixe courant, et
-   * vélocité de recul (knockback) — PRIVÉES côté TypeScript mais exposées en
-   * accesseurs JS ordinaires : `test/game/entities/suit.test.ts` (filet de
-   * caractérisation, gelé) y accède directement via un cast
-   * (`(suit as unknown as { velocityHorizontal: THREE.Vector3 })`), exactement
-   * comme il le faisait sur les champs bruts de l'implémentation
-   * pré-refactor — préservé au caractère près, voir la règle de non-régression
-   * de la tâche.
+   * Vélocité horizontale de poursuite/évitement, et vélocité de recul
+   * (knockback) — privées côté TypeScript mais exposées en accesseurs JS
+   * ordinaires : `test/game/entities/suit.test.ts` y accède via un cast
+   * (`(suit as unknown as { velocityHorizontal: THREE.Vector3 })`). Pas
+   * `private` : `tsc --noEmit` (`noUnusedLocals`) signalerait sinon un
+   * membre jamais lu DEPUIS LA CLASSE elle-même comme mort. Usage interne/
+   * diagnostic uniquement, comme `body`/`collider`.
    */
-  // Pas `private` : `tsc --noEmit` (`noUnusedLocals`) signale un membre privé
-  // jamais lu DEPUIS LA CLASSE elle-même comme mort — or ces deux accesseurs
-  // ne sont lus que depuis l'extérieur (le cast de test décrit ci-dessus).
-  // Non documentés dans les commentaires de tête comme API publique pour
-  // autant : usage interne/diagnostic uniquement, au même titre que
-  // `body`/`collider` avant ce jalon.
   get velocityHorizontal(): THREE.Vector3 {
     return this.ctx.velocityHorizontal;
   }

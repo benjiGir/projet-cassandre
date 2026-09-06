@@ -10,149 +10,40 @@ import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from ".
 import { PathfindingService, type NavGraph } from "../level/pathfinding";
 
 /**
- * Jalon M5 (PLAN_EFFECT_XSTATE.md, §7) — machine à états PARTAGÉE entre
- * `Suit` et `Director`, remplaçant les deux copies texto-identiques de
- * `runIdle`/`runAlert`/`runChase`/`runAttack`/`resolveAttack`/
- * `computeAvoidedDirection`/`applyAimJitter`/`updateKnockback`/
- * `integratePhysics` (et le reste) qui vivaient jusqu'ici séparément dans
- * `suit.ts`/`director.ts`.
+ * Machine à états PARTAGÉE entre `Suit` et `Director` — voir
+ * docs/decisions/0009-machine-partagee-suit-director.md pour la décision.
+ * Tout ce qui est indépendant du gabarit visuel/Rapier exact de l'entité vit
+ * ici (table de transition, durées, perception, évitement local, suivi de
+ * chemin, jitter de visée, knockback, intégration physique) ; `suit.ts`/
+ * `director.ts` ne gardent que le corps/collider Rapier, leur config et
+ * leur acteur XState.
  *
- * ## Frontière partagé / spécifique
+ * Plusieurs choix internes non évidents (pourquoi `attackCooldownRemaining`/
+ * `timeSinceLastSeen` ne sont pas des `stateTimer`, pourquoi pas de `guard:`
+ * pour les transitions pilotées par TICK, comment `state`/`stateTimer`
+ * restent réaffectables depuis les tests, la discipline zéro-allocation, et
+ * pourquoi `after` — transitions retardées par temps mural — est interdit
+ * ici) sont documentés en détail :
+ * see: docs/systems/entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
  *
- * TOUT ce qui est indépendant du gabarit visuel/Rapier exact de l'entité vit
- * ICI : la table de transition, les durées, la perception (ligne de vue),
- * l'évitement local, le suivi de chemin, le jitter de visée, le knockback,
- * l'intégration physique. `Suit`/`Director` (fins wrappers désormais) ne
- * gardent que : construction du corps/collider Rapier (identique entre les
- * deux, factorisée ici aussi via `createEnemyBody`), leur config
- * (`SuitConfig`/`DirectorConfig` — objets DISTINCTS, volontairement, voir
- * leur propre doc), et pour `Director` seulement, `revealed`/`justRevealed`/
- * le badge — restés HORS de la machine partagée sur demande explicite de la
- * tâche : un champ de contexte ANNEXE porté par la classe `Director`
- * elle-même, pas une région d'état parallèle de `enemyMachine`.
- *
- * ## `attackCooldownRemaining` / `timeSinceLastSeen` NE SONT PAS des `stateTimer`
- *
- * Contrairement à `alertDuration`/`attackTelegraphDuration`/`staggerDuration`/
- * `deathFrameDuration` (qui vivent tous dans `context.stateTimer`, remis à
- * zéro à CHAQUE transition — voir les actions `resetStateTimer`/`enterDead`/
- * `enterStagger` ci-dessous), ces deux champs sont des champs de `context`
- * PERSISTANTS À TRAVERS TOUTES LES TRANSITIONS, mis à jour à CHAQUE pas fixe
- * par `tickEnemy` INDÉPENDAMMENT de l'état courant (avant le `switch`,
- * exactement comme le faisait `Suit.update`/`Director.update` avant ce
- * jalon), et remis à zéro seulement par des règles précises :
- *   - `timeSinceLastSeen` : à l'entrée en ALERTE, en POURSUITE tant que la
- *     cible est en vue, et à la sortie de RECUL (encaisser un coup révèle
- *     forcément la position du joueur) — JAMAIS par un `entry:` générique.
- *   - `attackCooldownRemaining` : remis à `cfg.attackCooldown` SEULEMENT
- *     quand une attaque résout (`ATTACK_RESOLVED`), jamais par une autre
- *     transition d'état.
- * Un `context` XState peut très bien porter des champs qui ne sont pas des
- * "timers d'état" au sens strict — c'est le cas ici, délibérément.
- *
- * ## Pourquoi les transitions pilotées par TICK n'utilisent PAS `guard:`
- *
- * XState évalue les gardes de plusieurs transitions candidates pour un même
- * évènement dans l'ordre déclaré, jusqu'à la première qui passe. Pour
- * `chase`, la table de transition a DEUX candidats réels (perte de contact,
- * entrée en TIR) qui partagent la MÊME quantité coûteuse à calculer
- * (`inSight`, un raycast) et qui doivent être évalués en utilisant la valeur
- * calculée UNE SEULE FOIS ce pas-ci — recalculer `inSight` séparément dans
- * deux `guard:` indépendants doublerait le nombre de raycasts par Costard
- * par pas fixe (régression de perf silencieuse, contraire au budget "20
- * ennemis à 60 fps" et à la discipline "profiler avant d'ajouter"), et rien
- * dans XState ne permet nativement de partager un calcul entre gardes
- * sœurs sans le committer dans `context` en amont — ce qui revient à faire
- * exactement ce que fait `tickEnemy` ci-dessous, avec un niveau d'indirection
- * en moins. Le choix retenu : les fonctions de décision (`runIdle`/
- * `runAlert`/`runChase`/`runAttack`/`runStagger`, PORTÉES À L'IDENTIQUE
- * depuis le code pré-refactor, caractère pour caractère dans leur logique)
- * font tout le calcul UNE FOIS, mutent `context` directement (pas
- * d'allocation, même discipline que le reste du fichier), et appellent
- * `actor.send(...)` SEULEMENT quand une transition doit réellement avoir
- * lieu. La machine XState elle-même ne fait alors que déclarer le GRAPHE
- * (quels évènements sémantiques mènent à quel état, avec quelles actions
- * d'entrée) — un choix pragmatique, documenté ici plutôt que déguisé en
- * pureté déclarative qu'il n'est pas.
- *
- * ## `state`/`stateTimer` restent des propriétés EXTERNALEMENT réaffectables
- *
- * Le filet de sécurité de caractérisation (`test/game/entities/suit.test.ts`/
- * `director.test.ts`, écrit contre le code PRÉ-refactor) affecte directement
- * `suit.state = "chase"` / `suit.stateTimer = 1.23` comme mise en place de
- * test — exactement ce qu'un champ public mutable permettait avant ce
- * jalon. Un acteur XState encapsulé n'expose normalement AUCUNE façon
- * supportée de "téléporter" son nœud d'état courant sans passer par une
- * transition déclarée. `forceEnemyState` (plus bas) comble cet écart via
- * `StateMachine.resolveState` — API PUBLIQUE et documentée de XState pour
- * construire un snapshot valide pour un `(état, context)` arbitraire
- * (prévue pour la persistance/reprise) — puis pose ce snapshot directement
- * dans le champ interne `Actor["_snapshot"]` (préfixé `_`, non exposé par
- * les types TypeScript, mais un champ JS ordinaire à l'exécution : aucun
- * `#private` réel). Alternative rejetée : passer par
- * `createActor(machine, { snapshot }).start()` (le chemin "public") aurait
- * fonctionné aussi (vérifié) mais détruit/reconstruit l'acteur ENTIER à
- * chaque affectation de test (`restoreSnapshot` retraverse `context` par
- * `for...in` récursif pour réconcilier d'éventuels acteurs enfants — inutile
- * ici, notre machine n'en a aucun) ; l'assignation directe du snapshot déjà
- * résolu est strictement équivalente pour une machine PLATE sans enfants ni
- * historique (vérifié empiriquement : contexte préservé par référence,
- * mutations visibles, un `send()` ultérieur depuis l'état forcé retrouve le
- * comportement normal de la table de transition — voir le rapport de
- * tâche). Risque documenté : si `xstate` change le nom de ce champ interne
- * dans une future version, seule CETTE fonction doit être revue — jamais
- * utilisée par le chemin de production (`tickEnemy`/`applyEnemyDamageCore`
- * ne l'appellent JAMAIS, seuls les SETTERS publics `state`/`stateTimer` de
- * `Suit`/`Director` y recourent, exclusivement pour reproduire la commodité
- * de test de l'ancienne implémentation à champs bruts).
- *
- * ## Zéro allocation par pas fixe
- *
- * `context` est construit UNE FOIS par entité (`createEnemyMachineContext`,
- * appelée par le constructeur de `Suit`/`Director`) et n'est plus jamais
- * réalloué : toutes les actions ci-dessous MUTENT `context` directement
- * (`context.stateTimer = 0`, jamais `assign(() => ({stateTimer: 0}))`, qui
- * allouerait un nouvel objet `context` à chaque transition). Vérifié
- * empiriquement contre le `xstate` réellement installé (5.32.6) : la
- * référence de `context` reste stable d'un `send()` à l'autre tant qu'aucune
- * action `assign` n'est utilisée — voir le rapport de tâche pour le script
- * de vérification. Seul un `send()` RÉEL (une transition qui a effectivement
- * lieu, pas chaque pas fixe) alloue un petit objet `MachineSnapshot`
- * interne à XState ; rester en `chase`/`idle`/etc. sans transitionner
- * n'envoie AUCUN évènement à l'acteur (voir `tickEnemy` : les fonctions de
- * décision n'appellent `actor.send` que lorsqu'une transition a
- * effectivement lieu), donc AUCUNE allocation liée à XState dans le cas
- * dominant (un ennemi qui poursuit/observe sans changer d'état).
- *
- * ## `after` — interdit, respecté
- *
- * Aucune transition retardée par temps mural. Toutes les durées
- * (`alertDuration`, `attackTelegraphDuration`, `staggerDuration`,
- * `deathFrameDuration * deathFrameCount`) sont comparées à `context.stateTimer`,
- * incrémenté manuellement par `tickEnemy` avec le `dt` de GAMEPLAY reçu en
- * paramètre (jamais `Date.now()`/`setTimeout`).
+ * Rappel le plus susceptible d'être violé par erreur en éditant ce fichier :
+ * toute action MUTE `context` directement (`context.stateTimer = 0`), ne
+ * jamais utiliser `assign(...)` (réallouerait `context` à chaque
+ * transition) ; aucune durée d'état ne doit passer par `after`/`setTimeout`
+ * (invariant #13 de CLAUDE.md) — seul `context.stateTimer`, incrémenté par
+ * `tickEnemy` avec le `dt` de gameplay, mesure le temps.
  */
-
-// ---------------------------------------------------------------------------
-// Constantes partagées (dupliquées à l'identique entre suit.ts/director.ts
-// avant ce jalon — centralisées ici).
-// ---------------------------------------------------------------------------
 
 const TAU = Math.PI * 2;
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
 const WORLD_RIGHT_FALLBACK = new THREE.Vector3(1, 0, 0);
 
-/** Voir la doc identique (avant ce jalon) dans `suit.ts`/`director.ts` — jalon M4, PLAN_EFFECT_XSTATE.md, point 7. */
+/** Distance dont la cible doit avoir bougé avant qu'un nouveau chemin soit requêté (jalon M4). */
 const PATH_REQUERY_DISTANCE = 1.5;
-/** Voir la doc identique dans `suit.ts`/`director.ts`. */
+/** Distance en dessous de laquelle un waypoint du chemin baké est considéré atteint. */
 const WAYPOINT_REACHED_DISTANCE = 0.6;
 
-/**
- * Filtre « rayon d'ENEMY qui ne teste QUE la géométrie du niveau » — voir la
- * doc identique (avant ce jalon) dans `suit.ts`/`director.ts`. Membership
- * ENEMY, filtre WORLD SEUL : ne peut jamais toucher le joueur ni un autre
- * ennemi.
- */
+/** Filtre « rayon d'ENEMY qui ne teste QUE la géométrie du niveau » — membership ENEMY, filtre WORLD SEUL : ne peut jamais toucher le joueur ni un autre ennemi. */
 const WORLD_ONLY_RAY_GROUPS = interactionGroups(GROUP.ENEMY, GROUP.WORLD);
 
 function horizontalDistanceSq(a: THREE.Vector3, b: THREE.Vector3): number {
@@ -161,9 +52,7 @@ function horizontalDistanceSq(a: THREE.Vector3, b: THREE.Vector3): number {
   return dx * dx + dz * dz;
 }
 
-// ---------------------------------------------------------------------------
 // Config — sous-ensemble structurel commun à `SuitConfig`/`DirectorConfig`.
-// ---------------------------------------------------------------------------
 
 /**
  * Champs de config lus par la logique PARTAGÉE ci-dessous. `SuitConfig`/
@@ -213,9 +102,7 @@ export interface EnemyConfig {
   knockbackUpBoost: number;
 }
 
-// ---------------------------------------------------------------------------
 // États / lignes d'atlas — partagés (identiques entre Suit et Director).
-// ---------------------------------------------------------------------------
 
 export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
 export type EnemyState = EnemyLiveState | "dead" | "corpse";
@@ -244,24 +131,20 @@ export function enemySpriteRow(
   return ENEMY_LIVE_STATE_ROW[state as EnemyLiveState];
 }
 
-// ---------------------------------------------------------------------------
 // Contexte per-tick fourni par l'appelant (SuitManager/DirectorManager) —
 // remplace `SuitUpdateContext`/`DirectorUpdateContext` (ré-exportés en alias
 // de type depuis `suit.ts`/`director.ts` pour ne rien casser côté appelants).
-// ---------------------------------------------------------------------------
 
 export interface EnemyUpdateContext {
   physics: PhysicsWorld;
-  /** Contrôleur PARTAGÉ — voir la doc de tête (avant ce jalon) de `suit.ts`. */
+  /** Contrôleur PARTAGÉ — une seule instance, possédée par `SuitManager`/`DirectorManager`. */
   kcc: RAPIER.KinematicCharacterController;
   playerTargetPosition: THREE.Vector3;
   playerEyePosition: THREE.Vector3;
   navGraph: NavGraph | null;
 }
 
-// ---------------------------------------------------------------------------
 // Contexte XState — TOUT ce qu'une entité porte, hors id/rendu/`revealed`.
-// ---------------------------------------------------------------------------
 
 export interface EnemyMachineContext {
   readonly cfg: EnemyConfig;
@@ -277,7 +160,8 @@ export interface EnemyMachineContext {
 
   hp: number;
   stateTimer: number;
-  /** PAS un `stateTimer` — voir la doc de tête ("attackCooldownRemaining / timeSinceLastSeen NE SONT PAS des stateTimer"). */
+  /** PAS un `stateTimer` : persiste à travers toutes les transitions, remis à zéro par des règles précises. */
+  // see: docs/systems/entites.md#deux-catégories-de-données-dans-le-contexte-minuteurs-détat-et-mémoire-persistante
   timeSinceLastSeen: number;
   /** Idem. */
   attackCooldownRemaining: number;
@@ -364,8 +248,7 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
     currentPath: [],
     currentWaypointIndex: 0,
     // Sentinelle loin de tout niveau réel — garantit une première requête de
-    // chemin dès le premier pas fixe en `chase` (voir la doc identique,
-    // avant ce jalon, dans `suit.ts`).
+    // chemin dès le premier pas fixe en `chase`.
     lastPathQueryTarget: new THREE.Vector3(Number.POSITIVE_INFINITY, 0, Number.POSITIVE_INFINITY),
 
     deathFrameCount: params.deathFrameCount,
@@ -448,10 +331,6 @@ export function configureEnemyCharacterController(
   controller.setCharacterMass(cfg.characterMass);
 }
 
-// ---------------------------------------------------------------------------
-// Détachement physique (mort) — partagé.
-// ---------------------------------------------------------------------------
-
 function detachEnemyPhysics(ctx: EnemyMachineContext, physics: PhysicsWorld): void {
   if (ctx.body) {
     physics.world.removeRigidBody(ctx.body); // libère aussi le collider attaché (API Rapier).
@@ -459,10 +338,6 @@ function detachEnemyPhysics(ctx: EnemyMachineContext, physics: PhysicsWorld): vo
   ctx.body = null;
   ctx.collider = null;
 }
-
-// ---------------------------------------------------------------------------
-// Perception / géométrie — partagés, portés à l'identique.
-// ---------------------------------------------------------------------------
 
 function computeEyePosition(ctx: EnemyMachineContext, out: THREE.Vector3): THREE.Vector3 {
   const feetY = ctx.position.y - (ctx.cfg.capsuleHalfHeight + ctx.cfg.capsuleRadius);
@@ -740,10 +615,8 @@ function integratePhysics(ctx: EnemyMachineContext, dt: number, updateCtx: Enemy
   ctx.position.copy(ctx.nextTranslationScratch);
 }
 
-// ---------------------------------------------------------------------------
-// Machine XState — graphe + actions d'entrée. Voir la doc de tête pour le
-// choix de ne PAS piloter les transitions de type TICK via `guard:`.
-// ---------------------------------------------------------------------------
+// Machine XState — graphe + actions d'entrée.
+// see: docs/systems/entites.md#pourquoi-le-calcul-de-transition-vit-hors-des-gardes-xstate
 
 export type EnemyEvent =
   | { type: "SAW_PLAYER" }
@@ -778,7 +651,13 @@ export const enemyMachine = setup({
     armAttackCooldown: ({ context }) => {
       context.attackCooldownRemaining = context.cfg.attackCooldown;
     },
-    /** `* -> dead`. `event` est TOUJOURS `HIT_FATAL` ici (seule transition qui la référence) — la garde de type n'est qu'une formalité TS, voir la doc de tête sur le typage global des actions `setup()`. */
+    /**
+     * `* -> dead`. `event` est TOUJOURS `HIT_FATAL` ici (seule transition qui
+     * la référence) — XState type `event` sur l'union complète `EnemyEvent`
+     * dans chaque action de `setup()`, donc cette vérification est une pure
+     * formalité TypeScript pour affiner le type, pas une branche défensive
+     * qui peut réellement se déclencher.
+     */
     enterDead: ({ context, event }) => {
       if (event.type !== "HIT_FATAL") return;
       context.stateTimer = 0;
@@ -859,10 +738,9 @@ export function createEnemyActor(context: EnemyMachineContext): EnemyActor {
 }
 
 /**
- * Voir la doc de tête ("`state`/`stateTimer` restent des propriétés
- * externalement réaffectables") pour la justification complète. Réservé aux
- * SETTERS publics `Suit.state`/`Director.state` — jamais appelé par le
- * chemin de production (`tickEnemy`/`applyEnemyDamageCore`).
+ * Réservé aux SETTERS publics `Suit.state`/`Director.state` — jamais appelé
+ * par le chemin de production (`tickEnemy`/`applyEnemyDamageCore`).
+ * see: docs/systems/entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
  */
 export function forceEnemyState(actor: EnemyActor, next: EnemyState): void {
   const context = actor.getSnapshot().context;
@@ -870,12 +748,9 @@ export function forceEnemyState(actor: EnemyActor, next: EnemyState): void {
   (actor as unknown as { _snapshot: unknown })._snapshot = resolved;
 }
 
-// ---------------------------------------------------------------------------
-// Décisions par état — PORTÉES À L'IDENTIQUE (caractère pour caractère dans
-// leur logique) depuis `Suit`/`Director` avant ce jalon. `actor` n'est
-// utilisé que pour `send(...)`, jamais relu (voir `tickEnemy`, qui a déjà
-// extrait `ctx`/`state` une fois pour toutes ce pas-ci).
-// ---------------------------------------------------------------------------
+// Décisions par état. `actor` n'est utilisé que pour `send(...)`, jamais
+// relu (voir `tickEnemy`, qui a déjà extrait `ctx`/`state` une fois pour
+// toutes ce pas-ci).
 
 function runIdle(actor: EnemyActor, ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext, distance: number): void {
   if (distance > ctx.cfg.sightRange) return;
@@ -888,8 +763,8 @@ function runIdle(actor: EnemyActor, ctx: EnemyMachineContext, updateCtx: EnemyUp
 function runAlert(actor: EnemyActor, ctx: EnemyMachineContext, dt: number): void {
   ctx.stateTimer += dt;
   turnTowards(ctx, ctx.scratchToPlayer, dt);
-  // Transition INCONDITIONNELLE après `alertDuration` : ne re-checke pas la
-  // ligne de vue ici (délibéré, voir la doc pré-existante de `runAlert`).
+  // Transition INCONDITIONNELLE après `alertDuration` : ne re-vérifie pas la
+  // ligne de vue ici, choix délibéré.
   if (ctx.stateTimer >= ctx.cfg.alertDuration) {
     actor.send({ type: "ALERT_ELAPSED" });
   }
@@ -949,10 +824,6 @@ function runStagger(actor: EnemyActor, ctx: EnemyMachineContext, dt: number): vo
     actor.send({ type: "STAGGER_ELAPSED" });
   }
 }
-
-// ---------------------------------------------------------------------------
-// Point d'entrée public — un pas fixe complet pour UNE entité.
-// ---------------------------------------------------------------------------
 
 /**
  * Un pas fixe. `dt` est le dt de GAMEPLAY (scalé par le hitstop) — jamais
@@ -1014,12 +885,6 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
   integratePhysics(ctx, dt, updateCtx);
 }
 
-// ---------------------------------------------------------------------------
-// Dégâts — cœur partagé, wrappé différemment par Suit (`{died}`) et Director
-// (`{died, justRevealed}`, qui a besoin d'observer `hp` ENTRE la
-// soustraction et la décision fatale/non-fatale — voir `director.ts`).
-// ---------------------------------------------------------------------------
-
 export type EnemyDamageOutcome = "already-dead" | "fatal" | "nonfatal";
 
 /**
@@ -1035,11 +900,6 @@ export function applyEnemyDamageCore(actor: EnemyActor, amount: number): EnemyDa
   snapshot.context.hp -= amount;
   return snapshot.context.hp <= 0 ? "fatal" : "nonfatal";
 }
-
-// ---------------------------------------------------------------------------
-// Snapshot précédent / interpolation — partagés (identiques entre les deux
-// fichiers avant ce jalon).
-// ---------------------------------------------------------------------------
 
 export function snapshotEnemyPrevious(ctx: EnemyMachineContext): void {
   ctx.previousPosition.copy(ctx.position);

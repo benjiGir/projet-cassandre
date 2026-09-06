@@ -3,38 +3,16 @@ import * as THREE from "three";
 /**
  * Gizmos balistiques de debug — dessine BRIÈVEMENT, après chaque tir, la
  * forme EXACTE réellement testée par la requête de hit (mêmes nombres que
- * `game/player/weapons.ts` : portée, rayon, directions dispersées des
- * plombs), pas une approximation pédagogique. Demande explicite du
- * playtest : « il faudrait rajouter ... des gizmos pour voir sur quoi on
- * tire, j'ai l'impression de ne pas toucher à bout portant ».
+ * `game/player/weapons.ts`), pas une approximation pédagogique. Demande
+ * explicite du playtest (« il faudrait rajouter des gizmos pour voir sur
+ * quoi on tire »). ACTIF PAR DÉFAUT, contrairement au wireframe `KeyV` —
+ * `KeyB` bascule l'affichage à chaud.
  *
- * ACTIF PAR DÉFAUT — contrairement au wireframe `KeyV`
- * (`render/debugView.ts`), cet outil répond à un besoin de diagnostic
- * IMMÉDIAT signalé par l'utilisateur, pas une fonctionnalité cachée à
- * découvrir plus tard. `KeyB` (ballistics) bascule l'affichage à chaud, même
- * pattern que `createWireframeToggle`.
- *
- * DÉCOUPLAGE DÉLIBÉRÉ, même discipline que `render/fx.ts`/`render/hitmarker.ts`/
- * `render/crosshair.ts` : ce module n'importe rien de `game/*`, uniquement
- * des primitives (`THREE.Vector3`, nombres). `main.ts` fait le pont en
- * lisant `weapons.fireEvents` et en dépaquetant ses champs vers l'API
- * ci-dessous (voir le câblage dans `updateFx`).
- *
- * OBJETS 3D RÉELS dans la scène (pas un canvas 2D comme `crosshair.ts`/
- * `hitmarker.ts`) : ce sont des primitives dans le MONDE — précédent direct,
- * `spawnImpactParticles`/`spawnGibs` de `render/fx.ts`. Matériaux NON
- * ÉCLAIRÉS (`LineBasicMaterial`/`MeshBasicMaterial`), délibérément PAS
- * `MeshLambertMaterial` : l'invariant #5 interdit la PBR/le spéculaire/la
- * métalness sur ce que le JOUEUR voit en jeu ; ces gizmos sont un calque de
- * DIAGNOSTIC transitoire (quelques centaines de ms, jamais du rendu de jeu
- * final) — rester visible quelle que soit la direction de la lumière est le
- * comportement correct pour un outil de mesure, pas une entorse à
- * l'invariant.
- *
- * TEMPS RÉEL, jamais le pas fixe (`update(realDt)`, même régime que
- * `FxSystem.update`/`HitmarkerOverlay.update`) : la géométrie affichée est un
- * instantané figé du pas fixe où le tir a eu lieu, seule sa décroissance
- * (durée de vie avant suppression) est temps réel.
+ * Découplage de `game/*`, objets 3D réels non éclairés (pas une entorse à
+ * l'invariant #5 — calque de diagnostic transitoire), temps réel (géométrie
+ * figée sur l'instant du tir, seule la décroissance est temps réel) :
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/systems/rendu.md#gizmos-balistiques-de-debug
  */
 
 /** "Quelques centaines de ms", auto-effacé — voir la doc de tête. */

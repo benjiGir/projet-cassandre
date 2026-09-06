@@ -2,14 +2,10 @@ import { useState } from "react";
 
 /**
  * Écran de choix de niveau affiché AU BOOT, avant `startLoop`. Utilitaire de
- * développement (Phase 5, choix de zone) — pas le menu principal de la
- * Phase 6 (Jouer/Quitter).
- *
- * PUREMENT PRÉSENTATIONNEL : aucun import `src/game/*`, aucun accès au store
- * zustand. `main.ts` le monte avant même de construire la scène Three.js/le
- * monde Rapier — ce composant ne doit rien connaître du jeu, tout arrive par
- * props (invariant #2 : React ne touche jamais la boucle, et ici la boucle
- * n'existe même pas encore).
+ * développement (choix de zone individuelle) — pas le menu principal
+ * (Jouer/Options/Quitter). Purement présentationnel : aucun import
+ * `src/game/*`, aucun accès au store zustand.
+ * see: docs/systems/hud.md#menu-principal-et-écran-de-choix-de-niveau
  */
 
 export interface LevelMenuOption {

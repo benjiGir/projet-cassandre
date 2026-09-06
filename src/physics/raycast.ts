@@ -4,40 +4,27 @@ import { Context, Effect, Layer } from "effect";
 import type { PhysicsWorld } from "./world";
 
 /**
- * Jalon M3 (PLAN_EFFECT_XSTATE.md) : enveloppe Effect des TROIS requêtes
- * physiques de raycasting/shape-query réellement utilisées par le jeu.
- *
- * Le jeu n'utilise PAS `THREE.Raycaster` (vérifié par grep sur tout `src/`
- * avant ce jalon, zéro occurrence) — uniquement l'API physique de Rapier :
- * `world.castRay`, `world.castRayAndGetNormal`, `world.intersectionsWithShape`.
- * Ce service les enveloppe 1:1, avec la signature native complète (mêmes
- * paramètres, même information de retour — normale/timeOfImpact/collider,
- * rien de perdu derrière une ADT plus pauvre).
+ * Enveloppe Effect des trois requêtes physiques Rapier utilisées par le jeu
+ * (`castRay`, `castRayAndGetNormal`, `intersectionsWithShape`) — le jeu
+ * n'utilise pas `THREE.Raycaster`.
  *
  * `physics: PhysicsWorld` est un PARAMÈTRE de chaque méthode, jamais stocké
  * dans le service : `PhysicsWorld` est construit après `GameLayer`/
- * `GameRuntime` (init WASM Rapier asynchrone dans `main.ts`), le service ne
- * peut donc pas en dépendre à la construction de la Layer — et ça permet à
- * une Layer de test de fournir des résultats scriptés sans jamais construire
- * de vrai monde Rapier (précondition du jalon M5).
+ * `GameRuntime` (init WASM asynchrone), et ça permet à `RaycastService.test`
+ * de scripter des résultats sans monde Rapier réel.
  *
- * Discipline zéro-allocation : `ray`/`shapePos`/`shapeRot`/`shape` sont
- * fournis DÉJÀ CONSTRUITS par l'appelant (les `RAPIER.Ray` "scratch" de
- * `weapons.ts`/`suit.ts`/`director.ts`, réutilisés à chaque appel plutôt que
- * recréés) — ce service ne fabrique jamais de `RAPIER.Ray` en interne, il ne
- * fait que le transmettre à Rapier.
+ * Discipline zéro-allocation : les `RAPIER.Ray`/formes sont fournis déjà
+ * construits par l'appelant (scratch réutilisé) — ce service n'en fabrique
+ * jamais lui-même.
  *
- * Forme du service nommée séparément (`RaycastServiceShape`, plutôt qu'inline
- * dans `Context.Service<...>`) pour être réutilisable par `RaycastService.test`
- * ci-dessous ET par un futur jalon M5 (Layer scriptée pour tester le
- * comportement Suit/Director sans monde Rapier réel).
+ * see: docs/systems/physique.md#service-de-raycasting-raycastservice
  */
 export interface RaycastServiceShape {
   /**
-   * Miroir 1:1 de `RAPIER.World.castRay` — booléen hit/pas-hit avec
-   * collider/timeOfImpact, mais SANS normale. Utilisé pour la ligne de vue
-   * (`hasClearWorldPath`) et l'évitement local (`castAvoidanceRay`) de
-   * `suit.ts`/`director.ts`.
+   * Miroir 1:1 de `RAPIER.World.castRay` — hit/pas-hit avec collider et
+   * timeOfImpact, sans normale.
+   *
+   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
    */
   readonly castRay: (
     physics: PhysicsWorld,
@@ -53,8 +40,9 @@ export interface RaycastServiceShape {
 
   /**
    * Miroir 1:1 de `RAPIER.World.castRayAndGetNormal` — hit détaillé avec
-   * normale. Utilisé pour la résolution d'attaque de `suit.ts`/`director.ts`
-   * et les plombs du pompe (`weapons.ts`).
+   * normale.
+   *
+   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
    */
   readonly castRayAndGetNormal: (
     physics: PhysicsWorld,
@@ -69,12 +57,11 @@ export interface RaycastServiceShape {
   ) => Effect.Effect<RAPIER.RayColliderIntersection | null>;
 
   /**
-   * Miroir de `RAPIER.World.intersectionsWithShape` — requête de forme
-   * callback-based côté Rapier, mais le callback lui-même n'est PAS exposé
-   * ici : les colliders touchés sont collectés dans un tableau retourné,
-   * pour rester un `Effect.sync` direct sans fuite d'un point d'entrée
-   * impératif vers l'appelant. Utilisé pour la capsule du pied-de-biche
-   * (`weapons.ts`).
+   * Miroir de `RAPIER.World.intersectionsWithShape` : les colliders touchés
+   * sont collectés dans un tableau retourné plutôt qu'exposés via un
+   * callback, pour rester un `Effect.sync` direct.
+   *
+   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
    */
   readonly intersectionsWithShape: (
     physics: PhysicsWorld,
@@ -176,13 +163,12 @@ export class RaycastService extends Context.Service<RaycastService, RaycastServi
   );
 
   /**
-   * Layer de test scriptée — résultats fixes indépendants d'un vrai monde
-   * Rapier, réutilisable par un futur jalon (M5, comportement Suit/Director)
-   * pour tester ligne de vue/évitement/résolution d'attaque de façon
-   * déterministe sans jamais construire de monde physique réel. Chaque
-   * méthode par défaut renvoie "rien touché" (`null`/tableau vide) ; passer
-   * un override par méthode pour scripter un résultat précis (voir
-   * `test/physics/raycast.test.ts` pour un exemple d'usage).
+   * Layer de test scriptée — résultats indépendants d'un vrai monde Rapier.
+   * Chaque méthode renvoie par défaut "rien touché" (`null`/tableau vide) ;
+   * passer un override par méthode pour scripter un résultat précis (voir
+   * `test/physics/raycast.test.ts`).
+   *
+   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
    */
   static readonly test = (overrides: Partial<RaycastServiceShape> = {}) =>
     Layer.succeed(

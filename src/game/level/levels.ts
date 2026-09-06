@@ -1,16 +1,6 @@
 /**
- * Registre de niveaux — remplace le hardcode `levelParam === "zone_a_parking"`
- * qui vivait dans `main.ts` (dette explicitement documentée dans CLAUDE.md,
- * Phase 5 Zone A : « À REMPLACER par une vraie métadonnée de niveau le jour
- * où une deuxième zone à loadout différent existera »).
- *
- * Forme volontairement minimale (invariant retro-fps : élégance du code en
- * dernier) — pas de spawn points génériques, pas de loadout complexe, juste
- * ce qui est réellement consommé par `main.ts` aujourd'hui : quel builder
- * appeler (`gym.ts` vs pipeline glTF), quel fichier `.glb` charger, et si le
- * joueur démarre désarmé. Ajouter une 3e/4e zone = une ligne dans
- * `LEVEL_CHOICES`, sans toucher au menu (`src/ui/LevelMenu.tsx`) ni à l'ordre
- * de boot dans `main.ts`.
+ * Registre de niveaux — remplace le hardcode qui vivait dans `main.ts`.
+ * see: docs/game/niveau-hypermarche.md
  */
 
 export interface LevelDef {
@@ -26,35 +16,16 @@ export interface LevelDef {
   startUnarmed?: boolean;
 }
 
+// Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
+// see: docs/game/niveau-hypermarche.md
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
   { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },
-  // Premier combat réel du niveau (Costards à portée dès l'entrée, contre le
-  // Costard scellé hors `attackRange` de la Zone A) — démarre ARMÉE, pas de
-  // `startUnarmed` : le pied-de-biche/pompe sont déjà acquis en Zone A.
   { id: "zone_b_caisses", label: "Zone B — Caisses", kind: "gltf", gltfName: "zone_b_caisses" },
-  // Combat en couloirs entre les rangées de gondoles (embuscades latérales
-  // dès qu'une ligne de vue s'ouvre dans une allée) — démarre ARMÉE, même
-  // logique que la Zone B : le pied-de-biche/pompe sont déjà acquis avant.
   { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },
-  // Verticalité (mezzanine + escalier) — traversée joueur uniquement, aucun
-  // spawn_suit_* dessus : suit.ts::runChase n'a pas de vrai pathfinding
-  // (3 rayons d'évitement local), un Costard là-haut resterait bloqué
-  // contre la rambarde. Démarre ARMÉE, même logique que B/C.
   { id: "zone_d_reserve", label: "Zone D — Réserve", kind: "gltf", gltfName: "zone_d_reserve" },
-  // Passage de sortie ouvert (kit_door_2m, pas de door_* animé) — la porte
-  // verrouillée par badge reste une tâche séparée non commencée. Le vrai
-  // Directeur (`spawn_director_1`) y est désormais présent, plus un Costard
-  // placeholder. Démarre ARMÉE.
   { id: "zone_e_bureau", label: "Zone E — Bureau", kind: "gltf", gltfName: "zone_e_bureau" },
-  // Niveau complet (2026-08-22) : Zones A-E fusionnées en un seul fichier
-  // connecté (couloirs réels entre chaque zone, aucune coupure de
-  // chargement) — voir tools/blender/build_combined_level.py et le README
-  // Blender pour le détail des translations/brèches. Un seul spawn_player
-  // (celui de la Zone A) ; démarre DÉSARMÉE comme la Zone A seule, le pompe
-  // se ramasse maintenant réellement via use_shotgun en Zone B
-  // (WeaponSystem.pickUpShotgun()/hasShotgun). Les 5 entrées individuelles
-  // ci-dessus restent disponibles pour du test ciblé, inchangées.
+  // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {
     id: "hypermarche_complet",
     label: "Niveau complet — L'Hypermarché",

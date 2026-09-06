@@ -3,12 +3,9 @@ import { Effect } from "effect";
 import { runGameplaySync } from "../../core/runtime";
 import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `snapshotPrevious`/`stepPhysics` (callbacks de `startLoop`, `core/loop.ts`)
- * déplacées telles quelles, `engine` en paramètre explicite au lieu d'une
- * fermeture sur le scope de `main()`.
- */
+// `engine` est injecté en paramètre explicite (jamais une fermeture sur
+// `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
+// see: docs/systems/boucle-de-jeu.md#origine-des-modules
 
 export function snapshotPrevious(engine: GameEngine): void {
   const session = engine.session;
@@ -21,16 +18,16 @@ export function snapshotPrevious(engine: GameEngine): void {
 }
 
 /**
- * Jalon M8 : voir la doc de `isPhysicsSessionLive` — sans cette garde, la
- * fenêtre transitoire de `returnToMenu()` (session déjà `free()`-ée, pas
- * encore remplacée) ferait planter cet appel (accès à un monde Rapier WASM
- * déjà libéré). PAS la même garde que `updateGameplay` (celle-ci accepte
- * aussi `dead`/`levelComplete` : le monde y est encore parfaitement vivant,
- * seul le CONTENU du pas fixe est ignoré, invariant #1 — voir sa doc).
+ * PAS la même garde que `updateGameplay` (celle-ci accepte aussi
+ * `dead`/`levelComplete` : le monde y est encore parfaitement vivant, seul
+ * le CONTENU du pas fixe est ignoré, invariant #1). Sans cette garde-ci
+ * (`isPhysicsSessionLive`), la fenêtre transitoire de `returnToMenu()`
+ * (session déjà `free()`-ée, pas encore remplacée) ferait planter cet appel
+ * (accès à un monde Rapier WASM déjà libéré).
+ * see: docs/decisions/0013-garde-flux-vs-monde-physique.md
  *
- * Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : fait partie du pas fixe au sens de
- * l'invariant #1 (comme `updateGameplay`), donc du même périmètre —
- * trivial, un seul `Effect.sync`, aucune séquence à composer.
+ * Un seul `Effect.sync` (pas de phases `Effect.gen` comme
+ * `updateGameplay`/`updateFx`) : un seul appel à effectuer, rien à séquencer.
  */
 export function stepPhysics(engine: GameEngine, dt: number): void {
   if (!isPhysicsSessionLive(engine)) return;

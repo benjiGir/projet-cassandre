@@ -1,20 +1,12 @@
 import { useGameStore } from "../game/state";
 
 /**
- * Écran de mort plein cadre (Phase 6). Purement présentationnel : lit
- * `state.flowState` (Jalon M8, `ui/gameFlowMachine.ts` — poussé ici via
- * `actor.subscribe(...)` dans `main.ts`, remplace l'ancien booléen `isDead`)
- * et retourne `null` tant qu'il ne vaut pas `"dead"` — même pattern que
- * `HudMessage.tsx`. Aucune logique de jeu ici : l'arrêt réel du gameplay
- * (dégâts/tir/interactions qui ne font plus rien) est une garde dans
- * `main.ts::updateGameplay`, pas un effet de ce composant.
- *
- * Boutons "Rejouer"/"Retour au menu principal" : `onReplay`/`onReturnToMenu`
- * sont de VRAIES fonctions de reset passées par `App.tsx` (voir sa doc) —
- * `main.ts::replay`/`returnToMenu`, un dispose + reconstruction complète de
- * `PhysicsWorld`/`SuitManager`/`DirectorManager`/`WeaponSystem`/la session de
- * niveau, PAS `window.location.reload()`/`assign()` (`ui/screenNav.ts`,
- * supprimé par ce jalon — plus aucun appelant).
+ * Écran de mort plein cadre. Purement présentationnel : lit `state.flowState`,
+ * retourne `null` hors de l'état "dead". `onReplay`/`onReturnToMenu` sont de
+ * VRAIES fonctions de reset passées par `App.tsx`, jamais un rechargement de
+ * page.
+ * see: docs/systems/hud.md#écrans-de-mort-et-de-fin-de-niveau
+ * see: docs/decisions/0019-machine-xstate-flux-ecran.md
  */
 export interface DeathScreenProps {
   onReplay: () => void;

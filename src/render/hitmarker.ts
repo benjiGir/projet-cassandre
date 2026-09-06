@@ -1,30 +1,14 @@
 /**
  * Hitmarker — confirmation de hit à l'écran, INDÉPENDANTE de la lisibilité du
- * sprite touché. Nouveau canal de feedback, absent du jeu jusqu'au retour
- * playtest Phase 3 (« la sensation de tir et de touché n'est pas bonne »).
+ * sprite touché. Ajouté après un retour playtest Phase 3 (« la sensation de
+ * tir et de touché n'est pas bonne »). Canal de confirmation de DÉGÂT
+ * (matière ENEMY uniquement, `trigger("hit")`/`trigger("kill")`), pas
+ * d'impact générique — un hit mur n'alimente jamais ce module.
  *
- * POURQUOI PAS REACT (invariant #2) : un marqueur de hit doit apparaître en
- * UN frame d'affichage et durer ~100-150 ms — largement sous le throttle
- * 10 Hz du HUD React (`DebugPanel`/`game/state.ts`). Un `setState` par hit
- * suivi d'un re-render à cette cadence produirait un marqueur en retard et
- * saccadé, pas une confirmation nette. Ce module dessine directement sur un
- * `<canvas>` 2D dédié, mis à jour depuis `updateFx(realDt)` — même régime
- * temps réel que `FxSystem.update(realDt)` et `BillboardSprite.updateFlash`,
- * jamais le pas fixe.
- *
- * DÉCOUPLAGE DÉLIBÉRÉ, même discipline que `render/fx.ts`/`render/billboard.ts` :
- * ce module n'importe rien de `game/*`, uniquement des primitives
- * (`"hit" | "kill"`, des nombres de config). `main.ts` fait le pont en
- * appelant `trigger("hit")` sur `weapons.hitEvents` (matière ENEMY
- * uniquement — un hit mur n'a pas vocation à alimenter le hitmarker, c'est
- * un canal de confirmation de DÉGÂT, pas d'impact générique) et
- * `trigger("kill")` sur `suitManager.deathEvents`.
- *
- * RÉSOLUTION INTERNE : dessine dans le même espace que le rendu 3D
- * (`INTERNAL_WIDTH`×`INTERNAL_HEIGHT`, invariant #4), positionné en CSS
- * exactement comme `canvas#game` (100vw/100vh, `image-rendering: pixelated`)
- * — le marqueur reste donc centré et à l'échelle du rendu rétro quelle que
- * soit la taille de fenêtre, sans recalcul de coordonnées ici.
+ * Découplage de `game/*` (invariant #2, canvas 2D hors React, même
+ * résolution/CSS que `canvas#game`) :
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/systems/rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
  */
 
 import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
@@ -95,7 +79,7 @@ export class HitmarkerOverlay {
     this.ctx = ctx;
   }
 
-  /** Déclenche (ou renforce) un marqueur. `"kill"` a sa PROPRE fenêtre, distincte de `"hit"` — un kill est aussi un hit, mais `main.ts` n'a besoin d'appeler que `trigger("kill")` pour ce coup-là (voir son câblage). */
+  /** Déclenche (ou renforce) un marqueur. `"kill"` a sa PROPRE fenêtre, distincte de `"hit"` — un kill est aussi un hit, mais l'appelant (`game/loop/updateFx.ts`) n'a besoin d'appeler que `trigger("kill")` pour ce coup-là. */
   trigger(kind: HitmarkerKind) {
     if (!this.cfg.hitmarkerEnabled) return;
     const duration = kind === "kill" ? this.cfg.hitmarkerKillDuration : this.cfg.hitmarkerDuration;
@@ -153,9 +137,8 @@ export class HitmarkerOverlay {
     ctx.lineWidth = thickness;
     ctx.lineCap = "square";
 
-    // Croix à 4 branches, gap central (jamais un + plein qui se confondrait
-    // avec le point de visée du niveau de base — pas de crosshair permanent
-    // dans ce prototype, mais garde la convention standard FPS au cas où).
+    // Croix à 4 branches, gap central — même convention que le réticule
+    // permanent (`render/crosshair.ts`), rendu sur un canvas séparé.
     const gap = size * 0.35;
     const outer = size;
     ctx.beginPath();

@@ -12,6 +12,7 @@ yarn-error.log*
 .vscode/*
 
 .DS_Store
+/docs/.obsidian
 .claude/settings.local.json
 __pycache__/
 *.blend1

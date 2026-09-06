@@ -11,35 +11,15 @@ import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 /**
  * Manager léger : possède `Suit[]`, boucle dessus, traduit les sorties de
  * chaque `Suit.update()` en files d'événements accumulées PAR FRAME
- * D'AFFICHAGE — même contrat que `WeaponSystem.fireEvents`/`hitEvents`
- * (lecture non destructive, plusieurs lecteurs, vidées UNE SEULE FOIS par
- * `main.ts` en tout dernier via `clearFrameEvents()`). CONFORME à
- * l'invariant #8 (« pas d'ECS ») : c'est de l'organisation autour d'un
- * tableau, pas un système de composants génériques.
+ * D'AFFICHAGE, vidées UNE SEULE FOIS par `clearFrameEvents()` — conforme à
+ * l'invariant #8. Propriétaire du `KinematicCharacterController` PARTAGÉ
+ * (une seule instance pour tous les Costards).
  *
- * PROPRIÉTAIRE DU `KinematicCharacterController` PARTAGÉ : une seule
- * instance pour tous les Costards (voir la doc de tête de `suit.ts`).
- *
- * PIÈGE DE CONSOMMATION MULTI-PAS-FIXE (voir la note de la tâche) :
- * `weapons.hitEvents` ACCUMULE sur plusieurs pas fixes d'une même frame
- * d'affichage avant d'être vidé une fois par `main.ts`. `update()` est lui
- * appelé une fois PAR PAS FIXE (depuis `updateGameplay`), potentiellement
- * plusieurs fois par frame. Un `for (const hit of weapons.hitEvents)` naïf
- * traiterait deux fois les impacts du premier pas lors d'un rattrapage à 2
- * pas fixes. `hitCursor` (ci-dessous) ne lit que `[cursor, length)` à
- * chaque appel et avance `cursor` à `length`.
- *
- * Remise à zéro de `hitCursor` : PAS inférée après coup (ancienne heuristique
- * bogée — comparer `hitEvents.length` à `hitCursor` pour deviner qu'une
- * nouvelle frame a commencé perd silencieusement des impacts si deux frames
- * de tir consécutives produisent un compte d'impacts égal ou croissant sans
- * qu'une frame vide ne s'intercale ; voir `qa-evidence`, repro : 8 pellets
- * frame A → cursor 8, `clearFrameEvents()`, 8 pellets frame B → aucun des 8
- * retraité car `8 < 8` est faux). `clearFrameEvents()` (ci-dessous) est la
- * SEULE frontière de « nouvelle frame d'affichage » — appelée une fois par
- * frame, après tous les pas fixes de cette frame, avant le premier pas fixe
- * de la suivante — donc `hitCursor` s'y remet à 0 explicitement, sans
- * deviner.
+ * `hitCursor` (voir `consumeNewHits`) ne relit jamais un impact déjà vu
+ * malgré un `weapons.hitEvents` qui accumule sur PLUSIEURS pas fixes d'une
+ * même frame — remis à 0 UNIQUEMENT par `clearFrameEvents()`, jamais inféré.
+ * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
+ * see: docs/systems/entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
  */
 
 export interface SuitAlertEvent {
@@ -127,12 +107,10 @@ export class SuitManager {
    * `weapons.clearFrameEvents()`), après que tous les lecteurs (sprites, fx,
    * audio, store) ont fini de lire cette frame.
    *
-   * C'est aussi ici, et SEULEMENT ici, que `hitCursor` retombe à 0 : ce point
-   * est la seule frontière sans ambiguïté de « nouvelle frame d'affichage »
-   * (voir la doc de tête du fichier et `consumeNewHits`). Remettre `hitCursor`
-   * à 0 à cet endroit plutôt que de l'inférer par comparaison de longueur
-   * dans `consumeNewHits` élimine l'heuristique qui perdait silencieusement
-   * des impacts (bug `qa-evidence`, Phase 3).
+   * C'est aussi ici, et SEULEMENT ici, que `hitCursor` retombe à 0 (voir
+   * `consumeNewHits` et l'en-tête du fichier) — jamais inféré par
+   * comparaison de longueur.
+   * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
    */
   clearFrameEvents() {
     this._alertEvents.length = 0;
@@ -164,17 +142,18 @@ export class SuitManager {
 
   /**
    * Un pas fixe. À appeler APRÈS `weapons.update(...)` (pour que
-   * `hitEvents` du pas courant existent déjà) — voir `main.ts`.
+   * `hitEvents` du pas courant existent déjà) — voir `game/loop/updateGameplay.ts`.
    *
    * `playerTargetPosition`/`playerEyePosition` : origines AUTHENTIQUES du pas
    * fixe courant (jamais interpolées pour le rendu), même discipline que
    * `WeaponSystem.update`.
    *
    * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : graphe de praticabilité
-   * du niveau COURANT, `null` tant qu'aucun bake n'a encore eu lieu — voir
-   * `main.ts` (`currentNavGraph`, rebaké dans le callback `onLoaded` de
-   * `createLevelSession`). Simplement transmis à chaque `Suit` via
-   * `SuitUpdateContext`, ce manager ne l'interprète jamais lui-même.
+   * du niveau COURANT (`session.currentNavGraph`), `null` tant qu'aucun bake
+   * n'a encore eu lieu — rebaké dans le callback `onLoaded` de
+   * `createLevelSession` (voir `game/session/spawning.ts::loadGltfLevel`).
+   * Simplement transmis à chaque `Suit` via `SuitUpdateContext`, ce manager
+   * ne l'interprète jamais lui-même.
    */
   update(
     dt: number,
@@ -249,10 +228,10 @@ export class SuitManager {
   }
 
   /**
-   * `hitCursor` est remis à 0 exclusivement par `clearFrameEvents()` (voir sa
-   * doc) — jamais ici. Ne PAS réintroduire de comparaison de longueur pour
-   * « deviner » une nouvelle frame : c'est exactement l'heuristique qui a
-   * perdu des impacts silencieusement (bug `qa-evidence`, Phase 3).
+   * `hitCursor` est remis à 0 exclusivement par `clearFrameEvents()` — jamais
+   * ici. Ne PAS réintroduire de comparaison de longueur pour « deviner » une
+   * nouvelle frame.
+   * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
    */
   private consumeNewHits(hitEvents: ReadonlyArray<HitEvent>): Map<Suit, AggregatedHit> {
     const aggregated = this.aggregationScratch;

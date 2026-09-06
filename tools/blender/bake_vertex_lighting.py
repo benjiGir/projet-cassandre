@@ -22,58 +22,10 @@ Un script ne modifie pas son fichier d'entrée sans qu'on le lui demande.
 
 Code retour : 0 = bake fait et plausible, 1 = échec ou bake inexploitable.
 
-Procédure suivie (`vertex-color-sector-lighting`)
-------------------------------------------------
-  attribut de couleur "Col", domaine Point, type Byte Color
-  moteur Cycles, 128 samples
-  Bake Type Combined, sortie Active Color Attribute
-
-`--type diffuse` bake DIFFUSE / Direct + Indirect, c'est-à-dire la lumière
-SANS l'albédo. À utiliser quand les matériaux sont colorés et que le runtime
-multiplie déjà COLOR_0 par la base color : en Combined la couleur de base est
-bakée dans l'attribut, puis remultipliée au rendu — les surfaces colorées
-s'assombrissent au carré. Le kit utilise des couleurs claires et peu saturées
-précisément pour que ce doublement reste discret en Combined.
-
-Les proxies ne sont pas que des non-cibles, ce sont des OCCULTANTS
------------------------------------------------------------------
-Un proxy `col_*` est par construction COÏNCIDENT avec la géométrie qu'il
-représente — c'est sa définition. Laissé visible aux rayons pendant le bake, il
-scelle la pièce : zéro lumière directe, zéro indirecte, zéro ambiante monde, et
-l'attribut fraîchement créé reste au noir de sa valeur par défaut. L'opérateur
-retourne `FINISHED` sans rien signaler.
-
-Les retirer de la liste des cibles ne suffit donc pas : il faut aussi les
-retirer des RAYONS. Le script masque `col_*` / `trig_*` / `secret_*` du rendu le
-temps du bake et restaure l'état d'origine dans un `finally`, pour qu'un `--save`
-ne fige jamais des proxies masqués dans le .blend.
-
-C'est le bug qui a produit 5 pièces noires sur 25 dans `kit_hypermarche.blend`
-(2026-08-21) : `col_box_wall_4m` scellait `kit_wall_4m`, et trois proxies mal
-placés par `build_kit.py` scellaient trois autres pièces. `--keep-proxies`
-permet de reproduire la mesure.
-
-Ce que le rapport contrôle
---------------------------
-Un bake « réussi » qui sort tout noir ou tout plat est un bake raté. Le script
-mesure donc, par mesh, la luminance min/moyenne/max, l'écart-type et le NOMBRE
-de sommets noirs :
-  - moyenne ~0        → aucune lumière n'atteint le mesh (bake manquant)
-  - écart-type ~0     → surface plate : soit subdivision insuffisante, soit
-                        éclairage uniforme, dans les deux cas rien à voir
-  - max saturé à 1.0  → surexposition, le dégradé est écrêté
-  - NOIRS = SOMM      → mesh entièrement noir, DÉFAUT RÉEL
-
-Quelques sommets noirs sur un mesh sont normaux : ce sont les faces intérieures
-d'un volume fermé, jamais vues en jeu. C'est le 100 % qui est un défaut.
-
-Pour chaque mesh entièrement noir, le script lance un ray-cast sortant depuis
-ses sommets et NOMME la cause au lieu de laisser chercher :
-  - occulté par un AUTRE objet   → cet objet aurait dû être masqué
-  - occulté par LUI-MÊME         → géométrie intérieure ou faces coïncidentes,
-                                    c'est le mesh qu'il faut corriger
-  - exposé mais noir             → problème d'éclairage, seul cas où regarder
-                                    les lampes est le bon réflexe
+Procédure ("Col", Point, Byte Color, Cycles 128 samples, Combined ->
+Active Color Attribute), piège des proxies-occultants, méthodologie de
+diagnostic d'un mesh noir, lecture du rapport de luminance : voir
+docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors
 """
 
 from __future__ import annotations

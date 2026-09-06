@@ -10,13 +10,9 @@ import { unlockDoor, setupExitDoorTracking, triggerLevelComplete } from "../sess
 import { showHudMessage, triggerHeroLine } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `updateGameplay` (callback de `startLoop`, `core/loop.ts`) déplacée telle
- * quelle, `engine` en paramètre explicite au lieu d'une fermeture sur le
- * scope de `main()`. Structure `Effect.gen` en phases nommées inchangée
- * depuis le jalon M6 — ce refactor n'y touche pas.
- */
+// `engine` est injecté en paramètre explicite (jamais une fermeture sur
+// `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
+// see: docs/systems/boucle-de-jeu.md#origine-des-modules
 
 // Objets interactifs "signature Duke" (micro d'annonces, toilettes) — PV
 // rendus par les toilettes : "+1 PV" au sens LITTÉRAL du plan (blague
@@ -73,27 +69,19 @@ function captureInputFrame(engine: GameEngine): InputFrame {
   return liveFrame;
 }
 
-// Décide le mouvement AVANT le step : la translation cible est consommée
-// par le `world.step()` du même pas fixe (voir l'ordre dans core/loop.ts).
+// Décide le mouvement AVANT le step (latence nulle) : la translation cible
+// est consommée par `world.step()` du même pas fixe.
+// see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks
 export function updateGameplay(engine: GameEngine, dt: number): void {
   const session = engine.session;
 
-  // Mort / niveau terminé (Phase 6) : le pas fixe continue de tourner
-  // (invariant #1, la boucle ne s'arrête JAMAIS), mais tout le gameplay
-  // est ignoré une fois la partie hors de l'état "playing" — déplacement,
-  // tir, dégâts, interactions. PAS une violation de l'invariant #10
-  // ("aucune animation ne bloque le joueur") : cet invariant vise les
-  // animations NON LÉTALES, pas une fin de partie légitime. Rien n'est
-  // mis à jour ce pas-ci : le monde reste visuellement figé sur son
-  // dernier état (prev === curr à chaque pas suivant), aucun jitter
-  // d'interpolation.
-  //
-  // Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) : lecture DIRECTE de l'acteur
-  // de flux (`engine.flowActor.getSnapshot().value`), PAS un aller-retour
-  // par le store zustand (`state.flowState` n'existe que pour les
-  // composants React, voir sa doc dans `game/state.ts`) — l'acteur est
-  // déjà synchrone et disponible ici, un détour zustand n'apporterait
-  // rien au pas fixe.
+  // Mort / niveau terminé : le pas fixe continue de tourner (invariant #1),
+  // seul le CONTENU de ce pas est ignoré une fois hors de l'état "playing".
+  // see: docs/systems/boucle-de-jeu.md#fin-de-partie-pendant-le-pas-fixe
+
+  // Lecture DIRECTE de l'acteur de flux, jamais un aller-retour par zustand
+  // (`state.flowState` n'existe que pour React, voir sa doc dans
+  // `game/state.ts`) — l'acteur est déjà synchrone et disponible ici.
   if (engine.flowActor.getSnapshot().value !== "playing") return;
 
   // Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : le corps du pas fixe devient un

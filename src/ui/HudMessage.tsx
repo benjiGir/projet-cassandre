@@ -2,10 +2,9 @@ import { useGameStore } from "../game/state";
 
 /**
  * Message HUD transitoire (badge ramassé, porte verrouillée/déverrouillée...).
- * Purement présentationnel : lit `state.hudMessage`, n'écrit jamais dedans
- * (l'auto-effacement est géré par `main.ts` via `setTimeout`, voir
- * `game/state.ts`). Boîte blanche volontaire (invariant #9) — pas de style
- * final, juste un retour visible en jeu.
+ * Purement présentationnel : lit `state.hudMessage`, n'écrit jamais dedans.
+ * Boîte blanche volontaire (invariant #9) — pas de style final.
+ * see: docs/systems/hud.md#deux-canaux-de-message-hudmessage-et-heroline
  */
 export function HudMessage() {
   const message = useGameStore((s) => s.hudMessage);
