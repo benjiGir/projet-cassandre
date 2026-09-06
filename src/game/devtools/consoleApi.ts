@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
+import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
 import {
   CROSSHAIR_VARIANTS,
@@ -34,28 +35,16 @@ import {
   simulateRecording,
 } from "./testHarness";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `exposeDebugApi` (point d'entrée console `window.cassandre`, harnais
- * `feel-tuner`/`qa-evidence`) prenait déjà SES DÉPENDANCES en paramètres
- * explicites (portée module dans `main.ts`, aucune fermeture) — ce jalon
- * simplifie sa signature à un seul paramètre `engine: GameEngine` (plutôt
- * que 7 callbacks séparés) : `spawnSuitAt`/`spawnDirectorAt`/`loadGltfLevel`/
- * `debugFindPath`/`startPlayback` sont maintenant des fonctions IMPORTABLES
- * directement (elles vivaient comme fonctions imbriquées de `main()` avant
- * ce refactor), ce module n'a donc plus besoin qu'on les lui passe.
- */
+// Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
+// see: docs/systems/debug.md#origine-du-module-gamedevtools
 
 /**
  * Point d'entrée console pour l'A/B de `feel-tuner` et les preuves de
- * `qa-evidence`. Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) : `engine.session`
- * remplace les références directes (`player`/`weapons`/`suitManager`/
- * `directorManager`) qui existaient avant ce jalon — CE fichier n'a
- * plus qu'UNE SEULE session possible tant qu'aucun reset n'a eu lieu, mais
- * `window.cassandre` doit rester correct APRÈS un "Rejouer"/"Retour au menu"
- * (`main()` appelle cette fonction UNE SEULE FOIS, jamais reconstruite à
- * chaque reset) : `engine.session` est donc lu à chaque accès (getters),
- * jamais mis en cache dans une variable locale de cette fonction.
+ * `qa-evidence`. `engine.session` est lu à chaque accès, via des getters,
+ * JAMAIS mis en cache dans une variable locale : `window.cassandre` doit
+ * rester correct après un "Rejouer"/"Retour au menu" (`main()` appelle
+ * cette fonction UNE SEULE FOIS, jamais reconstruite à chaque reset).
+ * see: docs/systems/debug.md#point-dentrée-console-windowcassandre
  */
 export function exposeDebugApi(engine: GameEngine): void {
   window.cassandre = {
@@ -131,6 +120,14 @@ export function exposeDebugApi(engine: GameEngine): void {
       },
       findPath: (from, to) => debugFindPath(engine.session, from, to),
     },
+    /** Coupe/remet le thème (jamais `ambience`), même contrôle que la touche
+     * M en jeu et le toggle de `RebindScreen` — pour tester sans dépendre du
+     * pas fixe (voir `core/music.ts`). */
+    music: {
+      isEnabled: isMusicEnabled,
+      setEnabled: setMusicEnabled,
+      toggle: toggleMusic,
+    },
   };
 }
 
@@ -199,6 +196,11 @@ declare global {
         graph: () => NavGraph | null;
         stats: () => ReturnType<typeof navGraphStats> | null;
         findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[] | null;
+      };
+      music: {
+        isEnabled: () => boolean;
+        setEnabled: (enabled: boolean) => void;
+        toggle: () => boolean;
       };
     };
   }

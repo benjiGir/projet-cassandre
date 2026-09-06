@@ -8,28 +8,20 @@ import {
   input,
   type GameAction,
 } from "../core/input";
+import { isMusicEnabled, setMusicEnabled } from "../core/music";
 
 /**
- * Écran de rebinding (Phase 6, plan section G) — consomme l'API de rebinding
- * livrée par `core-loop` dans `src/core/input.ts` (voir sa doc de tête :
- * `getAllBindings`/`rebind`/`resetBindings`/`formatKeyCode`, déjà vérifiée
- * par build + tests headless, NON RETOUCHÉE ici).
- *
- * Accessible UNIQUEMENT depuis le menu principal (`MainMenu`, "Options"),
- * donc TOUJOURS avant `input.attach(canvas)` dans `main.ts` (le menu
- * principal s'affiche avant tout boot de jeu, voir `resolveBootChoice`) —
- * import direct de `input` sûr malgré ça : `getAllBindings`/`rebind`/
- * `resetBindings` ne touchent jamais `this.canvas`, seuls des listeners
- * `window` temporaires posés par CE composant (voir plus bas) captent la
- * touche suivante. Pas de pause en jeu dans ce slice (hors scope : le plan
- * ne demande qu'une accessibilité depuis le menu principal, pas un menu
- * pause complet — invariant retro-fps « pas de sur-ingénierie »).
- *
- * `input.getAllBindings()` N'EST PAS RÉACTIF (ce n'est pas du zustand) :
- * l'état local `bindings` ci-dessous est une COPIE, resynchronisée
- * explicitement après chaque rebind/reset — même philosophie que
- * `TuningPanel.tsx` (« l'état React local n'est resynchronisé qu'à
- * l'interaction humaine, jamais en tâche de fond »).
+ * Écran d'options — rebinding de touches + réglages audio. Consomme les API
+ * de `core/input.ts`/`core/music.ts` sans les modifier. Accessible
+ * uniquement depuis le menu principal (`MainMenu`, "Options"), donc toujours
+ * avant `input.attach(canvas)`. Ni `input.getAllBindings()` ni
+ * `isMusicEnabled()` ne sont réactifs (pas du zustand) : les états locaux
+ * ci-dessous sont des copies, resynchronisées explicitement après chaque
+ * changement. Le réglage musique reste aussi accessible en jeu via la
+ * touche fixe M (`game/loop/updateFx.ts`) — cet écran sert surtout à sa
+ * découvrabilité.
+ * see: docs/systems/hud.md#rebinding
+ * see: docs/reference/controles.md
  */
 
 export interface RebindScreenProps {
@@ -40,11 +32,18 @@ export function RebindScreen(props: RebindScreenProps) {
   const { onBack } = props;
   const [bindings, setBindings] = useState<Record<GameAction, string>>(() => input.getAllBindings());
   const [listeningFor, setListeningFor] = useState<GameAction | null>(null);
+  const [musicEnabled, setMusicEnabledState] = useState(() => isMusicEnabled());
+
+  function handleToggleMusic() {
+    const next = !musicEnabled;
+    setMusicEnabled(next);
+    setMusicEnabledState(next);
+  }
 
   // Capture LA PROCHAINE touche/bouton une fois qu'un rebind est demandé.
   // Attaché/détaché via `listeningFor` : rien n'écoute tant qu'aucun rebind
   // n'est en cours (pas de coût, pas de conflit avec d'éventuels autres
-  // listeners `window` — voir la doc de tête pour pourquoi c'est sûr ici).
+  // listeners `window`).
   useEffect(() => {
     if (!listeningFor) return;
 
@@ -114,7 +113,30 @@ export function RebindScreen(props: RebindScreenProps) {
         zIndex: 1000,
       }}
     >
-      <div style={{ fontSize: 22, fontWeight: "bold", color: "#0f0", letterSpacing: 2 }}>TOUCHES</div>
+      <div style={{ fontSize: 22, fontWeight: "bold", color: "#0f0", letterSpacing: 2 }}>OPTIONS</div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ fontSize: 13 }}>Musique</div>
+        <button
+          onClick={handleToggleMusic}
+          style={{
+            padding: "4px 12px",
+            minWidth: 90,
+            fontFamily: "monospace",
+            fontSize: 13,
+            color: musicEnabled ? "#0f0" : "#ddd",
+            background: musicEnabled ? "rgba(0, 255, 0, 0.08)" : "rgba(255, 255, 255, 0.04)",
+            border: `1px solid ${musicEnabled ? "#4a4" : "#444"}`,
+            cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+        >
+          {musicEnabled ? "Activée" : "Désactivée"}
+        </button>
+        <div style={{ fontSize: 11, color: "#666" }}>(touche M en jeu)</div>
+      </div>
+
+      <div style={{ fontSize: 15, fontWeight: "bold", color: "#0f0", letterSpacing: 1, marginTop: 4 }}>TOUCHES</div>
       <div style={{ fontSize: 11, color: "#888", maxWidth: 360, textAlign: "center" }}>
         AZERTY (ZQSD) fonctionne déjà par défaut — ceci sert à remapper au-delà,
         pour un autre agencement ou une préférence personnelle. Échap annule une

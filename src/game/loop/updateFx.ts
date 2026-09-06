@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { playEnemySfx, playImpactSfx, playWeaponFireSfx } from "../../core/audio";
 import { input } from "../../core/input";
 import { inputRecorder } from "../../core/inputRecorder";
+import { toggleMusic } from "../../core/music";
 import { runGameplaySync } from "../../core/runtime";
 import { type LoopStats } from "../../core/loop";
 import { FLESH_MATERIAL } from "../player/weapons";
@@ -11,17 +12,19 @@ import { weaponConfig } from "../player/weaponConfig";
 import { suitConfig } from "../entities/suitConfig";
 import { directorConfig } from "../entities/directorConfig";
 import { useGameStore } from "../state";
-import { grantKillViews, handlePlayerHit, triggerHeroLine, VIEWS_DIRECTOR_MULTIPLIER } from "../session/feedback";
+import {
+  grantKillViews,
+  handlePlayerHit,
+  showHudMessage,
+  triggerHeroLine,
+  VIEWS_DIRECTOR_MULTIPLIER,
+} from "../session/feedback";
 import { startPlayback, startRecording } from "../session/recording";
 import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 
-/**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `updateFx` (callback de `startLoop`, `core/loop.ts`) déplacée telle
- * quelle, `engine` en paramètre explicite au lieu d'une fermeture sur le
- * scope de `main()`. Structure `Effect.gen` en phases nommées inchangée
- * depuis le jalon M7 — ce refactor n'y touche pas.
- */
+// `engine` est injecté en paramètre explicite (jamais une fermeture sur
+// `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
+// see: docs/systems/boucle-de-jeu.md#origine-des-modules
 
 // Kill = réplique "premier lézard" (une seule fois par partie, Costard OU
 // Directeur confondus — voir la doc de `GameSession.firstKillTriggered`).
@@ -32,12 +35,9 @@ const shakeOffsetScratch = new THREE.Vector3();
 
 const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 
-/**
- * Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : même frontière synchrone que
- * `interpolateVisuals` (taux d'affichage, principe transverse #1) —
- * composé en phases nommées, mêmes statements et même ordre qu'avant ce
- * jalon, aucune logique changée.
- */
+// Tourne au taux d'affichage, comme `interpolateVisuals` — même frontière
+// Effect synchrone stricte (`runGameplaySync`) que le pas fixe.
+// see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): void {
   const session = engine.session;
   runGameplaySync(
@@ -62,8 +62,9 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
       yield* Effect.sync(() => {
         // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
         // files s'accumulent au fil des pas fixes de la frame et ne se vident
-        // jamais toutes seules. clearFrameEvents() est appelé par `shell`, en
-        // dernier, après consommation audio — ne JAMAIS l'appeler ici.
+        // jamais toutes seules. `clearFrameEvents()` est appelé plus bas DANS
+        // CETTE MÊME fonction, après tous ses lecteurs — jamais ici, avant
+        // qu'ils aient fini de lire.
         for (const event of session.weapons.fireEvents) {
           engine.fx.spawnMuzzleFlash(event.muzzlePosition, event.muzzleDirection, event.weapon);
           if (event.weapon === "shotgun") {
@@ -244,12 +245,10 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
 
         // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
         // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
-        // Jalon M8 : gardé par `isPhysicsSessionLive()` — `startRecording`/
-        // `startPlayback` appellent `session.player.spawn(...)`, qui TOUCHE
-        // Rapier (`body.setTranslation`) ; sans cette garde, appuyer sur
-        // F9/F10 pendant la fenêtre transitoire de `returnToMenu()` (session
-        // déjà `free()`-ée, pas encore remplacée) planterait — voir la doc de
-        // `isPhysicsSessionLive`. Cas limite dev-only, coût de la garde nul.
+        // Gardé par `isPhysicsSessionLive()` : `startRecording`/`startPlayback`
+        // appellent `session.player.spawn(...)`, qui touche Rapier. Cas
+        // limite dev-only, coût de la garde nul.
+        // see: docs/decisions/0013-garde-flux-vs-monde-physique.md
         if (isPhysicsSessionLive(engine)) {
           if (input.wasJustPressed("F9")) {
             if (inputRecorder.isRecording()) {
@@ -277,6 +276,15 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         if (input.wasJustPressed("KeyB")) {
           const enabled = engine.ballisticsDebug.toggle();
           console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
+        }
+        // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev
+        // comme V/B/F9/F10 ci-dessus) — coupe/remet uniquement le thème
+        // musical, jamais la nappe d'ambiance. Réglage persisté, voir
+        // `core/music.ts::setMusicEnabled`. Également accessible depuis
+        // l'écran Options pour la découvrabilité.
+        if (input.wasJustPressed("KeyM")) {
+          const enabled = toggleMusic();
+          showHudMessage(enabled ? "Musique activée" : "Musique désactivée");
         }
 
         engine.debugAccumulator += realDt;
