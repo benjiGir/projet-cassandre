@@ -1,57 +1,16 @@
 import { Howl } from "howler";
 
+import { assetUrl } from "./assetPath";
+
 /**
- * Wrapper minimal autour de Howler pour les effets sonores PONCTUELS du jeu
- * (tir, impact, et depuis la Phase 3 le feedback sonore de l'ennemi
- * « Costard » — alerte, télégraphie d'attaque, dégât encaissé, mort).
- * Scope strict des Phases 2-3 (`PLAN_PROTO_BOOMER_SHOOTER.md`) : aucune
- * musique, aucune nappe d'ambiance ici — ces deux-là sont couvertes depuis la
- * Phase 6 (« Habillage ») par `core/music.ts`, un module SÉPARÉ (pooling par
- * `Howl` + pitch ±8 % n'ont aucun sens pour une piste en boucle streamée,
- * voir sa doc de tête). Les répliques du héros, elles, restent du TEXTE HUD
- * (invariant #9, pas de vraie VO cette phase) — câblées dans `main.ts`, pas
- * ici, pas dans `music.ts` non plus.
+ * Effets sonores ponctuels (SFX) — tir, impact, feedback ennemi, portes,
+ * secrets. Musique et nappe d'ambiance : `core/music.ts`, module séparé
+ * (pooling/pitch n'ont aucun sens pour une piste en boucle streamée). Les
+ * répliques du héros restent du texte HUD, câblées dans `main.ts`.
  *
- * APPELANT : ce module ne touche jamais le pas fixe (invariant #2). Il est
- * consommé exclusivement depuis `updateFx` dans `main.ts`, sur des
- * `fireEvents`/`hitEvents` déjà produits par le pas fixe qui vient de tourner
- * — jamais de `setState` React ici (ce n'est de toute façon pas du React).
+ * N'est appelé que depuis `updateFx` — jamais le pas fixe (invariant #2).
  *
- * ASSETS — les ids de `SFX_TABLE` ont chacun un placeholder SYNTHÉTIQUE
- * (bruit/sinus générés par script, pas d'enregistrement, pas de source
- * externe) sous `public/assets/audio/sfx/<file>.{ogg,m4a}` : les 9 premiers
- * ajoutés le 2026-08-20 pour juger le feedback de hit avec du son plutôt
- * qu'en silence total, `door_locked`/`door_unlock`/`secret_found` ajoutés le
- * 2026-08-23 (porte à badge Zone E, puis secrets). Ce sont des boîtes blanches sonores, au même titre
- * que les meshes non texturés (invariant #9) — À REMPLACER par de vrais
- * assets à la Phase 5, pas des choix de sound design arrêtés. `public/` est
- * déjà le `publicDir` par défaut de Vite (non reconfiguré), donc
- * `/assets/audio/sfx/...` résout correctement tel quel, en dev comme en build.
- *
- * Un fichier absent (404, cas normal aujourd'hui) ne doit JAMAIS faire
- * planter le jeu : `onloaderror` log un SEUL `console.warn` par id (pas un
- * par tentative de lecture, un tir ne doit pas spammer la console) et le son
- * correspondant ne joue simplement pas. Aucun `throw`, nulle part dans ce
- * module.
- *
- * POOLING ET VARIATION DE PITCH — exactement le pattern prescrit par le skill
- * `audio-sfx-pipeline` : N instances de `Howl` par id, rotation circulaire,
- * variation de rate ±8 % à chaque lecture. Ça évite deux problèmes distincts :
- *  - l'effet « mitraillette de samples identiques » sur un son répété (tir,
- *    impact) ;
- *  - `Howl.rate(rate)` SANS id de son cible modifie la vitesse de TOUTES les
- *    instances en cours de lecture de ce `Howl` — en tirant au pompe (9
- *    plombs, jusqu'à 9 `hitEvent` dans le même pas fixe), appeler `rate()`
- *    sur le même objet `Howl` pour le plomb n+1 changerait rétroactivement le
- *    pitch du plomb n déjà en train de jouer. Un pool évite ce chevauchement.
- *
- * PIÈGE NAVIGATEUR (skill `audio-sfx-pipeline`) : le contexte audio reste
- * suspendu tant qu'aucune interaction utilisateur n'a eu lieu. Howler gère ça
- * lui-même via `Howler.autoUnlock` (`true` par défaut), qui écoute les
- * premiers `click`/`touchend`/`keydown` du `document` — exactement
- * l'événement `click` sur le canvas qui déclenche déjà `requestPointerLock`
- * dans `core/input.ts`. Aucun code de déblocage supplémentaire n'est
- * nécessaire ici.
+ * see: docs/systems/hud-audio.md#effets-sonores-ponctuels
  */
 
 /**
@@ -81,7 +40,7 @@ interface SfxDef {
   volume: number;
 }
 
-const SFX_BASE_PATH = "/assets/audio/sfx";
+const SFX_BASE_PATH = assetUrl("assets/audio/sfx");
 
 /** Nombre d'instances `Howl` par son, rotation circulaire (skill : N = 4 à 8 pour les armes). */
 const POOL_SIZE = 8;
@@ -150,12 +109,12 @@ const MATERIAL_IMPACT_SFX: Record<string, SfxId> = {
 const DEFAULT_IMPACT_SFX: SfxId = "impact_concrete";
 
 /**
- * Pool circulaire de `Howl` pour UN id logique. Pattern skill
- * `audio-sfx-pipeline` tel quel. Construit des `Howl` en `preload: true`
- * (par défaut) : chaque instance tente son propre chargement, échoue en
- * silence si le fichier est absent (voir `onloaderror` plus bas), et
- * `warnOnce` garantit un seul `console.warn` par id malgré les N échecs
- * (un par instance du pool).
+ * Pool circulaire de `Howl` pour UN id logique — voir la doc pour le
+ * pourquoi. `preload: true` (par défaut) : une instance qui échoue à
+ * charger reste silencieuse (`onloaderror`), `warnOnce` garantit un seul
+ * avertissement par id malgré les N échecs (un par instance du pool).
+ *
+ * see: docs/systems/hud-audio.md#pooling-et-variation-de-pitch
  */
 class SfxPool {
   private readonly sounds: Howl[] = [];

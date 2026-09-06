@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
+import { assetUrl } from "../../core/assetPath";
 import { runGameplaySync } from "../../core/runtime";
 import { BillboardSprite } from "../../render/billboard";
 import { Suit, SUIT_ATLAS_ROWS } from "../entities/suit";
@@ -12,33 +13,15 @@ import { type GameSession } from "./gameSession";
 import { type PersistentEngine, SUIT_SPRITE_HEIGHT, DIRECTOR_SPRITE_HEIGHT } from "./gameEngine";
 
 /**
- * Extraction du refactor de `main.ts` (2229 lignes → modules, 2026-09-05) :
- * `spawnSuitAt`/`spawnDirectorAt`/`loadGltfLevel`/`debugFindPath` prenaient
- * déjà `session: GameSession` en paramètre EXPLICITE depuis le jalon M8 (pas
- * une fermeture sur la variable mutable `currentSession`) — raison
- * documentée sur `spawnSuitAt` ci-dessous, inchangée par ce refactor. Ce
- * jalon ajoute `engine: PersistentEngine` comme second type de paramètre
- * explicite, pour le même genre de raison : ces fonctions tournent aussi
- * PENDANT `lifecycle.ts::buildGameEngine`/`bootGameSession`, avant que
- * `engine.session` n'existe — `PersistentEngine` (pas `GameEngine`) leur est
- * donc appliqué partout, voir `gameEngine.ts` pour la justification complète.
- */
-
-/**
- * Fait apparaître un Costard ET son `BillboardSprite`, toujours ensemble
- * (jamais l'un sans l'autre — un Costard sans sprite serait invisible mais
- * actif, un bug de lisibilité silencieux). `facing` par défaut : vise la
- * position COURANTE du joueur DE `session` au moment du spawn (pratique
- * aussi bien pour les 3 spawns initiaux que pour `cassandre.spawnSuit` en
- * cours de partie).
+ * Fait apparaître un Costard ET son `BillboardSprite`, toujours ensemble —
+ * un Costard sans sprite serait invisible mais actif, un bug de lisibilité
+ * silencieux. `facing` par défaut vise la position courante du joueur.
  *
  * `session` est un paramètre EXPLICITE (pas une lecture d'`engine.session`) :
- * cette fonction est aussi appelée DEPUIS `lifecycle.ts::bootGameSession`,
- * PENDANT la construction d'une NOUVELLE session qui n'est pas encore
- * devenue "la" session courante — lui faire lire `engine.session` pousserait
- * alors le Costard dans l'ANCIENNE partie (celle en cours de remplacement),
- * un bug d'un genre difficile à repérer en jeu (le Costard semblerait juste
- * ne jamais apparaître).
+ * lui faire lire `engine.session` pousserait le Costard dans l'ANCIENNE
+ * partie pendant un `bootGameSession` en cours (bug silencieux : l'entité
+ * semblerait juste ne jamais apparaître).
+ * see: docs/systems/session.md#spawn-et-chargement-de-niveau
  */
 export function spawnSuitAt(engine: PersistentEngine, session: GameSession, x: number, feetY: number, z: number): Suit {
   const facing = new THREE.Vector3(session.player.position.x - x, 0, session.player.position.z - z);
@@ -78,17 +61,14 @@ export function spawnDirectorAt(
 }
 
 /**
- * Charge (ou recharge) `public/assets/levels/<name>.glb` DANS `session` —
- * voir `game/level/hotReload.ts` pour le mécanisme de session/hot reload
- * lui-même (INCHANGÉ par ce refactor). `engine`/`session` explicites, même
- * raison que `spawnSuitAt` : appelée depuis `lifecycle.ts::bootGameSession`
- * pendant la construction d'une session qui n'est pas encore
- * `engine.session`, ET depuis la console (`cassandre.level.load`, qui doit
- * lui viser LA session courante — voir `devtools/consoleApi.ts`).
+ * Charge (ou recharge) `public/assets/levels/<name>.glb` dans `session` —
+ * voir `game/level/hotReload.ts` pour le mécanisme de hot reload lui-même.
+ * `engine`/`session` explicites, même raison que `spawnSuitAt` ci-dessus.
+ * see: docs/systems/session.md#spawn-et-chargement-de-niveau
  */
 export function loadGltfLevel(engine: PersistentEngine, session: GameSession, name: string): void {
   session.gltfLevelSession?.stop();
-  const url = `/assets/levels/${name}.glb`;
+  const url = assetUrl(`assets/levels/${name}.glb`);
   session.gltfLevelSession = createLevelSession(url, engine.scene, session.physics, {
     onLoaded: (handle, info) => {
       const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
@@ -108,13 +88,9 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
           `portes ${handle.stats.doorCount}, use ${handle.stats.useCount}, ` +
           `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}`,
       );
-      // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le
-      // joueur : un hot reload ne doit JAMAIS respawn (voir la doc de tête
-      // de `hotReload.ts`) — c'est le critère central de ce pipeline
-      // (<60 s, joueur en place). `isFirstLoad` est réarmé à `true` par
-      // `createLevelSession` à CHAQUE nouvel appel (nouvelle `session`,
-      // donc nouvelle fermeture) — un "Rejouer" respawn donc bien le
-      // joueur sur `spawn_player`, exactement comme le tout premier boot.
+      // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
+      // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
+      // see: docs/systems/session.md#spawn-et-chargement-de-niveau
       if (info.isFirstLoad && handle.spawnPlayer) {
         session.player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
         engine.look.yaw = handle.spawnPlayer.yaw;
