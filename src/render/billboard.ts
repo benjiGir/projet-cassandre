@@ -4,62 +4,18 @@ import { configureRetroTexture } from "./renderer";
 
 /**
  * Sprites billboard 8 directions (skill `billboard-sprites-8dir`) : un
- * `PlaneGeometry` par entité, orienté yaw-only vers la caméra, échantillonnant
- * un atlas 8 colonnes (directions) × N lignes (frames/états). Remplace
- * `THREE.Sprite`, qui billboard sur les trois axes et fait pencher l'ennemi
- * quand le joueur regarde en l'air ou vers le sol.
+ * `PlaneGeometry` par entité, orienté yaw-only, remplaçant `THREE.Sprite`
+ * (qui billboard sur les trois axes et fait pencher l'ennemi hors du plan
+ * horizontal).
  *
- * DÉCOUPLAGE DÉLIBÉRÉ, même discipline que `render/fx.ts` vis-à-vis de
- * `game/player/weapons.ts` (voir sa doc de tête) : ce module n'importe RIEN de
- * `game/entities/*` ni `game/player/*`, uniquement des primitives Three.js
- * (`THREE.Vector3`, `THREE.Camera`, `THREE.Texture`, `number`). Le futur
- * `game/entities/*` (Costard) fait le pont en lisant sa propre position/
- * orientation interpolées et en les poussant dans `updatePose`.
- *
- * CONTRAT D'INTERPOLATION, même pattern que `Viewmodel.update(alpha, weapons)`
- * et `PlayerController.eyePosition(alpha, out)` : `updatePose` ne fait AUCUNE
- * interpolation elle-même. L'appelant doit lui passer une position et un
- * forward DÉJÀ interpolés pour la frame d'affichage courante (typiquement en
- * gardant `previousPosition`/`position` sur l'entité et en appelant
- * `out.lerpVectors(previousPosition, position, alpha)` avant d'appeler
- * `updatePose`, exactement comme `eyePosition`). Passer des grandeurs du pas
- * fixe brut (non interpolées) fait trembler le sprite au ralenti dès que le
- * framerate d'affichage dépasse 60 Hz.
- *
- * TEMPS RÉEL VS PAS FIXE : `updatePose` (position/orientation/frame) est
- * appelée à CHAQUE FRAME D'AFFICHAGE avec des grandeurs interpolées, alors que
- * `updateFlash(realDt)` fait décroître le flash de dégâts en temps réel — même
- * séparation que `interpolateVisuals`/`updateFx` dans `main.ts`, ou que
- * `triggerShake`/`update(realDt)` dans `fx.ts`. Ce sont deux appels DISTINCTS
- * par frame d'affichage, jamais un seul `update()` fourre-tout : les grandeurs
- * qu'ils consomment (alpha d'interpolation vs delta temps réel) n'ont pas la
- * même nature.
- *
- * LE PIÈGE DU PARTAGE DE TEXTURE — lu et évité ICI, pas après coup : muter
- * `material.map.offset`/`.repeat` pour sélectionner une case d'atlas est la
- * technique standard, mais si plusieurs `BillboardSprite` PARTAGENT le même
- * objet `THREE.Texture` (ex. un seul atlas chargé une fois pour ~20 Costards),
- * muter `.offset` sur l'une désynchronise TOUTES les autres qui l'utilisent :
- * elles partagent le même objet, donc le même offset — au rendu, tous les
- * sprites affichent la case du DERNIER `updatePose` appelé cette frame. Bug
- * classique, quasi invisible à l'œil au premier essai (un seul sprite dans la
- * scène ne le révèle jamais).
- *
- * CHOIX RETENU ICI : option (a) du plan — chaque `BillboardSprite` clone
- * l'atlas passé au constructeur (`atlas.clone()`, `needsUpdate = true`) et ne
- * mute plus jamais que le `.offset`/`.repeat` de SA PROPRE copie. L'image
- * bitmap sous-jacente (`texture.image`, le canvas/bitmap décodé) reste
- * partagée par référence entre tous les clones — trois.js ne redécode ni ne
- * dédouble les pixels sources, seul l'objet `THREE.Texture` (filtre, offset,
- * repeat, sa propre resource GPU) est dupliqué. Coût par instance : un objet
- * JS léger + une texture GPU indépendante (mêmes pixels), pas une image. Pour
- * ~20 Costards simultanés (budget du skill), ce coût est négligeable et évite
- * totalement la classe de bug ci-dessus — préféré à l'option (b) (UV par
- * géométrie, atlas totalement partagé) qui est plus économe en mémoire GPU
- * mais interdit tout matériau partagé entre instances de toute façon (chaque
- * instance a déjà besoin de sa propre géométrie pour ses propres UV), donc
- * n'apporte pas d'économie réelle ici vu qu'on alloue déjà une géométrie par
- * instance (pour la taille/l'ancrage vertical, voir plus bas).
+ * Découplage délibéré de `game/entities/*`/`game/player/*` (primitives
+ * Three.js uniquement) et distinction temps réel (`updateFlash`) contre pas
+ * fixe interpolé (`updatePose`) — même discipline que le reste de `render/`.
+ * Convention de direction, mapping V de l'atlas, canaux teinte/flash, et le
+ * piège de partage de texture (évité par le clone d'instance, ADR 0017) :
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/systems/rendu.md#temps-réel-contre-pas-fixe-dans-render
+ * see: docs/systems/rendu.md#sprites-billboard-8-directions
  */
 
 /**
@@ -71,13 +27,12 @@ import { configureRetroTexture } from "./renderer";
 export const BILLBOARD_COLUMNS = 8;
 
 /**
- * Fraction du pic de flash considérée comme négligeable après la durée
- * demandée à `setFlash` — même idiome que `SHAKE_NEGLIGIBLE_FRACTION` dans
- * `fx.ts` : `k = -ln(fraction) / duration`. Forme de la courbe UNIQUEMENT :
- * la durée elle-même est un paramètre de `setFlash` (voir sa doc), passée par
- * l'appelant depuis `SuitConfig.hitFlashDuration` — retour playtest Phase 3 :
- * cette durée était figée en dur ici, donc pas tunable à chaud ni exposée au
- * panneau de debug, en violation du mandat du skill `game-feel-tuning`.
+ * Fraction du pic de flash considérée négligeable après la durée demandée à
+ * `setFlash` : `k = -ln(fraction) / duration` (même idiome que
+ * `SHAKE_NEGLIGIBLE_FRACTION` dans `fx.ts`). Durée elle-même passée par
+ * l'appelant (`SuitConfig.hitFlashDuration`), tunable à chaud — historique du
+ * passage d'une constante en dur à ce champ :
+ * see: docs/reference/valeurs-ennemis.md#feedback-visuel-dun-coup-reçu-par-un-ennemi
  */
 const FLASH_NEGLIGIBLE_FRACTION = 0.05;
 /** Durée de repli si `setFlash` est appelée sans second argument (compat / tests) — mêmes 0.25 s que l'ancienne constante en dur. */
@@ -120,7 +75,7 @@ export class BillboardSprite {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
 
   private readonly scene: THREE.Scene;
-  /** Copie PROPRE à cette instance — voir « LE PIÈGE DU PARTAGE DE TEXTURE » en tête de fichier. Ne jamais la partager. */
+  /** Copie PROPRE à cette instance (piège de partage de texture, ADR 0017) — ne jamais la partager. */
   private readonly texture: THREE.Texture;
   private readonly rows: number;
 
@@ -150,14 +105,11 @@ export class BillboardSprite {
     this.texture.repeat.set(1 / BILLBOARD_COLUMNS, 1 / this.rows);
     this.texture.offset.set(0, 1 - 1 / this.rows); // colonne 0, ligne 0 (voir mapping V dans `updatePose`)
 
-    // Géométrie PROPRE à cette instance (pas de partage) : la translation
-    // d'ancrage ci-dessous est appliquée en dur sur les vertices, elle
-    // dépend de `width`/`height`/`anchor` qui peuvent varier par instance
-    // (une future entité plus grande que le Costard standard, par exemple).
-    // PlaneGeometry par défaut : plan dans le repère XY, normale +Z, centré
-    // en (0,0) — [-w/2, w/2] x [-h/2, h/2]. On le translate en Y pour que
-    // `position.y` (posé dans `updatePose`) corresponde à la fraction
-    // `anchor` de la hauteur depuis le bas.
+    // Géométrie PROPRE à cette instance (translation d'ancrage dépendante de
+    // `width`/`height`/`anchor`, qui peuvent varier par instance) : un
+    // `PlaneGeometry` par défaut est centré en (0,0), on le translate en Y
+    // pour que `position.y` (posé dans `updatePose`) corresponde à la
+    // fraction `anchor` de la hauteur depuis le bas.
     const geometry = new THREE.PlaneGeometry(width, height);
     geometry.translate(0, height * (0.5 - anchor), 0);
 
@@ -176,29 +128,21 @@ export class BillboardSprite {
   /**
    * Positionne, oriente (yaw-only) et sélectionne la case d'atlas (direction ×
    * `row`) pour la frame d'affichage courante. À appeler UNE FOIS PAR FRAME
-   * D'AFFICHAGE, avec `position`/`forward` DÉJÀ INTERPOLÉS par l'appelant
-   * (voir la doc de tête) — jamais avec des valeurs brutes du pas fixe.
+   * D'AFFICHAGE, avec `position`/`forward` DÉJÀ INTERPOLÉS par l'appelant —
+   * jamais avec des valeurs brutes du pas fixe.
    *
-   * @param camera Caméra de rendu. Seule `camera.position` est lue (déjà
-   *   posée par l'appelant, typiquement via `PlayerController.eyePosition`) —
-   *   la ROTATION de la caméra n'entre PAS dans le calcul (invariant #3, la
-   *   rotation caméra n'est jamais interpolée ; le billboard, lui, n'a besoin
-   *   que de la position pour viser).
-   * @param position Position interpolée de l'entité, DANS LE MONDE. Son
-   *   interprétation verticale (pied/centre/sommet) dépend de
-   *   `BillboardSpriteOptions.verticalAnchor` passé au constructeur.
-   * @param forward Orientation interpolée de l'entité, vecteur normalisé,
-   *   `y` ignoré (aplati sur le plan horizontal en interne). Convention
-   *   DOCUMENTÉE : `direction = 0` correspond à l'ennemi vu DE FACE (le
-   *   joueur regarde `forward` droit dans les yeux). Un décalage de
-   *   convention ici se traduit par un décalage de 4 cases dans l'atlas —
-   *   erreur classique et difficile à repérer à l'œil (voir le skill
-   *   `billboard-sprites-8dir`) : si les sprites semblent tous « à l'envers »,
-   *   vérifier en premier que `forward` pointe bien dans le sens où
-   *   l'entité regarde, pas dans le sens opposé.
+   * @param camera Caméra de rendu. Seule `camera.position` est lue — la
+   *   ROTATION n'entre PAS dans le calcul (invariant #3, jamais interpolée ;
+   *   le billboard n'a besoin que de la position pour viser).
+   * @param position Position interpolée de l'entité, DANS LE MONDE.
+   *   Interprétation verticale (pied/centre/sommet) : voir
+   *   `BillboardSpriteOptions.verticalAnchor`.
+   * @param forward Orientation interpolée, vecteur normalisé, `y` ignoré.
+   *   Convention `direction = 0` = ennemi vu DE FACE (voir la doc de tête).
    * @param row Ligne de l'atlas (frame/état), 0-indexée. Défaut 0. Clampée à
    *   `[0, rows - 1]` (`rows` fixé au constructeur).
    */
+  // see: docs/systems/rendu.md#sprites-billboard-8-directions
   updatePose(camera: THREE.Camera, position: THREE.Vector3, forward: THREE.Vector3, row = 0): void {
     this.mesh.position.copy(position);
 
@@ -236,13 +180,10 @@ export class BillboardSprite {
     // éviter un flash visible d'une case d'atlas arbitraire.
 
     const clampedRow = Math.max(0, Math.min(this.rows - 1, Math.floor(row)));
-    // Mapping U : colonne 0 à gauche de l'atlas, croissant vers la droite —
-    // pas de subtilité, U croît dans le même sens que X sur le canvas source.
-    // Mapping V : ATTENTION, three.js flip l'axe V par défaut
-    // (`texture.flipY = true`) — v=0 correspond au BAS de l'image source,
-    // v=1 à son HAUT. `createPlaceholderAtlas` (et toute image standard)
-    // dessine la ligne 0 en HAUT du canvas ; pour que `row = 0` sélectionne
-    // bien cette ligne, son offset V doit donc être `1 - 1/rows`, pas 0.
+    // Mapping U : colonne 0 à gauche, croissant vers la droite (comme X).
+    // Mapping V : ATTENTION, three.js flip l'axe V par défaut (v=0 = BAS de
+    // l'image source) alors que `row = 0` doit sélectionner la ligne du HAUT.
+    // see: docs/systems/rendu.md#sprites-billboard-8-directions
     this.texture.offset.set(this.lastDirection / BILLBOARD_COLUMNS, 1 - (clampedRow + 1) / this.rows);
   }
 
@@ -254,24 +195,13 @@ export class BillboardSprite {
   /**
    * Change la teinte du sprite après construction (`material.color`),
    * MULTIPLIÉE avec les pixels de l'atlas au rendu — PAS un nouveau système
-   * de shader (invariant #5, `MeshLambertMaterial` uniquement, déjà le
-   * matériau de ce mesh). Usage introduit par le Directeur (2ᵉ type
-   * d'ennemi, `game/entities/director.ts`) : bascule visuelle « costume
-   * humain -> reptilien » quand les PV passent sous un seuil, sans créer de
-   * seconde ligne d'atlas ni de shader dédié — voir
-   * `DirectorConfig.humanTintColor`/`revealedTintColor` et
-   * `Director.tintColor`.
-   *
-   * Combinable SANS CONFLIT avec `setFlash`/`updateFlash` : la teinte de base
-   * (`material.color`) et le flash de dégâts (`material.emissive`) sont deux
-   * canaux distincts de `MeshLambertMaterial`, appliqués indépendamment par
-   * three.js au rendu (l'un module les texels, l'autre s'additionne dessus).
-   *
-   * Idempotente et bon marché (une mutation numérique, zéro allocation) :
-   * peut être appelée à chaque frame sans souci de performance si l'appelant
-   * préfère ne pas suivre l'état de révélation lui-même, mais le pattern
-   * attendu (comme `setFlash`) est de l'appeler UNE FOIS, au moment de
-   * l'événement de transition — pas à chaque frame par défaut.
+   * de shader (invariant #5, `MeshLambertMaterial` uniquement). Usage
+   * introduit par le Directeur : bascule costume humain -> reptilien sous
+   * un seuil de PV (`DirectorConfig.humanTintColor`/`revealedTintColor`,
+   * `Director.tintColor`). Idempotente et bon marché, mais le pattern
+   * attendu est de l'appeler UNE FOIS, au moment de l'événement de
+   * transition — pas à chaque frame par défaut.
+   * see: docs/systems/rendu.md#sprites-billboard-8-directions
    */
   setTint(color: number): void {
     this.mesh.material.color.set(color);
@@ -280,23 +210,15 @@ export class BillboardSprite {
   /**
    * Déclenche (ou renforce) le flash blanc de dégâts. `amount` dans [0, 1] :
    * 0 = aucun effet, 1 = blanc plein. PUREMENT COSMÉTIQUE — à appeler au
-   * moment du dégât côté gameplay (pas fixe), la décroissance visuelle est
-   * gérée en temps réel par `updateFlash`, jamais par le pas fixe (même
-   * séparation que `FxSystem.triggerShake`/`update(realDt)`).
-   *
-   * Comme `triggerShake` : PAS de sommation. Si un flash est déjà en cours,
-   * on prend le MAX de l'intensité courante (déjà partiellement décroissante)
-   * et de `amount` — plusieurs plombs de pompe touchant la même entité dans
-   * le même pas fixe ne doivent pas empiler un flash plus qu'blanc que blanc.
+   * moment du dégât côté gameplay (pas fixe) ; la décroissance visuelle est
+   * gérée en temps réel par `updateFlash`, jamais par le pas fixe. Pas de
+   * sommation entre déclenchements qui se chevauchent (voir la doc de tête).
    *
    * @param durationSeconds Durée pour revenir à `FLASH_NEGLIGIBLE_FRACTION`
-   *   du pic, en secondes — typiquement `suitConfig.hitFlashDuration`,
-   *   TUNABLE À CHAUD par l'appelant (console/panneau de debug). Recalcule
-   *   `flashDecayRate` à CHAQUE appel : un slider de durée changé pendant
-   *   qu'un flash est déjà en cours de décroissance s'applique donc dès le
-   *   prochain hit, jamais seulement au prochain chargement de module.
-   *   Défaut `DEFAULT_FLASH_DURATION` (0.25 s, ancienne valeur en dur) si
-   *   omis.
+   *   du pic, typiquement `suitConfig.hitFlashDuration`, TUNABLE À CHAUD.
+   *   Recalcule `flashDecayRate` à CHAQUE appel : un slider de durée changé
+   *   pendant qu'un flash décroît déjà s'applique dès le prochain hit.
+   *   Défaut `DEFAULT_FLASH_DURATION` si omis.
    */
   setFlash(amount: number, durationSeconds: number = DEFAULT_FLASH_DURATION): void {
     const safeDuration = Math.max(1e-3, durationSeconds);
@@ -306,9 +228,8 @@ export class BillboardSprite {
 
   /**
    * Fait décroître le flash de dégâts en TEMPS RÉEL. À appeler UNE FOIS PAR
-   * FRAME D'AFFICHAGE avec le delta temps réel (même hook que
-   * `FxSystem.update(realDt)` dans `updateFx` de `main.ts`) — JAMAIS avec
-   * `FIXED_DT` du pas fixe de gameplay.
+   * FRAME D'AFFICHAGE avec le delta temps réel (`game/loop/updateFx.ts`),
+   * JAMAIS avec `FIXED_DT` du pas fixe de gameplay.
    */
   updateFlash(realDt: number): void {
     if (this.flashIntensity <= 0) return;
@@ -328,33 +249,16 @@ export class BillboardSprite {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Atlas placeholder — invariant #9 (boîtes blanches jusqu'à la Phase 5) :
-// aucun asset de sprite final n'existe encore, mais le système DOIT être
-// testable. Génère une mosaïque de diagnostic (recommandée par le skill) :
-// une couleur distincte par colonne (direction), un numéro de colonne ET de
-// ligne lisible dans chaque case, pour vérifier à l'œil que la sélection
-// direction/frame est correctement câblée sans attendre l'art final.
-// ---------------------------------------------------------------------------
+// Atlas placeholder — invariant #9 : aucun asset de sprite final n'existe
+// encore, mais le système doit être testable sans lui. Format complet :
+// see: docs/pipeline/textures.md#atlas-placeholder-de-billboard
 
-const PLACEHOLDER_CELL_WIDTH = 32; // px, garde chaque case (et donc l'atlas) largement sous la limite 128×128/texture de l'invariant #4/skill
+const PLACEHOLDER_CELL_WIDTH = 32; // px, largement sous la limite 128×128/texture (invariant #4)
 const PLACEHOLDER_CELL_HEIGHT = 48; // px, portrait — gabarit humanoïde approximatif
-/** Padding transparent autour de chaque case (recommandé par le skill : évite le bleeding d'atlas en `NearestFilter`, même sans mipmaps, à cause de l'imprécision flottante sur les UV proches d'une frontière de case). */
+/** Padding transparent autour de chaque case : évite le bleeding d'atlas en `NearestFilter`. */
 const PLACEHOLDER_PADDING = 1;
 
-/**
- * Génère un atlas placeholder `columns` × `rows` par canvas, configuré avec
- * les réglages rétro (`NearestFilter`, pas de mipmaps, `SRGBColorSpace` — voir
- * `configureRetroTexture` dans `render/renderer.ts`, réutilisé tel quel ici
- * pour rester cohérent avec le reste du moteur).
- *
- * Chaque case affiche : un fond teinté par COLONNE (hue tournant sur 360°/
- * `columns`, donc la case `direction = 0` a toujours la même teinte
- * reconnaissable d'un atlas à l'autre) et le couple `"col.row"` en texte —
- * le moyen le plus direct de vérifier à l'œil qu'une case donnée correspond
- * bien à la direction/frame attendue, sans avoir à mémoriser une convention
- * de flèche.
- */
+/** Génère un atlas placeholder `columns` × `rows` par canvas, configuré avec les réglages rétro (`configureRetroTexture`). */
 export function createPlaceholderAtlas(columns: number, rows: number): THREE.Texture {
   const cols = Math.max(1, Math.floor(columns));
   const rowCount = Math.max(1, Math.floor(rows));

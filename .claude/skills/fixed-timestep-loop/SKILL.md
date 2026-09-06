@@ -62,6 +62,18 @@ Interpoler la rotation caméra ajoute jusqu'à 16 ms de latence perçue à la
 visée. C'est l'erreur la plus coûteuse et la plus difficile à diagnostiquer
 après coup, parce qu'elle se ressent sans se voir.
 
+## Orchestration Effect (`PLAN_EFFECT_XSTATE.md`, jalons M6/M7)
+
+Dans ce projet, `updateGameplay` ET `interpolateVisuals` exécutent leur
+corps via `runGameplaySync` (`src/core/runtime.ts`) plutôt qu'en TypeScript
+vanilla direct — la forme de la boucle ci-dessus (accumulateur, clamp,
+hitstop) ne change pas, Effect enveloppe seulement ce qui tourne dedans.
+`runGameplaySync` est la SEULE porte d'entrée synchrone vers `GameRuntime` :
+zéro `Effect.tryPromise`/`Effect.promise`/`Effect.async`/`Effect.sleep`
+dans un arbre qui passe par là, sinon `Runtime.runSync` lève un defect
+(rendu bruyant en console par le garde-fou, pas silencieux). Voir
+`effect-xstate-cassandre` pour le détail de ce pattern.
+
 ## Hitstop
 
 Le hitstop scale `dt` de gameplay. Il ne saute **jamais** de step physique :

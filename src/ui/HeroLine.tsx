@@ -1,20 +1,10 @@
 import { useGameStore } from "../game/state";
 
 /**
- * Réplique du héros — canal DÉDIÉ (`state.heroLine`), distinct du canal
- * système `HudMessage`/`state.hudMessage`. Purement présentationnel, comme
- * `HudMessage.tsx` : lit le store, n'écrit jamais dedans, l'auto-effacement
- * et le cooldown de 15 s (skill `audio-sfx-pipeline`) sont gérés côté
- * appelant (`main.ts::triggerHeroLine`), pas ici.
- *
- * Positionné comme une LÉGENDE DE STREAM sous la webcam factice (voir
- * `ui/Hud.tsx`) — c'est le héros qui commente sa propre vidéo, cohérent avec
- * la direction artistique "overlay de stream" du plan. Volontairement
- * distinct visuellement de `HudMessage` (centré, plus haut, fond neutre) :
- * l'un est une INFORMATION système, l'autre une RÉPLIQUE de personnage.
- *
- * Haut-DROITE, sous la webcam : suit son déplacement (voir la doc de tête
- * de `ui/Hud.tsx` — le coin haut-gauche reste celui de `DebugPanel`).
+ * Réplique du héros — canal dédié (`state.heroLine`), distinct du canal
+ * système `HudMessage`. Purement présentationnel : lit le store, n'écrit
+ * jamais dedans ; l'auto-effacement et le cooldown vivent côté appelant.
+ * see: docs/systems/hud.md#deux-canaux-de-message-hudmessage-et-heroline
  */
 export function HeroLine() {
   const line = useGameStore((s) => s.heroLine);

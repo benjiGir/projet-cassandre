@@ -57,6 +57,12 @@ export function DebugPanel() {
       }}
     >
       <div>{`FPS: ${debug.fps.toFixed(0).padStart(3, " ")}`}</div>
+      <div>
+        {/* Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : filet de sécurité concret du
+            risque de perf assumé — aucun budget fixé à l'avance, mais toute
+            dégradation doit être visible immédiatement ici. */}
+        {`Jeu: ${debug.gameplayMs.toFixed(2)}ms  Phys: ${debug.physicsMs.toFixed(2)}ms  Rendu: ${debug.renderMs.toFixed(2)}ms`}
+      </div>
       <div>{`Pos: ${fmt(debug.position.x)}, ${fmt(debug.position.y)}, ${fmt(debug.position.z)}`}</div>
       <div>{`Entities: ${String(debug.entityCount).padStart(3, " ")}`}</div>
       <div>

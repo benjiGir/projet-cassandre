@@ -16,42 +16,17 @@ import {
 } from "../game/entities/suitConfig";
 
 /**
- * Sliders à chaud pour `moveConfig` — livrable #2 du harnais de tuning
- * (skill `game-feel-tuning`). Sans ça, tuner exige la console pendant qu'on
- * court ; ce panneau supprime ce frottement.
- *
- * INVARIANT #2 tenu strictement : ce composant ne touche JAMAIS le pas fixe.
- * Il MUTE `moveConfig` (objet simple, hors React) sur interaction humaine
- * uniquement — drag de slider, clic de bouton — jamais dans une boucle. Zéro
- * `setInterval`, zéro `requestAnimationFrame`, zéro lecture continue de
- * `moveConfig` : l'état React local n'est resynchronisé qu'à l'OUVERTURE du
- * panneau (pour refléter une éventuelle console `applyFeelVariant`/reset
- * fait pendant qu'il était fermé), jamais en tâche de fond. Un slider peut
- * donc se re-render à chaque frappe humaine, jamais à 60 fps.
- *
- * POINTER LOCK : le jeu tourne en pointer lock (`core/input.ts`). Un slider a
- * besoin d'événements pointeur classiques, incompatibles avec le lock. Donc :
- * le panneau reste DÉMONTÉ (aucun noeud interactif, donc aucune interception
- * de clic) tant qu'il n'est pas ouvert par la touche dédiée `` ` `` (Backquote,
- * coin haut-gauche du clavier) — libre de tout conflit avec ZQSD/WASD
- * (KeyW/A/S/D, des CODES physiques, indépendants du layout clavier), Shift,
- * Espace, F9, F10, KeyV (wireframe) et KeyB (gizmos balistiques).
- * L'ouverture appelle `document.exitPointerLock()`. La
- * fermeture ne fait volontairement RIEN de plus côté pointer lock : le canvas
- * a déjà un écouteur `click → requestPointerLock` dans `core/input.ts`, donc
- * reprendre la main est un simple clic dans la fenêtre de jeu — dupliquer
- * cette responsabilité ici casserait la source unique de vérité du pointer
- * lock.
- *
- * Le panneau de diagnostic permanent (`DebugPanel`) n'est ni modifié ni
- * concerné : il reste `pointerEvents: "none"`, visible en jeu, aux deux états
- * de ce panneau.
+ * Sliders à chaud pour `moveConfig`/`weaponConfig`/`suitConfig` (skill
+ * `game-feel-tuning`) — sans ça, tuner exige la console pendant qu'on court.
+ * Invariant #2 tenu strictement : ne touche jamais le pas fixe, mute les
+ * configs sur interaction humaine uniquement, jamais en tâche de fond.
+ * Démonté (donc sans interception de clic, compatible pointer lock) tant
+ * qu'il n'est pas ouvert par la touche dédiée `` ` `` (Backquote).
+ * see: docs/systems/hud.md#panneau-de-tuning-à-chaud
  */
 
-// Touche dédiée : Backquote (`/~), jamais utilisée ailleurs dans le projet
-// (WASD/ZQSD = KeyW/KeyA/KeyS/KeyD, sprint = ShiftLeft, saut = Space,
-// recorder = F9/F10, wireframe = KeyV, gizmos balistiques = KeyB —
-// cf. src/main.ts, src/core/input.ts).
+// Touche dédiée : Backquote (`/~), jamais utilisée ailleurs dans le projet.
+// see: docs/reference/controles.md
 const TOGGLE_KEY = "Backquote";
 
 // Au-delà de ce délai entre deux appels, un nouvel `applyConfig()` est
@@ -123,12 +98,9 @@ const SLIDER_GROUPS: ReadonlyArray<{ title: string; fields: readonly SliderField
       { key: "jumpHeight", label: "Hauteur de saut", min: 0, max: 3, step: 0.05, decimals: 2, unit: "m" },
       { key: "coyoteTime", label: "Coyote time", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
       { key: "jumpBufferTime", label: "Jump buffer", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
-      // Plage resserrée suite à mesure (cf. commentaire `groundStickSpeed`,
-      // moveConfig.ts) : au-delà de ~0.5-1 m/s ce champ combiné à une grande
-      // vitesse horizontale axée-axe fait dégénérer la résolution Rapier —
-      // stutter mesuré jusqu'à 35% des pas fixes en ligne droite dans le hub.
-      // 0.6 laisse 3× la valeur par défaut (0.2) sans franchir la falaise
-      // mesurée entre 0.5 et 1.0.
+      // Plage resserrée : 0.6 laisse 3× la valeur par défaut (0.2) sans
+      // franchir la falaise de stabilité mesurée entre 0.5 et 1.0 m/s.
+      // see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       {
         key: "groundStickSpeed",
         label: "Collage au sol",
@@ -359,14 +331,8 @@ const SLIDER_GROUPS: ReadonlyArray<{ title: string; fields: readonly SliderField
 
 const VARIANT_NAMES = Object.keys(FEEL_VARIANTS) as (keyof typeof FEEL_VARIANTS)[];
 
-// ---------------------------------------------------------------------------
-// Harnais de feedback de hit (retour playtest Phase 3 — « la sensation de tir
-// et de touché n'est pas bonne »). Même discipline que `SLIDER_GROUPS`
-// ci-dessus : ce panneau EXPOSE et VARIE, il ne tranche rien (skill
-// `game-feel-tuning`). Bornes dérivées des commentaires de `weaponConfig.ts`/
-// `suitConfig.ts` (plage défendable autour du point de départ), jamais la
-// valeur elle-même.
-// ---------------------------------------------------------------------------
+// Harnais de feedback de hit — ce panneau expose et varie, il ne tranche rien.
+// see: docs/systems/hud.md#panneau-de-tuning-à-chaud
 
 const DEFAULT_WEAPON_CONFIG: WeaponConfig = { ...weaponConfig };
 const DEFAULT_SUIT_CONFIG: SuitConfig = { ...suitConfig };
@@ -591,10 +557,9 @@ export function TuningPanel() {
 
   function handleVariant(name: keyof typeof FEEL_VARIANTS) {
     // Réutilise exactement la fonction déjà exposée à la console
-    // (`cassandre.applyFeelVariant`) : même comportement, un seul chemin de
-    // vérité. Les variantes ne touchent que la vue, jamais capsule/KCC — pas
-    // d'`applyConfig()` nécessaire ici (cf. commentaire de `applyFeelVariant`
-    // dans `src/main.ts`).
+    // (`cassandre.applyFeelVariant`, `game/devtools/testHarness.ts`) : même
+    // comportement, un seul chemin de vérité. Les variantes ne touchent que
+    // la vue, jamais capsule/KCC — pas d'`applyConfig()` nécessaire ici.
     window.cassandre?.applyFeelVariant(name);
     setValues({ ...moveConfig });
   }

@@ -42,22 +42,10 @@ script séparé (`bake_vertex_lighting.py`), suivi par `validate_level.py` puis
 
 ## Le piège instancing-vs-bake (résolu ici, à ne pas réintroduire)
 
-`modular-kit-design` recommande de partager un même mesh-datablock entre
-toutes les instances d'une pièce ("Add -> Collection Instance", ou ici,
-plusieurs `Object` référençant le même `Mesh`). C'est correct pour la
-BIBLIOTHÈQUE du kit, où chaque pièce n'existe qu'UNE fois.
-
-Mais les couleurs de sommet ("Col") vivent sur le MESH-DATABLOCK, pas sur
-l'`Object`. Si 24 instances de `kit_wall_4m` dans un niveau partagent le même
-mesh, un bake ne peut écrire qu'UN SEUL jeu de couleurs — soit l'opérateur
-Cycles refuse (mesh multi-utilisateur), soit toutes les instances héritent du
-même dégradé, qui n'a de sens que pour l'UNE d'entre elles. Un mur près de la
-vitrine et un mur à l'autre bout de la pièce n'ont pas le même éclairage.
-
-`place_kit_piece` fait donc un `mesh.copy()` (single-user) pour chaque
-RENDU placé, afin que chaque instance porte son propre bake. Les PROXIES
-`col_*`, eux, ne sont jamais bakés ni rendus : ils restent partagés (mesh
-identique), ce qui est correct et moins coûteux en mémoire.
+`place_kit_piece` fait un `mesh.copy()` pour chaque instance RENDUE placée
+(chaque copie porte son propre bake), et garde les proxies `col_*` partagés
+(jamais bakés ni rendus). Pourquoi : voir
+docs/pipeline/niveau-blender.md#piège-instancing-vs-bake
 """
 
 from __future__ import annotations
@@ -325,25 +313,15 @@ def build_vitrine(vitrine_spec: dict | None, materials_lookup: dict,
 def build_floor_patches(patches: list[dict] | None, materials_lookup: dict,
                          shell_coll, col_coll) -> int:
     """Dalle(s) de sol SUR-MESURE, même rigueur que `build_vitrine` juste
-    au-dessus (subdivision au mètre, UV 64 px/m, proxy cuboid, transforms
-    appliqués en coordonnées MONDE), pour une empreinte qui NE TILE PAS
-    proprement en 4 m avec `kit_floor_4x4` (ex. l'alcôve 3×2 m du secret 1,
-    Zone B — voir `level_spec.py`). Même convention d'origine que
-    `kit_floor_4x4` (surface de marche, la dalle descend sous `z`,
-    épaisseur `kit_spec.SLAB_T`).
+    au-dessus, pour une empreinte qui NE TILE PAS proprement en 4 m avec
+    `kit_floor_4x4` (ex. l'alcôve 3×2 m du secret 1, Zone B — voir
+    `level_spec.py`). Même convention d'origine que `kit_floor_4x4` (surface
+    de marche, la dalle descend sous `z`).
 
-    PIÈGE DÉCOUVERT (nouveau, propre à cette tâche) : étendre le rectangle
-    englobant du `"floor"` d'une zone pour couvrir une alcôve qui déborde
-    HORS de son empreinte existante (contrairement à la vitrine/l'alcôve de
-    sortie de la Zone A/E, qui restent DANS l'empreinte) semble anodin sur
-    la zone seule, mais une fois cette zone TRANSLATÉE dans le niveau
-    combiné (`build_combined_level.py`), l'extension peut retomber
-    exactement sur la géométrie d'une autre zone ou d'un connecteur — mesuré
-    en assemblant `hypermarche_complet` : la Zone B étendue à l'ouest
-    (X0=-16) chevauchait EXACTEMENT le connecteur A-B une fois translatée
-    par dx=26, dupliquant une tuile de sol au même endroit (auto-occultation
-    au bake, 2 meshes noirs). Une dalle sur-mesure, limitée à l'empreinte
-    réelle du besoin, ne peut par construction chevaucher rien d'autre."""
+    Bornée à l'empreinte réelle du besoin plutôt que d'étendre le
+    rectangle englobant du `"floor"` existant — voir
+    docs/pipeline/niveau-blender.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
+    pour le piège que ça évite une fois la zone translatée."""
     if not patches:
         return 0
     slab_t = spec.SLAB_T
@@ -435,49 +413,22 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
     `"door_e_exit"`) ; sans elle, aucun vantail n'est posé — un `door_frame`
     reste alors un simple encadrement traversable, comportement inchangé.
 
-    PIÈGE DÉCOUVERT, propre à `door_*` (nouveau, absent de tout `col_*`
-    jusqu'ici) : `loader.ts::buildDoor` pose le corps Rapier dynamique à la
-    position DÉCOMPOSÉE DIRECTEMENT de `mesh.matrixWorld` (donc l'origine
-    locale de l'OBJET), et calcule les demi-étendues depuis la bounding box
-    LOCALE du mesh — CONTRAIREMENT à `buildCuboidCollider` (tout
-    `col_box_*`), qui recentre explicitement (`localCenter` calculé puis
-    reprojeté en repère monde, voir `loader.ts`). Si le vantail gardait la
-    convention du reste du kit (origine à un COIN, x∈[0,1.5] etc. — c'est le
-    cas du mesh-datablock `kit_door_leaf` dans `kit_hypermarche.blend`), le
-    corps physique se retrouverait centré sur ce COIN : la moitié du
-    collider tomberait hors du battant rendu. `loader.ts` est hors scope de
-    cette tâche (contrat déjà câblé, non modifié) : c'est donc la géométrie
-    qui doit s'y conformer. `kit_door_leaf` est le SEUL objet posé par ce
-    script dont l'origine locale est recentrée sur le centre de sa boîte
-    englobante plutôt que laissée au coin — uniquement sur l'INSTANCE de
-    NIVEAU (mesh copié, voir `.copy()` ci-dessous) ; le mesh-datablock du kit
-    lui-même reste inchangé (convention coin, cohérent avec le reste du kit
-    et `inspect_kit.py`).
+    `kit_door_leaf` est le SEUL objet posé par ce script dont l'origine
+    locale est recentrée (sur l'instance de niveau, mesh copié — le
+    datablock du kit reste inchangé) plutôt que laissée au coin : compense
+    le fait que `loader.ts::buildDoor` ne recentre pas — voir ADR 0012
+    (docs/decisions/0012-porte-collider-non-recentre.md).
 
-    Centre monde choisi : Z au centre exact de l'ouverture (moitié de la
-    hauteur d'ouverture, vantail posé au sol). Dans le repère LOCAL du cadre
-    (avant rotation), X est au centre exact de l'ouverture (jambage + moitié
-    de la largeur d'ouverture) et Y est CALÉ SUR LA FACE INTÉRIEURE du cadre
-    (`door_spec["y"]`, la même face de référence que tout `wall_run` du
-    projet) plutôt que centré dans l'épaisseur du mur (0.25 m) : un centrage
-    dans l'épaisseur donnerait un Y à `door_spec["y"] + (WALL_T - leaf_d)/2`,
-    qui n'est PAS un multiple de la grille 0.25 m pour les dimensions de ce
-    kit (0.25 et 0.15 ne produisent pas un tel multiple) —
-    `validate_level.py` avertirait sans qu'il s'agisse d'une contrainte
-    figée d'un kit déjà construit (contrairement à `use_crowbar`). Caler sur
-    la face retombe exactement sur la grille, sans aucune exception.
-
-    `door_spec["rot_deg"]` (optionnel, défaut 0.0, voir `build_door_frame`) :
-    ce centre LOCAL (calculé comme si le cadre n'était pas tourné) est
-    tourné de `rot_deg` autour de Z avant d'être ajouté à `(frame_x, frame_y)`
-    — exactement la même géométrie que `place_kit_piece`/`plan_wall_run`
-    appliquerait à n'importe quelle pièce posée à ce coin avec cette
-    rotation. Pour `rot_deg=0.0` (Zone E), cette rotation est un no-op et le
-    résultat est identique à l'ancien calcul non généralisé (X décalé,
-    Y = frame_y). Pour `rot_deg=90.0` (Zone B, mur ouest vertical), l'offset
-    local (le long de l'axe X du cadre) se retrouve le long de l'axe Y
-    MONDE, et `frame_x` devient la face intérieure — cohérent avec la façon
-    dont `plan_wall_run` fait pivoter tout module de mur sur ce même run."""
+    Centre monde : Z au milieu de l'ouverture (vantail au sol) ; dans le
+    repère LOCAL du cadre (avant rotation), X au centre de l'ouverture et Y
+    CALÉ SUR LA FACE INTÉRIEURE (`door_spec["y"]`) plutôt que centré dans
+    l'épaisseur du mur — un centrage dans l'épaisseur sortirait de la grille
+    0.25 m pour les dimensions de ce kit. Ce centre local est tourné de
+    `door_spec["rot_deg"]` (défaut 0.0) avant translation, comme
+    `plan_wall_run` le ferait pour n'importe quel module de mur posé à ce
+    coin avec cette rotation. Détail complet :
+    docs/pipeline/niveau-blender.md#vantail-de-porte-recentré-kit_door_leaf
+    """
     if door_spec is None or not door_spec.get("leaf_name"):
         return 0
 
@@ -533,23 +484,12 @@ def _build_row_run(piece_name: str, end_name: str | None, x: float,
     Logique PARTAGÉE entre `build_gondolas` (Zone C, `end_name` fourni : un
     `kit_gondola_end` accolé à chaque extrémité, bloque la vue latérale) et
     `build_racks` (Zone D, `end_name=None` : `kit_rack_4m` n'a pas de pièce
-    d'about dans le kit, la rangée finit à nu — réaliste pour du rayonnage
-    industriel).
+    d'about dans le kit, la rangée finit à nu).
 
-    Grille 0.25 m — décision MÉCANIQUE, pas de layout : `x` est utilisé TEL
-    QUEL comme coordonnée d'un COIN de la pièce (convention « origine =
-    coin » du kit, `kit_spec.py` en-tête), jamais comme centre de sa
-    profondeur. Centrer une pièce profonde de 1.25 m (gondole) ou 1.2 m
-    (rack) pile sur `x` demanderait un décalage qui n'est pas forcément un
-    multiple de 0.25 m et ferait échouer `validate_level.py` (warning
-    « hors grille », bloquant sous `--strict`). Utiliser `x` comme bord
-    (pas comme centre) garde chaque coin sur la grille tout en préservant
-    EXACTEMENT l'espacement centre-à-centre donné par `level_spec.py`.
-    Conséquence mécanique acceptée (documentée à l'appel, pas ici) : la
-    rotation +90° décale l'empreinte de la profondeur locale vers -X, donc
-    deux rangées à des abscisses symétriques (ex. -6.0 / 4.0) ne produisent
-    PAS des empreintes miroir l'une de l'autre — sous-produit du choix
-    « grille exacte, pas de reste silencieux », pas une décision de layout.
+    `x` est le COIN de la pièce, jamais le centre de sa profondeur (grille
+    0.25 m exacte, pas une décision de layout) : voir
+    docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
+    pour la mécanique complète et ses conséquences (asymétrie des couloirs).
     """
     piece_len = spec.find_piece(piece_name)["dims"][0]
     y0, y1 = y_range
@@ -628,31 +568,13 @@ def build_mezzanine_stairs(stairs_spec: dict | None, mesh_lookup, proxy_map,
                             props_coll, col_coll) -> int:
     """Escalier double : deux `kit_stairs_2m` posés côte à côte.
 
-    PIÈGE DÉCOUVERT (vérifié empiriquement en instanciant la pièce et en
-    lisant sa bounding box monde après rotation, pas seulement par calcul) :
-    `kit_stairs_2m` ne monte vers +Y QUE sous rotation +90° en Z (sans
-    rotation, la pente est le long de X — inutile ici, la mezzanine est au
-    nord). Or cette même rotation +90°, comme pour les gondoles/racks
-    (`_build_row_run`), décale l'empreinte de la LARGEUR locale de la pièce
-    (`dims[1]`, 2 m) vers -X à partir de l'origine Blender, PAS vers +X.
-
-    Un placement naïf des positions telles que données par `level_spec.py`
-    (coin bas Blender AVANT rotation, ex. x=-2.0 et x=0.0) ferait donc
-    atterrir les deux marches sur X∈[-4,0] au lieu de X∈[-2,2] — précisément
-    SOUS le segment de rambarde solide voisin (`x_runs` s'arrête à X=-2,
-    voir `build_mezzanine_railing`), bloquant le haut de l'escalier contre
-    une rambarde pleine. Ce n'est pas une asymétrie cosmétique acceptable
-    (comme les couloirs de gondoles/racks) : c'est une collision entre deux
-    pièces que le plan lui-même place bord à bord ailleurs (la brèche de
-    rambarde EST calculée pour loger l'escalier).
-
-    Correction MÉCANIQUE (pas une décision de layout — la position de la
-    brèche ne change pas, seule la valeur intermédiaire passée à Blender est
-    ajustée pour l'atteindre) : on ajoute `dims[1]` (largeur locale) à
-    chaque abscisse donnée avant l'appel à `place_kit_piece`, ce qui fait
-    tomber l'empreinte réelle exactement sur X∈[x, x+largeur] au lieu de
-    X∈[x-largeur, x] — soit X∈[-2,0] et X∈[0,2], combiné X∈[-2,2], comme le
-    veut le plan.
+    `kit_stairs_2m` ne monte vers +Y QUE sous rotation +90° en Z, et cette
+    rotation décale l'empreinte de la LARGEUR locale (2 m) vers -X — un
+    placement naïf des positions de `level_spec.py` ferait atterrir
+    l'escalier sous la rambarde voisine (collision réelle, pas cosmétique).
+    Compensé en ajoutant `dims[1]` à chaque abscisse avant `place_kit_piece`
+    (mécanique, la position de la brèche ne change pas). Détail complet :
+    docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
     """
     if stairs_spec is None:
         return 0
@@ -790,21 +712,16 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
 
 def build_secret_zones(zone: dict, materials_lookup: dict, logic_coll) -> int:
     """`secret_*` : zone comptée dans le compteur de secrets côté runtime
-    (`loader.ts::buildSecretZone`/`LevelStats.secretCount`). Même mécanique
-    géométrique que `build_use_objects` juste au-dessus (un vrai `THREE.Mesh`
-    au `center`/`size` donné — `buildSecretZone` calcule sa bounding box
-    MONDE et n'exige AUCUNE forme particulière, mais on réutilise
-    `build_multi_box_mesh` par cohérence avec le reste du kit : subdivision,
-    UV, attribut couleur "Col" déjà prêts pour le bake, comme n'importe quel
-    autre mesh de niveau — sans ça, `validate_level.py::check_vertex_colors`
-    avertirait sur un mesh sans préfixe `col_*`/`trig_*` dépourvu de vertex
-    colors).
+    (`loader.ts::buildSecretZone`). Même mécanique géométrique que
+    `build_use_objects` juste au-dessus (un `THREE.Mesh` au `center`/`size`
+    donné, aucune forme particulière exigée côté runtime — réutilise
+    `build_multi_box_mesh` pour que le mesh porte quand même vertex colors et
+    UV comme tout le reste du niveau).
 
     Contrairement à `"target"` sur un `use_*` (optionnel), `"secret_id"` est
-    attendu pour CHAQUE entrée de `zone["secrets"]` — `validate_level.py::
-    check_naming` avertit sur son absence, et c'est la seule donnée stable
-    qui permette à la détection côté TS de distinguer un secret d'un autre
-    sans parser le nom Blender."""
+    attendu pour CHAQUE entrée de `zone["secrets"]` — seule donnée stable qui
+    permette à la détection côté TS de distinguer un secret d'un autre sans
+    parser le nom Blender."""
     count = 0
     for secret in zone.get("secrets", []):
         cx, cy, cz = secret["center"]

@@ -22,7 +22,6 @@
  *   voir les helpers en bas de fichier. Ne jamais coder « 7.4 » en dur.
  */
 export interface MoveConfig {
-  // ---------------------------------------------------------------- vitesses
   /** Vitesse horizontale max en marche, m/s. */
   walkSpeed: number;
   /** Vitesse horizontale max en course (ShiftLeft), m/s. */
@@ -47,7 +46,6 @@ export interface MoveConfig {
    */
   airControl: number;
 
-  // -------------------------------------------------------------------- saut
   /** Hauteur de saut visée, en mètres. v₀ est dérivée de cette hauteur et de la gravité du monde. */
   jumpHeight: number;
   /**
@@ -65,37 +63,15 @@ export interface MoveConfig {
    * Maintient le contact (évite un `isGrounded` qui clignote et aide le
    * snap-to-ground en descente de pente). Doit rester < snapToGroundDistance / dt.
    *
-   * PLAFONNÉ BAS, et c'est mesuré, pas esthétique : à grande vitesse
-   * horizontale et sur un déplacement AXÉ-AXE (droit devant, pas en
-   * diagonale), un `desired` combinant ce creep vertical constant avec un
-   * grand déplacement horizontal fait dégénérer `computeColliderMovement` de
-   * Rapier sur sol plat — `computedMovement` ressort mesurablement plus court
-   * que voulu alors que `isGrounded` est vrai et la normale plate, sans mur ni
-   * collision réelle. C'est le stutter en ligne droite dans le hub (44×44 m
-   * ouvert, seul endroit du niveau où on court longtemps plein axe) :
-   *
-   *   groundStickSpeed=2 (ancienne valeur) : hub 35.1% de pas fixes affectés,
-   *     KCC brut isolé en plein +X 41-49% (indépendant d'autostep/snap,
-   *     indépendant de colliderOffset — testé 0.01 à 0.2 m, aucun effet).
-   *   groundStickSpeed=0.2 (valeur actuelle) : hub 2.1-2.4%, comparable au
-   *     bruit de fond déjà mesuré aux coutures géométriques du niveau
-   *     (2.4-4.3%). En diagonale (yaw non aligné) l'ancienne valeur ne
-   *     montrait déjà quasi aucun artefact : c'est bien l'axe-alignement +
-   *     magnitude du creep qui déclenche la dégénérescence, pas la géométrie.
-   *   Testé jusqu'à 0.02 sans le moindre flicker de `isGrounded` sur la vraie
-   *   gym (hub, escaliers 0.45 m, rampe 45°) : la marge de sécurité au-dessus
-   *   de 0.2 est large avant de retoucher au risque que ce champ existe pour
-   *   éviter.
-   *
-   * Diagnostic et mesures : harnais Rapier headless jetables, jeu réel
-   * (`gym.ts` + `PlayerController`) et KCC brut isolé, session de debug du
-   * stutter dans la gym (ne pas re-régresser sans ces mêmes harnais).
+   * PLAFONNÉ BAS, et c'est mesuré, pas esthétique : ne pas remonter cette
+   * valeur sans mesurer au même harnais Rapier headless que celui qui a
+   * trouvé le bug. Chiffres, méthode et alternative écartée :
+   * see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
    */
   groundStickSpeed: number;
   /** Vitesse de chute maximale, m/s. Garde-fou anti-tunneling après une longue chute. */
   maxFallSpeed: number;
 
-  // ----------------------------------------------------------------- capsule
   /** Rayon de la capsule du joueur, en mètres. */
   capsuleRadius: number;
   /** Demi-hauteur du segment de la capsule, en mètres. Hauteur totale = 2 × (halfHeight + radius). */
@@ -105,7 +81,6 @@ export interface MoveConfig {
   /** Masse du personnage, en kg. Utilisée pour les impulsions transmises aux corps dynamiques. */
   characterMass: number;
 
-  // ------------------------------------------------- KinematicCharacterController
   /** Marge conservée entre la capsule et le décor, en mètres. Jamais 0 (stabilité numérique). */
   colliderOffset: number;
   /** Hauteur de marche franchissable automatiquement, en mètres. */
@@ -121,25 +96,13 @@ export interface MoveConfig {
   /** Pente à partir de laquelle le joueur glisse tout seul, en degrés. */
   minSlopeSlideAngleDeg: number;
 
-  // -------------------------------------------------------------------- visée
   /** Sensibilité souris, en radians par pixel de `movementX`. */
   lookSensitivity: number;
   /** Limite de pitch (haut/bas), en degrés. */
   pitchLimitDeg: number;
 
-  // ------------------------------------------------------------ vue : head bob
-  //
-  // Le bob est POSITIONNEL uniquement (translation des yeux), jamais angulaire.
-  // Choix explicite, pas un oubli : l'invariant #3 interdit d'ajouter de la
-  // latence ou du bruit à la visée, et la Phase 2 tirera depuis la direction de
-  // visée pure. Un roulis de bob contaminerait cette base ; il est reporté et
-  // devra être arbitré séparément.
-  //
-  // La PHASE du bob se dérive de `PlayerController.distanceTravelled` (mètres
-  // réellement parcourus au pas fixe), jamais d'une horloge : le bob s'arrête
-  // exactement quand le joueur s'arrête, et un rejeu d'input redonne l'image au
-  // pixel près. Seule l'ENVELOPPE d'amplitude est lissée dans le temps — avec
-  // le `dt` du pas fixe, donc toujours sans horloge murale.
+  // Vue : head bob — positionnel uniquement, jamais angulaire (invariant #3) :
+  // see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
 
   /**
    * Distance horizontale parcourue pour UN CYCLE complet de bob, en mètres.
@@ -171,7 +134,6 @@ export interface MoveConfig {
    */
   bobResponseTime: number;
 
-  // -------------------------------------------------------- vue : FOV dynamique
   /** FOV vertical au repos, en degrés. Utilisé à la construction de la caméra. */
   fovBase: number;
   /** Élargissement maximal du FOV à pleine vitesse, en degrés (ajouté à `fovBase`). */
@@ -192,7 +154,6 @@ export interface MoveConfig {
    */
   fovResponseTime: number;
 
-  // ---------------------------------------------------- vue : réception de saut
   /** Enfoncement vertical maximal de la vue à la réception, en mètres. 0 = désactivé. */
   landingDipMax: number;
   /** Vitesse d'impact verticale donnant l'enfoncement maximal, m/s. */
@@ -250,23 +211,8 @@ export const moveConfig: MoveConfig = {
   landingDipRecoverTime: 0.35,
 };
 
-// --------------------------------------------------------------------------
-// Variantes de feel de la VUE — harnais A/B.
-//
-// Un seul axe, volontairement : « quantité de corps dans la caméra ».
-// A en met le minimum, C en met beaucoup, B est entre les deux. La CADENCE
-// (`bobDistancePerCycle`) est identique dans les trois pour que la comparaison
-// ne mélange pas deux dimensions ; c'est un axe à balayer séparément.
-//
-// Aucune de ces variantes ne touche au déplacement lui-même : vitesses,
-// accélérations, saut et capsule appartiennent à l'humain et ne sont pas
-// modifiés ici.
-//
-// Usage (console) :
-//     cassandre.applyFeelVariant("A");
-// `applyConfig()` n'est PAS nécessaire : aucun de ces champs n'est lu par
-// Rapier, ils sont relus à chaque pas fixe et à chaque frame d'affichage.
-// --------------------------------------------------------------------------
+// Variantes de feel de la VUE — harnais A/B (usage, axe de comparaison) :
+// see: docs/systems/joueur.md#harnais-ab-feel_variants
 
 /** Champs de vue seulement — aucune variante ne touche au déplacement. */
 export type FeelVariant = Partial<
@@ -289,11 +235,7 @@ export type FeelVariant = Partial<
 >;
 
 export const FEEL_VARIANTS: Record<"A" | "B" | "C", FeelVariant> = {
-  /**
-   * A — SOBRE. La caméra reste posée : le bob se devine plus qu'il ne se voit
-   * et le FOV bouge à peine ; la sensation de vitesse vient du décor qui
-   * défile, pas de la vue. Le meilleur choix si la visée en mouvement prime.
-   */
+  /** A — SOBRE : bob et FOV à peine perceptibles. */
   A: {
     bobDistancePerCycle: 5,
     bobVerticalAmplitude: 0.018,
@@ -306,11 +248,7 @@ export const FEEL_VARIANTS: Record<"A" | "B" | "C", FeelVariant> = {
     landingDipRecoverTime: 0.3,
   },
 
-  /**
-   * B — CLASSIQUE. Dosage de référence type Quake/GoldSrc : on sent le pas
-   * sans perdre le centre de l'écran, et la course s'annonce par un
-   * élargissement net mais court du champ. Point de départ recommandé.
-   */
+  /** B — CLASSIQUE : dosage type Quake/GoldSrc. Point de départ recommandé. */
   B: {
     bobDistancePerCycle: 5,
     bobVerticalAmplitude: 0.035,
@@ -323,12 +261,7 @@ export const FEEL_VARIANTS: Record<"A" | "B" | "C", FeelVariant> = {
     landingDipRecoverTime: 0.35,
   },
 
-  /**
-   * C — CHARNU. On sent le poids du corps : la vue roule d'un appui à l'autre,
-   * la course pousse visiblement les murs vers l'extérieur et les réceptions
-   * plient les genoux. Risque assumé : gêne à la visée en mouvement, et
-   * inconfort possible sur les joueurs sensibles au mal des transports.
-   */
+  /** C — CHARNU : bob et FOV marqués. Risque assumé : gêne la visée en mouvement. */
   C: {
     bobDistancePerCycle: 5,
     bobVerticalAmplitude: 0.06,
@@ -342,10 +275,8 @@ export const FEEL_VARIANTS: Record<"A" | "B" | "C", FeelVariant> = {
   },
 };
 
-// --------------------------------------------------------------------------
-// Grandeurs dérivées. Recalculées à chaque pas fixe pour rester correctes si
+// Grandeurs dérivées : recalculées à chaque pas fixe pour rester correctes si
 // la config est modifiée à chaud, et indépendantes de FIXED_DT.
-// --------------------------------------------------------------------------
 
 /**
  * Vitesse verticale initiale, en m/s, pour atteindre `jumpHeight` sous
@@ -379,22 +310,12 @@ export function capsuleTotalHeight(cfg: MoveConfig): number {
  * dont |normale.y| tombe SOUS ce seuil est plus raide que ce que le
  * controller sait gravir (`maxSlopeClimbAngleDeg`) : un mur quasi vertical,
  * ou une pente au-delà du seuil (y compris volontairement infranchissable,
- * comme la rampe à 55° de la gym).
+ * comme la rampe à 55° de la gym). Réutilise `maxSlopeClimbAngleDeg` plutôt
+ * qu'un second champ : c'est déjà la frontière que Rapier applique en
+ * interne entre franchissable et non franchissable.
  *
- * Ancien bug corrigé par ce seuil : Rapier compte le sol lui-même comme une
- * collision (`numComputedCollisions() > 0`) à quasiment CHAQUE pas fixe où
- * le joueur est au sol — pas seulement contre un mur. Reclipper sans filtrer
- * réécrivait `velocity` sur `movement / dt` dès qu'une pente, une marche
- * (autostep) ou même un sol plat fait de plusieurs boîtes adjacentes (gym.ts
- * n'utilise que ça, jamais un mesh continu) résolvait un pas fixe donné avec
- * un mouvement ponctuellement un peu plus court que voulu — sans blocage
- * réel. La vitesse retombait, l'accélération (`timeToMaxSpeed`) la faisait
- * remonter, un pas fixe suivant la refaisait chuter : la sensation de
- * « quelque chose qui bloque » en playtest (saccades sur rampes/marches/sol
- * multi-boîtes). Réutilise `maxSlopeClimbAngleDeg` plutôt qu'un second
- * champ : c'est déjà LA frontière que Rapier applique en interne entre
- * franchissable et non franchissable, donc la source unique de vérité pour
- * ce qui compte comme un mur.
+ * Le bug historique que ce filtre corrige, et pourquoi le filtrer sans lui
+ * cassait sol/pentes/marches : see: docs/systems/joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
  */
 export function wallNormalYThreshold(cfg: MoveConfig): number {
   return Math.cos((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);

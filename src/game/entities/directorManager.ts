@@ -4,6 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weapons";
 import { weaponConfig } from "../player/weaponConfig";
+import type { NavGraph } from "../level/pathfinding";
 import {
   Director,
   DirectorBadge,
@@ -14,29 +15,18 @@ import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./
 
 /**
  * Manager léger pour le Directeur — même rôle et même contrat que
- * `SuitManager` (voir sa doc de tête pour le détail complet du piège de
- * consommation multi-pas-fixe de `weapons.hitEvents`/`hitCursor`, repris ici
- * à l'identique) : possède `Director[]`, boucle dessus, traduit les sorties
- * de chaque `Director.update()`/`applyDamage()` en files d'événements
- * accumulées PAR FRAME D'AFFICHAGE, lues et vidées par un futur pont
- * `main.ts` — HORS SCOPE de cette tâche de câbler ce pont (voir le rapport).
+ * `SuitManager` (même piège de consommation multi-pas-fixe de
+ * `weapons.hitEvents`/`hitCursor`, repris ici à l'identique). Différences
+ * délibérées : pas de mécanique de gibs à bout portant (un boss qui explose
+ * en morceaux casserait la mise en scène de révélation/mort), une file
+ * d'événements supplémentaire `revealEvents`, et la possession du badge
+ * droppé à la mort (`DirectorBadge`).
  *
- * DIFFÉRENCES DÉLIBÉRÉES avec `SuitManager` :
- *  - pas de mécanique de gibs à bout portant (hors scope de la tâche du
- *    Directeur ; un boss qui explose en morceaux casserait la mise en scène
- *    de révélation/mort) — l'agrégation de dégâts ci-dessous est donc plus
- *    simple, un seul `totalDamage` par Directeur touché ce pas-ci ;
- *  - une file d'événements supplémentaire, `revealEvents`, pour la bascule
- *    visuelle costume humain -> reptilien (voir `Director.applyDamage` /
- *    `DirectorDamageResult.justRevealed`) ;
- *  - possède le badge droppé à la mort (`DirectorBadge`, pure logique, voir
- *    sa doc dans `director.ts`) et expose `tryCollectBadge` pour qu'un futur
- *    appelant (`main.ts`) le consomme à chaque pas fixe.
- *
- * `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss est
- * attendu en pratique, mais garder la forme tableau (invariant #8 : «
- * Entity[] », même architecture que `SuitManager`) coûte rien et évite un
- * type spécial pour « exactement un ennemi ».
+ * `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss
+ * est attendu en pratique, mais garder la forme tableau (invariant #8) ne
+ * coûte rien et évite un type spécial pour « exactement un ennemi ».
+ * see: docs/systems/entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
+ * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
  */
 
 export interface DirectorAlertEvent {
@@ -161,15 +151,20 @@ export class DirectorManager {
    * Un pas fixe. À appeler APRÈS `weapons.update(...)` — même ordre que
    * `SuitManager.update`. `hitEvents` est le MÊME tableau lu par
    * `SuitManager` (deux lecteurs indépendants, chacun avec son propre
-   * `hitCursor` local et sa propre `colliderTo*` map — sûr, exactement le
-   * même schéma que les lecteurs multiples de `fireEvents`/`hitEvents` dans
-   * `main.ts`, voir sa doc).
+   * `hitCursor` local et sa propre `colliderTo*` map — sûr, même schéma que
+   * les lecteurs multiples de `fireEvents`/`hitEvents` dans
+   * `game/loop/updateFx.ts`).
+   *
+   * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : voir la doc identique
+   * dans `SuitManager.update` — MÊME graphe (baké sur le gabarit
+   * `suitConfig`, voir `level/pathfinding.ts`), simplement transmis.
    */
   update(
     dt: number,
     playerTargetPosition: THREE.Vector3,
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
+    navGraph: NavGraph | null = null,
   ) {
     this._badge?.tick(dt);
 
@@ -180,6 +175,7 @@ export class DirectorManager {
       kcc: this.kcc,
       playerTargetPosition,
       playerEyePosition,
+      navGraph,
     };
 
     for (const director of this.directors) {
@@ -198,9 +194,9 @@ export class DirectorManager {
 
   /**
    * Vérifie si `playerPosition` vient de ramasser le badge droppé, si un
-   * Directeur est déjà mort. À appeler UNE FOIS PAR PAS FIXE par l'appelant
-   * (même discipline que `InteractionSystem.update`) — HORS SCOPE de cette
-   * tâche de câbler cet appel dans `main.ts` (voir le rapport de la tâche).
+   * Directeur est déjà mort. Appelé une fois par pas fixe depuis
+   * `game/loop/updateGameplay.ts` (même discipline que
+   * `InteractionSystem.update`).
    */
   tryCollectBadge(playerPosition: THREE.Vector3): boolean {
     return this._badge?.tryCollect(playerPosition, this.cfg.badgePickupRadius, this.cfg.badgePickupDelay) ?? false;
@@ -232,8 +228,8 @@ export class DirectorManager {
       // Drop du badge : AUX PIEDS du Directeur au moment de sa mort, pas au
       // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol —
       // sinon le badge apparaît flottant en l'air, pas posé). +0.15 = demi-
-      // hauteur du mesh placeholder (0.3m, voir `main.ts`), pour qu'il repose
-      // sur le sol plutôt que d'y être à moitié enfoncé.
+      // hauteur du mesh placeholder (0.3m, voir `game/session/gameEngine.ts`),
+      // pour qu'il repose sur le sol plutôt que d'y être à moitié enfoncé.
       const feetY = director.position.y - (this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius);
       // Un seul badge suivi à la fois (`_badge`) — cohérent avec un boss
       // unique ; si un futur niveau spawnait plusieurs Directeurs, ce champ

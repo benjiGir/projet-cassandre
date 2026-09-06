@@ -78,6 +78,21 @@ Déplacer un mur dans Blender, exporter, le voir en jeu **en moins de
 C'est le livrable principal de ce pipeline. S'il n'est pas atteint, le reste
 du travail sur le niveau sera pénible pendant tout le projet.
 
+## Retrofit Effect (jalon M2, `PLAN_EFFECT_XSTATE.md`)
+
+`src/game/level/loader.ts`/`hotReload.ts` sont entièrement passés par
+`Effect.gen` avec des erreurs TYPÉES (`MissingColliderGeometryError`,
+`OversizedColliderWarning`, `UntargetedUseObjectWarning`,
+`MissingSpawnPlayerError`...) au lieu de `console.error`/`if` ad hoc — mais
+**chaque comportement observable de la liste ci-dessus est resté
+identique** (principe transverse #4 du plan : Effect apporte de la
+visibilité de compilation sur ces chemins d'erreur, pas un changement de
+comportement en jeu). Ce sont des `Effect.gen` PLATS, appelés depuis
+`GameRuntime.runSync`/`runPromise` (`src/core/runtime.ts`) — pas un
+`Context.Service` dédié comme `RaycastService`/`PathfindingService`, le
+chargement de niveau reste à la frontière asynchrone (jamais dans le pas
+fixe).
+
 ## Rollback
 
 Si le pipeline glTF déborde au-delà d'un week-end, basculer sur TrenchBroom +

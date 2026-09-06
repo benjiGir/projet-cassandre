@@ -7,21 +7,22 @@ import { LevelCompleteScreen } from "./LevelCompleteScreen";
 import { TuningPanel } from "./TuningPanel";
 
 /**
- * Racine React montée UNE FOIS le niveau choisi (voir `main.ts::resolveBootChoice`
- * puis `root.render(createElement(App))`) — jamais avant, `MainMenu`/
- * `LevelMenu`/`RebindScreen` sont rendus directement dans `root` en amont,
- * hors de cet arbre.
- *
- * `Hud`/`HeroLine` (Phase 6, HUD de prod) cohabitent avec `DebugPanel`
- * (outil de DEV, jamais transformé en HUD de prod — voir sa doc de tête) et
- * `HudMessage` (canal système, distinct du canal `HeroLine`, voir
- * `game/state.ts`). `DeathScreen`/`LevelCompleteScreen` restent montés en
- * permanence mais rendent `null` tant que leur condition n'est pas remplie
- * (même pattern que `HudMessage`) — pas de montage/démontage conditionnel
- * ici, plus simple et sans risque de rater un changement d'état pendant que
- * le composant serait démonté.
+ * Racine React montée UNE FOIS le niveau choisi, jamais avant — `MainMenu`/
+ * `LevelMenu`/`RebindScreen` sont rendus hors de cet arbre, en amont.
+ * `onReplay`/`onReturnToMenu` sont de VRAIES fonctions de reset, pas des
+ * rechargements de page ; `App` reste purement présentationnel côté
+ * câblage, `main.ts` reste l'unique endroit qui sait QUOI faire quand ces
+ * boutons sont cliqués.
+ * see: docs/decisions/0019-machine-xstate-flux-ecran.md
+ * see: docs/systems/hud.md#composition-de-app
  */
-export function App() {
+export interface AppProps {
+  onReplay: () => void;
+  onReturnToMenu: () => void;
+}
+
+export function App(props: AppProps) {
+  const { onReplay, onReturnToMenu } = props;
   return (
     <>
       <DebugPanel />
@@ -29,8 +30,8 @@ export function App() {
       <Hud />
       <HeroLine />
       <HudMessage />
-      <DeathScreen />
-      <LevelCompleteScreen />
+      <DeathScreen onReplay={onReplay} onReturnToMenu={onReturnToMenu} />
+      <LevelCompleteScreen onReplay={onReplay} onReturnToMenu={onReturnToMenu} />
     </>
   );
 }

@@ -3,35 +3,12 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 
 /**
- * Gym boîte blanche — Phase 1 (Déplacement).
- *
- * Ce n'est pas un décor : c'est un instrument de mesure. Chaque zone encadre
- * un seuil du character controller pour qu'un franchissement raté soit
- * lisible à l'œil, sans HUD ni chiffres. Toute la géométrie est construite
- * ici à la main (pas de loader glTF — c'est un sujet de Phase 4, hors
- * scope).
- *
- * Valeurs de référence du controller au moment d'écrire ce fichier (en
- * cours de tuning ailleurs, volontairement PAS codées en dur dans la
- * géométrie ci-dessous, seulement en commentaire pour lire les seuils) :
- * autostep 0.35 m, pente max 50°, hauteur de saut 1.1 m, marche 9 m/s,
- * course 13 m/s, capsule rayon 0.4 / hauteur 1.2, yeux à 1.6 m.
- *
- * Layout depuis le spawn (hub central = "espace ouvert") :
- *   - Nord  -> couloir long (44 m, repères tous les 5 m)
- *   - Sud   -> rampes (20/35/45/55°) puis, plus loin, plateformes (0.8 à 1.4 m)
- *   - Est   -> escaliers (marches 0.15 à 0.45 m) puis, plus loin, gouffres (2 à 5 m)
- *   - Ouest -> mur plein, pas d'aile
- *
- * Toutes les ailes s'ouvrent directement sur le hub au niveau du sol : on
- * atteint l'entrée de chaque zone à pied, sans saut. À l'intérieur d'une
- * zone, le saut/l'ascension EST l'instrument (ex. la rampe à 55° n'est pas
- * censée être franchissable — c'est le test).
+ * Gym boîte blanche — Phase 1 (Déplacement). N'est pas un décor : c'est un
+ * instrument de mesure, chaque zone encadre un seuil du character
+ * controller. Layout et valeurs de seuil : see: docs/game/plan-prototype.md
  */
 
-// ---------------------------------------------------------------------------
-// Constantes générales
-// ---------------------------------------------------------------------------
+// Constantes générales.
 
 const FLOOR_THICK = 0.4;
 const WALL_HEIGHT = 6;
@@ -44,12 +21,7 @@ const DEG_TO_RAD = Math.PI / 180;
 const PIT_WALL_HEIGHT = 8.5;
 const PIT_WALL_CENTER_Y = 1.75; // couvre y = [-2.5, 6]
 
-// ---------------------------------------------------------------------------
-// Palette — une teinte de base par zone pour se repérer sans HUD, plus un
-// dégradé partagé (vert -> jaune -> orange -> rouge) appliqué aux éléments
-// instrumentés (rampe, marche, plateforme, gouffre) : vert = facile,
-// rouge = au seuil du controller.
-// ---------------------------------------------------------------------------
+// Palette : une teinte par zone, + un dégradé partagé vert->rouge (facile->seuil du controller).
 
 const OPEN_AREA_COLOR = 0x707a72;
 const CORRIDOR_COLOR = 0x4f6a7a;
@@ -67,11 +39,7 @@ function darken(hex: number, factor: number): number {
   return new THREE.Color(hex).multiplyScalar(factor).getHex();
 }
 
-// ---------------------------------------------------------------------------
-// Helpers de construction — mesh MeshLambertMaterial + collider fixed
-// cuboid en parallèle, comme testRoom.ts. Pas de trimesh : les cuboids
-// suffisent et sont plus robustes pour un controller kinématique.
-// ---------------------------------------------------------------------------
+// Helpers de construction — mesh + collider fixed cuboid en parallèle, jamais trimesh.
 
 function materialFor(materials: Map<number, THREE.MeshLambertMaterial>, color: number): THREE.MeshLambertMaterial {
   let mat = materials.get(color);
@@ -84,7 +52,7 @@ function materialFor(materials: Map<number, THREE.MeshLambertMaterial>, color: n
 
 /** Boîte axis-aligned : mesh + collider fixe cuboid, centrés sur (cx,cy,cz). */
 function addBox(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld,
   materials: Map<number, THREE.MeshLambertMaterial>,
   color: number,
@@ -110,7 +78,7 @@ function addBox(
  * qui monte selon X, les rampes de la zone sud montent selon Z).
  */
 function addRampBetween(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld,
   materials: Map<number, THREE.MeshLambertMaterial>,
   color: number,
@@ -141,10 +109,7 @@ function addRampBetween(
   physics.world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, thickness / 2, length / 2), body);
 }
 
-// ---------------------------------------------------------------------------
-// Zone 6 — Espace ouvert (hub central), >= 40x40 m dégagé pour le strafe et
-// les changements de direction. Toutes les ailes s'y ouvrent.
-// ---------------------------------------------------------------------------
+// Zone 6 — Espace ouvert (hub central).
 
 export const HUB_SIZE = 44; // >= 40x40 requis, x et z dans [-22, 22]
 const HUB_HALF = HUB_SIZE / 2;
@@ -153,7 +118,7 @@ const CORRIDOR_OPENING = 6; // largeur de l'ouverture nord, doit matcher CORRIDO
 const RAMPS_OPENING = 20; // largeur de l'ouverture sud, doit matcher RAMPS_WIDTH
 const EAST_OPENING = 20; // largeur de l'ouverture est, doit matcher EAST_WING_WIDTH
 
-function buildOpenArea(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildOpenArea(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   addBox(scene, physics, materials, darken(OPEN_AREA_COLOR, 0.6), 0, -FLOOR_THICK / 2, 0, HUB_SIZE, FLOOR_THICK, HUB_SIZE);
 
   const wallY = WALL_HEIGHT / 2;
@@ -177,10 +142,7 @@ function buildOpenArea(scene: THREE.Scene, physics: PhysicsWorld, materials: Map
   addBox(scene, physics, materials, OPEN_AREA_COLOR, -HUB_HALF, wallY, 0, WALL_THICK, WALL_HEIGHT, HUB_SIZE);
 }
 
-// ---------------------------------------------------------------------------
-// Zone 5 — Couloir long : >= 40 m, repères visuels tous les 5 m pour
-// chronométrer la vitesse de pointe à l'œil.
-// ---------------------------------------------------------------------------
+// Zone 5 — Couloir long.
 
 const CORRIDOR_WIDTH = 6;
 export const CORRIDOR_LENGTH = 44; // >= 40 m requis
@@ -188,7 +150,7 @@ const CORRIDOR_Z_START = HUB_HALF; // 22, mur nord du hub
 const CORRIDOR_Z_END = CORRIDOR_Z_START + CORRIDOR_LENGTH; // 66
 const CORRIDOR_MARKER_SPACING = 5;
 
-function buildCorridor(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildCorridor(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (CORRIDOR_Z_START + CORRIDOR_Z_END) / 2;
   addBox(scene, physics, materials, darken(CORRIDOR_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, CORRIDOR_WIDTH, FLOOR_THICK, CORRIDOR_LENGTH);
 
@@ -206,11 +168,7 @@ function buildCorridor(scene: THREE.Scene, physics: PhysicsWorld, materials: Map
   }
 }
 
-// ---------------------------------------------------------------------------
-// Zone 1 — Rampes : angles 20°/35°/45°/55°, hauteur commune (seul l'angle
-// varie, pour comparer à seuil constant). Pente max du controller = 50° :
-// la rampe à 55° doit rester infranchissable, c'est le test du seuil.
-// ---------------------------------------------------------------------------
+// Zone 1 — Rampes.
 
 const RAMPS_WIDTH = 20; // doit matcher RAMPS_OPENING
 const RAMPS_Z_START = -HUB_HALF; // -22
@@ -224,7 +182,7 @@ const RAMP_WIDTH = 4;
 const RAMP_THICKNESS = 0.4;
 const RAMP_LANDING_DEPTH = 2.5;
 
-function buildRampsZone(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildRampsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (RAMPS_Z_START + RAMPS_Z_END) / 2;
   const depth = RAMPS_Z_START - RAMPS_Z_END;
   addBox(scene, physics, materials, darken(RAMPS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
@@ -267,10 +225,7 @@ function buildRampsZone(scene: THREE.Scene, physics: PhysicsWorld, materials: Ma
   });
 }
 
-// ---------------------------------------------------------------------------
-// Zone 3 — Plateformes : hauteurs 0.8/1.0/1.2/1.4 m, atteignables en saut
-// simple depuis le sol. Mesure la hauteur de saut effective.
-// ---------------------------------------------------------------------------
+// Zone 3 — Plateformes.
 
 const PLATFORMS_Z_START = RAMPS_Z_END; // -40, continuité de l'aile sud
 const PLATFORMS_Z_END = -50;
@@ -281,7 +236,7 @@ const PLATFORM_WIDTH = 4;
 const PLATFORM_DEPTH = 3;
 const PLATFORM_Z = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2; // -45, ~4 m de recul depuis la limite de l'aile rampes
 
-function buildPlatformsZone(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildPlatformsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const centerZ = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2;
   const depth = PLATFORMS_Z_START - PLATFORMS_Z_END;
   addBox(scene, physics, materials, darken(PLATFORMS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
@@ -296,18 +251,13 @@ function buildPlatformsZone(scene: THREE.Scene, physics: PhysicsWorld, materials
   });
 }
 
-// ---------------------------------------------------------------------------
-// Zones 2 & 4 — Escaliers puis gouffres, dans la même aile est (pas de mur
-// entre les deux, l'aile continue). Escaliers proche du hub, gouffres au
-// fond, en ligne droite : on y arrive déjà lancé, condition idéale pour
-// mesurer la portée de saut en pleine course.
-// ---------------------------------------------------------------------------
+// Zones 2 & 4 — Escaliers puis gouffres, même aile est (pas de mur entre les deux).
 
 const EAST_WING_WIDTH = 20; // doit matcher EAST_OPENING, z in [-10, 10]
 const EAST_WING_HALF = EAST_WING_WIDTH / 2;
 const EAST_X_START = HUB_HALF; // 22, mur est du hub
 
-// --- Escaliers -----------------------------------------------------------
+// Escaliers.
 
 const STAIRS_RUNUP = 2;
 const STEP_COUNT = 6;
@@ -321,7 +271,7 @@ const STAIRS_STEPS_START_X = EAST_X_START + STAIRS_RUNUP; // 24
 const STAIRS_STEPS_END_X = STAIRS_STEPS_START_X + STEP_COUNT * STEP_TREAD; // 28.8
 const GAPS_START_X = 32; // début de l'aile gouffres ; le palier d'arrivée des escaliers comble l'écart jusque-là
 
-// --- Gouffres --------------------------------------------------------------
+// Gouffres.
 
 /** Portées testées, en mètres. Un gouffre franchi de justesse est le
  * meilleur détecteur de mollesse en pleine course. */
@@ -331,17 +281,15 @@ const PIT_DEPTH = 1.5; // fond de fosse, avec rampe de remontée : pas punitif
 const PIT_Z_CENTER = EAST_WING_HALF / 2; // centre de la bande gouffres, dans z in [0, 10] -> centre à z=5
 const RECOVERY_RAMP_RUN = 3;
 
-function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
   const wallY = WALL_HEIGHT / 2;
 
-  // --- sol + murs de la section escaliers --------------------------------
   const stairsCenterX = (EAST_X_START + GAPS_START_X) / 2;
   const stairsDepth = GAPS_START_X - EAST_X_START;
   addBox(scene, physics, materials, darken(STAIRS_COLOR, 0.6), stairsCenterX, -FLOOR_THICK / 2, 0, stairsDepth, FLOOR_THICK, EAST_WING_WIDTH);
   addBox(scene, physics, materials, STAIRS_COLOR, stairsCenterX, wallY, -EAST_WING_HALF, stairsDepth, WALL_HEIGHT, WALL_THICK);
   addBox(scene, physics, materials, STAIRS_COLOR, stairsCenterX, wallY, EAST_WING_HALF, stairsDepth, WALL_HEIGHT, WALL_THICK);
 
-  // --- volées de marches ---------------------------------------------------
   STEP_HEIGHTS.forEach((stepHeight, lane) => {
     const laneZ = STAIR_LANE_Z[lane];
     for (let s = 1; s <= STEP_COUNT; s++) {
@@ -365,7 +313,7 @@ function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, mater
     );
   });
 
-  // --- gouffres : pastilles de départ/atterrissage séparées par du vide --
+  // Gouffres : pastilles de départ/atterrissage séparées par du vide.
   let cursor = GAPS_START_X;
   const padCenters: number[] = [];
 
@@ -399,7 +347,7 @@ function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, mater
     EAST_WING_HALF
   );
 
-  // --- rampe de récupération : fond de fosse pas punitif ------------------
+  // Rampe de récupération : fond de fosse pas punitif.
   addRampBetween(
     scene,
     physics,
@@ -412,11 +360,10 @@ function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, mater
   );
   cursor += RECOVERY_RAMP_RUN;
 
-  // --- palier final + mur de fond ------------------------------------------
   const backWallX = cursor + 1;
   addBox(scene, physics, materials, darken(GAPS_COLOR, 0.6), (cursor + backWallX) / 2, -FLOOR_THICK / 2, PIT_Z_CENTER, backWallX - cursor, FLOOR_THICK, EAST_WING_HALF);
 
-  // --- sol de la bande escaliers prolongée le long des gouffres (contournement à pied) --
+  // Sol de la bande escaliers prolongée le long des gouffres (contournement à pied).
   const gapsSectionCenterX = (GAPS_START_X + backWallX) / 2;
   const gapsSectionDepth = backWallX - GAPS_START_X;
   addBox(
@@ -432,35 +379,28 @@ function buildStairsAndGapsWing(scene: THREE.Scene, physics: PhysicsWorld, mater
     EAST_WING_HALF
   );
 
-  // --- murs de la section gouffres (plongent sous le fond de fosse) -------
+  // Murs de la section gouffres (plongent sous le fond de fosse).
   addBox(scene, physics, materials, GAPS_COLOR, gapsSectionCenterX, PIT_WALL_CENTER_Y, -EAST_WING_HALF, gapsSectionDepth, PIT_WALL_HEIGHT, WALL_THICK);
   addBox(scene, physics, materials, GAPS_COLOR, gapsSectionCenterX, PIT_WALL_CENTER_Y, EAST_WING_HALF, gapsSectionDepth, PIT_WALL_HEIGHT, WALL_THICK);
   addBox(scene, physics, materials, GAPS_COLOR, backWallX, PIT_WALL_CENTER_Y, 0, WALL_THICK, PIT_WALL_HEIGHT, EAST_WING_WIDTH);
 }
 
-// ---------------------------------------------------------------------------
-// Spawn
-// ---------------------------------------------------------------------------
-
-/**
- * Spawn au centre du hub, orienté vers l'entrée du couloir (nord) : 32 m de
- * hub ouvert puis 44 m de couloir en ligne droite, largement de quoi sentir
- * la vitesse de pointe dans les 10 premières secondes.
- *
- * Convention de yaw supposée ici : yaw=0 -> avant = -Z (comme la caméra
- * free-fly provisoire de main.ts, Euler 'YXZ'). Si le player controller
- * utilise une convention différente, ajuster SPAWN_YAW en conséquence lors
- * du câblage dans main.ts.
- */
+// Spawn au centre du hub, orienté vers l'entrée du couloir nord.
+// Convention yaw=0 -> avant = -Z, voir SpawnPoint.yaw dans loader.ts.
 const SPAWN_POSITION = new THREE.Vector3(0, 0, -10);
 const SPAWN_YAW = Math.PI; // face +Z, vers l'entrée du couloir
 
-// ---------------------------------------------------------------------------
-
 /** Gym boîte blanche : rampes, escaliers, plateformes, gouffres, couloir
- * long, espace ouvert. Construit à la main, aucune abstraction glTF. */
+ * long, espace ouvert. Construit à la main, aucune abstraction glTF.
+ *
+ * `scene` accepte n'importe quel `THREE.Object3D`, pas seulement
+ * `THREE.Scene` : `main.ts` y passe un `THREE.Group` dédié à la partie
+ * courante, pour pouvoir retirer TOUTE la géométrie en un seul `remove()`
+ * au reset — sans ça, un reset sur `?level=gym` dupliquerait indéfiniment
+ * les boîtes à chaque partie (ce fichier ne garde aucune référence vers les
+ * meshes qu'il crée). */
 export function buildGym(
-  scene: THREE.Scene,
+  scene: THREE.Object3D,
   physics: PhysicsWorld
 ): {
   spawn: THREE.Vector3;

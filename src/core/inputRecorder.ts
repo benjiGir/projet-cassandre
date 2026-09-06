@@ -1,18 +1,6 @@
-/**
- * Enregistrement / rejeu d'input, pas fixe par pas fixe.
- *
- * Deux usages, et deux seulement :
- *  1. harnais A/B de `feel-tuner` — rejouer exactement la même course sur
- *     deux configs de déplacement différentes ;
- *  2. preuve de déterminisme — même séquence d'input, même état final.
- *
- * Ce qui est enregistré est l'input TEL QUE CONSOMMÉ PAR LE PAS FIXE, pas les
- * événements bruts du navigateur. C'est la seule granularité qui rejoue à
- * l'identique : le yaw/pitch est produit au taux d'affichage (variable), donc
- * on mémorise sa VALEUR au moment du pas fixe, pas seulement le delta souris.
- * Rejouer des deltas souris bruts donnerait un résultat différent à 60 Hz et
- * à 144 Hz.
- */
+// Enregistrement / rejeu d'input, pas fixe par pas fixe (harnais A/B de
+// feel-tuner, preuve de déterminisme).
+// see: docs/systems/boucle-de-jeu.md#enregistrement-et-rejeu-déterministe
 
 /** État d'input consommé par un pas fixe de gameplay. */
 export interface InputFrame {

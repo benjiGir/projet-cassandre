@@ -94,7 +94,8 @@ bpy.ops.export_scene.gltf(
     export_format='GLB',
     export_extras=True,          # obligatoire
     export_apply=True,           # applique les modificateurs
-    export_colors=True,          # vertex colors
+    export_vertex_color='ACTIVE', # Blender 5.x : ENUM, pas le bool export_colors —
+                                  # voir docs/decisions/0021-export-vertex-color-enum.md
     export_yup=True,
     export_draco_mesh_compression_enable=False,
 )

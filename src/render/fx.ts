@@ -4,55 +4,28 @@ import * as THREE from "three";
  * Effets visuels de tir : screenshake, muzzle flash, decals + particules
  * d'impact, douilles éjectées, gibs de mise à mort à bout portant. Module
  * PUREMENT cosmétique, tourne en temps réel (`update(realDt)`, appelé depuis
- * `updateFx` de `main.ts`), JAMAIS sur le pas fixe — voir la note de tête de
- * `core/loop.ts` sur pourquoi `updateFx` reçoit `realDt` et pas `FIXED_DT`.
+ * `game/loop/updateFx.ts`), JAMAIS sur le pas fixe.
  *
- * DÉCOUPLAGE DÉLIBÉRÉ de `game/player/weapons.ts` : ce module n'importe rien
- * de la couche gameplay, il ne reçoit que des primitives (`THREE.Vector3`,
- * `"melee" | "shotgun"`, `string`). `main.ts` fait le pont en lisant
- * `weapons.fireEvents`/`hitEvents` et en dépaquetant leurs champs vers l'API
- * ci-dessous. Aucun état de simulation, aucun `Math.random()` seedé ici :
- * tout ce qui suit est transitoire, hors harnais de rejeu F9/F10 (le shake ne
- * modifie ni la position du joueur ni aucun état de simulation, seulement
- * l'affichage transitoire de la caméra).
- *
- * POOLING — trois régimes différents, volontairement pas uniformisés :
- *  - Muzzle flash : pool à taille FIXE de 2 (lumière + quad), round-robin.
- *    Largement suffisant : le pas fixe est clampé à 0.25 s (`MAX_FRAME` dans
- *    `core/loop.ts`) et les cooldowns d'armes (>= 0.5 s) rendent impossible
- *    plus d'UN `fireEvent` par frame d'affichage en régime normal.
- *  - Decals : pool à taille fixe (`DECAL_POOL_SIZE`), round-robin — un
- *    joueur qui vide un chargeur ne doit pas accumuler des dizaines de quads
- *    invisibles pour toujours.
- *  - Particules d'impact, douilles et gibs : tableaux simples filtrés à
- *    chaque `update()`, PAS de pool — leur durée de vie est courte (< 2 s) et
- *    le volume par tir/mise à mort est faible (quelques unités), un vrai pool
- *    serait de la sur-ingénierie pour un prototype à cette échelle. Les gibs
- *    (`spawnGibs`) réutilisent la MÊME infrastructure `ToyParticle`/
- *    `updateToyPhysics` que les particules d'impact et les douilles — voir la
- *    section dédiée plus bas, aucune duplication du pattern générique.
+ * Découplage délibéré de `game/player/weapons.ts` (primitives uniquement,
+ * aucun `Math.random()` seedé — hors harnais de rejeu F9/F10), trois régimes
+ * de pooling volontairement pas uniformisés, et le choix de « physique
+ * jouet » sans Rapier pour les débris cosmétiques (ADR 0018) :
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/systems/rendu.md#effets-visuels-de-tir-fxsystem
  */
 
-// ---------------------------------------------------------------------------
 // Screenshake
-// ---------------------------------------------------------------------------
 
 /**
- * Fraction du pic d'amplitude considérée comme négligeable à la fin de la
- * fenêtre de décroissance. La constante de décroissance exponentielle est
- * dérivée de cette fraction et de la durée demandée à `triggerShake` :
- * `k = -ln(fraction) / duration`, donc à `t = duration`,
- * `amplitude(t) = pic * fraction`. Avec 0.05 (5 %) et une durée de 120 ms
- * (prescrite par le plan via `weaponConfig.shakeDuration`), l'effet est
- * revenu à 5 % de son pic en 120 ms pile — c'est la définition opérationnelle
- * de « décroissance exponentielle sur 120 ms » utilisée ici.
+ * Fraction du pic d'amplitude considérée négligeable à la fin de la fenêtre
+ * de décroissance : `k = -ln(fraction) / duration`, donc à `t = duration`,
+ * `amplitude(t) = pic * fraction`. Valeurs retenues :
+ * see: docs/reference/valeurs-deplacement.md#impact
  */
 const SHAKE_NEGLIGIBLE_FRACTION = 0.05;
 const SHAKE_DECAY_RATE = -Math.log(SHAKE_NEGLIGIBLE_FRACTION); // ≈ 2.9957
 
-// ---------------------------------------------------------------------------
 // Muzzle flash
-// ---------------------------------------------------------------------------
 
 /** Nombre de FRAMES D'AFFICHAGE (pas de pas fixes) pendant lesquelles le flash reste visible. */
 const MUZZLE_FLASH_FRAMES = 2;
@@ -72,11 +45,11 @@ interface MuzzleFlashPreset {
 
 /**
  * Un preset par arme. Le pied-de-biche N'A PAS DE CANON : `weapons.ts`
- * pousse quand même un `fireEvent` à chaque coup, et la spec de câblage
- * demande explicitement un muzzle flash pour CHAQUE tir, indépendamment de
- * l'arme (voir le câblage de `updateFx` dans `main.ts`). Interprété ici comme
- * une étincelle de choc au point de swing plutôt qu'un vrai flash d'arme à
- * feu : amplitude et taille nettement réduites par rapport au pompe.
+ * pousse quand même un `fireEvent` à chaque coup, et le câblage
+ * (`game/loop/updateFx.ts`) demande un muzzle flash pour CHAQUE tir,
+ * indépendamment de l'arme. Interprété ici comme une étincelle de choc au
+ * point de swing plutôt qu'un vrai flash d'arme à feu : amplitude et taille
+ * nettement réduites par rapport au pompe.
  */
 const MUZZLE_FLASH_PRESETS: Record<"melee" | "shotgun", MuzzleFlashPreset> = {
   shotgun: { color: 0xfff2c0, intensity: 60, range: 6, size: 0.22, offset: 0.45 },
@@ -90,9 +63,7 @@ interface MuzzleFlashSlot {
   framesRemaining: number;
 }
 
-// ---------------------------------------------------------------------------
 // Decals d'impact
-// ---------------------------------------------------------------------------
 
 const DECAL_POOL_SIZE = 24;
 const DECAL_SIZE = 0.12; // m
@@ -105,18 +76,10 @@ interface DecalSlot {
   mesh: THREE.Mesh;
 }
 
-// ---------------------------------------------------------------------------
 // Particules d'impact et douilles — « physique jouet » temps réel
-// ---------------------------------------------------------------------------
+// see: docs/decisions/0018-physique-jouet-debris-cosmetiques.md
 
-/**
- * Gravité jouet utilisée par les particules/douilles, en m/s². DÉLIBÉRÉMENT
- * dupliquée depuis `PhysicsWorld` (invariant #7, -25 m/s²) plutôt
- * qu'importée : ce module ne touche jamais Rapier (voir doc de tête), mais
- * réutilise la même magnitude pour que la chute cosmétique reste visuellement
- * cohérente avec le reste du monde (la balle témoin de `main.ts` tombe à la
- * même vitesse).
- */
+/** Gravité jouet, en m/s². DÉLIBÉRÉMENT dupliquée depuis l'invariant #7 (-25 m/s²) plutôt qu'importée : ce module ne touche jamais Rapier, mais réutilise la même magnitude pour rester cohérent visuellement avec le reste du monde. */
 const TOY_GRAVITY = -25;
 
 const PARTICLE_LIFETIME = 0.4; // s
@@ -135,25 +98,16 @@ const SHELL_RESTITUTION = 0.3;
 const SHELL_FRICTION = 0.6;
 /**
  * Hauteur de sol supposée pour le rebond des douilles, en mètres.
- * APPROXIMATION ASSUMÉE : ce module ne fait AUCUNE requête Rapier (choix (b)
- * du plan — « physique jouet, pas de collision précise », sans toucher
- * Rapier du tout). `y = 0` est le niveau du sol du hub et du couloir de
- * `game/level/gym.ts` ; dans les ailes rampes/plateformes/escaliers une
- * douille peut visuellement traverser une marche avant de disparaître —
- * acceptable pour un débris cosmétique à durée de vie courte (1.6 s) dans
- * une gym boîtes blanches, pas pour un futur niveau avec sol texturé.
+ * APPROXIMATION ASSUMÉE (aucune requête Rapier, voir ADR 0018) : `y = 0` est
+ * le niveau du sol du hub/couloir de `game/level/gym.ts` — dans une zone
+ * avec relief, une douille peut visuellement traverser une marche.
+ * see: docs/decisions/0018-physique-jouet-debris-cosmetiques.md
  */
 const SHELL_GROUND_Y = 0;
 
-// ---------------------------------------------------------------------------
-// Gibs — mort à bout portant (pompe). Même « physique jouet » que les
-// particules d'impact ci-dessus, RÉUTILISE `ToyParticle`/`updateToyPhysics`
-// tel quel : seuls géométrie/couleur/quantité/vitesse/dispersion diffèrent.
-// `bounce: false` comme `spawnImpactParticles` (pas comme les douilles) :
-// pas de rebond au sol, donc pas besoin de l'approximation `SHELL_GROUND_Y`
-// ici — une durée de vie plus longue que les particules d'impact suffit à
-// rendre la chute des chunks visible avant qu'ils disparaissent.
-// ---------------------------------------------------------------------------
+// Gibs — mort à bout portant (pompe). Réutilise `ToyParticle`/
+// `updateToyPhysics` tel quel (`bounce: false`, pas de rebond, donc pas
+// besoin de `SHELL_GROUND_Y` ici — voir la doc de tête).
 
 const GIB_LIFETIME = 0.9; // s, plus long que PARTICLE_LIFETIME (chunks plus gros, chute plus lisible)
 const GIBS_PER_KILL = 8;
@@ -190,23 +144,23 @@ const PLANE_DEFAULT_NORMAL = new THREE.Vector3(0, 0, 1);
 export class FxSystem {
   private readonly scene: THREE.Scene;
 
-  // --- Screenshake -----------------------------------------------------------
+  // Screenshake
   private shakePeak = 0;
   private shakeElapsed = 0;
   private shakeDurationActive = 0;
 
-  // --- Pools à taille fixe -----------------------------------------------------
+  // Pools à taille fixe
   private readonly muzzleFlashes: MuzzleFlashSlot[] = [];
   private muzzleFlashCursor = 0;
   private readonly decals: DecalSlot[] = [];
   private decalCursor = 0;
 
-  // --- Listes filtrées ---------------------------------------------------------
+  // Listes filtrées, pas de pool (voir la doc de tête)
   private readonly particles: ToyParticle[] = [];
   private readonly casings: ToyParticle[] = [];
   private readonly gibs: ToyParticle[] = [];
 
-  // --- Scratch, zéro allocation en régime établi --------------------------------
+  // Scratch, zéro allocation en régime établi
   private readonly scratchDir = new THREE.Vector3();
 
   constructor(scene: THREE.Scene) {
@@ -245,19 +199,11 @@ export class FxSystem {
     return { mesh };
   }
 
-  // ---------------------------------------------------------------------------
-  // Screenshake
-  // ---------------------------------------------------------------------------
-
   /**
-   * (Re)démarre ou renforce le screenshake. Si un shake est déjà en cours
-   * (typiquement : plusieurs plombs de pompe touchent dans le même pas fixe,
-   * donc plusieurs `hitEvent` dans la même frame d'affichage), on NE SOMME
-   * PAS les amplitudes — un impact à 9 plombs simultanés ne doit pas secouer
-   * 9× plus fort qu'un seul. On prend le MAX de l'amplitude courante
-   * (calculée à l'instant de l'appel, donc déjà partiellement décroissante si
-   * le shake précédent avait commencé à s'estomper) et de la nouvelle
-   * amplitude demandée, et on repart sur la durée pleine `duration`.
+   * (Re)démarre ou renforce le screenshake. PAS de sommation entre
+   * déclenchements qui se chevauchent (voir la doc de tête) : le MAX de
+   * l'amplitude courante (déjà partiellement décroissante) et de la nouvelle,
+   * relancé sur la durée pleine `duration`.
    */
   triggerShake(amplitude: number, duration: number) {
     const current = this.currentShakeAmplitude();
@@ -293,9 +239,7 @@ export class FxSystem {
     return out;
   }
 
-  // ---------------------------------------------------------------------------
   // Muzzle flash
-  // ---------------------------------------------------------------------------
 
   spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "shotgun") {
     const preset = MUZZLE_FLASH_PRESETS[weapon];
@@ -323,16 +267,12 @@ export class FxSystem {
     slot.framesRemaining = MUZZLE_FLASH_FRAMES;
   }
 
-  // ---------------------------------------------------------------------------
   // Decals d'impact
-  // ---------------------------------------------------------------------------
 
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string) {
-    // `material` : placeholder pour un futur système de tag de matériau (voir
-    // `PLACEHOLDER_MATERIAL` dans `weapons.ts`). Aucun n'existe cette phase,
-    // donc aucune variation de couleur/texture par matériau ici — le
-    // paramètre est conservé dans l'API pour ne pas devoir la changer plus
-    // tard.
+    // `material` : placeholder pour un futur tag de matériau (voir
+    // `PLACEHOLDER_MATERIAL` dans `weapons.ts`) — conservé dans l'API pour ne
+    // pas devoir la changer plus tard, sans effet cette phase.
     void material;
 
     const slot = this.decals[this.decalCursor]!;
@@ -343,9 +283,7 @@ export class FxSystem {
     slot.mesh.visible = true;
   }
 
-  // ---------------------------------------------------------------------------
   // Particules d'impact
-  // ---------------------------------------------------------------------------
 
   spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "shotgun") {
     const count = weapon === "shotgun" ? PARTICLES_PER_HIT_SHOTGUN : PARTICLES_PER_HIT_MELEE;
@@ -368,26 +306,14 @@ export class FxSystem {
     }
   }
 
-  // ---------------------------------------------------------------------------
   // Douilles éjectées
-  // ---------------------------------------------------------------------------
 
   /**
    * Une douille par tir de POMPE (jamais pour le pied-de-biche, pas de
-   * cartouche) — c'est `main.ts` qui filtre sur `fireEvent.weapon`, cette
-   * méthode ne fait aucune hypothèse sur l'appelant.
-   *
-   * « Physique jouet, pas de collision précise », OPTION (b) du plan : aucune
-   * interaction Rapier, mouvement balistique + rebond au sol supposé
-   * (`SHELL_GROUND_Y`) géré entièrement ici en temps réel. Choisi plutôt que
-   * l'option (a) (vrai `RigidBody` léger dans `COLLISION_GROUPS.DEBRIS`) pour
-   * éviter la gestion de cycle de vie d'un corps physique (création, nettoyage
-   * après quelques secondes, un pas de `world.step` de plus par douille) pour
-   * un objet purement décoratif sans le moindre effet de gameplay — cohérent
-   * avec le régime « temps réel affichage » déjà utilisé pour le shake et les
-   * particules d'impact dans ce même module. `COLLISION_GROUPS.DEBRIS` reste
-   * disponible tel quel dans `physics/world.ts` si un futur agent préfère
-   * de vraies collisions.
+   * cartouche) — c'est `game/loop/updateFx.ts` qui filtre sur
+   * `fireEvent.weapon`, cette méthode ne fait aucune hypothèse sur l'appelant.
+   * Physique jouet, pas d'interaction Rapier : voir ADR 0018.
+   * see: docs/decisions/0018-physique-jouet-debris-cosmetiques.md
    */
   spawnShellCasing(muzzlePosition: THREE.Vector3, muzzleDirection: THREE.Vector3) {
     const mesh = new THREE.Mesh(SHELL_GEOMETRY, SHELL_MATERIAL);
@@ -412,25 +338,15 @@ export class FxSystem {
     this.casings.push({ mesh, velocity, life: SHELL_LIFETIME, bounce: true });
   }
 
-  // ---------------------------------------------------------------------------
-  // Gibs — mort à bout portant
-  // ---------------------------------------------------------------------------
+  // Gibs — mort à bout portant. Réutilise `ToyParticle`/`updateToyPhysics`
+  // (voir la doc de tête) : seuls géométrie, couleur, quantité, vitesse et
+  // dispersion changent pour lire « chunk » plutôt que « éclat d'impact ».
 
   /**
-   * Gibs pour une mise à mort à bout portant (pompe). RÉUTILISE
-   * l'infrastructure `ToyParticle`/`updateToyPhysics` déjà en place pour
-   * `spawnImpactParticles`/`spawnShellCasing` ci-dessus (même gravité jouet,
-   * même boucle de mise à jour dans `update`) — seuls géométrie, couleur,
-   * quantité, vitesse et dispersion changent pour lire « chunk de viscère »
-   * plutôt que « éclat d'impact ».
-   *
-   * @param point Point d'origine de l'explosion de gibs (position de
-   *   l'entité tuée au moment du coup fatal), en coordonnées MONDE.
-   * @param direction Direction du coup fatal (typiquement `muzzleDirection`
-   *   du tir qui a tué), vecteur normalisé — sert de direction DE BASE pour
-   *   la dispersion des chunks, comme `normal` dans `spawnImpactParticles`,
-   *   mais n'a pas besoin d'être une normale de surface : une explosion de
-   *   gibs n'a pas de surface de rebond.
+   * @param point Position de l'entité tuée au moment du coup fatal (MONDE).
+   * @param direction Direction du coup fatal, normalisée — direction DE BASE
+   *   de la dispersion, comme `normal` dans `spawnImpactParticles`, mais sans
+   *   besoin d'être une normale de surface (une explosion n'a pas de rebond).
    */
   spawnGibs(point: THREE.Vector3, direction: THREE.Vector3) {
     for (let i = 0; i < GIBS_PER_KILL; i++) {
@@ -457,9 +373,7 @@ export class FxSystem {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Update temps réel — jamais appelé depuis le pas fixe
-  // ---------------------------------------------------------------------------
+  // Update temps réel — jamais appelé depuis le pas fixe (voir la doc de tête)
 
   update(realDt: number) {
     this.shakeElapsed += realDt;

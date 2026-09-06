@@ -3,7 +3,10 @@ Export glTF conforme au contrat runtime.
 
     blender -b level.blend -P tools/blender/export_level.py -- --out public/levels/hyper.glb
 
-Valide d'abord, exporte ensuite. Refuse d'exporter si la validation échoue.
+N'appelle PAS `validate_level.py` lui-même — exporte directement. La chaîne
+documentée (`tools/blender/README.md`) exécute la validation comme étape
+SÉPARÉE, avant cet appel : c'est cet ordre manuel qui protège l'export, pas
+ce script.
 
 PREMIER RUN RÉEL EN BLENDER 5.1.2 (2026-08-21, assemblage Zone A/B) : le
 kwarg `export_colors` documenté par `blender-level-conventions`/
@@ -16,6 +19,8 @@ voir `kit_spec.MATERIALS`). Sans ce fix, l'attribut "Col" bien réel dans le
 `.blend` n'aurait silencieusement PAS atteint `COLOR_0` du glTF. `ACTIVE`
 exporte l'attribut de couleur actif du mesh quel que soit le matériau —
 c'est ce que veut ce projet (`vertex-color-sector-lighting`).
+
+Décision actée : voir docs/decisions/0021-export-vertex-color-enum.md
 """
 
 import os

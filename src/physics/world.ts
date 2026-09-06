@@ -13,19 +13,12 @@ export async function initPhysics(): Promise<typeof RAPIER> {
   return RAPIER;
 }
 
-// ---------------------------------------------------------------------------
-// Groupes de collision
-//
-// Rapier encode l'interaction sur 32 bits : 16 bits d'appartenance (poids
-// fort) et 16 bits de filtre (poids faible). Deux colliders a et b
-// interagissent si et seulement si :
-//
-//     ((a >> 16) & b) != 0  &&  ((b >> 16) & a) != 0
-//
-// La condition est SYMÉTRIQUE : déclarer « ENEMY_SHOT touche PLAYER » sans
-// mettre ENEMY_SHOT dans le filtre de PLAYER ne produit aucune interaction.
-// La matrice ci-dessous est donc symétrisée par construction.
-// ---------------------------------------------------------------------------
+// Encodage Rapier : 32 bits = 16 bits d'appartenance (poids fort) + 16 bits
+// de filtre (poids faible). Deux colliders a/b interagissent ssi
+// ((a >> 16) & b) != 0 && ((b >> 16) & a) != 0 — condition SYMÉTRIQUE :
+// mettre ENEMY_SHOT dans le filtre de PLAYER sans l'inverse ne produit
+// aucune interaction. La matrice ci-dessous est symétrisée par construction.
+// see: docs/systems/physique.md#groupes-de-collision
 
 /** Bits d'appartenance (16 bits utiles). */
 export const GROUP = {
@@ -54,35 +47,11 @@ const ALL_GROUPS =
 
 /**
  * Masques prêts à poser sur un collider (`ColliderDesc.setCollisionGroups`).
- *
- * | Groupe        | Interagit avec                          |
- * |---------------|-----------------------------------------|
- * | WORLD         | tout                                    |
- * | PLAYER        | WORLD, ENEMY, ENEMY_SHOT, TRIGGER       |
- * | ENEMY         | WORLD, PLAYER, PLAYER_SHOT, ENEMY       |
- * | PLAYER_SHOT   | WORLD, ENEMY                            |
- * | ENEMY_SHOT    | WORLD, PLAYER                           |
- * | DEBRIS        | WORLD uniquement                        |
- * | TRIGGER       | PLAYER uniquement (sensor)              |
- *
  * Les débris ne collisionnent qu'avec le monde : sinon douilles et gibs
  * bloquent les tirs pour zéro gameplay.
  *
- * ENEMY s'inclut lui-même depuis 2026-08-23 (voir [[project_cassandre_boomer_shooter]]
- * mémoire pour la trouvaille) : sans ça, deux ennemis (Costard-Costard ou
- * Costard-Directeur) peuvent s'interpénétrer entièrement en convergeant sur
- * le même point (les 3 rayons d'évitement de `computeAvoidedDirection` ne
- * testent QUE `WORLD`, jamais les autres ennemis) — invisible en combat épars,
- * mais produit un z-fighting franc (billboards presque coplanaires, quasi la
- * même distance caméra) une fois plusieurs ennemis massés au même endroit
- * (typiquement autour du joueur mort). Le `KinematicCharacterController`
- * partagé de `SuitManager`/`DirectorManager` gère déjà la réponse de
- * collision pour n'importe quel handle autre que soi-même
- * (`(other) => other.handle !== collider.handle` dans `suit.ts`/`director.ts`)
- * — élargir ce masque suffit, aucun autre code à toucher.
- *
- * Seuls WORLD et PLAYER sont utilisés en Phase 1 ; les autres sont déclarés
- * pour les phases suivantes.
+ * see: docs/systems/physique.md#groupes-de-collision
+ * see: docs/decisions/0008-collision-ennemi-ennemi.md
  */
 export const COLLISION_GROUPS = {
   WORLD: interactionGroups(GROUP.WORLD, ALL_GROUPS),
@@ -137,7 +106,6 @@ export class PhysicsWorld {
     return this.world.gravity.y;
   }
 
-  /** Fabrique un KinematicCharacterController configuré selon `moveConfig`. */
   createCharacterController(cfg: MoveConfig = moveConfig): RAPIER.KinematicCharacterController {
     const controller = this.world.createCharacterController(cfg.colliderOffset);
     configureCharacterController(controller, cfg);

@@ -118,16 +118,9 @@ ZONE_B = {
 
     "floor": {"x": (-12.0, 12.0), "y": (-2.0, 22.0), "tile": 4.0},
 
-    # Dalle de sol SUR-MESURE (comme la vitrine de la Zone A — voir
-    # `build_level.py::build_floor_patches`) pour l'alcôve du secret 1,
-    # X∈[-15,-12] Y∈[10,12] (3×2 m) : NE tile PAS en 4 m avec
-    # `kit_floor_4x4`, et étendre le rectangle englobant du `"floor"`
-    # ci-dessus pour la couvrir a été TENTÉ puis abandonné — une fois cette
-    # zone translatée dans le niveau combiné (dx=26), l'extension retombait
-    # exactement sur le connecteur A-B (x∈[10,14], y∈[2,6]), dupliquant une
-    # tuile de sol au même endroit (2 meshes noirs au bake, auto-occultation
-    # — voir README). Une dalle limitée à l'empreinte réelle de l'alcôve ne
-    # peut par construction chevaucher aucune autre géométrie du niveau.
+    # Dalle de sol SUR-MESURE (`build_level.py::build_floor_patches`) pour
+    # l'alcôve du secret 1, X∈[-15,-12] Y∈[10,12] (3×2 m) : ne tile pas en
+    # 4 m avec kit_floor_4x4. see: docs/pipeline/niveau-blender.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
     "floor_patches": [
         {"name": "floor_secret_1b", "x": (-15.0, -12.0), "y": (10.0, 12.0)},
     ],
@@ -163,18 +156,11 @@ ZONE_B = {
     },
 
     # Porte du secret 1 (surgelés), SANS verrou (contrairement à
-    # `door_e_exit`, aucun badge/gate — voir CLAUDE.md). Brèche OUEST : un
-    # mur VERTICAL (contrairement à la brèche nord horizontale de la
-    # Zone E), donc `kit_door_2m`/`kit_door_leaf` doivent tourner de 90°
-    # pour suivre le mur — même mécanique de rotation que les murs
-    # ouest/est de tout `wall_run` (voir `build_level.py::plan_wall_run`/
-    # `_rotate90`). `x`/`y` = coin de la pièce AVANT rotation, choisi
-    # EXACTEMENT comme le ferait `plan_wall_run` pour un segment de 2 m
-    # inséré à la place de la brèche dans le run ouest d'origine (parcouru
-    # depuis start y=-2, run_dir=(0,1) ; au cursor=12, y=-2+12=10 ; theta=90°
-    # pour ce run — voir `build_door_frame`/`build_door_leaf`, généralisés
-    # pour cette tâche à un `rot_deg` optionnel, 0° par défaut = comportement
-    # Zone E inchangé).
+    # `door_e_exit` — voir CLAUDE.md). Brèche OUEST = mur VERTICAL, donc
+    # rot_deg=90° (voir build_level.py::build_door_frame/build_door_leaf) ;
+    # x/y = coin AVANT rotation, celui que `plan_wall_run` donnerait pour un
+    # segment de 2 m inséré à la place de la brèche (run ouest, start y=-2,
+    # cursor=12 -> y=10).
     "door_frame": {
         "piece": "kit_door_2m",
         "x": -12.0,
@@ -244,42 +230,29 @@ ZONE_C = {
 
     # Marche d'accès au secret 2 (toit de la rangée ouest, voir "secrets"
     # ci-dessous) : une seule `kit_crate` (1 m de haut, sous `jumpHeight`
-    # 1.1 m — marge 0.1 m) posée STATIQUE via `build_storage_props` (les
-    # extras dynamic/mass de la pièce existent mais aucun loader ne les lit
-    # encore, voir kit_spec.py — ignorés ici comme n'importe quel autre prop).
-    # Empreinte réelle de la rangée ouest (row x=-4.25, rotation +90° comme
-    # documenté ci-dessous dans "gondolas") : X∈[-5.5,-4.25]. Caisse posée à
-    # l'OUEST de cette empreinte (couloir latéral, PAS l'allée centrale),
-    # décalée de 0.25 m (grille) de la face ouest de la rangée — assez pour
-    # sauter proprement dessus puis, de son sommet (Z=1.0), sauter sur le
-    # toit de la gondole (Z=2.0, gain 1.0 m, à nouveau sous 1.1 m). Origine
-    # coin (convention crate/pallet) : X∈[-6.75,-5.75], Y∈[7.5,8.5] — centrée
-    # sur l'extrémité SUD de la rangée (y0=8.0), près du capuchon
-    # `kit_gondola_end` qui commence à Y=6.75.
+    # 1.1 m) posée STATIQUE via `build_storage_props` (ses extras
+    # dynamic/mass ne sont lus par aucun loader — ignorés comme tout autre
+    # prop, voir kit_spec.py). Empreinte réelle de la rangée ouest (row
+    # x=-4.25, rotation +90°, voir "gondolas" ci-dessous) : X∈[-5.5,-4.25].
+    # Caisse posée à l'OUEST de cette empreinte (couloir latéral), décalée de
+    # 0.25 m de la face ouest — assez pour sauter dessus puis, de son sommet
+    # (Z=1.0), sur le toit de la gondole (Z=2.0, gain 1.0 m). Origine coin :
+    # X∈[-6.75,-5.75], Y∈[7.5,8.5], près du capuchon sud (Y=6.75).
     "storage_props": {
         "crates": [(-6.75, 7.5, 0.0)],
     },
 
-    # Trois rangées de gondoles parallèles à l'axe Y (axe de déplacement
-    # principal du joueur, du spawn sud vers le fond nord), créant des allées
-    # nord-sud. Chaque rangée : 8 m de kit_gondola_4m (2 pièces, tiling exact,
-    # AUCUN reste — si ça ne tombe pas juste, c'est une erreur à signaler
-    # comme le fait déjà `wall_remainder` dans build_level.py), avec un
-    # kit_gondola_end accolé à CHAQUE extrémité — bloque la vue à TRAVERS une
-    # rangée (une allée voisine, un couloir latéral) et occulte réellement
-    # `spawn_suit_3`/`spawn_suit_4` depuis le spawn (vérifié en jeu). Ça ne
-    # bloque PAS la vue LE LONG d'une allée elle-même : une allée est par
-    # construction une ligne droite dégagée d'un bout à l'autre, donc un
-    # Costard posé en son centre reste visible dès le spawn qui la regarde
-    # en face — voir la correction de `spawn_suits` ci-dessous, qui documente
-    # le bug réel que ça a produit.
-    #
-    # Espacement centre-à-centre 4.25 m entre rangées adjacentes = 1.25 m de
-    # profondeur de gondole + 3.0 m d'allée (valeur documentée dans
-    # `kit_spec.py::kit_gondola_4m` : "allée de 3 m entre deux gondoles").
-    # Rangées à X = -4.25 / 0.0 / 4.25 → deux allées centrales de 3 m entre
-    # rangées (combat resserré, "couloir") + deux couloirs latéraux ouverts
-    # entre rangée extérieure et mur (~7 m chacun, pour circuler/reculer).
+    # Trois rangées de gondoles parallèles à l'axe Y, créant des allées
+    # nord-sud. Chaque rangée : 8 m de kit_gondola_4m (tiling exact, aucun
+    # reste), capuchon kit_gondola_end à CHAQUE extrémité — bloque la vue à
+    # TRAVERS une rangée (occulte spawn_suit_3/4 depuis le spawn, vérifié en
+    # jeu) mais PAS la vue LE LONG d'une allée (ligne droite dégagée par
+    # construction, voir ADR 0022 et la correction de `spawn_suits`
+    # ci-dessous). Espacement centre-à-centre 4.25 m = 1.25 m de profondeur
+    # de gondole + 3.0 m d'allée (kit_spec.py::kit_gondola_4m). Rangées à
+    # X = -4.25 / 0.0 / 4.25 → deux allées centrales de 3 m + deux couloirs
+    # latéraux ouverts (~7 m chacun). Convention coin/rotation des rangées :
+    # voir docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
     "gondolas": {
         "piece": "kit_gondola_4m",
         "end_piece": "kit_gondola_end",
@@ -291,22 +264,12 @@ ZONE_C = {
     },
 
     "spawn_player": (0.0, 0.0, 0.0),
-    # PREMIER JET CORRIGÉ (vérifié en jeu, `window.cassandre.suits`) :
-    # `spawn_suit_1`/`spawn_suit_2` étaient posés à mi-rangée (Y=12), dans
-    # l'axe même de l'allée qu'ils sont censés garder — or une allée est par
-    # construction une ligne DROITE et DÉGAGÉE d'un bout à l'autre : depuis
-    # `spawn_player`, `hasClearWorldPath` n'est jamais coupé par une rangée
-    # de gondoles qui longe l'allée sans jamais la traverser. Résultat mesuré
-    # au premier chargement : `spawn_suit_2` était déjà en état `attack` dès
-    # le spawn (12.2 m, sous `attackRange`=16 m) — aucune fenêtre d'approche,
-    # exactement le défaut déjà corrigé une fois en Zone B
-    # (`spawn_suit_2` 15 m → 18 m). Un placement centré dans une allée
-    # rectiligne ne peut PAS être cette embuscade masquée par occlusion (la
-    # ligne de vue existe par définition dès qu'on regarde dans l'allée) —
-    # seule la distance protège la fenêtre d'approche ici, comme en Zone B.
-    # Déplacés au-delà des rangées (Y=18, zone ouverte au nord du bloc de
-    # gondoles) : 18.1 m, au-delà d'`attackRange` avec la même marge que le
-    # fix de Zone B, `chase` et non `attack` au spawn (revérifié en jeu).
+    # spawn_suit_1/2 posés à la sortie nord des allées (Y=18, ~18.1 m),
+    # au-delà d'`attackRange`=16 m — pas au milieu (Y=12) comme le premier
+    # jet : une allée est une ligne droite dégagée d'un bout à l'autre, un
+    # spawn en son centre est donc en `attack` immédiat, sans fenêtre
+    # d'approche (vérifié en jeu). Voir
+    # docs/decisions/0022-occlusion-rangees-non-bloquante.md
     "spawn_suits": [
         ("spawn_suit_1", (-2.125, 18.0, 0.0)),  # sortie de l'allée centrale ouest
         ("spawn_suit_2", (2.125, 18.0, 0.0)),   # sortie de l'allée centrale est
@@ -388,16 +351,12 @@ ZONE_D = {
         ],
     },
     # Travée centrale ~8.8m entre les deux rangées, couloirs latéraux ouverts
-    # entre chaque rangée et le mur le plus proche. NOTE MÉCANIQUE (voir
-    # `build_level.py::build_racks`/`_build_row_run`) : comme pour les
-    # gondoles de la Zone C, `row["x"]` est un COIN de la pièce, et la
-    # rotation +90° (qui aligne la longueur locale du rack sur l'axe Y)
-    # décale l'empreinte de la profondeur (1.2m) vers -X, pas vers +X —
-    # l'empreinte réelle des rangées est donc X∈[-7.2,-6.0] (ouest) et
-    # X∈[2.8,4.0] (est), pas centrée symétriquement autour de X=0 malgré
-    # des coordonnées d'origine symétriques (-6.0/4.0). Largeur de travée
-    # réelle : 2.8 - (-6.0) = 8.8m, conforme. Conséquence mécanique
-    # acceptée, identique en nature à l'asymétrie de couloirs de la Zone C.
+    # entre chaque rangée et le mur le plus proche. Empreinte réelle (coin +
+    # rotation +90°, voir build_level.py::build_racks/_build_row_run et
+    # docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier) :
+    # X∈[-7.2,-6.0] (ouest) / X∈[2.8,4.0] (est), pas centrée sur X=0 malgré
+    # des origines symétriques (-6.0/4.0). Travée réelle 2.8-(-6.0)=8.8m,
+    # conforme au plan.
 
     # Mezzanine : dalle à Z=2.0 (kit_floor_4x4, origine = surface de marche,
     # poser à z=2.0 fait marcher à z=2.0), pleine largeur de la salle
@@ -419,24 +378,11 @@ ZONE_D = {
         "floor": {"x": (-14.0, 14.0), "y": (22.0, 30.0), "tile": 4.0, "z": 2.0},
         "stairs": {
             "piece": "kit_stairs_2m",
-            # Coordonnées TELLES QUE fournies par le plan (coin bas Blender
-            # de la pièce, AVANT rotation). NOTE MÉCANIQUE (voir
-            # `build_level.py::build_mezzanine_stairs`) : `kit_stairs_2m` ne
-            # monte vers +Y que sous rotation +90° (vérifié empiriquement —
-            # sans rotation la pente est le long de X), et cette même
-            # rotation décale l'empreinte de la largeur locale (2m) vers -X
-            # à partir de l'origine, exactement comme pour les gondoles/
-            # racks. Un placement naïf de ces coordonnées ferait donc
-            # atterrir les deux marches sur X∈[-4,0] au lieu de X∈[-2,2] —
-            # précisément SOUS le segment de rambarde solide voisin
-            # (`x_runs` s'arrête à X=-2), ce qui bloquerait le haut de
-            # l'escalier contre une rambarde pleine. `build_mezzanine_stairs`
-            # compense donc l'origine de +largeur (2m) pour que l'empreinte
-            # RÉELLE tombe exactement sur X∈[-2,2] comme le veut le plan
-            # (voir son docstring pour le calcul complet) — mécanique, pas
-            # une décision de layout : la position/taille de la brèche ne
-            # change pas, seule la valeur intermédiaire passée à Blender
-            # est ajustée pour l'obtenir.
+            # Coordonnées telles que fournies par le plan (coin bas Blender,
+            # AVANT rotation) — `build_level.py::build_mezzanine_stairs`
+            # compense la rotation +90° pour que l'empreinte réelle tombe
+            # sur X∈[-2,2] plutôt que sous la rambarde voisine. Voir
+            # docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
             "positions": [(-2.0, 20.0, 0.0), (0.0, 20.0, 0.0)],  # côte à côte, montent vers +Y
         },
         "railing": {
@@ -471,27 +417,14 @@ ZONE_D = {
     # joueur au sol via l'escalier hors de son axe direct) : AUCUN
     # spawn_suit_* sur la mezzanine, tous au sol.
     #
-    # BUG CONSTATÉ EN JEU (premier jet, corrigé ici) : `spawn_suit_1`/
-    # `spawn_suit_2` étaient posés à Y=10 dans les couloirs latéraux, en
-    # théorie occultés par la rangée adjacente (occlusion confirmée par
-    # calcul géométrique côté ouest, X∈[-7.2,-6.0] croisé à Y∈[6.0,7.2],
-    # et géométrie/colliders re-vérifiés indépendamment en rechargeant le
-    # `.glb` dans Blender — bbox exactes, col_box_rack_4m bien co-localisé
-    # avec le rendu). Pourtant `window.cassandre.suits` montre les DEUX en
-    # état `chase` puis `attack` dès le spawn, distance ~13.8m sous
-    # `attackRange`=16m — la rangée ne bloque PAS le rayon de vue de
-    # `hasClearWorldPath` en pratique, malgré une géométrie et des groupes
-    # de collision (`COLLISION_GROUPS.WORLD`, identiques pour tout `col_*`
-    # y compris les rangées) qui semblent corrects par lecture du code.
-    # Cause racine NON identifiée (pas de repro headless tenté) — possible
-    # gap général sur l'occlusion des `PROP` du kit pour les rayons de vue
-    # des Costards, pas spécifique à cette zone. Contournement appliqué ici,
-    # PAS une solution : `spawn_suit_1`/`spawn_suit_2` déplacés à Y=16
-    # (toujours dans le couloir latéral, même flaveur visuelle) mais à une
-    # distance qui les met hors d'`attackRange` QUELLE QUE SOIT l'occlusion
-    # réelle — même stratégie de secours que les fix Zone B/C.
-    # spawn_suit_3/4/5 dans la travée centrale ou près de l'escalier, à
-    # découvert mais au-delà d'attackRange=16m, même marge.
+    # spawn_suit_1/2 (couloirs latéraux, Y=16, ~18.9m) : déplacés depuis
+    # Y=10 (~13.8m) où l'occlusion par la rangée adjacente, pourtant
+    # confirmée par calcul géométrique et par les colliders réimportés,
+    # ne bloquait pas la ligne de vue en jeu — voir
+    # docs/decisions/0022-occlusion-rangees-non-bloquante.md (cause racine
+    # non identifiée, contournement par distance). spawn_suit_3/4/5 : travée
+    # centrale ou près de l'escalier, à découvert mais au-delà
+    # d'attackRange=16m, même marge.
     "spawn_suits": [
         ("spawn_suit_1", (-10.0, 16.0, 0.0)),  # couloir latéral ouest, ~18.9m
         ("spawn_suit_2", (10.0, 16.0, 0.0)),   # couloir latéral est, ~18.9m
@@ -523,19 +456,12 @@ ZONE_D = {
 # ZONE E — Bureau
 # -----------------------------------------------------------------------------
 #
-# HISTORIQUE DE SCOPE (voir CLAUDE.md) : la première passe sur cette zone ne
-# construisait QUE la géométrie + un ennemi placeholder standard. Le
-# Directeur (vrai boss, entité dédiée `director.ts`/`directorManager.ts`) et
-# le badge qu'il droppe à sa mort ont été câblés depuis, dans des tâches
-# séparées — `spawn_suit_1` a été remplacé par `spawn_director_1` ci-dessous.
-# Cette tâche-ci ferme le DERNIER écart documenté : la porte de sortie
-# verrouillée par ce badge. Le câblage runtime (`loader.ts::buildDoor`,
-# `interactive.ts`, `main.ts`) est déjà fait ET testé côté build — cette
-# tâche ne fournit QUE la géométrie manquante côté Blender : `door_frame`
-# ci-dessous pose toujours `kit_door_2m` (l'encadrement), mais y ajoute
-# maintenant un vrai vantail (`kit_door_leaf` renommé `door_e_exit`, voir
-# `build_level.py::build_door_leaf`) et un déclencheur `use_exit_door` (voir
-# `use_objects` ci-dessous) — la brèche n'est plus un simple passage ouvert.
+# Historique de scope (géométrie seule -> Directeur réel -> badge -> porte
+# verrouillée) : voir docs/game/niveau-hypermarche.md. `door_frame`
+# ci-dessous pose `kit_door_2m` (l'encadrement) ET son vantail
+# (`kit_door_leaf` renommé `door_e_exit`, build_level.py::build_door_leaf)
+# avec son déclencheur `use_exit_door` — la brèche n'est plus un simple
+# passage ouvert.
 
 ZONE_E = {
     "name": "zone_e_bureau",

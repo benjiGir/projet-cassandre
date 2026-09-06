@@ -16,23 +16,11 @@ Le script est ENTIÈREMENT déterministe et écrase sa sortie : le .blend est un
 artefact reproductible, pas un fichier qu'on édite à la main. Toute
 modification du kit passe par `kit_spec.py`, jamais par le .blend.
 
-Ce qu'il produit
-----------------
-- La structure de collections de `blender-level-conventions` :
-  GEO/{SHELL,PROPS,DETAIL}, COL, LOGIC, _KIT (exclue de l'export), _BAKE_LIGHTS
-- Une sous-collection par pièce dans `_KIT`, contenant le mesh rendu et ses
-  proxies `col_box_*` / `col_hull_*`, avec `instance_offset` réglé pour que
-  « Add → Collection Instance » pose la pièce à l'origine de l'empty.
-- Des meshes subdivisés au mètre, UV en projection boîte à 64 px/m, attribut
-  de couleur "Col" prêt pour le bake, transforms déjà appliqués (rotation
-  identité, scale 1 — la géométrie est construite en coordonnées locales, seule
-  la `location` est utilisée pour l'étalage du kit).
-- Un rig d'éclairage NEUTRE, uniquement destiné à valider le bake bout-en-bout.
-  Les zones réelles seront éclairées selon leur propre ambiance, ce rig n'est
-  pas un choix artistique.
-
-Ce qu'il ne fait PAS : aucun assemblage, aucun placement de pièce dans un
-niveau. Le kit est un instrument, pas un niveau.
+Le kit est un instrument, pas un niveau : ce script n'assemble rien, ne place
+aucune pièce. Structure de collections produite, format de pièce (mesh rendu
++ proxies, transforms déjà appliqués) : voir
+docs/pipeline/niveau-blender.md#kit-modulaire-et-assemblage-de-niveau-côté-blender
+et le skill `blender-level-conventions`.
 """
 
 from __future__ import annotations
@@ -270,18 +258,11 @@ def main() -> None:
 
         for kind, suffix, origin, size in piece.get("proxies", []):
             proxy = build_proxy(piece, kind, suffix, origin, size)
-            # `build_proxy` construit déjà le mesh en coordonnées LOCALES à la
-            # pièce (mêmes `origin`/`size` que les `parts` du rendu). Le proxy
-            # est enfant du mesh rendu, qui porte seul l'offset d'étalage : sa
-            # `location` locale doit donc rester nulle.
-            #
-            # Ne PAS écrire `proxy.location = location` + `matrix_parent_inverse
-            # = obj.matrix_world.inverted()` : le `matrix_world` du parent n'est
-            # pas réévalué tant que le depsgraph n'a pas tourné, l'inverse vaut
-            # donc l'identité et l'offset est appliqué DEUX FOIS. Le proxy part
-            # alors à `2 × location`, se pose sur une autre pièce du kit et la
-            # scelle — le bake de cette pièce sort noir (mesuré : kit_wall_1m,
-            # kit_vent, kit_camera).
+            # `location` locale du proxy DOIT rester nulle (le parent porte
+            # seul l'offset d'étalage) — ne pas la mettre à `location` avec
+            # un `matrix_parent_inverse` calculé ici : le depsgraph n'a pas
+            # encore tourné, l'offset serait appliqué deux fois.
+            # see: docs/pipeline/niveau-blender.md#piège-du-parent-inverse-non-réévalué
             proxy.parent = obj
             piece_coll.objects.link(proxy)
             proxy_count[kind] += 1

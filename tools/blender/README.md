@@ -13,7 +13,7 @@ Scripts headless. Aucun ne nécessite d'interface.
 | `inspect_kit.py` | vérifie le kit produit contre le contrat du projet |
 | `bake_vertex_lighting.py` | bake d'éclairage en vertex colors + rapport de plausibilité |
 | `validate_level.py` | vérifie un `.blend` de niveau contre le contrat du projet |
-| `export_level.py` | valide puis exporte en `.glb` avec les bons réglages |
+| `export_level.py` | exporte en `.glb` avec les bons réglages (validation en étape séparée, voir la chaîne ci-dessous) |
 
 ```bash
 # Kit modulaire
@@ -263,13 +263,13 @@ change aucun placement donné par `level_spec.py`, seulement l'implémentation
 mécanique du centrage. Documenté en détail dans le docstring de
 `build_gondolas`.
 
-**Observation, hors scope de cette tâche (notée, pas traitée)** : `export_level.py`
-documente en tête « Valide d'abord, exporte ensuite » mais son code
-n'appelle en réalité jamais `validate_level.py` — l'export se lance
-directement. Sans conséquence ici puisque la chaîne documentée exécute
-`validate_level.py` en étape séparée avant `export_level.py`, mais l'écart
-entre la docstring et le code existe déjà pour Zone A/B, pas introduit par
-Zone C.
+**Écart docstring/code trouvé pour Zone A/B, corrigé le 2026-09-06** :
+`export_level.py` documentait en tête « Valide d'abord, exporte ensuite »
+alors que son code n'a jamais appelé `validate_level.py` — l'export se lance
+directement. Sans conséquence pratique (la chaîne documentée exécute déjà
+`validate_level.py` en étape séparée avant `export_level.py`), mais la
+docstring reflète maintenant cet ordre manuel plutôt qu'une garantie que le
+script n'offrait pas.
 
 ### Niveau Zone D (Réserve)
 

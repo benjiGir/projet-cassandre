@@ -26,26 +26,9 @@ const TAU = Math.PI * 2;
  * `dt` est le dt du PAS FIXE, jamais un temps réel : le lissage fait donc
  * partie de la simulation et se rejoue à l'identique.
  *
- * Rampe linéaire et non approche exponentielle. Deux raisons, mesurées :
- *
- *  - une exponentielle N'ARRIVE JAMAIS. Mesuré sur la version précédente de ce
- *    code : après un arrêt net, l'enveloppe du bob mettait 1.78 s à atteindre
- *    zéro, et l'enfoncement de réception 2.18 s. Pendant tout ce temps la
- *    caméra dérive d'un poil de flottant à chaque frame — `updateProjectionMatrix`
- *    est rappelée indéfiniment, et surtout deux captures déterministes ne
- *    rendent pas le même pixel. Une rampe atteint sa cible exactement, à un pas
- *    fixe connu d'avance ;
- *  - le paramètre veut alors dire ce qu'il dit : `bobResponseTime = 0.12`
- *    éteint le bob en 0.12 s, pas « 63 % en 0.12 s puis une traîne d'une
- *    seconde ». C'est ce qu'un humain qui tune attend en lisant le nom.
- *
- * Ce qu'on y perd — le coude à l'arrivée — est invisible : ces grandeurs sont
- * des enveloppes, elles multiplient une sinusoïde qui reste continue.
- *
- * EXPORTÉE : `weapons.ts` (Phase 2) réutilise exactement cette fonction pour
- * la récupération de recul du viewmodel — même contrat (dt de gameplay,
- * jamais d'horloge murale), donc pas de raison d'en dupliquer une deuxième
- * version qui pourrait diverger.
+ * Rampe linéaire et non approche exponentielle — pourquoi, et pourquoi
+ * `weapons.ts` réutilise cette même fonction pour le recul du viewmodel :
+ * see: docs/systems/joueur.md#rampe-linéaire-pas-exponentielle-approach
  */
 export function approach(
   current: number,
@@ -63,18 +46,10 @@ export function approach(
 
 /**
  * Déplacement du joueur, basé sur le `KinematicCharacterController` de Rapier
- * (invariant #6 : jamais de résolution capsule-vs-monde maison).
- *
- * Découpage :
- * - le controller intègre lui-même vitesse horizontale et verticale (le corps
- *   est kinématique, le solveur ne l'intègre pas) ;
- * - la gravité est LUE sur le monde physique, jamais redéclarée ;
- * - `computeColliderMovement` résout pentes, marches et glissements ;
- * - la translation cible est posée via `setNextKinematicTranslation` et
- *   appliquée par le `world.step()` DU MÊME pas fixe (voir l'ordre des
- *   callbacks dans `core/loop.ts`).
- *
- * Aucun nombre de gameplay ici : tout vient de `moveConfig`.
+ * (invariant #6 : jamais de résolution capsule-vs-monde maison). Découpage
+ * de la résolution du pas fixe et aucun nombre de gameplay ici (tout vient
+ * de `moveConfig`) :
+ * see: docs/systems/joueur.md#résolution-du-pas-fixe
  */
 export class PlayerController {
   readonly body: RAPIER.RigidBody;
@@ -101,18 +76,9 @@ export class PlayerController {
    */
   distanceTravelled = 0;
 
-  // ------------------------------------------------------------------------
-  // État de VUE (head bob, FOV, réception). Trois règles tenues ici :
-  //
-  //  1. tout est avancé au PAS FIXE avec le `dt` de gameplay — aucune horloge
-  //     murale, donc un rejeu d'input redonne exactement la même image ;
-  //  2. chaque grandeur a son échantillon n−1, comme `previousPosition`, pour
-  //     être interpolée par `alpha` au rendu : `distanceTravelled` n'avance
-  //     qu'à 60 Hz, l'échantillonner brute ferait avancer le bob par paliers
-  //     visibles sur un écran à 144 Hz ;
-  //  3. rien de tout ça n'est angulaire : la vue est TRANSLATÉE, jamais
-  //     tournée (invariant #3, et la Phase 2 tirera depuis la visée pure).
-  // ------------------------------------------------------------------------
+  // État de VUE (head bob, FOV, réception) — les trois règles qui le
+  // gouvernent (pas fixe, échantillons prev/current, jamais angulaire) :
+  // see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
 
   /** `distanceTravelled` au pas fixe précédent. Interpolation de la phase du bob. */
   previousDistanceTravelled = 0;
@@ -344,10 +310,8 @@ export class PlayerController {
     if (this.isGrounded && this.velocity.y < 0) {
       // Poussée descendante constante : maintient le contact et stabilise
       // `computedGrounded` (sinon il clignote sur terrain plat). Ne PAS
-      // remonter cette valeur sans mesurer : un creep trop fort combiné à une
-      // grande vitesse horizontale axée-axe fait dégénérer
-      // `computeColliderMovement` (stutter). Détail et chiffres dans le
-      // commentaire de `groundStickSpeed`, moveConfig.ts.
+      // remonter cette valeur sans mesurer, voir ADR 0016 :
+      // see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       this.velocity.y = -cfg.groundStickSpeed;
     }
 
@@ -457,14 +421,8 @@ export class PlayerController {
 
   /**
    * Grandeurs de vue du pas fixe. Séparé de `update` pour que la lecture du
-   * déplacement reste lisible, mais c'est bien le même pas fixe : rien ici
-   * n'est autorisé à lire une horloge réelle.
-   *
-   * Ce qui est piloté par la DISTANCE (la phase du bob) n'apparaît pas ici :
-   * elle se dérive directement de `distanceTravelled`, donc elle se fige
-   * d'elle-même à l'arrêt. Seules les grandeurs qui doivent varier À VITESSE
-   * CONSTANTE — enveloppes et retour de réception — ont besoin d'un lissage
-   * temporel, et ce lissage utilise le `dt` du pas fixe.
+   * déplacement reste lisible — même pas fixe, mêmes règles :
+   * see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
    */
   private updateViewState(dt: number, impactSpeed: number) {
     const cfg = this.cfg;

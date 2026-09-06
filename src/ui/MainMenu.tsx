@@ -1,29 +1,17 @@
 import { useState, type CSSProperties } from "react";
 
 /**
- * Menu principal minimal (Phase 6, plan section F) — "Jouer" / "Options" /
- * "Quitter". DISTINCT de `LevelMenu.tsx` (outil de DEV pour choisir une zone
- * individuelle, voir son en-tête) : les deux ne sont PAS fusionnés.
- *
- * RELATION AVEC `LevelMenu` (décision explicite, voir `main.ts::resolveBootChoice`
- * pour le câblage exact) : "Jouer" mène DIRECTEMENT au niveau complet
- * (`hypermarche_complet`, sans passer par `LevelMenu`) — c'est le chemin
- * joueur normal. `LevelMenu` (choix de zone individuelle) reste accessible
- * UNIQUEMENT via le lien discret "Choisir une zone (dev)" tout en bas de cet
- * écran, qui délègue à `resolveLevelChoice` (la fonction pré-existante,
- * inchangée) — c'est le même composant `LevelMenu.tsx` que celui utilisé
- * historiquement, jamais dupliqué. Les raccourcis `?level=<id>` continuent
- * de bypasser CE menu entièrement (voir `resolveBootChoice`) : ce composant
- * ne s'affiche que si l'URL n'a PAS de paramètre `level`.
- *
- * PUREMENT PRÉSENTATIONNEL, comme `LevelMenu.tsx` : aucun import `src/game/*`,
- * tout arrive par props. Affiché AVANT que la boucle de jeu existe.
+ * Menu principal minimal — "Jouer" / "Options" / "Quitter". Distinct de
+ * `LevelMenu.tsx` (outil de dev pour choisir une zone individuelle) : les
+ * deux ne sont pas fusionnés. Purement présentationnel, comme `LevelMenu.tsx` :
+ * aucun import `src/game/*`, tout arrive par props.
+ * see: docs/systems/hud.md#menu-principal-et-écran-de-choix-de-niveau
  */
 
 export interface MainMenuProps {
   onPlay: () => void;
   onOptions: () => void;
-  /** Lien discret vers `LevelMenu` (choix de zone, outil de dev) — voir la doc de tête. */
+  /** Lien discret vers `LevelMenu` (choix de zone, outil de dev). */
   onChooseZone: () => void;
 }
 
@@ -93,7 +81,7 @@ export function MainMenu(props: MainMenuProps) {
             Jouer
           </button>
           <button onClick={onOptions} style={buttonStyle("options")} {...hoverHandlers("options")}>
-            Options (touches)
+            Options
           </button>
           <button onClick={handleQuit} style={buttonStyle("quit")} {...hoverHandlers("quit")}>
             Quitter
