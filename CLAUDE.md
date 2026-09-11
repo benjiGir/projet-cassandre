@@ -92,6 +92,23 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
+> **Chantier Niveau v2 — Planifié (2026-09-11), aucun jalon commencé.**
+> Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
+> `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
+> 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
+> a été conservée mais jugée insuffisante après avoir joué. Décisions :
+> structure en hub à la Duke 3D (10 espaces, cartes de fidélité comme
+> clés), bibliothèque d'assets tirée de **packs CC0 harmonisés**, **textures
+> rétro 64-128 px réintroduites** (style Build / Ion Fury, hypermarché
+> resté dans son jus années 90), marques d'emballage inventées, travail
+> **en direct dans Blender via le MCP officiel Blender Lab** (Blender 5.1,
+> `localhost:9876`, que `level-forge` ne peut pas piloter en l'état). Deux
+> pistes en parallèle : structure → blockout gris joué, et salle d'essai
+> « rayons » pour valider la richesse. Le niveau actuel reste jouable
+> jusqu'à la bascule (N10). Contraintes à connaître avant de dessiner : un
+> seul sol praticable par colonne (pathfinding 2.5D), occlusion des
+> lignes de vue non fiable (ADR 0022), aucune instanciation dans le loader.
+>
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute
 > la boucle jeu — gameplay (M6), raycasting (M3), pathfinding (M4), rendu et
