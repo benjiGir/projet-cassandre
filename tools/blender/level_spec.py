@@ -106,6 +106,37 @@ ZONE_A = {
     # "Parking" : sun optionnel pertinent, lumière du jour qui filtre par la
     # fente de la vitrine — pas une décision de layout, un choix d'éclairage.
     "lighting": {"sun": True},
+
+    # PAS de "ceiling" ici (clé absente = False) : c'est un extérieur, un
+    # plafond y serait un contresens — voir build_level.py::build_ceiling.
+
+    # Comble le vide identifié par l'audit (Zone A = zone la plus vide,
+    # aucune voiture ni marquage au sol) : un abri à caddies + une rangée,
+    # seul élément concret et récurrent de `refs/parking_exterieur` qui
+    # n'existe dans aucune pièce du kit avant cette tâche (voir
+    # `kit_cart_shelter`, nouvelle pièce, kit_spec.py). Posé à l'ouest, loin
+    # du spawn/crowbar (sud) et de l'alcôve/vitrine scellée (nord, y>=18) —
+    # aucune interférence avec la ligne de vue vers `spawn_suit_1`.
+    #
+    # Caddies au pas EXACT de leur longueur (1.0 m, `kit_cart` — kit_spec.py),
+    # jamais interpénétrés : un premier jet à 0.7 m de pas (nesting littéral)
+    # a fait ressortir 2 des 4 caddies ENTIÈREMENT NOIRS au bake — leur
+    # panier (parois pleines sur 4 côtés) enferme le caddie voisin quand les
+    # corps se recouvrent, même famille de bug que `kit_crate` avant sa
+    # correction (voir kit_spec.py). Des boîtes qui se TOUCHENT sans se
+    # chevaucher (ce que fait un pas = longueur exacte) sont documentées
+    # comme sûres ailleurs dans ce fichier (parois dos-à-dos d'une pièce
+    # multi-boîtes) ; la "rangée imbriquée" de la référence est donc rendue
+    # par un rang SERRÉ plutôt qu'un chevauchement réel — divergence
+    # assumée, la géométrie actuelle du caddie (parois droites, non
+    # effilées) ne permet pas un vrai nesting sans ce risque.
+    "kit_details": [
+        {"piece": "kit_cart_shelter", "x": -8.0, "y": 6.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -7.75, "y": 6.75, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -6.75, "y": 6.75, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -5.75, "y": 6.75, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -4.75, "y": 6.75, "z": 0.0, "rot_deg": 0.0},
+    ],
 }
 
 
@@ -188,6 +219,70 @@ ZONE_B = {
     "use_objects": [
         {"name": "use_frozen_storage", "center": (-10.75, 11.0, 1.0), "size": (0.3, 0.1, 0.3),
          "target": "door_b_frozen"},
+    ],
+
+    # Plafond fermé (salle de vente close, pas d'extérieur ici — voir
+    # build_level.py::build_ceiling) : luminaires visibles, panneaux
+    # d'allée suspendus (référence `caisses` explicite : "panneaux de numéro
+    # d'allée suspendus au plafond"), caméras, piliers dans l'espace ouvert
+    # devant les caisses, congélateur dans l'alcôve du secret 1.
+    "ceiling": True,
+    "kit_details": [
+        # Piliers : espace ouvert au sud des caisses (y=9.5), loin du
+        # secret/porte (x<-12) et des spawns (y=18).
+        {"piece": "kit_pillar", "x": -8.0, "y": 15.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_pillar", "x": 8.0, "y": 15.0, "z": 0.0, "rot_deg": 0.0},
+        # Luminaires visibles, grille 3x2 sous le plafond (z=WALL_H-0.15),
+        # même esprit que le rig de lampes invisibles (build_lighting) sans
+        # chercher à le dupliquer point par point.
+        {"piece": "kit_ceiling_light", "x": -8.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 8.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": -8.0, "y": 16.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 16.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 8.0, "y": 16.0, "z": 4.85, "rot_deg": 0.0},
+        # Panneaux de numéro d'allée, un par caisse (x_origins des caisses +
+        # 1.5 pour le centre, checkouts.y=9.5), suspendus à z=4.0.
+        {"piece": "kit_sign_aisle", "x": -7.75, "y": 9.5, "z": 4.0, "rot_deg": 90.0},
+        {"piece": "kit_sign_aisle", "x": -2.75, "y": 9.5, "z": 4.0, "rot_deg": 90.0},
+        {"piece": "kit_sign_aisle", "x": 2.25, "y": 9.5, "z": 4.0, "rot_deg": 90.0},
+        {"piece": "kit_sign_aisle", "x": 7.25, "y": 9.5, "z": 4.0, "rot_deg": 90.0},
+        # Caméras de surveillance, coins hauts.
+        {"piece": "kit_camera", "x": -11.0, "y": -1.5, "z": 4.5, "rot_deg": 45.0},
+        {"piece": "kit_camera", "x": 11.0, "y": 20.5, "z": 4.5, "rot_deg": 225.0},
+        # Congélateur du secret 1 : contre le mur du fond (x=-15), porte
+        # tournée vers l'entrée de l'alcôve (+X). Vérifié par calcul direct
+        # de la rotation (pas deviné) : la face "porte" du meuble est en
+        # local y=0 (normale locale (0,-1) — voir kit_spec._freezer_parts) ;
+        # sous rot_deg=90°, cette normale devient monde (+1,0) = +X, ce qui
+        # est voulu (un premier essai à rot_deg=270° faisait l'inverse et
+        # enfonçait la face avant DANS le mur du fond — bake entièrement noir
+        # mesuré, corrigé ici). Origine (-13.5, 10.0) choisie pour que
+        # l'empreinte tournée (2 x 1) tombe exactement dans l'alcôve :
+        # x in [-14.5,-13.5] (0.5 m du mur du fond x=-15), y in [10,12]
+        # (toute la largeur utile de l'alcôve).
+        {"piece": "kit_freezer_2m", "x": -13.5, "y": 10.0, "z": 0.0, "rot_deg": 90.0},
+        # Luminaire DÉDIÉ à l'alcôve du secret 1 (x < -12) : cette alcôve est
+        # hors de l'empreinte du "floor" principal (x in [-12,12]), donc hors
+        # de la grille de `build_lighting` — sans lui, la pièce est un volume
+        # scellé sans AUCUNE source de lumière Cycles (murs/porte pleins,
+        # aucun plafond, aucune area light au-dessus) et le congélateur y
+        # ressortait entièrement noir au bake (mesuré, diagnostiqué par
+        # raycast direct en ignorant les occultants col_*/secret_*
+        # eux-mêmes exclus par construction). Ce luminaire est une pièce du
+        # kit ORDINAIRE (face émissive, voir kit_spec.MAT_EMIT) : il compte
+        # comme source de lumière réelle pour Cycles au même titre qu'une
+        # area light, exactement ce que `bake_vertex_lighting.py` vérifie
+        # avant de bake (lampes OU matériaux émissifs).
+        {"piece": "kit_ceiling_light", "x": -13.5, "y": 11.0, "z": 4.85, "rot_deg": 0.0},
+        # Caddies, rangée serrée près de l'entrée (sud), loin des caisses
+        # (y=9.5) et de l'alcôve (x<-12) — même pas EXACT que Zone A (pas de
+        # chevauchement, voir sa note).
+        {"piece": "kit_cart", "x": -9.75, "y": 2.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -8.75, "y": 2.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -7.75, "y": 2.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -6.75, "y": 2.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_cart", "x": -5.75, "y": 2.0, "z": 0.0, "rot_deg": 0.0},
     ],
 
     # Secret 1 (mur cassable, surgelés — voir PLAN_PROTO_BOOMER_SHOOTER.md).
@@ -292,6 +387,37 @@ ZONE_C = {
         {"name": "use_pa_mic", "center": (0.0, 24.0, 0.5), "size": (0.15, 0.15, 1.0)},
     ],
 
+    # Plafond fermé (salle de vente close) : luminaires visibles, panneaux
+    # d'allée suspendus au-dessus des DEUX allées centrales (référence
+    # `hypermarche_interieur` : "tubes fluo linéaires... alignés avec les
+    # allées"), piliers dans les couloirs latéraux (jamais dans une allée
+    # centrale ni sur une rangée), une caméra.
+    "ceiling": True,
+    "kit_details": [
+        # Piliers dans les couloirs latéraux ouverts (ouest x<-5.5, est
+        # x>5.5), loin des rangées de gondoles et des spawns de sortie nord.
+        {"piece": "kit_pillar", "x": -9.0, "y": 12.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_pillar", "x": 9.0, "y": 12.0, "z": 0.0, "rot_deg": 0.0},
+        # Luminaires visibles, grille 3x2 sous le plafond.
+        {"piece": "kit_ceiling_light", "x": -8.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 4.0, "z": 4.85, "rot_deg": 90.0},
+        {"piece": "kit_ceiling_light", "x": 8.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": -8.0, "y": 20.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 20.0, "z": 4.85, "rot_deg": 90.0},
+        {"piece": "kit_ceiling_light", "x": 8.0, "y": 20.0, "z": 4.85, "rot_deg": 0.0},
+        # Panneaux d'allée suspendus au-dessus des DEUX allées centrales
+        # (X=-2.125 et X=2.125, voir "gondolas" ci-dessus), à mi-longueur du
+        # bloc de gondoles (Y=12, milieu de [8,16]).
+        {"piece": "kit_sign_aisle", "x": -2.0, "y": 12.0, "z": 4.0, "rot_deg": 90.0},
+        {"piece": "kit_sign_aisle", "x": 2.0, "y": 12.0, "z": 4.0, "rot_deg": 90.0},
+        # Bouches d'aération murales, mur nord, à l'écart du micro d'annonces
+        # (x=0, y=24).
+        {"piece": "kit_vent", "x": -9.5, "y": 25.75, "z": 3.5, "rot_deg": 0.0},
+        {"piece": "kit_vent", "x": 8.5, "y": 25.75, "z": 3.5, "rot_deg": 0.0},
+        # Caméra de surveillance, coin sud-ouest (entrée).
+        {"piece": "kit_camera", "x": -11.0, "y": -1.5, "z": 4.5, "rot_deg": 45.0},
+    ],
+
     # Secret 2 (toit, via palettes/caisse — voir PLAN_PROTO_BOOMER_SHOOTER.md).
     # Zone de détection sur le DESSUS de la rangée ouest (toit du collider
     # `col_box_gondola_4m`, Z=2.0, déjà marchable tel quel — aucune géométrie
@@ -327,7 +453,18 @@ ZONE_D = {
     "walls": [
         wall_run((-14.0, -2.0), (14.0, -2.0), (0.0, -1.0)),   # sud
         wall_run((-14.0, 30.0), (14.0, 30.0), (0.0, 1.0)),    # nord
-        wall_run((-14.0, -2.0), (-14.0, 30.0), (-1.0, 0.0)),  # ouest
+        # Ouest, par morceaux — la brèche y in [10,14] est la porte de quai
+        # scellée (voir "dock_door" ci-dessous), posée à part, PAS un
+        # wall_run, même convention que la vitrine de la Zone A / la porte
+        # du secret 1 en Zone B. Piège trouvé et corrigé ici : un premier
+        # jet laissait le mur ouest EN UN SEUL morceau tout en posant
+        # `kit_dock_door` au même endroit — un module `kit_wall_4m` et
+        # l'encadrement de la porte occupaient alors le MÊME volume,
+        # bake entièrement noir mesuré sur les deux (faces coïncidentes,
+        # même famille que le piège `kit_crate` déjà documenté). Segments de
+        # 12 m (3 modules) et 16 m (4 modules), aucun reste.
+        wall_run((-14.0, -2.0), (-14.0, 10.0), (-1.0, 0.0)),
+        wall_run((-14.0, 14.0), (-14.0, 30.0), (-1.0, 0.0)),
         wall_run((14.0, -2.0), (14.0, 30.0), (1.0, 0.0)),     # est
     ],
 
@@ -431,6 +568,43 @@ ZONE_D = {
         ("spawn_suit_3", (0.0, 18.0, 0.0)),    # travée centrale, ouvert, 18m
         ("spawn_suit_4", (-4.0, 21.0, 0.0)),   # near pied d'escalier, ouvert, ~21.4m
         ("spawn_suit_5", (4.0, 21.0, 0.0)),    # near pied d'escalier, ouvert, ~21.4m (symétrique)
+    ],
+
+    # Porte de quai scellée (voir build_level.py::build_dock_door — panneau
+    # FIXE, pas un `door_*` : aucun mandat pour toucher `src/**` dans cette
+    # tâche, et un vrai passage ouvrirait sur l'extérieur non modélisé du
+    # bâtiment). Mur OUEST (x=-14), loin des racks (rangée ouest à
+    # X in [-7.2,-6.0], 6.8 m de marge) et des piles de palettes (y=16) :
+    # brèche y in [10,14], rot_deg=90° (même mécanique que door_b_frozen,
+    # mur vertical).
+    "dock_door": {"piece": "kit_dock_door", "x": -14.0, "y": 10.0, "rot_deg": 90.0,
+                  "leaf_name": "dock_door_d_seal"},
+
+    # PAS de "ceiling" ici (clé absente = False) : référence `reserve_quai`
+    # explicite, structure de toit/fermes apparente, "pas de plafond plat" —
+    # voir refs/SPEC.md et build_level.py::build_ceiling. Les racks (6 m)
+    # dépassent de toute façon la hauteur des murs (5 m), une dalle plate à
+    # z=5 les couperait.
+    "kit_details": [
+        # Piliers : couloirs latéraux + travée centrale, à l'écart des racks,
+        # palettes et caisses isolées (voir "racks"/"storage_props" ci-dessus).
+        {"piece": "kit_pillar", "x": -9.0, "y": 8.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_pillar", "x": 8.0, "y": 10.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_pillar", "x": -3.0, "y": 17.0, "z": 0.0, "rot_deg": 0.0},
+        {"piece": "kit_pillar", "x": 0.0, "y": 10.0, "z": 0.0, "rot_deg": 0.0},
+        # Luminaires suspendus AU-DESSUS des racks (6 m) — pas de dalle de
+        # plafond pour les porter, mais une pièce du kit ordinaire n'a besoin
+        # d'aucun support visible pour être posée (voir Zone B, alcôve).
+        {"piece": "kit_ceiling_light", "x": -9.0, "y": 8.0, "z": 6.5, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 8.0, "z": 6.5, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 9.0, "y": 8.0, "z": 6.5, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": -9.0, "y": 22.0, "z": 6.5, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 0.0, "y": 22.0, "z": 6.5, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 9.0, "y": 22.0, "z": 6.5, "rot_deg": 0.0},
+        # Bouches d'aération, mur sud — à l'écart de la porte de quai (ouest)
+        # et du flanc est (breach de connexion D-E dans le niveau combiné).
+        {"piece": "kit_vent", "x": -8.0, "y": -1.75, "z": 3.5, "rot_deg": 0.0},
+        {"piece": "kit_vent", "x": 8.0, "y": -1.75, "z": 3.5, "rot_deg": 0.0},
     ],
 
     # Toilettes utilisables (+1 PV, objet interactif "signature Duke" du
@@ -562,6 +736,21 @@ ZONE_E = {
     "secrets": [],
 
     "lighting": {"sun": False},
+
+    # Plafond fermé (bureau — pièce close, référence explicite du plan).
+    # PAS de pilier ici, volontairement : salle de confrontation finale
+    # (voir plus haut, spawn_director_1 au centre), un pilier au milieu
+    # briserait la ligne de vue immédiate voulue pour la "révélation" —
+    # décision de composition, pas un oubli. Une seule caméra de
+    # surveillance, cohérente avec le thème "bureau/direction".
+    "ceiling": True,
+    "kit_details": [
+        {"piece": "kit_ceiling_light", "x": -4.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 4.0, "y": 4.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": -4.0, "y": 12.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_ceiling_light", "x": 4.0, "y": 12.0, "z": 4.85, "rot_deg": 0.0},
+        {"piece": "kit_camera", "x": -7.5, "y": -1.5, "z": 4.5, "rot_deg": 45.0},
+    ],
 }
 
 

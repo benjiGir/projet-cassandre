@@ -140,6 +140,31 @@ def _cart_parts(length=1.0, depth=0.6, height=1.0):
     ]
 
 
+def _cart_shelter_parts(width=4.0, depth=2.0, post_h=2.2, rise=0.15, roof_t=0.08):
+    """Abri à caddies (parking) : 4 poteaux fins + toit en 3 terrasses.
+
+    `parking_exterieur` montre un toit COURBE — hors de portée d'un agent
+    piloté par bpy (pas de modélisation organique, voir la frontière du rôle).
+    Approximé par 3 plaques plates contiguës qui montent puis redescendent
+    (même technique que `_stairs_parts` : des marches, pas une rampe, pour
+    rester en boîtes pures) — silhouette de faîtage sans aucune courbe réelle,
+    assumé comme divergence documentée avec la référence.
+
+    Aucune face coïncidente entre segments de toit (contrairement au piège
+    `kit_crate` corrigé) : chaque terrasse occupe sa PROPRE tranche de
+    profondeur, jamais deux plaques au même endroit.
+    """
+    post = 0.12
+    inset = 0.15
+    post_origins = [(inset, inset), (width - inset - post, inset),
+                     (inset, depth - inset - post), (width - inset - post, depth - inset - post)]
+    parts = [box(x, y, 0.0, post, post, post_h, MAT_DETAIL) for x, y in post_origins]
+    seg_d = depth / 3.0
+    for i, dz in enumerate((0.0, rise, 0.0)):
+        parts.append(box(0.0, i * seg_d, post_h + dz, width, seg_d, roof_t, MAT_SHELL))
+    return parts, post, post_h, post_origins
+
+
 def _freezer_parts(length=2.0, depth=1.0, height=2.0):
     """Meuble surgelés : caisson + montants de portes en relief.
 
@@ -195,6 +220,12 @@ def _wall_opening_parts(width, jamb, open_w, open_h, height=WALL_H, thick=WALL_T
 
 _DOOR_PARTS, _DOOR_PROXIES = _wall_opening_parts(2.0, 0.25, 1.5, 2.5)
 _DOCK_PARTS, _DOCK_PROXIES = _wall_opening_parts(4.0, 0.5, 3.0, 4.0)
+
+_SHELTER_PARTS, _SHELTER_POST, _SHELTER_POST_H, _SHELTER_POST_ORIGINS = _cart_shelter_parts()
+_SHELTER_PROXIES = [
+    ("box", f"post{i}", (x, y, 0.0), (_SHELTER_POST, _SHELTER_POST, _SHELTER_POST_H))
+    for i, (x, y) in enumerate(_SHELTER_POST_ORIGINS)
+]
 
 
 # --- Table du kit ------------------------------------------------------------
@@ -306,6 +337,19 @@ KIT = [
          props={"dynamic": 1, "mass": 12.0},
          note="DYNAMIQUE : extras dynamic/mass posés pour un loader qui ne les "
               "lit pas encore (voir README, travail restant level-pipeline)"),
+
+    # ------------------------------------------------------------- PARKING --
+    dict(name="kit_cart_shelter", cls="PROP", group="PROPS",
+         dims=(4.0, 2.0, _SHELTER_POST_H + 0.15 + 0.08),
+         mat=MAT_SHELL, parts=_SHELTER_PARTS, proxies=_SHELTER_PROXIES,
+         proxy_partial=True,
+         note="AJOUT hors liste initiale du skill, justifié par refs/SPEC.md "
+              "(« abri à caddies... candidat naturel pour combler le vide de "
+              "la Zone A »). Toit COURBE sur les références, approximé par 3 "
+              "terrasses planes qui montent puis redescendent — aucune "
+              "modélisation organique (hors du rôle), silhouette de faîtage "
+              "seulement. 4 poteaux fins = 4 proxies cuboid, toit non "
+              "collidable (jamais atteint par un joueur au sol)"),
 
     # ------------------------------------------------------- RÉSERVE / QUAI --
     dict(name="kit_rack_4m", cls="PROP", group="STORAGE", dims=(4.0, 1.2, 6.0),

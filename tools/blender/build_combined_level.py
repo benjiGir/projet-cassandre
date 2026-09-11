@@ -191,6 +191,27 @@ def _t_secrets(secrets: list[dict], dx: float, dy: float) -> list[dict]:
             for s in secrets]
 
 
+def _t_dock_door(d: dict | None, dx: float, dy: float) -> dict | None:
+    """Même mécanique que `_t_door_frame` : `rot_deg` est une orientation
+    (invariante par translation), `leaf_name` déjà zone-scopé
+    (`dock_door_d_seal`, seule zone à poser un `dock_door` à ce jour)."""
+    if d is None:
+        return None
+    out = {"piece": d["piece"], "x": d["x"] + dx, "y": d["y"] + dy}
+    if "rot_deg" in d:
+        out["rot_deg"] = d["rot_deg"]
+    if "leaf_name" in d:
+        out["leaf_name"] = d["leaf_name"]
+    return out
+
+
+def _t_kit_details(details: list[dict] | None, dx: float, dy: float) -> list[dict]:
+    """Traduit `x`/`y` de chaque entrée `kit_details` (voir
+    `build_level.py::build_kit_details`) ; `z`/`rot_deg`/`piece` inchangés
+    (une hauteur ou une orientation est invariante par translation pure)."""
+    return [dict(d, x=d["x"] + dx, y=d["y"] + dy) for d in (details or [])]
+
+
 def translate_zone(zone: dict, dx: float, dy: float) -> dict:
     """Traduction (dx, dy) de TOUT ce que contient un dict de zone. Ne lit
     JAMAIS ni n'écrit `level_spec.ZONE_*` — prend et retourne des dicts neufs,
@@ -206,6 +227,8 @@ def translate_zone(zone: dict, dx: float, dy: float) -> dict:
     z["mezzanine"] = _t_mezzanine(zone.get("mezzanine"), dx, dy)
     z["storage_props"] = _t_storage(zone.get("storage_props"), dx, dy)
     z["door_frame"] = _t_door_frame(zone.get("door_frame"), dx, dy)
+    z["dock_door"] = _t_dock_door(zone.get("dock_door"), dx, dy)
+    z["kit_details"] = _t_kit_details(zone.get("kit_details"), dx, dy)
     z["secrets"] = _t_secrets(zone.get("secrets", []), dx, dy)
     sp = zone["spawn_player"]
     z["spawn_player"] = (sp[0] + dx, sp[1] + dy, sp[2])
@@ -478,7 +501,7 @@ def build_all_zones() -> dict[str, dict]:
 # ---------------------------------------------------------------------------
 
 def gather_needed_pieces(zones: dict[str, dict]) -> list[str]:
-    needed = {"kit_wall_4m", "kit_wall_2m", "kit_wall_1m", "kit_floor_4x4"}
+    needed = {"kit_wall_4m", "kit_wall_2m", "kit_wall_1m", "kit_floor_4x4", "kit_corner_out"}
     for zone in zones.values():
         if zone.get("checkouts"):
             needed.add(zone["checkouts"]["piece"])
@@ -499,6 +522,12 @@ def gather_needed_pieces(zones: dict[str, dict]) -> list[str]:
             needed.add(zone["door_frame"]["piece"])
             if zone["door_frame"].get("leaf_name"):
                 needed.add("kit_door_leaf")
+        if zone.get("ceiling"):
+            needed.add("kit_ceiling_4x4")
+        if zone.get("dock_door"):
+            needed.add(zone["dock_door"]["piece"])
+        for detail in zone.get("kit_details", []):
+            needed.add(detail["piece"])
     return sorted(needed)
 
 
@@ -567,6 +596,11 @@ def main() -> None:
         z_totals["crates"] = crate_count
         z_totals["door"] = bl.build_door_frame(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
         z_totals["leaf"] = bl.build_door_leaf(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
+        z_totals["dock"] = bl.build_dock_door(zone.get("dock_door"), mesh_lookup, proxy_map, materials_lookup, shell, col_coll)
+        z_totals["ceiling"] = bl.build_ceiling(zone, zone["floor"], mesh_lookup, proxy_map, shell, col_coll)
+        z_totals["corners"] = bl.build_wall_corners(zone["walls"], mesh_lookup, proxy_map, shell, col_coll)
+        detail_counts = bl.build_kit_details(zone.get("kit_details"), mesh_lookup, proxy_map, props_coll, col_coll)
+        z_totals["details"] = sum(detail_counts.values())
 
         include_player = (letter == "a")
         z_totals["spawns"] = bl.build_spawns(zone, logic_coll, include_player=include_player)

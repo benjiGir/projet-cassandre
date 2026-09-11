@@ -16,3 +16,5 @@ yarn-error.log*
 .claude/settings.local.json
 __pycache__/
 *.blend1
+.venv-refs/
+/refs/

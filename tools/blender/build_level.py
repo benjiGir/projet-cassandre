@@ -247,11 +247,16 @@ def build_walls(wall_specs: list[dict], mesh_lookup, proxy_map,
 # ---------------------------------------------------------------------------
 
 def tile_floor(floor_spec: dict, mesh_lookup, proxy_map, shell_coll, col_coll,
-                z: float = 0.0) -> int:
+                z: float = 0.0, piece_name: str = "kit_floor_4x4") -> int:
     """`z` optionnel (défaut 0.0, le sol au sol) : la Zone D réutilise cette
     même fonction pour la dalle de mezzanine (`kit_floor_4x4` posé à z=2.0 —
     son origine est le coin de la SURFACE DE MARCHE, poser à z=2.0 fait donc
-    marcher à z=2.0, voir kit_spec.py), sans dupliquer la logique de tiling."""
+    marcher à z=2.0, voir kit_spec.py), sans dupliquer la logique de tiling.
+
+    `piece_name` optionnel (défaut `kit_floor_4x4`) : `build_ceiling`
+    réutilise cette même fonction telle quelle avec `kit_ceiling_4x4` (même
+    empreinte 4×4, même grille) — un plafond est un sol qu'on pose la tête en
+    bas, la mécanique de tiling est identique à l'octet près."""
     x0, x1 = floor_spec["x"]
     y0, y1 = floor_spec["y"]
     tile = floor_spec["tile"]
@@ -267,8 +272,28 @@ def tile_floor(floor_spec: dict, mesh_lookup, proxy_map, shell_coll, col_coll,
     for i in range(nx):
         for j in range(ny):
             loc = (x0 + i * tile, y0 + j * tile, z)
-            place_kit_piece("kit_floor_4x4", mesh_lookup, proxy_map, loc, 0.0, shell_coll, col_coll)
+            place_kit_piece(piece_name, mesh_lookup, proxy_map, loc, 0.0, shell_coll, col_coll)
     return nx * ny
+
+
+def build_ceiling(zone: dict, floor_spec: dict, mesh_lookup, proxy_map,
+                   shell_coll, col_coll) -> int:
+    """Plafond plat (`kit_ceiling_4x4`), SEULEMENT si `zone["ceiling"]` est
+    vrai. Décision par zone, pas systématique :
+
+    - Zone A (parking) : PAS de plafond, c'est un extérieur (lumière du jour
+      par la vitrine, `lighting.sun`) — un plafond y serait un contresens.
+    - Zone D (réserve) : PAS de plafond non plus, mais pour la raison
+      opposée — la référence montre une structure de toit/fermes apparente
+      ("pas de plafond plat", voir refs/SPEC.md), et les racks (6 m) dépassent
+      déjà la hauteur des murs (5 m) : une dalle plate à z=5 les couperait.
+    - Zones B/C/E (salles de vente/bureau fermées) : plafond posé à
+      z=WALL_H, seule vraie utilité pratique du plafond ici (au-delà du
+      visuel) — donner un point d'ancrage cohérent aux kit_ceiling_light."""
+    if not zone.get("ceiling"):
+        return 0
+    return tile_floor(floor_spec, mesh_lookup, proxy_map, shell_coll, col_coll,
+                       z=level_spec.WALL_HEIGHT, piece_name="kit_ceiling_4x4")
 
 
 # ---------------------------------------------------------------------------
@@ -466,6 +491,207 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
     # collider dynamique vient de `loader.ts::buildDoor`, jamais d'un `col_*`
     # compagnon (qui resterait STATIQUE et bloquerait même une fois la porte
     # "ouverte"/déplacée par le jeu — voir la note du kit).
+    return 1
+
+
+# ---------------------------------------------------------------------------
+# Détails du kit — placement générique (piliers, luminaires visibles, bouches
+# d'aération, signalétique d'allée, caméras, caddies, congélateur...)
+# ---------------------------------------------------------------------------
+
+def build_kit_details(details: list[dict] | None, mesh_lookup, proxy_map,
+                       target_coll, col_coll) -> Counter:
+    """Un seul mécanisme générique pour TOUTES les petites pièces habillage du
+    kit (`kit_pillar`, `kit_ceiling_light`, `kit_vent`, `kit_sign_aisle`,
+    `kit_camera`, `kit_cart`, `kit_freezer_2m`) : chaque entrée de
+    `level_spec.py` est un simple `{"piece", "x", "y", "z", "rot_deg"}`, posé
+    tel quel via `place_kit_piece` — ni plus ni moins que ce que
+    `build_checkouts` fait déjà pour `kit_checkout`, généralisé à n'importe
+    quelle pièce du kit. Les pièces DETAIL (`kit_ceiling_light`/`kit_vent`/
+    `kit_sign_aisle`/`kit_camera`) n'ont aucun proxy (`kit_spec.py`) :
+    `place_kit_piece` gère déjà ce cas (`proxy_map.get(name, [])` vide),
+    aucune branche spéciale nécessaire ici.
+
+    Existe pour que le placement d'une pièce d'habillage soit une DONNÉE
+    (`level_spec.py`) et non une fonction dédiée par pièce — 7 fonctions
+    quasi identiques n'auraient rien ajouté à la lisibilité."""
+    counts: Counter = Counter()
+    for spec_item in details or []:
+        place_kit_piece(spec_item["piece"], mesh_lookup, proxy_map,
+                         (spec_item["x"], spec_item["y"], spec_item.get("z", 0.0)),
+                         spec_item.get("rot_deg", 0.0), target_coll, col_coll)
+        counts[spec_item["piece"]] += 1
+    return counts
+
+
+# ---------------------------------------------------------------------------
+# Coins de mur — détection et remplissage automatiques (kit_corner_out)
+# ---------------------------------------------------------------------------
+#
+# Un `wall_run` ne couvre que l'empreinte de SON PROPRE segment (voir
+# `plan_wall_run`) : à un coin extérieur classique d'un rectangle (les deux
+# murs commencent OU finissent tous les deux au même point, dans une
+# configuration où aucun des deux ne "prend le relais" de l'autre), le petit
+# carré d'épaisseur × épaisseur à l'extérieur du coin n'est couvert par
+# AUCUN des deux murs — un vide invisible en jeu (personne ne sort des
+# colliders pour le voir) mais bien réel, visible en vue de dessus.
+#
+# Vérifié par calcul direct sur plusieurs coins de `level_spec.py` (pas
+# deviné) : un coin où wall_run A se TERMINE en P et wall_run B COMMENCE en P
+# n'est PAS automatiquement un vide — ça dépend de l'orientation relative des
+# deux `outward`. La méthode générale et fiable est donc un test direct de
+# recouvrement (ce bloc), pas une classification manuelle convexe/concave
+# par coin — voir docs/pipeline/niveau-blender.md#coins-de-mur-détection-automatique
+# pour le détail du raisonnement et deux exemples opposés (un coin sans vide,
+# un coin avec).
+#
+# Tous les murs du projet partagent la même épaisseur (`WALL_THICKNESS`) :
+# tout vide détecté par cet algorithme est donc TOUJOURS un carré
+# épaisseur × épaisseur, exactement la forme de `kit_corner_out`. Aucun vide
+# de la forme de `kit_corner_in` (1×1, compound concave) n'a été trouvé dans
+# aucune des 5 zones ni au niveau combiné — cette pièce reste dans le kit
+# pour un futur plan non rectiligne, mais n'est posée nulle part ici
+# (assumé, signalé dans le rapport de tâche).
+
+def _wall_box_2d(run: dict) -> tuple[float, float, float, float]:
+    """Empreinte 2D (xmin, xmax, ymin, ymax) du `wall_run`, épaisseur outward
+    comprise — même géométrie que celle que `plan_wall_run` matérialise en
+    pièces, mais réduite à un simple rectangle englobant (suffisant pour un
+    test de recouvrement, la pièce réelle est toujours ce rectangle puisque
+    tout mur de ce kit est un pavé droit)."""
+    (x0, y0), (x1, y1) = run["start"], run["end"]
+    ox, oy = run["outward"]
+    t = run.get("thickness", level_spec.WALL_THICKNESS)
+    xa, xb = min(x0, x1), max(x0, x1)
+    ya, yb = min(y0, y1), max(y0, y1)
+    if abs(oy) > abs(ox):     # mur horizontal (varie en X), épaisseur en Y
+        return (xa, xb, ya - t, ya) if oy < 0 else (xa, xb, ya, ya + t)
+    else:                     # mur vertical (varie en Y), épaisseur en X
+        return (xa - t, xa, ya, yb) if ox < 0 else (xa, xa + t, ya, yb)
+
+
+def _covers(box2d: tuple[float, float, float, float], x: float, y: float, eps=1e-4) -> bool:
+    xmin, xmax, ymin, ymax = box2d
+    return xmin - eps <= x <= xmax + eps and ymin - eps <= y <= ymax + eps
+
+
+def find_wall_gaps(walls: list[dict], thickness: float = None) -> list[tuple[float, float]]:
+    """Retourne l'origine (coin xmin,ymin) de chaque vide `épaisseur²`
+    détecté, dédupliquée. `thickness` par défaut = `level_spec.WALL_THICKNESS`
+    (tous les murs du projet la partagent — voir tête de section)."""
+    t = thickness or level_spec.WALL_THICKNESS
+    boxes = [_wall_box_2d(r) for r in walls]
+
+    # Regroupe les extrémités de runs qui coïncident (à la tolérance près),
+    # seule façon fiable de trouver "où deux murs se rencontrent" sans
+    # supposer un ordre de liste particulier.
+    endpoints = []  # (point, run_index)
+    for i, run in enumerate(walls):
+        endpoints.append((run["start"], i))
+        endpoints.append((run["end"], i))
+
+    seen_gaps = set()
+    gaps = []
+    for a in range(len(endpoints)):
+        (pa, ia) = endpoints[a]
+        for b in range(a + 1, len(endpoints)):
+            (pb, ib) = endpoints[b]
+            if ia == ib:
+                continue
+            if abs(pa[0] - pb[0]) > 1e-6 or abs(pa[1] - pb[1]) > 1e-6:
+                continue
+            run_a, run_b = walls[ia], walls[ib]
+            oa, ob = run_a["outward"], run_b["outward"]
+            # Coins perpendiculaires seulement (un T-jonction, outward
+            # parallèle, ne produit jamais de vide — le mur continu couvre
+            # déjà toute son épaisseur le long de sa longueur, voir tête de
+            # section) : produit scalaire des `outward` proche de 0.
+            dot = oa[0] * ob[0] + oa[1] * ob[1]
+            norm = math.hypot(*oa) * math.hypot(*ob)
+            if norm < 1e-9 or abs(dot) / norm > 0.1:
+                continue
+            # Point de test : au centre du carré candidat (P + t/2 dans
+            # chaque direction outward) — représentatif, pas un cas limite.
+            oax, oay = oa[0] / math.hypot(*oa), oa[1] / math.hypot(*oa)
+            obx, oby = ob[0] / math.hypot(*ob), ob[1] / math.hypot(*ob)
+            test_x = pa[0] + (t / 2.0) * (oax + obx)
+            test_y = pa[1] + (t / 2.0) * (oay + oby)
+            if _covers(boxes[ia], test_x, test_y) or _covers(boxes[ib], test_x, test_y):
+                continue
+            corner_x = pa[0] + t * min(0.0, oax) + t * min(0.0, obx)
+            corner_y = pa[1] + t * min(0.0, oay) + t * min(0.0, oby)
+            key = (round(corner_x, 4), round(corner_y, 4))
+            if key in seen_gaps:
+                continue
+            seen_gaps.add(key)
+            gaps.append((corner_x, corner_y))
+    return gaps
+
+
+def build_wall_corners(walls: list[dict], mesh_lookup, proxy_map,
+                        shell_coll, col_coll) -> int:
+    """Détecte les vides d'angle (voir `find_wall_gaps`) et pose un
+    `kit_corner_out` (empreinte épaisseur × épaisseur, voir kit_spec.py) à
+    chacun — rotation 0° : la pièce est un carré, sa section ne dépend pas de
+    l'orientation."""
+    gaps = find_wall_gaps(walls)
+    for (x, y) in gaps:
+        place_kit_piece("kit_corner_out", mesh_lookup, proxy_map,
+                         (x, y, 0.0), 0.0, shell_coll, col_coll)
+    return len(gaps)
+
+
+# ---------------------------------------------------------------------------
+# Porte de quai (Zone D) — encadrement + vantail SCELLÉ (pas de door_*)
+# ---------------------------------------------------------------------------
+
+def build_dock_door(dock_spec: dict | None, mesh_lookup, proxy_map,
+                     materials_lookup: dict, shell_coll, col_coll) -> int:
+    """`kit_dock_door` (encadrement 4 m, ouverture 3×4 — `kit_spec.py`) posé
+    comme un `wall_run` de mur (même mécanique que `build_door_frame`), PLUS
+    un panneau plein sur-mesure qui bouche l'ouverture (même technique que
+    `build_vitrine`/`build_floor_patches` : boîte construite directement en
+    coordonnées MONDE, avec son propre proxy cuboid).
+
+    Volontairement SCELLÉ, pas un `door_*` : contrairement à `door_e_exit`/
+    `door_b_frozen`, cette tâche n'a AUCUN mandat pour toucher `src/**`
+    (aucune convention glTF nouvelle au-delà de `kit_*`/`col_*` autorisée par
+    l'énoncé). Une porte de quai RÉELLEMENT ouvrante nécessiterait soit un
+    nouveau `door_*` (hors scope), soit une rotation dynamique par le loader
+    existant sans le rendre unlockable — dans les deux cas, un vrai chemin de
+    jeu vers l'EXTÉRIEUR NON MODÉLISÉ du bâtiment, un risque de faire tomber
+    le joueur hors du niveau. Un panneau fixe donne la LECTURE d'une porte de
+    quai (silhouette, jambages, linteau) sans ce risque — divergence
+    documentée, pas un oubli."""
+    if dock_spec is None:
+        return 0
+    x, y = dock_spec["x"], dock_spec["y"]
+    rot_deg = dock_spec.get("rot_deg", 0.0)
+    place_kit_piece("kit_dock_door", mesh_lookup, proxy_map, (x, y, 0.0), rot_deg,
+                     shell_coll, col_coll)
+
+    # Panneau scellé, construit en repère LOCAL DE LA PIÈCE (même frame que
+    # `kit_spec._DOCK_PARTS` : jamb=0.5, ouverture 3 × 4 sur toute l'épaisseur
+    # du mur) puis posé avec `location`/`rotation_euler`, EXACTEMENT comme
+    # `build_door_leaf` pose `kit_door_leaf` — pas de trigonométrie manuelle
+    # sur la position (piège déjà rencontré et corrigé ici avant export : un
+    # premier jet calculait la position tournée à la main et se trompait de
+    # signe sur l'épaisseur pour un mur vertical, voir historique de la
+    # tâche). Cette manière est correcte par construction, quelle que soit
+    # l'orientation du mur.
+    jamb, open_w, open_h, thick = 0.5, 3.0, 4.0, level_spec.WALL_THICKNESS
+    name = dock_spec.get("leaf_name", "dock_door_seal")
+    parts = [{"o": (jamb, 0.0, 0.0), "s": (open_w, thick, open_h), "mat": spec.MAT_DETAIL}]
+    panel_obj = geo_utils.build_multi_box_mesh(name, parts, spec.MAT_DETAIL, materials_lookup)
+    panel_obj.location = (x, y, 0.0)
+    panel_obj.rotation_euler = (0.0, 0.0, math.radians(rot_deg))
+    shell_coll.objects.link(panel_obj)
+
+    proxy_obj = geo_utils.build_proxy_object(f"col_box_{name}", "box",
+                                              (jamb, 0.0, 0.0), (open_w, thick, open_h))
+    proxy_obj.location = (x, y, 0.0)
+    proxy_obj.rotation_euler = (0.0, 0.0, math.radians(rot_deg))
+    col_coll.objects.link(proxy_obj)
     return 1
 
 
@@ -864,6 +1090,16 @@ def main() -> None:
         needed_pieces.append(zone["door_frame"]["piece"])
         if zone["door_frame"].get("leaf_name"):
             needed_pieces.append("kit_door_leaf")
+    if zone.get("ceiling"):
+        needed_pieces.append("kit_ceiling_4x4")
+    if zone.get("dock_door"):
+        needed_pieces.append("kit_dock_door")
+    # `kit_corner_out` : posé automatiquement partout où `find_wall_gaps`
+    # trouve un vide (voir la section dédiée) — toute zone rectiligne peut en
+    # avoir besoin, donc systématiquement dans le kit appendé.
+    needed_pieces.append("kit_corner_out")
+    for detail in zone.get("kit_details", []):
+        needed_pieces.append(detail["piece"])
     mesh_names, proxy_map = gather_kit_mesh_names(needed_pieces)
 
     mesh_lookup, materials_lookup = append_kit_data(kit_path, mesh_names, list(spec.MATERIALS.keys()))
@@ -889,6 +1125,10 @@ def main() -> None:
                                                       props_coll, col_coll)
     door_count = build_door_frame(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
     leaf_count = build_door_leaf(zone.get("door_frame"), mesh_lookup, proxy_map, shell, col_coll)
+    dock_count = build_dock_door(zone.get("dock_door"), mesh_lookup, proxy_map, materials_lookup, shell, col_coll)
+    ceiling_count = build_ceiling(zone, zone["floor"], mesh_lookup, proxy_map, shell, col_coll)
+    corner_count = build_wall_corners(zone["walls"], mesh_lookup, proxy_map, shell, col_coll)
+    detail_counts = build_kit_details(zone.get("kit_details"), mesh_lookup, proxy_map, props_coll, col_coll)
 
     spawn_count = build_spawns(zone, logic_coll)
     use_count = build_use_objects(zone, materials_lookup, logic_coll)
@@ -916,6 +1156,10 @@ def main() -> None:
     print(f"  Caisses (crates)   {crate_count}")
     print(f"  Porte              {door_count}")
     print(f"  Vantail de porte   {leaf_count}")
+    print(f"  Porte de quai      {dock_count}")
+    print(f"  Plafond            {ceiling_count}")
+    print(f"  Coins de mur       {corner_count}")
+    print("  Détails du kit     " + ("  ".join(f"{k}:{v}" for k, v in sorted(detail_counts.items())) or "0"))
     print(f"  Spawns             {spawn_count}")
     print(f"  Objets use_*       {use_count}")
     print(f"  Secrets            {secret_count}")
