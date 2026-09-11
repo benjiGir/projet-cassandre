@@ -72,6 +72,7 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
   session.gltfLevelSession = createLevelSession(url, engine.scene, session.physics, {
     onLoaded: (handle, info) => {
       const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
+      session.physics.refreshSceneQueries();
       session.currentNavGraph = runGameplaySync(
         PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
       );

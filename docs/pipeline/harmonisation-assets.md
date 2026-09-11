@@ -102,7 +102,9 @@ bibliothèque, avant d'être rangé dans `LIB_*` :
    10-15°), jamais `Collapse`.
 6. **Proxy de collision** cuboid par défaut, nommé `col_box_<nom>` (skill
    `collision-proxy-authoring`). Les petits objets (produits en rayon) n'en
-   ont pas : c'est l'étagère qui porte la collision.
+   ont pas : c'est l'étagère qui porte la collision. **Les plafonds n'en ont
+   jamais** : le bake du pathfinding prendrait leur dessus pour le sol (voir
+   [Pathfinding](../systems/pathfinding.md)).
 7. **Rangement** : une collection par asset (le rendu et son proxy
    ensemble), marquée comme asset dans la bonne catégorie de l'Asset
    Browser.

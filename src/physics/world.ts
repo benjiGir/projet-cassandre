@@ -116,4 +116,13 @@ export class PhysicsWorld {
     this.world.timestep = dt;
     this.world.step();
   }
+
+  /** Rapier ne peuple sa broad-phase qu'au `step()` : un pas de durée nulle rend les colliders neufs visibles aux rayons sans rien simuler. */
+  // see: docs/systems/physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas
+  refreshSceneQueries() {
+    const dt = this.world.timestep;
+    this.world.timestep = 0;
+    this.world.step();
+    this.world.timestep = dt;
+  }
 }

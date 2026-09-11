@@ -227,3 +227,25 @@ describe("PathfindingService.test (jalon M4) — Layer scriptée, sans monde Rap
     );
   });
 });
+
+// Régression : jusqu'au 2026-09-11, le chargement de niveau bakait le graphe sans jamais faire
+// avancer Rapier, et le graphe sortait vide dans tous les niveaux du jeu.
+describe("PhysicsWorld.refreshSceneQueries — colliders neufs visibles au bake", () => {
+  it.effect("sans rafraîchissement le graphe est vide, avec il couvre le sol", () =>
+    Effect.gen(function* () {
+      const pf = yield* PathfindingService;
+      const bounds = new THREE.Box3(new THREE.Vector3(-5, -1, -5), new THREE.Vector3(5, 3, 5));
+
+      const stale = new PhysicsWorld();
+      box(stale, { x: 0, y: -0.1, z: 0 }, { x: 5, y: 0.1, z: 5 });
+      assert.strictEqual(navGraphStats(yield* pf.bake(stale, bounds)).walkableCount, 0);
+
+      const fresh = new PhysicsWorld();
+      box(fresh, { x: 0, y: -0.1, z: 0 }, { x: 5, y: 0.1, z: 5 });
+      const timestepBefore = fresh.world.timestep;
+      fresh.refreshSceneQueries();
+      assert.strictEqual(fresh.world.timestep, timestepBefore);
+      assert.isAbove(navGraphStats(yield* pf.bake(fresh, bounds)).walkableCount, 100);
+    }).pipe(Effect.provide(GameLayer)),
+  );
+});

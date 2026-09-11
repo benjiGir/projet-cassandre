@@ -111,7 +111,12 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > seul sol praticable par colonne (pathfinding 2.5D), occlusion des
 > lignes de vue non fiable (ADR 0022). Le décor statique est fusionné au
 > chargement par matériau (ADR 0023) : budget du niveau v2, 200 draw calls ;
-> bake en `--type diffuse` (lumière seule) dès qu'il y a des textures.
+> bake en `--type diffuse` (lumière seule) dès qu'il y a des textures ; un
+> plafond n'a jamais de collider (le bake du pathfinding le prendrait pour
+> le sol). **Le pathfinding n'a réellement fonctionné en jeu qu'à partir du
+> 2026-09-11** (graphe vide depuis M4, faute de `refreshSceneQueries()` au
+> chargement) : tout retour de playtest sur le comportement des ennemis
+> est à lire à cette lumière.
 >
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute

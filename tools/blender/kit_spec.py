@@ -289,7 +289,9 @@ KIT = [
 
     dict(name="kit_ceiling_4x4", cls="SHELL", group="SHELL", dims=(4.0, 4.0, SLAB_T),
          slab=True, mat=MAT_SHELL, parts=[box(0, 0, 0, 4.0, 4.0, SLAB_T)],
-         proxies=[("box", "", (0, 0, 0), (4.0, 4.0, SLAB_T))],
+         # Pas de proxy : le bake du pathfinding descend depuis le haut du niveau et prendrait
+         # le dessus du plafond pour le sol ; hors d'atteinte à 5 m, il ne bloque rien en jeu.
+         proxies=[],
          note="origine au coin de la SOUS-FACE : poser à z=5 donne 5 m libres"),
 
     dict(name="kit_pillar", cls="SHELL", group="SHELL", dims=(0.5, 0.5, WALL_H),
@@ -454,7 +456,7 @@ def check_spec():
             if kind not in ("box", "hull_ramp"):
                 errors.append(f"{n}: type de proxy inconnu {kind!r}")
         if p["cls"] != "DETAIL" and not p.get("proxies"):
-            if n != "kit_door_leaf":
+            if n not in ("kit_door_leaf", "kit_ceiling_4x4"):
                 errors.append(f"{n}: pièce collidable sans proxy")
     return errors, warnings
 

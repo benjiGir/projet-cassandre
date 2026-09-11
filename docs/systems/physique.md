@@ -111,6 +111,34 @@ est symétrisée par construction dans le code pour ne jamais s'y exposer.
 > de vrais `RigidBody` Rapier (voir `src/render/fx.ts::spawnShellCasing`),
 > décision documentée directement dans ce fichier.
 
+## Colliders invisibles aux rayons avant le premier pas
+
+Rapier ne range ses colliders dans la structure qui sert aux requêtes
+(la broad-phase) qu'au moment d'un `world.step()`. Un collider tout juste
+créé est donc **invisible** à `castRay`, `castRayAndGetNormal` et
+`intersectionsWithShape` tant qu'aucun pas n'a eu lieu. Rapier 0.20
+n'offre aucune autre façon de mettre ces requêtes à jour.
+
+Le piège était connu des tests depuis les jalons M3 et M4 (chaque fixture
+appelle `physics.step(0)` avant de lancer un rayon, voir la doc de tête de
+`test/physics/raycast.test.ts`), mais **pas du code de production** : de
+M4 (2026-09-03) au 2026-09-11, `loadGltfLevel` bakait le graphe de
+navigation juste après la création des colliders, et **le graphe sortait
+vide dans tous les niveaux** — 0 cellule praticable, les ennemis
+retombaient toujours sur l'évitement local.
+
+Correction : `PhysicsWorld.refreshSceneQueries()` fait un pas de durée
+nulle (rien n'est simulé, le `timestep` est restauré), appelé par
+`game/session/spawning.ts` avant le bake. Le chargement de niveau crée déjà
+des corps hors du pas fixe ; ce pas nul ne fait avancer aucun temps de jeu,
+l'invariant #1 n'est pas entamé. Test de non-régression :
+`test/game/level/pathfinding.test.ts`. **Tout futur code qui interroge le
+monde juste après avoir créé des colliders doit passer par cette méthode.**
+
+Piste ouverte : ce même piège pourrait expliquer l'[ADR
+0022](../decisions/0022-occlusion-rangees-non-bloquante.md) — voir la
+section qui y a été ajoutée.
+
 ## Service de raycasting (RaycastService)
 
 Beaucoup de systèmes ont besoin de poser une question géométrique au monde

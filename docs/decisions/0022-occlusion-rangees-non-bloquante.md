@@ -64,6 +64,22 @@ distingue leur collider `col_box_*` de celui d'un mur `SHELL`, qui bloque
 correctement. **Ne pas supposer que cette hypothèse est la bonne** : elle
 n'a pas été testée.
 
+### Piste (2026-09-11), non vérifiée
+
+Rapier ne rend un collider visible aux rayons qu'après un `world.step()`
+(voir [Physique — Colliders invisibles aux rayons avant le premier
+pas](../systems/physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
+Au chargement d'un niveau, rien n'avançait la simulation avant la première
+passe d'IA : si le premier rayon de ligne de vue d'un ennemi part avant le
+premier pas de physique, il ne rencontre aucun collider et « voit » le
+joueur à travers la rangée. L'ennemi passe alors en alerte, et la suite
+de la machine à états peut s'enchaîner même une fois la rangée redevenue
+opaque. Ce serait cohérent avec les deux constats (ennemis actifs dès le
+spawn, géométrie pourtant correcte). Depuis le 2026-09-11,
+`refreshSceneQueries()` est appelé au chargement, avant toute passe d'IA ;
+le repro headless du jalon N5 (`PLAN_NIVEAU_V2.md`) doit confirmer ou
+écarter cette explication.
+
 ## Alternatives écartées
 
 | Option | Pourquoi non |

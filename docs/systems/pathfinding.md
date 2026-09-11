@@ -39,11 +39,23 @@ flowchart TD
     Avoid --> Steer
 ```
 
-Deux précisions sur ce diagramme :
+Trois précisions sur ce diagramme :
 
 - **`bake` a lieu une seule fois par niveau**, jamais dans le pas fixe — le
   coût de l'échantillonnage/des raycasts ne doit jamais retomber sur la
   boucle de jeu.
+- **`bake` exige un `physics.refreshSceneQueries()` juste avant** : sans
+  lui, les colliders du niveau qui vient d'être chargé sont invisibles aux
+  rayons et le graphe sort vide. C'était le cas en production jusqu'au
+  2026-09-11 — voir [Physique — Colliders invisibles aux rayons avant le
+  premier pas](physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas).
+- **Chaque colonne garde le premier sol touché en descendant.** Un plafond
+  muni d'un collider devient donc « le sol » de toute la salle en dessous.
+  Règle : **les plafonds n'ont pas de collider** (hors d'atteinte, ils ne
+  bloquent rien en jeu ; `kit_ceiling_4x4` n'a plus de proxy depuis le
+  2026-09-11). Le dessus des murs, des piliers et des racks ressort en
+  îlots isolés à 5-6 m, sans arête vers le sol, donc sans effet sur les
+  ennemis.
 - **Le repli vers l'évitement local n'est pas une erreur** : c'est le
   comportement attendu tant qu'aucun graphe n'est encore baké, ou quand
   aucun chemin exploitable n'existe entre les deux points (composantes non
