@@ -18,3 +18,5 @@ __pycache__/
 *.blend1
 .venv-refs/
 /refs/
+# Packs CC0 bruts : retéléchargeables, source et licence dans assets_src/LICENCES_ASSETS.md
+/assets_src/cc0_raw/

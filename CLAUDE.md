@@ -87,12 +87,14 @@ src/ui/       React overlay
 
 tools/blender/        scripts headless (kit, niveaux, bake, validation, export)
 assets_src/blender/   sources .blend (kit + niveaux), jamais servi en runtime
+assets_src/library/   bibliothèque d'assets du niveau v2 (.blend + catégories Asset Browser)
+assets_src/cc0_raw/   packs CC0 bruts, gitignorés (registre : assets_src/LICENCES_ASSETS.md)
 public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 ```
 
 ## Phase courante
 
-> **Chantier Niveau v2 — Planifié (2026-09-11), aucun jalon commencé.**
+> **Chantier Niveau v2 — En cours (2026-09-11) : N0 livré.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)

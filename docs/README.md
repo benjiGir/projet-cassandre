@@ -43,6 +43,7 @@ signale.
 - [Niveau : Blender vers glTF](pipeline/niveau-blender.md)
 - [Textures](pipeline/textures.md)
 - [Assets et références](pipeline/assets.md)
+- [Board de références — hypermarché](assets/board-hypermarche.md) — fiche de spec du niveau v2
 
 ## Référence
 

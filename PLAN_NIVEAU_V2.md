@@ -119,6 +119,12 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 2. Jalon N0 — Mise en place (commun aux deux pistes)
 
+> **✅ Livré (2026-09-11).** Passe du 2026-09-10 committée (`8eefdf7`), plan committé (`5e354b8`). Connexion MCP vérifiée sur Blender 5.1.2. Le travail en direct reste en session principale (option par défaut de l'action 3, `level-forge` inchangé).
+>
+> **Écart avec l'action 4 :** la bibliothèque vit dans son propre dossier, `assets_src/library/lib_hypermarche_v2.blend`, et non dans `assets_src/blender/`. Blender range les catégories de l'Asset Browser dans un fichier `blender_assets.cats.txt` placé à côté du `.blend` ; dans `assets_src/blender/`, ce fichier aurait couvert aussi le kit et les zones. Les six catégories (`assets_src/library/blender_assets.cats.txt`) sont vérifiées dans l'Asset Browser. La bibliothèque contient les collections `_REF` (repère humain de 1,8 m, exclu du rendu), `_RAW` (imports bruts) et `LIB` avec une sous-collection par catégorie ; unités en mètres, snap sur la grille absolue, grille du viewport à 0,25 m. `assets_src/cc0_raw/` est gitignoré, `assets_src/LICENCES_ASSETS.md` créé (vide). `assets_src/textures/` et `tools/textures/` seront créés en N3 avec leur premier contenu. La bibliothèque n'est pas enregistrée dans les préférences Blender de l'utilisateur ; elle s'utilise comme « Fichier courant » quand elle est ouverte.
+>
+> **Board complété** avec 5 sujets (`hypermarche_90s`, `galerie_marchande`, `cafeteria`, `electromenager_tv`, `parking_souterrain`), hors-sujet retiré après une planche contact. Fiche de spec versionnée dans `docs/assets/board-hypermarche.md` (liée depuis `docs/README.md`) ; `refs/SPEC.md` n'est plus qu'un renvoi. **Manques relevés** : Commons ne fournit presque rien sur les hypermarchés français des années 90 (seul le parking souterrain a le bon « jus »), l'électroménager (2 images) et la galerie (3 images) sont sous le seuil de 5 images, et le board n'a aucune référence de style Build / Ion Fury. À compléter par l'utilisateur si possible avant N3.
+
 **Objectif.** Poser l'environnement de travail et les dossiers, sans produire de contenu.
 
 **Actions.**
@@ -126,7 +132,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 2. Blender 5.1 ouvert, add-on MCP activé, serveur démarré ; `get_blendfile_summary_path_info` répond.
 3. Trancher qui pilote le MCP. `level-forge` n'a pas les outils MCP (`tools: Read, Write, Edit, Bash, Glob, Grep` dans `.claude/agents/level-forge.md`). Soit le travail en direct se fait en session principale (défaut), soit on ajoute les outils `mcp__Blender__*` à l'agent.
 4. Arborescence :
-   - `assets_src/blender/lib_hypermarche_v2.blend` : bibliothèque versionnée, rangée dans l'Asset Browser en catalogues Structure, Mobilier de vente, Produits, Signalétique, Déco, Gameplay ;
+   - `assets_src/library/lib_hypermarche_v2.blend` : bibliothèque versionnée, rangée dans l'Asset Browser en catalogues Structure, Mobilier de vente, Produits, Signalétique, Déco, Gameplay ;
    - `assets_src/cc0_raw/<pack>/` : packs téléchargés tels quels, **gitignorés** (retéléchargeables, source au registre) ;
    - `assets_src/textures/` : textures finales 128×128 et `palette.png`, versionnées ;
    - `assets_src/LICENCES_ASSETS.md` : registre des licences, versionné ;
