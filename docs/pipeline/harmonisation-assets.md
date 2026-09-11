@@ -60,6 +60,29 @@ diviser 128, sinon la texture ne se répète plus sans joint.
 d'un pixel. Les motifs fins (tôle, terrazzo, moquette) sont volontairement
 grossis.
 
+## Étiquettes et trim sheet
+
+**Étiquettes de produits** (`generate_labels.py` → `prd_etiquettes.png` et
+`prd_etiquettes.json`) : un atlas 128×128 de 16 cases de 32×32, une face de
+produit par case — les 13 marques inventées validées le 2026-09-11 et trois
+pastilles génériques (promo, prix choc, étiquette de prix). Le texte utilise
+une police pixel 3×5 codée dans le script : une police lissée deviendrait
+illisible une fois quantifiée. **Exception de densité assumée** : une face
+de 30 cm porte 32 px, soit environ 100 px/m au lieu de 64 ; à 64 px/m, un
+produit n'aurait qu'une vingtaine de pixels et aucun nom ne se lirait. Les
+autres faces d'un produit échantillonnent la couleur de fond de sa case.
+Marques et slogans : inventés, jamais inspirés d'une vraie marque.
+
+**Trim sheet** (`generate_trims.py` → `trim_hypermarche.png` et
+`trim_hypermarche.json`) : bandes horizontales répétables — tranche
+d'étagère avec étiquettes de prix, plinthe, bandeau de rayon, bord de quai,
+grille d'aération, néon, cornière, joint de caoutchouc. Les bornes
+verticales de chaque bande sont dans le JSON. En U, 64 px/m (U = x / 2) ;
+en V, la bande est étirée sur la hauteur de l'élément.
+
+Les deux ont été vérifiés en 3D à 640×360 : noms et pictos lisibles à
+1,5 m, tranche d'étagère immédiatement identifiable.
+
 ## Import d'un asset
 
 Tout asset tiers passe par ces étapes, dans la collection `_RAW` de la

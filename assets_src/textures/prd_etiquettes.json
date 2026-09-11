@@ -1,0 +1,198 @@
+{
+  "cell_px": 32,
+  "atlas_px": 128,
+  "labels": {
+    "cereales_pyramides": {
+      "cell": [
+        0,
+        0
+      ],
+      "px": [
+        0,
+        0,
+        32,
+        32
+      ]
+    },
+    "lait_trainees_blanches": {
+      "cell": [
+        1,
+        0
+      ],
+      "px": [
+        32,
+        0,
+        32,
+        32
+      ]
+    },
+    "eau_terre_plate": {
+      "cell": [
+        2,
+        0
+      ],
+      "px": [
+        64,
+        0,
+        32,
+        32
+      ]
+    },
+    "soda_5g_cola": {
+      "cell": [
+        3,
+        0
+      ],
+      "px": [
+        96,
+        0,
+        32,
+        32
+      ]
+    },
+    "raviolis_bunker": {
+      "cell": [
+        0,
+        1
+      ],
+      "px": [
+        0,
+        32,
+        32,
+        32
+      ]
+    },
+    "alu_protect": {
+      "cell": [
+        1,
+        1
+      ],
+      "px": [
+        32,
+        32,
+        32,
+        32
+      ]
+    },
+    "sables_reptiliens": {
+      "cell": [
+        2,
+        1
+      ],
+      "px": [
+        64,
+        32,
+        32,
+        32
+      ]
+    },
+    "cafe_reveille": {
+      "cell": [
+        3,
+        1
+      ],
+      "px": [
+        96,
+        32,
+        32,
+        32
+      ]
+    },
+    "chips_illumi": {
+      "cell": [
+        0,
+        2
+      ],
+      "px": [
+        0,
+        64,
+        32,
+        32
+      ]
+    },
+    "lessive_profonde": {
+      "cell": [
+        1,
+        2
+      ],
+      "px": [
+        32,
+        64,
+        32,
+        32
+      ]
+    },
+    "coquillettes_nouvel_ordre": {
+      "cell": [
+        2,
+        2
+      ],
+      "px": [
+        64,
+        64,
+        32,
+        32
+      ]
+    },
+    "dentifrice_sans_fluor": {
+      "cell": [
+        3,
+        2
+      ],
+      "px": [
+        96,
+        64,
+        32,
+        32
+      ]
+    },
+    "piles_lune_truquee": {
+      "cell": [
+        0,
+        3
+      ],
+      "px": [
+        0,
+        96,
+        32,
+        32
+      ]
+    },
+    "promo_moins_50": {
+      "cell": [
+        1,
+        3
+      ],
+      "px": [
+        32,
+        96,
+        32,
+        32
+      ]
+    },
+    "prix_choc": {
+      "cell": [
+        2,
+        3
+      ],
+      "px": [
+        64,
+        96,
+        32,
+        32
+      ]
+    },
+    "etiquette_prix": {
+      "cell": [
+        3,
+        3
+      ],
+      "px": [
+        96,
+        96,
+        32,
+        32
+      ]
+    }
+  }
+}

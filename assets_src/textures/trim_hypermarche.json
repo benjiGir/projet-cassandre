@@ -1,0 +1,37 @@
+{
+  "width": 128,
+  "bands": {
+    "tranche_etagere": {
+      "y": 0,
+      "height": 16
+    },
+    "plinthe": {
+      "y": 16,
+      "height": 16
+    },
+    "bandeau_rayon": {
+      "y": 32,
+      "height": 32
+    },
+    "bord_quai": {
+      "y": 64,
+      "height": 16
+    },
+    "grille_aeration": {
+      "y": 80,
+      "height": 16
+    },
+    "neon": {
+      "y": 96,
+      "height": 16
+    },
+    "corniere": {
+      "y": 112,
+      "height": 8
+    },
+    "joint_caoutchouc": {
+      "y": 120,
+      "height": 8
+    }
+  }
+}

@@ -189,7 +189,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 5. Jalon N3 — Charte visuelle : palette, textures, règles d'harmonisation (piste B)
 
-> **🔶 En cours (2026-09-11).** ImageMagick n'est pas installé : tout passe par Pillow (`.venv-refs/`), dans `tools/textures/`.
+> **✅ Livré (2026-09-11).** ImageMagick n'est pas installé : tout passe par Pillow (`.venv-refs/`), dans `tools/textures/`.
 >
 > **Palette** (`build_palette.py`) : 56 couleurs par k-means en Lab sur le board, les matériaux ambientCG et les atlas des packs, à poids égal, plus 8 accents de signalétique. Écart moyen de quantification (ΔE) : 3,1 sur les matériaux, 6,1 sur les atlas, 6,8 sur le board.
 >
@@ -199,7 +199,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 >
 > **Fiche d'harmonisation** écrite : [docs/pipeline/harmonisation-assets.md](docs/pipeline/harmonisation-assets.md) (textures, étapes d'import, nommage `str_` / `mob_` / `prd_` / `sig_` / `deco_` / `gp_`).
 >
-> **Reste** : la trim sheet (plinthes, bandeaux, tranches d'étagère) et le générateur d'étiquettes, qui attend la validation de la liste de marques.
+> **Étiquettes** (`generate_labels.py`) : atlas de 16 faces de 32×32 — les 13 marques inventées validées par l'utilisateur (Pyramides, Traînées Blanches, Eau Plate de la Terre Plate, 5G Cola, Raviolis du Bunker, ALU-PROTECT, Sablés Reptiliens, Café Réveillé, Illumi, Profonde, Coquillettes du Nouvel Ordre, Sans-Fluor, Lune Truquée) et trois pastilles génériques. Police pixel 3×5 codée à la main ; exception de densité assumée (environ 100 px/m sur les produits, sinon aucun nom ne se lirait). **Trim sheet** (`generate_trims.py`) : 8 bandes répétables (tranche d'étagère avec prix, plinthe, bandeau « HYPER », bord de quai, grille, néon, cornière, joint). Les deux vérifiées en 3D à 640×360 : noms et pictos lisibles à 1,5 m, tranche d'étagère immédiatement identifiable. Le bandeau porte « HYPER » en attendant un nom d'enseigne pour le magasin.
 
 **Objectif.** Que tout ce qui entre dans la bibliothèque parle la même langue visuelle.
 
