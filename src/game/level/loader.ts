@@ -5,6 +5,7 @@ import { Effect, Exit, Schema, Scope } from "effect";
 
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
 import { GameRuntime } from "../../core/runtime";
+import { mergeStaticDecor } from "./mergeStaticDecor";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -100,8 +101,10 @@ export interface LevelStats {
   doorCount: number;
   useCount: number;
   secretCount: number;
-  /** Meshes rendus tels quels, sans préfixe reconnu — le cas SILENCIEUX. */
+  /** Meshes rendus tels quels, sans préfixe reconnu — le cas SILENCIEUX. Compté AVANT la fusion du décor. */
   unprefixedMeshCount: number;
+  /** Objets de décor réellement rendus après `mergeStaticDecor` : ordre de grandeur des draw calls du décor. */
+  decorBatchCount: number;
 }
 
 export interface LevelHandle {
@@ -788,6 +791,25 @@ function buildLevelResourceEffect(
     const colliderKindCounts = { cuboid: 0, convexHull: 0, trimesh: 0 };
     let unprefixedMeshCount = 0;
 
+    // Un mesh sous une porte ou un objet interactif, ou visé par une animation, bouge ou doit
+    // rester adressable : il ne rejoint jamais un lot fusionné.
+    const movableRoots = new Set(
+      nodes.filter((o) => {
+        const n = blenderName(o);
+        return n.startsWith("door_") || n.startsWith("use_");
+      }),
+    );
+    const animatedNodeNames = new Set(
+      gltf.animations.flatMap((clip) => clip.tracks.map((t) => THREE.PropertyBinding.parseTrackName(t.name).nodeName)),
+    );
+    const isMovable = (obj: THREE.Object3D): boolean => {
+      for (let o: THREE.Object3D | null = obj; o && o !== root; o = o.parent) {
+        if (movableRoots.has(o) || animatedNodeNames.has(o.name)) return true;
+      }
+      return false;
+    };
+    const decorCandidates: THREE.Mesh[] = [];
+
     for (const obj of nodes) {
       // Nom "tel que tapé dans Blender", PAS `obj.name` — voir `blenderName`.
       const name = blenderName(obj);
@@ -894,9 +916,12 @@ function buildLevelResourceEffect(
       // Mesh sans préfixe reconnu : rendu tel quel, SANS collider,
       // SILENCIEUSEMENT — comportement voulu, ne rien logger ici.
       unprefixedMeshCount++;
+      if (!isMovable(obj)) decorCandidates.push(obj);
     }
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
+
+    const decor = mergeStaticDecor(root, decorCandidates);
 
     const stats: LevelStats = {
       colliderCount,
@@ -908,6 +933,7 @@ function buildLevelResourceEffect(
       useCount: useObjects.length,
       secretCount: secrets.length,
       unprefixedMeshCount,
+      decorBatchCount: unprefixedMeshCount - decor.mergedMeshCount + decor.batchCount,
     };
 
     return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, bodies };

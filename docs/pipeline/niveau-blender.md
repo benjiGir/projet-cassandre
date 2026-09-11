@@ -248,6 +248,41 @@ rechargement, remplacement du `setTimeout` récursif par
 `Effect.repeat(Schedule.spaced(...))`) : `PLAN_EFFECT_XSTATE.md` §4 et le
 skill `effect-xstate-cassandre`.
 
+## Fusion du décor statique
+
+À la fin de la construction du niveau, `mergeStaticDecor`
+(`game/level/mergeStaticDecor.ts`) regroupe les meshes de décor sans
+préfixe par **contenu de matériau** (texture, couleurs, vertex colors,
+transparence) et par jeu d'attributs de géométrie, puis fusionne chaque
+groupe en un seul mesh rattaché à `root`. Mesuré sur `hypermarche_complet` :
+615 meshes de décor deviennent 5 lots, et le jeu passe de 513 à 25 draw
+calls, avec un temps de rendu CPU divisé par deux. Décision et
+alternatives : [ADR 0023](../decisions/0023-fusion-decor-au-chargement.md).
+
+La clé se fait sur le contenu parce que `toLambert` crée **un matériau par
+mesh** : deux meshes à la même texture ont deux instances différentes.
+
+Chaque géométrie est copiée dans le lot avec ses propres sommets, donc ses
+propres vertex colors bakées : le piège instancing-vs-bake (voir plus bas)
+ne se pose pas, contrairement à une instanciation GPU.
+
+**Restent individuels** : tout mesh préfixé (`col_*`, `door_*`, `use_*`,
+`trig_*`, `secret_*`), tout mesh sous une porte ou un objet interactif, toute
+cible d'une piste d'animation, les meshes multi-matériaux, skinnés, instanciés
+ou à morph targets, et les meshes à **échelle négative** — la transformation
+inverserait l'ordre des sommets et le back-face culling ferait disparaître
+leurs faces.
+
+Contrepartie : un lot est dessiné en entier dès qu'une de ses parties est
+dans le champ (46 746 → 55 678 triangles sur la même vue). Négligeable sous
+le plafond de 200 000 ; si le niveau v2 s'en approche, découper les lots par
+cellule spatiale plutôt que revenir aux meshes individuels.
+
+`LevelStats.unprefixedMeshCount` reste compté avant la fusion (les
+contrôles de non-régression existants s'appuient dessus) ;
+`LevelStats.decorBatchCount` donne le nombre d'objets de décor réellement
+rendus après fusion.
+
 ## Hot reload
 
 Voir [ADR 0011](../decisions/0011-hot-reload-sondage-http.md) pour le choix
@@ -452,6 +487,15 @@ matériau coloré, le doublement assombrit la surface au carré. Le kit utilise
 des couleurs claires et peu saturées précisément pour que ce doublement
 reste discret. `--type diffuse` bake la lumière seule (Direct + Indirect,
 sans albédo) quand ce doublement devient gênant.
+
+**Niveau v2 texturé : `--type diffuse` obligatoire.** Mesuré le 2026-09-11
+sur une scène d'essai (caisse texturée rouge sur carrelage, une lampe) : en
+`combined`, la caisse enregistre du rouge (0,50 / 0,15 / 0,15), que le jeu
+multiplierait une seconde fois par la texture ; en `diffuse`, une lumière
+neutre (0,55 / 0,53 / 0,51), légèrement chaude par rebond sur le sol beige —
+exactement « texture × lumière ». Les valeurs en lumière seule sont plus
+claires (0,83 sur le sol contre 0,57 en `combined`) : la puissance des
+lampes est à recalibrer pour les zones du niveau v2.
 
 ## Critère de validation
 

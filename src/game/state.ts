@@ -24,6 +24,12 @@ interface DebugState {
   physicsMs: number;
   renderMs: number;
 
+  // see: docs/systems/debug.md#coût-de-rendu
+  /** Draw calls de la dernière image rendue (`renderer.info.render.calls`). */
+  drawCalls: number;
+  /** Triangles de la dernière image rendue (`renderer.info.render.triangles`). */
+  triangles: number;
+
   // see: docs/systems/debug.md#champs-de-debugstate
   isGrounded: boolean;
   /** Vitesse horizontale, m/s. */
@@ -103,6 +109,8 @@ const INITIAL_DEBUG: DebugState = {
   gameplayMs: 0,
   physicsMs: 0,
   renderMs: 0,
+  drawCalls: 0,
+  triangles: 0,
   isGrounded: false,
   horizontalSpeed: 0,
   verticalSpeed: 0,

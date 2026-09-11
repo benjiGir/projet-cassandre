@@ -43,6 +43,18 @@ un `setState` par pas fixe (invariant #2) :
   setters par frame consommerait le budget de perf React avant d'avoir
   commencé (skill `react-hud-bridge`).
 
+### Coût de rendu
+
+`drawCalls`/`triangles` reprennent `renderer.info.render` de la dernière
+image, dans le même bloc throttlé à 10 Hz. Ils sont justes parce que le jeu
+fait **une seule passe WebGL par image** (`main.ts`, rendu direct en
+640×360) : three.js remet ce compteur à zéro à chaque appel de `render()`.
+Une deuxième passe (post-traitement, viewmodel dans une scène séparée)
+ferait afficher le seul coût de la dernière passe — il faudrait alors
+passer `renderer.info.autoReset` à `false` et remettre à zéro une fois par
+image. Ajoutés pour le niveau v2 (`PLAN_NIVEAU_V2.md`, jalon N1), qui doit
+fixer un budget de draw calls avant de densifier le décor.
+
 ### Diagnostic du character controller
 
 `isGrounded`/`horizontalSpeed`/`verticalSpeed`/`numCollisions`/

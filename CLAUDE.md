@@ -94,7 +94,7 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
-> **Chantier Niveau v2 — En cours (2026-09-11) : N0 livré.**
+> **Chantier Niveau v2 — En cours (2026-09-11) : N0, N1 et N3 livrés, N2 presque (quatre licences à confirmer).**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -109,7 +109,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > « rayons » pour valider la richesse. Le niveau actuel reste jouable
 > jusqu'à la bascule (N10). Contraintes à connaître avant de dessiner : un
 > seul sol praticable par colonne (pathfinding 2.5D), occlusion des
-> lignes de vue non fiable (ADR 0022), aucune instanciation dans le loader.
+> lignes de vue non fiable (ADR 0022). Le décor statique est fusionné au
+> chargement par matériau (ADR 0023) : budget du niveau v2, 200 draw calls ;
+> bake en `--type diffuse` (lumière seule) dès qu'il y a des textures.
 >
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute

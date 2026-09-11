@@ -37,3 +37,4 @@ un lien vers son successeur.
 | [0020](0020-state-feuille-de-dependances.md) | `game/state.ts` comme feuille de dépendances — jamais d'import vers `src/game/*` | accepté |
 | [0021](0021-export-vertex-color-enum.md) | `export_vertex_color="ACTIVE"` plutôt que `export_colors` (export glTF Blender 5.x) | accepté |
 | [0022](0022-occlusion-rangees-non-bloquante.md) | Occlusion des rangées de kit non fiable pour la ligne de vue ennemie | accepté (cause racine inconnue) |
+| [0023](0023-fusion-decor-au-chargement.md) | Fusion du décor statique au chargement plutôt qu'instanciation GPU | accepté |

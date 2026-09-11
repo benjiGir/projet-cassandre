@@ -300,6 +300,8 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
             gameplayMs: stats.gameplayMs,
             physicsMs: stats.physicsMs,
             renderMs: stats.renderMs,
+            drawCalls: engine.renderer.info.render.calls,
+            triangles: engine.renderer.info.render.triangles,
             isGrounded: session.player.isGrounded,
             horizontalSpeed: session.player.horizontalSpeed,
             verticalSpeed: session.player.velocity.y,
