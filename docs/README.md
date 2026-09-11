@@ -44,6 +44,7 @@ signale.
 - [Textures](pipeline/textures.md)
 - [Assets et références](pipeline/assets.md)
 - [Board de références — hypermarché](assets/board-hypermarche.md) — fiche de spec du niveau v2
+- [Harmonisation des assets du niveau v2](pipeline/harmonisation-assets.md) — palette, textures, import des packs CC0
 
 ## Référence
 

@@ -14,7 +14,7 @@
 | Époque, ambiance | Hypermarché de province d'aujourd'hui, **resté dans son jus années 90** : carrelage, néons, PLV défraîchie |
 | Style visuel | **Build / Ion Fury** : textures pixel art 64-128 px, contrastées, un peu crasseuses, signalétique criarde |
 | Textures | **Réintroduites**, ce qui revient sur le choix « vertex colors seuls » du 2026-09-10. L'éclairage reste baké en vertex colors ([ADR 0005](docs/decisions/0005-eclairage-vertex-colors.md)) ; la texture porte l'albedo |
-| Source des assets | **Packs CC0 harmonisés uniquement.** Pas de génération 3D par IA. Claude harmonise, assemble et dispose ; il ne modélise pas de props de zéro, hors blockout gris et pièces de structure du kit existant |
+| Source des assets | **Packs CC0 harmonisés uniquement.** Pas de génération 3D par IA. Claude harmonise, assemble et dispose ; il ne modélise pas de props de zéro, hors blockout gris et pièces de structure du kit existant. **Exception actée le 2026-09-11** : les objets sans équivalent CC0 (photomaton, lecteur de carte de fidélité, comptoir de self) sont montés simplement en direct, en volumes simples et textures maison — l'approche Build. La machine à pinces, d'abord sur cette liste, est couverte par le pack CC0 Token Gesture (voir N2) |
 | Emballages | **Marques inventées**, textures générées par script dès le pilote. Jamais de pastiche d'une vraie marque : règle de satire du projet, organisations fictives uniquement |
 | Méthode | Travail **en direct dans Blender** via le MCP officiel Blender Lab, avec capture et correction à chaque étape. Les scripts headless restent pour valider, baker et exporter |
 | MCP | Officiel uniquement (`lab_blender_org/mcp`, Blender 5.1+, `localhost:9876`). Les packs sont téléchargés à la main, chacun validé avant par l'utilisateur (nom, source, taille, licence) |
@@ -85,7 +85,7 @@ Ce chantier réserve leur **emplacement** et pose leur géométrie. Leurs **syst
 ### Registre de risques assumés explicitement
 
 1. **Styles hétérogènes des packs CC0.** Kenney et Quaternius sont propres et arrondis, loin du style Build crasseux. L'harmonisation (retexture, palette, proxies) peut coûter plus que prévu. Si un pack résiste, on l'écarte plutôt que de forcer.
-2. **Couverture CC0 incomplète.** Certains objets propres au jeu (machine à pinces, mur de télés, lecteur de carte de fidélité, enseigne) peuvent n'exister dans aucun pack. Décision au cas par cas avec l'utilisateur ; pas de modélisation de zéro par défaut.
+2. **Couverture CC0 incomplète.** Certains objets propres au jeu (machine à pinces, mur de télés, lecteur de carte de fidélité, enseigne) peuvent n'exister dans aucun pack. Décision au cas par cas avec l'utilisateur ; pas de modélisation de zéro par défaut. *Tranché le 2026-09-11 pour la première liste : voir l'exception au §0 et la carte de couverture de N2.*
 3. **Un seul sol praticable par colonne.** Le pathfinding est un graphe 2.5D avec une seule hauteur de sol par cellule (`groundY` dans `src/game/level/pathfinding.ts`, échantillonné par un rayon vertical descendant). Deux espaces praticables superposés en vue de dessus ne peuvent pas être représentés : les ennemis du niveau inférieur n'auraient aucun chemin. **Contrainte de level design dure** : le parking souterrain (et tout étage de bureaux) ne doit jamais passer sous ou sur un autre espace praticable, par exemple en le plaçant sous le parking extérieur plutôt que sous la surface de vente. Un pathfinding multicouche serait un chantier à part.
 4. **Occlusion des lignes de vue non fiable** ([ADR 0022](docs/decisions/0022-occlusion-rangees-non-bloquante.md), cause inconnue). La nouvelle structure repose sur la couverture (allées transversales, piliers du parking souterrain). Le jalon N5 doit lever ce risque avant tout placement d'ennemis derrière un obstacle.
 5. **Draw calls.** Le loader n'a aucune instanciation, et le niveau combiné compte déjà environ 615 meshes de décor. Une bibliothèque 5 à 10 fois plus fournie impose le jalon N1 avant toute densification.
@@ -164,6 +164,16 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 4. Jalon N2 — Sourcing CC0 et registre des licences (piste B)
 
+> **🔶 En cours (2026-09-11).** Liste validée par l'utilisateur. Pilote : pack épicerie SideQuest, Supermarket de PensamientoAzul, Kenney Food Kit ; textures : ambientCG et Aquilarius. Les packs des autres espaces sont récupérés **tout de suite** (choix de l'utilisateur, pour avoir une vue d'ensemble), pas au moment de l'habillage. Quaternius Ultimate Food n'a pas été retenu.
+>
+> **Téléchargé par Claude et inscrit au registre** : Kenney Food Kit, Furniture Kit, Retro Urban Kit, Car Kit (licence CC0 confirmée aussi par le `License.txt` de chaque archive) ; 17 matériaux ambientCG, dont seules les cartes de couleur sont conservées. Constats : le Furniture Kit contient une télé à tube (`televisionVintage`), ce qui couvre le mur de télés ; le Retro Urban Kit est le seul pack en vraies textures pixel, les autres sont en couleurs unies ou en atlas de dégradés.
+>
+> **À télécharger par l'utilisateur** : tout ce qui est hébergé sur itch.io, dont la page affiche une vérification anti-robot que Claude ne contourne pas (y compris les téléchargements Quaternius, qui passent par itch.io). La licence de ces packs vient des résultats de recherche : elle doit être confirmée sur la page au moment du téléchargement, en ne prenant que la version gratuite CC0.
+>
+> **Déposé par l'utilisateur et inscrit au registre** (archives rangées dans `assets_src/cc0_raw/_archives/`) : KayKit City Builder, Furniture et Restaurant Bits, Quaternius House Interior et Cars, Supermarket de PensamientoAzul, Aquilarius Retro Textures, et trois objets de Retro3DGraphicsCollection (chariot élévateur, voiture PS1 GGBot, bureau valsekamerplant). **Trouvaille hors liste** : Token Gesture — Retro Arcade Props (base pack, CC0 par `LICENSE.txt` inclus) : 17 props d'arcade dont une machine à pinces (2 810 triangles, à décimer sous le budget signature de 2 000), un mur de lots, un changeur de jetons. **Quatre packs sans fichier de licence** (GGBot, valsekamerplant, PensamientoAzul, Aquilarius) restent « à confirmer » au registre et ne s'utilisent pas en jeu avant confirmation. **Pas déposés** : l'épicerie SideQuest, introuvable pour l'utilisateur (le pilote s'en passe : étagères PensamientoAzul et produits Kenney), les fûts PS1 (xiiixvv) et la tuyauterie (chilly-durango).
+>
+> **Carte de couverture** : le mur de télés est couvert (Kenney `televisionVintage`), la machine à pinces aussi (Token Gesture). Restent sans équivalent CC0 le photomaton, le lecteur de carte de fidélité et le comptoir de self : exception de modélisation simple actée (voir §0). Enseignes et signalétique sont produites en textures maison (N3).
+
 **Objectif.** Une liste de packs validée, qui couvre les besoins des 10 espaces.
 
 **Actions.**
@@ -178,6 +188,18 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 ---
 
 ## 5. Jalon N3 — Charte visuelle : palette, textures, règles d'harmonisation (piste B)
+
+> **🔶 En cours (2026-09-11).** ImageMagick n'est pas installé : tout passe par Pillow (`.venv-refs/`), dans `tools/textures/`.
+>
+> **Palette** (`build_palette.py`) : 56 couleurs par k-means en Lab sur le board, les matériaux ambientCG et les atlas des packs, à poids égal, plus 8 accents de signalétique. Écart moyen de quantification (ΔE) : 3,1 sur les matériaux, 6,1 sur les atlas, 6,8 sur le board.
+>
+> **16 textures de base** (`make_textures.py`) : carrelage blanc, damier, deux terrazzos, béton lisse et brut, asphalte, moquette, plâtre propre et usé, dalles de plafond, bac acier, tôle perforée, métal peint rouge, carton, bandes de danger. **Constat** : chez ambientCG, nervures, trous et losanges sont dans la carte de relief, perdue en Lambert ; ils sont repeints par programme dans la couleur, avec une période qui divise 128. La tôle striée et les dalles à grille ont été retirées (illisibles), remplacées par des bandes de danger générées.
+>
+> **Contrôle en 3D** : salle d'essai jetable dans Blender via MCP, UV à 64 px/m, rendu Workbench à 640×360 depuis 1,6 m, en éclairage studio puis plat. Échelle et lisibilité validées (carreaux de 50 cm, motifs nets) ; le rendu reste plus « photo réduite PS1 » que pixel art Ion Fury, à juger en jouant N4.
+>
+> **Fiche d'harmonisation** écrite : [docs/pipeline/harmonisation-assets.md](docs/pipeline/harmonisation-assets.md) (textures, étapes d'import, nommage `str_` / `mob_` / `prd_` / `sig_` / `deco_` / `gp_`).
+>
+> **Reste** : la trim sheet (plinthes, bandeaux, tranches d'étagère) et le générateur d'étiquettes, qui attend la validation de la liste de marques.
 
 **Objectif.** Que tout ce qui entre dans la bibliothèque parle la même langue visuelle.
 
