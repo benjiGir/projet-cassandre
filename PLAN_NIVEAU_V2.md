@@ -300,7 +300,56 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 7. Jalon N5 — Occlusion des lignes de vue (piste A, avant tout placement d'ennemis)
 
-> **Correctif trouvé en préparant N4 (2026-09-11), hors jalon.** Rapier ne rend un collider visible aux rayons qu'après un `world.step()`. Le code de production bakait le graphe de navigation juste après le chargement, sans jamais avancer la simulation : **depuis M4 (2026-09-03), le graphe sortait vide dans tous les niveaux** (0 cellule praticable, vérifié en jeu), et les ennemis se contentaient de l'évitement local. Corrigé par `PhysicsWorld.refreshSceneQueries()` (pas de durée nulle) avant le bake, avec un test de non-régression. Une fois le graphe réellement calculé, un second défaut est apparu : les **plafonds** ajoutés le 2026-09-10 (zones B, C, E) avaient un collider, et le rayon descendant du bake les prenait pour le sol (6 542 cellules à 5 m). Leurs 98 proxies ont été supprimés du kit et des niveaux, réexportés sans refaire le bake ; règle désormais écrite : un plafond n'a jamais de collider. Résultat sur `hypermarche_complet` : 9 209 cellules au sol au lieu de 3 954, graphe hors toit. **Le pathfinding agit en jeu pour la première fois** : le comportement des ennemis peut changer, à surveiller en jouant. **Hypothèse pour ce jalon** : le premier rayon de ligne de vue de chaque ennemi partait lui aussi avant le premier pas de physique, ce qui expliquerait l'ADR 0022 ; le repro doit la confirmer ou l'écarter.
+> **✅ Livré (2026-09-12). L'hypothèse du 2026-09-11 est CONFIRMÉE, et le
+> risque 4 tombe : on peut compter sur l'occlusion.** Repro headless écrit
+> (`test/game/entities/lineOfSight.test.ts`, 12 cas, aucun raycast scripté :
+> vrai `RaycastService`, vrai monde Rapier, vrai `Suit`, et pour les cas
+> décisifs les `.glb` RÉELLEMENT exportés, relus par `GLTFLoader.parse` aux
+> positions de spawn d'origine). Résultat net : à la position que l'ADR 0022
+> avait déplacée, le Costard reste `idle` quand le monde a été « pas-sé », et
+> passe `alert` quand il ne l'a pas été. **Zéro ligne de code de gameplay
+> écrite** : le correctif était déjà là depuis le 2026-09-11
+> (`refreshSceneQueries()` au chargement, posé pour le graphe de navigation —
+> il réparait la ligne de vue par la même occasion, sans que personne le
+> sache). [ADR 0022](docs/decisions/0022-occlusion-rangees-non-bloquante.md)
+> passé en `remplace`, nouvel [ADR
+> 0025](docs/decisions/0025-occlusion-lignes-de-vue-cause-racine.md) qui porte
+> la décision et les règles de placement.
+>
+> **Deux surprises que seule la mesure pouvait donner**, et qui changent la
+> lecture des anciennes zones : la position « occultée par la rangée » de la
+> Zone D l'est en fait par un **pilier** posé pour tout autre chose, et celle
+> de la Zone D est ne tient qu'à un **effleurement du coin** de la rangée
+> (occlusion réelle, robustesse nulle — un pas de côté du joueur l'annule).
+> Cette dernière répond à une question restée ouverte dans
+> `tools/blender/README.md`. Les tests sur niveau réel vérifient donc QUEL
+> collider arrête le rayon, pas seulement qu'il s'arrête.
+>
+> **Trois règles pour N6**, toutes mesurées : (1) une rangée couvre, une
+> embuscade par occlusion est un outil disponible ; (2) une allée ne couvre
+> rien, l'embuscade se pose dans une allée transversale ; (3) rien sous 1,6 m
+> ne bloque un rayon (1,8 m face au Directeur) — caisses, palettes et
+> comptoirs bas sont des obstacles de déplacement, pas du couvert.
+>
+> **Non fait, délibérément** : rapprocher les spawns des Zones C et D de leur
+> position de plan d'origine, désormais possible. Ces zones sont remplacées
+> au jalon N10, le travail serait jeté. Et **pas de vérification en jeu** :
+> le repro tourne sur les octets exacts du `.glb` servi au jeu, c'est plus
+> fidèle qu'un relevé console — mais la scène réelle peut différer sur un
+> point non couvert (collider créé APRÈS le chargement : hot reload, porte,
+> prop dynamique), noté dans l'ADR 0025.
+>
+> Une dette de typage, assumée : `test/node-builtin-shims.d.ts` déclare la
+> tranche minimale de `node:fs`/`node:path` utilisée pour relire un `.glb`.
+> `@types/node` n'est pas installé, et le charger redéfinirait des globales
+> partagées avec le DOM (`setTimeout` en tête) dans un projet qui cible le
+> navigateur. Le fichier est limité au dossier `test/`.
+>
+> `pnpm build` propre, `pnpm test` vert (132/132).
+>
+> ---
+>
+> **Contexte, écrit avant le jalon — correctif trouvé en préparant N4 (2026-09-11), hors jalon.** Rapier ne rend un collider visible aux rayons qu'après un `world.step()`. Le code de production bakait le graphe de navigation juste après le chargement, sans jamais avancer la simulation : **depuis M4 (2026-09-03), le graphe sortait vide dans tous les niveaux** (0 cellule praticable, vérifié en jeu), et les ennemis se contentaient de l'évitement local. Corrigé par `PhysicsWorld.refreshSceneQueries()` (pas de durée nulle) avant le bake, avec un test de non-régression. Une fois le graphe réellement calculé, un second défaut est apparu : les **plafonds** ajoutés le 2026-09-10 (zones B, C, E) avaient un collider, et le rayon descendant du bake les prenait pour le sol (6 542 cellules à 5 m). Leurs 98 proxies ont été supprimés du kit et des niveaux, réexportés sans refaire le bake ; règle désormais écrite : un plafond n'a jamais de collider. Résultat sur `hypermarche_complet` : 9 209 cellules au sol au lieu de 3 954, graphe hors toit. **Le pathfinding agit en jeu pour la première fois** : le comportement des ennemis peut changer, à surveiller en jouant. **Hypothèse pour ce jalon** : le premier rayon de ligne de vue de chaque ennemi partait lui aussi avant le premier pas de physique, ce qui expliquerait l'ADR 0022 ; le repro doit la confirmer ou l'écarter.
 
 **Objectif.** Savoir si une rangée, un pilier ou un comptoir bloque vraiment le regard d'un ennemi (risque 4).
 

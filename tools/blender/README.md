@@ -416,10 +416,18 @@ l'étendue Y de la rangée [4,20]) — occlusion confirmée. Côté est, le segm
 spawn(0,0)→suit_2(10,10) (droite y=x) ne croise l'empreinte réelle de la
 rangée est (X∈[2.8,4.0], Y∈[4,20]) qu'au point unique (4,4) — un
 effleurement de coin, pas une occlusion robuste. Position NON modifiée ici
-(décision de layout, hors périmètre de cette tâche) — à vérifier en jeu via
-`window.cassandre.suits` comme indiqué dans le rapport ; si `spawn_suit_2`
-sort en état `attack`/visible immédiatement, c'est la cause géométrique
-exacte.
+(décision de layout, hors périmètre de cette tâche).
+
+**Répondu au jalon N5 (2026-09-12)** par un repro headless sur le `.glb`
+exporté (`test/game/entities/lineOfSight.test.ts`, [ADR
+0025](../../docs/decisions/0025-occlusion-lignes-de-vue-cause-racine.md)) :
+depuis le `spawn_player`, le rayon s'arrête bel et bien — au coin exact
+(4, −4), c'est-à-dire par l'effleurement décrit ci-dessus. Occlusion réelle,
+robustesse nulle : un pas de côté du joueur l'annule. Et côté ouest, ce n'est
+pas la rangée qui coupe la vue mais `col_box_pillar` (arête à (−8,5 ; −8,5)),
+qui s'intercale avant elle. Le calcul géométrique d'origine était juste sur
+les racks ; il ne regardait simplement pas tout ce qui traîne sur le
+segment.
 
 **Piège de grille — nouvelle famille, propre à la Zone D (empilement
 vertical, pas tiling horizontal).** Les 8 warnings restants viennent tous de

@@ -1,16 +1,26 @@
 ---
 title: Occlusion des rangées de kit non fiable pour la ligne de vue ennemie
 tags: [adr, entites, level-design, raison-partielle]
-status: accepte
-updated: 2026-09-06
+status: remplace
+updated: 2026-09-12
 ---
 
 # ADR 0022 — Occlusion des rangées de kit non fiable pour la ligne de vue ennemie
 
 ## Statut
 
-Accepté pour le contournement. La cause racine reste **non identifiée** —
-voir la section dédiée ci-dessous plutôt qu'une justification inventée.
+**Remplacé par l'[ADR 0025](0025-occlusion-lignes-de-vue-cause-racine.md)
+(jalon N5, 2026-09-12), qui identifie la cause racine et rétablit la
+confiance dans l'occlusion.** Conservé tel quel : le raisonnement suivi ici
+— contourner par la distance plutôt que bloquer deux zones sur une cause
+inconnue — reste valide au moment où il a été tenu, et la piste ajoutée le
+2026-09-11 est celle qui s'est révélée juste.
+
+Ce qui a changé : le rayon de ligne de vue ne traversait pas la rangée à
+cause d'un défaut d'occlusion, mais parce qu'il partait **avant le premier
+pas de physique**, dans un monde Rapier dont la broad-phase était encore
+vide. Corrigé le 2026-09-11 (`refreshSceneQueries()`), mesuré le 2026-09-12
+(`test/game/entities/lineOfSight.test.ts`).
 
 ## Contexte
 
@@ -55,7 +65,7 @@ compter sur le blocage de ligne de vue par la rangée :
 Revérifié en jeu dans les deux cas : les ennemis concernés passent
 `idle` → `alert` → `chase` sans jamais `attack` au spawn.
 
-## Cause racine — non identifiée
+## Cause racine — non identifiée (à la date de cet ADR)
 
 Aucun repro headless n'a été tenté. Hypothèse non vérifiée : un gap général
 sur l'occlusion des pièces `PROP` du kit (gondoles, racks) spécifiquement
@@ -80,6 +90,9 @@ spawn, géométrie pourtant correcte). Depuis le 2026-09-11,
 le repro headless du jalon N5 (`PLAN_NIVEAU_V2.md`) doit confirmer ou
 écarter cette explication.
 
+**Confirmée le 2026-09-12** par ce repro — voir l'[ADR
+0025](0025-occlusion-lignes-de-vue-cause-racine.md).
+
 ## Alternatives écartées
 
 | Option | Pourquoi non |
@@ -100,9 +113,9 @@ le repro headless du jalon N5 (`PLAN_NIVEAU_V2.md`) doit confirmer ou
 
 ## Comment on saurait qu'on a eu tort
 
-Si un futur repro headless identifie une cause précise (ex. un défaut de
-`col_box_*` généré par `build_kit.py` pour les pièces `PROPS` uniquement, ou
-un problème de tolérance dans `RaycastService`/`WORLD_ONLY_RAY_GROUPS`), la
-corriger à la source rendrait ce contournement par distance inutile pour les
-zones existantes et permettrait de rapprocher les spawns du plan de level
-design d'origine.
+Critère écrit ici en 2026-09-06 : « si un futur repro headless identifie une
+cause précise, la corriger à la source rendrait ce contournement par distance
+inutile ». **C'est exactement ce qui est arrivé** — la cause n'était ni dans
+`build_kit.py` ni dans `RaycastService`, mais dans l'ordre des opérations au
+chargement. Les positions de spawn des Zones C et D n'ont pas été rapprochées
+pour autant : ces zones sont remplacées par le niveau v2 au jalon N10.

@@ -135,9 +135,13 @@ l'invariant #1 n'est pas entamé. Test de non-régression :
 `test/game/level/pathfinding.test.ts`. **Tout futur code qui interroge le
 monde juste après avoir créé des colliders doit passer par cette méthode.**
 
-Piste ouverte : ce même piège pourrait expliquer l'[ADR
-0022](../decisions/0022-occlusion-rangees-non-bloquante.md) — voir la
-section qui y a été ajoutée.
+Ce même piège expliquait l'[ADR
+0022](../decisions/0022-occlusion-rangees-non-bloquante.md) : le premier
+rayon de ligne de vue de chaque ennemi partait lui aussi dans une
+broad-phase vide, d'où des ennemis réveillés à travers une rangée de
+gondoles. Confirmé par la mesure au jalon N5 et clos par l'[ADR
+0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md) — le même
+correctif répare les deux.
 
 ## Service de raycasting (RaycastService)
 

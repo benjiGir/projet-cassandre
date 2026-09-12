@@ -291,6 +291,28 @@ Aucune zone existante n'a été retouchée pour exploiter ce pathfinding
 ou dans un escalier reste une décision de level design séparée à prendre
 consciemment, pas un acquis automatique du nouveau système.
 
+### Perception : ce qu'un ennemi voit à travers, et ce qu'il ne voit pas
+
+`hasClearWorldPath` tire un rayon `WORLD_ONLY_RAY_GROUPS` entre les yeux de
+l'ennemi et ceux du joueur, contre la géométrie du niveau seule. Ce que le
+level design peut en attendre, mesuré au jalon N5 sur les `.glb` exportés
+([ADR 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md),
+`test/game/entities/lineOfSight.test.ts`) :
+
+- une rangée de gondoles ou de racks **couvre réellement** — un ennemi posé
+  derrière reste `idle` ;
+- une **allée** ne couvre rien : c'est une ligne droite dégagée d'un bout à
+  l'autre ;
+- rien **sous `eyeHeight`** (1,6 m pour le joueur et le Costard, 1,8 m pour
+  le Directeur) ne bloque un rayon : caisses de sortie, palettes et
+  comptoirs bas sont des obstacles de déplacement, pas du couvert ;
+- un collider créé **après** le chargement du niveau n'est visible aux
+  rayons qu'après un pas de physique (voir [Physique —
+  `refreshSceneQueries`](physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
+  C'est ce piège, et non un défaut d'occlusion, qui a valu à l'[ADR
+  0022](../decisions/0022-occlusion-rangees-non-bloquante.md) deux zones
+  contournées par la distance.
+
 ## Les managers qui pilotent chaque type d'ennemi (SuitManager et DirectorManager)
 
 `SuitManager`/`DirectorManager` possèdent respectivement `Suit[]`/

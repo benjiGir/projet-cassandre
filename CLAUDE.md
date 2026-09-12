@@ -94,7 +94,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
-> **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3 et N4 livrés (gate de richesse PASSÉ), N2 presque (quatre licences à confirmer).**
+> **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
+> richesse PASSÉ) et N5 livrés, N2 presque (quatre licences à confirmer).
+> Prochain : N6, le plan de masse coté.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -108,9 +110,11 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > pistes en parallèle : structure → blockout gris joué, et salle d'essai
 > « rayons » pour valider la richesse. Le niveau actuel reste jouable
 > jusqu'à la bascule (N10). Contraintes à connaître avant de dessiner : un
-> seul sol praticable par colonne (pathfinding 2.5D), occlusion des
-> lignes de vue non fiable (ADR 0022). Le décor statique est fusionné au
-> chargement par matériau (ADR 0023) : budget du niveau v2, 200 draw calls ;
+> seul sol praticable par colonne (pathfinding 2.5D). **L'occlusion des
+> lignes de vue, elle, est fiable — mesuré à N5 (ADR 0025, qui remplace
+> l'ADR 0022)** : une rangée couvre, une allée ne couvre rien, et rien sous
+> 1,6 m ne bloque un rayon (1,8 m face au Directeur). Le décor statique est
+> fusionné au chargement par matériau (ADR 0023) : budget du niveau v2, 200 draw calls ;
 > bake en `--type diffuse` (lumière seule) dès qu'il y a des textures ; un
 > plafond n'a jamais de collider (le bake du pathfinding le prendrait pour
 > le sol). **Le pathfinding n'a réellement fonctionné en jeu qu'à partir du
@@ -379,12 +383,12 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > géométrique du croisement correct côté ouest. Pourtant vérifié en jeu
 > (`window.cassandre.suits`) : les DEUX passent `attack` dès le spawn
 > (~13.8m, sous `attackRange`=16m) — la rangée ne bloque PAS
-> `hasClearWorldPath` en pratique. **Cause racine non identifiée**, cf.
-> [[project_cassandre_boomer_shooter]] mémoire pour le détail de
-> l'investigation ; possible gap général sur l'occlusion des pièces `PROP`
-> du kit pour les rayons de vue, pas spécifique à cette zone — mérite un
-> repro headless dédié, pas creusé plus ici. Contournement appliqué (pas une
-> correction) : les deux repositionnés à Y=16 (~18.9m), hors `attackRange`
+> `hasClearWorldPath` en pratique. **Cause racine trouvée depuis, au jalon
+> N5 du niveau v2 (2026-09-12)** : le rayon partait avant le premier pas de
+> physique, dans une broad-phase Rapier encore vide — rien à voir avec les
+> pièces `PROP`, l'hypothèse d'un gap sur le kit est fausse (ADR 0025).
+> Corrigé depuis le 2026-09-11 par `refreshSceneQueries()` au chargement.
+> Contournement appliqué à l'époque (pas une correction) : les deux repositionnés à Y=16 (~18.9m), hors `attackRange`
 > quelle que soit l'occlusion réelle, même stratégie de secours que B/C.
 > Revérifié en jeu : les 5 Costards passent `idle`→`alert`→`chase` sans
 > jamais `attack` au spawn.

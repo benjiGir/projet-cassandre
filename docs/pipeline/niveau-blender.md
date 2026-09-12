@@ -428,15 +428,27 @@ n'affecte pas le bake — `build_combined_level.py` supprime les cinq mondes
 inutilisés après coup (comparaison par nom, pas par identité d'objet Python)
 par propreté, pas par nécessité de correction.
 
-### Occlusion des rangées de kit — écart connu
+### Occlusion des rangées de kit — ce sur quoi on peut compter
 
-Voir [ADR 0022](../decisions/0022-occlusion-rangees-non-bloquante.md) :
-poser un `spawn_suit_*` derrière une rangée de `kit_gondola_*`/`kit_rack_4m`
-en comptant sur l'occlusion pour bloquer la ligne de vue ennemie s'est
-révélé peu fiable en pratique (deux zones, deux pièces différentes),
-malgré une géométrie et des groupes de collision corrects par relecture. La
-cause racine n'a pas été identifiée — vérifier en jeu, pas seulement par
-calcul, avant de compter dessus dans une future zone.
+Une rangée de `kit_gondola_*`/`kit_rack_4m` **bloque réellement** la ligne de
+vue ennemie : un `spawn_suit_*` posé derrière reste `idle`. Mesuré au jalon
+N5 sur les `.glb` réellement exportés ([ADR
+0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md),
+`test/game/entities/lineOfSight.test.ts`), après une période de défiance
+fondée sur un symptôme dont la cause était ailleurs ([ADR
+0022](../decisions/0022-occlusion-rangees-non-bloquante.md) : le premier
+rayon partait avant le premier pas de physique).
+
+Trois limites à garder en tête en posant un ennemi :
+
+- **une allée ne couvre rien** — c'est une ligne droite dégagée d'un bout à
+  l'autre ; l'embuscade se pose dans une allée transversale, jamais dans
+  celle que le joueur regarde ;
+- **rien sous 1,6 m ne bloque un rayon** — `kit_checkout` (1,10 m), palettes
+  et comptoirs bas sont des obstacles de déplacement, pas du couvert. Un
+  couvert utile dépasse 1,6 m, et 1,8 m face au Directeur ;
+- un collider créé **après** le chargement (porte, prop dynamique) n'est
+  visible aux rayons qu'après un pas de physique.
 
 ## Bake d'éclairage (vertex colors)
 
