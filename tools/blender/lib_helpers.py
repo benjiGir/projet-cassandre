@@ -72,11 +72,15 @@ def _uv_trim(band: str, bounds):
     def fn(face, uv):
         n = face.normal
         along_x = abs(n.y) >= abs(n.x)
+        # Une bande de trim porte du texte : sur la face opposée, U doit décroître,
+        # sinon le bandeau se lit en miroir (« ЯƎPYH »). Vu depuis +y, l'axe +x part
+        # vers la gauche ; vu depuis -x, c'est +y qui part vers la gauche.
+        flip = (n.y > 0) if along_x else (n.x < 0)
         for loop in face.loops:
             c = loop.vert.co
             u = (c.x if along_x else c.y) / 2.0
             t = (c.z - z0) / max(z1 - z0, 1e-6)
-            loop[uv].uv = (u, v_bot + t * (v_top - v_bot))
+            loop[uv].uv = (-u if flip else u, v_bot + t * (v_top - v_bot))
     return fn
 
 
@@ -103,20 +107,87 @@ def _uv_label(label: str, bounds, front_axis: str = "-y"):
     return fn
 
 
+def subdivide(bm, target: float, passes: int = 6) -> None:
+    """Coupe les arêtes plus longues que `target`, jusqu'à ce qu'il n'en reste plus.
+
+    L'éclairage est baké PAR SOMMET : un mur de 16 m qui n'a que huit sommets
+    ne peut porter aucun dégradé, et ses huit coins sont justement les points
+    que la géométrie voisine vient sceller — le bake le rend alors entièrement
+    noir. Il lui faut des sommets à l'intérieur de sa surface.
+
+    Seules les arêtes trop longues sont coupées : une boîte de produit de 20 cm
+    reste intacte, un panneau de 4 m se découpe en grille.
+    """
+    for _ in range(passes):
+        edges = [e for e in bm.edges if e.calc_length() > target * 1.5]
+        if not edges:
+            break
+        bmesh.ops.subdivide_edges(bm, edges=edges, cuts=1, use_grid_fill=True)
+    bm.normal_update()
+
+
+def _mapper(uv: str, bounds, front: str):
+    if uv == "world":
+        return _uv_world
+    if uv.startswith("trim:"):
+        return _uv_trim(uv[5:], bounds)
+    if uv.startswith("label:"):
+        return _uv_label(uv[6:], bounds, front)
+    raise ValueError(uv)
+
+
+def boxes(name: str, parts, texture: str, coll: bpy.types.Collection,
+          subdiv: float = 0.75) -> bpy.types.Object:
+    """Plusieurs boîtes en UN SEUL mesh, donc un seul objet par matériau.
+
+    `parts` : liste de `(bounds, uv)` ou `(bounds, uv, front)`. Regrouper ainsi
+    évite qu'une gondole coûte vingt objets ; la fusion au chargement (ADR
+    0023) regroupe ensuite d'une gondole à l'autre.
+
+    `subdiv` est la longueur d'arête maximale — voir `subdivide`, sans quoi le
+    bake d'éclairage n'a aucun sommet où déposer un dégradé.
+    """
+    bm = bmesh.new()
+    layer = bm.loops.layers.uv.new("UVMap")
+    for part in parts:
+        bounds, uv = part[0], part[1]
+        piece = _box_bmesh(*bounds)
+        subdivide(piece, subdiv)
+        piece_layer = piece.loops.layers.uv.new("UVMap")
+        mapper = _mapper(uv, bounds, part[2] if len(part) > 2 else "-y")
+        for face in piece.faces:
+            mapper(face, piece_layer)
+        me_tmp = bpy.data.meshes.new("_tmp")
+        piece.to_mesh(me_tmp)
+        piece.free()
+        bm.from_mesh(me_tmp)
+        bpy.data.meshes.remove(me_tmp)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(name, me)
+    obj.data.materials.append(textured_material(texture))
+    coll.objects.link(obj)
+    return obj
+
+
 def box(name: str, bounds, texture: str, coll: bpy.types.Collection, uv: str = "world", **kw) -> bpy.types.Object:
     """bounds = (x0, y0, z0, x1, y1, z1) en mètres, monde. uv : "world", "trim:<bande>" ou "label:<étiquette>"."""
-    bm = _box_bmesh(*bounds)
+    return boxes(name, [(bounds, uv, kw.get("front", "-y"))], texture, coll,
+                 subdiv=kw.get("subdiv", 0.75))
+
+
+def cylinder(name: str, center, radius: float, z0: float, z1: float, texture: str,
+             coll: bpy.types.Collection, segments: int = 8) -> bpy.types.Object:
+    """Cylindre à faible nombre de côtés, UV projetées comme une boîte (64 px/m)."""
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=segments,
+                          radius1=radius, radius2=radius, depth=z1 - z0)
+    bmesh.ops.translate(bm, verts=bm.verts, vec=(center[0], center[1], (z0 + z1) / 2))
+    bm.normal_update()
     layer = bm.loops.layers.uv.new("UVMap")
-    if uv == "world":
-        mapper = _uv_world
-    elif uv.startswith("trim:"):
-        mapper = _uv_trim(uv[5:], bounds)
-    elif uv.startswith("label:"):
-        mapper = _uv_label(uv[6:], bounds, kw.get("front", "-y"))
-    else:
-        raise ValueError(uv)
     for face in bm.faces:
-        mapper(face, layer)
+        _uv_world(face, layer)
     me = bpy.data.meshes.new(name)
     bm.to_mesh(me)
     bm.free()

@@ -227,6 +227,42 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 6. Jalon N4 — Salle d'essai « rayons » (piste B, gate de richesse)
 
+> **🔶 Construite (2026-09-12), verdict de l'utilisateur en attente.** Salle
+> de 16 × 20 m, trois rangées coupées par une allée transversale, en jeu sous
+> `Essai — Rayons (niveau v2)`. Bibliothèque de **37 assets générés par code**
+> (`tools/blender/lib_rayons.py`), rangés dans l'Asset Browser par
+> `build_library.py`. `validate_level.py --strict` : **0 erreur, 0 warning**.
+> **96 350 triangles** (budget 200 000) et **13 à 26 lots de dessin** en jeu
+> (budget 200), 120 FPS, rendu 0,20 ms. Quatre itérations visuelles, la limite
+> prévue.
+>
+> **Trois défauts de pipeline trouvés en route, tous antérieurs à ce jalon :**
+> 1. **Un bake par sommet exige des sommets.** 42 meshes sur 262 sortaient
+>    entièrement noirs — panneaux à huit sommets dont chaque coin était scellé
+>    par la géométrie voisine. `lib_helpers.subdivide` découpe toute arête au
+>    delà d'un seuil ; zéro mesh noir ensuite.
+> 2. **Une salle close n'a pas de lumière d'ambiance.** Mesuré : faire varier
+>    la couleur du monde ne change rien, aucune lumière n'entre. Nouveau
+>    `bake_vertex_lighting.py --ambient`, terme d'ambiant global à l'ancienne
+>    (remap, sans écrêtage). Et `--emissive-marker` : un tube de néon, source
+>    la plus lumineuse de la salle, ressortait noir.
+> 3. **Le bake n'était pas le seul éclairage du jeu.** Une `DirectionalLight`
+>    et une `AmbientLight` héritées de la Phase 1 multipliaient tout niveau
+>    baké par une direction arbitraire (5, 10, 5) sans rapport avec ses néons :
+>    une face à l'opposé perdait 60 % de sa luminosité cuite. `LevelDef.bakedLighting`
+>    les neutralise, **par niveau** — les zones A-E ont été éclairées à l'œil
+>    SOUS cet ancien rig, leur bascule se décide à N10.
+>
+> **Écart assumé au plan** : le générateur de rayon garni est en Python, pas
+> en Geometry Nodes — le bake travaille par sommet sur de la géométrie réelle,
+> et une réalisation GN produit un mesh multi-matériaux que la fusion au
+> chargement refuse (ADR 0023). Raisonnement complet dans
+> `docs/pipeline/harmonisation-assets.md`.
+>
+> **Non utilisé** : le Supermarket de PensamientoAzul, dont la licence reste
+> « à confirmer ». Les gondoles sont remontées en pièces simples, les produits
+> viennent de Kenney Food et des 13 marques inventées de N3.
+
 **Objectif.** Prouver qu'on atteint la richesse visée avant d'habiller le niveau entier.
 
 **Actions** (en direct via MCP, capture à chaque étape).

@@ -14,6 +14,13 @@ export interface LevelDef {
   gltfName?: string;
   /** Le joueur démarre désarmé (pied-de-biche au sol, ramassable via use_crowbar) — voir WeaponSystem.startUnarmed()/pickUpMelee(). */
   startUnarmed?: boolean;
+  /**
+   * L'éclairage du niveau est CUIT dans les couleurs de sommet : la scène
+   * coupe alors son soleil et passe son ambiante à 1, pour que le rendu vaille
+   * exactement texture × couleur cuite.
+   * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+   */
+  bakedLighting?: boolean;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
@@ -25,6 +32,15 @@ export const LEVEL_CHOICES: LevelDef[] = [
   { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },
   { id: "zone_d_reserve", label: "Zone D — Réserve", kind: "gltf", gltfName: "zone_d_reserve" },
   { id: "zone_e_bureau", label: "Zone E — Bureau", kind: "gltf", gltfName: "zone_e_bureau" },
+  // Salle d'essai du chantier Niveau v2 (jalon N4) : sert à juger la richesse
+  // visuelle de la bibliothèque d'assets, pas à jouer. Voir PLAN_NIVEAU_V2.md.
+  {
+    id: "salle_essai_rayons",
+    label: "Essai — Rayons (niveau v2)",
+    kind: "gltf",
+    gltfName: "salle_essai_rayons",
+    bakedLighting: true,
+  },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {
     id: "hypermarche_complet",

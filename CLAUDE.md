@@ -117,6 +117,17 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > 2026-09-11** (graphe vide depuis M4, faute de `refreshSceneQueries()` au
 > chargement) : tout retour de playtest sur le comportement des ennemis
 > est à lire à cette lumière.
+> Bibliothèque d'assets du niveau v2 : 37 assets **générés par code**
+> (`tools/blender/lib_rayons.py`) ; `lib_hypermarche_v2.blend` est un produit
+> régénérable, jamais un fichier qu'on édite à la main. Salle d'essai jouable
+> via le menu dev (`salle_essai_rayons`). Trois règles de bake nées de N4 :
+> **subdiviser** toute grande surface (un bake par sommet exige des sommets,
+> sinon mesh noir), **`--ambient`** (une salle close n'a aucune lumière
+> d'environnement), **`--emissive-marker`** (une source ne s'éclaire pas
+> elle-même). Et surtout : un niveau baké doit porter
+> **`LevelDef.bakedLighting`**, sans quoi le soleil temps réel hérité de la
+> Phase 1 multiplie tout le bake par une direction arbitraire — actif
+> seulement sur la salle d'essai, la bascule des zones A-E se décide à N10.
 >
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute

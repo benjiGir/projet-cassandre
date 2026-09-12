@@ -28,7 +28,9 @@ import sys
 
 import bpy
 
-EXCLUDED_COLLECTIONS = {"_KIT"}
+# Collections SOURCES : le kit modulaire et la bibliothèque du niveau v2. On
+# n'exporte que les copies posées en niveau, jamais les originaux.
+EXCLUDED_COLLECTIONS = {"_KIT", "_LIB"}
 
 
 def get_args() -> list[str]:

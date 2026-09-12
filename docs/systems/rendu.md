@@ -51,6 +51,33 @@ remplacement, sous peine de le perdre silencieusement — le mesh resterait
 linéaire de `COLOR_0` est déjà géré en interne par `GLTFLoader`, rien à
 faire de plus côté loader.
 
+## Éclairage de scène selon le niveau
+
+La scène porte, depuis la Phase 1, une `AmbientLight` à 0.4 et une
+`DirectionalLight` à 0.8 placée en (5, 10, 5)
+(`game/session/gameEngine.ts`). C'est ce rig qui donne leur relief aux
+boîtes blanches de la gym, qui n'ont aucune couleur cuite.
+
+Sur un niveau baké, il fait double emploi — et pire, il fait tort. Le rendu
+Lambert vaut `texture × couleur de sommet × éclairage temps réel` : un
+niveau dont l'éclairage est déjà cuit dans ses sommets se retrouve éclairé
+une seconde fois, par une direction arbitraire qui n'a rien à voir avec ses
+propres néons. Une face tournée à l'opposé du soleil perd 60 % de sa
+luminosité cuite ; une face orientée vers lui déborde. La modulation la plus
+visible du niveau ne vient alors pas du bake mais d'un soleil hérité.
+
+`LevelDef.bakedLighting` (registre `game/level/levels.ts`) éteint le soleil
+et met l'ambiante à 1 pour ce niveau : le rendu vaut alors exactement
+`texture × couleur cuite`, ce que le pipeline vise depuis
+l'[ADR 0005](../decisions/0005-eclairage-vertex-colors.md).
+`lifecycle.ts::applyLightRig` l'applique à chaque construction de partie.
+
+**Pourquoi un réglage par niveau et non un correctif global** : les zones
+A à E ont été éclairées à l'œil SOUS l'ancien rig. Les y basculer d'office
+changerait l'aspect de tout le jeu sans que personne l'ait demandé. Seule
+la salle d'essai du niveau v2 l'active aujourd'hui ; la bascule des zones
+existantes se décidera au jalon N10 (`PLAN_NIVEAU_V2.md`).
+
 ## Découplage entre render et game
 
 Tous les modules de `src/render/` qui rendent des effets de jeu (`fx.ts`,

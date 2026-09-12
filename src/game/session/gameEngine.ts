@@ -43,6 +43,10 @@ export interface GameEngine {
   hitmarker: HitmarkerOverlay;
   ballisticsDebug: BallisticsDebugOverlay;
 
+  /** Éclairage temps réel de la scène, réglé PAR NIVEAU (`LevelDef.bakedLighting`) — voir `lifecycle.ts::applyLightRig`. */
+  ambientLight: THREE.AmbientLight;
+  sunLight: THREE.DirectionalLight;
+
   /** Atlas UNIQUE, partagé par tous les Costards de toutes les parties — voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`. */
   suitAtlas: THREE.Texture;
   directorAtlas: THREE.Texture;
@@ -137,7 +141,12 @@ export function buildGameEngine(
   // `interpolateVisuals` comme avant.
   scene.add(camera);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  // Rig hérité de la phase « boîtes blanches » : il éclaire la gym, qui n'a
+  // aucun bake. Un niveau dont l'éclairage est CUIT dans les sommets le
+  // rallume une seconde fois — `LevelDef.bakedLighting` le neutralise alors,
+  // voir `lifecycle.ts::applyLightRig`.
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambientLight);
   const sun = new THREE.DirectionalLight(0xffffff, 0.8);
   sun.position.set(5, 10, 5);
   scene.add(sun);
@@ -236,6 +245,8 @@ export function buildGameEngine(
     crosshair,
     hitmarker,
     ballisticsDebug,
+    ambientLight,
+    sunLight: sun,
     suitAtlas,
     directorAtlas,
     badgeGeometry,

@@ -1,8 +1,8 @@
 ---
 title: Harmonisation des assets du niveau v2
 tags: [pipeline, assets, textures, niveau]
-status: brouillon
-updated: 2026-09-11
+status: stable
+updated: 2026-09-12
 ---
 
 # Harmonisation des assets du niveau v2
@@ -110,6 +110,92 @@ bibliothèque, avant d'être rangé dans `LIB_*` :
    Browser.
 8. **Contrôle visuel** : vue silhouette à côté de trois voisins, puis
    capture à 640×360 depuis 1,6 m, comparée au board.
+
+## La bibliothèque livrée (jalon N4)
+
+37 assets, **générés par code** (`tools/blender/lib_rayons.py`) et non
+modelés à la main. `lib_hypermarche_v2.blend` est donc un PRODUIT que
+`build_library.py` régénère : on l'ouvre pour feuilleter, glisser un asset
+dans une scène, contrôler une silhouette — jamais pour l'éditer.
+
+| Catégorie | Assets |
+|---|---|
+| Mobilier de vente | gondole 4 m et 2 m, tête de gondole, bac promo, tourniquet, meuble réfrigéré 2 m, caddie |
+| Signalétique | panneau d'allée suspendu, affiche promo suspendue, rampe de néons 4 m, bandeau de rayon 4 m |
+| Structure | pilier 5 m |
+| Déco | palette de cartons, poubelle |
+| Produits | 13 marques inventées (boîtes à étiquette) + 10 modèles Kenney Food |
+
+**Un objet par matériau, pas un par pièce.** Une gondole est faite d'une
+vingtaine de boîtes, mais ne compte que quatre objets : tôle perforée,
+rouge, acier, trim. La fusion au chargement ([ADR 0023](../decisions/0023-fusion-decor-au-chargement.md))
+regroupant par matériau, découper plus finement coûterait vingt bakes et
+vingt meshes pour exactement le même résultat à l'écran. La salle d'essai
+entière tient en 13 lots de dessin.
+
+**Les modèles tiers sont des ACCENTS, pas le fond du rayon.** Un modèle
+Kenney coûte une centaine de triangles, une boîte à étiquette en coûte
+douze. Garnir majoritairement en modèles donnait 88 000 triangles pour la
+seule marchandise — l'essentiel du budget, pour un gain de silhouette
+visible seulement de près. Ramenés à 12 % des articles (45 % dans le rayon
+frais, où les silhouettes rondes font le sujet), la salle tombe à 96 000
+triangles au total.
+
+**Ce que les modèles Kenney apportent quand même** : tout le pack partage un
+unique matériau `colormap`, donc dix références de produits ne coûtent
+qu'un seul lot de dessin. Son atlas est requantifié sur notre palette et
+réduit à 128 px par `tools/textures/make_kenney_atlas.py` — en NEAREST, car
+ses UV visent le centre de pastilles unies qu'un filtre moyennant
+mélangerait.
+
+## Un rayon garni se fabrique, il ne se modèle pas
+
+`lib_rayons.stock_shelf` remplit une tablette : produit tiré au hasard,
+nombre d'exemplaires de front variable, retrait en profondeur, trous dans la
+rangée, léger dévers. Deux garde-fous sont nés du contrôle visuel :
+
+- **jamais deux fois la même référence de suite** — les tirages produisaient
+  des files de cinq paquets identiques, qui se lisent comme une erreur de
+  copier-coller plutôt que comme un rayon ;
+- **deux exemplaires de front au maximum** pour un produit large.
+
+Le plan prévoyait un générateur en Geometry Nodes. Il a été écrit en Python
+à la place : le bake d'éclairage travaille par sommet sur de la géométrie
+réelle, donc des instances GN devraient de toute façon être réalisées avant
+le bake, et une réalisation GN produit un mesh multi-matériaux que la fusion
+au chargement refuse ([ADR 0023](../decisions/0023-fusion-decor-au-chargement.md)).
+Le générateur Python produit un mesh par matériau, déterministe et rejouable
+par graine. Rien n'est perdu côté visuel ; ce qui est perdu, c'est le réglage
+interactif dans Blender.
+
+## Trois pièges de composition trouvés en regardant
+
+Aucun ne se voit sur un plan ; tous les trois se sont vus au rendu, à hauteur
+d'œil.
+
+1. **Un montant de gondole ne traverse pas la profondeur.** Traversant, il
+   présente à l'allée un panneau plein de 1,25 m de large tous les deux
+   mètres : la rangée se lit comme un mur rouge. Les montants sont au bord de
+   chaque face, et débordent d'un centimètre vers l'extérieur — à fleur des
+   tranches, les deux faces se disputeraient le z-buffer.
+2. **Une tête de gondole a des flancs pleins.** On la regarde depuis
+   l'entrée de l'allée, donc de biais : à flancs ouverts, on voit à travers
+   ses étagères, garnies d'un seul côté, et l'entrée d'allée se lit comme un
+   rayonnage vide. Ses flancs portent une affiche — un pan rouge de 1,25 × 2 m
+   à hauteur de regard, sans rien dessus, n'est pas mieux.
+3. **Un bac promo bas vaut mieux qu'un bac haut.** À 80 cm, les parois
+   cachaient entièrement la marchandise et le bac se lisait comme une caisse
+   grise. À 60 cm, avec un tas qui dépasse de la cuve, il redevient un bac.
+
+## Regarder au bon champ de vision
+
+Le jeu rend à 75° VERTICAL en 16:9, soit **107° horizontal**. Une capture
+Blender à 32 mm (la valeur historique de `render_preview.py`) montre 60° de
+moins et ment sur les bords de l'écran : au jalon N4, des rayons bien garnis
+en capture se révélaient rasants et creux en jeu. Les deux outils de rendu
+utilisent désormais 13,2 mm. `render_ingame.py` reconstruit en plus la
+colorimétrie du jeu — texture × couleur de sommet, en émission pure, sans
+transformation de vue.
 
 ## Nommage
 

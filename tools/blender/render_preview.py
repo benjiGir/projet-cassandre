@@ -40,7 +40,7 @@ import bpy
 from mathutils import Vector, Euler
 
 SKIP_PREFIXES = ("col_", "trig_", "secret_")
-EXCLUDED_COLLECTIONS = {"_KIT", "_LIGHTS", "_BAKE_LIGHTS"}
+EXCLUDED_COLLECTIONS = {"_KIT", "_LIB", "_LIGHTS", "_BAKE_LIGHTS"}
 
 
 def get_args() -> list[str]:
@@ -253,7 +253,12 @@ def main() -> None:
     spawn = find_spawn(spawn_hint)
     fp_cam = make_camera("_preview_first_person")
     fp_cam.data.type = "PERSP"
-    fp_cam.data.lens = 32.0
+    # 13.2 mm et non 32 : le jeu rend à 75° VERTICAL sur du 16:9
+    # (`moveConfig.fovBase`), soit 107° horizontal. Une focale plus longue donne
+    # une vue nettement plus étroite que l'écran réel, et une capture de contrôle
+    # qui ment sur ce que le joueur voit aux bords (constaté au jalon N4 : des
+    # rayons bien garnis en capture, rasants en jeu).
+    fp_cam.data.lens = 13.2
     fp_cam.data.clip_start = 0.05
     fp_cam.data.clip_end = max(diag_xy, 50.0) * 2.0
     if spawn is not None:

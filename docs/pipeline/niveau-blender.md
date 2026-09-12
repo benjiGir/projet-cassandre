@@ -497,6 +497,54 @@ exactement « texture × lumière ». Les valeurs en lumière seule sont plus
 claires (0,83 sur le sol contre 0,57 en `combined`) : la puissance des
 lampes est à recalibrer pour les zones du niveau v2.
 
+### Un bake par sommet exige des sommets
+
+Une couleur cuite vit SUR un sommet : un mur de 16 m qui n'en a que huit ne
+peut porter aucun dégradé, il sort d'un seul aplat. Pire, ses huit sommets
+sont les coins — précisément les points que la géométrie voisine vient
+sceller. Au jalon N4, 42 meshes sur 262 sont ressortis entièrement noirs
+pour cette seule raison : panneaux de fond, plinthes et montants dont chaque
+coin touchait une autre pièce.
+
+`lib_helpers.subdivide` découpe donc toute arête plus longue qu'un seuil
+(0.75 m par défaut, 0.8 m pour les sols, murs et plafonds). Seules les
+arêtes trop longues sont coupées : une boîte de produit de 20 cm reste
+intacte. Après subdivision, zéro mesh noir sur la même scène.
+`validate_level.py` contrôle ce point (« subdivision insuffisante pour le
+bake », moins d'un sommet par m²).
+
+### Le plancher d'éclairage d'une salle close
+
+Une salle de vente est une boîte fermée : aucune lumière d'environnement n'y
+entre — vérifié en mesurant, faire varier la couleur du monde de 0.10 à 0.22
+ne change pas la luminance d'un iota. Tout ce qu'une rampe n'atteint pas
+directement (dessous de tablette, flanc de gondole, recoin) tombe donc au
+noir.
+
+Monter la puissance des lampes ne corrige pas ça : ×2 sur les lampes ne
+donne que +50 % de luminance moyenne, parce que le gain part en écrêtage sur
+les surfaces déjà exposées. `bake_vertex_lighting.py --ambient A` applique
+après le bake le terme d'ambiant global des moteurs de l'époque :
+`c' = A + (1 − A) · c`. Il remappe l'intervalle au lieu de décaler puis
+saturer, donc il ne crée aucun écrêtage et conserve intégralement le dégradé.
+
+Valeur retenue pour la salle d'essai : 0.12, avec des rampes à 180 W.
+
+### Une source de lumière ressort noire
+
+Une surface qui ÉMET la lumière n'en reçoit pas : le tube d'une rampe de
+néons, l'objet le plus lumineux de la salle, sort noir d'un bake de lumière
+seule. `bake_vertex_lighting.py --emissive-marker` (défaut `_neon`) remet à
+blanc la couleur de sommet de tout objet dont le nom contient ce marqueur,
+après le bake. C'est une convention de nommage au même titre que `col_*` :
+un objet nommé `*_neon*` est une source, pas une surface éclairée. La lueur
+d'un néon dans un jeu Build est peinte, pas simulée.
+
+**Le bake n'est pas le seul éclairage du jeu.** Voir
+[Rendu — Éclairage de scène selon le niveau](../systems/rendu.md#éclairage-de-scène-selon-le-niveau) :
+sans `LevelDef.bakedLighting`, un soleil temps réel hérité de la Phase 1
+multiplie tout le bake par une direction arbitraire.
+
 ## Critère de validation
 
 Déplacer un mur dans Blender, exporter, le voir en jeu en MOINS DE 60

@@ -16,6 +16,14 @@ Options :
     --strict        code retour 1 dès qu'UN mesh ressort entièrement noir
     --keep-proxies  NE masque PAS les proxies aux rayons Cycles (reproduit le
                     bug historique, sert uniquement à re-mesurer la régression)
+    --ambient A     plancher d'éclairage appliqué après le bake, 0 à 1 (défaut 0,
+                    donc sans effet sur les niveaux existants) — voir
+                    `apply_ambient` : indispensable dans une salle close, où
+                    aucune lumière d'environnement n'entre
+    --emissive-marker NOM
+                    après le bake, remet à pleine lumière tout objet dont le nom
+                    contient NOM (défaut `_neon`) — une source n'est pas éclairée
+                    par elle-même et ressortirait noire, voir `force_full_light`
 
 Sans --save ni --out, le bake tourne et le rapport sort, mais RIEN n'est écrit.
 Un script ne modifie pas son fichier d'entrée sans qu'on le lui demande.
@@ -227,6 +235,59 @@ def diagnose_black(obj, depsgraph, scene, samples=64):
     return "EXPOSÉ mais noir → chercher du côté des lampes / du monde"
 
 
+def apply_ambient(targets, ambient: float) -> None:
+    """Remonte le plancher d'éclairage : `c' = a + (1 - a) · c`.
+
+    Une salle de vente est une boîte close : aucune lumière d'environnement n'y
+    entre, et tout ce qu'une rampe n'atteint pas directement (dessous de
+    tablette, flanc de gondole, recoin) tombe au noir. Monter la puissance des
+    lampes ne corrige pas ça — ça écrête les surfaces déjà exposées sans
+    éclairer les autres (mesuré : ×2 sur les lampes ne donne que +50 % de
+    luminance moyenne).
+
+    C'est le terme d'ambiant global des moteurs de l'époque : il remappe
+    l'intervalle au lieu de décaler puis saturer, donc il ne crée aucun
+    écrêtage et conserve intégralement le dégradé du bake.
+    """
+    if ambient <= 0.0:
+        return
+    for obj in targets:
+        ca = obj.data.color_attributes.get("Col")
+        if ca is None or len(ca.data) == 0:
+            continue
+        buf = [0.0] * (len(ca.data) * 4)
+        ca.data.foreach_get("color", buf)
+        for i in range(0, len(buf), 4):
+            for k in range(3):
+                buf[i + k] = ambient + (1.0 - ambient) * buf[i + k]
+        ca.data.foreach_set("color", buf)
+
+
+def force_full_light(targets, marker: str) -> list[str]:
+    """Remet à blanc la couleur de sommet des objets marqués (défaut : `_neon`).
+
+    Une surface qui ÉMET la lumière n'en reçoit pas : le tube d'une rampe de
+    néons ressort noir d'un bake de lumière seule, alors que c'est justement
+    l'objet le plus lumineux de la salle. En jeu, la couleur de sommet multiplie
+    la texture (`vertex-color-sector-lighting`) : la remettre à 1 rend au tube
+    sa texture pleine, ce qui est exactement l'effet voulu — la lueur d'un néon
+    dans un jeu Build est peinte, pas simulée.
+
+    Convention de nommage, au même titre que `col_*` : un objet dont le nom
+    contient `_neon` est une source, pas une surface éclairée.
+    """
+    touched = []
+    for obj in targets:
+        if marker not in obj.name:
+            continue
+        ca = obj.data.color_attributes.get("Col")
+        if ca is None or len(ca.data) == 0:
+            continue
+        ca.data.foreach_set("color", [1.0] * (len(ca.data) * 4))
+        touched.append(obj.name)
+    return touched
+
+
 def read_stats(obj):
     mesh = obj.data
     ca = mesh.color_attributes.get("Col")
@@ -256,6 +317,8 @@ def main() -> None:
     dry_run = "--dry-run" in args
     strict = "--strict" in args
     keep_proxies = "--keep-proxies" in args
+    emissive_marker = arg_value(args, "--emissive-marker", "_neon")
+    ambient = float(arg_value(args, "--ambient", "0"))
 
     if bake_type not in ("combined", "diffuse"):
         print(f"[bake] type inconnu : {bake_type}")
@@ -331,6 +394,15 @@ def main() -> None:
             sys.exit(1)
     finally:
         restore_occluders(hidden)
+
+    apply_ambient(targets, ambient)
+    if ambient > 0.0:
+        print(f"[bake] plancher d'éclairage {ambient:.2f} appliqué (remap, sans écrêtage)")
+
+    lit = force_full_light(targets, emissive_marker)
+    if lit:
+        print(f"[bake] {len(lit)} source(s) « {emissive_marker} » remise(s) à pleine "
+              f"lumière après le bake")
 
     # --- Rapport ------------------------------------------------------------
     rows, black, flat = [], [], []

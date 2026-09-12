@@ -14,6 +14,28 @@ Scripts headless. Aucun ne nécessite d'interface.
 | `bake_vertex_lighting.py` | bake d'éclairage en vertex colors + rapport de plausibilité |
 | `validate_level.py` | vérifie un `.blend` de niveau contre le contrat du projet |
 | `export_level.py` | exporte en `.glb` avec les bons réglages (validation en étape séparée, voir la chaîne ci-dessous) |
+| `lib_helpers.py` | **briques** de la bibliothèque v2 (matériaux texturés, boîtes multi-parties à UV 64 px/m, trims, étiquettes, proxies, subdivision) — pas exécutable seul |
+| `lib_rayons.py` | **bibliothèque d'assets** du niveau v2 : gondoles, têtes de gondole, bacs, frigos, caddies, signalétique, produits, et le générateur de garnissage — pas exécutable seul |
+| `build_library.py` | construit les assets de `lib_rayons.py` dans `lib_hypermarche_v2.blend` et les range dans l'Asset Browser |
+| `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
+| `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
+| `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
+
+```bash
+# Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
+blender -b assets_src/library/lib_hypermarche_v2.blend -P tools/blender/build_library.py -- --save
+blender -b --factory-startup -P tools/blender/build_salle_essai.py -- --out assets_src/blender/salle_essai_rayons.blend
+blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/bake_vertex_lighting.py -- --type diffuse --samples 128 --ambient 0.12 --save
+blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/validate_level.py -- --strict
+blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/export_level.py -- --out public/assets/levels/salle_essai_rayons.glb
+blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/render_ingame.py -- --out renders/salle_essai_rayons --view 5.75,1.25,0 --view 2.4,10,-80
+```
+
+Trois options du bake sont nées de cette salle et ne servent qu'aux niveaux
+texturés : `--type diffuse` (obligatoire dès qu'il y a des textures),
+`--ambient` (plancher d'éclairage d'une salle close) et `--emissive-marker`
+(une source ne s'éclaire pas elle-même). Leur raison d'être est dans
+[docs/pipeline/niveau-blender.md](../../docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors).
 
 ```bash
 # Kit modulaire

@@ -33,6 +33,9 @@ MIN_PROXY_THICKNESS = 0.1
 MAX_THIN_RATIO = 20.0
 TRI_BUDGET = 200_000
 
+# Collections sources, jamais exportées (voir `export_level.py`).
+SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
+
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_",
@@ -233,9 +236,14 @@ def check_budget(meshes) -> int:
 
 # --- 8. Matériaux ------------------------------------------------------------
 def check_materials() -> None:
+    """Seuil relevé de 8 à 24 : depuis l'ADR 0023, le décor statique est fusionné
+    PAR MATÉRIAU au chargement, donc un matériau vaut un lot de dessin pour tout
+    le niveau, et non plus un par objet. Viser le matériau unique n'a plus de
+    sens ; ce qui compte est de rester loin du budget de 200 lots."""
     n = len(bpy.data.materials)
-    if n > 8:
-        warn(f"{n} matériaux — chacun coûte un draw call, viser un kit à matériau unique")
+    if n > 24:
+        warn(f"{n} matériaux — autant de lots de dessin après fusion (ADR 0023), "
+             f"budget 200")
 
 
 # --- Rapport -----------------------------------------------------------------
@@ -243,7 +251,22 @@ def main() -> None:
     strict = "--strict" in sys.argv
     kit_mode = "--kit" in sys.argv
 
-    objects = list(bpy.context.scene.objects)
+    # Les collections SOURCES (kit, bibliothèque v2) ne partent pas en jeu :
+    # leurs originaux ne sont ni bakés ni exportés, les valider ferait du bruit.
+    # La bibliothèque range un asset par SOUS-collection : il faut descendre
+    # l'arbre, pas seulement regarder le nom de la collection directe.
+    sources = set()
+    for name in SOURCE_COLLECTIONS:
+        root = bpy.data.collections.get(name)
+        if root is None:
+            continue
+        stack = [root]
+        while stack:
+            coll = stack.pop()
+            sources.add(coll)
+            stack.extend(coll.children)
+    objects = [o for o in bpy.context.scene.objects
+               if not any(c in sources for c in o.users_collection)]
     meshes = [o for o in objects if o.type == "MESH"]
 
     check_units()

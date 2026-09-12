@@ -20,3 +20,6 @@ __pycache__/
 /refs/
 # Packs CC0 bruts : retéléchargeables, source et licence dans assets_src/LICENCES_ASSETS.md
 /assets_src/cc0_raw/
+
+# Captures de contrôle : régénérables par tools/blender/render_ingame.py
+/renders/

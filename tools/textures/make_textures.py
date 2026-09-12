@@ -20,7 +20,9 @@ SIZE = 128
 TEXTURES = {
     "sol_carrelage_blanc": dict(src="Tiles141", repeat=1, contrast=1.25),
     "sol_damier": dict(src="Tiles074", repeat=1, contrast=1.1),
-    "sol_terrazzo": dict(src="Terrazzo018", repeat=1, contrast=1.2, color=1.2),
+    # Contraste ramené de 1.2 à 0.85 : à 640×360 les éclats du terrazzo se lisaient
+    # comme des détritus au sol plutôt que comme un revêtement (constaté en rendu N4).
+    "sol_terrazzo": dict(src="Terrazzo018", repeat=1, contrast=0.85, color=0.8, brightness=1.05),
     "sol_terrazzo_fin": dict(src="Terrazzo013", repeat=1, contrast=1.3, color=1.2),
     "sol_beton": dict(src="Concrete034", repeat=1, contrast=1.4),
     "sol_beton_brut": dict(src="Concrete042A", repeat=1, contrast=1.3),
@@ -31,11 +33,19 @@ TEXTURES = {
     "plafond_dalles": dict(src="OfficeCeiling001", repeat=1, contrast=1.3),
     # Nervures et trous sont dans la carte de relief chez ambientCG, pas dans la couleur : en Lambert
     # il n'y a pas de relief, donc on les peint dans l'albedo, comme Build.
-    "metal_bac_acier": dict(src="CorrugatedSteel005", repeat=1, contrast=1.3, ribs=(8, 0.35)),
-    "metal_tole_perforee": dict(src="SheetMetal002", repeat=2, contrast=1.1, holes=(8, 1.6)),
+    "metal_bac_acier": dict(src="CorrugatedSteel005", repeat=1, contrast=1.15, ribs=(8, 0.22)),
+    # Trous de 6 cm et non 12 (période 4 px, qui divise 128 : sinon la texture ne
+    # se répète plus sans joint) et fond assombri : le dos d'une gondole doit
+    # reculer derrière la marchandise, pas lui disputer le regard.
+    "metal_tole_perforee": dict(src="SheetMetal002", repeat=2, contrast=1.1,
+                                brightness=0.78, holes=(4, 0.9)),
     "metal_peint_rouge": dict(src="PaintedMetal004", repeat=1, contrast=1.2, color=1.2),
     "carton": dict(src="Cardboard004", repeat=1, contrast=1.15, color=0.7, brightness=0.95),
     "metal_bandes_danger": dict(src="Concrete034", repeat=1, contrast=1.0, stripes=(16, "#f2c230", "#111014")),
+    # Pas de source bois dans le lot ambientCG retenu : le carton en tient lieu, assombri
+    # et rayé de joints nets (32 px = planche de 50 cm à 64 px/m).
+    "bois_palette": dict(src="Cardboard004", repeat=1, contrast=1.25, color=0.9,
+                         brightness=0.82, planks=(32, 2)),
 }
 
 
@@ -81,6 +91,19 @@ def paint_holes(img: Image.Image, period: int, radius: float) -> Image.Image:
     return img
 
 
+def paint_planks(img: Image.Image, period: int, seam: int) -> Image.Image:
+    """Joints de planches horizontaux, nets. Contrairement à `paint_ribs` (sinus,
+    relief doux d'une tôle), une planche se lit à son bord franc."""
+    px = img.load()
+    for y in range(img.height):
+        if y % period >= seam:
+            continue
+        for x in range(img.width):
+            r, g, b = px[x, y]
+            px[x, y] = (int(r * 0.55), int(g * 0.55), int(b * 0.55))
+    return img
+
+
 def paint_stripes(img: Image.Image, width: int, color_a: str, color_b: str) -> Image.Image:
     grime = img.convert("L")
     px, g = img.load(), grime.load()
@@ -102,6 +125,8 @@ def make(name: str, spec: dict, pal: Image.Image) -> Image.Image:
         small = paint_ribs(small, *spec["ribs"])
     if "holes" in spec:
         small = paint_holes(small, *spec["holes"])
+    if "planks" in spec:
+        small = paint_planks(small, *spec["planks"])
     if "stripes" in spec:
         small = paint_stripes(small, *spec["stripes"])
     # Accentuation sur une copie 3×3 puis recadrage au centre, pour que les filtres voient les voisins réels aux bords.

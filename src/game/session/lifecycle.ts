@@ -30,6 +30,29 @@ const SPAWN_FEET_GUARD = 0.1;
 const BALL_RADIUS = 0.4;
 
 /**
+ * Règle l'éclairage temps réel de la scène selon le niveau chargé.
+ *
+ * La scène porte depuis la Phase 1 une ambiante à 0.4 et un soleil à 0.8 :
+ * c'est ce qui donne leur relief aux boîtes blanches de la gym, qui n'ont
+ * aucune couleur cuite. Mais un niveau au bake vertex-color porte DÉJÀ tout
+ * son éclairage dans ses sommets — ce rig le multiplie alors une seconde
+ * fois, et par une direction arbitraire (5, 10, 5) qui n'a rien à voir avec
+ * les néons du plafond : une face tournée à l'opposé perd 60 % de sa
+ * luminosité cuite, une face orientée vers le soleil déborde.
+ *
+ * `bakedLighting` coupe le soleil et met l'ambiante à 1 : le rendu vaut alors
+ * exactement texture × couleur cuite, ce que le pipeline vise depuis le
+ * début. Réglage PAR NIVEAU et non global : les zones A-E ont été éclairées
+ * à l'œil SOUS l'ancien rig, les basculer changerait leur aspect sans que
+ * personne l'ait demandé — la bascule se décidera au jalon N10.
+ * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+ */
+function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
+  engine.ambientLight.intensity = choice.bakedLighting ? 1.0 : 0.4;
+  engine.sunLight.intensity = choice.bakedLighting ? 0.0 : 0.8;
+}
+
+/**
  * Construit une PARTIE complète : `PhysicsWorld` (donc `player`/`weapons`/
  * `suitManager`/`directorManager`, tous construits à partir de `physics`),
  * la géométrie du niveau (gym ou session glTF), tout l'état de suivi par
@@ -126,6 +149,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   if (choice.startUnarmed) {
     weapons.startUnarmed();
   }
+
+  applyLightRig(engine, choice);
 
   // 3 points de spawn dans le hub (chemin "gym" seulement — POSITIONS DE
   // TEST DE LA GYM, pas du contenu générique de moteur) : dispersés autour
