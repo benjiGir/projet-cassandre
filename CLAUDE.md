@@ -103,9 +103,10 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 ## Phase courante
 
 > **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
-> richesse PASSÉ), N5 et N7 livrés, N6 validé (structure et échelle), N2
-> presque (quatre licences à confirmer). Prochain : N8, le blockout gris
-> jouable.**
+> richesse PASSÉ), N5 et N7 livrés, N6 validé (structure et échelle), N8
+> construit et jouable (`Blockout — Niveau v2`, en attente du verdict), N2
+> presque (quatre licences à confirmer). Prochain : jouer le blockout, puis
+> N9, l'habillage.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)

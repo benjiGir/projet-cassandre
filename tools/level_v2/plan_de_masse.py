@@ -66,9 +66,10 @@ class Space:
     # pilier ou un meuble de plus de 1,6 m coupe réellement la ligne de vue.
     # La géométrie exacte ne se vérifie qu'au blockout (N8).
     spawns: list[tuple[str, float, float, str | None]] = field(default_factory=list)
-    # Pour un couloir posé À L'INTÉRIEUR d'un espace (une rampe qui remonte
-    # dans le volume du parking) : id de l'espace qui le contient.
-    dans: str | None = None
+    # Liaison en pente : (axe de descente, z au départ, z à l'arrivée).
+    # L'axe est "+x" ou "+y" — le sol part de `z_depart` au bord bas de cet
+    # axe et arrive à `z_arrivee` au bord haut. `None` = sol plat à `z`.
+    rampe: tuple[str, float, float] | None = None
     # Repères de gameplay : (libellé, x, y, nature) avec nature ∈
     # {carte, secret, objet, porte, depart}.
     reperes: list[tuple[str, float, float, str]] = field(default_factory=list)
@@ -231,12 +232,12 @@ SPACES: list[Space] = [
     ),
     Space(
         id="souterrain", nom="Parking souterrain",
-        x=(28, 76), y=(92, 132), z=-6.0, hauteur=3.5, densite="faible",
+        x=(28, 76), y=(92, 124), z=-6.0, hauteur=3.5, densite="faible",
         role="Tension, embuscade entre les piliers",
         duree="1:00", arrivee=(30, 116),
         ennemis="6 Costards, dispersés entre les piliers — la seule zone où l'occlusion fait tout le travail",
         spawns=[("suit_so1", 40, 100, None), ("suit_so2", 52, 104, None), ("suit_so3", 64, 110, None),
-                ("suit_so4", 44, 120, "pilier"), ("suit_so5", 58, 126, None), ("suit_so6", 70, 122, None)],
+                ("suit_so4", 44, 116, "pilier"), ("suit_so5", 58, 118, None), ("suit_so6", 70, 114, None)],
         notes=[
             "Hauteur 3,5 m, piliers tous les 8 m : pénombre, portée de vue coupée en permanence.",
             "Décalé à l'est de la réserve, jamais SOUS un espace praticable (contrainte de colonne).",
@@ -276,19 +277,22 @@ CORRIDORS: list[Space] = [
     Space(id="c_hb_rs", nom="Sas carte Argent", x=(-6, 6), y=(92, 96), z=0, hauteur=4.0,
           role="hub → réserve, porte carte Argent", couloir=True, densite="faible",
           reperes=[("porte Argent", 0, 94, "porte")]),
-    Space(id="c_rs_so", nom="Rampe de quai", x=(20, 28), y=(100, 128), z=-6.0, hauteur=4.0,
-          role="réserve (z=0) → parking souterrain (z=-6), pente 21 %", couloir=True, densite="faible"),
-    Space(id="c_so_bu", nom="Rampe de sortie", x=(44, 52), y=(124, 132), z=-6.0, hauteur=4.0,
-          role="parking souterrain → couloir des bureaux, remonte à z=0", couloir=True,
-          densite="faible", dans="souterrain"),
+    Space(id="c_rs_so", nom="Rampe de quai", x=(20, 28), y=(104, 116), z=-6.0, hauteur=4.0,
+          role="réserve (z=0) → parking souterrain (z=-6), descend vers l'est, 37°",
+          couloir=True, densite="faible", rampe=("+x", 0.0, -6.0)),
+    Space(id="c_so_bu", nom="Rampe de sortie", x=(36, 44), y=(124, 132), z=-6.0, hauteur=4.0,
+          role="parking souterrain (z=-6) → couloir des bureaux (z=0), remonte vers le nord, 37°",
+          couloir=True, densite="faible", rampe=("+y", -6.0, 0.0)),
     Space(id="c_bu", nom="Couloir de direction", x=(0, 44), y=(132, 140), z=0, hauteur=4.0,
           role="rampe de sortie → bureaux, porte carte Or à l'ouest", couloir=True, densite="faible",
           reperes=[("porte Or", 14, 136, "porte")]),
-    Space(id="c_short_n", nom="Couloir de service (nord)", x=(-44, 0), y=(132, 140), z=0, hauteur=4.0,
-          role="raccourci à SENS UNIQUE, première branche", couloir=True, densite="faible",
-          reperes=[("sens unique ↓", -26, 136, "porte")]),
-    Space(id="c_short_w", nom="Couloir de service (ouest)", x=(-44, -36), y=(84, 132), z=0, hauteur=4.0,
-          role="raccourci à SENS UNIQUE, débouche dans les rayons", couloir=True, densite="faible"),
+    Space(id="c_short_ramp", nom="Montée de service", x=(-36, 0), y=(132, 140), z=0.0, hauteur=4.0,
+          role="raccourci : monte du couloir des bureaux au couloir de service, 4,8°",
+          couloir=True, densite="faible", rampe=("+x", 3.0, 0.0),
+          reperes=[("sens unique ↓", -20, 136, "porte")]),
+    Space(id="c_short_w", nom="Couloir de service", x=(-44, -36), y=(84, 140), z=3.0, hauteur=4.0,
+          role="raccourci : débouche EN SURPLOMB des rayons, 3 m plus haut — "
+               "on saute dedans, on ne remonte pas", couloir=True, densite="faible"),
 ]
 
 ALL = SPACES + CORRIDORS
@@ -387,7 +391,57 @@ def rapport() -> list[str]:
               if not (s.x[0] < x < s.x[1] and s.y[0] < y < s.y[1])]
     a("  OK" if not dehors else "  HORS EMPRISE : " + ", ".join(dehors))
 
-    # --- Contrôle 6 : budget de triangles ------------------------------------
+    # --- Contrôle 6 : ouvertures et connectivité -----------------------------
+    a("")
+    a("Ouvertures — dérivées des façades partagées")
+    a("-" * 60)
+    larges = []
+    for o in sorted(openings(), key=lambda k: (k.a, k.b)):
+        marque = ""
+        if o.largeur > 14.0:
+            marque = "  <<< TROP LARGE : jonction de flanc, pas de face"
+            larges.append(f"{o.a}/{o.b}")
+        a(f"  {o.a:<12} ↔ {o.b:<12} {o.axe}={o.at:>7.1f}  "
+          f"{o.span[0]:>6.1f}..{o.span[1]:<6.1f} ({o.largeur:>4.1f} m)  z={o.z:>4.1f}{marque}")
+    if larges:
+        a(f"  >>> {len(larges)} jonction(s) à redresser : " + ", ".join(larges))
+
+    a("")
+    a("Jonctions volontairement murées")
+    a("-" * 60)
+    for paire in sorted(map(sorted, JONCTIONS_SCELLEES)):
+        a(f"  {paire[0]:<12} × {paire[1]}")
+
+    a("")
+    a("Passages à sens unique — par décrochement, pas par mécanisme")
+    a("-" * 60)
+    uniques = [o for o in openings() if o.sens_unique]
+    if not uniques:
+        a("  aucun")
+    for o in uniques:
+        depuis, vers = o.sens_unique
+        a(f"  {depuis:<14} → {vers:<14} on descend de {o.decrochement:.1f} m, "
+          f"le saut en monte {JUMP_HEIGHT:.1f}")
+
+    a("")
+    a("Contrôle — tout espace est atteignable depuis le spawn")
+    a("-" * 60)
+    joignables = accessibles()
+    isoles = [sp.nom for sp in SPACES if sp.id not in joignables]
+    a("  OK, les 10 espaces sont reliés" if not isoles else "  ISOLÉ(S) : " + ", ".join(isoles))
+
+    a("")
+    a("Contrôle — chaque porte à carte commande bien son secteur")
+    a("-" * 60)
+    for goulot, carte, attendus in GOULOTS:
+        sans = accessibles(sans=goulot)
+        fuites = [x for x in attendus if x in sans]
+        if fuites:
+            a(f"  {carte:<14} FUITE : {', '.join(fuites)} atteignable(s) sans passer par {goulot}")
+        else:
+            a(f"  {carte:<14} OK — {', '.join(attendus)} hors d'atteinte sans {goulot}")
+
+    # --- Contrôle 7 : budget de triangles ------------------------------------
     a("")
     a("Budget de triangles — estimation par densité")
     a("-" * 60)
@@ -416,7 +470,7 @@ def rapport() -> list[str]:
         etat = "OK" if t <= BUDGET_TRIANGLES else "AU-DESSUS"
         a(f"  {', '.join(x.nom for x in vus):<58} {t:>9,.0f}  {etat}".replace(",", " "))
 
-    # --- Contrôle 7 : total d'ennemis ---------------------------------------
+    # --- Contrôle 8 : total d'ennemis ---------------------------------------
     a("")
     a("Effectif")
     a("-" * 60)
@@ -469,6 +523,144 @@ def ascii_map() -> list[str]:
     lines = ["".join(row).rstrip() for row in reversed(grid)]   # nord en haut
     legend = [f"  {jeton(i)} {s.nom}" for i, s in enumerate(SPACES)] + ["  · liaisons"]
     return lines + [""] + legend
+
+
+# --- Ouvertures et connectivité ---------------------------------------------
+
+TOLERANCE = 1e-6
+
+
+@dataclass(frozen=True)
+class Opening:
+    """Passage entre deux rectangles qui se touchent par une façade.
+
+    DÉRIVÉ, jamais écrit à la main : deux rectangles qui partagent une ligne
+    de façade avec un recouvrement non nul sont reliés par cette ouverture.
+    C'est ce qui oblige le plan à n'avoir que des jonctions DE FACE — une
+    liaison qui longerait sa voisine sur 28 m produirait ici une ouverture de
+    28 m, immédiatement visible dans le rapport.
+    """
+    a: str
+    b: str
+    axe: str                      # "x" : façade verticale x=`at` ; "y" : façade horizontale
+    at: float
+    span: tuple[float, float]     # étendue de l'ouverture sur l'autre axe
+    z_a: float                    # altitude du sol côté `a`
+    z_b: float                    # altitude du sol côté `b`
+
+    @property
+    def largeur(self) -> float:
+        return self.span[1] - self.span[0]
+
+    @property
+    def z(self) -> float:
+        """Altitude de référence du passage — la plus basse des deux."""
+        return min(self.z_a, self.z_b)
+
+    @property
+    def decrochement(self) -> float:
+        return abs(self.z_a - self.z_b)
+
+    @property
+    def sens_unique(self) -> tuple[str, str] | None:
+        """Un décrochement qu'aucun saut ne remonte ne se franchit que vers le
+        bas. C'est de la géométrie, pas une règle de jeu : le moteur n'a
+        AUCUN système de passage à sens unique, et n'en a pas besoin."""
+        if self.decrochement <= JUMP_HEIGHT:
+            return None
+        return (self.a, self.b) if self.z_a > self.z_b else (self.b, self.a)
+
+
+# Deux rectangles qui se touchent ne communiquent pas forcément. Ces
+# jonctions-là sont des MURS, décidés : un couloir de service qui longe la
+# réserve ou les bureaux ouvrirait sinon un raccourci qui contourne une porte
+# à carte, et la progression du niveau tomberait. Le contrôle des goulots
+# ci-dessous vérifie que ces murs tiennent réellement.
+JONCTIONS_SCELLEES: set[frozenset[str]] = {
+    frozenset({"c_short_ramp", "bureaux"}),  # le raccourci ne débouche jamais chez le Directeur
+    frozenset({"reserve", "c_bu"}),        # les bureaux ne s'atteignent que par le souterrain
+    frozenset({"reserve", "c_short_ramp"}), # idem, côté raccourci
+}
+
+
+def _recouvrement(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float] | None:
+    lo, hi = max(a[0], b[0]), min(a[1], b[1])
+    return (lo, hi) if hi - lo > TOLERANCE else None
+
+
+def _sol_au_bord(space: Space, axe: str, at: float) -> float:
+    """Altitude du sol d'un espace au droit d'une façade — le bout haut ou bas
+    d'une rampe, son `z` sinon."""
+    if not space.rampe:
+        return space.z
+    sens, z0, z1 = space.rampe
+    bord_bas = space.x[0] if sens == "+x" else space.y[0]
+    bord_haut = space.x[1] if sens == "+x" else space.y[1]
+    if abs(at - bord_bas) < TOLERANCE:
+        return z0
+    if abs(at - bord_haut) < TOLERANCE:
+        return z1
+    return min(z0, z1)
+
+
+def openings() -> list[Opening]:
+    trouvees: list[Opening] = []
+    for i, s in enumerate(ALL):
+        for t in ALL[i + 1:]:
+            if frozenset({s.id, t.id}) in JONCTIONS_SCELLEES:
+                continue
+            # Façade verticale commune : le bord droit de l'un = le bord gauche de l'autre.
+            for gauche, droite in ((s, t), (t, s)):
+                if abs(gauche.x[1] - droite.x[0]) < TOLERANCE:
+                    span = _recouvrement(gauche.y, droite.y)
+                    if span:
+                        at = gauche.x[1]
+                        trouvees.append(Opening(gauche.id, droite.id, "x", at, span,
+                                                _sol_au_bord(gauche, "x", at),
+                                                _sol_au_bord(droite, "x", at)))
+            for bas, haut in ((s, t), (t, s)):
+                if abs(bas.y[1] - haut.y[0]) < TOLERANCE:
+                    span = _recouvrement(bas.x, haut.x)
+                    if span:
+                        at = bas.y[1]
+                        trouvees.append(Opening(bas.id, haut.id, "y", at, span,
+                                                _sol_au_bord(bas, "y", at),
+                                                _sol_au_bord(haut, "y", at)))
+    return trouvees
+
+
+# Ce que chaque porte à carte doit commander : sans elle, ces espaces sont
+# hors d'atteinte. C'est la progression du niveau, exprimée en une ligne
+# vérifiable plutôt qu'en intention.
+GOULOTS: list[tuple[str, str, tuple[str, ...]]] = [
+    ("c_hb_rs", "carte Argent", ("reserve", "souterrain", "bureaux")),
+    ("c_bu", "carte Or", ("bureaux",)),
+]
+
+
+def accessibles(depuis: str = "parking_ext", sans: str | None = None) -> set[str]:
+    """Espaces atteignables depuis `depuis` en ne passant que par les
+    ouvertures. Un espace absent du résultat est injouable, point. `sans`
+    retire un espace du graphe — c'est ainsi qu'on vérifie qu'une porte
+    commande bien son secteur."""
+    voisins: dict[str, set[str]] = {sp.id: set() for sp in ALL if sp.id != sans}
+    for o in openings():
+        if sans in (o.a, o.b):
+            continue
+        oriente = o.sens_unique
+        if oriente:
+            voisins[oriente[0]].add(oriente[1])
+        else:
+            voisins[o.a].add(o.b)
+            voisins[o.b].add(o.a)
+    vus, pile = {depuis}, [depuis]
+    while pile:
+        courant = pile.pop()
+        for v in voisins[courant]:
+            if v not in vus:
+                vus.add(v)
+                pile.append(v)
+    return vus
 
 
 # --- Vue de dessus cotée, en SVG ---------------------------------------------

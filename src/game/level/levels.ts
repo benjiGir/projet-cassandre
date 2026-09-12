@@ -47,6 +47,17 @@ export const LEVEL_CHOICES: LevelDef[] = [
     gltfName: "salle_essai_rayons",
     lighting: "hybride",
   },
+  // Blockout gris du niveau v2 (jalon N8) : la STRUCTURE, sans un seul asset
+  // — c'est la circulation, la lisibilité et la durée qu'on y juge, pas le
+  // décor. Construit par `tools/level_v2/build_blockout.py` depuis le plan de
+  // masse validé. Éclairage temps réel : aucun bake, aucune lampe posée.
+  {
+    id: "blockout_v2",
+    label: "Blockout — Niveau v2",
+    kind: "gltf",
+    gltfName: "blockout_v2",
+    startUnarmed: true,
+  },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {
     id: "hypermarche_complet",

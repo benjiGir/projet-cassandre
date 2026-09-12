@@ -40,8 +40,8 @@ Carré bleu = point d'arrivée du joueur dans l'espace.
 | | |
 |---|---|
 | Emprise | **128 × 206 m** (x ∈ [−52, 76], y ∈ [−40, 166]) |
-| Surface praticable | 11 848 m² d'espaces + 1 624 m² de liaisons = **13 472 m²** |
-| Échelle | 42 × la salle d'essai de N4 (320 m²) |
+| Surface praticable | 11 464 m² d'espaces + 1 496 m² de liaisons = **12 960 m²** |
+| Échelle | 40 × la salle d'essai de N4 (320 m²) |
 | Effectif | 40 Costards + 1 Directeur (niveau actuel : 13 + 1) |
 | Durée visée | 9:30, inchangée depuis le plan d'origine |
 
@@ -131,7 +131,7 @@ actuelle s'en interdisait, faute de chemin). La rampe de quai descend au
 parking souterrain ; **son dessous est plein**, sinon la colonne porterait
 deux sols.
 
-### 9. Parking souterrain — 48 × 40 m, h 3,5 m, z = −6 m, 1:00
+### 9. Parking souterrain — 48 × 32 m, h 3,5 m, z = −6 m, 1:00
 
 Pénombre, piliers tous les 8 m : la seule zone où l'occlusion fait tout le
 travail, la ligne de vue y est coupée en permanence. Six Costards dispersés.
@@ -165,10 +165,13 @@ flowchart TD
 
 L'entrée est linéaire — un tutoriel qui ne dit pas son nom. À partir du hub,
 le joueur choisit l'ordre entre les rayons et l'électroménager, donc entre
-l'Argent et l'Or. Le **raccourci à sens unique** part du couloir des
-bureaux, longe le magasin par l'ouest et débouche dans les rayons : un
-joueur arrivé devant la porte Or sans la carte revient au hub sans refaire
-tout le chemin.
+l'Argent et l'Or. Le **raccourci à sens unique** part du couloir des bureaux, monte une rampe
+douce, longe le magasin par l'ouest et **débouche 3 m au-dessus des rayons**.
+On saute dedans, on ne remonte pas : le sens unique est une conséquence de la
+géométrie (saut de 1,1 m contre un décrochement de 3 m), pas un mécanisme —
+le moteur n'a aucun système de passage à sens unique, et n'en a pas besoin.
+Un joueur arrivé devant la porte Or sans la carte revient ainsi au hub sans
+refaire tout le chemin.
 
 ## Vérifications
 
@@ -183,6 +186,9 @@ ce document :
 | Spawns hors `attackRange` du point d'arrivée | ✅ à découvert ; 6 spawns sont plus près **sous couvert déclaré**, à vérifier au blockout |
 | Spawns dans l'emprise de leur espace | ✅ |
 | Allées d'au moins 3 m | à vérifier au blockout — c'est une cote de mobilier, pas d'espace |
+| Tout espace atteignable depuis le spawn | ✅ les 10 espaces sont reliés |
+| Chaque porte à carte commande son secteur | ✅ sans le sas Argent, réserve/souterrain/bureaux sont hors d'atteinte ; sans le couloir des bureaux, les bureaux le sont |
+| Jonctions de face, jamais de flanc | ✅ trois jonctions volontairement murées, déclarées |
 
 Les six spawns « sous couvert » sont le dividende direct de N5 : avant
 l'[ADR 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md), la
@@ -193,7 +199,7 @@ un ennemi injuste.
 
 ### 1. L'échelle — gardée (utilisateur, 2026-09-12)
 
-13 472 m² praticables, 42 × la salle d'essai : lecture littérale de « voir
+12 960 m² praticables, 40 × la salle d'essai : lecture littérale de « voir
 grand », cohérente avec une vitesse de course de 13 m/s. L'alternative
 proposée — raboter les cotes de 30 % sans toucher à la structure — a été
 écartée. Ce que ça engage : **le volume de travail d'habillage du jalon N9**,

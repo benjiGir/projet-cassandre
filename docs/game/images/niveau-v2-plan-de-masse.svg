@@ -43,11 +43,11 @@
 <rect x="224.0" y="432.0" width="16.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="288.0" y="448.0" width="16.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="240.0" y="336.0" width="48.0" height="16.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
-<rect x="344.0" y="208.0" width="32.0" height="112.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
-<rect x="440.0" y="192.0" width="32.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="344.0" y="256.0" width="32.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="408.0" y="192.0" width="32.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="264.0" y="160.0" width="176.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
-<rect x="88.0" y="160.0" width="176.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
-<rect x="88.0" y="192.0" width="32.0" height="192.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="120.0" y="160.0" width="144.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="88.0" y="160.0" width="32.0" height="224.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="168.0" y="736.0" width="192.0" height="144.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
 <text x="176.0" y="754.0" fill="#e8edf2" font-size="13" font-weight="700">1. Parking extérieur</text>
 <text x="176.0" y="768.0" fill="#9fb0c0" font-size="10">48 × 36 m · h 6.0 · 0:45</text>
@@ -114,16 +114,16 @@
 <circle cx="216.0" cy="208.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <circle cx="320.0" cy="208.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <rect x="261.0" y="325.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
-<rect x="376.0" y="192.0" width="192.0" height="160.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
-<text x="384.0" y="210.0" fill="#e8edf2" font-size="13" font-weight="700">9. Parking souterrain</text>
-<text x="384.0" y="224.0" fill="#9fb0c0" font-size="10">48 × 40 m · h 3.5 · z -6 · 1:00</text>
+<rect x="376.0" y="224.0" width="192.0" height="128.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
+<text x="384.0" y="242.0" fill="#e8edf2" font-size="13" font-weight="700">9. Parking souterrain</text>
+<text x="384.0" y="256.0" fill="#9fb0c0" font-size="10">48 × 32 m · h 3.5 · z -6 · 1:00</text>
 <circle cx="424.0" cy="320.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <circle cx="472.0" cy="304.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <circle cx="520.0" cy="280.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<circle cx="440.0" cy="240.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<circle cx="440.0" cy="240.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
-<circle cx="496.0" cy="216.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<circle cx="544.0" cy="232.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="440.0" cy="256.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="440.0" cy="256.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="496.0" cy="248.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="544.0" cy="264.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <rect x="381.0" y="253.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
 <rect x="184.0" y="56.0" width="112.0" height="104.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
 <text x="184.0" y="38.0" fill="#e8edf2" font-size="13" font-weight="700">10. Bureaux direction</text>
@@ -168,8 +168,8 @@
 <text x="273.0" y="348.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Argent</text>
 <text x="320.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
 <text x="329.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Or</text>
-<text x="160.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
-<text x="169.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">sens unique ↓</text>
+<text x="184.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="193.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">sens unique ↓</text>
 <g stroke="#9fb0c0" stroke-width="2"><line x1="56" y1="912" x2="136" y2="912"/></g>
 <text x="56" y="906" fill="#9fb0c0" font-size="11">20 m</text>
 <text x="568" y="906" fill="#9fb0c0" font-size="12" text-anchor="end">nord ↑ · grille 10 m · repère Blender</text>

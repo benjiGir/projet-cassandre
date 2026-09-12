@@ -525,6 +525,57 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 10. Jalon N8 — Blockout gris jouable (piste A, gate de structure)
 
+> **🔶 Construit (2026-09-12), en attente du verdict de l'utilisateur — c'est
+> le gate de structure.** Jouable en jeu sous `Blockout — Niveau v2`.
+>
+> **Construit par script, depuis le plan de masse lui-même**
+> (`tools/level_v2/build_blockout.py`, qui importe `plan_de_masse.py`) : les
+> cotes, les ouvertures, les spawns et les repères de gameplay ne sont recopiés
+> nulle part. Écart au plan, assumé : boîtes grises paramétriques plutôt que le
+> kit modulaire — un blockout se juge sur la circulation, et le pavage du kit
+> par modules de 4/2/1 m laisserait des restes sur des pièces de 42 × 36 m
+> (invariant #9, « boîtes blanches »).
+>
+> **Trois vraies erreurs de structure trouvées par les contrôles, pas en
+> jouant** — c'est tout l'intérêt d'un plan calculable :
+> 1. **Trois jonctions de flanc** : les couloirs de service longeaient la
+>    réserve et les bureaux sur 20 à 24 m. Construites telles quelles, elles
+>    auraient ouvert des passages contournant les portes à carte. Murées
+>    explicitement, et déclarées comme telles.
+> 2. **La carte Argent ne servait à rien.** Le contrôle de goulot (« sans ce
+>    passage, ces espaces doivent être hors d'atteinte ») l'a montré : le
+>    raccourci se traversait dans les deux sens, donc la réserve s'atteignait
+>    sans carte. Confirmé ensuite dans le VRAI graphe de navigation du jeu.
+> 3. **Le sens unique n'avait aucun mécanisme derrière lui.** Corrigé par la
+>    géométrie plutôt que par du code : le couloir de service débouche
+>    **3 m au-dessus** des rayons. On saute dedans, on ne remonte pas (saut de
+>    1,1 m). Le sens unique se DÉDUIT maintenant du décrochement, il n'est plus
+>    déclaré — et le moteur n'a toujours aucun système de passage à sens unique.
+>
+> **Vérifié en jeu** : 202 colliders (dont 3 hulls, les rampes), 40 Costards +
+> 1 Directeur, 3 portes, 3 secrets, 9 `use_*`, **tous les Costards `idle` au
+> spawn** (aucune embuscade injuste). Graphe de navigation réel : 47 872
+> cellules praticables sur 107 793. **La progression est verrouillée par la
+> géométrie, mesurée sur ce graphe** : galerie, caisses, hub, rayons,
+> électroménager et cafétéria sont joignables depuis le spawn ; réserve,
+> souterrain, bureaux et couloir de service ne le sont pas. 36 lots de dessin,
+> 112 916 triangles, 0,13 ms de rendu.
+>
+> `validate_level.py --strict` : **0 erreur**, 4 avertissements, tous de la
+> classe déjà connue « pickup autoportant sans `target` » (pied-de-biche,
+> pompe, micro, toilettes) — la même que sur le niveau actuel.
+>
+> **Ce que le blockout ne fait pas** : aucun éclairage (temps réel, pas de
+> bake), aucun plafond ni linteau (le bake du pathfinding prendrait le premier
+> collider rencontré depuis le haut pour le sol), aucune ouverture à hauteur
+> d'homme au-dessus des portes (vantail de 2,5 m dans une baie ouverte). Les
+> objets « signature » (machine à pinces, photomaton) ne sont que leur
+> silhouette : leurs mécanismes restent au reliquat de la Phase 5.
+>
+> **Reste à faire, et c'est l'essentiel : l'utilisateur joue.** Circulation,
+> lisibilité, combats, secrets, durée chronométrée. C'est le moment où changer
+> le plan coûte le moins cher.
+
 **Objectif.** Jouer la structure avant d'y mettre un seul asset.
 
 **Actions** (en direct via MCP).
