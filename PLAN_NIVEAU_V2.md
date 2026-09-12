@@ -227,7 +227,17 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 6. Jalon N4 — Salle d'essai « rayons » (piste B, gate de richesse)
 
-> **🔶 Construite (2026-09-12), verdict de l'utilisateur en attente.** Salle
+> **✅ Livré (2026-09-12). Gate de richesse PASSÉ** — « je suis très content du
+> résultat, c'est vraiment excellent le rendu ». Trois demandes ont suivi,
+> toutes traitées en avant, aucune n'a nécessité de retour en N2 ou N3 :
+> **rayons à thème** (six catégories, l'unité de cohérence est la face de
+> gondole, nouvel atlas de bandeaux `sig_bandeaux.png`), **éclairage de néon**
+> (sources en forme de tube, rien au-dessus des rangées, trois tubes morts,
+> blanc froid, bloc de secours vert) et **voir grand** — reporté en N6, c'est
+> une consigne de plan, pas une correction. Détail des deux premières dans
+> `docs/pipeline/harmonisation-assets.md` et `docs/pipeline/niveau-blender.md`.
+>
+> **🔶 Construite (2026-09-12).** Salle
 > de 16 × 20 m, trois rangées coupées par une allée transversale, en jeu sous
 > `Essai — Rayons (niveau v2)`. Bibliothèque de **37 assets générés par code**
 > (`tools/blender/lib_rayons.py`), rangés dans l'Asset Browser par
@@ -292,6 +302,15 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 ---
 
 ## 8. Jalon N6 — Plan détaillé de la structure (piste A)
+
+> **Consigne de l'utilisateur (2026-09-12), après le gate N4 : VOIR GRAND.**
+> « Il ne faudra pas hésiter à voir grand pour la taille des pièces et de la
+> map, il faut donner envie d'explorer — et qui dit exploration dit fun à
+> trouver des secrets et des trucs marrants. » À lire comme une contrainte de
+> ce jalon : les cotes de la salle d'essai (16 × 20 m) sont un plancher, pas un
+> gabarit. Les deux garde-fous connus restent : un seul sol praticable par
+> colonne (pathfinding 2.5D) et le budget de 200 lots de dessin — la salle
+> d'essai n'en consomme que 18 pour 90 000 triangles, il y a de la marge.
 
 **Objectif.** Passer du schéma à un plan de masse coté, validé avant de construire.
 

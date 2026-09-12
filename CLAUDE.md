@@ -94,7 +94,7 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
-> **Chantier Niveau v2 — En cours (2026-09-11) : N0, N1 et N3 livrés, N2 presque (quatre licences à confirmer).**
+> **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3 et N4 livrés (gate de richesse PASSÉ), N2 presque (quatre licences à confirmer).**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -128,6 +128,13 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > **`LevelDef.bakedLighting`**, sans quoi le soleil temps réel hérité de la
 > Phase 1 multiplie tout le bake par une direction arbitraire — actif
 > seulement sur la salle d'essai, la bascule des zones A-E se décide à N10.
+> Après le gate : les rayons sont **thématiques** (six catégories, l'unité de
+> cohérence est la FACE de gondole, atlas de bandeaux `sig_bandeaux.png`) et
+> l'éclairage imite un plafond de néons — **la forme de la source fait l'ombre**
+> (tubes de 3,9 × 0,3 m, rien au-dessus des rangées, quelques tubes morts).
+> Consigne pour la suite : **voir grand** sur la taille des pièces et de la
+> carte, l'exploration prime (les 16 × 20 m de la salle d'essai sont un
+> plancher, pas un gabarit).
 >
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute

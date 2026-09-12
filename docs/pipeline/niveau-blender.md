@@ -530,6 +530,38 @@ saturer, donc il ne crée aucun écrêtage et conserve intégralement le dégrad
 
 Valeur retenue pour la salle d'essai : 0.12, avec des rampes à 180 W.
 
+### La forme de la source fait l'ombre
+
+Deuxième retour de jeu sur la salle d'essai : « ça manque d'ombre ». Le défaut
+n'était pas la puissance mais la **forme des sources** — seize carrés de 3,2 m
+sous le plafond. Un carré de trois mètres éclaire une salle de partout et n'y
+projette presque rien.
+
+Trois changements donnent le relief d'un plafond de néons, et aucun n'est un
+réglage de puissance :
+
+- **La source a la forme du tube** : un rectangle de 3,9 × 0,3 m
+  (`lib_helpers.area_light(..., size_y=...)`). La lumière chute alors
+  franchement en travers de l'allée.
+- **Rien n'éclaire directement au-dessus des rangées.** Les rampes courent
+  au-dessus des allées et des dégagements ; les gondoles reçoivent la lumière
+  de biais, leurs tablettes basses restent dans l'ombre des hautes. C'est cette
+  verticale qui fait lire un rayon comme un volume et non comme un mur d'images.
+- **Quelques tubes sont morts** (`lib_rayons.neon(..., eteint=True)` : même
+  rampe, tube nommé `_tube_mort`, donc hors du marqueur émissif). Un plafond
+  dont toutes les rampes fonctionnent n'a pas d'âge, et une salle sans coin
+  sombre ne donne envie d'aller nulle part.
+
+Blanc légèrement froid (0.86, 0.93, 1.0) : un tube fluorescent n'est jamais
+neutre. Un unique bloc de secours vert au-dessus de la sortie est la seule autre
+couleur de la salle — donc le seul repère qui se voit de loin dans l'ombre.
+
+Le sol descend à `subdiv=0.5` : c'est lui qui porte les flaques de lumière, et
+le bord d'une flaque ne peut pas être plus fin que la maille.
+
+Réglages retenus : tubes à 320 W, `--ambient 0.07`. Plus de plancher d'ambiant
+efface précisément les ombres qu'on vient de créer.
+
 ### Une source de lumière ressort noire
 
 Une surface qui ÉMET la lumière n'en reçoit pas : le tube d'une rampe de

@@ -45,11 +45,22 @@ W, D, HT = 16.0, 20.0, 5.0
 WALL_T = 0.25
 
 ROWS = (4.0, 8.5, 13.0)          # bord DROIT de chaque rangée (largeur 1.25)
+# Thème de chaque rangée : (face EST, face OUEST). Une allée voit donc deux
+# catégories voisines — boissons face au petit déjeuner, entretien face aux
+# conserves — comme dans un vrai magasin.
+THEMES = (("boissons", "epicerie"),
+          ("entretien", "petit_dej"),
+          ("frais", "conserves"))
 SEGMENTS = (2.25, 11.25)         # départ en y des deux tronçons de 6.5 m
 CROSS = (8.75, 11.25)            # allée transversale
 
+# Les rampes courent au-dessus des allées et des dégagements, jamais des rangées
+# (bords droits en 4.0 / 8.5 / 13.0, largeur 1.25).
 NEON_X = (1.5, 5.75, 10.25, 14.5)
 NEON_Y = (1.0, 5.5, 10.0, 14.5)
+# Tubes grillés, choisis pour creuser des coins : nord-ouest (réassort) et
+# sud-est. Rien de crucial ne s'y trouve — l'ombre invite, elle ne punit pas.
+NEONS_MORTS = frozenset({(1.5, 14.5), (14.5, 1.0), (10.25, 14.5)})
 
 SEED = 20260912
 
@@ -77,12 +88,14 @@ def build_shell(shell, col_coll) -> None:
     # Trois dalles jointives plutôt qu'une grande et des bandes par-dessus :
     # deux meshes coplanaires ressortiraient noirs au bake (auto-occultation).
     # `subdiv` serré : le sol et les murs portent l'essentiel du dégradé lumineux
-    # de la salle, et un dégradé n'existe qu'entre deux sommets.
-    H.box("sol_sud", (0, 0, -0.2, W, CROSS[0], 0), "sol_carrelage_blanc", shell, subdiv=0.8)
+    # de la salle, et un dégradé n'existe qu'entre deux sommets. Le sol descend à
+    # 0.5 m : c'est lui qui porte les flaques de lumière sous les rampes, et le
+    # bord d'une flaque ne peut pas être plus fin que la maille.
+    H.box("sol_sud", (0, 0, -0.2, W, CROSS[0], 0), "sol_carrelage_blanc", shell, subdiv=0.5)
     # Damier sur la transversale : elle se lit d'un bout à l'autre de la salle et
     # sert de repère d'orientation, ce qu'un sol uniforme ne fait pas.
-    H.box("sol_transversale", (0, CROSS[0], -0.2, W, CROSS[1], 0), "sol_damier", shell, subdiv=0.8)
-    H.box("sol_nord", (0, CROSS[1], -0.2, W, D, 0), "sol_carrelage_blanc", shell, subdiv=0.8)
+    H.box("sol_transversale", (0, CROSS[0], -0.2, W, CROSS[1], 0), "sol_damier", shell, subdiv=0.5)
+    H.box("sol_nord", (0, CROSS[1], -0.2, W, D, 0), "sol_carrelage_blanc", shell, subdiv=0.5)
     H.col_box("sol", (0, 0, -0.2, W, D, 0), col_coll)
 
     murs = [("sud", (-WALL_T, -WALL_T, 0, W + WALL_T, 0, HT)),
@@ -106,22 +119,30 @@ def build_shell(shell, col_coll) -> None:
 
 
 def build_rows(props, col_coll) -> int:
-    """Trois rangées de deux tronçons : tête de gondole, gondole 4 m, tête."""
+    """Trois rangées de deux tronçons : tête de gondole, gondole 4 m, tête.
+
+    Chaque FACE de rangée porte un thème et son bandeau. Une face donne sur une
+    allée, l'autre sur la suivante : c'est la face, pas la rangée, qui est
+    l'unité de cohérence. Les têtes de gondole restent volontairement mélangées
+    — c'est ce qu'est une tête de gondole, un assortiment de promotions.
+    """
     n = 0
     for ri, x_right in enumerate(ROWS):
+        # `place(..., 90)` envoie le -y local sur le +x monde : la face « avant »
+        # d'une gondole posée en rangée regarde donc l'est.
+        theme_est, theme_ouest = THEMES[ri]
         for si, y0 in enumerate(SEGMENTS):
             tag = f"r{ri}s{si}"
             seed = SEED + ri * 10 + si
             L.place(L.tete_garnie(seed), (x_right - 1.25, y0, 0), 0,
                     props, col_coll, f"{tag}_sud")
-            L.place(L.gondole_garnie(seed + 100), (x_right, y0 + 1.25, 0), 90,
-                    props, col_coll, tag)
+            L.place(L.gondole_garnie(seed + 100, 4.0, theme_est, theme_ouest),
+                    (x_right, y0 + 1.25, 0), 90, props, col_coll, tag)
             L.place(L.tete_garnie(seed + 200), (x_right, y0 + 6.5, 0), 180,
                     props, col_coll, f"{tag}_nord")
-            # Bandeau de catégorie sur les deux faces de la gondole.
-            L.place(L.bandeau_rayon(4.0), (x_right, y0 + 1.25, 2.0), 90,
+            L.place(L.bandeau_rayon(theme_est), (x_right, y0 + 1.25, 2.0), 90,
                     props, col_coll, f"{tag}_est")
-            L.place(L.bandeau_rayon(4.0), (x_right - 1.25, y0 + 5.25, 2.0), 270,
+            L.place(L.bandeau_rayon(theme_ouest), (x_right - 1.25, y0 + 5.25, 2.0), 270,
                     props, col_coll, f"{tag}_ouest")
             n += 3
     return n
@@ -175,15 +196,38 @@ def build_signage(props, col_coll) -> None:
 
 
 def build_lights(lights, props, energy: float) -> None:
-    """Rampes de néons + les area lights correspondantes. Le tube porte le
-    marqueur `_neon` : son éclairement propre est rétabli après le bake."""
+    """Rampes de néons et leurs sources.
+
+    Trois choix font tout le relief, et aucun n'est un réglage de puissance :
+
+    - **la source a la forme du tube** (3,9 × 0,3 m), pas d'un carré de 3 m.
+      Un carré éclaire de partout et ne projette presque rien ; un tube fait
+      chuter la lumière en travers de l'allée.
+    - **rien n'éclaire directement au-dessus des rangées.** Les rampes courent
+      au-dessus des allées et des dégagements, donc les gondoles reçoivent la
+      lumière de biais : leurs tablettes basses restent dans l'ombre des hautes,
+      ce qui donne la verticale du rayon.
+    - **quelques tubes sont morts.** Ils creusent des zones sombres — de quoi
+      dater le magasin, et donner envie d'aller voir.
+
+    Blanc légèrement froid : un tube fluorescent n'est jamais neutre.
+    """
+    blanc_froid = (0.86, 0.93, 1.0)
     n = 0
     for x in NEON_X:
         for y in NEON_Y:
-            L.place(L.neon(4.0), (x, y, HT - 0.18), 90, props, props, f"n{n}")
-            H.area_light(f"lamp_{n}", (x - 0.17, y + 2.0, HT - 0.30), 3.2,
-                         energy, lights)
+            mort = (x, y) in NEONS_MORTS
+            L.place(L.neon(4.0, eteint=mort), (x, y, HT - 0.18), 90, props, props, f"n{n}")
+            if not mort:
+                H.area_light(f"lamp_{n}", (x - 0.17, y + 2.0, HT - 0.30),
+                             0.30, energy, lights, size_y=3.90, color=blanc_froid)
             n += 1
+
+    # Bloc de secours au-dessus de la sortie nord : la seule lumière d'une autre
+    # couleur de la salle, donc le seul repère qui se voit de loin dans l'ombre.
+    L.place(L.neon(2.0), (7.0, 19.4, HT - 1.4), 0, props, props, "secours")
+    H.area_light("lamp_secours", (8.0, 19.55, HT - 1.55), 1.8, 40.0, lights,
+                 size_y=0.25, color=(0.35, 1.0, 0.45))
 
 
 def build_logic(logic) -> None:

@@ -148,6 +148,35 @@ réduit à 128 px par `tools/textures/make_kenney_atlas.py` — en NEAREST, car
 ses UV visent le centre de pastilles unies qu'un filtre moyennant
 mélangerait.
 
+## Des rayons à thème, pas un tas
+
+Premier retour de jeu sur la salle d'essai : « tout est mélangé ». Un rayon où
+les marques sont tirées au hasard se lit comme un tas ; un rayon cohérent se
+lit comme un magasin, et son bandeau devient une information d'orientation
+plutôt qu'une décoration.
+
+`lib_rayons.RAYONS` groupe les références en six catégories — épicerie,
+boissons, petit déjeuner, entretien, conserves, frais — chacune mêlant marques
+inventées et modèles Kenney. L'unité de cohérence est la **face** de gondole,
+pas la gondole : ses deux faces donnent sur deux allées différentes et portent
+chacune son thème et son bandeau. Une allée voit donc deux catégories voisines,
+comme dans un vrai magasin.
+
+Les **têtes de gondole restent volontairement mélangées** : c'est ce qu'est une
+tête de gondole, un assortiment de promotions.
+
+**Atlas de bandeaux** (`generate_banners.py` → `sig_bandeaux.png`/`.json`) :
+huit bandes de 16 px, une par catégorie, au format du trim sheet — `lib_helpers`
+fusionne les deux fichiers, seule la texture passée à l'asset change. Le trim
+sheet était plein, et un bandeau de catégorie n'est de toute façon pas un profil
+de menuiserie : c'est de la signalétique.
+
+Chaque bande porte **sa couleur de fond**, et c'est elle qui travaille : à
+640×360 et à vingt mètres, on reconnaît le rayon à sa couleur bien avant de lire
+son texte. Un cyan pour FRAIS a d'ailleurs dû devenir blanc — quantifié sur la
+palette, il tombait sur le bleu de BOISSONS et les deux rayons devenaient
+indiscernables de loin.
+
 ## Un rayon garni se fabrique, il ne se modèle pas
 
 `lib_rayons.stock_shelf` remplit une tablette : produit tiré au hasard,

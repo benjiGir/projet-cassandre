@@ -309,28 +309,43 @@ def promo_suspendu() -> str:
     return name
 
 
-def neon(length: float = 4.0) -> str:
-    """Rampe de néons. Le tube porte le marqueur `_neon` : `bake_vertex_lighting.py`
-    lui force une couleur de sommet blanche, sinon une source de lumière ressort
-    noire dans un bake de lumière seule."""
-    name = f"sig_rampe_{length:g}m".replace(".", "_")
+def neon(length: float = 4.0, eteint: bool = False) -> str:
+    """Rampe de néons.
+
+    Le tube porte le marqueur `_neon` : `bake_vertex_lighting.py` lui force une
+    couleur de sommet blanche, sinon une source de lumière ressort noire dans un
+    bake de lumière seule.
+
+    `eteint` produit la même rampe avec un tube nommé `_tube_mort`, donc SANS ce
+    marqueur : il reste éclairé par ses voisins, comme un tube grillé. Un
+    plafond dont toutes les rampes fonctionnent n'a pas d'âge — quelques-unes
+    mortes suffisent à dater le magasin et à creuser des zones d'ombre où il
+    devient intéressant d'aller voir.
+    """
+    name = f"sig_rampe_{'morte_' if eteint else ''}{length:g}m".replace(".", "_")
     coll, done = asset_coll(name)
     if done:
         return name
     H.box(f"{name}_carter", (0, 0, 0.06, length, 0.34, 0.18), "metal_bac_acier", coll)
-    H.box(f"{name}_tube_neon", (0.05, 0.05, 0.0, length - 0.05, 0.29, 0.07),
+    suffixe = "tube_mort" if eteint else "tube_neon"
+    H.box(f"{name}_{suffixe}", (0.05, 0.05, 0.0, length - 0.05, 0.29, 0.07),
           "mur_platre", coll)
     return name
 
 
-def bandeau_rayon(length: float = 4.0) -> str:
-    """Bandeau de catégorie posé sur le dessus d'une rangée."""
-    name = f"sig_bandeau_{length:g}m".replace(".", "_")
+def bandeau_rayon(theme: str, length: float = 4.0) -> str:
+    """Bandeau de catégorie posé sur le dessus d'une rangée.
+
+    Hauteur 0.25 m pour une bande de 16 px : c'est la densité du projet,
+    64 px/m. Sa couleur de fond porte autant d'information que son texte —
+    à vingt mètres et à 640×360, on reconnaît le rayon à sa couleur.
+    """
+    name = f"sig_bandeau_{theme}_{length:g}m".replace(".", "_")
     coll, done = asset_coll(name)
     if done:
         return name
-    H.box(f"{name}_bandeau", (0, 0, 0, length, 0.08, 0.35),
-          "trim_hypermarche", coll, uv="trim:bandeau_rayon")
+    H.box(f"{name}_bandeau", (0, 0, 0, length, 0.08, 0.25),
+          "sig_bandeaux", coll, uv=f"trim:rayon_{theme}")
     return name
 
 
@@ -404,6 +419,38 @@ PRODUITS = {
     "dentifrice_sans_fluor": (0.06, 0.04, 0.18),
     "piles_lune_truquee": (0.10, 0.04, 0.14),
 }
+
+
+# Rayons thématiques. Un rayon mélangé se lit comme un tas ; un rayon cohérent
+# se lit comme un magasin, et son bandeau de catégorie devient une information
+# d'orientation plutôt qu'une décoration. Chaque thème correspond à une bande de
+# `sig_bandeaux.png` (`rayon_<clé>`).
+RAYONS = {
+    "epicerie": (("sables_reptiliens", "chips_illumi", "coquillettes_nouvel_ordre"),
+                 ("bag", "barrel", "bottle-oil")),
+    "boissons": (("eau_terre_plate", "soda_5g_cola"),
+                 ("soda-bottle",)),
+    "petit_dej": (("cereales_pyramides", "cafe_reveille", "lait_trainees_blanches"),
+                  ("carton", "carton-small")),
+    "entretien": (("lessive_profonde", "alu_protect", "dentifrice_sans_fluor", "piles_lune_truquee"),
+                  ()),
+    "conserves": (("raviolis_bunker",),
+                  ("can", "can-small")),
+    "frais": (("lait_trainees_blanches",),
+              ("loaf", "cabbage", "carton")),
+}
+
+
+def _choix(theme: str | None, max_h: float):
+    """Références disponibles pour un thème, filtrées par le dégagement de la tablette."""
+    if theme is None:
+        boites, modeles = list(PRODUITS), list(KENNEY)
+    else:
+        labels, models = RAYONS[theme]
+        boites = [p for p in labels]
+        modeles = [k for k in KENNEY if k[0] in models]
+    return ([p for p in boites if PRODUITS[p][2] <= max_h],
+            [k for k in modeles if k[1] <= max_h])
 
 
 def produit(label: str) -> str:
@@ -551,7 +598,8 @@ def _span(mesh, axis: int = 0) -> float:
 
 def stock_shelf(g: Garnissage, x0: float, x1: float, y_face: float, z: float,
                 facing: int, rng: random.Random, max_h: float = 0.29,
-                density: float = 0.85, part_kenney: float = 0.12) -> None:
+                density: float = 0.85, part_kenney: float = 0.12,
+                theme: str | None = None) -> None:
     """Garnit une tablette.
 
     Le désordre est délibéré (skill `prop-silhouette-design`) : produits tirés
@@ -564,8 +612,7 @@ def stock_shelf(g: Garnissage, x0: float, x1: float, y_face: float, z: float,
     la seule marchandise — l'essentiel du budget pour un gain de silhouette
     qui ne se voit que de près.
     """
-    boites = [p for p, dims in PRODUITS.items() if dims[2] <= max_h]
-    modeles = [k for k in KENNEY if k[1] <= max_h]
+    boites, modeles = _choix(theme, max_h)
     if not boites and not modeles:
         return
     x, precedent = x0 + rng.uniform(0.01, 0.06), None
@@ -641,8 +688,13 @@ def _niveaux_gondole() -> list[tuple[float, float]]:
     return out
 
 
-def gondole_garnie(seed: int, length: float = 4.0) -> str:
-    name = f"mob_gondole_{length:g}m_g{seed}".replace(".", "_")
+def gondole_garnie(seed: int, length: float = 4.0,
+                   theme_avant: str | None = None,
+                   theme_arriere: str | None = None) -> str:
+    """Gondole garnie. Les DEUX faces ont chacune leur thème : elles donnent sur
+    deux allées différentes, et chacune porte son propre bandeau."""
+    cle = f"{theme_avant or 'mix'}_{theme_arriere or 'mix'}"
+    name = f"mob_gondole_{length:g}m_{cle}_g{seed}".replace(".", "_")
     coll, done = asset_coll(name)
     if done:
         return name
@@ -650,14 +702,18 @@ def gondole_garnie(seed: int, length: float = 4.0) -> str:
     rng = random.Random(seed)
     g = Garnissage()
     for z, clearance in _niveaux_gondole():
-        for y_face, facing in ((0.045, -1), (GOND_DEPTH - 0.045, 1)):
-            stock_shelf(g, 0.08, length - 0.08, y_face, z, facing, rng, max_h=clearance)
+        for y_face, facing, theme in ((0.045, -1, theme_avant),
+                                      (GOND_DEPTH - 0.045, 1, theme_arriere)):
+            stock_shelf(g, 0.08, length - 0.08, y_face, z, facing, rng,
+                        max_h=clearance, theme=theme)
     g.finish(name, coll)
     return name
 
 
-def tete_garnie(seed: int) -> str:
-    name = f"mob_gondole_tete_g{seed}"
+def tete_garnie(seed: int, theme: str | None = None) -> str:
+    """Tête de gondole garnie. Sans thème, elle reste volontairement mélangée :
+    c'est ce qu'est une tête de gondole, un assortiment de promotions."""
+    name = f"mob_gondole_tete_{theme or 'promo'}_g{seed}"
     coll, done = asset_coll(name)
     if done:
         return name
@@ -667,9 +723,10 @@ def tete_garnie(seed: int) -> str:
     # Deux rangs de profondeur : une tête de gondole se voit de biais depuis
     # l'entrée de l'allée, et un rang unique laisse voir la tablette nue derrière.
     for z, clearance in _niveaux_gondole():
-        stock_shelf(g, 0.10, GOND_DEPTH - 0.10, 0.045, z, -1, rng, max_h=clearance)
-        stock_shelf(g, 0.10, GOND_DEPTH - 0.10, 0.40, z, -1, rng, max_h=clearance,
-                    density=0.7)
+        stock_shelf(g, 0.10, GOND_DEPTH - 0.10, 0.045, z, -1, rng,
+                    max_h=clearance, theme=theme)
+        stock_shelf(g, 0.10, GOND_DEPTH - 0.10, 0.40, z, -1, rng,
+                    max_h=clearance, density=0.7, theme=theme)
     g.finish(name, coll)
     return name
 
@@ -711,8 +768,8 @@ def presentoir_garni(seed: int) -> str:
     return name
 
 
-def frigo_garni(seed: int) -> str:
-    name = f"mob_frigo_2m_g{seed}"
+def frigo_garni(seed: int, theme: str = "frais") -> str:
+    name = f"mob_frigo_2m_{theme}_g{seed}"
     coll, done = asset_coll(name)
     if done:
         return name
@@ -721,7 +778,8 @@ def frigo_garni(seed: int) -> str:
     g = Garnissage()
     # Un rayon frais vit de silhouettes rondes : la part de modèles Kenney y monte.
     for z, clearance in ((0.30, 0.30), (0.64, 0.41), (1.09, 0.41), (1.54, 0.41)):
-        stock_shelf(g, 0.12, 1.88, 0.10, z, -1, rng, max_h=clearance, part_kenney=0.45)
+        stock_shelf(g, 0.12, 1.88, 0.10, z, -1, rng, max_h=clearance,
+                    part_kenney=0.45, theme=theme)
     g.finish(name, coll)
     return name
 
@@ -729,8 +787,10 @@ def frigo_garni(seed: int) -> str:
 def build_all() -> list[str]:
     """Construit toute la bibliothèque. Idempotent."""
     names = [gondole(4.0), gondole(2.0), gondole_tete(), bac_promo(), presentoir(),
-             frigo_mural(), caddie(), panneau_allee(), promo_suspendu(), neon(4.0),
-             bandeau_rayon(4.0), pilier(), palette_cartons(), poubelle()]
+             frigo_mural(), caddie(), panneau_allee(), promo_suspendu(),
+             neon(4.0), neon(4.0, eteint=True),
+             pilier(), palette_cartons(), poubelle()]
+    names += [bandeau_rayon(t) for t in RAYONS]
     names += [produit(p) for p in PRODUITS]
     names += [kenney_produit(m, h) for m, h in KENNEY]
     return names

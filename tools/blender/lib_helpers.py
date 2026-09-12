@@ -11,7 +11,11 @@ import bpy
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TEX_DIR = os.path.join(ROOT, "assets_src", "textures")
-TRIM = json.load(open(os.path.join(TEX_DIR, "trim_hypermarche.json")))["bands"]
+# Les bandes des deux atlas partagent un espace de noms : le mapper n'a besoin
+# que de (y, hauteur), et c'est l'appelant qui choisit la texture.
+TRIM = {}
+for _atlas in ("trim_hypermarche", "sig_bandeaux"):
+    TRIM.update(json.load(open(os.path.join(TEX_DIR, _atlas + ".json")))["bands"])
 LABELS = json.load(open(os.path.join(TEX_DIR, "prd_etiquettes.json")))["labels"]
 
 
@@ -210,10 +214,24 @@ def col_box(name: str, bounds, coll: bpy.types.Collection) -> bpy.types.Object:
     return obj
 
 
-def area_light(name: str, location, size: float, energy: float, coll: bpy.types.Collection) -> bpy.types.Object:
+def area_light(name: str, location, size: float, energy: float, coll: bpy.types.Collection,
+               size_y: float | None = None, color=(1.0, 1.0, 1.0)) -> bpy.types.Object:
+    """Source rectangulaire. `size_y` en fait un TUBE plutôt qu'un carré.
+
+    La forme de la source décide de la dureté de l'ombre : un carré de 3 m
+    éclaire une salle de partout et n'y projette presque rien, alors qu'un tube
+    de 4 m sur 0,3 donne une vraie chute de lumière en travers de l'allée —
+    c'est-à-dire le relief qu'on attend d'un plafond de néons.
+    """
     data = bpy.data.lights.new(name, type="AREA")
     data.energy = energy
-    data.size = size
+    data.color = color
+    if size_y is None:
+        data.size = size
+    else:
+        data.shape = "RECTANGLE"
+        data.size = size
+        data.size_y = size_y
     obj = bpy.data.objects.new(name, data)
     obj.location = location
     coll.objects.link(obj)
