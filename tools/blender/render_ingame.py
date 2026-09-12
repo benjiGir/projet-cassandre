@@ -64,8 +64,16 @@ def arg_values(args, flag) -> list[str]:
     return [args[i + 1] for i, a in enumerate(args) if a == flag and i + 1 < len(args)]
 
 
-def rewire_as_game(mat: bpy.types.Material) -> None:
-    """Remplace le graphe par « texture × attribut Col », en émission pure."""
+def rewire_as_game(mat: bpy.types.Material, ambiant: float = 1.0,
+                   eclaire: bool = False) -> None:
+    """Reconstruit « texture × attribut Col ».
+
+    Sans lampe (`eclaire=False`), en émission pure : tout l'éclairage est déjà
+    dans les sommets. Avec des lampes, en diffus — la couleur de sommet devient
+    un masque d'ombre que la lumière vient multiplier, exactement comme
+    `MeshLambertMaterial` en jeu — plus une part d'émission qui tient lieu de
+    l'ambiante de la scène.
+    """
     if not mat.use_nodes:
         mat.use_nodes = True
     nt = mat.node_tree
@@ -80,15 +88,57 @@ def rewire_as_game(mat: bpy.types.Material) -> None:
     mix = nt.nodes.new("ShaderNodeMixRGB")
     mix.blend_type = "MULTIPLY"
     mix.inputs["Fac"].default_value = 1.0
-    emit = nt.nodes.new("ShaderNodeEmission")
-
     if image is not None:
         nt.links.new(image.outputs["Color"], mix.inputs["Color1"])
     else:
         mix.inputs["Color1"].default_value = (0.8, 0.8, 0.8, 1.0)
     nt.links.new(attr.outputs["Color"], mix.inputs["Color2"])
+
+    emit = nt.nodes.new("ShaderNodeEmission")
+    emit.inputs["Strength"].default_value = ambiant
     nt.links.new(mix.outputs["Color"], emit.inputs["Color"])
-    nt.links.new(emit.outputs["Emission"], out.inputs["Surface"])
+
+    if not eclaire:
+        nt.links.new(emit.outputs["Emission"], out.inputs["Surface"])
+        return
+
+    diffuse = nt.nodes.new("ShaderNodeBsdfDiffuse")
+    nt.links.new(mix.outputs["Color"], diffuse.inputs["Color"])
+    somme = nt.nodes.new("ShaderNodeAddShader")
+    nt.links.new(diffuse.outputs["BSDF"], somme.inputs[0])
+    nt.links.new(emit.outputs["Emission"], somme.inputs[1])
+    nt.links.new(somme.outputs["Shader"], out.inputs["Surface"])
+
+
+def build_game_lights(scene) -> int:
+    """Recrée en EEVEE les lampes que le JEU allumera, d'après les `light_*`.
+
+    Sur un niveau hybride (ADR 0024), la couleur de sommet n'est plus
+    l'éclairage mais l'ombre : rendre `texture × Col` seul donnerait une image
+    qui n'existe nulle part. Il faut donc rallumer ici les mêmes lampes que
+    `loader.ts::buildLevelLight` instancie en jeu, avec les mêmes extras.
+
+    Conversion d'intensité : une `PointLight` three.js est en candela, donc son
+    éclairement vaut I/d² ; une lampe Blender est en watts et rayonne
+    P/(4π·d²). Pour le même éclairement, P = 4π·I — un facteur calculé, pas
+    réglé à l'œil (à 40 au lieu de 12,6, la capture ressortait trois fois trop
+    claire et brûlait le plafond).
+    """
+    n = 0
+    for obj in list(scene.objects):
+        if obj.type != "EMPTY" or not obj.name.split(".")[0].startswith("light_"):
+            continue
+        data = bpy.data.lights.new(f"_rt_{obj.name}", type="POINT")
+        data.energy = float(obj.get("intensity", 8.0)) * 4.0 * math.pi
+        data.shadow_soft_size = 0.15
+        couleur = str(obj.get("color", "#ffffff")).lstrip("#")
+        if len(couleur) == 6:
+            data.color = tuple(int(couleur[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+        light = bpy.data.objects.new(f"_rt_{obj.name}", data)
+        light.location = obj.matrix_world.translation
+        scene.collection.objects.link(light)
+        n += 1
+    return n
 
 
 def find_spawn() -> bpy.types.Object | None:
@@ -125,8 +175,11 @@ def main() -> None:
         scene.world.use_nodes = False
         scene.world.color = (0.0, 0.0, 0.0)
 
+    lampes = build_game_lights(scene)
     for mat in bpy.data.materials:
-        rewire_as_game(mat)
+        rewire_as_game(mat, ambiant=0.18 if lampes else 1.0, eclaire=lampes > 0)
+    print(f"[rendu] {lampes} lampe(s) `light_*` rallumée(s)" if lampes
+          else "[rendu] aucune `light_*` : niveau tout baké, émission pure")
 
     sources = set()
     for name in SOURCE_COLLECTIONS:
@@ -140,8 +193,11 @@ def main() -> None:
     for obj in scene.objects:
         if obj.name.startswith(SKIP_PREFIXES) or any(c in sources for c in obj.users_collection):
             obj.hide_render = True
-        if obj.type == "LIGHT":
-            obj.hide_render = True      # tout l'éclairage est déjà dans les sommets
+        # Les lampes du BAKE n'ont rien à faire ici : leur travail est déjà dans
+        # la couleur de sommet. Seules les `_rt_*` reconstruites plus haut, celles
+        # que le jeu allumera vraiment, restent visibles.
+        if obj.type == "LIGHT" and not obj.name.startswith("_rt_"):
+            obj.hide_render = True
 
     data = bpy.data.cameras.new("_ingame")
     data.lens = GAME_LENS
