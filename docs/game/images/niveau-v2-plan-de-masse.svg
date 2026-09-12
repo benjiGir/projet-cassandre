@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 624 936" width="624" height="936" font-family="ui-monospace, monospace">
+<style>text{paint-order:stroke;stroke:#14171c;stroke-width:3px;stroke-linejoin:round}</style>
+<rect width="624" height="936" fill="#14171c"/>
+<g stroke="#222831" stroke-width="1">
+<line x1="64.0" y1="880.0" x2="64.0" y2="56.0"/>
+<line x1="104.0" y1="880.0" x2="104.0" y2="56.0"/>
+<line x1="144.0" y1="880.0" x2="144.0" y2="56.0"/>
+<line x1="184.0" y1="880.0" x2="184.0" y2="56.0"/>
+<line x1="224.0" y1="880.0" x2="224.0" y2="56.0"/>
+<line x1="264.0" y1="880.0" x2="264.0" y2="56.0"/>
+<line x1="304.0" y1="880.0" x2="304.0" y2="56.0"/>
+<line x1="344.0" y1="880.0" x2="344.0" y2="56.0"/>
+<line x1="384.0" y1="880.0" x2="384.0" y2="56.0"/>
+<line x1="424.0" y1="880.0" x2="424.0" y2="56.0"/>
+<line x1="464.0" y1="880.0" x2="464.0" y2="56.0"/>
+<line x1="504.0" y1="880.0" x2="504.0" y2="56.0"/>
+<line x1="544.0" y1="880.0" x2="544.0" y2="56.0"/>
+<line x1="56.0" y1="880.0" x2="568.0" y2="880.0"/>
+<line x1="56.0" y1="840.0" x2="568.0" y2="840.0"/>
+<line x1="56.0" y1="800.0" x2="568.0" y2="800.0"/>
+<line x1="56.0" y1="760.0" x2="568.0" y2="760.0"/>
+<line x1="56.0" y1="720.0" x2="568.0" y2="720.0"/>
+<line x1="56.0" y1="680.0" x2="568.0" y2="680.0"/>
+<line x1="56.0" y1="640.0" x2="568.0" y2="640.0"/>
+<line x1="56.0" y1="600.0" x2="568.0" y2="600.0"/>
+<line x1="56.0" y1="560.0" x2="568.0" y2="560.0"/>
+<line x1="56.0" y1="520.0" x2="568.0" y2="520.0"/>
+<line x1="56.0" y1="480.0" x2="568.0" y2="480.0"/>
+<line x1="56.0" y1="440.0" x2="568.0" y2="440.0"/>
+<line x1="56.0" y1="400.0" x2="568.0" y2="400.0"/>
+<line x1="56.0" y1="360.0" x2="568.0" y2="360.0"/>
+<line x1="56.0" y1="320.0" x2="568.0" y2="320.0"/>
+<line x1="56.0" y1="280.0" x2="568.0" y2="280.0"/>
+<line x1="56.0" y1="240.0" x2="568.0" y2="240.0"/>
+<line x1="56.0" y1="200.0" x2="568.0" y2="200.0"/>
+<line x1="56.0" y1="160.0" x2="568.0" y2="160.0"/>
+<line x1="56.0" y1="120.0" x2="568.0" y2="120.0"/>
+<line x1="56.0" y1="80.0" x2="568.0" y2="80.0"/>
+</g>
+<rect x="248.0" y="720.0" width="32.0" height="16.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="384.0" y="680.0" width="16.0" height="24.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="240.0" y="640.0" width="48.0" height="16.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="224.0" y="432.0" width="16.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="288.0" y="448.0" width="16.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="240.0" y="336.0" width="48.0" height="16.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="344.0" y="208.0" width="32.0" height="112.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="440.0" y="192.0" width="32.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="264.0" y="160.0" width="176.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="88.0" y="160.0" width="176.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="88.0" y="192.0" width="32.0" height="192.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="168.0" y="736.0" width="192.0" height="144.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
+<text x="176.0" y="754.0" fill="#e8edf2" font-size="13" font-weight="700">1. Parking extérieur</text>
+<text x="176.0" y="768.0" fill="#9fb0c0" font-size="10">48 × 36 m · h 6.0 · 0:45</text>
+<circle cx="208.0" cy="776.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="328.0" cy="768.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="261.0" y="861.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="144.0" y="656.0" width="240.0" height="64.0" fill="#c89a2f" fill-opacity="0.30" stroke="#c89a2f" stroke-width="2"/>
+<text x="152.0" y="674.0" fill="#e8edf2" font-size="13" font-weight="700">2. Galerie marchande</text>
+<text x="152.0" y="688.0" fill="#9fb0c0" font-size="10">60 × 16 m · h 6.0 · 1:00</text>
+<circle cx="176.0" cy="680.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="344.0" cy="676.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="240.0" cy="668.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="240.0" cy="668.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<rect x="261.0" y="709.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="400.0" y="640.0" width="88.0" height="80.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="400.0" y="622.0" fill="#e8edf2" font-size="13" font-weight="700">3. Cafétéria</text>
+<text x="400.0" y="636.0" fill="#9fb0c0" font-size="10">22 × 20 m · h 4.0 · 0:30</text>
+<circle cx="480.0" cy="700.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="472.0" cy="656.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="401.0" y="689.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="160.0" y="544.0" width="208.0" height="96.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="168.0" y="562.0" fill="#e8edf2" font-size="13" font-weight="700">4. Caisses</text>
+<text x="168.0" y="576.0" fill="#9fb0c0" font-size="10">52 × 24 m · h 5.0 · 1:00</text>
+<circle cx="192.0" cy="568.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="336.0" cy="568.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="240.0" cy="556.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="296.0" cy="556.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="261.0" y="629.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="240.0" y="352.0" width="48.0" height="192.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<g transform="translate(264.0,448.0) rotate(-90)"><text x="0" y="-4" fill="#e8edf2" font-size="13" font-weight="700" text-anchor="middle">5. Allée centrale (hub)</text><text x="0" y="12" fill="#9fb0c0" font-size="10" text-anchor="middle">12 × 48 m · h 6.0</text></g>
+<circle cx="264.0" cy="416.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="256.0" cy="368.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="261.0" y="533.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="56.0" y="384.0" width="168.0" height="144.0" fill="#c8622f" fill-opacity="0.30" stroke="#c8622f" stroke-width="2"/>
+<text x="64.0" y="402.0" fill="#e8edf2" font-size="13" font-weight="700">6. Rayons</text>
+<text x="64.0" y="416.0" fill="#9fb0c0" font-size="10">42 × 36 m · h 5.0 · 2:00</text>
+<circle cx="184.0" cy="504.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="184.0" cy="504.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="128.0" cy="496.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="88.0" cy="472.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="168.0" cy="424.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="168.0" cy="424.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="112.0" cy="408.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="72.0" cy="512.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="217.0" y="453.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="304.0" y="400.0" width="144.0" height="128.0" fill="#c89a2f" fill-opacity="0.30" stroke="#c89a2f" stroke-width="2"/>
+<text x="304.0" y="382.0" fill="#e8edf2" font-size="13" font-weight="700">7. Électroménager / TV</text>
+<text x="304.0" y="396.0" fill="#9fb0c0" font-size="10">36 × 32 m · h 5.0 · 1:00</text>
+<circle cx="344.0" cy="512.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="344.0" cy="512.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="392.0" cy="504.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="424.0" cy="472.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="368.0" cy="424.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="416.0" cy="416.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="305.0" y="469.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="168.0" y="192.0" width="176.0" height="144.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="176.0" y="210.0" fill="#e8edf2" font-size="13" font-weight="700">8. Réserve / quai</text>
+<text x="176.0" y="224.0" fill="#9fb0c0" font-size="10">44 × 36 m · h 8.0 · 1:15</text>
+<circle cx="200.0" cy="288.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="312.0" cy="280.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="232.0" cy="248.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="288.0" cy="240.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="184.0" cy="216.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="216.0" cy="208.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="320.0" cy="208.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="261.0" y="325.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="376.0" y="192.0" width="192.0" height="160.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
+<text x="384.0" y="210.0" fill="#e8edf2" font-size="13" font-weight="700">9. Parking souterrain</text>
+<text x="384.0" y="224.0" fill="#9fb0c0" font-size="10">48 × 40 m · h 3.5 · z -6 · 1:00</text>
+<circle cx="424.0" cy="320.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="472.0" cy="304.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="520.0" cy="280.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="440.0" cy="240.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="440.0" cy="240.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="496.0" cy="216.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="544.0" cy="232.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="381.0" y="253.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="184.0" y="56.0" width="112.0" height="104.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="184.0" y="38.0" fill="#e8edf2" font-size="13" font-weight="700">10. Bureaux direction</text>
+<text x="184.0" y="52.0" fill="#9fb0c0" font-size="10">28 × 26 m · h 4.0 · 1:00</text>
+<circle cx="240.0" cy="88.0" r="4.5" fill="#e8552f" stroke="#14171c" stroke-width="1"/>
+<circle cx="200.0" cy="128.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="272.0" cy="112.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="272.0" cy="112.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="216.0" cy="72.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<rect x="277.0" y="149.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<text x="264.0" y="868.0" fill="#6fd3ff" font-size="11" text-anchor="middle">▶</text>
+<text x="273.0" y="868.0" fill="#6fd3ff" font-size="10" text-anchor="start">départ</text>
+<text x="232.0" y="836.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="241.0" y="836.0" fill="#8fffb4" font-size="10" text-anchor="start">pied-de-biche</text>
+<text x="160.0" y="700.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="169.0" y="700.0" fill="#8fffb4" font-size="10" text-anchor="start">machine à pinces</text>
+<text x="192.0" y="696.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="201.0" y="696.0" fill="#8fffb4" font-size="10" text-anchor="start">photomaton</text>
+<text x="152.0" y="712.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="161.0" y="712.0" fill="#c58fff" font-size="10" text-anchor="start">secret 1 — arrière-boutique</text>
+<text x="472.0" y="680.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="463.0" y="680.0" fill="#8fffb4" font-size="10" text-anchor="end">toilettes +1 PV</text>
+<text x="412.0" y="652.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="421.0" y="652.0" fill="#c58fff" font-size="10" text-anchor="start">secret 3 — aération</text>
+<text x="272.0" y="604.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="281.0" y="604.0" fill="#8fffb4" font-size="10" text-anchor="start">fusil à pompe</text>
+<text x="264.0" y="452.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="273.0" y="452.0" fill="#8fffb4" font-size="10" text-anchor="start">micro d'annonces</text>
+<text x="72.0" y="476.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
+<text x="81.0" y="476.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Argent</text>
+<text x="200.0" y="524.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="209.0" y="524.0" fill="#c58fff" font-size="10" text-anchor="start">secret 2 — toit des gondoles</text>
+<text x="432.0" y="420.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
+<text x="441.0" y="420.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Or</text>
+<text x="384.0" y="524.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="393.0" y="524.0" fill="#8fffb4" font-size="10" text-anchor="start">mur d'écrans</text>
+<text x="240.0" y="92.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
+<text x="249.0" y="92.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Platine (Directeur)</text>
+<text x="240.0" y="64.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="249.0" y="64.0" fill="#ff8f8f" font-size="10" text-anchor="start">SORTIE</text>
+<text x="264.0" y="348.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="273.0" y="348.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Argent</text>
+<text x="320.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="329.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Or</text>
+<text x="160.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="169.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">sens unique ↓</text>
+<g stroke="#9fb0c0" stroke-width="2"><line x1="56" y1="912" x2="136" y2="912"/></g>
+<text x="56" y="906" fill="#9fb0c0" font-size="11">20 m</text>
+<text x="568" y="906" fill="#9fb0c0" font-size="12" text-anchor="end">nord ↑ · grille 10 m · repère Blender</text>
+</svg>

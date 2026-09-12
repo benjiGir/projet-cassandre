@@ -372,6 +372,46 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > colonne (pathfinding 2.5D) et le budget de 200 lots de dessin — la salle
 > d'essai n'en consomme que 18 pour 90 000 triangles, il y a de la marge.
 
+> **🔶 Proposé (2026-09-12), en attente de la validation de l'utilisateur.**
+> Livrable : [docs/game/niveau-v2-plan-de-masse.md](docs/game/niveau-v2-plan-de-masse.md)
+> (dix fiches, parcours, vérifications) + le plan coté en SVG
+> (`docs/game/images/niveau-v2-plan-de-masse.svg`).
+>
+> **Les cotes ne vivent pas dans le Markdown mais dans
+> `tools/level_v2/plan_de_masse.py`** : les contrôles de ce jalon sont des
+> calculs, pas des affirmations, et N8 construira depuis les mêmes
+> rectangles au lieu de les recopier. `python3 tools/level_v2/plan_de_masse.py --ascii`
+> rejoue tout : grille de 0,25 m, un seul sol praticable par colonne,
+> recouvrements, spawns hors `attackRange` du point d'arrivée, budget de
+> triangles.
+>
+> **Échelle retenue** : emprise 128 × 206 m, **13 472 m² praticables**, 42 ×
+> la salle d'essai de N4. C'est la vitesse de course (13 m/s, `moveConfig.ts`)
+> qui la fixe autant que la consigne « voir grand » : à cette vitesse, la
+> salle d'essai se traverse en 1,5 s. 40 Costards + 1 Directeur (contre 13 + 1
+> aujourd'hui).
+>
+> **Dividende de N5** : six spawns sont volontairement à portée mais **sous
+> couvert déclaré** (rangée, pilier, kiosque). Avant l'ADR 0025, la seule
+> protection disponible était la distance — tout le level design de combat
+> des zones A-E s'est écrit sous cette contrainte.
+>
+> **Deux décisions remontées à l'utilisateur**, détaillées dans le document :
+> (1) l'échelle, qui est aussi le volume de travail d'habillage de N9 —
+> réduire de 30 % reste possible sans toucher à la structure ; (2) **le
+> budget de triangles, qui ne tient pas** : 1,45 million estimé contre
+> 200 000 fixés en N1, soit 7,2 ×. Deux leviers dans cet ordre — fusionner
+> **par espace** et non par niveau (l'ADR 0023 fusionne aujourd'hui la carte
+> entière par matériau, donc le frustum n'élimine jamais rien ; ~50 lots au
+> lieu de 5, pire cas visible ramené à ~720 000), puis **re-mesurer** un
+> budget qui n'a jamais été confronté au matériel cible. Si la mesure dit
+> non, c'est l'échelle qui cède, pas la structure.
+>
+> **Contrainte de colonne, conséquence concrète** : le parking souterrain ne
+> peut pas être sous le magasin. Il est décalé à l'est de la réserve, à
+> z = −6 m. Et le dessous d'une rampe est toujours plein — sinon sa colonne
+> porte deux sols.
+
 **Objectif.** Passer du schéma à un plan de masse coté, validé avant de construire.
 
 **Actions.**

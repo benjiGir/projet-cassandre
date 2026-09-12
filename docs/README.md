@@ -19,6 +19,7 @@ signale.
 - [Plan du prototype](game/plan-prototype.md) — phases, critères, rollback
 - [Univers et factions](game/univers.md)
 - [Le niveau : hypermarché](game/niveau-hypermarche.md)
+- [Niveau v2 — plan de masse coté](game/niveau-v2-plan-de-masse.md) — proposition du jalon N6, en attente de validation
 
 ## Systèmes
 
