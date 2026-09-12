@@ -16,6 +16,17 @@ Options :
     --strict        code retour 1 dès qu'UN mesh ressort entièrement noir
     --keep-proxies  NE masque PAS les proxies aux rayons Cycles (reproduit le
                     bug historique, sert uniquement à re-mesurer la régression)
+    --pass P        both (défaut) | direct | indirect. `indirect` ne cuit que la
+                    lumière rebondie : c'est le montage hybride, où le direct est
+                    rendu en temps réel et où la couleur de sommet ne sert plus
+                    que de masque d'ombrage.
+    --bounces N     rebonds diffus de Cycles (défaut 4, celui de Blender).
+                    Baisser à 1 durcit l'éclairage : une salle blanche renvoie
+                    énormément, et le rendu physiquement juste écrase justement
+                    les ombres qu'un éclairage de néons devrait creuser.
+    --domain D      point (défaut) | corner. CORNER donne une couleur PAR FACE au
+                    lieu d'une par sommet : c'est ce qui fait qu'une arête se
+                    voit. Voir `ensure_color_attribute`.
     --ambient A     plancher d'éclairage appliqué après le bake, 0 à 1 (défaut 0,
                     donc sans effet sur les niveaux existants) — voir
                     `apply_ambient` : indispensable dans une salle close, où
@@ -80,15 +91,32 @@ def bakeable_objects():
     return out
 
 
-def ensure_color_attribute(obj) -> str:
-    """Crée/active l'attribut "Col" — domaine Point, Byte Color."""
+def ensure_color_attribute(obj, domain: str = "POINT") -> str:
+    """Crée/active l'attribut "Col" — Byte Color, sur le domaine demandé.
+
+    **POINT ou CORNER change tout ce qu'un bake peut exprimer.** Sur le domaine
+    POINT il y a UNE couleur par sommet, partagée par toutes les faces qui s'y
+    rejoignent : les huit sommets d'une boîte sont communs à trois faces
+    chacun, donc le dessus et le flanc d'un carton sous un néon reçoivent
+    forcément la même valeur. Aucune arête ne se détache, et la salle entière
+    paraît éclairée à plat même quand le bake, lui, porte du contraste.
+
+    Sur le domaine CORNER, chaque face a ses propres valeurs : une face
+    tournée vers le plafond s'éclaire, son flanc reste sombre, et l'arête
+    entre les deux se voit. C'est le relief qu'un éclairage temps réel donnerait
+    par le produit N·L — sauf qu'ici il est cuit, donc gratuit.
+
+    Le coût est à l'export : l'exporteur glTF dédouble les sommets dont les
+    coins diffèrent, exactement comme il le fait déjà pour les UV et les
+    normales. Plus de sommets dans le `.glb`, aucun surcoût de rendu.
+    """
     mesh = obj.data
     ca = mesh.color_attributes.get("Col")
-    if ca is not None and (ca.domain != "POINT" or ca.data_type != "BYTE_COLOR"):
+    if ca is not None and (ca.domain != domain or ca.data_type != "BYTE_COLOR"):
         mesh.color_attributes.remove(ca)
         ca = None
     if ca is None:
-        ca = mesh.color_attributes.new(name="Col", type="BYTE_COLOR", domain="POINT")
+        ca = mesh.color_attributes.new(name="Col", type="BYTE_COLOR", domain=domain)
     index = list(mesh.color_attributes).index(ca)
     mesh.color_attributes.active_color_index = index
     mesh.color_attributes.render_color_index = index
@@ -319,6 +347,15 @@ def main() -> None:
     keep_proxies = "--keep-proxies" in args
     emissive_marker = arg_value(args, "--emissive-marker", "_neon")
     ambient = float(arg_value(args, "--ambient", "0"))
+    passes = arg_value(args, "--pass", "both").lower()
+    if passes not in ("both", "direct", "indirect"):
+        print(f"[bake] passe inconnue : {passes}")
+        sys.exit(1)
+    bounces = int(arg_value(args, "--bounces", "4"))
+    domain = arg_value(args, "--domain", "point").upper()
+    if domain not in ("POINT", "CORNER"):
+        print(f"[bake] domaine inconnu : {domain}")
+        sys.exit(1)
 
     if bake_type not in ("combined", "diffuse"):
         print(f"[bake] type inconnu : {bake_type}")
@@ -329,6 +366,11 @@ def main() -> None:
     scene.cycles.device = "CPU"
     scene.cycles.samples = samples
     scene.cycles.use_adaptive_sampling = False
+    # Le rebond diffus est ce qui décide du contraste global : à 4 rebonds, un
+    # sol et un plafond blancs se renvoient la lumière jusqu'à effacer toute
+    # ombre. Un éclairage de jeu Build est plus dur que la réalité.
+    scene.cycles.diffuse_bounces = bounces
+    scene.cycles.max_bounces = max(bounces, 1)
     scene.cycles.seed = 0
     scene.render.bake.target = "VERTEX_COLORS"
     scene.render.bake.use_pass_direct = True
@@ -350,11 +392,12 @@ def main() -> None:
 
     fallback = bpy.data.materials.get("mat_kit_shell") or bpy.data.materials.new("mat_bake_fallback")
     for obj in targets:
-        ensure_color_attribute(obj)
+        ensure_color_attribute(obj, domain)
         ensure_material(obj, fallback)
 
     print(f"[bake] {len(targets)} meshes, {len(lights)} lampes, "
-          f"{len(emissive)} matériau(x) émissif(s), {samples} samples, type={bake_type}")
+          f"{len(emissive)} matériau(x) émissif(s), {samples} samples, "
+          f"type={bake_type}/{passes}, domaine={domain.lower()}, rebonds={bounces}")
 
     if not lights and not emissive:
         print("[bake] ERREUR : ni lampe ni matériau émissif — le bake sortirait noir")
@@ -376,7 +419,7 @@ def main() -> None:
         kwargs["type"] = "COMBINED"
     else:
         kwargs["type"] = "DIFFUSE"
-        kwargs["pass_filter"] = {"DIRECT", "INDIRECT"}
+        kwargs["pass_filter"] = {"DIRECT", "INDIRECT"} if passes == "both" else {passes.upper()}
 
     if keep_proxies:
         hidden = []

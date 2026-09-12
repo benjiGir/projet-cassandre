@@ -562,6 +562,40 @@ le bord d'une flaque ne peut pas être plus fin que la maille.
 Réglages retenus : tubes à 320 W, `--ambient 0.07`. Plus de plancher d'ambiant
 efface précisément les ombres qu'on vient de créer.
 
+### Une couleur par sommet ne peut pas montrer une arête
+
+Sur le domaine POINT, il y a **une couleur par sommet, partagée par toutes les
+faces qui s'y rejoignent**. Les huit sommets d'une boîte appartiennent chacun à
+trois faces : le dessus d'un carton sous un néon et son flanc reçoivent donc
+forcément la même valeur. Aucune arête ne se détache, et la salle paraît
+éclairée à plat même quand le bake, lui, porte du contraste — c'est exactement
+ce qu'un joueur décrit comme « on dirait une lumière d'ambiance qui éclaire
+tout ».
+
+`--domain corner` donne une couleur **par face**. L'exporteur glTF dédouble
+alors les sommets dont les coins diffèrent, comme il le fait déjà pour les UV
+et les normales : plus de sommets dans le `.glb`, aucun surcoût de rendu.
+Mesuré sur la salle d'essai, le plafond passe d'une moyenne de 0,39 à 0,57 —
+sa sous-face s'éclaire enfin sans être moyennée avec son dessus.
+
+### Le rebond diffus décide du contraste
+
+Cycles rebondit quatre fois par défaut. Dans une salle de vente blanche, sol et
+plafond se renvoient la lumière jusqu'à effacer les ombres qu'un plafond de
+néons devrait creuser — le plafond finissait la surface la plus claire de la
+pièce. `--bounces 1` durcit l'éclairage ; `--bounces 0` l'assèche trop
+(luminance moyenne 0,44 → 0,36 → 0,28). Un éclairage de jeu Build est plus dur
+que la réalité, c'est délibéré.
+
+### Cuire l'indirect seul, pour un montage hybride
+
+`--pass indirect` ne cuit que la lumière rebondie. Combiné à de vraies lampes
+temps réel côté jeu, la couleur de sommet ne sert plus que de **masque
+d'ombrage** et le direct est calculé par image — avec la chute de lumière, le
+relief des arêtes et l'éclairage des ennemis qui passent dessous. Mesuré sur la
+salle d'essai : seize `PointLight` ne coûtent rien à 640×360 (0,30 ms de rendu,
+117 FPS). Piste évaluée et non adoptée à ce stade — voir `PLAN_NIVEAU_V2.md`.
+
 ### Une source de lumière ressort noire
 
 Une surface qui ÉMET la lumière n'en reçoit pas : le tube d'une rampe de

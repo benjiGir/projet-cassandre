@@ -128,7 +128,78 @@ export function exposeDebugApi(engine: GameEngine): void {
       setEnabled: setMusicEnabled,
       toggle: toggleMusic,
     },
+    /** Répond à « pourquoi le niveau est-il éclairé comme ça ». Deux termes le
+     * décident, et ils se confondent à l'œil : l'éclairage TEMPS RÉEL de la
+     * scène, et la couleur CUITE dans les sommets. `lighting()` les sépare —
+     * même précédent console que `doors`/`secrets`. */
+    lighting: () => inspectLighting(engine),
   };
+}
+
+/**
+ * Sépare les deux termes du rendu d'un niveau : `texture × couleur de sommet ×
+ * éclairage temps réel`.
+ *
+ * `lights` liste ce que la scène éclaire vraiment. `batches` mesure, sur la
+ * géométrie réellement dessinée (donc APRÈS la fusion de `mergeStaticDecor`),
+ * si la couleur cuite est bien là et quel contraste elle porte. Un niveau plat
+ * a soit `vertexColors: false` (le bake n'arrive pas au matériau), soit un
+ * `range` écrasé (le bake lui-même est plat) — ce ne sont pas les mêmes
+ * corrections.
+ * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+ */
+function inspectLighting(engine: GameEngine) {
+  const lights: { type: string; intensity: number; color: string }[] = [];
+  const batches: {
+    name: string;
+    vertexColors: boolean;
+    hasColorAttribute: boolean;
+    min: number;
+    mean: number;
+    max: number;
+  }[] = [];
+
+  engine.scene.traverse((obj) => {
+    const light = obj as THREE.Light;
+    if (light.isLight) {
+      lights.push({
+        type: light.type,
+        intensity: light.intensity,
+        color: `#${light.color.getHexString()}`,
+      });
+    }
+  });
+
+  const root = engine.session.gltfLevelSession?.current?.root;
+  root?.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh || Array.isArray(mesh.material) || !mesh.visible) return;
+    const material = mesh.material as THREE.MeshLambertMaterial;
+    const attribute = mesh.geometry.getAttribute("color");
+    let min = 1;
+    let max = 0;
+    let sum = 0;
+    if (attribute) {
+      for (let i = 0; i < attribute.count; i += 1) {
+        // Luminance Rec. 709, la même pondération que le rapport de bake.
+        const luma =
+          0.2126 * attribute.getX(i) + 0.7152 * attribute.getY(i) + 0.0722 * attribute.getZ(i);
+        min = Math.min(min, luma);
+        max = Math.max(max, luma);
+        sum += luma;
+      }
+    }
+    batches.push({
+      name: mesh.name,
+      vertexColors: material.vertexColors === true,
+      hasColorAttribute: attribute !== undefined,
+      min: attribute ? +min.toFixed(3) : 0,
+      mean: attribute ? +(sum / attribute.count).toFixed(3) : 0,
+      max: attribute ? +max.toFixed(3) : 0,
+    });
+  });
+
+  return { lights, batches };
 }
 
 declare global {
@@ -202,6 +273,7 @@ declare global {
         setEnabled: (enabled: boolean) => void;
         toggle: () => boolean;
       };
+      lighting: () => ReturnType<typeof inspectLighting>;
     };
   }
 }

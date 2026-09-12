@@ -143,6 +143,26 @@ de partie (`player`, `weapons`, `suits`, `directors`, `directorManager`,
 `level`, `hasBadge`/`giveBadge`, `doors`, `secrets`, `pathfinding`) suivent
 cette même discipline.
 
+### cassandre.lighting() — séparer les deux termes de l'éclairage
+
+Le rendu d'un niveau vaut `texture × couleur de sommet × éclairage temps réel`.
+À l'œil, ces deux derniers termes se confondent : « c'est trop plat » peut
+vouloir dire que le bake n'arrive pas au matériau, que le bake lui-même est
+plat, ou qu'une lumière temps réel écrase tout. Ce sont trois corrections
+différentes.
+
+`cassandre.lighting()` les sépare. `lights` liste ce que la scène éclaire
+vraiment (type, intensité, couleur) ; `batches` mesure, **sur la géométrie
+réellement dessinée — donc après la fusion du décor (ADR 0023)** —, si la
+couleur cuite est présente (`vertexColors`, `hasColorAttribute`) et quel
+contraste elle porte (`min`/`mean`/`max` en luminance Rec. 709, la même
+pondération que le rapport de `bake_vertex_lighting.py`).
+
+Lecture : `vertexColors: false` ou `hasColorAttribute: false` → le bake
+n'atteint pas le matériau, chercher dans le loader ou la fusion. Un `min`/`max`
+resserré → c'est le bake qu'il faut refaire. Les deux corrects mais un rendu
+plat → regarder `lights`.
+
 ## Simulation hors écran et preuve de déterminisme
 
 `simulateRecording(rec, cfg)` (`testHarness.ts`) rejoue une séquence
