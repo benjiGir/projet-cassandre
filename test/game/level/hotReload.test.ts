@@ -45,6 +45,7 @@ function fakeHandle(): LevelHandle {
       secretCount: 0,
       unprefixedMeshCount: 0,
       decorBatchCount: 0,
+      lightCount: 0,
     },
     dispose: vi.fn(),
   };

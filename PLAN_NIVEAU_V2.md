@@ -237,6 +237,17 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > une consigne de plan, pas une correction. Détail des deux premières dans
 > `docs/pipeline/harmonisation-assets.md` et `docs/pipeline/niveau-blender.md`.
 >
+> **Suite du retour (2026-09-12) : éclairage hybride adopté.** « J'ai
+> l'impression qu'il y a une ambient light qui éclaire tout » — vérifié :
+> l'ambiante était bien à 1.0, mais la vraie cause était qu'une couleur cuite
+> PAR SOMMET ne peut pas montrer une arête. Corrigé (`--domain corner`), puis
+> mesuré que seize `PointLight` ne coûtent rien à 640×360 (0,30 ms). D'où
+> l'[ADR 0024](docs/decisions/0024-eclairage-hybride.md) : le direct est temps
+> réel via des `light_*` portées par le niveau, l'indirect est cuit et sert
+> d'ombre. **À traiter en N9** : three.js évalue toutes les lampes par
+> fragment, le niveau complet en demandera plus de cent — il faudra un pool de
+> taille fixe réaffecté aux luminaires proches.
+>
 > **🔶 Construite (2026-09-12).** Salle
 > de 16 × 20 m, trois rangées coupées par une allée transversale, en jeu sous
 > `Essai — Rayons (niveau v2)`. Bibliothèque de **37 assets générés par code**

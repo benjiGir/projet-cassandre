@@ -66,17 +66,51 @@ propres néons. Une face tournée à l'opposé du soleil perd 60 % de sa
 luminosité cuite ; une face orientée vers lui déborde. La modulation la plus
 visible du niveau ne vient alors pas du bake mais d'un soleil hérité.
 
-`LevelDef.bakedLighting` (registre `game/level/levels.ts`) éteint le soleil
-et met l'ambiante à 1 pour ce niveau : le rendu vaut alors exactement
-`texture × couleur cuite`, ce que le pipeline vise depuis
-l'[ADR 0005](../decisions/0005-eclairage-vertex-colors.md).
-`lifecycle.ts::applyLightRig` l'applique à chaque construction de partie.
+`LevelDef.lighting` (registre `game/level/levels.ts`) choisit le régime, et
+`lifecycle.ts::applyLightRig` l'applique à chaque construction de partie :
+
+| mode | ambiante | soleil | ce que le `.glb` doit fournir |
+|---|---|---|---|
+| `temps-reel` (défaut) | 0.4 | 0.8 | rien — gym et zones A-E |
+| `bake` | 1.0 | 0 | une couleur de sommet portant TOUT l'éclairage |
+| `hybride` | 0.18 | 0 | des `light_*` + une couleur de sommet d'OMBRE |
+
+En `bake`, le rendu vaut exactement `texture × couleur cuite`, ce que le
+pipeline vise depuis l'[ADR 0005](../decisions/0005-eclairage-vertex-colors.md).
+En `hybride`, l'ambiante n'est pas nulle : les lampes ont une portée finie et
+un recoin hors de portée de toutes tomberait au noir absolu.
 
 **Pourquoi un réglage par niveau et non un correctif global** : les zones
 A à E ont été éclairées à l'œil SOUS l'ancien rig. Les y basculer d'office
 changerait l'aspect de tout le jeu sans que personne l'ait demandé. Seule
 la salle d'essai du niveau v2 l'active aujourd'hui ; la bascule des zones
 existantes se décidera au jalon N10 (`PLAN_NIVEAU_V2.md`).
+
+### Éclairage hybride : lampes temps réel + ombre cuite
+
+Depuis l'[ADR 0024](../decisions/0024-eclairage-hybride.md), un niveau peut
+choisir un troisième régime, `lighting: "hybride"` : **le direct est rendu en
+temps réel, l'indirect est cuit**.
+
+Le niveau porte alors ses propres lampes. Elles sont posées dans Blender comme
+des empties `light_*` et instanciées par `loader.ts::buildLevelLight` en
+`THREE.PointLight`, attachées à la racine du niveau — donc détruites avec lui.
+Extras lus, tous optionnels : `color` (« #rrggbb »), `intensity`, `distance`,
+`decay`.
+
+La couleur de sommet ne porte plus l'éclairage mais **l'ombre** : elle
+multiplie la lumière temps réel au lieu de s'y ajouter. Un recoin à l'ombre
+cuite reste donc sombre même sous une lampe proche — faux physiquement, juste
+visuellement, et c'est ce qui remplace les ombres portées que trois.js ne
+calcule pas ici.
+
+`LevelStats.lightCount` donne le nombre de `light_*` réellement instanciées, et
+`cassandre.lighting()` liste ce qui éclaire vraiment la scène.
+
+**Coût, mesuré** : 27 lampes sur la salle d'essai — 0,40 ms de rendu, 120 FPS,
+18 draw calls. La limite connue est le passage à l'échelle : three.js évalue
+toutes les lampes pour chaque fragment, et le niveau complet en demanderait
+plus de cent. La parade prévue est dans l'ADR.
 
 ## Découplage entre render et game
 

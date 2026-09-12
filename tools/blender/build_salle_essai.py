@@ -195,22 +195,25 @@ def build_signage(props, col_coll) -> None:
                 props, col_coll, f"promo{i}")
 
 
-def build_lights(lights, props, energy: float) -> None:
-    """Rampes de néons et leurs sources.
+def build_lights(lights, props, logic, energy: float) -> None:
+    """Rampes de néons, leurs sources de BAKE, et leurs lampes de JEU.
 
-    Trois choix font tout le relief, et aucun n'est un réglage de puissance :
+    Deux éclairages cohabitent et n'ont pas le même métier :
 
-    - **la source a la forme du tube** (3,9 × 0,3 m), pas d'un carré de 3 m.
-      Un carré éclaire de partout et ne projette presque rien ; un tube fait
-      chuter la lumière en travers de l'allée.
-    - **rien n'éclaire directement au-dessus des rangées.** Les rampes courent
-      au-dessus des allées et des dégagements, donc les gondoles reçoivent la
-      lumière de biais : leurs tablettes basses restent dans l'ombre des hautes,
-      ce qui donne la verticale du rayon.
-    - **quelques tubes sont morts.** Ils creusent des zones sombres — de quoi
-      dater le magasin, et donner envie d'aller voir.
+    - les **area lights** servent au bake et ne partent pas en jeu. Trois choix
+      font tout leur relief, et aucun n'est un réglage de puissance : la source
+      a la forme du tube (3,9 × 0,3 m) et non d'un carré de 3 m ; rien
+      n'éclaire directement au-dessus des rangées, donc les gondoles reçoivent
+      la lumière de biais et leurs tablettes basses restent dans l'ombre des
+      hautes ; quelques tubes sont morts, ce qui creuse des zones sombres — de
+      quoi dater le magasin et donner envie d'aller voir.
+    - les **`light_*`** sont des empties lus par `loader.ts`, qui en fait des
+      `THREE.PointLight`. Ce sont elles qui éclairent en jeu : chute de
+      lumière réelle, arêtes qui se détachent, ennemis éclairés en passant
+      dessous.
 
-    Blanc légèrement froid : un tube fluorescent n'est jamais neutre.
+    Blanc légèrement froid dans les deux cas : un tube fluorescent n'est jamais
+    neutre.
     """
     blanc_froid = (0.86, 0.93, 1.0)
     n = 0
@@ -221,6 +224,15 @@ def build_lights(lights, props, energy: float) -> None:
             if not mort:
                 H.area_light(f"lamp_{n}", (x - 0.17, y + 2.0, HT - 0.30),
                              0.30, energy, lights, size_y=3.90, color=blanc_froid)
+                # Deux points par rampe : une lampe ponctuelle au milieu d'un
+                # tube de 4 m donnerait une flaque ronde là où il faut une
+                # traînée.
+                # Posées NETTEMENT sous le carter (0.65 m) : collées au plafond
+                # elles le brûlaient, alors que c'est le tube qui doit être
+                # l'objet le plus lumineux, pas la dalle autour.
+                for k, dy in enumerate((1.0, 3.0)):
+                    light_empty(logic, f"light_neon_{n}_{k}", (x - 0.17, y + dy, HT - 0.65),
+                                color="#dceeff", intensity=6.0, distance=11.0)
             n += 1
 
     # Bloc de secours au-dessus de la sortie nord : la seule lumière d'une autre
@@ -228,6 +240,29 @@ def build_lights(lights, props, energy: float) -> None:
     L.place(L.neon(2.0), (7.0, 19.4, HT - 1.4), 0, props, props, "secours")
     H.area_light("lamp_secours", (8.0, 19.55, HT - 1.55), 1.8, 40.0, lights,
                  size_y=0.25, color=(0.35, 1.0, 0.45))
+    light_empty(logic, "light_secours", (8.0, 19.3, HT - 1.6),
+                color="#4dff73", intensity=3.0, distance=7.0)
+
+
+def light_empty(coll, name: str, location, color: str, intensity: float,
+                distance: float, decay: float = 2.0):
+    """Lampe de JEU : un empty `light_*` que `loader.ts` transforme en PointLight.
+
+    Un empty plutôt qu'une vraie lampe Blender exportée en `KHR_lights_punctual` :
+    la scène a déjà des lampes, celles du bake, et le watt de Blender ne se
+    convertit pas en intensité three.js. L'empty porte exactement les paramètres
+    de `THREE.PointLight`, lisibles tels quels, et ne peut pas être confondu avec
+    une source de bake.
+    """
+    obj = bpy.data.objects.new(name, None)
+    obj.location = location
+    obj.empty_display_size = 0.3
+    obj["color"] = color
+    obj["intensity"] = intensity
+    obj["distance"] = distance
+    obj["decay"] = decay
+    coll.objects.link(obj)
+    return obj
 
 
 def build_logic(logic) -> None:
@@ -263,7 +298,7 @@ def main() -> None:
     build_walls_furniture(props, col_coll)
     build_props(props, col_coll)
     build_signage(props, col_coll)
-    build_lights(lights, props, energy)
+    build_lights(lights, props, logic, energy)
     build_logic(logic)
 
     lib_layer = bpy.context.view_layer.layer_collection.children.get(L.LIB_NAME)

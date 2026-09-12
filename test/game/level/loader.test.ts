@@ -135,6 +135,7 @@ describe("buildLevelFromGltf (jalon M2) — chemin heureux", () => {
       secretCount: 1,
       unprefixedMeshCount: 1,
       decorBatchCount: 1,
+      lightCount: 0,
     });
 
     expect(handle.spawnSuits.map((s) => s.name)).toEqual(["spawn_suit_1"]);

@@ -587,14 +587,28 @@ pièce. `--bounces 1` durcit l'éclairage ; `--bounces 0` l'assèche trop
 (luminance moyenne 0,44 → 0,36 → 0,28). Un éclairage de jeu Build est plus dur
 que la réalité, c'est délibéré.
 
-### Cuire l'indirect seul, pour un montage hybride
+### Cuire l'indirect seul — le montage hybride
 
-`--pass indirect` ne cuit que la lumière rebondie. Combiné à de vraies lampes
-temps réel côté jeu, la couleur de sommet ne sert plus que de **masque
-d'ombrage** et le direct est calculé par image — avec la chute de lumière, le
-relief des arêtes et l'éclairage des ennemis qui passent dessous. Mesuré sur la
-salle d'essai : seize `PointLight` ne coûtent rien à 640×360 (0,30 ms de rendu,
-117 FPS). Piste évaluée et non adoptée à ce stade — voir `PLAN_NIVEAU_V2.md`.
+`--pass indirect` ne cuit que la lumière rebondie. C'est la moitié Blender de
+l'[ADR 0024](../decisions/0024-eclairage-hybride.md) : le direct est rendu en
+temps réel par les lampes que le niveau porte lui-même, et la couleur de sommet
+ne sert plus que de **masque d'ombrage**.
+
+Deux éclairages cohabitent alors dans le `.blend`, et ils n'ont pas le même
+métier. Les **area lights** servent au bake et ne partent jamais en jeu. Les
+**empties `light_*`** ne servent qu'au jeu et sont invisibles au bake — ce sont
+des empties, donc Cycles les ignore sans qu'on ait rien à masquer.
+
+Chaîne pour un niveau hybride :
+
+```bash
+blender -b <niveau>.blend -P tools/blender/bake_vertex_lighting.py -- \
+    --type diffuse --pass indirect --samples 128 --ambient 0.5 \
+    --domain corner --bounces 3 --save
+```
+
+`--ambient 0.5` remappe le masque dans [0.5, 1.0] : au-dessous, l'ombre cuite
+éteindrait la lumière temps réel au lieu de la nuancer.
 
 ### Une source de lumière ressort noire
 

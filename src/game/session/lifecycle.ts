@@ -34,22 +34,31 @@ const BALL_RADIUS = 0.4;
  *
  * La scène porte depuis la Phase 1 une ambiante à 0.4 et un soleil à 0.8 :
  * c'est ce qui donne leur relief aux boîtes blanches de la gym, qui n'ont
- * aucune couleur cuite. Mais un niveau au bake vertex-color porte DÉJÀ tout
- * son éclairage dans ses sommets — ce rig le multiplie alors une seconde
- * fois, et par une direction arbitraire (5, 10, 5) qui n'a rien à voir avec
- * les néons du plafond : une face tournée à l'opposé perd 60 % de sa
- * luminosité cuite, une face orientée vers le soleil déborde.
+ * aucune couleur cuite. Sur un niveau baké, ce rig fait double emploi, et par
+ * une direction arbitraire (5, 10, 5) sans rapport avec les néons du plafond —
+ * une face tournée à l'opposé perdait 60 % de sa luminosité cuite.
  *
- * `bakedLighting` coupe le soleil et met l'ambiante à 1 : le rendu vaut alors
- * exactement texture × couleur cuite, ce que le pipeline vise depuis le
- * début. Réglage PAR NIVEAU et non global : les zones A-E ont été éclairées
- * à l'œil SOUS l'ancien rig, les basculer changerait leur aspect sans que
- * personne l'ait demandé — la bascule se décidera au jalon N10.
+ * Les trois modes, et ce que chacun attend du `.glb` :
+ *
+ * | mode | ambiante | soleil | le niveau doit fournir |
+ * |---|---|---|---|
+ * | `temps-reel` | 0.4 | 0.8 | rien (gym, zones A-E) |
+ * | `bake` | 1.0 | 0 | une couleur de sommet portant TOUT l'éclairage |
+ * | `hybride` | 0.18 | 0 | des `light_*` + une couleur de sommet d'OMBRE |
+ *
+ * En `hybride`, l'ambiante n'est pas nulle : les lampes du niveau ont une
+ * portée finie et un recoin hors de portée de toutes tomberait au noir absolu,
+ * ce qu'aucun jeu de cette époque ne fait.
+ *
+ * Réglage PAR NIVEAU et non global : les zones A-E ont été éclairées à l'œil
+ * SOUS l'ancien rig, les basculer changerait leur aspect sans que personne
+ * l'ait demandé — la bascule se décidera au jalon N10.
  * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
  */
 function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
-  engine.ambientLight.intensity = choice.bakedLighting ? 1.0 : 0.4;
-  engine.sunLight.intensity = choice.bakedLighting ? 0.0 : 0.8;
+  const mode = choice.lighting ?? "temps-reel";
+  engine.ambientLight.intensity = mode === "bake" ? 1.0 : mode === "hybride" ? 0.18 : 0.4;
+  engine.sunLight.intensity = mode === "temps-reel" ? 0.8 : 0.0;
 }
 
 /**

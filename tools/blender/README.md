@@ -25,16 +25,18 @@ Scripts headless. Aucun ne nécessite d'interface.
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
 blender -b assets_src/library/lib_hypermarche_v2.blend -P tools/blender/build_library.py -- --save
 blender -b --factory-startup -P tools/blender/build_salle_essai.py -- --out assets_src/blender/salle_essai_rayons.blend
-blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/bake_vertex_lighting.py -- --type diffuse --samples 128 --ambient 0.12 --save
+blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/bake_vertex_lighting.py -- --type diffuse --pass indirect --samples 128 --ambient 0.5 --domain corner --bounces 3 --save
 blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/validate_level.py -- --strict
 blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/export_level.py -- --out public/assets/levels/salle_essai_rayons.glb
 blender -b assets_src/blender/salle_essai_rayons.blend -P tools/blender/render_ingame.py -- --out renders/salle_essai_rayons --view 5.75,1.25,0 --view 2.4,10,-80
 ```
 
-Trois options du bake sont nées de cette salle et ne servent qu'aux niveaux
-texturés : `--type diffuse` (obligatoire dès qu'il y a des textures),
-`--ambient` (plancher d'éclairage d'une salle close) et `--emissive-marker`
-(une source ne s'éclaire pas elle-même). Leur raison d'être est dans
+Six options du bake sont nées de cette salle : `--type diffuse` (obligatoire
+dès qu'il y a des textures), `--domain corner` (une couleur par face, sans quoi
+aucune arête ne se détache), `--bounces` (une salle blanche renvoie tant de
+lumière qu'elle efface ses ombres), `--pass indirect` (montage hybride,
+ADR 0024), `--ambient` (plancher d'éclairage) et `--emissive-marker` (une
+source ne s'éclaire pas elle-même). Leur raison d'être est dans
 [docs/pipeline/niveau-blender.md](../../docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors).
 
 ```bash

@@ -135,6 +135,15 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > Consigne pour la suite : **voir grand** sur la taille des pièces et de la
 > carte, l'exploration prime (les 16 × 20 m de la salle d'essai sont un
 > plancher, pas un gabarit).
+> **Éclairage hybride (ADR 0024, 2026-09-12)** : un niveau v2 porte ses propres
+> lampes (empties `light_*` en Blender → `THREE.PointLight`), le bake ne cuit
+> plus que l'indirect (`--pass indirect --domain corner`) et la couleur de
+> sommet ne porte plus l'éclairage mais **l'ombre**. `LevelDef.lighting` choisit
+> le régime par niveau (`temps-reel` par défaut, `bake`, `hybride`) — les zones
+> A-E restent en `temps-reel`, leur bascule se décide à N10. Limite connue :
+> three.js évalue toutes les lampes par fragment, il faudra un pool réaffecté
+> au-delà d'une centaine (à traiter en N9). `cassandre.lighting()` en console
+> sépare éclairage temps réel et couleur cuite.
 >
 > **Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > par jalon dans `PLAN_EFFECT_XSTATE.md`. Effect orchestre maintenant toute

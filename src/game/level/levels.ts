@@ -15,12 +15,18 @@ export interface LevelDef {
   /** Le joueur démarre désarmé (pied-de-biche au sol, ramassable via use_crowbar) — voir WeaponSystem.startUnarmed()/pickUpMelee(). */
   startUnarmed?: boolean;
   /**
-   * L'éclairage du niveau est CUIT dans les couleurs de sommet : la scène
-   * coupe alors son soleil et passe son ambiante à 1, pour que le rendu vaille
-   * exactement texture × couleur cuite.
+   * D'où vient la lumière de ce niveau. Défaut `"temps-reel"`.
+   *
+   * - `"temps-reel"` : ambiante + soleil de la scène, le rig de la Phase 1 —
+   *   c'est ce qu'il faut aux boîtes blanches de la gym, qui n'ont aucune
+   *   couleur cuite, et c'est sous ce rig que les zones A-E ont été éclairées.
+   * - `"bake"` : tout est cuit dans les sommets. Soleil coupé, ambiante à 1,
+   *   le rendu vaut exactement texture × couleur cuite.
+   * - `"hybride"` : le niveau porte ses propres lampes (`light_*`) et sa
+   *   couleur cuite ne sert plus que de masque d'ombre.
    * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
    */
-  bakedLighting?: boolean;
+  lighting?: "temps-reel" | "bake" | "hybride";
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
@@ -39,7 +45,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
     label: "Essai — Rayons (niveau v2)",
     kind: "gltf",
     gltfName: "salle_essai_rayons",
-    bakedLighting: true,
+    lighting: "hybride",
   },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {

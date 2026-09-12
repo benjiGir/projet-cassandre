@@ -105,6 +105,8 @@ export interface LevelStats {
   unprefixedMeshCount: number;
   /** Objets de décor réellement rendus après `mergeStaticDecor` : ordre de grandeur des draw calls du décor. */
   decorBatchCount: number;
+  /** `light_*` instanciées en `THREE.PointLight` — voir `buildLevelLight`. */
+  lightCount: number;
 }
 
 export interface LevelHandle {
@@ -299,6 +301,38 @@ function blenderName(obj: THREE.Object3D): string {
 function cleanExtras(obj: THREE.Object3D): Record<string, unknown> {
   const { name: _internalName, ...rest } = obj.userData as Record<string, unknown>;
   return rest;
+}
+
+/**
+ * `light_*` — une lampe du niveau, posée dans Blender comme un empty.
+ *
+ * Pourquoi un empty et non une vraie lampe Blender exportée en
+ * `KHR_lights_punctual` : la scène Blender a DEUX éclairages qui n'ont rien à
+ * voir. Les area lights servent au bake — grandes, douces, en forme de tube —
+ * et l'unité de Blender (le watt) ne se convertit pas en intensité three.js.
+ * Un empty porte exactement les paramètres de `THREE.PointLight`, lisibles tels
+ * quels, et ne risque jamais d'être confondu avec une source de bake.
+ *
+ * Extras lus (tous optionnels) : `color` (« #rrggbb »), `intensity`,
+ * `distance`, `decay`. Les défauts correspondent à un tube de néon de plafond.
+ * see: docs/systems/rendu.md#éclairage-hybride-lampes-temps-réel--ombre-cuite
+ */
+function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
+  const extras = cleanExtras(obj);
+  const read = (key: string, fallback: number): number => {
+    const value = extras[key];
+    return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  };
+  const color = typeof extras.color === "string" ? extras.color : "#ffffff";
+  const light = new THREE.PointLight(
+    new THREE.Color(color),
+    read("intensity", 8),
+    read("distance", 12),
+    read("decay", 2),
+  );
+  light.name = name;
+  obj.getWorldPosition(light.position);
+  return light;
 }
 
 // Géométrie monde — voir le piège des transforms.
@@ -781,6 +815,7 @@ function buildLevelResourceEffect(
     let spawnPlayer: SpawnPoint | null = null;
     let spawnPlayerCount = 0;
     const spawnSuits: NamedSpawn[] = [];
+    const lights: THREE.PointLight[] = [];
     const spawnDirectors: NamedSpawn[] = [];
     const triggers: TriggerVolume[] = [];
     const doors: DoorInfo[] = [];
@@ -824,6 +859,12 @@ function buildLevelResourceEffect(
         const position = new THREE.Vector3();
         obj.getWorldPosition(position);
         spawnSuits.push({ name, position });
+        continue;
+      }
+      if (name.startsWith("light_")) {
+        // Attachée à `root` et non à la scène : elle disparaît avec le niveau,
+        // comme tout le reste du `.glb`.
+        lights.push(buildLevelLight(obj, name));
         continue;
       }
       if (name.startsWith("spawn_director_")) {
@@ -921,6 +962,8 @@ function buildLevelResourceEffect(
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
 
+    for (const light of lights) root.add(light);
+
     const decor = mergeStaticDecor(root, decorCandidates);
 
     const stats: LevelStats = {
@@ -934,6 +977,7 @@ function buildLevelResourceEffect(
       secretCount: secrets.length,
       unprefixedMeshCount,
       decorBatchCount: unprefixedMeshCount - decor.mergedMeshCount + decor.batchCount,
+      lightCount: lights.length,
     };
 
     return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, bodies };
