@@ -41,9 +41,20 @@ serrée, sans jamais dépendre de `requestAnimationFrame` :
 
 ```js
 cassandre.renderBench(120)            // coût CPU, draw calls, triangles
+cassandre.lightBudget()               // état du pool, sans rien changer
 cassandre.lightBudget(8)              // n'allume que les 8 lampes les plus proches
 cassandre.lightBudget(null)           // tout rallumer
+cassandre.lighting().lights           // `visible: false` = éteinte PAR LE POOL
 ```
+
+**Piège de cette mesure, découvert en la faisant.** Déplacer le joueur
+(`cassandre.player.spawn(...)`) ne déplace PAS la caméra tant que la boucle
+d'affichage ne tourne pas — et elle ne tourne pas dans un onglet masqué. Une
+série de mesures « à différentes positions » obtenue ainsi peut être une
+série d'une seule et même vue, et ça ne se voit pas dans les chiffres. La
+parade : poser `camera.position`/`camera.lookAt` directement avant chaque
+`renderBench`. Le témoin qui trahit le problème est le panneau de debug —
+`Steps: 0` et `Pos: 0,0,0` veulent dire que rien n'a bougé.
 
 Le coût GPU réel demande en plus un chronomètre GPU : `gl.finish()` seul ne
 mesure que l'envoi des commandes côté CPU — précisément la partie qui ne
@@ -113,6 +124,41 @@ spécification WebGL 2 pour `MAX_FRAGMENT_UNIFORM_VECTORS` est de 224
 vecteurs, soit environ quatre fois moins que les 1024 relevés ici : sur une
 machine conforme mais modeste, le mur peut tomber vers **une cinquantaine de
 lampes**. Aucun niveau ne doit s'approcher de ces ordres de grandeur.
+
+## Découpe du décor en cellules
+
+L'[ADR 0023](../decisions/0023-fusion-decor-au-chargement.md) regroupait le
+décor du niveau ENTIER par matériau. Un lot est dessiné dès qu'une seule de
+ses parties entre dans le champ : un lot qui couvre la carte n'est donc
+jamais écarté, et le niveau se dessine en entier à chaque image, dos compris.
+Découper d'abord par cellules de `DECOR_CELL_SIZE` mètres
+(`game/level/mergeStaticDecor.ts`) rend le tri d'écart à nouveau utile.
+
+Mesuré sur le blockout du niveau v2, caméra posée à la main (voir le piège
+ci-dessus), en lots de dessin / triangles réellement dessinés :
+
+| Cellule | Lots créés | Parking | Hub vers le nord | Rayons | Bureaux |
+|---|---|---|---|---|---|
+| niveau entier | 17 | 63 / 107 482 | 18 / 115 580 | 18 / 115 580 | 7 / 82 836 |
+| 48 m | 41 | 79 / 99 546 | 33 / 103 700 | 30 / 89 808 | 7 / 14 000 |
+| **32 m** | **62** | **93 / 91 442** | **41 / 84 952** | **39 / 81 804** | **8 / 11 184** |
+| 24 m | 86 | 91 / 86 980 | 67 / 86 796 | 61 / 79 492 | 9 / 9 564 |
+
+Deux choses à lire dans ce tableau.
+
+D'abord le symptôme : **sans découpe, les bureaux — une pièce close de
+28 × 26 m — dessinent 82 836 triangles.** Avec des cellules de 32 m, 11 184.
+Le reste du niveau était dessiné derrière les murs.
+
+Ensuite le choix de 32 m, qui est le **coude de la courbe** et non un ordre de
+grandeur : 48 → 32 m retire 8 à 18 % de triangles pour une dizaine de lots de
+plus ; 32 → 24 m n'en retire plus que 5 % pour vingt-quatre lots de plus.
+
+Le compromis se paie en lots de dessin, et il se paie surtout là où l'on voit
+loin (le parking, 63 → 93). Les deux budgets restent larges : 93 lots pour 200
+autorisés, 91 442 triangles pour 1 500 000. Si l'habillage de N9 approche des
+200 lots, **remonter la cellule est le premier levier** — les triangles ont de
+la marge, pas les lots.
 
 ## Ce que ça change pour le niveau v2
 

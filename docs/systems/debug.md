@@ -152,7 +152,7 @@ plat, ou qu'une lumière temps réel écrase tout. Ce sont trois corrections
 différentes.
 
 `cassandre.lighting()` les sépare. `lights` liste ce que la scène éclaire
-vraiment (type, intensité, couleur) ; `batches` mesure, **sur la géométrie
+vraiment (nom, type, intensité, couleur, `visible`) ; `batches` mesure, **sur la géométrie
 réellement dessinée — donc après la fusion du décor (ADR 0023)** —, si la
 couleur cuite est présente (`vertexColors`, `hasColorAttribute`) et quel
 contraste elle porte (`min`/`mean`/`max` en luminance Rec. 709, la même
@@ -162,6 +162,21 @@ Lecture : `vertexColors: false` ou `hasColorAttribute: false` → le bake
 n'atteint pas le matériau, chercher dans le loader ou la fusion. Un `min`/`max`
 resserré → c'est le bake qu'il faut refaire. Les deux corrects mais un rendu
 plat → regarder `lights`.
+
+### cassandre.lightBudget() — le pool de lampes
+
+Un espace qui paraît trop sombre n'a pas forcément un défaut d'éclairage : ses
+lampes peuvent simplement être **éteintes par le pool** (48 allumées au plus,
+voir [Rendu](rendu.md#le-pool-de-lampes)). C'est le premier réflexe à avoir,
+avant de toucher au niveau.
+
+`cassandre.lightBudget()` sans argument RAPPORTE l'état (`total`, `actives`,
+`budget`) sans rien changer — un inspecteur qui modifie ce qu'il inspecte
+fausserait la mesure suivante. Avec un argument, il change le budget :
+`lightBudget(null)` rallume tout (est-ce que ça règle le problème ? alors
+c'est le pool), `lightBudget(8)` sert à mesurer ce que coûtent les lampes.
+Dans `cassandre.lighting()`, une lampe éteinte par le pool apparaît avec
+`visible: false`, sous son nom Blender.
 
 ## Simulation hors écran et preuve de déterminisme
 

@@ -34,6 +34,7 @@ function fakeHandle(): LevelHandle {
     doors: [],
     useObjects: [],
     secrets: [],
+    lights: [],
     stats: {
       colliderCount: 0,
       colliderKindCounts: { cuboid: 0, convexHull: 0, trimesh: 0 },

@@ -2,7 +2,7 @@
 title: Fusion du décor statique au chargement plutôt qu'instanciation GPU
 tags: [adr, rendu, pipeline, niveau]
 status: accepte
-updated: 2026-09-11
+updated: 2026-09-12
 ---
 
 # ADR 0023 — Fusion du décor statique au chargement plutôt qu'instanciation GPU
@@ -10,6 +10,16 @@ updated: 2026-09-11
 ## Statut
 
 Accepté (jalon N1 de `PLAN_NIVEAU_V2.md`).
+
+**Révisé sur un point au jalon N9 (2026-09-12), la décision de fond tenant
+toujours** : le regroupement n'est plus « par matériau sur tout le niveau »
+mais « par matériau ET par cellule de 32 m ». La raison est exactement le
+premier point de la section « Conséquences » ci-dessous, qui s'est révélé être
+un défaut et non une remarque : un lot qui couvre la carte n'est jamais écarté
+par le tri d'écart, donc le niveau entier se dessinait à chaque image, derrière
+les murs compris — 82 836 triangles pour une pièce close de 28 × 26 m, contre
+11 184 après la découpe. Voir l'[ADR 0026](0026-visibilite-par-espace-et-pool-de-lampes.md)
+et [Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
 
 ## Contexte
 
@@ -57,7 +67,10 @@ par image, et le plafond existant de 200 000 triangles.
 ## Conséquences
 
 - Un lot est dessiné en entier dès qu'une de ses parties est dans le champ :
-  46 746 → 55 678 triangles sur la même vue. Négligeable aujourd'hui.
+  46 746 → 55 678 triangles sur la même vue. Négligeable aujourd'hui — **et
+  c'est cette phrase qui a mal vieilli** : sur une carte dix fois plus grande,
+  ce n'est plus du tout négligeable. Corrigé par la découpe en cellules, voir
+  le statut ci-dessus.
 - Le nombre de draw calls du décor suit désormais le **nombre de matériaux
   distincts**, pas le nombre d'objets : la palette et les atlas partagés du
   niveau v2 (voir [Harmonisation des
@@ -72,7 +85,7 @@ par image, et le plafond existant de 200 000 triangles.
 
 Si le niveau v2 approche du plafond de triangles parce que des lots entiers
 sont dessinés pour une petite partie visible, découper les lots par cellule
-spatiale. Si la mémoire ou le temps de chargement explosent parce que des
+spatiale. **C'est arrivé, et c'est ce qui a été fait** (jalon N9). Si la mémoire ou le temps de chargement explosent parce que des
 milliers de copies du même produit sont fusionnées, basculer ces produits
 (et eux seulement) en `InstancedMesh`, en acceptant l'éclairage par teinte
 d'instance.

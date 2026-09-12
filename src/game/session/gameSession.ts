@@ -10,6 +10,7 @@ import { type DirectorManager } from "../entities/directorManager";
 import { type SuitManager } from "../entities/suitManager";
 import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
+import { type LightPool } from "../../render/lightPool";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 
 /** Porte de sortie en cours de glissement cosmétique (voir la doc dans `game/loop/updateGameplay.ts`). */
@@ -61,6 +62,8 @@ export interface GameSession {
   gltfLevelSession: LevelSession | null;
   /** Graphe de praticabilité (Jalon M4) du niveau COURANT — rebaké à chaque `onLoaded`, voir `game/session/spawning.ts::loadGltfLevel`. */
   currentNavGraph: NavGraph | null;
+  /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque `onLoaded`, comme `currentNavGraph`. */
+  lightPool: LightPool | null;
 
   /** Carte lâchée par le Directeur : mesh visible tant qu'elle n'a pas été ramassée — voir `game/loop/updateGameplay.ts`. */
   droppedCardMesh: THREE.Mesh | null;

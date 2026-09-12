@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { assetUrl } from "../../core/assetPath";
 import { runGameplaySync } from "../../core/runtime";
 import { BillboardSprite } from "../../render/billboard";
+import { LightPool } from "../../render/lightPool";
 import { Suit, SUIT_ATLAS_ROWS } from "../entities/suit";
 import { Director, DIRECTOR_ATLAS_ROWS } from "../entities/director";
 import { createLevelSession } from "../level/hotReload";
@@ -76,6 +77,13 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       session.currentNavGraph = runGameplaySync(
         PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
       );
+      // Pool de lampes : reconstruit à CHAQUE chargement (le hot reload peut
+      // ajouter, déplacer ou retirer des `light_*`), et dès maintenant plutôt
+      // qu'à la première image — une scène qui dépasse le mur d'uniformes ne
+      // lève aucune exception, elle affiche du vide.
+      // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
+      session.lightPool = new LightPool(handle.lights);
+
       const navStats = navGraphStats(session.currentNavGraph);
       console.info(
         `[pathfinding] graphe baké — ${navStats.walkableCount}/${navStats.cellCount} cellules praticables, ` +
@@ -87,7 +95,9 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
           `spawns Costard ${handle.stats.spawnSuitCount}, spawns Directeur ${handle.stats.spawnDirectorCount}, ` +
           `triggers ${handle.stats.triggerCount}, ` +
           `portes ${handle.stats.doorCount}, use ${handle.stats.useCount}, ` +
-          `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}`,
+          `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}, ` +
+          `lampes ${handle.stats.lightCount} (${session.lightPool.stats.actives} allumées), ` +
+          `lots de décor ${handle.stats.decorBatchCount}`,
       );
       // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
       // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).

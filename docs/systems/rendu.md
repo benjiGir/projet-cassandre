@@ -105,12 +105,48 @@ visuellement, et c'est ce qui remplace les ombres portées que trois.js ne
 calcule pas ici.
 
 `LevelStats.lightCount` donne le nombre de `light_*` réellement instanciées, et
-`cassandre.lighting()` liste ce qui éclaire vraiment la scène.
+`cassandre.lighting()` liste ce qui éclaire vraiment la scène — un `visible:
+false` y marque une lampe éteinte par le pool ci-dessous, pas une lampe absente.
 
 **Coût, mesuré** : 27 lampes sur la salle d'essai — 0,40 ms de rendu, 120 FPS,
-18 draw calls. La limite connue est le passage à l'échelle : three.js évalue
-toutes les lampes pour chaque fragment, et le niveau complet en demanderait
-plus de cent. La parade prévue est dans l'ADR.
+18 draw calls.
+
+### Le pool de lampes
+
+three.js évalue **toutes** les lampes visibles pour chaque fragment, sous forme
+d'uniformes. Passé un certain compte, le shader dépasse
+`MAX_FRAGMENT_UNIFORM_VECTORS` et **ne compile plus du tout** : la géométrie
+disparaît, sans exception, sans rien d'autre qu'une ligne en console. Mesuré
+sur la machine de développement, le mur tombe à 255 lampes ; sur une machine
+conforme au minimum de la spécification WebGL 2, il peut tomber vers la
+cinquantaine. À la densité de la salle d'essai, le niveau v2 en demanderait
+environ 1 140.
+
+`LightPool` (`src/render/lightPool.ts`) n'en laisse donc que **48** allumées,
+les plus proches du joueur, et éteint le reste. Il est construit à chaque
+chargement de niveau (`session.lightPool`) et réévalué dans `updateFx`, au taux
+d'affichage — c'est la caméra qui décide, et elle est lue à l'affichage
+(invariant #3), jamais au pas fixe.
+
+Deux détails qui ne sont pas des détails :
+
+- **Le classement porte sur la sphère d'influence, pas sur la lampe.** Le score
+  est `distance − light.distance`, c'est-à-dire la distance de la caméra au
+  bord de ce que la lampe éclaire : une grande lampe lointaine éclaire
+  peut-être ce que le joueur regarde, une petite lampe à la même distance non.
+  Une lampe de portée nulle est illimitée côté three.js — elle n'est jamais
+  éteinte.
+- **Le classement n'est rejugé que tous les 2 m parcourus.** Le retard ne
+  concerne que la lampe la plus lointaine du lot, celle dont l'extinction ne
+  se voit pas.
+
+Un niveau sous le budget (la salle d'essai et ses 27 lampes) n'est jamais
+touché : tout reste allumé, et le pool ne fait plus rien.
+
+`cassandre.lightBudget()` rapporte l'état ; avec un argument, il change le
+budget (`null` = tout rallumer), ce qui sert autant à mesurer qu'à juger une
+ambiance. Détail et chiffres : [ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
+et [Ce que coûte une image](cout-de-rendu.md).
 
 ## Découplage entre render et game
 

@@ -140,6 +140,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ballBody,
     gltfLevelSession: null,
     currentNavGraph: null,
+    lightPool: null,
     droppedCardMesh: null,
     cards: new Set(),
     unlockedDoors: new Set(),

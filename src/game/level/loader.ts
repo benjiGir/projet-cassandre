@@ -130,6 +130,11 @@ export interface LevelHandle {
   doors: DoorInfo[];
   useObjects: UseObject[];
   secrets: SecretZone[];
+  /** Lampes `light_*` instanciées, déjà rattachées à `root`. Exposées pour le
+   * pool de lampes (`render/lightPool.ts`), qui décide lesquelles restent
+   * allumées — leur nombre seul ne suffit pas à ça.
+   * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md */
+  lights: THREE.PointLight[];
   stats: LevelStats;
   /**
    * Retire `root` de la scène et libère tous les corps/colliders Rapier et
@@ -1026,7 +1031,7 @@ function buildLevelResourceEffect(
       lightCount: lights.length,
     };
 
-    return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, stats, bodies };
+    return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, lights, stats, bodies };
   });
 }
 
@@ -1077,6 +1082,7 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
     doors: resource.doors,
     useObjects: resource.useObjects,
     secrets: resource.secrets,
+    lights: resource.lights,
     stats: resource.stats,
     dispose: () => GameRuntime.runSync(Scope.close(scope, Exit.void)),
   };

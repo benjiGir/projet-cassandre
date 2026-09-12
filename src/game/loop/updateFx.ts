@@ -48,6 +48,13 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         }
 
         engine.fx.update(realDt);
+        // Pool de lampes : réévalué au taux d'affichage, avant le rendu de
+        // cette frame. C'est la position de la CAMÉRA qui décide quelle lampe
+        // reste allumée, et elle est lue à l'affichage (invariant #3) — pas au
+        // pas fixe. L'appel sort immédiatement tant que la caméra n'a pas
+        // bougé de plus de 2 m.
+        // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
+        session.lightPool?.update(engine.camera.position);
         // Décroissance temps réel des minuteurs du hitmarker/réticule/gizmos —
         // même régime que `fx.update(realDt)` juste au-dessus, jamais le pas
         // fixe. `render()` (le dessin effectif des canvas 2D) est appelé en

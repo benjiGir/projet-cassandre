@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-12
 ---
 
 # Architecture Decision Records
@@ -37,7 +37,7 @@ un lien vers son successeur.
 | [0020](0020-state-feuille-de-dependances.md) | `game/state.ts` comme feuille de dépendances — jamais d'import vers `src/game/*` | accepté |
 | [0021](0021-export-vertex-color-enum.md) | `export_vertex_color="ACTIVE"` plutôt que `export_colors` (export glTF Blender 5.x) | accepté |
 | [0022](0022-occlusion-rangees-non-bloquante.md) | Occlusion des rangées de kit non fiable pour la ligne de vue ennemie | remplacé par 0025 |
-| [0023](0023-fusion-decor-au-chargement.md) | Fusion du décor statique au chargement plutôt qu'instanciation GPU | accepté |
+| [0023](0023-fusion-decor-au-chargement.md) | Fusion du décor statique au chargement plutôt qu'instanciation GPU | accepté, granularité révisée par 0026 |
 | [0024](0024-eclairage-hybride.md) | Éclairage hybride — lampes temps réel et ombre cuite | accepté |
 | [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | L'occlusion des lignes de vue ennemies est fiable, et le level design peut s'y fier | accepté |
 | [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU | accepté |

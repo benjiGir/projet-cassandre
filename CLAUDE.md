@@ -103,10 +103,10 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 ## Phase courante
 
 > **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
-> richesse PASSÉ), N5 et N7 livrés, N6 validé (structure et échelle), N8
-> construit et jouable (`Blockout — Niveau v2`, en attente du verdict), N2
-> presque (quatre licences à confirmer). Prochain : jouer le blockout, puis
-> N9, l'habillage.**
+> richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur
+> a joué le blockout et validé), N6 validé (structure et échelle), N2 presque
+> (quatre licences à confirmer). En cours : N9, l'habillage — ses prérequis de
+> rendu (N9.0) sont livrés, l'habillage espace par espace commence.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -124,10 +124,26 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > lignes de vue, elle, est fiable — mesuré à N5 (ADR 0025, qui remplace
 > l'ADR 0022)** : une rangée couvre, une allée ne couvre rien, et rien sous
 > 1,6 m ne bloque un rayon (1,8 m face au Directeur). Le décor statique est
-> fusionné au chargement par matériau (ADR 0023) : budget du niveau v2, 200 draw calls ;
-> bake en `--type diffuse` (lumière seule) dès qu'il y a des textures ; un
-> plafond n'a jamais de collider (le bake du pathfinding le prendrait pour
-> le sol). **Le pathfinding n'a réellement fonctionné en jeu qu'à partir du
+> fusionné au chargement par matériau **et par cellule de 32 m** (ADR 0023,
+> granularité révisée par l'ADR 0026 à N9) : sans la découpe, un lot couvre
+> toute la carte et le tri d'écart n'élimine plus rien — une pièce close de
+> 28 × 26 m dessinait 82 836 triangles, contre 11 184 après. Budget mesuré du
+> niveau v2 : **1 500 000 triangles, 200 lots de dessin, 48 lampes allumées**
+> (les 200 000 triangles posés a priori à N1 étaient trop prudents d'un ordre
+> de grandeur ; ce sont les LAMPES qui font mur, et le shader ne compile plus
+> du tout au-delà de ~255 sans lever la moindre exception — d'où le pool de
+> `src/render/lightPool.ts`). `cassandre.lightBudget()` rapporte l'état du
+> pool ; une lampe éteinte par lui apparaît en `visible: false` dans
+> `cassandre.lighting()` — c'est le premier réflexe quand un espace paraît trop
+> sombre. Bake en `--type diffuse` (lumière seule) dès qu'il y a des textures ;
+> un plafond n'a jamais de collider (le bake du pathfinding le prendrait pour
+> le sol).
+> **Piège de banc de mesure** : `cassandre.player.spawn(...)` ne déplace pas la
+> caméra tant que la boucle d'affichage ne tourne pas, et elle ne tourne pas
+> dans un onglet masqué — une série de mesures « à différentes positions » peut
+> être six fois la même vue sans que rien ne le trahisse. Poser
+> `camera.position`/`lookAt` à la main ; le témoin est `Steps: 0` au panneau de
+> debug. **Le pathfinding n'a réellement fonctionné en jeu qu'à partir du
 > 2026-09-11** (graphe vide depuis M4, faute de `refreshSceneQueries()` au
 > chargement) : tout retour de playtest sur le comportement des ennemis
 > est à lire à cette lumière.
@@ -141,6 +157,11 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > elle-même). Et surtout : un niveau baké NE DOIT PAS rester en
 > `LevelDef.lighting: "temps-reel"`, sans quoi le soleil hérité de la Phase 1
 > multiplie tout le bake par une direction arbitraire.
+> **Éclairage hybride, limite levée (N9)** : la note de l'ADR 0024 « il faudra
+> un pool réaffecté au-delà d'une centaine de lampes » est réglée — `LightPool`
+> n'en laisse que 48 allumées, les plus proches, classées sur la distance au
+> BORD de leur sphère d'influence (`distance − light.distance`) et non sur la
+> distance à la lampe. Un niveau sous le budget n'est jamais touché.
 > Après le gate : les rayons sont **thématiques** (six catégories, l'unité de
 > cohérence est la FACE de gondole, atlas de bandeaux `sig_bandeaux.png`) et
 > l'éclairage imite un plafond de néons — **la forme de la source fait l'ombre**

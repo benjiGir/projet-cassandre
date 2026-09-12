@@ -311,6 +311,13 @@ contrat < 60 s du pipeline de niveau. Le compteur de secrets
 seulement `isFirstLoad`) puisqu'il décrit une propriété du niveau chargé,
 pas un évènement ponctuel de partie.
 
+Le `LightPool` du niveau (`session.lightPool`, voir
+[Rendu](rendu.md#le-pool-de-lampes)) est reconstruit là aussi, à CHAQUE
+chargement et non seulement au premier : un hot reload peut ajouter, déplacer
+ou retirer des `light_*`. Il l'est avant la première image plutôt qu'à la
+demande — une scène qui dépasse le mur d'uniformes de three.js ne lève aucune
+exception, elle affiche du vide.
+
 `debugFindPath(session, from, to)` est un wrapper console pour
 `PathfindingService.findPath` sur le graphe courant de `session`.
 

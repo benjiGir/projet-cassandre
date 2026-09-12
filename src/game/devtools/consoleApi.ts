@@ -20,6 +20,7 @@ import { DirectorManager } from "../entities/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
 import { type DoorInfo, type LevelStats, type SecretZone } from "../level/loader";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
+import { type LightPoolStats } from "../../render/lightPool";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/cards";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
@@ -143,10 +144,24 @@ export function exposeDebugApi(engine: GameEngine): void {
      * de jeu — le seul chiffre exploitable quand `requestAnimationFrame` est
      * bridé (automatisation navigateur). Voir `benchmarkRender`. */
     renderBench: (frames = 120) => benchmarkRender(engine.renderer, engine.scene, engine.camera, frames),
-    /** N'allume que les `n` lampes les plus proches (`null` = tout rallumer) —
-     * mesure de la limite d'uniformes de three.js, et essai du pool annoncé
-     * par l'ADR 0024. Voir `applyLightBudget`. */
-    lightBudget: (n = null) => applyLightBudget(engine.scene, engine.camera, n),
+    /** Sans argument, rend l'état du POOL DE LAMPES du niveau chargé ; avec un
+     * argument, change son budget (`null` = tout rallumer). Passe par le vrai pool de production
+     * (`render/lightPool.ts`) : ce qu'on mesure ici est ce que le joueur aura.
+     * Sur une scène sans `light_*` (la gym), retombe sur le balayage de scène
+     * de `applyLightBudget`, qui n'a besoin d'aucun niveau chargé.
+     * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md */
+    lightBudget: (n?: number | null) => {
+      const pool = engine.session.lightPool;
+      if (!pool) return applyLightBudget(engine.scene, engine.camera, n ?? null);
+      // Sans argument, on RAPPORTE — `null` (tout rallumer) doit être demandé
+      // explicitement. Un inspecteur qui modifie ce qu'il inspecte fausse la
+      // mesure suivante.
+      if (n !== undefined) {
+        pool.setBudget(n);
+        pool.update(engine.camera.position);
+      }
+      return pool.stats;
+    },
   };
 }
 
@@ -154,7 +169,10 @@ export function exposeDebugApi(engine: GameEngine): void {
  * Sépare les deux termes du rendu d'un niveau : `texture × couleur de sommet ×
  * éclairage temps réel`.
  *
- * `lights` liste ce que la scène éclaire vraiment. `batches` mesure, sur la
+ * `lights` liste ce que la scène éclaire vraiment — `visible: false` marque une
+ * lampe ÉTEINTE PAR LE POOL (`render/lightPool.ts`), pas une lampe absente :
+ * c'est la première chose à regarder quand un espace paraît trop sombre.
+ * `batches` mesure, sur la
  * géométrie réellement dessinée (donc APRÈS la fusion de `mergeStaticDecor`),
  * si la couleur cuite est bien là et quel contraste elle porte. Un niveau plat
  * a soit `vertexColors: false` (le bake n'arrive pas au matériau), soit un
@@ -163,7 +181,7 @@ export function exposeDebugApi(engine: GameEngine): void {
  * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
  */
 function inspectLighting(engine: GameEngine) {
-  const lights: { type: string; intensity: number; color: string }[] = [];
+  const lights: { name: string; type: string; intensity: number; color: string; visible: boolean }[] = [];
   const batches: {
     name: string;
     vertexColors: boolean;
@@ -177,9 +195,11 @@ function inspectLighting(engine: GameEngine) {
     const light = obj as THREE.Light;
     if (light.isLight) {
       lights.push({
+        name: light.name,
         type: light.type,
         intensity: light.intensity,
         color: `#${light.color.getHexString()}`,
+        visible: light.visible,
       });
     }
   });
@@ -289,7 +309,7 @@ declare global {
       };
       lighting: () => ReturnType<typeof inspectLighting>;
       renderBench: (frames?: number) => RenderBenchmark;
-      lightBudget: (n?: number | null) => LightBudgetReport;
+      lightBudget: (n?: number | null) => LightBudgetReport | LightPoolStats;
     };
   }
 }

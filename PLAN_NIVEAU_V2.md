@@ -244,9 +244,10 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > mesuré que seize `PointLight` ne coûtent rien à 640×360 (0,30 ms). D'où
 > l'[ADR 0024](docs/decisions/0024-eclairage-hybride.md) : le direct est temps
 > réel via des `light_*` portées par le niveau, l'indirect est cuit et sert
-> d'ombre. **À traiter en N9** : three.js évalue toutes les lampes par
-> fragment, le niveau complet en demandera plus de cent — il faudra un pool de
-> taille fixe réaffecté aux luminaires proches.
+> d'ombre. **Traité en N9** : three.js évalue toutes les lampes par
+> fragment, le niveau complet en demandera plus de cent — d'où le pool de
+> taille fixe réaffecté aux luminaires proches, livré depuis
+> (`src/render/lightPool.ts`).
 >
 > **🔶 Construite (2026-09-12).** Salle
 > de 16 × 20 m, trois rangées coupées par une allée transversale, en jeu sous
@@ -416,10 +417,10 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 >
 > Remèdes actés, dans l'ordre : **pool de 48 lampes** réaffecté aux
 > luminaires les plus proches (c'est le remède que l'ADR 0024 annonçait pour
-> N9, désormais chiffré, et son prototype existe déjà comme outil de mesure :
-> `cassandre.lightBudget(n)`), **fusion du décor par espace** et non par
-> niveau, puis visibilité par espace tirée du graphe de pièces si la mesure
-> sur la vraie carte la réclame. Le chargement à la volée est explicitement
+> N9, désormais chiffré), **fusion du décor par espace** et non par niveau,
+> puis visibilité par espace tirée du graphe de pièces si la mesure sur la
+> vraie carte la réclame. **Les deux premiers sont livrés à N9** ; le
+> troisième n'a pas été nécessaire. Le chargement à la volée est explicitement
 > écarté : tout tient en mémoire, et il créerait l'apparition d'objets sous
 > les yeux du joueur qu'il est censé éviter — en plus de faire apparaître des
 > colliders APRÈS le `refreshSceneQueries()` du chargement, le piège même de
@@ -525,8 +526,9 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 10. Jalon N8 — Blockout gris jouable (piste A, gate de structure)
 
-> **🔶 Construit (2026-09-12), en attente du verdict de l'utilisateur — c'est
-> le gate de structure.** Jouable en jeu sous `Blockout — Niveau v2`.
+> **✅ Livré (2026-09-12). Gate de structure PASSÉ** — l'utilisateur a joué le
+> blockout et validé : « je valide on peut avancer ». La structure est donc
+> figée, et c'est elle que N9 habille. Jouable sous `Blockout — Niveau v2`.
 >
 > **Construit par script, depuis le plan de masse lui-même**
 > (`tools/level_v2/build_blockout.py`, qui importe `plan_de_masse.py`) : les
@@ -572,9 +574,9 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > objets « signature » (machine à pinces, photomaton) ne sont que leur
 > silhouette : leurs mécanismes restent au reliquat de la Phase 5.
 >
-> **Reste à faire, et c'est l'essentiel : l'utilisateur joue.** Circulation,
-> lisibilité, combats, secrets, durée chronométrée. C'est le moment où changer
-> le plan coûte le moins cher.
+> **Verdict de l'utilisateur : validé**, sans demande d'itération sur la
+> structure. Aucune cote du plan de masse ne bouge donc à partir d'ici ; toute
+> modification de circulation coûterait désormais l'habillage déjà posé.
 
 **Objectif.** Jouer la structure avant d'y mettre un seul asset.
 
@@ -594,16 +596,51 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 **Objectif.** Habiller la structure validée avec la bibliothèque validée.
 
-> **Chiffré d'avance (2026-09-12, jalon N6)** : le pool de lampes annoncé
-> ici a sa valeur et son mur — 48 lampes allumées, mur de compilation à 254
-> sur la machine de mesure, bien plus bas sur une machine modeste. Voir
-> [ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md).
-> La fusion du décor passe de « par niveau » à « par espace » dans la même
-> passe.
+> **N9.0 — prérequis de rendu : ✅ livré (2026-09-12).** Avant de poser un
+> seul asset, les deux mesures de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
+> sont du code de production. Sans elles, habiller dix espaces de néons
+> heurterait un mur qui ne lève aucune exception : il fait juste disparaître
+> la géométrie.
+>
+> 1. **Pool de lampes** (`src/render/lightPool.ts`) : 48 lampes allumées au
+>    plus, les plus proches du joueur, reconstruit à chaque chargement et
+>    réévalué au taux d'affichage. Le classement porte sur la distance au bord
+>    de la sphère d'influence (`distance − light.distance`), pas sur la
+>    distance à la lampe, et n'est rejugé que tous les 2 m. Vérifié en jeu sur
+>    la salle d'essai : forcé à 4 lampes, le rendu passe de 0,095 à 0,042 ms et
+>    les lampes allumées aux deux coins de la salle sont **entièrement
+>    disjointes**, sans qu'aucun appel ne touche le pool — seul le joueur a
+>    marché.
+> 2. **Fusion du décor par cellule de 32 m** (`DECOR_CELL_SIZE`), pas « par
+>    espace » comme annoncé : une découpe spatiale donne le même résultat sans
+>    demander au niveau de déclarer ses espaces, donc vaut aussi pour
+>    `hypermarche_complet`.
+>
+> **Le point 2 s'est révélé bien plus grave que prévu**, et c'est la mesure qui
+> l'a montré. Un lot fusionné couvrant toute la carte n'est jamais écarté par
+> le tri d'écart : **les bureaux, une pièce close de 28 × 26 m, dessinaient
+> 82 836 triangles** — tout le reste du niveau, derrière les murs. Après
+> découpe : 11 184. Les 32 m sont le coude d'une courbe mesurée (48 → 32 paie,
+> 32 → 24 ne paie plus), pas un ordre de grandeur ; tableau complet dans
+> [Ce que coûte une image](docs/systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+>
+> **Piège de mesure à connaître avant de refaire ce genre de banc** :
+> `cassandre.player.spawn(...)` ne déplace PAS la caméra tant que la boucle
+> d'affichage ne tourne pas — et elle ne tourne pas dans un onglet masqué. Une
+> série « à différentes positions » obtenue ainsi peut être six fois la même
+> vue, sans que rien dans les chiffres ne le trahisse. Poser
+> `camera.position`/`lookAt` à la main. Le témoin est `Steps: 0` au panneau de
+> debug.
+>
+> Reste de l'ADR 0026 volontairement NON fait : la visibilité par espace tirée
+> du graphe de pièces (§3), qui n'est pas nécessaire tant que la découpe en
+> cellules tient le budget.
+>
+> `pnpm build` propre, `pnpm test` vert (164/164).
 
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
-**Critères d'acceptation.** Moins de 200 000 triangles ; draw calls dans le budget de N1 ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.
+**Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.
 
 ---
 

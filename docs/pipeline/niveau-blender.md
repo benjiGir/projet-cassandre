@@ -253,11 +253,19 @@ skill `effect-xstate-cassandre`.
 À la fin de la construction du niveau, `mergeStaticDecor`
 (`game/level/mergeStaticDecor.ts`) regroupe les meshes de décor sans
 préfixe par **contenu de matériau** (texture, couleurs, vertex colors,
-transparence) et par jeu d'attributs de géométrie, puis fusionne chaque
-groupe en un seul mesh rattaché à `root`. Mesuré sur `hypermarche_complet` :
-615 meshes de décor deviennent 5 lots, et le jeu passe de 513 à 25 draw
-calls, avec un temps de rendu CPU divisé par deux. Décision et
-alternatives : [ADR 0023](../decisions/0023-fusion-decor-au-chargement.md).
+transparence), par jeu d'attributs de géométrie et par **cellule spatiale de
+32 m**, puis fusionne chaque groupe en un seul mesh rattaché à `root`. Mesuré
+sur `hypermarche_complet` : 615 meshes de décor deviennent 43 lots, et le jeu
+passe de 513 à quelques dizaines de draw calls selon l'endroit où l'on se
+tient. Décision et alternatives :
+[ADR 0023](../decisions/0023-fusion-decor-au-chargement.md), révisée par
+l'[ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
+pour la découpe en cellules.
+
+La cellule est celle du **centre de la boîte** du mesh, pas de son origine :
+un sol de 42 × 36 m dont l'origine est dans un coin appartient à la cellule
+qu'il couvre vraiment. Un objet plus grand qu'une cellule tombe entier dans
+une seule, et c'est voulu.
 
 La clé se fait sur le contenu parce que `toLambert` crée **un matériau par
 mesh** : deux meshes à la même texture ont deux instances différentes.
@@ -274,9 +282,15 @@ inverserait l'ordre des sommets et le back-face culling ferait disparaître
 leurs faces.
 
 Contrepartie : un lot est dessiné en entier dès qu'une de ses parties est
-dans le champ (46 746 → 55 678 triangles sur la même vue). Négligeable sous
-le plafond de 200 000 ; si le niveau v2 s'en approche, découper les lots par
-cellule spatiale plutôt que revenir aux meshes individuels.
+dans le champ. C'est précisément la raison de la découpe en cellules — sans
+elle, un lot couvrait toute la carte et n'était donc JAMAIS écarté par le tri
+d'écart : le niveau se dessinait en entier à chaque image, derrière les murs
+compris (82 836 triangles pour une pièce close de 28 × 26 m du blockout,
+contre 11 184 après). Le prix est un lot de plus par cellule occupée et par
+matériau ; si l'habillage approche des 200 draw calls, **remonter
+`DECOR_CELL_SIZE` est le premier levier**, les triangles ayant bien plus de
+marge que les lots. Courbe complète :
+[Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
 
 `LevelStats.unprefixedMeshCount` reste compté avant la fusion (les
 contrôles de non-régression existants s'appuient dessus) ;

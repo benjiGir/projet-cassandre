@@ -4,7 +4,7 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../src/game/level/loader";
-import { mergeStaticDecor } from "../../../src/game/level/mergeStaticDecor";
+import { DECOR_CELL_SIZE, mergeStaticDecor } from "../../../src/game/level/mergeStaticDecor";
 
 await initPhysics();
 
@@ -48,6 +48,49 @@ describe("mergeStaticDecor", () => {
     expect(batch.geometry.boundingBox!.max.toArray()).toEqual([10.5, 0.5, 10.5]);
     const colors = batch.geometry.attributes.color!;
     expect([colors.getX(24), colors.getY(24), colors.getZ(24)]).toEqual([0, 1, 0]);
+  });
+
+  it("sépare en lots distincts deux groupes éloignés de plus d'une cellule", () => {
+    // Sans découpe spatiale, ces quatre boîtes de même matériau feraient UN lot
+    // couvrant 100 m : le tri d'écart ne l'éliminerait jamais.
+    const root = new THREE.Group();
+    const loin = DECOR_CELL_SIZE * 3;
+    const ici = [coloredBox(texturedMat(), [0, 0, 0], 0xffffff), coloredBox(texturedMat(), [2, 0, 0], 0xffffff)];
+    const ailleurs = [
+      coloredBox(texturedMat(), [loin, 0, 0], 0xffffff),
+      coloredBox(texturedMat(), [loin + 2, 0, 0], 0xffffff),
+    ];
+    root.add(...ici, ...ailleurs);
+    root.updateWorldMatrix(true, true);
+
+    const result = mergeStaticDecor(root, [...ici, ...ailleurs]);
+
+    expect(result).toEqual({ mergedMeshCount: 4, batchCount: 2 });
+    const boites = root.children.map((o) => {
+      const mesh = o as THREE.Mesh;
+      mesh.geometry.computeBoundingBox();
+      return mesh.geometry.boundingBox!;
+    });
+    // Chaque lot reste borné à son propre groupe : c'est ce qui rend le tri d'écart utile.
+    for (const box of boites) expect(box.max.x - box.min.x).toBeCloseTo(3);
+  });
+
+  it("regroupe un mesh d'après le centre de sa boîte, pas son origine", () => {
+    // Origine dans un coin, comme les pièces du kit : le sol de 40 m posé en
+    // (0,0,0) a son centre en x = 20, donc la même cellule que la boîte voisine.
+    const root = new THREE.Group();
+    const sol = new THREE.Mesh(new THREE.BoxGeometry(40, 0.5, 40), texturedMat());
+    sol.geometry.translate(20, 0, 20);
+    const voisine = coloredBox(texturedMat(), [20, 1, 20], 0xffffff);
+    root.add(sol, voisine);
+    root.updateWorldMatrix(true, true);
+
+    // Le sol n'a pas de `color` : c'est l'attribut, pas la cellule, qui les
+    // sépare — on compare donc à la même paire avec l'attribut aligné.
+    const colors = new Float32Array(sol.geometry.attributes.position!.count * 3).fill(1);
+    sol.geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    expect(mergeStaticDecor(root, [sol, voisine])).toEqual({ mergedMeshCount: 2, batchCount: 1 });
   });
 
   it("laisse en place un mesh à échelle négative", () => {
