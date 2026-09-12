@@ -270,7 +270,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > 3. **Le bake n'était pas le seul éclairage du jeu.** Une `DirectionalLight`
 >    et une `AmbientLight` héritées de la Phase 1 multipliaient tout niveau
 >    baké par une direction arbitraire (5, 10, 5) sans rapport avec ses néons :
->    une face à l'opposé perdait 60 % de sa luminosité cuite. `LevelDef.bakedLighting`
+>    une face à l'opposé perdait 60 % de sa luminosité cuite. `LevelDef.lighting`
 >    les neutralise, **par niveau** — les zones A-E ont été éclairées à l'œil
 >    SOUS cet ancien rig, leur bascule se décide à N10.
 >

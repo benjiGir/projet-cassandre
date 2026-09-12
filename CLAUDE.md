@@ -124,10 +124,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > **subdiviser** toute grande surface (un bake par sommet exige des sommets,
 > sinon mesh noir), **`--ambient`** (une salle close n'a aucune lumière
 > d'environnement), **`--emissive-marker`** (une source ne s'éclaire pas
-> elle-même). Et surtout : un niveau baké doit porter
-> **`LevelDef.bakedLighting`**, sans quoi le soleil temps réel hérité de la
-> Phase 1 multiplie tout le bake par une direction arbitraire — actif
-> seulement sur la salle d'essai, la bascule des zones A-E se décide à N10.
+> elle-même). Et surtout : un niveau baké NE DOIT PAS rester en
+> `LevelDef.lighting: "temps-reel"`, sans quoi le soleil hérité de la Phase 1
+> multiplie tout le bake par une direction arbitraire.
 > Après le gate : les rayons sont **thématiques** (six catégories, l'unité de
 > cohérence est la FACE de gondole, atlas de bandeaux `sig_bandeaux.png`) et
 > l'éclairage imite un plafond de néons — **la forme de la source fait l'ombre**

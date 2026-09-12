@@ -43,7 +43,7 @@ export interface GameEngine {
   hitmarker: HitmarkerOverlay;
   ballisticsDebug: BallisticsDebugOverlay;
 
-  /** Éclairage temps réel de la scène, réglé PAR NIVEAU (`LevelDef.bakedLighting`) — voir `lifecycle.ts::applyLightRig`. */
+  /** Éclairage temps réel de la scène, réglé PAR NIVEAU (`LevelDef.lighting`) — voir `lifecycle.ts::applyLightRig`. */
   ambientLight: THREE.AmbientLight;
   sunLight: THREE.DirectionalLight;
 
@@ -143,7 +143,7 @@ export function buildGameEngine(
 
   // Rig hérité de la phase « boîtes blanches » : il éclaire la gym, qui n'a
   // aucun bake. Un niveau dont l'éclairage est CUIT dans les sommets le
-  // rallume une seconde fois — `LevelDef.bakedLighting` le neutralise alors,
+  // rallume une seconde fois — `LevelDef.lighting` le neutralise alors,
   // voir `lifecycle.ts::applyLightRig`.
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   scene.add(ambientLight);

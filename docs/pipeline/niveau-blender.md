@@ -622,7 +622,7 @@ d'un néon dans un jeu Build est peinte, pas simulée.
 
 **Le bake n'est pas le seul éclairage du jeu.** Voir
 [Rendu — Éclairage de scène selon le niveau](../systems/rendu.md#éclairage-de-scène-selon-le-niveau) :
-sans `LevelDef.bakedLighting`, un soleil temps réel hérité de la Phase 1
+sans un `LevelDef.lighting` adapté, un soleil temps réel hérité de la Phase 1
 multiplie tout le bake par une direction arbitraire.
 
 ## Critère de validation
