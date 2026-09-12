@@ -40,3 +40,4 @@ un lien vers son successeur.
 | [0023](0023-fusion-decor-au-chargement.md) | Fusion du décor statique au chargement plutôt qu'instanciation GPU | accepté |
 | [0024](0024-eclairage-hybride.md) | Éclairage hybride — lampes temps réel et ombre cuite | accepté |
 | [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | L'occlusion des lignes de vue ennemies est fiable, et le level design peut s'y fier | accepté |
+| [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU | accepté |

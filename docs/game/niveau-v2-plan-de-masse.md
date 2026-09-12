@@ -12,9 +12,11 @@ passer du schéma en boîtes à un plan coté, vérifié, **avant** de construir
 quoi que ce soit. Rien ici n'est modélisé ; ce document se valide ou se
 refuse sur plan, au moment où le changer coûte le moins cher.
 
-> **Statut : proposition.** Le jalon ne se ferme qu'à la validation de
-> l'utilisateur, et deux arbitrages lui reviennent — voir
-> [Les deux décisions à prendre](#les-deux-décisions-à-prendre).
+> **Statut : proposition, échelle validée.** L'utilisateur a retenu l'échelle
+> le 2026-09-12 et le budget de rendu a été tranché par la mesure (voir
+> [Les deux arbitrages](#les-deux-arbitrages-tranchés)). Restent à valider la
+> structure elle-même — le tracé des dix espaces, le parcours, les
+> placements — avant le blockout du jalon N8.
 
 Les cotes vivent dans `tools/level_v2/plan_de_masse.py`, pas dans ce texte :
 les contrôles du jalon (« un seul sol praticable par colonne », « spawn hors
@@ -55,7 +57,7 @@ Toutes ces valeurs viennent du code, pas d'une intention :
 | Portée de vue | 22 m | `suitConfig.ts`, `directorConfig.ts` |
 | Portée d'attaque | 16 m (Costard), 14 m (Directeur) | idem |
 | Portée d'un `use_*` | 2 m | `loader.ts` |
-| Budget de rendu | 200 lots de dessin, 200 000 triangles | jalon N1, [ADR 0023](../decisions/0023-fusion-decor-au-chargement.md) |
+| Budget de rendu | 200 lots de dessin, **1 500 000 triangles, 48 lampes** | mesuré, [ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) |
 | Un seul sol praticable par colonne | — | pathfinding 2.5D, [Entités — Navigation](../systems/entites.md#navigation) |
 | L'occlusion est fiable | une rangée couvre, une allée non | [ADR 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md) |
 
@@ -187,39 +189,43 @@ l'[ADR 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md), la
 seule protection disponible était la distance, et tout ennemi proche était
 un ennemi injuste.
 
-## Les deux décisions à prendre
+## Les deux arbitrages, tranchés
 
-### 1. L'échelle
+### 1. L'échelle — gardée (utilisateur, 2026-09-12)
 
-13 472 m² praticables, 42 × la salle d'essai. C'est une lecture littérale de
-« voir grand », et c'est cohérent avec une vitesse de course de 13 m/s — mais
-c'est aussi **le volume de travail d'habillage du jalon N9**, espace par
-espace, dans Blender. Réduire de 30 % reste possible sans toucher à la
-structure : les dix espaces et leurs liaisons ne changent pas, seules les
-cotes bougent.
+13 472 m² praticables, 42 × la salle d'essai : lecture littérale de « voir
+grand », cohérente avec une vitesse de course de 13 m/s. L'alternative
+proposée — raboter les cotes de 30 % sans toucher à la structure — a été
+écartée. Ce que ça engage : **le volume de travail d'habillage du jalon N9**,
+espace par espace, dans Blender. C'est désormais la seule contrainte sur la
+taille du niveau ; le rendu, lui, ne l'est plus (voir ci-dessous).
 
-### 2. Le budget de triangles
+### 2. Le budget de rendu — tranché, par la mesure
 
-L'estimation par densité donne **1,45 million de triangles** pour le niveau
-entier, soit **7,2 × le budget de 200 000** fixé en N1. Le calcul détaillé
-est dans la sortie du script. Deux leviers, à activer dans cet ordre :
+**Question posée** : le plan demande 1,45 million de triangles, contre
+200 000 fixés au jalon N1. Réponse mesurée plutôt que supposée
+([Ce que coûte une image](../systems/cout-de-rendu.md),
+[ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)) :
 
-1. **Fusionner par espace, pas par niveau.** L'[ADR 0023](../decisions/0023-fusion-decor-au-chargement.md)
-   regroupe aujourd'hui le décor du niveau ENTIER par matériau : un lot
-   couvre toute la carte, donc le frustum n'élimine jamais rien. Dix espaces
-   × ~5 matériaux = ~50 lots, largement sous les 200 du budget, et le
-   frustum peut enfin écarter ce qui n'est pas vu. **Le pire cas visible
-   tombe alors à ~720 000 triangles** (hub + rayons + électroménager).
-2. **Re-mesurer le budget.** Les 200 000 de N1 n'ont jamais été mesurés
-   contre le matériel cible : ils ont été posés a priori, sur un niveau qui
-   n'en affichait que 47 000. À 640 × 360 en Lambert sans ombres, la marge
-   réelle est probablement bien plus haute — mais ça se mesure, ça ne se
-   suppose pas.
+- **les triangles ne coûtent presque rien.** 1,45 million de triangles,
+  carte entière dans le champ, aucun tri d'écart : **4,94 ms de GPU** sur la
+  machine de développement, pour un budget d'image de 16,6 ms. Le chiffre de
+  N1 avait été posé a priori, sans machine en face ; il passe à 1 500 000 ;
+- **ce sont les lampes qui ont un mur.** Environ 0,03 ms par `PointLight`,
+  et au-delà de **254 lampes allumées le shader ne compile plus du tout** —
+  la géométrie disparaît, sans autre signe qu'une ligne en console. À la
+  densité d'éclairage de la salle d'essai, ce niveau en demanderait 1 140.
 
-**Recommandation** : valider la structure et les cotes maintenant, puis
-mesurer avant de construire (charger la salle d'essai de N4 en plusieurs
-exemplaires et lire `drawCalls`/`triangles` dans `DebugPanel`). Si la mesure
-dit non, c'est l'échelle qui cède, pas la structure.
+D'où trois mesures, dans l'ordre : un **pool de 48 lampes** réaffecté aux
+luminaires les plus proches, la **fusion du décor par espace** et non par
+niveau (pour que le tri d'écart puisse enfin écarter quelque chose), et une
+visibilité par espace tirée du graphe de pièces **si** la mesure sur la vraie
+carte la réclame. Le chargement à la volée est explicitement écarté : tout
+tient en mémoire, et il créerait l'apparition d'objets sous les yeux du
+joueur qu'il est censé éviter.
+
+**L'échelle n'est donc plus contrainte par le rendu.** Elle reste contrainte
+par le travail d'habillage de N9.
 
 ## Ce qui n'est pas tranché ici
 

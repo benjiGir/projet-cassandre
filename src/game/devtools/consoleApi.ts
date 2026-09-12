@@ -30,9 +30,13 @@ import {
   applyHitmarkerVariant,
   applyImpactVariant,
   applyKnockbackVariant,
+  applyLightBudget,
   applyRecoilVariant,
+  benchmarkRender,
   checkDeterminism,
   simulateRecording,
+  type LightBudgetReport,
+  type RenderBenchmark,
 } from "./testHarness";
 
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
@@ -133,6 +137,14 @@ export function exposeDebugApi(engine: GameEngine): void {
      * scène, et la couleur CUITE dans les sommets. `lighting()` les sépare —
      * même précédent console que `doors`/`secrets`. */
     lighting: () => inspectLighting(engine),
+    /** Coût de rendu de la scène telle qu'elle est, mesuré hors de la boucle
+     * de jeu — le seul chiffre exploitable quand `requestAnimationFrame` est
+     * bridé (automatisation navigateur). Voir `benchmarkRender`. */
+    renderBench: (frames = 120) => benchmarkRender(engine.renderer, engine.scene, engine.camera, frames),
+    /** N'allume que les `n` lampes les plus proches (`null` = tout rallumer) —
+     * mesure de la limite d'uniformes de three.js, et essai du pool annoncé
+     * par l'ADR 0024. Voir `applyLightBudget`. */
+    lightBudget: (n = null) => applyLightBudget(engine.scene, engine.camera, n),
   };
 }
 
@@ -274,6 +286,8 @@ declare global {
         toggle: () => boolean;
       };
       lighting: () => ReturnType<typeof inspectLighting>;
+      renderBench: (frames?: number) => RenderBenchmark;
+      lightBudget: (n?: number | null) => LightBudgetReport;
     };
   }
 }

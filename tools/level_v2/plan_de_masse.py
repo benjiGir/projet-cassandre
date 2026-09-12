@@ -31,9 +31,13 @@ EYE_HEIGHT = 1.6           # moveConfig.ts, suitConfig.ts
 JUMP_HEIGHT = 1.1          # moveConfig.ts
 USE_RANGE = 2.0            # loader.ts::USE_RANGE_METERS
 
-# Budget de N1 : 200 lots de dessin, 200 000 triangles par image.
+# Budget RÉVISÉ, mesuré (ADR 0026, docs/systems/cout-de-rendu.md) : le
+# chiffre de 200 000 triangles posé au jalon N1 l'avait été a priori, sans
+# machine en face. 1,45 M de triangles coûtent 4,9 ms de GPU carte entière
+# dans le champ. Ce sont les lampes qui ont un mur, pas les triangles.
 BUDGET_DRAW_CALLS = 200
-BUDGET_TRIANGLES = 200_000
+BUDGET_TRIANGLES = 1_500_000
+BUDGET_LAMPES = 48
 
 # Densité de triangles au m², mesurée : la salle d'essai de N4 fait
 # 96 350 triangles pour 16 × 20 m, soit 301/m². C'est le plafond « rayon
@@ -394,14 +398,14 @@ def rapport() -> list[str]:
         a(f"  {sp.nom:<24} {sp.aire:>6.0f} m² × {DENSITE_TRIS[sp.densite]:>3}/m² = {t:>9,.0f}".replace(",", " "))
     total += sum(c.aire * DENSITE_TRIS[c.densite] for c in CORRIDORS)
     a(f"  {'TOTAL (liaisons comprises)':<24} {total:>28,.0f}".replace(",", " "))
-    a(f"  Budget de N1 : {BUDGET_TRIANGLES:,} par image".replace(",", " "))
+    a(f"  Budget mesuré (ADR 0026) : {BUDGET_TRIANGLES:,} triangles et {BUDGET_LAMPES} lampes par image".replace(",", " "))
     if total > BUDGET_TRIANGLES:
-        a(f"  >>> {total / BUDGET_TRIANGLES:.1f}× le budget si TOUT le niveau est dessiné à chaque image.")
-        a("      La fusion d'ADR 0023 regroupe aujourd'hui le décor du niveau ENTIER par")
-        a("      matériau : un lot couvre toute la carte, donc rien n'est jamais éliminé")
-        a("      par frustum. Conséquence pour N9 : fusionner PAR ESPACE (10 × ~5 matériaux")
-        a("      = ~50 lots, sous les 200 du budget), pour que le frustum élimine les")
-        a("      espaces non vus. Pire cas visible ci-dessous.")
+        a(f"  >>> {total / BUDGET_TRIANGLES:.1f}× le budget, carte entière dessinée.")
+    else:
+        a(f"  OK — {total / BUDGET_TRIANGLES:.0%} du budget, même carte entière dans le champ")
+        a("      (mesuré : 1,45 M de triangles = 4,9 ms de GPU, ADR 0026). Le mur est")
+        a("      ailleurs : 254 lampes allumées et le shader ne compile plus. D'où un")
+        a(f"      pool de {BUDGET_LAMPES} lampes, et la fusion PAR ESPACE plutôt que par niveau.")
 
     a("")
     a("Pire cas visible — un espace et ses voisins immédiats")

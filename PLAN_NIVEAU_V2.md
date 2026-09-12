@@ -396,16 +396,43 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > protection disponible était la distance — tout le level design de combat
 > des zones A-E s'est écrit sous cette contrainte.
 >
-> **Deux décisions remontées à l'utilisateur**, détaillées dans le document :
-> (1) l'échelle, qui est aussi le volume de travail d'habillage de N9 —
-> réduire de 30 % reste possible sans toucher à la structure ; (2) **le
-> budget de triangles, qui ne tient pas** : 1,45 million estimé contre
-> 200 000 fixés en N1, soit 7,2 ×. Deux leviers dans cet ordre — fusionner
-> **par espace** et non par niveau (l'ADR 0023 fusionne aujourd'hui la carte
-> entière par matériau, donc le frustum n'élimine jamais rien ; ~50 lots au
-> lieu de 5, pire cas visible ramené à ~720 000), puis **re-mesurer** un
-> budget qui n'a jamais été confronté au matériel cible. Si la mesure dit
-> non, c'est l'échelle qui cède, pas la structure.
+> **Les deux arbitrages sont tranchés.** (1) **Échelle gardée**, décision de
+> l'utilisateur le 2026-09-12 : l'option « raboter de 30 % » est écartée.
+> (2) **Budget de rendu mesuré**, à la demande de l'utilisateur (« faire une
+> recherche sur comment gérer ça proprement ») plutôt que posé a priori —
+> voir [ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
+> et [docs/systems/cout-de-rendu.md](docs/systems/cout-de-rendu.md).
+>
+> **Résultat de la mesure, contre-intuitif : les triangles ne sont pas le
+> problème, les lampes le sont.** 1,45 million de triangles avec la carte
+> entière dans le champ et aucun tri d'écart coûtent **4,94 ms de GPU**
+> (budget d'image : 16,6 ms) — le chiffre de 200 000 de N1 était trop prudent
+> d'un ordre de grandeur, il passe à 1 500 000. En revanche une `PointLight`
+> coûte ~0,03 ms, et **au-delà de 254 lampes allumées le shader ne compile
+> plus du tout** : la géométrie disparaît, sans autre signe qu'une ligne en
+> console (`MAX_FRAGMENT_UNIFORM_VECTORS`). À la densité d'éclairage de la
+> salle d'essai, ce niveau en demanderait 1 140. Sur une machine conforme au
+> minimum de la spécification WebGL 2, le mur tombe vers la cinquantaine.
+>
+> Remèdes actés, dans l'ordre : **pool de 48 lampes** réaffecté aux
+> luminaires les plus proches (c'est le remède que l'ADR 0024 annonçait pour
+> N9, désormais chiffré, et son prototype existe déjà comme outil de mesure :
+> `cassandre.lightBudget(n)`), **fusion du décor par espace** et non par
+> niveau, puis visibilité par espace tirée du graphe de pièces si la mesure
+> sur la vraie carte la réclame. Le chargement à la volée est explicitement
+> écarté : tout tient en mémoire, et il créerait l'apparition d'objets sous
+> les yeux du joueur qu'il est censé éviter — en plus de faire apparaître des
+> colliders APRÈS le `refreshSceneQueries()` du chargement, le piège même de
+> l'ADR 0025. WebGPU n'est pas nécessaire (il ne répond pas au mur mesuré),
+> mais reste ouvert : three 0.185 convertit `MeshLambertMaterial` en
+> `MeshLambertNodeMaterial` tout seul, donc l'invariant #5 survivrait à une
+> bascule.
+>
+> **Outils ajoutés au passage** (`src/game/devtools/`) : `cassandre.renderBench()`
+> mesure le coût de rendu hors boucle de jeu — indispensable, les images par
+> seconde n'étant pas mesurables en automatisation navigateur
+> (`visibilityState: hidden` bride `requestAnimationFrame` à 1 Hz) — et
+> `cassandre.lightBudget(n)` n'allume que les n lampes les plus proches.
 >
 > **Contrainte de colonne, conséquence concrète** : le parking souterrain ne
 > peut pas être sous le magasin. Il est décalé à l'est de la réserve, à
@@ -464,6 +491,13 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 **Prérequis.** N4 et N8 validés par l'utilisateur.
 
 **Objectif.** Habiller la structure validée avec la bibliothèque validée.
+
+> **Chiffré d'avance (2026-09-12, jalon N6)** : le pool de lampes annoncé
+> ici a sa valeur et son mur — 48 lampes allumées, mur de compilation à 254
+> sur la machine de mesure, bien plus bas sur une machine modeste. Voir
+> [ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md).
+> La fusion du décor passe de « par niveau » à « par espace » dans la même
+> passe.
 
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 

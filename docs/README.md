@@ -34,6 +34,7 @@ signale.
 - [HUD et interface](systems/hud.md) — composition React, écrans, flux d'écran
 - [HUD et audio](systems/hud-audio.md)
 - [Outils de debug](systems/debug.md) — console `window.cassandre`, harnais A/B, preuve de déterminisme
+- [Ce que coûte une image — mesures](systems/cout-de-rendu.md) — triangles, lampes, et le mur des 254
 
 ## Décisions
 

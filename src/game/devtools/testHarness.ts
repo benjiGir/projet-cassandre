@@ -254,3 +254,114 @@ export function applyFlashVariant(name: keyof typeof FLASH_VARIANTS): FlashVaria
   console.info(`[feel] variante de flash ${name} appliquée`, report);
   return report;
 }
+
+export interface RenderBenchmark {
+  /** Images rendues pour la mesure, hors chauffe. */
+  frames: number;
+  msParImage: number;
+  /** Ce que donnerait une boucle qui ne ferait QUE dessiner. */
+  imagesParSecondeRendu: number;
+  drawCalls: number;
+  triangles: number;
+  /** Programmes GPU compilés — utile pour repérer une explosion de matériaux. */
+  programmes: number;
+}
+
+/**
+ * Banc de mesure du coût de rendu, en dehors de la boucle de jeu.
+ *
+ * Pourquoi il existe : le budget de 200 000 triangles fixé au jalon N1 n'a
+ * jamais été confronté au matériel ; et les FPS ne se mesurent pas dans un
+ * navigateur piloté en automatisation, où `document.visibilityState` vaut
+ * `hidden` et bride `requestAnimationFrame` à une image par seconde (limite
+ * documentée du projet). Ce banc contourne les deux : il appelle
+ * `renderer.render` lui-même, en boucle serrée, sans jamais dépendre de
+ * `requestAnimationFrame`.
+ *
+ * `gl.finish()` encadre la mesure pour que le GPU ait réellement terminé —
+ * sans lui, on ne chronomètre que l'envoi des commandes côté CPU, ce qui est
+ * précisément la partie qui ne coûte rien quand le problème est le nombre de
+ * triangles.
+ *
+ * Ne touche à aucun état de jeu : ne fait qu'afficher la scène telle quelle,
+ * depuis la caméra courante. Le pas fixe n'est pas avancé (invariant #1).
+ */
+export function benchmarkRender(
+  renderer: THREE.WebGLRenderer,
+  scene: THREE.Scene,
+  camera: THREE.Camera,
+  frames = 120,
+): RenderBenchmark {
+  const gl = renderer.getContext();
+
+  for (let i = 0; i < 10; i++) renderer.render(scene, camera); // chauffe : compilation des programmes, upload des buffers.
+  gl.finish();
+
+  const t0 = performance.now();
+  for (let i = 0; i < frames; i++) renderer.render(scene, camera);
+  gl.finish();
+  const total = performance.now() - t0;
+
+  const info = renderer.info;
+  const msParImage = total / frames;
+  return {
+    frames,
+    msParImage: Number(msParImage.toFixed(3)),
+    imagesParSecondeRendu: Number((1000 / msParImage).toFixed(1)),
+    drawCalls: info.render.calls,
+    triangles: info.render.triangles,
+    programmes: info.programs?.length ?? 0,
+  };
+}
+
+export interface LightBudgetReport {
+  /** Lampes de niveau trouvées dans la scène (hors soleil/ambiante). */
+  total: number;
+  /** Combien restent allumées après application du budget. */
+  actives: number;
+  /** `null` = budget levé, toutes rallumées. */
+  budget: number | null;
+}
+
+/**
+ * Garde allumées les `budget` lampes ponctuelles les plus proches de la
+ * caméra et éteint les autres (`visible = false`, ce que le renderer WebGL
+ * exclut de son état d'éclairage — trois.js n'évalue que les lampes
+ * visibles).
+ *
+ * Pourquoi ça existe : three.js pose TOUTES les lampes en uniformes de
+ * fragment. Au-delà de quelques centaines de `PointLight`, le programme
+ * dépasse `MAX_FRAGMENT_UNIFORM_VECTORS` et ne compile plus DU TOUT — la
+ * géométrie concernée disparaît, en console seulement. C'est la limite
+ * annoncée par l'ADR 0024 pour le niveau v2 ; cet outil sert à la mesurer
+ * et à essayer le remède avant de l'écrire pour de bon.
+ *
+ * Outil de mesure, pas un système de jeu : rien ne l'appelle par image.
+ */
+export function applyLightBudget(
+  scene: THREE.Scene,
+  camera: THREE.Camera,
+  budget: number | null,
+): LightBudgetReport {
+  const lampes: THREE.PointLight[] = [];
+  scene.traverse((obj) => {
+    if ((obj as THREE.PointLight).isPointLight) lampes.push(obj as THREE.PointLight);
+  });
+
+  if (budget === null) {
+    for (const l of lampes) l.visible = true;
+    return { total: lampes.length, actives: lampes.length, budget: null };
+  }
+
+  const cameraPos = new THREE.Vector3();
+  camera.getWorldPosition(cameraPos);
+  const pos = new THREE.Vector3();
+  const classees = lampes
+    .map((l) => ({ l, d: l.getWorldPosition(pos).distanceToSquared(cameraPos) }))
+    .sort((a, b) => a.d - b.d);
+
+  classees.forEach((e, i) => {
+    e.l.visible = i < budget;
+  });
+  return { total: lampes.length, actives: Math.min(budget, lampes.length), budget };
+}
