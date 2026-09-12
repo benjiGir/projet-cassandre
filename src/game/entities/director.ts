@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
+import { type LoyaltyCard } from "../player/loyaltyCards";
 
 import type { PhysicsWorld } from "../../physics/world";
 import { allocateEntityId, type Entity } from "./entity";
@@ -282,18 +283,22 @@ export function configureDirectorCharacterController(
  * `THREE.Object3D`. Pas de contrat `use_*` : ramassage par proximité seule.
  * see: docs/systems/entites.md#badge-du-directeur
  */
-export class DirectorBadge {
+export class DroppedCard {
   readonly position: THREE.Vector3;
+  /** Carte que ce drop donne au ramassage. Le Directeur lâche la Platine ;
+   * le champ existe pour que le drop ne préjuge de rien (jalon N7). */
+  readonly card: LoyaltyCard;
   collected = false;
 
-  /** Secondes écoulées depuis l'apparition — voir `DirectorConfig.badgePickupDelay`. */
+  /** Secondes écoulées depuis l'apparition — voir `DirectorConfig.cardPickupDelay`. */
   private age = 0;
 
-  constructor(position: THREE.Vector3) {
+  constructor(position: THREE.Vector3, card: LoyaltyCard) {
     this.position = position.clone();
+    this.card = card;
   }
 
-  /** Avance l'âge du badge d'un pas fixe — appelé par `DirectorManager.update`, jamais par une horloge murale. */
+  /** Avance l'âge du drop d'un pas fixe — appelé par `DirectorManager.update`, jamais par une horloge murale. */
   tick(dt: number): void {
     this.age += dt;
   }

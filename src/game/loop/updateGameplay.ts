@@ -1,14 +1,16 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { playDoorSfx, playSfx } from "../../core/audio";
+import { playSfx } from "../../core/audio";
 import { input } from "../../core/input";
 import { emptyInputFrame, inputRecorder, type InputFrame } from "../../core/inputRecorder";
 import { runGameplaySync } from "../../core/runtime";
 import { useGameStore } from "../state";
-import { unlockDoor, setupExitDoorTracking, triggerLevelComplete } from "../session/doors";
+import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
+import { grantCard } from "../session/cards";
 import { showHudMessage, triggerHeroLine } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
+import { DIRECTOR_DROPPED_CARD } from "../entities/directorConfig";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -122,20 +124,15 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           {
             onCrowbarPickup: () => session.weapons.pickUpMelee(),
             onShotgunPickup: () => session.weapons.pickUpShotgun(),
-            onExitDoorUse: (targetName) => {
-              if (session.unlockedDoors.has(targetName)) return; // déjà déverrouillée
-              if (!session.hasBadge) {
-                showHudMessage("Badge du Directeur requis");
-                playDoorSfx("locked");
-                return;
-              }
-              // `targetName === "door_e_exit"` : seule cette porte arme le suivi
-              // de fin de niveau (voir la doc de `ExitDoorTracking`) —
-              // `door_b_frozen` (secret 1, `onFrozenStorageUse` ci-dessous)
-              // partage la même mécanique de porte mais n'est jamais une sortie.
-              if (unlockDoor(session, targetName, "Porte déverrouillée") && targetName === "door_e_exit") {
-                setupExitDoorTracking(session, targetName);
-              }
+            // `use_exit_door` du niveau actuel : son `.glb` est antérieur à
+            // la convention `requires` (jalon N7) et ne déclare donc aucune
+            // carte. On lui applique la Platine — celle que le Directeur
+            // lâche désormais à la place du badge. À retirer au jalon N10,
+            // quand `hypermarche_complet` cède la place au niveau v2.
+            onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
+            onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
+            onCardPickup: (card) => {
+              grantCard(session, card);
             },
             onFrozenStorageUse: (targetName) => {
               if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
@@ -203,20 +200,20 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // ordre et mêmes corps qu'avant ce jalon, regroupés en une seule
       // phase finale (aucun de ces blocs ne dépend d'un Effect en soi).
       yield* Effect.sync(() => {
-        // Badge du Directeur : apparition (mesh) à la mort, une seule fois ;
-        // ramassage par proximité SEULE (pas de touche E, voir la doc de
-        // `DirectorBadge`) — même discipline de mutation directe en pas fixe
-        // que `interaction.update` ci-dessus pour `use_crowbar`.
-        if (session.directorManager.badge && !session.badgeMesh) {
-          session.badgeMesh = new THREE.Mesh(engine.badgeGeometry, engine.badgeMaterial);
-          session.badgeMesh.position.copy(session.directorManager.badge.position);
-          engine.scene.add(session.badgeMesh);
+        // Carte lâchée par le Directeur : apparition (mesh) à la mort, une
+        // seule fois ; ramassage par proximité SEULE (pas de touche E, voir
+        // la doc de `DroppedCard`) — même discipline de mutation directe en
+        // pas fixe que `interaction.update` ci-dessus pour `use_crowbar`.
+        const dropped = session.directorManager.droppedCard;
+        if (dropped && !session.droppedCardMesh) {
+          session.droppedCardMesh = new THREE.Mesh(engine.badgeGeometry, engine.badgeMaterial);
+          session.droppedCardMesh.position.copy(dropped.position);
+          engine.scene.add(session.droppedCardMesh);
         }
-        if (session.directorManager.tryCollectBadge(session.player.position) && session.badgeMesh) {
-          engine.scene.remove(session.badgeMesh);
-          session.badgeMesh = null;
-          session.hasBadge = true;
-          showHudMessage("Badge du Directeur récupéré");
+        if (session.directorManager.tryCollectCard(session.player.position) && session.droppedCardMesh) {
+          engine.scene.remove(session.droppedCardMesh);
+          session.droppedCardMesh = null;
+          grantCard(session, dropped?.card ?? DIRECTOR_DROPPED_CARD);
         }
 
         // Glissement cosmétique de la porte débloquée (voir sa doc plus haut) —

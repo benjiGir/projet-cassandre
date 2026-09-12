@@ -41,6 +41,10 @@ PREFIXES = (
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_",
 )
 
+# Cartes de fidélité (jalon N7) — doit rester identique à `LOYALTY_CARDS`
+# dans src/game/player/loyaltyCards.ts.
+LOYALTY_CARDS = ("argent", "or", "platine")
+
 errors: list[str] = []
 warnings: list[str] = []
 
@@ -99,13 +103,28 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
-        if n.startswith("use_") and "target" not in o.keys():
+        if n.startswith("use_") and "target" not in o.keys() and "card" not in o.keys():
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
             # à rien côté runtime ; corrigé pour que ce warning ait un sens
             # sur un futur `use_*` qui référence vraiment une cible.
+            # Exception "card" : une carte de fidélité à ramasser se suffit à
+            # elle-même, il n'y a rien à cibler (jalon N7, même règle que
+            # `loader.ts::buildUseObjectEffect`).
             warn(f"{o.name}: interactif sans custom property 'target'")
+        # Cartes de fidélité (jalon N7) : une valeur mal tapée rendrait la
+        # porte ouverte à tous, ou la carte introuvable. Côté jeu c'est un
+        # avertissement bruyant ; ici c'est une ERREUR, parce qu'on peut
+        # encore corriger le .blend avant l'export.
+        for cle in ("card", "requires"):
+            if n.startswith("use_") and cle in o.keys():
+                valeur = str(o[cle]).strip().lower()
+                if valeur not in LOYALTY_CARDS:
+                    err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une carte "
+                        f"({', '.join(LOYALTY_CARDS)})")
+        if n.startswith("use_") and "requires" in o.keys() and "target" not in o.keys():
+            warn(f"{o.name}: 'requires' sans 'target' — aucune porte à ouvrir")
         if n.startswith("secret_") and "secret_id" not in o.keys():
             warn(f"{o.name}: secret sans 'secret_id'")
 

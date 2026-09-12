@@ -1,6 +1,8 @@
 import * as THREE from "three";
 
 import { playDoorSfx } from "../../core/audio";
+import { LOYALTY_CARD_LABELS, type LoyaltyCard } from "../player/loyaltyCards";
+import { hasCard } from "./cards";
 import { showHudMessage } from "./feedback";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
@@ -25,6 +27,29 @@ export function unlockDoor(session: GameSession, targetName: string, successMess
   showHudMessage(successMessage);
   playDoorSfx("unlock");
   return true;
+}
+
+/**
+ * Tentative d'ouverture d'une porte gardée par une carte de fidélité
+ * (jalon N7) : déverrouille si la carte est en poche, refuse sinon — message
+ * et son, sans jamais consommer le `use_*`, donc réessayable.
+ *
+ * Seule `door_e_exit` arme le suivi de fin de niveau (voir la doc de
+ * `ExitDoorTracking`) : une autre porte à carte partage exactement la même
+ * mécanique sans jamais être une sortie.
+ *
+ * see: docs/systems/session.md#cartes-de-fidélité
+ */
+export function tryOpenCardDoor(session: GameSession, targetName: string, required: LoyaltyCard): boolean {
+  if (session.unlockedDoors.has(targetName)) return false; // déjà déverrouillée
+  if (!hasCard(session, required)) {
+    showHudMessage(`${LOYALTY_CARD_LABELS[required]} requise`);
+    playDoorSfx("locked");
+    return false;
+  }
+  const ouverte = unlockDoor(session, targetName, "Porte déverrouillée");
+  if (ouverte && targetName === "door_e_exit") setupExitDoorTracking(session, targetName);
+  return ouverte;
 }
 
 /**

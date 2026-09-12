@@ -76,6 +76,14 @@ explication**, pas contournée.
 | `use_*` | objet interactif (portée 2 m) |
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
 
+Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
+`door_*` actionné), `card` (carte de fidélité DONNÉE — `argent`/`or`/
+`platine`, en fait un ramassage) et `requires` (carte EXIGÉE pour agir sur
+`target`). Une valeur inconnue est une ERREUR de `validate_level.py` et un
+avertissement bruyant du loader, jamais un silence. La Platine n'a pas de
+`use_*` : le Directeur la lâche à sa mort. Détail complet dans
+`docs/reference/conventions-nommage.md#cartes-de-fidélité`.
+
 ## Structure
 
 ```
@@ -95,8 +103,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 ## Phase courante
 
 > **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
-> richesse PASSÉ) et N5 livrés, N2 presque (quatre licences à confirmer).
-> Prochain : N6, le plan de masse coté.**
+> richesse PASSÉ), N5 et N7 livrés, N6 validé (structure et échelle), N2
+> presque (quatre licences à confirmer). Prochain : N8, le blockout gris
+> jouable.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)

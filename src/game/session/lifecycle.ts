@@ -140,8 +140,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ballBody,
     gltfLevelSession: null,
     currentNavGraph: null,
-    badgeMesh: null,
-    hasBadge: false,
+    droppedCardMesh: null,
+    cards: new Set(),
     unlockedDoors: new Set(),
     openingDoor: null,
     exitDoorTracking: null,
@@ -208,7 +208,7 @@ export function teardownGameSession(engine: PersistentEngine, session: GameSessi
   // `engine.badgeMaterial`, persistants) — seule l'instance de mesh est
   // propre à la partie, donc seul un `remove` est nécessaire ici, jamais de
   // `dispose()` dessus.
-  if (session.badgeMesh) engine.scene.remove(session.badgeMesh);
+  if (session.droppedCardMesh) engine.scene.remove(session.droppedCardMesh);
 
   session.physics.world.free();
 }

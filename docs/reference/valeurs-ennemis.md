@@ -210,12 +210,12 @@ seuil de PV sans attendre un sprite dédié.
 
 | Paramètre | Valeur |
 |---|---|
-| `badgePickupRadius` | 1.5 m (même ordre de grandeur que la portée `use_*`, 2 m, mais consommé par proximité seule — pas de touche E, voir [Entités et IA](../systems/entites.md#badge-du-directeur)) |
-| `badgePickupDelay` | 0.6 s |
+| `cardPickupRadius` | 1.5 m (même ordre de grandeur que la portée `use_*`, 2 m, mais consommé par proximité seule — pas de touche E, voir [Entités et IA](../systems/entites.md#badge-du-directeur)) |
+| `cardPickupDelay` | 0.6 s |
 
-`badgePickupDelay` existe pour une raison précise : sans lui, un kill à bout
+`cardPickupDelay` existe pour une raison précise : sans lui, un kill à bout
 portant (mêlée, pompe au contact) place le joueur déjà dans
-`badgePickupRadius` au moment même où le badge apparaît — il se ramasserait
+`cardPickupRadius` au moment même où le badge apparaît — il se ramasserait
 alors sur le **même** pas fixe que sa création, donc jamais visible, ce qui
 se lit comme un bug (« le drop plante », « il disparaît tout de suite »)
 plutôt que comme un ramassage. 0.6 s : assez long pour que le joueur voie le

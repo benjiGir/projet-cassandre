@@ -140,7 +140,7 @@ cette fonction. Mettre en cache `const session = engine.session` au moment
 de la construction figerait `window.cassandre` sur la session détruite dès
 le premier reset — toutes les propriétés qui exposent une partie de l'état
 de partie (`player`, `weapons`, `suits`, `directors`, `directorManager`,
-`level`, `hasBadge`/`giveBadge`, `doors`, `secrets`, `pathfinding`) suivent
+`level`, `cards`/`giveCard`, `doors`, `secrets`, `pathfinding`) suivent
 cette même discipline.
 
 ### cassandre.lighting() — séparer les deux termes de l'éclairage

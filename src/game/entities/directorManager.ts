@@ -7,11 +7,15 @@ import { weaponConfig } from "../player/weaponConfig";
 import type { NavGraph } from "../level/pathfinding";
 import {
   Director,
-  DirectorBadge,
+  DroppedCard,
   configureDirectorCharacterController,
   type DirectorUpdateContext,
 } from "./director";
-import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
+import {
+  DIRECTOR_DROPPED_CARD,
+  directorConfig as defaultDirectorConfig,
+  type DirectorConfig,
+} from "./directorConfig";
 
 /**
  * Manager léger pour le Directeur — même rôle et même contrat que
@@ -19,8 +23,8 @@ import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./
  * `weapons.hitEvents`/`hitCursor`, repris ici à l'identique). Différences
  * délibérées : pas de mécanique de gibs à bout portant (un boss qui explose
  * en morceaux casserait la mise en scène de révélation/mort), une file
- * d'événements supplémentaire `revealEvents`, et la possession du badge
- * droppé à la mort (`DirectorBadge`).
+ * d'événements supplémentaire `revealEvents`, et la carte lâchée
+ * à la mort (`DroppedCard`).
  *
  * `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss
  * est attendu en pratique, mais garder la forme tableau (invariant #8) ne
@@ -79,8 +83,8 @@ export class DirectorManager {
   private readonly _deathEvents: DirectorDeathEvent[] = [];
   private readonly _playerHitEvents: DirectorPlayerHitEvent[] = [];
 
-  /** Badge droppé par le DERNIER Directeur mort — `null` tant qu'aucun n'est mort. Voir `DirectorBadge` (`director.ts`) pour la sémantique de ramassage. */
-  private _badge: DirectorBadge | null = null;
+  /** Carte lâchée par le DERNIER Directeur mort — `null` tant qu'aucun n'est mort. Voir `DroppedCard` (`director.ts`) pour la sémantique de ramassage. */
+  private _droppedCard: DroppedCard | null = null;
 
   // Scratch, zéro allocation en régime établi.
   private readonly scratchKnockback = new THREE.Vector3();
@@ -111,9 +115,9 @@ export class DirectorManager {
   get playerHitEvents(): ReadonlyArray<DirectorPlayerHitEvent> {
     return this._playerHitEvents;
   }
-  /** Badge actuellement droppé (peut être déjà ramassé, voir `DirectorBadge.collected`), `null` si aucun Directeur n'est encore mort. */
-  get badge(): DirectorBadge | null {
-    return this._badge;
+  /** Carte actuellement au sol (peut être déjà ramassé, voir `DroppedCard.collected`), `null` si aucun Directeur n'est encore mort. */
+  get droppedCard(): DroppedCard | null {
+    return this._droppedCard;
   }
 
   /**
@@ -166,7 +170,7 @@ export class DirectorManager {
     hitEvents: ReadonlyArray<HitEvent>,
     navGraph: NavGraph | null = null,
   ) {
-    this._badge?.tick(dt);
+    this._droppedCard?.tick(dt);
 
     const aggregated = this.consumeNewHits(hitEvents);
 
@@ -193,13 +197,13 @@ export class DirectorManager {
   }
 
   /**
-   * Vérifie si `playerPosition` vient de ramasser le badge droppé, si un
+   * Vérifie si `playerPosition` vient de ramasser la carte lâchée, si un
    * Directeur est déjà mort. Appelé une fois par pas fixe depuis
    * `game/loop/updateGameplay.ts` (même discipline que
    * `InteractionSystem.update`).
    */
-  tryCollectBadge(playerPosition: THREE.Vector3): boolean {
-    return this._badge?.tryCollect(playerPosition, this.cfg.badgePickupRadius, this.cfg.badgePickupDelay) ?? false;
+  tryCollectCard(playerPosition: THREE.Vector3): boolean {
+    return this._droppedCard?.tryCollect(playerPosition, this.cfg.cardPickupRadius, this.cfg.cardPickupDelay) ?? false;
   }
 
   private applyAggregatedHit(director: Director, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {
@@ -225,17 +229,18 @@ export class DirectorManager {
         point: hit.anyPoint.clone(),
         direction: this.scratchKnockback.clone(),
       });
-      // Drop du badge : AUX PIEDS du Directeur au moment de sa mort, pas au
+      // Drop de la carte : AUX PIEDS du Directeur au moment de sa mort, pas au
       // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol —
-      // sinon le badge apparaît flottant en l'air, pas posé). +0.15 = demi-
+      // sinon la carte apparaît flottante en l'air, pas posé). +0.15 = demi-
       // hauteur du mesh placeholder (0.3m, voir `game/session/gameEngine.ts`),
       // pour qu'il repose sur le sol plutôt que d'y être à moitié enfoncé.
       const feetY = director.position.y - (this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius);
-      // Un seul badge suivi à la fois (`_badge`) — cohérent avec un boss
-      // unique ; si un futur niveau spawnait plusieurs Directeurs, ce champ
-      // ne suivrait que le DERNIER mort, choix non retravaillé ici (hors scope).
-      this._badge = new DirectorBadge(
+      // Une seule carte suivie à la fois (`_droppedCard`) — cohérent avec un
+      // boss unique ; si un futur niveau spawnait plusieurs Directeurs, ce
+      // champ ne suivrait que le DERNIER mort, choix non retravaillé ici.
+      this._droppedCard = new DroppedCard(
         new THREE.Vector3(director.position.x, feetY + 0.15, director.position.z),
+        DIRECTOR_DROPPED_CARD,
       );
     } else {
       this._hurtEvents.push({ director, knockbackDirection: this.scratchKnockback.clone() });

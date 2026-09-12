@@ -56,6 +56,12 @@ interface DebugState {
   secretsFound: number;
   secretsTotal: number;
 
+  /** Cartes de fidélité en poche, dans l'ordre Argent/Or/Platine. Miroir de
+   * `session.cards`, jamais la source de vérité — l'union est redéclarée ici
+   * plutôt qu'importée, comme `activeWeapon`.
+   * see: docs/decisions/0020-state-feuille-de-dependances.md */
+  cards: readonly ("argent" | "or" | "platine")[];
+
   // see: docs/systems/debug.md#champs-de-debugstate
   views: number;
 }
@@ -74,6 +80,8 @@ interface GameState {
   incrementSecretsFound: () => void;
   /** Fixe `debug.secretsTotal` — appelé une fois au chargement d'un niveau (voir `LevelStats.secretCount`). */
   setSecretsTotal: (total: number) => void;
+  /** Recopie l'inventaire de cartes — appelé PONCTUELLEMENT au ramassage, jamais par image (voir `game/session/cards.ts`). */
+  setCards: (cards: readonly ("argent" | "or" | "platine")[]) => void;
   /** Incrémente `debug.views` de `amount`, décidé par l'appelant — voir `game/session/feedback.ts::grantKillViews`. */
   incrementViews: (amount: number) => void;
 
@@ -123,6 +131,7 @@ const INITIAL_DEBUG: DebugState = {
   activeWeapon: "melee",
   secretsFound: 0,
   secretsTotal: 0,
+  cards: [],
   views: 12,
 };
 
@@ -133,6 +142,7 @@ export const useGameStore = create<GameState>((set) => ({
   incrementSecretsFound: () =>
     set((state) => ({ debug: { ...state.debug, secretsFound: state.debug.secretsFound + 1 } })),
   setSecretsTotal: (total) => set((state) => ({ debug: { ...state.debug, secretsTotal: total } })),
+  setCards: (cards) => set((state) => ({ debug: { ...state.debug, cards } })),
   incrementViews: (amount) => set((state) => ({ debug: { ...state.debug, views: state.debug.views + amount } })),
 
   hudMessage: null,

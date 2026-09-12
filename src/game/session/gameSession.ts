@@ -10,6 +10,7 @@ import { type DirectorManager } from "../entities/directorManager";
 import { type SuitManager } from "../entities/suitManager";
 import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
+import { type LoyaltyCard } from "../player/loyaltyCards";
 
 /** Porte de sortie en cours de glissement cosmétique (voir la doc dans `game/loop/updateGameplay.ts`). */
 export interface OpeningDoor {
@@ -61,9 +62,13 @@ export interface GameSession {
   /** Graphe de praticabilité (Jalon M4) du niveau COURANT — rebaké à chaque `onLoaded`, voir `game/session/spawning.ts::loadGltfLevel`. */
   currentNavGraph: NavGraph | null;
 
-  /** Badge du Directeur : mesh visible tant qu'il n'a pas été ramassé — voir `game/loop/updateGameplay.ts`. */
-  badgeMesh: THREE.Mesh | null;
-  hasBadge: boolean;
+  /** Carte lâchée par le Directeur : mesh visible tant qu'elle n'a pas été ramassée — voir `game/loop/updateGameplay.ts`. */
+  droppedCardMesh: THREE.Mesh | null;
+  /** Cartes de fidélité en poche — les clés du niveau v2 (jalon N7). Survit
+   * à un hot reload, comme le faisait le badge : c'est un état de PARTIE, pas
+   * de niveau chargé.
+   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+  cards: Set<LoyaltyCard>;
 
   unlockedDoors: Set<string>;
   openingDoor: OpeningDoor | null;

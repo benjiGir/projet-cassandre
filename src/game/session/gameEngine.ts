@@ -50,7 +50,7 @@ export interface GameEngine {
   /** Atlas UNIQUE, partagé par tous les Costards de toutes les parties — voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`. */
   suitAtlas: THREE.Texture;
   directorAtlas: THREE.Texture;
-  /** Géométrie/matériau du badge du Directeur, PARTAGÉS entre parties — seule l'instance de mesh (`session.badgeMesh`) est propre à une partie. */
+  /** Géométrie/matériau de la carte lâchée par le Directeur, PARTAGÉS entre parties — seule l'instance de mesh (`session.droppedCardMesh`) est propre à une partie. */
   badgeGeometry: THREE.BoxGeometry;
   badgeMaterial: THREE.MeshLambertMaterial;
 
@@ -192,7 +192,7 @@ export function buildGameEngine(
   // (invariant #9), retiré de la scène au ramassage OU à un `teardownGameSession`.
   // Géométrie/matériau PARTAGÉS entre parties (jamais mutés en place ailleurs
   // que par cette identité de couleur), seule l'INSTANCE de mesh
-  // (`session.badgeMesh`) est propre à une partie.
+  // (`session.droppedCardMesh`) est propre à une partie.
   const badgeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
   const badgeMaterial = new THREE.MeshLambertMaterial({ color: 0xffd54a });
 

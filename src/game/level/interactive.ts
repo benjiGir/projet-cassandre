@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import type { UseObject } from "./loader";
+import type { LoyaltyCard } from "../player/loyaltyCards";
 
 /**
  * Système d'interaction (`use_*`) — voir `loader.ts` pour la construction de
@@ -8,7 +9,13 @@ import type { UseObject } from "./loader";
  * see: docs/pipeline/niveau-blender.md#objets-interactifs
  */
 
-/** Un appelant `main.ts` fournit une callback par effet nommé reconnu. Étendre cette interface au fur et à mesure que de nouveaux `use_*` nommés gagnent un effet — jamais un système générique de callbacks indexé par nom. */
+/** Un appelant `main.ts` fournit une callback par effet nommé reconnu. Étendre cette interface au fur et à mesure que de nouveaux `use_*` nommés gagnent un effet — jamais un système générique de callbacks indexé par nom.
+ *
+ * Deux exceptions, et elles sont volontaires : `onCardPickup` et
+ * `onCardDoorUse` ne sont PAS indexés par nom mais par ce que le `.glb`
+ * DÉCLARE (propriétés `card`/`requires`, voir `loader.ts::UseObject`). Le
+ * niveau v2 pose trois cartes et trois portes ; les câbler par nom aurait
+ * demandé six entrées ici, et une septième à chaque niveau suivant. */
 export interface InteractionHandlers {
   /** `use_crowbar` : ramasse le pied-de-biche. Appelle `weapons.pickUpMelee()` côté `main.ts`. */
   onCrowbarPickup(): void;
@@ -31,6 +38,14 @@ export interface InteractionHandlers {
    * `main.ts`), pas un pickup à usage unique — la blague de la valeur
    * dérisoire (+1 PV) fonctionne mieux en libre-service. */
   onToiletUse(): void;
+  /** `use_*` portant `extras.card` : le joueur ramasse cette carte de
+   * fidélité. Consommé comme un pickup d'arme. */
+  onCardPickup(card: LoyaltyCard, name: string): void;
+  /** `use_*` portant `extras.requires` ET `extras.target` : tentative
+   * d'ouverture d'une porte à carte. L'appelant décide seul si la carte est
+   * en poche (déverrouille) ou non (refus) — même partage des rôles que
+   * `onExitDoorUse`. */
+  onCardDoorUse(targetName: string, required: LoyaltyCard): void;
 }
 
 export class InteractionSystem {
@@ -95,8 +110,25 @@ export class InteractionSystem {
     this.dispatch(nearest, handlers);
   }
 
-  /** Dispatch par NOM Blender exact — voir la doc de tête de fichier. */
+  /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),
+   * ensuite par NOM Blender exact — voir la doc de tête de fichier. */
   private dispatch(useObject: UseObject, handlers: InteractionHandlers): void {
+    // Ramassage de carte : autoportant, consommé, comme `use_crowbar`.
+    if (useObject.grantsCard) {
+      handlers.onCardPickup(useObject.grantsCard, useObject.name);
+      useObject.object.visible = false;
+      this.consumed.add(useObject.object);
+      return;
+    }
+
+    // Porte à carte : JAMAIS consommée, un refus doit rester réessayable —
+    // même contrat que `use_exit_door`. Sans cible, il n'y a rien à ouvrir :
+    // `loader.ts` a déjà averti bruyamment, on ne le redit pas ici.
+    if (useObject.requiresCard && useObject.targetName) {
+      handlers.onCardDoorUse(useObject.targetName, useObject.requiresCard);
+      return;
+    }
+
     switch (useObject.name) {
       case "use_crowbar":
         handlers.onCrowbarPickup();

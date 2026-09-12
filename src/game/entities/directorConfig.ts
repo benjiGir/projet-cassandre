@@ -13,6 +13,8 @@
  * négociable du skill `enemy-state-machine`).
  * see: docs/reference/valeurs-ennemis.md
  */
+
+import { type LoyaltyCard } from "../player/loyaltyCards";
 export interface DirectorConfig {
   /** Points de vie max. */
   maxHp: number;
@@ -102,19 +104,19 @@ export interface DirectorConfig {
   revealShakeDuration: number;
 
   /**
-   * Rayon de ramassage du badge droppé à la mort, en mètres. Consommé par
-   * PROXIMITÉ SEULE (pas de touche E) — voir la doc de `DirectorBadge` dans
+   * Rayon de ramassage de la carte lâchée à la mort, en mètres. Consommé par
+   * PROXIMITÉ SEULE (pas de touche E) — voir la doc de `DroppedCard` dans
    * `director.ts` pour la justification de cet écart avec `use_crowbar`.
    */
-  badgePickupRadius: number;
+  cardPickupRadius: number;
   /**
-   * Délai minimum, en secondes, entre l'apparition du badge et le premier
+   * Délai minimum, en secondes, entre l'apparition de la carte et le premier
    * pas fixe où il peut être ramassé — sans lui, un kill à bout portant
-   * ramasserait le badge sur le pas fixe même de sa création, donc jamais
+   * ramasserait la carte sur le pas fixe même de sa création, donc jamais
    * visible. Voir docs/reference/valeurs-ennemis.md#badge-du-directeur pour
    * l'historique du bug que ce délai corrige.
    */
-  badgePickupDelay: number;
+  cardPickupDelay: number;
 
   /** Amplitude du screenshake quand une attaque du Directeur touche le joueur, en mètres — plus haute que `SuitConfig.playerHitShakeAmplitude` : un coup de boss doit se sentir plus lourd qu'un coup de Costard. */
   playerHitShakeAmplitude: number;
@@ -170,9 +172,18 @@ export const directorConfig: DirectorConfig = {
   revealShakeAmplitude: 0.12,
   revealShakeDuration: 0.25,
 
-  badgePickupRadius: 1.5,
-  badgePickupDelay: 0.6,
+  cardPickupRadius: 1.5,
+  cardPickupDelay: 0.6,
 
   playerHitShakeAmplitude: 0.1,
   playerHitShakeDuration: 0.12,
 };
+
+/**
+ * Carte lâchée par le Directeur à sa mort — la Platine, qui ouvre la sortie
+ * (jalon N7). Une constante plutôt qu'un champ de `DirectorConfig` : ce n'est
+ * pas un réglage de ressenti à faire varier en A/B, c'est une règle de
+ * progression du niveau.
+ * see: docs/reference/conventions-nommage.md#cartes-de-fidélité
+ */
+export const DIRECTOR_DROPPED_CARD: LoyaltyCard = "platine";

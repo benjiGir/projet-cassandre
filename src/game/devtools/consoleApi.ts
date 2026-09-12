@@ -21,6 +21,8 @@ import { directorConfig, type DirectorConfig } from "../entities/directorConfig"
 import { type DoorInfo, type LevelStats, type SecretZone } from "../level/loader";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
+import { grantCard } from "../session/cards";
+import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import { startPlayback } from "../session/recording";
 import { type GameEngine } from "../session/gameEngine";
 import {
@@ -103,13 +105,13 @@ export function exposeDebugApi(engine: GameEngine): void {
       load: (name) => loadGltfLevel(engine, engine.session, name),
       stats: () => engine.session.gltfLevelSession?.current?.stats ?? null,
     },
-    /** Porte à badge (Zone E) : `hasBadge()` lit l'état réel, `giveBadge()`
-     * force la possession pour tester `use_exit_door` sans devoir tuer le
-     * Directeur en console (même précédent que `directorManager` pour ce
-     * genre de test direct). */
-    hasBadge: () => engine.session.hasBadge,
-    giveBadge: () => {
-      engine.session.hasBadge = true;
+    /** Cartes de fidélité (jalon N7, remplace `hasBadge`/`giveBadge`) :
+     * `cards()` lit l'inventaire réel, `giveCard()` force une possession pour
+     * tester une porte sans devoir trouver la carte — même précédent que
+     * `directorManager` pour ce genre de test direct. */
+    cards: () => LOYALTY_CARDS.filter((card) => engine.session.cards.has(card)),
+    giveCard: (card) => {
+      grantCard(engine.session, card);
     },
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
@@ -270,8 +272,8 @@ declare global {
         stats: () => LevelStats | null;
       };
       /** Porte à badge (Zone E, `use_exit_door`/`door_e_exit`) : lecture/forçage de la possession du badge, pour tester sans tuer le Directeur en console. Opère sur la SESSION COURANTE. */
-      hasBadge: () => boolean;
-      giveBadge: () => void;
+      cards: () => LoyaltyCard[];
+      giveCard: (card: LoyaltyCard) => void;
       doors: () => DoorInfo[];
       secrets: () => SecretZone[];
       /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */

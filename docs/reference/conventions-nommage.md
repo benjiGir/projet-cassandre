@@ -37,9 +37,38 @@ Properties** à l'export, sinon tout le paramétrage est perdu silencieusement.
 
 | Propriété | Sur | Sens |
 |---|---|---|
-| `use_target` | `use_*` | nom de l'objet actionné |
+| `target` | `use_*` | nom de l'objet actionné (un `door_*`) |
+| `card` | `use_*` | carte de fidélité DONNÉE par cet objet — en fait un ramassage |
+| `requires` | `use_*` | carte EXIGÉE pour agir sur `target` |
 | `secret_id` | `secret_*` | identifiant du secret |
 | `door_hp` | `door_*` | points de vie si destructible |
+
+La propriété s'appelle bien `target`, pas `use_target` : c'est le nom que
+`loader.ts::buildUseObject` lit dans `extras`. (Cette table a porté
+`use_target` jusqu'au jalon N7 — un nom qui ne correspondait à rien côté
+runtime.)
+
+### Cartes de fidélité
+
+Les clés du niveau v2, à la place du badge unique du Directeur. Trois
+valeurs, et rien d'autre : **`argent`**, **`or`**, **`platine`**. La lecture
+tolère la casse et les espaces (`"Or "` marche), jamais un synonyme.
+
+| Ce qu'on veut | Comment on l'écrit |
+|---|---|
+| Une carte à ramasser | un `use_*` avec `card = "argent"`, sans `target` |
+| Une porte qui exige une carte | un `use_*` avec `target = "door_xxx"` **et** `requires = "argent"` |
+| Une porte sans condition | un `use_*` avec `target` seul (cas de `door_b_frozen`) |
+
+Deux garde-fous, parce qu'une faute de frappe ouvrirait la porte à tout le
+monde en silence : `validate_level.py` en fait une **erreur** avant l'export,
+et `loader.ts` un **avertissement bruyant** au chargement, la propriété étant
+alors ignorée.
+
+La carte **Platine** n'a pas de `use_*` : le Directeur la lâche à sa mort
+(`DIRECTOR_DROPPED_CARD`, `game/entities/directorConfig.ts`), ramassée par
+simple proximité. Côté jeu, l'inventaire vit dans `session.cards` et se
+consulte en console avec `cassandre.cards()` / `cassandre.giveCard("or")`.
 
 ## Constantes de construction
 

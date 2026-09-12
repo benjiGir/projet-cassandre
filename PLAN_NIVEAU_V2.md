@@ -459,6 +459,57 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 ## 9. Jalon N7 — Cartes de fidélité côté jeu (piste A)
 
+> **✅ Livré (2026-09-12).** `hasBadge` (booléen d'une seule clé) est
+> remplacé par `session.cards`, un ensemble de trois cartes — Argent, Or,
+> Platine. Le store zustand n'en est qu'un **miroir** pour le HUD, recopié au
+> ramassage, jamais par image (invariant #2).
+>
+> **La convention glTF est déclarative, pas câblée par nom** : deux custom
+> properties sur un `use_*`, `card` (carte DONNÉE — un ramassage) et
+> `requires` (carte EXIGÉE pour agir sur `target`). Poser une carte et la
+> porte qui va avec dans le niveau v2 ne demandera donc aucune ligne de
+> TypeScript. Le dispatch par nom historique (`use_crowbar`, `use_toilet`…)
+> reste intact et prioritaire nulle part : ce que le `.glb` déclare passe
+> avant. Détail dans
+> [docs/reference/conventions-nommage.md](docs/reference/conventions-nommage.md#cartes-de-fidélité),
+> table de `CLAUDE.md` à jour.
+>
+> **Une valeur mal tapée ne passe jamais en silence** — c'est le risque
+> propre à une convention déclarative : `requires = "bronze"` ouvrirait la
+> porte à tout le monde. Deux garde-fous : `validate_level.py` en fait une
+> **erreur** avant l'export, `loader.ts` un **avertissement bruyant** au
+> chargement (la propriété est alors ignorée).
+>
+> **Le Directeur lâche la Platine** : `DirectorBadge` devient `DroppedCard`,
+> porteuse d'une carte (`DIRECTOR_DROPPED_CARD`) au lieu d'un badge anonyme.
+> Ramassage par proximité inchangé, y compris le délai de 0,6 s qui existait
+> pour que le drop soit visible après un kill à bout portant.
+>
+> **Aucune régression sur le niveau actuel**, vérifié en jeu : mêmes comptes
+> (441 colliders, 13 Costards, 1 Directeur, 6 `use_*`, 2 portes).
+> `use_exit_door` n'a pas de propriété `requires` dans son `.glb`, antérieur
+> à ce jalon : le code lui applique la Platine par défaut — compatibilité
+> explicite, à retirer au jalon N10.
+>
+> **Écart au plan, assumé** : `tryOpenCardDoor` est parti dans
+> `session/doors.ts` plutôt que de rester dans `updateGameplay.ts`. Là-bas
+> elle était injoignable par un test ; à côté de `unlockDoor`, dont elle
+> n'est que la version gardée, elle se teste contre de vrais corps Rapier.
+>
+> **24 tests neufs** (`test/game/player/loyaltyCards.test.ts`) : lecture des
+> propriétés Blender, traversée du loader, dispatch d'interaction, inventaire
+> et son miroir HUD, garde de porte. `pnpm build` propre, `pnpm test` vert
+> (156/156). HUD vérifié en jeu : pastilles ARGENT/OR/PLATINE lisibles à
+> 640×360, au-dessus de la barre de PV. Console : `cassandre.cards()` /
+> `cassandre.giveCard("or")` remplacent `hasBadge()`/`giveBadge()`.
+>
+> **Non vérifié en conditions réelles** : l'ouverture d'une porte à carte par
+> une vraie touche E — l'automatisation navigateur gèle le pas fixe
+> (`visibilityState: hidden`), limitation déjà connue. La garde elle-même est
+> couverte par des tests contre de vrais corps/colliders Rapier, pas des
+> mocks. **Aucun son au ramassage d'une carte** : le badge n'en avait pas non
+> plus, rien n'a régressé — à traiter à l'habillage (N9).
+
 **Objectif.** Remplacer le badge unique par un inventaire de cartes, pour que le blockout soit jouable.
 
 **Conception.**

@@ -142,7 +142,7 @@ explicite de la tâche du jalon M5 :
   prototype). Il pilote la teinte du sprite (costume humain → reptilien),
   pas `state` — orthogonal à la machine à états : un Directeur révélé
   continue de traverser idle/alert/chase/attack/stagger normalement ;
-- le badge droppé à la mort, voir [Badge du Directeur](#badge-du-directeur)
+- la carte lâchée à la mort, voir [Carte lâchée par le Directeur](#carte-lâchée-par-le-directeur)
   plus bas.
 
 **Piège d'ordre à connaître avant de toucher `Director.applyDamage`** : le
@@ -168,7 +168,7 @@ collider Rapier (identique entre les deux, factorisée via `createEnemyBody`,
 mais l'instance elle-même est propre à chaque entité), la config
 (`SuitConfig`/`DirectorConfig`, objets distincts), le PRNG dérivé de la
 graine de l'instance, l'acteur XState lui-même (un par entité), et pour
-`Director` seulement `revealed`/le badge.
+`Director` seulement `revealed`/la carte lâchée.
 
 ### Deux catégories de données dans le contexte : minuteurs d'état et mémoire persistante
 
@@ -337,27 +337,32 @@ Différences délibérées de `DirectorManager` par rapport à `SuitManager` :
   donc plus simple (un seul `totalDamage` par Directeur touché) ;
 - une file d'événements supplémentaire, `revealEvents`, pour la bascule
   visuelle costume humain → reptilien ;
-- possède le badge droppé à la mort (`DirectorBadge`) et expose
-  `tryCollectBadge`.
+- possède la carte lâchée à la mort (`DroppedCard`) et expose
+  `tryCollectCard`.
 
 `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss est
 attendu en pratique, mais garder la forme tableau (même architecture que
 `SuitManager`) ne coûte rien et évite un type spécial pour « exactement un
 ennemi ».
 
-`revealEvents` (bascule visuelle) et `tryCollectBadge` (ramassage du badge)
+`revealEvents` (bascule visuelle) et `tryCollectCard` (ramassage de la carte)
 sont pleinement câblés et actifs en jeu : `revealEvents` est consommé dans
-`game/loop/updateFx.ts`, `tryCollectBadge` est appelé depuis
+`game/loop/updateFx.ts`, `tryCollectCard` est appelé depuis
 `game/loop/updateGameplay.ts` — vérifié par grep sur `src/` le 2026-09-05,
 après qu'une note périmée dans les en-têtes de `directorManager.ts` les
 avait un temps décrits comme un câblage encore à faire dans `main.ts`.
 
-## Badge du Directeur
+## Carte lâchée par le Directeur
 
-`DirectorBadge` (`director.ts`) est un objet de logique pure — position,
-rayon, état ramassé/non ramassé — sans aucune référence à `THREE.Scene`/
-`THREE.Object3D`, même séparation que `Director`/`DirectorManager`
-vis-à-vis du rendu.
+`DroppedCard` (`director.ts`) est un objet de logique pure — position, carte
+portée, rayon, état ramassé/non ramassé — sans aucune référence à
+`THREE.Scene`/`THREE.Object3D`, même séparation que `Director`/
+`DirectorManager` vis-à-vis du rendu.
+
+Depuis le jalon N7, ce n'est plus « le badge » mais une **carte de fidélité**
+(la Platine, `DIRECTOR_DROPPED_CARD` dans `directorConfig.ts`), qui rejoint
+l'inventaire commun aux trois cartes — voir
+[Conventions de nommage](../reference/conventions-nommage.md#cartes-de-fidélité).
 
 Il n'utilise **pas** le contrat `use_*`/`UseObject`
 (`game/level/interactive.ts`) : ce contrat est pensé pour des objets
@@ -365,7 +370,7 @@ pré-autorisés dans Blender (touche E, portée 2 m), pas pour un pickup génér
 à runtime par la mort d'une entité. Le ramassage se fait par proximité
 seule, via `tryCollect(playerPosition, pickupRadius, minAge)` — voir
 [Valeurs des ennemis](../reference/valeurs-ennemis.md#badge-du-directeur)
-pour `badgePickupRadius`/`badgePickupDelay` et l'historique du bug de drop
+pour `cardPickupRadius`/`cardPickupDelay` et l'historique du bug de drop
 corrigé le 2026-08-23.
 
 ## Configuration et tuning à chaud des ennemis (SuitConfig et DirectorConfig)

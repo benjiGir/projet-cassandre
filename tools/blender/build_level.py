@@ -915,12 +915,17 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
     prototype remplacé : `center` est le CENTRE du prop (cohérent avec
     `mesh.getWorldPosition()`), pas un coin — contrairement aux pièces du kit.
 
-    Clé optionnelle `"target"` (nouveau, Zone E) : propagée telle quelle
-    comme custom property Blender `obj["target"] = ...`, exportée dans
-    `extras.target` (export_extras=True, voir export_level.py) et lue par
-    `loader.ts::buildUseObject`. Absente pour un pickup autoportant
-    (`use_crowbar`/`use_shotgun`), présente pour un déclencheur qui vise un
-    `door_*` (`use_exit_door` -> `door_e_exit`)."""
+    Clés optionnelles, toutes propagées telles quelles en custom properties
+    Blender, exportées dans `extras.*` (export_extras=True, voir
+    export_level.py) et lues par `loader.ts::buildUseObject` :
+
+    - `"target"` (Zone E) : nom du `door_*` visé. Absente pour un pickup
+      autoportant (`use_crowbar`/`use_shotgun`), présente pour un
+      déclencheur (`use_exit_door` -> `door_e_exit`) ;
+    - `"card"` (jalon N7) : carte de fidélité DONNÉE par cet objet —
+      « argent », « or » ou « platine ». En fait un ramassage ;
+    - `"requires"` (jalon N7) : carte EXIGÉE pour agir sur `target`. Une
+      valeur inconnue est refusée bruyamment côté jeu, jamais devinée."""
     count = 0
     for use in zone["use_objects"]:
         cx, cy, cz = use["center"]
@@ -929,8 +934,9 @@ def build_use_objects(zone: dict, materials_lookup: dict, logic_coll) -> int:
         parts = [{"o": origin, "s": (sx, sy, sz), "mat": spec.MAT_DETAIL}]
         obj = geo_utils.build_multi_box_mesh(use["name"], parts, spec.MAT_DETAIL, materials_lookup)
         obj.location = (cx, cy, cz)
-        if "target" in use:
-            obj["target"] = use["target"]
+        for cle in ("target", "card", "requires"):
+            if cle in use:
+                obj[cle] = use[cle]
         logic_coll.objects.link(obj)
         count += 1
     return count

@@ -6,6 +6,7 @@ import { Effect, Exit, Schema, Scope } from "effect";
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
 import { GameRuntime } from "../../core/runtime";
 import { mergeStaticDecor } from "./mergeStaticDecor";
+import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -74,6 +75,14 @@ export interface UseObject {
    * avertissement bruyant (voir plus haut), pas une erreur bloquante : le
    * niveau continue de charger. */
   targetName: string | null;
+  /** Carte de fidélité DONNÉE par cet objet (custom property Blender `card`)
+   * — en fait un ramassage, consommé au premier usage. `null` si absent.
+   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+  grantsCard: LoyaltyCard | null;
+  /** Carte de fidélité EXIGÉE par cet objet (custom property Blender
+   * `requires`) pour agir sur sa cible. `null` = aucune condition.
+   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+  requiresCard: LoyaltyCard | null;
   extras: Record<string, unknown>;
 }
 
@@ -189,6 +198,15 @@ export class UntargetedUseObjectWarning extends Schema.TaggedError<UntargetedUse
   { name: Schema.String },
 ) {}
 
+/** `use_*` dont `extras.card`/`extras.requires` ne nomme aucune carte
+ * connue — une faute de frappe dans Blender, qui rendrait sinon la porte
+ * ouverte à tous ou la carte introuvable, EN SILENCE. Jamais bloquant :
+ * l'objet est retourné avec le champ correspondant à `null`. */
+export class UnknownLoyaltyCardWarning extends Schema.TaggedError<UnknownLoyaltyCardWarning>()(
+  "UnknownLoyaltyCardWarning",
+  { name: Schema.String, property: Schema.String, value: Schema.String },
+) {}
+
 /** `col_hull_*` dont `RAPIER.ColliderDesc.convexHull` retourne `null`
  * (sommets dégénérés) — toujours suivi d'un repli sur un collider trimesh
  * pour ce même mesh, jamais d'absence totale de collider. */
@@ -235,6 +253,13 @@ function formatUntargetedUseObject(error: UntargetedUseObjectWarning): string {
   return (
     `[level] "${error.name}" (use_*) n'a pas de cible référencée dans ses extras ` +
     `(custom property Blender "target" attendue) — objet interactif sans effet exploitable.`
+  );
+}
+
+function formatUnknownLoyaltyCard(error: UnknownLoyaltyCardWarning): string {
+  return (
+    `[level] "${error.name}" (use_*) : propriété "${error.property}" = "${error.value}", ` +
+    `qui n'est pas une carte de fidélité connue (${LOYALTY_CARDS.join(", ")}) — propriété ignorée.`
   );
 }
 
@@ -715,6 +740,20 @@ function buildDoor(
  * Absence de cible = `UntargetedUseObjectWarning`, loggué immédiatement
  * (jamais bloquant) — l'objet est quand même retourné avec
  * `targetName: null`. see: docs/pipeline/niveau-blender.md#objets-interactifs */
+/** Lit une propriété de carte (`card`/`requires`) : absente -> `null` sans
+ * bruit, présente mais inconnue -> `null` AVEC avertissement bruyant. */
+function readCardProperty(name: string, property: string, raw: unknown): Effect.Effect<LoyaltyCard | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const card = parseLoyaltyCard(raw);
+    if (card) return card;
+    yield* Effect.fail(new UnknownLoyaltyCardWarning({ name, property, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownLoyaltyCard(error)))),
+    );
+    return null;
+  });
+}
+
 function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<UseObject> {
   return Effect.gen(function* () {
     const position = new THREE.Vector3();
@@ -722,13 +761,20 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
 
     const extras = cleanExtras(mesh);
     const targetName = typeof extras.target === "string" ? extras.target : null;
-    if (!targetName) {
+    const grantsCard = yield* readCardProperty(name, "card", extras.card);
+    const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
+
+    // Une carte à ramasser se suffit à elle-même : pas de cible, donc pas
+    // d'avertissement — même exception de fond que `use_crowbar`/`use_shotgun`,
+    // qui eux le déclenchent encore (leur effet est câblé par nom, pas
+    // déclaré dans le `.glb`).
+    if (!targetName && !grantsCard) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, extras };
   });
 }
 

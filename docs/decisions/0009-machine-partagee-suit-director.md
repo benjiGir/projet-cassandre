@@ -46,7 +46,7 @@ n'a **pas** de sens à partager :
   entité, jamais partagé) ;
 - l'acteur XState lui-même (un par entité, jamais partagé) ;
 - pour `Director` seulement, `revealed`/`justRevealed` et le badge
-  (`DirectorBadge`) — restés **hors** de la machine partagée sur demande
+  (`DroppedCard`, `DirectorBadge` jusqu'au jalon N7) — restés **hors** de la machine partagée sur demande
   explicite de la tâche : un champ de contexte annexe porté par la classe
   `Director`, pas une région d'état parallèle de `enemyMachine`.
 

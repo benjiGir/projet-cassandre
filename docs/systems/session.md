@@ -163,7 +163,8 @@ Groupes de champs :
   la balle de test comme enfants d'un seul `THREE.Group` : un unique
   `scene.remove(gymRoot)` au teardown les retire tous, sans qu'aucun code
   de `gym.ts` n'ait besoin de retourner la liste de ce qu'il a créé.
-- **Suivi de progression** : badge du Directeur (`badgeMesh`/`hasBadge`),
+- **Suivi de progression** : cartes de fidélité (`droppedCardMesh`/`cards`,
+  voir [Cartes de fidélité](#cartes-de-fidélité)),
   portes (`unlockedDoors`/`openingDoor`/`exitDoorTracking`, voir
   [Portes et fin de niveau](#portes-et-fin-de-niveau)), secrets
   (`foundSecrets`, `WeakSet` par référence de mesh).
@@ -227,7 +228,7 @@ complète, dans un ordre précis : dispose la session de niveau glTF (déjà
 gérée par `LevelSession.stop()`), retire la géométrie propre à `session` de
 `scene` (gym + balle de test, en un seul `scene.remove(gymRoot)`) puis
 dispose géométries/matériaux, dispose les sprites billboard (Costards +
-Directeur), retire le mesh du badge s'il traînait, puis
+Directeur), retire le mesh de la carte lâchée s'il traînait, puis
 `physics.world.free()` EN DERNIER.
 
 Cet ordre EN DERNIER n'est pas arbitraire : libérer le monde Rapier libère
@@ -313,13 +314,31 @@ pas un évènement ponctuel de partie.
 `debugFindPath(session, from, to)` est un wrapper console pour
 `PathfindingService.findPath` sur le graphe courant de `session`.
 
+## Cartes de fidélité
+
+Trois cartes — Argent, Or, Platine — remplacent depuis le jalon N7 le booléen
+`hasBadge` d'une seule clé. Elles vivent dans `session.cards` (un `Set`), pas
+dans le store zustand : le store en est un **miroir** pour le HUD, recopié
+ponctuellement par `syncCardsToStore` au ramassage, jamais par image
+(invariant #2).
+
+`game/session/cards.ts` tient les trois seules opérations : `hasCard`,
+`grantCard` (qui refuse un doublon sans bruit — un hot reload remet les
+`use_*` en place, le cas arrive) et `syncCardsToStore`. Quelle carte se
+trouve où, et quelle porte exige laquelle, n'est écrit nulle part dans le
+code : c'est déclaré dans le `.glb`, voir
+[Conventions de nommage](../reference/conventions-nommage.md#cartes-de-fidélité).
+
+Comme le badge avant elles, les cartes survivent à un hot reload : c'est un
+état de PARTIE, pas de niveau chargé.
+
 ## Portes et fin de niveau
 
 `unlockDoor(session, targetName, successMessage)` (`doors.ts`) déverrouille
 un `door_*` (glissement cosmétique + collider désactivé) — factorisée entre
-`onExitDoorUse` (Zone E, gardé par le badge du Directeur) et
-`onFrozenStorageUse` (secret de Zone B, sans garde) : même mécanique de
-porte, seule la condition d'appel diffère, décidée par l'appelant.
+`tryOpenCardDoor` (porte gardée par une carte) et `onFrozenStorageUse`
+(secret de Zone B, sans garde) : même mécanique de porte, seule la condition
+d'appel diffère, décidée par l'appelant.
 
 `setupExitDoorTracking(session, doorName)` arme le suivi de franchissement
 de `door_e_exit`. L'axe de franchissement est dérivé par une heuristique

@@ -30,6 +30,20 @@ function formatViews(n: number): string {
   return n.toLocaleString("fr-FR");
 }
 
+/** Pastilles de carte : le nom de la carte EST sa couleur, pas besoin
+ * d'icône à 640×360. Libellés courts — "CARTE ARGENT" ne tiendrait pas. */
+const CARD_COLORS: Record<"argent" | "or" | "platine", string> = {
+  argent: "#c8ccd4",
+  or: "#e8b53d",
+  platine: "#9fe8e8",
+};
+
+const CARD_SHORT_LABELS: Record<"argent" | "or" | "platine", string> = {
+  argent: "ARGENT",
+  or: "OR",
+  platine: "PLATINE",
+};
+
 export function Hud() {
   const playerHp = useGameStore((s) => s.debug.playerHp);
   const playerMaxHp = useGameStore((s) => s.debug.playerMaxHp);
@@ -37,6 +51,7 @@ export function Hud() {
   const shotgunMaxAmmo = useGameStore((s) => s.debug.shotgunMaxAmmo);
   const activeWeapon = useGameStore((s) => s.debug.activeWeapon);
   const views = useGameStore((s) => s.debug.views);
+  const cards = useGameStore((s) => s.debug.cards);
 
   const hpRatio = playerMaxHp > 0 ? playerHp / playerMaxHp : 0;
 
@@ -163,6 +178,31 @@ export function Hud() {
           userSelect: "none",
         }}
       >
+        {/* Cartes de fidélité — les clés du niveau (jalon N7). Rien
+            n'apparaît tant que le joueur n'en a aucune : un emplacement vide
+            annoncerait ce qui reste à trouver, ce qui n'est pas le rôle du
+            HUD ici. */}
+        {cards.length > 0 && (
+          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+            {cards.map((card) => (
+              <div
+                key={card}
+                style={{
+                  padding: "2px 6px",
+                  fontSize: 10,
+                  fontWeight: "bold",
+                  letterSpacing: 1,
+                  color: "#111",
+                  background: CARD_COLORS[card],
+                  border: "1px solid rgba(0,0,0,0.6)",
+                  borderRadius: 2,
+                }}
+              >
+                {CARD_SHORT_LABELS[card]}
+              </div>
+            ))}
+          </div>
+        )}
         <div style={{ color: "#ccc", fontSize: 10, textShadow: HUD_TEXT_SHADOW, marginBottom: 2 }}>PV</div>
         <div
           style={{
