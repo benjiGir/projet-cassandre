@@ -808,6 +808,56 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > 198 `light_*` dont 48 allumées. Les cinq espaces restants sont tous de densité
 > `moyenne` ou `faible` au plan : la marge devrait suffire.
 
+> **N9.4 — lot « réserve + souterrain » : 🔶 construit (2026-09-13), en attente
+> du verdict.** Sept espaces habillés sur dix. Les deux qui changent d'ambiance :
+> béton, hauteur, pénombre — rien à voir avec une surface de vente.
+>
+> **Premier lot d'habillage SANS nouvel atlas**, et c'est volontaire : une
+> carrosserie est un aplat, un vitrage une bande sombre, un phare une bande
+> claire. Tout existait déjà dans `trim_hypermarche` et les matériaux peints.
+> Ajouter un atlas pour ça aurait coûté seize cases pour trois aplats. Nouveau
+> module `tools/blender/lib_reserve.py` (15 assets) : racks à palettes chargés,
+> portes de quai, transpalettes, fûts, suspensions industrielles, voitures,
+> piliers de béton, marquages au sol, extincteurs.
+>
+> **Deux ambiances, et elles ne se ressemblent pas.** La réserve est haute
+> (8 m) : un plafond de néons encastrés n'y existe pas, ce qui l'éclaire ce
+> sont des suspensions isolées qui laissent des trous d'ombre entre elles — et
+> ces trous sont du gameplay. Le souterrain est bas (3,5 m), froid, et **la
+> moitié de ses tubes est morte** : sur n'importe quel autre espace ce serait
+> de la négligence, ici c'est le sujet. Ses lampes sont deux fois moins
+> puissantes et deux fois moins portantes que celles de la surface de vente.
+>
+> **Correction d'ambiance trouvée en rendu** : les deux pièces avaient hérité
+> d'un plafond en dalles acoustiques blanches. Ni une réserve ni un parking
+> souterrain n'en ont, et ça leur donnait l'air d'un bureau. Passées en béton
+> brut, elles deviennent enfin ce qu'elles sont.
+>
+> **Le point critique de ce lot n'était pas le décor mais la RAMPE.** La
+> plateforme de quai et sa rampe sont posées par `bo.volumes()`, que l'habillage
+> remplace : les oublier aurait coupé le niveau en deux, la réserve n'ayant pas
+> d'autre accès au souterrain. Reconstruites dans l'habillage, et vérifiées sur
+> le vrai graphe de navigation — depuis la réserve, le quai (z = +3) et le
+> souterrain (z = −6) restent joignables.
+>
+> **Piège de mesure, encore un** : `render_ingame --eye` est une cote MONDE, pas
+> une hauteur au-dessus du sol local. Les premières vues du souterrain (z = −6)
+> plaçaient la caméra à 7,6 m au-dessus de son plancher, donc au-dessus de son
+> plafond. Une image vide n'est pas toujours une pièce vide.
+>
+> **Aucune régression de gameplay** : 40 Costards + 1 Directeur tous `idle`,
+> progression toujours verrouillée (carte Argent pour la réserve, carte Or pour
+> les bureaux), 3 portes, 3 secrets, 357 colliders dont les 4 hulls de rampe.
+> `validate_level.py --strict` : **0 erreur**.
+>
+> **Budgets, à sept espaces sur dix** : **165 lots de dessin sur 200** au pire
+> point de vue. La marge est mince pour les trois espaces restants (parking
+> extérieur, cafétéria, bureaux, tous de densité `faible` ou `moyenne`). Si elle
+> ne suffit pas, le recours n'est plus la taille de cellule — au-delà de 48 m
+> elle ne gagne plus — mais la **mutualisation des matériaux**, puis
+> `BatchedMesh` (voir l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)).
+> Triangles : 540 866 sur 1 500 000, toujours large. 189 `light_*`, 48 allumées.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.

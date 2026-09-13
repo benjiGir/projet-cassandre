@@ -30,6 +30,7 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import lib_electro as E         # noqa: E402
+import lib_reserve as R         # noqa: E402
 import lib_facade as F          # noqa: E402
 import lib_rayons as L          # noqa: E402
 
@@ -41,6 +42,9 @@ CATALOGUES = {
     "sig_": "c5440509-bdce-47ce-90ec-2873627b2daf",    # Signalétique
     "deco_": "df87ad73-13e0-47c1-be84-51e76e8baf76",   # Déco
     "gp_": "97b946f9-02f6-4e67-a2de-ad2e64b443d0",     # Gameplay
+    # Véhicules : rangés avec la déco faute de catégorie dédiée dans
+    # `blender_assets.cats.txt`, qui est un fichier tenu à la main.
+    "veh_": "df87ad73-13e0-47c1-be84-51e76e8baf76",
 }
 
 
@@ -57,7 +61,7 @@ def catalog_for(name: str) -> str | None:
 
 def main() -> None:
     args = get_args()
-    names = L.build_all() + F.build_all() + E.build_all()
+    names = L.build_all() + F.build_all() + E.build_all() + R.build_all()
 
     marked, sans_categorie = 0, []
     for name in names:

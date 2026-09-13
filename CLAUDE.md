@@ -108,8 +108,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
 > (N9.0) livrés, puis deux lots construits et jouables sous `Niveau v2 —
 > habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
-> (N9.2), puis le HUB et l'ÉLECTROMÉNAGER (N9.3). Cinq espaces habillés sur
-> dix, cinq encore gris (parking, cafétéria, réserve, souterrain, bureaux).**
+> (N9.2), le HUB et l'ÉLECTROMÉNAGER (N9.3), puis la RÉSERVE et le SOUTERRAIN
+> (N9.4). Sept espaces habillés sur dix, trois encore gris (parking extérieur,
+> cafétéria, bureaux).**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -161,7 +162,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (l'électroménager et le carrefour : mur d'écrans, cabines de démonstration,
 > rangées de gros blanc, estrade du micro). **Un appareil électroménager est une
 > boîte blanche avec une façade dessinée** — un hublot peint dans l'albedo fait
-> un lave-linge à 640×360. Cinq atlas au total, tous PLEINS : trois de bandes
+> un lave-linge à 640×360 — et `tools/blender/lib_reserve.py` (l'arrière du
+> magasin : racks à palettes, portes de quai, fûts, suspensions industrielles,
+> voitures, piliers de béton). Cinq atlas au total, tous PLEINS : trois de bandes
 > (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) et trois d'étiquettes
 > (`prd_etiquettes`, `prd_kiosque`, `prd_ecrans`) ; `uv="label:<nom>"` accepte
 > `front="+z"` pour un objet posé à plat (une pile de journaux se regarde d'en
@@ -194,7 +197,17 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) sont PLEINS : huit bandes
 > de 16 px occupent exactement les 128 px d'une texture, un besoin nouveau
 > demande un atlas de plus.
-> **Piège de construction de niveau** : dans `build_niveau.py`, le sol et le
+> **Piège de construction de niveau, le plus coûteux du chantier** : habiller un
+> espace REMPLACE l'appel à `bo.volumes()`, qui ne pose pas que du décor —
+> c'est lui qui construit la plateforme de quai de la réserve ET SA RAMPE, seul
+> accès au parking souterrain. Un habillage qui ne les reconstruit pas coupe le
+> niveau en deux, sans aucune erreur. Vérifier le graphe de navigation après
+> chaque lot, pas seulement les comptes.
+> **Piège de mesure** : `render_ingame --eye` est une cote MONDE, pas une
+> hauteur au-dessus du sol local — cadrer le souterrain (z = −6) à `--eye 1.6`
+> place la caméra au-dessus de son plafond, et rend une image vide qui n'est
+> pas une pièce vide.
+> Dans `build_niveau.py`, le sol et le
 > plafond sont posés PAR DÉFAUT pour tout espace, et seuls les espaces listés
 > dans `SOL_SUR_MESURE`/`PLAFOND_SUR_MESURE` s'en chargent eux-mêmes. Le défaut
 > inverse a déjà été payé : un espace habillé se retrouvait sans sol.

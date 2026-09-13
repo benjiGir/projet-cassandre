@@ -56,6 +56,7 @@ import geo_utils                      # noqa: E402
 import lib_helpers as H               # noqa: E402
 import lib_electro as E               # noqa: E402
 import lib_facade as F                # noqa: E402
+import lib_reserve as R               # noqa: E402
 import lib_rayons as L                # noqa: E402
 import plan_de_masse as plan          # noqa: E402
 import build_blockout as bo           # noqa: E402
@@ -76,8 +77,11 @@ COQUE = {
     "hub": ("sol_terrazzo", "mur_platre", "plafond_dalles"),
     "rayons": ("sol_carrelage_blanc", "mur_platre", "plafond_dalles"),
     "electro": ("sol_terrazzo_fin", "mur_platre", "plafond_dalles"),
-    "reserve": ("sol_beton", "mur_platre_use", "plafond_dalles"),
-    "souterrain": ("sol_beton_brut", "mur_platre_use", "plafond_dalles"),
+    # Béton brut au plafond et non des dalles de faux plafond : ni une réserve
+    # ni un parking souterrain n'en ont, et une dalle acoustique blanche au-
+    # dessus d'un parking le fait ressembler à un bureau.
+    "reserve": ("sol_beton", "mur_platre_use", "sol_beton_brut"),
+    "souterrain": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
     "bureaux": ("sol_moquette", "mur_platre", "plafond_dalles"),
 }
 COQUE_COULOIR = ("sol_terrazzo", "mur_platre", "plafond_dalles")
@@ -363,8 +367,9 @@ def _cle(prefixe: str, x: float, y: float, suffixe: str = "") -> str:
     return f"{prefixe}_{x:g}_{y:g}{suffixe}".replace(".", "_").replace("-", "m")
 
 
-def _neons(space, props, logic, xs, ys, morts, prefixe: str,
-           doubles=()) -> tuple[int, int]:
+def _neons(space, props, logic, xs, ys, morts, prefixe: str, doubles=(),
+           couleur: str = "#dceeff", intensite: float = 6.0,
+           portee: float = 11.0) -> tuple[int, int]:
     """Pose une grille de rampes de néons et les lampes de JEU correspondantes.
 
     Règle non négociable, héritée de la salle d'essai de N4 : **les rampes
@@ -393,7 +398,7 @@ def _neons(space, props, logic, xs, ys, morts, prefixe: str,
             for k, dy in enumerate((1.0, 3.0) if x in doubles else (2.0,)):
                 lampe(logic, "light_" + _cle(prefixe, x, y, f"_{k}"),
                       (x - 0.17, y + dy, ht - 0.65),
-                      color="#dceeff", intensity=6.0, distance=11.0)
+                      color=couleur, intensity=intensite, distance=portee)
                 lampes += 1
     return rampes, lampes
 
@@ -796,6 +801,157 @@ def habiller_electro(space, gris, props, col_coll, logic) -> dict:
             "rampes": rampes, "lampes": lampes}
 
 
+# --- Habillage : la réserve ---------------------------------------------------
+#
+# 44 × 36 m sous 8 m de plafond, la pièce la plus haute du niveau. Ses racks de
+# 6 m sont le SEUL vrai couvert du jeu (ADR 0025) et le plan y pose sept
+# Costards : c'est le gros combat. Cotes des volumes gris du blockout, à
+# l'unité près — y compris la plateforme et sa rampe, qui ne sont pas du décor
+# mais le seul accès au parking souterrain.
+
+# (x du bord ouest, y du départ, longueur). Le rack occupe 1,5 m de large.
+RS_RACKS = ((-16.0, 100.0, 14.0), (-16.0, 118.0, 10.0),
+            (4.0, 100.0, 14.0), (4.0, 118.0, 10.0))
+RS_PLATEFORME_Y = 123.0            # quai surélevé, z = +3,0
+RS_RAMPE_X = (-8.0, 4.0)
+RS_RAMPE_Y = (115.0, 123.0)
+# Suspensions industrielles : au-dessus des ALLÉES, jamais au-dessus d'un rack
+# de 6 m — même règle que les néons de la surface de vente, pour la même
+# raison (la lumière doit arriver de biais sur les faces de rack).
+RS_SUSPENSIONS = tuple((x, y) for x in (-20.0, -5.0, 12.0)
+                       for y in (100.0, 108.0, 116.0, 127.0))
+RS_SUSPENSIONS_MORTES = frozenset({(-20.0, 116.0), (12.0, 100.0)})
+
+
+def habiller_reserve(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    materiaux = gris
+
+    for i, (rx, ry, longueur) in enumerate(RS_RACKS):
+        # `rot 90` fait courir la longueur du rack le long de +y ; l'origine
+        # passe donc au bord EST de son emprise.
+        L.place(R.rack_palettes(longueur, 6.0, 1 + i % 3), (rx + 1.5, ry, z), 90,
+                props, col_coll, f"rs_rk{i}")
+
+    # Plateforme de quai, PLEINE (pas une mezzanine sur pilotis) : deux sols
+    # praticables dans la même colonne casseraient le pathfinding 2.5D. Reprise
+    # à l'identique du blockout, texture de béton en plus.
+    px0, py0 = x0, RS_PLATEFORME_Y
+    H.box("plateforme_rs", (px0, py0, z, x1, y1 - 0.25, z + 3.0),
+          "sol_beton", props, subdiv=SUBDIV_BAKE)
+    H.col_box("plateforme_rs", (px0, py0, z, x1, y1 - 0.25, z + 3.0), col_coll)
+    H.box("plateforme_rs_chant", (px0, py0 - 0.06, z + 2.55, x1, py0, z + 3.0),
+          "trim_hypermarche", props, uv="trim:bord_quai")
+
+    # La rampe : c'est elle, et rien d'autre, qui donne accès au quai puis au
+    # souterrain. La perdre en habillant couperait le niveau en deux.
+    bo.pente("rampe_plateforme_rs", RS_RAMPE_X, RS_RAMPE_Y, z, z + 3.0, "+y",
+             materiaux, props, col_coll)
+
+    # Portes de quai sur le mur nord, au-dessus de la plateforme.
+    portes = 0
+    for i, dx in enumerate((-19.0, -11.0, 8.0, 15.0)):
+        L.place(R.porte_quai(3.0), (dx, y1 - 0.55, z + 3.0), 0, props, props, f"rs_pq{i}")
+        portes += 1
+
+    # Réassort au sol : palettes filmées, fûts, transpalettes.
+    for i, (ax, ay, rot) in enumerate(((-21.5, 102.0, 0), (-21.5, 104.0, 12),
+                                       (17.0, 112.0, 0), (-2.0, 100.5, 25),
+                                       (-2.0, 128.0, 0), (16.5, 126.0, 8))):
+        L.place(L.palette_cartons(), (ax, ay, z), rot, props, col_coll, f"rs_pal{i}")
+    futs = 0
+    for i, (fx, fy) in enumerate(((-22.0, 116.0), (-21.2, 116.7), (-22.1, 117.4),
+                                  (18.5, 120.0), (17.7, 120.7))):
+        L.place(R.fut(i % 2), (fx, fy, z), 0, props, col_coll, f"rs_fut{i}")
+        futs += 1
+    for i, (tx, ty, rot) in enumerate(((-6.0, 106.0, 20), (9.0, 121.0, 200))):
+        L.place(R.transpalette(), (tx, ty, z), rot, props, col_coll, f"rs_tp{i}")
+    L.place(R.extincteur(), (x0 + 0.3, 110.0, z + 1.1), 270, props, props, "rs_ext")
+
+    # Suspensions industrielles. Un plafond de néons encastrés n'existe pas
+    # sous 8 m ; ce qui éclaire une réserve, ce sont des luminaires isolés qui
+    # laissent des trous d'ombre entre eux — et ces trous sont du gameplay.
+    ht = z + space.hauteur
+    lampes = 0
+    for sx, sy in RS_SUSPENSIONS:
+        L.place(R.suspension(0), (sx, sy, ht - 2.40), 0, props, props,
+                _cle("rs_su", sx, sy))
+        if (sx, sy) in RS_SUSPENSIONS_MORTES:
+            continue
+        lampe(logic, "light_" + _cle("rs", sx, sy), (sx + 0.30, sy + 0.30, ht - 2.20),
+              color="#e8f0ff", intensity=13.0, distance=17.0)
+        lampes += 1
+
+    return {"racks": len(RS_RACKS), "portes_quai": portes, "futs": futs,
+            "suspensions": len(RS_SUSPENSIONS), "lampes": lampes}
+
+
+# --- Habillage : le parking souterrain ---------------------------------------
+#
+# 48 × 32 m sous 3,5 m, six mètres plus bas que le reste. Le plan lui demande
+# de la TENSION, pas de la lisibilité : piliers tous les 8 m, portée de vue
+# coupée en permanence, pénombre. L'éclairage y est donc volontairement pauvre
+# — c'est le seul espace du niveau où éclairer davantage serait une faute.
+
+SO_PILIERS_X = (34.0, 42.0, 50.0, 58.0, 66.0, 74.0)
+SO_PILIERS_Y = (98.0, 106.0, 114.0, 122.0)
+SO_VOITURES = ((38.0, 116.0), (50.0, 116.0), (62.0, 116.0), (74.0, 116.0))
+SO_NEON_X = (30.0, 46.0, 62.0)
+SO_NEON_Y = (96.0, 106.0, 116.0)
+# La MOITIÉ des tubes est morte. Sur n'importe quel autre espace ce serait de
+# la négligence ; ici c'est le sujet.
+SO_NEONS_MORTS = frozenset({(30.0, 106.0), (46.0, 96.0), (62.0, 116.0), (46.0, 116.0)})
+
+
+def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    piliers = 0
+    for i, px in enumerate(SO_PILIERS_X):
+        for j, py in enumerate(SO_PILIERS_Y):
+            L.place(R.pilier_beton(space.hauteur), (px, py, z), 0,
+                    props, col_coll, f"so_pl{i}_{j}")
+            piliers += 1
+            # Un extincteur sur un pilier de bout de rangée : dans cette
+            # pénombre, la seule tache de rouge franc sert de repère.
+            if (i, j) in ((0, 0), (5, 3)):
+                L.place(R.extincteur(), (px + 0.29, py - 0.05, z + 1.0), 0,
+                        props, props, f"so_ext{i}{j}")
+
+    # Places matérialisées le long des deux longues façades, dos aux murs.
+    places = 0
+    for i in range(8):
+        L.place(R.marquage_place(5.0, 2.5), (x0 + 4.0 + i * 2.5, y0 + 0.5, z), 0,
+                props, props, f"so_pm_s{i}")
+        L.place(R.marquage_place(5.0, 2.5), (x0 + 4.0 + i * 2.5, y1 - 5.5, z), 0,
+                props, props, f"so_pm_n{i}")
+        places += 2
+
+    voitures = 0
+    for i, (vx, vy) in enumerate(SO_VOITURES):
+        carrosserie = R.CARROSSERIES[i % len(R.CARROSSERIES)]
+        L.place(R.voiture(carrosserie, i % len(R.CARROSSERIES)), (vx, vy, z), 0,
+                props, col_coll, f"so_au{i}")
+        voitures += 1
+
+    for i, (fx, fy) in enumerate(((x1 - 2.0, y0 + 1.0), (x1 - 1.2, y0 + 1.7))):
+        L.place(R.fut(i), (fx, fy, z), 0, props, col_coll, f"so_fut{i}")
+    L.place(L.poubelle(), (x0 + 1.0, y1 - 1.5, z), 0, props, col_coll, "so_pou")
+
+    # Éclairage volontairement pauvre et froid : deux fois moins puissant et
+    # deux fois moins portant que la surface de vente. C'est le seul espace du
+    # niveau où éclairer davantage serait une faute.
+    rampes, lampes = _neons(space, props, logic, SO_NEON_X, SO_NEON_Y,
+                            SO_NEONS_MORTS, "so",
+                            couleur="#c8d8e0", intensite=3.5, portee=9.0)
+    return {"piliers": piliers, "voitures": voitures, "places": places,
+            "rampes": rampes, "lampes": lampes}
+
+
 # Repères « signature » que l'habillage pose lui-même, en vrai objet : le
 # blockout ne doit donc plus poser leur silhouette grise.
 SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
@@ -807,6 +963,8 @@ HABILLAGE = {
     "galerie": habiller_galerie,
     "hub": habiller_hub,
     "electro": habiller_electro,
+    "reserve": habiller_reserve,
+    "souterrain": habiller_souterrain,
 }
 
 
@@ -823,6 +981,7 @@ def main() -> None:
     L.build_all()
     F.build_all()
     E.build_all()
+    R.build_all()
 
     root = bpy.context.scene.collection
     geo = geo_utils.make_collection("GEO", root)
