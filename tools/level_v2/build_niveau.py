@@ -54,6 +54,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(ICI), "blender"))
 
 import geo_utils                      # noqa: E402
 import lib_helpers as H               # noqa: E402
+import lib_facade as F                # noqa: E402
 import lib_rayons as L                # noqa: E402
 import plan_de_masse as plan          # noqa: E402
 import build_blockout as bo           # noqa: E402
@@ -111,9 +112,16 @@ def materiaux_espace(space, gris: dict, cache: dict) -> dict:
     return cache[cle]
 
 
+# Espaces dont l'habillage construit son propre plafond (percé, à redans...) :
+# `plafond()` les laisse tranquilles plutôt que d'en poser un second par-dessus.
+PLAFOND_SUR_MESURE = frozenset({"galerie"})
+
+
 def plafond(space, coll) -> bool:
     """Dalle de plafond, SANS collider. Retourne False quand l'espace est à ciel
-    ouvert."""
+    ouvert ou quand son habillage s'en charge lui-même."""
+    if space.id in PLAFOND_SUR_MESURE:
+        return False
     texture = COQUE.get(space.id, COQUE_COULOIR)[2]
     if texture is None:
         return False
@@ -340,35 +348,57 @@ def _signalisation_rayons(props, col_coll) -> int:
     return n
 
 
-def _neons_rayons(space, props, logic) -> tuple[int, int]:
-    """Rampes de néons et leurs lampes de jeu.
+def _cle(prefixe: str, x: float, y: float, suffixe: str = "") -> str:
+    """Nom stable et lisible pour une rampe ou une lampe, à partir de ses cotes.
+    Les coordonnées négatives deviennent `m` — un `-` dans un nom d'objet
+    Blender traverse l'export mais rend les noms pénibles à lire en console."""
+    return f"{prefixe}_{x:g}_{y:g}{suffixe}".replace(".", "_").replace("-", "m")
 
-    Deux lampes par rampe d'allée : une lampe ponctuelle au milieu d'un tube de
-    4 m donnerait une flaque ronde là où il faut une traînée. Les rampes des
-    dégagements latéraux n'en portent qu'une — elles éclairent un couloir, pas
-    une allée, et le budget de lampes se dépense là où le joueur regarde.
+
+def _neons(space, props, logic, xs, ys, morts, prefixe: str,
+           doubles=()) -> tuple[int, int]:
+    """Pose une grille de rampes de néons et les lampes de JEU correspondantes.
+
+    Règle non négociable, héritée de la salle d'essai de N4 : **les rampes
+    courent au-dessus des allées et des dégagements, jamais au-dessus d'un
+    meuble**. C'est ce qui fait que les gondoles reçoivent la lumière de biais
+    et que leurs tablettes basses restent dans l'ombre des hautes. Les `xs`/`ys`
+    passés ici sont donc des cotes de circulation, pas une grille régulière.
+
+    **Deux lampes** pour une rampe dont l'axe est dans `doubles`, une seule
+    sinon : une lampe ponctuelle au milieu d'un tube de 4 m donne une flaque
+    ronde là où il faut une traînée, mais un couloir n'a pas besoin des deux.
+
+    Un tube `mort` ne porte AUCUNE lampe : c'est ce qui creuse les zones
+    sombres. Il reste éclairé par ses voisins, comme un tube grillé.
     """
     ht = space.z + space.hauteur
     rampes = lampes = 0
-    for x in RY_NEON_ALLEES + RY_NEON_BORDS:
-        double = x in RY_NEON_ALLEES
-        for y in RY_NEON_Y:
-            mort = (x, y) in RY_NEONS_MORTS
+    for x in xs:
+        for y in ys:
+            mort = (x, y) in morts
             L.place(L.neon(4.0, eteint=mort), (x, y, ht - 0.18), 90,
-                    props, props, f"ry_n{x:g}_{y:g}".replace(".", "_").replace("-", "m"))
+                    props, props, _cle(f"{prefixe}_n", x, y))
             rampes += 1
             if mort:
                 continue
-            offsets = (1.0, 3.0) if double else (2.0,)
-            for k, dy in enumerate(offsets):
-                lampe(logic, f"light_ry_{x:g}_{y:g}_{k}".replace(".", "_").replace("-", "m"),
+            for k, dy in enumerate((1.0, 3.0) if x in doubles else (2.0,)):
+                lampe(logic, "light_" + _cle(prefixe, x, y, f"_{k}"),
                       (x - 0.17, y + dy, ht - 0.65),
                       color="#dceeff", intensity=6.0, distance=11.0)
                 lampes += 1
+    return rampes, lampes
+
+
+def _neons_rayons(space, props, logic) -> tuple[int, int]:
+    rampes, lampes = _neons(space, props, logic,
+                            RY_NEON_ALLEES + RY_NEON_BORDS, RY_NEON_Y,
+                            RY_NEONS_MORTS, "ry", doubles=RY_NEON_ALLEES)
 
     # Bloc de secours au-dessus du passage vers la réserve : la seule lumière
     # d'une autre couleur de la pièce, donc le seul repère qui se voit de loin
     # dans l'ombre.
+    ht = space.z + space.hauteur
     L.place(L.neon(2.0), (-32.0, space.y[1] - 0.6, ht - 1.4), 0, props, props, "ry_secours")
     lampe(logic, "light_ry_secours", (-31.0, space.y[1] - 0.9, ht - 1.6),
           color="#4dff73", intensity=3.0, distance=7.0)
@@ -396,8 +426,249 @@ def habiller_rayons(space, gris, props, col_coll, logic) -> dict:
             "signes": signes, "rampes": rampes, "lampes": lampes}
 
 
+# --- Habillage : la ligne de caisses -----------------------------------------
+#
+# Le premier vrai combat du niveau, et l'endroit où l'on ramasse le pompe. Les
+# huit caisses sont EXACTEMENT celles du blockout : 4 × 1,5 m tous les 6,5 m,
+# donc sept trouées de 2,5 m. Cette trame est ce qui a été joué — elle décide
+# où l'on peut passer sous le feu, et elle ne se redessine pas ici.
+
+CS_CAISSES_Y = 32.0
+CS_CAISSES_X = tuple(-26.0 + 2.0 + i * 6.5 for i in range(8))
+# Néons : au-dessus des dégagements, jamais au-dessus de la ligne de caisses.
+CS_NEON_X = (-22.0, -11.0, 0.0, 11.0, 22.0)
+CS_NEON_Y = (22.0, 28.0, 36.0, 41.0)
+CS_NEONS_MORTS = frozenset({(-22.0, 41.0), (22.0, 22.0), (0.0, 41.0)})
+
+
+def _sol_caisses(space, coll, col_coll) -> None:
+    """Deux dalles : terrazzo au sud, dans la continuité de la galerie d'où
+    l'on arrive, carrelage blanc au nord une fois la ligne franchie. Le
+    changement de sol dit « tu es entré dans le magasin » sans un panneau."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    coupe = CS_CAISSES_Y
+    for i, (ya, yb, texture) in enumerate(((y0, coupe, "sol_terrazzo"),
+                                           (coupe, y1, "sol_carrelage_blanc"))):
+        H.box(f"sol_caisses_{i}", (x0, ya, z - bo.EPAISSEUR_SOL, x1, yb, z),
+              texture, coll, subdiv=SUBDIV_BAKE)
+    H.col_box("sol_caisses", (x0, y0, z - bo.EPAISSEUR_SOL, x1, y1, z), col_coll)
+
+
+def habiller_caisses(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    _sol_caisses(space, props, col_coll)
+
+    for i, gx in enumerate(CS_CAISSES_X):
+        L.place(F.caisse(), (gx, CS_CAISSES_Y, z), 0, props, col_coll, f"cs{i}")
+
+    # Portiques antivol à l'entrée sud, là où le joueur débouche de la galerie
+    # (arrivée déclarée en (0, 22)). On passe ENTRE, comme dans un vrai magasin.
+    portiques = 0
+    for i, px in enumerate((-3.9, -1.0, 1.9)):
+        L.place(F.portique(), (px, y0 + 3.0, z), 0, props, col_coll, f"cs_pq{i}")
+        portiques += 1
+
+    # File de caddies contre le mur ouest, près de l'entrée.
+    L.place(F.rail_caddies(), (x0 + 1.5, y0 + 2.0, z), 0, props, col_coll, "cs_rail")
+    caddies = 0
+    for i, dy in enumerate((0.2, 1.15, 2.10, 3.05)):
+        L.place(L.caddie(), (x0 + 1.85, y0 + 2.1 + dy, z), 0, props, col_coll, f"cs_cd{i}")
+        caddies += 1
+
+    # Têtes de gondole promo aux deux bouts de la ligne : elles ferment la
+    # perspective et donnent une couleur à un espace autrement très blanc.
+    for i, (px, py, rot) in enumerate(((x0 + 0.5, CS_CAISSES_Y, 0), (x1 - 1.75, CS_CAISSES_Y, 0))):
+        L.place(L.tete_garnie(SEED + 700 + i), (px, py, z), rot, props, col_coll, f"cs_tete{i}")
+
+    # Bacs promo dans le dégagement sud, là où l'on ralentit en entrant.
+    for i, (px, py) in enumerate(((-16.0, 24.0), (12.0, 24.0))):
+        L.place(L.bac_garni(SEED + 720 + i), (px, py, z), 0, props, col_coll, f"cs_bac{i}")
+    for i, (px, py) in enumerate(((-8.0, 25.5), (6.5, 25.5))):
+        L.place(L.presentoir_garni(SEED + 740 + i), (px, py, z), 0, props, col_coll, f"cs_pres{i}")
+
+    for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.3, y0 + 0.8))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"cs_pou{i}")
+
+    # Îlots promo de part et d'autre de l'entrée : le dégagement sud fait
+    # 52 × 12 m et sonnait creux en rendu. Deux paires de têtes de gondole
+    # dos à dos donnent de la couleur et un obstacle à contourner, sans jamais
+    # gêner l'axe d'entrée (x ∈ [-6, 6], la trouée déclarée par le plan).
+    ilots = 0
+    for i, ix in enumerate((-13.0, 11.75)):
+        L.place(L.tete_garnie(SEED + 760 + i), (ix, 27.0, z), 0, props, col_coll, f"cs_il{i}a")
+        L.place(L.tete_garnie(SEED + 770 + i), (ix + 1.25, 28.25, z), 180, props, col_coll, f"cs_il{i}b")
+        ilots += 2
+    for i, (px, py, rot) in enumerate(((x0 + 3.0, y0 + 6.0, 0), (x1 - 4.0, y0 + 5.0, 20))):
+        L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"cs_pal{i}")
+
+    # Caddies abandonnés dans le dégagement sud et entre deux caisses.
+    for i, (px, py, rot) in enumerate(((-6.5, 26.0, 40), (5.0, 29.5, 200),
+                                       (-20.5, 34.5, 120), (17.0, 27.5, 300))):
+        L.place(L.caddie(), (px, py, z), rot, props, col_coll, f"cs_cdl{i}")
+        caddies += 1
+
+    # Enseignes : « SOLDES » au-dessus de la ligne, visible de toute la salle,
+    # et « SORTIE » au-dessus de la trouée sud par laquelle on est entré.
+    L.place(F.enseigne_murale("soldes"), (-1.5, y1 - 0.3, z + 3.2), 180, props, props, "cs_soldes")
+    L.place(F.enseigne_murale("sortie"), (-1.5, y0 + 0.35, z + 2.6), 0, props, props, "cs_sortie")
+
+    rampes, lampes = _neons(space, props, logic, CS_NEON_X, CS_NEON_Y, CS_NEONS_MORTS,
+                            "cs", doubles=CS_NEON_X)
+    return {"caisses": len(CS_CAISSES_X), "portiques": portiques, "caddies": caddies,
+            "ilots": ilots, "rampes": rampes, "lampes": lampes}
+
+
+# --- Habillage : la galerie marchande ----------------------------------------
+#
+# Transit, gags, et le secret 1. Quatre kiosques aux cotes du blockout, et la
+# VERRIÈRE que le plan de masse réclame : « la seule lumière naturelle du
+# niveau, contraste avec la surface de vente ».
+
+GA_KIOSQUES = tuple(-30.0 + 6.0 + i * 14.0 for i in range(4))
+GA_KIOSQUE_Y = 6.0
+GA_ENSEIGNES = ("presse_libre", "clefs_minute", "desimlock", "photomaton")
+# Verrières : au-dessus de l'allée SUD, celle qu'on parcourt en arrivant du
+# parking. Une verrière au-dessus d'un kiosque n'éclairerait que son toit.
+GA_VERRIERE_COTE = 4.0
+GA_VERRIERE_X = (-22.0, -2.0, 18.0)
+GA_VERRIERE_Y = 1.0
+# Néons : allée nord seulement. L'allée sud est éclairée par les verrières, et
+# c'est ce contraste qui donne son caractère à la galerie.
+GA_NEON_X = (-26.0, -14.0, -2.0, 10.0, 22.0)
+GA_NEON_Y = (11.5,)
+GA_NEONS_MORTS = frozenset({(-14.0, 11.5)})
+# Devantures à rideau baissé le long du mur nord, de part et d'autre de la
+# trouée vers les caisses (x ∈ [-6, 6], déclarée par le plan). Sans elles, ce
+# mur est soixante mètres de plâtre nu ; avec, la galerie raconte un centre
+# commercial à moitié dévitalisé — ce que ce magasin EST.
+GA_DEVANTURE_L = 5.0
+GA_DEVANTURES_N = (-29.5, -23.5, -17.5, -11.5, 6.5, 12.5, 18.5, 24.5)
+# Mur sud : même traitement, en évitant la trouée du parking (x ∈ [-4, 4]).
+# Les deux longs murs habillés ferment enfin les deux bouts de la galerie, qui
+# sonnaient creux en rendu.
+GA_DEVANTURES_S = (-29.5, -23.5, -17.5, -11.5, 4.5, 10.5, 16.5, 24.5)
+
+
+def _sol_galerie(space, coll, col_coll) -> None:
+    """Trois bandes : les deux allées en terrazzo fin, la bande des kiosques en
+    terrazzo large. Le sol dessine la circulation avant qu'on l'ait comprise."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    bandes = ((y0, GA_KIOSQUE_Y, "sol_terrazzo_fin"),
+              (GA_KIOSQUE_Y, GA_KIOSQUE_Y + 4.0, "sol_terrazzo"),
+              (GA_KIOSQUE_Y + 4.0, y1, "sol_terrazzo_fin"))
+    for i, (ya, yb, texture) in enumerate(bandes):
+        H.box(f"sol_galerie_{i}", (x0, ya, z - bo.EPAISSEUR_SOL, x1, yb, z),
+              texture, coll, subdiv=SUBDIV_BAKE)
+    H.col_box("sol_galerie", (x0, y0, z - bo.EPAISSEUR_SOL, x1, y1, z), col_coll)
+
+
+def _plafond_galerie(space, coll) -> None:
+    """Plafond percé des trois verrières. Toujours sans collider — un plafond
+    solide ferait croire au bake du pathfinding qu'il y a un sol à 6 m."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z + space.hauteur
+    haut = z + EPAISSEUR_PLAFOND
+    trous = [(vx, vx + GA_VERRIERE_COTE) for vx in GA_VERRIERE_X]
+    ya, yb = GA_VERRIERE_Y, GA_VERRIERE_Y + GA_VERRIERE_COTE
+    bandes = [(y0, ya, [(x0, x1)]),
+              (ya, yb, bo._segments_restants(x0, x1, trous)),
+              (yb, y1, [(x0, x1)])]
+    i = 0
+    for by0, by1, segments in bandes:
+        for sx0, sx1 in segments:
+            H.box(f"plafond_galerie_{i}", (sx0, by0, z, sx1, by1, haut),
+                  "plafond_dalles", coll, subdiv=SUBDIV_BAKE)
+            i += 1
+
+
+def habiller_galerie(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    _sol_galerie(space, props, col_coll)
+    _plafond_galerie(space, props)
+
+    for i, (gx, enseigne) in enumerate(zip(GA_KIOSQUES, GA_ENSEIGNES)):
+        L.place(F.kiosque(enseigne), (gx, GA_KIOSQUE_Y, z), 0, props, col_coll, f"ga{i}")
+
+    # Verrières et leur lumière. Blanc chaud et portée longue : c'est du jour,
+    # pas un tube fluorescent, et c'est le seul endroit du niveau où la lumière
+    # tombe de haut.
+    for i, vx in enumerate(GA_VERRIERE_X):
+        L.place(F.verriere(GA_VERRIERE_COTE), (vx, GA_VERRIERE_Y, z + space.hauteur),
+                0, props, props, f"ga_vr{i}")
+        lampe(logic, f"light_ga_jour_{i}",
+              (vx + GA_VERRIERE_COTE / 2, GA_VERRIERE_Y + GA_VERRIERE_COTE / 2, z + space.hauteur - 1.0),
+              color="#fff2d8", intensity=14.0, distance=20.0)
+
+    # Les deux machines « signature » du plan d'origine, en vrai et non plus en
+    # silhouette : leurs positions viennent des repères du plan de masse, pas
+    # d'ici (voir `SIGNATURES_HABILLEES`).
+    signatures = 0
+    for label, rx, ry, _nature in space.reperes:
+        if "machine à pinces" in label:
+            L.place(F.machine_pinces(), (rx - 0.5, ry - 0.5, z), 15, props, col_coll, "ga_pinces")
+            signatures += 1
+        elif "photomaton" in label:
+            L.place(F.photomaton(), (rx - 0.6, ry - 0.7, z), 0, props, col_coll, "ga_photo")
+            signatures += 1
+
+    # Devantures fermées le long des deux longs murs, dos au mur. Au sud,
+    # `place(..., 180)` retourne l'asset : sa devanture regarde vers le nord.
+    devantures = 0
+    for i, dx in enumerate(GA_DEVANTURES_N):
+        L.place(F.devanture_fermee(GA_DEVANTURE_L),
+                (dx, y1 - bo.EPAISSEUR_MUR - F.DEVANTURE_PROF, z), 0,
+                props, col_coll, f"ga_dvn{i}")
+        devantures += 1
+    for i, dx in enumerate(GA_DEVANTURES_S):
+        L.place(F.devanture_fermee(GA_DEVANTURE_L),
+                (dx + GA_DEVANTURE_L, y0 + bo.EPAISSEUR_MUR + F.DEVANTURE_PROF, z), 180,
+                props, col_coll, f"ga_dvs{i}")
+        devantures += 1
+
+    # Réassort abandonné derrière les kiosques : leur dos donne sur l'allée
+    # nord et n'a rien à montrer, contrairement à leur façade.
+    for i, (px, py, rot) in enumerate(((-22.0, 10.4, 0), (-7.5, 10.6, 15),
+                                       (6.5, 10.4, 0), (20.5, 10.6, 25))):
+        L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"ga_pal{i}")
+
+    # Bancs dos à dos au milieu de l'allée nord, et corbeilles.
+    bancs = 0
+    for i, (bx, rot) in enumerate(((-18.0, 0), (-16.0, 180), (8.0, 0), (10.0, 180))):
+        L.place(F.banc(), (bx, 13.0 if rot == 0 else 13.5, z), rot, props, col_coll, f"ga_bc{i}")
+        bancs += 1
+    for i, (px, py) in enumerate(((-19.5, 13.2), (11.5, 13.2), (x1 - 1.3, 2.0))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"ga_pou{i}")
+
+    # Panneau d'accueil face à l'arrivée du parking, et panneaux directionnels.
+    L.place(F.enseigne_murale("bienvenue"), (-1.5, y0 + 0.35, z + 3.0), 0, props, props, "ga_bienvenue")
+    for i, px in enumerate((-15.0, 13.0)):
+        L.place(L.panneau_allee(), (px, 9.2, z + 3.4), 0, props, col_coll, f"ga_pan{i}")
+
+    rampes, lampes = _neons(space, props, logic, GA_NEON_X, GA_NEON_Y, GA_NEONS_MORTS,
+                            "ga", doubles=GA_NEON_X)
+    return {"kiosques": len(GA_KIOSQUES), "devantures": devantures,
+            "verrieres": len(GA_VERRIERE_X), "signatures": signatures, "bancs": bancs,
+            "rampes": rampes, "lampes": lampes + len(GA_VERRIERE_X)}
+
+
+# Repères « signature » que l'habillage pose lui-même, en vrai objet : le
+# blockout ne doit donc plus poser leur silhouette grise.
+SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
+
+
 HABILLAGE = {
     "rayons": habiller_rayons,
+    "caisses": habiller_caisses,
+    "galerie": habiller_galerie,
 }
 
 
@@ -412,6 +683,7 @@ def main() -> None:
     geo_utils.wipe_scene()
     geo_utils.configure_scene()
     L.build_all()
+    F.build_all()
 
     root = bpy.context.scene.collection
     geo = geo_utils.make_collection("GEO", root)
@@ -450,10 +722,12 @@ def main() -> None:
         else:
             compte = habillage(space, materiaux, props, col_coll, logic_coll)
             lampes += compte["lampes"]
+            if space.id in PLAFOND_SUR_MESURE:
+                plafonds += 1
             habilles.append((space.id, compte))
 
     portes = bo.poser_portes(ouvertures, materiaux_espace(plan.ALL[0], gris, cache), shell, logic_coll)
-    reperes = bo.poser_reperes(gris, props, col_coll, logic_coll)
+    reperes = bo.poser_reperes(gris, props, col_coll, logic_coll, sauter=SIGNATURES_HABILLEES)
     costards, directeurs = bo.poser_spawns(logic_coll)
 
     # La bibliothèque est un dépôt de patrons, jamais du décor : exclue de la

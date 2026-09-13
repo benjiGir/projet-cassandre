@@ -435,7 +435,14 @@ REGLES_REPERES = [
 ]
 
 
-def poser_reperes(materiaux, geo_coll, col_coll, logic_coll) -> dict:
+def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
+                  sauter: frozenset = frozenset()) -> dict:
+    """Pose les repères de gameplay déclarés par le plan.
+
+    `sauter` liste des `cible` de `REGLES_REPERES` à NE PAS poser — l'habillage
+    (`build_niveau.py`) s'en sert pour remplacer une silhouette grise par le
+    vrai objet, sans dupliquer la lecture du plan ni toucher au reste.
+    """
     comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0}
     for space in plan.ALL:
         for label, rx, ry, nature in space.reperes:
@@ -445,7 +452,7 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll) -> dict:
             _, genre, cible = regle
             z = space.z
 
-            if genre == "rien":
+            if genre == "rien" or (cible is not None and cible in sauter):
                 continue
             if genre == "spawn":
                 empty("spawn_player", (rx, ry, z), logic_coll)

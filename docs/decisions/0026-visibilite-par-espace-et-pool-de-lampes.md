@@ -80,7 +80,7 @@ ENTIER par matériau : un lot couvre toute la carte, donc le frustum n'élimine
 jamais rien.
 
 **Livré**, mais pas comme annoncé. « Par espace » supposait que le niveau
-déclare ses espaces ; c'est **par cellule de 32 m** (`DECOR_CELL_SIZE`,
+déclare ses espaces ; c'est **par cellule de 48 m** (`DECOR_CELL_SIZE`,
 `game/level/mergeStaticDecor.ts`), ce qui donne le même résultat à l'échelle
 d'une pièce du niveau v2 sans inventer de convention glTF — et vaut donc aussi
 pour les niveaux déjà exportés, `hypermarche_complet` compris. Un mesh est
@@ -89,11 +89,22 @@ l'origine est dans un coin appartient à la cellule qu'il couvre vraiment.
 
 Ce n'est plus un bénéfice secondaire. Mesuré sur le blockout : les bureaux, une
 pièce close de 28 × 26 m, dessinaient **82 836 triangles** avant, **11 184**
-après. Les 32 m sont le coude d'une courbe mesurée, pas un ordre de grandeur —
-tableau complet dans [Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
-Le prix se paie en lots de dessin là où l'on voit loin (63 → 93 au parking) :
-c'est le budget qui a le moins de marge, et **remonter la cellule est le
-premier levier** si l'habillage de N9 approche des 200.
+après.
+
+La taille de cellule est le coude d'une courbe mesurée, pas un ordre de
+grandeur — et **ce coude se déplace avec l'habillage**. Sur le blockout gris,
+32 m gagnait encore. Dès trois espaces habillés (jalon N9.2), chaque cellule
+porte beaucoup plus de matériaux distincts, et 32 m coûtait **163 lots de
+dessin sur 200** au pire point de vue contre **122 à 48 m**, pour 3,7 % de
+triangles en plus seulement. Le levier annoncé ici a donc été tiré, au moment
+où la mesure l'a réclamé et pas avant. Tableaux complets dans
+[Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+
+**Le budget sous tension est celui des lots, pas celui des triangles** (33 % du
+budget). À re-mesurer quand les dix espaces seront habillés : si 48 m ne suffit
+plus, les recours dans l'ordre sont de mutualiser les matériaux (moins de lots
+par cellule) puis `BatchedMesh`, pas de monter encore la cellule — au-delà de
+48 m les lots ne baissent plus et les triangles remontent.
 
 ### 3. Une visibilité par espace, tirée du graphe de pièces
 

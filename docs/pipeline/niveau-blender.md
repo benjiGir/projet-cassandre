@@ -254,7 +254,7 @@ skill `effect-xstate-cassandre`.
 (`game/level/mergeStaticDecor.ts`) regroupe les meshes de décor sans
 préfixe par **contenu de matériau** (texture, couleurs, vertex colors,
 transparence), par jeu d'attributs de géométrie et par **cellule spatiale de
-32 m**, puis fusionne chaque groupe en un seul mesh rattaché à `root`. Mesuré
+48 m**, puis fusionne chaque groupe en un seul mesh rattaché à `root`. Mesuré
 sur `hypermarche_complet` : 615 meshes de décor deviennent 43 lots, et le jeu
 passe de 513 à quelques dizaines de draw calls selon l'endroit où l'on se
 tient. Décision et alternatives :

@@ -106,8 +106,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur
 > a joué le blockout et validé), N6 validé (structure et échelle), N2 presque
 > (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
-> (N9.0) livrés, premier lot (les RAYONS) construit et jouable sous `Niveau v2 —
-> habillage en cours`, en attente du verdict. Neuf espaces encore gris.**
+> (N9.0) livrés, puis deux lots construits et jouables sous `Niveau v2 —
+> habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
+> (N9.2). Trois espaces habillés sur dix, sept encore gris.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -125,10 +126,13 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > lignes de vue, elle, est fiable — mesuré à N5 (ADR 0025, qui remplace
 > l'ADR 0022)** : une rangée couvre, une allée ne couvre rien, et rien sous
 > 1,6 m ne bloque un rayon (1,8 m face au Directeur). Le décor statique est
-> fusionné au chargement par matériau **et par cellule de 32 m** (ADR 0023,
+> fusionné au chargement par matériau **et par cellule de 48 m** (ADR 0023,
 > granularité révisée par l'ADR 0026 à N9) : sans la découpe, un lot couvre
 > toute la carte et le tri d'écart n'élimine plus rien — une pièce close de
-> 28 × 26 m dessinait 82 836 triangles, contre 11 184 après. Budget mesuré du
+> 28 × 26 m dessinait 82 836 triangles, contre 11 184 après. **La bonne taille
+> de cellule DÉPEND de l'habillage et se re-mesure** : 32 m sur le blockout
+> gris, 48 m dès trois espaces habillés (un décor texturé porte bien plus de
+> matériaux par cellule, et le nombre de lots suit le nombre de matériaux). Budget mesuré du
 > niveau v2 : **1 500 000 triangles, 200 lots de dessin, 48 lampes allumées**
 > (les 200 000 triangles posés a priori à N1 étaient trop prudents d'un ordre
 > de grandeur ; ce sont les LAMPES qui font mur, et le shader ne compile plus
@@ -148,8 +152,11 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > 2026-09-11** (graphe vide depuis M4, faute de `refreshSceneQueries()` au
 > chargement) : tout retour de playtest sur le comportement des ennemis
 > est à lire à cette lumière.
-> Bibliothèque d'assets du niveau v2 : 37 assets **générés par code**
-> (`tools/blender/lib_rayons.py`) ; `lib_hypermarche_v2.blend` est un produit
+> Bibliothèque d'assets du niveau v2 : **deux modules générés par code**,
+> `tools/blender/lib_rayons.py` (37 assets, la surface de vente : gondoles,
+> produits, bandeaux de catégorie) et `tools/blender/lib_facade.py` (l'avant-
+> magasin et la galerie : caisses, portiques, kiosques, devantures à rideau
+> baissé, photomaton, machine à pinces) ; `lib_hypermarche_v2.blend` est un produit
 > régénérable, jamais un fichier qu'on édite à la main. Salle d'essai jouable
 > via le menu dev (`salle_essai_rayons`). Trois règles de bake nées de N4 :
 > **subdiviser** toute grande surface (un bake par sommet exige des sommets,
@@ -169,6 +176,15 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > aucune arête ne dépasse `cible × 1.5` — la garantie réelle est 1,5 fois la
 > valeur passée. Pour tenir le seuil d'un sommet par m² de `validate_level.py`,
 > passer 0,6 et non 1,0.
+> **Piège d'UV des enseignes** : `lib_helpers._uv_trim` mappe U depuis la
+> coordonnée MONDE — ce qu'il faut pour une plinthe qui se poursuit sans
+> raccord d'une boîte à la suivante, un piège pour une enseigne (le mot tombe
+> où il veut selon l'endroit où l'objet est posé, d'où des panneaux
+> « CAISSE CAISS »). Pour tout panneau porteur de TEXTE, utiliser
+> `uv="enseigne:<bande>"`, calé sur le panneau. Les trois atlas de bandes
+> (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) sont PLEINS : huit bandes
+> de 16 px occupent exactement les 128 px d'une texture, un besoin nouveau
+> demande un atlas de plus.
 > **Piège de l'outil de rendu** : `render_ingame.py` reconstruit
 > `texture × attribut Col`, et un nœud Attribut dont le nom n'existe pas sur le
 > mesh renvoie du NOIR, pas du neutre. Un niveau pas encore baké sortait donc

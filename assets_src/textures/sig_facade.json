@@ -1,0 +1,45 @@
+{
+  "width": 128,
+  "bands": {
+    "caisse": {
+      "y": 0,
+      "height": 16,
+      "pas": 64
+    },
+    "sortie": {
+      "y": 16,
+      "height": 16,
+      "pas": 64
+    },
+    "soldes": {
+      "y": 32,
+      "height": 16,
+      "pas": 64
+    },
+    "presse_libre": {
+      "y": 48,
+      "height": 16,
+      "pas": 128
+    },
+    "clefs_minute": {
+      "y": 64,
+      "height": 16,
+      "pas": 128
+    },
+    "desimlock": {
+      "y": 80,
+      "height": 16,
+      "pas": 128
+    },
+    "photomaton": {
+      "y": 96,
+      "height": 16,
+      "pas": 128
+    },
+    "bienvenue": {
+      "y": 112,
+      "height": 16,
+      "pas": 128
+    }
+  }
+}

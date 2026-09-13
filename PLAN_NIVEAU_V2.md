@@ -708,6 +708,54 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > relief. C'est le principal écart visuel avec la salle d'essai de N4, et c'est
 > ce que le bake apportera.
 
+> **N9.2 — lot « caisses + galerie » : 🔶 construit (2026-09-13), en attente du
+> verdict.** Trois espaces habillés sur dix. Les deux qui encadrent l'arrivée :
+> c'est la première impression du magasin.
+>
+> **La bibliothèque s'est étendue, comme le jalon le prévoit.** Ni caisse, ni
+> kiosque, ni photomaton n'existaient. Nouveau module `tools/blender/lib_facade.py`
+> (12 assets) à côté de `lib_rayons.py` : la coupure n'est pas arbitraire —
+> l'un meuble une SURFACE DE VENTE, l'autre ce qu'on traverse avant d'y entrer.
+> Nouvel atlas d'enseignes `sig_facade.png` (`tools/textures/generate_facade.py`),
+> troisième du projet parce que les deux autres sont PLEINS : huit bandes de
+> 16 px occupent exactement les 128 px d'une texture.
+>
+> **Un bug de texture trouvé en regardant le rendu.** `_uv_trim` mappe U depuis
+> la coordonnée MONDE — ce qu'il faut pour une plinthe, qui doit se poursuivre
+> sans raccord d'une boîte à la suivante. Pour une enseigne c'est un piège : le
+> mot tombe où il veut selon l'endroit où l'objet est posé, et les panneaux
+> affichaient « CAISSE CAISS ». Nouveau mapper `uv="enseigne:<bande>"`, calé sur
+> le PANNEAU et non sur le monde, qui montre toujours des mots entiers. Les
+> générateurs publient désormais le pas de répétition de chaque bande.
+>
+> **Ce que les rendus ont dicté.** La galerie sortait creuse : 96 m² de kiosque
+> dans une salle de 960, et soixante mètres de plâtre nu sur chaque long mur.
+> Seize **devantures à rideau baissé** les habillent — et ce n'est pas un
+> pis-aller, un centre commercial des années 90 à moitié dévitalisé est
+> exactement le magasin que ce niveau raconte. Les étagères des kiosques, nues
+> au premier jet, sont garnies du même garnissage que les gondoles.
+>
+> **Le levier de l'ADR 0026 a été tiré, parce que la mesure l'a réclamé.**
+> À trois espaces habillés et des cellules de 32 m : **163 lots de dessin sur
+> 200** au pire point de vue. Le lot suivant aurait dépassé le budget.
+> `DECOR_CELL_SIZE` passe donc de 32 à **48 m** : 122 lots au lieu de 163, pour
+> 3,7 % de triangles en plus. Constat général, à retenir pour la suite : **le
+> coude de cette courbe se déplace avec l'habillage** — un décor texturé porte
+> bien plus de matériaux distincts par cellule, et le nombre de lots suit le
+> nombre de matériaux, pas le nombre d'objets. Au-delà de 48 m les lots ne
+> baissent plus et les triangles remontent ; les recours suivants seront de
+> mutualiser les matériaux, puis `BatchedMesh`.
+>
+> **Aucune régression de gameplay** : 40 Costards + 1 Directeur tous `idle`,
+> progression toujours verrouillée par la carte Argent, 3 portes, 3 secrets,
+> 9 `use_*`. `validate_level.py --strict` : **0 erreur**, les 5 avertissements
+> déjà connus. 522 006 triangles sur 1 500 000, 122 lots sur 200, `.glb` à
+> 23 Mo.
+>
+> **Écart assumé** : les devantures mordent 0,70 m sur chaque long mur de la
+> galerie. Assez peu pour ne rien changer à un couloir de 6 m, mais c'est bien
+> une retouche de la circulation validée au blockout.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.

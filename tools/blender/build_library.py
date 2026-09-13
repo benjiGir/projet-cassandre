@@ -8,15 +8,15 @@ Options :
     --save    réécrit le .blend d'entrée (destructif, explicite)
     --out P   écrit ailleurs
 
-Construit tous les assets de `lib_rayons.py` et les marque dans l'Asset
+Construit tous les assets de `lib_rayons.py` et `lib_facade.py`, et les marque dans l'Asset
 Browser, chacun dans la catégorie donnée par son préfixe. Les assets sont
 générés par code : ce `.blend` est un PRODUIT, pas une source — il sert à les
 feuilleter, à les glisser dans une scène, à contrôler une silhouette. Le
 fichier d'entrée est rouvert et non reconstruit de zéro, pour conserver ce qui
 s'y trouve déjà à la main (le repère `_ref_humain_1m80`).
 
-Les niveaux, eux, n'appendent pas depuis ce fichier : ils appellent
-`lib_rayons` directement (voir `build_salle_essai.py`).
+Les niveaux, eux, n'appendent pas depuis ce fichier : ils appellent les
+modules directement (voir `build_salle_essai.py` et `tools/level_v2/build_niveau.py`).
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ import bpy
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import lib_facade as F          # noqa: E402
 import lib_rayons as L          # noqa: E402
 
 # UUID des catégories, tels qu'écrits dans assets_src/library/blender_assets.cats.txt.
@@ -54,7 +55,7 @@ def catalog_for(name: str) -> str | None:
 
 def main() -> None:
     args = get_args()
-    names = L.build_all()
+    names = L.build_all() + F.build_all()
 
     marked, sans_categorie = 0, []
     for name in names:

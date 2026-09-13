@@ -141,24 +141,39 @@ ci-dessus), en lots de dessin / triangles réellement dessinés :
 |---|---|---|---|---|---|
 | niveau entier | 17 | 63 / 107 482 | 18 / 115 580 | 18 / 115 580 | 7 / 82 836 |
 | 48 m | 41 | 79 / 99 546 | 33 / 103 700 | 30 / 89 808 | 7 / 14 000 |
-| **32 m** | **62** | **93 / 91 442** | **41 / 84 952** | **39 / 81 804** | **8 / 11 184** |
+| 32 m | 62 | 93 / 91 442 | 41 / 84 952 | 39 / 81 804 | 8 / 11 184 |
 | 24 m | 86 | 91 / 86 980 | 67 / 86 796 | 61 / 79 492 | 9 / 9 564 |
 
-Deux choses à lire dans ce tableau.
-
-D'abord le symptôme : **sans découpe, les bureaux — une pièce close de
+Le symptôme saute aux yeux : **sans découpe, les bureaux — une pièce close de
 28 × 26 m — dessinent 82 836 triangles.** Avec des cellules de 32 m, 11 184.
 Le reste du niveau était dessiné derrière les murs.
 
-Ensuite le choix de 32 m, qui est le **coude de la courbe** et non un ordre de
-grandeur : 48 → 32 m retire 8 à 18 % de triangles pour une dizaine de lots de
-plus ; 32 → 24 m n'en retire plus que 5 % pour vingt-quatre lots de plus.
+Sur ce niveau gris, 32 m était le coude de la courbe : 48 → 32 m retirait 8 à
+18 % de triangles pour une dizaine de lots de plus, 32 → 24 m n'en retirait
+plus que 5 % pour vingt-quatre lots de plus.
 
-Le compromis se paie en lots de dessin, et il se paie surtout là où l'on voit
-loin (le parking, 63 → 93). Les deux budgets restent larges : 93 lots pour 200
-autorisés, 91 442 triangles pour 1 500 000. Si l'habillage de N9 approche des
-200 lots, **remonter la cellule est le premier levier** — les triangles ont de
-la marge, pas les lots.
+### Le coude se déplace quand l'habillage arrive
+
+Refait sur le niveau HABILLÉ (trois espaces sur dix, jalon N9.2), le classement
+s'inverse. Un décor texturé porte bien plus de matériaux distincts par cellule,
+et le nombre de lots suit le nombre de matériaux :
+
+| Cellule | Lots créés | Pire point de vue | Galerie vers l'est | Ligne de caisses |
+|---|---|---|---|---|
+| 32 m | 156 | **163** / 480 446 | 98 / 173 670 | 107 / 226 672 |
+| **48 m** | **102** | **122** / 498 092 | 76 / 169 918 | 82 / 239 478 |
+| 64 m | 89 | 123 / 499 178 | 97 / 299 960 | 98 / 311 804 |
+
+**48 m devient le bon réglage** : 41 lots de moins au pire point de vue pour
+3,7 % de triangles en plus. Au-delà, les lots ne baissent plus et les triangles
+remontent franchement.
+
+C'est le levier que l'ADR 0026 annonçait, tiré au moment où la mesure l'a
+réclamé : à 32 m et trois espaces habillés, on était à 163 lots sur 200, et le
+lot suivant aurait dépassé le budget. La leçon générale : **le budget sous
+tension est celui des LOTS DE DESSIN, pas celui des triangles** (33 % du budget
+seulement), et la taille de cellule est ce qui arbitre entre les deux. À
+re-mesurer quand le niveau sera entièrement habillé.
 
 ## Ce que ça change pour le niveau v2
 

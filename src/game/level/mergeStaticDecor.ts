@@ -13,19 +13,23 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
  * en cellules rend le tri d'écart à nouveau capable d'écarter ce qui n'est pas
  * vu, au prix d'un lot de plus par cellule occupée et par matériau.
  *
- * 32 m est l'ordre de grandeur d'une pièce du niveau v2 (de 12 × 48 m pour
+ * 48 m est l'ordre de grandeur d'une pièce du niveau v2 (de 12 × 48 m pour
  * l'allée centrale à 48 × 36 m pour le parking) : c'est la « fusion par
  * espace » de l'ADR 0026, obtenue sans demander au niveau de déclarer ses
  * espaces — donc valable aussi pour les niveaux déjà exportés.
  *
- * La valeur est le COUDE d'une courbe mesurée sur le blockout, pas un choix
- * d'ordre de grandeur : passer de 48 à 32 m retire 8 à 18 % de triangles pour
- * une dizaine de lots de plus, passer de 32 à 24 m n'en retire plus que 5 %
- * pour vingt-quatre lots de plus. Chiffres et méthode :
+ * La valeur est le COUDE d'une courbe mesurée, pas un choix d'ordre de
+ * grandeur — et **ce coude s'est déplacé quand l'habillage est arrivé**. Sur le
+ * blockout gris, 32 m gagnait encore ; sur le niveau habillé, où chaque cellule
+ * porte bien plus de matériaux distincts, 32 m coûte 163 lots de dessin au pire
+ * point de vue contre 122 à 48 m, pour seulement 3,7 % de triangles en moins.
+ * Au-delà (64 m), les lots ne baissent plus et les triangles remontent. Le
+ * budget sous tension est celui des LOTS, pas celui des triangles : chiffres et
+ * méthode dans
  * [Ce que coûte une image](../../../docs/systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
  * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
  */
-export const DECOR_CELL_SIZE = 32;
+export const DECOR_CELL_SIZE = 48;
 
 export interface DecorMergeResult {
   /** Meshes de décor retirés de la scène parce qu'absorbés dans un lot fusionné. */

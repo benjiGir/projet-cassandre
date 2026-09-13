@@ -11,10 +11,12 @@ import bpy
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 TEX_DIR = os.path.join(ROOT, "assets_src", "textures")
-# Les bandes des deux atlas partagent un espace de noms : le mapper n'a besoin
-# que de (y, hauteur), et c'est l'appelant qui choisit la texture.
+# Les bandes des trois atlas partagent un espace de noms : le mapper n'a besoin
+# que de (y, hauteur), et c'est l'appelant qui choisit la texture. Trois atlas
+# et non un seul parce que chacun est PLEIN — huit bandes de 16 px occupent
+# exactement les 128 px d'une texture.
 TRIM = {}
-for _atlas in ("trim_hypermarche", "sig_bandeaux"):
+for _atlas in ("trim_hypermarche", "sig_bandeaux", "sig_facade"):
     TRIM.update(json.load(open(os.path.join(TEX_DIR, _atlas + ".json")))["bands"])
 LABELS = json.load(open(os.path.join(TEX_DIR, "prd_etiquettes.json")))["labels"]
 
@@ -88,6 +90,41 @@ def _uv_trim(band: str, bounds):
     return fn
 
 
+def _uv_enseigne(band: str, bounds):
+    """Comme `_uv_trim`, mais le motif est calé sur le PANNEAU et non sur le monde.
+
+    `_uv_trim` mappe U depuis la coordonnée MONDE : c'est ce qu'il faut pour une
+    plinthe, qui doit se poursuivre sans raccord d'une boîte à la suivante. Pour
+    une enseigne, c'est un piège — le mot tombe où il veut selon l'endroit où
+    l'objet est posé, et une enseigne coupée en deux se lit comme un bug de
+    texture, pas comme du carrelage.
+
+    Ici U va de 0 à N motifs entiers sur la largeur du panneau, N étant le
+    nombre de répétitions le plus proche de sa taille réelle. Un panneau montre
+    donc toujours des mots entiers, où qu'il soit posé.
+    """
+    meta = TRIM[band]
+    y, h = meta["y"], meta["height"]
+    pas = meta.get("pas", 128)
+    v_top, v_bot = 1 - y / 128, 1 - (y + h) / 128
+    x0, y0, z0, x1, y1, z1 = bounds
+
+    def fn(face, uv):
+        n = face.normal
+        along_x = abs(n.y) >= abs(n.x)
+        flip = (n.y > 0) if along_x else (n.x < 0)
+        a0, a1 = (x0, x1) if along_x else (y0, y1)
+        # Densité nominale : 64 px/m, donc un motif de `pas` px occupe pas/64 m.
+        motifs = max(1, round((a1 - a0) / (pas / 64.0)))
+        for loop in face.loops:
+            c = loop.vert.co
+            s = ((c.x if along_x else c.y) - a0) / max(a1 - a0, 1e-6)
+            u = s * motifs * pas / 128.0
+            t = (c.z - z0) / max(z1 - z0, 1e-6)
+            loop[uv].uv = (1 - u if flip else u, v_bot + t * (v_top - v_bot))
+    return fn
+
+
 def _uv_label(label: str, bounds, front_axis: str = "-y"):
     cx, cy = LABELS[label]["cell"]
     u0, u1 = cx / 4, (cx + 1) / 4
@@ -135,6 +172,8 @@ def _mapper(uv: str, bounds, front: str):
         return _uv_world
     if uv.startswith("trim:"):
         return _uv_trim(uv[5:], bounds)
+    if uv.startswith("enseigne:"):
+        return _uv_enseigne(uv[9:], bounds)
     if uv.startswith("label:"):
         return _uv_label(uv[6:], bounds, front)
     raise ValueError(uv)
