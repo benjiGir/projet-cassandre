@@ -28,10 +28,14 @@ import random
 import lib_helpers as H
 from lib_rayons import asset_coll
 
-# Carrosseries disponibles. Trois teintes seulement, et c'est assez : un parking
-# de 1995 n'est pas un nuancier, et à 640×360 c'est la SILHOUETTE qui distingue
-# deux voitures, pas leur peinture.
-CARROSSERIES = ("metal_peint_rouge", "mur_platre", "metal_bac_acier", "mur_platre_use")
+# Carrosseries : des APLATS pris dans la palette du projet, pas des textures.
+# Première tentative faite en `mur_platre` et `mur_platre_use` — du plâtre
+# taché sur une carrosserie ne se lit pas comme une voiture sale, ça se lit
+# comme un matelas (constaté en rendu). Une carrosserie n'a pas de motif ; elle
+# a une couleur. Six teintes de 1995, choisies dans le nuancier commun.
+CARROSSERIES = ("#b02931", "#d5d7d8", "#605c58", "#1f5fbf", "#a58a60", "#237978")
+VITRAGE = "#2f3541"        # verre teinté vu de l'extérieur
+CAOUTCHOUC = "#222222"     # pneus et pare-chocs
 
 
 # --- Réserve -----------------------------------------------------------------
@@ -172,31 +176,43 @@ def voiture(carrosserie: str, seed: int = 0) -> str:
     Construite en six volumes : capot, coffre, habitacle, vitrages, pare-chocs,
     roues. Le vitrage est une bande de caoutchouc sombre et les phares une
     bande claire — aucun atlas dédié, et à 640×360 la différence ne se voit
-    pas. Le museau est en `-y` : posée à `rot 0`, la voiture regarde le sud.
+    pas.
+
+    **La longueur court le long de X et le museau est en -X** : posée à
+    `rot 0`, la voiture regarde l'ouest et occupe 4,00 m en x pour 1,90 m en y.
+    Une file de voitures posées à `rot 0` est donc une file pare-chocs contre
+    pare-chocs, pas une rangée d'emplacements côte à côte — pour ça, `rot 90`.
     """
-    name = f"veh_auto_{carrosserie}_{seed}".replace(".", "_")
+    name = f"veh_auto_{carrosserie.lstrip('#')}_{seed}"
     coll, done = asset_coll(name)
     if done:
         return name
     lo, la, ht = 4.00, 1.90, 1.45
     bas, toit = 0.34, ht
 
-    caisse = [((0.10, 0.0, bas, lo - 0.10, la, 0.86), "world"),          # bas de caisse
-              ((1.10, 0.06, 0.86, 2.95, la - 0.06, toit), "world")]      # pavillon
-    H.boxes(f"{name}_caisse", caisse, carrosserie, coll, subdiv=0.7)
+    caisse = [((0.10, 0.0, bas, lo - 0.10, la, 0.88), f"aplat:{carrosserie}"),   # bas de caisse
+              ((1.10, 0.08, 0.88, 2.95, la - 0.08, toit), f"aplat:{carrosserie}")]  # pavillon
+    H.boxes(f"{name}_caisse", caisse, "palette", coll)
 
     # Vitrages : pare-brise incliné impossible en boîtes, donc une ceinture
     # vitrée continue — ce que lit l'œil de toute façon à cette résolution.
-    vitres = [((1.04, 0.02, 0.92, 1.14, la - 0.02, toit - 0.08), "trim:joint_caoutchouc"),
-              ((2.91, 0.02, 0.92, 3.01, la - 0.02, toit - 0.08), "trim:joint_caoutchouc"),
-              ((1.14, 0.02, 0.92, 2.91, 0.08, toit - 0.08), "trim:joint_caoutchouc"),
-              ((1.14, la - 0.08, 0.92, 2.91, la - 0.02, toit - 0.08), "trim:joint_caoutchouc")]
-    H.boxes(f"{name}_vitres", vitres, "trim_hypermarche", coll)
+    # ENCASTRÉE dans le pavillon et non débordante : au premier jet elle
+    # dépassait de 6 cm de chaque côté et se lisait comme une dalle posée sur
+    # la voiture, pas comme ses vitres.
+    # Vitrage, pare-chocs et pneus : des aplats sombres eux aussi. Montés en
+    # `trim:joint_caoutchouc` au premier jet, ils tilaient leur nervure et
+    # cerclaient la voiture d'un bandeau strié — une ondulation de hangar, pas
+    # un pare-chocs.
+    vitres = [((1.12, 0.06, 0.92, 1.18, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}"),
+              ((2.87, 0.06, 0.92, 2.93, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}"),
+              ((1.18, 0.06, 0.92, 2.87, 0.12, toit - 0.10), f"aplat:{VITRAGE}"),
+              ((1.18, la - 0.12, 0.92, 2.87, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}")]
+    H.boxes(f"{name}_vitres", vitres, "palette", coll)
 
     H.boxes(f"{name}_pare_chocs", [
-        ((0.0, 0.04, 0.40, 0.12, la - 0.04, 0.72), "trim:joint_caoutchouc"),
-        ((lo - 0.12, 0.04, 0.40, lo, la - 0.04, 0.72), "trim:joint_caoutchouc"),
-    ], "trim_hypermarche", coll)
+        ((0.0, 0.04, 0.40, 0.12, la - 0.04, 0.72), f"aplat:{CAOUTCHOUC}"),
+        ((lo - 0.12, 0.04, 0.40, lo, la - 0.04, 0.72), f"aplat:{CAOUTCHOUC}"),
+    ], "palette", coll)
     # Phares avant (bande claire) et feux arrière (rouge peint).
     H.boxes(f"{name}_phares", [
         ((0.02, 0.16, 0.60, 0.06, 0.52, 0.76), "trim:neon"),
@@ -210,8 +226,8 @@ def voiture(carrosserie: str, seed: int = 0) -> str:
     roues = []
     for x in (0.62, lo - 1.24):
         for y in (-0.04, la - 0.22):
-            roues.append(((x, y, 0.0, x + 0.62, y + 0.26, bas + 0.28), "world"))
-    H.boxes(f"{name}_roues", roues, "trim_hypermarche", coll)
+            roues.append(((x, y, 0.0, x + 0.62, y + 0.26, bas + 0.28), f"aplat:{CAOUTCHOUC}"))
+    H.boxes(f"{name}_roues", roues, "palette", coll)
 
     H.col_box(name[4:], (0, 0, 0, lo, la, ht), coll)
     return name
@@ -267,10 +283,71 @@ def extincteur() -> str:
     return name
 
 
+# --- Parking extérieur -------------------------------------------------------
+
+def lampadaire(hauteur: float = 5.0) -> str:
+    """Mât d'éclairage de parking : fût, crosse, projecteur.
+
+    Le parking est le SEUL espace à ciel ouvert du niveau, donc le seul sans
+    plafond où accrocher des néons. Et comme le niveau tourne en `hybride`
+    (ambiante 0,18, pas de soleil), il n'y a pas de lumière du jour : c'est un
+    parking de nuit, éclairé par ses mâts et rien d'autre. Un choix assumé —
+    c'est aussi une bien meilleure entrée en matière qu'un plein soleil.
+
+    La tête porte le marqueur `_neon` : sans lui, une source ressort noire dans
+    un bake de lumière seule.
+    """
+    name = f"str_lampadaire_{hauteur:g}m".replace(".", "_")
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    H.box(f"{name}_socle", (0, 0, 0, 0.52, 0.52, 0.30), "mur_platre_use", coll)
+    H.box(f"{name}_fut", (0.16, 0.16, 0.30, 0.36, 0.36, hauteur), "metal_bac_acier", coll)
+    H.box(f"{name}_crosse", (0.16, 0.36, hauteur - 0.22, 0.36, 1.30, hauteur), "metal_bac_acier", coll)
+    H.box(f"{name}_capot", (0.02, 1.05, hauteur - 0.34, 0.50, 1.85, hauteur - 0.22),
+          "metal_bac_acier", coll)
+    H.box(f"{name}_neon", (0.06, 1.10, hauteur - 0.40, 0.46, 1.80, hauteur - 0.34),
+          "mur_platre", coll)
+    H.col_box(name[4:], (0, 0, 0, 0.52, 0.52, hauteur), coll)
+    return name
+
+
+def abri_caddies(longueur: float = 6.0) -> str:
+    """Abri à caddies : quatre poteaux, une couverture, un rail au sol.
+
+    6 × 4 × 2,50 m, les cotes du volume gris du blockout — mais OUVERT, alors
+    que le blockout en faisait un bloc plein. C'est voulu : un abri qu'on peut
+    traverser est un couvert partiel, ce qui vaut mieux qu'un mur de plus sur un
+    parking dont le plan dit qu'il est un tutoriel, pas un combat. Seuls les
+    poteaux ont un collider.
+    """
+    name = f"str_abri_caddies_{longueur:g}m".replace(".", "_")
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    lo, pr, ht = longueur, 4.0, 2.50
+    poteaux = []
+    for x in (0.0, lo - 0.16):
+        for y in (0.0, pr - 0.16):
+            poteaux.append(((x, y, 0, x + 0.16, y + 0.16, ht), "world"))
+    H.boxes(f"{name}_poteaux", poteaux, "metal_bac_acier", coll)
+    for i, (x, y) in enumerate(((0.0, 0.0), (lo - 0.16, 0.0),
+                                (0.0, pr - 0.16), (lo - 0.16, pr - 0.16))):
+        H.col_box(f"{name[4:]}_p{i}", (x, y, 0, x + 0.16, y + 0.16, ht), coll)
+    H.box(f"{name}_couverture", (-0.25, -0.25, ht, lo + 0.25, pr + 0.25, ht + 0.16),
+          "metal_tole_perforee", coll, subdiv=0.8)
+    H.box(f"{name}_bandeau", (-0.25, -0.28, ht - 0.06, lo + 0.25, -0.25, ht + 0.16),
+          "metal_bandes_danger", coll)
+    H.box(f"{name}_rail", (0.60, pr / 2 - 0.04, 0, lo - 0.60, pr / 2 + 0.04, 0.30),
+          "metal_bac_acier", coll)
+    return name
+
+
 def build_all() -> list[str]:
     """Construit tout le module. Idempotent, comme les autres bibliothèques."""
     names = [porte_quai(3.0), transpalette(), fut(0), fut(1), suspension(0),
-             pilier_beton(3.5), marquage_place(5.0, 2.5), extincteur()]
+             pilier_beton(3.5), marquage_place(5.0, 2.5), extincteur(),
+             lampadaire(5.0), abri_caddies(6.0)]
     names += [rack_palettes(4.0, 6.0, s) for s in (1, 2, 3)]
     names += [voiture(c, i) for i, c in enumerate(CARROSSERIES)]
     return names

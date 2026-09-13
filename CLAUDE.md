@@ -108,9 +108,10 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
 > (N9.0) livrés, puis deux lots construits et jouables sous `Niveau v2 —
 > habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
-> (N9.2), le HUB et l'ÉLECTROMÉNAGER (N9.3), puis la RÉSERVE et le SOUTERRAIN
-> (N9.4). Sept espaces habillés sur dix, trois encore gris (parking extérieur,
-> cafétéria, bureaux).**
+> (N9.2), le HUB et l'ÉLECTROMÉNAGER (N9.3), la RÉSERVE et le SOUTERRAIN
+> (N9.4), enfin le PARKING, la CAFÉTÉRIA et les BUREAUX (N9.5). **Les dix
+> espaces sont habillés**, plus un seul volume gris. Jouable sous `Niveau v2 —
+> habillé`. Reste le BAKE : le niveau n'a aucune ombre portée.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -164,7 +165,12 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > boîte blanche avec une façade dessinée** — un hublot peint dans l'albedo fait
 > un lave-linge à 640×360 — et `tools/blender/lib_reserve.py` (l'arrière du
 > magasin : racks à palettes, portes de quai, fûts, suspensions industrielles,
-> voitures, piliers de béton). Cinq atlas au total, tous PLEINS : trois de bandes
+> voitures, piliers de béton) et `tools/blender/lib_bureaux.py` (cafétéria et
+> bureaux). **Pour une surface qui ne veut AUCUN motif** — une carrosserie, un
+> pneu, un vitrage — utiliser `uv="aplat:#rrggbb"`, qui mappe tout sur un pavé
+> de `palette.png`, le nuancier commun : une carrosserie texturée en plâtre
+> taché se lit comme un matelas, pas comme une voiture sale. Cinq atlas de
+> bandes et d'étiquettes, tous PLEINS : trois de bandes
 > (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) et trois d'étiquettes
 > (`prd_etiquettes`, `prd_kiosque`, `prd_ecrans`) ; `uv="label:<nom>"` accepte
 > `front="+z"` pour un objet posé à plat (une pile de journaux se regarde d'en

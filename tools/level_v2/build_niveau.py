@@ -54,6 +54,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(ICI), "blender"))
 
 import geo_utils                      # noqa: E402
 import lib_helpers as H               # noqa: E402
+import lib_bureaux as B               # noqa: E402
 import lib_electro as E               # noqa: E402
 import lib_facade as F                # noqa: E402
 import lib_reserve as R               # noqa: E402
@@ -952,6 +953,180 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
             "rampes": rampes, "lampes": lampes}
 
 
+# --- Habillage : le parking extérieur -----------------------------------------
+#
+# Le spawn, et donc la première image du jeu. À CIEL OUVERT : c'est le seul
+# espace sans plafond, donc le seul sans rien où accrocher un néon. Et comme le
+# niveau tourne en `hybride` (ambiante 0,18, pas de soleil), il n'y a pas de
+# lumière du jour — c'est un parking de NUIT, éclairé par ses mâts et rien
+# d'autre. Choix assumé, et une bien meilleure entrée en matière qu'un plein
+# soleil sur du bitume.
+
+PK_VOITURES_X = tuple(-24.0 + 4.0 + i * 7.0 for i in range(6))
+PK_VOITURES_Y = (-34.0, -16.0)
+PK_ABRI = (14.0, -24.0)
+PK_LAMPADAIRES = ((-22.0, -32.0), (-22.0, -14.0), (-2.0, -38.0),
+                  (-2.0, -8.0), (20.0, -32.0), (20.0, -14.0))
+
+
+def habiller_parking(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    voitures = 0
+    for j, vy in enumerate(PK_VOITURES_Y):
+        for i, vx in enumerate(PK_VOITURES_X):
+            # Un emplacement sur cinq reste vide : un parking plein au cordeau
+            # se lit comme une grille, pas comme un parking.
+            if (i + j) % 5 == 3:
+                continue
+            carrosserie = R.CARROSSERIES[(i + 2 * j) % len(R.CARROSSERIES)]
+            L.place(R.voiture(carrosserie, (i + 2 * j) % len(R.CARROSSERIES)),
+                    (vx, vy, z), 0, props, col_coll, f"pk_au{j}{i}")
+            voitures += 1
+
+    # Une voiture de plus à côté du pied-de-biche. Le plan le veut « sur le
+    # capot » ; le repère du blockout est à 0,50 m du sol, sous la ligne de
+    # capot (0,86 m), donc il est POSÉ À CÔTÉ et non dessus — écart assumé
+    # plutôt qu'un pickup noyé dans la carrosserie.
+    L.place(R.voiture(R.CARROSSERIES[4], 4), (-13.5, -29.5, z), 0,
+            props, col_coll, "pk_au_pdb")
+    voitures += 1
+
+    L.place(R.abri_caddies(6.0), (PK_ABRI[0], PK_ABRI[1], z), 0, props, col_coll, "pk_abri")
+    for i, dy in enumerate((0.4, 1.35, 2.30)):
+        L.place(L.caddie(), (PK_ABRI[0] + 2.6, PK_ABRI[1] + 0.5 + dy, z), 0,
+                props, col_coll, f"pk_cd{i}")
+
+    # Marquages au sol : UN par emplacement, aligné sur la voiture qui s'y range.
+    # Les voitures du blockout sont alignées le long de X, museau à l'ouest —
+    # une file pare-chocs contre pare-chocs et non une rangée d'emplacements
+    # côte à côte. Les bandes suivent donc ce pas de 7 m, et non une trame
+    # régulière qui les ferait se chevaucher.
+    places = 0
+    for j, vy in enumerate(PK_VOITURES_Y):
+        for i, vx in enumerate(PK_VOITURES_X):
+            L.place(R.marquage_place(5.0, 2.5), (vx - 0.5, vy - 0.3, z), 0,
+                    props, props, f"pk_pm{j}_{i}")
+            places += 1
+
+    # Mâts d'éclairage : la seule lumière du parking.
+    lampes = 0
+    for i, (lx, ly) in enumerate(PK_LAMPADAIRES):
+        L.place(R.lampadaire(5.0), (lx, ly, z), 0, props, col_coll, f"pk_lp{i}")
+        lampe(logic, f"light_pk_{i}", (lx + 0.26, ly + 1.45, z + 4.45),
+              color="#fff0d0", intensity=16.0, distance=22.0)
+        lampes += 1
+
+    for i, (px, py) in enumerate(((x0 + 1.0, y1 - 1.5), (x1 - 1.4, y0 + 1.2))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"pk_pou{i}")
+    L.place(F.enseigne_murale("bienvenue"), (-3.0, y1 - 0.3, z + 3.4), 180,
+            props, props, "pk_bienvenue")
+
+    return {"voitures": voitures, "places": places, "lampadaires": len(PK_LAMPADAIRES),
+            "lampes": lampes}
+
+
+# --- Habillage : la cafétéria -------------------------------------------------
+#
+# Optionnelle, et c'est ce qui la définit : le plan y met du soin (+1 PV aux
+# toilettes) et le secret 3. Première pièce MEUBLÉE du niveau et non achalandée
+# — on y mange, on n'y achète rien.
+
+CA_COMPTOIR = (37.0, 3.0)
+CA_FRIGO = (53.0, 16.0)
+CA_TABLES = tuple((34.0 + 4.0 + (i % 3) * 5.0, 0.0 + 9.0 + (i // 3) * 5.0) for i in range(6))
+CA_NEON_X = (36.0, 44.0, 52.0)
+CA_NEON_Y = (6.0, 14.0)
+CA_NEONS_MORTS = frozenset({(52.0, 6.0)})
+
+
+def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    L.place(B.comptoir_self(12.0), (CA_COMPTOIR[0], CA_COMPTOIR[1], z), 0,
+            props, col_coll, "ca_self")
+    L.place(L.frigo_garni(SEED + 950, "frais"), (CA_FRIGO[0], CA_FRIGO[1], z), 0,
+            props, col_coll, "ca_frigo")
+
+    for i, (tx, ty) in enumerate(CA_TABLES):
+        L.place(B.table_cafeteria(i % 3), (tx, ty, z), 0, props, col_coll, f"ca_tb{i}")
+
+    for i, facade in enumerate(B.FACADES_DISTRIBUTEUR):
+        L.place(B.distributeur(facade), (x1 - 1.05, y0 + 2.0 + i * 1.0, z), 90,
+                props, col_coll, f"ca_dist{i}")
+
+    # Accès au secret 3 (bouche d'aération à (37, 18)) : le plan le veut par le
+    # comptoir puis le haut d'un meuble. Le comptoir du self est au sud de la
+    # pièce, à quinze mètres de la bouche — la chaîne d'escalade est donc posée
+    # ICI, contre le mur ouest : une caisse à 1,00 m puis un meuble à 2,00 m,
+    # les deux hauteurs que le plan nomme, franchissables d'un saut (1,10 m).
+    sx, sy = 35.0, 17.0
+    H.box("caisse_acces_secret3", (sx, sy, z, sx + 1.0, sy + 1.0, z + 1.0), "carton", props)
+    H.col_box("caisse_acces_secret3", (sx, sy, z, sx + 1.0, sy + 1.0, z + 1.0), col_coll)
+    L.place(L.frigo_garni(SEED + 960, "frais"), (x0 + 0.3, 17.4, z), 270,
+            props, col_coll, "ca_frigo_secret")
+
+    L.place(B.fontaine_eau(), (x0 + 0.6, 2.0, z), 0, props, col_coll, "ca_fontaine")
+    for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.4, y1 - 1.4))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"ca_pou{i}")
+    for i, (px, py) in enumerate(((40.0, 19.0), (47.0, 19.0))):
+        L.place(L.bac_garni(SEED + 970 + i), (px, py, z), 0, props, col_coll, f"ca_bac{i}")
+
+    rampes, lampes = _neons(space, props, logic, CA_NEON_X, CA_NEON_Y,
+                            CA_NEONS_MORTS, "ca", doubles=CA_NEON_X)
+    return {"tables": len(CA_TABLES), "distributeurs": len(B.FACADES_DISTRIBUTEUR),
+            "rampes": rampes, "lampes": lampes}
+
+
+# --- Habillage : les bureaux --------------------------------------------------
+#
+# La salle de confrontation : le Directeur, puis la sortie. Le plan le pose
+# volontairement SOUS `attackRange` — la révélation doit être immédiate, pas une
+# embuscade. L'habillage ne doit donc rien ajouter qui coupe la ligne de vue
+# entre l'entrée sud et le fond de la pièce.
+
+BU_POSTES = ((-16.0, 145.0), (-4.0, 145.0), (-16.0, 154.0), (-4.0, 154.0))
+BU_CLOISON = (-18.0, 154.0)
+BU_NEON_X = (-18.0, -10.0, 2.0)
+BU_NEON_Y = (142.0, 150.0, 160.0)
+BU_NEONS_MORTS = frozenset({(-18.0, 160.0), (2.0, 142.0)})
+
+
+def habiller_bureaux(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    for i, (bx, by) in enumerate(BU_POSTES):
+        L.place(B.poste_bureau(i), (bx, by, z), 0, props, col_coll, f"bu_ps{i}")
+
+    L.place(B.cloison_bureau(12.0), (BU_CLOISON[0], BU_CLOISON[1], z), 0,
+            props, col_coll, "bu_cloison")
+
+    for i, (ax, ay, rot) in enumerate(((x0 + 0.4, 143.0, 90), (x0 + 0.4, 144.0, 90),
+                                       (x1 - 1.0, 148.0, 270), (-9.0, y1 - 0.9, 180))):
+        L.place(B.armoire_dossiers(i % 2), (ax, ay, z), rot, props, col_coll, f"bu_ar{i}")
+
+    L.place(B.fontaine_eau(), (x1 - 0.9, 142.0, z), 0, props, col_coll, "bu_fontaine")
+    for i, (px, py) in enumerate(((x0 + 0.8, 162.0), (2.0, 143.0))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"bu_pou{i}")
+    for i, (px, py, rot) in enumerate(((x0 + 1.0, 158.5, 0), (4.5, 160.0, 20))):
+        L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"bu_pal{i}")
+
+    # « SORTIE » au-dessus de la porte de sortie, au nord. Le dernier panneau du
+    # niveau, et le seul qui indique autre chose qu'un rayon.
+    L.place(F.enseigne_murale("sortie"), (-7.5, y1 - 0.35, z + 2.9), 180,
+            props, props, "bu_sortie")
+
+    rampes, lampes = _neons(space, props, logic, BU_NEON_X, BU_NEON_Y,
+                            BU_NEONS_MORTS, "bu", doubles=BU_NEON_X)
+    return {"postes": len(BU_POSTES), "rampes": rampes, "lampes": lampes}
+
+
 # Repères « signature » que l'habillage pose lui-même, en vrai objet : le
 # blockout ne doit donc plus poser leur silhouette grise.
 SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
@@ -965,6 +1140,9 @@ HABILLAGE = {
     "electro": habiller_electro,
     "reserve": habiller_reserve,
     "souterrain": habiller_souterrain,
+    "parking_ext": habiller_parking,
+    "cafeteria": habiller_cafeteria,
+    "bureaux": habiller_bureaux,
 }
 
 
@@ -982,6 +1160,7 @@ def main() -> None:
     F.build_all()
     E.build_all()
     R.build_all()
+    B.build_all()
 
     root = bpy.context.scene.collection
     geo = geo_utils.make_collection("GEO", root)

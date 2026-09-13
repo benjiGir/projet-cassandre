@@ -94,6 +94,40 @@ def _uv_trim(band: str, bounds):
     return fn
 
 
+# Palette commune du projet (`tools/textures/build_palette.py`) : 64 aplats de
+# 16 px dans une grille 8 × 8. Elle sert de NUANCIER — viser le centre d'un
+# pavé donne une couleur plate sans inventer de texture.
+PALETTE = json.load(open(os.path.join(TEX_DIR, "palette.json")))["colors"]
+
+
+def _uv_aplat(couleur: str):
+    """Mappe TOUTE la géométrie sur un seul pavé de `palette.png`.
+
+    Pourquoi ça existe : le pipeline ne connaît que des matériaux texturés, et
+    certaines surfaces ne veulent AUCUN motif. Une carrosserie de voiture
+    texturée en plâtre taché ne se lit pas comme une voiture sale, elle se lit
+    comme un matelas (constaté en rendu). La palette du projet est déjà un
+    nuancier harmonisé : on s'en sert comme tel.
+
+    Utilisation : `texture="palette"`, `uv="aplat:#rrggbb"`. La couleur doit
+    exister dans `palette.json` — une faute de frappe doit casser bruyamment,
+    pas retomber sur un gris au hasard.
+    """
+    try:
+        i = PALETTE.index(couleur.lower())
+    except ValueError as exc:
+        raise ValueError(f"couleur absente de la palette : {couleur}") from exc
+    # Centre du pavé : à mi-chemin des 16 px, donc jamais sur un bord où le
+    # filtrage irait chercher la couleur voisine.
+    u = ((i % 8) + 0.5) / 8.0
+    v = 1.0 - ((i // 8) + 0.5) / 8.0
+
+    def fn(face, uv):
+        for loop in face.loops:
+            loop[uv].uv = (u, v)
+    return fn
+
+
 def _uv_enseigne(band: str, bounds):
     """Comme `_uv_trim`, mais le motif est calé sur le PANNEAU et non sur le monde.
 
@@ -187,6 +221,8 @@ def _mapper(uv: str, bounds, front: str):
         return _uv_trim(uv[5:], bounds)
     if uv.startswith("enseigne:"):
         return _uv_enseigne(uv[9:], bounds)
+    if uv.startswith("aplat:"):
+        return _uv_aplat(uv[6:])
     if uv.startswith("label:"):
         return _uv_label(uv[6:], bounds, front)
     raise ValueError(uv)

@@ -60,14 +60,15 @@ export const LEVEL_CHOICES: LevelDef[] = [
   },
   // Niveau v2 habillé (jalon N9), construit par `tools/level_v2/build_niveau.py`
   // depuis la MÊME structure que le blockout ci-dessus — seuls les matériaux,
-  // les plafonds, les lampes et le contenu des espaces habillés changent. Un
-  // espace encore gris est un espace qui reste à habiller, et ça se voit exprès.
+  // les plafonds, les lampes et le contenu des espaces changent. Les dix
+  // espaces sont habillés depuis N9.5.
   // `hybride` : le niveau porte ses propres `light_*`, pas de soleil. Il n'est
   // pas encore baké, donc la couleur de sommet ne porte aucune ombre — c'est
-  // l'éclairage temps réel seul.
+  // l'éclairage temps réel seul. Le parking d'arrivée est un parking de NUIT :
+  // sans soleil et à ciel ouvert, ses mâts sont sa seule lumière.
   {
     id: "niveau_v2",
-    label: "Niveau v2 — habillage en cours",
+    label: "Niveau v2 — habillé",
     kind: "gltf",
     gltfName: "niveau_v2",
     startUnarmed: true,

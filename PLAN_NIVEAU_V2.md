@@ -858,6 +858,61 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > `BatchedMesh` (voir l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)).
 > Triangles : 540 866 sur 1 500 000, toujours large. 189 `light_*`, 48 allumées.
 
+> **N9.5 — lot « parking + cafétéria + bureaux » : 🔶 construit (2026-09-13),
+> en attente du verdict. LES DIX ESPACES SONT HABILLÉS** — plus un seul volume
+> gris dans le niveau. Jouable sous `Niveau v2 — habillé`.
+>
+> **Le parking d'arrivée est un parking de NUIT**, et c'est une conséquence
+> assumée du régime `hybride` : ambiante 0,18, pas de soleil, et c'est le seul
+> espace à ciel ouvert — donc le seul sans plafond où accrocher un néon. Six
+> mâts l'éclairent, et rien d'autre. La galerie éclairée au fond de l'allée
+> devient du coup l'objectif le plus lisible qu'on pouvait offrir au joueur
+> pour sa première image.
+>
+> **Nouveau module `tools/blender/lib_bureaux.py`** (comptoir de self, tables
+> de réfectoire, distributeurs, postes de travail, cloison vitrée, armoires à
+> dossiers, fontaine à eau), plus deux assets de parking dans `lib_reserve`
+> (mât d'éclairage, abri à caddies). **Toujours aucun atlas neuf** : les écrans
+> de bureau sont ceux de l'électroménager — un moniteur et un téléviseur sont
+> la même dalle à 640×360.
+>
+> **Une capacité neuve du pipeline, née d'un vrai échec de rendu.** Les
+> premières voitures étaient texturées en `mur_platre` : du plâtre taché sur
+> une carrosserie ne se lit pas comme une voiture sale, ça se lit comme un
+> **matelas**. Une carrosserie n'a pas de motif, elle a une couleur — et le
+> pipeline ne savait faire que des matériaux texturés. D'où `uv="aplat:#rrggbb"`
+> (`lib_helpers._uv_aplat`), qui mappe toute une surface sur un pavé de
+> `palette.png`, le nuancier commun du projet. Six teintes de 1995 pour les
+> carrosseries, deux aplats sombres pour les vitrages et les pneus — qui
+> tilaient leur nervure de caoutchouc et cerclaient la voiture d'un bandeau
+> strié au premier jet.
+>
+> **Deux autres corrections trouvées en regardant** : les marquages au sol du
+> parking se chevauchaient (bandes de 5 m espacées de 2,5 m), et la doc de
+> `voiture()` annonçait un museau en `-y` alors qu'il est en `-x` — ce qui
+> aurait fait poser toutes les voitures futures de travers.
+>
+> **Accès au secret 3 rendu réel** : le plan veut qu'on y monte « par le
+> comptoir puis le haut du frigo », mais le comptoir du self est à quinze
+> mètres de la bouche d'aération. Une caisse à 1,00 m et un meuble à 2,00 m
+> sont donc posés CONTRE la bouche — les deux hauteurs que le plan nomme.
+>
+> **Aucune régression de gameplay** : 40 Costards + 1 Directeur tous `idle`,
+> progression toujours verrouillée, 3 portes, 3 secrets, 9 `use_*`, 389
+> colliders, et le pied-de-biche toujours joignable depuis le spawn.
+> `validate_level.py --strict` : **0 erreur**.
+>
+> **Budgets, niveau complet** : **179 lots de dessin sur 200** au pire point de
+> vue (l'entrée des caisses). Ça tient, de justesse — et il n'y a plus d'espace
+> à ajouter, donc c'est le chiffre final de l'habillage. 541 038 triangles sur
+> 1 500 000 (36 %), 0,44 ms de rendu, 199 `light_*` dont 48 allumées, `.glb` de
+> 26 Mo.
+>
+> **Ce qui reste, et c'est le gros morceau visuel** : le BAKE. Le niveau tourne
+> en `hybride` sans couleur de sommet, donc **aucune ombre portée nulle part**.
+> C'est le dernier écart avec la salle d'essai de N4, et il se voit surtout sur
+> les plafonds, uniformément clairs.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.
