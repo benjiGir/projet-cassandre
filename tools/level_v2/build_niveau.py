@@ -361,6 +361,18 @@ def _signalisation_rayons(props, col_coll) -> int:
     return n
 
 
+def semer(props, col_coll, prefixe: str, items) -> int:
+    """Sème du mobilier Kenney repeint sur la palette (voir `lib_bureaux.meuble`).
+
+    Tout le kit tient dans un seul matériau, donc ces objets ne coûtent aucun
+    lot de dessin supplémentaire là où il y en a déjà un — c'est ce qui permet
+    d'en mettre PARTOUT. `items` : (modèle, x, y, z, rotation en degrés).
+    """
+    for i, (modele, x, y, zz, rot) in enumerate(items):
+        L.place(B.meuble(modele), (x, y, zz), rot, props, col_coll, f"{prefixe}{i}")
+    return len(items)
+
+
 def _cle(prefixe: str, x: float, y: float, suffixe: str = "") -> str:
     """Nom stable et lisible pour une rampe ou une lampe, à partir de ses cotes.
     Les coordonnées négatives deviennent `m` — un `-` dans un nom d'objet
@@ -530,6 +542,11 @@ def habiller_caisses(space, gris, props, col_coll, logic) -> dict:
     L.place(F.enseigne_murale("soldes"), (-1.5, y1 - 0.3, z + 3.2), 180, props, props, "cs_soldes")
     L.place(F.enseigne_murale("sortie"), (-1.5, y0 + 0.35, z + 2.6), 0, props, props, "cs_sortie")
 
+    semer(props, col_coll, "cs_k", (
+        ("pottedPlant", -25.0, 22.0, z, 0), ("pottedPlant", 24.5, 22.0, z, 0),
+        ("pottedPlant", -25.0, 42.5, z, 0), ("pottedPlant", 24.5, 42.5, z, 0),
+    ))
+
     rampes, lampes = _neons(space, props, logic, CS_NEON_X, CS_NEON_Y, CS_NEONS_MORTS,
                             "cs", doubles=CS_NEON_X)
     return {"caisses": len(CS_CAISSES_X), "portiques": portiques, "caddies": caddies,
@@ -667,9 +684,21 @@ def habiller_galerie(space, gris, props, col_coll, logic) -> dict:
     for i, px in enumerate((-15.0, 13.0)):
         L.place(L.panneau_allee(), (px, 9.2, z + 3.4), 0, props, col_coll, f"ga_pan{i}")
 
+    # Plantes en bac tout le long : une galerie marchande en est pleine, et
+    # c'est le seul élément vivant d'un espace autrement minéral. Elles
+    # n'existaient pas au lot précédent faute de texture de feuillage — le
+    # Kenney Furniture Kit en a, et il tient dans un seul matériau.
+    meubles = semer(props, col_coll, "ga_k", (
+        ("pottedPlant", -27.0, 8.0, z, 0), ("pottedPlant", -13.0, 8.0, z, 0),
+        ("pottedPlant", 1.0, 8.0, z, 0), ("pottedPlant", 15.0, 8.0, z, 0),
+        ("pottedPlant", 28.5, 8.0, z, 0), ("pottedPlant", -27.0, 13.5, z, 0),
+        ("pottedPlant", 28.5, 13.5, z, 0),
+        ("trashcan", -5.0, 13.0, z, 0), ("trashcan", 5.0, 2.0, z, 0),
+    ))
+
     rampes, lampes = _neons(space, props, logic, GA_NEON_X, GA_NEON_Y, GA_NEONS_MORTS,
                             "ga", doubles=GA_NEON_X)
-    return {"kiosques": len(GA_KIOSQUES), "devantures": devantures,
+    return {"kiosques": len(GA_KIOSQUES), "devantures": devantures, "meubles": meubles,
             "verrieres": len(GA_VERRIERE_X), "signatures": signatures, "bancs": bancs,
             "rampes": rampes, "lampes": lampes + len(GA_VERRIERE_X)}
 
@@ -731,9 +760,14 @@ def habiller_hub(space, gris, props, col_coll, logic) -> dict:
         L.place(L.caddie(), (px, py, z), rot, props, col_coll, f"hb_cd{i}")
     L.place(L.poubelle(), (x1 - 1.2, 45.5, z), 0, props, col_coll, "hb_pou")
 
+    meubles = semer(props, col_coll, "hb_k", (
+        ("pottedPlant", -5.0, 52.0, z, 0), ("pottedPlant", 4.0, 60.0, z, 0),
+        ("pottedPlant", -5.0, 74.0, z, 0), ("pottedPlant", 4.0, 86.0, z, 0),
+        ("loungeSofa", -4.6, 64.0, z, 90), ("trashcan", 4.2, 50.0, z, 0),
+    ))
     rampes, lampes = _neons(space, props, logic, HB_NEON_X, HB_NEON_Y,
                             HB_NEONS_MORTS, "hb", doubles=HB_NEON_X)
-    return {"panneaux": panneaux, "rampes": rampes, "lampes": lampes}
+    return {"panneaux": panneaux, "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
 
 # --- Habillage : l'électroménager --------------------------------------------
@@ -796,10 +830,23 @@ def habiller_electro(space, gris, props, col_coll, logic) -> dict:
     for i, (px, py) in enumerate(((x0 + 0.8, y0 + 0.8), (x1 - 1.3, y1 - 1.3))):
         L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"el_pou{i}")
 
+    # Téléviseurs et hi-fi en exposition : le rayon s'appelle « électroménager
+    # et TV », et il n'avait jusqu'ici pas un seul téléviseur hors du mur.
+    meubles = semer(props, col_coll, "el_k", (
+        ("televisionVintage", 12.0, 56.0, z + 0.16, 270),
+        ("televisionVintage", 12.0, 58.0, z + 0.16, 270),
+        ("televisionModern", 12.0, 60.0, z + 0.16, 270),
+        ("televisionModern", 44.0, 54.0, z + 0.16, 90),
+        ("televisionVintage", 44.0, 56.5, z + 0.16, 90),
+        ("speaker", 43.5, 66.0, z, 90), ("speaker", 43.5, 68.0, z, 90),
+        ("radio", 21.5, 66.9, z + 0.90, 200), ("laptop", 27.0, 62.9, z + 0.90, 160),
+        ("pottedPlant", 11.0, 78.5, z, 0), ("pottedPlant", 44.5, 78.5, z, 0),
+        ("trashcan", 11.0, 49.5, z, 0),
+    ))
     rampes, lampes = _neons(space, props, logic, EL_NEON_X, EL_NEON_Y,
                             EL_NEONS_MORTS, "el", doubles=EL_NEON_X)
     return {"cabines": len(EL_CABINES), "rangees": rangees, "petits": petits,
-            "rampes": rampes, "lampes": lampes}
+            "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
 
 # --- Habillage : la réserve ---------------------------------------------------
@@ -850,6 +897,13 @@ def habiller_reserve(space, gris, props, col_coll, logic) -> dict:
     # souterrain. La perdre en habillant couperait le niveau en deux.
     bo.pente("rampe_plateforme_rs", RS_RAMPE_X, RS_RAMPE_Y, z, z + 3.0, "+y",
              materiaux, props, col_coll)
+
+    # Un camion de livraison à quai. C'est ce qui explique le quai : sans
+    # véhicule, une plateforme surélevée n'est qu'une estrade. Posé sur la
+    # plateforme, reculé contre une porte.
+    camion = ("truck", 2.40, 7.20, 3.10)
+    L.place(R.voiture(*camion), (-11.0, y1 - 0.9, z + 3.0), 180,
+            props, col_coll, "rs_camion")
 
     # Portes de quai sur le mur nord, au-dessus de la plateforme.
     portes = 0
@@ -932,12 +986,23 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
                 props, props, f"so_pm_n{i}")
         places += 2
 
+    # `rot 90` : les modèles du kit arrivent longueur le long de +Y, et les
+    # emplacements du blockout sont orientés est-ouest. L'origine passe donc au
+    # coin opposé de l'emprise.
     voitures = 0
     for i, (vx, vy) in enumerate(SO_VOITURES):
-        carrosserie = R.CARROSSERIES[i % len(R.CARROSSERIES)]
-        L.place(R.voiture(carrosserie, i % len(R.CARROSSERIES)), (vx, vy, z), 0,
+        modele = R.MODELES_VOITURE[(i * 3) % len(R.MODELES_VOITURE)]
+        L.place(R.voiture(*modele), (vx + modele[2], vy, z), 90,
                 props, col_coll, f"so_au{i}")
         voitures += 1
+
+    # Détails du même atlas, donc gratuits en lots de dessin : un cône renversé,
+    # un pneu, deux caisses. Un parking construit et jamais utilisé n'existe pas.
+    for i, (ax, ay, modele) in enumerate(((33.0, 96.0, "cone"), (57.0, 110.0, "cone"),
+                                          (69.0, 100.0, "debris-tire"),
+                                          (31.0, 121.0, "box"), (31.8, 120.2, "box"))):
+        L.place(R.accessoire_car_kit(modele), (ax, ay, z), i * 37,
+                props, col_coll, f"so_acc{i}")
 
     for i, (fx, fy) in enumerate(((x1 - 2.0, y0 + 1.0), (x1 - 1.2, y0 + 1.7))):
         L.place(R.fut(i), (fx, fy, z), 0, props, col_coll, f"so_fut{i}")
@@ -981,18 +1046,29 @@ def habiller_parking(space, gris, props, col_coll, logic) -> dict:
             # se lit comme une grille, pas comme un parking.
             if (i + j) % 5 == 3:
                 continue
-            carrosserie = R.CARROSSERIES[(i + 2 * j) % len(R.CARROSSERIES)]
-            L.place(R.voiture(carrosserie, (i + 2 * j) % len(R.CARROSSERIES)),
-                    (vx, vy, z), 0, props, col_coll, f"pk_au{j}{i}")
+            modele = R.MODELES_VOITURE[(i + 3 * j) % len(R.MODELES_VOITURE)]
+            L.place(R.voiture(*modele), (vx + modele[2], vy, z), 90,
+                    props, col_coll, f"pk_au{j}{i}")
             voitures += 1
 
     # Une voiture de plus à côté du pied-de-biche. Le plan le veut « sur le
     # capot » ; le repère du blockout est à 0,50 m du sol, sous la ligne de
     # capot (0,86 m), donc il est POSÉ À CÔTÉ et non dessus — écart assumé
     # plutôt qu'un pickup noyé dans la carrosserie.
-    L.place(R.voiture(R.CARROSSERIES[4], 4), (-13.5, -29.5, z), 0,
+    modele_pdb = R.MODELES_VOITURE[3]
+    L.place(R.voiture(*modele_pdb), (-13.5 + modele_pdb[2], -29.5, z), 90,
             props, col_coll, "pk_au_pdb")
     voitures += 1
+
+    # Cônes, pneu et caisses semés : même atlas que les voitures, donc aucun lot
+    # de dessin de plus, et c'est ce qui distingue un parking utilisé d'un
+    # parking construit.
+    for i, (ax, ay, modele) in enumerate(((-3.0, -33.0, "cone"), (-1.0, -32.4, "cone"),
+                                          (8.0, -22.0, "cone"), (-22.5, -10.0, "debris-tire"),
+                                          (21.5, -7.0, "box"), (22.3, -7.8, "box"),
+                                          (-21.0, -6.0, "box"))):
+        L.place(R.accessoire_car_kit(modele), (ax, ay, z), i * 43,
+                props, col_coll, f"pk_acc{i}")
 
     L.place(R.abri_caddies(6.0), (PK_ABRI[0], PK_ABRI[1], z), 0, props, col_coll, "pk_abri")
     for i, dy in enumerate((0.4, 1.35, 2.30)):
@@ -1076,10 +1152,21 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     for i, (px, py) in enumerate(((40.0, 19.0), (47.0, 19.0))):
         L.place(L.bac_garni(SEED + 970 + i), (px, py, z), 0, props, col_coll, f"ca_bac{i}")
 
+    meubles = semer(props, col_coll, "ca_k", (
+        ("kitchenCoffeeMachine", 47.5, 3.6, z + 1.10, 0),
+        ("toaster", 45.0, 3.7, z + 1.10, 15),
+        ("kitchenMicrowave", 43.0, 3.6, z + 1.10, 0),
+        ("kitchenFridge", 55.0, 1.2, z, 270),
+        ("pottedPlant", 34.9, 1.2, z, 0), ("pottedPlant", 54.8, 18.6, z, 0),
+        ("pottedPlant", 44.0, 18.8, z, 0), ("plantSmall2", 43.0, 9.0, z + 0.75, 0),
+        ("stoolBar", 38.0, 5.0, z, 0), ("stoolBar", 40.0, 5.0, z, 0),
+        ("stoolBar", 42.0, 5.0, z, 0), ("stoolBar", 44.0, 5.0, z, 0),
+        ("trashcan", 34.8, 12.0, z, 0), ("radio", 38.5, 3.7, z + 1.10, 200),
+    ))
     rampes, lampes = _neons(space, props, logic, CA_NEON_X, CA_NEON_Y,
                             CA_NEONS_MORTS, "ca", doubles=CA_NEON_X)
     return {"tables": len(CA_TABLES), "distributeurs": len(B.FACADES_DISTRIBUTEUR),
-            "rampes": rampes, "lampes": lampes}
+            "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
 
 # --- Habillage : les bureaux --------------------------------------------------
@@ -1117,6 +1204,22 @@ def habiller_bureaux(space, gris, props, col_coll, logic) -> dict:
     for i, (px, py, rot) in enumerate(((x0 + 1.0, 158.5, 0), (4.5, 160.0, 20))):
         L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"bu_pal{i}")
 
+    # Mobilier de bureau : c'est ce qui distingue une salle de réunion d'un
+    # hangar à moquette. Coin d'attente au sud-est, plantes et bibliothèques le
+    # long des murs, portemanteau près de l'entrée.
+    meubles = semer(props, col_coll, "bu_k", (
+        ("loungeSofa", 3.0, 145.5, z, 180), ("tableCoffee", 3.6, 147.6, z, 0),
+        ("pottedPlant", 1.2, 144.0, z, 0), ("pottedPlant", -18.6, 149.0, z, 0),
+        ("pottedPlant", -1.0, 163.0, z, 0), ("pottedPlant", -18.0, 164.5, z, 0),
+        ("bookcaseClosed", -13.0, y1 - 1.1, z, 180), ("bookcaseOpen", -11.8, y1 - 1.1, z, 180),
+        ("bookcaseClosed", -19.2, 156.0, z, 90),
+        ("coatRackStanding", 5.5, 141.5, z, 0),
+        ("chairDesk", -14.0, 147.6, z, 180), ("chairDesk", -2.2, 147.4, z, 170),
+        ("chairDesk", -14.2, 156.6, z, 190), ("chairDesk", -2.0, 156.5, z, 180),
+        ("trashcan", -17.4, 143.2, z, 0), ("trashcan", -5.5, 152.0, z, 0),
+        ("rugRectangle", 1.5, 144.5, z, 0),
+    ))
+
     # « SORTIE » au-dessus de la porte de sortie, au nord. Le dernier panneau du
     # niveau, et le seul qui indique autre chose qu'un rayon.
     L.place(F.enseigne_murale("sortie"), (-7.5, y1 - 0.35, z + 2.9), 180,
@@ -1124,7 +1227,7 @@ def habiller_bureaux(space, gris, props, col_coll, logic) -> dict:
 
     rampes, lampes = _neons(space, props, logic, BU_NEON_X, BU_NEON_Y,
                             BU_NEONS_MORTS, "bu", doubles=BU_NEON_X)
-    return {"postes": len(BU_POSTES), "rampes": rampes, "lampes": lampes}
+    return {"postes": len(BU_POSTES), "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
 
 # Repères « signature » que l'habillage pose lui-même, en vrai objet : le

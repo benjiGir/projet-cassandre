@@ -110,7 +110,8 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
 > (N9.2), le HUB et l'ÉLECTROMÉNAGER (N9.3), la RÉSERVE et le SOUTERRAIN
 > (N9.4), enfin le PARKING, la CAFÉTÉRIA et les BUREAUX (N9.5). **Les dix
-> espaces sont habillés**, plus un seul volume gris. Jouable sous `Niveau v2 —
+> espaces sont habillés**, plus un seul volume gris, et les packs CC0 (Kenney
+> Car Kit et Furniture Kit) sont entrés au lot N9.6. Jouable sous `Niveau v2 —
 > habillé`. Reste le BAKE : le niveau n'a aucune ombre portée.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
@@ -169,8 +170,25 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > bureaux). **Pour une surface qui ne veut AUCUN motif** — une carrosserie, un
 > pneu, un vitrage — utiliser `uv="aplat:#rrggbb"`, qui mappe tout sur un pavé
 > de `palette.png`, le nuancier commun : une carrosserie texturée en plâtre
-> taché se lit comme un matelas, pas comme une voiture sale. Cinq atlas de
-> bandes et d'étiquettes, tous PLEINS : trois de bandes
+> taché se lit comme un matelas, pas comme une voiture sale.
+> **Packs CC0 tiers : le critère d'admission est le nombre de MATÉRIAUX, pas le
+> style.** Le budget sous tension du niveau est le nombre de lots de dessin, et
+> un pack à vingt textures séparées en coûterait vingt. Deux voies existent,
+> toutes deux dans `lib_helpers.import_kit` : un pack à atlas unique se
+> requantifie sur la palette (`make_kenney_atlas.py`, multi-packs) ; un pack
+> SANS texture, dont les matériaux ne sont que des couleurs nommées (le Kenney
+> Furniture Kit, 140 modèles), s'importe avec `repeindre=True`, qui reporte
+> chaque teinte sur `palette.png` — tout le kit tient alors dans un matériau.
+> **Deux pièges d'échelle** : les kits Kenney sont à des proportions de jouet
+> (une berline à 4,40 m de long sort à 2,24 m de HAUT), d'où `dimensions=(x,y,z)`
+> qui remet chaque axe à sa cote ; et les modèles arrivent longueur le long de
+> **+Y** (conversion Y-up → Z-up de l'import glTF).
+> **Un pack marqué « à confirmer » dans `assets_src/LICENCES_ASSETS.md` NE
+> S'UTILISE PAS** — c'est la règle du registre lui-même. `retro3d_car`,
+> `retro3d_office`, `pensamientoazul_supermarket` et `aquilarius_retro_textures`
+> sont dans ce cas : trancher demande d'ouvrir chaque page source, une action
+> utilisateur (reliquat de N2).
+> Cinq atlas de bandes et d'étiquettes, tous PLEINS : trois de bandes
 > (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) et trois d'étiquettes
 > (`prd_etiquettes`, `prd_kiosque`, `prd_ecrans`) ; `uv="label:<nom>"` accepte
 > `front="+z"` pour un objet posé à plat (une pile de journaux se regarde d'en

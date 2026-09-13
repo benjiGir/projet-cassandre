@@ -913,6 +913,69 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > C'est le dernier écart avec la salle d'essai de N4, et il se voit surtout sur
 > les plafonds, uniformément clairs.
 
+> **N9.6 — les packs CC0 entrent enfin dans le niveau : 🔶 construit
+> (2026-09-13).** Retour utilisateur : « tu n'utilises pas ce que l'on a
+> récupéré dans les assets ». C'était exact, et sur les voitures c'était un
+> gâchis franc — j'avais modélisé des carrosseries en boîtes alors que le
+> **Kenney Car Kit** dormait dans le dépôt depuis N2, explicitement fléché
+> « voitures des deux parkings » au registre des licences.
+>
+> **Ce qui entre, et pourquoi ces packs-là.** Le critère n'est pas le style
+> mais le nombre de MATÉRIAUX : le budget sous tension du niveau est le nombre
+> de lots de dessin, et un pack à vingt textures séparées en coûterait vingt.
+>
+> - **Kenney Car Kit** (CC0 confirmé) : tous ses modèles partagent un unique
+>   atlas de pastilles, requantifié sur la palette du projet
+>   (`make_kenney_atlas.py`, désormais multi-packs). Huit véhicules, plus des
+>   cônes, caisses et pneus du même atlas — donc gratuits en lots de dessin.
+> - **Kenney Furniture Kit** (CC0 confirmé) : 140 modèles, et une particularité
+>   qui décide de tout — **le pack n'a AUCUNE texture**, ses matériaux sont des
+>   couleurs plates nommées (`wood`, `metal`, `metalDark`). Importé tel quel il
+>   amènerait trois ou quatre matériaux par meuble. `import_kit(...,
+>   repeindre=True)` reporte donc chaque teinte sur le nuancier commun
+>   (`palette.png`) : **tout le kit tient dans un seul matériau**, et il passe
+>   au passage sous la charte de couleurs du projet.
+>
+> **Ce qui N'ENTRE PAS, et c'est une règle, pas un oubli.** Les packs
+> `retro3d_car`, `retro3d_office`, `pensamientoazul_supermarket` et
+> `aquilarius_retro_textures` sont marqués **« à confirmer »** au registre des
+> licences, et le registre dit lui-même qu'une ligne ainsi marquée ne s'utilise
+> pas tant qu'elle ne l'est pas. Les trancher demande d'ouvrir chaque page
+> source et d'y lire la licence — une action utilisateur, reliquat de N2.
+> `quaternius_cars` reste dehors pour une raison technique : `.blend` sans
+> atlas commun.
+>
+> **Deux pièges d'échelle, payés en rendu.** Les kits Kenney sont modélisés à
+> des proportions de jouet : une berline mise à 4,40 m de long sort à 2,59 m de
+> large et **2,24 m de haut**, plus haute qu'un homme. D'où `dimensions=(x,y,z)`
+> dans l'importateur, qui remet chaque axe à sa cote réelle — ça écrase un peu
+> la silhouette, mais personne n'a l'original sous les yeux et ce qu'on voit
+> est une voiture à la bonne taille. Second piège : les modèles arrivent
+> longueur le long de **+Y** (conversion Y-up → Z-up de l'import glTF), donc
+> posés à `rot 90` sur des emplacements orientés est-ouest.
+>
+> **Ce que ça change en vie.** Voitures réelles (berline, SUV, van, taxi,
+> break, utilitaire) dans les deux parkings, un camion à quai dans la réserve —
+> sans véhicule, une plateforme surélevée n'est qu'une estrade. Plantes en bac
+> dans la galerie, le hub, les caisses, la cafétéria et les bureaux : elles
+> n'existaient pas faute de texture de feuillage, le Furniture Kit en a.
+> Téléviseurs et enceintes en exposition à l'électroménager, qui s'appelle
+> « électroménager ET TV » et n'avait pas un poste hors du mur d'écrans.
+> Canapés, bibliothèques, portemanteau, fauteuils de bureau, tabourets,
+> machine à café, corbeilles.
+>
+> **Le budget, et c'est le point qui engage la suite** : **186 lots de dessin
+> sur 200**. Le remplacement des voitures était NEUTRE (le matériau `palette`
+> des aplats disparaissait avec les boîtes, remplacé par l'atlas du car kit) ;
+> c'est le mobilier qui a consommé la marge. Il reste 14 lots. **Tout ajout
+> ultérieur passe d'abord par la mutualisation des matériaux ou `BatchedMesh`**
+> ([ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)).
+> 561 100 triangles sur 1 500 000, `.glb` de 29 Mo.
+>
+> Aucune régression de gameplay : 40 Costards + 1 Directeur tous `idle`,
+> progression toujours verrouillée, 451 colliders.
+> `validate_level.py --strict` : **0 erreur**.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.

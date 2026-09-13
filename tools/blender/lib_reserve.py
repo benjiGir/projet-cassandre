@@ -23,19 +23,39 @@ Deux ambiances à tenir, et elles ne ressemblent à rien de ce qui précède :
 
 from __future__ import annotations
 
+import os
 import random
 
 import lib_helpers as H
 from lib_rayons import asset_coll
 
-# Carrosseries : des APLATS pris dans la palette du projet, pas des textures.
-# Première tentative faite en `mur_platre` et `mur_platre_use` — du plâtre
-# taché sur une carrosserie ne se lit pas comme une voiture sale, ça se lit
-# comme un matelas (constaté en rendu). Une carrosserie n'a pas de motif ; elle
-# a une couleur. Six teintes de 1995, choisies dans le nuancier commun.
-CARROSSERIES = ("#b02931", "#d5d7d8", "#605c58", "#1f5fbf", "#a58a60", "#237978")
-VITRAGE = "#2f3541"        # verre teinté vu de l'extérieur
-CAOUTCHOUC = "#222222"     # pneus et pare-chocs
+# Kenney Car Kit 3.1, CC0 confirmé et explicitement fléché « voitures des deux
+# parkings » dans `assets_src/LICENCES_ASSETS.md`.
+#
+# Pourquoi CE pack et pas les autres voitures du dépôt : tous ses modèles
+# partagent UN SEUL atlas de pastilles unies, donc tout le parc automobile du
+# niveau ne coûte qu'un matériau et se fond en un lot au chargement (ADR 0023).
+# Le budget sous tension du niveau v2 est le nombre de lots de dessin — un pack
+# à vingt textures séparées en coûterait vingt. Les packs `retro3d_car` et
+# `quaternius_cars` restent inutilisés : le premier est marqué « à confirmer »
+# au registre des licences et ne s'utilise donc pas, le second est en `.blend`
+# et n'a pas d'atlas commun.
+CAR_GLB = os.path.join(H.ROOT, "assets_src", "cc0_raw", "kenney_car-kit",
+                       "Models", "GLB format")
+
+# (modèle, largeur, longueur, hauteur) en mètres RÉELS. Le pack est modélisé à
+# des proportions de jouet — une berline mise à 4,40 m de long en fait 2,59 de
+# large et 2,24 de HAUT, plus qu'un homme. Chaque axe est donc remis à sa cote,
+# ce qui écrase un peu la silhouette mais donne une voiture à la bonne taille ;
+# personne n'a l'original sous les yeux pour comparer.
+MODELES_VOITURE = (("sedan", 1.82, 4.40, 1.48),
+                   ("suv", 1.95, 4.60, 1.78),
+                   ("hatchback-sports", 1.76, 4.05, 1.40),
+                   ("van", 2.00, 4.90, 2.05),
+                   ("taxi", 1.82, 4.40, 1.50),
+                   ("sedan-sports", 1.86, 4.30, 1.34),
+                   ("suv-luxury", 1.98, 4.80, 1.80),
+                   ("delivery", 2.10, 5.20, 2.45))
 
 
 # --- Réserve -----------------------------------------------------------------
@@ -170,66 +190,54 @@ def suspension(seed: int = 0) -> str:
 
 # --- Parking souterrain ------------------------------------------------------
 
-def voiture(carrosserie: str, seed: int = 0) -> str:
-    """Voiture à l'arrêt, 4,00 × 1,90 × 1,45 m.
+def voiture(modele: str, largeur: float, longueur: float, hauteur: float) -> str:
+    """Voiture du Kenney Car Kit, ramenée à une longueur réelle.
 
-    Construite en six volumes : capot, coffre, habitacle, vitrages, pare-chocs,
-    roues. Le vitrage est une bande de caoutchouc sombre et les phares une
-    bande claire — aucun atlas dédié, et à 640×360 la différence ne se voit
-    pas.
+    Remplace une voiture montée en boîtes, qui n'avait ni arche de roue, ni
+    pare-brise incliné, ni la moindre courbe — et dont la carrosserie texturée
+    en plâtre se lisait comme un matelas. Le pack a tout ça pour trois cents
+    triangles, et il était dans le dépôt depuis N2.
 
-    **La longueur court le long de X et le museau est en -X** : posée à
-    `rot 0`, la voiture regarde l'ouest et occupe 4,00 m en x pour 1,90 m en y.
-    Une file de voitures posées à `rot 0` est donc une file pare-chocs contre
-    pare-chocs, pas une rangée d'emplacements côte à côte — pour ça, `rot 90`.
+    Le modèle arrive avec sa longueur le long de **+Y** (conversion Y-up → Z-up
+    de l'import glTF) : une voiture posée à `rot 0` est donc orientée
+    nord-sud. Son collider est calculé sur l'encombrement réel après mise à
+    l'échelle, jamais sur des cotes recopiées à la main.
     """
-    name = f"veh_auto_{carrosserie.lstrip('#')}_{seed}"
+    name = f"veh_{modele.replace('-', '_')}"
     coll, done = asset_coll(name)
     if done:
         return name
-    lo, la, ht = 4.00, 1.90, 1.45
-    bas, toit = 0.34, ht
+    obj = H.import_kit(name, os.path.join(CAR_GLB, f"{modele}.glb"),
+                       "prd_kenney_car", coll, dimensions=(largeur, longueur, hauteur))
+    lx, ly, lz = H.kit_bounds(obj)
+    H.col_box(name[4:], (0, 0, 0, lx, ly, lz), coll)
+    return name
 
-    caisse = [((0.10, 0.0, bas, lo - 0.10, la, 0.88), f"aplat:{carrosserie}"),   # bas de caisse
-              ((1.10, 0.08, 0.88, 2.95, la - 0.08, toit), f"aplat:{carrosserie}")]  # pavillon
-    H.boxes(f"{name}_caisse", caisse, "palette", coll)
 
-    # Vitrages : pare-brise incliné impossible en boîtes, donc une ceinture
-    # vitrée continue — ce que lit l'œil de toute façon à cette résolution.
-    # ENCASTRÉE dans le pavillon et non débordante : au premier jet elle
-    # dépassait de 6 cm de chaque côté et se lisait comme une dalle posée sur
-    # la voiture, pas comme ses vitres.
-    # Vitrage, pare-chocs et pneus : des aplats sombres eux aussi. Montés en
-    # `trim:joint_caoutchouc` au premier jet, ils tilaient leur nervure et
-    # cerclaient la voiture d'un bandeau strié — une ondulation de hangar, pas
-    # un pare-chocs.
-    vitres = [((1.12, 0.06, 0.92, 1.18, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}"),
-              ((2.87, 0.06, 0.92, 2.93, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}"),
-              ((1.18, 0.06, 0.92, 2.87, 0.12, toit - 0.10), f"aplat:{VITRAGE}"),
-              ((1.18, la - 0.12, 0.92, 2.87, la - 0.06, toit - 0.10), f"aplat:{VITRAGE}")]
-    H.boxes(f"{name}_vitres", vitres, "palette", coll)
+# Petits accessoires du même pack, donc du MÊME atlas : ils ne coûtent pas un
+# matériau de plus. (modèle, largeur, longueur, hauteur).
+ACCESSOIRES_CAR_KIT = {
+    "cone": (0.40, 0.40, 0.70),
+    "box": (0.60, 0.60, 0.55),
+    "debris-tire": (0.68, 0.24, 0.68),
+}
 
-    H.boxes(f"{name}_pare_chocs", [
-        ((0.0, 0.04, 0.40, 0.12, la - 0.04, 0.72), f"aplat:{CAOUTCHOUC}"),
-        ((lo - 0.12, 0.04, 0.40, lo, la - 0.04, 0.72), f"aplat:{CAOUTCHOUC}"),
-    ], "palette", coll)
-    # Phares avant (bande claire) et feux arrière (rouge peint).
-    H.boxes(f"{name}_phares", [
-        ((0.02, 0.16, 0.60, 0.06, 0.52, 0.76), "trim:neon"),
-        ((0.02, la - 0.52, 0.60, 0.06, la - 0.16, 0.76), "trim:neon"),
-    ], "trim_hypermarche", coll)
-    H.boxes(f"{name}_feux", [
-        ((lo - 0.05, 0.14, 0.62, lo - 0.01, 0.46, 0.80), "world"),
-        ((lo - 0.05, la - 0.46, 0.62, lo - 0.01, la - 0.14, 0.80), "world"),
-    ], "metal_peint_rouge", coll)
 
-    roues = []
-    for x in (0.62, lo - 1.24):
-        for y in (-0.04, la - 0.22):
-            roues.append(((x, y, 0.0, x + 0.62, y + 0.26, bas + 0.28), f"aplat:{CAOUTCHOUC}"))
-    H.boxes(f"{name}_roues", roues, "palette", coll)
+def accessoire_car_kit(modele: str) -> str:
+    """Cône, caisse ou pneu abandonné, pris dans le Kenney Car Kit.
 
-    H.col_box(name[4:], (0, 0, 0, lo, la, ht), coll)
+    Même atlas que les voitures : semer une douzaine de ces objets ne coûte
+    donc aucun lot de dessin supplémentaire. C'est exactement le genre de
+    détail qui fait qu'un parking a l'air utilisé plutôt que construit.
+    """
+    name = f"veh_acc_{modele.replace('-', '_')}"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    obj = H.import_kit(name, os.path.join(CAR_GLB, f"{modele}.glb"),
+                       "prd_kenney_car", coll, dimensions=ACCESSOIRES_CAR_KIT[modele])
+    lx, ly, lz = H.kit_bounds(obj)
+    H.col_box(name[4:], (0, 0, 0, lx, ly, lz), coll)
     return name
 
 
@@ -349,5 +357,6 @@ def build_all() -> list[str]:
              pilier_beton(3.5), marquage_place(5.0, 2.5), extincteur(),
              lampadaire(5.0), abri_caddies(6.0)]
     names += [rack_palettes(4.0, 6.0, s) for s in (1, 2, 3)]
-    names += [voiture(c, i) for i, c in enumerate(CARROSSERIES)]
+    names += [voiture(*m) for m in MODELES_VOITURE]
+    names += [accessoire_car_kit(a) for a in ACCESSOIRES_CAR_KIT]
     return names

@@ -18,6 +18,7 @@ entrant, après quatre espaces de rayonnage.
 
 from __future__ import annotations
 
+import os
 import random
 
 import lib_helpers as H
@@ -26,6 +27,65 @@ from lib_electro import ECRANS
 
 # Étiquettes de produits réutilisées en façade de distributeur.
 FACADES_DISTRIBUTEUR = ("soda_5g_cola", "chips_illumi", "cafe_reveille")
+
+
+# --- Mobilier tiré du Kenney Furniture Kit ------------------------------------
+#
+# 140 modèles CC0 confirmés, et une particularité qui décide de tout : le pack
+# n'a AUCUNE texture. Ses matériaux sont des couleurs plates nommées (`wood`,
+# `metal`, `metalDark`). Importé tel quel, chaque meuble amènerait trois ou
+# quatre matériaux de plus, et le budget sous tension du niveau v2 est le
+# nombre de lots de dessin.
+#
+# `H.import_kit(..., repeindre=True)` reporte donc chaque teinte sur le
+# nuancier commun (`palette.png`) : tout le kit tient dans UN matériau, se fond
+# en un lot au chargement (ADR 0023), et passe au passage sous la charte de
+# couleurs du projet — ce qu'un import brut n'aurait pas fait.
+
+MEUBLES_GLB = os.path.join(H.ROOT, "assets_src", "cc0_raw", "kenney_furniture-kit",
+                           "Models", "GLTF format")
+
+# (modèle, hauteur en mètres, collider ?). Les hauteurs sont RÉELLES : le pack
+# est à une échelle plausible mais pas métrique, et un canapé de 1,20 m de haut
+# dans un couloir de 6 m ne trompe personne.
+MEUBLES = {
+    "pottedPlant": (1.05, True),
+    "plantSmall2": (0.42, False),
+    "bookcaseClosed": (1.80, True),
+    "bookcaseOpen": (1.80, True),
+    "chairDesk": (1.05, True),
+    "chair": (0.95, True),
+    "trashcan": (0.55, True),
+    "coatRackStanding": (1.75, True),
+    "loungeSofa": (0.82, True),
+    "tableCoffee": (0.45, True),
+    "kitchenCoffeeMachine": (0.38, False),
+    "kitchenMicrowave": (0.30, False),
+    "toaster": (0.22, False),
+    "kitchenFridge": (1.72, True),
+    "televisionVintage": (0.62, False),
+    "televisionModern": (0.68, False),
+    "speaker": (1.00, True),
+    "radio": (0.24, False),
+    "laptop": (0.26, False),
+    "stoolBar": (0.78, True),
+    "rugRectangle": (0.02, False),
+}
+
+
+def meuble(modele: str) -> str:
+    """Un meuble du Kenney Furniture Kit, repeint sur le nuancier du projet."""
+    hauteur, collider = MEUBLES[modele]
+    name = f"mob_k_{modele}"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    obj = H.import_kit(name, os.path.join(MEUBLES_GLB, f"{modele}.glb"),
+                       "palette", coll, hauteur=hauteur, repeindre=True)
+    if collider:
+        lx, ly, lz = H.kit_bounds(obj)
+        H.col_box(name[4:], (0, 0, 0, lx, ly, lz), coll)
+    return name
 
 
 # --- Cafétéria ---------------------------------------------------------------
@@ -265,4 +325,5 @@ def build_all() -> list[str]:
     names += [distributeur(f) for f in FACADES_DISTRIBUTEUR]
     names += [poste_bureau(s) for s in range(4)]
     names += [armoire_dossiers(s) for s in range(2)]
+    names += [meuble(m) for m in MEUBLES]
     return names

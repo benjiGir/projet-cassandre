@@ -289,6 +289,158 @@ def cylinder(name: str, center, radius: float, z0: float, z1: float, texture: st
     return obj
 
 
+def _couleur_materiau(mat) -> tuple[float, float, float]:
+    """Couleur de base d'un matériau importé, en linéaire.
+
+    L'importateur glTF écrit `baseColorFactor` à la fois dans le nœud
+    Principled et dans `diffuse_color` ; on lit le nœud en premier, qui est la
+    valeur qui compte au rendu, et on retombe sur l'autre pour un matériau sans
+    nœuds.
+    """
+    if mat is None:
+        return (0.8, 0.8, 0.8)
+    if mat.use_nodes:
+        for n in mat.node_tree.nodes:
+            if n.type == "BSDF_PRINCIPLED":
+                return tuple(n.inputs["Base Color"].default_value)[:3]
+    return tuple(mat.diffuse_color)[:3]
+
+
+def _uv_palette_la_plus_proche(rgb) -> tuple[float, float]:
+    """UV du pavé de `palette.png` le plus proche d'une couleur donnée.
+
+    Comparaison en sRGB après conversion depuis le linéaire de Blender, et
+    distance euclidienne simple : le nuancier ne compte que 64 teintes bien
+    séparées, une métrique perceptuelle n'y changerait rien de visible.
+    """
+    def vers_srgb(c: float) -> float:
+        return 12.92 * c if c <= 0.0031308 else 1.055 * (c ** (1 / 2.4)) - 0.055
+    cible = [vers_srgb(max(0.0, min(1.0, c))) * 255.0 for c in rgb]
+    meilleur, meilleure_d = 0, None
+    for i, h in enumerate(PALETTE):
+        p = [int(h[k:k + 2], 16) for k in (1, 3, 5)]
+        d = sum((p[k] - cible[k]) ** 2 for k in range(3))
+        if meilleure_d is None or d < meilleure_d:
+            meilleur, meilleure_d = i, d
+    return (((meilleur % 8) + 0.5) / 8.0, 1.0 - ((meilleur // 8) + 0.5) / 8.0)
+
+
+def _repeindre_sur_palette(mesh) -> None:
+    """Remplace les UV d'un mesh par des pointages sur `palette.png`, une teinte
+    par matériau source.
+
+    Pourquoi : certains kits (le Kenney Furniture Kit, 140 modèles) n'ont AUCUNE
+    texture — leurs matériaux sont des couleurs plates nommées `wood`, `metal`,
+    `metalDark`. Tel quel, chaque modèle importerait trois ou quatre matériaux,
+    et le budget du niveau v2 se compte en lots de dessin. En reportant chaque
+    couleur sur le nuancier commun, TOUT le kit tient dans un seul matériau et
+    se fond en un lot — et il passe au passage sous la charte de couleurs du
+    projet, ce qu'un import brut n'aurait pas fait.
+    """
+    uv = mesh.uv_layers.get("UVMap") or mesh.uv_layers.new(name="UVMap")
+    coords = [_uv_palette_la_plus_proche(_couleur_materiau(m)) for m in mesh.materials] or [(0.5, 0.5)]
+    for poly in mesh.polygons:
+        u, v = coords[min(poly.material_index, len(coords) - 1)]
+        for li in poly.loop_indices:
+            uv.data[li].uv = (u, v)
+
+
+def import_kit(name: str, glb_path: str, atlas: str, coll: bpy.types.Collection,
+               longueur: float | None = None, hauteur: float | None = None,
+               axe_long: int = 0, dimensions=None,
+               repeindre: bool = False) -> bpy.types.Object:
+    """Importe un `.glb` d'un kit Kenney, le fusionne en UN mesh et le rebascule
+    sur notre atlas requantifié.
+
+    Trois choses qui n'ont l'air de rien et qui sont tout le travail :
+
+    1. **Fusion à la main plutôt que `object.join`.** L'opérateur dépend de la
+       sélection et de l'objet actif, or l'import glTF pose un empty racine
+       porteur de la conversion Y-up → Z-up. On lit chaque matrice monde AVANT
+       de rien supprimer.
+    2. **Le matériau du pack est jeté.** Il pointe sur un atlas 512 px, ce qui
+       viole le plafond de 128 px de `validate_level.py` ; on ne garde que la
+       version requantifiée sur la palette du projet
+       (`tools/textures/make_kenney_atlas.py`). Les UV, elles, sont conservées
+       telles quelles : les deux atlas ont la même disposition.
+    3. **Origine ramenée au coin bas**, la convention de toute la bibliothèque —
+       sans quoi `lib_rayons.place` poserait l'objet de travers.
+
+    `repeindre` traite le cas des kits SANS texture, dont les matériaux ne sont
+    que des couleurs nommées : chaque teinte est reportée sur le nuancier commun
+    (`palette.png`), et tout le kit tient alors dans un seul matériau. Voir
+    `_repeindre_sur_palette`.
+
+    L'échelle se donne par `longueur` (le long de `axe_long`), par `hauteur`, ou
+    par `dimensions` — un triplet (x, y, z) qui met chaque axe à sa cote,
+    INDÉPENDAMMENT des autres.
+
+    Pourquoi cette troisième voie existe, et pourquoi elle n'est pas un aveu de
+    paresse : les kits Kenney sont modélisés à des proportions de jouet. Une
+    berline mise à 4,40 m de long sort à 2,59 m de large et **2,24 m de haut** —
+    plus haute qu'un homme. Posée à côté d'un Costard d'1,80 m, elle transforme
+    le parking en circuit de petites voitures. Remettre chaque axe à sa cote
+    réelle écrase un peu la silhouette, mais personne n'a l'original sous les
+    yeux pour comparer : ce qu'on voit, c'est une voiture à la bonne taille.
+    """
+    before_obj = set(bpy.data.objects)
+    before_img = set(bpy.data.images)
+    before_mat = set(bpy.data.materials)
+    bpy.ops.import_scene.gltf(filepath=glb_path)
+    nouveaux = [o for o in bpy.data.objects if o not in before_obj]
+
+    bpy.context.view_layer.update()
+    bm = bmesh.new()
+    for obj in nouveaux:
+        if obj.type == "MESH":
+            tmp = obj.data.copy()
+            tmp.transform(obj.matrix_world)
+            if repeindre:
+                # AVANT la fusion : après, l'association face → matériau source
+                # est perdue, et c'est elle qui porte toute la couleur du modèle.
+                _repeindre_sur_palette(tmp)
+            bm.from_mesh(tmp)
+            bpy.data.meshes.remove(tmp)
+    for obj in nouveaux:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    for mat in [m for m in bpy.data.materials if m not in before_mat]:
+        bpy.data.materials.remove(mat)
+    for img in [i for i in bpy.data.images if i not in before_img and i.users == 0]:
+        bpy.data.images.remove(img)
+
+    lo = [min(v.co[i] for v in bm.verts) for i in range(3)]
+    hi = [max(v.co[i] for v in bm.verts) for i in range(3)]
+    if dimensions is not None:
+        facteurs = tuple(dimensions[i] / max(hi[i] - lo[i], 1e-6) for i in range(3))
+    else:
+        if longueur is not None:
+            k = longueur / max(hi[axe_long] - lo[axe_long], 1e-6)
+        elif hauteur is not None:
+            k = hauteur / max(hi[2] - lo[2], 1e-6)
+        else:
+            k = 1.0
+        facteurs = (k, k, k)
+    for v in bm.verts:
+        v.co = tuple((v.co[i] - lo[i]) * facteurs[i] for i in range(3))
+
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    me.validate(verbose=False)
+    obj = bpy.data.objects.new(name, me)
+    obj.data.materials.append(textured_material(atlas))
+    coll.objects.link(obj)
+    return obj
+
+
+def kit_bounds(obj: bpy.types.Object) -> tuple[float, float, float]:
+    """Encombrement d'un objet importé, en mètres — l'origine étant au coin bas,
+    c'est aussi sa boîte. Sert à poser un `col_box` à la bonne taille sans
+    recopier des cotes lues à la main dans le pack."""
+    co = [v.co for v in obj.data.vertices]
+    return tuple(max(c[i] for c in co) for i in range(3))
+
+
 def col_box(name: str, bounds, coll: bpy.types.Collection) -> bpy.types.Object:
     """Proxy de collision cuboid invisible `col_box_<name>` (voir `collision-proxy-authoring`)."""
     bm = _box_bmesh(*bounds)
