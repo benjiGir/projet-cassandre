@@ -3,35 +3,43 @@
   "bands": {
     "rayon_epicerie": {
       "y": 0,
-      "height": 16
+      "height": 16,
+      "pas": 128
     },
     "rayon_boissons": {
       "y": 16,
-      "height": 16
+      "height": 16,
+      "pas": 128
     },
     "rayon_petit_dej": {
       "y": 32,
-      "height": 16
+      "height": 16,
+      "pas": 128
     },
     "rayon_entretien": {
       "y": 48,
-      "height": 16
+      "height": 16,
+      "pas": 128
     },
     "rayon_conserves": {
       "y": 64,
-      "height": 16
+      "height": 16,
+      "pas": 128
     },
     "rayon_frais": {
       "y": 80,
-      "height": 16
+      "height": 16,
+      "pas": 64
     },
     "rayon_promos": {
       "y": 96,
-      "height": 16
+      "height": 16,
+      "pas": 64
     },
     "rayon_bazar": {
       "y": 112,
-      "height": 16
+      "height": 16,
+      "pas": 64
     }
   }
 }

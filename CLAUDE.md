@@ -108,7 +108,8 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
 > (N9.0) livrés, puis deux lots construits et jouables sous `Niveau v2 —
 > habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
-> (N9.2). Trois espaces habillés sur dix, sept encore gris.**
+> (N9.2), puis le HUB et l'ÉLECTROMÉNAGER (N9.3). Cinq espaces habillés sur
+> dix, cinq encore gris (parking, cafétéria, réserve, souterrain, bureaux).**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -156,7 +157,15 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > `tools/blender/lib_rayons.py` (37 assets, la surface de vente : gondoles,
 > produits, bandeaux de catégorie) et `tools/blender/lib_facade.py` (l'avant-
 > magasin et la galerie : caisses, portiques, kiosques, devantures à rideau
-> baissé, photomaton, machine à pinces) ; `lib_hypermarche_v2.blend` est un produit
+> baissé, photomaton, machine à pinces) et `tools/blender/lib_electro.py`
+> (l'électroménager et le carrefour : mur d'écrans, cabines de démonstration,
+> rangées de gros blanc, estrade du micro). **Un appareil électroménager est une
+> boîte blanche avec une façade dessinée** — un hublot peint dans l'albedo fait
+> un lave-linge à 640×360. Cinq atlas au total, tous PLEINS : trois de bandes
+> (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) et trois d'étiquettes
+> (`prd_etiquettes`, `prd_kiosque`, `prd_ecrans`) ; `uv="label:<nom>"` accepte
+> `front="+z"` pour un objet posé à plat (une pile de journaux se regarde d'en
+> haut) ; `lib_hypermarche_v2.blend` est un produit
 > régénérable, jamais un fichier qu'on édite à la main. Salle d'essai jouable
 > via le menu dev (`salle_essai_rayons`). Trois règles de bake nées de N4 :
 > **subdiviser** toute grande surface (un bake par sommet exige des sommets,
@@ -185,6 +194,10 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > (`trim_hypermarche`, `sig_bandeaux`, `sig_facade`) sont PLEINS : huit bandes
 > de 16 px occupent exactement les 128 px d'une texture, un besoin nouveau
 > demande un atlas de plus.
+> **Piège de construction de niveau** : dans `build_niveau.py`, le sol et le
+> plafond sont posés PAR DÉFAUT pour tout espace, et seuls les espaces listés
+> dans `SOL_SUR_MESURE`/`PLAFOND_SUR_MESURE` s'en chargent eux-mêmes. Le défaut
+> inverse a déjà été payé : un espace habillé se retrouvait sans sol.
 > **Piège de l'outil de rendu** : `render_ingame.py` reconstruit
 > `texture × attribut Col`, et un nœud Attribut dont le nom n'existe pas sur le
 > mesh renvoie du NOIR, pas du neutre. Un niveau pas encore baké sortait donc

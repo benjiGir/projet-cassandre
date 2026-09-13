@@ -756,6 +756,58 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > galerie. Assez peu pour ne rien changer à un couloir de 6 m, mais c'est bien
 > une retouche de la circulation validée au blockout.
 
+> **N9.3 — lot « hub + électroménager », et la marchandise des kiosques :
+> 🔶 construit (2026-09-13), en attente du verdict.** Cinq espaces habillés sur
+> dix.
+>
+> **Retour utilisateur traité en premier : les kiosques vendaient de
+> l'épicerie.** Un kiosque de presse garni de boîtes de céréales se lit comme
+> une erreur — ce qui fait reconnaître une librairie, c'est la SILHOUETTE de sa
+> marchandise, des rectangles plats et bariolés debout côte à côte. Nouvel
+> atlas `prd_kiosque.png` (16 étiquettes : magazines, quotidiens, clés,
+> coques de téléphone, planches de photomaton) et une pose écrite pour ça
+> plutôt qu'un appel à `stock_shelf`, qui range des boîtes de rayon. Chaque
+> enseigne vend désormais son métier, et les piles de journaux sont posées à
+> plat sur le comptoir.
+>
+> **Nouvelle capacité du pipeline** : `uv="label:<nom>"` accepte `front="+z"`.
+> Une pile de journaux se regarde D'EN HAUT, et le mapper ne savait faire que
+> les quatre faces verticales.
+>
+> **Nouveau module `tools/blender/lib_electro.py`** (14 assets) et nouvel atlas
+> `prd_ecrans.png` (écrans allumés + façades d'appareils). Parti pris du module :
+> **un appareil électroménager est une boîte blanche avec une façade dessinée**
+> — un hublot et deux boutons peints dans l'albedo font un lave-linge à
+> 640×360, les modéliser coûterait cent fois plus de triangles pour un gain
+> qui ne se voit qu'à un mètre.
+>
+> Le **mur d'écrans** du plan est enfin autre chose qu'un volume gris : 44
+> dalles allumées sur des contenus différents (mire, neige, journal télévisé,
+> météo, football, vidéosurveillance, écrans éteints). Un seul, au centre de la
+> grille, diffuse **le présentateur reptilien** — assez pour qu'on le remarque
+> en passant, jamais assez pour que la blague s'use.
+>
+> **Deux erreurs de pose trouvées en regardant le rendu, pas le code** : le mur
+> d'écrans diffusait vers le mur (ses dalles regardent le -y local, et le
+> blockout le pose contre la façade sud), et le petit électroménager flottait au
+> ras du sol faute d'étagère. Corrigés, et une étagère dédiée ajoutée.
+>
+> **Un piège que je me suis créé, et refermé par le défaut inverse** :
+> `main()` ne posait plus de sol pour un espace habillé, en supposant que
+> l'habillage s'en charge — l'électroménager n'avait donc PAS DE SOL. Le défaut
+> est maintenant l'inverse : un sol uni est posé partout sauf pour les espaces
+> qui déclarent `SOL_SUR_MESURE`. Un habillage qui oublie son sol donne une
+> pièce banale, plus jamais un trou.
+>
+> **Aucune régression de gameplay** : 40 Costards + 1 Directeur tous `idle`,
+> progression toujours verrouillée par la carte Argent, 3 portes, 3 secrets,
+> 9 `use_*`, 341 colliders. `validate_level.py --strict` : **0 erreur**.
+>
+> **Budgets, à cinq espaces sur dix** : 136 lots de dessin sur 200 au pire point
+> de vue (la cellule de 48 m tient), 507 600 triangles sur 1 500 000 (34 %),
+> 198 `light_*` dont 48 allumées. Les cinq espaces restants sont tous de densité
+> `moyenne` ou `faible` au plan : la marge devrait suffire.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.

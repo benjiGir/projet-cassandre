@@ -24,7 +24,7 @@ from __future__ import annotations
 import random
 
 import lib_helpers as H
-from lib_rayons import Garnissage, asset_coll, stock_shelf
+from lib_rayons import asset_coll
 
 # --- Ligne de caisses --------------------------------------------------------
 
@@ -133,15 +133,85 @@ def rail_caddies() -> str:
 KIOSQUE_L, KIOSQUE_P, KIOSQUE_H = 6.0, 4.0, 3.0
 
 
-# Thème de marchandise par enseigne : un kiosque de presse et un réparateur de
-# téléphones ne montrent pas les mêmes silhouettes sur leurs étagères, et c'est
-# à ça qu'on les reconnaît de loin avant de lire le bandeau.
-THEME_KIOSQUE = {
-    "presse_libre": "epicerie",     # piles de formats plats et bariolés
-    "clefs_minute": "entretien",    # petits objets sombres alignés
-    "desimlock": "entretien",
-    "photomaton": "petit_dej",      # cartons clairs
+# --- Marchandise de kiosque --------------------------------------------------
+#
+# Un kiosque de presse garni de boîtes de céréales se lit comme une erreur : ce
+# qui fait reconnaître une librairie, c'est la SILHOUETTE de sa marchandise,
+# des rectangles plats et bariolés debout côte à côte. D'où un atlas dédié
+# (`prd_kiosque.png`, `tools/textures/generate_kiosque.py`) et une pose écrite
+# ici plutôt qu'un appel à `stock_shelf`, qui range des boîtes de rayon.
+
+# (largeur, profondeur, hauteur) en mètres. Les articles DEBOUT sont présentés
+# face au client ; les articles À PLAT sont empilés, couverture vers le haut.
+DEBOUT = {
+    "mag_verite": (0.21, 0.025, 0.29),
+    "mag_ovni": (0.21, 0.025, 0.29),
+    "mag_stars": (0.20, 0.025, 0.27),
+    "mag_mots": (0.17, 0.025, 0.24),
+    "cle_brute": (0.09, 0.015, 0.17),
+    "porte_cles": (0.10, 0.02, 0.15),
+    "plaque_grave": (0.11, 0.015, 0.14),
+    "coque_tel": (0.12, 0.02, 0.20),
+    "carte_sim": (0.10, 0.015, 0.14),
+    "carte_tel": (0.11, 0.01, 0.16),
+    "cadre_photo": (0.17, 0.03, 0.21),
+    "album_photo": (0.19, 0.04, 0.25),
+    "planche_photo": (0.09, 0.01, 0.24),
 }
+A_PLAT = {
+    "journal_une": (0.32, 0.23),
+    "journal_sport": (0.30, 0.22),
+    "pellicule": (0.09, 0.07),
+}
+
+# Ce que vend chaque enseigne : (articles debout, articles empilés à plat).
+MARCHANDISE = {
+    "presse_libre": (("mag_verite", "mag_ovni", "mag_stars", "mag_mots"),
+                     ("journal_une", "journal_sport")),
+    "clefs_minute": (("cle_brute", "porte_cles", "plaque_grave", "cle_brute"), ()),
+    "desimlock": (("coque_tel", "carte_sim", "carte_tel"), ()),
+    "photomaton": (("cadre_photo", "album_photo", "planche_photo"), ("pellicule",)),
+}
+
+
+def _rang_debout(parts, labels, x0: float, x1: float, y_face: float, z: float,
+                 rng: random.Random) -> None:
+    """Aligne des articles debout sur une tablette, de gauche à droite.
+
+    Le désordre est délibéré, comme pour les gondoles (skill
+    `prop-silhouette-design`) : titres tirés au hasard, petits écarts, quelques
+    trous. Un présentoir parfaitement régulier se lit comme une texture.
+    """
+    x = x0
+    while x < x1 - 0.12:
+        label = rng.choice(labels)
+        w, d, h = DEBOUT[label]
+        if x + w > x1:
+            break
+        if rng.random() < 0.10:            # un trou : il en manque toujours un
+            x += w + rng.uniform(0.01, 0.04)
+            continue
+        recul = rng.uniform(0.0, 0.02)
+        parts.append(((x, y_face + recul, z, x + w, y_face + recul + d, z + h),
+                      f"label:{label}", "-y"))
+        x += w + rng.uniform(0.005, 0.025)
+
+
+def _pile_a_plat(parts, label, cx: float, cy: float, z: float, n: int,
+                 rng: random.Random) -> None:
+    """Empile des exemplaires à plat, couverture vers le haut.
+
+    L'étiquette est sur la face `+z` : une pile de journaux sur un comptoir se
+    regarde d'en haut, pas de face. Chaque exemplaire est décalé de quelques
+    millimètres — une pile parfaitement droite n'existe pas.
+    """
+    w, d = A_PLAT[label]
+    ep = 0.012
+    for i in range(n):
+        dx, dy = rng.uniform(-0.012, 0.012), rng.uniform(-0.012, 0.012)
+        parts.append(((cx - w / 2 + dx, cy - d / 2 + dy, z + i * ep,
+                       cx + w / 2 + dx, cy + d / 2 + dy, z + (i + 1) * ep),
+                      f"label:{label}", "+z"))
 
 
 def kiosque(enseigne: str, seed: int = 0) -> str:
@@ -177,16 +247,20 @@ def kiosque(enseigne: str, seed: int = 0) -> str:
                 for z in niveaux]
     H.boxes(f"{name}_etageres", etageres, "metal_tole_perforee", coll)
 
-    # Étagères GARNIES. Une tablette nue se lit comme un rayonnage vide, et
-    # c'est exactement ce qu'on voit d'un kiosque : sa marchandise par-dessus
-    # le comptoir. Même garnissage que les gondoles (`lib_rayons`), donc même
-    # désordre délibéré et même assemblage en un mesh par matériau.
-    rng = random.Random(hash((name, seed)) & 0xFFFF)
-    g = Garnissage()
+    # Étagères GARNIES, et garnies de ce que CETTE enseigne vend. Une tablette
+    # nue se lit comme un rayonnage vide, et une tablette garnie au hasard se
+    # lit comme une erreur : c'est la marchandise qui dit le métier du kiosque.
+    # Tout part en UN mesh par `H.boxes`, donc un seul appel de dessin.
+    rng = random.Random(abs(hash((name, seed))) % 100000)
+    debout, a_plat = MARCHANDISE[enseigne]
+    parts = []
     for z in niveaux:
-        stock_shelf(g, 0.40, lo - 0.40, pr - 0.70, z + 0.05, -1, rng,
-                    max_h=0.40, density=0.75, theme=THEME_KIOSQUE.get(enseigne))
-    g.finish(name, coll)
+        _rang_debout(parts, debout, 0.42, lo - 0.42, pr - 0.70, z + 0.05, rng)
+    # Sur le comptoir, face au client : les piles du jour.
+    for i, label in enumerate(a_plat):
+        _pile_a_plat(parts, label, 0.95 + i * 0.75, 0.42, 1.05,
+                     rng.randint(5, 9), rng)
+    H.boxes(f"{name}_marchandise", parts, "prd_kiosque", coll, subdiv=0.5)
 
     # Fronton : débord de 8 cm devant la façade, sinon l'enseigne serait
     # coplanaire avec le mur et les deux se disputeraient le z-buffer.

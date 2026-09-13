@@ -18,7 +18,11 @@ TEX_DIR = os.path.join(ROOT, "assets_src", "textures")
 TRIM = {}
 for _atlas in ("trim_hypermarche", "sig_bandeaux", "sig_facade"):
     TRIM.update(json.load(open(os.path.join(TEX_DIR, _atlas + ".json")))["bands"])
-LABELS = json.load(open(os.path.join(TEX_DIR, "prd_etiquettes.json")))["labels"]
+# Même principe que les bandes ci-dessus : les trois atlas d'étiquettes
+# partagent un espace de noms, et c'est l'appelant qui choisit la texture.
+LABELS = {}
+for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans"):
+    LABELS.update(json.load(open(os.path.join(TEX_DIR, _labels + ".json")))["labels"])
 
 
 def textured_material(texture: str) -> bpy.types.Material:
@@ -133,14 +137,23 @@ def _uv_label(label: str, bounds, front_axis: str = "-y"):
 
     def fn(face, uv):
         n = face.normal
-        is_front = {"-y": n.y < -0.5, "+y": n.y > 0.5, "-x": n.x < -0.5, "+x": n.x > 0.5}[front_axis]
+        is_front = {"-y": n.y < -0.5, "+y": n.y > 0.5,
+                    "-x": n.x < -0.5, "+x": n.x > 0.5,
+                    # `+z` sert aux objets POSÉS À PLAT dont la face utile est
+                    # le dessus : une pile de journaux sur un comptoir se
+                    # regarde d'en haut, pas de face.
+                    "+z": n.z > 0.5}[front_axis]
         for loop in face.loops:
             c = loop.vert.co
             if is_front:
-                s = (c.x - x0) / (x1 - x0) if front_axis in ("-y", "+y") else (c.y - y0) / (y1 - y0)
-                if front_axis in ("+y", "-x"):
-                    s = 1 - s
-                t = (c.z - z0) / (z1 - z0)
+                if front_axis == "+z":
+                    s = (c.x - x0) / (x1 - x0)
+                    t = 1 - (c.y - y0) / (y1 - y0)
+                else:
+                    s = (c.x - x0) / (x1 - x0) if front_axis in ("-y", "+y") else (c.y - y0) / (y1 - y0)
+                    if front_axis in ("+y", "-x"):
+                        s = 1 - s
+                    t = (c.z - z0) / (z1 - z0)
                 loop[uv].uv = (u0 + s * (u1 - u0), v_bot + t * (v_top - v_bot))
             else:
                 # Les autres faces prennent la couleur de fond, lue près du coin haut-gauche de la case.

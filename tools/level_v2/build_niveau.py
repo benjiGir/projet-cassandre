@@ -54,6 +54,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(ICI), "blender"))
 
 import geo_utils                      # noqa: E402
 import lib_helpers as H               # noqa: E402
+import lib_electro as E               # noqa: E402
 import lib_facade as F                # noqa: E402
 import lib_rayons as L                # noqa: E402
 import plan_de_masse as plan          # noqa: E402
@@ -115,6 +116,13 @@ def materiaux_espace(space, gris: dict, cache: dict) -> dict:
 # Espaces dont l'habillage construit son propre plafond (percé, à redans...) :
 # `plafond()` les laisse tranquilles plutôt que d'en poser un second par-dessus.
 PLAFOND_SUR_MESURE = frozenset({"galerie"})
+
+# Idem pour le SOL, quand l'habillage le découpe en bandes de textures
+# différentes. Le défaut est volontairement l'inverse — `main()` pose un sol
+# uni à tout espace qui n'est pas listé ici, habillé ou non. Un habillage qui
+# oublie son sol donne ainsi une pièce banale, jamais un trou dans lequel le
+# joueur tombe.
+SOL_SUR_MESURE = frozenset({"rayons", "caisses", "galerie", "hub"})
 
 
 def plafond(space, coll) -> bool:
@@ -660,6 +668,134 @@ def habiller_galerie(space, gris, props, col_coll, logic) -> dict:
             "rampes": rampes, "lampes": lampes + len(GA_VERRIERE_X)}
 
 
+# --- Habillage : l'allée centrale (le carrefour) ------------------------------
+#
+# 12 × 48 m, le seul espace qu'on traverse dans les deux sens à chaque
+# aller-retour. Son travail est de dire OÙ ON VA : sans signalétique, un
+# carrefour n'est qu'un couloir de plus.
+
+HB_NEON_X = (-4.5, 3.5)
+HB_NEON_Y = (46.0, 54.0, 62.0, 72.0, 80.0, 88.0)
+HB_NEONS_MORTS = frozenset({(-4.5, 80.0), (3.5, 54.0)})
+# Panneaux suspendus aux trois embranchements, lus dans les deux sens.
+# `rayon_bazar` est le nom réel du rayon électroménager en grande surface.
+HB_DIRECTIONS = ((62.0, "rayon_epicerie", -4.2), (62.0, "rayon_bazar", 2.2),
+                 (50.0, "rayon_promos", -1.0), (84.0, "rayon_frais", -1.0))
+
+
+def _sol_hub(space, coll, col_coll) -> None:
+    """Bande centrale plus fine, bordures larges : le sol dessine l'axe de
+    circulation avant qu'on ait lu le moindre panneau."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    bandes = ((x0, x0 + 3.0, "sol_terrazzo"), (x0 + 3.0, x1 - 3.0, "sol_terrazzo_fin"),
+              (x1 - 3.0, x1, "sol_terrazzo"))
+    for i, (xa, xb, texture) in enumerate(bandes):
+        H.box(f"sol_hub_{i}", (xa, y0, z - bo.EPAISSEUR_SOL, xb, y1, z),
+              texture, coll, subdiv=SUBDIV_BAKE)
+    H.col_box("sol_hub", (x0, y0, z - bo.EPAISSEUR_SOL, x1, y1, z), col_coll)
+
+
+def habiller_hub(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    _sol_hub(space, props, col_coll)
+
+    # Estrade du micro d'annonces, aux cotes exactes du blockout : 4 × 4 × 0,50,
+    # donc franchissable d'un saut. C'est un point haut, pas un obstacle.
+    L.place(E.estrade_micro(), (-2.0, 66.0, z), 0, props, col_coll, "hb_estrade")
+
+    panneaux = 0
+    for i, (py, bande, px) in enumerate(HB_DIRECTIONS):
+        L.place(E.panneau_direction(bande), (px, py, z + 3.60), 0,
+                props, props, f"hb_dir{i}")
+        panneaux += 1
+
+    for i, (px, py) in enumerate(((x0 + 0.9, 50.0), (x1 - 1.4, 58.0),
+                                  (x0 + 0.9, 76.0), (x1 - 1.4, 84.0))):
+        L.place(L.pilier(), (px, py, z), 0, props, col_coll, f"hb_p{i}")
+
+    for i, (px, py) in enumerate(((-4.0, 47.5), (2.5, 88.0))):
+        L.place(L.bac_garni(SEED + 800 + i), (px, py, z), 0, props, col_coll, f"hb_bac{i}")
+    for i, (px, py, rot) in enumerate(((x0 + 0.8, 70.5, 0), (x1 - 2.0, 62.0, 15))):
+        L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"hb_pal{i}")
+    for i, (px, py, rot) in enumerate(((-3.0, 56.0, 70), (3.0, 78.0, 250))):
+        L.place(L.caddie(), (px, py, z), rot, props, col_coll, f"hb_cd{i}")
+    L.place(L.poubelle(), (x1 - 1.2, 45.5, z), 0, props, col_coll, "hb_pou")
+
+    rampes, lampes = _neons(space, props, logic, HB_NEON_X, HB_NEON_Y,
+                            HB_NEONS_MORTS, "hb", doubles=HB_NEON_X)
+    return {"panneaux": panneaux, "rampes": rampes, "lampes": lampes}
+
+
+# --- Habillage : l'électroménager --------------------------------------------
+#
+# Le rayon « elevee » du plan, celui du mur d'écrans et de la carte Or. Cotes
+# des volumes gris du blockout, à l'unité près : mur d'écrans de 14 × 1 × 3,
+# quatre cabines de 5 × 5 × 2,5, et le carton qui donne accès à la carte.
+
+EL_CABINES = ((16.0, 58.0), (32.0, 58.0), (16.0, 70.0), (32.0, 70.0))
+EL_MUR_ECRANS = (14.0, 49.0)
+EL_CARTON_OR = (40.0, 74.0)
+# Rangées d'exposition. Leur façade regarde le -y local, donc une rangée posée
+# à `rot 0` présente sa marchandise à qui se tient au SUD d'elle. Toutes sont
+# donc calées sur les deux dégagements est-ouest que laissent les cabines
+# (y ∈ [63, 70] et y ∈ [75, 80]) : le joueur arrive par l'ouest et les longe.
+EL_RANGEES = ((21.0, 66.5), (26.5, 66.5), (38.0, 66.5),
+              (21.0, 77.0), (28.0, 77.0), (40.0, 77.0))
+EL_ETAGERES = ((11.0, 54.0), (11.0, 58.0), (43.5, 52.0))
+EL_NEON_X = (12.5, 22.0, 30.0, 38.0, 44.0)
+EL_NEON_Y = (49.0, 56.0, 64.0, 72.0)
+EL_NEONS_MORTS = frozenset({(44.0, 72.0), (12.5, 64.0), (30.0, 49.0)})
+
+
+def habiller_electro(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    # `rot 180` : les dalles du mur d'écrans regardent le -y local, donc posé
+    # tel quel contre le mur sud il diffuserait vers le mur. Retourné, il occupe
+    # la même emprise (d'où l'origine au coin opposé) et regarde la salle.
+    L.place(E.mur_ecrans(14.0), (EL_MUR_ECRANS[0] + 14.0, EL_MUR_ECRANS[1] + 1.0, z), 180,
+            props, col_coll, "el_mur")
+
+    for i, (cx, cy) in enumerate(EL_CABINES):
+        L.place(E.cabine_demo(i), (cx, cy, z), 0, props, col_coll, f"el_cab{i}")
+
+    rangees = 0
+    for i, (rx, ry) in enumerate(EL_RANGEES):
+        L.place(E.rangee_blanc(4.0, 1 + i % 2), (rx, ry, z), 0,
+                props, col_coll, f"el_rg{i}")
+        rangees += 1
+
+    # Petit électroménager : sur des étagères, pas posé au sol. C'est la seule
+    # marchandise du rayon qu'on voit de près, donc celle qui porte le détail.
+    petits = 0
+    for i, (px, py) in enumerate(EL_ETAGERES):
+        L.place(E.etagere_petits(i), (px, py, z), 0, props, col_coll, f"el_et{i}")
+        petits += 1
+
+    # Carton d'accès à la carte Or, repris À L'IDENTIQUE du blockout : 1 m, donc
+    # franchissable d'un saut (1,10 m). Changer cette hauteur casserait un accès
+    # déjà validé en jouant.
+    cx, cy = EL_CARTON_OR
+    H.box("carton_acces_or", (cx, cy, z, cx + 1.0, cy + 1.0, z + 1.0), "carton", props)
+    H.col_box("carton_acces_or", (cx, cy, z, cx + 1.0, cy + 1.0, z + 1.0), col_coll)
+
+    for i, (px, py, rot) in enumerate(((x0 + 1.2, y1 - 2.0, 0), (x1 - 2.4, y0 + 1.5, 25))):
+        L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"el_pal{i}")
+    for i, (px, py) in enumerate(((x0 + 0.8, y0 + 0.8), (x1 - 1.3, y1 - 1.3))):
+        L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"el_pou{i}")
+
+    rampes, lampes = _neons(space, props, logic, EL_NEON_X, EL_NEON_Y,
+                            EL_NEONS_MORTS, "el", doubles=EL_NEON_X)
+    return {"cabines": len(EL_CABINES), "rangees": rangees, "petits": petits,
+            "rampes": rampes, "lampes": lampes}
+
+
 # Repères « signature » que l'habillage pose lui-même, en vrai objet : le
 # blockout ne doit donc plus poser leur silhouette grise.
 SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
@@ -669,6 +805,8 @@ HABILLAGE = {
     "rayons": habiller_rayons,
     "caisses": habiller_caisses,
     "galerie": habiller_galerie,
+    "hub": habiller_hub,
+    "electro": habiller_electro,
 }
 
 
@@ -684,6 +822,7 @@ def main() -> None:
     geo_utils.configure_scene()
     L.build_all()
     F.build_all()
+    E.build_all()
 
     root = bpy.context.scene.collection
     geo = geo_utils.make_collection("GEO", root)
@@ -706,7 +845,7 @@ def main() -> None:
         if space.rampe:
             sens, z0, z1 = space.rampe
             bo.pente(f"sol_{space.id}", space.x, space.y, z0, z1, sens, materiaux, shell, col_coll)
-        elif habillage is None:
+        elif space.id not in SOL_SUR_MESURE:
             bo.boite(f"sol_{space.id}",
                      (space.x[0], space.y[0], space.z - bo.EPAISSEUR_SOL),
                      (space.largeur, space.profondeur, bo.EPAISSEUR_SOL),

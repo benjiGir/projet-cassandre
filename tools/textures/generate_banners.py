@@ -45,7 +45,7 @@ BANNERS = [
 ]
 
 
-def band(img: Image.Image, d: ImageDraw.ImageDraw, y0: int, texte: str, fond, encre) -> None:
+def band(img: Image.Image, d: ImageDraw.ImageDraw, y0: int, texte: str, fond, encre) -> int:
     d.rectangle((0, y0, W - 1, y0 + BAND_H - 1), fill=fond)
     d.rectangle((0, y0, W - 1, y0), fill=BLACK)
     d.rectangle((0, y0 + BAND_H - 1, W - 1, y0 + BAND_H - 1), fill=BLACK)
@@ -57,6 +57,7 @@ def band(img: Image.Image, d: ImageDraw.ImageDraw, y0: int, texte: str, fond, en
         pas += 1
     for x in range(0, W, pas):
         draw_text(img, texte, x + (pas - largeur) // 2, y0 + 3, encre, scale=2)
+    return pas
 
 
 def main() -> None:
@@ -64,8 +65,10 @@ def main() -> None:
     d = ImageDraw.Draw(img)
     layout, y = {}, 0
     for nom, texte, fond, encre in BANNERS:
-        band(img, d, y, texte, fond, encre)
-        layout[nom] = {"y": y, "height": BAND_H}
+        pas = band(img, d, y, texte, fond, encre)
+        # `pas` publié, comme dans `generate_facade` : un panneau taillé à une
+        # largeur quelconque couperait le mot en deux (voir `_uv_enseigne`).
+        layout[nom] = {"y": y, "height": BAND_H, "pas": pas}
         y += BAND_H
     assert y == W, f"les bandes font {y} px, il en faut {W}"
     img = img.quantize(palette=palette_image(), dither=Image.Dither.NONE).convert("RGB")
