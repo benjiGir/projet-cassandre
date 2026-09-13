@@ -58,6 +58,21 @@ export const LEVEL_CHOICES: LevelDef[] = [
     gltfName: "blockout_v2",
     startUnarmed: true,
   },
+  // Niveau v2 habillé (jalon N9), construit par `tools/level_v2/build_niveau.py`
+  // depuis la MÊME structure que le blockout ci-dessus — seuls les matériaux,
+  // les plafonds, les lampes et le contenu des espaces habillés changent. Un
+  // espace encore gris est un espace qui reste à habiller, et ça se voit exprès.
+  // `hybride` : le niveau porte ses propres `light_*`, pas de soleil. Il n'est
+  // pas encore baké, donc la couleur de sommet ne porte aucune ombre — c'est
+  // l'éclairage temps réel seul.
+  {
+    id: "niveau_v2",
+    label: "Niveau v2 — habillage en cours",
+    kind: "gltf",
+    gltfName: "niveau_v2",
+    startUnarmed: true,
+    lighting: "hybride",
+  },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {
     id: "hypermarche_complet",

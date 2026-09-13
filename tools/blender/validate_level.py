@@ -31,7 +31,12 @@ MIN_CEILING = 2.0
 MIN_PASSAGE = 1.0
 MIN_PROXY_THICKNESS = 0.1
 MAX_THIN_RATIO = 20.0
-TRI_BUDGET = 200_000
+# Budget MESURÉ, pas supposé : 1,45 million de triangles dans le champ coûtent
+# 4,94 ms GPU sur la machine de mesure, pour une image de 16,6 ms. Les 200 000
+# posés a priori au jalon N1 étaient trop prudents d'un ordre de grandeur — ce
+# sont les LAMPES qui font mur, pas les triangles.
+# Voir docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
+TRI_BUDGET = 1_500_000
 
 # Collections sources, jamais exportées (voir `export_level.py`).
 SOURCE_COLLECTIONS = {"_KIT", "_LIB"}

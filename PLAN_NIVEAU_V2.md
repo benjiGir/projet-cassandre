@@ -638,6 +638,76 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 >
 > `pnpm build` propre, `pnpm test` vert (164/164).
 
+> **N9.1 — lot « rayons » : 🔶 construit (2026-09-13), en attente du verdict.**
+> Jouable sous `Niveau v2 — habillage en cours`.
+>
+> **La structure n'est pas rejouée, elle est réutilisée.**
+> `tools/level_v2/build_niveau.py` importe `build_blockout` et lui emprunte sa
+> coque entière — sols, murs percés par les ouvertures du plan, portes, `use_*`,
+> secrets, spawns. Le blockout a été joué et validé ; toute cote redessinée
+> serait une occasion de le contredire. Quatre choses changent, et rien
+> d'autre : les matériaux de la coque (texturés au lieu de gris), les plafonds
+> (absents du blockout, et toujours sans collider), les lampes, et le contenu
+> des espaces habillés.
+>
+> **Un espace non encore habillé garde ses volumes gris, et ça se voit exprès** :
+> le niveau reste jouable de bout en bout à chaque lot, et ce qui est gris est
+> ce qui reste à faire. `HABILLAGE` est le registre qui décide. La coque, elle,
+> est texturée PARTOUT dès ce lot — c'est presque gratuit (un dictionnaire de
+> matériaux par espace, passé aux mêmes fonctions) et ça rend la carte lisible
+> tout de suite.
+>
+> **Aucune régression de gameplay, vérifiée sur le vrai graphe de navigation** :
+> 40 Costards + 1 Directeur, **tous `idle` au spawn** ; galerie, caisses, hub,
+> rayons, électroménager et cafétéria joignables depuis le spawn ; réserve,
+> souterrain et bureaux toujours HORS d'atteinte sans la carte Argent. 3 portes,
+> 3 secrets, 9 `use_*`, 262 colliders. Exactement le blockout validé.
+>
+> `validate_level.py --strict` : **0 erreur**, 5 avertissements — les 4 de la
+> classe connue « pickup autoportant sans `target` », plus « bake manquant »,
+> attendu : ce lot n'est pas encore baké.
+>
+> **Deux constats de mesure, dont un qui engage la suite.**
+>
+> 1. **Le budget qui serre est les LOTS DE DESSIN, pas les triangles.** Avec UN
+>    seul espace habillé : 133 lots au pire point de vue sur 200 autorisés
+>    (67 %), contre 416 984 triangles sur 1 500 000 (28 %). Extrapolé à dix
+>    espaces, les 200 lots seront dépassés. Le levier est documenté et chiffré —
+>    remonter `DECOR_CELL_SIZE`, voir l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) —
+>    mais il se tirera quand la mesure le réclamera, pas d'avance.
+> 2. **Le pool de lampes sert pour de vrai dès ce lot** : 128 `light_*` posées,
+>    48 allumées. Et il ne coûte rien de visible — debout dans les rayons, les
+>    48 plus proches sont exactement celles qui éclairent la vue.
+>
+> **Le `.glb` pèse 21 Mo** (contre 4,2 pour le blockout), pour un seul espace
+> habillé. Répartition des 471 216 triangles exportés, mesurée et non supposée :
+>
+> | | triangles | part |
+> |---|---|---|
+> | mobilier + produits (un seul espace) | 210 428 | 44,7 % |
+> | plafonds (les dix) | 116 768 | 24,8 % |
+> | sols | 84 636 | 18,0 % |
+> | murs | 41 728 | 8,9 % |
+> | reste (volumes gris, signalétique, déco) | 17 656 | 3,7 % |
+>
+> Deux lectures. La coque (plafonds + sols + murs, **52 %**) est déjà complète
+> et ne grandira plus : ce sont des surfaces plates, et elles coûtent cher
+> uniquement parce qu'elles sont subdivisées pour un bake **qui n'a pas encore
+> eu lieu**. Si l'on décidait de ne jamais baker, ou de subdiriser au moment du
+> bake plutôt qu'à la construction, c'est un gain immédiat de plus de 200 000
+> triangles. Le mobilier, lui, vaut 210 000 triangles pour l'espace le plus
+> dense du plan (`densité forte`) — soit moins de la moitié de ce que N6
+> estimait pour lui. Extrapolé aux dix espaces avec leurs densités déclarées,
+> le niveau complet devrait tenir autour de 900 000 triangles, sous le budget
+> de 1 500 000. **C'est donc bien les lots de dessin, et non les triangles, qu'il
+> faudra surveiller.** La compression Draco reste inutilisée, et c'est le levier
+> si le poids de téléchargement devient le sujet.
+>
+> **Ce que ce lot n'a pas** : le bake. Le niveau tourne en `hybride` sans
+> couleur de sommet, donc éclairage temps réel pur — pas d'ombre portée, pas de
+> relief. C'est le principal écart visuel avec la salle d'essai de N4, et c'est
+> ce que le bake apportera.
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.

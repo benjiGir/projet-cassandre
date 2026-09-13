@@ -110,7 +110,66 @@ def rewire_as_game(mat: bpy.types.Material, ambiant: float = 1.0,
     nt.links.new(somme.outputs["Shader"], out.inputs["Surface"])
 
 
-def build_game_lights(scene) -> int:
+def blanchir_meshes_sans_col() -> int:
+    """Pose un attribut `Col` BLANC sur les meshes qui n'en ont pas.
+
+    `rewire_as_game` multiplie la texture par l'attribut `Col`. Un nœud
+    Attribut dont le nom n'existe pas sur le mesh ne renvoie pas « neutre »
+    mais **du noir** : sans cette passe, tout mesh non baké sort entièrement
+    noir, et on croit à un niveau éteint alors que c'est l'outil qui ment.
+
+    Le cas est normal, pas accidentel : un niveau en cours d'habillage n'est
+    pas encore baké, et la bibliothèque (`lib_helpers.py`) ne crée pas
+    d'attribut de couleur, contrairement à `geo_utils.py`. En jeu il n'y a
+    aucun problème — `loader.ts` décide `vertexColors` mesh par mesh, d'après
+    la présence réelle de COLOR_0.
+
+    Blanc = masque d'ombre neutre, donc « texture × 1 » : exactement ce que le
+    jeu affiche pour ces meshes-là.
+    """
+    n = 0
+    for mesh in bpy.data.meshes:
+        if mesh.color_attributes.get("Col") is not None:
+            continue
+        col = mesh.color_attributes.new(name="Col", type="BYTE_COLOR", domain="POINT")
+        col.data.foreach_set("color", [1.0] * (len(mesh.vertices) * 4))
+        mesh.color_attributes.active_color_index = mesh.color_attributes.find("Col")
+        n += 1
+    return n
+
+
+# Doit valoir `LIGHT_POOL_BUDGET` (`src/render/lightPool.ts`). Sans ce
+# plafond, une capture allume TOUTES les lampes du niveau et promet une
+# luminosité que le jeu ne tiendra pas — un niveau v2 complet en porte plus de
+# cent, le jeu n'en allume jamais plus de 48.
+BUDGET_LAMPES = 48
+
+
+def appliquer_pool(lampes: list, position, budget: int = BUDGET_LAMPES) -> int:
+    """N'allume que les `budget` lampes les plus proches, comme `LightPool`.
+
+    Même critère que le jeu : la distance au BORD de la sphère d'influence
+    (`distance − portée`) et non à la lampe, une portée nulle valant illimitée.
+    À refaire pour CHAQUE point de vue — c'est la caméra qui décide.
+    see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
+    """
+    if len(lampes) <= budget:
+        for lampe in lampes:
+            lampe.hide_render = False
+        return len(lampes)
+
+    def score(lampe) -> float:
+        portee = float(lampe.get("_portee", 0.0))
+        if portee <= 0.0:
+            return float("-inf")
+        return (lampe.location - position).length - portee
+
+    for i, lampe in enumerate(sorted(lampes, key=score)):
+        lampe.hide_render = i >= budget
+    return budget
+
+
+def build_game_lights(scene) -> list:
     """Recrée en EEVEE les lampes que le JEU allumera, d'après les `light_*`.
 
     Sur un niveau hybride (ADR 0024), la couleur de sommet n'est plus
@@ -124,7 +183,7 @@ def build_game_lights(scene) -> int:
     réglé à l'œil (à 40 au lieu de 12,6, la capture ressortait trois fois trop
     claire et brûlait le plafond).
     """
-    n = 0
+    lampes = []
     for obj in list(scene.objects):
         if obj.type != "EMPTY" or not obj.name.split(".")[0].startswith("light_"):
             continue
@@ -136,9 +195,12 @@ def build_game_lights(scene) -> int:
             data.color = tuple(int(couleur[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
         light = bpy.data.objects.new(f"_rt_{obj.name}", data)
         light.location = obj.matrix_world.translation
+        # Portée reportée sur la lampe : c'est elle, pas l'empty, que le pool
+        # ci-dessus classe.
+        light["_portee"] = float(obj.get("distance", 0.0))
         scene.collection.objects.link(light)
-        n += 1
-    return n
+        lampes.append(light)
+    return lampes
 
 
 def find_spawn() -> bpy.types.Object | None:
@@ -175,10 +237,14 @@ def main() -> None:
         scene.world.use_nodes = False
         scene.world.color = (0.0, 0.0, 0.0)
 
+    sans_col = blanchir_meshes_sans_col()
+    if sans_col:
+        print(f"[rendu] {sans_col} mesh(es) sans attribut `Col` — masque d'ombre neutre posé")
+
     lampes = build_game_lights(scene)
     for mat in bpy.data.materials:
-        rewire_as_game(mat, ambiant=0.18 if lampes else 1.0, eclaire=lampes > 0)
-    print(f"[rendu] {lampes} lampe(s) `light_*` rallumée(s)" if lampes
+        rewire_as_game(mat, ambiant=0.18 if lampes else 1.0, eclaire=len(lampes) > 0)
+    print(f"[rendu] {len(lampes)} lampe(s) `light_*` rallumée(s)" if lampes
           else "[rendu] aucune `light_*` : niveau tout baké, émission pure")
 
     sources = set()
@@ -217,9 +283,11 @@ def main() -> None:
         x, y, cap = (float(v) for v in spec.split(","))
         cam.location = (x, y, eye)
         cam.rotation_euler = Euler((math.radians(90.0), 0.0, math.radians(cap)), "XYZ")
+        allumees = appliquer_pool(lampes, Vector((x, y, eye)))
         scene.render.filepath = os.path.join(out_dir, f"vue_{i + 1:02d}.png")
         bpy.ops.render.render(write_still=True)
-        print(f"[rendu] {scene.render.filepath}  ({x}, {y}, cap {cap}°)")
+        print(f"[rendu] {scene.render.filepath}  ({x}, {y}, cap {cap}°)"
+              + (f"  — {allumees}/{len(lampes)} lampes allumées" if lampes else ""))
 
 
 if __name__ == "__main__":

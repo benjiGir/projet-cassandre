@@ -105,8 +105,9 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
 > richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur
 > a joué le blockout et validé), N6 validé (structure et échelle), N2 presque
-> (quatre licences à confirmer). En cours : N9, l'habillage — ses prérequis de
-> rendu (N9.0) sont livrés, l'habillage espace par espace commence.**
+> (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
+> (N9.0) livrés, premier lot (les RAYONS) construit et jouable sous `Niveau v2 —
+> habillage en cours`, en attente du verdict. Neuf espaces encore gris.**
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)
@@ -157,6 +158,24 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 > elle-même). Et surtout : un niveau baké NE DOIT PAS rester en
 > `LevelDef.lighting: "temps-reel"`, sans quoi le soleil hérité de la Phase 1
 > multiplie tout le bake par une direction arbitraire.
+> **Le niveau v2 habillé se construit PAR-DESSUS le blockout, pas à côté**
+> (`tools/level_v2/build_niveau.py` importe `build_blockout`) : la structure
+> validée à N8 n'est jamais redessinée, seuls changent les matériaux de la
+> coque, les plafonds (toujours sans collider), les lampes et le contenu des
+> espaces habillés. Le registre `HABILLAGE` décide quels espaces sont habillés ;
+> les autres gardent leurs volumes GRIS, exprès — le niveau reste jouable de
+> bout en bout à chaque lot, et ce qui est gris est ce qui reste à faire.
+> **Piège de subdivision** : `lib_helpers.subdivide(cible)` s'arrête quand plus
+> aucune arête ne dépasse `cible × 1.5` — la garantie réelle est 1,5 fois la
+> valeur passée. Pour tenir le seuil d'un sommet par m² de `validate_level.py`,
+> passer 0,6 et non 1,0.
+> **Piège de l'outil de rendu** : `render_ingame.py` reconstruit
+> `texture × attribut Col`, et un nœud Attribut dont le nom n'existe pas sur le
+> mesh renvoie du NOIR, pas du neutre. Un niveau pas encore baké sortait donc
+> entièrement noir — on croit le niveau éteint alors que c'est l'outil qui ment.
+> Corrigé (masque blanc posé d'office sur les meshes sans `Col`) ; l'outil
+> applique aussi le pool de 48 lampes par point de vue, sans quoi une capture
+> promet une luminosité que le jeu ne tient pas.
 > **Éclairage hybride, limite levée (N9)** : la note de l'ADR 0024 « il faudra
 > un pool réaffecté au-delà d'une centaine de lampes » est réglée — `LightPool`
 > n'en laisse que 48 allumées, les plus proches, classées sur la distance au
