@@ -5,6 +5,7 @@ import { Effect, Exit, Schema, Scope } from "effect";
 
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
 import { GameRuntime } from "../../core/runtime";
+import { configureRetroTexture } from "../../render/renderer";
 import { mergeStaticDecor } from "./mergeStaticDecor";
 import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
 
@@ -294,11 +295,10 @@ function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLam
   });
   lambert.name = mat.name;
   if (lambert.map) {
-    // Invariant #4 : NearestFilter partout, jamais de mipmaps.
-    lambert.map.magFilter = THREE.NearestFilter;
-    lambert.map.minFilter = THREE.NearestFilter;
-    lambert.map.generateMipmaps = false;
-    lambert.map.needsUpdate = true;
+    // Invariant #4 : `NearestFilter` à l'AGRANDISSEMENT, toujours — c'est lui
+    // qui fait le gros pixel franc. La réduction (les surfaces vues de loin)
+    // suit le mode courant : voir `configureRetroTexture` et l'ADR 0027.
+    configureRetroTexture(lambert.map);
   }
   return lambert;
 }

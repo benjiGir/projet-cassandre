@@ -35,6 +35,35 @@ qui en résulterait est silencieuse — le niveau importé « a l'air » normal
 en dev, juste avec des reflets spéculaires qui ne devraient jamais exister à
 l'écran dans ce projet.
 
+## Filtrage des textures
+
+Deux réglages se cachent derrière « ça pixelise », et ils n'ont rien à voir :
+
+- la **résolution interne** (640×360) donne un gros pixel UNIFORME sur toute
+  l'image. C'est le look, et il ne gêne personne au premier plan ;
+- le **filtrage de réduction** décide de ce qui arrive quand une texture de
+  128 px ne couvre plus que trois pixels à l'écran.
+
+`configureRetroTexture` (`render/renderer.ts`) tient les deux bouts :
+`magFilter` reste `NearestFilter` **toujours** — c'est lui qui fait le gros
+pixel franc quand on colle une texture de près —, et la réduction suit le mode
+courant (`FiltrageTexture`) :
+
+| Mode | Réduction | Ce qu'on voit |
+|---|---|---|
+| `nearest` | `NearestFilter`, pas de mipmap | le réglage d'origine : les surfaces lointaines grésillent et rampent quand la caméra bouge |
+| `mipmap` | `NearestMipmapLinear` | le grésillement disparaît ; un sol vu en fuyante floute à mi-distance |
+| **`aniso`** | idem + anisotropie maximale | **défaut** — le sol rasant reste net. C'est le cas qui compte : ce niveau est fait de grandes salles qu'on traverse au ras du sol |
+
+`cassandre.filtrage(mode)` rebascule toutes les textures chargées sans
+recharger le niveau, et `cassandre.resolution(l, h)` change la résolution
+interne : un défaut qui ne se voit qu'en mouvement ne se juge que comme ça, sur
+la même vue, en basculant d'un mode à l'autre.
+
+Coût mesuré sur le niveau v2 complet : 0,36 ms en `nearest`, 0,96 ms en
+`aniso`, pour un budget d'image de 16,6 ms. Décision et alternatives :
+[ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md).
+
 ## Éclairage de secteur baké en vertex colors (COLOR_0)
 
 Voir [ADR 0005](../decisions/0005-eclairage-vertex-colors.md) pour la

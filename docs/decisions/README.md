@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-09-12
+updated: 2026-09-13
 ---
 
 # Architecture Decision Records
@@ -41,3 +41,4 @@ un lien vers son successeur.
 | [0024](0024-eclairage-hybride.md) | Éclairage hybride — lampes temps réel et ombre cuite | accepté |
 | [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | L'occlusion des lignes de vue ennemies est fiable, et le level design peut s'y fier | accepté |
 | [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU | accepté |
+| [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie sur les textures réduites, gros pixel conservé à l'agrandissement | **proposé** |

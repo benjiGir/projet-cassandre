@@ -21,6 +21,14 @@ import { directorConfig, type DirectorConfig } from "../entities/directorConfig"
 import { type DoorInfo, type LevelStats, type SecretZone } from "../level/loader";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
 import { type LightPoolStats } from "../../render/lightPool";
+import {
+  anisotropieDisponible,
+  appliquerFiltrage,
+  setResolutionInterne,
+  INTERNAL_HEIGHT,
+  INTERNAL_WIDTH,
+  type FiltrageTexture,
+} from "../../render/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/cards";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
@@ -150,6 +158,22 @@ export function exposeDebugApi(engine: GameEngine): void {
      * Sur une scène sans `light_*` (la gym), retombe sur le balayage de scène
      * de `applyLightBudget`, qui n'a besoin d'aucun niveau chargé.
      * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md */
+    /** Bascule le filtrage des textures RÉDUITES (vues de loin) et rend le
+     * nombre de textures rebasculées. `"nearest"` est le réglage historique,
+     * celui qui fait grésiller les surfaces lointaines ; `"mipmap"` et
+     * `"aniso"` le corrigent. L'agrandissement reste au plus proche dans les
+     * trois cas — le gros pixel de près ne bouge pas.
+     * see: docs/decisions/0027-filtrage-des-textures-reduites.md */
+    filtrage: (mode: FiltrageTexture = "aniso") => ({
+      mode,
+      textures: appliquerFiltrage(engine.scene, mode),
+      anisotropieMax: anisotropieDisponible(),
+    }),
+    /** Change la résolution de rendu INTERNE, pour comparer. Sans argument,
+     * revient aux 640×360 de l'invariant #4. Les overlays 2D (réticule,
+     * hitmarker) gardent leur propre taille et ne suivent pas. */
+    resolution: (width = INTERNAL_WIDTH, height = INTERNAL_HEIGHT) =>
+      setResolutionInterne(engine.renderer, engine.camera, width, height),
     lightBudget: (n?: number | null) => {
       const pool = engine.session.lightPool;
       if (!pool) return applyLightBudget(engine.scene, engine.camera, n ?? null);
@@ -309,6 +333,8 @@ declare global {
       };
       lighting: () => ReturnType<typeof inspectLighting>;
       renderBench: (frames?: number) => RenderBenchmark;
+      filtrage: (mode?: FiltrageTexture) => { mode: FiltrageTexture; textures: number; anisotropieMax: number };
+      resolution: (width?: number, height?: number) => { width: number; height: number };
       lightBudget: (n?: number | null) => LightBudgetReport | LightPoolStats;
     };
   }

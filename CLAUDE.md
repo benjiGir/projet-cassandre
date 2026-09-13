@@ -31,8 +31,18 @@ explication**, pas contournée.
    s'abonne à zustand, throttlé à 10 Hz maximum.
 3. **La rotation caméra n'est pas interpolée.** Elle est lue au taux
    d'affichage. L'interpoler ajoute de la latence de visée.
-4. **Résolution interne 640×360**, upscalée. `NearestFilter` sur toutes les
-   textures, `generateMipmaps = false`.
+4. **Résolution interne 640×360**, upscalée. **`NearestFilter` à
+   l'AGRANDISSEMENT sur toutes les textures** — c'est lui qui fait le gros
+   pixel franc, et il ne se négocie pas. La RÉDUCTION (surfaces vues de loin)
+   utilise mipmaps + anisotropie : sans eux, une texture de 128 px qui ne
+   couvre plus trois pixels échantillonne au hasard, et ça grésille — du
+   crénelage, pas du cachet rétro. **Amendement proposé le 2026-09-13 après un
+   retour de playtest, EN ATTENTE DE VALIDATION** : voir
+   [ADR 0027](docs/decisions/0027-filtrage-des-textures-reduites.md), et
+   `cassandre.filtrage("nearest")` pour revenir au comportement historique en
+   un appel. Monter la résolution interne ne corrige PAS ce défaut-là (plus de
+   fragments qui échantillonnent au hasard) et coûte le look ;
+   `cassandre.resolution(l, h)` existe pour s'en convaincre.
 5. **`MeshLambertMaterial` uniquement.** Pas de PBR, pas de
    `MeshStandardMaterial`, pas de map de rugosité ni de métalness.
 6. **Character controller = celui de Rapier** (`KinematicCharacterController`).

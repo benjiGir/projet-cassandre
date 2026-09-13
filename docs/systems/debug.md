@@ -163,6 +163,17 @@ n'atteint pas le matériau, chercher dans le loader ou la fusion. Un `min`/`max`
 resserré → c'est le bake qu'il faut refaire. Les deux corrects mais un rendu
 plat → regarder `lights`.
 
+### cassandre.filtrage() / resolution() — juger « ça pixelise »
+
+Deux réglages distincts produisent la même plainte, et il faut les séparer
+avant de toucher à quoi que ce soit : la résolution interne fait un gros pixel
+UNIFORME (le look), le filtrage de réduction fait grésiller les surfaces
+LOINTAINES (un défaut). `cassandre.filtrage("nearest"|"mipmap"|"aniso")`
+rebascule toutes les textures chargées sans recharger le niveau, et
+`cassandre.resolution(l, h)` change la résolution de rendu — les deux sur la
+même vue, en direct, parce qu'un défaut qui ne se voit qu'en mouvement ne se
+juge pas sur une capture. Voir [Rendu](rendu.md#filtrage-des-textures).
+
 ### cassandre.lightBudget() — le pool de lampes
 
 Un espace qui paraît trop sombre n'a pas forcément un défaut d'éclairage : ses
