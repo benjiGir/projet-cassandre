@@ -112,17 +112,34 @@ public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 
 ## Phase courante
 
-> **Chantier Niveau v2 — En cours (2026-09-12) : N0, N1, N3, N4 (gate de
+> **Chantier Niveau v2 — En cours (2026-09-13) : N0, N1, N3, N4 (gate de
 > richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur
-> a joué le blockout et validé), N6 validé (structure et échelle), N2 presque
-> (quatre licences à confirmer). En cours : N9, l'habillage — prérequis de rendu
-> (N9.0) livrés, puis deux lots construits et jouables sous `Niveau v2 —
-> habillage en cours` : les RAYONS (N9.1), puis les CAISSES et la GALERIE
-> (N9.2), le HUB et l'ÉLECTROMÉNAGER (N9.3), la RÉSERVE et le SOUTERRAIN
-> (N9.4), enfin le PARKING, la CAFÉTÉRIA et les BUREAUX (N9.5). **Les dix
-> espaces sont habillés**, plus un seul volume gris, et les packs CC0 (Kenney
-> Car Kit et Furniture Kit) sont entrés au lot N9.6. Jouable sous `Niveau v2 —
-> habillé`. Reste le BAKE : le niveau n'a aucune ombre portée.**
+> a joué le blockout et validé), N6 validé, N2 presque (quatre licences à
+> confirmer). N9, l'habillage, est CONSTRUIT de bout en bout : prérequis de
+> rendu (N9.0), puis les dix espaces en cinq lots (N9.1 rayons, N9.2 caisses +
+> galerie, N9.3 hub + électroménager, N9.4 réserve + souterrain, N9.5 parking +
+> cafétéria + bureaux), enfin l'entrée des packs CC0 Kenney (N9.6). **Plus un
+> seul volume gris.** Jouable sous `Niveau v2 — habillé`.**
+>
+> **TROIS CHOSES ATTENDENT L'UTILISATEUR, et rien ne devrait avancer sans
+> elles :**
+> 1. **Le verdict de playtest sur N9** — aucun lot n'a encore été validé ; le
+>    critère du plan est « verdict positif à chaque lot ».
+> 2. **L'amendement de l'invariant #4** proposé par l'[ADR 0027](docs/decisions/0027-filtrage-des-textures-reduites.md),
+>    après un retour « ça pixelise au loin » : mipmaps + anisotropie à la
+>    RÉDUCTION, gros pixel conservé à l'agrandissement. Le code tourne déjà
+>    ainsi pour qu'il juge sur pièce ; `cassandre.filtrage("nearest")` revient
+>    en arrière en un appel.
+> 3. **Quatre licences à confirmer** dans `assets_src/LICENCES_ASSETS.md`
+>    (`retro3d_car`, `retro3d_office`, `pensamientoazul_supermarket`,
+>    `aquilarius_retro_textures`) : tant qu'elles sont marquées « à confirmer »,
+>    ces packs NE S'UTILISENT PAS — c'est la règle du registre. Les trancher
+>    demande d'ouvrir chaque page source, une action utilisateur.
+>
+> **Deux dettes techniques connues avant N10** : le **BAKE** (le niveau n'a
+> aucune ombre portée, c'est le dernier écart visuel avec la salle d'essai de
+> N4) et le **budget de lots de dessin, à 186 sur 200** — tout ajout de décor
+> passe d'abord par la mutualisation des matériaux ou `BatchedMesh`.
 > Refonte complète du niveau, détail jalon par jalon (N0-N10) dans
 > `PLAN_NIVEAU_V2.md`. Point de départ : la passe du 2026-09-10 (poser les
 > 9 pièces du kit jamais utilisées, via `level-forge` en scripts headless)

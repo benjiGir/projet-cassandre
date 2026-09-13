@@ -976,6 +976,25 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > progression toujours verrouillée, 451 colliders.
 > `validate_level.py --strict` : **0 erreur**.
 
+> **Correctif de rendu pendant N9 (2026-09-13), hors jalon : le filtrage des
+> textures RÉDUITES.** Retour de playtest — « cette espèce de sensation étrange
+> très pixelisée pour les zones qui se trouvent loin », avec la demande de
+> monter la résolution interne.
+>
+> Diagnostic avant de toucher au chiffre : deux réglages se cachent derrière
+> « ça pixelise ». La résolution interne donne un gros pixel UNIFORME, c'est le
+> look. Le filtrage de réduction décide de ce qui arrive quand une texture de
+> 128 px ne couvre plus trois pixels — en `NearestFilter` sans mipmap, le
+> fragment échantillonne presque au hasard, et ça grésille et rampe dès que la
+> caméra bouge. Monter la résolution n'aurait pas corrigé ça : plus de pixels,
+> c'est plus de fragments qui échantillonnent au hasard.
+>
+> `magFilter` reste donc `NearestFilter` (le gros pixel de près ne bouge pas) ;
+> la réduction passe en mipmaps + anisotropie. Trois modes commutables en jeu
+> (`cassandre.filtrage`), plus `cassandre.resolution(l, h)` puisque c'était la
+> demande. **Touche l'invariant #4 : amendement proposé dans l'[ADR 0027](docs/decisions/0027-filtrage-des-textures-reduites.md),
+> EN ATTENTE DE VALIDATION.**
+
 **Actions.** Espace par espace, en commençant par les rayons (reprise directe de la salle d'essai). Compléter la bibliothèque au fil de l'eau en repassant par N2 et N3 pour tout besoin nouveau. Éclairage de secteur par espace (néons de la surface de vente, pénombre du parking souterrain). Bake, validation, export et test en jeu après chaque espace ou lot d'espaces ; l'utilisateur joue chaque lot.
 
 **Critères d'acceptation.** Budget de rendu de l'[ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md) — **1 500 000 triangles** (et non les 200 000 posés a priori à N1, révisés après mesure), 200 lots de dessin, 48 lampes allumées ; `validate_level.py --strict` sans erreur ; captures ; verdict positif de l'utilisateur à chaque lot.
