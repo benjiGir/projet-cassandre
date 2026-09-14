@@ -52,7 +52,8 @@ interface MuzzleFlashPreset {
  * nettement réduites par rapport au pompe.
  */
 const MUZZLE_FLASH_PRESETS: Record<"melee" | "shotgun", MuzzleFlashPreset> = {
-  shotgun: { color: 0xfff2c0, intensity: 60, range: 6, size: 0.22, offset: 0.45 },
+  // Le pompe part du bout du canon affiché (`Viewmodel.muzzleWorldPosition`) : juste devant.
+  shotgun: { color: 0xfff2c0, intensity: 60, range: 6, size: 0.22, offset: 0.06 },
   melee: { color: 0xd8d8e8, intensity: 12, range: 2.5, size: 0.08, offset: 0.15 },
 };
 

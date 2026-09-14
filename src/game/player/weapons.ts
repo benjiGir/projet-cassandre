@@ -12,6 +12,19 @@ import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig
 
 const TAU = Math.PI * 2;
 
+/** Valeur plafond des horloges du viewmodel : « il y a très longtemps ». */
+const CLOCK_AT_REST = 1e3; // s
+
+/** Horloges lues par le viewmodel, voir `WeaponSystem.viewmodelClocks`. */
+export interface ViewmodelClocks {
+  active: "none" | "melee" | "shotgun";
+  /** Arme montrée avant le dernier changement. */
+  previous: "none" | "melee" | "shotgun";
+  sinceSwitch: number;
+  sinceMeleeFire: number;
+  sinceShotgunFire: number;
+}
+
 /**
  * Matériau de repli pour tout ce qui n'est pas un ennemi. La gym est en
  * boîtes blanches (invariant #9) : il n'existe aucun système de tag de
@@ -153,6 +166,22 @@ export class WeaponSystem {
   private previousRecoilKickPitch = 0; // radians
   private recoilRecoverTime = 0;
 
+  // Horloges du viewmodel (balayage, pompage, changement d'arme) : avancées
+  // au pas fixe pour que le hitstop fige aussi l'arme, lues par le rendu
+  // seul — AUCUNE ne conditionne un tir (invariant #10). Une valeur finie
+  // plutôt qu'`Infinity` : l'interpolation `prev + (cur - prev) * alpha`
+  // donnerait `NaN`.
+  private sinceMeleeFire = CLOCK_AT_REST;
+  private previousSinceMeleeFire = CLOCK_AT_REST;
+  private sinceShotgunFire = CLOCK_AT_REST;
+  private previousSinceShotgunFire = CLOCK_AT_REST;
+  private sinceSwitch = CLOCK_AT_REST;
+  private previousSinceSwitch = CLOCK_AT_REST;
+  /** Arme que le viewmodel montrait avant le dernier changement. */
+  private switchedFrom: "none" | "melee" | "shotgun" = "melee";
+  /** Dernière arme vue par `update`, pour détecter un changement d'où qu'il vienne (touche, ramassage, désarmement). */
+  private shownWeapon: "none" | "melee" | "shotgun" = "melee";
+
   // Files d'événements de la frame d'affichage courante, accumulées au fil
   // des pas fixes (une frame lente peut en exécuter plusieurs) : contrat
   // complet (qui lit, qui vide, dans quel ordre) —
@@ -207,6 +236,9 @@ export class WeaponSystem {
 
   /** À appeler avant `update`, au même endroit que `player.snapshotPrevious()`. */
   snapshotPrevious() {
+    this.previousSinceMeleeFire = this.sinceMeleeFire;
+    this.previousSinceShotgunFire = this.sinceShotgunFire;
+    this.previousSinceSwitch = this.sinceSwitch;
     this.previousRecoilEnvelope = this.recoilEnvelope;
     this.previousRecoilKickPosition.copy(this.recoilKickPosition);
     this.previousRecoilKickPitch = this.recoilKickPitch;
@@ -230,6 +262,8 @@ export class WeaponSystem {
     this.hasMelee = false;
     this.hasShotgun = false;
     this.activeWeapon = "none";
+    this.shownWeapon = "none";
+    this.switchedFrom = "none";
   }
 
   /**
@@ -271,6 +305,16 @@ export class WeaponSystem {
     outEuler.set(pitch * t, 0, 0, "XYZ");
   }
 
+  /** Horloges du viewmodel interpolées pour le rendu, écrites dans `out` — même modèle que `viewmodelPose`. */
+  viewmodelClocks(alpha: number, out: ViewmodelClocks): ViewmodelClocks {
+    out.active = this.activeWeapon;
+    out.previous = this.switchedFrom;
+    out.sinceSwitch = THREE.MathUtils.lerp(this.previousSinceSwitch, this.sinceSwitch, alpha);
+    out.sinceMeleeFire = THREE.MathUtils.lerp(this.previousSinceMeleeFire, this.sinceMeleeFire, alpha);
+    out.sinceShotgunFire = THREE.MathUtils.lerp(this.previousSinceShotgunFire, this.sinceShotgunFire, alpha);
+    return out;
+  }
+
   /**
    * Un pas fixe d'armes. `dt` est le dt de GAMEPLAY (déjà scalé par le
    * hitstop) — jamais d'horloge murale ici, tout se rejoue à l'identique.
@@ -281,6 +325,10 @@ export class WeaponSystem {
   update(dt: number, frame: InputFrame, eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     const cfg = this.cfg;
 
+    this.sinceMeleeFire = Math.min(CLOCK_AT_REST, this.sinceMeleeFire + dt);
+    this.sinceShotgunFire = Math.min(CLOCK_AT_REST, this.sinceShotgunFire + dt);
+    this.sinceSwitch = Math.min(CLOCK_AT_REST, this.sinceSwitch + dt);
+
     this.meleeCooldownRemaining = Math.max(0, this.meleeCooldownRemaining - dt);
     this.shotgunCooldownRemaining = Math.max(0, this.shotgunCooldownRemaining - dt);
 
@@ -289,6 +337,13 @@ export class WeaponSystem {
     // pied-de-biche pendant que le joueur est censé être désarmé.
     if (frame.switchToMelee && this.hasMelee) this.activeWeapon = "melee";
     if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
+    // Un ramassage (`pickUp*`, appelé par l'interaction APRÈS ce pas) est vu
+    // au pas suivant : un pas de retard, invisible.
+    if (this.activeWeapon !== this.shownWeapon) {
+      this.switchedFrom = this.shownWeapon;
+      this.shownWeapon = this.activeWeapon;
+      this.sinceSwitch = 0;
+    }
 
     // Récupération d'abord (comme `landingDip` dans `controller.ts`) : elle
     // décroît la valeur héritée du pas PRÉCÉDENT. Si ce pas-ci déclenche un
@@ -304,6 +359,7 @@ export class WeaponSystem {
       if (this.activeWeapon === "melee" && this.hasMelee) {
         if (this.meleeCooldownRemaining <= 0) {
           this.fireMelee(eyeOrigin, yaw, pitch);
+          this.sinceMeleeFire = 0;
           this.meleeCooldownRemaining = cfg.meleeCooldown;
           this.applyKick(cfg.meleeRecoil);
         }
@@ -312,6 +368,7 @@ export class WeaponSystem {
       } else if (this.activeWeapon === "shotgun" && this.hasShotgun) {
         if (this.shotgunCooldownRemaining <= 0 && this.shotgunAmmo > 0) {
           this.fireShotgun(eyeOrigin, yaw, pitch);
+          this.sinceShotgunFire = 0;
           this.shotgunCooldownRemaining = cfg.shotgunCooldown;
           this.shotgunAmmo -= 1;
           this.applyKick(cfg.shotgunRecoil);

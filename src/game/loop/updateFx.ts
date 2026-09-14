@@ -32,6 +32,7 @@ const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont 
 
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
+const muzzleScratch = new THREE.Vector3();
 
 const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 
@@ -73,7 +74,13 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // CETTE MÊME fonction, après tous ses lecteurs — jamais ici, avant
         // qu'ils aient fini de lire.
         for (const event of session.weapons.fireEvents) {
-          engine.fx.spawnMuzzleFlash(event.muzzlePosition, event.muzzleDirection, event.weapon);
+          // L'éclair du pompe naît au bout du canon affiché, pas au centre de
+          // l'écran ; le pied-de-biche garde son étincelle devant l'œil.
+          const flashOrigin =
+            event.weapon === "shotgun"
+              ? engine.viewmodel.muzzleWorldPosition(muzzleScratch)
+              : event.muzzlePosition;
+          engine.fx.spawnMuzzleFlash(flashOrigin, event.muzzleDirection, event.weapon);
           if (event.weapon === "shotgun") {
             engine.fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
           }
@@ -213,10 +220,13 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           playEnemySfx("hurt");
         }
         for (const event of session.directorManager.revealEvents) {
-          // Bascule costume humain -> reptilien : teinte appliquée UNE FOIS ici
-          // (événement discret), jamais reposée à chaque frame dans
-          // `interpolateVisuals` — voir `Director.tintColor`/`revealed`.
-          session.directorSprites.get(event.director.id)?.setTint(event.director.tintColor);
+          // Bascule costume humain -> reptilien, UNE FOIS ici (événement
+          // discret) : la peau `revele` de la planche, ou à défaut (planche de
+          // repli) une teinte — voir `Director.tintColor`/`revealed`.
+          const sprite = session.directorSprites.get(event.director.id);
+          const revealedAtlas = engine.directorSheet.atlases.revele;
+          if (revealedAtlas) sprite?.setAtlas(revealedAtlas);
+          else sprite?.setTint(event.director.tintColor);
           engine.fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
         }
         for (const event of session.directorManager.deathEvents) {

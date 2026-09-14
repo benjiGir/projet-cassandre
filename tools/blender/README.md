@@ -20,6 +20,8 @@ Scripts headless. Aucun ne nécessite d'interface.
 | `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
+| `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
+| `build_weapons.py` | pied-de-biche et pompe en vue subjective, tenus par les bras du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
@@ -38,6 +40,68 @@ lumière qu'elle efface ses ombres), `--pass indirect` (montage hybride,
 ADR 0024), `--ambient` (plancher d'éclairage) et `--emissive-marker` (une
 source ne s'éclaire pas elle-même). Leur raison d'être est dans
 [docs/pipeline/niveau-blender.md](../../docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors).
+
+```bash
+# Sprites des ennemis (ADR 0028) — ~10 s par personnage
+blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard
+blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage directeur
+# Itération rapide : quelques animations et directions, écrit <personnage>_apercu.png
+blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard --anims aim,fire --directions 0,2 --out renders/sprites
+```
+
+Pièges payés en écrivant ce script, tous silencieux :
+
+- **Remettre le rig au repos avant chaque pose.** Les actions du modèle
+  n'animent pas les mêmes os (`Man_Idle` : 15 canaux, `Man_Run` : 22) : un os
+  absent de la nouvelle action garde la pose précédente, et un pied de course
+  traîne sous la visée.
+- **Accrocher toutes les pièces (pistolet, lunettes, crête) avant le premier
+  rendu.** Accrochée après, une pièce hérite de la dernière pose rendue — le
+  corps allongé de la mort — et flotte à côté du crâne.
+- **Désélectionner avant `object.join`.** L'import glTF laisse tout le
+  personnage sélectionné, et `join` avale le mesh skinné dans le pistolet.
+- **Le matériau `Eyes` habille aussi la ceinture et les boutons.** Placer les
+  lunettes sur son centre les posait à la taille : seuls comptent les sommets
+  au-dessus de la base du crâne.
+- **La veste a un jour au milieu du ventre.** Un rayon tiré de face à x = 0 la
+  traverse et touche le DOS du costume (y > 0) ; une cravate calée dessus part
+  en biais. Seuls les impacts sur la moitié avant du corps comptent, et la
+  cravate est verticale.
+- **Coupé : le reflet spéculaire de Workbench.** Sur une face tournée vers la
+  caméra, il grise un noir — les lunettes disparaissaient de face.
+
+Pour juger la lisibilité sans lancer le jeu, réduire une case à la taille
+qu'elle occupe à l'écran : `360 / (2 d tan 37,5°)` pixels par mètre à `d`
+mètres, soit ~38 px de haut pour un Costard à 11 m.
+
+Côté modèle : `TieTexture` est le plastron de chemise, pas la cravate (d'où la
+cravate construite par script), et le `.glb` traîne une `Icosphere` hors du rig.
+
+```bash
+# Armes du joueur (ADR 0029) — écrit aussi renders/armes/{pied_de_biche,pompe}.png, vues depuis l'œil au FOV du jeu
+blender -b --factory-startup -P tools/blender/build_weapons.py
+# --debug ajoute des vues orthographiques de côté et de dessus, pour voir où tombent les mains
+blender -b --factory-startup -P tools/blender/build_weapons.py -- --debug
+```
+
+La place de l'arme à l'écran se règle en tête du script (`PRISE_*`, `AXE_*`,
+repère de l'œil), jamais en TypeScript. Le script imprime, pour chaque bras, la
+distance épaule-cible et l'écart du poignet à sa cible : au-delà de quelques
+millimètres, le bras est trop court pour la prise demandée.
+
+Pièges payés, tous silencieux :
+
+- **L'IK écrase la rotation de la main.** Dans une même pile, le solveur IK
+  réoriente la paume, qui fait partie de sa chaîne : on résout l'IK, on fige la
+  pose obtenue, on coupe l'IK, PUIS on applique la rotation de main.
+- **L'angle de pôle dépend du roulis des os** : le script essaie les angles de
+  15 en 15° et garde celui qui pose le coude au plus près de sa cible.
+- **Les doigts se ferment par une rotation NÉGATIVE** autour de l'axe X de l'os
+  (vers la paume), pour les deux mains ; positive, la main s'ouvre à l'envers.
+- **Retirer l'action d'animation** après la pose de départ, sinon une
+  réévaluation écrase les poses figées.
+- **Jamais d'extra `pivot`** : `GLTFLoader` le réserve (voir docs/systems/rendu.md).
+- **Un bras de 1,80 m n'atteint pas le fût** : les bras sont au gabarit 2,20 m.
 
 ```bash
 # Kit modulaire

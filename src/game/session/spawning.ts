@@ -1,17 +1,31 @@
 import * as THREE from "three";
+import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
 import { assetUrl } from "../../core/assetPath";
 import { runGameplaySync } from "../../core/runtime";
+import { RaycastService } from "../../physics/raycast";
+import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
+import { enemySpriteQuad } from "../../render/enemySprites";
 import { LightPool } from "../../render/lightPool";
-import { Suit, SUIT_ATLAS_ROWS } from "../entities/suit";
-import { Director, DIRECTOR_ATLAS_ROWS } from "../entities/director";
+import { dressWeaponPickup } from "../../render/viewmodel";
+import { Suit } from "../entities/suit";
+import { suitConfig } from "../entities/suitConfig";
+import { Director } from "../entities/director";
+import { directorConfig } from "../entities/directorConfig";
 import { createLevelSession } from "../level/hotReload";
 import { PathfindingService, navGraphStats } from "../level/pathfinding";
 import { useGameStore } from "../state";
 import { type GameSession } from "./gameSession";
-import { type PersistentEngine, SUIT_SPRITE_HEIGHT, DIRECTOR_SPRITE_HEIGHT } from "./gameEngine";
+import { type PersistentEngine } from "./gameEngine";
+
+/**
+ * Normales des sprites d'ennemis inclinées de 45° vers le haut : les lampes du
+ * niveau v2 sont des néons de plafond, qu'un quad vertical ne voit presque pas.
+ * see: docs/systems/rendu.md#éclairage-des-sprites
+ */
+const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
 /**
  * Fait apparaître un Costard ET son `BillboardSprite`, toujours ensemble —
@@ -30,10 +44,13 @@ export function spawnSuitAt(engine: PersistentEngine, session: GameSession, x: n
   facing.normalize();
 
   const suit = session.suitManager.spawnSuit(x, feetY, z, facing);
-  const sprite = new BillboardSprite(engine.scene, engine.suitAtlas, {
-    rows: SUIT_ATLAS_ROWS,
-    height: SUIT_SPRITE_HEIGHT,
-    verticalAnchor: 0.5,
+  // Le rendu interpole le CENTRE de la capsule : les pieds de l'atlas se
+  // posent sur son bas, offset du KCC compris.
+  const sheet = engine.suitSheet;
+  const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
+    rows: sheet.rows,
+    normalTilt: ENEMY_SPRITE_NORMAL_TILT,
+    ...enemySpriteQuad(sheet, suitConfig.capsuleHalfHeight + suitConfig.capsuleRadius + suitConfig.colliderOffset),
   });
   session.suitSprites.set(suit.id, sprite);
   return suit;
@@ -52,13 +69,30 @@ export function spawnDirectorAt(
   facing.normalize();
 
   const director = session.directorManager.spawnDirector(x, feetY, z, facing);
-  const sprite = new BillboardSprite(engine.scene, engine.directorAtlas, {
-    rows: DIRECTOR_ATLAS_ROWS,
-    height: DIRECTOR_SPRITE_HEIGHT,
-    verticalAnchor: 0.5,
+  const sheet = engine.directorSheet;
+  const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
+    rows: sheet.rows,
+    normalTilt: ENEMY_SPRITE_NORMAL_TILT,
+    ...enemySpriteQuad(
+      sheet,
+      directorConfig.capsuleHalfHeight + directorConfig.capsuleRadius + directorConfig.colliderOffset,
+    ),
   });
   session.directorSprites.set(director.id, sprite);
   return director;
+}
+
+const GROUND_PROBE_GROUPS = interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD);
+
+/** Hauteur du premier collider du monde sous `point` (3 m au plus), `null` sinon. */
+function groundBelow(session: GameSession, point: THREE.Vector3): number | null {
+  const ray = new RAPIER.Ray({ x: point.x, y: point.y, z: point.z }, { x: 0, y: -1, z: 0 });
+  const hit = runGameplaySync(
+    RaycastService.use((raycast) =>
+      raycast.castRay(session.physics, ray, 3, true, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, GROUND_PROBE_GROUPS),
+    ),
+  );
+  return hit ? point.y - hit.timeOfImpact : null;
 }
 
 /**
@@ -83,6 +117,15 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       // lève aucune exception, elle affiche du vide.
       // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
       session.lightPool = new LightPool(handle.lights);
+
+      // Ramassages d'armes : la boîte du `.glb` cède la place au vrai modèle,
+      // posé sur la surface réellement sous elle.
+      for (const useObject of handle.useObjects) {
+        const weapon = useObject.name === "use_crowbar" ? "melee" : useObject.name === "use_shotgun" ? "shotgun" : null;
+        if (!weapon) continue;
+        const groundY = groundBelow(session, useObject.position);
+        dressWeaponPickup(useObject.object, weapon, engine.weaponModels, groundY);
+      }
 
       const navStats = navGraphStats(session.currentNavGraph);
       console.info(

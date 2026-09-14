@@ -8,6 +8,7 @@ import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
 import { PathfindingService, type NavGraph } from "../level/pathfinding";
+import type { EnemyAnimationInput } from "../../render/enemySprites";
 
 /**
  * Machine à états PARTAGÉE entre `Suit` et `Director` — voir
@@ -102,33 +103,45 @@ export interface EnemyConfig {
   knockbackUpBoost: number;
 }
 
-// États / lignes d'atlas — partagés (identiques entre Suit et Director).
+// États — partagés (identiques entre Suit et Director).
 
 export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
 export type EnemyState = EnemyLiveState | "dead" | "corpse";
 
-export const ENEMY_DEATH_ROW_BASE = 5;
-export const ENEMY_LIVE_STATE_ROW: Record<EnemyLiveState, number> = {
-  idle: 0,
-  alert: 1,
-  chase: 2,
-  attack: 3,
-  stagger: 4,
+/** Pose du sprite pour chaque état : l'attaque se TIENT en joue pendant la télégraphie. */
+const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
+  idle: "idle",
+  alert: "alert",
+  chase: "chase",
+  attack: "aim",
+  stagger: "stagger",
+  dead: "death",
+  corpse: "corpse",
 };
 
-/** Ligne d'atlas de la pose courante — voir `SUIT_ATLAS_ROWS`/`DIRECTOR_ATLAS_ROWS`. Partagé : même calcul pour les deux types d'ennemi, seul `deathFrameCount`/`deathFrameDuration` varie (identiques en pratique aujourd'hui, mais gardés paramétrables). */
-export function enemySpriteRow(
-  state: EnemyState,
-  stateTimer: number,
-  deathFrameDuration: number,
-  deathFrameCount: number,
-): number {
-  if (state === "dead") {
-    const frame = Math.min(deathFrameCount - 1, Math.floor(stateTimer / deathFrameDuration));
-    return ENEMY_DEATH_ROW_BASE + frame;
-  }
-  if (state === "corpse") return ENEMY_DEATH_ROW_BASE + deathFrameCount - 1;
-  return ENEMY_LIVE_STATE_ROW[state as EnemyLiveState];
+/**
+ * Traduit l'état courant en entrées d'animation du sprite, écrites dans `out`
+ * (zéro allocation par frame). Lecture seule : l'animation ne décide rien.
+ * see: docs/systems/rendu.md#animation-des-sprites-dennemis
+ */
+export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput): EnemyAnimationInput {
+  const snapshot = actor.getSnapshot();
+  const ctx = snapshot.context;
+  const state = snapshot.value as EnemyState;
+  out.pose = ENEMY_POSE[state];
+  out.poseTime = ctx.stateTimer;
+  out.poseDuration =
+    state === "alert"
+      ? ctx.cfg.alertDuration
+      : state === "stagger"
+        ? ctx.cfg.staggerDuration
+        : state === "dead"
+          ? ctx.cfg.deathFrameDuration * ctx.deathFrameCount
+          : 0;
+  out.clock = ctx.animClock;
+  out.stride = ctx.strideDistance;
+  out.timeSinceShot = ctx.timeSinceShot;
+  return out;
 }
 
 // Contexte per-tick fourni par l'appelant (SuitManager/DirectorManager) —
@@ -181,8 +194,17 @@ export interface EnemyMachineContext {
   currentWaypointIndex: number;
   readonly lastPathQueryTarget: THREE.Vector3;
 
-  /** Nombre de frames de l'animation de mort — `DEATH_FRAME_COUNT`/`DIRECTOR_DEATH_FRAME_COUNT` (4 dans les deux cas aujourd'hui), fourni par le wrapper à la construction plutôt que codé en dur ici. */
+  /** Nombre de frames de l'animation de mort — `DEATH_FRAME_COUNT`/`DIRECTOR_DEATH_FRAME_COUNT`, fourni par le wrapper à la construction plutôt que codé en dur ici. */
   readonly deathFrameCount: number;
+
+  // --- Horloges d'animation du sprite, avancées au pas fixe et lues par le
+  // rendu seul (`readEnemyAnimation`) : aucune décision ne les consulte.
+  /** Secondes de gameplay depuis l'apparition. */
+  animClock: number;
+  /** Mètres parcourus depuis l'apparition : font défiler la course. */
+  strideDistance: number;
+  /** Secondes depuis le dernier tir réellement parti. */
+  timeSinceShot: number;
 
   // --- Scratch, zéro allocation en régime établi (identique à l'avant-jalon).
   readonly scratchRay: RAPIER.Ray;
@@ -252,6 +274,10 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
     lastPathQueryTarget: new THREE.Vector3(Number.POSITIVE_INFINITY, 0, Number.POSITIVE_INFINITY),
 
     deathFrameCount: params.deathFrameCount,
+
+    animClock: 0,
+    strideDistance: 0,
+    timeSinceShot: Number.POSITIVE_INFINITY,
 
     scratchRay: new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 }),
     scratchToPlayer: new THREE.Vector3(),
@@ -541,6 +567,7 @@ function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext):
 
   if (!hasClearWorldPath(updateCtx.physics, eye, targetEye, ctx.scratchRay)) return;
 
+  ctx.timeSinceShot = 0; // le coup part, touché ou non.
   ctx.scratchAimDir.subVectors(targetEye, eye).normalize();
   applyAimJitter(ctx, ctx.scratchAimDir, ctx.scratchJitteredDir);
 
@@ -601,6 +628,7 @@ function integratePhysics(ctx: EnemyMachineContext, dt: number, updateCtx: Enemy
     (other) => other.handle !== collider.handle,
   );
   updateCtx.kcc.computedMovement(ctx.movementScratch);
+  ctx.strideDistance += Math.hypot(ctx.movementScratch.x, ctx.movementScratch.z);
   const grounded = updateCtx.kcc.computedGrounded();
   if (grounded && ctx.verticalVelocity < 0) ctx.verticalVelocity = 0;
   ctx.isGrounded = grounded;
@@ -843,6 +871,8 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
   ctx.pendingAlert = false;
   ctx.pendingTelegraph = false;
   ctx.pendingAttackDamage = 0;
+  ctx.animClock += dt;
+  ctx.timeSinceShot += dt;
 
   if (state === "corpse") return; // figé, rien à faire (pas d'allocation, pas de raycast).
 

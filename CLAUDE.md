@@ -108,9 +108,51 @@ assets_src/blender/   sources .blend (kit + niveaux), jamais servi en runtime
 assets_src/library/   bibliothèque d'assets du niveau v2 (.blend + catégories Asset Browser)
 assets_src/cc0_raw/   packs CC0 bruts, gitignorés (registre : assets_src/LICENCES_ASSETS.md)
 public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
+public/assets/sprites/ atlas 8 directions + manifestes des ennemis (générés)
+public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 ```
 
 ## Phase courante
+
+> **Armes du joueur — vrais modèles (2026-09-13), EN ATTENTE DU VERDICT DE
+> PLAYTEST.** Pied-de-biche et pompe en 3D basse définition, tenus par les
+> avant-bras du « Man in Long Sleeves » CC0 posés par IK
+> ([ADR 0029](docs/decisions/0029-armes-en-vue-subjective.md),
+> `tools/blender/build_weapons.py`). Placement à l'écran réglé DANS BLENDER
+> (repère de l'œil), animations procédurales en TypeScript : balayage autour
+> du coude, coup de pompe (le fût et la main gauche reculent), changement
+> d'arme (descente / remontée). Horloges au pas fixe dans `WeaponSystem`, qui
+> ne retardent jamais un tir (invariant #10, testé). Les armes passent devant
+> les murs grâce à `gl.depthRange(0, 0.05)` ; l'éclair du pompe naît au bout du
+> canon ; `use_crowbar`/`use_shotgun` montrent la vraie arme posée au sol.
+> Vérifié en jeu : placement, balayage, pompage, changement d'arme par la
+> touche 1, mur, éclair, ramassages du niveau v2. **Non vérifié** : un vrai tir
+> à la souris (verrouillage du pointeur hors de portée de l'automatisation) et
+> la sensation en mouvement.
+
+> **Ennemis — vrais sprites animés (2026-09-13), EN ATTENTE DU VERDICT DE
+> PLAYTEST.** L'atlas numéroté est remplacé par des sprites 8 directions
+> pré-rendus depuis le « Man in Suit » CC0 de Quaternius
+> ([ADR 0028](docs/decisions/0028-sprites-ennemis-pre-rendus.md)) : Costard en
+> costume noir, cravate rouge, lunettes noires ; Directeur en costume beige,
+> peau `revele` verte à crête posée par `setAtlas` à la révélation. Vingt
+> lignes par atlas : repos, alerte, course (6 frames entraînées par la
+> DISTANCE parcourue), visée à deux mains, tir avec éclair, recul, mort
+> (6 frames, un plongeon en avant). Régénérer : `render_enemy_sprites.py`
+> (`tools/blender/README.md`), le jeu lit le manifeste JSON au démarrage.
+> Horloges d'animation dans le contexte XState (`animClock`,
+> `strideDistance`, `timeSinceShot`), avancées au pas fixe, lues par le rendu
+> seul. Vérifié en jeu (gym et niveau v2) : les huit directions, la course,
+> la visée, le tir, les six frames de mort et la bascule de peau. **Pas
+> encore jugé en jouant** ; chaque ennemi visible reste un lot de dessin sur
+> un budget de 186/200.
+> **Passe de lisibilité (2026-09-14)** après « trop low res » : la cause
+> mesurée est le budget de pixels (38 px de haut à 11 m) et un modèle fin et
+> sombre, pas le filtrage. Membres épaissis, tête ×1,22, veste ardoise, plastron
+> blanc, lunettes et cravate élargies, atlas à 96 px/m (1920 × 3840, ~118 Mo de
+> VRAM pour les trois), normales des quads inclinées de 45° vers le haut pour
+> capter les néons. Résolution interne inchangée (invariant #4). Détail :
+> ADR 0028, section « Révision du 2026-09-14 ».
 
 > **Chantier Niveau v2 — En cours (2026-09-13) : N0, N1, N3, N4 (gate de
 > richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur

@@ -1,0 +1,47 @@
+{
+  "personnage": "directeur",
+  "source": "assets_src/cc0_raw/quaternius_man_in_suit/man_in_suit.glb",
+  "cellWidth": 240,
+  "cellHeight": 192,
+  "columns": 8,
+  "rows": 20,
+  "pixelsPerMeter": 84,
+  "feetFromBottom": 4,
+  "atlases": {
+    "humain": "directeur.png",
+    "revele": "directeur_revele.png"
+  },
+  "animations": {
+    "idle": {
+      "row": 0,
+      "frames": 2,
+      "fps": 1.5
+    },
+    "alert": {
+      "row": 2,
+      "frames": 2
+    },
+    "chase": {
+      "row": 4,
+      "frames": 6,
+      "metersPerCycle": 2.8
+    },
+    "aim": {
+      "row": 10,
+      "frames": 1
+    },
+    "fire": {
+      "row": 11,
+      "frames": 1,
+      "duration": 0.12
+    },
+    "stagger": {
+      "row": 12,
+      "frames": 2
+    },
+    "death": {
+      "row": 14,
+      "frames": 6
+    }
+  }
+}

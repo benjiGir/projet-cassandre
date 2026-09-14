@@ -4,6 +4,7 @@ import { Effect } from "effect";
 import { input } from "../../core/input";
 import { inputRecorder } from "../../core/inputRecorder";
 import { runGameplaySync } from "../../core/runtime";
+import { createEnemyAnimationInput, enemySpriteRow } from "../../render/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 
@@ -29,6 +30,7 @@ const suitForwardScratch = new THREE.Vector3();
 // Même rôle, pour le Directeur.
 const directorPositionScratch = new THREE.Vector3();
 const directorForwardScratch = new THREE.Vector3();
+const enemyAnimationScratch = createEnemyAnimationInput();
 
 // Tourne au taux d'affichage, pas le pas fixe — même frontière Effect
 // synchrone stricte (`runGameplaySync`) que le pas fixe.
@@ -117,7 +119,8 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
           if (!sprite) continue;
           const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
           const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
-          sprite.updatePose(engine.camera, pos, fwd, suit.spriteRow);
+          const row = enemySpriteRow(engine.suitSheet, suit.animation(enemyAnimationScratch));
+          sprite.updatePose(engine.camera, pos, fwd, row);
         }
 
         // Même chose pour le Directeur (au plus un, mais `directors` reste un
@@ -127,7 +130,8 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
           if (!sprite) continue;
           const pos = director.interpolatedPosition(alpha, directorPositionScratch);
           const fwd = director.interpolatedForward(alpha, directorForwardScratch);
-          sprite.updatePose(engine.camera, pos, fwd, director.spriteRow);
+          const row = enemySpriteRow(engine.directorSheet, director.animation(enemyAnimationScratch));
+          sprite.updatePose(engine.camera, pos, fwd, row);
         }
       });
     }),

@@ -12,12 +12,10 @@ import {
   createEnemyBody,
   createEnemyMachineContext,
   createEnemyPrng,
-  enemySpriteRow,
-  ENEMY_DEATH_ROW_BASE,
-  ENEMY_LIVE_STATE_ROW,
   forceEnemyState,
   interpolateEnemyForward,
   interpolateEnemyPosition,
+  readEnemyAnimation,
   snapshotEnemyPrevious,
   tickEnemy,
   type EnemyActor,
@@ -25,6 +23,7 @@ import {
   type EnemyState,
   type EnemyUpdateContext,
 } from "./enemyMachine";
+import type { EnemyAnimationInput } from "../../render/enemySprites";
 
 /**
  * L'ennemi « Directeur » — boss unique de fin (Zone E), 2ᵉ type d'ennemi du
@@ -36,26 +35,11 @@ import {
  * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 
-/** Nombre de frames de l'animation de mort — même choix que `Suit` (4 frames). */
-export const DIRECTOR_DEATH_FRAME_COUNT = 4;
-
-/**
- * Nombre de lignes de l'atlas 8×N attendu par `BillboardSprite` — MÊME
- * disposition que `SUIT_ATLAS_ROWS`. La révélation (costume humain ->
- * reptilien) N'AJOUTE PAS de lignes ici : elle est rendue par une TEINTE
- * (`BillboardSprite.setTint`, voir `tintColor`) appliquée par-dessus les
- * mêmes lignes d'état.
- */
-export const DIRECTOR_ATLAS_ROWS = 5 + DIRECTOR_DEATH_FRAME_COUNT;
+/** Frames de l'animation de mort — même choix que `Suit` (6 frames, 0,9 s au `deathFrameDuration` du Directeur). */
+export const DIRECTOR_DEATH_FRAME_COUNT = 6;
 
 /** États de la machine — alias de `EnemyState` (`enemyMachine.ts`), même union littérale que `SuitState`. */
 export type DirectorState = EnemyState;
-
-/** Exposée pour documentation/débogage (mosaïque de diagnostic états × directions). */
-export const DIRECTOR_STATE_ROWS = {
-  ...ENEMY_LIVE_STATE_ROW,
-  deathBase: ENEMY_DEATH_ROW_BASE,
-} as const;
 
 /** Contexte partagé injecté à chaque `Director.update()` — alias de `EnemyUpdateContext` (`enemyMachine.ts`), même graphe partagé (baké sur le gabarit `suitConfig`, voir `level/pathfinding.ts`), même filet de sécurité `computeAvoidedDirection` si `null`/requête échouée. */
 export type DirectorUpdateContext = EnemyUpdateContext;
@@ -196,9 +180,9 @@ export class Director implements Entity {
     return this.ctx.knockbackVelocity;
   }
 
-  /** Ligne d'atlas de la pose courante — voir `DIRECTOR_ATLAS_ROWS`. */
-  get spriteRow(): number {
-    return enemySpriteRow(this.state, this.stateTimer, this.cfg.deathFrameDuration, DIRECTOR_DEATH_FRAME_COUNT);
+  /** Entrées d'animation du sprite, écrites dans `out` — voir `render/enemySprites.ts::enemySpriteRow`. */
+  animation(out: EnemyAnimationInput): EnemyAnimationInput {
+    return readEnemyAnimation(this.actor, out);
   }
 
   /** Teinte à appliquer sur le sprite (`BillboardSprite.setTint`) pour l'état de révélation courant. */

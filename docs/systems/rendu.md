@@ -241,10 +241,12 @@ cette ligne, son offset V doit donc être `1 - 1/rows`, pas `0`. Piège
 classique d'atlas three.js, pas spécifique à ce projet.
 
 **Deux canaux de teinte indépendants** : `setTint` (`material.color`,
-multiplié avec les pixels de l'atlas — bascule costume humain → reptilien du
-Directeur) et `setFlash`/`updateFlash` (`material.emissive`, flash blanc de
-dégâts) sont deux canaux distincts de `MeshLambertMaterial`, combinables
-sans conflit : l'un module les texels, l'autre s'additionne dessus.
+multiplié avec les pixels de l'atlas) et `setFlash`/`updateFlash`
+(`material.emissive`, flash blanc de dégâts) sont deux canaux distincts de
+`MeshLambertMaterial`, combinables sans conflit : l'un module les texels,
+l'autre s'additionne dessus. La bascule humain → reptilien du Directeur passe
+d'abord par `setAtlas` (la peau `revele` de sa planche) ; la teinte ne sert
+plus que de repli quand la planche ne s'est pas chargée.
 
 **`setFlash` ne somme jamais** : si un flash est déjà en cours, prend le MAX
 de l'intensité courante (déjà partiellement décroissante) et de la nouvelle
@@ -258,6 +260,84 @@ pour le piège de partage de texture évité et l'alternative écartée.
 **Atlas placeholder** (`createPlaceholderAtlas`) : voir
 [Textures](../pipeline/textures.md#atlas-placeholder-de-billboard) pour son
 format et son rôle.
+
+## Animation des sprites d'ennemis
+
+`BillboardSprite` choisit la COLONNE (la direction) ; `render/enemySprites.ts`
+choisit la LIGNE (la frame). Les atlas sont des rendus 3D réduits en pixels
+([ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md)), produits par
+`tools/blender/render_enemy_sprites.py` avec un manifeste JSON qui nomme les
+lignes.
+
+```mermaid
+flowchart LR
+  B["render_enemy_sprites.py<br/>(Blender, hors jeu)"] --> A["costard.png<br/>costard.json"]
+  A -->|"main.ts, au démarrage"| S["EnemySpriteSheet"]
+  M["machine à états<br/>+ horloges d'animation<br/>(pas fixe)"] -->|"readEnemyAnimation"| I["EnemyAnimationInput"]
+  I --> R["enemySpriteRow"]
+  S --> R
+  R -->|"ligne"| P["BillboardSprite.updatePose<br/>(taux d'affichage)"]
+```
+
+**Ce qui fait avancer chaque animation** :
+
+| Pose (état) | Frames | Avance selon |
+|---|---|---|
+| `idle` | 2 | l'horloge d'animation, à `fps` |
+| `alert` | 2 | le temps passé dans l'état, étalé sur `alertDuration` |
+| `chase` | 6 | **les mètres parcourus**, un cycle tous les `metersPerCycle` |
+| `aim` (`attack`) | 1 | tenue pendant toute la télégraphie |
+| `fire` | 1 | affichée `duration` secondes après un tir, par-dessus la course |
+| `stagger` | 2 | étalé sur `staggerDuration` |
+| `death` puis `corpse` | 6 | étalé sur `deathFrameDuration × DEATH_FRAME_COUNT`, puis dernière frame |
+
+**La course suit la distance, pas le temps.** Un Costard qui bute contre un
+mur cesse de courir au lieu de faire du surplace ; un ennemi ralenti par le
+recul ralentit sa foulée. `strideDistance` cumule le déplacement horizontal
+réellement accordé par le KCC, pas la vitesse demandée.
+
+**L'éclair de tir se lit par-dessus la course.** La machine repasse en `chase`
+le pas même où le coup part : sans cette priorité, la frame de tir ne serait
+jamais affichée. `timeSinceShot` est remis à zéro quand le rayon part vraiment
+(ligne de vue confirmée), touché ou non.
+
+**Les horloges vivent dans le contexte XState mais ne décident rien.**
+`animClock`, `strideDistance` et `timeSinceShot` avancent au pas fixe avec le
+`dt` de gameplay : le hitstop fige l'animation avec l'ennemi, et le rejeu F9/F10
+rejoue les mêmes frames. Aucune transition ne les lit, et elles ne consomment
+pas de tirage aléatoire.
+
+**Ancrage vertical** : le rendu interpole le CENTRE de la capsule. La ligne des
+pieds de l'atlas (`feetFromBottom` pixels au-dessus du bas de la case) est posée
+sur le bas de la capsule, offset du KCC compris — `enemySpriteQuad`. La case
+fait 2,5 × 2 m au gabarit du Costard : un corps allongé en fin de mort a besoin
+de la largeur.
+
+**Planche absente** : `loadEnemySpriteSheetOrPlaceholder` retombe sur l'atlas
+numéroté, avec une erreur en console. Le jeu reste jouable, jamais en silence.
+
+### Éclairage des sprites
+
+Un sprite est un quad vertical tourné vers la caméra, éclairé en Lambert comme
+le reste. Or les lampes du niveau v2 sont des néons de plafond : leur lumière
+arrive sur ce quad presque à l'horizontale, et `n · l` reste proche de zéro.
+Les murs compensent par l'indirect cuit dans leurs sommets ; un sprite n'a rien
+de tel, et sortait en silhouette noire dans le parking.
+
+`BillboardSprite` accepte donc `normalTilt` : les normales du quad sont
+inclinées vers le haut (45° pour les ennemis, `ENEMY_SPRITE_NORMAL_TILT` dans
+`game/session/spawning.ts`), sans bouger la géométrie. Le quad capte alors la
+lumière d'en haut comme le ferait un volume, et reste éclairé de face par une
+lampe à hauteur d'homme (cos 45° ≈ 0,7).
+
+### Lisibilité : ce que 360 pixels laissent
+
+À 11 m, un Costard fait 38 px de haut. À cette taille, ni le filtrage ni la
+densité de l'atlas ne changent rien : ce qui se lit, ce sont des masses et des
+valeurs. Les sprites sont donc dessinés pour ça, dans
+`tools/blender/render_enemy_sprites.py` : membres épaissis, tête agrandie,
+veste gris ardoise plutôt que noire, plastron blanc, lunettes et cravate plus
+larges que nature. Détail et mesures dans l'[ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md#révision-du-2026-09-14--lisibilité).
 
 ## Effets visuels de tir (FxSystem)
 
@@ -361,6 +441,81 @@ jamais un ternaire binaire : un ternaire melee/shotgun afficherait le pompe
 par défaut sur `"none"` (arme fantôme à l'écran pour un joueur censé être
 désarmé, Zone A avant ramassage du pied-de-biche) — bug visuel silencieux
 évité en énumérant les trois cas.
+
+### Les modèles : placés dans Blender, animés ici
+
+Pied-de-biche et pompe sont des modèles basse définition tenus par les
+avant-bras du héros ([ADR 0029](../decisions/0029-armes-en-vue-subjective.md)),
+construits par `tools/blender/build_weapons.py` et exportés dans
+`public/assets/weapons/armes.glb`. Les meshes `vm_*` y sont DÉJÀ exprimés dans
+le repère de la caméra : **la place de l'arme à l'écran se règle dans le script
+Blender** (`PRISE_*`, `AXE_*`), en regardant ses vues de contrôle, jamais par des
+constantes en TypeScript. Le jeu n'ajoute que du mouvement autour d'un pivot.
+
+Tout ce que le jeu doit savoir de la géométrie voyage dans les extras glTF :
+
+| Extra | Nœud | Rôle |
+|---|---|---|
+| `prise` | `vm_crowbar`, `vm_shotgun` | poing droit : centre du recul et des changements d'arme |
+| `bout_canon` | `vm_shotgun` | point de départ de l'éclair de tir |
+| `axe_glissiere` | `vm_shotgun_pump` | direction le long de laquelle recule le fût |
+
+**Jamais un extra nommé `pivot`** : `GLTFLoader` (three r185) le réserve à
+`Object3D.pivot` et l'efface de tout nœud qui a des enfants — la pompe perdait
+le sien, le pied-de-biche le gardait.
+
+Un seul `MeshLambertMaterial` à couleurs de sommets pour toutes les armes : un
+lot de dessin pour le pied-de-biche, deux pour la pompe (carcasse, fût mobile).
+
+### Ce qui anime l'arme
+
+```mermaid
+flowchart LR
+  W["WeaponSystem<br/>(pas fixe)"] -->|"viewmodelPose : recul"| V["Viewmodel.update<br/>(taux d'affichage)"]
+  W -->|"viewmodelClocks : sinceSwitch,<br/>sinceMeleeFire, sinceShotgunFire"| A["viewmodelAnimationAt<br/>(pure)"]
+  A -->|"lowered, swing, pump"| V
+```
+
+| Geste | Déclencheur | Forme |
+|---|---|---|
+| Changement d'arme | `activeWeapon` change, d'où que ça vienne (touche, ramassage) | l'ancienne descend en 0,12 s, la nouvelle remonte en 0,18 s |
+| Balayage | un coup de pied-de-biche part | frappe en 0,07 s, retour en 0,28 s, **autour du coude** |
+| Pompage | un tir de pompe part | fût en arrière de 0,2 à 0,33 s, en avant jusqu'à 0,48 s |
+
+**Aucun geste ne retient le joueur (invariant #10).** Les horloges avancent au
+pas fixe, donc le hitstop fige aussi l'arme, mais aucune n'entre dans la
+décision de tirer. Tirer pendant un changement remet l'arme en place aussitôt ;
+le pompage se termine avant la fin du cooldown du pompe (0,8 s), un test y veille.
+
+**Le balayage tourne autour du coude, pas du poing.** Autour du poing,
+l'avant-bras remonte dans le champ et barre l'écran en fin de geste.
+
+**Horloges finies, pas `Infinity`** : l'interpolation `prev + (cur - prev) × α`
+d'une horloge « au repos » à `Infinity` donne `NaN`. Elles plafonnent à 1 000 s.
+
+### Les armes passent devant les murs
+
+La pompe dépasse d'un mètre devant l'œil, la capsule du joueur de 40 cm : collé
+à un mur, le canon s'y enfonçait. Les meshes du viewmodel se dessinent avec
+`gl.depthRange(0, 0.05)` (posé dans `onBeforeRender`, rétabli dans
+`onAfterRender`) : leur profondeur est tassée dans les 5 % avant du tampon. Ils
+passent devant tout ce qui est à plus de ~11 cm de l'œil et gardent leurs
+propres occlusions (une main devant la carcasse). `WebGLState` ne pilote pas
+`depthRange`, three.js ne le rétablit donc jamais à notre place — d'où le
+rétablissement explicite. Écarté : une seconde passe de rendu, qui exigerait de
+dupliquer toutes les lampes sur une couche dédiée.
+
+### Ramassages au sol
+
+`use_crowbar` et `use_shotgun` gardent leur boîte `.glb` (portée d'interaction,
+contrat du loader) mais la rendent invisible : `dressWeaponPickup` y accroche
+le modèle `world_*`, aligné sur la plus grande dimension horizontale de la boîte
+et posé sur la surface **réellement** sous elle, trouvée par un rayon au
+chargement — les boîtes `use_*` du niveau v2 flottent à 25 cm du sol. Le modèle
+est l'enfant de la boîte : le ramassage, qui cache la boîte, le cache avec.
+
+**Repli** : si `armes.glb` ne se charge pas, `loadWeaponModelsOrPlaceholder`
+reprend les boîtes historiques, avec une erreur en console.
 
 ## Bascule wireframe de debug
 

@@ -11,12 +11,10 @@ import {
   createEnemyBody,
   createEnemyMachineContext,
   createEnemyPrng,
-  enemySpriteRow,
-  ENEMY_DEATH_ROW_BASE,
-  ENEMY_LIVE_STATE_ROW,
   forceEnemyState,
   interpolateEnemyForward,
   interpolateEnemyPosition,
+  readEnemyAnimation,
   snapshotEnemyPrevious,
   tickEnemy,
   type EnemyActor,
@@ -24,6 +22,7 @@ import {
   type EnemyState,
   type EnemyUpdateContext,
 } from "./enemyMachine";
+import type { EnemyAnimationInput } from "../../render/enemySprites";
 
 /**
  * L'ennemi « Costard » — Phase 3 (skills `enemy-state-machine`,
@@ -35,24 +34,15 @@ import {
  * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 
-/** Nombre de frames de l'animation de mort (deliverable Phase 3 : 4 frames). */
-export const DEATH_FRAME_COUNT = 4;
-
 /**
- * Nombre de lignes de l'atlas 8×N attendu par `createPlaceholderAtlas`/
- * `BillboardSprite` : 5 poses d'état distinctes (IDLE, ALERTE, POURSUITE,
- * TIR, RECUL) + 4 frames de mort dédiées (CADAVRE réutilise la dernière).
+ * Frames de l'animation de mort : fixe sa durée (× `deathFrameDuration`, soit
+ * 0,72 s), les frames de la planche s'étalent dessus. 6, comme la planche
+ * `costard` : genoux, supplication, bascule, chute, à plat.
  */
-export const SUIT_ATLAS_ROWS = 5 + DEATH_FRAME_COUNT;
+export const DEATH_FRAME_COUNT = 6;
 
 /** États de la machine, mappés sur les noms français du plan/skill en commentaire — alias de `EnemyState` (`enemyMachine.ts`), même union littérale. */
 export type SuitState = EnemyState;
-
-/** Exposée pour documentation/débogage (`cassandre.suitConfig`, mosaïque de diagnostic). */
-export const SUIT_STATE_ROWS = {
-  ...ENEMY_LIVE_STATE_ROW,
-  deathBase: ENEMY_DEATH_ROW_BASE,
-} as const;
 
 /**
  * Contexte partagé injecté à chaque `Suit.update()` par `SuitManager` — alias
@@ -64,7 +54,6 @@ export type SuitUpdateContext = EnemyUpdateContext;
 export class Suit implements Entity {
   readonly id: number;
   private readonly actor: EnemyActor;
-  private readonly cfg: SuitConfig;
 
   /**
    * @param spawnPosition PIEDS du Costard au spawn (x, feetY, z) — même
@@ -80,7 +69,6 @@ export class Suit implements Entity {
     cfg: SuitConfig = defaultSuitConfig,
   ) {
     this.id = allocateEntityId();
-    this.cfg = cfg;
 
     const { body, collider, centerY } = createEnemyBody(physics, cfg, spawnPosition);
 
@@ -195,9 +183,9 @@ export class Suit implements Entity {
     return this.ctx.knockbackVelocity;
   }
 
-  /** Ligne d'atlas de la pose courante — voir `SUIT_ATLAS_ROWS`. Diagnostic direct : chaque état vivant a sa ligne, la mort en a 4 dédiées. */
-  get spriteRow(): number {
-    return enemySpriteRow(this.state, this.stateTimer, this.cfg.deathFrameDuration, DEATH_FRAME_COUNT);
+  /** Entrées d'animation du sprite, écrites dans `out` — voir `render/enemySprites.ts::enemySpriteRow`. */
+  animation(out: EnemyAnimationInput): EnemyAnimationInput {
+    return readEnemyAnimation(this.actor, out);
   }
 
   /** À appeler avant `stepPhysics`, comme `PlayerController.snapshotPrevious`. */

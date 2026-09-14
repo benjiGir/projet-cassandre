@@ -42,3 +42,5 @@ un lien vers son successeur.
 | [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | L'occlusion des lignes de vue ennemies est fiable, et le level design peut s'y fier | accepté |
 | [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU | accepté |
 | [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie sur les textures réduites, gros pixel conservé à l'agrandissement | **proposé** |
+| [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle 3D CC0 | accepté |
+| [0029](0029-armes-en-vue-subjective.md) | Armes en vue subjective : modèles 3D tenus par des bras CC0 | accepté |

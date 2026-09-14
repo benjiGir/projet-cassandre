@@ -29,10 +29,12 @@ partagée : à surveiller si l'une des deux dérive de l'autre.
 ## Atlas placeholder de billboard
 
 `render/billboard.ts::createPlaceholderAtlas` génère par canvas un atlas
-`columns × rows` (aujourd'hui 8×N, voir [Rendu — Sprites billboard 8
-directions](../systems/rendu.md#sprites-billboard-8-directions)) tenant lieu
-de sprite d'ennemi tant qu'aucun art final n'existe (invariant #9). Chaque
-case fait 32×48 px — largement sous la limite 128×128/texture — et porte :
+`columns × rows` (8×10, voir [Rendu — Sprites billboard 8
+directions](../systems/rendu.md#sprites-billboard-8-directions)). Il a tenu
+lieu de sprite d'ennemi jusqu'aux atlas pré-rendus
+([ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md)) ; il ne sert plus
+que de repli quand une planche de `public/assets/sprites/` ne se charge pas.
+Chaque case fait 32×48 px et porte :
 
 - un fond teinté par COLONNE (teinte HSL tournant sur 360°/`columns`, donc
   la colonne `direction = 0` a toujours la même teinte reconnaissable d'un

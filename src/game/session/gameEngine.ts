@@ -5,14 +5,12 @@ import { GameClock } from "../../core/time";
 import { type Recording } from "../../core/inputRecorder";
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/renderer";
 import { FxSystem } from "../../render/fx";
-import { Viewmodel } from "../../render/viewmodel";
+import { Viewmodel, type WeaponModels } from "../../render/viewmodel";
 import { createWireframeToggle } from "../../render/debugView";
 import { HitmarkerOverlay } from "../../render/hitmarker";
 import { CrosshairOverlay } from "../../render/crosshair";
 import { BallisticsDebugOverlay } from "../../render/ballisticsDebug";
-import { BILLBOARD_COLUMNS, createPlaceholderAtlas } from "../../render/billboard";
-import { SUIT_ATLAS_ROWS } from "../entities/suit";
-import { DIRECTOR_ATLAS_ROWS } from "../entities/director";
+import { type EnemySpriteSheet } from "../../render/enemySprites";
 import { weaponConfig } from "../player/weaponConfig";
 import { moveConfig } from "../player/moveConfig";
 import { InteractionSystem } from "../level/interactive";
@@ -39,6 +37,8 @@ export interface GameEngine {
   /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx.ts`. */
   fx: FxSystem;
   viewmodel: Viewmodel;
+  /** Géométries des armes, partagées par le viewmodel et les ramassages posés dans les niveaux. */
+  weaponModels: WeaponModels;
   crosshair: CrosshairOverlay;
   hitmarker: HitmarkerOverlay;
   ballisticsDebug: BallisticsDebugOverlay;
@@ -47,9 +47,9 @@ export interface GameEngine {
   ambientLight: THREE.AmbientLight;
   sunLight: THREE.DirectionalLight;
 
-  /** Atlas UNIQUE, partagé par tous les Costards de toutes les parties — voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`. */
-  suitAtlas: THREE.Texture;
-  directorAtlas: THREE.Texture;
+  /** Planches de sprites, chargées une fois au démarrage et partagées par tous les ennemis de toutes les parties — chaque `BillboardSprite` clone l'atlas (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`). */
+  suitSheet: EnemySpriteSheet;
+  directorSheet: EnemySpriteSheet;
   /** Géométrie/matériau de la carte lâchée par le Directeur, PARTAGÉS entre parties — seule l'instance de mesh (`session.droppedCardMesh`) est propre à une partie. */
   badgeGeometry: THREE.BoxGeometry;
   badgeMaterial: THREE.MeshLambertMaterial;
@@ -89,11 +89,6 @@ export interface GameEngine {
  */
 export type PersistentEngine = Omit<GameEngine, "session">;
 
-/** Capsule Costard : demi-hauteur 0.5 + rayon 0.4 -> hauteur totale 1.8 m, choisie pour matcher EXACTEMENT `DEFAULT_HEIGHT` de `BillboardSprite` (voir `suitConfig.ts`) : `verticalAnchor: 0.5` fait donc coïncider le centre du sprite avec le centre de la capsule que `Suit` interpole, sans calcul de décalage supplémentaire. */
-export const SUIT_SPRITE_HEIGHT = 1.8;
-/** capsuleHalfHeight(0.6) + capsuleRadius(0.45) = 1.05 -> hauteur totale 2.1 m, même règle de correspondance exacte que `SUIT_SPRITE_HEIGHT`. */
-export const DIRECTOR_SPRITE_HEIGHT = 2.1;
-
 /**
  * `true` ssi le monde Rapier de `engine.session` est garanti vivant — pas
  * encore construit, ou déjà `free()`-é pendant la fenêtre transitoire de
@@ -116,6 +111,8 @@ export function buildGameEngine(
   canvas: HTMLCanvasElement,
   root: ReturnType<typeof createRoot>,
   flowActor: GameFlowActor,
+  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet },
+  weaponModels: WeaponModels,
 ): PersistentEngine {
   const scene = new THREE.Scene();
   // Far plane : la gym expose une ligne de vue dégagée du fond de l'aile
@@ -161,7 +158,7 @@ export function buildGameEngine(
   // aucun des deux ne touche au pas fixe ni à `weapons`/`player`. PERSISTANTS
   // (Jalon M8) : liés à `scene`/`camera`, pas à une partie en particulier.
   const fx = new FxSystem(scene);
-  const viewmodel = new Viewmodel(camera);
+  const viewmodel = new Viewmodel(camera, weaponModels);
   // Réticule permanent (retour playtest son, voir `render/crosshair.ts`) :
   // overlay canvas 2D indépendant de React, même conteneur/config que le
   // hitmarker ci-dessous. Construit AVANT le hitmarker pour que celui-ci soit
@@ -179,14 +176,6 @@ export function buildGameEngine(
   // bascule à chaud via `KeyB` dans `loop/updateFx.ts`.
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
 
-  // `BillboardSprite` clone en interne l'objet `THREE.Texture` par instance
-  // (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`),
-  // donc réutiliser cette même texture source pour chaque `new
-  // BillboardSprite(...)`, PARTIE APRÈS PARTIE, est le pattern attendu — pas
-  // besoin de la reconstruire à chaque `bootGameSession`.
-  const suitAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, SUIT_ATLAS_ROWS);
-
-  const directorAtlas = createPlaceholderAtlas(BILLBOARD_COLUMNS, DIRECTOR_ATLAS_ROWS);
   // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager
   // restent purs de tout rendu, voir leur doc de tête) — placeholder simple
   // (invariant #9), retiré de la scène au ramassage OU à un `teardownGameSession`.
@@ -242,13 +231,14 @@ export function buildGameEngine(
     clock,
     fx,
     viewmodel,
+    weaponModels,
     crosshair,
     hitmarker,
     ballisticsDebug,
     ambientLight,
     sunLight: sun,
-    suitAtlas,
-    directorAtlas,
+    suitSheet: sheets.suit,
+    directorSheet: sheets.director,
     badgeGeometry,
     badgeMaterial,
     ballPrevPos,

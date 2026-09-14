@@ -62,6 +62,15 @@ export interface BillboardSpriteOptions {
   alphaTest?: number;
   /** Teinte multipliée avec l'atlas (`material.color`). Défaut blanc (0xffffff, aucune teinte). */
   color?: number;
+  /**
+   * Inclinaison vers le haut des normales du quad, en radians. 0 = normale
+   * tournée vers la caméra (défaut). Un quad vertical reçoit la lumière d'un
+   * plafonnier presque à l'horizontale et reste sombre : incliné, il la capte
+   * comme le ferait un volume. La géométrie ne bouge pas, seul l'éclairage
+   * Lambert change.
+   * see: docs/systems/rendu.md#éclairage-des-sprites
+   */
+  normalTilt?: number;
 }
 
 const DEFAULT_ROWS = 1;
@@ -75,8 +84,8 @@ export class BillboardSprite {
   readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
 
   private readonly scene: THREE.Scene;
-  /** Copie PROPRE à cette instance (piège de partage de texture, ADR 0017) — ne jamais la partager. */
-  private readonly texture: THREE.Texture;
+  /** Copie PROPRE à cette instance (piège de partage de texture, ADR 0017) — ne jamais la partager. Remplacée par `setAtlas`. */
+  private texture: THREE.Texture;
   private readonly rows: number;
 
   private flashIntensity = 0;
@@ -112,6 +121,11 @@ export class BillboardSprite {
     // fraction `anchor` de la hauteur depuis le bas.
     const geometry = new THREE.PlaneGeometry(width, height);
     geometry.translate(0, height * (0.5 - anchor), 0);
+    const tilt = options.normalTilt ?? 0;
+    if (tilt !== 0) {
+      const normals = geometry.attributes.normal!;
+      for (let i = 0; i < normals.count; i++) normals.setXYZ(i, 0, Math.sin(tilt), Math.cos(tilt));
+    }
 
     const material = new THREE.MeshLambertMaterial({
       map: this.texture,
@@ -193,6 +207,20 @@ export class BillboardSprite {
   }
 
   /**
+   * Remplace l'atlas en gardant la case courante — même disposition exigée.
+   * Usage : la peau reptilienne du Directeur, posée UNE FOIS à la révélation.
+   */
+  setAtlas(atlas: THREE.Texture): void {
+    const next = atlas.clone();
+    next.needsUpdate = true;
+    next.repeat.copy(this.texture.repeat);
+    next.offset.copy(this.texture.offset);
+    this.texture.dispose();
+    this.texture = next;
+    this.mesh.material.map = next;
+  }
+
+  /**
    * Change la teinte du sprite après construction (`material.color`),
    * MULTIPLIÉE avec les pixels de l'atlas au rendu — PAS un nouveau système
    * de shader (invariant #5, `MeshLambertMaterial` uniquement). Usage
@@ -249,8 +277,8 @@ export class BillboardSprite {
   }
 }
 
-// Atlas placeholder — invariant #9 : aucun asset de sprite final n'existe
-// encore, mais le système doit être testable sans lui. Format complet :
+// Atlas placeholder : repli quand une planche de `render/enemySprites.ts` ne
+// se charge pas. Format complet :
 // see: docs/pipeline/textures.md#atlas-placeholder-de-billboard
 
 const PLACEHOLDER_CELL_WIDTH = 32; // px, largement sous la limite 128×128/texture (invariant #4)

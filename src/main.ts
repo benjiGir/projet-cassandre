@@ -7,7 +7,9 @@ import { initMusic } from "./core/music";
 import { startLoop } from "./core/loop";
 import { runGameplaySync } from "./core/runtime";
 import { initPhysics } from "./physics/world";
+import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
 import { RenderService } from "./render/renderService";
+import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
 import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
 import { useGameStore } from "./game/state";
@@ -54,13 +56,26 @@ async function main() {
   // see: docs/systems/hud-audio.md#musique-et-nappe-dambiance
   initMusic();
 
-  await initPhysics();
+  // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
+  // frontière asynchrone, jamais depuis la boucle (invariant #11).
+  const [, suitSheet, directorSheet, weaponModels] = await Promise.all([
+    initPhysics(),
+    loadEnemySpriteSheetOrPlaceholder("costard"),
+    loadEnemySpriteSheetOrPlaceholder("directeur"),
+    loadWeaponModelsOrPlaceholder(),
+  ]);
 
   // État PERSISTANT (survit à un reset) : `buildGameEngine` ne construit PAS
   // `session` (ordre de construction circulaire) — `bootGameSession` la
   // construit juste après, à partir de ce même `persistentEngine`.
   // see: docs/systems/session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
-  const persistentEngine = buildGameEngine(canvas, root, flowActor);
+  const persistentEngine = buildGameEngine(
+    canvas,
+    root,
+    flowActor,
+    { suit: suitSheet, director: directorSheet },
+    weaponModels,
+  );
   const session = bootGameSession(persistentEngine, choice);
   const engine: GameEngine = { ...persistentEngine, session };
 
