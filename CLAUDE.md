@@ -88,8 +88,9 @@ explication**, pas contournée.
 
 Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
 `door_*` actionné), `card` (carte de fidélité DONNÉE — `argent`/`or`/
-`platine`, en fait un ramassage) et `requires` (carte EXIGÉE pour agir sur
-`target`). Une valeur inconnue est une ERREUR de `validate_level.py` et un
+`platine`, en fait un ramassage), `requires` (carte EXIGÉE pour agir sur
+`target`) et `soin` (PV d'une trousse, ramassée en marchant dessus, sans
+touche E). Une valeur inconnue est une ERREUR de `validate_level.py` et un
 avertissement bruyant du loader, jamais un silence. La Platine n'a pas de
 `use_*` : le Directeur la lâche à sa mort. Détail complet dans
 `docs/reference/conventions-nommage.md#cartes-de-fidélité`.

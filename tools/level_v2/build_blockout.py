@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import math
 import os
+import re
 import sys
 
 import bmesh
@@ -419,6 +420,7 @@ REGLES_REPERES = [
     ("fusil à pompe", "use", "use_shotgun"),
     ("micro d'annonces", "use", "use_pa_mic"),
     ("toilettes", "use", "use_toilet"),
+    ("trousse de soin", "soin", None),    # PV lus dans le libellé : « trousse de soin +25 »
     ("carte Argent", "carte", "argent"),
     ("carte Or", "carte", "or"),
     ("carte Platine", "rien", None),      # lâchée par le Directeur, rien à poser
@@ -445,6 +447,7 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
     """
     comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0}
     for space in plan.ALL:
+        trousses = 0
         for label, rx, ry, nature in space.reperes:
             regle = next((r for r in REGLES_REPERES if r[0] in label), None)
             if regle is None:
@@ -464,6 +467,16 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
             elif genre == "carte":
                 boite_centree(f"use_carte_{cible}", (rx, ry, z + 1.0), (0.4, 0.05, 0.6),
                               "repere", materiaux, logic_coll, extras={"card": cible})
+                comptes["use"] += 1
+            elif genre == "soin":
+                pv = re.search(r"\+(\d+)", label)
+                if pv is None:
+                    raise SystemExit(f"[blockout] trousse sans PV dans son libellé : {label!r} ({space.id})")
+                trousses += 1
+                # Repère seulement : le jeu remplace la boîte par la trousse,
+                # posée sur le sol réellement sous elle (`render/healPickup.ts`).
+                boite_centree(f"use_soin_{space.id}_{trousses}", (rx, ry, z + 0.25), (0.5, 0.5, 0.5),
+                              "repere", materiaux, logic_coll, extras={"soin": int(pv.group(1))})
                 comptes["use"] += 1
             elif genre == "secret":
                 # Volume logique : rendu invisible par le loader, jamais un collider.

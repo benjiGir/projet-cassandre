@@ -71,7 +71,9 @@ class Space:
     # axe et arrive à `z_arrivee` au bord haut. `None` = sol plat à `z`.
     rampe: tuple[str, float, float] | None = None
     # Repères de gameplay : (libellé, x, y, nature) avec nature ∈
-    # {carte, secret, objet, porte, depart}.
+    # {carte, secret, objet, porte, depart, soin}. Une trousse de soin porte ses
+    # PV dans son libellé (« trousse de soin +25 ») : c'est lui que lit
+    # `build_blockout.py`, pas une seconde table à tenir synchro.
     reperes: list[tuple[str, float, float, str]] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     couloir: bool = False
@@ -147,6 +149,8 @@ SPACES: list[Space] = [
         ],
         reperes=[
             ("toilettes +1 PV", 52, 11, "objet"),
+            # Récompense du détour : la seule trousse double avant les bureaux.
+            ("trousse de soin +50", 52, 16, "soin"),
             ("secret 3 — aération", 37, 18, "secret"),
         ],
     ),
@@ -163,6 +167,7 @@ SPACES: list[Space] = [
         ],
         reperes=[
             ("fusil à pompe", 2, 30, "objet"),
+            ("trousse de soin +25", -6, 41, "soin"),
         ],
     ),
     Space(
@@ -195,6 +200,7 @@ SPACES: list[Space] = [
         ],
         reperes=[
             ("carte Argent", -48, 62, "carte"),
+            ("trousse de soin +25", -44, 62, "soin"),
             ("secret 2 — toit des gondoles", -16, 50, "secret"),
         ],
     ),
@@ -212,6 +218,7 @@ SPACES: list[Space] = [
         ],
         reperes=[
             ("carte Or", 42, 76, "carte"),
+            ("trousse de soin +25", 40, 62, "soin"),
             ("mur d'écrans", 30, 50, "objet"),
         ],
     ),
@@ -229,6 +236,11 @@ SPACES: list[Space] = [
             "Mezzanine au nord, z=3.0 — rien de praticable dessous (contrainte de colonne).",
             "La rampe de quai descend au parking souterrain ; son dessous est plein.",
         ],
+        # Au sud, jamais sous la mezzanine : le plus gros combat du niveau.
+        reperes=[
+            ("trousse de soin +25", -6, 112, "soin"),
+            ("trousse de soin +25", 12, 110, "soin"),
+        ],
     ),
     Space(
         id="souterrain", nom="Parking souterrain",
@@ -241,6 +253,9 @@ SPACES: list[Space] = [
         notes=[
             "Hauteur 3,5 m, piliers tous les 8 m : pénombre, portée de vue coupée en permanence.",
             "Décalé à l'est de la réserve, jamais SOUS un espace praticable (contrainte de colonne).",
+        ],
+        reperes=[
+            ("trousse de soin +25", 64, 110, "soin"),
         ],
     ),
     Space(
@@ -257,6 +272,9 @@ SPACES: list[Space] = [
         ],
         reperes=[
             ("carte Platine (Directeur)", -6, 158, "carte"),
+            # À l'entrée de la salle du boss : laissée au sol si le joueur arrive
+            # en pleine forme, elle attend qu'il revienne la chercher en plein combat.
+            ("trousse de soin +50", 4, 142, "soin"),
             ("SORTIE", -6, 165, "porte"),
         ],
     ),
@@ -773,6 +791,7 @@ def svg() -> str:
         "objet": ("#8fffb4", "●"),
         "porte": ("#ff8f8f", "▮"),
         "depart": ("#6fd3ff", "▶"),
+        "soin": ("#5fe07a", "✚"),
     }
     for sp in ALL:
         for label, rx, ry, nature in sp.reperes:

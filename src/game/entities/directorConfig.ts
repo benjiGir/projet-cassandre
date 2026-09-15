@@ -158,7 +158,8 @@ export const directorConfig: DirectorConfig = {
   staggerDuration: 0.45,
   deathFrameDuration: 0.15,
 
-  attackDamage: 15,
+  // 15 à l'origine, baissé en même temps que le Costard (6) pour garder l'écart.
+  attackDamage: 10,
   aimJitterDeg: 2,
 
   knockbackSpeed: 3,

@@ -18,7 +18,7 @@ import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from 
 import { Director } from "../entities/director";
 import { DirectorManager } from "../entities/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
-import { type DoorInfo, type LevelStats, type SecretZone } from "../level/loader";
+import { type DoorInfo, type LevelStats, type SecretZone, type UseObject } from "../level/loader";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
 import { type LightPoolStats } from "../../render/lightPool";
 import {
@@ -126,6 +126,8 @@ export function exposeDebugApi(engine: GameEngine): void {
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
+    /** Trousses de soin (`use_*` portant `soin`) du niveau glTF actuellement chargé — `visible: false` = déjà ramassée (même précédent que `secrets`). */
+    heals: () => (engine.session.gltfLevelSession?.current?.useObjects ?? []).filter((u) => u.heals !== null),
     /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant. `graph()` expose le `NavGraph` brut (tableaux typés, voir sa doc), `stats()` un résumé lisible, `findPath(from, to)` calcule un chemin en direct (`null` si pas de graphe/chemin) — même précédent console que `doors`/`secrets`. */
     pathfinding: {
       graph: () => engine.session.currentNavGraph,
@@ -320,6 +322,7 @@ declare global {
       giveCard: (card: LoyaltyCard) => void;
       doors: () => DoorInfo[];
       secrets: () => SecretZone[];
+      heals: () => UseObject[];
       /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */
       pathfinding: {
         graph: () => NavGraph | null;

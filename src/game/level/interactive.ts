@@ -48,6 +48,12 @@ export interface InteractionHandlers {
   onCardDoorUse(targetName: string, required: LoyaltyCard): void;
 }
 
+/** Distance entre le centre de capsule du joueur et le centre d'une trousse
+ * sous laquelle on la ramasse, mètres. Le centre de capsule est à ~0,9 m du
+ * sol et la boîte à ~0,25 m : 1,2 m laisse environ 1 m à l'horizontale, soit
+ * « marcher dessus » sans devoir viser la boîte au centimètre. */
+export const HEAL_PICKUP_RADIUS = 1.2;
+
 export class InteractionSystem {
   /** Objets `use_*` déjà consommés, PAR RÉFÉRENCE DE MESH, pas par nom — un
    * hot reload remplace tout mesh, donc redevient déclenchable (dev-only).
@@ -94,6 +100,7 @@ export class InteractionSystem {
 
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
+      if (useObject.heals !== null) continue; // trousse : ramassée en marchant dessus, voir `collectHeals`
       const rangeSq = useObject.range * useObject.range;
       const distanceSq = playerPosition.distanceToSquared(useObject.position);
       if (distanceSq > rangeSq) continue;
@@ -108,6 +115,29 @@ export class InteractionSystem {
     if (!usePressed || !nearest) return;
 
     this.dispatch(nearest, handlers);
+  }
+
+  /**
+   * Un pas fixe de ramassage des trousses de soin (`use_*` portant `soin`),
+   * SANS touche : à portée de `HEAL_PICKUP_RADIUS`, la trousse est offerte à
+   * `tryHeal`. Elle n'est consommée que si `tryHeal` renvoie `true` — un
+   * joueur en pleine forme la laisse au sol pour plus tard, comme dans Doom.
+   *
+   * @param useObjects Même contrat de fraîcheur que pour `update`.
+   */
+  collectHeals(
+    useObjects: readonly UseObject[],
+    playerPosition: THREE.Vector3,
+    tryHeal: (amount: number) => boolean,
+  ): void {
+    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+    for (const useObject of useObjects) {
+      if (useObject.heals === null || this.consumed.has(useObject.object)) continue;
+      if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
+      if (!tryHeal(useObject.heals)) continue;
+      useObject.object.visible = false;
+      this.consumed.add(useObject.object);
+    }
   }
 
   /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),

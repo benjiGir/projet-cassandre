@@ -8,6 +8,7 @@ import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
+import { dressHealPickup } from "../../render/healPickup";
 import { LightPool } from "../../render/lightPool";
 import { dressWeaponPickup } from "../../render/viewmodel";
 import { Suit } from "../entities/suit";
@@ -118,9 +119,13 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
       session.lightPool = new LightPool(handle.lights);
 
-      // Ramassages d'armes : la boîte du `.glb` cède la place au vrai modèle,
-      // posé sur la surface réellement sous elle.
+      // Ramassages d'armes et trousses de soin : la boîte du `.glb` cède la
+      // place au vrai modèle, posé sur la surface réellement sous elle.
       for (const useObject of handle.useObjects) {
+        if (useObject.heals !== null) {
+          dressHealPickup(useObject.object, groundBelow(session, useObject.position));
+          continue;
+        }
         const weapon = useObject.name === "use_crowbar" ? "melee" : useObject.name === "use_shotgun" ? "shotgun" : null;
         if (!weapon) continue;
         const groundY = groundBelow(session, useObject.position);

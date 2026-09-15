@@ -121,9 +121,27 @@ l'autre.
 
 | Paramètre | Costard | Directeur |
 |---|---|---|
-| `attackDamage` | 10 | 15 (un boss doit faire plus mal, mais rester survivable plusieurs coups avec `playerMaxHp` = 100, `game/state.ts`) |
+| `attackDamage` | 6 | 10 (un boss doit faire plus mal, mais rester survivable plusieurs coups avec `playerMaxHp` = 100, `game/state.ts`) |
 | `aimJitterDeg` | 2.5° | 2° (un boss vise légèrement mieux) |
 | `gibDistance` | 3 m | — (le Directeur n'a pas de mécanique de gibs : un boss qui explose en morceaux casserait la mise en scène de révélation/mort) |
+
+**Dégâts baissés le 2026-09-15** (10 → 6, Directeur 15 → 10), après un retour
+de playtest du niveau v2 : « je meurs trop vite », face à plusieurs Costards.
+Les valeurs d'origine venaient de la gym de la Phase 3, où l'on n'affrontait
+jamais plus de trois Costards et jamais sans pouvoir reculer. Le même jour, le
+niveau v2 a reçu ses trousses de soin (propriété `soin` d'un `use_*`, voir
+[Conventions de nommage](conventions-nommage.md#trousses-de-soin)).
+
+Ordres de grandeur utiles au prochain réglage :
+
+- **Sous 9 m, tous les tirs touchent.** La capsule du joueur fait 0,4 m de
+  rayon et le jitter est de ±2,5° : l'écart latéral n'atteint le bord de la
+  capsule qu'à 9,2 m. À 16 m (`attackRange`), un tir sur deux environ touche.
+- **Le tir ne s'esquive pas en bougeant.** `resolveAttack` vise la position
+  du joueur à la FIN de la télégraphie, pas au début : seule une ligne de vue
+  coupée le fait rater. C'est ce qui rend un groupe si dangereux.
+- **Un Costard fait environ 3 PV/s** (6 dégâts toutes les 2,05 s,
+  télégraphie comprise), contre 4,9 PV/s avant.
 
 `gibDistance` (Costard) est un point de départ explicitement **non figé**
 par la tâche d'origine, contrairement à `weaponConfig.shotgunPelletCount`/

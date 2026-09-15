@@ -84,6 +84,11 @@ export interface UseObject {
    * `requires`) pour agir sur sa cible. `null` = aucune condition.
    * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
   requiresCard: LoyaltyCard | null;
+  /** PV rendus par cet objet (custom property Blender `soin`, nombre > 0) —
+   * une trousse de soin, ramassée en marchant dessus et non à la touche E.
+   * `null` si absent.
+   * see: docs/reference/conventions-nommage.md#trousses-de-soin */
+  heals: number | null;
   extras: Record<string, unknown>;
 }
 
@@ -213,6 +218,14 @@ export class UnknownLoyaltyCardWarning extends Schema.TaggedError<UnknownLoyalty
   { name: Schema.String, property: Schema.String, value: Schema.String },
 ) {}
 
+/** `use_*` dont `extras.soin` n'est pas un nombre strictement positif — une
+ * trousse qui ne soignerait rien, ou une faute de frappe. Jamais bloquant :
+ * l'objet est retourné avec `heals: null`. */
+export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmountWarning>()(
+  "InvalidHealAmountWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
 /** `col_hull_*` dont `RAPIER.ColliderDesc.convexHull` retourne `null`
  * (sommets dégénérés) — toujours suivi d'un repli sur un collider trimesh
  * pour ce même mesh, jamais d'absence totale de collider. */
@@ -266,6 +279,13 @@ function formatUnknownLoyaltyCard(error: UnknownLoyaltyCardWarning): string {
   return (
     `[level] "${error.name}" (use_*) : propriété "${error.property}" = "${error.value}", ` +
     `qui n'est pas une carte de fidélité connue (${LOYALTY_CARDS.join(", ")}) — propriété ignorée.`
+  );
+}
+
+function formatInvalidHealAmount(error: InvalidHealAmountWarning): string {
+  return (
+    `[level] "${error.name}" (use_*) : propriété "soin" = "${error.value}", ` +
+    `qui n'est pas un nombre de PV strictement positif — propriété ignorée.`
   );
 }
 
@@ -759,6 +779,20 @@ function readCardProperty(name: string, property: string, raw: unknown): Effect.
   });
 }
 
+/** Lit la propriété `soin` : absente -> `null` sans bruit, présente mais pas
+ * un nombre > 0 -> `null` AVEC avertissement bruyant (même règle que les cartes). */
+function readHealProperty(name: string, raw: unknown): Effect.Effect<number | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const amount = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(amount) && amount > 0) return amount;
+    yield* Effect.fail(new InvalidHealAmountWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidHealAmount(error)))),
+    );
+    return null;
+  });
+}
+
 function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<UseObject> {
   return Effect.gen(function* () {
     const position = new THREE.Vector3();
@@ -768,18 +802,19 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
     const targetName = typeof extras.target === "string" ? extras.target : null;
     const grantsCard = yield* readCardProperty(name, "card", extras.card);
     const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
+    const heals = yield* readHealProperty(name, extras.soin);
 
-    // Une carte à ramasser se suffit à elle-même : pas de cible, donc pas
-    // d'avertissement — même exception de fond que `use_crowbar`/`use_shotgun`,
-    // qui eux le déclenchent encore (leur effet est câblé par nom, pas
-    // déclaré dans le `.glb`).
-    if (!targetName && !grantsCard) {
+    // Une carte ou une trousse à ramasser se suffit à elle-même : pas de
+    // cible, donc pas d'avertissement — même exception de fond que
+    // `use_crowbar`/`use_shotgun`, qui eux le déclenchent encore (leur effet
+    // est câblé par nom, pas déclaré dans le `.glb`).
+    if (!targetName && !grantsCard && heals === null) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, extras };
   });
 }
 

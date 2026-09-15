@@ -31,7 +31,8 @@ export type SfxId =
   | "enemy_death"
   | "door_locked"
   | "door_unlock"
-  | "secret_found";
+  | "secret_found"
+  | "heal_pickup";
 
 interface SfxDef {
   /** Nom de fichier SANS extension, résolu en `${SFX_BASE_PATH}/<file>.{ogg,m4a}`. */
@@ -86,6 +87,9 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // partie) — passe quand même par le même `SfxPool`/±8% que tout le reste
   // par simplicité, la variation de pitch est inoffensive ici aussi.
   secret_found: { file: "secret_found", volume: 0.9 },
+  // Trousse de soin ramassée (niveau v2) : fréquent, mais court et discret —
+  // il ne doit jamais couvrir la télégraphie d'un Costard.
+  heal_pickup: { file: "heal_pickup", volume: 0.7 },
 };
 
 /** Son de tir par arme. */

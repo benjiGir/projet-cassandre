@@ -40,6 +40,7 @@ Properties** à l'export, sinon tout le paramétrage est perdu silencieusement.
 | `target` | `use_*` | nom de l'objet actionné (un `door_*`) |
 | `card` | `use_*` | carte de fidélité DONNÉE par cet objet — en fait un ramassage |
 | `requires` | `use_*` | carte EXIGÉE pour agir sur `target` |
+| `soin` | `use_*` | PV rendus — une trousse, ramassée en marchant dessus |
 | `secret_id` | `secret_*` | identifiant du secret |
 | `door_hp` | `door_*` | points de vie si destructible |
 
@@ -69,6 +70,30 @@ La carte **Platine** n'a pas de `use_*` : le Directeur la lâche à sa mort
 (`DIRECTOR_DROPPED_CARD`, `game/entities/directorConfig.ts`), ramassée par
 simple proximité. Côté jeu, l'inventaire vit dans `session.cards` et se
 consulte en console avec `cassandre.cards()` / `cassandre.giveCard("or")`.
+
+### Trousses de soin
+
+Un `use_*` avec `soin = 25` (des PV, un nombre strictement positif), sans
+`target`. Contrairement aux autres `use_*`, **il se ramasse en marchant
+dessus**, pas à la touche E : à moins de 1,2 m du centre du joueur
+(`HEAL_PICKUP_RADIUS`, `game/level/interactive.ts`). Un joueur qui a déjà tous
+ses PV la laisse au sol, pour plus tard.
+
+La boîte du `.glb` ne sert qu'à situer l'objet : le jeu la remplace par une
+trousse blanche à croix verte de pharmacie, posée sur le sol réellement sous
+elle (`render/healPickup.ts`). La croix rouge est un emblème protégé, d'où la
+verte.
+
+Mêmes garde-fous que les cartes : **erreur** de `validate_level.py`,
+**avertissement bruyant** du loader. Au niveau v2, les trousses se déclarent
+dans le plan de masse (`tools/level_v2/plan_de_masse.py`), avec leurs PV dans
+le libellé : `("trousse de soin +25", x, y, "soin")`. Pour les inspecter en
+console : `cassandre.heals()`, où `object.visible: false` signale une trousse
+déjà ramassée.
+
+**Piège de placement** : le point d'apparition d'un ennemi n'est pas un sol
+libre garanti, un Costard peut démarrer collé à un rack. Vérifier l'emplacement
+d'une trousse contre le décor après construction, pas seulement contre le plan.
 
 ## Constantes de construction
 

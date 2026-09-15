@@ -144,7 +144,9 @@ export const suitConfig: SuitConfig = {
   staggerDuration: 0.4,
   deathFrameDuration: 0.12,
 
-  attackDamage: 10,
+  // 10 à l'origine, baissé après un playtest du niveau v2 : face à plusieurs
+  // Costards, le joueur fondait. see: docs/reference/valeurs-ennemis.md#combat
+  attackDamage: 6,
   aimJitterDeg: 2.5,
   gibDistance: 3,
 

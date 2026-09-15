@@ -159,6 +159,25 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         ),
       );
 
+      // Trousses de soin : même position, même liste relue que ci-dessus, mais
+      // sans touche. Le soin passe par `session.playerHp`, comme les toilettes.
+      yield* Effect.sync(() =>
+        engine.interaction.collectHeals(
+          session.gltfLevelSession?.current?.useObjects ?? [],
+          session.player.position,
+          (amount) => {
+            const maxHp = useGameStore.getState().debug.playerMaxHp;
+            if (session.playerHp >= maxHp) return false; // laissée au sol pour plus tard
+            const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
+            session.playerHp += healed;
+            useGameStore.getState().setPlayerHp(session.playerHp);
+            showHudMessage(`+${healed} PV`);
+            playSfx("heal_pickup");
+            return true;
+          },
+        ),
+      );
+
       // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
       // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
       // position interpolée pour le rendu. Voir la note de déterminisme dans

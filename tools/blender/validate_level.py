@@ -108,7 +108,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
-        if n.startswith("use_") and "target" not in o.keys() and "card" not in o.keys():
+        if n.startswith("use_") and not {"target", "card", "soin"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -116,7 +116,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             # sur un futur `use_*` qui référence vraiment une cible.
             # Exception "card" : une carte de fidélité à ramasser se suffit à
             # elle-même, il n'y a rien à cibler (jalon N7, même règle que
-            # `loader.ts::buildUseObjectEffect`).
+            # `loader.ts::buildUseObjectEffect`). Idem pour "soin", une trousse.
             warn(f"{o.name}: interactif sans custom property 'target'")
         # Cartes de fidélité (jalon N7) : une valeur mal tapée rendrait la
         # porte ouverte à tous, ou la carte introuvable. Côté jeu c'est un
@@ -128,6 +128,13 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 if valeur not in LOYALTY_CARDS:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une carte "
                         f"({', '.join(LOYALTY_CARDS)})")
+        if n.startswith("use_") and "soin" in o.keys():
+            try:
+                pv = float(o["soin"])
+            except (TypeError, ValueError):
+                pv = 0.0
+            if not pv > 0:
+                err(f"{o.name}: 'soin' = '{o['soin']}' n'est pas un nombre de PV > 0")
         if n.startswith("use_") and "requires" in o.keys() and "target" not in o.keys():
             warn(f"{o.name}: 'requires' sans 'target' — aucune porte à ouvrir")
         if n.startswith("secret_") and "secret_id" not in o.keys():
