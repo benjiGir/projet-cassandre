@@ -1,0 +1,65 @@
+{
+  "atlas_px": 512,
+  "cell_px": [
+    100,
+    160
+  ],
+  "affiches": {
+    "cereales_pyramides": {
+      "px": [
+        0,
+        0,
+        100,
+        160
+      ]
+    },
+    "lait_trainees_blanches": {
+      "px": [
+        100,
+        0,
+        100,
+        160
+      ]
+    },
+    "eau_terre_plate": {
+      "px": [
+        200,
+        0,
+        100,
+        160
+      ]
+    },
+    "soda_5g_cola": {
+      "px": [
+        300,
+        0,
+        100,
+        160
+      ]
+    },
+    "raviolis_bunker": {
+      "px": [
+        400,
+        0,
+        100,
+        160
+      ]
+    },
+    "cafe_reveille": {
+      "px": [
+        200,
+        160,
+        100,
+        160
+      ]
+    },
+    "coquillettes_nouvel_ordre": {
+      "px": [
+        0,
+        320,
+        100,
+        160
+      ]
+    }
+  }
+}

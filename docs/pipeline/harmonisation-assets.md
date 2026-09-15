@@ -83,6 +83,42 @@ en V, la bande est étirée sur la hauteur de l'élément.
 Les deux ont été vérifiés en 3D à 640×360 : noms et pictos lisibles à
 1,5 m, tranche d'étagère immédiatement identifiable.
 
+## Affiches de marques
+
+Les illustrations viennent d'un générateur d'images, à partir des prompts de
+[`assets_src/affiches/PROMPTS.md`](../../assets_src/affiches/PROMPTS.md) ; les
+images brutes sont déposées dans `assets_src/affiches/raw/<nom>.png`.
+`tools/textures/generate_affiches.py` en fait l'atlas `aff_affiches.png` :
+détection de la bande vide du bas (les générateurs la font entre 19 et 27 %
+de la hauteur), recadrage de l'illustration, réduction à 100 × 160 px, puis
+nom et slogan en police pixel sur une bande repeinte aux couleurs de
+l'étiquette du produit, et quantification sur la palette.
+
+Le texte n'est jamais laissé à l'IA : réduit à 100 px de large, un texte lissé
+devient illisible. Une affiche pas encore générée est simplement sautée, et
+chacune a sa case réservée dans l'ordre de `AFFICHES` : en ajouter une ne
+déplace jamais les autres.
+
+**Deux exceptions assumées**, décidées le 2026-09-15 :
+
+- **Densité** : 100 px pour une affiche de 1 m de large, la même exception
+  que les étiquettes, et pour la même raison.
+- **Taille** : l'atlas fait **512 × 512**, au-delà du plafond de 128 × 128.
+  Ce plafond tient pour des textures qui se répètent sur un mur ; une affiche
+  ne se répète pas. Quinze textures de 128 coûteraient quinze lots de dessin,
+  et le niveau en compte déjà 186 sur 200 ; l'atlas unique n'en ajoute qu'un
+  (187 mesuré en jeu). `validate_level.py` n'accepte ce plafond que pour les
+  images `aff_*`.
+
+**Où elles vont** : sur les deux flancs des têtes de gondole des rayons
+(1 × 1,6 m, `uv="affiche:<nom>"`), l'affiche d'une marque du thème de la face
+qui donne sur la même allée (`RY_AFFICHES`, `build_niveau.py`). Un thème sans
+affiche disponible garde l'autocollant « PRIX CHOC ».
+
+Pour ajouter des affiches : déposer les images, relancer
+`generate_affiches.py`, puis reconstruire et exporter `niveau_v2` (voir
+[`tools/blender/README.md`](../../tools/blender/README.md)).
+
 ## Import d'un asset
 
 Tout asset tiers passe par ces étapes, dans la collection `_RAW` de la

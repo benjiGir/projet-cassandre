@@ -23,6 +23,10 @@ for _atlas in ("trim_hypermarche", "sig_bandeaux", "sig_facade"):
 LABELS = {}
 for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans"):
     LABELS.update(json.load(open(os.path.join(TEX_DIR, _labels + ".json")))["labels"])
+# Affiches de marques (`generate_affiches.py`) : un atlas de cases 5:8 et non
+# de cases carrées, d'où un mapper à part, `uv="affiche:<nom>"`.
+_AFF = json.load(open(os.path.join(TEX_DIR, "aff_affiches.json")))
+AFFICHES = {nom: [c / _AFF["atlas_px"] for c in a["px"]] for nom, a in _AFF["affiches"].items()}
 
 
 def textured_material(texture: str) -> bpy.types.Material:
@@ -165,8 +169,16 @@ def _uv_enseigne(band: str, bounds):
 
 def _uv_label(label: str, bounds, front_axis: str = "-y"):
     cx, cy = LABELS[label]["cell"]
-    u0, u1 = cx / 4, (cx + 1) / 4
-    v_top, v_bot = 1 - cy / 4, 1 - (cy + 1) / 4
+    return _uv_case(cx / 4, (cx + 1) / 4, 1 - (cy + 1) / 4, 1 - cy / 4, bounds, front_axis)
+
+
+def _uv_affiche(nom: str, bounds, front_axis: str = "-y"):
+    x, y, w, h = AFFICHES[nom]
+    return _uv_case(x, x + w, 1 - (y + h), 1 - y, bounds, front_axis)
+
+
+def _uv_case(u0, u1, v_bot, v_top, bounds, front_axis: str):
+    """Une case d'atlas sur la face avant d'une boîte, le fond de case ailleurs."""
     x0, y0, z0, x1, y1, z1 = bounds
 
     def fn(face, uv):
@@ -225,6 +237,8 @@ def _mapper(uv: str, bounds, front: str):
         return _uv_aplat(uv[6:])
     if uv.startswith("label:"):
         return _uv_label(uv[6:], bounds, front)
+    if uv.startswith("affiche:"):
+        return _uv_affiche(uv[8:], bounds, front)
     raise ValueError(uv)
 
 

@@ -103,7 +103,7 @@ d'une trousse contre le décor après construction, pas seulement contre le plan
 | Grille standard | 1 m |
 | Module de kit | 2 m |
 | Densité de texels | 64 px/m |
-| Taille de texture | 128 × 128 max |
+| Taille de texture | 128 × 128 max (atlas d'affiches `aff_*` : 512 × 512, voir [Affiches de marques](../pipeline/harmonisation-assets.md#affiches-de-marques)) |
 | Épaisseur de mur | 0.25 m |
 | Ouverture de porte | 1.5 × 2.5 m |
 | Portée d'usage (`use_*`) | 2 m |

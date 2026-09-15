@@ -259,6 +259,31 @@ def _sol_rayons(space, coll, col_coll) -> None:
     H.col_box("sol_rayons", (x0, y0, z - bo.EPAISSEUR_SOL, x1, y1, z), col_coll)
 
 
+# Affiches de marques des flancs de têtes de gondole, par thème de la face qui
+# donne sur la même allée : le flanc vend ce que l'allée vend. Une affiche pas
+# encore générée (absente de `aff_affiches.json`) est ignorée, et un thème sans
+# aucune affiche garde l'autocollant « PRIX CHOC » — les suivantes entreront
+# d'elles-mêmes à la prochaine construction.
+RY_AFFICHES = {
+    "epicerie": ("coquillettes_nouvel_ordre", "sables_reptiliens", "chips_illumi"),
+    "boissons": ("soda_5g_cola", "eau_terre_plate"),
+    "petit_dej": ("cereales_pyramides", "cafe_reveille", "lait_trainees_blanches"),
+    "entretien": ("lessive_profonde", "alu_protect", "dentifrice_sans_fluor", "piles_lune_truquee"),
+    "conserves": ("raviolis_bunker",),
+}
+
+
+def _affiche_suivante(theme: str, compteurs: dict) -> str | None:
+    """Tourne dans les affiches disponibles du thème, sans hasard : deux flancs
+    voisins du même thème ne portent pas la même tant qu'il y en a deux."""
+    dispo = [a for a in RY_AFFICHES[theme] if a in H.AFFICHES]
+    if not dispo:
+        return None
+    k = compteurs.get(theme, 0)
+    compteurs[theme] = k + 1
+    return dispo[k % len(dispo)]
+
+
 def _rangees(props, col_coll) -> int:
     """Cinq rangées de trois tronçons : tête de gondole, corps, tête.
 
@@ -266,16 +291,21 @@ def _rangees(props, col_coll) -> int:
     d'une gondole posée en rangée regarde donc l'est.
     """
     n = 0
+    compteurs: dict = {}
     for ri, gx in enumerate(RY_RANGEES):
         droite = gx + L.GOND_DEPTH          # bord EST de la rangée
         theme_est, theme_ouest = RY_THEMES[ri]
         for si, (ya, _yb) in enumerate(RY_TRONCONS):
             tag = f"ry{ri}s{si}"
             seed = SEED + ri * 10 + si
-            L.place(L.tete_garnie(seed), (gx, ya, 0), 0, props, col_coll, f"{tag}_sud")
+            # Flancs d'une tête, dans l'ordre (-x local, +x local). Posée à 0°,
+            # son -x regarde l'ouest ; tournée de 180°, il regarde l'est.
+            sud = (_affiche_suivante(theme_ouest, compteurs), _affiche_suivante(theme_est, compteurs))
+            nord = (_affiche_suivante(theme_est, compteurs), _affiche_suivante(theme_ouest, compteurs))
+            L.place(L.tete_garnie(seed, affiches=sud), (gx, ya, 0), 0, props, col_coll, f"{tag}_sud")
             L.place(L.gondole_garnie(seed + 100, RY_CORPS, theme_est, theme_ouest),
                     (droite, ya + RY_TETE, 0), 90, props, col_coll, tag)
-            L.place(L.tete_garnie(seed + 200), (droite, ya + 8.0, 0), 180,
+            L.place(L.tete_garnie(seed + 200, affiches=nord), (droite, ya + 8.0, 0), 180,
                     props, col_coll, f"{tag}_nord")
             L.place(L.bandeau_rayon(theme_est, RY_CORPS), (droite, ya + RY_TETE, L.GOND_HEIGHT),
                     90, props, col_coll, f"{tag}_est")

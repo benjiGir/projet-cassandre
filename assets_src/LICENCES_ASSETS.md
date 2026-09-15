@@ -24,3 +24,13 @@ La licence est **lue sur la page de la source** au moment du téléchargement, j
 | Low poly Supermarket (29 FBX : 4 étagères, 2 congélateurs, caisse, caddie, produits) | PensamientoAzul | https://pensamientoazul.itch.io/supermarket-3d-assets | **à confirmer sur la page** — CC0 selon les résultats de recherche, aucun fichier inclus | 2026-09-11, par l'utilisateur | 1,7 Mo | `pensamientoazul_supermarket/` | rayons (pilote) | — |
 | Retro Textures (60 × 128 px, palette Quake) | Aquilarius | https://aquilarius.itch.io/aquilariusrt | **à confirmer sur la page** — CC0 selon les résultats de recherche, aucun fichier inclus | 2026-09-11, par l'utilisateur | 2,9 Mo | `aquilarius_retro_textures/` | réserve, parking souterrain | — |
 | 17 matériaux, carte de couleur 1K seulement (`Tiles141`, `Tiles074`, `Terrazzo013`, `Terrazzo018`, `PaintedPlaster017`, `PaintedPlaster015`, `Concrete034`, `Concrete042A`, `SheetMetal002`, `DiamondPlate006C`, `OfficeCeiling001`, `OfficeCeiling006`, `PaintedMetal004`, `CorrugatedSteel005`, `Cardboard004`, `Asphalt031`, `Carpet012`) | ambientCG | https://ambientcg.com (API v2, archives `1K-JPG`) | CC0 1.0 — https://docs.ambientcg.com/license/ (2026-09-11) | 2026-09-11 | 107,6 Mo téléchargés, 16 Mo conservés | `ambientcg/` | sols, murs, plafonds, métal, carton : base des textures 128 px (N3) | seules les cartes `_Color` sont gardées ; le reste des archives est jeté |
+
+## Images générées pour le projet
+
+Pas des assets tiers ni du CC0 : des illustrations créées par l'utilisateur
+avec un générateur d'images, à partir des prompts du dépôt. Elles sont
+versionnées, contrairement aux packs bruts : on ne peut pas les « retélécharger ».
+
+| Contenu | Générateur | Prompts | Générées le | Dossier | Utilisé pour | Modifications |
+|---|---|---|---|---|---|---|
+| 7 illustrations d'affiches de marques inventées (`cereales_pyramides`, `lait_trainees_blanches`, `eau_terre_plate`, `soda_5g_cola`, `raviolis_bunker`, `cafe_reveille`, `coquillettes_nouvel_ordre`), 1024 × 1536 px | ChatGPT (génération d'images), par l'utilisateur | `assets_src/affiches/PROMPTS.md` | 2026-09-15 | `assets_src/affiches/raw/` | atlas `aff_affiches.png`, flancs des têtes de gondole du niveau v2 | recadrées, réduites à 100 × 160 px, quantifiées sur la palette ; nom et slogan ajoutés en police pixel (`tools/textures/generate_affiches.py`) |

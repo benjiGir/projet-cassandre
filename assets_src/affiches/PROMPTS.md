@@ -240,11 +240,14 @@ Avoid: text, letters, numbers, logos, real brands, real magazine layouts, real p
 
 ## Ensuite (côté code)
 
-Un script `tools/textures/generate_affiches.py`, sur le modèle de
-`generate_labels.py` : recadrage en 5:8, réduction, quantification sur la
-palette, bande du bas repeinte, nom et slogan à la police pixel (à compléter :
-elle n'a ni accents, ni apostrophe, ni point d'interrogation). Toutes les
-affiches dans **un seul atlas** : une texture de plus coûterait un lot de
-dessin par affiche, et le niveau est déjà à 186 sur 200. Emplacements prévus :
-les flancs de gondole (le pan rouge de 1,25 × 2 m), l'affiche promo suspendue,
-le kiosque presse.
+Une fois les images déposées dans `raw/` :
+
+```bash
+./.venv-refs/bin/python3 tools/textures/generate_affiches.py
+```
+
+puis reconstruire et exporter `niveau_v2`. Le détail (recadrage, texte en
+police pixel, atlas unique de 512 × 512, placement sur les têtes de gondole) est
+dans [Harmonisation des assets](../../docs/pipeline/harmonisation-assets.md#affiches-de-marques).
+Les slogans affichés en jeu sont ceux de `AFFICHES` dans le script : sans
+accents, et parfois raccourcis pour tenir dans 100 px.

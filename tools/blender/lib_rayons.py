@@ -138,9 +138,15 @@ def gondole(length: float = 4.0) -> str:
     return name
 
 
-def gondole_tete() -> str:
-    """Tête de gondole promo : simple face, fronton à l'affiche « -50% »."""
+def gondole_tete(affiches: tuple[str | None, str | None] = (None, None)) -> str:
+    """Tête de gondole promo : simple face, fronton à l'affiche « -50% ».
+
+    `affiches` : l'affiche de marque de chaque flanc, (-x local, +x local), ou
+    `None` pour garder l'autocollant « PRIX CHOC ». Une variante par paire.
+    """
     name = "mob_gondole_tete"
+    if affiches != (None, None):
+        name += "_aff_" + "_".join(a or "prix" for a in affiches)
     coll, done = asset_coll(name)
     if done:
         return name
@@ -174,11 +180,18 @@ def gondole_tete() -> str:
     # Affiches sur les flancs : un flanc plein sans rien dessus n'est qu'un pan
     # rouge de 1,25 × 2 m à hauteur de regard, à l'endroit précis où le joueur
     # entre dans l'allée. Une tête de gondole, c'est de la signalétique.
-    H.boxes(f"{name}_fronton", [
-        ((0.08, 0.0, ht + 0.05, w - 0.08, 0.05, ht + 0.45), "label:promo_moins_50", "-y"),
-        ((-0.01, 0.20, 0.70, 0.0, 1.05, 1.55), "label:prix_choc", "-x"),
-        ((w, 0.20, 0.70, w + 0.01, 1.05, 1.55), "label:prix_choc", "+x"),
-    ], "prd_etiquettes", coll)
+    fronton = [((0.08, 0.0, ht + 0.05, w - 0.08, 0.05, ht + 0.45), "label:promo_moins_50", "-y")]
+    murales = []
+    # Une affiche de 1 × 1,6 m (5:8) centrée sur le flanc, à hauteur de regard ;
+    # l'autocollant carré « PRIX CHOC » là où aucune affiche n'est demandée.
+    for affiche, x0, x1, front in ((affiches[0], -0.01, 0.0, "-x"), (affiches[1], w, w + 0.01, "+x")):
+        if affiche:
+            murales.append(((x0, 0.125, 0.25, x1, 1.125, 1.85), f"affiche:{affiche}", front))
+        else:
+            fronton.append(((x0, 0.20, 0.70, x1, 1.05, 1.55), "label:prix_choc", front))
+    H.boxes(f"{name}_fronton", fronton, "prd_etiquettes", coll)
+    if murales:
+        H.boxes(f"{name}_affiches", murales, "aff_affiches", coll)
     H.col_box(name[4:], (0, 0, 0, w, d, ht), coll)
     return name
 
@@ -710,14 +723,18 @@ def gondole_garnie(seed: int, length: float = 4.0,
     return name
 
 
-def tete_garnie(seed: int, theme: str | None = None) -> str:
+def tete_garnie(seed: int, theme: str | None = None,
+                affiches: tuple[str | None, str | None] = (None, None)) -> str:
     """Tête de gondole garnie. Sans thème, elle reste volontairement mélangée :
-    c'est ce qu'est une tête de gondole, un assortiment de promotions."""
+    c'est ce qu'est une tête de gondole, un assortiment de promotions.
+    `affiches` : voir `gondole_tete`."""
     name = f"mob_gondole_tete_{theme or 'promo'}_g{seed}"
+    if affiches != (None, None):
+        name += "_aff_" + "_".join(a or "prix" for a in affiches)
     coll, done = asset_coll(name)
     if done:
         return name
-    _clone_base(gondole_tete(), coll)
+    _clone_base(gondole_tete(affiches), coll)
     rng = random.Random(seed)
     g = Garnissage()
     # Deux rangs de profondeur : une tête de gondole se voit de biais depuis

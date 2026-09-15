@@ -25,6 +25,11 @@ from mathutils import Vector
 # --- Constantes projet -------------------------------------------------------
 GRID = 0.25
 MAX_TEXTURE = 128
+# Exception décidée le 2026-09-15 : l'atlas des affiches de marques (`aff_*`)
+# ne se répète pas sur un mur, il porte quinze affiches lisibles en UN seul
+# matériau. Le découper en textures de 128 coûterait un lot de dessin par
+# affiche. Voir docs/pipeline/harmonisation-assets.md#affiches-de-marques.
+MAX_TEXTURE_AFFICHES = 512
 TEXEL_DENSITY = 64.0          # px/m
 MAX_STEP = 0.35               # autostep du character controller
 MIN_CEILING = 2.0
@@ -227,8 +232,9 @@ def project_images():
 def check_textures() -> None:
     for img in project_images():
         w, h = img.size
-        if w > MAX_TEXTURE or h > MAX_TEXTURE:
-            err(f"{img.name}: {w}×{h} — plafond {MAX_TEXTURE}×{MAX_TEXTURE}")
+        plafond = MAX_TEXTURE_AFFICHES if img.name.startswith("aff_") else MAX_TEXTURE
+        if w > plafond or h > plafond:
+            err(f"{img.name}: {w}×{h} — plafond {plafond}×{plafond}")
         if w != h:
             warn(f"{img.name}: non carrée ({w}×{h}) — incompatible array texture")
 
