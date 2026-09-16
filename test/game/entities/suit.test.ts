@@ -45,7 +45,7 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
 import { Effect } from "effect";
-import { assert, beforeEach, describe, it } from "@effect/vitest";
+import { afterEach, assert, beforeEach, describe, it } from "@effect/vitest";
 
 import { GameRuntime } from "../../../src/core/runtime";
 import { RaycastService, type RaycastServiceShape } from "../../../src/physics/raycast";
@@ -63,6 +63,7 @@ import {
   type SuitUpdateContext,
 } from "../../../src/game/entities/suit";
 import { suitConfig, type SuitConfig } from "../../../src/game/entities/suitConfig";
+import { setNotarget } from "../../../src/game/devtools/cheats";
 
 await initPhysics();
 
@@ -651,5 +652,66 @@ describe("Suit — jitter de visée déterministe (PRNG mulberry32 propre à l'e
     assertVectorApprox(first, expected, 1e-6, "premier tir vs référence");
     assertVectorApprox(second, expected, 1e-6, "second tir vs référence");
     assertVectorApprox(first, second, 1e-12, "même seed -> même résultat, deux instances indépendantes");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bascule de dev `notarget` (game/devtools/cheats.ts)
+// ---------------------------------------------------------------------------
+
+describe("Suit sous notarget — la bascule de dev qui rend les ennemis passifs", () => {
+  afterEach(() => {
+    // `cheats` est un singleton de module, partagé par tous les `it()` de ce
+    // fichier : le laisser actif contaminerait les tests suivants.
+    setNotarget(false);
+  });
+
+  it("idle ne bascule jamais en alerte, même à portée et à vue", () => {
+    const { suit, ctx } = createRig();
+    ctx.playerTargetPosition.set(0, 0, 10); // < sightRange, LOS dégagée : alerte sans notarget
+    ctx.playerEyePosition.set(0, suitConfig.eyeHeight, 10);
+    scriptRaycast();
+    setNotarget(true);
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.state, "idle");
+    assert.isFalse(suit.pendingAlert);
+  });
+
+  it("un Costard déjà lancé perd le contact IMMÉDIATEMENT, sans attendre lostContactTimeout", () => {
+    const { suit, ctx } = createRig();
+    suit.state = "chase";
+    ctx.playerTargetPosition.set(0, 0, 10);
+    ctx.playerEyePosition.set(0, suitConfig.eyeHeight, 10);
+    scriptRaycast();
+    setNotarget(true);
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.state, "idle");
+  });
+
+  it("une pose de tir déjà engagée se résout sans le moindre dégât", () => {
+    const { suit, ctx } = createRig();
+    const targetEye = new THREE.Vector3(0, suitConfig.eyeHeight, 10);
+    ctx.playerTargetPosition.set(targetEye.x, 0, targetEye.z);
+    ctx.playerEyePosition.copy(targetEye);
+    scriptRaycast({
+      castRay: () => Effect.succeed(null),
+      castRayAndGetNormal: () =>
+        Effect.succeed({
+          collider: PLAYER_COLLIDER,
+          timeOfImpact: 9.5,
+          normal: { x: 0, y: 0, z: -1 },
+        } as RAPIER.RayColliderIntersection),
+    });
+    setNotarget(true);
+
+    suit.state = "attack";
+    suit.stateTimer = suitConfig.attackTelegraphDuration; // résout CE pas-ci
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.pendingAttackDamage, 0);
   });
 });

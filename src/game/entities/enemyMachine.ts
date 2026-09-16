@@ -8,6 +8,7 @@ import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
 import { PathfindingService, type NavGraph } from "../level/pathfinding";
+import { cheats } from "../devtools/cheats";
 import type { EnemyAnimationInput } from "../../render/enemySprites";
 
 /**
@@ -562,6 +563,7 @@ function applyAimJitter(ctx: EnemyMachineContext, dir: THREE.Vector3, out: THREE
  * télégraphie — l'attaque rate alors SILENCIEUSEMENT.
  */
 function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext): void {
+  if (cheats.notarget) return; // dev : la pose de tir va au bout, le coup ne part pas
   const eye = computeEyePosition(ctx, ctx.scratchEye);
   const targetEye = updateCtx.playerEyePosition;
 
@@ -781,6 +783,7 @@ export function forceEnemyState(actor: EnemyActor, next: EnemyState): void {
 // toutes ce pas-ci).
 
 function runIdle(actor: EnemyActor, ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext, distance: number): void {
+  if (cheats.notarget) return; // dev : jamais de repérage, donc jamais d'alerte
   if (distance > ctx.cfg.sightRange) return;
   const eye = computeEyePosition(ctx, ctx.scratchEye);
   if (!hasClearWorldPath(updateCtx.physics, eye, updateCtx.playerEyePosition, ctx.scratchRay)) return;
@@ -807,10 +810,15 @@ function runChase(
 ): void {
   const eye = computeEyePosition(ctx, ctx.scratchEye);
   const inSight =
-    distance <= ctx.cfg.sightRange && hasClearWorldPath(updateCtx.physics, eye, updateCtx.playerEyePosition, ctx.scratchRay);
+    !cheats.notarget &&
+    distance <= ctx.cfg.sightRange &&
+    hasClearWorldPath(updateCtx.physics, eye, updateCtx.playerEyePosition, ctx.scratchRay);
 
+  // Sous `notarget`, le contact est perdu TOUT DE SUITE plutôt qu'au bout de
+  // `lostContactTimeout` : on veut se promener, pas être suivi cinq secondes
+  // par un ennemi déjà lancé quand la bascule est activée.
   if (inSight) ctx.timeSinceLastSeen = 0;
-  else ctx.timeSinceLastSeen += dt;
+  else ctx.timeSinceLastSeen = cheats.notarget ? ctx.cfg.lostContactTimeout : ctx.timeSinceLastSeen + dt;
 
   if (ctx.timeSinceLastSeen >= ctx.cfg.lostContactTimeout) {
     actor.send({ type: "CONTACT_LOST" });

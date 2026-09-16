@@ -20,6 +20,7 @@ import {
   VIEWS_DIRECTOR_MULTIPLIER,
 } from "../session/feedback";
 import { startPlayback, startRecording } from "../session/recording";
+import { toggleNotarget } from "../devtools/cheats";
 import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
@@ -293,6 +294,16 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         if (input.wasJustPressed("KeyB")) {
           const enabled = engine.ballisticsDebug.toggle();
           console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
+        }
+        // F8 : les ennemis cessent de voir le joueur (`notarget`), pour
+        // parcourir un niveau et le regarder. Même bascule ponctuelle que
+        // KeyV/KeyB, mais elle touche le GAMEPLAY — d'où le message HUD, qui
+        // évite de croire plus tard à une IA cassée.
+        // see: docs/reference/controles.md#touches-de-dev
+        if (input.wasJustPressed("F8")) {
+          const on = toggleNotarget();
+          showHudMessage(on ? "Dev : ennemis passifs" : "Dev : ennemis à nouveau hostiles");
+          console.info(`[debug] notarget ${on ? "activé" : "désactivé"}`);
         }
         // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev
         // comme V/B/F9/F10 ci-dessus) — coupe/remet uniquement le thème

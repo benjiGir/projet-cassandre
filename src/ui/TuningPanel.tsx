@@ -8,6 +8,7 @@ import {
   weaponConfig,
   type WeaponConfig,
 } from "../game/player/weaponConfig";
+import { cheats, setNotarget } from "../game/devtools/cheats";
 import {
   FLASH_VARIANTS,
   KNOCKBACK_VARIANTS,
@@ -497,6 +498,10 @@ export function TuningPanel() {
   // uniquement, jamais en continu).
   const [weaponValues, setWeaponValues] = useState<WeaponConfig>(() => ({ ...weaponConfig }));
   const [suitValues, setSuitValues] = useState<SuitConfig>(() => ({ ...suitConfig }));
+  // Miroir de la bascule de dev : la source de vérité reste `cheats`, que la
+  // touche F8 et la console mutent aussi — d'où la resynchronisation à
+  // l'ouverture, comme les configs ci-dessus.
+  const [notarget, setNotargetState] = useState(cheats.notarget);
   const lastApplyConfigAt = useRef(0);
 
   useEffect(() => {
@@ -515,11 +520,16 @@ export function TuningPanel() {
     setValues({ ...moveConfig });
     setWeaponValues({ ...weaponConfig });
     setSuitValues({ ...suitConfig });
+    setNotargetState(cheats.notarget);
     // Un slider a besoin du pointeur ; le rendre au canvas casserait le lock
     // de toute façon dès le premier clic. On le relâche explicitement pour
     // que la souris soit immédiatement utilisable sur les sliders.
     document.exitPointerLock();
   }, [open]);
+
+  function handleNotargetToggle(on: boolean) {
+    setNotargetState(setNotarget(on));
+  }
 
   function applyConfigThrottled(force: boolean) {
     const player = window.cassandre?.player;
@@ -899,6 +909,18 @@ export function TuningPanel() {
             (raw) => handleSuitSliderChange(field, raw),
           ),
         )}
+      </div>
+
+      <div style={{ borderTop: "1px solid #444", paddingTop: 8, marginBottom: 4 }}>
+        <div style={{ color: "#6cf", fontWeight: "bold", marginBottom: 2 }}>Dev</div>
+        <label>
+          <input type="checkbox" checked={notarget} onChange={(e) => handleNotargetToggle(e.target.checked)} />
+          {" Ennemis passifs — notarget (F8)"}
+        </label>
+        <div style={{ color: "#666", marginTop: 2 }}>
+          Les ennemis ne voient plus le joueur et leurs attaques ne font rien : pour parcourir un
+          niveau et le regarder. Un rejeu F9/F10 enregistré ainsi ne se rejoue pas à l'identique.
+        </div>
       </div>
 
       <div style={{ color: "#666", marginTop: 6 }}>

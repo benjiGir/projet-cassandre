@@ -34,10 +34,36 @@ Table identique aux codes qu'avait en dur `captureInputFrame` (aujourd'hui
 `game/loop/updateGameplay.ts`) avant l'introduction de cette API — aucune
 régression de comportement par défaut.
 
-Les touches de DEBUG (`F9`, `F10`, `KeyV`, `KeyB` dans
-`game/loop/updateFx.ts`) sont volontairement absentes de cette table :
-outils de dev, jamais montrées au joueur, jamais persistées, jamais
+Les touches de DEBUG (voir ci-dessous) sont volontairement absentes de cette
+table : outils de dev, jamais montrées au joueur, jamais persistées, jamais
 rebindables via cette API.
+
+## Touches de dev
+
+Lues au taux d'affichage dans `game/loop/updateFx.ts` (sauf le panneau de
+tuning, qui écoute lui-même), jamais rebindables.
+
+| Touche | Effet |
+|---|---|
+| `F8` | **Ennemis passifs** (`notarget`) : ils ne voient plus le joueur et leurs attaques ne font rien — pour parcourir un niveau et le regarder |
+| `F9` / `F10` | Enregistre / rejoue une séquence d'input (harnais A/B, preuve de déterminisme) |
+| `KeyV` | Wireframe de toute la scène |
+| `KeyB` | Gizmos balistiques (actifs par défaut) |
+| `` ` `` | Panneau de tuning à chaud (`ui/TuningPanel.tsx`) |
+
+`KeyM` (musique) n'est pas dans cette liste : c'est une touche joueur, fixe
+et non rebindable, doublée par l'écran Options.
+
+**`notarget` est la seule de ces bascules qui touche le GAMEPLAY**, pas
+seulement l'affichage — d'où son message HUD à chaque bascule, qui évite de
+prendre plus tard des ennemis inertes pour une IA cassée. Elle vit dans
+`game/devtools/cheats.ts`, se coche aussi dans le panneau de tuning et
+s'appelle en console (`cassandre.notarget()` / `cassandre.notarget(false)`).
+Un ennemi déjà lancé perd le contact immédiatement, sans attendre
+`lostContactTimeout`. Conséquence : une séquence enregistrée à F9 avec
+`notarget` actif ne se rejoue pas à l'identique sans lui — les ennemis ne
+prennent plus les mêmes décisions, même si le RNG, lui, reste continu
+(invariant #12).
 
 ## Pourquoi ça marche déjà en AZERTY
 

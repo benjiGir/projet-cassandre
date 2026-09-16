@@ -31,6 +31,7 @@ import {
 } from "../../render/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/cards";
+import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import { startPlayback } from "../session/recording";
 import { type GameEngine } from "../session/gameEngine";
@@ -126,6 +127,8 @@ export function exposeDebugApi(engine: GameEngine): void {
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
+    /** Dev : `notarget()` rend les ennemis aveugles au joueur, `notarget(false)` les réveille (touche F8, ou la case du panneau de tuning). */
+    notarget: (on = true) => setNotarget(on),
     /** Trousses de soin (`use_*` portant `soin`) du niveau glTF actuellement chargé — `visible: false` = déjà ramassée (même précédent que `secrets`). */
     heals: () => (engine.session.gltfLevelSession?.current?.useObjects ?? []).filter((u) => u.heals !== null),
     /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant. `graph()` expose le `NavGraph` brut (tableaux typés, voir sa doc), `stats()` un résumé lisible, `findPath(from, to)` calcule un chemin en direct (`null` si pas de graphe/chemin) — même précédent console que `doors`/`secrets`. */
@@ -323,6 +326,8 @@ declare global {
       doors: () => DoorInfo[];
       secrets: () => SecretZone[];
       heals: () => UseObject[];
+      /** Dev : rend les ennemis aveugles au joueur (voir `devtools/cheats.ts`). */
+      notarget: (on?: boolean) => boolean;
       /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */
       pathfinding: {
         graph: () => NavGraph | null;
