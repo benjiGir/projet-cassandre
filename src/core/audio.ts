@@ -52,6 +52,17 @@ interface SfxDef {
   file: string;
   /** Volume de base [0..1], avant tout scale passé à `playSfx`. */
   volume: number;
+  /**
+   * Variation de hauteur à chaque lecture, en fraction. Défaut
+   * `PITCH_VARIATION`.
+   *
+   * À baisser sur tout son tiré d'un VRAI enregistrement, et en particulier
+   * sur les armes du joueur. La variation existe pour casser la répétition
+   * d'un échantillon court ; sur un son de synthèse elle passe inaperçue, mais
+   * ±8 % sur un coup de feu font presque un ton et demi — l'arme change de
+   * calibre d'un tir à l'autre, et l'oreille lit ça comme un faux.
+   */
+  pitch?: number;
 }
 
 const SFX_BASE_PATH = assetUrl("assets/audio/sfx");
@@ -63,8 +74,8 @@ const POOL_SIZE = 8;
 const PITCH_VARIATION = 0.08;
 
 const SFX_TABLE: Record<SfxId, SfxDef> = {
-  melee_fire: { file: "melee_fire", volume: 0.7 },
-  shotgun_fire: { file: "shotgun_fire", volume: 1.0 },
+  melee_fire: { file: "melee_fire", volume: 0.7, pitch: 0.04 },
+  shotgun_fire: { file: "shotgun_fire", volume: 1.0, pitch: 0.025 },
   impact_concrete: { file: "impact_concrete", volume: 0.8 },
   // Pas encore utilisés cette phase (`HitEvent.material` vaut toujours
   // "concrete", voir `PLACEHOLDER_MATERIAL` dans `game/player/weapons.ts`) :
@@ -110,7 +121,7 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // il ne doit jamais couvrir la télégraphie d'un Costard.
   heal_pickup: { file: "heal_pickup", volume: 0.7 },
   // Pistolet : sec et court, il se répète bien plus souvent que le pompe.
-  pistol_fire: { file: "pistol_fire", volume: 0.75 },
+  pistol_fire: { file: "pistol_fire", volume: 0.75, pitch: 0.025 },
   // Boîte de munitions : deux cliquetis métalliques, à ne pas confondre avec
   // le carillon d'une trousse de soin.
   ammo_pickup: { file: "ammo_pickup", volume: 0.7 },
@@ -204,7 +215,8 @@ class SfxPool {
     const howl = this.sounds[this.cursor]!;
     this.cursor = (this.cursor + 1) % this.sounds.length;
     try {
-      const rate = 1 - PITCH_VARIATION + Math.random() * PITCH_VARIATION * 2; // ±8 %
+      const p = SFX_TABLE[this.id].pitch ?? PITCH_VARIATION;
+      const rate = 1 - p + Math.random() * p * 2;
       howl.rate(rate);
       howl.volume(SFX_TABLE[this.id].volume * volumeScale);
       howl.play();

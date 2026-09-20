@@ -5,8 +5,9 @@
 
 Existe pour une raison simple : **un agent ne peut pas écouter**. Il peut
 trier par nom, durée et niveau, traiter proprement, mais pas juger si un son
-claque. Cette page pose côte à côte, pour chaque son du jeu, l'ancien
-placeholder synthétique, celui qui est installé, et les variantes retenues —
+claque. Cette page pose côte à côte, pour chaque son du jeu, les versions déjà
+écoutées (`HISTORIQUE`), celle qui est installée, des variantes de TRAITEMENT
+sur la même prise (`COMPARAISONS`) et des variantes de PRISE (`VARIANTES`) —
 toutes passées par la MÊME chaîne que `import_sfx.py`, sinon la comparaison
 mentirait.
 
@@ -29,6 +30,15 @@ SORTIE = os.path.join(I.ROOT, "public", "audition")
 K = I.K
 F = I.F
 V = f"{K}/kenney_voiceover-pack/Male"
+
+# Versions PRÉCÉDENTES remises en regard, de la plus ancienne à la plus
+# récente. Chaque entrée est un dossier de `public/` contenant `<sfx>.ogg` ;
+# tous sont gitignorés et se remplissent à la main avant une écoute (pour la
+# passe rejetée du 2026-09-20 : `git show <commit>:public/assets/audio/sfx/…`).
+# Sans ça, la page ne montrerait que l'état courant, et on ne saurait pas si on
+# avance.
+HISTORIQUE = [("audition_avant", "synthétique (l'origine)"),
+              ("audition_rejete", "1re passe CC0 (rejetée)")]
 
 # Variantes proposées à l'écoute, EN PLUS de celle installée. Le commentaire
 # dit ce qu'on cherche à trancher.
@@ -98,6 +108,38 @@ VARIANTES: dict[str, list[tuple[str, str, float]]] = {
                      ("grincement 3", f"{K}/kenney_rpg-audio/Audio/creak3.ogg", 1.20)],
 }
 
+# Variantes entièrement spécifiées, quand l'écoute ne porte pas sur le CHOIX
+# de la prise mais sur son TRAITEMENT. Depuis le 2026-09-20 c'est le cas des
+# armes : la prise est bonne, ce qui manquait était le grave (voir `I.Grave`).
+COMPARAISONS: dict[str, list[tuple[str, "I.Source"]]] = {
+    "shotgun_fire": [
+        ("sans grave reconstruit",
+         I.Source(f"{F}/Model 12/K_22P.wav", duree=0.90, pack="audition")),
+        ("grave plus discret",
+         I.Source(f"{F}/Model 12/K_22P.wav", duree=0.90, pack="audition",
+                  grave=I.Grave(160, 85, 0.050, 0.060, 0.20, 0.13))),
+        ("grave plus lourd",
+         I.Source(f"{F}/Model 12/K_22P.wav", duree=0.90, pack="audition",
+                  grave=I.Grave(155, 70, 0.075, 0.100, 0.42, 0.28))),
+    ],
+    "pistol_fire": [
+        ("sans grave reconstruit",
+         I.Source(f"{F}/1911/A_42P.wav", duree=0.55, pack="audition")),
+        ("grave plus discret",
+         I.Source(f"{F}/1911/A_42P.wav", duree=0.55, pack="audition",
+                  grave=I.Grave(180, 95, 0.030, 0.040, 0.22, 0.12))),
+        ("grave plus lourd",
+         I.Source(f"{F}/1911/A_42P.wav", duree=0.55, pack="audition",
+                  grave=I.Grave(175, 78, 0.045, 0.060, 0.48, 0.25))),
+    ],
+}
+
+# Les armes de remplacement passent par la MÊME reconstruction de grave que
+# celle qui est installée : sans ça on comparerait un pompe avec ventre à un
+# pompe sans ventre, et le ventre gagnerait à tous les coups.
+GRAVE_VARIANTE = {"shotgun_fire": I.SOURCES["shotgun_fire"].grave,
+                  "pistol_fire": I.SOURCES["pistol_fire"].grave}
+
 # Les sons du jeu, dans l'ordre de la page.
 ORDRE = ["shotgun_fire", "pistol_fire", "melee_fire", "impact_concrete", "impact_metal", "impact_flesh",
          "enemy_alert", "enemy_telegraph", "enemy_hurt", "enemy_death", "door_swing", "door_slide",
@@ -105,14 +147,14 @@ ORDRE = ["shotgun_fire", "pistol_fire", "melee_fire", "impact_concrete", "impact
          "prop_break_wood", "prop_break_glass"]
 
 
-def rendre(chemin_relatif: str, duree: float, sortie: str) -> bool:
+def rendre(s: "I.Source", sortie: str) -> bool:
     """Passe une variante par la chaîne d'`import_sfx`, vers `public/audition`."""
-    source = os.path.join(I.BRUT, chemin_relatif)
+    source = os.path.join(I.BRUT, s.chemin)
     if not os.path.exists(source):
-        print(f"[audition] source absente, ignorée : {chemin_relatif}")
+        print(f"[audition] source absente, ignorée : {s.chemin}")
         return False
     data, hz = I.lire(source)
-    data = I.traiter(data, hz, I.Source(chemin_relatif, duree=duree, pack="audition"))
+    data = I.traiter(data, hz, s)
     import wave
 
     with wave.open(os.path.join(SORTIE, sortie + ".wav"), "wb") as w:
@@ -122,34 +164,45 @@ def rendre(chemin_relatif: str, duree: float, sortie: str) -> bool:
         w.writeframes((data * 32767).astype("<i2").tobytes())
     import subprocess
 
-    subprocess.run(["oggenc", "-Q", "-q", "4", "-o", os.path.join(SORTIE, sortie + ".ogg"),
+    # La MÊME qualité que l'import : comparer deux encodages différents
+    # reviendrait à juger l'encodeur en croyant juger la prise.
+    subprocess.run(["oggenc", "-Q", "-q", I.QUALITE_OGG, "-o", os.path.join(SORTIE, sortie + ".ogg"),
                     os.path.join(SORTIE, sortie + ".wav")], check=True)
     os.unlink(os.path.join(SORTIE, sortie + ".wav"))
     return True
 
 
 def main() -> None:
-    avant = os.path.join(I.ROOT, "public", "audition_avant")
     shutil.rmtree(SORTIE, ignore_errors=True)
     os.makedirs(SORTIE, exist_ok=True)
 
     lignes = []
     for sfx in ORDRE:
         pistes = []
-        # L'ancien placeholder, s'il a été mis de côté avant l'import.
-        ancien = os.path.join(avant, f"{sfx}.ogg")
-        if os.path.exists(ancien):
-            shutil.copy(ancien, os.path.join(SORTIE, f"{sfx}__synth.ogg"))
-            pistes.append(("synthétique (avant)", f"{sfx}__synth.ogg"))
+        # Ce qu'on a déjà écouté, dans l'ordre chronologique.
+        for rang, (dossier, etiquette) in enumerate(HISTORIQUE):
+            ancien = os.path.join(I.ROOT, "public", dossier, f"{sfx}.ogg")
+            if os.path.exists(ancien):
+                shutil.copy(ancien, os.path.join(SORTIE, f"{sfx}__h{rang}.ogg"))
+                pistes.append((etiquette, f"{sfx}__h{rang}.ogg"))
+
         installe = os.path.join(I.SORTIE, f"{sfx}.ogg")
         if os.path.exists(installe):
             shutil.copy(installe, os.path.join(SORTIE, f"{sfx}__installe.ogg"))
             source = I.SOURCES[sfx].chemin.rsplit("/", 1)[-1] if sfx in I.SOURCES else "synthèse"
             pistes.append((f"INSTALLÉ — {source}", f"{sfx}__installe.ogg"))
+
+        # Même prise, traitement différent.
+        for i, (etiquette, s) in enumerate(COMPARAISONS.get(sfx, [])):
+            if rendre(s, f"{sfx}__c{i}"):
+                pistes.append((etiquette, f"{sfx}__c{i}.ogg"))
+
+        # Autre prise, même traitement que celle installée.
         for i, (etiquette, chemin, duree) in enumerate(VARIANTES.get(sfx, [])):
-            nom = f"{sfx}__v{i}"
-            if rendre(chemin, duree, nom):
-                pistes.append((etiquette, nom + ".ogg"))
+            s = I.Source(chemin, duree=duree, pack="audition", grave=GRAVE_VARIANTE.get(sfx))
+            if rendre(s, f"{sfx}__v{i}"):
+                pistes.append((etiquette, f"{sfx}__v{i}.ogg"))
+
         lignes.append((sfx, pistes))
 
     with open(os.path.join(SORTIE, "index.html"), "w") as f:
@@ -186,12 +239,16 @@ PAGE = """<!doctype html>
   button:hover { background: #2e2e3c; }
   button.joue { background: #2e6f4e; border-color: #47a273; }
   button[data-src*="__installe"] { border-color: #7a6a2a; }
-  button[data-src*="__synth"] { color: #9a9aa8; }
+  button[data-src*="__h"] { color: #9a9aa8; }
 </style>
 <h1>Écoute des sons</h1>
-<p class="aide">Un clic joue le son. <strong>INSTALLÉ</strong> = ce qui est dans le jeu en ce moment,
-<em>synthétique (avant)</em> = l'ancien placeholder. Dis-moi les remplacements à faire, je les note dans
-<code>tools/audio/import_sfx.py</code>.</p>
+<p class="aide">Un clic joue le son. <strong>INSTALLÉ</strong> = ce qui est dans le jeu en ce moment ;
+les boutons gris à sa gauche sont les versions déjà écoutées, de la plus ancienne à la plus récente ;
+ceux de droite sont des variantes, toutes passées par la même chaîne.</p>
+<p class="aide">Les deux armes ouvrent la page : commence par elles. La question du jour n'est pas
+« quelle arme » mais <strong>combien de grave</strong> — les prises de la bibliothèque n'en ont aucun, il est
+reconstruit. « sans grave reconstruit » est exactement ce qui a été rejeté, en mieux enregistré.</p>
+<p class="aide">Dis-moi les remplacements à faire, je les note dans <code>tools/audio/import_sfx.py</code>.</p>
 %s
 <script>
   let courant = null;

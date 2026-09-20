@@ -146,22 +146,49 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 
 ## Phase courante
 
-> **Sons : de vrais enregistrements CC0 (2026-09-20), EN ATTENTE D'UNE
-> ÉCOUTE.** Quatorze des vingt SFX ne sont plus synthétiques : le pompe et le
+> **Sons : de vrais enregistrements CC0 (2026-09-20), DEUXIÈME ÉCOUTE EN
+> ATTENTE.** Quatorze des vingt SFX ne sont plus synthétiques : le pompe et le
 > pistolet sont de VRAIES armes (Winchester Model 12, Colt 1911 — « The Free
 > Firearm Sound Library », CC0), le reste vient des packs audio CC0 de Kenney.
-> Chaîne commune : mono, recalage sur l'attaque, coupe courte, normalisation,
-> 22 050 Hz (le grain Build, et la moitié du poids) — vingt sons pour moins de
-> 300 Ko. La recette est dans `tools/audio/import_sfx.py` (quelle prise devient
-> quel son), les packs au registre `assets_src/LICENCES_ASSETS.md`, les
-> archives brutes dans `assets_src/cc0_raw/` (gitignoré).
+> La recette est dans `tools/audio/import_sfx.py` (quelle prise devient quel
+> son), les packs au registre `assets_src/LICENCES_ASSETS.md`, les archives
+> brutes dans `assets_src/cc0_raw/` (gitignoré).
+>
+> **La première passe a été REJETÉE à l'écoute** (« c'est trop bizarre le son
+> des armes, je n'aime pas du tout »). Trois causes mesurées, dont deux étaient
+> des défauts de la chaîne — tableaux de mesures dans
+> [HUD et audio](docs/systems/hud-audio.md#pourquoi-cette-chaîne) :
+> 1. **La somme stéréo creusait le son.** Ces prises sont au couple ESPACÉ
+>    (0,89 ms entre canaux, corrélation −0,03) : les additionner est un filtre
+>    en peigne, qui retirait **5 à 6 dB entre 60 et 600 Hz**. `un_canal()`
+>    mesure maintenant la corrélation et garde UN canal quand elle est faible.
+> 2. **Le rééchantillonnage n'avait pas de filtre anti-repliement.** À
+>    22 050 Hz par simple interpolation, tout ce qui dépassait 11 kHz revenait
+>    se plier dans l'aigu (+2,8 dB mesurés en 9–11 kHz) : on perdait le
+>    claquement ET on le remplaçait par du grésillement. Sortie à **44 100 Hz**,
+>    `passe_bas()` avant toute décimation. Vingt sons pour moins de 400 Ko.
+> 3. **Les prises n'ont AUCUN grave et saturent** — 0,1 % de l'énergie sous
+>    200 Hz, ~60 % entre 600 et 1500 Hz, et 2 à 5 ms d'échantillons à pleine
+>    échelle dans CHAQUE fichier de la bibliothèque. Ça ne se corrige pas par
+>    traitement, ce qui manque n'est pas dans le fichier : `Grave` le
+>    reconstruit sous la prise (sinusoïde qui plonge + bruit filtré, graine
+>    fixe). Part de l'énergie 60–200 Hz : **0,1 → 26,9 %** au pompe, **0 →
+>    17,1 %** au pistolet, facteur de crête inchangé (23,5 dB).
+>
+> Corrigé aussi côté jeu : `SfxDef.pitch` descend la variation de hauteur à
+> ±2,5 % sur les armes (±8 % par défaut). Sur un vrai enregistrement, ±8 % font
+> presque un ton et demi — l'arme change de calibre à chaque tir.
 > **Six sons restent synthétiques**, faute d'équivalent CC0 : les quatre
 > vocalisations de Costard (aucun pack CC0 n'a de grognements) et les deux
 > portes mécaniques du niveau v2 (porte automatique, rideau métallique).
 > **Un agent n'entend pas** : `tools/audio/audition.py` écrit une page locale
-> (`http://localhost:5173/audition/`) qui met côte à côte, par son, l'ancien
-> placeholder, celui qui est installé et des variantes, toutes traitées de la
-> même façon. Le verdict d'écoute se note dans la table d'`import_sfx.py`.
+> (`http://localhost:5173/audition/`) qui met côte à côte, par son, les
+> versions déjà écoutées (dont celle qui a été rejetée), celle qui est
+> installée, des variantes de TRAITEMENT et des variantes de PRISE, toutes
+> passées par la même chaîne et le même encodeur. Le verdict d'écoute se note
+> dans la table d'`import_sfx.py`. **Garder les versions précédentes est le
+> point clé** : sans elles, une écoute dit si un son plaît, jamais si on a
+> progressé depuis la dernière.
 >
 > **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 > DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies
