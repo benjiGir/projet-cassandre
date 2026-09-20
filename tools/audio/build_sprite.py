@@ -32,45 +32,56 @@ POOL = 12
 
 # Marge de crete de l'atlas, AVANT encodage.
 #
-# Volontairement plus basse que le defaut de `write_wav` (0.89). Un encodeur
-# avec perte depasse son entree, et d'autant plus que le signal a des marches
-# nettes — ce que `crush` fabrique expres pour le grain retro. Mesure au
-# decodeur du navigateur, le seul qui ne rabote pas a 1.0 :
+# Un encodeur avec perte depasse son entree, et d'autant plus que le signal a
+# des marches nettes. Mesure au decodeur du navigateur, le seul qui ne rabote
+# pas a 1.0 — les autres ecretent en silence et on ne voit rien :
 #
-#   atlas a 0.95 -> ogg +2.6 dB    (une vingtaine d'echantillons ecretes)
-#   atlas a 0.89 -> ogg +1.44 dB (13 ech.)  m4a +0.88 dB (6 ech.)
-#   atlas a 0.80 -> ogg +0.96 dB  (3 ech.)  m4a propre
+#   AVEC le grain retro, atlas a 0.95 -> ogg +2.6 dB, ~20 echantillons ecretes
+#                        atlas a 0.89 -> ogg +1.44 dB (13 ech.)
+#                        atlas a 0.80 -> ogg +0.96 dB (3 ech.)
+#   SANS le grain,       atlas a 0.80 -> ogg -0.97 dB, ZERO ecretage
 #
-# Le depassement ne s'annule PAS completement : il tient a une seule
-# transitoire, et le rapport ne suit pas le niveau. Descendre encore couterait
-# du niveau partout pour trois echantillons de moins, inaudibles. On s'arrete
-# la. Le decibel perdu se rattrape au volume par son, pas en saturant l'atlas.
-PEAK = 0.80
+# C'est le `crush` qui causait le depassement : ses paliers d'echantillon
+# bloque sont des marches verticales, precisement ce qu'un encodeur ne sait pas
+# representer et compense en depassant. Retire du defaut le 2026-09-20, le
+# probleme part avec lui, et le decibel qu'il fallait sacrifier revient.
+PEAK = 0.85
 
 
 def dispo(programme: str) -> bool:
     return shutil.which(programme) is not None
 
 
-def lancer(commande: list[str], dst: str) -> bool:
-    try:
-        subprocess.run(commande, capture_output=True, check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"  echec encodage {dst}: {e.stderr.decode()[-200:]}")
-        return False
+def essayer(tentatives: list[list[str]], dst: str) -> bool:
+    """Lance les commandes dans l'ordre, s'arrete a la premiere qui reussit.
+
+    ESSAYER, pas choisir : la presence d'un encodeur ne dit pas qu'il sait
+    faire le travail. Le ffmpeg de Homebrew est livre SANS libvorbis — le
+    preferer parce qu'il est installe a produit un sprite sans .ogg, donc un
+    jeu muet sur Chrome et Firefox, pendant que `oggenc` attendait a cote.
+    """
+    dernier = ""
+    for commande in tentatives:
+        if not dispo(commande[0]):
+            continue
+        try:
+            subprocess.run(commande, capture_output=True, check=True)
+            return True
+        except subprocess.CalledProcessError as e:
+            dernier = f"{commande[0]}: {e.stderr.decode()[-160:]}"
+    if dernier:
+        print(f"  echec encodage {dst} ({dernier})")
+    return False
 
 
 def vers_ogg(src: str, dst: str, qualite: int) -> bool:
     """WAV -> Vorbis, par ffmpeg ou par oggenc."""
-    if dispo("ffmpeg"):
-        return lancer(["ffmpeg", "-y", "-i", src, "-c:a", "libvorbis",
-                       "-q:a", str(qualite), "-ac", "1", dst], dst)
-    # Pas de --downmix : tout le studio est mono par construction, et l'option
-    # ne ferait qu'avertir qu'elle n'a rien a faire.
-    if dispo("oggenc"):
-        return lancer(["oggenc", "-Q", "-q", str(qualite), "-o", dst, src], dst)
-    return False
+    # Pas de --downmix sur oggenc : tout le studio est mono par construction,
+    # et l'option ne ferait qu'avertir qu'elle n'a rien a faire.
+    return essayer([
+        ["ffmpeg", "-y", "-i", src, "-c:a", "libvorbis", "-q:a", str(qualite), "-ac", "1", dst],
+        ["oggenc", "-Q", "-q", str(qualite), "-o", dst, src],
+    ], dst)
 
 
 def vers_m4a(src: str, dst: str, kbps: int) -> bool:
@@ -81,13 +92,10 @@ def vers_m4a(src: str, dst: str, kbps: int) -> bool:
     supporter, et ne se rabat PAS sur l'autre si celui-la manque. Livrer le
     sprite en ogg seul, c'est un jeu muet sur Safari.
     """
-    if dispo("ffmpeg"):
-        return lancer(["ffmpeg", "-y", "-i", src, "-c:a", "aac",
-                       "-b:a", f"{kbps}k", "-ac", "1", dst], dst)
-    if dispo("afconvert"):
-        return lancer(["afconvert", "-f", "m4af", "-d", "aac",
-                       "-b", str(kbps * 1000), src, dst], dst)
-    return False
+    return essayer([
+        ["ffmpeg", "-y", "-i", src, "-c:a", "aac", "-b:a", f"{kbps}k", "-ac", "1", dst],
+        ["afconvert", "-f", "m4af", "-d", "aac", "-b", str(kbps * 1000), src, dst],
+    ], dst)
 
 
 def main() -> None:

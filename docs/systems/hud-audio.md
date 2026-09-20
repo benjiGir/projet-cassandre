@@ -39,8 +39,13 @@ que depuis `updateFx` (`game/loop/updateFx.ts`), sur des
 
 ## Assets sonores
 
-**Tout le son du jeu est synthétisé par code.** Aucun échantillon externe,
-aucune question de licence. Le studio vit sous `tools/audio/` : `synth.py`
+**Le son se fait à deux mains, depuis le 2026-09-20 :** de vrais
+enregistrements CC0 pour tout ce qui est un OBJET — armes, impacts, verre,
+bois, portes, ramassages, voix des Costards — et la synthèse pour ce qui
+n'existe pas physiquement : interface, bips du lecteur de carte, son de secret
+trouvé, ambiances de zone. Chaque technique est bonne à une chose différente,
+et quatre passes ont été nécessaires pour l'admettre (voir plus bas). Les deux
+origines se rejoignent dans le même sprite. Le studio vit sous `tools/audio/` : `synth.py`
 (briques DSP), `recipes.py` (les recettes, en texte, versionnées),
 `render_sfx.py` (rendu WAV), `analyze_sfx.py` (mesures et masquage),
 `build_sprite.py` (empaquetage), `audition.py` (page d'écoute). Les WAV sont
@@ -68,6 +73,36 @@ absente du sprite est signalé UNE fois au chargement, pas au premier tir ;
 déclenche n'importe quel son sans avoir à provoquer la situation qui le
 produit — indispensable, le verrouillage du pointeur étant hors de portée de
 l'automatisation.
+
+### Le grain rétro, retiré du défaut
+
+Le rendu appliquait un `crush` à 10 bits / 22 050 Hz à tout sauf l'ambiance et
+l'interface — « l'équivalent audio du 640×360 ». Mesuré le 2026-09-20, il
+faisait autre chose que ce qu'il annonçait. La réduction de taux se fait par
+blocage d'échantillon, sans filtre : elle ne coupe pas l'aigu, elle le
+**replie**.
+
+| Son | Parasite injecté | Aigu |
+|---|---:|---|
+| `impact_metal` | **−1,7 dB** du signal | +1,9 dB de *faux* aigu |
+| `impact_glass` | −2,9 dB | fabriqué, pas perdu |
+| `pistol_fire` | −2,9 dB | +1,8 dB de faux |
+| `crowbar_metal` | −4,4 dB | +2,5 dB de faux |
+
+À −6 dB il y a autant de parasite que de son utile ; plusieurs étaient
+au-dessus. Sur un impact métal ou un bris de verre — précisément les sons dont
+la richesse fait qu'on les reconnaît — on remplaçait le détail par du bruit.
+
+Il reste disponible en option (`render_sfx.py --crush`), et `synth.crush` reste
+une brique : un son qui passe par un haut-parleur **dans la fiction** (annonce
+au micro, interphone, talkie) a de bonnes raisons d'être dégradé. Ce qui était
+faux, c'est de l'appliquer à tout.
+
+Effet de bord mesuré, et il est net : l'écrêtage de l'atlas a disparu avec lui.
+Les paliers du `crush` sont des marches verticales, exactement ce qu'un
+encodeur avec perte ne sait pas représenter et compense en dépassant. La marge
+de crête, qu'il avait fallu descendre à 0,80, est remontée à 0,85 — zéro
+échantillon écrêté dans les deux formats, contre une vingtaine au départ.
 
 ### Pourquoi la synthèse, et pas des enregistrements
 

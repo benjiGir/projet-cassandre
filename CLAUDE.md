@@ -146,9 +146,33 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 
 ## Phase courante
 
-> **Son : studio de synthèse, intégré au jeu (2026-09-20), EN ATTENTE D'UNE
-> ÉCOUTE.** Tout le son est désormais **synthétisé par code** — aucun
-> échantillon externe, aucune question de licence. Studio sous `tools/audio/`
+> **Son : CHANTIER EN COURS (2026-09-20). Quatre passes rejetées à l'écoute,
+> direction arrêtée à la cinquième.** Le son se fait à DEUX MAINS : de vrais
+> enregistrements CC0 pour tout ce qui est un OBJET (armes, impacts, verre,
+> bois, portes, ramassages, voix des Costards), la SYNTHÈSE pour ce qui
+> n'existe pas physiquement (interface, lecteur de carte, secret trouvé,
+> ambiances). Les deux origines se rejoignent dans un même sprite.
+> **En attente** : l'utilisateur télécharge les enregistrements CC0 depuis
+> Freesound (un contributeur différent par famille — une bibliothèque entière
+> enregistrée au même endroit donne des sons qui se ressemblent tous, mesuré) ;
+> ils se déposent dans `assets_src/cc0_raw/freesound/`, dont le README porte
+> les conventions.
+> **Leçon des quatre rejets** : le reproche était le même à chaque fois — « ça
+> ne ressemble pas à ce que c'est » — et j'ai corrigé trois autres choses
+> (chaîne d'import, distinction des timbres, puissance). Toutes réelles,
+> aucune n'était la sienne. La synthèse procédurale fait des sons
+> structurellement justes mais sans le désordre qui fait reconnaître un objet.
+>
+> **Le grain rétro est RETIRÉ du défaut**, et c'est la correction la plus
+> mesurable de la passe : le `crush` 10 bits / 22 050 Hz injectait un parasite
+> à −1,7 dB du signal sur `impact_metal`, et FABRIQUAIT du faux aigu par
+> repliement au lieu d'en retirer. Il reste en option (`--crush`) pour un son
+> dégradé DANS LA FICTION (annonce au micro, interphone). Effet de bord : ses
+> marches verticales causaient tout le dépassement d'encodeur, donc l'écrêtage
+> de l'atlas a disparu avec lui et la marge de crête est remontée de 0,80 à
+> 0,85.
+>
+> Le studio reste `tools/audio/` — aucun échantillon dans le dépôt. Studio sous `tools/audio/`
 > (`synth.py` DSP, `recipes.py` les recettes, `render_sfx.py`,
 > `analyze_sfx.py`, `build_sprite.py`, `audition.py`), plus l'agent
 > `sound-forge` et cinq skills. Le jeu charge un **audio sprite** unique

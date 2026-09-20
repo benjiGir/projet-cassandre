@@ -33,9 +33,8 @@ import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from recipes import RECIPES              # noqa: E402
-from render_sfx import CRUSH             # noqa: E402
-from synth import SR, crush, write_wav   # noqa: E402
+from recipes import RECIPES       # noqa: E402
+from synth import SR, write_wav    # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SORTIE = os.path.join(ROOT, "public", "audition")
@@ -65,12 +64,11 @@ def mesures(x: np.ndarray) -> str:
     return f"{len(x) / SR:.2f}s · crete {20 * np.log10(crete / rms):.0f}dB · {centre:.0f}Hz"
 
 
-def rendre(nom: str, fonction, seed: int, categorie: str, sortie: str) -> str:
+def rendre(nom: str, fonction, seed: int, sortie: str) -> str:
     """Rend une recette et l'encode en ogg. Renvoie la ligne de mesures."""
+    # Pas de grain retro : il a quitte le defaut du rendu le 2026-09-20, et une
+    # page d'ecoute qui ne traiterait pas comme le rendu mentirait.
     x = np.asarray(fonction(seed=seed), dtype=np.float64)
-    if categorie not in ("ambience", "ui"):
-        x = crush(x, **CRUSH)
-
     wav = os.path.join(SORTIE, sortie + ".wav")
     write_wav(wav, x, SR, peak=0.95)
     subprocess.run(["oggenc", "-Q", "-q", "5",
@@ -97,7 +95,7 @@ def main() -> None:
         boutons = []
         for seed in seeds:
             fichier = f"{nom}__{seed}"
-            info = rendre(nom, fonction, seed, categorie, fichier)
+            info = rendre(nom, fonction, seed, fichier)
             etiquette = nom if seed == 0 else f"variante {seed}"
             boutons.append(
                 f'      <button data-src="{fichier}.ogg" title="{html.escape(info)}">'
