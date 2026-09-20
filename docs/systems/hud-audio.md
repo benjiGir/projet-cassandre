@@ -16,9 +16,10 @@ fond et un thème musical, en boucle sur toute une session, qui doivent
 parfois baisser brièvement pour laisser la place à une réplique du héros —
 c'est le rôle de `core/music.ts`, volontairement séparé du premier parce
 que les deux jeux de contraintes (pooling/pitch d'un côté, streaming en
-boucle de l'autre) n'ont rien en commun. Quatorze des vingt SFX sont
-maintenant de vrais enregistrements CC0 (voir plus bas) ; les six qui
-restent, et la musique, sont encore des placeholders synthétiques.
+boucle de l'autre) n'ont rien en commun. Treize des vingt SFX sont
+maintenant de vrais enregistrements CC0 et un est fabriqué avec sa recette
+(voir plus bas) ; les six qui restent, et la musique, sont encore des
+placeholders synthétiques sans recette.
 
 ## Effets sonores ponctuels
 
@@ -39,7 +40,7 @@ que depuis `updateFx` (`game/loop/updateFx.ts`), sur des
 
 ## Assets sonores
 
-Depuis le 2026-09-20, quatorze des vingt `SfxId` viennent de packs CC0, pas
+Depuis le 2026-09-20, treize des vingt `SfxId` viennent de packs CC0, pas
 d'une synthèse : les tirs du pompe et du pistolet sont de VRAIES armes (un
 Winchester Model 12 et un Colt 1911, « The Free Firearm Sound Library »), le
 reste vient des packs audio de Kenney. Chaque pack a sa ligne au registre
@@ -55,7 +56,24 @@ Les vingt sons pèsent ensemble moins de 400 Ko.
 vocalisations de Costard (`enemy_alert`, `enemy_telegraph`, `enemy_hurt`,
 `enemy_death` — aucun pack CC0 n'a de grognements) et les deux portes
 mécaniques du niveau v2 (`door_slide`, `door_shutter` — ni porte automatique
-ni rideau métallique dans ces packs).
+ni rideau métallique dans ces packs). Ceux-là sont une **dette** : ils ont été
+produits par des scripts jetables jamais versionnés, donc personne ne peut les
+refaire ni savoir comment ils ont été obtenus.
+
+**Un son est FABRIQUÉ, avec sa recette** : `melee_fire`, par
+`tools/audio/synth_sfx.py`. Le pied-de-biche sortait jusqu'au 2026-09-20 de
+`knifeSlice2.ogg` — et ça s'entendait : « le pied de biche sonne comme un coup
+de couteau ». C'était littéralement le cas. Aucun pack du projet n'a de son de
+BALANCEMENT, et une lame qui fend l'air n'est pas une barre d'acier qui la
+brasse : plus grave, plus lente, et assez de masse pour qu'on la sente. Un
+`Souffle` est du bruit dont la COULEUR bouge — un passe-bande à variable d'état
+dont le centre monte jusqu'au passage devant l'oreille puis redescend ; un
+filtre fixe donnerait un « chhh » de vieille radio, pas un mouvement. Médiane
+spectrale : **5823 Hz (la lame) → 885 Hz (la barre)**.
+
+`synth_sfx.py` est l'endroit où la dette des six autres se remboursera, un son
+à la fois. Chaque son y porte sa graine : régénérer redonne exactement le même
+fichier, sinon comparer deux versions n'aurait plus de sens.
 
 **Comment on choisit, puisqu'un agent n'entend pas** :
 `tools/audio/audition.py` écrit une page locale — `http://localhost:5173/audition/`

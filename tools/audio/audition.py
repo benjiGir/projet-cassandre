@@ -25,6 +25,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import import_sfx as I  # noqa: E402
+import synth_sfx as SY  # noqa: E402
 
 SORTIE = os.path.join(I.ROOT, "public", "audition")
 K = I.K
@@ -52,9 +53,6 @@ VARIANTES: dict[str, list[tuple[str, str, float]]] = {
     "pistol_fire": [("Walther PPQ 9 mm", f"{F}/Walther PPQ/X_39P.wav", 0.55),
                     ("Bersa .380", f"{F}/Bersa/F_47P.wav", 0.50),
                     ("S&W 642, revolver", f"{F}/Smith & Wesson 642/V_27P.wav", 0.55)],
-    "melee_fire": [("lame 1", f"{K}/kenney_rpg-audio/Audio/knifeSlice.ogg", 0.35),
-                   ("coup de hache", f"{K}/kenney_rpg-audio/Audio/chop.ogg", 0.40),
-                   ("étoffe", f"{K}/kenney_rpg-audio/Audio/cloth3.ogg", 0.35)],
     "impact_concrete": [("pioche 3", f"{K}/kenney_impact-sounds/Audio/impactMining_003.ogg", 0.35),
                         ("générique léger", f"{K}/kenney_impact-sounds/Audio/impactGeneric_light_000.ogg", 0.35),
                         ("pas sur béton", f"{K}/kenney_impact-sounds/Audio/footstep_concrete_000.ogg", 0.35)],
@@ -134,6 +132,18 @@ COMPARAISONS: dict[str, list[tuple[str, "I.Source"]]] = {
     ],
 }
 
+# Sons FABRIQUÉS proposés à l'écoute (`synth_sfx.py`). Même rôle que
+# `COMPARAISONS` : la question n'est pas quelle prise, mais quel réglage.
+SYNTHESES: dict[str, list[tuple[str, "SY.Souffle", int]]] = {
+    # Le pied-de-biche : quelle masse a la barre ? Trois poids, du plus sec au
+    # plus lourd. Celui du milieu est ce qui est installé.
+    "melee_fire": [
+        ("barre plus légère", SY.Souffle(0.30, 300, 1300, 380, 0.58, 1.7, 0.22, brillance=5200), 0x0C12),
+        ("barre plus lourde", SY.Souffle(0.40, 190, 760, 240, 0.60, 1.6, 0.70, brillance=3000), 0x0C12),
+        ("barre plus rapide", SY.Souffle(0.24, 260, 1050, 320, 0.55, 1.8, 0.45, brillance=3800), 0x0C12),
+    ],
+}
+
 # Les armes de remplacement passent par la MÊME reconstruction de grave que
 # celle qui est installée : sans ça on comparerait un pompe avec ventre à un
 # pompe sans ventre, et le ventre gagnerait à tous les coups.
@@ -172,6 +182,23 @@ def rendre(s: "I.Source", sortie: str) -> bool:
     return True
 
 
+def rendre_synth(s: "SY.Souffle", graine: int, sortie: str) -> bool:
+    """Même chose pour un son fabriqué : il n'a pas de fichier source."""
+    import subprocess
+    import wave
+
+    data = SY.souffler(s, I.HZ, graine)
+    with wave.open(os.path.join(SORTIE, sortie + ".wav"), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(I.HZ)
+        w.writeframes((data * 32767).astype("<i2").tobytes())
+    subprocess.run(["oggenc", "-Q", "-q", I.QUALITE_OGG, "-o", os.path.join(SORTIE, sortie + ".ogg"),
+                    os.path.join(SORTIE, sortie + ".wav")], check=True)
+    os.unlink(os.path.join(SORTIE, sortie + ".wav"))
+    return True
+
+
 def main() -> None:
     shutil.rmtree(SORTIE, ignore_errors=True)
     os.makedirs(SORTIE, exist_ok=True)
@@ -189,13 +216,19 @@ def main() -> None:
         installe = os.path.join(I.SORTIE, f"{sfx}.ogg")
         if os.path.exists(installe):
             shutil.copy(installe, os.path.join(SORTIE, f"{sfx}__installe.ogg"))
-            source = I.SOURCES[sfx].chemin.rsplit("/", 1)[-1] if sfx in I.SOURCES else "synthèse"
+            source = (I.SOURCES[sfx].chemin.rsplit("/", 1)[-1] if sfx in I.SOURCES
+                      else "fabriqué" if sfx in I.FABRIQUES else "synthèse")
             pistes.append((f"INSTALLÉ — {source}", f"{sfx}__installe.ogg"))
 
         # Même prise, traitement différent.
         for i, (etiquette, s) in enumerate(COMPARAISONS.get(sfx, [])):
             if rendre(s, f"{sfx}__c{i}"):
                 pistes.append((etiquette, f"{sfx}__c{i}.ogg"))
+
+        # Réglages d'un son fabriqué.
+        for i, (etiquette, s, graine) in enumerate(SYNTHESES.get(sfx, [])):
+            if rendre_synth(s, graine, f"{sfx}__s{i}"):
+                pistes.append((etiquette, f"{sfx}__s{i}.ogg"))
 
         # Autre prise, même traitement que celle installée.
         for i, (etiquette, chemin, duree) in enumerate(VARIANTES.get(sfx, [])):

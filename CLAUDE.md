@@ -178,9 +178,19 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 > Corrigé aussi côté jeu : `SfxDef.pitch` descend la variation de hauteur à
 > ±2,5 % sur les armes (±8 % par défaut). Sur un vrai enregistrement, ±8 % font
 > presque un ton et demi — l'arme change de calibre à chaque tir.
-> **Six sons restent synthétiques**, faute d'équivalent CC0 : les quatre
-> vocalisations de Costard (aucun pack CC0 n'a de grognements) et les deux
-> portes mécaniques du niveau v2 (porte automatique, rideau métallique).
+> **Le pied-de-biche est FABRIQUÉ** (`tools/audio/synth_sfx.py`, nouveau) : il
+> sortait de `knifeSlice2.ogg`, et ça s'entendait — « le pied de biche sonne
+> comme un coup de couteau », littéralement vrai. Aucun pack du projet n'a de
+> son de BALANCEMENT. Un `Souffle` est du bruit dont la COULEUR bouge (passe-
+> bande à variable d'état, centre qui monte au passage puis redescend) ;
+> médiane spectrale 5823 Hz la lame → 885 Hz la barre. **Ne pas remettre
+> `melee_fire` dans la table d'`import_sfx.py`** : le prochain import
+> réécrirait la barre en lame.
+> **Six sons restent synthétiques SANS RECETTE**, produits par des scripts
+> jetables jamais versionnés — dette connue, ils rejoindront `synth_sfx.py` un
+> par un : les quatre vocalisations de Costard (aucun pack CC0 n'a de
+> grognements) et les deux portes mécaniques du niveau v2 (porte automatique,
+> rideau métallique).
 > **Un agent n'entend pas** : `tools/audio/audition.py` écrit une page locale
 > (`http://localhost:5173/audition/`) qui met côte à côte, par son, les
 > versions déjà écoutées (dont celle qui a été rejetée), celle qui est

@@ -159,9 +159,11 @@ SOURCES: dict[str, Source] = {
     "pistol_fire": Source(f"{F}/1911/A_42P.wav", duree=0.55, pack="firearm_library",
                           grave=Grave(depart=180, arrivee=85, plongeon=0.035,
                                       decroissance=0.048, niveau=0.35, corps=0.18)),
-    # Pied-de-biche : un sifflement de lame, sans impact — l'impact vient de
-    # `impact_*`, joué séparément quand le coup touche.
-    "melee_fire": Source(f"{K}/kenney_rpg-audio/Audio/knifeSlice2.ogg", duree=0.35, pack="kenney_rpg_audio"),
+    # Le pied-de-biche N'EST PAS ICI : il sortait de `knifeSlice2.ogg`, et ça
+    # s'entendait — « le pied de biche sonne comme un coup de couteau »
+    # (2026-09-20). Aucun pack du projet n'a de son de BALANCEMENT, il est donc
+    # fabriqué : `tools/audio/synth_sfx.py`. Ne pas le remettre dans cette
+    # table, sinon le prochain import écrase la barre par la lame.
     # --- Impacts -----------------------------------------------------------
     "impact_concrete": Source(f"{K}/kenney_impact-sounds/Audio/impactMining_000.ogg", duree=0.35,
                               pack="kenney_impact_sounds"),
@@ -192,9 +194,12 @@ SOURCES: dict[str, Source] = {
                                pack="kenney_impact_sounds"),
 }
 
-# Sons encore SYNTHÉTIQUES, faute d'équivalent CC0 : les trois vocalisations de
-# Costard (aucun pack CC0 n'a de grognements) et les deux portes mécaniques du
-# niveau v2 (aucun pack n'a de porte automatique ni de rideau métallique).
+# Sons FABRIQUÉS, avec leur recette : `tools/audio/synth_sfx.py`.
+FABRIQUES = ("melee_fire",)
+
+# Sons synthétiques SANS recette : produits par des scripts jetables jamais
+# versionnés, ils sont sur disque et personne ne peut les refaire. Dette
+# connue ; ils rejoindront `synth_sfx.py` un par un.
 RESTES_SYNTHETIQUES = ("enemy_alert", "enemy_telegraph", "enemy_hurt", "enemy_death",
                        "door_slide", "door_shutter")
 
@@ -385,7 +390,8 @@ def main() -> None:
     if args.liste:
         for sfx, s in SOURCES.items():
             print(f"  {sfx:<18} {s.duree:>4.2f} s  {s.chemin}")
-        print(f"  encore synthétiques : {', '.join(RESTES_SYNTHETIQUES)}")
+        print(f"  fabriqués : {', '.join(FABRIQUES)} (synth_sfx.py)")
+        print(f"  synthétiques sans recette : {', '.join(RESTES_SYNTHETIQUES)}")
         return
 
     demandes = args.sfx or list(SOURCES)
@@ -408,7 +414,8 @@ def main() -> None:
         print(f"[sfx] {sfx:<18} {len(data) / HZ:>4.2f} s  {ogg / 1024:>5.1f} Ko ogg  {m4a / 1024:>5.1f} Ko m4a"
               f"  <- {os.path.basename(s.chemin)}")
     print(f"[sfx] {len(demandes)} sons, {total / 1024:.0f} Ko au total ({HZ} Hz mono)")
-    print(f"[sfx] encore synthétiques : {', '.join(RESTES_SYNTHETIQUES)}")
+    print(f"[sfx] fabriqués par synth_sfx.py : {', '.join(FABRIQUES)}")
+    print(f"[sfx] synthétiques sans recette : {', '.join(RESTES_SYNTHETIQUES)}")
 
 
 if __name__ == "__main__":
