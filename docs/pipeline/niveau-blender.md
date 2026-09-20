@@ -315,6 +315,11 @@ Voir [ADR 0011](../decisions/0011-hot-reload-sondage-http.md) pour le choix
 du mécanisme (sondage HTTP HEAD plutôt qu'un watcher fichier) et ses
 alternatives.
 
+**Développement uniquement.** La fibre de sondage n'est créée que sous
+`import.meta.env.DEV`, donc elle n'existe pas dans un build de production —
+où le `.glb` ne changera jamais. Ça n'a pas toujours été vrai : voir la
+révision du 2026-09-20 de l'ADR.
+
 **Préservation de la position du joueur** : `createLevelSession` ne touche
 JAMAIS `player.position`/`player.velocity`. Un rechargement dispose
 l'ancien `LevelHandle` et en construit un nouveau, point final. Le SEUL

@@ -6,7 +6,7 @@ import { loadLevel, type LevelHandle } from "./loader";
 import { GameRuntime } from "../../core/runtime";
 
 /**
- * Hot reload dev-only pour les niveaux `.glb` — sondage HTTP HEAD plutôt
+ * Hot reload DEV SEULEMENT pour les niveaux `.glb` — sondage HTTP HEAD plutôt
  * qu'un watcher fichier (voir ADR 0011), préserve la position du joueur, et
  * retrofit Effect au jalon M2 (erreurs typées, mutex de rechargement,
  * polling par `Schedule`). see: docs/pipeline/niveau-blender.md#hot-reload
@@ -18,7 +18,8 @@ import { GameRuntime } from "../../core/runtime";
 
 export interface LevelSessionOptions {
   /** Intervalle de sondage HTTP HEAD, ms. 400 ms par défaut : largement sous
-   * les 60 s cibles, sans matraquer le serveur dev. */
+   * les 60 s cibles, sans matraquer le serveur dev. Sans effet en production,
+   * où le sondage n'existe pas (voir plus bas). */
   pollIntervalMs?: number;
   /** Appelé après CHAQUE (re)chargement réussi, le tout premier compris.
    * `info.isFirstLoad` distingue le boot (où repositionner le joueur sur
@@ -38,15 +39,18 @@ export interface LevelSession {
   readonly ready: Promise<LevelHandle>;
   /** Force un rechargement immédiat, sans attendre le prochain sondage. */
   reload(): Promise<void>;
-  /** Arrête le sondage et libère le niveau courant. */
+  /** Arrête le sondage (s'il tourne) et libère le niveau courant. */
   stop(): void;
 }
 
 /**
- * Ouvre une session de niveau glTF avec hot reload. Charge `url` UNE
- * PREMIÈRE FOIS immédiatement (pas d'attente du premier intervalle de
- * sondage), puis sonde `url` en continu pour détecter un export Blender
- * ultérieur.
+ * Ouvre une session de niveau glTF. Charge `url` UNE PREMIÈRE FOIS
+ * immédiatement — en production c'est tout ce qui se passe.
+ *
+ * EN DÉVELOPPEMENT seulement, sonde ensuite `url` en continu pour détecter un
+ * export Blender ultérieur et recharger le niveau en place. `reload()` reste
+ * disponible dans les deux cas : c'est un appel explicite, pas une boucle de
+ * fond.
  */
 export function createLevelSession(
   url: string,
@@ -131,11 +135,25 @@ export function createLevelSession(
     });
   }
 
+  // Le sondage est un outil d'AUTEUR, pas une fonction du jeu : il sert à voir
+  // en jeu un export Blender qu'on vient de faire. En production le `.glb` ne
+  // changera jamais, et sonder 2,5 fois par seconde pour l'apprendre coûte du
+  // trafic et de la batterie à chaque joueur, indéfiniment.
+  //
+  // Ce fichier s'annonçait « dev-only » depuis son écriture sans que rien ne
+  // l'applique, et le sondage partait bel et bien dans le bundle livré.
+  // `import.meta.env.DEV` est remplacé par une constante au build, donc toute
+  // cette branche — et `pollOnceEffect` avec elle — disparaît du bundle de
+  // production au lieu d'y dormir.
+  //
   // Effect.repeat(Schedule.spaced(...)) retourne le compteur du Schedule
   // (jamais lu) : typé au plus large (`unknown`) plutôt que `void`.
-  let pollFiber: Fiber.Fiber<unknown, never> | null = GameRuntime.runFork(
-    pollOnceEffect().pipe(Effect.repeat(Schedule.spaced(pollIntervalMs))),
-  );
+  let pollFiber: Fiber.Fiber<unknown, never> | null = null;
+  if (import.meta.env.DEV) {
+    pollFiber = GameRuntime.runFork(
+      pollOnceEffect().pipe(Effect.repeat(Schedule.spaced(pollIntervalMs))),
+    );
+  }
 
   void reload();
 

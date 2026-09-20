@@ -54,3 +54,30 @@ charge, latence réseau anormale) ou si le volume de requêtes HEAD devient un
 problème mesuré (jamais observé à ce jour), reconsidérer un watcher fichier
 réel plutôt que d'augmenter l'intervalle de sondage — augmenter l'intervalle
 dégraderait directement le critère de validation.
+
+## Révision du 2026-09-20 — la décision n'était pas appliquée
+
+Signalé par l'utilisateur, qui voyait passer un `HEAD` toutes les 400 ms sans
+savoir d'où il venait.
+
+Cet ADR dit « pendant toute une session de **développement** », et l'en-tête du
+module disait « dev-only ». Rien ne l'appliquait : aucune garde nulle part, et
+le sondage partait bel et bien dans le bundle de production — vérifié en
+cherchant `no-store` dans `dist/assets/*.js`, il y était.
+
+Conséquence réelle : un build déployé interrogeait le `.glb` **2,5 fois par
+seconde, indéfiniment, pour chaque joueur**, alors que le fichier ne change
+jamais en production. Du trafic, de la batterie, et des requêtes facturées sur
+un hébergement qui les compte, pour apprendre en boucle que rien n'a bougé.
+
+La création de la fibre de sondage est maintenant enveloppée dans
+`if (import.meta.env.DEV)`. Vite remplace cette expression par une constante au
+build, donc la branche — et `pollOnceEffect` avec elle — disparaît du bundle
+livré au lieu d'y dormir. Vérifié dans les deux sens : plus aucune occurrence
+de `no-store` en production, et en développement un `touch` sur le `.glb`
+déclenche toujours « changement détecté » suivi d'un rechargement complet.
+
+`reload()` reste disponible partout : c'est un appel explicite, pas une boucle
+de fond. La leçon est moins le bug que sa durée de vie — **un commentaire qui
+annonce une contrainte ne l'applique pas**, et celui-ci a survécu à tout le
+retrofit Effect du jalon M2 sans que personne le vérifie.
