@@ -3,8 +3,9 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weapons";
-import { weaponConfig } from "../player/weaponConfig";
+import { damageForWeapon } from "../player/weaponConfig";
 import type { NavGraph } from "../level/pathfinding";
+import type { VitreHitTarget } from "./enemyMachine";
 import {
   Director,
   DroppedCard,
@@ -169,6 +170,7 @@ export class DirectorManager {
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
     navGraph: NavGraph | null = null,
+    vitreSystem?: VitreHitTarget,
   ) {
     this._droppedCard?.tick(dt);
 
@@ -180,6 +182,7 @@ export class DirectorManager {
       playerTargetPosition,
       playerEyePosition,
       navGraph,
+      vitreSystem,
     };
 
     for (const director of this.directors) {
@@ -277,7 +280,7 @@ export class DirectorManager {
         aggregated.set(director, entry);
       }
 
-      const damage = hitEvent.weapon === "shotgun" ? weaponConfig.shotgunDamagePerPellet : weaponConfig.meleeDamage;
+      const damage = damageForWeapon(hitEvent.weapon);
       entry.totalDamage += damage;
     }
     this.hitCursor = hitEvents.length;

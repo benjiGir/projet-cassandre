@@ -9,8 +9,8 @@ machines « signature » du plan d'origine.
 
 Mêmes conventions que `lib_rayons`, dont il réutilise `asset_coll` et `place` :
 géométrie en boîtes à 64 px/m, transform figée dans le mesh à la pose, un
-`col_box_*` par asset solide, et rien de transparent (invariant #5, tout est
-`MeshLambertMaterial`). Les enseignes viennent de l'atlas `sig_facade`
+`col_box_*` par asset solide, tout en `MeshLambertMaterial`. Les enseignes
+viennent de l'atlas `sig_facade`
 (`tools/textures/generate_facade.py`).
 
 Une absence assumée : **pas de plante verte**. Une galerie marchande en réclame,
@@ -349,20 +349,21 @@ def banc() -> str:
 
 
 def verriere(cote: float = 4.0) -> str:
-    """Panneau de verrière — la seule lumière naturelle du niveau (note du plan
-    de masse sur la galerie).
+    """Verrière — la seule ouverture de la galerie sur le ciel.
 
-    Le panneau porte le marqueur `_neon` dans son nom : `bake_vertex_lighting.py`
-    remet à blanc la couleur de sommet des objets ainsi marqués, sinon une
-    source de lumière ressort noire dans un bake de lumière seule. La lumière
-    elle-même vient d'un `light_*` posé dessous par le niveau — c'est lui qui
-    éclaire en jeu, pas ce panneau.
+    Jusqu'au 2026-09-19, un panneau blanc OPAQUE fermait le cadre : il se lisait
+    comme un luminaire, et le ciel de nuit du niveau ne s'y voyait pas. C'est
+    maintenant une vraie vitre (`vitre_*`), sans collider (`solide` faux) : un
+    collider au plafond serait pris pour le sol par le bake de navigation. La
+    lumière vient d'un `light_*` posé dessous par le niveau.
     """
     name = f"str_verriere_{cote:g}m".replace(".", "_")
     coll, done = asset_coll(name)
     if done:
         return name
-    H.box(f"{name}_neon", (0.12, 0.12, 0, cote - 0.12, cote - 0.12, 0.06), "mur_platre", coll)
+    vitre = H.box("vitre_verriere", (0.12, 0.12, 0.02, cote - 0.12, cote - 0.12, 0.04), "verre", coll,
+                  uv=f"aplat:{H.VERRE_TEINTE}")
+    vitre["solide"] = False
     cadre = [((0, 0, 0, cote, 0.12, 0.14), "world"),
              ((0, cote - 0.12, 0, cote, cote, 0.14), "world"),
              ((0, 0.12, 0, 0.12, cote - 0.12, 0.14), "world"),
@@ -399,9 +400,10 @@ def photomaton() -> str:
 def machine_pinces() -> str:
     """Machine à pinces — le « secret dérisoire » de la liste d'origine.
 
-    Pas de vitre : rien de transparent n'existe en `MeshLambertMaterial`
-    (invariant #5). La cage est donc ouverte sur ses montants, et c'est le tas
-    de peluches à l'intérieur qui la rend lisible.
+    Pas de vitre : la cage est ouverte sur ses montants, et c'est le tas de
+    peluches à l'intérieur qui la rend lisible. (Du verre serait possible — la
+    transparence ne contredit pas l'invariant #5, qui porte sur le modèle
+    d'éclairage — mais il coûterait un lot de dessin dans la galerie.)
     """
     name = "gp_machine_pinces"
     coll, done = asset_coll(name)

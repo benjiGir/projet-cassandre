@@ -88,6 +88,10 @@ def place(asset: str, location, rot_deg: float, coll: bpy.types.Collection,
             v.co.z += location[2]
         base = obj.name.split(".")[0]
         copy = bpy.data.objects.new(f"{base}_{suffix}", me)
+        # Les custom properties suivent la copie : une `vitre_*` d'asset porte
+        # ses `pv`/`givre`, que le jeu lit dans les extras glTF.
+        for cle in obj.keys():
+            copy[cle] = obj[cle]
         target = col_coll if base.startswith("col_") else coll
         if base.startswith("col_"):
             copy.display_type = "WIRE"
@@ -240,7 +244,8 @@ def presentoir() -> str:
 
 
 def frigo_mural() -> str:
-    """Meuble réfrigéré mural, façade ouverte (pas de vitre : rien de transparent en Lambert)."""
+    """Meuble réfrigéré mural du rayon frais, façade OUVERTE comme un vrai meuble
+    de libre-service. Les surgelés, eux, sont derrière du verre (`armoire_surgeles`)."""
     name = "mob_frigo_2m"
     coll, done = asset_coll(name)
     if done:
@@ -553,7 +558,7 @@ class Garnissage:
     `bmesh` (étiquettes, Kenney) que l'on fige en fin de garnissage.
     """
 
-    MATERIAUX = ("prd_etiquettes", "prd_kenney")
+    MATERIAUX = ("prd_etiquettes", "prd_kenney", "prd_surgeles")
 
     def __init__(self):
         self.bm = {m: bmesh.new() for m in self.MATERIAUX}
@@ -798,6 +803,224 @@ def frigo_garni(seed: int, theme: str = "frais") -> str:
         stock_shelf(g, 0.12, 1.88, 0.10, z, -1, rng, max_h=clearance,
                     part_kenney=0.45, theme=theme)
     g.finish(name, coll)
+    return name
+
+
+# ---------------------------------------------------------------------------
+# Rayon surgelés
+# ---------------------------------------------------------------------------
+#
+# Le plan du niveau v2 le promettait dans les rayons depuis le premier jour
+# (« Rayon surgelés qui explose »), et il n'avait jamais été construit. Des
+# armoires à portes VITRÉES contre le mur ouest, dans le prolongement du frais,
+# et des bacs congélateurs à couvercles vitrés dans l'allée transversale nord.
+# Le verre est une `vitre_*` cassable (`pv`) qui lâche du givre (`givre`) : on
+# peut vider une armoire au fusil à pompe.
+
+# Gabarits (largeur, profondeur, hauteur) des produits de `prd_surgeles`.
+SURGELES = {
+    "pizza_5g": (0.26, 0.05, 0.26),
+    "glace_zone51": (0.16, 0.12, 0.12),
+    "frites_plates": (0.18, 0.06, 0.26),
+    "pois_puces": (0.16, 0.05, 0.22),
+    "poisson_atlante": (0.20, 0.05, 0.14),
+    "nuggets_reptiliens": (0.18, 0.06, 0.20),
+    "glacons_mur": (0.18, 0.08, 0.24),
+    "poelee_trainees": (0.18, 0.06, 0.24),
+    "buche_cryo": (0.24, 0.10, 0.10),
+    "steak_clone": (0.20, 0.05, 0.14),
+    "crepes_illumi": (0.18, 0.05, 0.16),
+    "sorbet_lune": (0.14, 0.12, 0.12),
+}
+
+# PV d'une vitre de congélateur : un coup de pied-de-biche, deux plombs.
+VITRE_SURGELES_PV = 10
+
+
+def produit_surgele(label: str) -> str:
+    name = f"prd_{label}"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    w, d, h = SURGELES[label]
+    H.box(name, (0, 0, 0, w, d, h), "prd_surgeles", coll, uv=f"label:{label}", front="-y")
+    return name
+
+
+def _src_surgele(label: str):
+    return bpy.data.collections[produit_surgele(label)].objects[0].data
+
+
+def stock_surgeles(g: Garnissage, x0: float, x1: float, y_face: float, z: float,
+                   facing: int, rng: random.Random, max_h: float, empiler: bool = True) -> None:
+    """Garnit une tablette de congélateur. Contrairement à une gondole, un
+    congélateur se range par FAÇADES : trois ou quatre paquets identiques côte
+    à côte, souvent empilés. C'est ce qui le distingue d'un rayon sec à trois
+    mètres, bien avant qu'on lise une étiquette."""
+    refs = [lab for lab, (_w, _d, h) in SURGELES.items() if h <= max_h]
+    if not refs:
+        return
+    x = x0 + rng.uniform(0.01, 0.04)
+    precedent = None
+    while x < x1 - 0.12:
+        label = rng.choice([r for r in refs if r != precedent] or refs)
+        precedent = label
+        w, _d, h = SURGELES[label]
+        etages = max(1, min(3, int(max_h // (h + 0.005)))) if empiler else 1
+        for _ in range(rng.choice((2, 3, 3, 4))):
+            if x + w > x1:
+                break
+            recul = rng.uniform(0.0, 0.03)
+            for k in range(rng.randint(1, etages)):
+                g.add(_src_surgele(label), "prd_surgeles", x, y_face - facing * recul,
+                      z + k * (h + 0.002), facing, rng.uniform(-2.0, 2.0))
+            x += w + rng.uniform(0.003, 0.012)
+        x += rng.uniform(0.02, 0.10)
+
+
+ARM_L, ARM_P, ARM_H = 2.0, 0.9, 2.2      # armoire : largeur, profondeur, hauteur
+ARM_SOCLE, ARM_FRONTON = 0.30, 0.30      # sous les portes, au-dessus
+ARM_TABLETTES = (0.72, 1.14, 1.56)       # dessus de chaque tablette
+
+
+def armoire_surgeles() -> str:
+    """Armoire surgelés à deux portes vitrées, façade en -y local.
+
+    Le collider du meuble commence DERRIÈRE le verre (y = 0,08) : devant, ce
+    sont les deux `vitre_*`, avec leur propre collider. Un collider plein qui
+    couvrirait la façade arrêterait tous les tirs avant la vitre, et elle ne se
+    casserait jamais.
+    """
+    name = "mob_armoire_surgeles"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    w, d, ht = ARM_L, ARM_P, ARM_H
+    haut_portes = ht - ARM_FRONTON
+    acier = [((0, 0, 0, 0.06, d, ht), "world"),
+             ((w - 0.06, 0, 0, w, d, ht), "world"),
+             ((0, d - 0.06, 0, w, d, ht), "world"),
+             ((0, 0.06, 0, w, d, ARM_SOCLE), "world"),
+             ((0, 0, haut_portes, w, d, ht), "world"),
+             # Montants et traverses des portes, au nu de la façade.
+             ((0.06, 0.0, ARM_SOCLE - 0.04, w - 0.06, 0.06, ARM_SOCLE), "world"),
+             ((0.06, 0.0, haut_portes, w - 0.06, 0.06, haut_portes + 0.04), "world"),
+             ((w / 2 - 0.03, 0.0, ARM_SOCLE, w / 2 + 0.03, 0.06, haut_portes), "world"),
+             # Poignées : deux barres verticales de part et d'autre du montant.
+             ((w / 2 - 0.13, -0.05, 0.85, w / 2 - 0.10, -0.01, 1.55), "world"),
+             ((w / 2 + 0.10, -0.05, 0.85, w / 2 + 0.13, -0.01, 1.55), "world")]
+    for z in ARM_TABLETTES:
+        acier.append(((0.06, 0.10, z - 0.03, w - 0.06, d - 0.06, z), "world"))
+    H.boxes(f"{name}_acier", acier, "metal_bac_acier", coll)
+    # Fronton « SURGELÉS », le givre au pied des portes et au fond de la cuve.
+    H.boxes(f"{name}_fronton", [
+        ((0.0, -0.02, ht - 0.27, w, 0.0, ht - 0.02), "enseigne:surgeles"),
+        ((0.06, 0.0, ARM_SOCLE - 0.04 - 0.14, w - 0.06, 0.005, ARM_SOCLE - 0.04), "trim:givre"),
+        ((0.06, d - 0.075, ARM_SOCLE, w - 0.06, d - 0.06, ARM_SOCLE + 0.30), "trim:givre"),
+    ], "prd_surgeles", coll)
+    # Rampe lumineuse intérieure, sous le fronton : ce qui fait briller la
+    # marchandise derrière le verre.
+    H.box(f"{name}_trim", (0.08, 0.10, haut_portes - 0.10, w - 0.08, 0.16, haut_portes - 0.02),
+          "trim_hypermarche", coll, uv="trim:neon")
+    for i, (a, b) in enumerate(((0.06, w / 2 - 0.03), (w / 2 + 0.03, w - 0.06))):
+        vitre = H.box(f"vitre_armoire_{'gd'[i]}", (a, 0.02, ARM_SOCLE, b, 0.035, haut_portes),
+                      "verre", coll, uv=f"aplat:{H.VERRE_TEINTE}")
+        vitre["pv"] = VITRE_SURGELES_PV
+        vitre["givre"] = True
+    H.col_box(name[4:], (0, 0.08, 0, w, d, ht), coll)
+    return name
+
+
+def armoire_surgeles_garnie(seed: int) -> str:
+    name = f"mob_armoire_surgeles_g{seed}"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    _clone_base(armoire_surgeles(), coll)
+    # `_clone_base` ne recopie pas les custom properties : les vitres les
+    # reprennent ici, faute de quoi elles seraient incassables.
+    for obj in coll.objects:
+        if obj.name.startswith("vitre_"):
+            obj["pv"] = VITRE_SURGELES_PV
+            obj["givre"] = True
+    rng = random.Random(seed)
+    g = Garnissage()
+    niveaux = [ARM_SOCLE] + list(ARM_TABLETTES)
+    for i, z in enumerate(niveaux):
+        dessus = (niveaux[i + 1] - 0.03) if i + 1 < len(niveaux) else ARM_H - ARM_FRONTON - 0.12
+        for a, b in ((0.08, ARM_L / 2 - 0.05), (ARM_L / 2 + 0.05, ARM_L - 0.08)):
+            stock_surgeles(g, a, b, 0.12, z, -1, rng, max_h=dessus - z - 0.02)
+    g.finish(name, coll)
+    return name
+
+
+BAC_L, BAC_P = 2.0, 1.0
+BAC_CUVE, BAC_BORD, BAC_VITRE = 0.95, 1.08, 1.05    # dessus de cuve, du rebord, du verre
+# Fond de cuve HAUT : la marchandise doit affleurer sous le verre. À 0,55 m, on
+# ne voyait depuis l'allée qu'un bac vide et le rang du fond.
+BAC_FOND = 0.72
+
+
+def bac_surgeles(seed: int) -> str:
+    """Bac congélateur en îlot, deux couvercles vitrés coulissants.
+
+    Tout est calé sur la règle du graphe de navigation : un dessus à 1,0 m ou
+    moins devient une cellule que les ennemis ne savent pas escalader (marche
+    de 0,35 m). Le verre culmine donc à 1,05 m. Le collider de la cuve s'arrête
+    SOUS le verre, pour que les tirs d'en haut le trouvent.
+    """
+    name = f"mob_bac_surgeles_g{seed}"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    w, d = BAC_L, BAC_P
+    e = 0.06
+    H.boxes(f"{name}_caisse", [
+        ((0, 0, 0.12, e, d, BAC_CUVE), "world"),
+        ((w - e, 0, 0.12, w, d, BAC_CUVE), "world"),
+        ((e, 0, 0.12, w - e, e, BAC_CUVE), "world"),
+        ((e, d - e, 0.12, w - e, d, BAC_CUVE), "world"),
+    ], "mur_platre", coll)
+    H.boxes(f"{name}_acier", [
+        ((0.02, 0.02, 0.0, w - 0.02, d - 0.02, 0.12), "world"),
+        ((0, 0, BAC_CUVE, w, e, BAC_BORD), "world"),
+        ((0, d - e, BAC_CUVE, w, d, BAC_BORD), "world"),
+        ((0, e, BAC_CUVE, e, d - e, BAC_BORD), "world"),
+        ((w - e, e, BAC_CUVE, w, d - e, BAC_BORD), "world"),
+        ((w / 2 - 0.02, e, BAC_CUVE, w / 2 + 0.02, d - e, BAC_VITRE + 0.01), "world"),
+    ], "metal_bac_acier", coll)
+    # « SURGELÉS » sur les deux longs côtés, le fond de cuve givré.
+    H.boxes(f"{name}_enseigne", [
+        ((0.0, -0.01, 0.55, w, 0.0, 0.80), "enseigne:surgeles"),
+        ((0.0, d, 0.55, w, d + 0.01, 0.80), "enseigne:surgeles"),
+        ((e, e, BAC_FOND - 0.05, w - e, d - e, BAC_FOND), "trim:givre"),
+    ], "prd_surgeles", coll)
+    for i, (a, b) in enumerate(((e, w / 2 - 0.02), (w / 2 + 0.02, w - e))):
+        vitre = H.box(f"vitre_bac_{'gd'[i]}", (a, e, BAC_VITRE - 0.02, b, d - e, BAC_VITRE),
+                      "verre", coll, uv=f"aplat:{H.VERRE_TEINTE}")
+        vitre["pv"] = VITRE_SURGELES_PV
+        vitre["givre"] = True
+    H.col_box(name[4:], (0, 0, 0, w, d, BAC_CUVE), coll)
+    rng = random.Random(seed)
+    g = Garnissage()
+    # Quatre rangs, les deux moitiés tournées chacune vers son allée. Vu d'en
+    # haut, à travers le verre, la cuve doit paraître pleine.
+    for y_face, facing in ((e + 0.02, -1), (e + 0.22, -1), (d - e - 0.22, 1), (d - e - 0.02, 1)):
+        stock_surgeles(g, e + 0.02, w - e - 0.02, y_face, BAC_FOND, facing, rng,
+                       max_h=BAC_VITRE - 0.03 - BAC_FOND, empiler=False)
+    g.finish(name, coll)
+    return name
+
+
+def panneau_surgeles() -> str:
+    """Panneau suspendu double face au-dessus du rayon, ses deux tiges au plafond."""
+    name = "sig_panneau_surgeles"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+    H.box(f"{name}_plaque", (0, 0, 0, 2.0, 0.06, 0.5), "prd_surgeles", coll, uv="enseigne:surgeles")
+    H.boxes(f"{name}_tiges", [((0.2, 0.02, 0.5, 0.22, 0.04, 1.8), "world"),
+                              ((1.78, 0.02, 0.5, 1.80, 0.04, 1.8), "world")], "metal_bac_acier", coll)
     return name
 
 

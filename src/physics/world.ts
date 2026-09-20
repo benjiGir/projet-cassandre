@@ -29,6 +29,7 @@ export const GROUP = {
   ENEMY_SHOT: 1 << 4,
   DEBRIS: 1 << 5,
   TRIGGER: 1 << 6,
+  PROP: 1 << 7,
 } as const;
 
 /** Compose un masque d'interaction Rapier à partir des bits d'appartenance et de filtre. */
@@ -43,7 +44,8 @@ const ALL_GROUPS =
   GROUP.PLAYER_SHOT |
   GROUP.ENEMY_SHOT |
   GROUP.DEBRIS |
-  GROUP.TRIGGER;
+  GROUP.TRIGGER |
+  GROUP.PROP;
 
 /**
  * Masques prêts à poser sur un collider (`ColliderDesc.setCollisionGroups`).
@@ -57,13 +59,37 @@ export const COLLISION_GROUPS = {
   WORLD: interactionGroups(GROUP.WORLD, ALL_GROUPS),
   PLAYER: interactionGroups(
     GROUP.PLAYER,
-    GROUP.WORLD | GROUP.ENEMY | GROUP.ENEMY_SHOT | GROUP.TRIGGER,
+    GROUP.WORLD | GROUP.ENEMY | GROUP.ENEMY_SHOT | GROUP.TRIGGER | GROUP.PROP,
   ),
-  ENEMY: interactionGroups(GROUP.ENEMY, GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT | GROUP.ENEMY),
-  PLAYER_SHOT: interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD | GROUP.ENEMY),
+  ENEMY: interactionGroups(
+    GROUP.ENEMY,
+    GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT | GROUP.ENEMY | GROUP.PROP,
+  ),
+  PLAYER_SHOT: interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD | GROUP.ENEMY | GROUP.PROP),
   ENEMY_SHOT: interactionGroups(GROUP.ENEMY_SHOT, GROUP.WORLD | GROUP.PLAYER),
   DEBRIS: interactionGroups(GROUP.DEBRIS, GROUP.WORLD),
   TRIGGER: interactionGroups(GROUP.TRIGGER, GROUP.PLAYER),
+  /**
+   * `prop_*` : mobilier poussable/destructible (`game/level/props.ts`).
+   *
+   * Groupe SÉPARÉ de `WORLD`, et c'est tout l'intérêt. Deux requêtes du jeu
+   * filtrent sur `GROUP.WORLD` seul : la ligne de vue des ennemis et le bake
+   * du graphe de navigation (`WORLD_ONLY_RAY_GROUPS`, dupliqué dans
+   * `entities/enemyMachine.ts` et `level/pathfinding.ts`). Un prop en `WORLD`
+   * entrerait donc dans les deux — or il BOUGE, et ces deux résultats sont
+   * calculés une fois pour toutes au chargement : un caddie poussé laisserait
+   * derrière lui un trou de navigation et un bloqueur de vue fantômes.
+   *
+   * `ENEMY_SHOT` est volontairement ABSENT du filtre : un prop n'arrête pas
+   * une balle ennemie. Sinon un ennemi viderait son chargeur dans une caisse
+   * qui ne bloque même pas sa ligne de vue, sans jamais comprendre pourquoi
+   * il ne touche plus.
+   * see: docs/decisions/0030-props-dynamiques.md
+   */
+  PROP: interactionGroups(
+    GROUP.PROP,
+    GROUP.WORLD | GROUP.PLAYER | GROUP.ENEMY | GROUP.PLAYER_SHOT | GROUP.PROP,
+  ),
 } as const;
 
 /**

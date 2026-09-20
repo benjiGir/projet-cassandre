@@ -143,6 +143,29 @@ bloque le joueur ») : cet invariant vise les animations non létales
 ce pas-ci : le monde reste visuellement figé sur son dernier état
 (`prev === curr` à chaque pas suivant), sans jitter d'interpolation.
 
+## Filet de chute
+
+Un niveau construit sans y jouer finit toujours par avoir un trou, et une
+chute hors du monde est **sans retour** : rien ne rattrape le joueur, aucun
+écran de mort ne se déclenche, la partie est simplement perdue. Le pas fixe
+mémorise donc, juste après `player.update`, le dernier sol **réellement**
+touché (`session.lastSafeGround`), et y remet le joueur au-delà de 12 m de
+chute — plus que le plus grand décrochement voulu du niveau v2 (6 m, entre la
+réserve et le parking souterrain). Logique et seuil :
+`game/session/fallRescue.ts`.
+
+« Réellement » n'est pas un détail : un joueur qu'on vient de téléporter
+(chargement de niveau, rejeu d'input, console de debug) se déclare *au sol* le
+temps d'un pas fixe, même en plein vide. Le sol n'est donc mémorisé que si le
+character controller a rapporté au moins une collision ce pas-là
+(`numCollisions > 0`). Sans cette garde, le vide devient lui-même le dernier
+sol sûr et le filet y renvoie le joueur en boucle.
+
+Ce n'est pas une mécanique de jeu : **il ne devrait jamais se déclencher**.
+Quand il se déclenche, il écrit les coordonnées en console — c'est ainsi qu'un
+playtest signale un trou, que `tools/level_v2/audit_niveau.py` sait ensuite
+retrouver tout seul.
+
 ## Mesure des temps de frame (LoopStats)
 
 Jalon M7 (`PLAN_EFFECT_XSTATE.md`, §9) : compteurs de temps par phase, en

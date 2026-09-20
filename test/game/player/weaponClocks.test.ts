@@ -12,7 +12,14 @@ const DT = 1 / 60;
 const EYE = new THREE.Vector3(0, 1.6, 0);
 
 function lire(weapons: WeaponSystem): ViewmodelClocks {
-  return weapons.viewmodelClocks(1, { active: "none", previous: "none", sinceSwitch: 0, sinceMeleeFire: 0, sinceShotgunFire: 0 });
+  return weapons.viewmodelClocks(1, {
+    active: "none",
+    previous: "none",
+    sinceSwitch: 0,
+    sinceMeleeFire: 0,
+    sincePistolFire: 0,
+    sinceShotgunFire: 0,
+  });
 }
 
 function pas(weapons: WeaponSystem, frame: Partial<ReturnType<typeof emptyInputFrame>> = {}) {

@@ -8,8 +8,11 @@ import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
-import { dressHealPickup } from "../../render/healPickup";
+import { dressAmmoPickup, dressHealPickup } from "../../render/pickups";
 import { LightPool } from "../../render/lightPool";
+import { PropSystem } from "../level/props";
+import { DoorSystem } from "../level/doors";
+import { VitreSystem } from "../level/vitres";
 import { dressWeaponPickup } from "../../render/viewmodel";
 import { Suit } from "../entities/suit";
 import { suitConfig } from "../entities/suitConfig";
@@ -107,17 +110,49 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
   const url = assetUrl(`assets/levels/${name}.glb`);
   session.gltfLevelSession = createLevelSession(url, engine.scene, session.physics, {
     onLoaded: (handle, info) => {
+      // Portes ANIMÉES : construites AVANT le bake du graphe de navigation,
+      // pour pouvoir rendre les groupes `auto` PASSANTS le temps du bake
+      // (sinon un bureau derrière une porte automatique fermée ne reçoit
+      // jamais d'arête — un vantail verrouillé, lui, doit rester bloquant).
+      // see: docs/decisions/0031-portes-animees-et-vitres.md
+      const doorSystem = new DoorSystem(handle.doors);
+      const autoColliders = doorSystem.autoGroupColliders;
+      for (const collider of autoColliders) collider.setEnabled(false);
+
       const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
       session.physics.refreshSceneQueries();
       session.currentNavGraph = runGameplaySync(
         PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
       );
+
+      for (const collider of autoColliders) collider.setEnabled(true);
+      session.doorSystem = doorSystem;
+
+      // Portes déjà déverrouillées CETTE PARTIE (hot reload) : le nouveau
+      // `.glb` reconstruit des corps/colliders neufs, toujours à l'état
+      // fermé — sans ceci, un hot reload reverrouillerait silencieusement
+      // une porte à carte/`use_*` déjà ouverte. `silent` : pas de son, pas de
+      // ré-ouverture visible pour rien.
+      for (const name of session.unlockedDoors) {
+        doorSystem.open(name, session.player.position, { silent: true });
+      }
+
+      // Vitrages : même raison de les reconstruire ici que le reste — un hot
+      // reload remplace les corps/colliders du niveau, les vitres reviennent
+      // donc intactes avec le fichier (comme les PV des props).
+      session.vitreSystem = new VitreSystem(handle.vitres);
+
       // Pool de lampes : reconstruit à CHAQUE chargement (le hot reload peut
       // ajouter, déplacer ou retirer des `light_*`), et dès maintenant plutôt
       // qu'à la première image — une scène qui dépasse le mur d'uniformes ne
       // lève aucune exception, elle affiche du vide.
       // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
       session.lightPool = new LightPool(handle.lights);
+
+      // Mobilier physique : même raison de le reconstruire ici que le pool de
+      // lampes et le graphe de navigation — un hot reload remplace les corps
+      // Rapier du niveau, donc toute table indexée sur leurs handles.
+      session.propSystem = new PropSystem(handle.props, handle.root);
 
       // Ramassages d'armes et trousses de soin : la boîte du `.glb` cède la
       // place au vrai modèle, posé sur la surface réellement sous elle.
@@ -126,7 +161,18 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
           dressHealPickup(useObject.object, groundBelow(session, useObject.position));
           continue;
         }
-        const weapon = useObject.name === "use_crowbar" ? "melee" : useObject.name === "use_shotgun" ? "shotgun" : null;
+        if (useObject.ammo !== null) {
+          dressAmmoPickup(useObject.object, groundBelow(session, useObject.position));
+          continue;
+        }
+        const weapon =
+          useObject.name === "use_crowbar"
+            ? "melee"
+            : useObject.name === "use_pistol"
+              ? "pistol"
+              : useObject.name === "use_shotgun"
+                ? "shotgun"
+                : null;
         if (!weapon) continue;
         const groundY = groundBelow(session, useObject.position);
         dressWeaponPickup(useObject.object, weapon, engine.weaponModels, groundY);
@@ -139,12 +185,16 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       );
 
       console.info(
-        `[level] "${name}.glb" chargé — colliders ${handle.stats.colliderCount}, ` +
+        `[level] "${name}.glb" chargé — colliders ${handle.stats.colliderCount} ` +
+          `(cuboid ${handle.stats.colliderKindCounts.cuboid}, hull ${handle.stats.colliderKindCounts.convexHull}, ` +
+          `trimesh ${handle.stats.colliderKindCounts.trimesh}), ` +
           `spawns Costard ${handle.stats.spawnSuitCount}, spawns Directeur ${handle.stats.spawnDirectorCount}, ` +
           `triggers ${handle.stats.triggerCount}, ` +
           `portes ${handle.stats.doorCount}, use ${handle.stats.useCount}, ` +
           `secrets ${handle.stats.secretCount}, meshes non préfixés ${handle.stats.unprefixedMeshCount}, ` +
           `lampes ${handle.stats.lightCount} (${session.lightPool.stats.actives} allumées), ` +
+          `props ${handle.stats.propCount}, ` +
+          `vitres ${handle.stats.vitreCount} (${handle.stats.vitreBatchCount} lots), ` +
           `lots de décor ${handle.stats.decorBatchCount}`,
       );
       // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur

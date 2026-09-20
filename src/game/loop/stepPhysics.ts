@@ -13,6 +13,8 @@ export function snapshotPrevious(engine: GameEngine): void {
   session.weapons.snapshotPrevious();
   session.suitManager.snapshotPrevious();
   session.directorManager.snapshotPrevious();
+  session.propSystem?.snapshotPrevious();
+  session.doorSystem?.snapshotPrevious();
   engine.ballPrevPos.copy(engine.ballCurrPos);
   engine.ballPrevQuat.copy(engine.ballCurrQuat);
 }
@@ -35,6 +37,9 @@ export function stepPhysics(engine: GameEngine, dt: number): void {
   runGameplaySync(
     Effect.sync(() => {
       session.physics.step(dt);
+      // Props : relus APRÈS le pas, jamais avant — c'est ce pas-ci qui vient
+      // d'intégrer les impulsions posées par `updateGameplay`.
+      session.propSystem?.syncFromPhysics();
       // `ballBody` n'existe que sur le chemin "gym" (voir `bootGameSession`)
       // — rien à mettre à jour sinon, pas un bug.
       if (session.ballBody) {

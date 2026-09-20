@@ -11,6 +11,7 @@ import { DirectorManager } from "../entities/directorManager";
 import { useGameStore } from "../state";
 import { App } from "../../ui/App";
 import { type LevelDef } from "../level/levels";
+import { chargerCiel } from "../../render/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { resolveBootChoice } from "./bootChoice";
 import { type GameSession } from "./gameSession";
@@ -59,6 +60,9 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   const mode = choice.lighting ?? "temps-reel";
   engine.ambientLight.intensity = mode === "bake" ? 1.0 : mode === "hybride" ? 0.18 : 0.4;
   engine.sunLight.intensity = mode === "temps-reel" ? 0.8 : 0.0;
+  // Le ciel suit le niveau, comme la lumière : un niveau sans `ciel` retombe
+  // sur la couleur de fond du renderer, et un reset vers la gym l'efface.
+  engine.scene.background = choice.ciel ? chargerCiel(choice.ciel) : null;
 }
 
 /**
@@ -141,12 +145,15 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     gltfLevelSession: null,
     currentNavGraph: null,
     lightPool: null,
+    propSystem: null,
+    doorSystem: null,
+    vitreSystem: null,
     droppedCardMesh: null,
     cards: new Set(),
     unlockedDoors: new Set(),
-    openingDoor: null,
     exitDoorTracking: null,
     foundSecrets: new WeakSet(),
+    lastSafeGround: new THREE.Vector3(),
     playerHp: useGameStore.getState().debug.playerMaxHp,
     firstKillTriggered: false,
     lowHpLineTriggered: false,

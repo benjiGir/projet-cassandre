@@ -19,8 +19,15 @@ function hpColor(ratio: number): string {
 }
 
 /** Libellé de la ligne "munitions" — dépend de l'arme active, pas seulement du compte de cartouches (un pied-de-biche n'a pas de munitions, un joueur désarmé encore moins). */
-function ammoLabel(activeWeapon: "none" | "melee" | "shotgun", ammo: number, maxAmmo: number): string {
-  if (activeWeapon === "shotgun") return `${ammo} / ${maxAmmo}`;
+function ammoLabel(
+  activeWeapon: "none" | "melee" | "pistol" | "shotgun",
+  shotgunAmmo: number,
+  shotgunMaxAmmo: number,
+  pistolAmmo: number,
+  pistolMaxAmmo: number,
+): string {
+  if (activeWeapon === "shotgun") return `${shotgunAmmo} / ${shotgunMaxAmmo}`;
+  if (activeWeapon === "pistol") return `${pistolAmmo} / ${pistolMaxAmmo}`;
   if (activeWeapon === "melee") return "PIED-DE-BICHE";
   return "À MAINS NUES";
 }
@@ -49,6 +56,8 @@ export function Hud() {
   const playerMaxHp = useGameStore((s) => s.debug.playerMaxHp);
   const shotgunAmmo = useGameStore((s) => s.debug.shotgunAmmo);
   const shotgunMaxAmmo = useGameStore((s) => s.debug.shotgunMaxAmmo);
+  const pistolAmmo = useGameStore((s) => s.debug.pistolAmmo);
+  const pistolMaxAmmo = useGameStore((s) => s.debug.pistolMaxAmmo);
   const activeWeapon = useGameStore((s) => s.debug.activeWeapon);
   const views = useGameStore((s) => s.debug.views);
   const cards = useGameStore((s) => s.debug.cards);
@@ -242,7 +251,7 @@ export function Hud() {
       >
         <div style={{ color: "#ccc", fontSize: 10, textShadow: HUD_TEXT_SHADOW, marginBottom: 2 }}>MUNITIONS</div>
         <div style={{ color: "#fff", fontSize: 16, fontWeight: "bold", textShadow: HUD_TEXT_SHADOW }}>
-          {ammoLabel(activeWeapon, shotgunAmmo, shotgunMaxAmmo)}
+          {ammoLabel(activeWeapon, shotgunAmmo, shotgunMaxAmmo, pistolAmmo, pistolMaxAmmo)}
         </div>
       </div>
     </>

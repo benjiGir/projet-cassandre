@@ -44,6 +44,7 @@ graph LR
     ENEMY_SHOT((ENEMY_SHOT))
     DEBRIS((DEBRIS))
     TRIGGER((TRIGGER))
+    PROP((PROP))
 
     WORLD --- PLAYER
     WORLD --- ENEMY
@@ -55,7 +56,12 @@ graph LR
     PLAYER --- ENEMY_SHOT
     PLAYER --- TRIGGER
     ENEMY --- PLAYER_SHOT
+    WORLD --- PROP
+    PLAYER --- PROP
+    ENEMY --- PROP
+    PLAYER_SHOT --- PROP
     ENEMY -.se bloque avec lui-même.-> ENEMY
+    PROP -.se bloque avec lui-même.-> PROP
 ```
 
 Ce que ce graphe dit en langage clair : le décor (`WORLD`) touche tout le
@@ -70,7 +76,10 @@ leur propre tireur : c'est ce qui empêche le joueur de se blesser avec son
 propre pompe. Les débris cosmétiques (`DEBRIS`) ne touchent que le décor —
 sinon douilles et gibs bloqueraient les tirs pour zéro gameplay. Les
 volumes de déclenchement (`TRIGGER`) ne réagissent qu'au joueur, en capteur
-pur (`sensor`, aucune réponse physique).
+pur (`sensor`, aucune réponse physique). Le mobilier physique (`PROP`) se
+heurte au décor, au joueur, aux ennemis, aux tirs DU joueur et aux autres
+props — mais **pas** aux tirs ennemis : une balle de Costard traverse une
+caisse.
 
 Pour la correspondance exacte bit à bit :
 
@@ -83,6 +92,7 @@ Pour la correspondance exacte bit à bit :
 | `ENEMY_SHOT`  | WORLD, PLAYER                           |
 | `DEBRIS`      | WORLD uniquement                        |
 | `TRIGGER`     | PLAYER uniquement (sensor)              |
+| `PROP`        | WORLD, PLAYER, ENEMY, PLAYER_SHOT, PROP |
 
 `ENEMY` s'inclut lui-même — voir [ADR 0008](../decisions/0008-collision-ennemi-ennemi.md)
 pour le bug de billboards qui clignotaient (deux ennemis interpénétrés
@@ -109,7 +119,51 @@ est symétrisée par construction dans le code pour ne jamais s'y exposer.
 > `DEBRIS` reste déclaré mais non utilisé — les douilles éjectées et les
 > gibs utilisent une physique factice gérée en temps d'affichage plutôt que
 > de vrais `RigidBody` Rapier (voir `src/render/fx.ts::spawnShellCasing`),
-> décision documentée directement dans ce fichier.
+> décision documentée directement dans ce fichier. `PROP` s'y est ajouté le
+> 2026-09-17 avec les props dynamiques (voir ci-dessous).
+
+## Props dynamiques
+
+`prop_*` est le seul préfixe du niveau dont l'objet **bouge réellement** : un
+corps dynamique libre, poussable par le joueur et les ennemis, cassable au tir
+quand le `.glb` lui donne des `pv`. Le contrat de nommage est dans
+[Conventions de nommage](../reference/conventions-nommage.md#props-physiques) ;
+le raisonnement derrière le groupe de collision séparé, dans
+[ADR 0030](../decisions/0030-props-dynamiques.md).
+
+Ce qui compte ici, c'est **où chaque chose se passe dans la boucle**. Trois
+appels, trois moments, et les intervertir casse quelque chose de différent :
+
+| Appel | Quand | Pourquoi là |
+|---|---|---|
+| `snapshotPrevious()` | avant `updateGameplay` | la pose du pas précédent devient la référence d'interpolation |
+| `update(hitEvents)` | dans `updateGameplay`, après `weapons.update` | les impacts du pas existent, et l'impulsion doit être intégrée par le pas qui suit **immédiatement** |
+| `syncFromPhysics()` | dans `stepPhysics`, après `physics.step` | c'est ce pas-là qui vient d'intégrer l'impulsion |
+| `interpolate(alpha, cam)` | taux d'affichage | seul endroit qui écrit dans un mesh de prop, et qui l'élague par distance |
+
+Deux points qui ne se devinent pas :
+
+- **Le corps est posé sur le centre de la boîte, pas sur l'origine du mesh.**
+  Un corps dynamique tourne autour de son centre de masse, et l'origine du kit
+  du projet est dans un COIN. L'écart est conservé (`PropInfo.centerOffset`) et
+  réappliqué au rendu. `buildDoor` ne le fait pas
+  ([ADR 0012](../decisions/0012-porte-collider-non-recentre.md)) : sans
+  conséquence pour un vantail verrouillé, fatal pour un corps libre.
+- **La destruction DÉSACTIVE le corps, elle ne le retire pas du monde.**
+  `loader.ts::disposeLevelResource` retire chaque corps du niveau à la
+  libération ; un corps déjà retiré aurait libéré son handle, que Rapier peut
+  avoir réattribué depuis.
+- **Les props sont élagués par distance, et c'est ce qui tient le budget.**
+  Three.js n'élimine que par le cône de vue, jamais par occlusion. Le décor y
+  échappe parce qu'il est fusionné par cellule de 48 m
+  ([ADR 0023](../decisions/0023-fusion-decor-au-chargement.md)) ; un prop, qui
+  est un mesh à part par construction, jamais. Regarder l'axe long du niveau
+  mettait ainsi 37 props sur 51 dans le cône, à travers tout le magasin.
+  `PROP_RENDER_DISTANCE_SQ` (36 m) ramène le coût à 6-8 lots quel que soit le
+  point de vue. Un prop qui revient dans la portée après avoir bougé hors de vue
+  voit sa pose réécrite une fois — sinon il réapparaîtrait à son ancienne place.
+
+En console : `cassandre.props.liste()` et `cassandre.props.casser(nom)`.
 
 ## Colliders invisibles aux rayons avant le premier pas
 

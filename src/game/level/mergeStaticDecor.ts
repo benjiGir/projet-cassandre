@@ -40,7 +40,7 @@ export interface DecorMergeResult {
 
 // `toLambert` crée un matériau par mesh : deux meshes à la même texture ont deux instances
 // distinctes, d'où une clé par contenu plutôt que par identité.
-function materialKey(mat: THREE.MeshLambertMaterial): string {
+export function materialKey(mat: THREE.MeshLambertMaterial): string {
   return [
     mat.map?.uuid ?? "-",
     mat.color.getHexString(),
@@ -55,7 +55,7 @@ function materialKey(mat: THREE.MeshLambertMaterial): string {
 }
 
 // `mergeGeometries` refuse de mélanger géométries indexées et non indexées, ou des jeux d'attributs différents.
-function attributeKey(geometry: THREE.BufferGeometry): string {
+export function attributeKey(geometry: THREE.BufferGeometry): string {
   const names = Object.keys(geometry.attributes).sort();
   return `${geometry.index ? "i" : "n"}:${names.map((n) => `${n}${geometry.attributes[n]!.itemSize}`).join(",")}`;
 }

@@ -17,11 +17,12 @@ const CLOCK_AT_REST = 1e3; // s
 
 /** Horloges lues par le viewmodel, voir `WeaponSystem.viewmodelClocks`. */
 export interface ViewmodelClocks {
-  active: "none" | "melee" | "shotgun";
+  active: WeaponKind;
   /** Arme montrée avant le dernier changement. */
-  previous: "none" | "melee" | "shotgun";
+  previous: WeaponKind;
   sinceSwitch: number;
   sinceMeleeFire: number;
+  sincePistolFire: number;
   sinceShotgunFire: number;
 }
 
@@ -51,7 +52,7 @@ const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
 /** Une arme effectivement déclenchée (jamais poussé sur tentative à sec/cooldown). */
 export interface FireEvent {
-  weapon: "melee" | "shotgun";
+  weapon: "melee" | "pistol" | "shotgun";
   /** Origine authentique du pas fixe (yeux, non bobée) — pas une position rendue. */
   muzzlePosition: THREE.Vector3;
   /** Direction de visée unitaire au moment du tir. */
@@ -75,7 +76,7 @@ export interface HitEvent {
   point: THREE.Vector3;
   normal: THREE.Vector3;
   material: string;
-  weapon: "melee" | "shotgun";
+  weapon: "melee" | "pistol" | "shotgun";
   /**
    * Handle Rapier (`RAPIER.Collider.handle`) du collider RÉELLEMENT touché.
    * Permet de router un dégât vers l'entité propriétaire sans dupliquer la
@@ -109,6 +110,11 @@ const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
  * origine interpolée dépend du taux d'affichage et casserait silencieusement
  * le rejeu déterministe du raycast d'arme.
  */
+/** Arme tenue par le joueur. `"none"` = désarmé (voir `startUnarmed`). */
+export type WeaponKind = "none" | "melee" | "pistol" | "shotgun";
+/** Arme qui TIRE — `"none"` exclu : une arme absente ne produit ni tir ni impact. */
+export type FiringWeapon = Exclude<WeaponKind, "none">;
+
 export class WeaponSystem {
   /**
    * Arme sélectionnée. Lecture publique pour le débogage (`window.cassandre`,
@@ -120,10 +126,13 @@ export class WeaponSystem {
    * 1-3) construit un `WeaponSystem` sans jamais appeler `startUnarmed()`, et
    * doit donc démarrer EXACTEMENT comme avant, armé du pied-de-biche.
    */
-  activeWeapon: "none" | "melee" | "shotgun" = "melee";
+  activeWeapon: WeaponKind = "melee";
 
   /** Munitions de pompe restantes. Lecture publique pour le débogage. */
   shotgunAmmo: number;
+
+  /** Munitions de pistolet restantes, rechargées par les boîtes du niveau (`use_*` portant `munitions`). */
+  pistolAmmo = 0;
 
   /**
    * Le joueur possède-t-il le pied-de-biche ? `true` par défaut — encore une
@@ -147,11 +156,19 @@ export class WeaponSystem {
    */
   private hasShotgun = true;
 
+  /**
+   * Le joueur possède-t-il le pistolet ? `false` PAR DÉFAUT, contrairement aux
+   * deux autres : le pistolet est arrivé après `gym.ts` et les zones A-E, qui
+   * doivent démarrer exactement comme avant.
+   */
+  private hasPistol = false;
+
   private readonly physics: PhysicsWorld;
   private readonly clock: GameClock;
   private readonly cfg: WeaponConfig;
 
   private meleeCooldownRemaining = 0;
+  private pistolCooldownRemaining = 0;
   private shotgunCooldownRemaining = 0;
 
   // Recul : enveloppe 0..1, même pattern que `bobIntensity` (approach() vers
@@ -173,14 +190,16 @@ export class WeaponSystem {
   // donnerait `NaN`.
   private sinceMeleeFire = CLOCK_AT_REST;
   private previousSinceMeleeFire = CLOCK_AT_REST;
+  private sincePistolFire = CLOCK_AT_REST;
+  private previousSincePistolFire = CLOCK_AT_REST;
   private sinceShotgunFire = CLOCK_AT_REST;
   private previousSinceShotgunFire = CLOCK_AT_REST;
   private sinceSwitch = CLOCK_AT_REST;
   private previousSinceSwitch = CLOCK_AT_REST;
   /** Arme que le viewmodel montrait avant le dernier changement. */
-  private switchedFrom: "none" | "melee" | "shotgun" = "melee";
+  private switchedFrom: WeaponKind = "melee";
   /** Dernière arme vue par `update`, pour détecter un changement d'où qu'il vienne (touche, ramassage, désarmement). */
-  private shownWeapon: "none" | "melee" | "shotgun" = "melee";
+  private shownWeapon: WeaponKind = "melee";
 
   // Files d'événements de la frame d'affichage courante, accumulées au fil
   // des pas fixes (une frame lente peut en exécuter plusieurs) : contrat
@@ -237,6 +256,7 @@ export class WeaponSystem {
   /** À appeler avant `update`, au même endroit que `player.snapshotPrevious()`. */
   snapshotPrevious() {
     this.previousSinceMeleeFire = this.sinceMeleeFire;
+    this.previousSincePistolFire = this.sincePistolFire;
     this.previousSinceShotgunFire = this.sinceShotgunFire;
     this.previousSinceSwitch = this.sinceSwitch;
     this.previousRecoilEnvelope = this.recoilEnvelope;
@@ -260,6 +280,7 @@ export class WeaponSystem {
    */
   startUnarmed(): void {
     this.hasMelee = false;
+    this.hasPistol = false;
     this.hasShotgun = false;
     this.activeWeapon = "none";
     this.shownWeapon = "none";
@@ -276,6 +297,29 @@ export class WeaponSystem {
   pickUpMelee(): void {
     this.hasMelee = true;
     this.activeWeapon = "melee";
+  }
+
+  /**
+   * Ramassage du pistolet : équipé immédiatement, avec sa dotation de départ
+   * (`pistolStartingAmmo`). Contrairement aux deux autres armes, un second
+   * ramassage ne redonne PAS de munitions — sinon un hot reload du niveau
+   * rechargerait gratuitement. Les recharges passent par `addPistolAmmo`.
+   */
+  pickUpPistol(): void {
+    if (!this.hasPistol) this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.cfg.pistolStartingAmmo);
+    this.hasPistol = true;
+    this.activeWeapon = "pistol";
+  }
+
+  /**
+   * Boîte de munitions ramassée. Retourne le nombre RÉELLEMENT ajouté : 0 si
+   * le joueur est déjà au plafond (`pistolMaxAmmo`) — l'appelant laisse alors
+   * la boîte au sol, comme une trousse de soin sur un joueur en pleine forme.
+   */
+  addPistolAmmo(amount: number): number {
+    const before = this.pistolAmmo;
+    this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.pistolAmmo + amount);
+    return this.pistolAmmo - before;
   }
 
   /** Ramassage du pompe : `hasShotgun = true`, équipé immédiatement — même contrat que `pickUpMelee`. Idempotente. */
@@ -311,6 +355,7 @@ export class WeaponSystem {
     out.previous = this.switchedFrom;
     out.sinceSwitch = THREE.MathUtils.lerp(this.previousSinceSwitch, this.sinceSwitch, alpha);
     out.sinceMeleeFire = THREE.MathUtils.lerp(this.previousSinceMeleeFire, this.sinceMeleeFire, alpha);
+    out.sincePistolFire = THREE.MathUtils.lerp(this.previousSincePistolFire, this.sincePistolFire, alpha);
     out.sinceShotgunFire = THREE.MathUtils.lerp(this.previousSinceShotgunFire, this.sinceShotgunFire, alpha);
     return out;
   }
@@ -326,16 +371,19 @@ export class WeaponSystem {
     const cfg = this.cfg;
 
     this.sinceMeleeFire = Math.min(CLOCK_AT_REST, this.sinceMeleeFire + dt);
+    this.sincePistolFire = Math.min(CLOCK_AT_REST, this.sincePistolFire + dt);
     this.sinceShotgunFire = Math.min(CLOCK_AT_REST, this.sinceShotgunFire + dt);
     this.sinceSwitch = Math.min(CLOCK_AT_REST, this.sinceSwitch + dt);
 
     this.meleeCooldownRemaining = Math.max(0, this.meleeCooldownRemaining - dt);
+    this.pistolCooldownRemaining = Math.max(0, this.pistolCooldownRemaining - dt);
     this.shotgunCooldownRemaining = Math.max(0, this.shotgunCooldownRemaining - dt);
 
     // Le joueur ne peut pas se rééquiper d'une arme qu'il n'a pas ramassée en
     // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
     // pied-de-biche pendant que le joueur est censé être désarmé.
     if (frame.switchToMelee && this.hasMelee) this.activeWeapon = "melee";
+    if (frame.switchToPistol && this.hasPistol) this.activeWeapon = "pistol";
     if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
     // Un ramassage (`pickUp*`, appelé par l'interaction APRÈS ce pas) est vu
     // au pas suivant : un pas de retard, invisible.
@@ -365,6 +413,15 @@ export class WeaponSystem {
         }
         // Sinon : cooldown non écoulé, tentative à sec — ne fait RIEN. Pas
         // de crash, pas d'animation bloquante (invariant #10).
+      } else if (this.activeWeapon === "pistol" && this.hasPistol) {
+        if (this.pistolCooldownRemaining <= 0 && this.pistolAmmo > 0) {
+          this.firePistol(eyeOrigin, yaw, pitch);
+          this.sincePistolFire = 0;
+          this.pistolCooldownRemaining = cfg.pistolCooldown;
+          this.pistolAmmo -= 1;
+          this.applyKick(cfg.pistolRecoil);
+        }
+        // Sinon : cadence non écoulée OU chargeur vide — clic à sec, RAF.
       } else if (this.activeWeapon === "shotgun" && this.hasShotgun) {
         if (this.shotgunCooldownRemaining <= 0 && this.shotgunAmmo > 0) {
           this.fireShotgun(eyeOrigin, yaw, pitch);
@@ -541,6 +598,71 @@ export class WeaponSystem {
    * cône uniforme largement suffisante à 5°, tirée du PRNG seedé de ce
    * fichier (jamais `Math.random`).
    */
+  /**
+   * Un rayon unique, légèrement dispersé, même PRNG déterministe que le pompe
+   * (invariant #12). `pelletEndpoints` porte son unique bout de trajectoire :
+   * les gizmos balistiques de debug marchent donc sans rien savoir de l'arme.
+   */
+  private firePistol(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
+    this.computeAimBasis(yaw, pitch);
+
+    const pelletEndpoints: THREE.Vector3[] = [];
+    this._fireEvents.push({
+      weapon: "pistol",
+      muzzlePosition: eyeOrigin.clone(),
+      muzzleDirection: this.aimForward.clone(),
+      pelletEndpoints,
+    });
+
+    const maxOffset = Math.tan(THREE.MathUtils.degToRad(this.cfg.pistolSpreadDeg));
+    const radius = Math.sqrt(this.nextRandom()) * maxOffset;
+    const angle = this.nextRandom() * TAU;
+    this.pelletDirScratch
+      .copy(this.aimForward)
+      .addScaledVector(this.aimRight, Math.cos(angle) * radius)
+      .addScaledVector(this.aimUp, Math.sin(angle) * radius)
+      .normalize();
+
+    this.scratchRay.origin.x = eyeOrigin.x;
+    this.scratchRay.origin.y = eyeOrigin.y;
+    this.scratchRay.origin.z = eyeOrigin.z;
+    this.scratchRay.dir.x = this.pelletDirScratch.x;
+    this.scratchRay.dir.y = this.pelletDirScratch.y;
+    this.scratchRay.dir.z = this.pelletDirScratch.z;
+
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castRayAndGetNormal(
+          this.physics,
+          this.scratchRay,
+          this.cfg.pistolRange,
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          COLLISION_GROUPS.PLAYER_SHOT,
+        ),
+      ),
+    );
+    const portee = hit ? hit.timeOfImpact : this.cfg.pistolRange;
+    const bout = new THREE.Vector3(
+      eyeOrigin.x + this.pelletDirScratch.x * portee,
+      eyeOrigin.y + this.pelletDirScratch.y * portee,
+      eyeOrigin.z + this.pelletDirScratch.z * portee,
+    );
+    pelletEndpoints.push(bout);
+    if (!hit) return;
+
+    const material = this.materialForCollider(hit.collider);
+    this._hitEvents.push({
+      point: bout.clone(),
+      normal: new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z),
+      material,
+      weapon: "pistol",
+      colliderHandle: hit.collider.handle,
+      distance: hit.timeOfImpact,
+    });
+    this.triggerHitstopFor(material);
+  }
+
   private fireShotgun(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 

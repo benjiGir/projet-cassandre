@@ -27,12 +27,16 @@ table, ce ne sont pas des bindings discrets.
 | `jump` | `Space` | Sauter |
 | `fire` | `Mouse0` | Tirer |
 | `switchMelee` | `Digit1` | Arme : pied-de-biche |
-| `switchShotgun` | `Digit2` | Arme : pompe |
+| `switchPistol` | `Digit2` | Arme : pistolet |
+| `switchShotgun` | `Digit3` | Arme : pompe |
 | `use` | `KeyE` | Utiliser |
 
 Table identique aux codes qu'avait en dur `captureInputFrame` (aujourd'hui
-`game/loop/updateGameplay.ts`) avant l'introduction de cette API — aucune
-régression de comportement par défaut.
+`game/loop/updateGameplay.ts`) avant l'introduction de cette API — à une
+exception près, assumée : l'arrivée du pistolet (2026-09-16) a pris la touche
+`2` et repoussé le pompe en `3`, l'ordre classique du genre. Un joueur qui
+avait déjà rebindé ses touches garde les siennes : `localStorage` l'emporte
+sur cette table.
 
 Les touches de DEBUG (voir ci-dessous) sont volontairement absentes de cette
 table : outils de dev, jamais montrées au joueur, jamais persistées, jamais

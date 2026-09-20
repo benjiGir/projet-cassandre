@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { playEnemySfx, playImpactSfx, playWeaponFireSfx } from "../../core/audio";
+import { playDoorMovementSfx, playEnemySfx, playImpactSfx, playPropBreakSfx, playWeaponFireSfx } from "../../core/audio";
 import { input } from "../../core/input";
 import { inputRecorder } from "../../core/inputRecorder";
 import { toggleMusic } from "../../core/music";
@@ -30,6 +30,26 @@ import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 // Kill = réplique "premier lézard" (une seule fois par partie, Costard OU
 // Directeur confondus — voir la doc de `GameSession.firstKillTriggered`).
 const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
+
+/**
+ * Couleur et quantité des éclats par matière de `prop_*`.
+ *
+ * Traduction `game/` -> `render/` : `FxSystem.spawnDebris` ne prend qu'un
+ * nombre, il ne connaît pas les matières du niveau — même frontière que
+ * `material: string` sur `spawnImpactDecal`.
+ * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ */
+const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
+  bois: { color: 0x6b4a2a, count: 10 },
+  // Le carton part en plus gros morceaux, et moins nombreux : un carton
+  // s'écrase, il n'éclate pas.
+  carton: { color: 0x8a6a42, count: 7 },
+  // Le verre est le seul qui vaut vraiment la dépense : beaucoup d'éclats
+  // clairs, c'est LUI qui fait lire « ça s'est cassé » à 640×360.
+  verre: { color: 0xa8d8e8, count: 18 },
+  metal: { color: 0x8a8f96, count: 8 },
+};
+const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
@@ -75,12 +95,12 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // CETTE MÊME fonction, après tous ses lecteurs — jamais ici, avant
         // qu'ils aient fini de lire.
         for (const event of session.weapons.fireEvents) {
-          // L'éclair du pompe naît au bout du canon affiché, pas au centre de
-          // l'écran ; le pied-de-biche garde son étincelle devant l'œil.
+          // L'éclair d'une arme à feu naît au bout du canon affiché, pas au
+          // centre de l'écran ; le pied-de-biche garde son étincelle devant l'œil.
           const flashOrigin =
-            event.weapon === "shotgun"
-              ? engine.viewmodel.muzzleWorldPosition(muzzleScratch)
-              : event.muzzlePosition;
+            event.weapon === "melee"
+              ? event.muzzlePosition
+              : engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon);
           engine.fx.spawnMuzzleFlash(flashOrigin, event.muzzleDirection, event.weapon);
           if (event.weapon === "shotgun") {
             engine.fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
@@ -96,7 +116,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           // `WeaponSystem.fireMelee`, reconstruite ici à partir de
           // `weaponConfig.meleeRange`/`meleeHitRadius` — mêmes nombres que la
           // requête Rapier, aucune duplication de valeur en dur.
-          if (event.weapon === "shotgun" && event.pelletEndpoints) {
+          if (event.weapon !== "melee" && event.pelletEndpoints) {
             engine.ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
           } else if (event.weapon === "melee") {
             engine.ballisticsDebug.recordMeleeFire(
@@ -255,6 +275,53 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
       });
 
       yield* Effect.sync(() => {
+        // Mobilier physique — même contrat que les trois blocs ci-dessus :
+        // lecture non destructive, `clearFrameEvents()` en tout dernier.
+        //
+        // Un impact sur un prop NON fatal ne fait rien de plus ici : le decal,
+        // les particules et le son d'impact générique sont déjà partis avec
+        // `weapons.hitEvents` plus haut, comme pour n'importe quelle surface.
+        // Seule la destruction a son propre retour.
+        const props = session.propSystem;
+        if (props) {
+          for (const event of props.destroyedEvents) {
+            const debris = PROP_DEBRIS[event.matiere] ?? DEFAULT_PROP_DEBRIS;
+            engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
+            engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
+            playPropBreakSfx(event.matiere);
+          }
+          props.clearFrameEvents();
+        }
+      });
+
+      yield* Effect.sync(() => {
+        // Vitrages (`vitre_*`) — même contrat de lecture non destructive que
+        // les blocs ci-dessus. Un impact non fatal n'a rien de plus à faire
+        // ici (decal/particules/son générique déjà partis avec
+        // `weapons.hitEvents`) ; la casse réutilise le débris "verre" déjà
+        // défini pour les `prop_*` — même matière, même lecture visuelle.
+        const vitres = session.vitreSystem;
+        if (vitres) {
+          for (const event of vitres.destroyedEvents) {
+            const debris = PROP_DEBRIS.verre ?? DEFAULT_PROP_DEBRIS;
+            engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
+            if (event.givre) engine.fx.spawnFrostBurst(event.point);
+            engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
+            playPropBreakSfx("verre");
+          }
+          vitres.clearFrameEvents();
+        }
+
+        // Portes animées — un son au DÉBUT de chaque ouverture depuis l'état
+        // fermé (voir `DoorSystem.movementEvents`), jamais à la fermeture.
+        const doors = session.doorSystem;
+        if (doors) {
+          for (const event of doors.movementEvents) playDoorMovementSfx(event.movement);
+          doors.clearFrameEvents();
+        }
+      });
+
+      yield* Effect.sync(() => {
         // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
         // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
         // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
@@ -341,6 +408,8 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
             },
             shotgunAmmo: session.weapons.shotgunAmmo,
             shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
+            pistolAmmo: session.weapons.pistolAmmo,
+            pistolMaxAmmo: weaponConfig.pistolMaxAmmo,
             // HUD de prod (Phase 6, `ui/Hud.tsx`) : quel libellé afficher pour
             // "munitions" dépend de l'arme active, pas seulement du compte de
             // cartouches. Même throttle 10 Hz que le reste de ce bloc.

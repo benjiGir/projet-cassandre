@@ -6,7 +6,7 @@ Troisième module, après `lib_rayons` (la surface de vente alimentaire) et
 électroménager/TV et l'allée centrale qui dessert tout le magasin.
 
 Mêmes conventions : boîtes à 64 px/m, transform figée à la pose, un `col_box_*`
-par asset solide, rien de transparent (invariant #5). Les écrans et les façades
+par asset solide. Les écrans et les façades
 d'appareils viennent de l'atlas `prd_ecrans` (`tools/textures/generate_ecrans.py`).
 
 Le parti pris de tout le module tient en une phrase : **un appareil
@@ -26,6 +26,10 @@ from lib_rayons import asset_coll
 # se pose à la main, une seule fois dans tout le niveau (voir `mur_ecrans`).
 ECRANS = ("ecran_mire", "ecran_neige", "ecran_info", "ecran_meteo",
           "ecran_foot", "ecran_camera", "ecran_eteint", "ecran_barres")
+
+# Hauteur minimale d'un collider de mobilier dont le dessus ne doit PAS
+# devenir un sol pour le graphe de navigation (voir `rangee_blanc`).
+HORS_NAVIGATION = 1.05
 
 # Façades d'appareils, par gabarit.
 GROS_APPAREILS = ("app_lave_linge", "app_four", "app_frigo")
@@ -184,7 +188,19 @@ def rangee_blanc(longueur: float = 4.0, seed: int = 0) -> str:
         x += 0.60 + rng.uniform(0.06, 0.16)
     H.boxes(f"{name}_caissons", caissons, "mur_platre", coll)
     H.boxes(f"{name}_facades", facades, "prd_ecrans", coll)
-    H.col_box(name[4:], (0, 0, 0, longueur, 0.90, 1.90), coll)
+    # Collider à la silhouette : l'estrade, puis chaque appareil à SA hauteur.
+    # Une seule boîte de 1,90 m (premier jet) laissait marcher dans le vide
+    # au-dessus des lave-linge de 1 m, et arrêtait un tir à 1,60 m là où l'œil
+    # ne voyait rien — la ligne de vue ennemie lit les mêmes colliders.
+    #
+    # Plancher à 1,05 m : un lave-linge fait pile 1,00 m, soit exactement la
+    # marche maximale du graphe de navigation (`MAX_STEP_HEIGHT`,
+    # `game/level/pathfinding.ts`). Son dessus deviendrait une cellule reliée
+    # au sol, qu'un Costard (marche de 0,35 m) ne sait pas gravir — il se
+    # collerait à la rangée. Cinq centimètres invisibles l'en excluent.
+    H.col_box(f"{name[4:]}_estrade", (0, 0, 0, longueur, 0.90, 0.15), coll)
+    for i, ((ax, ay, _, bx, by, bz), _uv) in enumerate(caissons):
+        H.col_box(f"{name[4:]}_app{i}", (ax, ay, 0.15, bx, by, max(bz, HORS_NAVIGATION)), coll)
     return name
 
 
@@ -209,8 +225,12 @@ def cabine_demo(seed: int = 0) -> str:
                 ((0, 0, 0, 1.20, ep, ht), "world"),
                 ((lo - 1.20, 0, 0, lo, ep, ht), "world")]
     H.boxes(f"{name}_cloisons", cloisons, "mur_platre", coll, subdiv=0.7)
-    H.box(f"{name}_plinthe", (0, 0, 0, lo, pr, 0.12),
-          "trim_hypermarche", coll, uv="trim:plinthe")
+    # Plinthe au pied des cloisons, et non une dalle pleine de 5 × 5 m : on
+    # entre dans la cabine, et une dalle sans collider y enfonçait les pieds.
+    H.boxes(f"{name}_plinthe",
+            [((ax - 0.01, ay - 0.01, 0, bx + 0.01, by + 0.01, 0.12), "trim:plinthe")
+             for (ax, ay, _, bx, by, _), _uv in cloisons],
+            "trim_hypermarche", coll)
     H.box(f"{name}_corniche", (0, 0, ht - 0.12, lo, pr, ht),
           "trim_hypermarche", coll, uv="trim:corniere")
 
@@ -229,7 +249,19 @@ def cabine_demo(seed: int = 0) -> str:
                 ((2.85, 1.10, 0.45, 3.10, 2.00, 0.70), "world")]
     H.boxes(f"{name}_fauteuil", fauteuil, "metal_peint_rouge", coll)
 
-    H.col_box(name[4:], (0, 0, 0, lo, pr, ht), coll)
+    # Un collider par cloison, plus le meuble télé et le fauteuil. Une boîte
+    # pleine de 5 × 5 m (premier jet) faisait de l'ouverture un mur invisible :
+    # la cabine se voyait ouverte et ne s'ouvrait pas.
+    # Découpés pour ne jamais se recouvrir aux angles : le fond sur toute la
+    # largeur, les côtés s'arrêtent contre lui, les retours contre les côtés.
+    for i, bornes in enumerate(((0, pr - ep, 0, lo, pr, ht),
+                                (0, 0, 0, ep, pr - ep, ht),
+                                (lo - ep, 0, 0, lo, pr - ep, ht),
+                                (ep, 0, 0, 1.20, ep, ht),
+                                (lo - 1.20, 0, 0, lo - ep, ep, ht))):
+        H.col_box(f"{name[4:]}_cloison{i}", bornes, coll)
+    H.col_box(f"{name[4:]}_tv", (1.55, pr - 0.85, 0, 3.45, pr - ep, 1.70), coll)
+    H.col_box(f"{name[4:]}_fauteuil", (1.90, 1.10, 0, 3.10, 2.00, HORS_NAVIGATION), coll)
     return name
 
 

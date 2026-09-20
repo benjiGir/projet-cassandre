@@ -27,6 +27,11 @@ export interface LevelDef {
    * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
    */
   lighting?: "temps-reel" | "bake" | "hybride";
+  /** Ciel en fond de scène, nom d'un dossier de `public/assets/sky/` — six
+   * faces générées par `tools/textures/generate_ciel.py`. Absent = la couleur
+   * de fond du renderer, ce qu'il faut à un niveau entièrement clos.
+   * see: docs/systems/rendu.md#ciel */
+  ciel?: string;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
@@ -73,6 +78,8 @@ export const LEVEL_CHOICES: LevelDef[] = [
     gltfName: "niveau_v2",
     startUnarmed: true,
     lighting: "hybride",
+    // La nuit au-dessus du parking d'arrivée et derrière les verrières.
+    ciel: "nuit",
   },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {

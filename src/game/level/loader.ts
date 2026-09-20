@@ -7,7 +7,30 @@ import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
 import { GameRuntime } from "../../core/runtime";
 import { configureRetroTexture } from "../../render/renderer";
 import { mergeStaticDecor } from "./mergeStaticDecor";
+import {
+  DEFAULT_PROP_MATERIAL,
+  PROP_MATERIALS,
+  parsePropMaterial,
+  type PropInfo,
+  type PropMaterial,
+} from "./props";
+import {
+  batchDoorMeshes,
+  DEFAULT_DOOR_MOVEMENT,
+  DOOR_MOVEMENTS,
+  parseDoorMovement,
+  type DoorInfo,
+  type DoorMovement,
+} from "./doors";
+import { mergeVitreDecor, type VitreCandidate, type VitreInfo } from "./vitres";
 import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
+
+// `DoorInfo`/`VitreInfo` sont DÉFINIS dans `./doors`/`./vitres` (comme
+// `PropInfo` dans `./props`) — ce fichier reste le seul point d'import public
+// historique (`devtools/consoleApi.ts` importe `DoorInfo` depuis `./loader`),
+// d'où ce ré-export.
+export type { DoorInfo, DoorMovement } from "./doors";
+export type { VitreInfo } from "./vitres";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -46,23 +69,6 @@ export interface TriggerVolume {
   extras: Record<string, unknown>;
 }
 
-export interface DoorInfo {
-  name: string;
-  object: THREE.Object3D;
-  body: RAPIER.RigidBody;
-  collider: RAPIER.Collider;
-  /** Demi-étendues MONDE (après scale) du cuboid généré depuis la bounding
-   * box locale — évite à l'appelant (`interactive.ts`/`main.ts`) de refaire
-   * ce calcul pour animer une ouverture (ex. glissement vertical sur sa
-   * propre hauteur, voir la porte à badge de la Zone E). */
-  halfExtents: THREE.Vector3;
-  /** Clip d'animation glTF associé à ce nœud, s'il existe. PARSÉ, PAS JOUÉ —
-   * lire un mixer et déclencher l'ouverture est le scope de
-   * `game/level/interactive.ts` (hors Phase 4). */
-  clip: THREE.AnimationClip | null;
-  extras: Record<string, unknown>;
-}
-
 export interface UseObject {
   name: string;
   object: THREE.Object3D;
@@ -84,6 +90,11 @@ export interface UseObject {
    * `requires`) pour agir sur sa cible. `null` = aucune condition.
    * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
   requiresCard: LoyaltyCard | null;
+  /** Munitions de pistolet données par cet objet (custom property Blender
+   * `munitions`, nombre > 0) — une boîte, ramassée en marchant dessus comme
+   * une trousse. `null` si absent.
+   * see: docs/reference/conventions-nommage.md#boîtes-de-munitions */
+  ammo: number | null;
   /** PV rendus par cet objet (custom property Blender `soin`, nombre > 0) —
    * une trousse de soin, ramassée en marchant dessus et non à la touche E.
    * `null` si absent.
@@ -122,6 +133,28 @@ export interface LevelStats {
   decorBatchCount: number;
   /** `light_*` instanciées en `THREE.PointLight` — voir `buildLevelLight`. */
   lightCount: number;
+  /**
+   * `prop_*` instanciés en corps dynamiques. AJOUTER UN PROP AJOUTE UN LOT DE
+   * DESSIN : un corps qui bouge ne peut pas rejoindre un lot fusionné
+   * (`mergeStaticDecor`), il se dessine seul pour toujours. À lire avec
+   * `decorBatchCount`, sur un budget mesuré à 200.
+   * see: docs/decisions/0030-props-dynamiques.md
+   */
+  propCount: number;
+  /** `vitre_*` rencontrées, cassables ou non. */
+  vitreCount: number;
+  /**
+   * Lots de dessin ajoutés par les vitres APRÈS fusion (`mergeVitreDecor`) :
+   * un par matériau pour tout le niveau, quel que soit `vitreCount`. À lire
+   * avec `decorBatchCount`, sur le même budget de 200.
+   * see: docs/decisions/0031-portes-animees-et-vitres.md
+   */
+  vitreBatchCount: number;
+  /**
+   * Lots de dessin des vantaux (`batchDoorMeshes`) : un par matériau partagé
+   * par au moins deux `door_*`, plus un par vantail seul de son matériau.
+   */
+  doorBatchCount: number;
 }
 
 export interface LevelHandle {
@@ -136,6 +169,14 @@ export interface LevelHandle {
   doors: DoorInfo[];
   useObjects: UseObject[];
   secrets: SecretZone[];
+  /** Mobilier physique `prop_*` — l'état de partie (PV, destruction) vit dans
+   * `PropSystem` (`game/level/props.ts`), reconstruit à chaque chargement.
+   * see: docs/reference/conventions-nommage.md#props-physiques */
+  props: PropInfo[];
+  /** Vitrages `vitre_*` — l'état de partie (PV, casse) vit dans `VitreSystem`
+   * (`game/level/vitres.ts`), reconstruit à chaque chargement comme `PropSystem`.
+   * see: docs/reference/conventions-nommage.md#préfixe-vitre */
+  vitres: VitreInfo[];
   /** Lampes `light_*` instanciées, déjà rattachées à `root`. Exposées pour le
    * pool de lampes (`render/lightPool.ts`), qui décide lesquelles restent
    * allumées — leur nombre seul ne suffit pas à ça.
@@ -223,6 +264,37 @@ export class UnknownLoyaltyCardWarning extends Schema.TaggedError<UnknownLoyalty
  * l'objet est retourné avec `heals: null`. */
 export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmountWarning>()(
   "InvalidHealAmountWarning",
+  { name: Schema.String, value: Schema.String, property: Schema.String },
+) {}
+
+/** `prop_*` dont `extras.matiere` n'est pas une matière connue — jamais
+ * bloquant : le prop est construit avec `DEFAULT_PROP_MATERIAL`. */
+export class UnknownPropMaterialWarning extends Schema.TaggedError<UnknownPropMaterialWarning>()(
+  "UnknownPropMaterialWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
+/** `prop_*` dont `extras.masse`/`extras.pv` n'est pas un nombre strictement
+ * positif — jamais bloquant : la propriété est ignorée et le prop prend le
+ * défaut du préfixe (masse de repli, ou indestructible pour `pv`). */
+export class InvalidPropNumberWarning extends Schema.TaggedError<InvalidPropNumberWarning>()(
+  "InvalidPropNumberWarning",
+  { name: Schema.String, property: Schema.String, value: Schema.String },
+) {}
+
+/** `door_*` dont `extras.mouvement` n'est pas une valeur connue — jamais
+ * bloquant : la porte est construite avec `DEFAULT_DOOR_MOVEMENT` (même
+ * règle que `matiere` sur un `prop_*`). */
+export class UnknownDoorMovementWarning extends Schema.TaggedError<UnknownDoorMovementWarning>()(
+  "UnknownDoorMovementWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
+/** `vitre_*` dont `extras.pv` n'est pas un nombre strictement positif —
+ * jamais bloquant : la vitre est construite INCASSABLE (même règle que `pv`
+ * sur un `prop_*`). */
+export class InvalidVitrePvWarning extends Schema.TaggedError<InvalidVitrePvWarning>()(
+  "InvalidVitrePvWarning",
   { name: Schema.String, value: Schema.String },
 ) {}
 
@@ -283,9 +355,43 @@ function formatUnknownLoyaltyCard(error: UnknownLoyaltyCardWarning): string {
 }
 
 function formatInvalidHealAmount(error: InvalidHealAmountWarning): string {
+  const unite = error.property === "soin" ? "PV" : "munitions";
   return (
-    `[level] "${error.name}" (use_*) : propriété "soin" = "${error.value}", ` +
-    `qui n'est pas un nombre de PV strictement positif — propriété ignorée.`
+    `[level] "${error.name}" (use_*) : propriété "${error.property}" = "${error.value}", ` +
+    `qui n'est pas un nombre de ${unite} strictement positif — propriété ignorée.`
+  );
+}
+
+function formatUnknownPropMaterial(error: UnknownPropMaterialWarning): string {
+  return (
+    `[level] "${error.name}" (prop_*) : propriété "matiere" = "${error.value}", ` +
+    `qui n'est pas une matière connue (${PROP_MATERIALS.join(", ")}) — ` +
+    `repli sur "${DEFAULT_PROP_MATERIAL}".`
+  );
+}
+
+function formatInvalidPropNumber(error: InvalidPropNumberWarning): string {
+  const repli =
+    error.property === "masse"
+      ? `repli sur ${DEFAULT_PROP_MASS_KG} kg`
+      : "prop laissé indestructible";
+  return (
+    `[level] "${error.name}" (prop_*) : propriété "${error.property}" = "${error.value}", ` +
+    `qui n'est pas un nombre strictement positif — ${repli}.`
+  );
+}
+
+function formatUnknownDoorMovement(error: UnknownDoorMovementWarning): string {
+  return (
+    `[level] "${error.name}" (door_*) : propriété "mouvement" = "${error.value}", ` +
+    `qui n'est pas un mouvement connu (${DOOR_MOVEMENTS.join(", ")}) — repli sur "${DEFAULT_DOOR_MOVEMENT}".`
+  );
+}
+
+function formatInvalidVitrePv(error: InvalidVitrePvWarning): string {
+  return (
+    `[level] "${error.name}" (vitre_*) : propriété "pv" = "${error.value}", ` +
+    `qui n'est pas un nombre strictement positif — vitre laissée incassable.`
   );
 }
 
@@ -703,62 +809,324 @@ function findClipForObject(clips: THREE.AnimationClip[], object: THREE.Object3D)
   return null;
 }
 
-/** `door_*` : porte animée. Collider DYNAMIQUE, verrouillé (translations +
- * rotations, gravité neutralisée) tant qu'aucune logique de jeu ne le
- * pilote — voir docs/pipeline/niveau-blender.md#portes.
+/**
+ * `door_*` : porte ANIMÉE (`game/level/doors.ts::DoorSystem`, reconstruit à
+ * chaque chargement comme `PropSystem`). Corps FIXE, posé à la pose FERMÉE
+ * pour toujours — seul le collider est activé/désactivé, seul le MESH bouge.
+ * Voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md)
+ * pour la cause racine (aucune porte ne bougeait à l'écran avant ce jalon) et
+ * les choix ci-dessous.
  *
- * PIÈGE : contrairement à `buildCuboidCollider`/`buildTriggerEffect`, le
- * corps est positionné sur la translation MONDE BRUTE du mesh (`worldPosition`),
- * PAS sur le centre de sa bounding box locale — voir
- * docs/decisions/0012-porte-collider-non-recentre.md pour pourquoi ce n'est
- * pas corrigé ici. */
-function buildDoor(
+ * Le mesh est rattaché sous `root` (`root.attach`, comme un `prop_*`) : sa
+ * pose LOCALE résultante EST la pose "fermée" que `DoorSystem` anime autour —
+ * plus besoin de matrice inverse à chaque pas fixe, contrairement à
+ * `PropSystem` qui relit un corps dynamique. Contrairement à l'ANCIEN
+ * `buildDoor` ([ADR 0012](../../../docs/decisions/0012-porte-collider-non-recentre.md),
+ * qui posait le corps sur la translation brute du mesh), le corps est
+ * maintenant recentré sur la bounding box locale — comme `buildCuboidCollider`
+ * — parce que le vantail n'est plus verrouillé-mais-mobile : un corps FIXE
+ * pour de bon peut se permettre d'être exactement juste. Sans effet sur les
+ * `.glb` déjà exportés (leurs vantaux ont l'origine déjà recentrée en
+ * Blender pour compenser ce même écart, voir l'ADR 0012).
+ */
+function buildDoorEffect(
+  mesh: THREE.Mesh,
+  name: string,
+  root: THREE.Object3D,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+  clips: THREE.AnimationClip[],
+): Effect.Effect<DoorInfo> {
+  return Effect.gen(function* () {
+    const extras = cleanExtras(mesh);
+    const movement = yield* readDoorMovement(name, extras.mouvement);
+
+    root.attach(mesh);
+    mesh.updateMatrixWorld(true);
+
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const localMin = bb.min.clone();
+    const localMax = bb.max.clone();
+    const localCenter = new THREE.Vector3().addVectors(localMin, localMax).multiplyScalar(0.5);
+    const localSize = new THREE.Vector3().subVectors(localMax, localMin);
+
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+    const discardedPosition = new THREE.Vector3();
+    mesh.matrixWorld.decompose(discardedPosition, worldQuat, worldScale);
+    const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
+
+    const halfExtents = new THREE.Vector3(
+      Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+      Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+      Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+    );
+
+    const body = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+        .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+    );
+    const collider = physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
+        COLLISION_GROUPS.WORLD,
+      ),
+      body,
+    );
+    bodies.push(body);
+
+    return {
+      name,
+      object: mesh,
+      body,
+      collider,
+      halfExtents,
+      localMin,
+      localMax,
+      closedPosition: mesh.position.clone(),
+      closedQuaternion: mesh.quaternion.clone(),
+      scale: mesh.scale.clone(),
+      movement,
+      clip: findClipForObject(clips, mesh),
+      extras,
+    };
+  });
+}
+
+/**
+ * `vitre_*` : mesh de verre plat, UN matériau (l'alpha `transparent`/
+ * `opacity` du glTF a déjà été recopié par `toLambert`, appelé pour CE mesh
+ * comme pour tous les autres avant le routage par préfixe). Collider cuboid
+ * FIXE, groupe WORLD, tant que `solide !== false` — une verrière au plafond
+ * (`solide: false`) n'a AUCUN collider et est incassable : un collider
+ * au-dessus d'un sol serait pris pour le sol par le bake du graphe de
+ * navigation, piège déjà connu des plafonds (voir `docs/reference/conventions-nommage.md`).
+ *
+ * Double face + pas d'écriture de profondeur : une teinte unique de vitrage
+ * rend l'ordre de mélange indifférent, pas besoin de trier les fragments.
+ *
+ * Ne construit QUE le candidat — la fusion (`mergeVitreDecor`,
+ * voir `LevelStats.vitreBatchCount`) et l'état de partie (PV, casse,
+ * `VitreSystem`) vivent ailleurs, même séparation que `prop_*`/`PropSystem`.
+ */
+function buildVitreCandidateEffect(
   mesh: THREE.Mesh,
   name: string,
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
-  clips: THREE.AnimationClip[],
-): DoorInfo {
-  mesh.geometry.computeBoundingBox();
-  const bb = mesh.geometry.boundingBox!;
-  const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+): Effect.Effect<VitreCandidate> {
+  return Effect.gen(function* () {
+    const extras = cleanExtras(mesh);
+    const solide = extras.solide !== false;
+    const maxHp = solide ? yield* readVitrePv(name, extras.pv) : null;
+    const givre = extras.givre === true;
 
-  const worldPosition = new THREE.Vector3();
-  const worldQuat = new THREE.Quaternion();
-  const worldScale = new THREE.Vector3();
-  mesh.matrixWorld.decompose(worldPosition, worldQuat, worldScale);
+    const material = mesh.material as THREE.MeshLambertMaterial;
+    material.side = THREE.DoubleSide;
+    material.depthWrite = false;
 
-  const halfExtents = new THREE.Vector3(
-    Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
-    Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
-    Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
-  );
+    let collider: RAPIER.Collider | null = null;
+    let body: RAPIER.RigidBody | null = null;
+    if (solide) {
+      mesh.geometry.computeBoundingBox();
+      const bb = mesh.geometry.boundingBox!;
+      const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+      const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
 
-  const body = physics.world.createRigidBody(
-    RAPIER.RigidBodyDesc.dynamic()
-      .setTranslation(worldPosition.x, worldPosition.y, worldPosition.z)
-      .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w })
-      .setGravityScale(0)
-      .lockTranslations()
-      .lockRotations(),
-  );
-  const collider = physics.world.createCollider(
-    RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
-      COLLISION_GROUPS.WORLD,
-    ),
-    body,
-  );
-  bodies.push(body);
+      const worldQuat = new THREE.Quaternion();
+      const worldScale = new THREE.Vector3();
+      const discardedPosition = new THREE.Vector3();
+      mesh.matrixWorld.decompose(discardedPosition, worldQuat, worldScale);
+      const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
 
-  return {
-    name,
-    object: mesh,
-    body,
-    collider,
-    halfExtents,
-    clip: findClipForObject(clips, mesh),
-    extras: cleanExtras(mesh),
-  };
+      const halfExtents = new THREE.Vector3(
+        Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+        Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+        Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+      );
+
+      body = physics.world.createRigidBody(
+        RAPIER.RigidBodyDesc.fixed()
+          .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+          .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+      );
+      collider = physics.world.createCollider(
+        RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
+          COLLISION_GROUPS.WORLD,
+        ),
+        body,
+      );
+      bodies.push(body);
+    }
+
+    return {
+      name,
+      mesh: mesh as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>,
+      collider,
+      body,
+      maxHp,
+      givre,
+      extras,
+    };
+  });
+}
+
+/**
+ * Masse d'un `prop_*` qui ne déclare pas `masse`, en kg.
+ *
+ * Rapier déduirait sinon la masse d'une densité par défaut de 1000 kg/m³
+ * (celle de l'eau) : une caisse d'un mètre de côté pèserait une tonne et le
+ * joueur — 80 kg, `moveConfig.characterMass` — ne la bougerait pas d'un
+ * millimètre. 25 kg se pousse en marchant dessus sans partir en glissade.
+ */
+const DEFAULT_PROP_MASS_KG = 25;
+
+/** Frottement/rebond d'un prop : il glisse un peu et ne rebondit pas. Un
+ * caddie qui rebondit se lit comme un ballon de plage. */
+const PROP_FRICTION = 0.8;
+const PROP_RESTITUTION = 0;
+
+/** Amortissements : sans eux, un prop poussé sur un sol plat garde sa vitesse
+ * très longtemps (Rapier n'a pas de frottement de roulement) et traverse la
+ * pièce pour un coup d'épaule. */
+const PROP_LINEAR_DAMPING = 0.6;
+const PROP_ANGULAR_DAMPING = 0.8;
+
+/** Lit `matiere` : absente -> défaut sans bruit, inconnue -> défaut AVEC
+ * avertissement bruyant (même règle que `card` sur un `use_*`). */
+function readPropMaterial(name: string, raw: unknown): Effect.Effect<PropMaterial> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return DEFAULT_PROP_MATERIAL;
+    const matiere = parsePropMaterial(raw);
+    if (matiere) return matiere;
+    yield* Effect.fail(new UnknownPropMaterialWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownPropMaterial(error)))),
+    );
+    return DEFAULT_PROP_MATERIAL;
+  });
+}
+
+/** Lit `masse`/`pv` : absente -> `null` sans bruit, présente mais pas un
+ * nombre > 0 -> `null` AVEC avertissement bruyant. */
+function readPropNumber(name: string, property: string, raw: unknown): Effect.Effect<number | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(value) && value > 0) return value;
+    yield* Effect.fail(new InvalidPropNumberWarning({ name, property, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidPropNumber(error)))),
+    );
+    return null;
+  });
+}
+
+/** Lit `mouvement` d'un `door_*` : absent -> `DEFAULT_DOOR_MOVEMENT` sans
+ * bruit, présent mais inconnu -> `DEFAULT_DOOR_MOVEMENT` AVEC avertissement
+ * bruyant (même règle que `matiere` sur un `prop_*`). */
+function readDoorMovement(name: string, raw: unknown): Effect.Effect<DoorMovement> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return DEFAULT_DOOR_MOVEMENT;
+    const mouvement = parseDoorMovement(raw);
+    if (mouvement) return mouvement;
+    yield* Effect.fail(new UnknownDoorMovementWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownDoorMovement(error)))),
+    );
+    return DEFAULT_DOOR_MOVEMENT;
+  });
+}
+
+/** Lit `pv` d'un `vitre_*` : absent -> `null` (incassable) sans bruit,
+ * présent mais pas un nombre strictement positif -> `null` AVEC
+ * avertissement bruyant (même règle que `pv` sur un `prop_*`). */
+function readVitrePv(name: string, raw: unknown): Effect.Effect<number | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(value) && value > 0) return value;
+    yield* Effect.fail(new InvalidVitrePvWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidVitrePv(error)))),
+    );
+    return null;
+  });
+}
+
+/**
+ * `prop_*` : mobilier physique. Corps DYNAMIQUE libre (contrairement à
+ * `door_*`, dynamique mais verrouillé), collider cuboid, groupe
+ * `COLLISION_GROUPS.PROP`.
+ *
+ * Deux différences avec tous les autres préfixes, toutes deux nécessaires
+ * parce que ce corps-ci est réellement libre :
+ *
+ * 1. **Le mesh est reparenté sous `root`** (`root.attach`, qui conserve la
+ *    pose MONDE). Un prop resté sous un groupe Blender hériterait de la
+ *    transformation de ce groupe EN PLUS de celle que la physique lui écrit.
+ * 2. **Le corps est posé sur le CENTRE de la boîte, pas sur l'origine du
+ *    mesh** — un corps dynamique tourne autour de son centre de masse. Le
+ *    décalage entre les deux est conservé dans `PropInfo.centerOffset` et
+ *    réappliqué au rendu ; c'est exactement le piège que `buildDoor` laisse
+ *    ouvert (ADR 0012), sans conséquence pour un vantail verrouillé.
+ *
+ * Extras lus (tous optionnels) : `masse` (kg), `pv` (absent = indestructible),
+ * `matiere` (son de casse + couleur des débris).
+ * see: docs/reference/conventions-nommage.md#props-physiques
+ */
+function buildPropEffect(
+  mesh: THREE.Mesh,
+  name: string,
+  root: THREE.Object3D,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<PropInfo> {
+  return Effect.gen(function* () {
+    const extras = cleanExtras(mesh);
+    const matiere = yield* readPropMaterial(name, extras.matiere);
+    const masse = yield* readPropNumber(name, "masse", extras.masse);
+    const maxHp = yield* readPropNumber(name, "pv", extras.pv);
+
+    root.attach(mesh);
+    mesh.updateMatrixWorld(true);
+
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+    const centerOffset = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
+
+    const worldPosition = new THREE.Vector3();
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+    mesh.matrixWorld.decompose(worldPosition, worldQuat, worldScale);
+    const worldCenter = centerOffset.clone().applyMatrix4(mesh.matrixWorld);
+
+    const halfExtents = new THREE.Vector3(
+      Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+      Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+      Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+    );
+
+    const body = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+        .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w })
+        .setLinearDamping(PROP_LINEAR_DAMPING)
+        .setAngularDamping(PROP_ANGULAR_DAMPING)
+        // Un plomb de pompe transmet une impulsion franche à un objet léger :
+        // sans CCD, un prop peut traverser un sol de 20 cm en un seul pas fixe.
+        .setCcdEnabled(true),
+    );
+    const collider = physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
+        .setMass(masse ?? DEFAULT_PROP_MASS_KG)
+        .setFriction(PROP_FRICTION)
+        .setRestitution(PROP_RESTITUTION)
+        .setCollisionGroups(COLLISION_GROUPS.PROP),
+      body,
+    );
+    bodies.push(body);
+
+    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, extras };
+  });
 }
 
 /** `use_*` : objet interactif, portée 2 m. Cible lue dans `extras.target`.
@@ -779,14 +1147,15 @@ function readCardProperty(name: string, property: string, raw: unknown): Effect.
   });
 }
 
-/** Lit la propriété `soin` : absente -> `null` sans bruit, présente mais pas
- * un nombre > 0 -> `null` AVEC avertissement bruyant (même règle que les cartes). */
-function readHealProperty(name: string, raw: unknown): Effect.Effect<number | null> {
+/** Lit une quantité (`soin`, `munitions`) : absente -> `null` sans bruit,
+ * présente mais pas un nombre > 0 -> `null` AVEC avertissement bruyant (même
+ * règle que les cartes). */
+function readAmountProperty(name: string, property: string, raw: unknown): Effect.Effect<number | null> {
   return Effect.gen(function* () {
     if (raw === undefined || raw === null || raw === "") return null;
     const amount = typeof raw === "number" ? raw : Number(raw);
     if (Number.isFinite(amount) && amount > 0) return amount;
-    yield* Effect.fail(new InvalidHealAmountWarning({ name, value: String(raw) })).pipe(
+    yield* Effect.fail(new InvalidHealAmountWarning({ name, value: String(raw), property })).pipe(
       Effect.catch((error) => Effect.sync(() => console.error(formatInvalidHealAmount(error)))),
     );
     return null;
@@ -802,19 +1171,20 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
     const targetName = typeof extras.target === "string" ? extras.target : null;
     const grantsCard = yield* readCardProperty(name, "card", extras.card);
     const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
-    const heals = yield* readHealProperty(name, extras.soin);
+    const heals = yield* readAmountProperty(name, "soin", extras.soin);
+    const ammo = yield* readAmountProperty(name, "munitions", extras.munitions);
 
     // Une carte ou une trousse à ramasser se suffit à elle-même : pas de
     // cible, donc pas d'avertissement — même exception de fond que
     // `use_crowbar`/`use_shotgun`, qui eux le déclenchent encore (leur effet
     // est câblé par nom, pas déclaré dans le `.glb`).
-    if (!targetName && !grantsCard && heals === null) {
+    if (!targetName && !grantsCard && heals === null && ammo === null) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, extras };
   });
 }
 
@@ -905,6 +1275,8 @@ function buildLevelResourceEffect(
     const spawnDirectors: NamedSpawn[] = [];
     const triggers: TriggerVolume[] = [];
     const doors: DoorInfo[] = [];
+    const props: PropInfo[] = [];
+    const vitreCandidates: VitreCandidate[] = [];
     const useObjects: UseObject[] = [];
     const secrets: SecretZone[] = [];
 
@@ -912,12 +1284,13 @@ function buildLevelResourceEffect(
     const colliderKindCounts = { cuboid: 0, convexHull: 0, trimesh: 0 };
     let unprefixedMeshCount = 0;
 
-    // Un mesh sous une porte ou un objet interactif, ou visé par une animation, bouge ou doit
-    // rester adressable : il ne rejoint jamais un lot fusionné.
+    // Un mesh sous une porte, un prop physique ou un objet interactif, ou visé
+    // par une animation, bouge ou doit rester adressable : il ne rejoint jamais
+    // un lot fusionné.
     const movableRoots = new Set(
       nodes.filter((o) => {
         const n = blenderName(o);
-        return n.startsWith("door_") || n.startsWith("use_");
+        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_");
       }),
     );
     const animatedNodeNames = new Set(
@@ -1025,8 +1398,18 @@ function buildLevelResourceEffect(
       }
 
       if (name.startsWith("door_")) {
-        doors.push(buildDoor(obj, name, physics, bodies, gltf.animations));
+        doors.push(yield* buildDoorEffect(obj, name, root, physics, bodies, gltf.animations));
         continue; // reste visible : c'est un panneau de décor animé, pas un volume logique
+      }
+
+      if (name.startsWith("vitre_")) {
+        vitreCandidates.push(yield* buildVitreCandidateEffect(obj, name, physics, bodies));
+        continue; // reste visible : le rendu de la vitre EST son mesh, fusionné plus bas comme le décor
+      }
+
+      if (name.startsWith("prop_")) {
+        props.push(yield* buildPropEffect(obj, name, root, physics, bodies));
+        continue; // reste visible : un prop EST son rendu, il n'a pas de proxy séparé
       }
 
       if (name.startsWith("use_")) {
@@ -1051,6 +1434,15 @@ function buildLevelResourceEffect(
     for (const light of lights) root.add(light);
 
     const decor = mergeStaticDecor(root, decorCandidates);
+    // Fusion DÉDIÉE des vitres (voir `mergeVitreDecor`) : contrairement au
+    // reste du décor, chaque vitre doit garder sa propre plage de sommets
+    // adressable pour se casser individuellement sans jamais coûter un lot de
+    // dessin de plus (voir `LevelStats.vitreBatchCount`).
+    const vitreMerge = mergeVitreDecor(root, vitreCandidates);
+    // Vantaux regroupés par matériau (voir `batchDoorMeshes`) : un vantail
+    // animé ne rejoint jamais le décor fusionné, mais vingt vantaux n'ont pas
+    // à coûter vingt lots de dessin.
+    const doorBatchCount = batchDoorMeshes(root, doors);
 
     const stats: LevelStats = {
       colliderCount,
@@ -1064,9 +1456,28 @@ function buildLevelResourceEffect(
       unprefixedMeshCount,
       decorBatchCount: unprefixedMeshCount - decor.mergedMeshCount + decor.batchCount,
       lightCount: lights.length,
+      propCount: props.length,
+      vitreCount: vitreMerge.vitres.length,
+      vitreBatchCount: vitreMerge.batchCount,
+      doorBatchCount,
     };
 
-    return { root, gltf, spawnPlayer, spawnSuits, spawnDirectors, triggers, doors, useObjects, secrets, lights, stats, bodies };
+    return {
+      root,
+      gltf,
+      spawnPlayer,
+      spawnSuits,
+      spawnDirectors,
+      triggers,
+      doors,
+      props,
+      vitres: vitreMerge.vitres,
+      useObjects,
+      secrets,
+      lights,
+      stats,
+      bodies,
+    };
   });
 }
 
@@ -1077,6 +1488,8 @@ function disposeLevelResource(resource: LevelResource, scene: THREE.Scene, physi
   for (const body of resource.bodies) physics.world.removeRigidBody(body); // retire aussi les colliders attachés
   resource.root.traverse((obj) => {
     if (!(obj instanceof THREE.Mesh)) return;
+    // Un lot de vantaux porte aussi ses textures de matrices et d'indirection.
+    if (obj instanceof THREE.BatchedMesh) obj.dispose();
     obj.geometry.dispose();
     const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
     for (const mat of mats) {
@@ -1115,6 +1528,8 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
     spawnDirectors: resource.spawnDirectors,
     triggers: resource.triggers,
     doors: resource.doors,
+    props: resource.props,
+    vitres: resource.vitres,
     useObjects: resource.useObjects,
     secrets: resource.secrets,
     lights: resource.lights,

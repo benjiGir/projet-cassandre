@@ -48,9 +48,11 @@ interface DebugState {
   // see: docs/systems/debug.md#champs-de-debugstate
   shotgunAmmo: number;
   shotgunMaxAmmo: number;
+  pistolAmmo: number;
+  pistolMaxAmmo: number;
 
   // see: docs/decisions/0020-state-feuille-de-dependances.md
-  activeWeapon: "none" | "melee" | "shotgun";
+  activeWeapon: "none" | "melee" | "pistol" | "shotgun";
 
   // see: docs/systems/debug.md#champs-de-debugstate
   secretsFound: number;
@@ -128,6 +130,8 @@ const INITIAL_DEBUG: DebugState = {
   playerMaxHp: 100,
   shotgunAmmo: 0,
   shotgunMaxAmmo: 0,
+  pistolAmmo: 0,
+  pistolMaxAmmo: 0,
   activeWeapon: "melee",
   secretsFound: 0,
   secretsTotal: 0,

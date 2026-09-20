@@ -48,12 +48,22 @@ SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
 
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
-    "spawn_", "trig_", "door_", "use_", "secret_", "kit_",
+    "spawn_", "trig_", "door_", "use_", "secret_", "kit_", "prop_", "vitre_",
 )
+
+# Extras d'un `door_*` animé — doivent rester identiques à ce que lit
+# src/game/level/doorSystem.ts (docs/reference/conventions-nommage.md#portes).
+MOUVEMENTS_PORTE = ("descend", "monte", "battant", "coulisse")
+CHARNIERES = ("min", "max")
+SENS_PORTE = ("auto", "+", "-")
 
 # Cartes de fidélité (jalon N7) — doit rester identique à `LOYALTY_CARDS`
 # dans src/game/player/loyaltyCards.ts.
 LOYALTY_CARDS = ("argent", "or", "platine")
+
+# Matières de props — doit rester identique à `PROP_MATERIALS` dans
+# src/game/level/props.ts.
+PROP_MATIERES = ("bois", "carton", "verre", "metal")
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -65,6 +75,12 @@ def err(msg: str) -> None:
 
 def warn(msg: str) -> None:
     warnings.append(msg)
+
+
+def centre_monde(obj) -> Vector:
+    """Centre de la boîte englobante de `obj` en espace MONDE."""
+    coins = [obj.matrix_world @ Vector(c) for c in obj.bound_box]
+    return sum(coins, Vector((0.0, 0.0, 0.0))) / len(coins)
 
 
 def base_name(name: str) -> str:
@@ -88,6 +104,10 @@ def check_transforms(meshes) -> None:
         if any(abs(c - 1.0) > 1e-4 for c in s):
             err(f"{o.name}: scale non appliqué {tuple(round(c, 3) for c in s)}")
 
+        # Un vantail a son origine au CENTRE de sa boîte (le loader y pose son
+        # corps, ADR 0012) : elle dépend de ses dimensions, pas de la grille.
+        if base_name(o.name).startswith("door_"):
+            continue
         loc = o.location
         off = [c for c in loc if abs(c / GRID - round(c / GRID)) > 1e-3]
         if off:
@@ -113,7 +133,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
-        if n.startswith("use_") and not {"target", "card", "soin"} & set(o.keys()):
+        if n.startswith("use_") and not {"target", "card", "soin", "munitions"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -133,17 +153,89 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 if valeur not in LOYALTY_CARDS:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une carte "
                         f"({', '.join(LOYALTY_CARDS)})")
-        if n.startswith("use_") and "soin" in o.keys():
-            try:
-                pv = float(o["soin"])
-            except (TypeError, ValueError):
-                pv = 0.0
-            if not pv > 0:
-                err(f"{o.name}: 'soin' = '{o['soin']}' n'est pas un nombre de PV > 0")
+        for cle, unite in (("soin", "PV"), ("munitions", "munitions")):
+            if n.startswith("use_") and cle in o.keys():
+                try:
+                    quantite = float(o[cle])
+                except (TypeError, ValueError):
+                    quantite = 0.0
+                if not quantite > 0:
+                    err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre de {unite} > 0")
         if n.startswith("use_") and "requires" in o.keys() and "target" not in o.keys():
             warn(f"{o.name}: 'requires' sans 'target' — aucune porte à ouvrir")
         if n.startswith("secret_") and "secret_id" not in o.keys():
             warn(f"{o.name}: secret sans 'secret_id'")
+
+        # --- door_* : une valeur mal tapée ferait une porte qui glisse dans
+        # le sol au lieu de pivoter, sans rien dire.
+        if n.startswith("door_"):
+            for cle, permis in (("mouvement", MOUVEMENTS_PORTE), ("charniere", CHARNIERES),
+                                ("sens", SENS_PORTE)):
+                if cle in o.keys() and str(o[cle]).strip().lower() not in permis:
+                    err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une valeur connue ({', '.join(permis)})")
+            for cle in ("angle", "course", "duree", "portee", "delai"):
+                if cle in o.keys():
+                    try:
+                        valeur = float(o[cle])
+                    except (TypeError, ValueError):
+                        valeur = 0.0
+                    if not valeur > 0:
+                        err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre > 0")
+            if o.type == "MESH" and len(o.data.materials) > 1:
+                err(f"{o.name}: {len(o.data.materials)} matériaux — un vantail n'en a qu'UN "
+                    "(deux primitives glTF, et le loader ne voit plus une porte)")
+
+        # --- vitre_* : du verre. `pv` absent = incassable.
+        if n.startswith("vitre_") and o.type == "MESH":
+            if "pv" in o.keys():
+                try:
+                    pv = float(o["pv"])
+                except (TypeError, ValueError):
+                    pv = 0.0
+                if not pv > 0:
+                    err(f"{o.name}: 'pv' = '{o['pv']}' n'est pas un nombre > 0")
+            if "pv" in o.keys() and "solide" in o.keys() and not o["solide"]:
+                err(f"{o.name}: cassable ('pv') mais sans collider ('solide' faux) — aucun tir ne la trouvera")
+
+        # --- prop_* : mobilier physique (corps dynamique Rapier).
+        if n.startswith("prop_") and o.type == "MESH":
+            # Le collider est un CUBOID déduit de la bounding box, comme pour
+            # `col_box_*`. Une forme qui n'est pas une boîte ne sera pas
+            # refusée par le loader — elle sera silencieusement approximée par
+            # sa boîte englobante, ce qui se voit en jeu et pas dans le .blend.
+            if len(o.data.vertices) != 8:
+                warn(f"{o.name}: prop non-box ({len(o.data.vertices)} sommets) — "
+                     "le collider sera sa boîte englobante")
+            if "matiere" in o.keys():
+                valeur = str(o["matiere"]).strip().lower()
+                if valeur not in PROP_MATIERES:
+                    err(f"{o.name}: 'matiere' = '{o['matiere']}' n'est pas une matière "
+                        f"({', '.join(PROP_MATIERES)})")
+            for cle in ("masse", "pv"):
+                if cle in o.keys():
+                    try:
+                        quantite = float(o[cle])
+                    except (TypeError, ValueError):
+                        quantite = 0.0
+                    if not quantite > 0:
+                        err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre > 0")
+            # Un prop porte SON PROPRE collider dynamique : lui en poser un
+            # `col_*` jumeau par-dessus le fige dans le décor, exactement
+            # l'inverse de ce qu'on voulait, et sans aucune erreur visible.
+            #
+            # Le test porte sur le CENTRE DE LA BOÎTE ENGLOBANTE, pas sur
+            # l'origine de l'objet : dans ce pipeline la géométrie est écrite
+            # en coordonnées monde et toutes les origines valent (0, 0, 0) —
+            # les comparer déclarerait tous les objets superposés.
+            empreinte = centre_monde(o)
+            for autre in objects:
+                if autre is o or autre.type != "MESH":
+                    continue
+                if not base_name(autre.name).startswith("col_"):
+                    continue
+                if (centre_monde(autre) - empreinte).length < 0.05:
+                    err(f"{o.name}: un collider statique ({autre.name}) est posé au même "
+                        "endroit — un prop physique n'en veut pas")
 
 
 # --- 4. Colliders ------------------------------------------------------------

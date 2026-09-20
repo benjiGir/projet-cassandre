@@ -23,7 +23,9 @@ c'est ce que veut ce projet (`vertex-color-sector-lighting`).
 Décision actée : voir docs/decisions/0021-export-vertex-color-enum.md
 """
 
+import json
 import os
+import struct
 import sys
 
 import bpy
@@ -54,6 +56,85 @@ def hide_excluded() -> list[str]:
     return hidden
 
 
+def noms_du_view_layer() -> set[str]:
+    """Objets que `use_visible=True` est censé exporter : ceux du view layer,
+    donc jamais ceux d'une collection exclue."""
+    return {o.name for o in bpy.context.view_layer.objects}
+
+
+def noms_des_collections_sources() -> set[str]:
+    """Noms de base des objets vivant dans `_KIT`/`_LIB`, sous-collections
+    comprises. Lus dans `bpy.data`, donc valides même si la collection a été
+    dés-exclue du view layer."""
+    noms: set[str] = set()
+
+    def descendre(coll) -> None:
+        for o in coll.objects:
+            noms.add(o.name.split(".")[0])
+        for enfant in coll.children:
+            descendre(enfant)
+
+    for nom in EXCLUDED_COLLECTIONS:
+        coll = bpy.data.collections.get(nom)
+        if coll:
+            descendre(coll)
+    return noms
+
+
+def noms_du_glb(path: str) -> list[str]:
+    """Noms des noeuds du `.glb` qu'on vient d'écrire (chunk JSON seul)."""
+    data = open(path, "rb").read()
+    length = struct.unpack("<III", data[:12])[2]
+    off = 12
+    while off < length:
+        clen, ctype = struct.unpack("<II", data[off:off + 8])
+        if ctype == 0x4E4F534A:  # 'JSON'
+            return [n.get("name", "") for n in json.loads(data[off + 8:off + 8 + clen]).get("nodes", [])]
+        off += 8 + clen
+    return []
+
+
+def verifier_contenu(out: str) -> None:
+    """Refuse en bloc un export qui embarque autre chose que le niveau.
+
+    Pourquoi cette garde existe : le 2026-09-18, un `.glb` livré au jeu
+    contenait TOUTE la bibliothèque `_LIB` — 1 153 noeuds de trop, 47 Mo au
+    lieu de 29, et un tas d'assets empilés à l'origine du monde. Le `.blend`,
+    lui, était parfaitement sain (`_LIB` exclue). Le cas se produit dès que
+    l'export ne passe PAS par ce script — typiquement un File > Export glTF
+    depuis l'interface, qui n'a pas `use_visible=True` coché par défaut et
+    sort alors les collections exclues du view layer.
+
+    Un `.glb` faux ne lève aucune erreur en jeu : il se charge, et on croit
+    que c'est le niveau. D'où une vérification a posteriori, sur le fichier
+    réellement écrit, plutôt qu'une confiance dans les options passées.
+    """
+    attendus = {a.split(".")[0] for a in noms_du_view_layer()}
+    sources = noms_des_collections_sources()
+    exportes = [n for n in noms_du_glb(out) if n]
+    # `export_apply=True` peut renommer un noeud en le dédupliquant : on
+    # compare sur le nom de base, jamais sur l'égalité stricte.
+    #
+    # DEUX tests, parce qu'il y a deux façons de se tromper : exporter hors du
+    # view layer (l'interface de Blender), ou avoir dés-exclu `_LIB` avant
+    # d'exporter (auquel cas elle EST dans le view layer, et le premier test
+    # ne verrait rien).
+    intrus = sorted({n for n in exportes if n.split(".")[0] not in attendus})
+    fuites = sorted({n for n in exportes if n.split(".")[0] in sources})
+    if not intrus and not fuites:
+        print(f"[export] contenu vérifié : {len(attendus)} objets du view layer, "
+              f"aucun intrus, aucune fuite de _KIT/_LIB")
+        return
+    intrus = intrus or fuites
+    apercu = ", ".join(intrus[:8])
+    raise SystemExit(
+        f"[export] ÉCHEC : {len(intrus)} noeuds exportés n'appartiennent pas au view layer "
+        f"({apercu}{'...' if len(intrus) > 8 else ''}).\n"
+        f"[export] Une collection SOURCE (_KIT / _LIB) est probablement partie dans l'export. "
+        f"Ré-exporter AVEC ce script, jamais par File > Export de l'interface."
+    )
+
+
 def main() -> None:
     args = get_args()
     out = bpy.path.abspath(parse_out(args))
@@ -82,6 +163,7 @@ def main() -> None:
 
     size = os.path.getsize(out) / 1024
     print(f"[export] {out}  ({size:.0f} Ko)")
+    verifier_contenu(out)
 
 
 if __name__ == "__main__":

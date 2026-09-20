@@ -184,3 +184,32 @@ image rien que pour l'éclairage.
 
 C'est donc l'éclairage, et non la géométrie, qui impose de ne traiter que ce
 qui est proche du joueur. Décision et remède : [ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md).
+
+## Ce qui ne fusionne jamais
+
+Le décor statique fusionne (ADR 0023/0026). Tout ce qui doit pouvoir bouger,
+disparaître ou se casser SEUL en est exclu — et coûte alors un lot de dessin
+par objet DANS LE CÔNE DE VUE, occultation comprise, puisque three.js
+n'élimine que par le cône. Mesuré au niveau v2 le 2026-09-19, chaque famille
+a son remède, et les trois sont le même : regrouper ou élaguer.
+
+| Famille | Sans remède | Remède | Après |
+|---|---|---|---|
+| `prop_*` (mobilier poussable) | 37 lots au spawn du parking | élagage à 36 m ([ADR 0030](../decisions/0030-props-dynamiques.md)) | 6 |
+| `door_*` (vantaux animés) | 13 lots au bout du hub, 20 vantaux | `BatchedMesh` par matériau (`batchDoorMeshes`) | 6 pour tout le niveau |
+| `vitre_*` (vitrages) | 6 lots au spawn du parking | un lot par matériau, sans découpe en cellules | 1 pour tout le niveau |
+| `use_*` (ramassages, lecteurs) | 21 lots depuis les caisses, dont une trousse à 150 m | élagage à 48 m (`render/useObjectCulling.ts`) | 3 à 5 |
+
+**Pourquoi trois réglages différents.** Un vantail ne peut pas être élagué :
+il est grand, on le regarde de loin, et le voir apparaître à trente mètres se
+remarque — mais vingt vantaux tiennent dans six lots parce qu'ils ne sont que
+six matériaux. Une vitre ne peut pas non plus être élaguée (on voit à travers
+une galerie entière), mais tout le verre du niveau pèse quelques centaines de
+triangles : un seul lot, sans cellules, coûte toujours un. Un ramassage, lui,
+est petit : à 48 m, une trousse fait deux pixels de haut.
+
+**État du budget après cette passe** (200 lots, quarante ennemis encore en
+vie, ramassages proches visibles) : pire vue mesurée **188 lots** (la ligne
+de caisses vers le nord), contre 198 avant. Le détail d'une vue chargée :
+environ 123 lots de décor fusionné, 45 sprites d'ennemis, 14 morceaux de
+coque isolés, 1 lot de verre, 3 à 6 lots de vantaux.

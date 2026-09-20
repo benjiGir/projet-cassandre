@@ -5,6 +5,9 @@ import type { PhysicsWorld } from "../../physics/world";
 import type { LevelSession } from "../level/hotReload";
 import type { LevelDef } from "../level/levels";
 import type { NavGraph } from "../level/pathfinding";
+import type { PropSystem } from "../level/props";
+import type { DoorSystem } from "../level/doors";
+import type { VitreSystem } from "../level/vitres";
 import { type BillboardSprite } from "../../render/billboard";
 import { type DirectorManager } from "../entities/directorManager";
 import { type SuitManager } from "../entities/suitManager";
@@ -12,14 +15,6 @@ import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
 import { type LightPool } from "../../render/lightPool";
 import { type LoyaltyCard } from "../player/loyaltyCards";
-
-/** Porte de sortie en cours de glissement cosmétique (voir la doc dans `game/loop/updateGameplay.ts`). */
-export interface OpeningDoor {
-  body: RAPIER.RigidBody;
-  startY: number;
-  targetY: number;
-  t: number;
-}
 
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
@@ -64,6 +59,21 @@ export interface GameSession {
   currentNavGraph: NavGraph | null;
   /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque `onLoaded`, comme `currentNavGraph`. */
   lightPool: LightPool | null;
+  /** Mobilier physique (`prop_*`) du niveau COURANT — PV et destructions de
+   * CETTE partie. Reconstruit à chaque `onLoaded`, comme `currentNavGraph` et
+   * `lightPool` : un hot reload rend leurs PV aux props, exactement comme il
+   * rend le niveau à son état de fichier.
+   * see: docs/systems/physique.md#props-dynamiques */
+  propSystem: PropSystem | null;
+  /** Portes animées (`door_*`) du niveau COURANT — reconstruites à chaque
+   * `onLoaded`, comme `propSystem`. Remplace l'ancien `openingDoor` (une
+   * seule porte à la fois) : voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
+   * see: docs/reference/conventions-nommage.md#portes-animées */
+  doorSystem: DoorSystem | null;
+  /** Vitrages (`vitre_*`) du niveau COURANT — PV et casses de CETTE partie,
+   * reconstruits à chaque `onLoaded`, comme `propSystem`/`doorSystem`.
+   * see: docs/reference/conventions-nommage.md#préfixe-vitre */
+  vitreSystem: VitreSystem | null;
 
   /** Carte lâchée par le Directeur : mesh visible tant qu'elle n'a pas été ramassée — voir `game/loop/updateGameplay.ts`. */
   droppedCardMesh: THREE.Mesh | null;
@@ -74,10 +84,18 @@ export interface GameSession {
   cards: Set<LoyaltyCard>;
 
   unlockedDoors: Set<string>;
-  openingDoor: OpeningDoor | null;
   exitDoorTracking: ExitDoorTracking | null;
   /** Secrets déjà trouvés CETTE partie — `WeakSet` par référence de mesh, voir sa doc historique dans `game/loop/updateGameplay.ts`. */
   foundSecrets: WeakSet<THREE.Object3D>;
+
+  /**
+   * Dernier point où le joueur touchait le sol. Sert de filet : un niveau
+   * construit sans y jouer finit toujours par avoir un trou, et une chute
+   * hors du monde est sans retour (rien ne rattrape le joueur, la partie est
+   * perdue sans écran de mort). Voir `RESCUE_FALL_DEPTH` dans
+   * `game/loop/updateGameplay.ts`.
+   */
+  lastSafeGround: THREE.Vector3;
 
   /** PV courants du joueur, suivis localement — `setPlayerHp` prend une valeur absolue (voir `game/state.ts`), `game/session`/`game/loop` sont les seuls endroits qui connaissent le dégât infligé. */
   playerHp: number;

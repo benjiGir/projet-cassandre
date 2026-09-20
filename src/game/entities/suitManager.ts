@@ -3,8 +3,9 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weapons";
-import { weaponConfig } from "../player/weaponConfig";
+import { damageForWeapon } from "../player/weaponConfig";
 import type { NavGraph } from "../level/pathfinding";
+import type { VitreHitTarget } from "./enemyMachine";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 
@@ -161,6 +162,7 @@ export class SuitManager {
     playerEyePosition: THREE.Vector3,
     hitEvents: ReadonlyArray<HitEvent>,
     navGraph: NavGraph | null = null,
+    vitreSystem?: VitreHitTarget,
   ) {
     const aggregated = this.consumeNewHits(hitEvents);
 
@@ -170,6 +172,7 @@ export class SuitManager {
       playerTargetPosition,
       playerEyePosition,
       navGraph,
+      vitreSystem,
     };
 
     for (const suit of this.suits) {
@@ -246,7 +249,7 @@ export class SuitManager {
         aggregated.set(suit, entry);
       }
 
-      const damage = hitEvent.weapon === "shotgun" ? weaponConfig.shotgunDamagePerPellet : weaponConfig.meleeDamage;
+      const damage = damageForWeapon(hitEvent.weapon);
       entry.totalDamage += damage;
 
       if (!entry.gibs && hitEvent.weapon === "shotgun" && hitEvent.distance <= this.cfg.gibDistance) {

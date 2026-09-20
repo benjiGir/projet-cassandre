@@ -18,6 +18,7 @@ export type GameAction =
   | "jump"
   | "fire"
   | "switchMelee"
+  | "switchPistol"
   | "switchShotgun"
   | "use";
 
@@ -39,7 +40,11 @@ export const DEFAULT_BINDINGS: Record<GameAction, string> = {
   jump: "Space",
   fire: "Mouse0",
   switchMelee: "Digit1",
-  switchShotgun: "Digit2",
+  // Le pistolet s'intercale en 2 et repousse le pompe en 3, l'ordre classique
+  // du genre (poing, pistolet, fusil). Un joueur qui avait déjà rebindé garde
+  // ses touches : `localStorage` gagne sur cette table.
+  switchPistol: "Digit2",
+  switchShotgun: "Digit3",
   use: "KeyE",
 };
 
@@ -62,6 +67,7 @@ export const ACTION_LABELS: Record<GameAction, string> = {
   jump: "Sauter",
   fire: "Tirer",
   switchMelee: "Arme : pied-de-biche",
+  switchPistol: "Arme : pistolet",
   switchShotgun: "Arme : pompe",
   use: "Utiliser",
 };

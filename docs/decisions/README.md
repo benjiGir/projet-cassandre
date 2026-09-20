@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-09-13
+updated: 2026-09-19
 ---
 
 # Architecture Decision Records
@@ -26,7 +26,7 @@ un lien vers son successeur.
 | [0009](0009-machine-partagee-suit-director.md) | Machine XState partagée entre Costard et Directeur | accepté |
 | [0010](0010-curseur-evenements-multi-pas-fixe.md) | Curseur explicite d'événements multi-pas-fixe, jamais inféré | accepté |
 | [0011](0011-hot-reload-sondage-http.md) | Hot reload de niveau par sondage HTTP HEAD plutôt qu'un watcher fichier | accepté |
-| [0012](0012-porte-collider-non-recentre.md) | Collider de porte non recentré automatiquement dans loader.ts | accepté |
+| [0012](0012-porte-collider-non-recentre.md) | Collider de porte non recentré automatiquement dans loader.ts | remplacé par 0031 |
 | [0013](0013-garde-flux-vs-monde-physique.md) | Deux gardes distinctes — état de flux vs existence du monde physique | accepté |
 | [0014](0014-gameengine-persistentengine-separes.md) | GameEngine et PersistentEngine séparés plutôt qu'un champ session nullable | accepté |
 | [0015](0015-rampe-lineaire-lissage-vue.md) | Rampe linéaire plutôt qu'approche exponentielle pour le lissage de vue | accepté |
@@ -44,3 +44,5 @@ un lien vers son successeur.
 | [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie sur les textures réduites, gros pixel conservé à l'agrandissement | **proposé** |
 | [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle 3D CC0 | accepté |
 | [0029](0029-armes-en-vue-subjective.md) | Armes en vue subjective : modèles 3D tenus par des bras CC0 | accepté |
+| [0030](0030-props-dynamiques.md) | Props dynamiques : un préfixe glTF et un groupe de collision à part | accepté |
+| [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres — `DoorSystem`/`VitreSystem`, collider actif seulement fermé | accepté |

@@ -160,24 +160,36 @@ zone irrégulière, sa détection appartient à `game/level/interactive.ts`/
 
 ## Portes
 
-Collider DYNAMIQUE (pas `fixed()` comme `col_*`, pas non plus le
-`KinematicCharacterController` réservé au joueur par l'invariant #6).
-Verrouillé (translations + rotations, gravité neutralisée) tant qu'aucune
-logique de jeu ne le pilote — une porte non pilotée ne doit ni tomber sous
-la gravité −25 m/s² ni dériver au moindre contact avant que
-`game/level/interactive.ts` ne la débloque explicitement pour l'animer.
+Corps **FIXE**, posé une fois pour toutes à la pose FERMÉE : seul le MESH
+s'anime (`game/level/doors.ts::DoorSystem`), et seul le collider s'active ou
+se désactive. Une porte n'existe donc, pour Rapier, qu'ouverte ou fermée —
+jamais « à moitié », jamais capable de coincer le joueur en cours de
+mouvement. Le mouvement (`battant`, `coulisse`, `monte`, `descend`), la
+charnière, la portée d'ouverture automatique et le groupe de vantaux se
+déclarent en extras Blender : voir
+[Conventions de nommage](../reference/conventions-nommage.md#portes-animées) et
+[ADR 0031](../decisions/0031-portes-animees-et-vitres.md).
 
-**Piège** : `buildDoor` positionne le corps sur la translation MONDE BRUTE
-du mesh, PAS sur le centre de sa bounding box locale comme le font
-`buildCuboidCollider`/`buildTriggerEffect` pour `col_box_*`/`trig_*`. Voir
-[ADR 0012](../decisions/0012-porte-collider-non-recentre.md) pour pourquoi
-ce n'est pas corrigé ici mais côté Blender (recentrage du pivot de la copie
-posée en niveau).
+**Ce que l'ADR 0031 corrige** : de la porte à badge de la Zone E
+(2026-08-23) au 2026-09-19, AUCUNE porte n'a jamais bougé à l'écran. Le jeu
+faisait glisser le corps Rapier — invisible — et coupait son collider ; rien
+ne recopiait cette pose sur le mesh, qui restait planté dans l'ouverture
+qu'on venait de franchir. Seuls les `prop_*` synchronisaient leur mesh.
 
-`DoorInfo.halfExtents` est exposé pour éviter à l'appelant de refaire ce
-calcul afin d'animer une ouverture (ex. glissement vertical sur sa propre
-hauteur, porte à badge de la Zone E). `DoorInfo.clip` est PARSÉ, PAS JOUÉ —
-lire un mixer et déclencher l'ouverture est le rôle d'`interactive.ts`.
+Conséquence côté données : le corps est maintenant recentré sur la boîte
+englobante locale, comme `col_box_*` — le piège de la translation brute
+décrit par [ADR 0012](../decisions/0012-porte-collider-non-recentre.md)
+n'existe plus pour un corps fixe. Les `.glb` déjà exportés ne changent pas
+de comportement : leurs vantaux sont déjà recentrés côté Blender.
+
+`DoorInfo.clip` reste PARSÉ, PAS JOUÉ : aucune porte du jeu n'est animée par
+un clip glTF, tout vient des extras.
+
+**Coût de rendu** : un vantail animé ne peut pas rejoindre le décor fusionné,
+et three.js n'élimine que par le cône de vue. Les vantaux qui partagent un
+matériau sont donc regroupés en un `BatchedMesh` au chargement
+(`batchDoorMeshes`) : un lot de dessin par matériau pour tout le niveau, avec
+élimination par vantail. Les vingt vantaux du niveau v2 tiennent en six lots.
 
 ## Objets interactifs
 
@@ -414,6 +426,41 @@ multiple de la grille 0.25 m pour les dimensions de ce kit. Le centre local
 est ensuite tourné de `rot_deg` autour de Z avant translation, exactement
 comme `plan_wall_run` le ferait pour n'importe quelle pièce de mur postée à
 ce même coin avec cette même rotation.
+
+### Vantaux et vitres du niveau v2 (côté Blender)
+
+Posés par `tools/level_v2/build_niveau.py` (`poser_portes_animees`,
+`habiller_etage`) ; le contrat lu par le jeu est dans
+[conventions de nommage](../reference/conventions-nommage.md). Ce qui ne
+se voit qu'en construisant :
+
+- **Un vantail = un mesh, UN matériau.** Deux matériaux font deux
+  primitives glTF, que `GLTFLoader` range sous un groupe : le loader ne
+  voit plus de `door_*`. La poignée prend ses UV dans un pavé de la texture
+  du vantail (`uv="quincaillerie:<vantail>"`), le verre d'une porte vitrée
+  est dans l'ALPHA de sa texture (`portes_verre.png`, voir
+  `tools/textures/generate_portes.py`). `validate_level.py` en fait une
+  erreur.
+- **Origine au centre de la boîte**, jamais de rotation d'objet. La boîte
+  englobante est le collider ET décide de la charnière : une poignée posée
+  hors de la hauteur du vantail l'étire sans rien dire (arrivé à l'étage, à
+  z = 4 : les poignées étaient à hauteur absolue). `vantail()` refuse
+  désormais toute quincaillerie hors du vantail.
+- **`charniere` se lit dans le repère three.js.** Le +Y de Blender y devient
+  −Z : pour un vantail long en y (façade perpendiculaire à x), `min` et
+  `max` s'échangent. `_charniere()` fait la conversion.
+- **Les vitres partagent un seul matériau**, `mat_verre` (la palette en aplat,
+  alpha constant 0,3) : l'exporteur écrit `alphaMode: BLEND` dès qu'une alpha
+  constante vaut moins de 1, ou qu'une alpha d'image est branchée. Une vitre
+  CASSABLE doit être la première chose que le tir rencontre : le collider
+  du meuble derrière commence après le verre (`armoire_surgeles`,
+  `bac_surgeles`).
+- **Une vraie fenêtre ne perce que le RENDU d'un mur de coque**
+  (`vraie_fenetre`), son collider reste plein et la vitre est `solide:
+  false`. Ne percer que des murs qui donnent hors du bâtiment : il n'a pas
+  de toits, et un plafond ne se voit que d'en dessous.
+- **Voir la transparence dans Blender** demande le mode *Material Preview* :
+  en *Solid*, le verre sort opaque et masque tout ce qu'il y a derrière.
 
 ### Dalles sur-mesure et chevauchement dans le niveau combiné
 

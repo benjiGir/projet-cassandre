@@ -71,12 +71,20 @@ class Space:
     # axe et arrive à `z_arrivee` au bord haut. `None` = sol plat à `z`.
     rampe: tuple[str, float, float] | None = None
     # Repères de gameplay : (libellé, x, y, nature) avec nature ∈
-    # {carte, secret, objet, porte, depart, soin}. Une trousse de soin porte ses
-    # PV dans son libellé (« trousse de soin +25 ») : c'est lui que lit
-    # `build_blockout.py`, pas une seconde table à tenir synchro.
-    reperes: list[tuple[str, float, float, str]] = field(default_factory=list)
+    # {carte, secret, objet, porte, depart, soin, munitions}. Une trousse de
+    # soin et une boîte de munitions portent leur quantité dans leur libellé
+    # (« trousse de soin +25 ») : c'est lui que lit `build_blockout.py`, pas
+    # une seconde table à tenir synchro. Un cinquième terme, facultatif, donne
+    # une altitude AU-DESSUS du sol de l'espace : un repère posé sur un meuble
+    # (le campement du secret 2, sur le toit des gondoles).
+    reperes: list[tuple] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     couloir: bool = False
+    # Espace atteint en GRIMPANT sur du mobilier (une caisse, un distributeur)
+    # et non par le sol : le décrochement de son ouverture dépasse un saut, mais
+    # le mobilier fait la marche. Le contrôle d'accessibilité le traite donc
+    # dans les deux sens.
+    grimpable: bool = False
 
     @property
     def largeur(self) -> float:
@@ -128,12 +136,12 @@ SPACES: list[Space] = [
         spawns=[("suit_ga1", -22, 10, None), ("suit_ga2", 20, 11, None), ("suit_ga3", -6, 13, "kiosque central de la galerie")],
         notes=[
             "Verrière : la seule lumière naturelle du niveau, contraste avec la surface de vente.",
-            "Machine à pinces (secret dérisoire) et photomaton à l'ouest ; `secret_1_photomaton` derrière.",
+            "Machine à pinces (secret dérisoire) et photomaton contre le mur ouest : se servir du "
+            "photomaton efface le pan de mur voisin, derrière lequel est le labo (secret 1).",
         ],
         reperes=[
             ("machine à pinces", -26, 6, "objet"),
-            ("photomaton", -18, 7, "objet"),
-            ("secret 1 — arrière-boutique", -28, 3, "secret"),
+            ("photomaton", -29, 6.5, "objet"),
         ],
     ),
     Space(
@@ -145,13 +153,13 @@ SPACES: list[Space] = [
         spawns=[("suit_ca1", 54, 5, None), ("suit_ca2", 52, 16, None)],
         notes=[
             "Comptoir de self : un des trois objets sans équivalent CC0, monté en volumes simples.",
-            "`secret_3_aeration` : bouche accessible depuis le comptoir (1,0 m) puis le haut du frigo (2,0 m).",
+            "Secret 3 : une caisse (1,0 m) puis un distributeur (1,9 m) mènent à la bouche "
+            "d'aération du mur nord, et au local VMC derrière.",
         ],
         reperes=[
             ("toilettes +1 PV", 52, 11, "objet"),
             # Récompense du détour : la seule trousse double avant les bureaux.
             ("trousse de soin +50", 52, 16, "soin"),
-            ("secret 3 — aération", 37, 18, "secret"),
         ],
     ),
     Space(
@@ -163,10 +171,11 @@ SPACES: list[Space] = [
         spawns=[("suit_cs1", -18, 38, None), ("suit_cs2", 18, 38, None), ("suit_cs3", -6, 41, None), ("suit_cs4", 8, 41, None)],
         notes=[
             "Ligne de caisses en travers à y≈32, trouées de 2,5 m — obstacles de déplacement, PAS du couvert (1,10 m < 1,6 m).",
-            "`use_shotgun` posé sur un tapis de caisse, à 10 m de l'entrée.",
+            "`use_pistol` posé sur un tapis de caisse, à 10 m de l'entrée — la première arme à feu.",
         ],
         reperes=[
-            ("fusil à pompe", 2, 30, "objet"),
+            ("pistolet", 2, 30, "objet"),
+            ("boîte de munitions +24", -18, 24, "munitions"),
             ("trousse de soin +25", -6, 41, "soin"),
         ],
     ),
@@ -196,12 +205,19 @@ SPACES: list[Space] = [
         notes=[
             "Reprise directe de la salle d'essai de N4 : mêmes rangées thématiques, mêmes néons.",
             "Deux allées transversales (y≈60 et y≈72) : c'est là que se posent les embuscades.",
+            "`use_shotgun` à l'entrée est de l'allée transversale sud : l'arme arrive juste avant les combats en allée.",
             "Carte Argent derrière le comptoir du rayon frais.",
         ],
         reperes=[
             ("carte Argent", -48, 62, "carte"),
+            ("fusil à pompe", -16, 60, "objet"),
+            ("boîte de munitions +24", -30, 72, "munitions"),
             ("trousse de soin +25", -44, 62, "soin"),
-            ("secret 2 — toit des gondoles", -16, 50, "secret"),
+            # Sur le TOIT de la rangée ouest, tronçon nord (2 m) : une caisse
+            # d'un mètre au sud, puis deux allées transversales de 4 m à sauter.
+            ("secret 2 — campement sur les gondoles", -47.5, 78, "secret", 2.0),
+            ("boîte de munitions +36", -47.5, 79.75, "munitions", 2.0),
+            ("trousse de soin +25", -47.5, 76.25, "soin", 2.0),
         ],
     ),
     Space(
@@ -214,10 +230,11 @@ SPACES: list[Space] = [
                 ("suit_el4", 26, 74, None), ("suit_el5", 38, 76, None)],
         notes=[
             "Mur d'écrans : géométrie posée, le rendu dans une texture reste hors scope (reliquat Phase 5).",
-            "Carte Or dans la cabine de démonstration, en hauteur — saut depuis un carton (1,0 m).",
+            "Carte Or dans la cabine de démonstration du coin nord-est, ouverte au sud, devant le téléviseur.",
         ],
         reperes=[
-            ("carte Or", 42, 76, "carte"),
+            ("carte Or", 43, 75.25, "carte"),
+            ("boîte de munitions +24", 14, 52, "munitions"),
             ("trousse de soin +25", 40, 62, "soin"),
             ("mur d'écrans", 30, 50, "objet"),
         ],
@@ -238,6 +255,7 @@ SPACES: list[Space] = [
         ],
         # Au sud, jamais sous la mezzanine : le plus gros combat du niveau.
         reperes=[
+            ("boîte de munitions +24", -6, 100, "munitions"),
             ("trousse de soin +25", -6, 112, "soin"),
             ("trousse de soin +25", 12, 110, "soin"),
         ],
@@ -255,27 +273,68 @@ SPACES: list[Space] = [
             "Décalé à l'est de la réserve, jamais SOUS un espace praticable (contrainte de colonne).",
         ],
         reperes=[
+            ("boîte de munitions +24", 40, 104, "munitions"),
             ("trousse de soin +25", 64, 110, "soin"),
         ],
     ),
     Space(
-        id="bureaux", nom="Bureaux direction",
-        x=(-20, 8), y=(140, 166), z=0, hauteur=4.0, densite="moyenne",
-        role="Le Directeur, puis la sortie (carte Platine)",
-        duree="1:00", arrivee=(4, 142),
-        ennemis="1 Directeur + 3 Costards",
-        spawns=[("director_bu1", -6, 158, None), ("suit_bu1", -16, 148, None),
-                ("suit_bu2", 2, 152, "salle du boss — intention explicite"), ("suit_bu3", -12, 162, None)],
+        # À l'ÉTAGE (retour de playtest du 2026-09-18 : « un étage avec les
+        # bureaux de l'hypermarché et au bout le bureau du directeur »). Posé au-
+        # dessus d'un vide : rien de praticable dessous, contrainte de colonne.
+        id="bureaux", nom="Étage des bureaux",
+        x=(-30, 8), y=(150, 166), z=4.0, hauteur=3.0, densite="moyenne",
+        role="L'administration du magasin : un couloir, quatre bureaux, et le Directeur au bout",
+        duree="0:45", arrivee=(5, 151),
+        ennemis="2 Costards dans les bureaux, en embuscade derrière les cloisons",
+        spawns=[("suit_bu1", -16, 161, None), ("suit_bu3", 2, 161, "cloison de la salle de pause")],
         notes=[
-            "Salle de confrontation : le Directeur est volontairement SOUS `attackRange`, la révélation doit être immédiate (même choix qu'en Zone E).",
-            "`door_exit` au nord, déverrouillée par la carte Platine lâchée à sa mort.",
+            "On y monte par l'escalier de service, derrière la porte carte Or.",
+            "Couloir au sud (y 150..154,5), quatre bureaux au nord : sécurité, comptabilité, "
+            "ressources humaines, salle de pause. Le bureau du Directeur ferme le couloir à l'ouest.",
         ],
         reperes=[
-            ("carte Platine (Directeur)", -6, 158, "carte"),
-            # À l'entrée de la salle du boss : laissée au sol si le joueur arrive
-            # en pleine forme, elle attend qu'il revienne la chercher en plein combat.
-            ("trousse de soin +50", 4, 142, "soin"),
-            ("SORTIE", -6, 165, "porte"),
+            ("boîte de munitions +36", 4, 162, "munitions"),
+            # Devant la porte du Directeur : laissée au sol si le joueur arrive
+            # en forme, elle attend qu'il revienne la chercher en plein combat.
+            ("trousse de soin +50", -27, 152, "soin"),
+        ],
+    ),
+    Space(
+        id="direction", nom="Bureau du Directeur",
+        x=(-44, -30), y=(146, 166), z=4.0, hauteur=3.5, densite="moyenne",
+        role="Le Directeur, puis l'issue de secours (carte Platine)",
+        duree="1:00", arrivee=(-31, 152.25),
+        ennemis="1 Directeur + 1 Costard garde du corps",
+        spawns=[("director_bu1", -38, 159, "salle du boss — la révélation doit être immédiate"),
+                ("suit_bu2", -33, 147.5, "salle du boss — intention explicite")],
+        notes=[
+            "Salle de confrontation : le Directeur est volontairement SOUS `attackRange`, "
+            "la révélation doit être immédiate (même choix qu'en Zone E).",
+            "`door_exit` au nord : l'issue de secours, déverrouillée par la carte Platine lâchée à sa mort.",
+        ],
+        reperes=[
+            ("carte Platine (Directeur)", -38, 159, "carte"),
+            ("SORTIE", -37, 166, "porte"),
+        ],
+    ),
+    Space(
+        id="secret1", nom="Labo du photomaton (secret 1)",
+        x=(-36, -30), y=(2, 10), z=0, hauteur=3.5, densite="faible",
+        role="Secret 1 : l'arrière-boutique du photomaton, derrière un pan de mur",
+        notes=["`use_photomaton` (le photomaton lui-même) ouvre `door_secret_photomaton`, le pan de mur voisin."],
+        reperes=[
+            ("secret 1 — labo photo", -33, 6, "secret"),
+            ("trousse de soin +50", -34.75, 3.75, "soin"),
+            ("boîte de munitions +36", -34.75, 8.5, "munitions"),
+        ],
+    ),
+    Space(
+        id="secret3", nom="Local VMC (secret 3)",
+        x=(35, 41), y=(20, 24), z=2.0, hauteur=2.5, densite="faible", grimpable=True,
+        role="Secret 3 : derrière la bouche d'aération de la cafétéria",
+        reperes=[
+            ("secret 3 — aération", 38.5, 22, "secret"),
+            ("trousse de soin +50", 40, 21, "soin"),
         ],
     ),
 ]
@@ -301,16 +360,25 @@ CORRIDORS: list[Space] = [
     Space(id="c_so_bu", nom="Rampe de sortie", x=(36, 44), y=(124, 132), z=-6.0, hauteur=4.0,
           role="parking souterrain (z=-6) → couloir des bureaux (z=0), remonte vers le nord, 37°",
           couloir=True, densite="faible", rampe=("+y", -6.0, 0.0)),
-    Space(id="c_bu", nom="Couloir de direction", x=(0, 44), y=(132, 140), z=0, hauteur=4.0,
-          role="rampe de sortie → bureaux, porte carte Or à l'ouest", couloir=True, densite="faible",
-          reperes=[("porte Or", 14, 136, "porte")]),
-    Space(id="c_short_ramp", nom="Montée de service", x=(-36, 0), y=(132, 140), z=0.0, hauteur=4.0,
-          role="raccourci : monte du couloir des bureaux au couloir de service, 4,8°",
-          couloir=True, densite="faible", rampe=("+x", 3.0, 0.0),
-          reperes=[("sens unique ↓", -20, 136, "porte")]),
-    Space(id="c_short_w", nom="Couloir de service", x=(-44, -36), y=(84, 140), z=3.0, hauteur=4.0,
-          role="raccourci : débouche EN SURPLOMB des rayons, 3 m plus haut — "
-               "on saute dedans, on ne remonte pas", couloir=True, densite="faible"),
+    Space(id="c_bu", nom="Couloir du personnel", x=(0, 44), y=(132, 140), z=0, hauteur=4.0,
+          role="rampe de sortie → escalier des bureaux (porte carte Or) et couloir de service",
+          couloir=True, densite="faible",
+          reperes=[("porte Or", 5, 140, "porte")]),
+    Space(id="c_escalier", nom="Escalier des bureaux", x=(2, 8), y=(140, 150), z=0.0, hauteur=3.0,
+          role="couloir du personnel (z=0) → étage des bureaux (z=4), porte carte Or en bas, 22°",
+          couloir=True, densite="faible", rampe=("+y", 0.0, 4.0)),
+    # Le raccourci vers la surface de vente. Il débouchait EN SURPLOMB des
+    # rayons, 3 m plus haut (« on saute dedans ») — retour de playtest du
+    # 2026-09-18 : « le bout du couloir amène aux rayons mais on se trouve en
+    # hauteur ». Il reste de plain-pied, et c'est une PORTE COUPE-FEU qui fait
+    # le sens unique : elle ne s'ouvre que du côté du personnel.
+    Space(id="c_short_ramp", nom="Couloir de service", x=(-36, 0), y=(132, 140), z=0.0, hauteur=4.0,
+          role="raccourci : du couloir du personnel vers la porte coupe-feu des rayons",
+          couloir=True, densite="faible"),
+    Space(id="c_short_w", nom="Couloir de la porte coupe-feu", x=(-44, -36), y=(84, 140), z=0.0, hauteur=4.0,
+          role="raccourci : longe les rayons jusqu'à la porte coupe-feu, qui ne s'ouvre que de ce côté",
+          couloir=True, densite="faible",
+          reperes=[("porte coupe-feu", -42.5, 84, "porte")]),
 ]
 
 ALL = SPACES + CORRIDORS
@@ -433,20 +501,23 @@ def rapport() -> list[str]:
     a("")
     a("Passages à sens unique — par décrochement, pas par mécanisme")
     a("-" * 60)
-    uniques = [o for o in openings() if o.sens_unique]
-    if not uniques:
+    uniques = [o for o in openings() if o.sens_unique
+               and not ({o.a, o.b} & {sp.id for sp in ALL if sp.grimpable})]
+    if not uniques and not PORTES_SENS_UNIQUE:
         a("  aucun")
     for o in uniques:
         depuis, vers = o.sens_unique
         a(f"  {depuis:<14} → {vers:<14} on descend de {o.decrochement:.1f} m, "
           f"le saut en monte {JUMP_HEIGHT:.1f}")
+    for (depuis, vers) in PORTES_SENS_UNIQUE.values():
+        a(f"  {depuis:<14} → {vers:<14} porte qui ne s'ouvre que du côté {depuis}")
 
     a("")
     a("Contrôle — tout espace est atteignable depuis le spawn")
     a("-" * 60)
     joignables = accessibles()
     isoles = [sp.nom for sp in SPACES if sp.id not in joignables]
-    a("  OK, les 10 espaces sont reliés" if not isoles else "  ISOLÉ(S) : " + ", ".join(isoles))
+    a(f"  OK, les {len(SPACES)} espaces sont reliés" if not isoles else "  ISOLÉ(S) : " + ", ".join(isoles))
 
     a("")
     a("Contrôle — chaque porte à carte commande bien son secteur")
@@ -595,9 +666,34 @@ class Opening:
 # à carte, et la progression du niveau tomberait. Le contrôle des goulots
 # ci-dessous vérifie que ces murs tiennent réellement.
 JONCTIONS_SCELLEES: set[frozenset[str]] = {
-    frozenset({"c_short_ramp", "bureaux"}),  # le raccourci ne débouche jamais chez le Directeur
     frozenset({"reserve", "c_bu"}),        # les bureaux ne s'atteignent que par le souterrain
     frozenset({"reserve", "c_short_ramp"}), # idem, côté raccourci
+}
+
+
+# Portes qui ne s'ouvrent que d'UN côté : (depuis, vers). La géométrie ne le
+# dit pas — les deux sols sont de plain-pied —, c'est la porte qui le fait :
+# son `use_*` n'est à portée que du côté `depuis`. Une fois ouverte, elle le
+# reste, et le raccourci devient praticable dans les deux sens : c'est le
+# raccourci à la Doom, qu'on débloque en l'ayant mérité.
+# Passages ÉTROITS : (largeur, centre sur l'axe de la façade). Sans eux, deux
+# espaces qui se touchent communiquent sur toute la longueur de leur façade
+# commune — 16 m entre le couloir de l'étage et le bureau du Directeur, 8 m de
+# mur « secret » ouvert sur la galerie. Toutes les cotes sur la grille.
+PASSAGES: dict[frozenset[str], tuple[float, float]] = {
+    frozenset({"bureaux", "direction"}): (2.0, 152.25),   # la porte capitonnée du Directeur, dans l'axe du couloir
+    # Les portes va-et-vient « PRIVÉ » de la réserve : le bout nord du hub était
+    # ouvert sur 12 m, un sas vide avant le rideau de la carte Argent.
+    frozenset({"hub", "c_hb_rs"}): (2.0, 0.0),
+    frozenset({"galerie", "secret1"}): (1.5, 8.25),       # le pan de mur qui s'efface
+    frozenset({"cafeteria", "secret3"}): (2.0, 36.5),     # la bouche d'aération
+    # Dans l'axe de l'allée entre les rangées 0 et 1 : centrée sur x = −40, la
+    # porte donnait sur le bout d'une gondole à deux mètres.
+    frozenset({"c_short_w", "rayons"}): (2.5, -42.5),     # la porte coupe-feu
+}
+
+PORTES_SENS_UNIQUE: dict[frozenset[str], tuple[str, str]] = {
+    frozenset({"c_short_w", "rayons"}): ("c_short_w", "rayons"),
 }
 
 
@@ -622,6 +718,18 @@ def _sol_au_bord(space: Space, axe: str, at: float) -> float:
 
 
 def openings() -> list[Opening]:
+    trouvees = _openings_bruts()
+    retrecies = []
+    for o in trouvees:
+        passage = PASSAGES.get(frozenset({o.a, o.b}))
+        if passage:
+            largeur, centre = passage
+            o = Opening(o.a, o.b, o.axe, o.at, (centre - largeur / 2, centre + largeur / 2), o.z_a, o.z_b)
+        retrecies.append(o)
+    return retrecies
+
+
+def _openings_bruts() -> list[Opening]:
     trouvees: list[Opening] = []
     for i, s in enumerate(ALL):
         for t in ALL[i + 1:]:
@@ -651,8 +759,8 @@ def openings() -> list[Opening]:
 # hors d'atteinte. C'est la progression du niveau, exprimée en une ligne
 # vérifiable plutôt qu'en intention.
 GOULOTS: list[tuple[str, str, tuple[str, ...]]] = [
-    ("c_hb_rs", "carte Argent", ("reserve", "souterrain", "bureaux")),
-    ("c_bu", "carte Or", ("bureaux",)),
+    ("c_hb_rs", "carte Argent", ("reserve", "souterrain", "bureaux", "direction")),
+    ("c_escalier", "carte Or", ("bureaux", "direction")),
 ]
 
 
@@ -662,10 +770,13 @@ def accessibles(depuis: str = "parking_ext", sans: str | None = None) -> set[str
     retire un espace du graphe — c'est ainsi qu'on vérifie qu'une porte
     commande bien son secteur."""
     voisins: dict[str, set[str]] = {sp.id: set() for sp in ALL if sp.id != sans}
+    grimpables = {sp.id for sp in ALL if sp.grimpable}
     for o in openings():
         if sans in (o.a, o.b):
             continue
-        oriente = o.sens_unique
+        oriente = PORTES_SENS_UNIQUE.get(frozenset({o.a, o.b}))
+        if oriente is None and not ({o.a, o.b} & grimpables):
+            oriente = o.sens_unique
         if oriente:
             voisins[oriente[0]].add(oriente[1])
         else:
@@ -792,9 +903,10 @@ def svg() -> str:
         "porte": ("#ff8f8f", "▮"),
         "depart": ("#6fd3ff", "▶"),
         "soin": ("#5fe07a", "✚"),
+        "munitions": ("#e0b45f", "▪"),
     }
     for sp in ALL:
-        for label, rx, ry, nature in sp.reperes:
+        for label, rx, ry, nature, *_alt in sp.reperes:
             col, glyphe = STYLE[nature]
             place = px(rx) + 10 + len(label) * 6.2
             ancre = "end" if place > w - MARGE else "start"

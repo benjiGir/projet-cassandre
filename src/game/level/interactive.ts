@@ -21,6 +21,8 @@ export interface InteractionHandlers {
   onCrowbarPickup(): void;
   /** `use_shotgun` : ramasse le pompe (niveau complet, Zone B). Appelle `weapons.pickUpShotgun()` côté `main.ts`. */
   onShotgunPickup(): void;
+  /** `use_pistol` : ramasse le pistolet, avec sa dotation de munitions. */
+  onPistolPickup(): void;
   /** `use_exit_door` (Zone E) : tentative d'ouverture de la porte de sortie.
    * `targetName` = nom du `door_*` visé (lu dans `extras.target`, voir
    * `loader.ts::buildUseObject`) — `main.ts` décide seul si le badge est en
@@ -46,6 +48,14 @@ export interface InteractionHandlers {
    * en poche (déverrouille) ou non (refus) — même partage des rôles que
    * `onExitDoorUse`. */
   onCardDoorUse(targetName: string, required: LoyaltyCard): void;
+  /** `use_*` portant `extras.target` SANS `extras.requires`, et qu'aucun nom
+   * ci-dessous ne réclame : une porte LIBRE — le pan de mur du photomaton, la
+   * porte coupe-feu des rayons. Troisième exception déclarative, même raison
+   * que les cartes : c'est le `.glb` qui dit « ceci ouvre cela ».
+   * `message` est lu dans `extras.message`, `null` s'il est absent. Le sens
+   * unique d'une porte ne se code pas ici : il tient à l'endroit où le `.glb`
+   * pose son `use_*`, hors de portée depuis l'autre côté. */
+  onDoorUse(targetName: string, message: string | null): void;
 }
 
 /** Distance entre le centre de capsule du joueur et le centre d'une trousse
@@ -100,7 +110,9 @@ export class InteractionSystem {
 
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
-      if (useObject.heals !== null) continue; // trousse : ramassée en marchant dessus, voir `collectHeals`
+      // Trousse et boîte de munitions : ramassées en marchant dessus, voir
+      // `collectHeals`/`collectAmmo` — jamais proposées à la touche E.
+      if (useObject.heals !== null || useObject.ammo !== null) continue;
       const rangeSq = useObject.range * useObject.range;
       const distanceSq = playerPosition.distanceToSquared(useObject.position);
       if (distanceSq > rangeSq) continue;
@@ -130,11 +142,30 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     tryHeal: (amount: number) => boolean,
   ): void {
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal);
+  }
+
+  /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions`). */
+  collectAmmo(
+    useObjects: readonly UseObject[],
+    playerPosition: THREE.Vector3,
+    tryTake: (amount: number) => boolean,
+  ): void {
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake);
+  }
+
+  private collectWalkOver(
+    useObjects: readonly UseObject[],
+    playerPosition: THREE.Vector3,
+    quantite: (useObject: UseObject) => number | null,
+    prendre: (amount: number) => boolean,
+  ): void {
     const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
     for (const useObject of useObjects) {
-      if (useObject.heals === null || this.consumed.has(useObject.object)) continue;
+      const amount = quantite(useObject);
+      if (amount === null || this.consumed.has(useObject.object)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!tryHeal(useObject.heals)) continue;
+      if (!prendre(amount)) continue;
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }
@@ -168,6 +199,13 @@ export class InteractionSystem {
         this.consumed.add(useObject.object);
         break;
 
+      case "use_pistol":
+        // Même contrat que `use_crowbar`/`use_shotgun` : autoportant, consommé.
+        handlers.onPistolPickup();
+        useObject.object.visible = false;
+        this.consumed.add(useObject.object);
+        break;
+
       case "use_shotgun":
         // Même contrat que `use_crowbar` (pickup autoportant, pas de `targetName`).
         handlers.onShotgunPickup();
@@ -195,8 +233,14 @@ export class InteractionSystem {
         break;
 
       default:
-        // Nom sans handler reconnu : aucun effet, aucun warning. Un `use_*`
-        // sans cible a déjà son propre avertissement bruyant émis par
+        // Porte libre : jamais consommée, comme une porte à carte — l'appelant
+        // ignore un second appui sur une porte déjà ouverte.
+        if (useObject.targetName) {
+          const message = typeof useObject.extras.message === "string" ? useObject.extras.message : null;
+          handlers.onDoorUse(useObject.targetName, message);
+        }
+        // Nom sans handler reconnu et sans cible : aucun effet, aucun warning.
+        // Un `use_*` sans cible a déjà son propre avertissement bruyant émis par
         // `loader.ts` (voir sa doc) — ne pas le dupliquer ici.
         break;
     }

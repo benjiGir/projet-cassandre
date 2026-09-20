@@ -8,9 +8,11 @@ du « Man in Long Sleeves » CC0 de Quaternius (voir
 `assets_src/LICENCES_ASSETS.md`), et exporte `public/assets/weapons/armes.glb` :
 
     vm_crowbar        pied-de-biche + avant-bras droit
+    vm_pistol         pistolet + avant-bras droit
     vm_shotgun        pompe (carcasse, canon) + avant-bras droit
       vm_shotgun_pump   fût mobile + avant-bras gauche (glisse au pompage)
     world_crowbar     pied-de-biche seul, à poser au sol
+    world_pistol      pistolet seul
     world_shotgun     pompe seule, fût compris
 
 Les `vm_*` sont exprimés dans le REPÈRE DE L'ŒIL : origine à la caméra, X à
@@ -71,6 +73,12 @@ PRISE_PDB = (0.27, 0.40, -0.26)
 AXE_PDB = (-0.15, 0.90, 0.60)          # la barre pointe devant, le col s'arrête sous le réticule
 PRISE_POMPE = (0.21, 0.30, -0.25)
 AXE_CANON = (-0.06, 1.0, 0.07)         # presque droit devant : on voit le flanc gauche
+PRISE_PISTOLET = (0.19, 0.30, -0.25)
+AXE_PISTOLET = (-0.07, 1.0, 0.10)      # plus relevé que le pompe : une arme de poing se tient haut
+# Un vrai pistolet (22 cm) tenu à bout de bras ne couvre presque rien de
+# l'écran : agrandi comme les bras le sont déjà (`GABARIT_BRAS`), il retrouve
+# le poids visuel du pompe. Le modèle au sol, lui, garde sa vraie taille.
+ECHELLE_PISTOLET_VM = 1.25
 
 # Os gardés pour un avant-bras : le coude est coupé, hors champ.
 OS_AVANT_BRAS = ("LowerArm", "Palm", "MiddleHand", "Fingers", "Thumb1", "Thumb2")
@@ -189,6 +197,24 @@ def construire_pied_de_biche() -> bpy.types.Object:
     # Scotch noir sous le poing : lit la main même quand la barre est de profil.
     pieces.append(balayage("pdb_scotch", [Vector((0, -0.07, 0)), Vector((0, 0.07, 0))], 0.028, 0.028, PALETTE["scotch"]))
     return fusionner("pied_de_biche", pieces)
+
+
+def construire_pistolet() -> bpy.types.Object:
+    """Repère de l'arme : canon vers +Y, Z en haut, origine au milieu de la
+    poignée. Un pistolet de service trapu — la SILHOUETTE doit se distinguer
+    du pompe à 640×360, d'où une culasse haute et un canon très court."""
+    pieces = []
+    # Poignée inclinée de 20° vers l'arrière, gainée de noir.
+    pieces.append(tube("pist_poignee", (0, 0.025, -0.075), (0, -0.015, 0.045), 0.020, PALETTE["scotch"], 5))
+    pieces.append(pave("pist_carcasse", (0, 0.045, 0.075), (0.032, 0.14, 0.038), PALETTE["acier"]))
+    # Culasse : la pièce qui fait lire « pistolet », plus claire que la carcasse.
+    pieces.append(pave("pist_culasse", (0, 0.055, 0.105), (0.034, 0.17, 0.028), PALETTE["acier_sombre"]))
+    pieces.append(pave("pist_pontet", (0, 0.045, 0.035), (0.010, 0.05, 0.018), PALETTE["acier_sombre"]))
+    pieces.append(pave("pist_detente", (0, 0.045, 0.042), (0.006, 0.014, 0.022), PALETTE["acier_clair"]))
+    pieces.append(tube("pist_canon", (0, 0.13, 0.105), (0, 0.175, 0.105), 0.010, PALETTE["acier_sombre"], 6))
+    pieces.append(pave("pist_guidon", (0, 0.125, 0.126), (0.005, 0.010, 0.008), PALETTE["acier_clair"]))
+    pieces.append(pave("pist_hausse", (0, -0.028, 0.124), (0.020, 0.008, 0.006), PALETTE["acier_clair"]))
+    return fusionner("pistolet", pieces)
 
 
 def construire_pompe() -> tuple[bpy.types.Object, bpy.types.Object]:
@@ -446,6 +472,23 @@ def assembler(scene, arm, mesh, oeil: Oeil):
     vm_crowbar = fusionner("vm_crowbar", [pdb, bras_pdb])
     placer(vm_crowbar, vers_oeil)
 
+    # Pistolet : même poing droit que le pied-de-biche, arme tenue plus haut
+    # et plus au centre — c'est ce qui le distingue du pompe à l'écran.
+    prise_pist = oeil.monde(PRISE_PISTOLET)
+    axe_pist = oeil.direction(AXE_PISTOLET)
+    arme_pist = repere(prise_pist, axe_pist.cross(oeil.haut), axe_pist)
+    pistolet = construire_pistolet()
+    placer(pistolet, arme_pist @ Matrix.Scale(ECHELLE_PISTOLET_VM, 4))
+    haut_pist = Vector(arme_pist.col[2][:3])
+    main_pist = repere(prise_pist, -haut_pist, axe_pist)
+    droit.poser(main_pist, coude=oeil.monde((0.30, 0.02, -0.72)), recul_poignet=0.085, decalage_paume=0.04)
+    droit.fermer_poing(100, 30)
+    bpy.context.view_layer.update()
+    print("[armes] pistolet,", droit.ecart())
+    bras_pist = extraire_avant_bras(scene, mesh, ("R",), "bras_pistolet")
+    vm_pistol = fusionner("vm_pistol", [pistolet, bras_pist])
+    placer(vm_pistol, vers_oeil)
+
     # Pompe : poignée en bas à droite, canon pointé vers le réticule.
     prise_pompe = oeil.monde(PRISE_POMPE)
     axe_canon = oeil.direction(AXE_CANON)
@@ -482,11 +525,14 @@ def assembler(scene, arm, mesh, oeil: Oeil):
     # Surtout pas `pivot` : `GLTFLoader` (three r185) réserve cet extra pour
     # `Object3D.pivot` et l'efface de tout nœud qui a des enfants.
     vm_crowbar["prise"] = vers_gltf(PRISE_PDB)
+    vm_pistol["prise"] = vers_gltf(PRISE_PISTOLET)
+    vm_pistol["bout_canon"] = vers_gltf(
+        vers_oeil @ (arme_pist @ (Matrix.Scale(ECHELLE_PISTOLET_VM, 4) @ Vector((0, 0.175, 0.105)))))
     vm_shotgun["prise"] = vers_gltf(PRISE_POMPE)
     vm_shotgun["bout_canon"] = vers_gltf(vers_oeil @ (arme @ Vector((0, 0.66, 0.118))))
     vm_pump["axe_glissiere"] = vers_gltf(Vector(AXE_CANON).normalized())
 
-    return vm_crowbar, vm_shotgun, vm_pump
+    return vm_crowbar, vm_pistol, vm_shotgun, vm_pump
 
 
 def armes_au_sol():
@@ -494,14 +540,17 @@ def armes_au_sol():
     le long de +Y, dessous à Z = 0."""
     pdb = construire_pied_de_biche()
     placer(pdb, Matrix.Rotation(math.radians(90), 4, "Y") @ Matrix.Translation((0, -0.1, 0)))
+    pistolet = construire_pistolet()
+    pistolet.name = pistolet.data.name = "world_pistol"
+    placer(pistolet, Matrix.Rotation(math.radians(90), 4, "Y") @ Matrix.Translation((0, -0.06, -0.09)))
     carcasse, fut = construire_pompe()
     pompe = fusionner("world_shotgun", [carcasse, fut])
     placer(pompe, Matrix.Rotation(math.radians(90), 4, "Y") @ Matrix.Translation((0, -0.25, -0.05)))
     pdb.name = pdb.data.name = "world_crowbar"
-    for ob in (pdb, pompe):
+    for ob in (pdb, pistolet, pompe):
         zmin = min(v.co.z for v in ob.data.vertices)
         ob.data.transform(Matrix.Translation((0, 0, -zmin)))
-    return pdb, pompe
+    return pdb, pistolet, pompe
 
 
 # --- Contrôle et export ------------------------------------------------------
@@ -596,21 +645,24 @@ def main() -> int:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene, arm, mesh = importer_heros()
     oeil = Oeil(arm)
-    vm_crowbar, vm_shotgun, vm_pump = assembler(scene, arm, mesh, oeil)
+    vm_crowbar, vm_pistol, vm_shotgun, vm_pump = assembler(scene, arm, mesh, oeil)
 
     # Le héros n'a plus rien à faire dans la scène : seuls ses bras figés restent.
     for o in list(scene.objects):
         if o.type in {"ARMATURE", "EMPTY"} or o is mesh:
             bpy.data.objects.remove(o)
-    world_crowbar, world_shotgun = armes_au_sol()
+    world_crowbar, world_pistol, world_shotgun = armes_au_sol()
 
-    rendre_vues(scene, {
+    vues = {
         "pied_de_biche": {"vm_crowbar"},
+        "pistolet": {"vm_pistol"},
         "pompe": {"vm_shotgun", "vm_shotgun_pump"},
-    }, renders)
+    }
+    rendre_vues(scene, vues, renders)
     if "--debug" in args:
-        rendre_debug(scene, {"pied_de_biche": {"vm_crowbar"}, "pompe": {"vm_shotgun", "vm_shotgun_pump"}}, renders)
-    exporter(out, [vm_crowbar, vm_shotgun, vm_pump, world_crowbar, world_shotgun])
+        rendre_debug(scene, vues, renders)
+    exporter(out, [vm_crowbar, vm_pistol, vm_shotgun, vm_pump,
+                   world_crowbar, world_pistol, world_shotgun])
     return 0
 
 

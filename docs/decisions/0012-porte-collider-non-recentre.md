@@ -1,13 +1,27 @@
 ---
 title: Collider de porte non recentré automatiquement dans loader.ts
 tags: [adr, pipeline, physique]
-status: accepte
-updated: 2026-09-05
+status: remplace
+updated: 2026-09-19
 ---
 
 # ADR 0012 — Collider de porte non recentré automatiquement dans loader.ts
 
 ## Statut
+
+**Remplacé par [ADR 0031](0031-portes-animees-et-vitres.md).**
+
+Le signal annoncé en bas de cet ADR ("si un futur `door_*` réimporté produit
+un collider visiblement décalé... reconsidérer l'alignement de `buildDoor`")
+s'est produit dès que les portes ont dû réellement s'ANIMER (jalon
+`door_*`, 2026-09-19) : `buildDoorEffect` décompose maintenant la bounding
+box locale comme `buildCuboidCollider`/`buildTrigger`, exactement l'option
+écartée ci-dessous. Sans conséquence sur le contenu déjà exporté (voir l'ADR
+0031, section correspondante) : les vantaux déjà posés ont leur pivot déjà
+recentré côté Blender pour compenser ce même écart, donc identiques avant/
+après. Page gardée pour l'historique, jamais supprimée (règle du dépôt).
+
+## Statut (historique, avant remplacement)
 
 Accepté.
 

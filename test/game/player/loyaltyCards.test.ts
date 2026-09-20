@@ -8,7 +8,6 @@
  * de session (`grantCard`, et son miroir dans le store du HUD).
  */
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
@@ -21,6 +20,7 @@ import {
   type LoyaltyCard,
 } from "../../../src/game/player/loyaltyCards";
 import { InteractionSystem, type InteractionHandlers } from "../../../src/game/level/interactive";
+import { DoorSystem } from "../../../src/game/level/doors";
 import { grantCard, hasCard, syncCardsToStore } from "../../../src/game/session/cards";
 import { tryOpenCardDoor } from "../../../src/game/session/doors";
 import { type GameSession } from "../../../src/game/session/gameSession";
@@ -145,8 +145,10 @@ function handlersDeTest(overrides: Partial<InteractionHandlers> = {}): Interacti
   return {
     onCrowbarPickup: () => {},
     onShotgunPickup: () => {},
+    onPistolPickup: () => {},
     onExitDoorUse: () => {},
     onFrozenStorageUse: () => {},
+    onDoorUse: () => {},
     onPaMicUse: () => {},
     onToiletUse: () => {},
     onCardPickup: () => {},
@@ -154,6 +156,38 @@ function handlersDeTest(overrides: Partial<InteractionHandlers> = {}): Interacti
     ...overrides,
   };
 }
+
+describe("InteractionSystem — portes libres (sans carte)", () => {
+  it("une cible sans `requires` ouvre sa porte, avec le message déclaré par le .glb", () => {
+    const handle = build([useObjet("use_photomaton", { target: "door_secret_photomaton", message: "Clic !" })]);
+    const onDoorUse = vi.fn();
+    const system = new InteractionSystem();
+
+    system.update(true, handle.useObjects, handle.useObjects[0].position.clone(), handlersDeTest({ onDoorUse }));
+
+    expect(onDoorUse).toHaveBeenCalledWith("door_secret_photomaton", "Clic !");
+  });
+
+  it("jamais consommée, et un nom historique garde son propre handler", () => {
+    const handle = build([
+      useObjet("use_coupe_feu", { target: "door_coupe_feu" }),
+      useObjet("use_frozen_storage", { target: "door_b_frozen" }),
+    ]);
+    const [coupeFeu, surgeles] = handle.useObjects;
+    const onDoorUse = vi.fn();
+    const onFrozenStorageUse = vi.fn();
+    const system = new InteractionSystem();
+    const handlers = handlersDeTest({ onDoorUse, onFrozenStorageUse });
+
+    system.update(true, [coupeFeu], coupeFeu.position.clone(), handlers);
+    system.update(true, [coupeFeu], coupeFeu.position.clone(), handlers);
+    system.update(true, [surgeles], surgeles.position.clone(), handlers);
+
+    expect(onDoorUse).toHaveBeenCalledTimes(2);
+    expect(onDoorUse).toHaveBeenCalledWith("door_coupe_feu", null);
+    expect(onFrozenStorageUse).toHaveBeenCalledWith("door_b_frozen");
+  });
+});
 
 describe("InteractionSystem — objets à carte", () => {
   it("une carte à ramasser appelle onCardPickup, disparaît et ne se reprend pas", () => {
@@ -286,28 +320,43 @@ describe("Inventaire de cartes (game/session/cards.ts)", () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Session avec une porte réelle du point de vue de `unlockDoor` : un corps et
- * un collider Rapier authentiques, pas des mocks — c'est eux que la fonction
- * manipule (glissement, `setEnabled(false)`).
+ * Session avec une porte réelle du point de vue de `unlockDoor` : construite
+ * par le VRAI chemin de chargement (`buildLevelFromGltf`), donc un vrai
+ * `DoorInfo` (pose fermée, bbox locale) porté par un vrai `DoorSystem` — pas
+ * des mocks. C'est ce que `unlockDoor`/`tryOpenCardDoor` manipulent
+ * réellement depuis le retrofit vers `DoorSystem` (ADR 0031) : plus de
+ * glissement de corps Rapier à la main, `session.doorSystem.open(...)` fait
+ * tout (résolution du groupe, désactivation du collider).
  */
 function sessionAvecPorte(cards: LoyaltyCard[] = []) {
   const physics = new PhysicsWorld();
-  const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.25, 0));
-  const collider = physics.world.createCollider(RAPIER.ColliderDesc.cuboid(1, 1.25, 0.1), body);
+  const scene = new THREE.Scene();
+
+  const spawn = new THREE.Object3D();
+  spawn.name = "spawn_player";
+
+  const door = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 0.2), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+  door.name = "door_reserve";
+  door.position.set(0, 1.25, 0);
+
+  const group = new THREE.Group();
+  group.add(spawn, door);
+  const handle = buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, scene, physics);
+  const doorInfo = handle.doors[0]!;
+  const doorSystem = new DoorSystem([doorInfo]);
 
   const session = {
     cards: new Set<LoyaltyCard>(cards),
     unlockedDoors: new Set<string>(),
-    openingDoor: null,
+    doorSystem,
     exitDoorTracking: null,
-    gltfLevelSession: {
-      current: {
-        doors: [{ name: "door_reserve", body, collider, halfExtents: new THREE.Vector3(1, 1.25, 0.1) }],
-      },
-    },
+    // Devant la porte (pas exactement dessus) — sert d'`openerPosition` pour
+    // un éventuel battant en `sens: auto`, sans conséquence ici (`descend`).
+    player: { position: new THREE.Vector3(0, 1, 2) },
+    gltfLevelSession: { current: { doors: handle.doors } },
   } as unknown as GameSession;
 
-  return { session, body, collider };
+  return { session, collider: doorInfo.collider };
 }
 
 describe("tryOpenCardDoor — la garde de porte", () => {
@@ -340,7 +389,7 @@ describe("tryOpenCardDoor — la garde de porte", () => {
     expect(tryOpenCardDoor(session, "door_reserve", "argent")).toBe(true);
     expect(session.unlockedDoors.has("door_reserve")).toBe(true);
     expect(collider.isEnabled()).toBe(false);
-    expect(session.openingDoor).not.toBeNull();
+    expect(session.doorSystem?.stateOf("door_reserve")).toBe("opening");
   });
 
   it("une carte ne vaut pas pour une autre", () => {
@@ -352,10 +401,13 @@ describe("tryOpenCardDoor — la garde de porte", () => {
   it("déjà déverrouillée : non-événement, pas de second glissement", () => {
     const { session } = sessionAvecPorte(["argent"]);
     tryOpenCardDoor(session, "door_reserve", "argent");
-    session.openingDoor = null;
+    const etatApresPremierDeverrouillage = session.doorSystem?.stateOf("door_reserve");
 
     expect(tryOpenCardDoor(session, "door_reserve", "argent")).toBe(false);
-    expect(session.openingDoor).toBeNull();
+    // Rien ne rejoue : le second essai est un non-événement (`unlockedDoors`
+    // coupe court avant même de toucher `doorSystem`), l'état de la porte est
+    // inchangé.
+    expect(session.doorSystem?.stateOf("door_reserve")).toBe(etatApresPremierDeverrouillage);
   });
 
   it("seule door_e_exit arme le suivi de fin de niveau", () => {

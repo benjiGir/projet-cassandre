@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { assetUrl } from "../core/assetPath";
-import type { ViewmodelClocks, WeaponSystem } from "../game/player/weapons";
+import type { ViewmodelClocks, WeaponKind, WeaponSystem } from "../game/player/weapons";
 
 /**
  * Les armes affichées à l'écran : pied-de-biche et fusil à pompe tenus par
@@ -23,14 +23,18 @@ import type { ViewmodelClocks, WeaponSystem } from "../game/player/weapons";
 
 export interface WeaponModels {
   crowbar: THREE.BufferGeometry;
+  pistol: THREE.BufferGeometry;
   shotgun: THREE.BufferGeometry;
   shotgunPump: THREE.BufferGeometry;
   worldCrowbar: THREE.BufferGeometry;
+  worldPistol: THREE.BufferGeometry;
   worldShotgun: THREE.BufferGeometry;
   /** Poing droit de chaque arme, repère caméra : centre des rotations. */
   crowbarPivot: THREE.Vector3;
+  pistolPivot: THREE.Vector3;
   shotgunPivot: THREE.Vector3;
   /** Bout du canon, repère caméra : où naît l'éclair de tir. */
+  pistolMuzzle: THREE.Vector3;
   shotgunMuzzle: THREE.Vector3;
   /** Direction du canon (unitaire, repère caméra) : le fût recule le long de son opposé. */
   pumpAxis: THREE.Vector3;
@@ -65,6 +69,7 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
   const extra = (name: string, key: string): unknown => byName.get(name)?.find((obj) => key in obj.userData)?.userData[key];
 
   const crowbar = node("vm_crowbar");
+  const pistol = node("vm_pistol");
   const shotgun = node("vm_shotgun");
   const pump = node("vm_shotgun_pump");
   // Invariant #5 : `GLTFLoader` pose un `MeshStandardMaterial` par défaut.
@@ -72,11 +77,15 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
 
   return {
     crowbar: crowbar.geometry,
+    pistol: pistol.geometry,
     shotgun: shotgun.geometry,
     shotgunPump: pump.geometry,
     worldCrowbar: node("world_crowbar").geometry,
+    worldPistol: node("world_pistol").geometry,
     worldShotgun: node("world_shotgun").geometry,
     crowbarPivot: vec3(extra("vm_crowbar", "prise"), "vm_crowbar.prise"),
+    pistolPivot: vec3(extra("vm_pistol", "prise"), "vm_pistol.prise"),
+    pistolMuzzle: vec3(extra("vm_pistol", "bout_canon"), "vm_pistol.bout_canon"),
     shotgunPivot: vec3(extra("vm_shotgun", "prise"), "vm_shotgun.prise"),
     shotgunMuzzle: vec3(extra("vm_shotgun", "bout_canon"), "vm_shotgun.bout_canon"),
     pumpAxis: vec3(extra("vm_shotgun_pump", "axe_glissiere"), "vm_shotgun_pump.axe_glissiere").normalize(),
@@ -101,11 +110,15 @@ function coloredBox(size: [number, number, number], center: [number, number, num
 export function placeholderWeaponModels(): WeaponModels {
   return {
     crowbar: coloredBox([0.06, 0.06, 0.7], [0.32, -0.28, -0.55], 0x8a5a34),
+    pistol: coloredBox([0.06, 0.1, 0.26], [0.26, -0.26, -0.45], 0x3a3d44),
     shotgun: coloredBox([0.09, 0.12, 0.85], [0.3, -0.3, -0.65], 0x555a60),
     shotgunPump: coloredBox([0.001, 0.001, 0.001], [0.3, -0.3, -0.65], 0x555a60),
     worldCrowbar: coloredBox([0.03, 0.03, 0.7], [0, 0.015, 0], 0x8a5a34),
+    worldPistol: coloredBox([0.04, 0.05, 0.22], [0, 0.025, 0], 0x3a3d44),
     worldShotgun: coloredBox([0.05, 0.05, 0.8], [0, 0.025, 0], 0x555a60),
     crowbarPivot: new THREE.Vector3(0.32, -0.28, -0.4),
+    pistolPivot: new THREE.Vector3(0.26, -0.26, -0.32),
+    pistolMuzzle: new THREE.Vector3(0.26, -0.22, -0.6),
     shotgunPivot: new THREE.Vector3(0.3, -0.3, -0.4),
     shotgunMuzzle: new THREE.Vector3(0.3, -0.25, -1.05),
     pumpAxis: new THREE.Vector3(0, 0, -1),
@@ -141,7 +154,7 @@ export const VIEWMODEL_TIMING = {
 
 export interface ViewmodelAnimation {
   /** Arme à afficher cette frame (l'ancienne pendant qu'elle descend). */
-  weapon: "none" | "melee" | "shotgun";
+  weapon: WeaponKind;
   /** 0 = en place, 1 = hors écran. */
   lowered: number;
   /** 0 = repos, 1 = fin du balayage. */
@@ -161,7 +174,13 @@ export function viewmodelAnimationAt(clocks: ViewmodelClocks, out: ViewmodelAnim
   // Changement d'arme. Tirer avec la nouvelle arme la remet en place
   // aussitôt : l'animation suit le joueur, elle ne le retient jamais.
   const sinceActiveFire =
-    clocks.active === "melee" ? clocks.sinceMeleeFire : clocks.active === "shotgun" ? clocks.sinceShotgunFire : Infinity;
+    clocks.active === "melee"
+      ? clocks.sinceMeleeFire
+      : clocks.active === "pistol"
+        ? clocks.sincePistolFire
+        : clocks.active === "shotgun"
+          ? clocks.sinceShotgunFire
+          : Infinity;
   const lowerPhase = clocks.previous === "none" ? 0 : t.lower;
   out.weapon = clocks.active;
   out.lowered = 0;
@@ -177,6 +196,8 @@ export function viewmodelAnimationAt(clocks: ViewmodelClocks, out: ViewmodelAnim
   const s = clocks.sinceMeleeFire;
   out.swing = s < t.strike ? easeOut(s / t.strike) : 1 - easeInOut(clamp01((s - t.strike) / t.recover));
 
+  // Le pistolet n'a pas de mouvement propre : tout son geste est le recul
+  // (`viewmodelPose`), plus sec et plus court que celui du pompe.
   const p = clocks.sinceShotgunFire - t.pumpStart;
   out.pump =
     p < 0 ? 0 : p < t.pumpBack ? easeInOut(p / t.pumpBack) : 1 - easeInOut(clamp01((p - t.pumpBack) / t.pumpForward));
@@ -216,6 +237,7 @@ const PUMP_ROLL = 0.07;
 
 export class Viewmodel {
   private readonly crowbar: THREE.Group;
+  private readonly pistol: THREE.Group;
   private readonly shotgun: THREE.Group;
   private readonly pump: THREE.Mesh;
   private readonly models: WeaponModels;
@@ -229,6 +251,7 @@ export class Viewmodel {
     previous: "none",
     sinceSwitch: 1e3,
     sinceMeleeFire: 1e3,
+    sincePistolFire: 1e3,
     sinceShotgunFire: 1e3,
   };
   private readonly animation: ViewmodelAnimation = { weapon: "none", lowered: 0, swing: 0, pump: 0 };
@@ -237,6 +260,7 @@ export class Viewmodel {
     this.models = models;
     this.crowbarElbow = models.crowbarPivot.clone().add(CROWBAR_ELBOW);
     this.crowbar = this.mount(camera, models.crowbar, this.crowbarElbow);
+    this.pistol = this.mount(camera, models.pistol, models.pistolPivot);
     this.shotgun = this.mount(camera, models.shotgun, models.shotgunPivot);
     this.pump = drawOverWorld(new THREE.Mesh(models.shotgunPump, models.material));
     this.shotgun.children[0]!.add(this.pump);
@@ -262,6 +286,7 @@ export class Viewmodel {
     const anim = viewmodelAnimationAt(weapons.viewmodelClocks(alpha, this.clocks), this.animation);
 
     this.crowbar.visible = anim.weapon === "melee";
+    this.pistol.visible = anim.weapon === "pistol";
     this.shotgun.visible = anim.weapon === "shotgun";
 
     if (anim.weapon === "melee") {
@@ -273,6 +298,11 @@ export class Viewmodel {
         0,
         SWING_ROLL * anim.swing,
       );
+    } else if (anim.weapon === "pistol") {
+      const group = this.pistol;
+      group.position.copy(this.models.pistolPivot).add(this.scratchPosition);
+      group.position.y -= LOWER_DROP * anim.lowered;
+      group.rotation.set(this.scratchEuler.x + LOWER_PITCH * anim.lowered, 0, 0);
     } else if (anim.weapon === "shotgun") {
       const group = this.shotgun;
       group.position.copy(this.models.shotgunPivot).add(this.scratchPosition);
@@ -286,10 +316,11 @@ export class Viewmodel {
    * Bout du canon du pompe en coordonnées monde, tel qu'affiché cette frame :
    * l'éclair de tir y naît au lieu du centre de l'écran. Cosmétique.
    */
-  muzzleWorldPosition(out: THREE.Vector3): THREE.Vector3 {
-    const mesh = this.shotgun.children[0]!;
+  muzzleWorldPosition(out: THREE.Vector3, weapon: "pistol" | "shotgun" = "shotgun"): THREE.Vector3 {
+    const group = weapon === "pistol" ? this.pistol : this.shotgun;
+    const mesh = group.children[0]!;
     mesh.updateWorldMatrix(true, false);
-    return mesh.localToWorld(out.copy(this.models.shotgunMuzzle));
+    return mesh.localToWorld(out.copy(weapon === "pistol" ? this.models.pistolMuzzle : this.models.shotgunMuzzle));
   }
 }
 
@@ -303,7 +334,7 @@ export class Viewmodel {
  */
 export function dressWeaponPickup(
   object: THREE.Object3D,
-  weapon: "melee" | "shotgun",
+  weapon: "melee" | "pistol" | "shotgun",
   models: WeaponModels,
   groundY: number | null,
 ): void {
@@ -314,7 +345,9 @@ export function dressWeaponPickup(
   const mesh = object as THREE.Mesh;
   if (mesh.isMesh) mesh.material = HIDDEN_MATERIAL;
 
-  const model = new THREE.Mesh(weapon === "melee" ? models.worldCrowbar : models.worldShotgun, models.material);
+  const geometrie =
+    weapon === "melee" ? models.worldCrowbar : weapon === "pistol" ? models.worldPistol : models.worldShotgun;
+  const model = new THREE.Mesh(geometrie, models.material);
   model.position.set(center.x, groundY ?? box.min.y, center.z);
   // Les modèles au sol sont longs selon -Z (le +Y de Blender).
   model.rotation.y = size.x > size.z ? Math.PI / 2 : 0;

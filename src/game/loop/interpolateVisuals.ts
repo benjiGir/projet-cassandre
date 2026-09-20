@@ -111,6 +111,25 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
       });
 
       yield* Effect.sync(() => {
+        // Mobilier physique : même patron que la balle plus haut, généralisé à
+        // N objets. APRÈS le bloc caméra, comme les billboards juste en
+        // dessous : `interpolate` élague par distance à la caméra, il lui faut
+        // donc la position de CETTE frame, pas celle de la précédente. Il saute
+        // de lui-même tout prop endormi ou hors de portée — donc, en régime
+        // établi, la quasi-totalité d'entre eux.
+        session.propSystem?.interpolate(alpha, engine.camera.position);
+        // Portes animées : même patron qu'au-dessus, sans élagage par
+        // distance — les vantaux d'un même matériau tiennent dans un seul lot
+        // de dessin, qui élimine déjà chaque vantail hors champ
+        // (`batchDoorMeshes`) — voir `DoorSystem.interpolate`.
+        session.doorSystem?.interpolate(alpha);
+        // Objets interactifs : élagués par distance comme les props, pour la
+        // même raison (voir `render/useObjectCulling.ts`).
+        engine.useObjectCulling.update(
+          session.gltfLevelSession?.current?.useObjects ?? [],
+          engine.camera.position,
+        );
+
         // Costards : position/forward interpolés (jamais les valeurs brutes du
         // pas fixe, voir la doc de `BillboardSprite.updatePose`), une fois par
         // Costard vivant OU cadavre (le cadavre reste affiché, figé).

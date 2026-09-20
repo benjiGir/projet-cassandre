@@ -19,6 +19,9 @@ import { Director } from "../entities/director";
 import { DirectorManager } from "../entities/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
 import { type DoorInfo, type LevelStats, type SecretZone, type UseObject } from "../level/loader";
+import type { PropSystem } from "../level/props";
+import type { DoorSystem } from "../level/doors";
+import type { VitreSystem } from "../level/vitres";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
 import { type LightPoolStats } from "../../render/lightPool";
 import {
@@ -125,8 +128,36 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
+    /** Portes ANIMÉES du niveau courant (`game/level/doors.ts::DoorSystem`) :
+     * `liste()` rend l'état de chaque vantail (mouvement, groupe, ouvert/
+     * fermé), `ouvrir(nom)` en ouvre un (et tout son groupe) SANS passer par
+     * un `use_*`/une carte — le seul moyen de juger le mouvement et le son
+     * quand le verrouillage du pointeur est hors de portée de
+     * l'automatisation (même précédent que `props`).
+     * see: docs/decisions/0031-portes-animees-et-vitres.md */
+    doorSystem: {
+      liste: () => engine.session.doorSystem?.describe() ?? [],
+      ouvrir: (nom: string) => engine.session.doorSystem?.open(nom, engine.session.player.position) ?? false,
+    },
+    /** Vitrages du niveau courant (`game/level/vitres.ts::VitreSystem`) :
+     * `liste()` rend l'état de chaque vitre (PV, cassée, givre), `casser(nom)`
+     * en détruit une sans tirer dessus — même précédent que `props`. */
+    vitres: {
+      liste: () => engine.session.vitreSystem?.describe() ?? [],
+      casser: (nom: string) => engine.session.vitreSystem?.destroyByName(nom) ?? false,
+    },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
+    /** Mobilier physique (`prop_*`) du niveau courant : `liste()` rend l'état
+     * de chaque prop (PV, matière, position), `casser(nom)` en détruit un sans
+     * tirer dessus — le seul moyen de juger les débris et le son quand le
+     * verrouillage du pointeur est hors de portée de l'automatisation. */
+    props: {
+      liste: () => engine.session.propSystem?.describe() ?? [],
+      casser: (nom: string) => engine.session.propSystem?.destroyByName(nom) ?? false,
+    },
+    /** Boîtes de munitions (`use_*` portant `munitions`) du niveau courant — `visible: false` = déjà ramassée. */
+    ammo: () => (engine.session.gltfLevelSession?.current?.useObjects ?? []).filter((u) => u.ammo !== null),
     /** Dev : `notarget()` rend les ennemis aveugles au joueur, `notarget(false)` les réveille (touche F8, ou la case du panneau de tuning). */
     notarget: (on = true) => setNotarget(on),
     /** Trousses de soin (`use_*` portant `soin`) du niveau glTF actuellement chargé — `visible: false` = déjà ramassée (même précédent que `secrets`). */
@@ -324,8 +355,24 @@ declare global {
       cards: () => LoyaltyCard[];
       giveCard: (card: LoyaltyCard) => void;
       doors: () => DoorInfo[];
+      /** Portes ANIMÉES du niveau courant — voir `game/level/doors.ts::DoorSystem`. */
+      doorSystem: {
+        liste: () => ReturnType<DoorSystem["describe"]>;
+        ouvrir: (nom: string) => boolean;
+      };
+      /** Vitrages du niveau courant — voir `game/level/vitres.ts::VitreSystem`. */
+      vitres: {
+        liste: () => ReturnType<VitreSystem["describe"]>;
+        casser: (nom: string) => boolean;
+      };
       secrets: () => SecretZone[];
       heals: () => UseObject[];
+      ammo: () => UseObject[];
+      /** Mobilier physique (`prop_*`) du niveau courant — voir `game/level/props.ts`. */
+      props: {
+        liste: () => ReturnType<PropSystem["describe"]>;
+        casser: (nom: string) => boolean;
+      };
       /** Dev : rend les ennemis aveugles au joueur (voir `devtools/cheats.ts`). */
       notarget: (on?: boolean) => boolean;
       /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */

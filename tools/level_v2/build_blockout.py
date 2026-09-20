@@ -23,10 +23,12 @@ laisserait des restes sur des pièces de 42 × 36 m.
 
 Trois règles de construction, toutes nées de pièges déjà payés :
 
-1. **Aucun linteau au-dessus d'un passage.** Le bake du graphe de navigation
-   tire un rayon vers le bas et prend le PREMIER collider : un linteau ferait
-   croire à un sol à 3 m. Les ouvertures montent donc jusqu'au plafond (même
-   raison que « un plafond n'a jamais de collider »).
+1. **Aucun linteau SOLIDE au-dessus d'un passage.** Le bake du graphe de
+   navigation tire un rayon vers le bas et prend le PREMIER collider : un
+   linteau solide ferait croire à un sol à 3 m. Les ouvertures montent donc
+   jusqu'au plafond dans la coque. `build_niveau.poser_linteaux` referme
+   ensuite l'écart entre deux plafonds de hauteurs différentes par un linteau
+   RENDU SEULEMENT, sans collider — exactement comme un plafond.
 2. **Aucun plafond.** Pour la même raison, et parce qu'un blockout se regarde
    de haut.
 3. **Les murs sont posés À L'INTÉRIEUR de l'emprise de leur espace.** Deux
@@ -116,6 +118,68 @@ def boite(nom: str, origine, taille, materiau: str, materiaux, coll, col_coll,
         col_coll.objects.link(proxy)
 
 
+def _solide_incline(nom_mesh: str, x, y, axe: str, dessus, dessous,
+                    subdiviser: bool = False) -> bpy.types.Mesh:
+    """Prisme à quatre coins dont le dessus et le dessous suivent chacun une
+    fonction (x, y) → z. Sert au sol d'une rampe (dessous plat) comme à son
+    plafond (dessous et dessus parallèles à la pente).
+
+    Porte des UV, projetées comme partout ailleurs à 2 m par répétition — sauf
+    sur les faces en pente, où V suit la LONGUEUR de la pente et non sa
+    projection au sol : à 37°, la texture s'étirerait sinon d'un quart. Sans
+    aucune UV, un matériau texturé s'échantillonne en un seul texel et la
+    rampe sortait en gris uni, entre deux espaces texturés.
+    """
+    x0, x1 = x
+    y0, y1 = y
+    coins = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+    longueur = (x1 - x0) if axe == "+x" else (y1 - y0)
+    etirement = math.hypot(1.0, (dessus(x1, y1) - dessus(x0, y0)) / longueur)
+
+    mesh = bpy.data.meshes.new(nom_mesh)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new("UVMap")
+    bas = [bm.verts.new((px, py, dessous(px, py))) for px, py in coins]
+    haut = [bm.verts.new((px, py, dessus(px, py))) for px, py in coins]
+    bm.faces.new(bas[::-1])
+    bm.faces.new(haut)
+    for i in range(4):
+        j = (i + 1) % 4
+        bm.faces.new((bas[i], bas[j], haut[j], haut[i]))
+    bm.normal_update()
+    for f in bm.faces:
+        f.smooth = False
+        n = f.normal
+        for loop in f.loops:
+            c = loop.vert.co
+            if abs(n.z) > max(abs(n.x), abs(n.y)):
+                u, v = ((c.y, (c.x - x0) * etirement) if axe == "+x"
+                        else (c.x, (c.y - y0) * etirement))
+            elif abs(n.x) >= abs(n.y):
+                u, v = c.y, c.z
+            else:
+                u, v = c.x, c.z
+            loop[uv].uv = (u / 2.0, v / 2.0)
+    if subdiviser:
+        cuts = max(1, int(max(x1 - x0, y1 - y0) / SEG))
+        bmesh.ops.subdivide_edges(bm, edges=list(bm.edges), cuts=cuts, use_grid_fill=True)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.validate(verbose=False)
+    mesh.update()
+    return mesh
+
+
+def _niveau_pente(x, y, z_debut: float, z_fin: float, axe: str):
+    x0, x1 = x
+    y0, y1 = y
+
+    def hauteur(px: float, py: float) -> float:
+        t = ((px - x0) / (x1 - x0)) if axe == "+x" else ((py - y0) / (y1 - y0))
+        return z_debut + (z_fin - z_debut) * t
+    return hauteur
+
+
 def pente(nom: str, x, y, z_debut: float, z_fin: float, axe: str,
           materiaux, coll, col_coll) -> None:
     """Sol incliné : un solide à fond plat et dessus en pente.
@@ -123,48 +187,45 @@ def pente(nom: str, x, y, z_debut: float, z_fin: float, axe: str,
     Convexe par construction, donc son collider est un `col_hull_*` — le
     loader sait les lire, et une rampe en trimesh coûterait pour rien.
     """
-    x0, x1 = x
-    y0, y1 = y
+    hauteur = _niveau_pente(x, y, z_debut, z_fin, axe)
     z_bas = min(z_debut, z_fin) - EPAISSEUR_SOL
 
-    def hauteur(px: float, py: float) -> float:
-        t = ((px - x0) / (x1 - x0)) if axe == "+x" else ((py - y0) / (y1 - y0))
-        return z_debut + (z_fin - z_debut) * t
+    def plat(px: float, py: float) -> float:
+        return z_bas
 
-    coins = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
-
-    def construire(nom_mesh: str, subdiviser: bool = False):
-        mesh = bpy.data.meshes.new(nom_mesh)
-        bm = bmesh.new()
-        bas = [bm.verts.new((px, py, z_bas)) for px, py in coins]
-        haut = [bm.verts.new((px, py, hauteur(px, py))) for px, py in coins]
-        bm.faces.new(bas[::-1])
-        bm.faces.new(haut)
-        for i in range(4):
-            j = (i + 1) % 4
-            bm.faces.new((bas[i], bas[j], haut[j], haut[i]))
-        for f in bm.faces:
-            f.smooth = False
-        if subdiviser:
-            cuts = max(1, int(max(x1 - x0, y1 - y0) / SEG))
-            bmesh.ops.subdivide_edges(bm, edges=list(bm.edges), cuts=cuts, use_grid_fill=True)
-        bm.to_mesh(mesh)
-        bm.free()
-        mesh.validate(verbose=False)
-        mesh.update()
-        return mesh
-
-    mesh = construire(nom, subdiviser=True)
+    mesh = _solide_incline(nom, x, y, axe, hauteur, plat, subdiviser=True)
     mesh.materials.append(materiaux["sol"])
     obj = bpy.data.objects.new(nom, mesh)
     col = mesh.color_attributes.new(name="Col", type="BYTE_COLOR", domain="POINT")
     col.data.foreach_set("color", [1.0] * (len(mesh.vertices) * 4))
     coll.objects.link(obj)
 
-    proxy = bpy.data.objects.new(f"col_hull_{nom}", construire(f"col_hull_{nom}"))
+    proxy = bpy.data.objects.new(f"col_hull_{nom}", _solide_incline(f"col_hull_{nom}", x, y, axe, hauteur, plat))
     proxy.display_type = "WIRE"
     proxy.show_wire = True
     col_coll.objects.link(proxy)
+
+
+def dalle_inclinee(nom: str, x, y, z_debut: float, z_fin: float, axe: str,
+                   epaisseur: float, materiau, coll) -> bpy.types.Object:
+    """Plafond d'une rampe : une dalle parallèle à la pente, RENDUE SEULEMENT.
+
+    Aucun collider, pour la même raison qu'un plafond plat (le bake de
+    navigation prendrait son dessous pour un sol). `z_debut`/`z_fin` sont les
+    cotes de la sous-face aux deux bouts."""
+    dessous = _niveau_pente(x, y, z_debut, z_fin, axe)
+
+    def dessus(px: float, py: float) -> float:
+        return dessous(px, py) + epaisseur
+
+    mesh = _solide_incline(nom, x, y, axe, dessus, dessous, subdiviser=True)
+    mesh.materials.append(materiau)
+    obj = bpy.data.objects.new(nom, mesh)
+    # PAS d'attribut `Col` : les plafonds plats (`lib_helpers.box`) n'en portent
+    # pas, et la fusion au chargement groupe par jeu d'attributs — une dalle
+    # inclinée qui en porterait un resterait seule dans son lot de dessin.
+    coll.objects.link(obj)
+    return obj
 
 
 def _segments_restants(debut: float, fin: float, trous: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -218,6 +279,44 @@ def murs_espace(space, ouvertures, materiaux, coll, col_coll) -> int:
         poses += 1
     for a, b in _segments_restants(y0 + t, y1 - t, trous["E"]):
         boite(f"mur_{space.id}_e{poses}", (x1 - t, a, z), (t, b - a, h), "mur", materiaux, coll, col_coll)
+        poses += 1
+    poses += _parapets(space, ouvertures, materiaux, coll, col_coll)
+    return poses
+
+
+def _parapets(space, ouvertures, materiaux, coll, col_coll) -> int:
+    """Mur d'allège côté BAS d'un passage à sens unique.
+
+    Une ouverture entre deux sols décalés de plus d'un saut ne se franchit que
+    vers le bas — le plan le sait (`Opening.sens_unique`). Mais la façade est
+    percée sur TOUTE sa hauteur des deux côtés : depuis le bas, on sort donc du
+    niveau de plain-pied, dans une zone qui n'est le sol de personne, et on
+    tombe sans fin. Le côté haut garde son ouverture (c'est par là qu'on saute),
+    le côté bas reçoit un mur jusqu'au niveau du sol d'en face.
+
+    Trouvé par `audit_niveau.py` après la première traversée complète jouée
+    (2026-09-16) : au nord des rayons, sous le couloir de service.
+    """
+    x0, x1 = space.x
+    y0, y1 = space.y
+    t = EPAISSEUR_MUR
+    poses = 0
+    for o in ouvertures:
+        if space.id not in (o.a, o.b) or not o.sens_unique:
+            continue
+        z_ici = o.z_a if o.a == space.id else o.z_b
+        z_face = o.z_b if o.a == space.id else o.z_a
+        if z_face <= z_ici:
+            continue                      # côté HAUT : c'est de là qu'on saute
+        haut = z_face - z_ici
+        a, b = o.span
+        nom = f"parapet_{space.id}_{poses}"
+        if o.axe == "y":
+            ya = y0 if abs(o.at - y0) < 1e-6 else y1 - t
+            boite(nom, (a, ya, z_ici), (b - a, t, haut), "mur", materiaux, coll, col_coll)
+        else:
+            xa = x0 if abs(o.at - x0) < 1e-6 else x1 - t
+            boite(nom, (xa, a, z_ici), (t, b - a, haut), "mur", materiaux, coll, col_coll)
         poses += 1
     return poses
 
@@ -355,16 +454,26 @@ def volumes(space, materiaux, coll, col_coll) -> int:
 # --- Gameplay ----------------------------------------------------------------
 #
 # Les portes à carte rétrécissent leur ouverture : un passage de 12 m ne se
-# ferme pas avec un vantail. Largeur, nom du `door_*`, carte exigée.
+# ferme pas avec un vantail. Nom du `door_*`, carte exigée, largeur.
 PORTES = {
-    frozenset({"c_hb_rs", "reserve"}): ("door_argent", "argent"),
-    frozenset({"c_bu", "bureaux"}): ("door_or", "or"),
+    # Le rideau métallique du quai : 4 m, la largeur d'un transpalette chargé.
+    frozenset({"c_hb_rs", "reserve"}): ("door_argent", "argent", LARGEUR_PORTE),
+    # En bas de l'escalier de l'étage, et non plus à l'entrée d'une salle au
+    # rez-de-chaussée : c'est l'étage entier que la carte Or ouvre. Une porte
+    # double de service (2 × 1 m) : un vantail de 4 m pour un escalier se
+    # lisait comme une porte de hangar.
+    frozenset({"c_bu", "c_escalier"}): ("door_or", "or", 2.0),
 }
 
-# La sortie ne relie aucun espace : elle perce le mur NORD des bureaux vers
-# l'extérieur, qui n'est pas modélisé — exactement comme `door_e_exit`
-# aujourd'hui. Déclarée à la main pour cette raison.
-OUVERTURE_SORTIE = plan.Opening("bureaux", "_dehors", "y", 166.0, (-8.0, -4.0), 0.0, 0.0)
+# La sortie ne relie aucun espace : c'est l'issue de secours du bureau du
+# Directeur, dans son mur NORD, à l'étage — vers l'extérieur, qui n'est pas
+# modélisé. Déclarée à la main pour cette raison.
+OUVERTURE_SORTIE = plan.Opening("direction", "_dehors", "y", 166.0, (-38.0, -36.0), 4.0, 4.0)
+# Petit palier DERRIÈRE la sortie, à l'altitude de l'étage. La partie se termine
+# au franchissement (`estPorteDeSortie`, `game/session/doors.ts`), mais il
+# s'écoule un pas fixe entre le franchissement et l'écran de fin : sans sol, ce
+# pas-là est une chute.
+PALIER_SORTIE = ((-40.0, 166.0), (6.0, 3.0))
 
 
 def ouvertures_effectives() -> list:
@@ -375,19 +484,33 @@ def ouvertures_effectives() -> list:
         porte = PORTES.get(frozenset({o.a, o.b}))
         if porte:
             milieu = (o.span[0] + o.span[1]) / 2.0
+            largeur = porte[2]
             o = plan.Opening(o.a, o.b, o.axe, o.at,
-                             (milieu - LARGEUR_PORTE / 2.0, milieu + LARGEUR_PORTE / 2.0),
+                             (milieu - largeur / 2.0, milieu + largeur / 2.0),
                              o.z_a, o.z_b)
         effectives.append(o)
     effectives.append(OUVERTURE_SORTIE)
     return effectives
 
 
+def poser_palier_sortie(materiaux, coll, col_coll) -> None:
+    (px, py), (largeur, profondeur) = PALIER_SORTIE
+    z = OUVERTURE_SORTIE.z
+    boite("sol_sortie", (px, py, z - EPAISSEUR_SOL), (largeur, profondeur, EPAISSEUR_SOL),
+          "sol", materiaux, coll, col_coll)
+    # Trois murets : on sort du magasin, on ne part pas en promenade.
+    boite("mur_sortie_n", (px, py + profondeur - EPAISSEUR_MUR, z),
+          (largeur, EPAISSEUR_MUR, 3.0), "mur", materiaux, coll, col_coll)
+    boite("mur_sortie_o", (px, py, z), (EPAISSEUR_MUR, profondeur, 3.0), "mur", materiaux, coll, col_coll)
+    boite("mur_sortie_e", (px + largeur - EPAISSEUR_MUR, py, z),
+          (EPAISSEUR_MUR, profondeur, 3.0), "mur", materiaux, coll, col_coll)
+
+
 def poser_portes(ouvertures, materiaux, geo_coll, logic_coll) -> int:
     """Un vantail par porte à carte, plus la sortie — et le `use_*` qui la
     commande, à portée (2 m) de qui se présente devant."""
     poses = 0
-    a_poser = [(o, *PORTES[frozenset({o.a, o.b})]) for o in ouvertures
+    a_poser = [(o, *PORTES[frozenset({o.a, o.b})][:2]) for o in ouvertures
                if frozenset({o.a, o.b}) in PORTES]
     a_poser.append((OUVERTURE_SORTIE, "door_exit", "platine"))
 
@@ -418,6 +541,8 @@ REGLES_REPERES = [
     ("départ", "spawn", None),
     ("pied-de-biche", "use", "use_crowbar"),
     ("fusil à pompe", "use", "use_shotgun"),
+    ("pistolet", "use", "use_pistol"),
+    ("boîte de munitions", "munitions", None),   # quantité lue dans le libellé, comme une trousse
     ("micro d'annonces", "use", "use_pa_mic"),
     ("toilettes", "use", "use_toilet"),
     ("trousse de soin", "soin", None),    # PV lus dans le libellé : « trousse de soin +25 »
@@ -432,9 +557,21 @@ REGLES_REPERES = [
     ("secret 3", "secret", "secret_3_aeration"),
     ("porte Argent", "rien", None),       # posée depuis les ouvertures
     ("porte Or", "rien", None),
-    ("sens unique", "signature", "sig_sens_unique"),
+    ("porte coupe-feu", "rien", None),    # posée par l'habillage, qui porte aussi son bouton
     ("SORTIE", "rien", None),
 ]
+
+
+def _z_du_sol(space, x: float, y: float) -> float:
+    """Altitude du sol sous (x, y) — interpolée dans une rampe. Sans ça, un
+    repère posé dans la montée de service se retrouvait 1,5 m sous la pente
+    (trouvé par `audit_niveau.py`)."""
+    if not space.rampe:
+        return space.z
+    axe, z0, z1 = space.rampe
+    t = ((x - space.x[0]) / max(space.largeur, 1e-6) if axe == "+x"
+         else (y - space.y[0]) / max(space.profondeur, 1e-6))
+    return z0 + (z1 - z0) * min(1.0, max(0.0, t))
 
 
 def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
@@ -447,13 +584,15 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
     """
     comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0}
     for space in plan.ALL:
-        trousses = 0
-        for label, rx, ry, nature in space.reperes:
+        compteurs: dict[str, int] = {}
+        for label, rx, ry, nature, *altitude in space.reperes:
             regle = next((r for r in REGLES_REPERES if r[0] in label), None)
             if regle is None:
                 raise SystemExit(f"[blockout] repère sans règle de construction : {label!r} ({space.id})")
             _, genre, cible = regle
-            z = space.z
+            # Altitude facultative : un repère posé SUR un meuble (le campement
+            # du secret 2, sur le toit des gondoles), pas sur le sol.
+            z = _z_du_sol(space, rx, ry) + (altitude[0] if altitude else 0.0)
 
             if genre == "rien" or (cible is not None and cible in sauter):
                 continue
@@ -468,15 +607,15 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
                 boite_centree(f"use_carte_{cible}", (rx, ry, z + 1.0), (0.4, 0.05, 0.6),
                               "repere", materiaux, logic_coll, extras={"card": cible})
                 comptes["use"] += 1
-            elif genre == "soin":
-                pv = re.search(r"\+(\d+)", label)
-                if pv is None:
-                    raise SystemExit(f"[blockout] trousse sans PV dans son libellé : {label!r} ({space.id})")
-                trousses += 1
-                # Repère seulement : le jeu remplace la boîte par la trousse,
-                # posée sur le sol réellement sous elle (`render/healPickup.ts`).
-                boite_centree(f"use_soin_{space.id}_{trousses}", (rx, ry, z + 0.25), (0.5, 0.5, 0.5),
-                              "repere", materiaux, logic_coll, extras={"soin": int(pv.group(1))})
+            elif genre in ("soin", "munitions"):
+                quantite = re.search(r"\+(\d+)", label)
+                if quantite is None:
+                    raise SystemExit(f"[blockout] ramassage sans quantité dans son libellé : {label!r} ({space.id})")
+                compteurs[genre] = compteurs.get(genre, 0) + 1
+                # Repère seulement : le jeu remplace la boîte par le vrai modèle,
+                # posé sur le sol réellement sous elle (`render/pickups.ts`).
+                boite_centree(f"use_{genre}_{space.id}_{compteurs[genre]}", (rx, ry, z + 0.25), (0.5, 0.5, 0.5),
+                              "repere", materiaux, logic_coll, extras={genre: int(quantite.group(1))})
                 comptes["use"] += 1
             elif genre == "secret":
                 # Volume logique : rendu invisible par le loader, jamais un collider.
@@ -540,6 +679,7 @@ def main() -> None:
         vols += volumes(space, materiaux, props, col_coll)
 
     portes = poser_portes(ouvertures, materiaux, shell, logic_coll)
+    poser_palier_sortie(materiaux, shell, col_coll)
     reperes = poser_reperes(materiaux, props, col_coll, logic_coll)
     costards, directeurs = poser_spawns(logic_coll)
 

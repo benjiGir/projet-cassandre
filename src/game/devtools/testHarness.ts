@@ -121,6 +121,7 @@ export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantR
 interface RecoilVariantReport {
   variant: keyof typeof RECOIL_VARIANTS;
   meleeRecoil: RecoilVariant["meleeRecoil"];
+  pistolRecoil: RecoilVariant["pistolRecoil"];
   shotgunRecoil: RecoilVariant["shotgunRecoil"];
 }
 
@@ -136,6 +137,7 @@ export function applyRecoilVariant(name: keyof typeof RECOIL_VARIANTS): RecoilVa
   const report: RecoilVariantReport = {
     variant: name,
     meleeRecoil: weaponConfig.meleeRecoil,
+    pistolRecoil: weaponConfig.pistolRecoil,
     shotgunRecoil: weaponConfig.shotgunRecoil,
   };
   console.info(`[feel] variante de recul ${name} appliquée`, report);

@@ -21,6 +21,8 @@ export interface InputFrame {
   fire: boolean;
   /** Front montant consommé, même contrat que `jump` : sélection pied-de-biche. */
   switchToMelee: boolean;
+  /** Front montant consommé, même contrat que `jump` : sélection pistolet. */
+  switchToPistol: boolean;
   /** Front montant consommé, même contrat que `jump` : sélection fusil à pompe. */
   switchToShotgun: boolean;
   /** Front montant déjà consommé, même contrat que `jump` : interaction (`use_*`, `KeyE`). */
@@ -59,6 +61,7 @@ export function emptyInputFrame(): InputFrame {
     sprint: false,
     fire: false,
     switchToMelee: false,
+    switchToPistol: false,
     switchToShotgun: false,
     use: false,
     yaw: 0,

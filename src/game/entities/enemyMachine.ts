@@ -149,6 +149,17 @@ export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput):
 // remplace `SuitUpdateContext`/`DirectorUpdateContext` (ré-exportés en alias
 // de type depuis `suit.ts`/`director.ts` pour ne rien casser côté appelants).
 
+/**
+ * Vue minimale de `VitreSystem` (`game/level/vitres.ts`) utile à
+ * `resolveAttack` — interface STRUCTURELLE plutôt qu'un import direct, pour
+ * ne pas alourdir le couplage de ce fichier au-delà de ce qu'il utilise
+ * réellement (un seul appel). `VitreSystem` la satisfait sans rien déclarer
+ * de spécial.
+ */
+export interface VitreHitTarget {
+  tryBreakByColliderHandle(colliderHandle: number, point: THREE.Vector3, direction: THREE.Vector3): boolean;
+}
+
 export interface EnemyUpdateContext {
   physics: PhysicsWorld;
   /** Contrôleur PARTAGÉ — une seule instance, possédée par `SuitManager`/`DirectorManager`. */
@@ -156,6 +167,14 @@ export interface EnemyUpdateContext {
   playerTargetPosition: THREE.Vector3;
   playerEyePosition: THREE.Vector3;
   navGraph: NavGraph | null;
+  /**
+   * Vitrages du niveau courant (`session.vitreSystem`), `undefined` si aucun
+   * niveau glTF n'est chargé (la gym n'a pas de `vitre_*`). Un tir ennemi qui
+   * rate le joueur mais rencontre une vitre sur son chemin la CASSE — effet
+   * Duke Nukem voulu, voir `handleEnemyShotMiss`.
+   * see: docs/decisions/0031-portes-animees-et-vitres.md
+   */
+  vitreSystem?: VitreHitTarget;
 }
 
 // Contexte XState — TOUT ce qu'une entité porte, hors id/rendu/`revealed`.
@@ -218,6 +237,8 @@ export interface EnemyMachineContext {
   readonly scratchJitteredDir: THREE.Vector3;
   readonly scratchAimRight: THREE.Vector3;
   readonly scratchAimUp: THREE.Vector3;
+  /** Point d'impact d'un tir ennemi qui rate le joueur — voir `handleEnemyShotMiss`. */
+  readonly scratchEnemyShotPoint: THREE.Vector3;
   readonly desiredScratch: { x: number; y: number; z: number };
   readonly movementScratch: { x: number; y: number; z: number };
   readonly nextTranslationScratch: THREE.Vector3;
@@ -290,6 +311,7 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
     scratchJitteredDir: new THREE.Vector3(),
     scratchAimRight: new THREE.Vector3(),
     scratchAimUp: new THREE.Vector3(),
+    scratchEnemyShotPoint: new THREE.Vector3(),
     desiredScratch: { x: 0, y: 0, z: 0 },
     movementScratch: { x: 0, y: 0, z: 0 },
     nextTranslationScratch: new THREE.Vector3(),
@@ -558,6 +580,26 @@ function applyAimJitter(ctx: EnemyMachineContext, dir: THREE.Vector3, out: THREE
 }
 
 /**
+ * Un rayon d'attaque ennemi qui ne touche PAS le joueur peut quand même avoir
+ * touché une vitre entre-temps (le jitre de visée dévie légèrement le tir de
+ * la ligne de mire exacte, qui elle passait déjà la vérification de ligne de
+ * vue) — la casse plutôt que de laisser le rayon s'arrêter dessus sans rien
+ * signaler, effet Duke Nukem voulu par le contrat de `vitre_*`. EXPORTÉE pour
+ * un test direct (logique pure, sans machine à états ni PRNG à faire
+ * atterrir sur le bon jitter) : see: docs/decisions/0031-portes-animees-et-vitres.md
+ */
+export function handleEnemyShotMiss(
+  vitreSystem: VitreHitTarget | undefined,
+  hitCollider: RAPIER.Collider,
+  hitIsPlayer: boolean,
+  point: THREE.Vector3,
+  direction: THREE.Vector3,
+): void {
+  if (hitIsPlayer || !vitreSystem) return;
+  vitreSystem.tryBreakByColliderHandle(hitCollider.handle, point, direction);
+}
+
+/**
  * Raycast d'attaque (groupe `ENEMY_SHOT`). Re-vérifie la ligne de vue au
  * moment du tir : le joueur a pu se mettre à couvert pendant la fenêtre de
  * télégraphie — l'attaque rate alors SILENCIEUSEMENT.
@@ -594,7 +636,18 @@ function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext):
       ),
     ),
   );
-  if (!hit || !isPlayerCollider(hit.collider)) return; // mur touché en premier (jitter, ou joueur sorti du couloir de tir) : raté silencieux.
+  if (!hit) return; // rien touché avant `maxDist` : raté silencieux.
+  if (!isPlayerCollider(hit.collider)) {
+    // Mur touché en premier (jitter, ou joueur sorti du couloir de tir) :
+    // raté silencieux, SAUF si c'est une vitre — elle vole en éclats.
+    const point = ctx.scratchEnemyShotPoint.set(
+      eye.x + ctx.scratchJitteredDir.x * hit.timeOfImpact,
+      eye.y + ctx.scratchJitteredDir.y * hit.timeOfImpact,
+      eye.z + ctx.scratchJitteredDir.z * hit.timeOfImpact,
+    );
+    handleEnemyShotMiss(updateCtx.vitreSystem, hit.collider, false, point, ctx.scratchJitteredDir);
+    return;
+  }
 
   ctx.pendingAttackDamage = ctx.cfg.attackDamage;
   ctx.pendingPlayerHitPoint.set(

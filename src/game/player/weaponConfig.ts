@@ -26,6 +26,22 @@ export interface WeaponConfig {
   /** Dégâts par coup. Placeholder : aucun ennemi n'existe encore pour les consommer (Phase 3). */
   meleeDamage: number;
 
+  /**
+   * Pistolet (2026-09-16) : l'arme de milieu de gamme entre le pied-de-biche
+   * et le pompe. Tire un seul rayon, vite, peu fort — cinq balles pour un
+   * Costard (50 PV), contre un tir de pompe à bout portant.
+   */
+  pistolCooldown: number;
+  /** Portée du rayon, en mètres. Plus loin que le pompe : c'est l'arme de la distance. */
+  pistolRange: number;
+  pistolDamage: number;
+  /** Dispersion, demi-angle en degrés. Faible mais non nulle : tirer vite doit coûter en précision. */
+  pistolSpreadDeg: number;
+  /** Munitions données par le ramassage de l'arme. */
+  pistolStartingAmmo: number;
+  /** Plafond de munitions : une boîte ramassée au-delà est perdue (elle reste au sol). */
+  pistolMaxAmmo: number;
+
   /** Nombre de plombs par tir. PRESCRIT par le plan — ne pas retoucher ici. */
   shotgunPelletCount: number;
   /** Demi-angle du cône de dispersion, en degrés. PRESCRIT par le plan — ne pas retoucher ici. */
@@ -62,6 +78,8 @@ export interface WeaponConfig {
 
   /** Kick de recul du pied-de-biche à la frappe. Récupéré par rampe linéaire (`approach()`), au dt de gameplay. */
   meleeRecoil: RecoilKick;
+  /** Kick de recul du pistolet. Bien plus sec et court que celui du pompe. */
+  pistolRecoil: RecoilKick;
   /** Kick de recul du pompe au tir. Même mécanique que `meleeRecoil`. */
   shotgunRecoil: RecoilKick;
 
@@ -195,6 +213,13 @@ export const weaponConfig: WeaponConfig = {
   meleeCooldown: 0.5,
   meleeDamage: 40,
 
+  pistolCooldown: 0.22,
+  pistolRange: 60,
+  pistolDamage: 12,
+  pistolSpreadDeg: 0.8,
+  pistolStartingAmmo: 48,
+  pistolMaxAmmo: 150,
+
   shotgunPelletCount: 9,
   shotgunSpreadConeDeg: 5,
   shotgunCooldown: 0.8,
@@ -206,6 +231,7 @@ export const weaponConfig: WeaponConfig = {
   // Valeurs de départ = variante B ci-dessous (« classique »), même
   // convention que `moveConfig`/`FEEL_VARIANTS`.
   meleeRecoil: { kickX: 0, kickY: -0.035, kickZ: 0.05, kickPitchDeg: 5, recoverTime: 0.18 },
+  pistolRecoil: { kickX: 0, kickY: 0.012, kickZ: 0.05, kickPitchDeg: 3, recoverTime: 0.12 },
   shotgunRecoil: { kickX: 0, kickY: 0.025, kickZ: 0.14, kickPitchDeg: 7, recoverTime: 0.22 },
 
   hitstopDuration: DEFAULT_HITSTOP_FRAMES * FIXED_DT,
@@ -248,12 +274,25 @@ export const weaponConfig: WeaponConfig = {
   crosshairPulseDuration: 0.08,
 };
 
+/**
+ * Dégâts d'UN impact, par arme. Une table plutôt qu'un ternaire recopié dans
+ * chaque manager d'ennemi : avec trois armes, un ternaire se trompe en
+ * silence (tout ce qui n'est pas « pompe » devenait du pied-de-biche).
+ */
+export function damageForWeapon(weapon: "melee" | "pistol" | "shotgun"): number {
+  if (weapon === "shotgun") return weaponConfig.shotgunDamagePerPellet;
+  if (weapon === "pistol") return weaponConfig.pistolDamage;
+  return weaponConfig.meleeDamage;
+}
+
 // Variantes de recul — harnais A/B, même mécanique que `FEEL_VARIANTS` dans
 // `moveConfig.ts`. Axe, usage console et protocole F9/F10 :
 // see: docs/systems/armes.md#recul-du-viewmodel-recoil_variants
 
 export interface RecoilVariant {
   meleeRecoil: RecoilKick;
+  /** Le pistolet suit la même échelle que les deux autres, en plus sec. */
+  pistolRecoil: RecoilKick;
   shotgunRecoil: RecoilKick;
 }
 
@@ -261,18 +300,21 @@ export const RECOIL_VARIANTS: Record<"A" | "B" | "C", RecoilVariant> = {
   /** A — DISCIPLINÉ : kick court, récupération rapide. Risque : peut se sentir mou. */
   A: {
     meleeRecoil: { kickX: 0, kickY: -0.015, kickZ: 0.02, kickPitchDeg: 2, recoverTime: 0.1 },
+    pistolRecoil: { kickX: 0, kickY: 0.006, kickZ: 0.025, kickPitchDeg: 1.5, recoverTime: 0.08 },
     shotgunRecoil: { kickX: 0, kickY: 0.012, kickZ: 0.07, kickPitchDeg: 3, recoverTime: 0.14 },
   },
 
   /** B — CLASSIQUE : kick net sans perte de cible prolongée. Point de départ recommandé. */
   B: {
     meleeRecoil: { kickX: 0, kickY: -0.035, kickZ: 0.05, kickPitchDeg: 5, recoverTime: 0.18 },
+    pistolRecoil: { kickX: 0, kickY: 0.012, kickZ: 0.05, kickPitchDeg: 3, recoverTime: 0.12 },
     shotgunRecoil: { kickX: 0, kickY: 0.025, kickZ: 0.14, kickPitchDeg: 7, recoverTime: 0.22 },
   },
 
   /** C — LOURD : poids visible sur les deux armes. Risque : retarde le tir suivant/la réacquisition. */
   C: {
     meleeRecoil: { kickX: 0, kickY: -0.06, kickZ: 0.09, kickPitchDeg: 9, recoverTime: 0.28 },
+    pistolRecoil: { kickX: 0, kickY: 0.022, kickZ: 0.09, kickPitchDeg: 5, recoverTime: 0.2 },
     shotgunRecoil: { kickX: 0, kickY: 0.045, kickZ: 0.22, kickPitchDeg: 12, recoverTime: 0.32 },
   },
 };

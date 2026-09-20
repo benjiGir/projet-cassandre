@@ -51,7 +51,10 @@ interface MuzzleFlashPreset {
  * point de swing plutôt qu'un vrai flash d'arme à feu : amplitude et taille
  * nettement réduites par rapport au pompe.
  */
-const MUZZLE_FLASH_PRESETS: Record<"melee" | "shotgun", MuzzleFlashPreset> = {
+const MUZZLE_FLASH_PRESETS: Record<"melee" | "pistol" | "shotgun", MuzzleFlashPreset> = {
+  // Pistolet : plus petit et plus court que le pompe, mais même origine (bout
+  // du canon affiché, voir `Viewmodel.muzzleWorldPosition`).
+  pistol: { color: 0xfff0b0, intensity: 28, range: 4, size: 0.12, offset: 0.06 },
   // Le pompe part du bout du canon affiché (`Viewmodel.muzzleWorldPosition`) : juste devant.
   shotgun: { color: 0xfff2c0, intensity: 60, range: 6, size: 0.22, offset: 0.06 },
   melee: { color: 0xd8d8e8, intensity: 12, range: 2.5, size: 0.08, offset: 0.15 },
@@ -122,12 +125,48 @@ const GIB_COLOR = 0x3a120f; // rouge/brun sombre, nettement plus sombre que PART
 const GIB_GEOMETRY = new THREE.BoxGeometry(GIB_SIZE, GIB_SIZE, GIB_SIZE);
 const GIB_MATERIAL = new THREE.MeshLambertMaterial({ color: GIB_COLOR });
 
+// Débris — destruction d'un `prop_*`. Même infrastructure jouet que les gibs
+// (`spawnChunks`), trois différences assumées : des éclats plus petits et plus
+// nombreux (une caisse ne se démonte pas en huit morceaux de chair), une durée
+// de vie plus longue (le joueur regarde ce qu'il vient de casser), et une
+// COULEUR passée par l'appelant.
+//
+// La couleur est un `number`, pas une matière : `render/` ne connaît pas les
+// matières de `game/level/props.ts`, c'est `loop/updateFx.ts` qui traduit —
+// même frontière que `material: string` sur `spawnImpactDecal`.
+// see: docs/systems/rendu.md#découplage-entre-render-et-game
+const DEBRIS_LIFETIME = 1.4; // s
+const DEBRIS_SIZE = 0.06; // m
+const DEBRIS_SPEED_MIN = 2;
+const DEBRIS_SPEED_MAX = 5.5;
+const DEBRIS_SPREAD = 1.1;
+const DEBRIS_GEOMETRY = new THREE.BoxGeometry(DEBRIS_SIZE, DEBRIS_SIZE, DEBRIS_SIZE);
+
+// Givre — casse d'un `vitre_*` portant `givre: true` (armoires/bacs surgelés,
+// voir `game/level/vitres.ts::VitreSystem`). Même infrastructure jouet que
+// les gibs/débris (`spawnChunks`), une seule vraie différence : une bouffée
+// qui RETOMBE LENTEMENT (`FROST_GRAVITY_SCALE` << 1) au lieu de chuter comme
+// un éclat solide — d'où `ToyParticle.gravityScale`, absent avant ce préfixe
+// (tout le reste de ce fichier tombait à la même gravité jouet).
+const FROST_LIFETIME = 1.8; // s, plus long que les débris — une bouffée qui retombe lentement doit avoir le temps de le faire
+const FROST_COUNT = 14;
+const FROST_SIZE = 0.05;
+const FROST_SPEED_MIN = 0.6;
+const FROST_SPEED_MAX = 1.8;
+const FROST_SPREAD = 1.3; // bouffée large, pas un jet dirigé
+const FROST_GRAVITY_SCALE = 0.12;
+const FROST_COLOR = 0xdcf2fb; // blanc légèrement bleuté
+const FROST_GEOMETRY = new THREE.BoxGeometry(FROST_SIZE, FROST_SIZE, FROST_SIZE);
+const FROST_MATERIAL = new THREE.MeshLambertMaterial({ color: FROST_COLOR });
+
 interface ToyParticle {
   mesh: THREE.Mesh;
   velocity: THREE.Vector3;
   life: number;
   /** Rebond au sol (douilles) ou disparition directe (particules d'impact). */
   bounce: boolean;
+  /** Multiplicateur de `TOY_GRAVITY` — 1 pour tout sauf le givre, qui retombe lentement. */
+  gravityScale: number;
 }
 
 // Géométries/matériaux PARTAGÉS entre toutes les particules/douilles (comme
@@ -141,6 +180,9 @@ const SHELL_MATERIAL = new THREE.MeshLambertMaterial({ color: 0xc98a2c }); // la
 
 /** Normale par défaut d'un `PlaneGeometry` non tourné (+Z). Réutilisée en lecture seule, jamais mutée. */
 const PLANE_DEFAULT_NORMAL = new THREE.Vector3(0, 0, 1);
+
+/** Direction de base d'une bouffée de givre (`spawnFrostBurst`) — elle n'a pas de normale de surface comme un impact, juste "vers le haut". Réutilisée en lecture seule, jamais mutée. */
+const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
 
 export class FxSystem {
   private readonly scene: THREE.Scene;
@@ -160,6 +202,15 @@ export class FxSystem {
   private readonly particles: ToyParticle[] = [];
   private readonly casings: ToyParticle[] = [];
   private readonly gibs: ToyParticle[] = [];
+  private readonly debris: ToyParticle[] = [];
+  private readonly frost: ToyParticle[] = [];
+
+  /**
+   * Un `MeshLambertMaterial` par couleur de débris, créé à la première
+   * demande. Borné par le nombre de matières de props (quatre) : un matériau
+   * par appel ferait une fuite GPU à chaque caisse cassée.
+   */
+  private readonly debrisMaterials = new Map<number, THREE.MeshLambertMaterial>();
 
   // Scratch, zéro allocation en régime établi
   private readonly scratchDir = new THREE.Vector3();
@@ -242,7 +293,7 @@ export class FxSystem {
 
   // Muzzle flash
 
-  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "shotgun") {
+  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun") {
     const preset = MUZZLE_FLASH_PRESETS[weapon];
     const slot = this.muzzleFlashes[this.muzzleFlashCursor]!;
     this.muzzleFlashCursor = (this.muzzleFlashCursor + 1) % this.muzzleFlashes.length;
@@ -286,7 +337,7 @@ export class FxSystem {
 
   // Particules d'impact
 
-  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "shotgun") {
+  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun") {
     const count = weapon === "shotgun" ? PARTICLES_PER_HIT_SHOTGUN : PARTICLES_PER_HIT_MELEE;
 
     for (let i = 0; i < count; i++) {
@@ -303,7 +354,7 @@ export class FxSystem {
       const speed = PARTICLE_SPEED_MIN + Math.random() * (PARTICLE_SPEED_MAX - PARTICLE_SPEED_MIN);
       const velocity = new THREE.Vector3(vx, vy, vz).normalize().multiplyScalar(speed);
 
-      this.particles.push({ mesh, velocity, life: PARTICLE_LIFETIME, bounce: false });
+      this.particles.push({ mesh, velocity, life: PARTICLE_LIFETIME, bounce: false, gravityScale: 1 });
     }
   }
 
@@ -336,7 +387,7 @@ export class FxSystem {
     }
 
     const velocity = new THREE.Vector3(rightX * SHELL_EJECT_SPEED, SHELL_EJECT_UP_SPEED, rightZ * SHELL_EJECT_SPEED);
-    this.casings.push({ mesh, velocity, life: SHELL_LIFETIME, bounce: true });
+    this.casings.push({ mesh, velocity, life: SHELL_LIFETIME, bounce: true, gravityScale: 1 });
   }
 
   // Gibs — mort à bout portant. Réutilise `ToyParticle`/`updateToyPhysics`
@@ -350,27 +401,92 @@ export class FxSystem {
    *   besoin d'être une normale de surface (une explosion n'a pas de rebond).
    */
   spawnGibs(point: THREE.Vector3, direction: THREE.Vector3) {
-    for (let i = 0; i < GIBS_PER_KILL; i++) {
-      const mesh = new THREE.Mesh(GIB_GEOMETRY, GIB_MATERIAL);
+    this.spawnChunks(this.gibs, point, direction, GIB_GEOMETRY, GIB_MATERIAL, {
+      count: GIBS_PER_KILL,
+      lifetime: GIB_LIFETIME,
+      spread: GIB_SPREAD,
+      speedMin: GIB_SPEED_MIN,
+      speedMax: GIB_SPEED_MAX,
+      gravityScale: 1,
+    });
+  }
+
+  /**
+   * Éclats de destruction d'un `prop_*` (caisse, caddie, vitrine).
+   *
+   * @param point Point du coup fatal (MONDE).
+   * @param direction Direction du coup fatal, normalisée.
+   * @param color Couleur des éclats — voir `DEBRIS_LIFETIME` et suivantes pour
+   *   pourquoi c'est un nombre et pas une matière.
+   * @param count Nombre d'éclats. L'appelant le module sur la taille du prop :
+   *   une vitrine ne se casse pas comme un carton.
+   */
+  spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number) {
+    let material = this.debrisMaterials.get(color);
+    if (!material) {
+      material = new THREE.MeshLambertMaterial({ color });
+      this.debrisMaterials.set(color, material);
+    }
+    this.spawnChunks(this.debris, point, direction, DEBRIS_GEOMETRY, material, {
+      count,
+      lifetime: DEBRIS_LIFETIME,
+      spread: DEBRIS_SPREAD,
+      speedMin: DEBRIS_SPEED_MIN,
+      speedMax: DEBRIS_SPEED_MAX,
+      gravityScale: 1,
+    });
+  }
+
+  /**
+   * Bouffée de givre — casse d'un `vitre_*` portant `givre: true` (armoires et
+   * bacs surgelés). Même infrastructure jouet que les gibs/débris, mais une
+   * gravité très amortie (`FROST_GRAVITY_SCALE`) : la bouffée doit flotter
+   * puis retomber lentement, pas chuter comme un éclat solide.
+   */
+  spawnFrostBurst(point: THREE.Vector3) {
+    this.spawnChunks(this.frost, point, UP_DIRECTION, FROST_GEOMETRY, FROST_MATERIAL, {
+      count: FROST_COUNT,
+      lifetime: FROST_LIFETIME,
+      spread: FROST_SPREAD,
+      speedMin: FROST_SPEED_MIN,
+      speedMax: FROST_SPEED_MAX,
+      gravityScale: FROST_GRAVITY_SCALE,
+    });
+  }
+
+  /**
+   * Corps commun des gibs, débris et givre : un lot de cubes jouets projetés
+   * dans un cône autour de `direction`, géométrie et matériau PARTAGÉS
+   * (jamais une allocation par morceau).
+   */
+  private spawnChunks(
+    list: ToyParticle[],
+    point: THREE.Vector3,
+    direction: THREE.Vector3,
+    geometry: THREE.BufferGeometry,
+    material: THREE.MeshLambertMaterial,
+    opts: { count: number; lifetime: number; spread: number; speedMin: number; speedMax: number; gravityScale: number },
+  ) {
+    for (let i = 0; i < opts.count; i++) {
+      const mesh = new THREE.Mesh(geometry, material);
       mesh.position.copy(point);
       // Scale non uniforme, purement cosmétique : casse la silhouette de
       // cube parfait pour lire « chunk » plutôt que « particule » à l'œil,
-      // sans allouer de géométrie par gib (GIB_GEOMETRY reste partagée,
+      // sans allouer de géométrie par morceau (la géométrie reste partagée,
       // comme PARTICLE_GEOMETRY/SHELL_GEOMETRY plus haut).
       mesh.scale.set(0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8);
       this.scene.add(mesh);
 
       // Cône jouet autour de `direction`, plus large que celui des particules
-      // d'impact (GIB_SPREAD > PARTICLE_SPREAD) et légèrement plus ascendant :
-      // `Math.random()` ordinaire — cosmétique, hors harnais de déterminisme
-      // (voir la doc de tête du fichier).
-      const vx = direction.x + (Math.random() * 2 - 1) * GIB_SPREAD;
-      const vy = direction.y + (Math.random() * 2 - 1) * GIB_SPREAD + 0.8;
-      const vz = direction.z + (Math.random() * 2 - 1) * GIB_SPREAD;
-      const speed = GIB_SPEED_MIN + Math.random() * (GIB_SPEED_MAX - GIB_SPEED_MIN);
+      // d'impact et légèrement plus ascendant : `Math.random()` ordinaire —
+      // cosmétique, hors harnais de déterminisme (voir la doc de tête).
+      const vx = direction.x + (Math.random() * 2 - 1) * opts.spread;
+      const vy = direction.y + (Math.random() * 2 - 1) * opts.spread + 0.8;
+      const vz = direction.z + (Math.random() * 2 - 1) * opts.spread;
+      const speed = opts.speedMin + Math.random() * (opts.speedMax - opts.speedMin);
       const velocity = new THREE.Vector3(vx, vy, vz).normalize().multiplyScalar(speed);
 
-      this.gibs.push({ mesh, velocity, life: GIB_LIFETIME, bounce: false });
+      list.push({ mesh, velocity, life: opts.lifetime, bounce: false, gravityScale: opts.gravityScale });
     }
   }
 
@@ -391,6 +507,8 @@ export class FxSystem {
     this.updateToyPhysics(this.particles, realDt);
     this.updateToyPhysics(this.casings, realDt);
     this.updateToyPhysics(this.gibs, realDt);
+    this.updateToyPhysics(this.debris, realDt);
+    this.updateToyPhysics(this.frost, realDt);
   }
 
   private updateToyPhysics(list: ToyParticle[], realDt: number) {
@@ -403,7 +521,7 @@ export class FxSystem {
         continue;
       }
 
-      p.velocity.y += TOY_GRAVITY * realDt;
+      p.velocity.y += TOY_GRAVITY * p.gravityScale * realDt;
       p.mesh.position.addScaledVector(p.velocity, realDt);
 
       if (p.bounce && p.mesh.position.y <= SHELL_GROUND_Y && p.velocity.y < 0) {

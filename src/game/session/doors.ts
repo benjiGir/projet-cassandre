@@ -8,22 +8,24 @@ import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
 /**
- * Déverrouille le `door_*` nommé `targetName` (glissement + collider
- * désactivé, voir `OpeningDoor` dans `gameSession.ts`). Retourne `false`
- * sans effet si `targetName` ne correspond à aucun `door_*` du niveau
- * courant (erreur de données Blender, pas un état de jeu valide).
+ * Déverrouille le GROUPE de vantaux contenant `targetName` (voir `groupe`
+ * dans `game/level/doors.ts` — une porte double s'ouvre entière) : la
+ * traversée du mesh est déléguée à `session.doorSystem`, reconstruit à
+ * chaque chargement comme `PropSystem`. Le groupe reste ouvert pour de bon
+ * (`permanent`, quel que soit `referme`) — c'est la règle du contrat pour
+ * toute porte à carte/`use_*`. Retourne `false` sans effet si `targetName` ne
+ * correspond à aucun `door_*` du niveau courant (erreur de données Blender,
+ * pas un état de jeu valide).
  * see: docs/systems/session.md#portes-et-fin-de-niveau
+ * see: docs/decisions/0031-portes-animees-et-vitres.md
  */
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
-  const door = (session.gltfLevelSession?.current?.doors ?? []).find((d) => d.name === targetName);
-  if (!door) {
+  const opened = session.doorSystem?.open(targetName, session.player.position) ?? false;
+  if (!opened) {
     console.error(`[main] use_* référence une porte introuvable ("${targetName}").`);
     return false;
   }
   session.unlockedDoors.add(targetName);
-  const t = door.body.translation();
-  session.openingDoor = { body: door.body, startY: t.y, targetY: t.y - door.halfExtents.y * 2, t: 0 };
-  door.collider.setEnabled(false);
   showHudMessage(successMessage);
   playDoorSfx("unlock");
   return true;
@@ -34,12 +36,23 @@ export function unlockDoor(session: GameSession, targetName: string, successMess
  * (jalon N7) : déverrouille si la carte est en poche, refuse sinon — message
  * et son, sans jamais consommer le `use_*`, donc réessayable.
  *
- * Seule `door_e_exit` arme le suivi de fin de niveau (voir la doc de
- * `ExitDoorTracking`) : une autre porte à carte partage exactement la même
+ * Seules les PORTES DE SORTIE arment le suivi de fin de niveau (voir la doc
+ * de `ExitDoorTracking`) : une autre porte à carte partage exactement la même
  * mécanique sans jamais être une sortie.
  *
  * see: docs/systems/session.md#cartes-de-fidélité
  */
+/**
+ * Les portes qui terminent le niveau, par NOM. `door_e_exit` est celle de
+ * l'ancien niveau complet (Zone E) ; `door_exit` celle du niveau v2. Les deux
+ * donnent sur un « dehors » qui n'est pas modélisé : sans ce suivi, le joueur
+ * franchit la porte et tombe dans le vide au lieu de finir la partie — c'est
+ * exactement ce qui arrivait au niveau v2 avant le 2026-09-16.
+ */
+export function estPorteDeSortie(doorName: string): boolean {
+  return doorName === "door_e_exit" || doorName === "door_exit";
+}
+
 export function tryOpenCardDoor(session: GameSession, targetName: string, required: LoyaltyCard): boolean {
   if (session.unlockedDoors.has(targetName)) return false; // déjà déverrouillée
   if (!hasCard(session, required)) {
@@ -48,7 +61,7 @@ export function tryOpenCardDoor(session: GameSession, targetName: string, requir
     return false;
   }
   const ouverte = unlockDoor(session, targetName, "Porte déverrouillée");
-  if (ouverte && targetName === "door_e_exit") setupExitDoorTracking(session, targetName);
+  if (ouverte && estPorteDeSortie(targetName)) setupExitDoorTracking(session, targetName);
   return ouverte;
 }
 

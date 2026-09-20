@@ -7,8 +7,8 @@ updated: 2026-09-06
 
 # Armes du joueur
 
-Le joueur dispose de deux armes — un pied-de-biche en mêlée et un fusil à
-pompe — et ce document explique comment leurs tirs sont résolus, pourquoi
+Le joueur dispose de trois armes — un pied-de-biche en mêlée, un pistolet et
+un fusil à pompe — et ce document explique comment leurs tirs sont résolus, pourquoi
 ils doivent l'être de façon déterministe, et comment le feedback de hit
 (hitstop, secousse, réticule, marqueur de touche) a été construit couche
 par couche à partir de retours de playtest concrets plutôt que d'un plan
@@ -28,6 +28,27 @@ de visée depuis `frame.yaw`/`frame.pitch` — jamais des valeurs interpolées
 pour le rendu (`player.eyePosition(alpha, …)`). Une origine interpolée
 dépend du taux d'affichage et casserait silencieusement le rejeu
 déterministe du raycast d'arme (invariant #12, [ADR 0007](../decisions/0007-rng-deterministe.md)).
+
+## Pistolet (2026-09-16)
+
+L'arme intermédiaire, ajoutée après un playtest : le pied-de-biche oblige au
+corps-à-corps, le pompe est rare et précieux, il manquait celle qu'on a
+toujours sur soi. Un seul rayon par tir (`firePistol`), 12 dégâts, cadence
+0,22 s — cinq balles pour un Costard (50 PV), contre un tir de pompe à bout
+portant. Dispersion de 0,8° au demi-angle, tirée du MÊME générateur
+déterministe que le pompe (invariant #12).
+
+**Ses munitions se ramassent**, contrairement à celles du pompe : le
+pistolet arrive avec `pistolStartingAmmo` (48) et se recharge aux **boîtes de
+munitions** posées dans le niveau (`use_*` portant `munitions`, ramassées en
+marchant dessus comme une trousse de soin — voir
+[Conventions de nommage](../reference/conventions-nommage.md#boîtes-de-munitions)).
+`addPistolAmmo` retourne ce qu'il a RÉELLEMENT ajouté : au plafond
+(`pistolMaxAmmo`, 150), il rend 0 et la boîte reste au sol pour plus tard.
+
+`pickUpPistol()` ne donne sa dotation qu'au PREMIER ramassage : un hot reload
+remet les `use_*` du niveau en place, et rendrait sinon des munitions
+gratuites à chaque rechargement de `.glb`.
 
 ## Architecture munitions : un seul pool
 
@@ -53,8 +74,11 @@ l'exige — pas tranché ici.
   un callback asynchrone de chargement de niveau. Appelée en retard, elle
   ne crashe rien mais désarme le joueur en cours de partie au lieu qu'il
   démarre désarmé : un bug de timing silencieux, pas une erreur visible.
-- `pickUpMelee()`/`pickUpShotgun()` équipent immédiatement l'arme ramassée
-  (convention boomer-shooter classique) et sont idempotentes.
+- `pickUpMelee()`/`pickUpShotgun()`/`pickUpPistol()` équipent immédiatement
+  l'arme ramassée (convention boomer-shooter classique) et sont idempotentes.
+- `hasPistol` fait exception aux deux autres : `false` par défaut. Le
+  pistolet est arrivé après `gym.ts` et les zones A-E, qui doivent démarrer
+  exactement comme avant.
 
 ## Matériau perçu et hitstop mur/ennemi
 

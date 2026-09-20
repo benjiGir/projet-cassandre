@@ -2,7 +2,7 @@
 title: Session de partie
 tags: [systeme, core]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-19
 ---
 
 # Session de partie
@@ -165,7 +165,7 @@ Groupes de champs :
   de `gym.ts` n'ait besoin de retourner la liste de ce qu'il a créé.
 - **Suivi de progression** : cartes de fidélité (`droppedCardMesh`/`cards`,
   voir [Cartes de fidélité](#cartes-de-fidélité)),
-  portes (`unlockedDoors`/`openingDoor`/`exitDoorTracking`, voir
+  portes (`unlockedDoors`/`doorSystem`/`exitDoorTracking`, voir
   [Portes et fin de niveau](#portes-et-fin-de-niveau)), secrets
   (`foundSecrets`, `WeakSet` par référence de mesh).
 - **État du joueur et idempotence** : `playerHp`, `firstKillTriggered`/
@@ -176,10 +176,13 @@ Groupes de champs :
   (cooldown des répliques, PROPRE À la partie : une réplique juste avant la
   mort ne doit pas geler le canal de la partie suivante après « Rejouer »).
 
-`OpeningDoor` (glissement cosmétique d'un vantail) et `ExitDoorTracking`
-(suivi de franchissement de `door_e_exit`) sont deux types satellites du
-même fichier — voir [Portes et fin de niveau](#portes-et-fin-de-niveau)
-pour leur usage.
+`ExitDoorTracking` (suivi de franchissement de `door_e_exit`/`door_exit`)
+est un type satellite du même fichier — voir
+[Portes et fin de niveau](#portes-et-fin-de-niveau) pour son usage.
+`doorSystem`/`vitreSystem` (`DoorSystem`/`VitreSystem`) sont, eux,
+reconstruits à chaque `onLoaded` comme `propSystem`/`currentNavGraph` — voir
+[Spawn et chargement de niveau](#spawn-et-chargement-de-niveau) et
+[ADR 0031](../decisions/0031-portes-animees-et-vitres.md).
 
 ## Construire une partie
 
@@ -301,15 +304,21 @@ claire.
 `loadGltfLevel(engine, session, name)` charge (ou recharge)
 `public/assets/levels/<name>.glb` dans `session` via `createLevelSession`
 (voir [ADR 0011](../decisions/0011-hot-reload-sondage-http.md) pour le
-mécanisme de hot reload lui-même). Son callback `onLoaded` : bake le graphe
-de praticabilité sur les bounds du niveau chargé, logue des diagnostics, et
-surtout ne repositionne le joueur / ne fait apparaître les Costards et le
-Directeur QUE si `info.isFirstLoad` — un hot reload pendant une partie ne
-doit JAMAIS respawn le joueur ni dupliquer un ennemi, c'est le cœur du
-contrat < 60 s du pipeline de niveau. Le compteur de secrets
-(`debug.secretsTotal`), lui, est mis à jour à CHAQUE chargement (pas
-seulement `isFirstLoad`) puisqu'il décrit une propriété du niveau chargé,
-pas un évènement ponctuel de partie.
+mécanisme de hot reload lui-même). Son callback `onLoaded` : construit
+D'ABORD `session.doorSystem` (`DoorSystem`) et désactive les colliders de ses
+groupes `auto` AVANT de baker le graphe de praticabilité (sinon un bureau
+derrière une porte automatique fermée au chargement ne reçoit jamais
+d'arête), les réactive juste après, puis rouvre silencieusement toute porte
+déjà dans `session.unlockedDoors` (hot reload EN COURS DE PARTIE — voir
+[Portes et fin de niveau](#portes-et-fin-de-niveau)). `session.vitreSystem`
+(`VitreSystem`) est reconstruit juste après, comme `propSystem`. Le
+callback logue aussi des diagnostics, et surtout ne repositionne le joueur /
+ne fait apparaître les Costards et le Directeur QUE si `info.isFirstLoad` —
+un hot reload pendant une partie ne doit JAMAIS respawn le joueur ni
+dupliquer un ennemi, c'est le cœur du contrat < 60 s du pipeline de niveau.
+Le compteur de secrets (`debug.secretsTotal`), lui, est mis à jour à CHAQUE
+chargement (pas seulement `isFirstLoad`) puisqu'il décrit une propriété du
+niveau chargé, pas un évènement ponctuel de partie.
 
 Le `LightPool` du niveau (`session.lightPool`, voir
 [Rendu](rendu.md#le-pool-de-lampes)) est reconstruit là aussi, à CHAQUE
@@ -341,20 +350,38 @@ Comme le badge avant elles, les cartes survivent à un hot reload : c'est un
 
 ## Portes et fin de niveau
 
-`unlockDoor(session, targetName, successMessage)` (`doors.ts`) déverrouille
-un `door_*` (glissement cosmétique + collider désactivé) — factorisée entre
-`tryOpenCardDoor` (porte gardée par une carte) et `onFrozenStorageUse`
-(secret de Zone B, sans garde) : même mécanique de porte, seule la condition
-d'appel diffère, décidée par l'appelant.
+Depuis [ADR 0031](../decisions/0031-portes-animees-et-vitres.md), le
+mouvement d'un vantail vit entièrement dans `session.doorSystem`
+(`DoorSystem`, `game/level/doors.ts`) — reconstruit à chaque `onLoaded`
+(hot reload compris), au même titre que `propSystem`/`currentNavGraph`/
+`lightPool` (voir [Spawn et chargement de niveau](#spawn-et-chargement-de-niveau)).
+`session/doors.ts` n'est plus qu'un fin habillage par-dessus : feedback
+(message HUD, son de carte), idempotence (`session.unlockedDoors`) et le
+suivi de fin de niveau — il ne touche plus jamais un corps ou un collider
+Rapier lui-même.
+
+`unlockDoor(session, targetName, successMessage)` (`doors.ts`) délègue à
+`session.doorSystem.open(targetName, session.player.position)` : cette
+méthode résout le GROUPE de vantaux contenant `targetName` (une porte double
+s'ouvre entière) et le rend `permanent` — une porte à carte/`use_*` ne se
+referme jamais. Factorisée entre `tryOpenCardDoor` (porte gardée par une
+carte) et `onFrozenStorageUse`/`onDoorUse` (portes libres) : même mécanique,
+seule la condition d'appel diffère, décidée par l'appelant.
+
+**Un hot reload rouvre silencieusement** toute porte déjà présente dans
+`session.unlockedDoors` — sans quoi un rechargement de niveau EN COURS DE
+PARTIE reverrouillerait visuellement une porte déjà ouverte (le nouveau
+`.glb` reconstruit des corps/colliders neufs, toujours à l'état fermé). Voir
+`session/spawning.ts::loadGltfLevel`.
 
 `setupExitDoorTracking(session, doorName)` arme le suivi de franchissement
-de `door_e_exit`. L'axe de franchissement est dérivé par une heuristique
-géométrique : l'axe local le plus fin du vantail (hors hauteur) est son
-épaisseur, donc sa normale — la même heuristique que
-`buildCuboidCollider`/`buildDoor` dans le loader de niveau, parce que les
-données Blender ne portent jamais un « axe de porte » explicite. Cet axe
-local est ensuite transformé par la rotation réelle du corps Rapier pour
-obtenir l'axe monde.
+de `door_e_exit`/`door_exit`. L'axe de franchissement est dérivé par une
+heuristique géométrique : l'axe local le plus fin du vantail (hors hauteur)
+est son épaisseur, donc sa normale — la même heuristique que
+`buildCuboidCollider`/`buildDoorEffect` dans le loader de niveau, parce que
+les données Blender ne portent jamais un « axe de porte » explicite. Cet
+axe local est ensuite transformé par la rotation réelle du corps Rapier
+(désormais FIXE, donc toujours à sa pose fermée) pour obtenir l'axe monde.
 
 `triggerLevelComplete(engine, session)` bascule vers l'écran de fin de
 niveau (envoie `LEVEL_COMPLETED` à l'acteur de flux) et libère le pointeur,

@@ -65,6 +65,11 @@ MEUBLES = {
     "kitchenFridge": (1.72, True),
     "televisionVintage": (0.62, False),
     "televisionModern": (0.68, False),
+    # Meuble télé bas : ce qui porte les téléviseurs du rayon Image & Son. Un
+    # téléviseur posé à même le sol ne s'expose dans aucun magasin.
+    "cabinetTelevision": (0.50, True),
+    # Coin cuisine de la salle de pause, à l'étage des bureaux.
+    "kitchenCabinet": (0.90, True),
     "speaker": (1.00, True),
     "radio": (0.24, False),
     "laptop": (0.26, False),
@@ -240,13 +245,15 @@ def poste_bureau(seed: int = 0) -> str:
     # Fauteuil, tourné au hasard vers le bureau.
     a = rng.uniform(-0.25, 0.25)
     fx, fy = 1.50 + a, pr + 0.55
+    # Ardoise unie sur le nuancier : en `trim_hypermarche` projeté monde, le
+    # fauteuil prenait des rayures de chantier jaunes et noires.
     H.boxes(f"{name}_fauteuil", [
-        ((fx - 0.28, fy - 0.28, 0.42, fx + 0.28, fy + 0.28, 0.50), "world"),
-        ((fx - 0.28, fy + 0.16, 0.50, fx + 0.28, fy + 0.28, 1.02), "world"),
-        ((fx - 0.06, fy - 0.06, 0.06, fx + 0.06, fy + 0.06, 0.42), "world"),
-        ((fx - 0.30, fy - 0.05, 0.04, fx + 0.30, fy + 0.05, 0.10), "world"),
-        ((fx - 0.05, fy - 0.30, 0.04, fx + 0.05, fy + 0.30, 0.10), "world"),
-    ], "trim_hypermarche", coll)
+        ((fx - 0.28, fy - 0.28, 0.42, fx + 0.28, fy + 0.28, 0.50), "aplat:#2f3541"),
+        ((fx - 0.28, fy + 0.16, 0.50, fx + 0.28, fy + 0.28, 1.02), "aplat:#2f3541"),
+        ((fx - 0.06, fy - 0.06, 0.06, fx + 0.06, fy + 0.06, 0.42), "aplat:#444a54"),
+        ((fx - 0.30, fy - 0.05, 0.04, fx + 0.30, fy + 0.05, 0.10), "aplat:#444a54"),
+        ((fx - 0.05, fy - 0.30, 0.04, fx + 0.05, fy + 0.30, 0.10), "aplat:#444a54"),
+    ], "palette", coll)
 
     H.col_box(name[4:], (0, 0, 0, lo, pr, ht), coll)
     return name
@@ -256,8 +263,9 @@ def cloison_bureau(longueur: float = 12.0) -> str:
     """Cloison de bureau : plein en bas, vitré en haut.
 
     2 m de haut — au-dessus des 1,60 m des yeux, donc un vrai couvert. La
-    partie « vitrée » est un cadre ajouré et non du verre : rien de transparent
-    n'existe en `MeshLambertMaterial` (invariant #5). À cette résolution un
+    partie « vitrée » est un cadre ajouré. Du vrai verre est possible (une
+    `vitre_*`, voir `lib_helpers.textured_material("verre")`) : c'est ce que
+    porte la cloison de l'étage des bureaux. Celle-ci reste ajourée, et un
     cadre à claire-voie se lit comme une verrière de cloison.
     """
     name = f"str_cloison_bureau_{longueur:g}m".replace(".", "_")
@@ -296,7 +304,11 @@ def armoire_dossiers(seed: int = 0) -> str:
             ouverts.append(((0.10, -0.30, z + 0.26, lo - 0.10, -0.04, z + 0.40), "world"))
         else:
             tiroirs.append(((0.05, -0.02, z, lo - 0.05, 0.0, z + 0.26), "world"))
-    H.boxes(f"{name}_tiroirs", tiroirs, "trim_hypermarche", coll)
+    # Façades de tiroir en plâtre clair sur caisson d'acier. Elles prenaient la
+    # bande de bordure `trim_hypermarche` en projection monde, donc au hasard :
+    # des rayures de chantier jaunes et noires, et l'armoire se lisait comme une
+    # caisse de chantier.
+    H.boxes(f"{name}_tiroirs", tiroirs, "mur_platre", coll)
     if ouverts:
         H.boxes(f"{name}_ouverts", ouverts, "carton", coll)
     H.col_box(name[4:], (0, 0, 0, lo, pr, ht), coll)

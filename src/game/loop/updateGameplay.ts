@@ -10,7 +10,12 @@ import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/do
 import { grantCard } from "../session/cards";
 import { showHudMessage, triggerHeroLine } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
-import { DIRECTOR_DROPPED_CARD } from "../entities/directorConfig";
+import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/directorConfig";
+import { suitConfig } from "../entities/suitConfig";
+import { moveConfig } from "../player/moveConfig";
+import { recordSafeGround, shouldRescue } from "../session/fallRescue";
+import { type DoorActor } from "../level/doors";
+import { type GameSession } from "../session/gameSession";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -27,12 +32,54 @@ const HERO_LINE_TOILET = "Ça va mieux.";
 const TOILET_HEAL_AMOUNT = 1;
 const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
 
-// Constantes de porte/sortie de niveau (Zone E, `door_e_exit`) — voir la
-// doc de `OpeningDoor`/`ExitDoorTracking` dans `session/gameSession.ts`.
-const DOOR_OPEN_DURATION = 0.6;
+// Constante de fin de niveau (Zone E, `door_e_exit`) — voir la doc
+// d'`ExitDoorTracking` dans `session/gameSession.ts`.
 // Marge au-delà du vantail, m — évite un déclenchement au ras de la porte
 // (le joueur doit être VISIBLEMENT sorti, pas juste avoir franchi le plan).
 const EXIT_CROSSING_MARGIN = 1.0;
+
+// Acteurs pris en compte par `DoorSystem` (proximité des portes `auto`, refus
+// de refermeture sur une capsule qui chevauche encore le vantail) —
+// RECYCLÉS d'un pas fixe à l'autre plutôt que réalloués, comme `liveFrame`
+// ci-dessus. see: docs/reference/conventions-nommage.md#portes-animées
+const doorActorPool: DoorActor[] = [];
+
+function doorActorSlot(index: number): DoorActor {
+  let slot = doorActorPool[index];
+  if (!slot) {
+    slot = { position: new THREE.Vector3(), radius: 0, halfHeight: 0 };
+    doorActorPool[index] = slot;
+  }
+  return slot;
+}
+
+/** Joueur + ennemis VIVANTS de la session courante, au format attendu par `DoorSystem.update`. */
+function collectDoorActors(session: GameSession): readonly DoorActor[] {
+  let count = 0;
+
+  const player = doorActorSlot(count++);
+  player.position.copy(session.player.position);
+  player.radius = moveConfig.capsuleRadius;
+  player.halfHeight = moveConfig.capsuleHalfHeight;
+
+  for (const suit of session.suitManager.suits) {
+    if (!suit.isAlive) continue;
+    const slot = doorActorSlot(count++);
+    slot.position.copy(suit.position);
+    slot.radius = suitConfig.capsuleRadius;
+    slot.halfHeight = suitConfig.capsuleHalfHeight;
+  }
+  for (const director of session.directorManager.directors) {
+    if (!director.isAlive) continue;
+    const slot = doorActorSlot(count++);
+    slot.position.copy(director.position);
+    slot.radius = directorConfig.capsuleRadius;
+    slot.halfHeight = directorConfig.capsuleHalfHeight;
+  }
+
+  doorActorPool.length = count;
+  return doorActorPool;
+}
 
 // Origine de tir AUTHENTIQUE du pas fixe courant (position + eyeOffset, PAS
 // `player.eyePosition(alpha, …)` qui est interpolée pour le rendu) — voir
@@ -60,6 +107,7 @@ function captureInputFrame(engine: GameEngine): InputFrame {
   liveFrame.jump = input.consumeActionJustPressed("jump");
   liveFrame.fire = input.consumeActionJustPressed("fire");
   liveFrame.switchToMelee = input.consumeActionJustPressed("switchMelee");
+  liveFrame.switchToPistol = input.consumeActionJustPressed("switchPistol");
   liveFrame.switchToShotgun = input.consumeActionJustPressed("switchShotgun");
   liveFrame.use = input.consumeActionJustPressed("use");
   liveFrame.yaw = engine.look.yaw;
@@ -110,6 +158,23 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
 
       yield* Effect.sync(() => session.player.update(gameplayDt, activeFrame));
 
+      // Filet de chute (`session/fallRescue.ts`) : le dernier sol RÉELLEMENT
+      // touché sert de point de retour.
+      yield* Effect.sync(() => {
+        const player = session.player;
+        if (recordSafeGround(session.lastSafeGround, player.position, player.isGrounded, player.numCollisions)) return;
+        if (!shouldRescue(session.lastSafeGround, player.position, player.isGrounded)) return;
+        console.warn(
+          `[niveau] chute hors du monde en x=${player.position.x.toFixed(1)}, z=${player.position.z.toFixed(1)} — ` +
+            `retour au dernier sol touché. Trou de décor à corriger (tools/level_v2/audit_niveau.py).`,
+        );
+        // `spawn` prend la position des PIEDS, `lastSafeGround` le centre de
+        // la capsule : la moitié de la capsule les sépare.
+        const demiCapsule = moveConfig.capsuleHalfHeight + moveConfig.capsuleRadius;
+        player.spawn(session.lastSafeGround.x, session.lastSafeGround.y - demiCapsule, session.lastSafeGround.z);
+        showHudMessage("Sol manquant — vous êtes remis sur pied");
+      });
+
       // Interaction (`use_*`, touche E) — APRÈS `player.update` (donc
       // `player.position` déjà avancée ce pas-ci) et AVANT `weapons.update`
       // pour qu'un ramassage et un tir puissent se produire dans le même pas
@@ -124,6 +189,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           {
             onCrowbarPickup: () => session.weapons.pickUpMelee(),
             onShotgunPickup: () => session.weapons.pickUpShotgun(),
+            onPistolPickup: () => {
+              session.weapons.pickUpPistol();
+              showHudMessage("Pistolet récupéré");
+            },
             // `use_exit_door` du niveau actuel : son `.glb` est antérieur à
             // la convention `requires` (jalon N7) et ne déclare donc aucune
             // carte. On lui applique la Platine — celle que le Directeur
@@ -137,6 +206,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onFrozenStorageUse: (targetName) => {
               if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
               unlockDoor(session, targetName, "Rayon surgelés ouvert");
+            },
+            onDoorUse: (targetName, message) => {
+              if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
+              unlockDoor(session, targetName, message ?? "Passage ouvert");
             },
             onPaMicUse: () => {
               triggerHeroLine(session, HERO_LINE_PA_MIC);
@@ -155,6 +228,23 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               showHudMessage(`+${TOILET_HEAL_AMOUNT} PV`);
               triggerHeroLine(session, HERO_LINE_TOILET);
             },
+          },
+        ),
+      );
+
+      // Boîtes de munitions : même ramassage sans touche que les trousses. Une
+      // boîte ramassée au plafond de munitions ne donnerait rien : elle reste
+      // au sol, comme une trousse sur un joueur en pleine forme.
+      yield* Effect.sync(() =>
+        engine.interaction.collectAmmo(
+          session.gltfLevelSession?.current?.useObjects ?? [],
+          session.player.position,
+          (amount) => {
+            const pris = session.weapons.addPistolAmmo(amount);
+            if (pris <= 0) return false;
+            showHudMessage(`+${pris} munitions`);
+            playSfx("ammo_pickup");
+            return true;
           },
         ),
       );
@@ -205,6 +295,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           weaponEyeOrigin,
           session.weapons.hitEvents,
           session.currentNavGraph,
+          session.vitreSystem ?? undefined,
         );
         session.directorManager.update(
           gameplayDt,
@@ -212,7 +303,25 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           weaponEyeOrigin,
           session.weapons.hitEvents,
           session.currentNavGraph,
+          session.vitreSystem ?? undefined,
         );
+        // Mobilier physique : même file `hitEvents`, lue de la même façon (non
+        // destructivement) que les deux managers ci-dessus. Un tir traverse un
+        // prop détruit et un ennemi mort de la même manière — c'est le collider
+        // désactivé qui le décide, jamais un filtre écrit ici.
+        //
+        // AVANT `physics.step` (voir `core/loop.ts`) : l'impulsion posée ici
+        // est intégrée par le pas qui suit immédiatement, jamais le suivant.
+        session.propSystem?.update(session.weapons.hitEvents);
+        // Vitrages : même file, mêmes deux raisons (déterminisme du rejeu,
+        // pas fixe strict) que le mobilier physique juste au-dessus.
+        session.vitreSystem?.update(session.weapons.hitEvents);
+        // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
+        // #1) — `interpolateVisuals.ts` ne fait qu'interpoler entre deux
+        // poses déjà décidées. `collectDoorActors` lit le joueur et les
+        // ennemis VIVANTS de CE pas-ci (donc après `player.update` /
+        // `suitManager`/`directorManager` un peu plus haut).
+        session.doorSystem?.update(gameplayDt, collectDoorActors(session));
       });
 
       // Résolution badge / porte / sortie de niveau / secrets — même
@@ -233,18 +342,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           engine.scene.remove(session.droppedCardMesh);
           session.droppedCardMesh = null;
           grantCard(session, dropped?.card ?? DIRECTOR_DROPPED_CARD);
-        }
-
-        // Glissement cosmétique de la porte débloquée (voir sa doc plus haut) —
-        // le collider est déjà désactivé depuis le déverrouillage, ceci ne fait
-        // que déplacer le mesh hors du passage.
-        if (session.openingDoor) {
-          session.openingDoor.t = Math.min(1, session.openingDoor.t + gameplayDt / DOOR_OPEN_DURATION);
-          const y =
-            session.openingDoor.startY + (session.openingDoor.targetY - session.openingDoor.startY) * session.openingDoor.t;
-          const current = session.openingDoor.body.translation();
-          session.openingDoor.body.setTranslation({ x: current.x, y, z: current.z }, true);
-          if (session.openingDoor.t >= 1) session.openingDoor = null;
         }
 
         // Fin de niveau : franchissement du vantail déverrouillé — voir la

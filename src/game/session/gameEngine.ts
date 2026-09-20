@@ -5,6 +5,7 @@ import { GameClock } from "../../core/time";
 import { type Recording } from "../../core/inputRecorder";
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/renderer";
 import { FxSystem } from "../../render/fx";
+import { UseObjectCulling } from "../../render/useObjectCulling";
 import { Viewmodel, type WeaponModels } from "../../render/viewmodel";
 import { createWireframeToggle } from "../../render/debugView";
 import { HitmarkerOverlay } from "../../render/hitmarker";
@@ -37,6 +38,8 @@ export interface GameEngine {
   /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx.ts`. */
   fx: FxSystem;
   viewmodel: Viewmodel;
+  /** Élagage par distance des `use_*` — PERSISTANT, comme `fx`/`viewmodel` : il ne retient que des références faibles (voir `render/useObjectCulling.ts`). */
+  useObjectCulling: UseObjectCulling;
   /** Géométries des armes, partagées par le viewmodel et les ramassages posés dans les niveaux. */
   weaponModels: WeaponModels;
   crosshair: CrosshairOverlay;
@@ -231,6 +234,7 @@ export function buildGameEngine(
     clock,
     fx,
     viewmodel,
+    useObjectCulling: new UseObjectCulling(),
     weaponModels,
     crosshair,
     hitmarker,

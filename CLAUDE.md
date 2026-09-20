@@ -73,6 +73,23 @@ explication**, pas contournée.
     `game/entities/enemyMachine.ts`. Sinon le hitstop ne ralentirait plus
     les ennemis, régression invisible mais réelle.
 
+## TypeSafe (Jev) — écarté du jeu (2026-09-20)
+
+Le plugin `typesafe-ai` donne accès à `jev-1.13.0` : un modèle qui ne génère
+rien, il répond à des questions typées sur du texte (`Choice`, `Noul`,
+`Score`) par un appel réseau. **Il n'a pas sa place dans le jeu**, et trois
+invariants l'interdisent, chacun suffisant : un appel réseau est asynchrone
+alors que le pas fixe et le rendu passent par la frontière synchrone stricte
+(#1, #11) ; le rejeu d'input exige un déroulé identique à entrées identiques,
+or les probabilités du modèle ne sont pas déterministes (#12) ; et la clé
+d'API partirait dans le bundle client. Ça vaut aussi pour les répliques du
+héros — elles restent écrites, et tirées par le RNG déterministe.
+
+Restait l'outillage hors-jeu (garde-fou de satire sur les marques inventées,
+pré-tri des licences à confirmer, triage des retours de playtest) : **écarté
+par l'utilisateur le 2026-09-20**. Aucune clé, aucune dépendance, aucun appel
+dans le dépôt.
+
 ## Conventions de nommage glTF
 
 | Préfixe | Effet à l'import |
@@ -82,15 +99,29 @@ explication**, pas contournée.
 | `spawn_suit_*` | point d'apparition Costard |
 | `spawn_director_*` | point d'apparition Directeur (boss unique) |
 | `trig_*` | volume de trigger (box), mesh invisible |
-| `door_*` | porte animée, collider dynamique |
+| `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors.ts`) |
 | `use_*` | objet interactif (portée 2 m) |
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
+| `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |
+| `vitre_*` | vitrage : collider cuboid tant que `solide !== false`, cassable si `pv` (`VitreSystem`, `game/level/vitres.ts`) |
+
+Custom properties Blender lues sur un `prop_*` : `masse` (kg, défaut 25), `pv`
+(ABSENT = indestructible, seulement poussable) et `matiere` (`bois`/`carton`/
+`verre`/`metal`, décide du son de casse et de la couleur des débris). Un
+`prop_*` ne porte JAMAIS de `col_*` jumeau — il construit son propre collider —
+et **chaque prop visible est un lot de dessin de plus, définitivement** : un
+objet qui bouge ne rejoint jamais un lot de décor fusionné. Détail dans
+`docs/reference/conventions-nommage.md#props-physiques`,
+[ADR 0030](docs/decisions/0030-props-dynamiques.md).
 
 Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
 `door_*` actionné), `card` (carte de fidélité DONNÉE — `argent`/`or`/
 `platine`, en fait un ramassage), `requires` (carte EXIGÉE pour agir sur
-`target`) et `soin` (PV d'une trousse, ramassée en marchant dessus, sans
-touche E). Une valeur inconnue est une ERREUR de `validate_level.py` et un
+`target`), `message` (texte d'une porte LIBRE — `target` sans `requires` : le
+photomaton du secret 1, la porte coupe-feu ; le sens unique d'une porte tient à
+la place de son `use_*`, hors de portée depuis l'autre côté), `soin` (PV d'une
+trousse) et `munitions` (recharge de pistolet) —
+ces deux derniers se ramassent en marchant dessus, sans touche E. Une valeur inconnue est une ERREUR de `validate_level.py` et un
 avertissement bruyant du loader, jamais un silence. La Platine n'a pas de
 `use_*` : le Directeur la lâche à sa mort. Détail complet dans
 `docs/reference/conventions-nommage.md#cartes-de-fidélité`.
@@ -114,6 +145,212 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 ```
 
 ## Phase courante
+
+> **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
+> DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies
+> portes qui bougent, des vraies vitres, et il est où mon rayon surgelés ? ».
+> - **Cause racine des portes** : depuis la porte à badge de la Zone E
+>   (2026-08-23), AUCUNE porte n'avait jamais bougé à l'écran. Le jeu faisait
+>   glisser le CORPS Rapier — invisible — et coupait son collider ; rien ne
+>   recopiait cette pose sur le mesh. Seuls les `prop_*` le faisaient. Corrigé
+>   par `game/level/doors.ts::DoorSystem` ([ADR 0031](docs/decisions/0031-portes-animees-et-vitres.md)) :
+>   corps FIXE à la pose fermée, collider actif seulement fermé, mesh animé au
+>   pas fixe. Quatre mouvements en extras (`battant`, `coulisse`, `monte`,
+>   `descend`), groupes de vantaux, et portes `auto` qui s'ouvrent devant qui
+>   s'approche — joueur OU Costard, le bake de navigation les traversant.
+> - **Le niveau passe de 5 boîtes grises à 20 vantaux** : sas d'entrée à
+>   portes automatiques vitrées, va-et-vient « PRIVÉ » de la réserve, rideau
+>   métallique de la carte Argent, portes doubles Or/sortie/coupe-feu, quatre
+>   portes de bureau, porte capitonnée du Directeur. Un vantail est UN mesh à
+>   UN matériau (deux matériaux = deux primitives glTF = un groupe que le
+>   loader ne reconnaît plus), quincaillerie et verre pris dans sa propre
+>   texture (`tools/textures/generate_portes.py`).
+> - **Vitres réelles** (`vitre_*`, `VitreSystem`) : la transparence n'a jamais
+>   été interdite par l'invariant #5, qui porte sur le MODÈLE D'ÉCLAIRAGE —
+>   plusieurs docstrings de `lib_*.py` affirmaient le contraire et ont privé le
+>   niveau de verre pendant tout N9. Cloisons vitrées de l'étage et panneaux du
+>   sas CASSABLES (`pv`), fenêtres sur la ville et verrières de la galerie
+>   incassables et sans collider (`solide: false` — un collider au plafond
+>   serait pris pour le sol par le bake de navigation). Les verrières étaient
+>   jusqu'ici fermées par un panneau blanc OPAQUE : le ciel de nuit ne s'y
+>   voyait pas, contrairement à ce qui avait été annoncé à la passe précédente.
+> - **Rayon surgelés**, promis par le plan depuis le premier jour et jamais
+>   construit : six armoires à portes vitrées contre le mur ouest dans le
+>   prolongement du frais, deux bacs congélateurs à couvercles vitrés, douze
+>   marques inventées de plus (`prd_surgeles`, atlas qui porte à la fois des
+>   faces et deux bandes), bandeau et lumière froide. Casser une vitre lâche
+>   du givre (`givre: true`).
+> **Budget de lots, remesuré en jeu à quinze points de vue** : ce qui ne
+> fusionne jamais coûte par objet DANS LE CÔNE, occultation comprise. Vingt
+> vantaux coûtaient jusqu'à 13 lots dans une vue, le verre découpé en cellules
+> jusqu'à 6, et les `use_*` n'avaient AUCUN élagage (21 lots depuis les
+> caisses, dont une trousse à 150 m). Remèdes : `BatchedMesh` par matériau pour
+> les vantaux (6 lots pour 20), un seul lot pour tout le verre, élagage à 48 m
+> des `use_*`. Pire vue mesurée **188/200**, contre 219 avant ces trois
+> correctifs et 198 avant toute la passe — tableau dans
+> [Ce que coûte une image](docs/systems/cout-de-rendu.md#ce-qui-ne-fusionne-jamais).
+> Mesuré aussi : `validate_level.py --strict` 0 erreur et 7 warnings connus,
+> `audit_niveau.py` à zéro partout, plan de masse relié, graphe de navigation
+> qui traverse sas, va-et-vient et portes de bureau, `pnpm build` propre,
+> `pnpm test` 282/282. **Non vérifié** : jouer — la sensation d'une porte qui
+> s'ouvre devant soi, casser une vitre au fusil, le combat derrière les
+> cloisons vitrées de l'étage.
+>
+> **Deuxième passe en direct dans Blender (2026-09-18, soir), EN ATTENTE DU
+> VERDICT DE PLAYTEST.** Retours : lampadaires mal placés devant l'entrée,
+> secrets incompréhensibles, couloir des bureaux qui débouche en hauteur sur
+> les rayons, Costards qui apparaissent dans les props, accès au Directeur
+> incohérent — et deux envies : un ÉTAGE de bureaux avec le Directeur au bout,
+> une skybox. Tout est à la source (`plan_de_masse.py`, `build_niveau.py`), bâti
+> dans la session live :
+> - **Étage des bureaux** (z = 4, au-dessus d'un vide) : escalier de service
+>   derrière la porte Or (collider en rampe lisse, marches rendues à ±10 cm),
+>   couloir aux fenêtres de nuit, quatre bureaux derrière des cloisons
+>   (vidéosurveillance, comptabilité, RH, salle de pause), et au bout le
+>   **bureau du Directeur** (son portrait est le présentateur reptilien du mur
+>   d'écrans), dont l'issue de secours termine le niveau. `poser()` place tout
+>   meuble d'après ses VRAIES cotes et le côté où regarde sa façade.
+> - **Raccourci** de plain-pied, fermé par une **porte coupe-feu** à sens
+>   unique (`PORTES_SENS_UNIQUE` au plan, bouton hors de portée côté rayons).
+>   Nouveau concept moteur : la porte LIBRE (`use_*` avec `target` sans
+>   `requires`, `onDoorUse`, testé).
+> - **Secrets réels**, au lieu de volumes au sol qu'on traversait en passant :
+>   labo derrière un pan de mur que le photomaton efface ; campement sur le
+>   toit des gondoles (caisse, puis deux allées à sauter) ; couvée reptilienne
+>   dans le local VMC, par la bouche au-dessus d'un distributeur (l'ancienne
+>   chaîne passait par un frigo de 2,20 m, infranchissable). Récompense dans
+>   chacun. `plan.PASSAGES` rétrécit une façade commune à une vraie porte.
+> - **Spawns recalés à la construction** (`recaler_spawns`) : posés sur le sol
+>   réel (quai à 3 m, rampe) puis écartés des colliders et des props, chaque
+>   déplacement au journal ; onze l'étaient. L'audit a un contrôle « spawns
+>   encombrés ».
+> - **Skybox de nuit** : `LevelDef.ciel`, cubemap en `scene.background`
+>   (`render/ciel.ts`, `tools/textures/generate_ciel.py`, docs/systems/rendu.md#ciel).
+> - Lampadaires : deux encadrent l'entrée, tête vers elle, les autres dans les
+>   files de places. Armoires et fauteuils de bureau n'ont plus de rayures de
+>   chantier (bandes de bordure projetées au hasard).
+> **Budget de lots, le point à surveiller** : 188 lots de décor (187 avant) ;
+> pire vue mesurée **198/200** (haut de la rampe de sortie vers le sud), à
+> cause de ce qui ne fusionne jamais — le ciel, deux portes, six récompenses.
+> La fusion groupe par matériau ET jeu d'attributs : un mesh sans `Col` ne
+> rejoint pas un mesh qui en porte un. Un matériau neuf dans une cellule de
+> 48 m coûte un lot : habiller une cachette avec la matière de la pièce
+> qu'elle prolonge. Mesuré : audit à zéro partout (spawns compris),
+> `validate_level.py --strict` 0 erreur et 7 warnings (tous connus), graphe de
+> navigation relié (escalier, étage, Directeur, cachettes ; pas les toits),
+> `pnpm build` propre, `pnpm test` 226/226. **Non vérifié** : jouer — le saut de
+> toit en toit, la porte coupe-feu à la vraie touche E, le combat à l'étage.
+>
+> **Reprise de la carte en direct dans Blender (2026-09-18), EN ATTENTE DU
+> VERDICT DE PLAYTEST.** Retour : « des incohérences entre le parking souterrain
+> et le couloir des bureaux, beaucoup de props mal placés à l'électroménager ».
+> **Méthode décidée avec l'utilisateur** : on travaille dans le Blender OUVERT
+> via le MCP (regarder à hauteur d'œil, corriger, re-regarder), mais chaque
+> correction va dans les scripts, et `build_niveau.py` est relancé DANS la
+> session live (≈ 10 s), jamais en headless. Le `.blend` reste un produit
+> régénérable. Ce qui a été trouvé en regardant, et corrigé à la source :
+> 1. **13 jonctions sur 21 ouvraient sur le vide** : deux voisins aux plafonds
+>    de hauteurs différentes, façade percée sur toute la hauteur — 6,5 m aux
+>    deux rampes du souterrain, d'où l'on voyait PAR-DESSUS le toit du parking.
+>    `poser_linteaux` pose des linteaux (et des impostes au-dessus des portes)
+>    RENDUS SEULEMENT, sans collider : la règle « aucun linteau » du blockout
+>    visait le bake de navigation, qu'un mesh sans collider ne touche pas.
+> 2. **Plafond d'une rampe = pente**, plus un plat au point haut ; **le sol
+>    d'une rampe porte des UV** (il sortait en gris uni). Rampes du souterrain en
+>    béton, secteur personnel (couloir de direction, montée et couloir de
+>    service) en béton et plâtre usé. Les couloirs ont des luminaires visibles
+>    (la lumière sortait de nulle part). Rampes gardées à 37°, sur décision.
+> 3. **Souterrain redessiné sur UNE trame** : piliers tous les 8 m, places de
+>    5 m perpendiculaires aux allées, voitures DANS les places (elles étaient
+>    en travers de l'allée), rampe de sortie encadrée par deux piliers.
+> 4. **Électroménager recomposé par zone** : l'entrée dégagée (une étagère et
+>    trois téléviseurs AU SOL y barraient le passage), le mur d'écrans
+>    autonome face à l'entrée — `suit_el2/3/5` sont VRAIMENT derrière,
+>    `suit_el1` VRAIMENT dans une cabine (vérifié contre les colliders ; ni
+>    l'un ni l'autre n'était vrai avant). Téléviseurs Kenney tournés vers la
+>    salle (ils regardaient le mur depuis N9 : ils font face au −y local comme
+>    le reste de la bibliothèque, donc `rot 90` contre un mur ouest). Cabines
+>    où l'on entre (un collider plein fermait leur ouverture), rangées
+>    d'appareils au collider à leur silhouette (un bloc de 1,90 m arrêtait les
+>    tirs au-dessus des lave-linge). Carte Or dans la cabine nord-est, ouverte
+>    au sud : la carte est un repère plat, vue par la tranche sinon.
+> **Piège payé une fois, corrigé** : `audit_niveau.py` désactivait tout le
+> décor pour ses rayons sans le restaurer — sans effet en headless, mais dans
+> une session ouverte l'export suivant (`use_visible`) n'écrivait que les
+> colliders (722 Ko de `.glb`). Il restaure maintenant l'état. **Autre piège** :
+> la session Blender ouverte peut être PLUS VIEILLE que le `.blend` sur disque
+> (une reconstruction headless ne la recharge pas) — vérifier avant de
+> sauvegarder depuis elle. Mesuré : 0 trou, 0 bord ouvert, 0 interpénétration,
+> 0 objet flottant ; `validate_level.py --strict` 0 erreur et les 9 warnings
+> déjà connus ; 187 lots de décor, pire vue mesurée 190/200 (haut de la rampe
+> de sortie) ; graphe de navigation relié partout où il faut ; `pnpm test`
+> 224/224. **Non vérifié** : le ressenti en jouant. **Écart connu, pas
+> corrigé** : le couvert « pilier » déclaré pour `suit_so4` n'existe pas (ni
+> avant ni après) ; `MAX_STEP_HEIGHT` du graphe (1,0 m) dépasse la marche des
+> ennemis (0,35 m), d'où les 5 cm de marge sur les colliders d'appareils.
+>
+> **Props physiques — livrés (2026-09-17), corrigés après playtest
+> (2026-09-18).** Un préfixe `prop_*` donne au niveau du mobilier qui BOUGE :
+> corps dynamique Rapier libre, poussable par le joueur et les ennemis (les deux
+> character controllers appliquaient déjà des impulsions aux corps dynamiques),
+> cassable au tir si le `.glb` lui donne des `pv`. Runtime :
+> `game/level/props.ts` (`PropSystem`, reconstruit à chaque chargement comme le
+> graphe de navigation et le pool de lampes), branché aux quatre moments de la
+> boucle (`snapshotPrevious` / `update(hitEvents)` avant `physics.step` /
+> `syncFromPhysics` après / `interpolate` au taux d'affichage, APRÈS le bloc
+> caméra). Destruction = collider et corps DÉSACTIVÉS (jamais retirés du monde,
+> voir l'ADR), mesh caché, évènement lu par `updateFx` qui pose les débris et le
+> son (`prop_break_wood`/`prop_break_glass`, même pipeline Python que les 12
+> autres). **Groupe de collision `PROP` séparé de `WORLD`**, décision centrale
+> de l'[ADR 0030](docs/decisions/0030-props-dynamiques.md) : la ligne de vue
+> ennemie et le bake du graphe de navigation filtrent sur `WORLD` seul et sont
+> calculés UNE FOIS au chargement — un prop en `WORLD` laisserait, une fois
+> poussé, un trou de navigation et un bloqueur de vue fantômes. Conséquence
+> assumée : **un prop ne protège pas** (les balles ennemies le traversent).
+>
+> **Deux corrections après le premier playtest (« je n'ai pas trouvé de
+> physique »), toutes deux dans la révision de l'ADR 0030 :**
+> 1. **Placement.** Les six props du premier jet étaient tous dans deux espaces
+>    à l'écart ; le hub — 48 m qu'on est OBLIGÉ de parcourir — n'en portait
+>    aucun. Le placement passe maintenant par une table unique
+>    (`PROPS_PHYSIQUES` dans `build_niveau.py`, appelée pour TOUT espace depuis
+>    `main()`) couvrant les dix espaces : **51 props**, dont des piles de 2-3
+>    qui s'écroulent. Règle qui manquait : *un prop doit être sur le chemin, pas
+>    dans une pièce qu'on peut sauter.*
+> 2. **Le modèle de coût annoncé était FAUX.** « Un lot par prop visible » avait
+>    été mesuré dans une pièce close. La vérité est *un lot par prop dans le
+>    CÔNE DE VUE* : three.js n'élimine que par le cône, jamais par occlusion, et
+>    un prop ne peut pas rejoindre un lot fusionné. Mesuré : 37 props sur 51
+>    dessinés depuis le spawn du parking, **210 lots pour un budget de 200**.
+>    Corrigé par un **élagage par distance** (`PROP_RENDER_DISTANCE_SQ`, 36 m)
+>    dans `PropSystem.interpolate` — coût retombé à **+6 lots à la galerie, +8
+>    au hub, +6 au spawn**. Ce qui compte n'est donc pas le nombre total de
+>    props mais leur DENSITÉ locale.
+>
+> **Piège d'export, payé une fois (2026-09-18)** : un `.glb` livré au jeu
+> contenait TOUTE la bibliothèque `_LIB` — 1 153 nœuds de trop, 47 Mo au lieu de
+> 29, tous les patrons d'assets empilés à l'origine du monde — alors que le
+> `.blend` était sain. Cause : un export qui ne passe pas par
+> `tools/blender/export_level.py`, seul endroit qui pose `use_visible=True`
+> (l'interface de Blender ne coche pas cette case par défaut). Un `.glb` faux ne
+> lève RIEN en jeu, il se charge. `export_level.py` vérifie donc désormais le
+> fichier qu'il vient d'écrire et échoue sur tout nœud hors du view layer ou
+> issu de `_KIT`/`_LIB` — garde-fou testé contre la vraie reproduction du
+> défaut. **Si la ligne `[export] contenu vérifié` n'apparaît pas, le `.glb`
+> n'est pas fiable.**
+>
+> Vérifié en jeu : 51 props chargés aux bonnes cotes, budget mesuré à trois
+> points (pire point du niveau : la galerie à 195 lots, dont 189 de décor
+> pré-existant), et surtout **une pile de trois cartons renversée en marchant
+> dedans par le VRAI chemin de rejeu d'input** (carton du bas poussé de 54 cm,
+> celui du milieu de 66 cm, celui du haut tombé de 1,24 m à 0,30 m et projeté à
+> 1,94 m). `validate_level.py --strict` : 0 erreur, 9 warnings tous
+> pré-existants. `audit_niveau.py` : 0 trou, 0 bord ouvert, 0 interpénétration,
+> 0 objet flottant — il a trouvé 5 encastrements de props contre du décor déjà
+> posé, tous corrigés. `pnpm build` propre, `pnpm test` vert (224/224).
+> **Non vérifié** : tirer réellement à la souris sur une caisse, et la sensation
+> à la manette/au clavier (verrouillage du pointeur hors de portée de
+> l'automatisation, même limitation que d'habitude).
 
 > **Armes du joueur — vrais modèles (2026-09-13), EN ATTENTE DU VERDICT DE
 > PLAYTEST.** Pied-de-biche et pompe en 3D basse définition, tenus par les
@@ -155,6 +392,25 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 > capter les néons. Résolution interne inchangée (invariant #4). Détail :
 > ADR 0028, section « Révision du 2026-09-14 ».
 
+> **Playtest complet du niveau v2 (2026-09-16) : « y a encore beaucoup de
+> boulot ».** Retour après la première traversée de bout en bout : trop
+> d'éléments pas à leur place ou en collision, et des trous qui font tomber
+> dans le vide. Nouvel outil `tools/level_v2/audit_niveau.py` (trous de sol,
+> bords ouverts sur le vide, interpénétrations, objets flottants) — à lancer
+> APRÈS chaque construction, au même titre que `validate_level.py`. Il a
+> trouvé les deux vraies chutes, toutes deux structurelles : le mur nord des
+> rayons percé sur toute sa hauteur sous le couloir de service (un passage à
+> sens unique reçoit désormais un PARAPET côté bas), et la porte de sortie qui
+> donnait sur rien — la fin de niveau n'était armée que pour l'ancienne porte
+> `door_e_exit` (`estPorteDeSortie`, plus un palier derrière la sortie).
+> Un **filet de chute** (`game/session/fallRescue.ts`) remet le joueur sur le
+> dernier sol touché au-delà de 12 m de chute, et écrit les coordonnées du trou
+> en console : un trou coûte désormais trois secondes, plus une partie.
+> État de l'audit après cette passe : **0 trou, 0 bord ouvert, 0
+> interpénétration, 0 objet flottant**. Ce qui reste, et que l'audit ne sait
+> PAS voir : la composition, l'échelle, ce qui « fait faux » à l'œil — donc un
+> deuxième playtest.
+>
 > **Chantier Niveau v2 — En cours (2026-09-13) : N0, N1, N3, N4 (gate de
 > richesse PASSÉ), N5, N7 et N8 livrés (gate de STRUCTURE PASSÉ — l'utilisateur
 > a joué le blockout et validé), N6 validé, N2 presque (quatre licences à

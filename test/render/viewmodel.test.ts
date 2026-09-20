@@ -6,7 +6,15 @@ import { VIEWMODEL_TIMING as T, viewmodelAnimationAt, type ViewmodelAnimation } 
 const REPOS = 1e3;
 
 function clocks(partial: Partial<ViewmodelClocks>): ViewmodelClocks {
-  return { active: "shotgun", previous: "melee", sinceSwitch: REPOS, sinceMeleeFire: REPOS, sinceShotgunFire: REPOS, ...partial };
+  return {
+    active: "shotgun",
+    previous: "melee",
+    sinceSwitch: REPOS,
+    sinceMeleeFire: REPOS,
+    sincePistolFire: REPOS,
+    sinceShotgunFire: REPOS,
+    ...partial,
+  };
 }
 
 function anim(partial: Partial<ViewmodelClocks>): ViewmodelAnimation {

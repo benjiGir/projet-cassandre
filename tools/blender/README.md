@@ -13,6 +13,7 @@ Scripts headless. Aucun ne nécessite d'interface.
 | `inspect_kit.py` | vérifie le kit produit contre le contrat du projet |
 | `bake_vertex_lighting.py` | bake d'éclairage en vertex colors + rapport de plausibilité |
 | `validate_level.py` | vérifie un `.blend` de niveau contre le contrat du projet |
+| `../level_v2/audit_niveau.py` | cherche ce qui ne se voit qu'en jouant : trous de sol, bords ouverts sur le vide, décor encastré |
 | `export_level.py` | exporte en `.glb` avec les bons réglages (validation en étape séparée, voir la chaîne ci-dessous) |
 | `lib_helpers.py` | **briques** de la bibliothèque v2 (matériaux texturés, boîtes multi-parties à UV 64 px/m, trims, étiquettes, proxies, subdivision) — pas exécutable seul |
 | `lib_rayons.py` | **bibliothèque d'assets** du niveau v2 : gondoles, têtes de gondole, bacs, frigos, caddies, signalétique, produits, et le générateur de garnissage — pas exécutable seul |
@@ -157,6 +158,67 @@ Le `.blend` du kit est un **artefact reproductible**, pas un fichier qu'on édit
 à la main : toute modification du kit passe par `kit_spec.py`, puis
 `build_kit.py`, puis re-bake. Même règle pour un niveau : toute modification
 de plan passe par `level_spec.py`, puis `build_level.py`, puis re-bake.
+
+## Exporter : toujours par le script, jamais par l'interface
+
+`export_level.py` ne se contente pas d'appeler l'exporteur glTF : il pose
+`use_visible=True`, ce qui est la SEULE chose qui garde les collections sources
+(`_KIT`, `_LIB`) hors du fichier livré.
+
+Un `File > Export > glTF 2.0` depuis l'interface de Blender n'a pas cette case
+cochée par défaut. Le 2026-09-18, un `.glb` livré au jeu contenait ainsi toute
+la bibliothèque : **1 153 nœuds de trop, 47 Mo au lieu de 29**, et tous les
+patrons d'assets empilés à l'origine du monde. Le `.blend`, lui, était sain.
+
+Ce qui rend ce défaut coûteux, c'est qu'il **ne lève rien** : le niveau se
+charge, se joue, et on cherche le bug ailleurs. `export_level.py` vérifie donc
+désormais le fichier qu'il vient d'écrire — tout nœud hors du view layer, ou
+appartenant à `_KIT`/`_LIB`, fait échouer l'export avec le compte exact.
+
+```bash
+blender -b assets_src/blender/niveau_v2.blend -P tools/blender/export_level.py -- --out public/assets/levels/niveau_v2.glb
+# [export] contenu vérifié : 2488 objets du view layer, aucun intrus, aucune fuite de _KIT/_LIB
+```
+
+Si cette ligne n'apparaît pas, le `.glb` n'est pas fiable.
+
+## Audit d'un niveau construit (`tools/level_v2/audit_niveau.py`)
+
+```bash
+blender -b assets_src/blender/niveau_v2.blend -P tools/level_v2/audit_niveau.py
+blender -b assets_src/blender/niveau_v2.blend -P tools/level_v2/audit_niveau.py -- --pas 0.25 --csv audit.csv
+```
+
+`validate_level.py` vérifie le CONTRAT (noms, grille, budgets). L'audit
+vérifie ce qu'on ne découvre sinon qu'en jouant, et que la construction
+headless produit en silence — il est né du premier playtest complet du niveau
+v2 (2026-09-16 : « trop d'éléments pas à leur place, en collision, des trous
+qui nous font tomber dans le vide ») :
+
+| Contrôle | Ce qu'il trouve |
+|---|---|
+| Trous de sol | une case praticable sans rien dessous — le joueur tombe |
+| Bords ouverts sur le vide | on sort d'un espace par le côté, et il n'y a rien : c'est là que sont les vraies chutes, pas dans le sol |
+| Interpénétrations | deux proxies de collision qui se traversent de plus de 12 cm |
+| Objets flottants ou enfoncés | une base de proxy loin du sol sous elle |
+
+L'audit regarde aussi les **`prop_*`**, qui n'ont pourtant aucun `col_*` : ils
+portent leur collider dynamique, construit à l'import depuis leur boîte
+englobante. Ils sont même le cas le plus urgent des trois derniers contrôles —
+un décor statique encastré fait juste moche, un prop encastré est violemment
+éjecté au premier pas de simulation. C'est exactement ce qu'il a trouvé à la
+première passe : un carton posé dans le collider d'un caddie placé au hasard.
+
+Trois pièges appris en l'écrivant, qui valent pour tout outil de ce genre :
+
+- **Ne regarder que les `col_*` réellement posés.** La bibliothèque `_LIB`
+  vit à l'origine, tous ses assets empilés : la compter donnait
+  15 000 interpénétrations qui n'existent pas.
+- **Partir de haut et chercher une face orientée vers le HAUT.** Un rayon
+  tiré à hauteur de genou commence à l'intérieur du premier canapé venu, n'en
+  voit que le dessous, et signale un trou là où l'on marche très bien.
+- **Un `col_hull_*` n'est pas sa boîte englobante.** Une rampe remplit sa
+  boîte à moitié : comparer des boîtes y invente des collisions.
 
 ## Ce que la validation contrôle
 

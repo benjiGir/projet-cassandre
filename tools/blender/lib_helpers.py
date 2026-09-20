@@ -16,13 +16,32 @@ TEX_DIR = os.path.join(ROOT, "assets_src", "textures")
 # et non un seul parce que chacun est PLEIN — huit bandes de 16 px occupent
 # exactement les 128 px d'une texture.
 TRIM = {}
-for _atlas in ("trim_hypermarche", "sig_bandeaux", "sig_facade"):
+for _atlas in ("trim_hypermarche", "sig_bandeaux", "sig_facade", "prd_surgeles"):
     TRIM.update(json.load(open(os.path.join(TEX_DIR, _atlas + ".json")))["bands"])
-# Même principe que les bandes ci-dessus : les trois atlas d'étiquettes
-# partagent un espace de noms, et c'est l'appelant qui choisit la texture.
+# Même principe que les bandes ci-dessus : les atlas d'étiquettes partagent un
+# espace de noms, et c'est l'appelant qui choisit la texture. `prd_surgeles`
+# porte les deux : des faces de produit ET deux bandes (le bandeau du rayon, le
+# givre), pour que tout le rayon surgelés ne coûte qu'un matériau.
 LABELS = {}
-for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans"):
+for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans", "prd_surgeles"):
     LABELS.update(json.load(open(os.path.join(TEX_DIR, _labels + ".json")))["labels"])
+# Vantaux de porte (`tools/textures/generate_portes.py`) : une case entière par
+# vantail, plus deux échantillons — `metal` pour la quincaillerie, `chant` pour
+# les tranches. Voir `_uv_porte`.
+PORTES_DESIGN = {}
+for _portes in ("portes_verre", "portes"):
+    for _nom, _meta in json.load(open(os.path.join(TEX_DIR, _portes + ".json")))["portes"].items():
+        PORTES_DESIGN[_nom] = dict(_meta, atlas=_portes)
+# Textures dont l'ALPHA est lu : le verre d'un vantail tient dans sa texture,
+# pas dans un second matériau (un `door_*` doit rester un seul mesh à un seul
+# matériau). La transparence est compatible avec l'invariant #5, qui porte sur
+# le modèle d'éclairage : `toLambert` recopie `transparent`/`opacity`.
+TEXTURES_ALPHA = frozenset({"portes_verre"})
+# Le verre des `vitre_*` : un aplat de la palette à 30 % d'opacité. Un seul
+# matériau pour TOUTES les vitres du niveau — le jeu les regroupe en un lot par
+# cellule, et une teinte unique rend l'ordre de mélange indifférent.
+VERRE_TEINTE = "#b5d2e8"
+VERRE_OPACITE = 0.3
 # Affiches de marques (`generate_affiches.py`) : un atlas de cases 5:8 et non
 # de cases carrées, d'où un mapper à part, `uv="affiche:<nom>"`.
 _AFF = json.load(open(os.path.join(TEX_DIR, "aff_affiches.json")))
@@ -30,6 +49,10 @@ AFFICHES = {nom: [c / _AFF["atlas_px"] for c in a["px"]] for nom, a in _AFF["aff
 
 
 def textured_material(texture: str) -> bpy.types.Material:
+    """Matériau à une texture. `texture="verre"` est le verre des vitres : la
+    palette, lue en aplat (`uv="aplat:#b5d2e8"`), à `VERRE_OPACITE`. Une
+    texture de `TEXTURES_ALPHA` voit son alpha branché : l'exporteur glTF écrit
+    alors `alphaMode: BLEND`, que le loader du jeu respecte."""
     name = f"mat_{texture}"
     mat = bpy.data.materials.get(name)
     if mat:
@@ -43,10 +66,18 @@ def textured_material(texture: str) -> bpy.types.Material:
     if "Specular IOR Level" in bsdf.inputs:
         bsdf.inputs["Specular IOR Level"].default_value = 0.0
     tex = nt.nodes.new("ShaderNodeTexImage")
-    tex.image = bpy.data.images.load(os.path.join(TEX_DIR, texture + ".png"), check_existing=True)
+    fichier = "palette" if texture == "verre" else texture
+    tex.image = bpy.data.images.load(os.path.join(TEX_DIR, fichier + ".png"), check_existing=True)
     tex.interpolation = "Closest"
     nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
     nt.nodes.active = tex
+    if texture == "verre":
+        bsdf.inputs["Alpha"].default_value = VERRE_OPACITE
+    elif texture in TEXTURES_ALPHA:
+        nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+    if texture == "verre" or texture in TEXTURES_ALPHA:
+        # Pour la vue de Blender seulement : l'export se décide sur le nœud Alpha.
+        mat.surface_render_method = "BLENDED"
     return mat
 
 
@@ -226,6 +257,55 @@ def subdivide(bm, target: float, passes: int = 6) -> None:
     bm.normal_update()
 
 
+def _uv_porte(nom: str, bounds):
+    """Un vantail : sa case entière sur les deux grandes faces, la couleur de
+    `chant` sur les tranches.
+
+    La grande face est celle dont la normale suit l'axe le plus MINCE de la
+    boîte (l'épaisseur du vantail). Vue de derrière, la case est retournée en
+    largeur : une plaque « DIRECTION » se lit à l'endroit des deux côtés, comme
+    une vraie plaque vissée sur chaque face.
+    """
+    meta = PORTES_DESIGN[nom]
+    x, y, w, h = meta["px"]
+    cx, cy = meta["chant"]
+    a = 128.0
+    u0, u1, v_bot, v_top = x / a, (x + w) / a, 1 - (y + h) / a, 1 - y / a
+    chant = ((cx + 0.5) / a, 1 - (cy + 0.5) / a)
+    x0, y0, z0, x1, y1, z1 = bounds
+    mince_x = (x1 - x0) < (y1 - y0)
+
+    def fn(face, uv):
+        n = face.normal
+        grande = abs(n.x) > 0.5 if mince_x else abs(n.y) > 0.5
+        for loop in face.loops:
+            c = loop.vert.co
+            if not grande:
+                loop[uv].uv = chant
+                continue
+            s = (c.y - y0) / (y1 - y0) if mince_x else (c.x - x0) / (x1 - x0)
+            # Face « arrière » : +x pour un vantail mince en x, -y sinon — même
+            # convention que `_uv_case` (vu depuis +x, +y part vers la gauche).
+            if (mince_x and n.x < 0) or (not mince_x and n.y > 0):
+                s = 1 - s
+            t = (c.z - z0) / max(z1 - z0, 1e-6)
+            loop[uv].uv = (u0 + s * (u1 - u0), v_bot + t * (v_top - v_bot))
+    return fn
+
+
+def _uv_quincaillerie(nom: str):
+    """Toute la géométrie au centre du pavé `metal` du vantail : la poignée
+    d'une porte partage ainsi le matériau de son vantail."""
+    meta = PORTES_DESIGN[nom]
+    x, y, w, h = meta["metal"]
+    u, v = (x + w / 2) / 128.0, 1 - (y + h / 2) / 128.0
+
+    def fn(face, uv):
+        for loop in face.loops:
+            loop[uv].uv = (u, v)
+    return fn
+
+
 def _mapper(uv: str, bounds, front: str):
     if uv == "world":
         return _uv_world
@@ -239,6 +319,10 @@ def _mapper(uv: str, bounds, front: str):
         return _uv_label(uv[6:], bounds, front)
     if uv.startswith("affiche:"):
         return _uv_affiche(uv[8:], bounds, front)
+    if uv.startswith("porte:"):
+        return _uv_porte(uv[6:], bounds)
+    if uv.startswith("quincaillerie:"):
+        return _uv_quincaillerie(uv[14:])
     raise ValueError(uv)
 
 
@@ -453,6 +537,48 @@ def kit_bounds(obj: bpy.types.Object) -> tuple[float, float, float]:
     recopier des cotes lues à la main dans le pack."""
     co = [v.co for v in obj.data.vertices]
     return tuple(max(c[i] for c in co) for i in range(3))
+
+
+# Matières de props — doit rester identique à `PROP_MATERIALS` dans
+# src/game/level/props.ts, et à `PROP_MATIERES` dans validate_level.py.
+PROP_MATIERES = ("bois", "carton", "verre", "metal")
+
+
+def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,
+         uv: str = "world", masse: float | None = None, pv: float | None = None,
+         matiere: str | None = None, **kw) -> bpy.types.Object:
+    """Mobilier PHYSIQUE `prop_<name>` : poussable, et cassable si `pv` est donné.
+
+    Trois différences avec `box`, toutes les trois nécessaires :
+
+    1. **Pas de subdivision.** Un prop BOUGE, donc il ne peut porter aucune
+       couleur d'éclairage cuite (elle serait juste dans la pose de départ).
+       Lui donner des sommets intérieurs ne servirait qu'à payer des triangles.
+       Il garde donc ses huit sommets, et `validate_level.py` s'en assure.
+    2. **Pas de `col_box` jumeau.** Le prop porte son propre collider
+       dynamique, construit par `loader.ts` depuis sa boîte englobante. Lui
+       poser un collider statique par-dessus le figerait dans le décor.
+    3. **Des custom properties** : `masse` (kg), `pv` (absent = indestructible),
+       `matiere` (son de casse et couleur des débris).
+
+    ATTENTION AU BUDGET : un prop ne rejoint jamais un lot de décor fusionné,
+    il se dessine seul. Chaque prop posé est un lot de dessin de plus, sur un
+    budget mesuré à 200 pour tout le niveau.
+    see: docs/reference/conventions-nommage.md#props-physiques
+    """
+    if matiere is not None and matiere not in PROP_MATIERES:
+        raise ValueError(f"{name}: matiere '{matiere}' inconnue ({', '.join(PROP_MATIERES)})")
+    # `subdiv` énorme : `subdivide` ne coupe que les arêtes plus longues que
+    # 1,5 × la cible, donc aucune ici — la boîte garde ses huit sommets.
+    obj = box(f"prop_{name}", bounds, texture, coll, uv=uv, subdiv=1e9,
+              front=kw.get("front", "-y"))
+    if masse is not None:
+        obj["masse"] = float(masse)
+    if pv is not None:
+        obj["pv"] = float(pv)
+    if matiere is not None:
+        obj["matiere"] = matiere
+    return obj
 
 
 def col_box(name: str, bounds, coll: bpy.types.Collection) -> bpy.types.Object:

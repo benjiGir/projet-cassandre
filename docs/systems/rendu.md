@@ -177,6 +177,33 @@ budget (`null` = tout rallumer), ce qui sert autant à mesurer qu'à juger une
 ambiance. Détail et chiffres : [ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
 et [Ce que coûte une image](cout-de-rendu.md).
 
+## Ciel
+
+Un niveau peut déclarer un ciel : `LevelDef.ciel`, nom d'un dossier de
+`public/assets/sky/`. `lifecycle.ts::applyLightRig` le pose en
+`scene.background` avec la lumière du niveau, et l'efface pour un niveau qui
+n'en a pas — la gym, un reset.
+
+C'est une **cubemap**, pas un mesh : three.js dessine le fond avec son propre
+shader, en un seul appel, derrière tout le reste. L'invariant #5 (Lambert
+seulement) porte sur les matériaux du monde, qu'aucun ciel ne touche. Filtrée
+au plus proche dans les deux sens et sans mipmaps (`render/ciel.ts`) : un ciel
+n'est jamais vu en fuyante, il n'a pas le défaut de réduction que
+l'[ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md) corrige sur
+les sols.
+
+Le seul ciel existant, `nuit`, couvre le niveau v2 : il se voit au-dessus du
+parking d'arrivée, à ciel ouvert, et derrière les verrières de la galerie.
+Six faces de 256 px générées par `tools/textures/generate_ciel.py`, chaque
+pixel calculé depuis sa DIRECTION et non sa place dans la face — c'est ce qui
+raccorde l'horizon d'une face à l'autre sans couture. Peu de couleurs et une
+trame ordonnée, comme les ciels du Build engine ; un horizon qui dit où l'on
+est (une ville de province la nuit, château d'eau, ligne haute tension, antenne
+relais) et une lune fermée par une fermeture éclair, celle des piles « Lune
+truquée » du rayon bazar.
+
+Coût : un lot de dessin par image, là où le fond n'était qu'une couleur.
+
 ## Découplage entre render et game
 
 Tous les modules de `src/render/` qui rendent des effets de jeu (`fx.ts`,
