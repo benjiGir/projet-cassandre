@@ -146,59 +146,51 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 
 ## Phase courante
 
-> **Sons : de vrais enregistrements CC0 (2026-09-20), DEUXIÈME ÉCOUTE EN
-> ATTENTE.** Quatorze des vingt SFX ne sont plus synthétiques : le pompe et le
-> pistolet sont de VRAIES armes (Winchester Model 12, Colt 1911 — « The Free
-> Firearm Sound Library », CC0), le reste vient des packs audio CC0 de Kenney.
-> La recette est dans `tools/audio/import_sfx.py` (quelle prise devient quel
-> son), les packs au registre `assets_src/LICENCES_ASSETS.md`, les archives
-> brutes dans `assets_src/cc0_raw/` (gitignoré).
+> **Son : studio de synthèse, intégré au jeu (2026-09-20), EN ATTENTE D'UNE
+> ÉCOUTE.** Tout le son est désormais **synthétisé par code** — aucun
+> échantillon externe, aucune question de licence. Studio sous `tools/audio/`
+> (`synth.py` DSP, `recipes.py` les recettes, `render_sfx.py`,
+> `analyze_sfx.py`, `build_sprite.py`, `audition.py`), plus l'agent
+> `sound-forge` et cinq skills. Le jeu charge un **audio sprite** unique
+> (`public/assets/audio/sfx/sfx.{ogg,m4a,json}`) au lieu d'un fichier par son.
+> `SFX_TABLE` raccorde les identifiants du JEU aux noms de RECETTES — les deux
+> vocabulaires restent séparés, et c'est le seul endroit à toucher.
 >
-> **La première passe a été REJETÉE à l'écoute** (« c'est trop bizarre le son
-> des armes, je n'aime pas du tout »). Trois causes mesurées, dont deux étaient
-> des défauts de la chaîne — tableaux de mesures dans
-> [HUD et audio](docs/systems/hud-audio.md#pourquoi-cette-chaîne) :
-> 1. **La somme stéréo creusait le son.** Ces prises sont au couple ESPACÉ
->    (0,89 ms entre canaux, corrélation −0,03) : les additionner est un filtre
->    en peigne, qui retirait **5 à 6 dB entre 60 et 600 Hz**. `un_canal()`
->    mesure maintenant la corrélation et garde UN canal quand elle est faible.
-> 2. **Le rééchantillonnage n'avait pas de filtre anti-repliement.** À
->    22 050 Hz par simple interpolation, tout ce qui dépassait 11 kHz revenait
->    se plier dans l'aigu (+2,8 dB mesurés en 9–11 kHz) : on perdait le
->    claquement ET on le remplaçait par du grésillement. Sortie à **44 100 Hz**,
->    `passe_bas()` avant toute décimation. Vingt sons pour moins de 400 Ko.
-> 3. **Les prises n'ont AUCUN grave et saturent** — 0,1 % de l'énergie sous
->    200 Hz, ~60 % entre 600 et 1500 Hz, et 2 à 5 ms d'échantillons à pleine
->    échelle dans CHAQUE fichier de la bibliothèque. Ça ne se corrige pas par
->    traitement, ce qui manque n'est pas dans le fichier : `Grave` le
->    reconstruit sous la prise (sinusoïde qui plonge + bruit filtré, graine
->    fixe). Part de l'énergie 60–200 Hz : **0,1 → 26,9 %** au pompe, **0 →
->    17,1 %** au pistolet, facteur de crête inchangé (23,5 dB).
+> **Pourquoi la synthèse : deux passes d'échantillons CC0 ont été rejetées à
+> l'écoute**, et les mesures ont tranché. D'abord « c'est trop bizarre le son
+> des armes » : somme stéréo d'un couple ESPACÉ qui retirait 5-6 dB entre 60 et
+> 600 Hz, rééchantillonnage sans filtre anti-repliement (+2,8 dB de
+> grésillement en 9-11 kHz), et surtout des prises SANS AUCUN GRAVE (0,1 % de
+> l'énergie sous 200 Hz) qui saturaient. Puis « le pistolet et le pompe, on
+> dirait le même son » : **0,976** de corrélation de timbre — et TOUTES les
+> paires de la bibliothèque tenaient au-dessus de **0,840**, un 12 contre un
+> .22 compris. Le stand et les micros écrasaient l'arme. Détail chiffré dans
+> [HUD et audio](docs/systems/hud-audio.md#assets-sonores).
 >
-> Corrigé aussi côté jeu : `SfxDef.pitch` descend la variation de hauteur à
-> ±2,5 % sur les armes (±8 % par défaut). Sur un vrai enregistrement, ±8 % font
-> presque un ton et demi — l'arme change de calibre à chaque tir.
-> **Le pied-de-biche est FABRIQUÉ** (`tools/audio/synth_sfx.py`, nouveau) : il
-> sortait de `knifeSlice2.ogg`, et ça s'entendait — « le pied de biche sonne
-> comme un coup de couteau », littéralement vrai. Aucun pack du projet n'a de
-> son de BALANCEMENT. Un `Souffle` est du bruit dont la COULEUR bouge (passe-
-> bande à variable d'état, centre qui monte au passage puis redescend) ;
-> médiane spectrale 5823 Hz la lame → 885 Hz la barre. **Ne pas remettre
-> `melee_fire` dans la table d'`import_sfx.py`** : le prochain import
-> réécrirait la barre en lame.
-> **Six sons restent synthétiques SANS RECETTE**, produits par des scripts
-> jetables jamais versionnés — dette connue, ils rejoindront `synth_sfx.py` un
-> par un : les quatre vocalisations de Costard (aucun pack CC0 n'a de
-> grognements) et les deux portes mécaniques du niveau v2 (porte automatique,
-> rideau métallique).
-> **Un agent n'entend pas** : `tools/audio/audition.py` écrit une page locale
-> (`http://localhost:5173/audition/`) qui met côte à côte, par son, les
-> versions déjà écoutées (dont celle qui a été rejetée), celle qui est
-> installée, des variantes de TRAITEMENT et des variantes de PRISE, toutes
-> passées par la même chaîne et le même encodeur. Le verdict d'écoute se note
-> dans la table d'`import_sfx.py`. **Garder les versions précédentes est le
-> point clé** : sans elles, une écoute dit si un son plaît, jamais si on a
-> progressé depuis la dernière.
+> **La mesure qui garde cette porte fermée** : spectre moyen des 250 premières
+> ms, 30 bandes log 100 Hz-16 kHz, moyenne retirée, corrélation. Deux sons qui
+> doivent se distinguer restent **sous 0,55**. Sur le catalogue synthétisé,
+> `shotgun`/`crowbar_swing` est à −0,024. `analyze_sfx.py --mask` fait l'autre
+> contrôle, celui de LISIBILITÉ : la télégraphie d'un Costard ne doit pas être
+> masquée par le tir du joueur — contrainte de gameplay, pas de goût.
+>
+> **Pièges payés et refermés** : `ffmpeg` n'est pas installé, `build_sprite.py`
+> se rabat donc sur `oggenc`/`afconvert` (livré avec macOS). L'atlas SATURAIT —
+> marge de crête à 0,95 alors qu'un encodeur avec perte dépasse son entrée,
+> d'autant plus que `crush` fabrique des marches nettes : +2,6 dB mesurés, une
+> vingtaine d'échantillons écrêtés sur la transitoire du pompe. Ramenée à 0,80.
+> Le décodeur du navigateur est le SEUL qui ne rabote pas à 1,0, donc le seul
+> qui le montre. Vérifié aussi, et sain : l'AAC n'ajoute pas de délai
+> d'amorçage ici, les positions du sprite valent pour les deux formats.
+>
+> **Un agent n'entend pas.** `tools/audio/audition.py` écrit une page locale
+> (`http://localhost:5173/audition/`) : tout le catalogue à un clic par son,
+> variantes de seed comprises, avec les mesures sous chaque bouton. En jeu,
+> `cassandre.sfx.liste()` dit quel identifiant pointe sur quelle recette et si
+> elle est présente, `cassandre.sfx.joue(id)` déclenche n'importe quel son sans
+> provoquer la situation. Vérifié en jeu : atlas chargé, 31 sons, **zéro
+> identifiant orphelin sur 20**, signal réel mesuré au bus maître pour six
+> sons, sans saturation. **Non vérifié** : comment ça sonne.
 >
 > **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 > DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies

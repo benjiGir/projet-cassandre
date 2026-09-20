@@ -1,0 +1,134 @@
+{
+  "src": [
+    "sfx.ogg",
+    "sfx.m4a"
+  ],
+  "sprite": {
+    "cart_roll": [
+      0.0,
+      1520.0
+    ],
+    "crowbar_flesh": [
+      1640.0,
+      350.0
+    ],
+    "crowbar_metal": [
+      2110.0,
+      820.0
+    ],
+    "crowbar_swing": [
+      3049.9,
+      170.0
+    ],
+    "door_locked": [
+      3339.9,
+      520.0
+    ],
+    "door_open": [
+      3979.9,
+      1320.0
+    ],
+    "door_shutter": [
+      5419.9,
+      1920.0
+    ],
+    "door_slide": [
+      7459.9,
+      1670.0
+    ],
+    "door_unlock": [
+      9249.8,
+      630.0
+    ],
+    "enemy_hurt": [
+      9999.8,
+      400.0
+    ],
+    "impact_concrete": [
+      10519.8,
+      520.0
+    ],
+    "impact_flesh": [
+      11159.8,
+      250.0
+    ],
+    "impact_glass": [
+      11529.8,
+      784.6
+    ],
+    "impact_metal": [
+      12434.4,
+      670.0
+    ],
+    "pa_click": [
+      13224.3,
+      350.0
+    ],
+    "pickup_ammo": [
+      13694.3,
+      360.0
+    ],
+    "pickup_health": [
+      14174.3,
+      710.0
+    ],
+    "pickup_key": [
+      15004.3,
+      1050.0
+    ],
+    "pistol_fire": [
+      16174.2,
+      340.0
+    ],
+    "prop_break_wood": [
+      16634.2,
+      640.0
+    ],
+    "secret_found": [
+      17394.2,
+      1660.0
+    ],
+    "shell_drop": [
+      19174.1,
+      380.0
+    ],
+    "shotgun": [
+      19674.1,
+      760.0
+    ],
+    "shotgun_pump": [
+      20554.1,
+      340.0
+    ],
+    "suit_alert": [
+      21014.1,
+      600.0
+    ],
+    "suit_death": [
+      21734.1,
+      900.0
+    ],
+    "suit_shot": [
+      22754.0,
+      240.0
+    ],
+    "suit_telegraph": [
+      23114.0,
+      640.0
+    ],
+    "ui_confirm": [
+      23874.0,
+      210.0
+    ],
+    "ui_deny": [
+      24204.0,
+      180.0
+    ],
+    "ui_hover": [
+      24504.0,
+      60.0
+    ]
+  },
+  "pool": 12,
+  "_note": "Genere par tools/audio/build_sprite.py. Ne pas editer a la main \u2014 modifier recipes.py et regenerer."
+}

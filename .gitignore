@@ -24,5 +24,6 @@ __pycache__/
 # Captures de contrôle : régénérables par tools/blender/render_ingame.py
 /renders/
 public/audition/
-public/audition_avant/
-public/audition_rejete/
+# Atlas intermediaire du sprite audio : seuls les .ogg/.m4a encodes partent
+# dans le jeu, le WAV se regenere par tools/audio/build_sprite.py
+public/audio/**/*.wav

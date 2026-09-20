@@ -11,10 +11,15 @@ import type { DoorMovement } from "../game/level/doors";
  *
  * N'est appelé que depuis `updateFx` — jamais le pas fixe (invariant #2).
  *
- * Quatorze de ces vingt sons sont de vrais enregistrements CC0 depuis le
- * 2026-09-20 (`tools/audio/import_sfx.py` dit lequel vient d'où) ; les quatre
- * vocalisations de Costard et les deux portes mécaniques sont encore
- * synthétiques, faute d'équivalent CC0.
+ * **Tout le son est SYNTHÉTISÉ par code** depuis le 2026-09-20 : le studio
+ * `tools/audio/` rend les recettes de `recipes.py` et les empaquette en un
+ * AUDIO SPRITE — un seul fichier, un seul décodage, une seule requête. Ce
+ * module ne connaît donc plus de fichiers par son : il charge `sfx.json`,
+ * qui dit où chaque son commence dans l'atlas et combien de temps il dure.
+ *
+ * Deux passes tirées d'échantillons CC0 ont été rejetées à l'écoute avant ce
+ * choix ; la dernière parce que deux armes mesuraient 0,976 de ressemblance
+ * de timbre. Un son fabriqué se règle, un enregistrement se subit.
  *
  * see: docs/systems/hud-audio.md#assets-sonores
  */
@@ -48,8 +53,16 @@ export type SfxId =
   | "prop_break_glass";
 
 interface SfxDef {
-  /** Nom de fichier SANS extension, résolu en `${SFX_BASE_PATH}/<file>.{ogg,m4a}`. */
-  file: string;
+  /**
+   * Clé dans le sprite, telle que `recipes.py` nomme la recette.
+   *
+   * L'identifiant du JEU et le nom de la RECETTE sont volontairement deux
+   * choses : le jeu parle de `melee_fire`, le studio de `crowbar_swing`, et
+   * aucun des deux n'a à se plier au vocabulaire de l'autre. C'est cette
+   * table qui les raccorde, et c'est le seul endroit à toucher si une recette
+   * est renommée.
+   */
+  sprite: string;
   /** Volume de base [0..1], avant tout scale passé à `playSfx`. */
   volume: number;
   /**
@@ -67,70 +80,68 @@ interface SfxDef {
 
 const SFX_BASE_PATH = assetUrl("assets/audio/sfx");
 
-/** Nombre d'instances `Howl` par son, rotation circulaire (skill : N = 4 à 8 pour les armes). */
-const POOL_SIZE = 8;
+/** Repli si le manifeste ne dit pas combien de lectures simultanées prévoir. */
+const POOL_LECTURES = 12;
 
 /** Variation de pitch systématique sur tout son répété — ±8 %, cf. skill `audio-sfx-pipeline`. */
 const PITCH_VARIATION = 0.08;
 
 const SFX_TABLE: Record<SfxId, SfxDef> = {
-  melee_fire: { file: "melee_fire", volume: 0.7, pitch: 0.04 },
-  shotgun_fire: { file: "shotgun_fire", volume: 1.0, pitch: 0.025 },
-  impact_concrete: { file: "impact_concrete", volume: 0.8 },
+  melee_fire: { sprite: "crowbar_swing", volume: 0.7, pitch: 0.04 },
+  shotgun_fire: { sprite: "shotgun", volume: 1.0, pitch: 0.025 },
+  impact_concrete: { sprite: "impact_concrete", volume: 0.8 },
   // Pas encore utilisés cette phase (`HitEvent.material` vaut toujours
   // "concrete", voir `PLACEHOLDER_MATERIAL` dans `game/player/weapons.ts`) :
-  // déclarés dès maintenant pour qu'un futur système de tag de matériau
-  // n'ait qu'à déposer les fichiers, sans toucher au code.
-  impact_metal: { file: "impact_metal", volume: 0.8 },
-  impact_flesh: { file: "impact_flesh", volume: 0.8 },
+  // les recettes existent, un futur système de tag de matériau n'aura rien à
+  // ajouter ici.
+  impact_metal: { sprite: "impact_metal", volume: 0.8 },
+  impact_flesh: { sprite: "impact_flesh", volume: 0.8 },
   // Feedback ennemi Costard (Phase 3, voir `enemy-state-machine`). Les
   // quatre se répètent potentiellement plusieurs fois par scène (plusieurs
   // Costards, plusieurs coups encaissés, plusieurs télégraphies avant un
   // kill) : aucun n'est le genre de son « unique et signifiant » que le
   // skill `audio-sfx-pipeline` exempte de variation de pitch (clé
   // ramassée, secret trouvé, réplique du héros) — les quatre passent donc
-  // par `SfxPool.play()` sans traitement spécial, qui applique déjà la
-  // variation ±8 % à tout ce qu'il joue (voir plus bas).
-  enemy_alert: { file: "enemy_alert", volume: 0.9 },
+  // par `playSfx` sans traitement spécial, qui applique déjà la variation
+  // ±8 % à tout ce qu'il joue (voir plus bas).
+  enemy_alert: { sprite: "suit_alert", volume: 0.9 },
   // Volume le plus haut du lot : c'est le canal de lisibilité critique
   // (skill `audio-sfx-pipeline` — « la télégraphie d'attaque ennemie doit
   // être audible et directionnelle »). Doit rester timbralement distinct
   // des trois autres, PAS une variation d'un même sample.
-  enemy_telegraph: { file: "enemy_telegraph", volume: 1.0 },
-  enemy_hurt: { file: "enemy_hurt", volume: 0.7 },
-  enemy_death: { file: "enemy_death", volume: 0.9 },
+  enemy_telegraph: { sprite: "suit_telegraph", volume: 1.0 },
+  enemy_hurt: { sprite: "enemy_hurt", volume: 0.7 },
+  enemy_death: { sprite: "suit_death", volume: 0.9 },
   // Porte à badge (Zone E, `use_exit_door`) : événements rares et ponctuels
   // (un refus par essai sans badge, un déverrouillage UNE SEULE fois par
-  // partie) — passent quand même par `SfxPool`/±8% comme tout le reste, la
-  // variation de pitch est inoffensive sur un son qui ne se répète presque
-  // jamais.
-  door_locked: { file: "door_locked", volume: 0.8 },
-  door_unlock: { file: "door_unlock", volume: 0.9 },
+  // partie) — passent quand même par le ±8 % commun, inoffensif sur un son
+  // qui ne se répète presque jamais.
+  door_locked: { sprite: "door_locked", volume: 0.8 },
+  door_unlock: { sprite: "door_unlock", volume: 0.9 },
   // Portes ANIMÉES (jalon `door_*`, voir `game/level/doors.ts::DoorSystem`) :
   // un son par MOUVEMENT plutôt que par porte — trois timbres suffisent à
   // distinguer un battant d'un coulissant/rideau, voir `DOOR_MOVEMENT_SFX`.
-  door_swing: { file: "door_swing", volume: 0.85 },
-  door_slide: { file: "door_slide", volume: 0.7 },
-  door_shutter: { file: "door_shutter", volume: 0.9 },
+  door_swing: { sprite: "door_open", volume: 0.85 },
+  door_slide: { sprite: "door_slide", volume: 0.7 },
+  door_shutter: { sprite: "door_shutter", volume: 0.9 },
   // Secret trouvé (Phase 5, critère de validation du plan) : événement RARE
   // et SIGNIFIANT au sens du skill `audio-sfx-pipeline` (au plus 2 fois par
-  // partie) — passe quand même par le même `SfxPool`/±8% que tout le reste
-  // par simplicité, la variation de pitch est inoffensive ici aussi.
-  secret_found: { file: "secret_found", volume: 0.9 },
+  // partie) — passe quand même par le ±8 % commun, inoffensif ici aussi.
+  secret_found: { sprite: "secret_found", volume: 0.9 },
   // Trousse de soin ramassée (niveau v2) : fréquent, mais court et discret —
   // il ne doit jamais couvrir la télégraphie d'un Costard.
-  heal_pickup: { file: "heal_pickup", volume: 0.7 },
+  heal_pickup: { sprite: "pickup_health", volume: 0.7 },
   // Pistolet : sec et court, il se répète bien plus souvent que le pompe.
-  pistol_fire: { file: "pistol_fire", volume: 0.75, pitch: 0.025 },
+  pistol_fire: { sprite: "pistol_fire", volume: 0.75, pitch: 0.025 },
   // Boîte de munitions : deux cliquetis métalliques, à ne pas confondre avec
   // le carillon d'une trousse de soin.
-  ammo_pickup: { file: "ammo_pickup", volume: 0.7 },
+  ammo_pickup: { sprite: "pickup_ammo", volume: 0.7 },
   // Destruction d'un `prop_*`. Deux timbres seulement : un craquement sec
-  // (bois/carton) et un bris (verre). Le métal réutilise `impact_metal`, déjà
-  // sur disque — inventer un troisième placeholder pour l'entendre trois fois
-  // par partie serait du son pour le son.
-  prop_break_wood: { file: "prop_break_wood", volume: 0.85 },
-  prop_break_glass: { file: "prop_break_glass", volume: 0.9 },
+  // (bois/carton) et un bris (verre). Le métal réutilise `impact_metal` : une
+  // troisième recette pour l'entendre trois fois par partie serait du son
+  // pour le son.
+  prop_break_wood: { sprite: "prop_break_wood", volume: 0.85 },
+  prop_break_glass: { sprite: "impact_glass", volume: 0.9 },
 };
 
 /** Son de tir par arme. */
@@ -169,92 +180,109 @@ const PROP_BREAK_SFX: Record<string, SfxId> = {
 const DEFAULT_PROP_BREAK_SFX: SfxId = "prop_break_wood";
 
 /**
- * Pool circulaire de `Howl` pour UN id logique — voir la doc pour le
- * pourquoi. `preload: true` (par défaut) : une instance qui échoue à
- * charger reste silencieuse (`onloaderror`), `warnOnce` garantit un seul
- * avertissement par id malgré les N échecs (un par instance du pool).
+ * Ce que `tools/audio/build_sprite.py` écrit à côté de l'atlas.
  *
- * see: docs/systems/hud-audio.md#pooling-et-variation-de-pitch
+ * `sprite` est au format attendu par Howler : par clé, `[début_ms, durée_ms]`
+ * dans l'atlas. Le fichier est GÉNÉRÉ — il ne s'édite pas à la main, il se
+ * régénère depuis `recipes.py`.
  */
-class SfxPool {
-  private readonly sounds: Howl[] = [];
-  private cursor = 0;
-  private warned = false;
-
-  constructor(private readonly id: SfxId, def: SfxDef) {
-    const src = [`${SFX_BASE_PATH}/${def.file}.ogg`, `${SFX_BASE_PATH}/${def.file}.m4a`];
-    for (let i = 0; i < POOL_SIZE; i++) {
-      try {
-        this.sounds.push(
-          new Howl({
-            src,
-            volume: def.volume,
-            preload: true,
-            onloaderror: () => this.warnMissingOnce(),
-          }),
-        );
-      } catch {
-        // Défensif : un `throw` synchrone du constructeur Howler (jamais vu
-        // en pratique, mais non documenté comme impossible) ne doit pas non
-        // plus faire tomber l'initialisation du jeu.
-        this.warnMissingOnce();
-      }
-    }
-  }
-
-  private warnMissingOnce() {
-    if (this.warned) return;
-    this.warned = true;
-    console.warn(
-      `[audio] SFX "${this.id}" introuvable (attendu : ${SFX_BASE_PATH}/${SFX_TABLE[this.id].file}.{ogg,m4a}) — le jeu continue sans ce son.`,
-    );
-  }
-
-  play(volumeScale: number) {
-    if (this.sounds.length === 0) return;
-    const howl = this.sounds[this.cursor]!;
-    this.cursor = (this.cursor + 1) % this.sounds.length;
-    try {
-      const p = SFX_TABLE[this.id].pitch ?? PITCH_VARIATION;
-      const rate = 1 - p + Math.random() * p * 2;
-      howl.rate(rate);
-      howl.volume(SFX_TABLE[this.id].volume * volumeScale);
-      howl.play();
-    } catch {
-      // Même discipline non-fatale qu'à la construction : un échec de
-      // lecture (contexte audio pas encore débloqué, etc.) ne doit jamais
-      // remonter dans la boucle de jeu.
-      this.warnMissingOnce();
-    }
-  }
+interface SpriteManifest {
+  src: string[];
+  sprite: Record<string, [number, number]>;
+  pool?: number;
 }
 
-let pools: Map<SfxId, SfxPool> | null = null;
+let atlas: Howl | null = null;
+let cles: Set<string> = new Set();
+let chargement = false;
+const avertis = new Set<string>();
+
+function avertirUneFois(cle: string, raison: string) {
+  if (avertis.has(cle)) return;
+  avertis.add(cle);
+  console.warn(`[audio] ${raison} — le jeu continue sans ce son.`);
+}
 
 /**
- * Construit les pools de tous les sons connus. À appeler UNE FOIS, avant
- * `startLoop` (même endroit que les autres initialisations globales de
- * `main.ts`). Idempotent : un second appel est un no-op silencieux plutôt
- * qu'une erreur, au cas où un futur écran (menu, retry) réappellerait ce
- * point d'entrée par prudence.
+ * Charge l'atlas et son manifeste. À appeler UNE FOIS, avant `startLoop`
+ * (même endroit que les autres initialisations globales de `main.ts`).
+ * Idempotent.
+ *
+ * Volontairement SYNCHRONE en apparence : elle lance le chargement et rend la
+ * main. Tant que l'atlas n'est pas là, `playSfx` ne fait rien — c'est la même
+ * discipline non-fatale qu'avant, et le premier son du jeu arrive de toute
+ * façon des dizaines de secondes après le démarrage. En faire une promesse
+ * obligerait `main.ts` à attendre le réseau avant d'afficher quoi que ce soit.
  */
 export function initAudio() {
-  if (pools) return;
-  pools = new Map();
-  for (const id of Object.keys(SFX_TABLE) as SfxId[]) {
-    pools.set(id, new SfxPool(id, SFX_TABLE[id]));
-  }
+  if (atlas || chargement) return;
+  chargement = true;
+
+  fetch(`${SFX_BASE_PATH}/sfx.json`)
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+    .then((manifeste: SpriteManifest) => {
+      cles = new Set(Object.keys(manifeste.sprite));
+      atlas = new Howl({
+        src: manifeste.src.map((f) => `${SFX_BASE_PATH}/${f}`),
+        sprite: manifeste.sprite,
+        // Nombre de nœuds audio que Howler garde pour les lectures qui se
+        // chevauchent. Le pompe tire 9 plombs dans le même pas fixe : à 5, le
+        // défaut, les derniers voleraient le nœud des premiers.
+        pool: manifeste.pool ?? POOL_LECTURES,
+        onloaderror: () =>
+          avertirUneFois("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
+      });
+
+      // Un identifiant du jeu qui ne pointe sur aucune recette est une ERREUR
+      // de câblage, pas un silence acceptable : elle se dit une fois, au
+      // chargement, plutôt qu'au premier tir.
+      for (const id of Object.keys(SFX_TABLE) as SfxId[]) {
+        const cle = SFX_TABLE[id].sprite;
+        if (!cles.has(cle)) {
+          avertirUneFois(id, `"${id}" pointe sur la recette "${cle}", absente du sprite`);
+        }
+      }
+    })
+    .catch((e) => {
+      chargement = false;
+      avertirUneFois("manifeste", `manifeste audio illisible (${e})`);
+    });
 }
 
 /**
  * Joue un effet sonore ponctuel par identifiant logique. Non-bloquant,
- * non-fatal : si `initAudio()` n'a pas encore été appelé, ou si le son est
- * introuvable sur disque, ne fait rien d'observable pour le joueur au-delà
- * du silence (le warning de chargement, lui, ne sort qu'une fois par id, à
- * l'initialisation).
+ * non-fatal : avant que l'atlas soit chargé, ou si la recette manque, ne fait
+ * rien d'observable au-delà du silence.
+ *
+ * Le volume et la hauteur sont posés sur l'IDENTIFIANT DE LECTURE renvoyé par
+ * `play`, jamais sur le `Howl` entier — sans ça, le neuvième plomb d'un tir de
+ * pompe changerait rétroactivement la hauteur des huit qui sonnent encore.
+ * C'est ce que le pool d'instances évitait avant ; le sprite le règle mieux,
+ * puisque chaque lecture a sa propre identité.
  */
 export function playSfx(id: SfxId, volumeScale = 1) {
-  pools?.get(id)?.play(volumeScale);
+  if (!atlas) return;
+  const def = SFX_TABLE[id];
+  if (!cles.has(def.sprite)) return;
+
+  const lecture = atlas.play(def.sprite);
+  if (lecture === undefined) return;
+  const p = def.pitch ?? PITCH_VARIATION;
+  atlas.rate(1 - p + Math.random() * p * 2, lecture);
+  atlas.volume(def.volume * volumeScale, lecture);
+}
+
+/**
+ * État du câblage son, pour la console de debug : par identifiant du jeu, la
+ * recette visée et si elle est réellement dans le sprite chargé. C'est ce qui
+ * répond à « pourquoi ce son ne sort pas » sans lire le code.
+ */
+export function listSfx(): { id: SfxId; recette: string; present: boolean }[] {
+  return (Object.keys(SFX_TABLE) as SfxId[]).map((id) => ({
+    id,
+    recette: SFX_TABLE[id].sprite,
+    present: cles.has(SFX_TABLE[id].sprite),
+  }));
 }
 
 /** Son de tir pour l'arme `weapon` — lookup encapsulé, voir `WEAPON_FIRE_SFX`. */

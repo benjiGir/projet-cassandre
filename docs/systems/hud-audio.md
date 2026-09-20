@@ -2,7 +2,7 @@
 title: HUD et audio
 tags: [systeme, audio]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-20
 ---
 
 # HUD et audio
@@ -16,10 +16,9 @@ fond et un thème musical, en boucle sur toute une session, qui doivent
 parfois baisser brièvement pour laisser la place à une réplique du héros —
 c'est le rôle de `core/music.ts`, volontairement séparé du premier parce
 que les deux jeux de contraintes (pooling/pitch d'un côté, streaming en
-boucle de l'autre) n'ont rien en commun. Treize des vingt SFX sont
-maintenant de vrais enregistrements CC0 et un est fabriqué avec sa recette
-(voir plus bas) ; les six qui restent, et la musique, sont encore des
-placeholders synthétiques sans recette.
+boucle de l'autre) n'ont rien en commun. **Les vingt SFX sont synthétisés
+par code** depuis le 2026-09-20 et livrés en un seul audio sprite (voir plus
+bas) ; la musique, elle, reste un placeholder.
 
 ## Effets sonores ponctuels
 
@@ -40,149 +39,110 @@ que depuis `updateFx` (`game/loop/updateFx.ts`), sur des
 
 ## Assets sonores
 
-Depuis le 2026-09-20, treize des vingt `SfxId` viennent de packs CC0, pas
-d'une synthèse : les tirs du pompe et du pistolet sont de VRAIES armes (un
-Winchester Model 12 et un Colt 1911, « The Free Firearm Sound Library »), le
-reste vient des packs audio de Kenney. Chaque pack a sa ligne au registre
-(`assets_src/LICENCES_ASSETS.md`), et la recette — quelle prise devient quel
-son, et comment elle est traitée — est dans `tools/audio/import_sfx.py`.
+**Tout le son du jeu est synthétisé par code.** Aucun échantillon externe,
+aucune question de licence. Le studio vit sous `tools/audio/` : `synth.py`
+(briques DSP), `recipes.py` (les recettes, en texte, versionnées),
+`render_sfx.py` (rendu WAV), `analyze_sfx.py` (mesures et masquage),
+`build_sprite.py` (empaquetage), `audition.py` (page d'écoute). Les WAV sont
+des artefacts de build ; la source est `recipes.py`, et un même seed y rend le
+même octet.
 
-Chaîne de traitement, la même pour tous : passage à un canal, recalage sur
-l'attaque (les prises d'armes commencent par des secondes de silence), coupe
-courte avec fondu, normalisation, **44 100 Hz** avec filtre anti-repliement.
-Les vingt sons pèsent ensemble moins de 400 Ko.
+Le jeu ne charge plus un fichier par son mais un **audio sprite** : un seul
+fichier, un seul décodage, une seule requête, latence minimale. Le manifeste
+`sfx.json` dit où chaque son commence dans l'atlas et combien de temps il dure.
+Les ambiances en sont exclues — longues et bouclées, elles se chargent en
+streaming, et les mettre dans l'atlas gonflerait le décodage initial pour rien.
 
-**Six sons restent synthétiques**, faute d'équivalent CC0 : les quatre
-vocalisations de Costard (`enemy_alert`, `enemy_telegraph`, `enemy_hurt`,
-`enemy_death` — aucun pack CC0 n'a de grognements) et les deux portes
-mécaniques du niveau v2 (`door_slide`, `door_shutter` — ni porte automatique
-ni rideau métallique dans ces packs). Ceux-là sont une **dette** : ils ont été
-produits par des scripts jetables jamais versionnés, donc personne ne peut les
-refaire ni savoir comment ils ont été obtenus.
+```bash
+./.venv-refs/bin/python3 tools/audio/render_sfx.py --out /tmp/wav
+./.venv-refs/bin/python3 tools/audio/build_sprite.py /tmp/wav --out public/assets/audio/sfx
+./.venv-refs/bin/python3 tools/audio/audition.py     # page d'écoute
+```
 
-**Un son est FABRIQUÉ, avec sa recette** : `melee_fire`, par
-`tools/audio/synth_sfx.py`. Le pied-de-biche sortait jusqu'au 2026-09-20 de
-`knifeSlice2.ogg` — et ça s'entendait : « le pied de biche sonne comme un coup
-de couteau ». C'était littéralement le cas. Aucun pack du projet n'a de son de
-BALANCEMENT, et une lame qui fend l'air n'est pas une barre d'acier qui la
-brasse : plus grave, plus lente, et assez de masse pour qu'on la sente. Un
-`Souffle` est du bruit dont la COULEUR bouge — un passe-bande à variable d'état
-dont le centre monte jusqu'au passage devant l'oreille puis redescend ; un
-filtre fixe donnerait un « chhh » de vieille radio, pas un mouvement. Médiane
-spectrale : **5823 Hz (la lame) → 885 Hz (la barre)**.
+`SFX_TABLE` raccorde les **identifiants du jeu** aux **noms de recettes** :
+`melee_fire` joue `crowbar_swing`, `enemy_death` joue `suit_death`. Les deux
+vocabulaires restent séparés exprès, et cette table est le seul endroit à
+toucher si une recette est renommée. Un identifiant qui pointe sur une recette
+absente du sprite est signalé UNE fois au chargement, pas au premier tir ;
+`cassandre.sfx.liste()` le dit aussi en console, et `cassandre.sfx.joue(id)`
+déclenche n'importe quel son sans avoir à provoquer la situation qui le
+produit — indispensable, le verrouillage du pointeur étant hors de portée de
+l'automatisation.
 
-`synth_sfx.py` est l'endroit où la dette des six autres se remboursera, un son
-à la fois. Chaque son y porte sa graine : régénérer redonne exactement le même
-fichier, sinon comparer deux versions n'aurait plus de sens.
+### Pourquoi la synthèse, et pas des enregistrements
 
-**Comment on choisit, puisqu'un agent n'entend pas** :
-`tools/audio/audition.py` écrit une page locale — `http://localhost:5173/audition/`
-— qui pose côte à côte, pour chaque son, les versions déjà écoutées, celle qui
-est installée, des variantes de TRAITEMENT sur la même prise et des variantes
-de PRISE. Toutes passent par la même chaîne et le même encodeur : comparer
-deux réglages d'encodage reviendrait à juger l'encodeur en croyant juger le
-son. Le choix se note ensuite dans la table d'`import_sfx.py`, qui reste la
-source de vérité.
+Parce qu'on a essayé, deux fois, et que l'utilisateur a rejeté les deux.
+L'histoire vaut d'être gardée, parce que ce sont les mesures qui ont tranché :
 
-Garder les versions précédentes n'est pas de la coquetterie : sans elles, une
-écoute dit si un son plaît, jamais si on a progressé depuis la dernière.
+1. **« C'est trop bizarre le son des armes. »** Trois causes mesurées. La somme
+   stéréo d'un couple de micros ESPACÉ (corrélation −0,03, 0,89 ms d'écart)
+   est un filtre en peigne : elle retirait **5 à 6 dB entre 60 et 600 Hz**. Le
+   rééchantillonnage vers 22 050 Hz se faisait sans filtre anti-repliement :
+   **+2,8 dB de grésillement** replié dans la bande 9–11 kHz, pile où vit le
+   claquement du coup. Et surtout, les prises n'avaient **aucun grave** —
+   0,1 % de l'énergie sous 200 Hz, 60 % entre 600 et 1500 Hz — en saturant
+   2 à 5 ms sur chaque détonation.
+2. **« Le pistolet et le pompe, on dirait le même son. »** Mesuré : **0,976**
+   de corrélation de timbre. Pire, TOUTES les paires d'armes de la
+   bibliothèque tenaient au-dessus de **0,840**, un fusil de chasse contre un
+   .22 compris. Le lieu et les micros écrasaient l'arme : elles avaient été
+   tirées le même jour, au même stand, au même couple de micros.
 
-Un fichier absent (404, cas normal en l'absence d'asset final) ne fait
-jamais planter le jeu : `onloaderror` log un seul `console.warn` par id
-(jamais un par tentative de lecture) et le son ne joue simplement pas.
+Un enregistrement se subit, un son fabriqué se règle. Là où l'échantillon ne
+laissait qu'à choisir une autre prise, la recette laisse décider *ce qui*
+sépare deux sons.
 
-## Pourquoi cette chaîne
+### La mesure qui garde cette porte fermée
 
-La première version de cette chaîne, le matin du 2026-09-20, a été rejetée à
-l'écoute : « c'est trop bizarre le son des armes, je n'aime pas du tout ». La
-réponse est ici parce que les trois causes se mesurent, et qu'aucune n'était
-une question de goût.
+Spectre moyen des 250 premières ms, 30 bandes log de 100 Hz à 16 kHz, en dB,
+moyenne retirée, puis corrélation entre deux sons. Deux sons qui doivent se
+distinguer restent **sous 0,55**. Repères mesurés sur le catalogue synthétisé :
 
-### La somme stéréo creusait le son
+| Paire | Ressemblance |
+|---|---:|
+| `shotgun` / `crowbar_swing` | −0,024 |
+| `shotgun` / `impact_metal` | 0,200 |
+| `shotgun` / `crowbar_metal` | 0,433 |
+| *(pour mémoire)* pompe / pistolet, échantillons rejetés | **0,976** |
 
-La bibliothèque d'armes est enregistrée dehors, au couple de micros ESPACÉ :
-la même onde arrive sur les deux capsules à 0,89 ms d'intervalle (30 cm
-d'écart), et la corrélation entre canaux est quasi nulle — **−0,03** sur le
-Model 12. Les additionner, ce qui semble la façon évidente de passer en mono,
-fait interférer le son avec sa propre copie retardée. C'est un filtre en
-peigne, et il tombait exactement là où vit un coup de feu :
+`analyze_sfx.py --mask a.wav b.wav` fait l'autre contrôle, celui de
+lisibilité : la télégraphie d'attaque d'un Costard ne doit pas être masquée
+par le tir du joueur. C'est une contrainte de gameplay, pas de goût — c'est le
+canal qui dit au joueur qu'on lui tire dessus hors champ.
 
-| Bande | Ce que la somme mono retirait |
-|---|---|
-| 60–200 Hz | **−5,4 dB** (pompe) · **−6,3 dB** (pistolet) |
-| 200–600 Hz | −1,4 dB · −6,2 dB |
-| 600–1500 Hz | −4,1 dB · −1,3 dB |
+### Ce que l'agent ne peut pas faire
 
-`un_canal()` mesure donc la corrélation avant de décider : il somme si les
-canaux se ressemblent, sinon il en garde UN — celui qui porte le plus
-d'énergie sur les 50 ms qui suivent l'attaque.
+**Entendre.** Il mesure, il compare, il vérifie une conformité — il ne saura
+jamais dire si un pompe claque. `tools/audio/audition.py` écrit donc une page
+locale (`http://localhost:5173/audition/`) qui pose tout le catalogue à un clic
+par son, variantes de seed comprises, avec sous chaque bouton les mesures que
+l'agent, lui, a pu faire. Quand l'oreille et le chiffre divergent, c'est
+l'oreille qui a raison ; le chiffre sert à savoir quoi corriger.
 
-### Le rééchantillonnage n'avait pas de filtre
-
-La sortie était à 22 050 Hz, « le grain de l'époque Build ». La conversion se
-faisait par interpolation linéaire, sans filtre anti-repliement : tout ce qui
-dépassait 11 kHz ne disparaissait pas, il se repliait vers le bas à une
-fréquence fausse. Mesuré : **+2,8 dB de trop dans la bande 9–11 kHz** d'un
-coup de pompe. On perdait le claquement du coup, et on le remplaçait par du
-grésillement au même endroit.
-
-Corrigé deux fois : sortie à 44 100 Hz, et `passe_bas()` (sinus cardinal
-fenêtré) avant toute décimation. Un son d'arme n'est pas le bon endroit pour
-économiser 150 Ko.
-
-### Les prises n'ont aucun grave, et elles saturent
-
-C'est la cause principale, et elle n'est pas dans le code. Mesuré sur les
-quatre armes de la bibliothèque, sur les 500 ms qui suivent la détonation :
-
-| Arme | < 60 Hz | 60–200 Hz | 200–600 Hz | **600–1500 Hz** |
-|---|---:|---:|---:|---:|
-| Winchester Model 12 | 0,0 % | 0,1 % | 14,8 % | **59,2 %** |
-| Colt 1911 | 0,0 % | 0,0 % | 16,3 % | **66,0 %** |
-| Benelli Nova | 0,1 % | 0,1 % | 12,3 % | **60,7 %** |
-| Mossberg | 0,0 % | 0,1 % | 13,3 % | **57,3 %** |
-
-Un coup de feu dont toute l'énergie tient entre 600 et 1500 Hz n'est pas un
-coup de feu : c'est un claquement de pétard. Ces prises sont faites en
-extérieur, avec le coupe-bas qu'impose le vent, et **chaque fichier de la
-bibliothèque sature** — 2 à 5 ms d'échantillons collés à la pleine échelle sur
-la détonation, le préampli à bout de souffle.
-
-Ça ne se rattrape pas par traitement : ce qui manque n'est pas dans le
-fichier. On le reconstruit, comme le fait n'importe quel jeu — la prise garde
-l'aigu, la texture et la mécanique de l'arme, une sinusoïde qui plonge lui
-rend le coup de poing, un bruit filtré lui rend le ventre (`Grave`, tirage à
-graine fixe pour rester reproductible). Résultat, part de l'énergie entre 60
-et 200 Hz : **0,1 % → 26,9 %** pour le pompe, **0,0 % → 17,1 %** pour le
-pistolet, sans toucher au facteur de crête (23,5 dB avant comme après — la
-transitoire est intacte, on a ajouté sous elle, pas devant).
-
-Le plongeon s'arrête à 80 Hz, pas plus bas : sous 60 Hz un petit haut-parleur
-ne restitue rien, et l'énergie qu'on y met est perdue pour tout le monde sauf
-pour le casque, où elle devient de la boue.
+Un fichier absent (404) ne fait jamais planter le jeu : un seul `console.warn`
+par id, et le son ne joue pas.
 
 ## Pooling et variation de pitch
 
-Pattern du skill `audio-sfx-pipeline` : N instances de `Howl` par id
-(`POOL_SIZE = 8`), rotation circulaire, variation de rate ±8 %
-(`PITCH_VARIATION`) à chaque lecture.
+Le sprite a rendu le pool d'instances inutile, et pour une raison qui mérite
+d'être dite. L'ancien module gardait N `Howl` par son parce que
+`Howl.rate(rate)` SANS identifiant change la vitesse de toutes les instances
+en cours : en tirant au pompe — 9 plombs dans le même pas fixe — régler le
+pitch du plomb n+1 modifiait rétroactivement celui du plomb n, encore en train
+de sonner.
 
-**Sauf sur les armes**, depuis le 2026-09-20 : `SfxDef.pitch` baisse cette
-variation à ±2,5 % pour le pompe et le pistolet, ±4 % pour le pied-de-biche.
-Le défaut a été réglé pour des sons de synthèse, où il passe inaperçu ; ±8 %
-sur un vrai enregistrement font presque un ton et demi, et l'arme du joueur
-semble changer de calibre d'un tir à l'autre. Ce n'est pas de la variété,
-c'est ce que l'oreille lit comme un faux.
+Avec le sprite, chaque lecture a son propre identifiant, rendu par `play()` :
+`rate(r, id)` et `volume(v, id)` ne touchent qu'elle. Ce qui demandait huit
+objets tient maintenant dans un seul, et Howler garde `pool` nœuds audio (12,
+donné par le manifeste) pour les lectures qui se chevauchent — le défaut de 5
+ne suffirait pas à une salve de pompe.
 
-Ça évite deux problèmes :
-
-- l'effet « mitraillette de samples identiques » sur un son répété (tir,
-  impact) ;
-- `Howl.rate(rate)` sans id de son cible modifie la vitesse de TOUTES les
-  instances en cours de lecture de ce `Howl` — en tirant au pompe (9
-  plombs, jusqu'à 9 `hitEvent` dans le même pas fixe), appeler `rate()` sur
-  le même objet `Howl` pour le plomb n+1 changerait rétroactivement le
-  pitch du plomb n déjà en train de jouer. Un pool évite ce chevauchement.
+La variation de hauteur reste : ±8 % par défaut, pour casser l'effet
+« mitraillette de samples identiques » sur un son répété. **Sauf sur les
+armes**, à ±2,5 % (`SfxDef.pitch`) : ±8 % font presque un ton et demi, et
+l'arme du joueur semble changer de calibre d'un tir à l'autre. Les recettes
+rendent en plus 3 à 4 **variantes de seed** — le bruit change, la structure
+reste — ce qui casse la répétition bien mieux qu'un repitch.
 
 ## Piège navigateur : déblocage du contexte audio
 

@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
 import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
+import { listSfx, playSfx, type SfxId } from "../../core/audio";
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
 import {
   CROSSHAIR_VARIANTS,
@@ -147,6 +148,15 @@ export function exposeDebugApi(engine: GameEngine): void {
     vitres: {
       liste: () => engine.session.vitreSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.vitreSystem?.destroyByName(nom) ?? false,
+    },
+    /** Effets sonores : `liste()` dit quel identifiant du jeu pointe sur quelle
+     * recette du studio et si elle est bien dans le sprite, `joue(id)` déclenche
+     * n'importe lequel sans avoir à provoquer la situation qui le produit. Le
+     * verrouillage du pointeur est hors de portée de l'automatisation, donc
+     * c'est le seul moyen d'entendre un tir sans jouer. */
+    sfx: {
+      liste: () => listSfx(),
+      joue: (id: SfxId, volume = 1) => playSfx(id, volume),
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
@@ -367,6 +377,10 @@ declare global {
       vitres: {
         liste: () => ReturnType<VitreSystem["describe"]>;
         casser: (nom: string) => boolean;
+      };
+      sfx: {
+        liste: () => ReturnType<typeof listSfx>;
+        joue: (id: SfxId, volume?: number) => void;
       };
       secrets: () => SecretZone[];
       heals: () => UseObject[];
