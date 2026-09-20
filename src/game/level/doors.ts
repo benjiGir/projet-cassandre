@@ -51,6 +51,23 @@ export function parseDoorMovement(raw: unknown): DoorMovement | null {
 export type DoorHinge = "min" | "max";
 export type DoorSens = "auto" | "+" | "-";
 
+/**
+ * Qui déclenche l'ouverture automatique d'une porte.
+ *
+ * `"ennemis"` existe pour les portes qu'on manœuvre À LA MAIN : sans lui, une
+ * porte de bureau refermée par le joueur se rouvrirait dans la seconde, parce
+ * qu'il est encore devant. Les Costards, eux, continuent de la pousser — ce
+ * qui garde le graphe de navigation utile (le bake traverse toute porte qui
+ * n'est pas `"non"`).
+ */
+export type DoorAuto = "non" | "tous" | "ennemis";
+
+/** Ce que la touche E peut faire à une porte, à moins de `PORTEE_ACTION_MANUELLE`. */
+export type DoorManuelle = "non" | "les-deux" | "fermer";
+
+/** Portée de l'action manuelle, mètres — la même que celle d'un `use_*`, pour que « agir » ait une seule distance dans tout le jeu. */
+export const PORTEE_ACTION_MANUELLE = 2;
+
 /** Durée d'ouverture par défaut, secondes — valeurs du contrat, une par mouvement. */
 const MOVEMENT_DEFAULT_DUREE: Record<DoorMovement, number> = {
   battant: 0.5,
@@ -69,6 +86,9 @@ export interface ParsedDoorConfig {
   charniere: DoorHinge;
   angleRad: number;
   sens: DoorSens;
+  /** `auto: true` -> "tous", `auto: "ennemis"` -> "ennemis", absent -> "non". */
+  autoQui: DoorAuto;
+  manuelle: DoorManuelle;
   /** `null` = calculée depuis la géométrie (voir `DoorSystem` — longueur du vantail pour `coulisse`, hauteur pour `monte`/`descend`). */
   course: number | null;
   duree: number;
@@ -103,7 +123,11 @@ export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, 
       ? extras.duree
       : MOVEMENT_DEFAULT_DUREE[mouvement];
 
-  const auto = extras.auto === true;
+  const autoQui: DoorAuto = extras.auto === true ? "tous" : extras.auto === "ennemis" ? "ennemis" : "non";
+  const auto = autoQui !== "non";
+
+  const manuelle: DoorManuelle =
+    extras.manuelle === true ? "les-deux" : extras.manuelle === "fermer" ? "fermer" : "non";
 
   const referme = typeof extras.referme === "boolean" ? extras.referme : true;
 
@@ -119,7 +143,20 @@ export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, 
       ? extras.portee
       : DEFAULT_PORTEE;
 
-  return { charniere, angleRad: THREE.MathUtils.degToRad(angleDeg), sens, course, duree, auto, referme, delai, groupe, portee };
+  return {
+    charniere,
+    angleRad: THREE.MathUtils.degToRad(angleDeg),
+    sens,
+    autoQui,
+    manuelle,
+    course,
+    duree,
+    auto,
+    referme,
+    delai,
+    groupe,
+    portee,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -163,6 +200,8 @@ export interface DoorActor {
   position: THREE.Vector3;
   radius: number;
   halfHeight: number;
+  /** Le joueur, par opposition à un ennemi — voir `DoorAuto`. Le refus de refermeture, lui, vaut pour les deux. */
+  joueur: boolean;
 }
 
 /** Émis quand un GROUPE de vantaux démarre une ouverture depuis l'état fermé — consommé par `updateFx.ts` pour le son. */
@@ -451,6 +490,9 @@ interface DoorGroup {
   /** Centre du groupe, MONDE (moyenne des corps fermés) — la portée `auto` se mesure depuis lui. */
   center: THREE.Vector3;
   auto: boolean;
+  autoQui: DoorAuto;
+  /** La plus permissive des valeurs de ses membres — un groupe se manœuvre d'un bloc. */
+  manuelle: DoorManuelle;
   portee: number;
   delai: number;
   /** `false` si UN SEUL membre porte `referme:false` — un groupe "reste ouvert" ne se referme sur AUCUN de ses vantaux. */
@@ -494,6 +536,16 @@ export class DoorSystem {
         members,
         center,
         auto: members.some((m) => m.config.auto),
+        autoQui: members.some((m) => m.config.autoQui === "tous")
+          ? "tous"
+          : members.some((m) => m.config.autoQui === "ennemis")
+            ? "ennemis"
+            : "non",
+        manuelle: members.some((m) => m.config.manuelle === "les-deux")
+          ? "les-deux"
+          : members.some((m) => m.config.manuelle === "fermer")
+            ? "fermer"
+            : "non",
         portee: Math.max(...members.map((m) => m.config.portee)),
         delai: Math.max(...members.map((m) => m.config.delai)),
         referme: members.every((m) => m.config.referme),
@@ -550,6 +602,60 @@ export class DoorSystem {
     return true;
   }
 
+  /**
+   * Touche E : ouvre ou referme la porte manœuvrable la plus proche de
+   * `position`, dans `PORTEE_ACTION_MANUELLE`. Retourne ce qui a été fait, ou
+   * `null` si rien n'était à portée (l'appelant peut alors laisser l'appui à
+   * quelqu'un d'autre).
+   *
+   * Une porte `manuelle: "fermer"` ne s'OUVRE jamais ainsi : c'est ce qui
+   * garde le sens unique de la porte coupe-feu, dont le bouton est hors de
+   * portée côté rayons. On peut la refermer des deux côtés ; pour la rouvrir,
+   * il faut retourner au bouton.
+   */
+  actionner(position: THREE.Vector3): { name: string; action: "ouverte" | "fermee" } | null {
+    const porteeSq = PORTEE_ACTION_MANUELLE * PORTEE_ACTION_MANUELLE;
+    let cible: DoorGroup | null = null;
+    let meilleure = Infinity;
+    for (const group of this.groups) {
+      if (group.manuelle === "non") continue;
+      for (const member of group.members) {
+        const t = member.info.body.translation();
+        const dx = position.x - t.x;
+        const dy = position.y - t.y;
+        const dz = position.z - t.z;
+        const d = dx * dx + dy * dy + dz * dz;
+        if (d < meilleure && d <= porteeSq) {
+          meilleure = d;
+          cible = group;
+        }
+      }
+    }
+    if (!cible) return null;
+
+    const nom = cible.members[0]!.info.name;
+    if (cible.target === 1) {
+      this.beginClosing(cible);
+      return { name: nom, action: "fermee" };
+    }
+    if (cible.manuelle !== "les-deux") return null; // « fermer » seulement : rien à faire sur une porte déjà fermée
+    this.beginOpening(cible, position, false);
+    return { name: nom, action: "ouverte" };
+  }
+
+  /**
+   * Referme un groupe à la demande. `permanent` saute : une porte ouverte par
+   * un `use_*` (la coupe-feu) redevient une porte ordinaire, refermable, et
+   * son bouton pourra la rouvrir.
+   */
+  private beginClosing(group: DoorGroup): void {
+    group.permanent = false;
+    group.idleTimer = 0;
+    group.target = 0;
+    const representative = group.members[0]!;
+    this._movementEvents.push({ name: representative.info.name, movement: representative.info.movement });
+  }
+
   private beginOpening(group: DoorGroup, openerPosition: THREE.Vector3, silent: boolean): void {
     const wasFullyClosed = group.progress === 0 && group.target === 0;
     if (wasFullyClosed && !silent) {
@@ -592,6 +698,7 @@ export class DoorSystem {
 
     let opener: THREE.Vector3 | null = null;
     for (const actor of actors) {
+      if (group.autoQui === "ennemis" && actor.joueur) continue; // à lui d'ouvrir à la main
       if (isActorInAutoRange(group.center, actor, group.portee)) {
         opener = actor.position;
         break;

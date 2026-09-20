@@ -199,7 +199,8 @@ Toutes les extras suivantes sont **optionnelles** :
 | `sens` | (`battant`) `"auto"`, `"+"` ou `"-"` ; (`coulisse`) `"+"` ou `"-"` (pas d'`"auto"`) | `"auto"` (battant), `"+"` (coulisse) |
 | `course` | (`coulisse`/`monte`/`descend`) distance parcourue, mètres | longueur du vantail (coulisse) ou sa hauteur (monte/descend) |
 | `duree` | secondes d'ouverture | `0.5` battant, `0.45` coulisse, `1.4` monte, `0.6` descend |
-| `auto` | `true` = porte LIBRE, s'ouvre par proximité (voir plus bas) | `false` |
+| `auto` | `true` = s'ouvre par proximité devant N'IMPORTE QUI ; `"ennemis"` = devant les ennemis SEULEMENT (au joueur de l'ouvrir à la main) | absent = jamais |
+| `manuelle` | `true` = la touche E l'ouvre ET la referme ; `"fermer"` = la touche E ne fait que la REFERMER | absent = pas manœuvrable |
 | `referme` | (portes `auto` seulement) se referme après `delai` sans personne à portée | `true` |
 | `delai` | (portes `auto`) secondes sans personne à portée avant refermeture | `1.2` |
 | `groupe` | vantaux qui s'ouvrent/se referment ENSEMBLE (portes doubles) | (aucun — chaque vantail est son propre groupe) |
@@ -215,6 +216,25 @@ donc déjà après la conversion Y-up (Blender) → Z-up (three.js) faite par
 `GLTFLoader` — le +Y de Blender devient le −Z de three. C'est à l'auteur du
 niveau de garder ça en tête en pointant ces valeurs depuis Blender ; le code
 runtime ne connaît que le repère three.js.
+
+**`manuelle` et `auto: "ennemis"` vont ensemble.** Une porte qu'on ouvre à la
+main (les quatre bureaux de l'étage) ne doit pas se rouvrir toute seule quand
+on vient de la refermer — le joueur est encore devant. Elle garde pourtant
+`auto: "ennemis"` : un Costard la pousse, et le bake du graphe de navigation
+traverse toute porte dont l'`auto` n'est pas absent, donc ceux qui
+travaillent derrière ont toujours un chemin pour en sortir.
+
+**`manuelle: "fermer"` sert au sens unique.** La porte coupe-feu des rayons
+s'ouvre par son bouton, posé hors de portée côté surface de vente ; la main
+ne peut que la REFERMER, des deux côtés. Le raccourci reste donc à sens
+unique, mais on peut claquer la porte derrière soi, et la rouvrir en
+retournant au bouton (l'ouverture « permanente » d'un `use_*` saute à la
+première fermeture manuelle).
+
+L'appui sur E va d'abord aux `use_*` à portée ; s'il n'en trouve aucun, il
+passe aux portes manœuvrables, dans la même portée de 2 m. Sans cet ordre, le
+bouton de la coupe-feu et la porte elle-même répondraient au même appui,
+qui l'ouvrirait et la refermerait dans le même pas fixe.
 
 `sens: "auto"` (défaut d'un battant) recalcule, à CHAQUE début d'ouverture,
 le sens qui écarte le vantail de la position de celui qui l'ouvre (joueur ou
@@ -232,11 +252,12 @@ d'une ouverture depuis l'état fermé : `door_swing` (battant), `door_slide`
 `door_locked`/`door_unlock` de la porte à carte restent séparés — ils
 signalent un REFUS/SUCCÈS de carte, pas un mouvement de vantail.
 
-En console : `cassandre.doorSystem.liste()` (état de chaque vantail) et
+En console : `cassandre.doorSystem.liste()` (état de chaque vantail),
 `cassandre.doorSystem.ouvrir("door_argent")` (ouvre un vantail — et tout son
-groupe — sans passer par un `use_*`/une carte, pour juger le mouvement et le
-son quand le verrouillage du pointeur est hors de portée de
-l'automatisation).
+groupe — sans passer par un `use_*`/une carte) et
+`cassandre.doorSystem.actionner()` (la touche E sur la porte manœuvrable la
+plus proche du joueur). Ces trois-là existent parce que le verrouillage du
+pointeur met le vrai clavier hors de portée de l'automatisation.
 
 ### Préfixe vitre
 

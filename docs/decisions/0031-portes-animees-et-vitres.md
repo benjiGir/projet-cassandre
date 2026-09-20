@@ -230,3 +230,34 @@ courante étaient égales — donc dès l'arrivée en butée. La dernière pose 
 restait alors une interpolation (`alpha < 1`) : un battant pouvait s'arrêter
 trois degrés avant sa butée, ouvert comme fermé, pour toujours. Il écrit
 maintenant la pose exacte une dernière fois (`settled`).
+
+## Révision du 2026-09-20 — la main reprend la porte
+
+Retour de playtest : « je voudrais que les portes des bureaux soient
+actionnables à la main et non en ouverture automatique, et pouvoir refermer la
+porte de secours des rayons ». Deux extras de plus, qui vont par deux.
+
+- **`manuelle`** : `true` (la touche E ouvre et referme) ou `"fermer"` (elle ne
+  fait que refermer). L'appui va d'abord aux `use_*` à portée et ne retombe sur
+  les portes que s'il n'a servi à aucun — sans cet ordre, le bouton de la
+  coupe-feu et la porte elle-même répondraient au même appui, qui l'ouvrirait
+  et la refermerait dans le même pas fixe.
+- **`auto: "ennemis"`** : l'ouverture par proximité ne vaut plus que pour les
+  ennemis. Sans elle, une porte de bureau refermée se rouvrirait dans la
+  seconde, le joueur étant encore devant ; et sans `auto` du tout, les Costards
+  postés dans les bureaux n'auraient plus aucun chemin pour en sortir — le bake
+  du graphe traverse une porte dès que son `auto` n'est pas absent.
+
+`manuelle: "fermer"` est ce qui garde le sens unique de la coupe-feu tout en
+la rendant refermable : son bouton, hors de portée côté rayons, reste le seul
+moyen de l'OUVRIR ; la main ne peut que la claquer, des deux côtés. La
+fermeture manuelle lève l'ouverture « permanente » posée par le `use_*`, et
+`onDoorUse` décide désormais sur l'ÉTAT courant de la porte plutôt que sur
+`session.unlockedDoors` — sinon le bouton refuserait de la rouvrir, la porte
+étant déjà comptée comme déverrouillée pour la partie.
+
+Vérifié en jeu : la porte de la vidéosurveillance reste fermée avec le joueur
+à 1,30 m, s'ouvre et se referme à la demande, et un Costard posé derrière la
+pousse quand même ; la coupe-feu refuse la main quand elle est fermée, se
+referme quand elle est ouverte, et son bouton la rouvre. Les chemins de
+navigation vers les quatre bureaux et le Directeur sont intacts.

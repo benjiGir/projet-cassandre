@@ -47,7 +47,7 @@ const doorActorPool: DoorActor[] = [];
 function doorActorSlot(index: number): DoorActor {
   let slot = doorActorPool[index];
   if (!slot) {
-    slot = { position: new THREE.Vector3(), radius: 0, halfHeight: 0 };
+    slot = { position: new THREE.Vector3(), radius: 0, halfHeight: 0, joueur: false };
     doorActorPool[index] = slot;
   }
   return slot;
@@ -61,6 +61,7 @@ function collectDoorActors(session: GameSession): readonly DoorActor[] {
   player.position.copy(session.player.position);
   player.radius = moveConfig.capsuleRadius;
   player.halfHeight = moveConfig.capsuleHalfHeight;
+  player.joueur = true;
 
   for (const suit of session.suitManager.suits) {
     if (!suit.isAlive) continue;
@@ -68,6 +69,7 @@ function collectDoorActors(session: GameSession): readonly DoorActor[] {
     slot.position.copy(suit.position);
     slot.radius = suitConfig.capsuleRadius;
     slot.halfHeight = suitConfig.capsuleHalfHeight;
+    slot.joueur = false;
   }
   for (const director of session.directorManager.directors) {
     if (!director.isAlive) continue;
@@ -75,6 +77,7 @@ function collectDoorActors(session: GameSession): readonly DoorActor[] {
     slot.position.copy(director.position);
     slot.radius = directorConfig.capsuleRadius;
     slot.halfHeight = directorConfig.capsuleHalfHeight;
+    slot.joueur = false;
   }
 
   doorActorPool.length = count;
@@ -181,8 +184,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // fixe (raffinement, pas une exigence). `useObjects` est RELUE ici à
       // chaque appel, jamais mise en cache : un hot reload remplace tout le
       // tableau (voir `interactive.ts`/`hotReload.ts`).
-      yield* Effect.sync(() =>
-        engine.interaction.update(
+      yield* Effect.sync(() => {
+        const consomme = engine.interaction.update(
           activeFrame.use,
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
@@ -208,7 +211,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               unlockDoor(session, targetName, "Rayon surgelés ouvert");
             },
             onDoorUse: (targetName, message) => {
-              if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
+              // Rouvrable : une porte libre peut avoir été REFERMÉE à la main
+              // depuis (la coupe-feu), et son bouton doit alors la rouvrir.
+              // C'est son état courant qui décide, pas `unlockedDoors`.
+              const etat = session.doorSystem?.stateOf(targetName);
+              if (etat === "open" || etat === "opening") return;
               unlockDoor(session, targetName, message ?? "Passage ouvert");
             },
             onPaMicUse: () => {
@@ -229,8 +236,14 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               triggerHeroLine(session, HERO_LINE_TOILET);
             },
           },
-        ),
-      );
+        );
+
+        // Portes manœuvrables à la main (`manuelle`) : le même appui, s'il
+        // n'a servi à aucun `use_*`. Sinon, le bouton de la porte coupe-feu et
+        // la porte elle-même réagiraient tous les deux — elle s'ouvrirait et
+        // se refermerait dans le même pas fixe.
+        if (activeFrame.use && !consomme) session.doorSystem?.actionner(session.player.position);
+      });
 
       // Boîtes de munitions : même ramassage sans touche que les trousses. Une
       // boîte ramassée au plafond de munitions ne donnerait rien : elle reste

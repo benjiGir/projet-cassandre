@@ -98,13 +98,18 @@ export class InteractionSystem {
    *   pas la position des pieds ni la position oculaire — la portée de 2 m
    *   rend l'écart avec les pieds (~0.85 m) négligeable.
    * @param handlers Callbacks par effet nommé reconnu, voir `InteractionHandlers`.
+   * @returns `true` si l'appui a été CONSOMMÉ par un `use_*`. L'appelant s'en
+   *   sert pour savoir s'il reste quelque chose à faire de cet appui —
+   *   manœuvrer une porte à la main, par exemple (`DoorSystem.actionner`) —
+   *   sans qu'un bouton et la porte qu'il commande réagissent tous les deux
+   *   au même appui.
    */
   update(
     usePressed: boolean,
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     handlers: InteractionHandlers,
-  ): void {
+  ): boolean {
     let nearest: UseObject | null = null;
     let nearestDistanceSq = Infinity;
 
@@ -124,9 +129,10 @@ export class InteractionSystem {
 
     this.nearestName = nearest?.name ?? null;
 
-    if (!usePressed || !nearest) return;
+    if (!usePressed || !nearest) return false;
 
     this.dispatch(nearest, handlers);
+    return true;
   }
 
   /**

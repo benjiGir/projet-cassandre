@@ -56,6 +56,11 @@ PREFIXES = (
 MOUVEMENTS_PORTE = ("descend", "monte", "battant", "coulisse")
 CHARNIERES = ("min", "max")
 SENS_PORTE = ("auto", "+", "-")
+# `auto` : True (tout le monde) ou "ennemis" (les Costards seuls, le joueur
+# l'ouvre à la main). `manuelle` : True (ouvrir et fermer) ou "fermer" (la
+# porte coupe-feu : son bouton commande l'ouverture, la main la referme).
+AUTO_PORTE = ("true", "1", "ennemis")
+MANUELLE_PORTE = ("true", "1", "fermer")
 
 # Cartes de fidélité (jalon N7) — doit rester identique à `LOYALTY_CARDS`
 # dans src/game/player/loyaltyCards.ts.
@@ -170,7 +175,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         # le sol au lieu de pivoter, sans rien dire.
         if n.startswith("door_"):
             for cle, permis in (("mouvement", MOUVEMENTS_PORTE), ("charniere", CHARNIERES),
-                                ("sens", SENS_PORTE)):
+                                ("sens", SENS_PORTE), ("auto", AUTO_PORTE), ("manuelle", MANUELLE_PORTE)):
                 if cle in o.keys() and str(o[cle]).strip().lower() not in permis:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une valeur connue ({', '.join(permis)})")
             for cle in ("angle", "course", "duree", "portee", "delai"):

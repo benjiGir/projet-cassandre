@@ -165,6 +165,13 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 >   UN matériau (deux matériaux = deux primitives glTF = un groupe que le
 >   loader ne reconnaît plus), quincaillerie et verre pris dans sa propre
 >   texture (`tools/textures/generate_portes.py`).
+> - **Portes manœuvrables à la main** (retour du 2026-09-20) : les quatre
+>   portes de bureau ne s'ouvrent plus par proximité, mais à la touche E
+>   (`manuelle: true`) ; elles gardent `auto: "ennemis"` pour que les Costards
+>   les poussent et que le graphe de navigation les traverse. La porte
+>   coupe-feu des rayons se REFERME à la main (`manuelle: "fermer"`) sans
+>   perdre son sens unique : son bouton, hors de portée côté rayons, reste le
+>   seul moyen de l'ouvrir.
 > - **Vitres réelles** (`vitre_*`, `VitreSystem`) : la transparence n'a jamais
 >   été interdite par l'invariant #5, qui porte sur le MODÈLE D'ÉCLAIRAGE —
 >   plusieurs docstrings de `lib_*.py` affirmaient le contraire et ont privé le

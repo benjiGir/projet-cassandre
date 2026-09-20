@@ -226,8 +226,8 @@ describe("isActorBlockingClosedDoor / isActorInAutoRange", () => {
   const halfExtents = new THREE.Vector3(1, 1.25, 0.1);
 
   it("un acteur dans la boîte inflée bloque, hors de la boîte ne bloque pas", () => {
-    const dedans: DoorActor = { position: new THREE.Vector3(0.5, 1, 0), radius: 0.3, halfHeight: 0.9 };
-    const dehors: DoorActor = { position: new THREE.Vector3(5, 1, 0), radius: 0.3, halfHeight: 0.9 };
+    const dedans: DoorActor = { position: new THREE.Vector3(0.5, 1, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
+    const dehors: DoorActor = { position: new THREE.Vector3(5, 1, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
     expect(isActorBlockingClosedDoor(closedPosition, closedQuaternion, halfExtents, dedans)).toBe(true);
     expect(isActorBlockingClosedDoor(closedPosition, closedQuaternion, halfExtents, dehors)).toBe(false);
   });
@@ -235,17 +235,17 @@ describe("isActorBlockingClosedDoor / isActorInAutoRange", () => {
   it("respecte la rotation du vantail (test en espace LOCAL)", () => {
     // Vantail tourné de 90° : sa "largeur" (halfExtents.x=1) pointe maintenant sur Z.
     const rotated = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-    const surXMonde: DoorActor = { position: new THREE.Vector3(0.5, 1, 0), radius: 0.05, halfHeight: 0.9 };
-    const surZMonde: DoorActor = { position: new THREE.Vector3(0, 1, 0.5), radius: 0.05, halfHeight: 0.9 };
+    const surXMonde: DoorActor = { position: new THREE.Vector3(0.5, 1, 0), radius: 0.05, halfHeight: 0.9, joueur: true };
+    const surZMonde: DoorActor = { position: new THREE.Vector3(0, 1, 0.5), radius: 0.05, halfHeight: 0.9, joueur: true };
     expect(isActorBlockingClosedDoor(closedPosition, rotated, halfExtents, surXMonde)).toBe(false);
     expect(isActorBlockingClosedDoor(closedPosition, rotated, halfExtents, surZMonde)).toBe(true);
   });
 
   it("portée horizontale + tolérance d'altitude fixe (2 m)", () => {
     const center = new THREE.Vector3(0, 0, 0);
-    const proche: DoorActor = { position: new THREE.Vector3(2, 0, 0), radius: 0.3, halfHeight: 0.9 };
-    const loin: DoorActor = { position: new THREE.Vector3(10, 0, 0), radius: 0.3, halfHeight: 0.9 };
-    const enHauteur: DoorActor = { position: new THREE.Vector3(1, 5, 0), radius: 0.3, halfHeight: 0.9 };
+    const proche: DoorActor = { position: new THREE.Vector3(2, 0, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
+    const loin: DoorActor = { position: new THREE.Vector3(10, 0, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
+    const enHauteur: DoorActor = { position: new THREE.Vector3(1, 5, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
     expect(isActorInAutoRange(center, proche, 2.5)).toBe(true);
     expect(isActorInAutoRange(center, loin, 2.5)).toBe(false);
     expect(isActorInAutoRange(center, enHauteur, 2.5)).toBe(false);
@@ -479,6 +479,100 @@ describe("batchDoorMeshes — un lot de dessin par matériau", () => {
   });
 });
 
+describe("DoorSystem — portes manœuvrables à la main", () => {
+  const LOIN = new THREE.Vector3(0, 1, 40);
+  const DEVANT = new THREE.Vector3(0, 1, 1.2);
+
+  function porteDeBureau() {
+    return build([
+      doorMesh("door_bureau", new THREE.Vector3(1, 2.1, 0.05), new THREE.Vector3(0, 1.05, 0), {
+        mouvement: "battant",
+        manuelle: true,
+        auto: "ennemis",
+        portee: 1.6,
+        referme: false,
+      }),
+    ]);
+  }
+
+  it("la touche E ouvre, puis referme", () => {
+    const { handle } = porteDeBureau();
+    const doors = new DoorSystem(handle.doors);
+
+    expect(doors.actionner(DEVANT)).toEqual({ name: "door_bureau", action: "ouverte" });
+    expect(doors.stateOf("door_bureau")).toBe("opening");
+    for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
+    expect(doors.stateOf("door_bureau")).toBe("open");
+
+    expect(doors.actionner(DEVANT)).toEqual({ name: "door_bureau", action: "fermee" });
+    for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
+    expect(doors.stateOf("door_bureau")).toBe("closed");
+  });
+
+  it("hors de portée, l'appui ne sert à rien (l'appelant peut en faire autre chose)", () => {
+    const { handle } = porteDeBureau();
+    const doors = new DoorSystem(handle.doors);
+    expect(doors.actionner(LOIN)).toBeNull();
+    expect(doors.stateOf("door_bureau")).toBe("closed");
+  });
+
+  it("`auto: ennemis` : le joueur ne l'ouvre pas en s'approchant, un Costard si", () => {
+    const { handle } = porteDeBureau();
+    const doors = new DoorSystem(handle.doors);
+    const joueur: DoorActor = { position: new THREE.Vector3(0, 1, 1), radius: 0.4, halfHeight: 0.5, joueur: true };
+    const costard: DoorActor = { position: new THREE.Vector3(0, 1, 1), radius: 0.4, halfHeight: 0.5, joueur: false };
+
+    for (let i = 0; i < 10; i++) doors.update(DT, [joueur]);
+    expect(doors.stateOf("door_bureau")).toBe("closed");
+
+    doors.update(DT, [costard]);
+    expect(doors.stateOf("door_bureau")).toBe("opening");
+  });
+
+  it("une porte `auto: ennemis` reste PASSANTE pour le bake du graphe de navigation", () => {
+    const { handle } = porteDeBureau();
+    const doors = new DoorSystem(handle.doors);
+    expect(doors.autoGroupColliders).toHaveLength(1);
+  });
+
+  it("`manuelle: \"fermer\"` (porte coupe-feu) : la main la referme, jamais ne l'ouvre", () => {
+    const { handle } = build([
+      doorMesh("door_coupe_feu", new THREE.Vector3(1.25, 2.25, 0.05), new THREE.Vector3(0, 1.13, 0), {
+        mouvement: "battant",
+        manuelle: "fermer",
+        groupe: "coupe_feu",
+      }),
+    ]);
+    const doors = new DoorSystem(handle.doors);
+
+    // Fermée : la main n'y peut rien, c'est le bouton qui commande.
+    expect(doors.actionner(DEVANT)).toBeNull();
+    expect(doors.stateOf("door_coupe_feu")).toBe("closed");
+
+    // Le bouton l'ouvre (chemin `use_*` -> `unlockDoor`)...
+    expect(doors.open("door_coupe_feu", new THREE.Vector3(0, 1, -2))).toBe(true);
+    for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
+    expect(doors.stateOf("door_coupe_feu")).toBe("open");
+
+    // ... et la main la referme, malgré l'ouverture « permanente » du use_*.
+    expect(doors.actionner(DEVANT)).toEqual({ name: "door_coupe_feu", action: "fermee" });
+    for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
+    expect(doors.stateOf("door_coupe_feu")).toBe("closed");
+
+    // Rouvrable par son bouton, sinon le raccourci serait perdu pour la partie.
+    expect(doors.open("door_coupe_feu", new THREE.Vector3(0, 1, -2))).toBe(true);
+    expect(doors.stateOf("door_coupe_feu")).toBe("opening");
+  });
+
+  it("une porte à carte n'est pas manœuvrable à la main", () => {
+    const { handle } = build([
+      doorMesh("door_argent", new THREE.Vector3(4, 2.5, 0.08), new THREE.Vector3(0, 1.25, 0), { mouvement: "monte" }),
+    ]);
+    const doors = new DoorSystem(handle.doors);
+    expect(doors.actionner(DEVANT)).toBeNull();
+  });
+});
+
 describe("DoorSystem — portes auto", () => {
   function autoDoor(extra: Record<string, unknown> = {}) {
     return doorMesh("door_auto", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0), {
@@ -490,7 +584,7 @@ describe("DoorSystem — portes auto", () => {
       ...extra,
     });
   }
-  const PRES: DoorActor = { position: new THREE.Vector3(1, 1, 0), radius: 0.3, halfHeight: 0.9 };
+  const PRES: DoorActor = { position: new THREE.Vector3(1, 1, 0), radius: 0.3, halfHeight: 0.9, joueur: true };
 
   it("s'ouvre quand un acteur entre à portée, se referme après le délai une fois seul", () => {
     const { handle } = build([autoDoor()]);
@@ -530,7 +624,7 @@ describe("DoorSystem — portes auto", () => {
 
     // `PRES` s'éloigne hors de portée `auto` (déclenche la fermeture), mais
     // un AUTRE acteur reste physiquement DANS le vantail (chevauchement).
-    const bloqueur: DoorActor = { position: new THREE.Vector3(0, 1.25, 0), radius: 0.5, halfHeight: 0.9 };
+    const bloqueur: DoorActor = { position: new THREE.Vector3(0, 1.25, 0), radius: 0.5, halfHeight: 0.9, joueur: true };
     for (let i = 0; i < 60; i++) doors.update(DT, [bloqueur]);
     // Le délai (0.5s) + la durée de fermeture (0.2s) sont largement écoulés :
     // sans le refus de refermeture, la porte serait "closed" ici.

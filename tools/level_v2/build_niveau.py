@@ -1879,10 +1879,15 @@ def habiller_etage(space, gris, props, col_coll, logic) -> dict:
         # la pousse — joueur ou Costard — et reste ouverte.
         o = plan.Opening("bureaux", nom, "y", yc0 + ET_EP / 2, (px, px + ET_PORTE_L), z, z)
         libre = px + ET_PORTE_L - 0.005
+        # Elle s'ouvre à la MAIN (touche E) : une porte de bureau qui s'écarte
+        # toute seule à l'approche se lit comme une porte de magasin. Les
+        # Costards, eux, la poussent — sans quoi ceux qui travaillent derrière
+        # n'auraient aucun chemin pour sortir de leur bureau.
         vantail(f"door_bureau_{nom}",
                 _monde(o, px + 0.005, -EP_VANTAIL / 2, z + 0.01, libre, EP_VANTAIL / 2, z + ET_PORTE_H - 0.1),
                 "portes", "porte:porte_bureau", props,
-                dict(mouvement="battant", charniere="min", sens="auto", auto=True, portee=1.6, referme=False),
+                dict(mouvement="battant", charniere="min", sens="auto", auto="ennemis", manuelle=True,
+                     portee=1.6, referme=False),
                 _bequilles(o, libre, -1), "quincaillerie:porte_bureau")
     # Cloisons entre bureaux.
     for i, (_nom, _a, b) in enumerate(ET_BUREAUX[:-1]):
@@ -2261,8 +2266,12 @@ def _porte_libre(o, spec, props, logic) -> None:
         depuis = next(s for s in plan.ALL if s.id == plan.PORTES_SENS_UNIQUE[frozenset({o.a, o.b})][0])
         bornes = depuis.y if o.axe == "y" else depuis.x
         cote_personnel = 1 if (bornes[0] + bornes[1]) / 2 > o.at else -1
+        # `manuelle: "fermer"` : on peut la REFERMER à la main, des deux côtés,
+        # jamais l'ouvrir. Le sens unique tient toujours à la place du bouton —
+        # hors de portée côté rayons — mais la porte n'est plus un interrupteur
+        # à sens unique définitif : on peut la claquer derrière soi.
         porte_double(o, (spec["porte"], f"{spec['porte']}_b"), HAUTEUR_VANTAIL[frozenset({o.a, o.b})],
-                     spec["texture"], "world", props, {"groupe": "coupe_feu"},
+                     spec["texture"], "world", props, {"groupe": "coupe_feu", "manuelle": "fermer"},
                      quincaillerie="barre", face_barre=cote_personnel)
     bo.boite_centree(spec["use"], spec["use_centre"], spec["use_taille"], "repere",
                      {"repere": H.textured_material(spec["texture"])}, logic,

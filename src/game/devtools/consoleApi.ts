@@ -138,6 +138,8 @@ export function exposeDebugApi(engine: GameEngine): void {
     doorSystem: {
       liste: () => engine.session.doorSystem?.describe() ?? [],
       ouvrir: (nom: string) => engine.session.doorSystem?.open(nom, engine.session.player.position) ?? false,
+      /** La touche E sur la porte manœuvrable la plus proche (`manuelle`), depuis la position du joueur — le verrouillage du pointeur met la vraie touche hors de portée de l'automatisation. */
+      actionner: () => engine.session.doorSystem?.actionner(engine.session.player.position) ?? null,
     },
     /** Vitrages du niveau courant (`game/level/vitres.ts::VitreSystem`) :
      * `liste()` rend l'état de chaque vitre (PV, cassée, givre), `casser(nom)`
@@ -359,6 +361,7 @@ declare global {
       doorSystem: {
         liste: () => ReturnType<DoorSystem["describe"]>;
         ouvrir: (nom: string) => boolean;
+        actionner: () => ReturnType<DoorSystem["actionner"]>;
       };
       /** Vitrages du niveau courant — voir `game/level/vitres.ts::VitreSystem`. */
       vitres: {
