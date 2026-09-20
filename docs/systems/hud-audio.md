@@ -16,9 +16,9 @@ fond et un thème musical, en boucle sur toute une session, qui doivent
 parfois baisser brièvement pour laisser la place à une réplique du héros —
 c'est le rôle de `core/music.ts`, volontairement séparé du premier parce
 que les deux jeux de contraintes (pooling/pitch d'un côté, streaming en
-boucle de l'autre) n'ont rien en commun. Tous les assets sonores actuels
-sont des placeholders synthétiques générés par script, pas des
-enregistrements — même statut que les meshes non texturés (invariant #9).
+boucle de l'autre) n'ont rien en commun. Quatorze des vingt SFX sont
+maintenant de vrais enregistrements CC0 (voir plus bas) ; les six qui
+restent, et la musique, sont encore des placeholders synthétiques.
 
 ## Effets sonores ponctuels
 
@@ -37,15 +37,32 @@ Ce module ne touche jamais le pas fixe (invariant #2) : il n'est consommé
 que depuis `updateFx` (`game/loop/updateFx.ts`), sur des
 `fireEvents`/`hitEvents` déjà produits par le pas fixe qui vient de tourner.
 
-## Assets sonores : boîtes blanches
+## Assets sonores
 
-Chaque `SfxId` a un placeholder SYNTHÉTIQUE (bruit/sinus généré par script,
-aucun enregistrement ni source externe) sous
-`public/assets/audio/sfx/<file>.{ogg,m4a}` — 9 sons ajoutés le 2026-08-20
-pour juger le feedback de hit avec du son plutôt qu'en silence,
-`door_locked`/`door_unlock`/`secret_found` ajoutés le 2026-08-23. Même
-statut que les meshes non texturés (invariant #9) : à remplacer par de vrais
-assets à la Phase 5, pas des choix de sound design arrêtés.
+Depuis le 2026-09-20, quatorze des vingt `SfxId` viennent de packs CC0, pas
+d'une synthèse : les tirs du pompe et du pistolet sont de VRAIES armes (un
+Winchester Model 12 et un Colt 1911, « The Free Firearm Sound Library »), le
+reste vient des packs audio de Kenney. Chaque pack a sa ligne au registre
+(`assets_src/LICENCES_ASSETS.md`), et la recette — quelle prise devient quel
+son, et comment elle est traitée — est dans `tools/audio/import_sfx.py`.
+
+Chaîne de traitement, la même pour tous : mono, recalage sur l'attaque (les
+prises d'armes commencent par des secondes de silence), coupe courte avec
+fondu, normalisation, **22 050 Hz** — le grain de l'époque Build, et la
+moitié du poids. Les vingt sons pèsent ensemble moins de 300 Ko.
+
+**Six sons restent synthétiques**, faute d'équivalent CC0 : les quatre
+vocalisations de Costard (`enemy_alert`, `enemy_telegraph`, `enemy_hurt`,
+`enemy_death` — aucun pack CC0 n'a de grognements) et les deux portes
+mécaniques du niveau v2 (`door_slide`, `door_shutter` — ni porte automatique
+ni rideau métallique dans ces packs).
+
+**Comment on choisit, puisqu'un agent n'entend pas** :
+`tools/audio/audition.py` écrit une page locale qui pose côte à côte, pour
+chaque son, l'ancien placeholder, celui qui est installé et des variantes,
+toutes passées par la même chaîne — `http://localhost:5173/audition/`. Le
+choix se note ensuite dans la table d'`import_sfx.py`, qui reste la source
+de vérité.
 
 Un fichier absent (404, cas normal en l'absence d'asset final) ne fait
 jamais planter le jeu : `onloaderror` log un seul `console.warn` par id

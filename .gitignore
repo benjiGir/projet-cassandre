@@ -23,3 +23,5 @@ __pycache__/
 
 # Captures de contrôle : régénérables par tools/blender/render_ingame.py
 /renders/
+public/audition/
+public/audition_avant/

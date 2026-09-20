@@ -146,6 +146,23 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 
 ## Phase courante
 
+> **Sons : de vrais enregistrements CC0 (2026-09-20), EN ATTENTE D'UNE
+> ÉCOUTE.** Quatorze des vingt SFX ne sont plus synthétiques : le pompe et le
+> pistolet sont de VRAIES armes (Winchester Model 12, Colt 1911 — « The Free
+> Firearm Sound Library », CC0), le reste vient des packs audio CC0 de Kenney.
+> Chaîne commune : mono, recalage sur l'attaque, coupe courte, normalisation,
+> 22 050 Hz (le grain Build, et la moitié du poids) — vingt sons pour moins de
+> 300 Ko. La recette est dans `tools/audio/import_sfx.py` (quelle prise devient
+> quel son), les packs au registre `assets_src/LICENCES_ASSETS.md`, les
+> archives brutes dans `assets_src/cc0_raw/` (gitignoré).
+> **Six sons restent synthétiques**, faute d'équivalent CC0 : les quatre
+> vocalisations de Costard (aucun pack CC0 n'a de grognements) et les deux
+> portes mécaniques du niveau v2 (porte automatique, rideau métallique).
+> **Un agent n'entend pas** : `tools/audio/audition.py` écrit une page locale
+> (`http://localhost:5173/audition/`) qui met côte à côte, par son, l'ancien
+> placeholder, celui qui est installé et des variantes, toutes traitées de la
+> même façon. Le verdict d'écoute se note dans la table d'`import_sfx.py`.
+>
 > **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 > DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies
 > portes qui bougent, des vraies vitres, et il est où mon rayon surgelés ? ».

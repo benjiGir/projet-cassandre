@@ -11,7 +11,12 @@ import type { DoorMovement } from "../game/level/doors";
  *
  * N'est appelé que depuis `updateFx` — jamais le pas fixe (invariant #2).
  *
- * see: docs/systems/hud-audio.md#effets-sonores-ponctuels
+ * Quatorze de ces vingt sons sont de vrais enregistrements CC0 depuis le
+ * 2026-09-20 (`tools/audio/import_sfx.py` dit lequel vient d'où) ; les quatre
+ * vocalisations de Costard et les deux portes mécaniques sont encore
+ * synthétiques, faute d'équivalent CC0.
+ *
+ * see: docs/systems/hud-audio.md#assets-sonores
  */
 
 /**

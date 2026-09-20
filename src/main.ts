@@ -50,7 +50,7 @@ async function main() {
 
   input.attach(canvas);
   // Pools de SFX (tir, impact), placeholders synthétiques (invariant #9).
-  // see: docs/systems/hud-audio.md#assets-sonores-boîtes-blanches
+  // see: docs/systems/hud-audio.md#assets-sonores
   initAudio();
   // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
   // see: docs/systems/hud-audio.md#musique-et-nappe-dambiance
