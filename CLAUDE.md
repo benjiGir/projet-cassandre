@@ -136,85 +136,103 @@ src/game/     player entities level state
 src/ui/       React overlay
 
 tools/blender/        scripts headless (kit, niveaux, bake, validation, export)
+tools/audio/          studio sonore (recettes, rendu, mesures, sprite, écoute)
 assets_src/blender/   sources .blend (kit + niveaux), jamais servi en runtime
 assets_src/library/   bibliothèque d'assets du niveau v2 (.blend + catégories Asset Browser)
 assets_src/cc0_raw/   packs CC0 bruts, gitignorés (registre : assets_src/LICENCES_ASSETS.md)
 public/assets/levels/ .glb exportés, seuls fichiers lus par le jeu
 public/assets/sprites/ atlas 8 directions + manifestes des ennemis (générés)
 public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
+public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (générés)
 ```
 
 ## Phase courante
 
-> **Son : CHANTIER EN COURS (2026-09-20). Quatre passes rejetées à l'écoute,
-> direction arrêtée à la cinquième.** Le son se fait à DEUX MAINS : de vrais
-> enregistrements CC0 pour tout ce qui est un OBJET (armes, impacts, verre,
-> bois, portes, ramassages, voix des Costards), la SYNTHÈSE pour ce qui
-> n'existe pas physiquement (interface, lecteur de carte, secret trouvé,
-> ambiances). Les deux origines se rejoignent dans un même sprite.
-> **En attente** : l'utilisateur télécharge les enregistrements CC0 depuis
-> Freesound (un contributeur différent par famille — une bibliothèque entière
-> enregistrée au même endroit donne des sons qui se ressemblent tous, mesuré) ;
-> ils se déposent dans `assets_src/cc0_raw/freesound/`, dont le README porte
-> les conventions.
-> **Leçon des quatre rejets** : le reproche était le même à chaque fois — « ça
-> ne ressemble pas à ce que c'est » — et j'ai corrigé trois autres choses
-> (chaîne d'import, distinction des timbres, puissance). Toutes réelles,
-> aucune n'était la sienne. La synthèse procédurale fait des sons
-> structurellement justes mais sans le désordre qui fait reconnaître un objet.
+> **Son : CHANTIER EN COURS, DIRECTION ARRÊTÉE (2026-09-21).** Quatre passes
+> rejetées à l'écoute avant d'y voir clair. Le son se fait désormais à DEUX
+> MAINS : de vrais enregistrements CC0 pour tout ce qui est un OBJET (armes,
+> impacts, verre, bois, portes, ramassages, voix des Costards), la SYNTHÈSE
+> pour ce qui n'existe pas physiquement (interface, lecteur de carte, secret
+> trouvé, ambiances de zone). Les deux origines se rejoignent dans un même
+> sprite.
+> **EN ATTENTE DE L'UTILISATEUR** : il télécharge les enregistrements depuis
+> Freesound (compte obligatoire, et le navigateur de l'agent s'y voit refuser
+> l'accès — ne pas compter dessus) vers `assets_src/cc0_raw/freesound/`, dont
+> le README porte les conventions. **Un contributeur différent par famille** :
+> une bibliothèque entière enregistrée au même endroit donne des sons qui se
+> ressemblent tous, quoi qu'on leur fasse.
 >
-> **Le grain rétro est RETIRÉ du défaut**, et c'est la correction la plus
-> mesurable de la passe : le `crush` 10 bits / 22 050 Hz injectait un parasite
-> à −1,7 dB du signal sur `impact_metal`, et FABRIQUAIT du faux aigu par
-> repliement au lieu d'en retirer. Il reste en option (`--crush`) pour un son
-> dégradé DANS LA FICTION (annonce au micro, interphone). Effet de bord : ses
-> marches verticales causaient tout le dépassement d'encodeur, donc l'écrêtage
-> de l'atlas a disparu avec lui et la marge de crête est remontée de 0,80 à
-> 0,85.
+> **La leçon des quatre rejets, plus utile que les correctifs.** Le reproche
+> était le même à chaque fois — « ça ne ressemble pas à ce que c'est » — et
+> j'ai corrigé trois autres choses : la chaîne d'import, la distinction des
+> timbres, la puissance. Les trois défauts étaient réels et mesurés ; aucun
+> n'était le sien. La synthèse procédurale produit des sons structurellement
+> justes — bonne enveloppe, bon spectre — mais sans le désordre qui fait dire à
+> l'oreille « ça, c'est du métal ». **Avant de livrer un correctif sur une
+> plainte sensorielle, vérifier qu'il répond aux MOTS employés.**
 >
-> Le studio reste `tools/audio/` — aucun échantillon dans le dépôt. Studio sous `tools/audio/`
-> (`synth.py` DSP, `recipes.py` les recettes, `render_sfx.py`,
-> `analyze_sfx.py`, `build_sprite.py`, `audition.py`), plus l'agent
-> `sound-forge` et cinq skills. Le jeu charge un **audio sprite** unique
-> (`public/assets/audio/sfx/sfx.{ogg,m4a,json}`) au lieu d'un fichier par son.
-> `SFX_TABLE` raccorde les identifiants du JEU aux noms de RECETTES — les deux
-> vocabulaires restent séparés, et c'est le seul endroit à toucher.
+> **Le studio** est `tools/audio/` (ajouté par l'utilisateur avec l'agent
+> `sound-forge` et cinq skills) : `synth.py` briques DSP, `recipes.py` les
+> recettes en texte, `render_sfx.py`, `analyze_sfx.py` (mesures et `--mask`),
+> `build_sprite.py`, `audition.py` (page d'écoute). Déterministe : même graine,
+> même octet. Le jeu charge un **audio sprite** unique
+> (`public/assets/audio/sfx/sfx.{ogg,m4a,json}`) au lieu d'un fichier par son ;
+> `SFX_TABLE` raccorde les identifiants du JEU aux noms de RECETTES
+> (`melee_fire` joue `crowbar_swing`) — deux vocabulaires séparés exprès, et le
+> seul endroit à toucher au renommage. Le pool de `Howl` a disparu avec sa
+> raison d'être : chaque lecture du sprite a son propre identifiant.
 >
-> **Pourquoi la synthèse : deux passes d'échantillons CC0 ont été rejetées à
-> l'écoute**, et les mesures ont tranché. D'abord « c'est trop bizarre le son
-> des armes » : somme stéréo d'un couple ESPACÉ qui retirait 5-6 dB entre 60 et
-> 600 Hz, rééchantillonnage sans filtre anti-repliement (+2,8 dB de
-> grésillement en 9-11 kHz), et surtout des prises SANS AUCUN GRAVE (0,1 % de
-> l'énergie sous 200 Hz) qui saturaient. Puis « le pistolet et le pompe, on
-> dirait le même son » : **0,976** de corrélation de timbre — et TOUTES les
-> paires de la bibliothèque tenaient au-dessus de **0,840**, un 12 contre un
-> .22 compris. Le stand et les micros écrasaient l'arme. Détail chiffré dans
-> [HUD et audio](docs/systems/hud-audio.md#assets-sonores).
+> **Le grain rétro est RETIRÉ du défaut (2026-09-20)**, et c'est la correction
+> la plus mesurable : le `crush` 10 bits / 22 050 Hz décime par blocage
+> d'échantillon, sans filtre — il ne COUPE pas l'aigu, il le REPLIE. Parasite
+> injecté à **−1,7 dB du signal** sur `impact_metal`, faux aigu FABRIQUÉ. À
+> −6 dB il y a autant de parasite que de son utile. Reste en option
+> (`--crush`) pour un son dégradé DANS LA FICTION (annonce au micro,
+> interphone). Effet de bord : ses marches verticales causaient tout le
+> dépassement d'encodeur, donc l'écrêtage de l'atlas a disparu avec lui et la
+> marge de crête est remontée de 0,80 à 0,85, zéro échantillon écrêté.
 >
-> **La mesure qui garde cette porte fermée** : spectre moyen des 250 premières
-> ms, 30 bandes log 100 Hz-16 kHz, moyenne retirée, corrélation. Deux sons qui
-> doivent se distinguer restent **sous 0,55**. Sur le catalogue synthétisé,
-> `shotgun`/`crowbar_swing` est à −0,024. `analyze_sfx.py --mask` fait l'autre
-> contrôle, celui de LISIBILITÉ : la télégraphie d'un Costard ne doit pas être
-> masquée par le tir du joueur — contrainte de gameplay, pas de goût.
+> **Les mesures qui gardent les portes fermées** (détail chiffré dans
+> [HUD et audio](docs/systems/hud-audio.md#assets-sonores)) :
+> - **Distance de timbre** : spectre moyen des 250 premières ms, 30 bandes log
+>   100 Hz-16 kHz, moyenne retirée, corrélation. Deux sons qui doivent se
+>   distinguer restent **sous 0,55**. La paire rejetée était à 0,976, et TOUTE
+>   la bibliothèque CC0 d'armes tenait au-dessus de 0,840 — un 12 contre un
+>   .22 compris.
+> - **Facteur de crête** : l'oreille juge le volume sur le niveau MOYEN, pas
+>   sur le pic. Médiane du catalogue 17,3 dB, impacts à 25-30 ; les samples de
+>   l'époque Build tiennent dans 6-12 dB.
+> - **`analyze_sfx.py --mask`** : contrainte de GAMEPLAY, pas de goût — la
+>   télégraphie d'un Costard ne doit pas être masquée par le tir du joueur,
+>   c'est le canal qui dit qu'on vous tire dessus hors champ.
 >
-> **Pièges payés et refermés** : `ffmpeg` n'est pas installé, `build_sprite.py`
-> se rabat donc sur `oggenc`/`afconvert` (livré avec macOS). L'atlas SATURAIT —
-> marge de crête à 0,95 alors qu'un encodeur avec perte dépasse son entrée,
-> d'autant plus que `crush` fabrique des marches nettes : +2,6 dB mesurés, une
-> vingtaine d'échantillons écrêtés sur la transitoire du pompe. Ramenée à 0,80.
-> Le décodeur du navigateur est le SEUL qui ne rabote pas à 1,0, donc le seul
-> qui le montre. Vérifié aussi, et sain : l'AAC n'ajoute pas de délai
-> d'amorçage ici, les positions du sprite valent pour les deux formats.
+> **Pièges payés.** Howler choisit UN format d'après le codec supporté et ne se
+> rabat pas sur l'autre : le sprite DOIT partir en `.ogg` ET `.m4a`. Le
+> `ffmpeg` de Homebrew est livré **sans libvorbis** — le préférer parce qu'il
+> est installé a produit un sprite sans `.ogg`, donc muet sur Chrome et
+> Firefox ; les encodeurs sont maintenant ESSAYÉS dans l'ordre jusqu'à ce que
+> l'un réussisse. Un encodeur avec perte DÉPASSE son entrée, et seul le
+> décodeur du navigateur le montre (les autres rabotent à 1,0 en silence).
+> Vérifié et sain : l'AAC n'ajoute pas de délai d'amorçage, les positions du
+> sprite valent pour les deux formats.
 >
 > **Un agent n'entend pas.** `tools/audio/audition.py` écrit une page locale
 > (`http://localhost:5173/audition/`) : tout le catalogue à un clic par son,
-> variantes de seed comprises, avec les mesures sous chaque bouton. En jeu,
+> variantes de graine comprises, mesures sous chaque bouton. En jeu,
 > `cassandre.sfx.liste()` dit quel identifiant pointe sur quelle recette et si
 > elle est présente, `cassandre.sfx.joue(id)` déclenche n'importe quel son sans
-> provoquer la situation. Vérifié en jeu : atlas chargé, 31 sons, **zéro
-> identifiant orphelin sur 20**, signal réel mesuré au bus maître pour six
-> sons, sans saturation. **Non vérifié** : comment ça sonne.
+> provoquer la situation. Vérifié : atlas chargé, zéro identifiant orphelin sur
+> 20, signal réel au bus maître. **Non vérifié, et c'est tout le sujet** :
+> comment ça sonne.
+>
+> **Hot reload : le sondage ne part plus en production (2026-09-21).** Signalé
+> par l'utilisateur, qui voyait un `HEAD` sur le `.glb` toutes les 400 ms. Le
+> module s'annonçait « dev-only » et l'ADR 0011 parlait d'une session « de
+> développement », mais **rien ne l'appliquait** — le sondage était bien dans
+> le bundle livré. La fibre n'est créée que sous `import.meta.env.DEV`, donc la
+> branche disparaît au build. La leçon dépasse le bug : **un commentaire qui
+> annonce une contrainte ne l'applique pas**, et celui-là a traversé tout le
+> retrofit Effect du jalon M2 sans que personne le vérifie.
 >
 > **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 > DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies
