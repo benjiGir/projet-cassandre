@@ -1574,11 +1574,18 @@ export function loadLevelEffect(
   url: string,
   scene: THREE.Scene,
   physics: PhysicsWorld,
+  onProgress?: (fraction: number) => void,
 ): Effect.Effect<LevelHandle, LevelFetchError> {
   return Effect.gen(function* () {
     const loader = new GLTFLoader();
     const gltf = yield* Effect.tryPromise({
-      try: () => loader.loadAsync(url),
+      try: () =>
+        loader.loadAsync(url, (event) => {
+          // `total` vaut 0 si le serveur n'annonce pas de `Content-Length`
+          // (réponse en flux, compression à la volée) : dans ce cas on ne
+          // sait rien, et mentir vaut moins que se taire.
+          if (onProgress && event.total > 0) onProgress(event.loaded / event.total);
+        }),
       catch: (cause) => new LevelFetchError({ url, cause }),
     });
     return yield* buildLevelFromGltfEffect(gltf, scene, physics);
@@ -1591,6 +1598,11 @@ export function loadLevelEffect(
  * au-dessus reste testable hors navigateur. Rejette avec `LevelFetchError`
  * en cas d'échec réseau/parsing (`hotReload.ts`, seul appelant, la rattrape).
  */
-export async function loadLevel(url: string, scene: THREE.Scene, physics: PhysicsWorld): Promise<LevelHandle> {
-  return GameRuntime.runPromise(loadLevelEffect(url, scene, physics));
+export async function loadLevel(
+  url: string,
+  scene: THREE.Scene,
+  physics: PhysicsWorld,
+  onProgress?: (fraction: number) => void,
+): Promise<LevelHandle> {
+  return GameRuntime.runPromise(loadLevelEffect(url, scene, physics, onProgress));
 }

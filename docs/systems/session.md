@@ -285,10 +285,23 @@ et attend le choix de l'utilisateur.
 chemins historiques (`?level=` enregistré ou non) continuent de fonctionner
 exactement comme avant, la logique n'est pas dupliquée, seulement enrobée.
 Sans `?level=` : affiche `MainMenu` (Jouer / Options / Quitter). « Jouer »
-résout DIRECTEMENT sur `hypermarche_complet`, sans passer par `LevelMenu`
-(resté un outil de dev, atteignable via un lien discret). « Options »
-affiche `RebindScreen`. Réutilisée par `returnToMenu` (voir plus haut) —
-exactement comme au tout premier boot.
+résout DIRECTEMENT sur **`niveau_v2`**, le niveau habillé, sans passer par
+`LevelMenu`. « Options » affiche `RebindScreen`. Réutilisée par
+`returnToMenu` (voir plus haut) — exactement comme au tout premier boot.
+
+**Le choix de zone n'existe qu'en développement** (2026-09-21). `MainMenu`
+ne reçoit `onChooseZone` que sous `import.meta.env.DEV`, et ne rend pas le
+bouton quand le handler est absent ; dans un build de production Vite
+remplace l'expression par une constante et il ne reste que
+`onChooseZone: void 0`. C'est un outil d'AUTEUR : il expose les zones de
+test, les blockouts et la gym, qui n'ont rien à faire devant un joueur.
+`?level=` continue de fonctionner partout — chemin d'outillage assumé, il
+demande de taper une URL, pas de cliquer.
+
+Jusqu'au 2026-09-21, « Jouer » lançait `hypermarche_complet` (les cinq zones
+de la Phase 5 recollées). Ce niveau reste enregistré et jouable par le choix
+de zone ou par `?level=`, mais ce n'est plus ce que voit quelqu'un qui appuie
+sur Jouer.
 
 ## Spawn et chargement de niveau
 

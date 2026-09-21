@@ -58,11 +58,15 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
   const levelParam = new URLSearchParams(window.location.search).get("level");
   if (levelParam) return resolveLevelChoice(root);
 
-  const fullLevel = LEVEL_CHOICES.find((entry) => entry.id === "hypermarche_complet");
+  // "Jouer" lance LE niveau du jeu, sans détour par un choix : le niveau v2
+  // habillé. `hypermarche_complet` (les cinq zones de la Phase 5 recollées)
+  // reste au registre et reste jouable par le choix de zone ou par `?level=`,
+  // mais ce n'est plus ce que voit quelqu'un qui appuie sur Jouer.
+  const mainLevel = LEVEL_CHOICES.find((entry) => entry.id === "niveau_v2");
   // Filet de sécurité de TYPAGE uniquement, jamais atteint en pratique tant
   // que `levels.ts` garde cette entrée enregistrée — sans lui, "Jouer"
   // retomberait sur le tout premier choix du registre plutôt que de planter.
-  const playChoice = fullLevel ?? LEVEL_CHOICES[0];
+  const playChoice = mainLevel ?? LEVEL_CHOICES[0];
 
   return new Promise((resolve) => {
     function showMainMenu() {
@@ -72,9 +76,17 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
           onOptions: () => {
             root.render(createElement(RebindScreen, { onBack: showMainMenu }));
           },
-          onChooseZone: () => {
-            resolveLevelChoice(root).then(resolve);
-          },
+          // Le choix de zone est un outil d'AUTEUR : il expose les zones de
+          // test et les blockouts, qui n'ont rien à faire devant un joueur.
+          // `import.meta.env.DEV` est remplacé par une constante au build,
+          // donc le bouton — et la branche entière — disparaissent du bundle
+          // de production. `?level=` continue de marcher partout, c'est un
+          // chemin d'outillage assumé.
+          onChooseZone: import.meta.env.DEV
+            ? () => {
+                resolveLevelChoice(root).then(resolve);
+              }
+            : undefined,
         }),
       );
     }

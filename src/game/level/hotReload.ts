@@ -29,6 +29,10 @@ export interface LevelSessionOptions {
    * glb temporairement invalide pendant l'écriture...). La session garde le
    * niveau précédent affiché — jamais d'écran noir sur une erreur transitoire. */
   onError?: (error: unknown) => void;
+  /** Avancement du TÉLÉCHARGEMENT du `.glb`, fraction 0..1. Appelé aussi lors
+   * d'un rechargement à chaud — c'est à l'appelant de décider si ça l'intéresse
+   * encore (`core/loadingProgress.ts` ignore tout après `finishLoading()`). */
+  onProgress?: (fraction: number) => void;
 }
 
 export interface LevelSession {
@@ -37,6 +41,11 @@ export interface LevelSession {
   /** Résolu après le PREMIER chargement réussi — pratique pour `await` la
    * position de spawn au boot sans dupliquer la logique de `onLoaded`. */
   readonly ready: Promise<LevelHandle>;
+  /** Résolu après le premier essai, QU'IL AIT RÉUSSI OU NON. `ready` seul ne
+   * suffit pas à un écran de chargement : sur un `.glb` absent ou corrompu il
+   * ne se résout jamais, et l'écran resterait affiché pour toujours au lieu de
+   * laisser voir l'erreur. */
+  readonly firstLoadSettled: Promise<void>;
   /** Force un rechargement immédiat, sans attendre le prochain sondage. */
   reload(): Promise<void>;
   /** Arrête le sondage (s'il tourne) et libère le niveau courant. */
@@ -68,6 +77,10 @@ export function createLevelSession(
   const ready = new Promise<LevelHandle>((resolve) => {
     resolveReady = resolve;
   });
+  let settleFirstLoad!: () => void;
+  const firstLoadSettled = new Promise<void>((resolve) => {
+    settleFirstLoad = resolve;
+  });
 
   // Garde-fou structurel EN PLUS de `reloadInFlight` (ne le remplace pas —
   // un Semaphore seul sérialiserait les appels concurrents au lieu de les
@@ -76,7 +89,7 @@ export function createLevelSession(
 
   function performLoadEffect(): Effect.Effect<void> {
     return Effect.tryPromise({
-      try: () => loadLevel(url, scene, physics),
+      try: () => loadLevel(url, scene, physics, options.onProgress),
       catch: (cause) => cause,
     }).pipe(
       Effect.map((nextHandle) => {
@@ -88,11 +101,13 @@ export function createLevelSession(
           resolveReady(nextHandle);
         }
         options.onLoaded?.(nextHandle, info);
+        settleFirstLoad();
       }),
       Effect.catch((error) =>
         Effect.sync(() => {
           console.error(`[level] échec du (re)chargement de "${url}" — niveau précédent conservé.`, error);
           options.onError?.(error);
+          settleFirstLoad();
         }),
       ),
     );
@@ -162,6 +177,7 @@ export function createLevelSession(
       return currentHandle;
     },
     ready,
+    firstLoadSettled,
     reload,
     stop() {
       currentHandle?.dispose();

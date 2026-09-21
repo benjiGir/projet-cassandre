@@ -12,7 +12,9 @@ export interface MainMenuProps {
   onPlay: () => void;
   onOptions: () => void;
   /** Lien discret vers `LevelMenu` (choix de zone, outil de dev). */
-  onChooseZone: () => void;
+  /** Absent = pas de bouton. Le choix de zone est un outil de DEV : il ne
+   * s'affiche pas dans un build de production (voir `game/session/bootChoice.ts`). */
+  onChooseZone?: () => void;
 }
 
 const BUTTON_BASE_STYLE: CSSProperties = {
@@ -89,22 +91,24 @@ export function MainMenu(props: MainMenuProps) {
         </div>
       )}
 
-      <button
-        onClick={onChooseZone}
-        style={{
-          marginTop: 8,
-          background: "none",
-          border: "none",
-          color: "#555",
-          fontFamily: "monospace",
-          fontSize: 11,
-          textDecoration: "underline",
-          cursor: "pointer",
-          pointerEvents: "auto",
-        }}
-      >
-        Choisir une zone (dev)
-      </button>
+      {onChooseZone && (
+        <button
+          onClick={onChooseZone}
+          style={{
+            marginTop: 8,
+            background: "none",
+            border: "none",
+            color: "#555",
+            fontFamily: "monospace",
+            fontSize: 11,
+            textDecoration: "underline",
+            cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+        >
+          Choisir une zone (dev)
+        </button>
+      )}
     </div>
   );
 }

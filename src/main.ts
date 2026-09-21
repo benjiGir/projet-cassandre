@@ -21,6 +21,8 @@ import { updateGameplay } from "./game/loop/updateGameplay";
 import { interpolateVisuals } from "./game/loop/interpolateVisuals";
 import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
+import { LoadingScreen } from "./ui/LoadingScreen";
+import { finishLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
 
 // Orchestrateur mince depuis le refactor du 2026-09-05 (2229 -> 129 lignes,
 // extraction structurelle pure, aucun comportement observable changé).
@@ -48,6 +50,15 @@ async function main() {
   const choice = await resolveBootChoice(root);
   flowActor.send({ type: "PLAY" });
 
+  // L'écran de chargement prend la place du menu IMMÉDIATEMENT, et le garde
+  // jusqu'à ce que le niveau soit réellement là. Avant ça, le menu restait
+  // affiché, figé, pendant les 29 Mo du niveau v2 — puis le HUD apparaissait
+  // sur une scène vide, le décor surgissant d'un coup quelques secondes plus
+  // tard. see: docs/systems/hud.md#écran-de-chargement
+  reportLoading("Démarrage", 0.02);
+  root.render(createElement(LoadingScreen));
+  await letBrowserPaint();
+
   input.attach(canvas);
   // Pools de SFX (tir, impact), placeholders synthétiques (invariant #9).
   // see: docs/systems/hud-audio.md#assets-sonores
@@ -58,12 +69,15 @@ async function main() {
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).
+  reportLoading("Moteur physique et planches de sprites", 0.08);
   const [, suitSheet, directorSheet, weaponModels] = await Promise.all([
     initPhysics(),
     loadEnemySpriteSheetOrPlaceholder("costard"),
     loadEnemySpriteSheetOrPlaceholder("directeur"),
     loadWeaponModelsOrPlaceholder(),
   ]);
+  reportLoading("Chargement du niveau", 0.3);
+  await letBrowserPaint();
 
   // État PERSISTANT (survit à un reset) : `buildGameEngine` ne construit PAS
   // `session` (ordre de construction circulaire) — `bootGameSession` la
@@ -78,6 +92,18 @@ async function main() {
   );
   const session = bootGameSession(persistentEngine, choice);
   const engine: GameEngine = { ...persistentEngine, session };
+
+  // On ATTEND le premier chargement avant de rendre la main au joueur. Sur le
+  // chemin glTF, `bootGameSession` ne fait que LANCER le chargement : sans
+  // cette attente la boucle démarrait aussitôt et le joueur tombait dans le
+  // vide depuis (0, 2, 0) — position transitoire documentée dans
+  // `lifecycle.ts` — jusqu'à ce que `onLoaded` le repose sur `spawn_player`.
+  //
+  // `firstLoadSettled` et pas `ready` : sur un `.glb` absent ou corrompu,
+  // `ready` ne se résout jamais et l'écran de chargement resterait affiché
+  // pour toujours, cachant l'erreur au lieu de la montrer.
+  await session.gltfLevelSession?.firstLoadSettled;
+  finishLoading();
 
   // `<App/>` monté APRÈS la construction du monde : `onReplay`/
   // `onReturnToMenu` ferment sur `engine`.

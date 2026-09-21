@@ -168,8 +168,8 @@ distinction information/réplique.
 `MainMenu.tsx` (Jouer / Options / Quitter) et `LevelMenu.tsx` (choix de
 zone individuelle, outil de DEV) sont deux composants distincts,
 volontairement jamais fusionnés. Le câblage exact entre les deux
-(« Jouer » va directement au niveau complet sans passer par `LevelMenu`,
-accessible uniquement via un lien discret « Choisir une zone (dev) ») est
+(« Jouer » va directement au niveau v2 sans passer par `LevelMenu`, dont le
+lien « Choisir une zone (dev) » n'apparaît **qu'en développement**) est
 documenté dans [Session de partie — Choix du niveau au
 boot](session.md#choix-du-niveau-au-boot), qui fait référence. Les deux
 composants sont purement présentationnels (aucun import `src/game/*`),
@@ -179,6 +179,45 @@ montés avant même que la scène Three.js/le monde Rapier existent.
 message de repli si ça ne fonctionne pas : un onglet ouvert normalement
 (pas par script) ne peut pas se fermer lui-même, spec DOM — le bouton reste
 honnête plutôt que de prétendre avoir fait quelque chose.
+
+## Écran de chargement
+
+`LoadingScreen.tsx` occupe l'écran entre le menu et la partie, et il attend
+le niveau pour de bon : `main.ts` ne monte `<App/>` et ne démarre la boucle
+qu'après `gltfLevelSession.firstLoadSettled`.
+
+Avant lui (jusqu'au 2026-09-21), le menu restait affiché **figé** pendant les
+29 Mo du niveau v2, puis le HUD apparaissait sur une scène vide, le joueur
+tombant depuis la position transitoire `(0, 2, 0)` jusqu'à ce que `onLoaded`
+le repose sur `spawn_player`. Le décor surgissait ensuite d'un coup.
+
+**Pourquoi `firstLoadSettled` et pas `ready`** : `ready` ne se résout que sur
+un SUCCÈS. Sur un `.glb` absent ou corrompu, l'écran de chargement resterait
+affiché indéfiniment et cacherait l'erreur au lieu de la montrer.
+`firstLoadSettled` se résout après le premier essai, qu'il ait réussi ou non.
+
+**La progression est réelle**, pas une animation : `GLTFLoader` remonte les
+octets par son `onProgress`, que `LevelSessionOptions.onProgress` fait
+traverser jusqu'à `core/loadingProgress.ts`. Le `.glb` occupe la bande
+0,30-0,85 ; le reste (physique, planches de sprites, construction du décor,
+cuisson du graphe de navigation) se partage ce qui l'encadre. Les bornes sont
+chez les appelants, parce que seul l'appelant sait ce qui vient après lui. Si
+le serveur n'annonce pas de `Content-Length`, la fraction n'est pas calculable
+et rien n'est publié — se taire vaut mieux que mentir.
+
+**Deux détails qui font toute la différence quand le fil principal bloque.**
+Construire les colliders et cuire le graphe de navigation sont synchrones :
+- chaque étape s'annonce AVANT de commencer, et `letBrowserPaint()` rend la
+  main deux trames pour que React ait le temps de peindre — sinon le nouveau
+  libellé n'apparaît qu'une fois le travail fini, c'est-à-dire jamais ;
+- le reflet qui glisse sur la barre est une animation CSS de `transform`,
+  donc jouée par le compositeur et non par le fil principal. C'est la seule
+  chose qui continue de bouger pendant le blocage, et donc la seule qui
+  distingue « ça travaille » de « c'est planté ».
+
+Les petites phrases (`QUIPS`) ne décrivent JAMAIS ce que fait le chargement :
+c'est le libellé au-dessus de la barre qui le dit. Les confondre rendrait la
+vraie information invisible derrière la blague.
 
 ## Écrans de mort et de fin de niveau
 

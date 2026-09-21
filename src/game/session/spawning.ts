@@ -19,6 +19,7 @@ import { suitConfig } from "../entities/suitConfig";
 import { Director } from "../entities/director";
 import { directorConfig } from "../entities/directorConfig";
 import { createLevelSession } from "../level/hotReload";
+import { reportLoading } from "../../core/loadingProgress";
 import { PathfindingService, navGraphStats } from "../level/pathfinding";
 import { useGameStore } from "../state";
 import { type GameSession } from "./gameSession";
@@ -109,7 +110,15 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
   session.gltfLevelSession?.stop();
   const url = assetUrl(`assets/levels/${name}.glb`);
   session.gltfLevelSession = createLevelSession(url, engine.scene, session.physics, {
+    // Bornes du chargement : le `.glb` occupe la part du lion, le reste de
+    // `main.ts` se partage ce qui l'encadre. Elles sont ici plutôt qu'au
+    // rapporteur parce que seul l'appelant sait ce qui vient après lui.
+    onProgress: (fraction) => reportLoading("Chargement du niveau", 0.3 + fraction * 0.55),
     onLoaded: (handle, info) => {
+      // Le glTF est là mais tout ce qui suit est SYNCHRONE et bloque : on
+      // annonce l'étape avant de la commencer, sinon le libellé n'apparaît
+      // qu'une fois le travail fini — c'est-à-dire jamais.
+      reportLoading("Construction du décor et des portes", 0.86);
       // Portes ANIMÉES : construites AVANT le bake du graphe de navigation,
       // pour pouvoir rendre les groupes `auto` PASSANTS le temps du bake
       // (sinon un bureau derrière une porte automatique fermée ne reçoit
@@ -119,6 +128,7 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       const autoColliders = doorSystem.autoGroupColliders;
       for (const collider of autoColliders) collider.setEnabled(false);
 
+      reportLoading("Cuisson du graphe de navigation", 0.92);
       const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
       session.physics.refreshSceneQueries();
       session.currentNavGraph = runGameplaySync(
