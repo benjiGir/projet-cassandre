@@ -5,8 +5,9 @@ import * as THREE from "three";
  * forme EXACTE réellement testée par la requête de hit (mêmes nombres que
  * `game/player/weapons.ts`), pas une approximation pédagogique. Demande
  * explicite du playtest (« il faudrait rajouter des gizmos pour voir sur
- * quoi on tire »). ACTIF PAR DÉFAUT, contrairement au wireframe `KeyV` —
- * `KeyB` bascule l'affichage à chaud.
+ * quoi on tire »). ACTIF PAR DÉFAUT EN DEV, contrairement au wireframe
+ * `KeyV` — `KeyB` bascule l'affichage à chaud. Éteint et sans touche dans le
+ * build de production.
  *
  * Découplage de `game/*`, objets 3D réels non éclairés (pas une entorse à
  * l'invariant #5 — calque de diagnostic transitoire), temps réel (géométrie
@@ -32,7 +33,7 @@ interface ActiveTrace {
 
 export class BallisticsDebugOverlay {
   private readonly scene: THREE.Scene;
-  private enabled = true;
+  private enabled = import.meta.env.DEV;
   private readonly traces: ActiveTrace[] = [];
 
   constructor(scene: THREE.Scene) {

@@ -175,8 +175,8 @@ export function buildGameEngine(
   const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   // Gizmos balistiques de debug (retour playtest : « rajouter ... des gizmos
   // pour voir sur quoi on tire »), voir `render/ballisticsDebug.ts`. Objets
-  // 3D RÉELS ajoutés à `scene`, pas un overlay canvas — actif PAR DÉFAUT,
-  // bascule à chaud via `KeyB` dans `loop/updateFx.ts`.
+  // 3D RÉELS ajoutés à `scene`, pas un overlay canvas — actif PAR DÉFAUT en
+  // dev, bascule à chaud via `KeyB` dans `loop/updateFx.ts` ; éteint en prod.
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
 
   // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager

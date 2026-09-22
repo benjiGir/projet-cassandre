@@ -2,7 +2,7 @@
 title: HUD et interface
 tags: [systeme, ui]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-22
 ---
 
 # HUD et interface
@@ -39,6 +39,12 @@ plus bas). `DeathScreen`/`LevelCompleteScreen` restent montés en
 permanence et rendent `null` tant que leur condition n'est pas remplie —
 pas de montage/démontage conditionnel, plus simple et sans risque de rater
 un changement d'état pendant que le composant serait démonté.
+
+**Build de production** : `DebugPanel` et `TuningPanel` n'y sont pas
+montés (`import.meta.env.DEV`, constante au build — ils quittent le bundle).
+À la place de `DebugPanel`, au même coin haut-gauche, `FpsCounter` affiche
+le seul chiffre qui intéresse un joueur, lu dans `state.debug.fps` avec un
+sélecteur arrondi à l'entier. Voir [Outils de debug](debug.md).
 
 `root.render(createElement(App, ...))` (`main.ts`) a lieu APRÈS la
 construction complète de `GameEngine`/`GameSession` : les callbacks
@@ -135,8 +141,8 @@ pour le détail exact par champ, jamais un `setState` par pas fixe
 (invariant #2).
 
 **Webcam + compteur de vues en HAUT-DROITE, jamais haut-gauche** :
-`DebugPanel` (dev, toujours monté à côté) occupe le coin haut-gauche depuis
-la Phase 1. Un premier jet de ce HUD les avait superposés là — constaté
+`DebugPanel` (dev) occupe le coin haut-gauche depuis la Phase 1, et
+`FpsCounter` le reprend en production. Un premier jet de ce HUD les avait superposés là — constaté
 illisible en jeu (texte des deux composants entrelacé). Corrigé en
 déplaçant ce bloc, jamais en touchant `DebugPanel`. Le commentaire à côté
 du bloc webcam dans le code doit rester cohérent avec cette position — un

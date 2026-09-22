@@ -126,7 +126,10 @@ async function main() {
     },
   });
 
-  exposeDebugApi(engine);
+  // `window.cassandre` est un outil de dev, pas une API joueur : il donne des
+  // cartes, téléporte, rend les ennemis passifs. Absent du build de production.
+  // see: docs/systems/debug.md#point-dentrée-console-windowcassandre
+  if (import.meta.env.DEV) exposeDebugApi(engine);
 }
 
 main();

@@ -1,5 +1,6 @@
 import { DebugPanel } from "./DebugPanel";
 import { DeathScreen } from "./DeathScreen";
+import { FpsCounter } from "./FpsCounter";
 import { HeroLine } from "./HeroLine";
 import { Hud } from "./Hud";
 import { HudMessage } from "./HudMessage";
@@ -23,10 +24,12 @@ export interface AppProps {
 
 export function App(props: AppProps) {
   const { onReplay, onReturnToMenu } = props;
+  // `import.meta.env.DEV` est une constante au build : en production, les
+  // deux panneaux de dev disparaissent du bundle, pas seulement de l'écran.
   return (
     <>
-      <DebugPanel />
-      <TuningPanel />
+      {import.meta.env.DEV ? <DebugPanel /> : <FpsCounter />}
+      {import.meta.env.DEV && <TuningPanel />}
       <Hud />
       <HeroLine />
       <HudMessage />

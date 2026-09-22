@@ -2,7 +2,7 @@
 title: Contrôles et bindings
 tags: [reference, input]
 status: stable
-updated: 2026-09-05
+updated: 2026-09-22
 ---
 
 # Contrôles et bindings
@@ -45,14 +45,19 @@ rebindables via cette API.
 ## Touches de dev
 
 Lues au taux d'affichage dans `game/loop/updateFx.ts` (sauf le panneau de
-tuning, qui écoute lui-même), jamais rebindables.
+tuning, qui écoute lui-même), jamais rebindables. **Absentes du build de
+production** : leur lecture est sous `import.meta.env.DEV`, constante au
+build, donc la branche n'existe pas dans le bundle livré — même régime que le
+panneau de debug, le panneau de tuning et `window.cassandre`. Sans ça, un
+joueur qui aurait rebindé une action sur `V` ou `B` basculerait le wireframe
+ou les gizmos en jouant.
 
 | Touche | Effet |
 |---|---|
 | `F8` | **Ennemis passifs** (`notarget`) : ils ne voient plus le joueur et leurs attaques ne font rien — pour parcourir un niveau et le regarder |
 | `F9` / `F10` | Enregistre / rejoue une séquence d'input (harnais A/B, preuve de déterminisme) |
 | `KeyV` | Wireframe de toute la scène |
-| `KeyB` | Gizmos balistiques (actifs par défaut) |
+| `KeyB` | Gizmos balistiques (actifs par défaut en dev, éteints en prod) |
 | `` ` `` | Panneau de tuning à chaud (`ui/TuningPanel.tsx`) |
 
 `KeyM` (musique) n'est pas dans cette liste : c'est une touche joueur, fixe

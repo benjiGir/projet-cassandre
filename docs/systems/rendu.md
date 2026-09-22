@@ -2,7 +2,7 @@
 title: Rendu
 tags: [systeme, rendu]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-22
 ---
 
 # Rendu
@@ -434,8 +434,9 @@ gizmos pour voir sur quoi on tire »). Dessinent la forme EXACTE réellement
 testée par la requête de hit courante (mêmes nombres que `WeaponSystem` :
 portée, rayon, directions dispersées des plombs) — pas une approximation
 pédagogique. Contrairement au wireframe (`KeyV`, désactivé par défaut), actif
-PAR DÉFAUT : il répond à un besoin de diagnostic immédiat, pas une
-fonctionnalité cachée à découvrir. `KeyB` bascule l'affichage à chaud — voir
+PAR DÉFAUT en dev : il répond à un besoin de diagnostic immédiat, pas une
+fonctionnalité cachée à découvrir. Éteint dans le build de production, où
+`KeyB` n'est pas lu. `KeyB` bascule l'affichage à chaud — voir
 [Outils de debug](debug.md) et [Contrôles](../reference/controles.md) pour
 le câblage des touches.
 

@@ -328,49 +328,56 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // `player.eyePosition`/`camera.position` de base.
         engine.camera.position.add(engine.fx.currentShakeOffset(shakeOffsetScratch));
 
-        // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
-        // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
-        // Gardé par `isPhysicsSessionLive()` : `startRecording`/`startPlayback`
-        // appellent `session.player.spawn(...)`, qui touche Rapier. Cas
-        // limite dev-only, coût de la garde nul.
-        // see: docs/decisions/0013-garde-flux-vs-monde-physique.md
-        if (isPhysicsSessionLive(engine)) {
-          if (input.wasJustPressed("F9")) {
-            if (inputRecorder.isRecording()) {
-              engine.lastRecording = inputRecorder.stopRecording();
-              console.info(`[recorder] ${engine.lastRecording?.frames.length ?? 0} pas fixes enregistrés`);
-            } else {
-              startRecording(engine, session);
-              console.info("[recorder] enregistrement démarré");
+        // Touches de dev (F8-F10, V, B) : absentes du build de production.
+        // `import.meta.env.DEV` y vaut `false` à la compilation, la branche
+        // disparaît — un joueur qui aurait rebindé une action sur `V` ne
+        // basculerait pas le wireframe en jouant.
+        // see: docs/reference/controles.md#touches-de-dev
+        if (import.meta.env.DEV) {
+          // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
+          // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
+          // Gardé par `isPhysicsSessionLive()` : `startRecording`/`startPlayback`
+          // appellent `session.player.spawn(...)`, qui touche Rapier. Cas
+          // limite dev-only, coût de la garde nul.
+          // see: docs/decisions/0013-garde-flux-vs-monde-physique.md
+          if (isPhysicsSessionLive(engine)) {
+            if (input.wasJustPressed("F9")) {
+              if (inputRecorder.isRecording()) {
+                engine.lastRecording = inputRecorder.stopRecording();
+                console.info(`[recorder] ${engine.lastRecording?.frames.length ?? 0} pas fixes enregistrés`);
+              } else {
+                startRecording(engine, session);
+                console.info("[recorder] enregistrement démarré");
+              }
+            }
+            if (input.wasJustPressed("F10") && engine.lastRecording) {
+              startPlayback(engine, session, engine.lastRecording);
+              console.info(`[recorder] rejeu de ${engine.lastRecording.frames.length} pas fixes`);
             }
           }
-          if (input.wasJustPressed("F10") && engine.lastRecording) {
-            startPlayback(engine, session, engine.lastRecording);
-            console.info(`[recorder] rejeu de ${engine.lastRecording.frames.length} pas fixes`);
+          // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
+          // (invariant #2 — pas de lecture continue, pas de setState par frame).
+          if (input.wasJustPressed("KeyV")) {
+            const enabled = engine.wireframeToggle.toggle();
+            console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
           }
-        }
-        // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
-        // (invariant #2 — pas de lecture continue, pas de setState par frame).
-        if (input.wasJustPressed("KeyV")) {
-          const enabled = engine.wireframeToggle.toggle();
-          console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
-        }
-        // KeyB (ballistics) : gizmos balistiques de debug, actifs PAR DÉFAUT
-        // (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
-        // de bascule ponctuelle que KeyV ci-dessus.
-        if (input.wasJustPressed("KeyB")) {
-          const enabled = engine.ballisticsDebug.toggle();
-          console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
-        }
-        // F8 : les ennemis cessent de voir le joueur (`notarget`), pour
-        // parcourir un niveau et le regarder. Même bascule ponctuelle que
-        // KeyV/KeyB, mais elle touche le GAMEPLAY — d'où le message HUD, qui
-        // évite de croire plus tard à une IA cassée.
-        // see: docs/reference/controles.md#touches-de-dev
-        if (input.wasJustPressed("F8")) {
-          const on = toggleNotarget();
-          showHudMessage(on ? "Dev : ennemis passifs" : "Dev : ennemis à nouveau hostiles");
-          console.info(`[debug] notarget ${on ? "activé" : "désactivé"}`);
+          // KeyB (ballistics) : gizmos balistiques de debug, actifs par défaut
+          // en dev (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
+          // de bascule ponctuelle que KeyV ci-dessus.
+          if (input.wasJustPressed("KeyB")) {
+            const enabled = engine.ballisticsDebug.toggle();
+            console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
+          }
+          // F8 : les ennemis cessent de voir le joueur (`notarget`), pour
+          // parcourir un niveau et le regarder. Même bascule ponctuelle que
+          // KeyV/KeyB, mais elle touche le GAMEPLAY — d'où le message HUD, qui
+          // évite de croire plus tard à une IA cassée.
+          // see: docs/reference/controles.md#touches-de-dev
+          if (input.wasJustPressed("F8")) {
+            const on = toggleNotarget();
+            showHudMessage(on ? "Dev : ennemis passifs" : "Dev : ennemis à nouveau hostiles");
+            console.info(`[debug] notarget ${on ? "activé" : "désactivé"}`);
+          }
         }
         // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev
         // comme V/B/F9/F10 ci-dessus) — coupe/remet uniquement le thème

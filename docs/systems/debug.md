@@ -2,7 +2,7 @@
 title: Outils de debug
 tags: [systeme, debug]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-22
 ---
 
 # Outils de debug
@@ -21,6 +21,15 @@ vivent **pas** ici : elles sont câblées dans `game/loop/updateFx.ts` — voir
 [Contrôles et bindings](../reference/controles.md) pour la liste complète
 des touches de debug et pourquoi elles sont volontairement absentes de la
 table de rebinding.
+
+**Rien de tout cela n'existe dans le build de production** (2026-09-22) :
+`DebugPanel` y est remplacé par un simple compteur d'images par seconde
+(`ui/FpsCounter.tsx`, même coin), `TuningPanel` n'est pas monté,
+`window.cassandre` n'est pas construit et les touches de dev ne sont pas
+lues. Chaque garde est un `import.meta.env.DEV`, remplacé par une constante
+au build : la branche disparaît du bundle, elle n'est pas seulement
+masquée. Un outil de dev dont on veut la trace en prod se diagnostique donc
+sur `pnpm dev`, pas sur la page déployée.
 
 ## Champs de DebugState
 
@@ -126,7 +135,9 @@ refactor), ce module n'a donc plus besoin qu'on les lui passe.
 ## Point d'entrée console (window.cassandre)
 
 `exposeDebugApi(engine)` construit `window.cassandre` — l'A/B de
-`feel-tuner` et les preuves de `qa-evidence` passent par cet objet. Jalon
+`feel-tuner` et les preuves de `qa-evidence` passent par cet objet. **En
+dev seulement** : il donne des cartes, téléporte, rend les ennemis passifs
+(`notarget`), et `main.ts` ne l'appelle pas dans le build de production. Jalon
 M8 (`PLAN_EFFECT_XSTATE.md`, §10) : `engine.session` a remplacé les
 références directes (`player`/`weapons`/`suitManager`/`directorManager`)
 qui existaient avant ce jalon — ce fichier n'a plus qu'UNE SEULE session
