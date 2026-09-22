@@ -10,12 +10,13 @@ import { loadingSnapshot, subscribeLoading, type LoadingState } from "../core/lo
  * décor apparaître d'un coup. Purement présentationnel, comme `MainMenu` et
  * `LevelMenu` : aucun import `src/game/*`, aucun accès au store zustand.
  *
- * **Le reflet qui glisse sur la barre est une animation CSS de `transform`.**
- * Ce n'est pas de la décoration : construire les colliders et cuire le graphe
- * de navigation bloquent le fil principal, donc ni React ni un `setInterval`
- * ne peuvent rien redessiner pendant ce temps. Une animation de `transform`,
- * elle, tourne sur le compositeur et continue de bouger — c'est la seule chose
- * qui distingue « ça travaille » de « c'est planté » au pire moment.
+ * **Le reflet/l'éclat qui glisse sur la barre est une animation CSS de
+ * `transform`.** Ce n'est pas de la décoration : construire les colliders et
+ * cuire le graphe de navigation bloquent le fil principal, donc ni React ni
+ * un `setInterval` ne peuvent rien redessiner pendant ce temps. Une
+ * animation de `transform`, elle, tourne sur le compositeur et continue de
+ * bouger — c'est la seule chose qui distingue « ça travaille » de « c'est
+ * planté » au pire moment.
  *
  * see: docs/systems/hud.md#écran-de-chargement
  */
@@ -48,17 +49,12 @@ const QUIPS = [
   "Lissage des costumes. Rien à signaler.",
 ];
 
-const KEYFRAMES = `
-@keyframes cassandre-reflet {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(400%); }
-}`;
-
 export interface LoadingScreenProps {
   title?: string;
 }
 
-export function LoadingScreen(props: LoadingScreenProps) {
+/** Progression réelle + rotation des phrases. */
+function useLoadingContent(): { label: string; pourcent: number; quip: string } {
   const state = useSyncExternalStore<LoadingState | null>(subscribeLoading, loadingSnapshot, loadingSnapshot);
 
   // Point de départ tiré de l'horloge plutôt que de `Math.random()` : le
@@ -73,80 +69,75 @@ export function LoadingScreen(props: LoadingScreenProps) {
 
   const quip = QUIPS[(first + tick) % QUIPS.length];
   const progress = state?.progress ?? 0;
-  const pourcent = Math.round(progress * 100);
+  return { label: state?.label ?? "Initialisation…", pourcent: Math.round(progress * 100), quip };
+}
+
+export function LoadingScreen(props: LoadingScreenProps) {
+  const title = props.title ?? DEFAULT_TITLE;
+  const { label, pourcent, quip } = useLoadingContent();
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 18,
-        background: "#0a0a0a",
-        color: "#ddd",
-        fontFamily: "monospace",
-        pointerEvents: "auto",
-        zIndex: 1000,
-      }}
-    >
-      <style>{KEYFRAMES}</style>
-
-      <div style={{ fontSize: 28, fontWeight: "bold", color: "#0f0", letterSpacing: 2 }}>
-        {props.title ?? DEFAULT_TITLE}
+    <div className="ls-root">
+      <style>{LS_CSS}</style>
+      <div className="ls-scanlines" />
+      <div className="ls-rec">
+        <span className="ls-dot" /> ACQUISITION DU SIGNAL
       </div>
 
-      <div style={{ width: 420, maxWidth: "80vw" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: 12,
-            color: "#8a8a8a",
-            marginBottom: 6,
-            letterSpacing: 1,
-          }}
-        >
-          <span>{state?.label ?? "Initialisation…"}</span>
+      <div className="ls-title">{title}</div>
+
+      <div className="ls-bar-wrap">
+        <div className="ls-bar-head">
+          <span>{label}</span>
           <span>{pourcent} %</span>
         </div>
-
-        <div
-          style={{
-            position: "relative",
-            height: 10,
-            background: "#1a1a1a",
-            border: "1px solid #2e2e2e",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: `${pourcent}%`,
-              background: "#0f0",
-              // Pas de transition sur la largeur : la progression réelle
-              // arrive déjà par petits pas pendant le téléchargement, et une
-              // transition la ferait traîner derrière la vérité.
-              boxShadow: "0 0 8px rgba(0,255,0,0.35)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "25%",
-              background: "linear-gradient(90deg, transparent, rgba(0,255,0,0.18), transparent)",
-              animation: "cassandre-reflet 1.6s linear infinite",
-              pointerEvents: "none",
-            }}
-          />
+        <div className="ls-bar-track">
+          <div className="ls-bar-fill" style={{ width: `${pourcent}%` }} />
+          <div className="ls-bar-sheen" />
         </div>
       </div>
 
-      <div style={{ fontSize: 13, color: "#7a7a7a", minHeight: "1.4em", textAlign: "center" }}>{quip}</div>
+      <div className="ls-quip">{quip}</div>
     </div>
   );
 }
+
+const LS_CSS = `
+.ls-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  background: radial-gradient(ellipse at 50% 40%, #0c130c 0%, #050705 70%, #020302 100%);
+  color: #bfe8bf;
+  font-family: "Courier New", ui-monospace, monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  overflow: hidden;
+}
+.ls-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(120,255,140,0.05) 0px, rgba(120,255,140,0.05) 1px, transparent 2px, transparent 4px);
+  mix-blend-mode: screen;
+}
+.ls-rec { display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 2px; color: #f66; }
+.ls-dot { width: 8px; height: 8px; border-radius: 50%; background: #f33; box-shadow: 0 0 8px #f33; animation: ls-blink 1.1s steps(1) infinite; }
+@keyframes ls-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.15; } }
+.ls-title { font-size: 28px; font-weight: 700; letter-spacing: 3px; color: #6bffa0; text-shadow: 0 0 12px rgba(90,255,140,0.5); }
+.ls-bar-wrap { width: 420px; max-width: 80vw; }
+.ls-bar-head { display: flex; justify-content: space-between; font-size: 12px; color: #7fae7f; margin-bottom: 6px; letter-spacing: 1px; }
+.ls-bar-track { position: relative; height: 10px; background: #0e170e; border: 1px solid rgba(140,255,150,0.3); overflow: hidden; }
+.ls-bar-fill { height: 100%; background: #3fdc6e; box-shadow: 0 0 8px rgba(90,255,140,0.4); }
+.ls-bar-sheen {
+  position: absolute; inset: 0; width: 25%;
+  background: linear-gradient(90deg, transparent, rgba(120,255,140,0.25), transparent);
+  animation: ls-sheen 1.6s linear infinite;
+}
+@keyframes ls-sheen { from { transform: translateX(-100%); } to { transform: translateX(500%); } }
+.ls-quip { font-size: 13px; color: #6f9c6f; min-height: 1.4em; text-align: center; }
+`;

@@ -263,6 +263,49 @@ en place dans `RebindScreen.tsx`, gardé en entier dans le code plutôt que
 migré ici : c'est un piège concret pour quiconque serait tenté de retirer
 cette garde comme « dead code ».
 
+## Options — contrôles et affichage
+
+`RebindScreen.tsx` est en réalité l'écran « Options » entier : deux onglets
+(`CONTRÔLES`, ci-dessus, et `AFFICHAGE`) dans un seul composant, avec un
+bouton RETOUR partagé — pas deux écrans séparés à naviguer depuis le menu
+principal. L'onglet Affichage expose quatre réglages graphiques et visuels,
+choisis explicitement (pas un panneau générique) :
+
+1. **Filtrage des textures lointaines** (`nearest`/`mipmap`/`aniso`,
+   `render/renderer.ts::appliquerFiltrage`) — le plus important des quatre.
+   C'est l'amendement de l'invariant #4 proposé par [ADR
+   0027](../decisions/0027-filtrage-des-textures-reduites.md), en attente de
+   la validation de l'utilisateur depuis le 13 septembre parce que trancher
+   demandait jusqu'ici un appel console. Ce menu ne change rien côté rendu :
+   il donne juste un accès humain à un réglage qui existe déjà. Les
+   libellés décrivent l'effet à l'œil (« net même en rasant »), jamais le
+   nom de la technique (mipmap, anisotropie).
+2. **Résolution interne** (`render/renderer.ts::setResolutionInterne`,
+   présentée depuis 640×360 comme l'ORIGINE du jeu, jamais comme une valeur
+   basse à corriger — invariant #4).
+3. **Champ de vision** — la valeur de BASE seule (`moveConfig.fovBase`) ;
+   l'élargissement automatique à la course (`fovRunBoost`) s'ajoute
+   par-dessus, inchangé.
+4. **Intensité du screenshake** — un seul curseur (0 à 100 %, 100 % =
+   intensité d'origine) qui met à l'échelle `weaponConfig.shakeAmplitude` et
+   `weaponConfig.enemyShakeAmplitude` (impact générique et impact ennemi
+   confirmé) depuis leurs valeurs d'origine, jamais de façon cumulative.
+
+Logique non visuelle isolée dans `ui/graphicsSettings.ts` : persistance
+`localStorage` (`cassandre.graphics`, même convention que
+`cassandre.keybinds`/`cassandre.musicEnabled`), et deux fonctions
+d'application. Le FOV et le screenshake sont de simples champs mutables lus
+en continu par le jeu — les muter s'applique immédiatement, qu'un niveau
+soit chargé ou non. Le filtrage et la résolution ont besoin d'un moteur
+construit (`scene`/`camera`/`renderer`) : persistés au clic, ils ne
+s'appliquent réellement qu'au prochain boot, juste après `buildGameEngine`
+dans `main.ts` — le filtrage posé à cet instant devient le mode par défaut
+de `configureRetroTexture` pour chaque texture chargée ensuite (premier
+niveau, `replay()`, hot reload), sans qu'aucun de ces chemins n'ait besoin
+d'y penser. **Limite connue, assumée** : il n'existe pas de menu de pause
+(invariant #9) — les quatre réglages ne se changent que depuis le menu
+principal, avant de jouer.
+
 ## Panneau de tuning à chaud
 
 `TuningPanel.tsx` expose des sliders à chaud pour `moveConfig`/
