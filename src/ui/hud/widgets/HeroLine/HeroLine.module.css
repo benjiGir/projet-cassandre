@@ -1,0 +1,21 @@
+/* Largeur généreuse et petite police : c'est le nombre de lignes qui fait la
+   hauteur de la bulle. see: docs/systems/hud.md#hud-de-production */
+.bubble {
+  margin-top: calc(var(--vpx) * 4);
+  max-width: calc(var(--vpx) * 220);
+  padding: calc(var(--vpx) * 3) calc(var(--vpx) * 5);
+  color: var(--amber);
+  font-size: calc(var(--vpx) * 10);
+  line-height: 1.3;
+  text-shadow: 1px 1px 2px #000;
+  background: rgba(20, 15, 0, 0.6);
+  border: calc(var(--vpx) * 1) solid rgba(255, 226, 122, 0.4);
+}
+
+.speaker {
+  display: block;
+  margin-bottom: calc(var(--vpx) * 1);
+  font-size: calc(var(--vpx) * 8);
+  letter-spacing: 0.5px;
+  opacity: 0.75;
+}

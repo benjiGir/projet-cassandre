@@ -1,0 +1,25 @@
+.label {
+  margin-bottom: calc(var(--vpx) * 2);
+}
+
+.track {
+  width: calc(var(--vpx) * 60);
+  height: calc(var(--vpx) * 7);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+  border: calc(var(--vpx) * 1) solid rgba(140, 255, 150, 0.35);
+}
+
+.fill {
+  width: calc(var(--fill) * 100%);
+  height: 100%;
+  background: #3f3;
+  transition: width 120ms linear;
+}
+
+.fill[data-level="warn"] { background: #fa3; }
+.fill[data-level="critical"] { background: #f44; }
+
+.value {
+  margin-top: calc(var(--vpx) * 1.5);
+}

@@ -1,0 +1,62 @@
+.camera {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--phosphor-faint);
+}
+
+.panel {
+  --corner-size: 22px;
+  gap: 18px;
+  padding: 46px 58px 34px;
+  box-shadow: 0 0 40px rgba(60, 220, 90, 0.08) inset;
+}
+
+/* Léger décalage chromatique : un signal analogique qui bave. */
+.title {
+  font-size: 40px;
+  letter-spacing: 4px;
+  text-shadow:
+    0 0 12px rgba(90, 255, 140, 0.55),
+    2px 0 0 rgba(255, 60, 60, 0.35),
+    -2px 0 0 rgba(60, 180, 255, 0.25);
+}
+
+.cursor {
+  animation: cursor 1s steps(1) infinite;
+}
+
+@keyframes cursor {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.tagline {
+  margin: -10px 0 0;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 320px;
+  margin-top: 6px;
+}
+
+.quitRefused {
+  min-width: 320px;
+  max-width: 340px;
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+  color: #ffb199;
+  background: rgba(60, 10, 10, 0.35);
+  border: 1px solid rgba(255, 120, 90, 0.4);
+}

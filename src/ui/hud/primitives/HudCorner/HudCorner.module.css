@@ -1,0 +1,26 @@
+/* Le calque est au-dessus du jeu : un clic intercepté casserait la visée. */
+.corner {
+  position: fixed;
+  pointer-events: none;
+  user-select: none;
+  font-family: var(--font-mono);
+}
+
+.topRight {
+  top: calc(var(--vpx) * 3);
+  right: calc(var(--vpx) * 5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.bottomLeft {
+  bottom: calc(var(--vpx) * 6);
+  left: calc(var(--vpx) * 6);
+}
+
+.bottomRight {
+  bottom: calc(var(--vpx) * 6);
+  right: calc(var(--vpx) * 6);
+  text-align: right;
+}

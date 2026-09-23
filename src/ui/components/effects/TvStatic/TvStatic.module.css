@@ -1,0 +1,17 @@
+.static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image:
+    repeating-linear-gradient(0deg, #fff 0px, #fff 1px, transparent 1px, transparent 2px),
+    repeating-linear-gradient(90deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
+  animation: flicker 0.15s steps(2) infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.04; }
+  50% { opacity: 0.09; }
+  100% { opacity: 0.05; }
+}

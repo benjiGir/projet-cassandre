@@ -1,0 +1,69 @@
+/*
+ * Jetons de l'interface : les seules valeurs partagées entre composants.
+ * Un ton d'écran redéfinit le jeu de variables sémantiques ; un composant lit
+ * `var(--title)`, `var(--corner)`… et ne connaît jamais le ton.
+ * see: docs/reference/react-css.md#les-jetons
+ */
+
+:root {
+  --font-mono: "Courier New", ui-monospace, monospace;
+
+  /* Un pixel virtuel du HUD : l'image du jeu fait 640×360 et le HUD grandit
+     avec elle, comme un object-fit: contain (invariant #4). */
+  --vpx: min(calc(100vw / 640), calc(100vh / 360));
+
+  --phosphor: #bfe8bf;
+  --phosphor-strong: #eafff0;
+  --phosphor-bright: #6bffa0;
+  --phosphor-edge: #7fff9e;
+  --phosphor-dim: #7fae7f;
+  --phosphor-faint: #5a8a5a;
+  --alert: #f66;
+  --alert-lamp: #f33;
+  --amber: #ffe27a;
+}
+
+/* Ton « signal » : vert phosphore, celui de toute l'interface par défaut. */
+:root,
+[data-tone="signal"] {
+  --screen-bg: radial-gradient(ellipse at 50% 40%, #0c130c 0%, #050705 70%, #020302 100%);
+  --text: var(--phosphor);
+  --text-strong: var(--phosphor-strong);
+  --text-dim: var(--phosphor-dim);
+  --title: var(--phosphor-bright);
+  --title-glow: rgba(90, 255, 140, 0.5);
+  --corner: #6f6;
+  --panel-bg: rgba(10, 18, 10, 0.55);
+  --panel-border: rgba(140, 255, 150, 0.25);
+  --control-bg: rgba(120, 255, 140, 0.05);
+  --control-bg-hover: rgba(120, 255, 140, 0.14);
+  --control-border: rgba(140, 255, 150, 0.35);
+  --control-edge: var(--phosphor-edge);
+  --glow: rgba(90, 255, 140, 0.35);
+  --scanline: rgba(120, 255, 140, 0.05);
+  --flag-text: var(--phosphor-edge);
+  --flag-bg: rgba(120, 255, 140, 0.12);
+  --flag-border: rgba(140, 255, 150, 0.5);
+}
+
+/* Ton « alert » : l'écran de mort. */
+[data-tone="alert"] {
+  --screen-bg: radial-gradient(ellipse at 50% 40%, #180505 0%, #0a0202 70%, #050101 100%);
+  --text: #f3c9c9;
+  --text-strong: #ffe0e0;
+  --text-dim: #b88;
+  --title: #ff6b6b;
+  --title-glow: rgba(255, 60, 60, 0.5);
+  --corner: var(--alert);
+  --panel-bg: rgba(20, 5, 5, 0.6);
+  --panel-border: rgba(255, 100, 100, 0.3);
+  --control-bg: rgba(255, 90, 90, 0.06);
+  --control-bg-hover: rgba(255, 90, 90, 0.16);
+  --control-border: rgba(255, 110, 110, 0.4);
+  --control-edge: #ff8080;
+  --glow: rgba(255, 80, 80, 0.3);
+  --scanline: rgba(255, 60, 60, 0.04);
+  --flag-text: #ff5b5b;
+  --flag-bg: rgba(255, 60, 60, 0.12);
+  --flag-border: rgba(255, 90, 90, 0.5);
+}

@@ -1,0 +1,52 @@
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.column {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  color: var(--text);
+  background: rgba(120, 255, 140, 0.04);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.compact {
+  align-items: center;
+  padding: 7px 14px;
+  text-align: center;
+}
+
+.choice[aria-checked="true"] {
+  color: var(--text-strong);
+  background: #163a1c;
+  border-color: var(--control-edge);
+}
+
+.choiceLabel {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.choiceHint {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.choice[aria-checked="true"] .choiceHint {
+  color: #a8d0a8;
+}

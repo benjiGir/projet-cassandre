@@ -1,0 +1,10 @@
+.value {
+  color: var(--phosphor);
+  font-size: calc(var(--vpx) * 16);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.glow {
+  text-shadow: 0 0 calc(var(--vpx) * 3) rgba(90, 255, 140, 0.4);
+}

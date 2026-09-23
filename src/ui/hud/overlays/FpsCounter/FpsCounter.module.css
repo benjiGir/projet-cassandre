@@ -1,0 +1,12 @@
+.counter {
+  position: fixed;
+  top: calc(var(--vpx) * 3);
+  left: calc(var(--vpx) * 3);
+  padding: calc(var(--vpx) * 1) calc(var(--vpx) * 2);
+  color: #ddd;
+  font-family: monospace;
+  font-size: calc(var(--vpx) * 4);
+  white-space: pre;
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}

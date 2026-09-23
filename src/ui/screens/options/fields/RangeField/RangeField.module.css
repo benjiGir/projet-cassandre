@@ -1,0 +1,20 @@
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.slider {
+  flex: 1;
+  max-width: 300px;
+  accent-color: var(--phosphor-bright);
+}
+
+.value {
+  min-width: 48px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-strong);
+}

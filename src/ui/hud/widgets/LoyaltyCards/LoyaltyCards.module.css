@@ -1,0 +1,18 @@
+.cards {
+  display: flex;
+  gap: calc(var(--vpx) * 2);
+  margin-bottom: calc(var(--vpx) * 3);
+}
+
+.card {
+  padding: calc(var(--vpx) * 1.5) calc(var(--vpx) * 4);
+  font-size: calc(var(--vpx) * 9);
+  font-weight: bold;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0.5);
+  border: calc(var(--vpx) * 1) solid;
+}
+
+.card[data-card="argent"] { color: #c8ccd4; }
+.card[data-card="or"] { color: #e8b53d; }
+.card[data-card="platine"] { color: #9fe8e8; }

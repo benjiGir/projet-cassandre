@@ -15,7 +15,7 @@ génériques ni de loadout complexe, juste ce que le jeu consomme réellement
 aujourd'hui : quel builder appeler (`gym.ts` vs pipeline glTF), quel fichier
 `.glb` charger, et si le joueur démarre désarmé. Ajouter une zone
 supplémentaire est une ligne dans `LEVEL_CHOICES`, sans toucher au menu
-(`src/ui/LevelMenu.tsx`) ni à l'ordre de boot.
+(`src/ui/dev/LevelMenu/LevelMenu.tsx`) ni à l'ordre de boot.
 
 ## Zones individuelles
 

@@ -1,7 +1,7 @@
 /**
  * Progression du chargement initial — canal minuscule entre ce qui charge
  * (physique, planches de sprites, `.glb` du niveau) et l'écran qui l'affiche
- * (`ui/LoadingScreen.tsx`).
+ * (`ui/screens/loading/LoadingScreen/LoadingScreen.tsx`).
  *
  * Pourquoi un canal à part et pas le store zustand du HUD : celui-ci est
  * throttlé à 10 Hz et remis à zéro par `resetGameStore()` à chaque boot de

@@ -1,0 +1,3 @@
+.label {
+  margin-bottom: calc(var(--vpx) * 2);
+}

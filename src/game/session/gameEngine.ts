@@ -28,7 +28,7 @@ export interface GameEngine {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  /** Racine React de `#ui-root` — `App`/`LevelMenu`/`MainMenu`/`RebindScreen` s'y montent tour à tour. */
+  /** Racine React de `#ui-root` — `App`/`LevelMenu`/`MainMenu`/`OptionsScreen` s'y montent tour à tour. */
   root: ReturnType<typeof createRoot>;
   /** Acteur XState du flux d'écran (Jalon M8) — UN SEUL pour toute la durée de l'onglet, jamais recréé par `bootGameSession`/`replay`/`returnToMenu` (contrairement à `session`). */
   flowActor: GameFlowActor;

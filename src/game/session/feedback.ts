@@ -92,7 +92,7 @@ export function handlePlayerHit(engine: GameEngine, session: GameSession): void 
     session.deathHandled = true;
     engine.flowActor.send({ type: "DIED" });
     // Libère le pointeur : l'écran de mort a besoin du curseur pour ses
-    // boutons "Rejouer"/"Retour au menu principal" (voir `DeathScreen.tsx`).
+    // boutons "Rejouer"/"Retour au menu principal" (voir `ui/screens/death/DeathScreen/DeathScreen.tsx`).
     document.exitPointerLock();
   }
 }

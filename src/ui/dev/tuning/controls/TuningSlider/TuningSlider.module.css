@@ -1,0 +1,16 @@
+.slider {
+  margin-bottom: 4px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.value {
+  color: #0f0;
+}
+
+.input {
+  width: 100%;
+}

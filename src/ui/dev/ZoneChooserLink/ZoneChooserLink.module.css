@@ -1,0 +1,11 @@
+.link {
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #446644;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}

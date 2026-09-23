@@ -1,0 +1,17 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* « safe » : un contenu plus haut que la fenêtre (onglet Affichage en 720p)
+     s'aligne en haut au lieu d'avoir son titre rogné hors de portée du défilement. */
+  justify-content: safe center;
+  overflow: auto;
+  padding: 24px 0;
+  background: var(--screen-bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+}

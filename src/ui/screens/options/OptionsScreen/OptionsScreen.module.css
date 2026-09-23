@@ -1,0 +1,19 @@
+.panel {
+  align-items: stretch;
+  gap: 10px;
+  width: 520px;
+  max-width: 92vw;
+  padding: 40px 46px 30px;
+}
+
+.title {
+  margin-bottom: 4px;
+  font-size: 24px;
+  letter-spacing: 4px;
+}
+
+.footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(140, 255, 150, 0.15);
+}

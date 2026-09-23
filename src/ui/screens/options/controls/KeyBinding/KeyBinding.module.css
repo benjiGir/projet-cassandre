@@ -1,0 +1,28 @@
+.label {
+  align-self: center;
+  font-size: 11.5px;
+  color: #a8d0a8;
+}
+
+.key {
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 11.5px;
+  letter-spacing: 0.5px;
+  text-align: left;
+  color: var(--text);
+  background: rgba(120, 255, 140, 0.04);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.key[aria-pressed="true"] {
+  color: var(--text-strong);
+  background: #163a1c;
+  border-color: var(--control-edge);
+}
+
+.key[data-modified="true"] {
+  color: var(--amber);
+  border-color: rgba(255, 226, 122, 0.4);
+}

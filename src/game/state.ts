@@ -11,7 +11,7 @@ export type GameFlowState =
   | "dead"
   | "levelComplete";
 
-interface DebugState {
+export interface DebugState {
   fps: number;
   /** Position des yeux du joueur, m. */
   position: { x: number; y: number; z: number };

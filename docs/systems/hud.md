@@ -2,7 +2,7 @@
 title: HUD et interface
 tags: [systeme, ui]
 status: stable
-updated: 2026-09-22
+updated: 2026-09-23
 ---
 
 # HUD et interface
@@ -27,15 +27,26 @@ message (`showHudMessage`/`triggerHeroLine`) et le cycle de vie d'une partie
 
 ## Composition de App
 
+L'organisation de `src/ui/` (un dossier par domaine : `components/`, `hud/`,
+`screens/<écran>/`, `dev/`) et les règles d'écriture du React sont fixées par
+[React — structure et rangement](../reference/react-structure.md) et ses trois
+règles sœurs ; cette page décrit ce que font les écrans, pas comment les écrire.
+
 `App.tsx` est la racine React montée UNE FOIS le niveau choisi, jamais
-avant — `MainMenu`/`LevelMenu`/`RebindScreen` sont rendus directement par
+avant — `MainMenu`/`LevelMenu`/`OptionsScreen` sont rendus directement par
 `game/session/bootChoice.ts`, hors de cet arbre (voir [Session de partie —
 Choix du niveau au boot](session.md#choix-du-niveau-au-boot)).
 
-`Hud`/`HeroLine` (HUD de production) cohabitent avec `DebugPanel` (outil de
-DEV, jamais transformé en HUD de prod) et `HudMessage` (canal système,
-distinct du canal `HeroLine`, voir [Deux canaux de message](#deux-canaux-de-message-hudmessage-et-heroline)
-plus bas). `DeathScreen`/`LevelCompleteScreen` restent montés en
+`Hud` (HUD de production) cohabite avec `DebugPanel` (outil de DEV, jamais
+transformé en HUD de prod) et `HudMessage` (canal système, distinct du canal
+`HeroLine`, voir [Deux canaux de message](#deux-canaux-de-message-hudmessage-et-heroline)
+plus bas). `HeroLine` n'est pas monté par `App` mais par `Hud`, en dernier
+enfant du coin haut-droite (`HudCorner`) : la webcam, le compteur de spectateurs et
+la réplique s'y empilent dans le flux, si bien que la réplique suit la
+hauteur RÉELLE de ce qui la précède. Elle a longtemps été un bloc `fixed`
+indépendant posé à une hauteur en dur, qui aurait recouvert le compteur à la
+première retouche de la webcam — même défaut, déjà corrigé une fois, que
+celui de la légende contre le compteur. `DeathScreen`/`LevelCompleteScreen` restent montés en
 permanence et rendent `null` tant que leur condition n'est pas remplie —
 pas de montage/démontage conditionnel, plus simple et sans risque de rater
 un changement d'état pendant que le composant serait démonté.
@@ -98,7 +109,7 @@ réellement envoyés par l'application (`main.ts`, `game/session/lifecycle.ts`,
 `src/`. Les états `options` et `levelSelect` existent dans le graphe et sont
 couverts par les tests, mais ne sont **jamais atteints par l'acteur réel** :
 `OPEN_OPTIONS`/`CHOOSE_ZONE` ne sont envoyés nulle part côté application
-(`MainMenu`/`LevelMenu`/`RebindScreen` sont affichés directement par
+(`MainMenu`/`LevelMenu`/`OptionsScreen` sont affichés directement par
 `bootChoice.ts`, voir plus haut, sans passer par cette machine). Le graphe
 reste néanmoins complet et testé pour rester correct si ce câblage évoluait.
 
@@ -114,7 +125,7 @@ pas seulement une fois la partie commencée.
 
 `GameFlowState` (le type des 7 états) est DÉFINI dans `game/state.ts`, pas
 dans `ui/gameFlowMachine.ts` puis importé : garder le sens de dépendance
-déjà établi par ce fichier (`DeathScreen.tsx`/`Hud.tsx` importent déjà
+déjà établi par ce fichier (les écrans et les widgets du HUD importent déjà
 `useGameStore` DEPUIS `game/state.ts`, jamais l'inverse) plutôt que d'en
 ouvrir un second. `ui/gameFlowMachine.ts` réutilise ce type tel quel pour
 ses clés d'état ; TypeScript vérifie la correspondance structurelle sans
@@ -125,20 +136,37 @@ règle générale (`game/state.ts` n'importe jamais un autre module de
 
 ## HUD de production
 
-`Hud.tsx` est l'overlay de STREAM (webcam factice, badge « EN DIRECT »,
+`hud/Hud/Hud.tsx` est l'overlay de STREAM (webcam factice, badge « EN DIRECT »,
 compteur de « vues ») — pas un HUD de FPS classique : direction artistique
 du plan, le héros est un youtubeur complotiste, le HUD raconte le
 personnage plutôt que d'afficher des chiffres neutres.
 
-Sélecteurs fins PAR CHAMP (skill `react-hud-bridge`, anti-pattern « objet
-complet en sélecteur ») : chaque `useGameStore((s) => s.debug.xxx)` ne
-re-render ce composant que si CE champ précis change — contrairement à
-`DebugPanel`, qui lit `state.debug` en entier (acceptable pour un panneau
-de dev démontable, pas pour ce HUD). Chaque champ affiché a sa propre
+`Hud` ne lit rien du store : il pose trois coins (`HudCorner`) et des widgets
+dedans — `LiveCam`, `ViewerCount`, `HeroLine` en haut à droite,
+`LoyaltyCards` et `HealthPanel` en bas à gauche, `AmmoPanel` en bas à droite.
+**Chaque widget sélectionne exactement ce qu'il affiche** : quand les
+munitions changent, seul `AmmoPanel` re-rend (voir [React —
+composition](../reference/react-composition.md#chaque-feuille-lit-ses-propres-données)).
+`AmmoPanel` pousse l'idée jusqu'au bout avec un sélecteur qui rend
+directement la chaîne affichée (`ammoLabel`, `hud/lib/hudFormat.ts`) : il ne
+re-rend que si le TEXTE change. `DebugPanel`, lui, lit `state.debug` en
+entier — acceptable pour un panneau de dev démontable, pas pour ce HUD.
+Chaque champ affiché a sa propre
 discipline d'écriture (throttlée à 10 Hz ou ponctuelle à l'évènement) —
 voir [Outils de debug — Champs de DebugState](debug.md#champs-de-debugstate)
 pour le détail exact par champ, jamais un `setState` par pas fixe
 (invariant #2).
+
+**Tout le HUD est dimensionné en pixels virtuels** (`--vpx`,
+`theme/tokens.css`) : il grandit avec la fenêtre dans la même proportion que
+l'image 640×360 du jeu. En `px` fixes, ses libellés faisaient 0,93 % de la
+hauteur d'écran en 1080p et deux fois moins en 4K. Mesuré après passage à
+l'échelle puis réduction : chiffres vitaux à 4,4 % de la hauteur, bloc
+webcam + compteur à 19,6 %, identiques en 1280×720, 1920×1080 et 2560×1440.
+La webcam (`LiveCam`) est en 16:9 et réutilise le cadre à coins des menus
+(`CornerFrame`) ; la tête de la silhouette passe SOUS le badge EN DIRECT —
+un cadre en 2,27:1 où le badge masquait 75 % de la tête se lisait comme
+« écrasé ».
 
 **Webcam + compteur de vues en HAUT-DROITE, jamais haut-gauche** :
 `DebugPanel` (dev) occupe le coin haut-gauche depuis la Phase 1, et
@@ -164,31 +192,34 @@ musical déclenché par `HeroLine` uniquement.
 
 Côté présentation, les deux composants ne font que lire le store et
 retourner `null` si rien à afficher — jamais écrire dedans. `HeroLine` est
-positionné comme une LÉGENDE DE STREAM sous la webcam factice de `Hud.tsx`
+positionné comme une LÉGENDE DE STREAM sous la webcam factice (`LiveCam`)
 (c'est le héros qui commente sa propre vidéo) ; `HudMessage` reste centré,
 plus haut à l'écran, fond neutre — la distinction visuelle reflète la
 distinction information/réplique.
 
 ## Menu principal et écran de choix de niveau
 
-`MainMenu.tsx` (Jouer / Options / Quitter) et `LevelMenu.tsx` (choix de
-zone individuelle, outil de DEV) sont deux composants distincts,
-volontairement jamais fusionnés. Le câblage exact entre les deux
-(« Jouer » va directement au niveau v2 sans passer par `LevelMenu`, dont le
-lien « Choisir une zone (dev) » n'apparaît **qu'en développement**) est
+`screens/mainMenu/MainMenu/MainMenu.tsx` (Jouer / Options / Quitter) et
+`dev/LevelMenu/LevelMenu.tsx` (choix de zone individuelle, outil de DEV) sont deux
+composants distincts, volontairement jamais fusionnés. `MainMenu` ne sait
+rien des outils de dev : il offre un emplacement `devTools`, que
+`bootChoice.ts` remplit avec `dev/ZoneChooserLink/ZoneChooserLink.tsx` **en développement
+seulement** — le lien, son texte, son CSS et `LevelMenu` quittent ainsi le
+bundle de production. Le câblage exact (« Jouer » va directement au niveau
+v2 sans passer par `LevelMenu`) est
 documenté dans [Session de partie — Choix du niveau au
 boot](session.md#choix-du-niveau-au-boot), qui fait référence. Les deux
 composants sont purement présentationnels (aucun import `src/game/*`),
 montés avant même que la scène Three.js/le monde Rapier existent.
 
-`handleQuit` (`MainMenu.tsx`) tente `window.close()` puis bascule vers un
+`handleQuit` (`MainMenu`) tente `window.close()` puis bascule vers un
 message de repli si ça ne fonctionne pas : un onglet ouvert normalement
 (pas par script) ne peut pas se fermer lui-même, spec DOM — le bouton reste
 honnête plutôt que de prétendre avoir fait quelque chose.
 
 ## Écran de chargement
 
-`LoadingScreen.tsx` occupe l'écran entre le menu et la partie, et il attend
+`screens/loading/LoadingScreen/LoadingScreen.tsx` occupe l'écran entre le menu et la partie, et il attend
 le niveau pour de bon : `main.ts` ne monte `<App/>` et ne démarre la boucle
 qu'après `gltfLevelSession.firstLoadSettled`.
 
@@ -221,13 +252,17 @@ Construire les colliders et cuire le graphe de navigation sont synchrones :
   chose qui continue de bouger pendant le blocage, et donc la seule qui
   distingue « ça travaille » de « c'est planté ».
 
-Les petites phrases (`QUIPS`) ne décrivent JAMAIS ce que fait le chargement :
+Les petites phrases (`LOADING_QUIPS`, `loadingQuips.ts`) ne décrivent JAMAIS ce que fait le chargement :
 c'est le libellé au-dessus de la barre qui le dit. Les confondre rendrait la
 vraie information invisible derrière la blague.
 
 ## Écrans de mort et de fin de niveau
 
-`DeathScreen.tsx` et `LevelCompleteScreen.tsx` partagent le même pattern :
+`screens/death/DeathScreen/DeathScreen.tsx` et `screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen.tsx`
+partagent le même pattern, et les mêmes primitives (`Screen`, `CornerFrame`,
+`StatusFlag`, `ScreenTitle`, `Button`) — le rouge de l'écran de mort vient du
+seul `tone="alert"` posé sur `Screen`, que la cascade CSS transmet à tout le
+reste :
 purement présentationnels, lisent `state.flowState`, retournent `null`
 tant que l'état n'est pas le leur (`"dead"`/`"levelComplete"`).
 `onReplay`/`onReturnToMenu` sont de VRAIES fonctions de reset
@@ -241,13 +276,14 @@ explicitement optionnel, pas construit ici.
 
 ## Rebinding
 
-`RebindScreen.tsx` consomme l'API de rebinding de `core/input.ts`
+`screens/options/controls/ControlsTab/ControlsTab.tsx` consomme l'API de rebinding de `core/input.ts`
 (`getAllBindings`/`rebind`/`resetBindings`/`formatKeyCode`) sans la
 modifier. Accessible uniquement depuis le menu principal (« Options »),
 donc toujours AVANT `input.attach(canvas)` — un import direct du module
 `input` reste sûr malgré cet ordre : `getAllBindings`/`rebind`/
 `resetBindings` ne touchent jamais `this.canvas`, seuls des listeners
-`window` temporaires posés par ce composant captent la touche suivante.
+`window` temporaires captent la touche suivante (`useInputCapture.ts`, qui
+les pose le temps d'une capture et lit l'état courant par `useEffectEvent`).
 Voir [Contrôles et bindings](../reference/controles.md) pour le contrat
 complet de `core/input.ts`.
 
@@ -258,17 +294,19 @@ chaque rebind/reset — même philosophie que le panneau de tuning ci-dessous.
 **Piège corrigé, toujours documenté dans le code** : un `KeyboardEvent.code`
 vide (jamais produit par un vrai clavier physique, mais possible via des
 évènements synthétiques) corrompait silencieusement le binding avant
-qu'un garde (`if (!e.code) return;`) ne soit ajouté — voir le commentaire
-en place dans `RebindScreen.tsx`, gardé en entier dans le code plutôt que
+qu'une garde ne soit ajoutée — voir le commentaire en place dans
+`useInputCapture.ts`, gardé dans le code plutôt que
 migré ici : c'est un piège concret pour quiconque serait tenté de retirer
 cette garde comme « dead code ».
 
 ## Options — contrôles et affichage
 
-`RebindScreen.tsx` est en réalité l'écran « Options » entier : deux onglets
-(`CONTRÔLES`, ci-dessus, et `AFFICHAGE`) dans un seul composant, avec un
-bouton RETOUR partagé — pas deux écrans séparés à naviguer depuis le menu
-principal. L'onglet Affichage expose quatre réglages graphiques et visuels,
+`screens/options/OptionsScreen/OptionsScreen.tsx` est l'écran « Options » entier : deux
+onglets (`OptionsTabs` : `CONTRÔLES`, ci-dessus, et `AFFICHAGE`,
+`DisplayTab.tsx`) et un bouton RETOUR partagé — pas deux écrans séparés à
+naviguer depuis le menu principal. Chaque réglage est une `OptionSection`
+(titre, explication, contrôle) qui compose un `ChoiceGroup` ou un
+`RangeField`. L'onglet Affichage expose quatre réglages graphiques et visuels,
 choisis explicitement (pas un panneau générique) :
 
 1. **Filtrage des textures lointaines** (`nearest`/`mipmap`/`aniso`,
@@ -291,7 +329,7 @@ choisis explicitement (pas un panneau générique) :
    `weaponConfig.enemyShakeAmplitude` (impact générique et impact ennemi
    confirmé) depuis leurs valeurs d'origine, jamais de façon cumulative.
 
-Logique non visuelle isolée dans `ui/graphicsSettings.ts` : persistance
+Logique non visuelle isolée dans `game/graphicsSettings.ts`, hors de `src/ui/` parce qu'elle pilote le moteur : persistance
 `localStorage` (`cassandre.graphics`, même convention que
 `cassandre.keybinds`/`cassandre.musicEnabled`), et deux fonctions
 d'application. Le FOV et le screenshake sont de simples champs mutables lus
@@ -308,13 +346,21 @@ principal, avant de jouer.
 
 ## Panneau de tuning à chaud
 
-`TuningPanel.tsx` expose des sliders à chaud pour `moveConfig`/
+`dev/tuning/TuningPanel/TuningPanel.tsx` expose des sliders à chaud pour `moveConfig`/
 `weaponConfig`/`suitConfig` (skill `game-feel-tuning`) — sans ça, tuner
 exige la console pendant qu'on court. Invariant #2 tenu strictement : ne
 touche jamais le pas fixe, mute les configs (objets simples, hors React)
-sur interaction humaine uniquement, jamais dans une boucle ; l'état React
-local n'est resynchronisé qu'à l'ouverture/au reset/à l'application d'une
-variante.
+sur interaction humaine uniquement, jamais dans une boucle.
+
+Les curseurs sont des DONNÉES (`tuningFields.ts`) ; un réglage de plus est
+une ligne de plus, pas un bloc de JSX recopié. Le panneau se compose par
+domaine (`MoveTuning`, `HitFeedbackTuning` qui regroupe impact, hitmarker,
+réticule et Costard, `DevCheats`). Aucune copie de config dans l'état React :
+`useConfigEditor` lit l'objet mutable en direct et force le rendu après une
+mutation — exception assumée à la règle générale, réservée à `dev/`. Un seul
+éditeur par config, partagé entre les groupes : « Défauts » du groupe Impact
+remet toute la config d'arme, et les groupes Hitmarker et Réticule doivent se
+redessiner avec lui (vérifié).
 
 Pointer lock : le jeu tourne verrouillé (`core/input.ts`), incompatible
 avec les évènements pointeur d'un slider. Le panneau reste démonté (donc
@@ -331,13 +377,6 @@ flash) sont documentés avec leurs tables de profils dans [Armes du joueur —
 Harnais A/B](armes.md#harnais-ab), [Joueur — Harnais A/B —
 FEEL_VARIANTS](joueur.md#harnais-ab-feel_variants) et [Outils de debug —
 Harnais A/B — protocole général](debug.md#harnais-ab-protocole-général) ;
-`TuningPanel.tsx` n'en est que la façade UI, il ne tranche aucune valeur.
-
-**Dette de conception à surveiller** : ce fichier fait ~950 lignes et
-mélange cinq domaines de tuning indépendants (déplacement, impact/shake,
-hitmarker, réticule, Costard) dans un seul composant. Aucune découpe
-entreprise dans cette passe (restructuration éditoriale, pas une tâche de
-code) — signalé comme candidat à un futur découpage en sous-composants par
-domaine.
+le panneau n'en est que la façade UI, il ne tranche aucune valeur.
 
 Retour à la [carte de la documentation](../README.md).

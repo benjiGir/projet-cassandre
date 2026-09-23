@@ -58,7 +58,7 @@ ou les gizmos en jouant.
 | `F9` / `F10` | Enregistre / rejoue une séquence d'input (harnais A/B, preuve de déterminisme) |
 | `KeyV` | Wireframe de toute la scène |
 | `KeyB` | Gizmos balistiques (actifs par défaut en dev, éteints en prod) |
-| `` ` `` | Panneau de tuning à chaud (`ui/TuningPanel.tsx`) |
+| `` ` `` | Panneau de tuning à chaud (`ui/dev/tuning/TuningPanel/TuningPanel.tsx`) |
 
 `KeyM` (musique) n'est pas dans cette liste : c'est une touche joueur, fixe
 et non rebindable, doublée par l'écran Options.

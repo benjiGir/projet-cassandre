@@ -1,0 +1,6 @@
+.label {
+  color: var(--phosphor-dim);
+  font-size: calc(var(--vpx) * 10);
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px #000;
+}

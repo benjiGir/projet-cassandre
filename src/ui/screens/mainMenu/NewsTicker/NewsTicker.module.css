@@ -1,0 +1,26 @@
+.ticker {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 26px;
+  overflow: hidden;
+  background: rgba(120, 255, 140, 0.08);
+  border-top: 1px solid var(--panel-border);
+}
+
+.track {
+  padding-left: 100%;
+  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  animation: scroll 22s linear infinite;
+}
+
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}

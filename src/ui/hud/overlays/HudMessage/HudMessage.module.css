@@ -1,0 +1,20 @@
+.message {
+  position: fixed;
+  top: 72%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: calc(var(--vpx) * 5) calc(var(--vpx) * 10);
+  color: var(--phosphor);
+  font-family: var(--font-mono);
+  font-size: calc(var(--vpx) * 18);
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px #000;
+  background: rgba(6, 16, 6, 0.7);
+  border: calc(var(--vpx) * 1) solid rgba(140, 255, 150, 0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
+.tick {
+  color: var(--phosphor-edge);
+}

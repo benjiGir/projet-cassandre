@@ -286,15 +286,19 @@ chemins historiques (`?level=` enregistré ou non) continuent de fonctionner
 exactement comme avant, la logique n'est pas dupliquée, seulement enrobée.
 Sans `?level=` : affiche `MainMenu` (Jouer / Options / Quitter). « Jouer »
 résout DIRECTEMENT sur **`niveau_v2`**, le niveau habillé, sans passer par
-`LevelMenu`. « Options » affiche `RebindScreen`. Réutilisée par
+`LevelMenu`. « Options » affiche `OptionsScreen`. Réutilisée par
 `returnToMenu` (voir plus haut) — exactement comme au tout premier boot.
 
-**Le choix de zone n'existe qu'en développement** (2026-09-21). `MainMenu`
-ne reçoit `onChooseZone` que sous `import.meta.env.DEV`, et ne rend pas le
-bouton quand le handler est absent ; dans un build de production Vite
-remplace l'expression par une constante et il ne reste que
-`onChooseZone: void 0`. C'est un outil d'AUTEUR : il expose les zones de
-test, les blockouts et la gym, qui n'ont rien à faire devant un joueur.
+**Le choix de zone n'existe qu'en développement** (2026-09-21, resserré le
+2026-09-23). `MainMenu` ne sait rien des outils de dev : il offre un
+emplacement `devTools`, que `bootChoice.ts` ne remplit (avec
+`ui/dev/ZoneChooserLink/ZoneChooserLink.tsx`) que sous `import.meta.env.DEV`. Le choix
+lui-même est une fonction privée, `chooseZone`, atteinte seulement derrière
+cette garde ; sans `?level=`, `resolveLevelChoice` rend le niveau principal
+en production. Vite remplaçant la garde par une constante, le lien, son
+texte, son CSS et `LevelMenu` quittent entièrement le bundle livré — vérifié
+par recherche dans `dist/assets`. C'est un outil d'AUTEUR : il expose les
+zones de test, les blockouts et la gym, qui n'ont rien à faire devant un joueur.
 `?level=` continue de fonctionner partout — chemin d'outillage assumé, il
 demande de taper une URL, pas de cliquer.
 

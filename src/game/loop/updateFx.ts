@@ -417,7 +417,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
             shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
             pistolAmmo: session.weapons.pistolAmmo,
             pistolMaxAmmo: weaponConfig.pistolMaxAmmo,
-            // HUD de prod (Phase 6, `ui/Hud.tsx`) : quel libellé afficher pour
+            // HUD de prod (Phase 6, `ui/hud/widgets/AmmoPanel/AmmoPanel.tsx`) : quel libellé afficher pour
             // "munitions" dépend de l'arme active, pas seulement du compte de
             // cartouches. Même throttle 10 Hz que le reste de ce bloc.
             activeWeapon: session.weapons.activeWeapon,

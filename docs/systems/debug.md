@@ -24,7 +24,7 @@ table de rebinding.
 
 **Rien de tout cela n'existe dans le build de production** (2026-09-22) :
 `DebugPanel` y est remplacé par un simple compteur d'images par seconde
-(`ui/FpsCounter.tsx`, même coin), `TuningPanel` n'est pas monté,
+(`ui/hud/overlays/FpsCounter/FpsCounter.tsx`, même coin), `TuningPanel` n'est pas monté,
 `window.cassandre` n'est pas construit et les touches de dev ne sont pas
 lues. Chaque garde est un `import.meta.env.DEV`, remplacé par une constante
 au build : la branche disparaît du bundle, elle n'est pas seulement
@@ -34,8 +34,8 @@ sur `pnpm dev`, pas sur la page déployée.
 ## Champs de DebugState
 
 `DebugState` (`game/state.ts`) est la source commune à `DebugPanel` (tout le
-panneau, `state.debug` en entier) et au HUD de production `ui/Hud.tsx`
-(sélecteurs fins par champ) — voir [HUD et interface — HUD de
+panneau, `state.debug` en entier) et au HUD de production `ui/hud/`
+(chaque widget sélectionne ses propres champs) — voir [HUD et interface — HUD de
 production](hud.md#hud-de-production). Deux disciplines d'écriture, jamais
 un `setState` par pas fixe (invariant #2) :
 

@@ -184,7 +184,7 @@ export function exposeDebugApi(engine: GameEngine): void {
       findPath: (from, to) => debugFindPath(engine.session, from, to),
     },
     /** Coupe/remet le thème (jamais `ambience`), même contrôle que la touche
-     * M en jeu et le toggle de `RebindScreen` — pour tester sans dépendre du
+     * M en jeu et le toggle de `ui/screens/options/controls/MusicToggle/MusicToggle.tsx` — pour tester sans dépendre du
      * pas fixe (voir `core/music.ts`). */
     music: {
       isEnabled: isMusicEnabled,

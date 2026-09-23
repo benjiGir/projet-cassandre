@@ -1,0 +1,21 @@
+.panel {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  padding: 6px 10px;
+  color: #0f0;
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.level[data-level="ok"] { color: #0f0; }
+.level[data-level="warn"] { color: #fa3; }
+.level[data-level="bad"] { color: #f44; }
+
+.strong {
+  font-weight: bold;
+}

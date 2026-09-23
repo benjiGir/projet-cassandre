@@ -1,0 +1,29 @@
+.panel {
+  --title-glow-radius: 16px;
+  gap: 16px;
+  padding: 44px 56px 36px;
+}
+
+.title {
+  letter-spacing: 2px;
+}
+
+.body {
+  max-width: 360px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  text-align: center;
+  color: #a8d0a8;
+}
+
+.stats {
+  display: flex;
+  gap: 28px;
+  font-size: 12px;
+  color: #8fc08f;
+}
+
+.actions {
+  margin-top: 6px;
+}

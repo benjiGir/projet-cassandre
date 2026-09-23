@@ -1,0 +1,29 @@
+.indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--alert);
+  text-shadow: 0 0 6px rgba(255, 60, 60, 0.6);
+}
+
+.corner {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+}
+
+.lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--alert-lamp);
+  box-shadow: 0 0 8px var(--alert-lamp);
+  animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}

@@ -1,0 +1,43 @@
+.button {
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  transition: background 120ms linear, color 120ms linear, box-shadow 120ms linear;
+}
+
+.button:hover {
+  color: var(--hover-text, var(--text-strong));
+  background: var(--control-bg-hover);
+  box-shadow: 0 0 18px var(--glow) inset, 0 0 14px var(--glow);
+}
+
+.primary {
+  color: var(--text-strong);
+  border-color: var(--control-edge);
+}
+
+/* Une variante redéfinit les variables du ton au lieu de réécrire les règles. */
+.danger {
+  --control-bg-hover: rgba(255, 80, 80, 0.12);
+  --glow: rgba(255, 80, 80, 0.3);
+  --hover-text: #ffdada;
+}
+
+.large {
+  padding: 12px 18px;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-align: left;
+}
+
+.icon {
+  display: inline-block;
+  width: 18px;
+  opacity: 0.85;
+}

@@ -1,0 +1,29 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.label {
+  min-width: 130px;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.toggle {
+  padding: 5px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #9c9;
+  background: var(--control-bg);
+  border: 1px solid rgba(140, 255, 150, 0.3);
+  cursor: pointer;
+}
+
+.toggle[aria-pressed="true"] {
+  color: var(--text-strong);
+  border-color: var(--control-edge);
+  box-shadow: 0 0 10px rgba(90, 255, 140, 0.25) inset;
+}

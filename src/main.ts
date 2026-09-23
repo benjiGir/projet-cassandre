@@ -1,6 +1,8 @@
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
+import "./ui/theme/tokens.css";
+
 import { initAudio } from "./core/audio";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
@@ -12,7 +14,7 @@ import { RenderService } from "./render/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
 import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
-import { applyRenderSettings, initGraphicsSettingsAtBoot } from "./ui/graphicsSettings";
+import { applyRenderSettings, initGraphicsSettingsAtBoot } from "./game/graphicsSettings";
 import { useGameStore } from "./game/state";
 import { resolveBootChoice } from "./game/session/bootChoice";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
@@ -22,8 +24,8 @@ import { updateGameplay } from "./game/loop/updateGameplay";
 import { interpolateVisuals } from "./game/loop/interpolateVisuals";
 import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
-import { maybeRenderDevPreview } from "./ui/devPreview";
-import { LoadingScreen } from "./ui/LoadingScreen";
+import { maybeRenderDevPreview } from "./ui/dev/devPreview/devPreview";
+import { LoadingScreen } from "./ui/screens/loading/LoadingScreen/LoadingScreen";
 import { finishLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
 
 // Orchestrateur mince depuis le refactor du 2026-09-05 (2229 -> 129 lignes,
@@ -35,12 +37,12 @@ async function main() {
   const root = createRoot(uiRoot);
 
   // Harnais d'aperçu des écrans (`?uiPreview=<écran>`), DEV UNIQUEMENT —
-  // voir `ui/devPreview.tsx`. Doit rester la toute première chose testée :
+  // voir `ui/dev/devPreview/devPreview.tsx`. Doit rester la toute première chose testée :
   // s'il rend, tout le reste du boot (physique, session, boucle) ne doit
   // jamais démarrer.
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
-  // Réglages graphiques persistés (`ui/graphicsSettings.ts`) — chargés et
+  // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et
   // appliqués (FOV, screenshake) AVANT le menu principal : un joueur qui a
   // déjà réglé ces deux-là ne doit pas les voir revenir à leur valeur
   // d'origine le temps d'un aller-retour en jeu. Le filtrage et la
@@ -109,7 +111,7 @@ async function main() {
 
   // Filtrage des textures réduites + résolution interne : les deux seuls
   // réglages graphiques qui ont besoin d'un moteur construit (voir la doc de
-  // tête de `ui/graphicsSettings.ts`). Appelé AVANT `bootGameSession` : le
+  // tête de `game/graphicsSettings.ts`). Appelé AVANT `bootGameSession` : le
   // filtrage posé ici devient le mode par défaut de `configureRetroTexture`
   // pour CHAQUE texture chargée ensuite (premier niveau, `replay()`, hot
   // reload), sans qu'aucun de ces chemins n'ait besoin d'y penser.
