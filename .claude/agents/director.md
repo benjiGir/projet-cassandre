@@ -26,7 +26,8 @@ Tu décomposes, tu routes, tu vérifies.
 | Pipeline visuel, sprites, decals, FX | `retro-render` | `build-engine-look`, `billboard-sprites-8dir` |
 | Ennemis, IA, états, télégraphie | `entity-designer` | `enemy-state-machine`, `billboard-sprites-8dir` |
 | Chargement de niveau, interactifs | `level-pipeline` | `gltf-level-conventions` |
-| HUD, menus, audio | `shell` | `react-hud-bridge`, `audio-sfx-pipeline` |
+| Câblage du HUD et des menus, audio | `shell` | `react-hud-bridge`, `audio-sfx-pipeline` + les quatre règles `docs/reference/react-*.md` |
+| Apparence de l'interface (menus, écrans, HUD) | `ui-forge` | `build-engine-look`, `visual-critique-loop` + les quatre règles `docs/reference/react-*.md` |
 | Validation, captures, perf | `qa-evidence` | `visual-evidence-gates` |
 
 ## Gates de phase

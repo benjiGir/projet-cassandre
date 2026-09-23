@@ -5,6 +5,11 @@ description: Découplage entre la boucle de jeu et l'UI React — store zustand,
 
 # Pont game loop → React
 
+> **Note** — Ce skill couvre le pont entre la boucle et React. La FORME du code
+> React (rangement, CSS, composition, API de React 19.2) est fixée par quatre
+> règles à lire avant d'écrire : `docs/reference/react-structure.md`,
+> `react-bonnes-pratiques.md`, `react-css.md`, `react-composition.md`.
+
 ## Le principe
 
 ```
@@ -43,7 +48,8 @@ if (player.hp !== lastPublishedHp) {
 
 ## Pattern de lecture
 
-Sélecteurs fins, un par valeur. Jamais l'objet complet :
+Sélecteurs fins, un par valeur, posés dans le widget qui affiche la valeur —
+pas dans un parent qui redistribue. Jamais l'objet complet :
 
 ```ts
 // Correct — ne re-render que si hp change
@@ -51,6 +57,10 @@ const hp = useGameStore((s) => s.hp);
 
 // Faux — re-render à chaque écriture du store, quelle qu'elle soit
 const state = useGameStore();
+
+// Faux, et pire — un objet neuf à chaque appel : zustand 5 compare par
+// référence, React boucle jusqu'à « Maximum update depth exceeded »
+const { hp, maxHp } = useGameStore((s) => ({ hp: s.hp, maxHp: s.maxHp }));
 ```
 
 ## Throttling

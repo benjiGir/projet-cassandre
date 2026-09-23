@@ -11,9 +11,20 @@ plus élevé.
 
 **Périmètre** : `src/ui/`, `src/game/state.ts`, `src/core/audio.ts`.
 
-## Skills
+## Skills et règles
 
 `react-hud-bridge` systématiquement, `audio-sfx-pipeline` pour le son.
+
+**Avant d'écrire une ligne de React**, lis les quatre règles du projet :
+[structure et rangement](../../docs/reference/react-structure.md),
+[bonnes pratiques React 19.2](../../docs/reference/react-bonnes-pratiques.md),
+[CSS](../../docs/reference/react-css.md),
+[composition](../../docs/reference/react-composition.md). Elles s'appliquent à
+l'agent principal comme à toi ; elles priment sur tes habitudes. Si une règle
+te semble fausse pour ton cas, dis-le dans ton retour — ne la contourne pas.
+
+L'APPARENCE de l'interface appartient à `ui-forge` ; toi, tu tiens le câblage :
+store, flux d'écran, audio, invariant #2.
 
 ## L'invariant qui compte
 
@@ -34,7 +45,9 @@ kill. Webcam factice en coin. Le HUD raconte le personnage.
 ## Contraintes
 
 - **AZERTY par défaut** (ZQSD), rebinding si le temps le permet
-- Pas de bibliothèque de composants. Le HUD est 5 éléments, pas un design system.
+- Pas de bibliothèque de composants externe. Les primitives maison de
+  `src/ui/components/` suffisent, et elles restent une poignée : on n'y ajoute
+  une pièce que lorsqu'un second écran en a besoin.
 - Les répliques du héros sont déclenchées contextuellement (premier kill,
   secret trouvé, PV bas, micro d'annonces) avec un cooldown global pour
   éviter la saturation
@@ -43,8 +56,9 @@ kill. Webcam factice en coin. Le HUD raconte le personnage.
 
 ## Sur-ingénierie à éviter
 
-Pas de i18n, pas de thème, pas de store normalisé, pas de router. Le proto a
-trois écrans. Traite-le comme tel.
+Pas de i18n, pas de système de thème configurable (les tons d'écran sont fixés
+en CSS, voir `react-css.md`), pas de store normalisé, pas de router. Le proto a
+six écrans. Traite-le comme tel.
 
 ## Preuves attendues
 

@@ -34,6 +34,10 @@ l'arbitrage perceptuel.
 `game-feel-tuning` systématiquement, `rapier-character-controller` pour le
 déplacement, `fixed-timestep-loop` pour tout ce qui est temporel.
 
+Le panneau de tuning (`src/ui/dev/tuning/`) est du React : avant d'y toucher,
+lis les quatre règles du projet (`docs/reference/react-structure.md`, `react-bonnes-pratiques.md`, `react-css.md`, `react-composition.md`). Un nouveau réglage s'ajoute
+dans `dev/tuning/lib/tuningFields.ts` (des données), pas en recopiant un bloc de JSX.
+
 ## Format de proposition
 
 | Paramètre | Actuel | Plage | Effet perceptuel |

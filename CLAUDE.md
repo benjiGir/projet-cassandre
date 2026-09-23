@@ -73,6 +73,25 @@ explication**, pas contournée.
     `game/entities/enemyMachine.ts`. Sinon le hitstop ne ralentirait plus
     les ennemis, régression invisible mais réelle.
 
+## Conventions React — non négociables
+
+Tout code React (`src/ui/`) suit quatre règles écrites, **pour l'agent
+principal comme pour chaque sous-agent** (`shell`, `ui-forge`, `feel-tuner`
+quand il touche au panneau de tuning). Les lire AVANT d'écrire :
+[structure et rangement](docs/reference/react-structure.md),
+[bonnes pratiques React 19.2](docs/reference/react-bonnes-pratiques.md),
+[CSS](docs/reference/react-css.md), [composition](docs/reference/react-composition.md).
+
+L'essentiel : **un dossier par composant** (`Button/Button.tsx` +
+`Button.module.css` + ses `.ts` privés), regroupés en familles par rôle
+(`components/controls/`, `hud/widgets/`, `screens/options/fields/`…), les `.ts`
+partagés d'un domaine dans son `lib/`, sans `index.ts` ; jamais de `<style>`,
+jamais de style inline hors `cssVars()` ; des primitives composées par `children` ; chaque widget du HUD
+lit ses propres données du store ; un module qui persiste ou pilote le moteur
+ne vit pas dans `src/ui/`. Adoptées le 2026-09-23 après un verdict sans appel
+de l'utilisateur sur l'état du dossier (« la qualité du code React est
+ignoble ») : ce n'est pas une préférence de style, c'est le niveau attendu.
+
 ## TypeSafe (Jev) — écarté du jeu (2026-09-20)
 
 Le plugin `typesafe-ai` donne accès à `jev-1.13.0` : un modèle qui ne génère
@@ -522,8 +541,10 @@ public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (génér�
 > 2. **L'amendement de l'invariant #4** proposé par l'[ADR 0027](docs/decisions/0027-filtrage-des-textures-reduites.md),
 >    après un retour « ça pixelise au loin » : mipmaps + anisotropie à la
 >    RÉDUCTION, gros pixel conservé à l'agrandissement. Le code tourne déjà
->    ainsi pour qu'il juge sur pièce ; `cassandre.filtrage("nearest")` revient
->    en arrière en un appel.
+>    ainsi pour qu'il juge sur pièce. **Depuis le 2026-09-22, le choix se fait
+>    sans console** : menu principal › Paramètres du signal › Affichage, trois
+>    modes décrits par ce qu'on voit (« gros pixel partout » = comportement
+>    historique). `cassandre.filtrage("nearest")` reste disponible en dev.
 > 3. **Quatre licences à confirmer** dans `assets_src/LICENCES_ASSETS.md`
 >    (`retro3d_car`, `retro3d_office`, `pensamientoazul_supermarket`,
 >    `aquilarius_retro_textures`) : tant qu'elles sont marquées « à confirmer »,

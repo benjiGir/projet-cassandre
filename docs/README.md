@@ -54,6 +54,10 @@ signale.
 - [Valeurs des ennemis](reference/valeurs-ennemis.md)
 - [Conventions de nommage](reference/conventions-nommage.md)
 - [Contrôles et bindings](reference/controles.md)
+- [React — structure et rangement](reference/react-structure.md) — `src/ui/`, un dossier par domaine, pas de barrel
+- [React 19.2 — bonnes pratiques](reference/react-bonnes-pratiques.md) — état, effets, store, accessibilité
+- [React — CSS](reference/react-css.md) — modules, jetons, tons d'écran, `--vpx`
+- [React — composition](reference/react-composition.md) — primitives, feuilles qui lisent leurs données
 - [Three.js + Rapier](reference/threejs-rapier.md) — guide de terrain vérifié
 
 ## Conventions de cette documentation
