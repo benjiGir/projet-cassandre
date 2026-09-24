@@ -58,7 +58,9 @@ def mur_ecrans(longueur: float = 14.0, seed: int = 0) -> str:
     rng = random.Random(seed or 20260913)
 
     H.box(f"{name}_caisson", (0, 0.25, 0, lo, pr, ht), "metal_bac_acier", coll, subdiv=0.8)
-    H.box(f"{name}_plinthe", (0, 0.18, 0, lo, pr, 0.20),
+    # Bouts et dos rentrés d'un centimètre dans le caisson : à fleur, ils se
+    # battaient avec ses faces.
+    H.box(f"{name}_plinthe", (0.01, 0.18, 0, lo - 0.01, pr - 0.01, 0.20),
           "trim_hypermarche", coll, uv="trim:plinthe")
 
     # Grille d'écrans. Pas de 1,15 m, quatre rangs : la moitié basse est à
@@ -136,7 +138,9 @@ def etagere_petits(seed: int = 0) -> str:
                 ((lo - 0.06, 0, 0, lo, pr, ht), "world"),
                 ((0, pr - 0.04, 0.12, lo, pr, ht), "world")]
     H.boxes(f"{name}_montants", montants, "metal_bac_acier", coll)
-    H.box(f"{name}_plinthe", (0, 0, 0, lo, pr, 0.12),
+    # Entre les joues et 1 cm devant elles : coupée à leurs cotes, la plinthe
+    # avait ses bouts et sa façade dans leurs plans.
+    H.box(f"{name}_plinthe", (0.06, -0.01, 0, lo - 0.06, pr, 0.12),
           "trim_hypermarche", coll, uv="trim:plinthe")
 
     niveaux = (0.12, 0.62, 1.12)
@@ -231,7 +235,9 @@ def cabine_demo(seed: int = 0) -> str:
             [((ax - 0.01, ay - 0.01, 0, bx + 0.01, by + 0.01, 0.12), "trim:plinthe")
              for (ax, ay, _, bx, by, _), _uv in cloisons],
             "trim_hypermarche", coll)
-    H.box(f"{name}_corniche", (0, 0, ht - 0.12, lo, pr, ht),
+    # Débordante d'un centimètre, dessus compris : à fleur, ses faces étaient
+    # coplanaires avec le haut et l'extérieur des cloisons.
+    H.box(f"{name}_corniche", (-0.01, -0.01, ht - 0.12, lo + 0.01, pr + 0.01, ht + 0.01),
           "trim_hypermarche", coll, uv="trim:corniere")
 
     # Le téléviseur, contre la cloison du fond, à hauteur de regard assis.
@@ -280,7 +286,9 @@ def estrade_micro() -> str:
         return name
     lo, pr, ht = 4.0, 4.0, 0.50
     H.box(f"{name}_socle", (0, 0, 0, lo, pr, ht), "bois_palette", coll, subdiv=0.8)
-    H.box(f"{name}_chant", (-0.02, -0.02, ht - 0.12, lo + 0.02, pr + 0.02, ht),
+    # 1 cm sous le plancher : une boîte pleine arasée à `ht` doublait tout le
+    # dessus de l'estrade, et bois et cornière s'y battaient sur 16 m².
+    H.box(f"{name}_chant", (-0.02, -0.02, ht - 0.12, lo + 0.02, pr + 0.02, ht - 0.01),
           "trim_hypermarche", coll, uv="trim:corniere")
     H.box(f"{name}_pupitre", (1.55, 1.70, ht, 2.45, 2.30, ht + 1.05),
           "metal_bac_acier", coll)

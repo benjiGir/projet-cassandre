@@ -86,7 +86,9 @@ def rack_palettes(longueur: float = 4.0, hauteur: float = 6.0, seed: int = 0) ->
         acier.append(((0, 0, z, lo, 0.10, z + 0.14), "world"))
         acier.append(((0, pr - 0.10, z, lo, pr, z + 0.14), "world"))
     H.boxes(f"{name}_acier", acier, "metal_peint_rouge", coll)
-    H.box(f"{name}_pied", (0, 0, 0, lo, pr, 0.18),
+    # Rentré d'un centimètre sous les montants et la première lisse : à leurs
+    # cotes, ses quatre faces étaient dans les plans des leurs.
+    H.box(f"{name}_pied", (0.01, 0.01, 0, lo - 0.01, pr - 0.01, 0.18),
           "trim_hypermarche", coll, uv="trim:bord_quai")
 
     # Chargement : une palette par emplacement, parfois vide. Un rack plein à

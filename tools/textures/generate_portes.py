@@ -1,4 +1,4 @@
-"""Vantaux de porte : deux atlas 128×128 de deux vantaux chacun (64×128), quantifiés sur la palette.
+"""Vantaux de porte : des atlas 128×128 de deux vantaux chacun (64×128), quantifiés sur la palette.
 
     ./.venv-refs/bin/python3 tools/textures/generate_portes.py
 
@@ -8,6 +8,9 @@
   matériau (deux matériaux = deux primitives glTF = un groupe que le loader ne
   reconnaît plus comme une porte), et ça ne coûte qu'un lot de dessin.
 - `portes.png` (RGB) : la porte de bureau et la porte capitonnée du Directeur.
+- `portes_2.png` (RGB) : la porte des toilettes de la cafétéria, et une case
+  libre pour la prochaine. Un atlas de plus plutôt qu'un atlas plus large :
+  `validate_level.py` plafonne les textures à 128×128, carrées.
 
 Un vantail couvre toute sa case, quelle que soit sa taille réelle : la densité
 n'est donc pas les 64 px/m du reste du niveau, mais une porte se lit à sa
@@ -149,9 +152,50 @@ def porte_capitonnee() -> tuple[Image.Image, dict]:
     return img, {"metal": [53, y - 4, 3, 8], "chant": [0, 64]}
 
 
+def porte_wc() -> tuple[Image.Image, dict]:
+    """Porte des toilettes de la cafétéria : stratifié gris clair, plaque bleue
+    « WC » et ses deux pictogrammes, plaque de poussée inox, tôle de coup de
+    pied. Elle se reconnaît de l'autre bout de la salle à sa plaque bleue, bien
+    avant qu'on y lise quoi que ce soit."""
+    haut = 2.0
+    img = Image.new("RGB", (L, H), hexc("#c9c3b6"))
+    d = ImageDraw.Draw(img)
+    d.rectangle((0, 0, L - 1, H - 1), outline=hexc("#8a8478"), width=2)
+    # Traces grises là où l'on pousse depuis vingt ans : autour de la plaque.
+    for i in range(12):
+        x, y = 40 + (i * 7) % 18, _y(1.35, haut) + (i * 5) % 22
+        d.point((x, y), fill=hexc("#a39d90"))
+    # La plaque : WC en double taille, l'homme et la femme dessous.
+    y = _y(1.7, haut)
+    d.rectangle((15, y, 48, y + 25), fill=hexc("#1f5fbf"), outline=hexc("#0f2f60"))
+    draw_text(img, "WC", (L - text_width("WC", 2)) // 2, y + 3, BLANC, scale=2)
+    haut_picto = y + 15
+    for cx, femme in ((25, False), (38, True)):
+        d.rectangle((cx - 1, haut_picto, cx, haut_picto + 1), fill=BLANC)
+        if femme:
+            d.polygon(((cx - 1, haut_picto + 3), (cx, haut_picto + 3),
+                       (cx + 2, haut_picto + 7), (cx - 3, haut_picto + 7)), fill=BLANC)
+        else:
+            d.rectangle((cx - 2, haut_picto + 3, cx + 1, haut_picto + 6), fill=BLANC)
+        d.rectangle((cx - 2, haut_picto + 7, cx - 1, haut_picto + 9), fill=BLANC)
+        d.rectangle((cx, haut_picto + 7, cx + 1, haut_picto + 9), fill=BLANC)
+    d.line((31, haut_picto, 31, haut_picto + 9), fill=BLANC)
+    # Plaque de poussée, et le pavé de quincaillerie qu'elle fournit.
+    d.rectangle((50, _y(1.3, haut), 57, _y(1.0, haut)), fill=ALU_CLAIR, outline=ALU_SOMBRE)
+    # Tôle de coup de pied.
+    y0 = _y(0.3, haut)
+    d.rectangle((2, y0, L - 3, H - 3), fill=ALU)
+    d.line((2, y0, L - 3, y0), fill=ALU_SOMBRE)
+    for i in range(5):
+        x = 7 + i * 11
+        d.line((x, y0 + 5 + i % 2, x + 6, y0 + 3 + i % 2), fill=ALU_CLAIR)
+    return img, {"metal": [52, _y(1.25, haut), 4, 8], "chant": [0, 64]}
+
+
 ATLAS = {
     "portes_verre": (("porte_auto", porte_auto), ("porte_vav", porte_vav)),
     "portes": (("porte_bureau", porte_bureau), ("porte_capitonnee", porte_capitonnee)),
+    "portes_2": (("porte_wc", porte_wc),),
 }
 
 

@@ -2,7 +2,7 @@
 title: Niveau v2 — plan de masse coté
 tags: [game, niveau, level-design]
 status: propose
-updated: 2026-09-12
+updated: 2026-09-24
 ---
 
 # Niveau v2 — plan de masse coté
@@ -35,13 +35,21 @@ python3 tools/level_v2/plan_de_masse.py --ascii
 Repère de Blender : X vers l'est, Y vers le nord, Z vers le haut, mètres,
 grille de 0,25 m. Points orange = Costards, point rouge = le Directeur, un
 halo en pointillés = spawn volontairement à portée mais **sous couvert**.
-Carré bleu = point d'arrivée du joueur dans l'espace.
+Carré bleu = point d'arrivée du joueur dans l'espace. Les petites pièces
+(toilettes, cachettes des secrets) ne portent que leur numéro sur le plan ;
+leur nom et leurs cotes sont dans la légende du bas.
+
+Le SVG se régénère depuis le script, jamais à la main :
+
+```bash
+python3 tools/level_v2/plan_de_masse.py --svg docs/game/images/niveau-v2-plan-de-masse.svg
+```
 
 | | |
 |---|---|
 | Emprise | **128 × 206 m** (x ∈ [−52, 76], y ∈ [−40, 166]) |
-| Surface praticable | 11 464 m² d'espaces + 1 496 m² de liaisons = **12 960 m²** |
-| Échelle | 40 × la salle d'essai de N4 (320 m²) |
+| Surface praticable | 11 776 m² d'espaces + 1 556 m² de liaisons = **13 332 m²** |
+| Échelle | 42 × la salle d'essai de N4 (320 m²) |
 | Effectif | 40 Costards + 1 Directeur (niveau actuel : 13 + 1) |
 | Durée visée | 9:30, inchangée depuis le plan d'origine |
 
@@ -86,10 +94,20 @@ premier usage assumé de l'occlusion comme embuscade (ADR 0025).
 ### 3. Cafétéria — 22 × 20 m, h 4 m, 0:30 — optionnelle
 
 Accessible par l'est de la galerie, jamais sur le chemin critique.
-**Toilettes (+1 PV)** et **secret 3** (bouche d'aération, atteinte par le
-comptoir à 1,0 m puis le haut du frigo à 2,0 m — deux sauts sous
-`jumpHeight`). Le comptoir de self est l'un des trois objets sans
-équivalent CC0, monté en volumes simples (exception actée en N2).
+**Secret 3** : la bouche d'aération du mur nord, atteinte par une caisse de
+1,0 m puis un distributeur de 1,9 m — deux sauts sous `jumpHeight`. Le
+comptoir de self est l'un des trois objets sans équivalent CC0, monté en
+volumes simples (exception actée en N2).
+
+**Les toilettes (12 sur le plan)**, 8 × 10 m, derrière une porte « WC » du
+mur est — une vraie pièce depuis le 2026-09-24, là où il n'y avait qu'un
+`use_toilet` flottant au milieu de la salle. Carrelage aux murs, trois
+cabines au nord (la deuxième est fermée, des chaussures dépassent dessous),
+deux lavabos au sud, deux urinoirs à l'est. Le +1 PV du plan d'origine est la
+plaque de chasse d'eau de la première cabine. Aucun Costard. Coût mesuré :
+**2 lots de dessin** dans toute vue qui voit la pièce (ses murs carrelés et
+sa porte) — son sol est d'un seul tenant avec celui de la cafétéria, son
+plafond se fond dans le plâtre du mur voisin.
 
 ### 4. Caisses — 52 × 24 m, h 5 m, 1:00
 

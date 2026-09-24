@@ -48,7 +48,7 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 ICI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ICI)
@@ -103,6 +103,11 @@ COQUE = {
     # les deux cellules sont dans le champ des vues déjà les plus chargées.
     "secret1": ("sol_terrazzo", "mur_platre", "plafond_dalles"),
     "secret3": ("sol_damier", "mur_platre", "plafond_dalles"),
+    # Seules dans leur cellule de 48 m, les toilettes y paient un lot de dessin
+    # par matière. Aux murs, le carrelage blanc des caisses fait la faïence ; le
+    # sol est celui de la cafétéria, d'un seul tenant (`SOL_COMMUN`) ; le plafond,
+    # en plâtre, est posé par `habiller_toilettes` (`PLAFOND_SUR_MESURE`).
+    "toilettes": ("sol_damier", "sol_carrelage_blanc", "mur_platre"),
 }
 COQUE_COULOIR = ("sol_terrazzo", "mur_platre", "plafond_dalles")
 
@@ -139,7 +144,7 @@ def materiaux_espace(space, gris: dict, cache: dict) -> dict:
 
 # Espaces dont l'habillage construit son propre plafond (percé, à redans...) :
 # `plafond()` les laisse tranquilles plutôt que d'en poser un second par-dessus.
-PLAFOND_SUR_MESURE = frozenset({"galerie"})
+PLAFOND_SUR_MESURE = frozenset({"galerie", "toilettes"})
 
 # Idem pour le SOL, quand l'habillage le découpe en bandes de textures
 # différentes. Le défaut est volontairement l'inverse — `main()` pose un sol
@@ -147,6 +152,30 @@ PLAFOND_SUR_MESURE = frozenset({"galerie"})
 # oublie son sol donne ainsi une pièce banale, jamais un trou dans lequel le
 # joueur tombe.
 SOL_SUR_MESURE = frozenset({"rayons", "caisses", "galerie", "hub"})
+
+# Sols posés d'UN SEUL tenant avec celui d'un voisin : hôte → invités, qui en
+# prennent la matière. Le jeu fusionne le décor par matière et par cellule de
+# 48 m, le CENTRE de l'objet faisant foi, et un sol n'est jamais dans la même
+# tranche verticale qu'un mur : seules dans leur cellule, les toilettes payaient
+# un lot de dessin rien que pour leur sol (mesuré le 2026-09-24). D'un seul
+# tenant avec la cafétéria, le sol commun n'en coûte qu'un pour les deux pièces.
+SOL_COMMUN = {"cafeteria": ("toilettes",)}
+SOL_INVITE = frozenset(i for invites in SOL_COMMUN.values() for i in invites)
+
+
+def sol_commun(space, materiaux, coll, col_coll) -> None:
+    """Le sol de `space` et de ses invités en un seul mesh ; un collider par pièce."""
+    espaces = {s.id: s for s in plan.ALL}
+    pieces = [space] + [espaces[i] for i in SOL_COMMUN[space.id]]
+    e = bo.EPAISSEUR_SOL
+    parts = [{"o": (s.x[0], s.y[0], s.z - e), "s": (s.largeur, s.profondeur, e), "mat": "sol"} for s in pieces]
+    coll.objects.link(geo_utils.build_multi_box_mesh(f"sol_{space.id}", parts, "sol", materiaux,
+                                                     seg=bo.SEG, uv_tile=2.0))
+    for s in pieces:
+        proxy = geo_utils.build_proxy_object(f"col_box_sol_{s.id}", "box", (0.0, 0.0, 0.0),
+                                             (s.largeur, s.profondeur, e))
+        proxy.location = (s.x[0], s.y[0], s.z - e)
+        col_coll.objects.link(proxy)
 
 
 def plafond(space, coll) -> bool:
@@ -237,6 +266,11 @@ def poser_linteaux(ouvertures, gris, cache, coll) -> int:
         grand, bas, haut = (a, pb, pa) if pa > pb else (b, pa, pb)
         mur = materiaux_espace(grand, gris, cache)["mur"]
         nom = f"linteau_{grand.id}_{o.b if grand is a else o.a}"
+        # Entre les murs de son espace, jamais dedans : une ouverture qui court
+        # jusqu'au bout de la façade a les murs voisins descendus jusqu'à
+        # l'angle (`bo.murs_espace`), et le linteau les traverserait.
+        bords = grand.y if o.axe == "x" else grand.x
+        lo, hi = max(lo, bords[0] + t), min(hi, bords[1] - t)
         if o.axe == "y":
             ya = o.at - t if abs(grand.y[1] - o.at) < 1e-6 else o.at
             bo.boite(nom, (lo, ya, bas), (hi - lo, t, haut - bas),
@@ -814,9 +848,11 @@ def habiller_caisses(space, gris, props, col_coll, logic) -> dict:
         # `place(..., 180)` fait tourner l'asset AUTOUR DE SON ORIGINE : son
         # empreinte part alors vers -x et -y. La seconde tête se pose donc au
         # coin OPPOSÉ de la paire, sans quoi les deux se superposent (constaté
-        # par `audit_niveau.py`, 1,25 × 1,25 × 2,0 de recouvrement).
+        # par `audit_niveau.py`, 1,25 × 1,25 × 2,0 de recouvrement). Et 2 cm
+        # plus loin : les montants arrière débordent d'un centimètre de chaque
+        # dos, et dos à dos ils se superposaient dans les mêmes plans.
         L.place(L.tete_garnie(SEED + 760 + i), (ix, 27.0, z), 0, props, col_coll, f"cs_il{i}a")
-        L.place(L.tete_garnie(SEED + 770 + i), (ix + 1.25, 29.5, z), 180, props, col_coll, f"cs_il{i}b")
+        L.place(L.tete_garnie(SEED + 770 + i), (ix + 1.25, 29.52, z), 180, props, col_coll, f"cs_il{i}b")
         ilots += 2
     for i, (px, py, rot) in enumerate(((x0 + 3.0, y0 + 6.0, 0), (x1 - 4.0, y0 + 5.0, 20))):
         L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"cs_pal{i}")
@@ -1611,8 +1647,10 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     H.col_box("caisse_acces_secret3", (sx, sy, z, sx + 1.0, sy + 1.0, z + 1.0), col_coll)
     # Le cadre de la bouche, côté cafétéria : un trou dans un mur se lit comme un
     # défaut, un trou encadré comme une bouche.
-    H.boxes("ca_bouche_cadre", [((ventx - 0.08, y1 - 0.3, z + 2.0, ventx, y1 - 0.24, z + 4.0), "world"),
-                                ((ventx + 2.0, y1 - 0.3, z + 2.0, ventx + 2.08, y1 - 0.24, z + 4.0), "world")],
+    # Il mord d'un centimètre sur la baie : à fleur, ses faces intérieures
+    # doublaient les bouts du mur.
+    H.boxes("ca_bouche_cadre", [((ventx - 0.08, y1 - 0.3, z + 2.0, ventx + 0.01, y1 - 0.24, z + 4.0), "world"),
+                                ((ventx + 1.99, y1 - 0.3, z + 2.0, ventx + 2.08, y1 - 0.24, z + 4.0), "world")],
             "metal_bac_acier", props)
 
     L.place(B.fontaine_eau(), (x0 + 0.6, 2.0, z), 0, props, col_coll, "ca_fontaine")
@@ -1637,6 +1675,140 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
                             CA_NEONS_MORTS, "ca", doubles=CA_NEON_X)
     return {"tables": len(CA_TABLES), "distributeurs": len(B.FACADES_DISTRIBUTEUR),
             "meubles": meubles, "rampes": rampes, "lampes": lampes}
+
+
+# --- Habillage : les toilettes de la cafétéria --------------------------------
+#
+# Demandées le 2026-09-24 (« il manque une vraie salle pour les toilettes ») :
+# jusque-là, le +1 PV du plan tenait dans un cube `use_toilet` flottant au milieu
+# de la cafétéria. Une salle carrelée derrière une porte « WC » : trois cabines
+# au nord, deux lavabos au sud, deux urinoirs à l'est. La plaque de chasse d'eau
+# de la première cabine EST l'objet interactif.
+
+WC_CABINES_X = 60.0                        # bord ouest de la première cabine
+WC_CABINE_L, WC_CABINE_P = 1.25, 1.75      # largeur, profondeur depuis le mur nord
+WC_PORTE_CABINE = 0.8
+WC_CLOISON = 0.04
+# Les cloisons de cabine s'arrêtent à 15 cm du sol : c'est à ça qu'on les
+# reconnaît. Leurs COLLIDERS, eux, descendent jusqu'au sol — un proxy qui flotte
+# est ce que `audit_niveau.py` appelle un objet flottant — et font 12 cm
+# d'épaisseur : `validate_level.py` exige 10 cm contre le tunneling, et à 10 cm
+# pile l'arrondi flottant le fait échouer.
+WC_CLOISON_BAS, WC_CLOISON_HAUT = 0.15, 2.15
+WC_COLLIDER_MIN = 0.12
+WC_STRATIFIE = "#237978"                   # le vert d'eau des cabines de toilettes publiques
+WC_URINOIRS_Y = (9.5, 11.0)
+WC_NEONS_X, WC_NEONS_Y = (58.25, 61.25), (8.0,)
+WC_NEONS_MORTS = frozenset({(61.25, 8.0)})  # un tube grillé au-dessus des urinoirs
+
+
+def _vantail_entrouvert(nom: str, charniere, largeur: float, angle_deg: float,
+                        z0: float, z1: float, props) -> None:
+    """Porte de cabine ouverte vers l'intérieur. La rotation est FIGÉE dans le
+    mesh et l'objet reste à l'origine, sur la grille — comme tout ce que pose
+    `L.place`."""
+    hx, hy = charniere
+    obj = H.box(nom, (0.0, -0.015, z0, largeur, 0.015, z1), "palette", props, uv=f"aplat:{WC_STRATIFIE}")
+    obj.data.transform(Matrix.Translation((hx, hy, 0.0)) @ Matrix.Rotation(math.radians(angle_deg), 4, "Z"))
+
+
+def _collider_epaissi(nom: str, b, z_sol: float, col_coll) -> None:
+    """Proxy d'une paroi mince : posé au sol, élargi à `WC_COLLIDER_MIN` sur son
+    axe le plus mince, centré sur elle."""
+    x0, y0, _, x1, y1, z1 = b
+    if x1 - x0 < y1 - y0:
+        c = (x0 + x1) / 2
+        x0, x1 = min(x0, c - WC_COLLIDER_MIN / 2), max(x1, c + WC_COLLIDER_MIN / 2)
+    else:
+        c = (y0 + y1) / 2
+        y0, y1 = min(y0, c - WC_COLLIDER_MIN / 2), max(y1, c + WC_COLLIDER_MIN / 2)
+    H.col_box(nom, (x0, y0, z_sol, x1, y1, z1), col_coll)
+
+
+def habiller_toilettes(space, gris, props, col_coll, logic) -> dict:
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    t = bo.EPAISSEUR_MUR
+    est, sud, nord = x1 - t, y0 + t, y1 - t
+    yf = nord - WC_CABINE_P                     # la ligne des portes de cabine
+    e = WC_CLOISON / 2
+    xs = [WC_CABINES_X + i * WC_CABINE_L for i in range(3)]
+
+    # Plafond de plâtre peint, monté comme un MUR (`bo.boite`) : il porte ainsi
+    # l'attribut `Col` des murs et se fond au chargement dans le lot de plâtre que
+    # la cellule a déjà — le mur est de la cafétéria. En dalles, ou sans `Col`, il
+    # coûtait un lot de dessin à lui seul (mesuré : 4 lots pour la salle, ramenés
+    # à 2 avec le sol carrelé).
+    bo.boite("plafond_toilettes", (x0, y0, z + space.hauteur),
+             (space.largeur, space.profondeur, EPAISSEUR_PLAFOND),
+             "mur", {"mur": H.textured_material(COQUE[space.id][2])}, props, None, avec_collider=False)
+
+    # Cabines : une cloison à l'ouest de chacune (la dernière s'appuie sur le mur
+    # est), une façade percée de trois portes, une lisse d'acier par-dessus.
+    cloisons = [(sx - e, yf + e, z + WC_CLOISON_BAS, sx + e, nord, z + WC_CLOISON_HAUT) for sx in xs]
+    bords = [xs[0] - e] + [v for sx in xs for v in (sx + 0.225, sx + 0.225 + WC_PORTE_CABINE)] + [est]
+    cloisons += [(a, yf - e, z + WC_CLOISON_BAS, b, yf + e, z + WC_CLOISON_HAUT)
+                 for a, b in zip(bords[::2], bords[1::2])]
+    H.boxes("wc_cloisons", [(c, f"aplat:{WC_STRATIFIE}") for c in cloisons], "palette", props)
+    for i, c in enumerate(cloisons):
+        _collider_epaissi(f"wc_cloison{i}", c, z, col_coll)
+    H.box("wc_lisse", (xs[0] - e, yf - 0.03, z + WC_CLOISON_HAUT, est, yf + 0.03, z + WC_CLOISON_HAUT + 0.04),
+          "metal_bac_acier", props)
+
+    # La première cabine est ouverte — la chasse d'eau y est —, la deuxième
+    # fermée, avec des chaussures qui dépassent dessous, la troisième ouverte.
+    for i, sx in enumerate(xs):
+        a = sx + 0.225
+        if i == 1:
+            porte = (a + 0.005, yf - 0.015, z + WC_CLOISON_BAS, a + WC_PORTE_CABINE - 0.005, yf + 0.015, z + 2.0)
+            H.box("wc_porte_fermee", porte, "palette", props, uv=f"aplat:{WC_STRATIFIE}")
+            _collider_epaissi("wc_porte_fermee", porte, z, col_coll)
+        else:
+            _vantail_entrouvert(f"wc_porte{i}", (a + 0.005, yf), WC_PORTE_CABINE - 0.01, 70.0,
+                                z + WC_CLOISON_BAS, z + 2.0, props)
+    # Cuir marron et non noir : des chaussures noires disparaissent dans les
+    # cases noires du damier (constaté en rendu).
+    cx = xs[1] + WC_CABINE_L / 2
+    H.boxes("wc_chaussures", [((cx - 0.17, yf - 0.10, z, cx - 0.06, yf + 0.18, z + 0.09), "aplat:#654933"),
+                              ((cx + 0.06, yf - 0.10, z, cx + 0.17, yf + 0.18, z + 0.09), "aplat:#654933")],
+            "palette", props)
+
+    lx, ly, _ = _emprise(B.meuble("toilet"))
+    for i, sx in enumerate(xs):
+        poser(B.meuble("toilet"), sx + (WC_CABINE_L - lx) / 2, nord - ly, z, "-y", props, col_coll,
+              f"wc_cuvette{i}")
+    # La plaque de chasse d'eau, au-dessus du réservoir de la première cabine.
+    # Centrée SUR la face du mur, comme les lecteurs de carte : son origine reste
+    # sur la grille. La portée d'usage (2 m) se mesure jusqu'à elle.
+    rx, ry = next((r[1], r[2]) for r in space.reperes if "toilettes" in r[0])
+    bo.boite_centree("use_toilet", (rx, ry, z + 1.25), (0.25, 0.08, 0.2), "repere",
+                     {"repere": H.textured_material("metal_bac_acier")}, logic)
+
+    # Lavabos et miroirs contre le mur sud, poubelle, sèche-mains.
+    mx, _, _ = _emprise(B.meuble("bathroomMirror"))
+    for i, lav_x in enumerate((57.0, 58.5)):
+        bx0, _, bx1, _ = poser(B.meuble("bathroomSink"), lav_x, sud, z, "+y", props, col_coll, f"wc_lavabo{i}")
+        poser(B.meuble("bathroomMirror"), (bx0 + bx1) / 2 - mx / 2, sud, z + 1.15, "+y", props, col_coll,
+              f"wc_miroir{i}")
+    poser(B.meuble("trashcan"), 59.75, sud, z, "+y", props, col_coll, "wc_poubelle")
+    H.box("wc_seche_mains", (60.25, sud, z + 1.2, 60.55, sud + 0.2, z + 1.5), "metal_bac_acier", props)
+
+    # Urinoirs contre le mur est : la cuvette, sa lèvre 2 cm devant (jamais à
+    # fleur), la descente d'eau, une séparation entre les deux.
+    urinoirs, tuyaux = [], []
+    for uy in WC_URINOIRS_Y:
+        urinoirs.append(((est - 0.33, uy - 0.2, z + 0.55, est, uy + 0.2, z + 1.15), "aplat:#f2efe6"))
+        urinoirs.append(((est - 0.35, uy - 0.15, z + 0.60, est - 0.30, uy + 0.15, z + 0.72), "aplat:#a2a3a1"))
+        tuyaux.append(((est - 0.06, uy - 0.015, z + 1.15, est - 0.03, uy + 0.015, z + 1.45), "world"))
+    ym = sum(WC_URINOIRS_Y) / 2
+    urinoirs.append(((est - 0.45, ym - e, z + 0.5, est, ym + e, z + 1.4), f"aplat:{WC_STRATIFIE}"))
+    H.boxes("wc_urinoirs", urinoirs, "palette", props)
+    H.boxes("wc_tuyaux", tuyaux, "metal_bac_acier", props)
+
+    rampes, lampes = _neons(space, props, logic, WC_NEONS_X, WC_NEONS_Y, WC_NEONS_MORTS, "wc")
+    return {"cabines": len(xs), "lavabos": 2, "urinoirs": len(WC_URINOIRS_Y),
+            "rampes": rampes, "lampes": lampes}
 
 
 # --- Poser un meuble d'après ses VRAIES cotes -------------------------------
@@ -1788,7 +1960,9 @@ def habiller_escalier(space, gris, props, col_coll, logic) -> dict:
     # lui, la fusion au chargement les laisse dans deux lots séparés.
     couleur = marches_obj.data.color_attributes.new(name="Col", type="BYTE_COLOR", domain="POINT")
     couleur.data.foreach_set("color", [1.0] * (len(marches_obj.data.vertices) * 4))
-    nez = [((x0 + t, y0 + k * giron, z0 + (k + 0.5) * contre - 0.03,
+    # Le nez déborde d'un centimètre devant la contremarche : à fleur, sa façade
+    # et celle de la marche se battaient sur chaque marche.
+    nez = [((x0 + t, y0 + k * giron - 0.01, z0 + (k + 0.5) * contre - 0.03,
              x1 - t, y0 + k * giron + 0.04, z0 + (k + 0.5) * contre + 0.005), "trim:corniere")
            for k in range(ES_MARCHES)]
     H.boxes("escalier_nez", nez, "trim_hypermarche", props)
@@ -1866,14 +2040,18 @@ def habiller_etage(space, gris, props, col_coll, logic) -> dict:
         for x in coupes:
             montants.append((max(a, x - 0.03), yc0 + 0.03, z + ET_ALLEGE, min(b, x + 0.03), yc1 - 0.03,
                              z + ET_VITRAGE))
-        montants.append((a, yc0 - 0.02, z + ET_ALLEGE - 0.03, b, yc1 + 0.02, z + ET_ALLEGE))
+        # L'appui coiffe l'allège d'un centimètre : arasé à sa hauteur, les deux
+        # dessus se battaient sur toute la longueur de la cloison.
+        montants.append((a, yc0 - 0.02, z + ET_ALLEGE - 0.03, b, yc1 + 0.02, z + ET_ALLEGE + 0.01))
     H.boxes("et_cloison_montants", [(m, "world") for m in montants], "metal_bac_acier", props)
     # Au-dessus de chaque porte, l'imposte qui en fait une PORTE et non une brèche
     # jusqu'au plafond. Rendue seulement : elle est au-dessus de toute tête.
     for nom, px in ET_PORTES.items():
         H.box(f"et_imposte_{nom}", (px, yc0, z + ET_PORTE_H, px + ET_PORTE_L, yc1, ht), "mur_platre", props)
-        for j, cx in enumerate((px - 0.06, px + ET_PORTE_L)):
-            H.box(f"et_chambranle_{nom}_{j}", (cx, yc0 - 0.03, z, cx + 0.06, yc1 + 0.03, z + ET_PORTE_H + 0.06),
+        # Le chambranle mord d'un centimètre sur la baie : c'est lui qui fait
+        # l'embrasure. À fleur du bout de la cloison, bois et plâtre s'y battaient.
+        for j, (ca, cb) in enumerate(((px - 0.06, px + 0.01), (px + ET_PORTE_L - 0.01, px + ET_PORTE_L + 0.06))):
+            H.box(f"et_chambranle_{nom}_{j}", (ca, yc0 - 0.03, z, cb, yc1 + 0.03, z + ET_PORTE_H + 0.06),
                   "bois_palette", props)
         # La porte : bois, plaque nominative, béquille. Elle s'ouvre devant qui
         # la pousse — joueur ou Costard — et reste ouverte.
@@ -2046,6 +2224,7 @@ HAUTEUR_VANTAIL = {
     frozenset({"bureaux", "direction"}): 2.25,
     frozenset({"c_short_w", "rayons"}): 2.25,
     frozenset({"galerie", "secret1"}): bo.HAUTEUR_PORTE,
+    frozenset({"cafeteria", "toilettes"}): 2.0,
     "sortie": 2.25,
 }
 
@@ -2338,6 +2517,19 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
         elif cle in PORTES_LIBRES:
             _porte_libre(o, PORTES_LIBRES[cle], props, logic)
             poses += 1
+        elif cle == frozenset({"cafeteria", "toilettes"}):
+            # La porte des WC se manœuvre comme celles des bureaux : à la main
+            # (touche E), les Costards la poussent. Une porte de toilettes qui
+            # s'écarte toute seule se lirait comme une porte de magasin.
+            lo, hi = o.span
+            libre = hi - 0.005
+            vantail("door_wc", _monde(o, lo + 0.005, -EP_VANTAIL / 2, o.z + 0.01, libre, EP_VANTAIL / 2,
+                                      o.z + HAUTEUR_VANTAIL[cle]),
+                    "portes_2", "porte:porte_wc", props,
+                    dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto",
+                         auto="ennemis", manuelle=True, portee=1.6, referme=False),
+                    _bequilles(o, libre, -1), "quincaillerie:porte_wc")
+            poses += 1
     return poses
 
 
@@ -2555,9 +2747,10 @@ def poser_props_physiques(space, coll) -> int:
     return poses
 
 
-# Repères « signature » que l'habillage pose lui-même, en vrai objet : le
-# blockout ne doit donc plus poser leur silhouette grise.
-SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
+# Repères que l'habillage pose lui-même, en vrai objet : le blockout ne doit donc
+# plus poser leur silhouette grise — ni le cube flottant de `use_toilet`, devenu
+# la plaque de chasse d'eau de `habiller_toilettes`.
+SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton", "use_toilet"})
 
 
 HABILLAGE = {
@@ -2576,6 +2769,7 @@ HABILLAGE = {
     "c_bu": habiller_couloir_direction,
     "secret1": habiller_labo,
     "secret3": habiller_vmc,
+    "toilettes": habiller_toilettes,
 }
 
 
@@ -2737,7 +2931,9 @@ def main() -> None:
         if space.rampe:
             sens, z0, z1 = space.rampe
             bo.pente(f"sol_{space.id}", space.x, space.y, z0, z1, sens, materiaux, shell, col_coll)
-        elif space.id not in SOL_SUR_MESURE:
+        elif space.id in SOL_COMMUN:
+            sol_commun(space, materiaux, shell, col_coll)
+        elif space.id not in SOL_SUR_MESURE and space.id not in SOL_INVITE:
             bo.boite(f"sol_{space.id}",
                      (space.x[0], space.y[0], space.z - bo.EPAISSEUR_SOL),
                      (space.largeur, space.profondeur, bo.EPAISSEUR_SOL),

@@ -156,10 +156,13 @@ def gondole_tete(affiches: tuple[str | None, str | None] = (None, None)) -> str:
         return name
     w, d, ht = GOND_DEPTH, GOND_DEPTH, GOND_HEIGHT
 
-    trim = [((0, 0, 0, w, d, 0.15), "trim:plinthe")]
+    # Plinthe, tranches et dos s'arrêtent à 1 cm DANS les flancs : coupés à fleur,
+    # leurs bouts étaient coplanaires avec la face extérieure des flancs, et les
+    # deux textures s'y disputaient le z-buffer sur toute la tête de gondole.
+    trim = [((0.01, 0, 0, w - 0.01, d, 0.15), "trim:plinthe")]
     acier = []
     for h in GOND_LEVELS[1:]:
-        trim.append(((0, 0, h - LIP_DROP, w, 0.03, h + SHELF_T), "trim:tranche_etagere"))
+        trim.append(((0.01, 0, h - LIP_DROP, w - 0.01, 0.03, h + SHELF_T), "trim:tranche_etagere"))
         acier.append(((0.08, 0.03, h, w - 0.08, d - 0.06, h + SHELF_T), "world"))
 
     # Flancs PLEINS. Une tête de gondole se regarde depuis l'entrée de l'allée,
@@ -179,7 +182,7 @@ def gondole_tete(affiches: tuple[str | None, str | None] = (None, None)) -> str:
     H.boxes(f"{name}_trim", trim, "trim_hypermarche", coll)
     H.boxes(f"{name}_acier", acier, "metal_bac_acier", coll)
     H.boxes(f"{name}_rouge", rouge, "metal_peint_rouge", coll)
-    H.box(f"{name}_dos", (0, d - 0.06, 0.15, w, d, ht - 0.06),
+    H.box(f"{name}_dos", (0.01, d - 0.06, 0.15, w - 0.01, d, ht - 0.06),
           "metal_tole_perforee", coll, subdiv=0.5)
     # Affiches sur les flancs : un flanc plein sans rien dessus n'est qu'un pan
     # rouge de 1,25 × 2 m à hauteur de regard, à l'endroit précis où le joueur
@@ -259,7 +262,9 @@ def frigo_mural() -> str:
     for h in (0.60, 1.05, 1.50):
         acier.append(((0.08, 0.06, h, w - 0.08, d - 0.08, h + SHELF_T), "world"))
     H.boxes(f"{name}_acier", acier, "metal_bac_acier", coll)
-    trim = [((0, 0, 0, w, 0.03, 0.30), "trim:plinthe"),
+    # Plinthe 1 cm devant la façade du socle et 1 cm sous son dessus, bouts
+    # rentrés dans les joues : à fleur, les deux faces se battaient.
+    trim = [((0.01, -0.01, 0, w - 0.01, 0.03, 0.29), "trim:plinthe"),
             ((0.08, 0.0, ht - 0.28, w - 0.08, 0.06, ht - 0.15), "trim:neon")]
     H.boxes(f"{name}_trim", trim, "trim_hypermarche", coll)
     H.col_box(name[4:], (0, 0, 0, w, d, ht), coll)
@@ -701,7 +706,12 @@ def _niveaux_gondole() -> list[tuple[float, float]]:
     out = [(GOND_LEVELS[0], GOND_LEVELS[1] - LIP_DROP - GOND_LEVELS[0])]
     for i, h in enumerate(GOND_LEVELS[1:], start=1):
         z = h + SHELF_T
-        top = GOND_LEVELS[i + 1] - LIP_DROP if i + 1 < len(GOND_LEVELS) else GOND_HEIGHT
+        # Le dernier niveau s'arrête 1 cm sous le DESSUS de la gondole : un paquet
+        # qui montait jusqu'à GOND_HEIGHT affleurait le chapeau, là où l'on marche
+        # pour le secret 2, et s'y battait avec lui. Pas plus bas : sous le
+        # chapeau (0,19 m libres), l'épicerie et les boissons n'ont plus aucune
+        # référence assez petite et leur tablette haute resterait vide.
+        top = GOND_LEVELS[i + 1] - LIP_DROP if i + 1 < len(GOND_LEVELS) else GOND_HEIGHT - 0.01
         out.append((z, top - z))
     return out
 

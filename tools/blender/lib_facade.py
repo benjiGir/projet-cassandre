@@ -54,7 +54,9 @@ def caisse() -> str:
         ((0, 0, 0, lo, pr, 0.15), "trim:plinthe"),
         # Bourrelet de protection sur la tranche client : une caisse prend des
         # coups de caddie toute la journée, et c'est ce qui la date.
-        ((0, -0.03, 0.60, lo, 0.03, 0.78), "trim:joint_caoutchouc"),
+        # Il dépasse aussi aux deux bouts : à fleur, ses extrémités doublaient
+        # celles du meuble.
+        ((-0.01, -0.03, 0.60, lo + 0.01, 0.03, 0.78), "trim:joint_caoutchouc"),
     ], "trim_hypermarche", coll)
 
     acier = [((0, 0, 0.15, lo, pr, 0.85), "world"),
@@ -238,7 +240,9 @@ def kiosque(enseigne: str, seed: int = 0) -> str:
     # Comptoir de façade, à 1,05 m : la hauteur d'un comptoir, et la seule
     # partie du kiosque que le joueur longe de près.
     H.box(f"{name}_comptoir", (0.30, 0, 0.15, lo - 0.30, 0.80, 1.05), "metal_bac_acier", coll)
-    H.box(f"{name}_chant", (0.30, -0.02, 0.97, lo - 0.30, 0.02, 1.05),
+    # Un centimètre plus haut et plus long que le comptoir : arasée à 1,05 m, la
+    # cornière doublait le bord du plateau.
+    H.box(f"{name}_chant", (0.29, -0.02, 0.97, lo - 0.29, 0.02, 1.06),
           "trim_hypermarche", coll, uv="trim:corniere")
     # Rayonnage du fond, vu par-dessus le comptoir : sans lui le kiosque est
     # une boîte vide avec une enseigne dessus.

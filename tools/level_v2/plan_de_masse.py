@@ -147,7 +147,7 @@ SPACES: list[Space] = [
     Space(
         id="cafeteria", nom="Cafétéria",
         x=(34, 56), y=(0, 20), z=0, hauteur=4.0, densite="moyenne",
-        role="Optionnelle : soin, toilettes (+1 PV), secret 3 (bouche d'aération)",
+        role="Optionnelle : soin, toilettes (+1 PV) derrière la porte est, secret 3 (bouche d'aération)",
         duree="0:30", arrivee=(35, 7),
         ennemis="2 Costards attablés — réveil à l'entrée",
         spawns=[("suit_ca1", 54, 5, None), ("suit_ca2", 52, 16, None)],
@@ -157,7 +157,6 @@ SPACES: list[Space] = [
             "d'aération du mur nord, et au local VMC derrière.",
         ],
         reperes=[
-            ("toilettes +1 PV", 52, 11, "objet"),
             # Récompense du détour : la seule trousse double avant les bureaux.
             ("trousse de soin +50", 52, 16, "soin"),
         ],
@@ -315,6 +314,24 @@ SPACES: list[Space] = [
         reperes=[
             ("carte Platine (Directeur)", -38, 159, "carte"),
             ("SORTIE", -37, 166, "porte"),
+        ],
+    ),
+    # Posé AVANT les cachettes : le SVG numérote les espaces dans cet ordre, et
+    # la doc suit cette numérotation pour les dix premiers.
+    Space(
+        id="toilettes", nom="Toilettes",
+        x=(56, 64), y=(6, 16), z=0, hauteur=3.0, densite="moyenne",
+        role="Optionnelles, au fond de la cafétéria : la chasse d'eau rend 1 PV",
+        duree="0:10", arrivee=(57, 11),
+        ennemis="aucun — une cabine fermée, des chaussures dépassent sous la porte",
+        notes=[
+            "Jusqu'au 2026-09-24, les toilettes n'étaient qu'un `use_toilet` flottant au milieu "
+            "de la cafétéria : un cube, pas une pièce.",
+            "Trois cabines au nord, deux lavabos et leurs miroirs au sud, deux urinoirs à l'est.",
+        ],
+        reperes=[
+            # La plaque de chasse d'eau de la première cabine, sur le mur nord.
+            ("toilettes +1 PV", 60.5, 15.75, "objet"),
         ],
     ),
     Space(
@@ -687,6 +704,7 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     frozenset({"hub", "c_hb_rs"}): (2.0, 0.0),
     frozenset({"galerie", "secret1"}): (1.5, 8.25),       # le pan de mur qui s'efface
     frozenset({"cafeteria", "secret3"}): (2.0, 36.5),     # la bouche d'aération
+    frozenset({"cafeteria", "toilettes"}): (1.0, 11.0),   # la porte des WC, à 1 m comme celles des bureaux
     # Dans l'axe de l'allée entre les rangées 0 et 1 : centrée sur x = −40, la
     # porte donnait sur le bout d'une gondole à deux mètres.
     frozenset({"c_short_w", "rayons"}): (2.5, -42.5),     # la porte coupe-feu
@@ -796,6 +814,12 @@ def accessibles(depuis: str = "parking_ext", sans: str | None = None) -> set[str
 
 PX_PAR_M = 4.0
 MARGE = 56.0
+# Place à droite pour les étiquettes des repères : sans elle, celles des pièces
+# du bord est (toilettes, souterrain) partaient vers la gauche, sur leurs voisines.
+MARGE_DROITE = 100.0
+# Sous ce côté, en pixels, un espace ne porte que son numéro ; son nom va dans la
+# légende du bas. Un titre vertical dans une pièce de 6 m débordait sur la voisine.
+PETIT_ESPACE_PX = 48
 
 COULEUR = {
     "forte": "#c8622f",
@@ -805,11 +829,23 @@ COULEUR = {
 }
 
 
+# Repères de gameplay sur la carte : couleur et symbole par nature.
+STYLE_REPERES = {
+    "carte": ("#8fe3ff", "◆"),
+    "secret": ("#c58fff", "★"),
+    "objet": ("#8fffb4", "●"),
+    "porte": ("#ff8f8f", "▮"),
+    "depart": ("#6fd3ff", "▶"),
+    "soin": ("#5fe07a", "✚"),
+    "munitions": ("#e0b45f", "▪"),
+}
+
+
 def svg() -> str:
     xs = [s.x[0] for s in ALL] + [s.x[1] for s in ALL]
     ys = [s.y[0] for s in ALL] + [s.y[1] for s in ALL]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
-    w = (x1 - x0) * PX_PAR_M + 2 * MARGE
+    w = (x1 - x0) * PX_PAR_M + 2 * MARGE + MARGE_DROITE
     h = (y1 - y0) * PX_PAR_M + 2 * MARGE
 
     def px(x: float) -> float:
@@ -845,6 +881,17 @@ def svg() -> str:
             f'fill="#2a313b" stroke="#3d4855" stroke-width="1"/>'
         )
 
+    annexes = []
+    occupe = []                                  # boîtes des textes posés : (x0, y0, x1, y1)
+
+    def libre(boite, obstacles) -> bool:
+        return all(boite[2] <= o[0] or o[2] <= boite[0] or boite[3] <= o[1] or o[3] <= boite[1]
+                   for o in obstacles)
+
+    rects = {sp.id: (px(sp.x[0]), py(sp.y[1]), px(sp.x[1]), py(sp.y[0])) for sp in SPACES}
+    reperes = [(label, rx, ry, *STYLE_REPERES[nature]) for sp in ALL
+               for label, rx, ry, nature, *_alt in sp.reperes]
+    occupe += [(px(rx) - 5, py(ry) - 5, px(rx) + 5, py(ry) + 5) for _l, rx, ry, _c, _g in reperes]
     for i, sp in enumerate(SPACES, start=1):
         col = COULEUR[sp.densite]
         parts.append(
@@ -860,7 +907,19 @@ def svg() -> str:
         # appartient aux repères de gameplay. Un espace trop étroit pour son
         # nom le porte à la verticale (cas du hub).
         largeur_titre = len(titre) * 7.4
-        if sp.largeur * PX_PAR_M < 80:
+        if max(sp.largeur, sp.profondeur) * PX_PAR_M < PETIT_ESPACE_PX:
+            # Au centre, ou contre un bord extérieur si un symbole y est déjà.
+            r = rects[sp.id]
+            cx, cy = (r[0] + r[2]) / 2, (r[1] + r[3]) / 2
+            for nx, ny in ((cx, cy), (r[0] - 9, cy), (r[2] + 9, cy), (cx, r[1] - 7), (cx, r[3] + 9)):
+                boite = (nx - 8, ny - 5, nx + 8, ny + 6)
+                if libre(boite, occupe):
+                    break
+            occupe.append(boite)
+            parts.append(f'<text x="{nx:.1f}" y="{ny + 4:.1f}" fill="#e8edf2" font-size="11" '
+                         f'font-weight="700" text-anchor="middle">{i}</text>')
+            annexes.append(f"{titre} ({sp.largeur:.0f} × {sp.profondeur:.0f} m)")
+        elif sp.largeur * PX_PAR_M < 80:
             cx = px((sp.x[0] + sp.x[1]) / 2)
             cy = py((sp.y[0] + sp.y[1]) / 2)
             parts.append(
@@ -871,10 +930,17 @@ def svg() -> str:
                 f'</g>'
             )
         else:
-            # Étiquette dans le rectangle si elle y tient, juste au-dessus sinon.
+            # Étiquette dans le rectangle si elle y tient ; sinon juste au-dessus,
+            # ou juste dessous quand un autre espace occupe le dessus (la cafétéria
+            # et le local VMC collé à son mur nord).
             dedans = largeur_titre <= sp.largeur * PX_PAR_M - 12
             tx = px(sp.x[0]) + (8 if dedans else 0)
             ty = py(sp.y[1]) + (18 if dedans else -18)
+            if not dedans:
+                autres = [r for k, r in rects.items() if k != sp.id]
+                largeur_bloc = max(largeur_titre, len(cote) * 6.0)
+                if not libre((tx, ty - 11, tx + largeur_bloc, ty + 17), autres):
+                    ty = py(sp.y[0]) + 16
             parts.append(
                 f'<text x="{tx:.1f}" y="{ty:.1f}" fill="#e8edf2" font-size="13" '
                 f'font-weight="700">{titre}</text>'
@@ -882,6 +948,7 @@ def svg() -> str:
             parts.append(
                 f'<text x="{tx:.1f}" y="{ty + 14:.1f}" fill="#9fb0c0" font-size="10">{cote}</text>'
             )
+            occupe.append((tx, ty - 11, tx + largeur_titre, ty + 17))
         for _n, sx, sy, cover in sp.spawns:
             fill = "#e8552f" if _n.startswith("director") else "#e8a33d"
             r = 4.5 if _n.startswith("director") else 3
@@ -894,33 +961,45 @@ def svg() -> str:
             ax, ay = sp.arrivee
             parts.append(f'<rect x="{px(ax) - 3:.1f}" y="{py(ay) - 3:.1f}" width="6" height="6" '
                          f'fill="none" stroke="#6fd3ff" stroke-width="1.5"/>')
+            occupe.append((px(ax) - 4, py(ay) - 4, px(ax) + 4, py(ay) + 4))
 
-    # Repères de gameplay.
-    STYLE = {
-        "carte": ("#8fe3ff", "◆"),
-        "secret": ("#c58fff", "★"),
-        "objet": ("#8fffb4", "●"),
-        "porte": ("#ff8f8f", "▮"),
-        "depart": ("#6fd3ff", "▶"),
-        "soin": ("#5fe07a", "✚"),
-        "munitions": ("#e0b45f", "▪"),
-    }
-    for sp in ALL:
-        for label, rx, ry, nature, *_alt in sp.reperes:
-            col, glyphe = STYLE[nature]
-            place = px(rx) + 10 + len(label) * 6.2
-            ancre = "end" if place > w - MARGE else "start"
-            dx = -9 if ancre == "end" else 9
-            parts.append(f'<text x="{px(rx):.1f}" y="{py(ry) + 4:.1f}" fill="{col}" font-size="11" '
-                         f'text-anchor="middle">{glyphe}</text>')
-            parts.append(f'<text x="{px(rx) + dx:.1f}" y="{py(ry) + 4:.1f}" fill="{col}" font-size="10" '
-                         f'text-anchor="{ancre}">{label}</text>')
-
+    for _label, rx, ry, col, glyphe in reperes:
+        parts.append(f'<text x="{px(rx):.1f}" y="{py(ry) + 4:.1f}" fill="{col}" font-size="11" '
+                     f'text-anchor="middle">{glyphe}</text>')
+    for label, rx, ry, col, _glyphe in reperes:
+        largeur = len(label) * 6.2
+        prefere = "end" if px(rx) + 10 + largeur > w - MARGE else "start"
+        autre = "start" if prefere == "end" else "end"
+        # Le symbole reste sur son point ; l'étiquette cherche une place libre —
+        # ni titre, ni symbole, ni autre étiquette — ligne par ligne, d'un côté
+        # puis de l'autre du symbole. Faute de place libre, celle qui recouvre le
+        # moins de texte.
+        candidats = []
+        for decalage in (0, 12, -12, 24, -24, 36, -36, 48, -48):
+            for ancre in (prefere, autre):
+                gauche = px(rx) - 9 - largeur if ancre == "end" else px(rx) + 9
+                if gauche < 0 or gauche + largeur > w:
+                    continue
+                y = py(ry) + 4 + decalage
+                b = (gauche, y - 9, gauche + largeur, y + 2)
+                recouvert = sum(max(0.0, min(b[2], o[2]) - max(b[0], o[0])) * max(0.0, min(b[3], o[3]) - max(b[1], o[1]))
+                                for o in occupe)
+                candidats.append((recouvert, len(candidats), ancre, decalage))
+        _r, _i, ancre, decalage = min(candidats) if candidats else (0, 0, prefere, 0)
+        gauche = px(rx) - 9 - largeur if ancre == "end" else px(rx) + 9
+        y = py(ry) + 4 + decalage
+        occupe.append((gauche, y - 9, gauche + largeur, y + 2))
+        dx = -9 if ancre == "end" else 9
+        parts.append(f'<text x="{px(rx) + dx:.1f}" y="{y:.1f}" fill="{col}" font-size="10" '
+                     f'text-anchor="{ancre}">{label}</text>')
     # Échelle.
     parts.append(f'<g stroke="#9fb0c0" stroke-width="2">'
                  f'<line x1="{MARGE:.0f}" y1="{h - 24:.0f}" x2="{MARGE + 20 * PX_PAR_M:.0f}" y2="{h - 24:.0f}"/>'
                  f'</g>')
     parts.append(f'<text x="{MARGE:.0f}" y="{h - 30:.0f}" fill="#9fb0c0" font-size="11">20 m</text>')
+    if annexes:
+        parts.append(f'<text x="{MARGE:.0f}" y="{h - 8:.0f}" fill="#9fb0c0" font-size="10">'
+                     f'{" · ".join(annexes)}</text>')
     parts.append(f'<text x="{w - MARGE:.0f}" y="{h - 30:.0f}" fill="#9fb0c0" font-size="12" '
                  f'text-anchor="end">nord ↑ · grille 10 m · repère Blender</text>')
     parts.append("</svg>")

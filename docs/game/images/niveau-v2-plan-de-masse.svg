@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 624 936" width="624" height="936" font-family="ui-monospace, monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 724 936" width="724" height="936" font-family="ui-monospace, monospace">
 <style>text{paint-order:stroke;stroke:#14171c;stroke-width:3px;stroke-linejoin:round}</style>
-<rect width="624" height="936" fill="#14171c"/>
+<rect width="724" height="936" fill="#14171c"/>
 <g stroke="#222831" stroke-width="1">
 <line x1="64.0" y1="880.0" x2="64.0" y2="56.0"/>
 <line x1="104.0" y1="880.0" x2="104.0" y2="56.0"/>
@@ -46,6 +46,7 @@
 <rect x="344.0" y="256.0" width="32.0" height="48.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="408.0" y="192.0" width="32.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="264.0" y="160.0" width="176.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
+<rect x="272.0" y="120.0" width="24.0" height="40.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="120.0" y="160.0" width="144.0" height="32.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="88.0" y="160.0" width="32.0" height="224.0" fill="#2a313b" stroke="#3d4855" stroke-width="1"/>
 <rect x="168.0" y="736.0" width="192.0" height="144.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
@@ -63,8 +64,8 @@
 <circle cx="240.0" cy="668.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
 <rect x="261.0" y="709.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
 <rect x="400.0" y="640.0" width="88.0" height="80.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
-<text x="400.0" y="622.0" fill="#e8edf2" font-size="13" font-weight="700">3. Cafétéria</text>
-<text x="400.0" y="636.0" fill="#9fb0c0" font-size="10">22 × 20 m · h 4.0 · 0:30</text>
+<text x="400.0" y="736.0" fill="#e8edf2" font-size="13" font-weight="700">3. Cafétéria</text>
+<text x="400.0" y="750.0" fill="#9fb0c0" font-size="10">22 × 20 m · h 4.0 · 0:30</text>
 <circle cx="480.0" cy="700.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <circle cx="472.0" cy="656.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <rect x="401.0" y="689.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
@@ -125,52 +126,105 @@
 <circle cx="496.0" cy="248.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <circle cx="544.0" cy="264.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
 <rect x="381.0" y="253.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
-<rect x="184.0" y="56.0" width="112.0" height="104.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
-<text x="184.0" y="38.0" fill="#e8edf2" font-size="13" font-weight="700">10. Bureaux direction</text>
-<text x="184.0" y="52.0" fill="#9fb0c0" font-size="10">28 × 26 m · h 4.0 · 1:00</text>
-<circle cx="240.0" cy="88.0" r="4.5" fill="#e8552f" stroke="#14171c" stroke-width="1"/>
-<circle cx="200.0" cy="128.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<circle cx="272.0" cy="112.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<circle cx="272.0" cy="112.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
-<circle cx="216.0" cy="72.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
-<rect x="277.0" y="149.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="144.0" y="56.0" width="152.0" height="64.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="144.0" y="38.0" fill="#e8edf2" font-size="13" font-weight="700">10. Étage des bureaux</text>
+<text x="144.0" y="52.0" fill="#9fb0c0" font-size="10">38 × 16 m · h 3.0 · z +4 · 0:45</text>
+<circle cx="200.0" cy="76.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="272.0" cy="76.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="272.0" cy="76.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<rect x="281.0" y="113.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="88.0" y="56.0" width="56.0" height="80.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<g transform="translate(116.0,96.0) rotate(-90)"><text x="0" y="-4" fill="#e8edf2" font-size="13" font-weight="700" text-anchor="middle">11. Bureau du Directeur</text><text x="0" y="12" fill="#9fb0c0" font-size="10" text-anchor="middle">14 × 20 m · h 3.5 · z +4 · 1:00</text></g>
+<circle cx="112.0" cy="84.0" r="4.5" fill="#e8552f" stroke="#14171c" stroke-width="1"/>
+<circle cx="112.0" cy="84.0" r="7.5" fill="none" stroke="#e8552f" stroke-width="1" stroke-dasharray="2 2"/>
+<circle cx="132.0" cy="130.0" r="3" fill="#e8a33d" stroke="#14171c" stroke-width="1"/>
+<circle cx="132.0" cy="130.0" r="6" fill="none" stroke="#e8a33d" stroke-width="1" stroke-dasharray="2 2"/>
+<rect x="137.0" y="108.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="488.0" y="656.0" width="32.0" height="40.0" fill="#5f8b6a" fill-opacity="0.30" stroke="#5f8b6a" stroke-width="2"/>
+<text x="504.0" y="680.0" fill="#e8edf2" font-size="11" font-weight="700" text-anchor="middle">12</text>
+<rect x="489.0" y="673.0" width="6" height="6" fill="none" stroke="#6fd3ff" stroke-width="1.5"/>
+<rect x="120.0" y="680.0" width="24.0" height="32.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
+<text x="111.0" y="700.0" fill="#e8edf2" font-size="11" font-weight="700" text-anchor="middle">13</text>
+<rect x="404.0" y="624.0" width="24.0" height="16.0" fill="#4a6076" fill-opacity="0.30" stroke="#4a6076" stroke-width="2"/>
+<text x="395.0" y="636.0" fill="#e8edf2" font-size="11" font-weight="700" text-anchor="middle">14</text>
 <text x="264.0" y="868.0" fill="#6fd3ff" font-size="11" text-anchor="middle">▶</text>
-<text x="273.0" y="868.0" fill="#6fd3ff" font-size="10" text-anchor="start">départ</text>
 <text x="232.0" y="836.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="241.0" y="836.0" fill="#8fffb4" font-size="10" text-anchor="start">pied-de-biche</text>
 <text x="160.0" y="700.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="169.0" y="700.0" fill="#8fffb4" font-size="10" text-anchor="start">machine à pinces</text>
-<text x="192.0" y="696.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="201.0" y="696.0" fill="#8fffb4" font-size="10" text-anchor="start">photomaton</text>
-<text x="152.0" y="712.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
-<text x="161.0" y="712.0" fill="#c58fff" font-size="10" text-anchor="start">secret 1 — arrière-boutique</text>
-<text x="472.0" y="680.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="463.0" y="680.0" fill="#8fffb4" font-size="10" text-anchor="end">toilettes +1 PV</text>
-<text x="412.0" y="652.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
-<text x="421.0" y="652.0" fill="#c58fff" font-size="10" text-anchor="start">secret 3 — aération</text>
+<text x="148.0" y="698.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="472.0" y="660.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
 <text x="272.0" y="604.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="281.0" y="604.0" fill="#8fffb4" font-size="10" text-anchor="start">fusil à pompe</text>
+<text x="192.0" y="628.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="240.0" y="560.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
 <text x="264.0" y="452.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="273.0" y="452.0" fill="#8fffb4" font-size="10" text-anchor="start">micro d'annonces</text>
 <text x="72.0" y="476.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
-<text x="81.0" y="476.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Argent</text>
-<text x="200.0" y="524.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
-<text x="209.0" y="524.0" fill="#c58fff" font-size="10" text-anchor="start">secret 2 — toit des gondoles</text>
-<text x="432.0" y="420.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
-<text x="441.0" y="420.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Or</text>
+<text x="200.0" y="484.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="144.0" y="436.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="88.0" y="476.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="74.0" y="412.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="74.0" y="405.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="74.0" y="419.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="436.0" y="423.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
+<text x="320.0" y="516.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="424.0" y="476.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
 <text x="384.0" y="524.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
-<text x="393.0" y="524.0" fill="#8fffb4" font-size="10" text-anchor="start">mur d'écrans</text>
-<text x="240.0" y="92.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
-<text x="249.0" y="92.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Platine (Directeur)</text>
-<text x="240.0" y="64.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
-<text x="249.0" y="64.0" fill="#ff8f8f" font-size="10" text-anchor="start">SORTIE</text>
+<text x="240.0" y="324.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="240.0" y="276.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="312.0" y="284.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="424.0" y="308.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="520.0" y="284.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="280.0" y="76.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="156.0" y="116.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="112.0" y="88.0" fill="#8fe3ff" font-size="11" text-anchor="middle">◆</text>
+<text x="116.0" y="60.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="506.0" y="661.0" fill="#8fffb4" font-size="11" text-anchor="middle">●</text>
+<text x="132.0" y="700.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="125.0" y="709.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
+<text x="125.0" y="690.0" fill="#e0b45f" font-size="11" text-anchor="middle">▪</text>
+<text x="418.0" y="636.0" fill="#c58fff" font-size="11" text-anchor="middle">★</text>
+<text x="424.0" y="640.0" fill="#5fe07a" font-size="11" text-anchor="middle">✚</text>
 <text x="264.0" y="348.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="284.0" y="164.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="94.0" y="388.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
+<text x="273.0" y="868.0" fill="#6fd3ff" font-size="10" text-anchor="start">départ</text>
+<text x="241.0" y="836.0" fill="#8fffb4" font-size="10" text-anchor="start">pied-de-biche</text>
+<text x="169.0" y="700.0" fill="#8fffb4" font-size="10" text-anchor="start">machine à pinces</text>
+<text x="157.0" y="722.0" fill="#8fffb4" font-size="10" text-anchor="start">photomaton</text>
+<text x="463.0" y="660.0" fill="#5fe07a" font-size="10" text-anchor="end">trousse de soin +50</text>
+<text x="281.0" y="604.0" fill="#8fffb4" font-size="10" text-anchor="start">pistolet</text>
+<text x="183.0" y="628.0" fill="#e0b45f" font-size="10" text-anchor="end">boîte de munitions +24</text>
+<text x="249.0" y="560.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="273.0" y="452.0" fill="#8fffb4" font-size="10" text-anchor="start">micro d'annonces</text>
+<text x="81.0" y="488.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Argent</text>
+<text x="209.0" y="484.0" fill="#8fffb4" font-size="10" text-anchor="start">fusil à pompe</text>
+<text x="153.0" y="436.0" fill="#e0b45f" font-size="10" text-anchor="start">boîte de munitions +24</text>
+<text x="97.0" y="464.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="83.0" y="364.0" fill="#c58fff" font-size="10" text-anchor="start">secret 2 — campement sur les gondoles</text>
+<text x="83.0" y="453.0" fill="#e0b45f" font-size="10" text-anchor="start">boîte de munitions +36</text>
+<text x="83.0" y="383.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="445.0" y="423.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Or</text>
+<text x="311.0" y="516.0" fill="#e0b45f" font-size="10" text-anchor="end">boîte de munitions +24</text>
+<text x="433.0" y="476.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="393.0" y="524.0" fill="#8fffb4" font-size="10" text-anchor="start">mur d'écrans</text>
+<text x="231.0" y="324.0" fill="#e0b45f" font-size="10" text-anchor="end">boîte de munitions +24</text>
+<text x="231.0" y="276.0" fill="#5fe07a" font-size="10" text-anchor="end">trousse de soin +25</text>
+<text x="321.0" y="284.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="433.0" y="308.0" fill="#e0b45f" font-size="10" text-anchor="start">boîte de munitions +24</text>
+<text x="529.0" y="284.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +25</text>
+<text x="289.0" y="76.0" fill="#e0b45f" font-size="10" text-anchor="start">boîte de munitions +36</text>
+<text x="147.0" y="128.0" fill="#5fe07a" font-size="10" text-anchor="end">trousse de soin +50</text>
+<text x="121.0" y="88.0" fill="#8fe3ff" font-size="10" text-anchor="start">carte Platine (Directeur)</text>
+<text x="107.0" y="60.0" fill="#ff8f8f" font-size="10" text-anchor="end">SORTIE</text>
+<text x="515.0" y="661.0" fill="#8fffb4" font-size="10" text-anchor="start">toilettes +1 PV</text>
+<text x="141.0" y="736.0" fill="#c58fff" font-size="10" text-anchor="start">secret 1 — labo photo</text>
+<text x="134.0" y="661.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +50</text>
+<text x="134.0" y="642.0" fill="#e0b45f" font-size="10" text-anchor="start">boîte de munitions +36</text>
+<text x="409.0" y="648.0" fill="#c58fff" font-size="10" text-anchor="end">secret 3 — aération</text>
+<text x="433.0" y="640.0" fill="#5fe07a" font-size="10" text-anchor="start">trousse de soin +50</text>
 <text x="273.0" y="348.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Argent</text>
-<text x="320.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
-<text x="329.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Or</text>
-<text x="184.0" y="180.0" fill="#ff8f8f" font-size="11" text-anchor="middle">▮</text>
-<text x="193.0" y="180.0" fill="#ff8f8f" font-size="10" text-anchor="start">sens unique ↓</text>
+<text x="293.0" y="164.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte Or</text>
+<text x="103.0" y="352.0" fill="#ff8f8f" font-size="10" text-anchor="start">porte coupe-feu</text>
 <g stroke="#9fb0c0" stroke-width="2"><line x1="56" y1="912" x2="136" y2="912"/></g>
 <text x="56" y="906" fill="#9fb0c0" font-size="11">20 m</text>
-<text x="568" y="906" fill="#9fb0c0" font-size="12" text-anchor="end">nord ↑ · grille 10 m · repère Blender</text>
+<text x="56" y="928" fill="#9fb0c0" font-size="10">12. Toilettes (8 × 10 m) · 13. Labo du photomaton (secret 1) (6 × 8 m) · 14. Local VMC (secret 3) (6 × 4 m)</text>
+<text x="668" y="906" fill="#9fb0c0" font-size="12" text-anchor="end">nord ↑ · grille 10 m · repère Blender</text>
 </svg>

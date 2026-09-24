@@ -29,7 +29,7 @@ for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans", "prd_surgeles"):
 # vantail, plus deux échantillons — `metal` pour la quincaillerie, `chant` pour
 # les tranches. Voir `_uv_porte`.
 PORTES_DESIGN = {}
-for _portes in ("portes_verre", "portes"):
+for _portes in ("portes_verre", "portes", "portes_2"):
     for _nom, _meta in json.load(open(os.path.join(TEX_DIR, _portes + ".json")))["portes"].items():
         PORTES_DESIGN[_nom] = dict(_meta, atlas=_portes)
 # Textures dont l'ALPHA est lu : le verre d'un vantail tient dans sa texture,

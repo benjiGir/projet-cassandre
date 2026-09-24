@@ -253,6 +253,33 @@ public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (génér�
 > annonce une contrainte ne l'applique pas**, et celui-là a traversé tout le
 > retrofit Effect du jalon M2 sans que personne le vérifie.
 >
+> **Quatrième passe en direct dans Blender (2026-09-23/24), EN ATTENTE DU
+> VERDICT DE PLAYTEST.** Trois retours, trois corrections à la source :
+> - **« Des trous entre les jonctions de murs »** : 18 angles vides de 25 cm,
+>   partout où une ouverture court jusqu'au bout d'une façade nord/sud (sas,
+>   couloirs, escalier) — `murs_espace` rognait les murs est/ouest même quand
+>   rien ne tenait l'angle. Trouvés au lancer de rayons (41 grappes → 0).
+> - **« Des textures qui se chevauchent »** : 82 m² de faces coplanaires
+>   VISIBLES, presque toutes dans les meubles générés — plinthe, chant,
+>   corniche, nez de marche coupés aux cotes exactes du corps qu'ils habillent
+>   (estrade du micro : 16 m² à elle seule). Règle : une finition dépasse ou
+>   rentre d'1 cm, jamais à fleur. Reste 0,14 m², négligeable. Le tampon de
+>   profondeur est en 24 bits (0,1/130 m) : 1 cm d'écart ne se bat nulle part.
+> - **Une vraie salle pour les toilettes** (12 sur le plan de masse, à l'est de
+>   la cafétéria) : porte « WC » à la main (atlas `portes_2`, `validate_level`
+>   plafonne les textures à 128×128), trois cabines, lavabos et miroirs Kenney,
+>   urinoirs ; le +1 PV est la plaque de chasse d'eau. Plan de masse et SVG à
+>   jour (la carte n'avait pas été régénérée depuis N8).
+> **Piège de budget payé** : le décor fusionne par cellule de 48 m EN 3D, le
+> centre de l'objet faisant foi — un sol n'est jamais dans la tranche d'un
+> mur. Seule dans sa cellule, la salle coûtait 4 lots (sol, plafond, murs,
+> porte) ; ramenée à 2 par un sol d'un seul tenant avec la cafétéria
+> (`SOL_COMMUN`) et un plafond monté par `bo.boite` (attribut `Col`, donc
+> fusionné avec le plâtre voisin). Pire vue mesurée : **198/200** (parking
+> extérieur vers le nord-est). Mesuré : `validate_level.py --strict` 0 erreur
+> et 7 warnings connus, audit à zéro, export vérifié. **Non vérifié** : jouer —
+> la porte WC à la vraie touche E, le +1 PV.
+>
 > **Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 > DE PLAYTEST.** Retour après validation de la passe précédente : « des vraies
 > portes qui bougent, des vraies vitres, et il est où mon rayon surgelés ? ».

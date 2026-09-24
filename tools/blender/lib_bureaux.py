@@ -75,6 +75,10 @@ MEUBLES = {
     "laptop": (0.26, False),
     "stoolBar": (0.78, True),
     "rugRectangle": (0.02, False),
+    # Toilettes de la cafétéria.
+    "toilet": (0.78, True),
+    "bathroomSink": (0.88, True),
+    "bathroomMirror": (0.70, False),
 }
 
 
@@ -110,7 +114,9 @@ def comptoir_self(longueur: float = 12.0) -> str:
 
     H.box(f"{name}_socle", (0, 0.20, 0, lo, pr, ht - 0.10), "metal_bac_acier", coll, subdiv=0.8)
     H.box(f"{name}_plateau", (0, 0.18, ht - 0.10, lo, pr, ht), "metal_bac_acier", coll)
-    H.box(f"{name}_plinthe", (0, 0.18, 0, lo, pr, 0.14),
+    # Bouts et dos rentrés d'un centimètre dans le socle : à fleur, ils se
+    # battaient avec ses faces.
+    H.box(f"{name}_plinthe", (0.01, 0.18, 0, lo - 0.01, pr - 0.01, 0.14),
           "trim_hypermarche", coll, uv="trim:plinthe")
     # Glissière à plateaux, en tube : le détail qui dit « self » et pas « bar ».
     H.boxes(f"{name}_glissiere", [

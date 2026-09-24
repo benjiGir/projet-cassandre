@@ -272,14 +272,25 @@ def murs_espace(space, ouvertures, materiaux, coll, col_coll) -> int:
     for a, b in _segments_restants(x0, x1, trous["N"]):
         boite(f"mur_{space.id}_n{poses}", (a, y1 - t, z), (b - a, t, h), "mur", materiaux, coll, col_coll)
         poses += 1
+
     # Façades est/ouest rognées de l'épaisseur des deux autres : deux boîtes
     # qui se recouvrent donneraient des faces coïncidentes, donc un bake noir.
-    for a, b in _segments_restants(y0 + t, y1 - t, trous["O"]):
-        boite(f"mur_{space.id}_o{poses}", (x0, a, z), (t, b - a, h), "mur", materiaux, coll, col_coll)
-        poses += 1
-    for a, b in _segments_restants(y0 + t, y1 - t, trous["E"]):
-        boite(f"mur_{space.id}_e{poses}", (x1 - t, a, z), (t, b - a, h), "mur", materiaux, coll, col_coll)
-        poses += 1
+    # Mais seulement là où la façade nord ou sud tient l'angle : une ouverture
+    # qui court jusqu'au bout de la sienne (un couloir ouvert de bout en bout)
+    # ne pose rien dans l'angle, et le rognage y laissait un carré vide de la
+    # hauteur du mur, ouvert sur le vide — une fente de 25 cm à chaque angle de
+    # sas, de couloir et d'escalier (18 angles vides, trouvés au lancer de
+    # rayons le 2026-09-23). Le mur descend alors jusqu'à l'angle.
+    def angle_tenu(face: str, x_angle: float) -> bool:
+        return not any(a < x_angle + t - 1e-6 and b > x_angle - t + 1e-6 for a, b in trous[face])
+
+    for face, x_mur, x_angle in (("O", x0, x0), ("E", x1 - t, x1)):
+        debut = y0 + t if angle_tenu("S", x_angle) else y0
+        fin = y1 - t if angle_tenu("N", x_angle) else y1
+        for a, b in _segments_restants(debut, fin, trous[face]):
+            boite(f"mur_{space.id}_{face.lower()}{poses}", (x_mur, a, z), (t, b - a, h), "mur",
+                  materiaux, coll, col_coll)
+            poses += 1
     poses += _parapets(space, ouvertures, materiaux, coll, col_coll)
     return poses
 
