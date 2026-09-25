@@ -22,7 +22,7 @@ import { directorConfig } from "../entities/directorConfig";
 import { useGameStore } from "../state";
 import {
   grantKillViews,
-  handlePlayerHit,
+  presentPlayerDamage,
   showHudMessage,
   triggerHeroLine,
   VIEWS_DIRECTOR_MULTIPLIER,
@@ -118,6 +118,7 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 // see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): void {
   const session = engine.session;
+  let playerWasHit = false;
   runGameplaySync(
     Effect.gen(function* () {
       yield* Effect.sync(() => {
@@ -283,8 +284,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           }
         }
         for (const event of session.suitManager.playerHitEvents) {
-          session.playerHp = Math.max(0, session.playerHp - event.amount);
-          useGameStore.getState().setPlayerHp(session.playerHp);
+          playerWasHit = true;
           // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
           // modification de `render/fx.ts` : particules au point d'impact sur
           // le joueur, léger screenshake dédié (`suitConfig`, pas
@@ -295,8 +295,6 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           // `weapons.hitEvents` plus haut).
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
-          // PV bas / mort (Phase 6) — voir la doc de `handlePlayerHit`.
-          handlePlayerHit(engine, session);
         }
         session.suitManager.clearFrameEvents();
       });
@@ -344,14 +342,13 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           }
         }
         for (const event of session.directorManager.playerHitEvents) {
-          session.playerHp = Math.max(0, session.playerHp - event.amount);
-          useGameStore.getState().setPlayerHp(session.playerHp);
+          playerWasHit = true;
           // PAS de decal ici, même raison que le bloc équivalent du Costard
           // juste au-dessus (le joueur bouge en permanence).
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
-          handlePlayerHit(engine, session);
         }
+        if (playerWasHit) presentPlayerDamage(session);
         session.directorManager.clearFrameEvents();
       });
 

@@ -146,6 +146,22 @@ describe("chargement d'un prop_*", () => {
 });
 
 describe("PropSystem — tir, poussée, destruction", () => {
+  it("ne relit pas le même impact lors d'un second pas fixe de la même frame", () => {
+    const damage = weaponConfig.shotgunDamagePerPellet;
+    const { handle } = build([
+      propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: damage * 2 }),
+    ]);
+    const props = new PropSystem(handle.props, handle.root);
+    const prop = handle.props[0]!;
+    const accumulatedFrameHits = [hitFrom(prop.collider.handle, new THREE.Vector3(0.5, 0.5, 0.5))];
+
+    props.update(accumulatedFrameHits);
+    props.update(accumulatedFrameHits);
+
+    expect(props.hitEvents).toHaveLength(1);
+    expect(props.aliveCount).toBe(1);
+  });
+
   it("un impact pousse réellement le corps, dans le sens du tir", () => {
     const { handle, physics } = build([
       propMesh("prop_caddie", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { masse: 10 }),

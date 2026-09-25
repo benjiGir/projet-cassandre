@@ -22,6 +22,7 @@ import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
 import { bootGameSession, replay, resumeGame, returnToMenu } from "./game/session/lifecycle";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
+import { updateDisplayInput } from "./game/loop/updateDisplayInput";
 import { interpolateVisuals } from "./game/loop/interpolateVisuals";
 import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
@@ -171,6 +172,7 @@ async function main() {
   );
 
   startLoop({
+    updateDisplayInput: () => updateDisplayInput(engine),
     snapshotPrevious: () => snapshotPrevious(engine),
     // Décide le mouvement AVANT le step.
     // see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks

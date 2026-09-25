@@ -25,6 +25,8 @@ export interface LoopStats {
 }
 
 export interface LoopCallbacks {
+  /** Capture la visée au taux d'affichage avant que le premier pas fixe ne la lise. */
+  updateDisplayInput: () => void;
   snapshotPrevious: () => void;
   /**
    * Décide du mouvement du pas courant. Appelé AVANT `stepPhysics` : un
@@ -62,6 +64,7 @@ export function startLoop(callbacks: LoopCallbacks) {
     accumulator += frameTime;
 
     input.beginFrame();
+    callbacks.updateDisplayInput();
 
     let steps = 0;
     let gameplayMs = 0;

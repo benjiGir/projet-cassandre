@@ -378,6 +378,7 @@ export class SanitaireSystem {
 
   private readonly _hitEvents: SanitaireHitEvent[] = [];
   private readonly _destroyedEvents: SanitaireDestroyedEvent[] = [];
+  private hitCursor = 0;
 
   constructor(sanitaires: readonly SanitaireInfo[]) {
     for (const info of sanitaires) {
@@ -428,20 +429,22 @@ export class SanitaireSystem {
     }
   }
 
-  /** Vide les files d'évènements. Une seule fois par frame d'affichage, comme `VitreSystem.clearFrameEvents`. */
+  /** Vide les files d'évènements et remet `hitCursor` à zéro. Une seule fois par frame d'affichage (ADR 0010). */
   clearFrameEvents(): void {
     this._hitEvents.length = 0;
     this._destroyedEvents.length = 0;
+    this.hitCursor = 0;
   }
 
   /**
    * Tirs du JOUEUR (hitscan, plombs, pied-de-biche) — même chemin de
    * `HitEvent` que `VitreSystem.update`, dégâts par la MÊME table
-   * (`damageForWeapon`). Non destructif : la file appartient à `WeaponSystem`.
+   * (`damageForWeapon`). Non destructif : la file appartient à `WeaponSystem` ;
+   * le curseur local empêche sa relecture lors d'un second pas fixe.
    */
   update(hitEvents: ReadonlyArray<HitEvent>): void {
-    if (this.states.length === 0) return;
-    for (const hit of hitEvents) {
+    for (let i = this.hitCursor; i < hitEvents.length; i++) {
+      const hit = hitEvents[i]!;
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
@@ -455,6 +458,7 @@ export class SanitaireSystem {
         this.destroy(state, hit.point, hit.normal.clone().negate());
       }
     }
+    this.hitCursor = hitEvents.length;
   }
 
   /**

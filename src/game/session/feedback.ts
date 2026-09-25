@@ -1,6 +1,6 @@
 import { duckMusicForHeroLine, restoreMusicVolume } from "../../core/music";
 import { useGameStore } from "../state";
-import { publishLevelRecap } from "./score";
+import { publishLevelRecap, recordHpLost } from "./score";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
@@ -74,29 +74,30 @@ export function grantKillViews(multiplier = 1): void {
 const LOW_HP_HERO_LINE_THRESHOLD = 0.3;
 const HERO_LINE_LOW_HP = "Ça va, ÇA VA. Continuez de me suivre, c'est important.";
 
-/**
- * Appelée juste après CHAQUE décrément de `session.playerHp` (Costard ET
- * Directeur, même contrat) : détecte, dans l'ordre, la réplique "PV bas"
- * puis la mort — un coup qui amène `playerHp` à 0 pile sous le seuil ne
- * déclenche PAS la réplique en plus de l'écran de mort, la mort prime.
- * `session.deathHandled` reste nécessaire malgré la garde de
- * `updateGameplay` : voir pourquoi.
- * see: docs/systems/session.md#feedback-joueur
- */
-export function handlePlayerHit(engine: GameEngine, session: GameSession): void {
-  const maxHp = useGameStore.getState().debug.playerMaxHp;
-  if (!session.lowHpLineTriggered && session.playerHp > 0 && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
-    session.lowHpLineTriggered = true;
-    triggerHeroLine(session, HERO_LINE_LOW_HP);
-  }
+/** Résout les PV et la mort dans le pas fixe. Aucun effet visuel ou timer mural. */
+export function applyPlayerDamage(engine: GameEngine, session: GameSession, amount: number): void {
+  const hpBefore = session.playerHp;
+  session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
+  recordHpLost(session.stats, hpBefore - session.playerHp);
+
   if (!session.deathHandled && session.playerHp <= 0) {
     session.deathHandled = true;
-    // Récap PARTIEL (sans bonus de chrono — la partie ne s'est pas terminée
-    // par la sortie) — voir `game/session/score.ts::publishLevelRecap`.
     publishLevelRecap(session, false);
     engine.flowActor.send({ type: "DIED" });
-    // Libère le pointeur : l'écran de mort a besoin du curseur pour ses
-    // boutons "Rejouer"/"Retour au menu principal" (voir `ui/screens/death/DeathScreen/DeathScreen.tsx`).
+  }
+}
+
+/** Publie les PV et les retours perceptifs, au taux d'affichage. */
+export function presentPlayerDamage(session: GameSession): void {
+  useGameStore.getState().setPlayerHp(session.playerHp);
+  if (session.playerHp <= 0) {
     document.exitPointerLock();
+    return;
+  }
+
+  const maxHp = useGameStore.getState().debug.playerMaxHp;
+  if (!session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
+    session.lowHpLineTriggered = true;
+    triggerHeroLine(session, HERO_LINE_LOW_HP);
   }
 }

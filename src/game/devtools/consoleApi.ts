@@ -38,7 +38,7 @@ import {
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/cards";
 import { triggerLevelComplete } from "../session/doors";
-import { handlePlayerHit } from "../session/feedback";
+import { applyPlayerDamage, presentPlayerDamage } from "../session/feedback";
 import { type SessionStats } from "../session/score";
 import { useGameStore, type LevelRecap } from "../state";
 import { setNotarget } from "./cheats";
@@ -282,7 +282,7 @@ export function exposeDebugApi(engine: GameEngine): void {
      * gameplay écoulé — voir `SessionStats`), `recap()` le dernier récap
      * PUBLIÉ dans le store (`null` tant qu'aucune partie ne s'est terminée).
      * `completeLevel()`/`killPlayer()` déclenchent le VRAI chemin de fin de
-     * partie (mêmes fonctions que `triggerLevelComplete`/`handlePlayerHit`
+     * partie (mêmes fonctions que `triggerLevelComplete`/`applyPlayerDamage`
      * en jeu, publication du récap comprise) sans avoir à finir le niveau ou
      * à se faire tuer — même précédent que `killSuit`/`killDirector`
      * au-dessus, le verrouillage du pointeur étant hors de portée de
@@ -292,9 +292,8 @@ export function exposeDebugApi(engine: GameEngine): void {
       recap: () => useGameStore.getState().recap,
       completeLevel: () => triggerLevelComplete(engine, engine.session),
       killPlayer: () => {
-        engine.session.playerHp = 0;
-        useGameStore.getState().setPlayerHp(0);
-        handlePlayerHit(engine, engine.session);
+        applyPlayerDamage(engine, engine.session, engine.session.playerHp);
+        presentPlayerDamage(engine.session);
       },
     },
     /** Pause (`docs/systems/session.md#pause`) : `pause()`/`resume()` envoient

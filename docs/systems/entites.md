@@ -329,6 +329,10 @@ avec son propre curseur (`hitCursor`) et sa propre map
 `colliderTo{Suit,Director}` — voir [ADR 0010](../decisions/0010-curseur-evenements-multi-pas-fixe.md)
 pour le piège que ce curseur explicite évite (une comparaison de longueur
 pour deviner une nouvelle frame perd silencieusement des impacts).
+Les systèmes cassables (`PropSystem`, `VitreSystem`, `SanitaireSystem`)
+appliquent exactement le même contrat : leur curseur indépendant garantit
+qu'un impact n'est traité qu'une fois quand une image regroupe plusieurs pas
+fixes.
 
 Différences délibérées de `DirectorManager` par rapport à `SuitManager` :
 

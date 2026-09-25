@@ -2,7 +2,7 @@
 title: Curseur explicite d'événements multi-pas-fixe, jamais inféré
 tags: [adr, entites]
 status: accepte
-updated: 2026-09-05
+updated: 2026-09-25
 ---
 
 # ADR 0010 — Curseur explicite d'événements multi-pas-fixe, jamais inféré
@@ -13,16 +13,15 @@ Accepté.
 
 ## Contexte
 
-`SuitManager`/`DirectorManager` traduisent les sorties de `Suit.update()`/
-`Director.update()` en files d'événements (`alertEvents`, `hurtEvents`,
-`deathEvents`...) accumulées **par frame d'affichage** — même contrat que
-`WeaponSystem.fireEvents`/`hitEvents` (`game/player/weapons.ts`) : lecture
-non destructive, plusieurs lecteurs, vidées une seule fois par frame via
-`clearFrameEvents()`.
+`SuitManager`/`DirectorManager` et les systèmes cassables (`PropSystem`,
+`VitreSystem`, `SanitaireSystem`) lisent la file partagée
+`WeaponSystem.hitEvents`. Ces événements s'accumulent **par frame
+d'affichage** : lecture non destructive par plusieurs consommateurs, puis
+vidage une seule fois par frame via `clearFrameEvents()`.
 
 `weapons.hitEvents` lui-même suit cette même règle et s'accumule sur
 **plusieurs pas fixes** d'une même frame d'affichage avant d'être vidé.
-Chaque manager (`SuitManager`, `DirectorManager`) doit donc lire
+Chaque consommateur doit donc lire
 `hitEvents` sans jamais retraiter un impact déjà vu — sans quoi un
 rattrapage à 2 pas fixes sur une même frame (30 Hz d'affichage) traiterait
 deux fois les impacts du premier pas.
@@ -39,18 +38,18 @@ n'est retraité, car `8 < 8` est faux.
 
 ## Décision
 
-`hitCursor` n'est **jamais** inféré. Chaque manager lit exclusivement
+`hitCursor` n'est **jamais** inféré. Chaque consommateur lit exclusivement
 `hitEvents[cursor, length)` à chaque appel et avance `cursor` à `length`
 (`consumeNewHits`). Le curseur ne retombe à 0 qu'à un seul endroit :
 `clearFrameEvents()`, appelé une fois par frame d'affichage, après tous les
 pas fixes de cette frame et avant le premier pas fixe de la suivante — la
 seule frontière sans ambiguïté de « nouvelle frame ».
 
-`SuitManager` et `DirectorManager` lisent le **même** tableau `hitEvents`
-(partagé avec `weapons.ts`), chacun avec son propre `hitCursor` et sa propre
-map `colliderTo*` — deux lecteurs indépendants du même flux, comme les
-lecteurs multiples de `fireEvents`/`hitEvents` déjà en place dans `main.ts`
-(rendu, fx, audio, store).
+`SuitManager`, `DirectorManager`, `PropSystem`, `VitreSystem` et
+`SanitaireSystem` lisent le **même** tableau, chacun avec son propre
+`hitCursor` et sa propre table de routage par collider. Ce sont cinq lecteurs
+indépendants du même flux ; l'ordre de leur appel ne change pas ce qu'ils
+observent.
 
 ## Alternatives écartées
 
@@ -61,19 +60,19 @@ lecteurs multiples de `fireEvents`/`hitEvents` déjà en place dans `main.ts`
 
 ## Conséquences
 
-- Toute nouvelle file d'événements par-frame dans ce module doit suivre le
+- Toute nouvelle file d'événements par-frame suivant ce contrat doit suivre le
   même schéma (curseur explicite, remise à zéro uniquement dans
   `clearFrameEvents`) — ne pas réintroduire une heuristique de longueur pour
   « faire plus simple ».
-- Deux managers lisant le même tableau source imposent de dupliquer un peu
+- Plusieurs systèmes lisant le même tableau source imposent de dupliquer un peu
   d'état (`hitCursor`, `colliderTo*`) plutôt que de le mutualiser — accepté
   comme coût raisonnable pour garder chaque manager indépendant.
 
 ## Comment on saurait qu'on a eu tort
 
-Si un troisième lecteur de `hitEvents` doit un jour être ajouté et que la
-duplication de `hitCursor`/`colliderTo*` par lecteur devient un vrai
-fardeau de maintenance, envisager de centraliser la distribution des
-impacts (par exemple un répartiteur unique qui pousse chaque `HitEvent` vers
-le bon manager au moment du tir, plutôt que chaque manager qui rejoue tout
-le tableau).
+Si la duplication de `hitCursor` et des tables `colliderTo*` devient un vrai
+fardeau de maintenance, la distribution pourra être centralisée : un
+répartiteur parcourrait chaque `HitEvent` une seule fois et transmettrait une
+tranche immuable propre au pas courant. Ce changement devra conserver les
+lecteurs multiples et la fenêtre d'observation par frame ; le nombre actuel
+de lecteurs ne justifie pas encore cette complexité.

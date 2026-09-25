@@ -218,6 +218,24 @@ describe("mergeSanitaireDecor — un lot par matériau pour tout le niveau", () 
 describe("SanitaireSystem — casse par PV (tir du joueur)", () => {
   const pv = weaponConfig.pistolDamage * 2;
 
+  it("ne relit pas le même impact lors d'un second pas fixe de la même frame", () => {
+    const { handle } = build([
+      sanitaireMesh("sanitaire_a", new THREE.Vector3(0.6, 0.8, 0.7), new THREE.Vector3(0, 0, 0), {
+        sorte: "cuvette",
+        pv,
+      }),
+    ]);
+    const sanitaires = new SanitaireSystem(handle.sanitaires);
+    const colliderHandle = handle.sanitaires[0]!.collider.handle;
+    const accumulatedFrameHits = [hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))];
+
+    sanitaires.update(accumulatedFrameHits);
+    sanitaires.update(accumulatedFrameHits);
+
+    expect(sanitaires.hitEvents).toHaveLength(1);
+    expect(sanitaires.intactCount).toBe(1);
+  });
+
   it("casse exactement au passage à zéro PV, écrase SA plage de sommets uniquement", () => {
     const { handle } = build([
       sanitaireMesh("sanitaire_a", new THREE.Vector3(0.6, 0.8, 0.7), new THREE.Vector3(0, 0, 0), {

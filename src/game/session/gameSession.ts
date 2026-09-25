@@ -118,7 +118,7 @@ export interface GameSession {
   playerHp: number;
   firstKillTriggered: boolean;
   lowHpLineTriggered: boolean;
-  /** Idempotence de `game/session/feedback.ts::handlePlayerHit` — voir sa doc. */
+  /** Idempotence de `game/session/feedback.ts::applyPlayerDamage` — voir sa doc. */
   deathHandled: boolean;
   /** Idempotence de `game/session/doors.ts::triggerLevelComplete` — voir sa doc. */
   levelCompleteHandled: boolean;

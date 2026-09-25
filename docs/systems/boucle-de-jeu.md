@@ -2,7 +2,7 @@
 title: Boucle de jeu
 tags: [systeme, core]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-25
 ---
 
 # Boucle de jeu
@@ -39,7 +39,8 @@ document.
 flowchart TD
     RAF["requestAnimationFrame(frame) — programmé en tout premier"] --> ACC["accumulator += temps écoulé, clampé à 0.25 s (MAX_FRAME)"]
     ACC --> BF["input.beginFrame()"]
-    BF --> COND{"accumulator >= 1/60 s ?"}
+    BF --> DISPLAY_INPUT["updateDisplayInput() : capture la souris et met à jour yaw/pitch au taux d'affichage"]
+    DISPLAY_INPUT --> COND{"accumulator >= 1/60 s ?"}
 
     COND -- "oui, 0 à N fois cette frame" --> BFS["input.beginFixedStep()"]
     BFS --> SNAP["snapshotPrevious() : capture la position n-1 de tout (joueur, armes, ennemis) pour l'interpolation à venir"]
@@ -49,8 +50,8 @@ flowchart TD
     DEC --> COND
 
     COND -- "non, plus de pas dû cette frame" --> ALPHA["alpha = accumulator / (1/60)"]
-    ALPHA --> INTERP["interpolateVisuals(alpha) : caméra (rotation lue en direct, jamais interpolée), sprites d'ennemis, viewmodel"]
-    INTERP --> FX["updateFx(tempsRéel, stats) : particules/son/shake, store zustand throttlé à 10 Hz — <b>React ne s'exécute jamais avant ce point</b>"]
+    ALPHA --> INTERP["interpolateVisuals(alpha) : applique la rotation déjà capturée, jamais interpolée ; sprites d'ennemis, viewmodel"]
+    INTERP --> FX["updateFx(tempsRéel, stats) : particules/son/shake, télémétrie zustand throttlée à 10 Hz"]
     FX --> RENDER["render()"]
     RENDER --> ENDF["input.endFrame() — DOIT rester le tout dernier appel"]
     ENDF -.->|prochaine frame| RAF
@@ -60,12 +61,12 @@ Points à retenir avant les sections détaillées ci-dessous :
 
 - **Le hitstop ne vit que dans `updateGameplay`.** `stepPhysics` reçoit
   toujours le pas fixe plein (`FIXED_DT`) — voir [Hitstop](#hitstop).
-- **React/zustand n'apparaissent nulle part dans le bloc de pas fixes.** Le
-  seul point de contact avec le store est à l'intérieur d'`updateFx`, throttlé
-  à 10 Hz maximum (invariant #2 de `CLAUDE.md`) — jamais un `setState` par pas
-  fixe. Le détail par champ (quelle donnée, à quelle cadence) est documenté
-  dans [Outils de debug — Champs de DebugState](debug.md#champs-de-debugstate),
-  pas dupliqué ici.
+- **React ne pilote jamais la boucle.** Les publications zustand liées à un
+  événement discret (ramassage, mort, récapitulatif) peuvent partir du pas
+  fixe, mais aucune donnée n'est poussée vers React à chaque pas. La
+  télémétrie continue reste regroupée dans `updateFx`, à 10 Hz maximum
+  (invariant #2). Le détail par champ est documenté dans
+  [Outils de debug — Champs de DebugState](debug.md#champs-de-debugstate).
 - **Le bloc de pas fixes peut tourner 0, 1 ou plusieurs fois par frame
   d'affichage** (`steps` peut dépasser 1 à basse fréquence d'affichage, ou
   valoir 0 à très haute fréquence) — c'est l'accumulateur qui décide, pas un
@@ -111,7 +112,7 @@ déterministe.
 ## Ordre de la frame d'affichage
 
 ```
-beginFrame → [beginFixedStep, snapshotPrevious, updateGameplay, stepPhysics]* → interpolateVisuals → updateFx → render → endFrame
+beginFrame → updateDisplayInput → [beginFixedStep, snapshotPrevious, updateGameplay, stepPhysics]* → interpolateVisuals → updateFx → render → endFrame
 ```
 
 `endFrame` clôt la frame d'affichage et doit rester le DERNIER appel. Le
@@ -120,14 +121,20 @@ visuellement au bloc des pas fixes) rend les fronts montants invisibles à
 `interpolateVisuals`/`updateFx` dès qu'un pas fixe a tourné dans la frame —
 presque toutes les frames à 60 Hz, toutes à 30 Hz.
 
+`updateDisplayInput` capture le delta de souris une seule fois, juste après
+`beginFrame`. Le premier pas fixe de la frame enregistre donc le `yaw`/`pitch`
+mis à jour : un clic accompagné d'un mouvement de souris tire dans la
+direction visible sur cette même image. En rejeu, la souris physique est
+ignorée et le pas fixe restaure la visée enregistrée.
+
 ## Ce que la boucle garantit à chaque frame
 
 - un seul `world.step()` par pas fixe, jamais dans le rendu ;
 - delta clampé à 0.25 s (`MAX_FRAME`, garde-fou anti spiral of death) ;
 - snapshot n−1 avant toute mutation, interpolation au rendu via `alpha` ;
-- la rotation caméra est lue dans `interpolateVisuals`, au taux d'affichage,
-  hors du pas fixe, et n'est jamais interpolée (invariant #3, latence de
-  visée) ;
+- la rotation caméra est capturée dans `updateDisplayInput`, au taux
+  d'affichage et avant les pas fixes, puis appliquée par
+  `interpolateVisuals` sans interpolation (invariant #3, latence de visée) ;
 - `updateFx` reçoit le temps réel de la frame, pas `FIXED_DT`.
 
 ## Fin de partie pendant le pas fixe

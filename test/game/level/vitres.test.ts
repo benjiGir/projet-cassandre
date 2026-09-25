@@ -166,6 +166,19 @@ describe("mergeVitreDecor — un lot par matériau pour tout le niveau", () => {
 describe("VitreSystem — casse par PV (tir du joueur)", () => {
   const pv = weaponConfig.pistolDamage * 2;
 
+  it("ne relit pas le même impact lors d'un second pas fixe de la même frame", () => {
+    const { handle } = build([vitreMesh("vitre_a", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv })]);
+    const vitres = new VitreSystem(handle.vitres);
+    const colliderHandle = handle.vitres[0]!.collider!.handle;
+    const accumulatedFrameHits = [hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))];
+
+    vitres.update(accumulatedFrameHits);
+    vitres.update(accumulatedFrameHits);
+
+    expect(vitres.hitEvents).toHaveLength(1);
+    expect(vitres.intactCount).toBe(1);
+  });
+
   it("casse exactement au passage à zéro PV, écrase SA plage de sommets uniquement", () => {
     const { handle } = build([
       vitreMesh("vitre_a", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv }),

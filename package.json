@@ -7,9 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "check": "pnpm typecheck && pnpm test && vite build",
+    "check:docs": "python3 tools/docs/check_docs_links.py docs --src src",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",

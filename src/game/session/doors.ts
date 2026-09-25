@@ -101,7 +101,7 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
 /**
  * Bascule vers l'écran de fin de niveau (`LEVEL_COMPLETED` envoyé à
  * l'acteur de flux) et libère le pointeur, même geste qu'à la mort — voir
- * `feedback.ts::handlePlayerHit` pour la même discussion d'idempotence
+ * `feedback.ts::applyPlayerDamage` pour la même discussion d'idempotence
  * appliquée à `session.levelCompleteHandled`.
  * see: docs/systems/session.md#portes-et-fin-de-niveau
  */

@@ -201,7 +201,7 @@ export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
  * Construit le récap depuis `session` et le pousse dans le store, UNE FOIS —
  * jamais par image (invariant #2). Seul point d'entrée impur du module :
  * `game/session/doors.ts::triggerLevelComplete` (fin de niveau,
- * `includeTimeBonus: true`) et `game/session/feedback.ts::handlePlayerHit`
+ * `includeTimeBonus: true`) et `game/session/feedback.ts::applyPlayerDamage`
  * (mort, `includeTimeBonus: false` — récap PARTIEL, sans bonus de chrono
  * pour une partie non terminée) sont les deux seuls appelants.
  */

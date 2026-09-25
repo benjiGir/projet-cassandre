@@ -1,8 +1,6 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { input } from "../../core/input";
-import { inputRecorder } from "../../core/inputRecorder";
 import { runGameplaySync } from "../../core/runtime";
 import { createEnemyAnimationInput, enemySpriteRow } from "../../render/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/moveConfig";
@@ -46,22 +44,10 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         }
       });
 
-      // EXCEPTION EXPLICITE, non négociable (invariant #3, voir
-      // PLAN_EFFECT_XSTATE.md §9) : la rotation caméra reste un
-      // Effect.sync FEUILLE, sans aucune indirection de service — un
-      // enveloppement plus profond (générateur imbriqué, service)
-      // ajouterait de la latence de visée. Rotation lue au taux
-      // d'affichage, jamais interpolée (latence de visée sinon).
+      // La rotation brute a déjà été capturée au taux d'affichage par
+      // `updateDisplayInput`, AVANT les pas fixes. Ici elle est seulement
+      // recopiée sur la caméra, sans interpolation (invariant #3).
       yield* Effect.sync(() => {
-        const { dx, dy } = input.consumeMouseDelta();
-        if (!inputRecorder.isPlaying()) {
-          engine.lookDelta.dx += dx;
-          engine.lookDelta.dy += dy;
-          engine.look.yaw -= dx * moveConfig.lookSensitivity;
-          engine.look.pitch -= dy * moveConfig.lookSensitivity;
-          const pitchLimit = (moveConfig.pitchLimitDeg * Math.PI) / 180;
-          engine.look.pitch = Math.max(-pitchLimit, Math.min(pitchLimit, engine.look.pitch));
-        }
         cameraEuler.set(engine.look.pitch, engine.look.yaw, 0);
         engine.camera.quaternion.setFromEuler(cameraEuler);
       });

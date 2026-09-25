@@ -8,7 +8,7 @@ import { runGameplaySync } from "../../core/runtime";
 import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
 import { grantCard } from "../session/cards";
-import { showHudMessage, triggerHeroLine } from "../session/feedback";
+import { applyPlayerDamage, showHudMessage, triggerHeroLine } from "../session/feedback";
 import { relieveAtSanitaire, trySanitaire } from "../session/sanitaires";
 import {
   advanceGameplayTime,
@@ -362,6 +362,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // longueur avant/après CET appel précis isole exactement ce qu'il
         // vient de produire, peu importe quand la file sera vidée.
         const suitDeathsBefore = session.suitManager.deathEvents.length;
+        const suitPlayerHitsBefore = session.suitManager.playerHitEvents.length;
         session.suitManager.update(
           gameplayDt,
           session.player.position,
@@ -372,8 +373,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.sanitaireSystem ?? undefined,
         );
         recordSuitKills(session.stats, session.suitManager.deathEvents.length - suitDeathsBefore);
+        for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
+          applyPlayerDamage(engine, session, session.suitManager.playerHitEvents[i]!.amount);
+        }
 
         const directorDeathsBefore = session.directorManager.deathEvents.length;
+        const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
         session.directorManager.update(
           gameplayDt,
           session.player.position,
@@ -384,6 +389,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.sanitaireSystem ?? undefined,
         );
         recordDirectorKills(session.stats, session.directorManager.deathEvents.length - directorDeathsBefore);
+        for (let i = directorPlayerHitsBefore; i < session.directorManager.playerHitEvents.length; i++) {
+          applyPlayerDamage(engine, session, session.directorManager.playerHitEvents[i]!.amount);
+        }
 
         // Mobilier physique : même file `hitEvents`, lue de la même façon (non
         // destructivement) que les deux managers ci-dessus. Un tir traverse un

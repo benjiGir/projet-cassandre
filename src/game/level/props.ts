@@ -183,6 +183,7 @@ export class PropSystem {
 
   private readonly _hitEvents: PropHitEvent[] = [];
   private readonly _destroyedEvents: PropDestroyedEvent[] = [];
+  private hitCursor = 0;
 
   constructor(props: readonly PropInfo[], root: THREE.Object3D) {
     root.updateWorldMatrix(true, false);
@@ -239,10 +240,12 @@ export class PropSystem {
    * Vide les files d'évènements. Appelée UNE SEULE FOIS par frame
    * d'affichage, après TOUS les lecteurs — même contrat que
    * `WeaponSystem.clearFrameEvents`/`SuitManager.clearFrameEvents`.
+   * C'est l'unique remise à zéro de `hitCursor` (ADR 0010).
    */
   clearFrameEvents(): void {
     this._hitEvents.length = 0;
     this._destroyedEvents.length = 0;
+    this.hitCursor = 0;
   }
 
   /**
@@ -254,11 +257,12 @@ export class PropSystem {
    * c'est exactement la place qu'occupe déjà `suitManager.update`.
    *
    * Lecture NON DESTRUCTIVE de `hitEvents` : la file appartient à
-   * `WeaponSystem`, qui la vide lui-même en fin de frame d'affichage.
+   * `WeaponSystem`, qui la vide lui-même en fin de frame d'affichage. Le
+   * curseur local empêche de relire un impact lors d'un second pas fixe.
    */
   update(hitEvents: ReadonlyArray<HitEvent>): void {
-    if (this.states.length === 0) return;
-    for (const hit of hitEvents) {
+    for (let i = this.hitCursor; i < hitEvents.length; i++) {
+      const hit = hitEvents[i]!;
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.destroyed) continue;
 
@@ -285,6 +289,7 @@ export class PropSystem {
       });
       if (fatal) this.destroy(state, hit.point, impulseScratch);
     }
+    this.hitCursor = hitEvents.length;
   }
 
   /**

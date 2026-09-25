@@ -21,7 +21,7 @@ export interface DeathScreenProps {
  * Écran de mort : le stream est coupé. `onReplay`/`onReturnToMenu` sont de
  * vrais resets en place, jamais un rechargement de page. Le récap est
  * PARTIEL (`game/session/score.ts::publishLevelRecap(session, false)`,
- * appelé par `handlePlayerHit`) : pas de bonus de rapidité puisque la sortie
+ * appelé par `applyPlayerDamage`) : pas de bonus de rapidité puisque la sortie
  * n'a jamais été franchie — `.partialNote` ci-dessous le dit en toutes
  * lettres, la ligne "Rapidité" n'existe simplement pas dans `recap.lines`
  * plutôt que de l'expliquer par son absence.

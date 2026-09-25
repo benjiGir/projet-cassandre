@@ -2,7 +2,7 @@
 title: Session de partie
 tags: [systeme, core]
 status: stable
-updated: 2026-09-24
+updated: 2026-09-25
 ---
 
 # Session de partie
@@ -31,7 +31,7 @@ flowchart TD
     Choice --> Persistent["buildGameEngine : construit PersistentEngine\n(scène, caméra, atlas, rendu cosmétique) — UNE SEULE FOIS"]
     Persistent --> Boot["bootGameSession : construit GameSession\n(monde Rapier, joueur, armes, ennemis, niveau)"]
     Boot --> Running["La partie tourne : pas fixe + rendu\n(startLoop, voir Boucle de jeu)"]
-    Running -->|PV à zéro| Died["handlePlayerHit déclenche DIED"]
+    Running -->|PV à zéro| Died["applyPlayerDamage déclenche DIED dans le pas fixe"]
     Running -->|door_e_exit franchie| Complete["triggerLevelComplete déclenche LEVEL_COMPLETED"]
     Died --> Screen{"Écran de mort ou\nde fin de niveau"}
     Complete --> Screen
@@ -430,20 +430,23 @@ volume musique, tous deux globaux) : il reste correct même si un reset
 (« Rejouer »/« Retour au menu ») survient pendant la fenêtre d'affichage
 d'une réplique.
 
-`handlePlayerHit(engine, session)` est appelée juste après chaque
-décrément de `session.playerHp` (Costard ET Directeur, même contrat) :
-détecte, dans l'ordre, la réplique « PV bas » (premier franchissement de la
-partie) puis la mort — un coup qui amène `playerHp` à 0 pile sous le seuil
-ne déclenche PAS la réplique en plus de l'écran de mort, la mort prime.
+`applyPlayerDamage(engine, session, amount)` est appelée dans
+`updateGameplay`, immédiatement après l'`update()` du manager qui vient de
+produire un `playerHitEvent`. Elle ne lit que la tranche nouvellement ajoutée
+pendant ce pas. Les PV, `stats.hpLost`, `deathHandled`, le récapitulatif et
+l'événement XState `DIED` sont donc résolus dans le pas fixe, avant la
+physique et indépendamment du nombre de pas regroupés dans l'image.
+
+`presentPlayerDamage(session)` reste au taux d'affichage dans `updateFx`.
+Cette fonction publie les PV au store, déclenche la réplique « PV bas » et
+libère le pointeur à la mort ; ce sont des effets de présentation, avec
+horloge murale ou DOM, et non des décisions de simulation. Un coup létal ne
+déclenche pas la réplique de seuil : la mort prime.
+
 L'idempotence (`session.deathHandled`) reste nécessaire malgré la garde de
-`updateGameplay` (`flowState !== "playing"` → return) : plusieurs
-`playerHitEvents` peuvent arriver dans le MÊME pas fixe (deux Costards qui
-touchent au même instant), et c'est `updateFx` — jamais gatée par le flux,
-elle continue de drainer les files après la mort — qui les traite un par un
-dans la même frame. Sans ce flag, un second appel enverrait un second
-`DIED` (no-op côté machine XState) et un second `exitPointerLock()`
-(idempotent côté DOM) : inoffensif, mais le flag documente l'intention
-plutôt que de compter sur ces deux idempotences accidentelles.
+`updateGameplay` (`flowState !== "playing"` → return) : plusieurs impacts
+peuvent arriver dans le MÊME pas fixe. Le premier passage à zéro envoie
+`DIED`; les suivants ne republient ni récapitulatif ni transition.
 
 ## Récapitulatif de fin de partie
 
@@ -481,7 +484,7 @@ délibérée :
 IMPUR (il écrit dans `useGameStore`) : appelé par
 `game/session/doors.ts::triggerLevelComplete` (fin de niveau,
 `includeTimeBonus: true`) et par
-`game/session/feedback.ts::handlePlayerHit` (mort, `includeTimeBonus:
+`game/session/feedback.ts::applyPlayerDamage` (mort, `includeTimeBonus:
 false` — récap PARTIEL, sans bonus de chrono pour une partie qui ne s'est
 pas terminée par la sortie). `LevelRecap`/`RecapLine` sont DÉFINIS dans
 `game/state.ts`, pas dans `score.ts` (même principe que `GameFlowState`,
