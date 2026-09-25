@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
 import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
 import { listSfx, playSfx, type SfxId } from "../../core/audio";
+import { waterAmbienceDebugState } from "../../core/waterAmbience";
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
 import {
   CROSSHAIR_VARIANTS,
@@ -23,6 +24,7 @@ import { type DoorInfo, type LevelStats, type SecretZone, type UseObject } from 
 import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
+import type { SanitaireSystem } from "../level/sanitaires";
 import { navGraphStats, type NavGraph } from "../level/pathfinding";
 import { type LightPoolStats } from "../../render/lightPool";
 import {
@@ -35,6 +37,10 @@ import {
 } from "../../render/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/cards";
+import { triggerLevelComplete } from "../session/doors";
+import { handlePlayerHit } from "../session/feedback";
+import { type SessionStats } from "../session/score";
+import { useGameStore, type LevelRecap } from "../state";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import { startPlayback } from "../session/recording";
@@ -105,6 +111,14 @@ export function exposeDebugApi(engine: GameEngine): void {
     spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
+    /** DEV : tue le premier Costard encore vivant (vrai `deathEvent`, compté
+     * par le récap de fin de partie) — `false` si aucun n'est vivant. Le seul
+     * moyen de tester le récap sans viser, le verrouillage du pointeur étant
+     * hors de portée de l'automatisation. */
+    killSuit: () => {
+      const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
+      return suit ? engine.session.suitManager.debugKill(suit) : false;
+    },
     get directors() {
       return engine.session.directorManager.directors;
     },
@@ -115,6 +129,11 @@ export function exposeDebugApi(engine: GameEngine): void {
     spawnDirector: (x, y, z) => spawnDirectorAt(engine, engine.session, x, y, z),
     directorCount: () => engine.session.directorManager.directors.length,
     directorAliveCount: () => engine.session.directorManager.directors.filter((d) => d.isAlive).length,
+    /** DEV : même rôle que `killSuit`, pour le Directeur (carte lâchée comprise). */
+    killDirector: () => {
+      const director = engine.session.directorManager.directors.find((d) => d.isAlive);
+      return director ? engine.session.directorManager.debugKill(director) : false;
+    },
     level: {
       load: (name) => loadGltfLevel(engine, engine.session, name),
       stats: () => engine.session.gltfLevelSession?.current?.stats ?? null,
@@ -149,6 +168,23 @@ export function exposeDebugApi(engine: GameEngine): void {
       liste: () => engine.session.vitreSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.vitreSystem?.destroyByName(nom) ?? false,
     },
+    /** Sanitaires du niveau courant (`game/level/sanitaires.ts::SanitaireSystem`,
+     * [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)) :
+     * `liste()` rend l'état de chaque sanitaire (sorte, PV, cassé), `casser(nom)`
+     * en détruit un sans tirer dessus (même précédent que `vitres`/`props`),
+     * `jets()` les jets d'eau actifs. `delai()`/`forcerDelai(secondes)` lisent
+     * ou forcent le délai de soulagement (220 s par défaut) — le seul moyen de
+     * juger le "Rien ne vient." et le plafond de PV sans attendre en jouant. */
+    sanitaires: {
+      liste: () => engine.session.sanitaireSystem?.describe() ?? [],
+      casser: (nom: string) => engine.session.sanitaireSystem?.destroyByName(nom) ?? false,
+      jets: () => engine.session.sanitaireSystem?.activeJets ?? [],
+      delai: () => engine.session.sanitaireReliefCooldown,
+      forcerDelai: (secondes = 0) => {
+        engine.session.sanitaireReliefCooldown = secondes;
+        return engine.session.sanitaireReliefCooldown;
+      },
+    },
     /** Effets sonores : `liste()` dit quel identifiant du jeu pointe sur quelle
      * recette du studio et si elle est bien dans le sprite, `joue(id)` déclenche
      * n'importe lequel sans avoir à provoquer la situation qui le produit. Le
@@ -157,6 +193,13 @@ export function exposeDebugApi(engine: GameEngine): void {
     sfx: {
       liste: () => listSfx(),
       joue: (id: SfxId, volume = 1) => playSfx(id, volume),
+      /** État de la boucle d'eau positionnelle (`core/waterAmbience.ts`,
+       * sanitaires cassés) : `charge` = fichier chargé, `joue` = `Howl`
+       * réellement en lecture, `volume`/`pan` = mélange courant — le seul
+       * moyen de la vérifier sans l'entendre (même limitation que `joue`
+       * ci-dessus, verrouillage du pointeur hors de portée de
+       * l'automatisation). */
+      eau: () => waterAmbienceDebugState(),
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
@@ -234,6 +277,32 @@ export function exposeDebugApi(engine: GameEngine): void {
       }
       return pool.stats;
     },
+    /** Récap de fin de partie (`game/session/score.ts`) : `stats()` rend les
+     * compteurs BRUTS de la partie en cours (kills, tirs, casse, temps de
+     * gameplay écoulé — voir `SessionStats`), `recap()` le dernier récap
+     * PUBLIÉ dans le store (`null` tant qu'aucune partie ne s'est terminée).
+     * `completeLevel()`/`killPlayer()` déclenchent le VRAI chemin de fin de
+     * partie (mêmes fonctions que `triggerLevelComplete`/`handlePlayerHit`
+     * en jeu, publication du récap comprise) sans avoir à finir le niveau ou
+     * à se faire tuer — même précédent que `killSuit`/`killDirector`
+     * au-dessus, le verrouillage du pointeur étant hors de portée de
+     * l'automatisation. */
+    recap: {
+      stats: () => engine.session.stats,
+      recap: () => useGameStore.getState().recap,
+      completeLevel: () => triggerLevelComplete(engine, engine.session),
+      killPlayer: () => {
+        engine.session.playerHp = 0;
+        useGameStore.getState().setPlayerHp(0);
+        handlePlayerHit(engine, engine.session);
+      },
+    },
+    /** Pause (`docs/systems/session.md#pause`) : `pause()`/`resume()` envoient
+     * directement PAUSE/RESUME à l'acteur de flux — le déclenchement réel
+     * (perte du verrouillage du pointeur) est hors de portée de
+     * l'automatisation navigateur, comme le reste du verrouillage. */
+    pause: () => engine.flowActor.send({ type: "PAUSE" }),
+    resume: () => engine.flowActor.send({ type: "RESUME" }),
   };
 }
 
@@ -346,6 +415,8 @@ declare global {
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */
       suitAliveCount: () => number;
+      /** DEV : tue le premier Costard vivant (vrai `deathEvent`, compté par le récap) — `false` si aucun n'est vivant. */
+      killSuit: () => boolean;
       /** Mêmes rôles que `suits`/`suitConfig`/`spawnSuit`, pour le Directeur (boss Zone E) — voir `director.ts`/`directorManager.ts`. Jalon M8 : `directors`/`directorManager` sont des accesseurs LIVE (getters). */
       directors: Director[];
       /** Référence directe au manager complet (badge, files d'événements) — même précédent que `weapons` ci-dessus, utile pour du débogage console. Getter LIVE (Jalon M8). */
@@ -354,6 +425,8 @@ declare global {
       spawnDirector: (x: number, y: number, z: number) => Director;
       directorCount: () => number;
       directorAliveCount: () => number;
+      /** DEV : même rôle que `killSuit`, pour le Directeur. */
+      killDirector: () => boolean;
       /** Pipeline de niveau glTF (Phase 4), capacité ADDITIVE dev-only — voir
        * la doc de tête de `session/spawning.ts::loadGltfLevel`. Opère sur la
        * SESSION COURANTE (Jalon M8). */
@@ -378,9 +451,18 @@ declare global {
         liste: () => ReturnType<VitreSystem["describe"]>;
         casser: (nom: string) => boolean;
       };
+      /** Sanitaires du niveau courant — voir `game/level/sanitaires.ts::SanitaireSystem`. */
+      sanitaires: {
+        liste: () => ReturnType<SanitaireSystem["describe"]>;
+        casser: (nom: string) => boolean;
+        jets: () => SanitaireSystem["activeJets"];
+        delai: () => number;
+        forcerDelai: (secondes?: number) => number;
+      };
       sfx: {
         liste: () => ReturnType<typeof listSfx>;
         joue: (id: SfxId, volume?: number) => void;
+        eau: () => ReturnType<typeof waterAmbienceDebugState>;
       };
       secrets: () => SecretZone[];
       heals: () => UseObject[];
@@ -408,6 +490,16 @@ declare global {
       filtrage: (mode?: FiltrageTexture) => { mode: FiltrageTexture; textures: number; anisotropieMax: number };
       resolution: (width?: number, height?: number) => { width: number; height: number };
       lightBudget: (n?: number | null) => LightBudgetReport | LightPoolStats;
+      /** Récap de fin de partie (`game/session/score.ts`) — voir sa doc d'implémentation pour le détail de chaque champ. */
+      recap: {
+        stats: () => SessionStats;
+        recap: () => LevelRecap | null;
+        completeLevel: () => void;
+        killPlayer: () => void;
+      };
+      /** Pause (`docs/systems/session.md#pause`) : envoie directement PAUSE/RESUME à l'acteur de flux. */
+      pause: () => void;
+      resume: () => void;
     };
   }
 }

@@ -50,7 +50,10 @@ export type SfxId =
   | "pistol_fire"
   | "ammo_pickup"
   | "prop_break_wood"
-  | "prop_break_glass";
+  | "prop_break_glass"
+  | "sanitaire_use"
+  | "sanitaire_break"
+  | "water_drink";
 
 interface SfxDef {
   /**
@@ -142,6 +145,12 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // pour le son.
   prop_break_wood: { sprite: "prop_break_wood", volume: 0.85 },
   prop_break_glass: { sprite: "impact_glass", volume: 0.9 },
+  // Sanitaires (`sanitaire_*`, toilettes du niveau v2) : la chasse d'eau à
+  // chaque usage, la faïence qui éclate et la gerbe d'eau à la casse, une
+  // gorgée à chaque appui sur E devant le jet.
+  sanitaire_use: { sprite: "toilet_flush", volume: 0.8 },
+  sanitaire_break: { sprite: "ceramic_break", volume: 0.9 },
+  water_drink: { sprite: "water_gulp", volume: 0.7 },
 };
 
 /** Son de tir par arme. */

@@ -46,3 +46,4 @@ un lien vers son successeur.
 | [0029](0029-armes-en-vue-subjective.md) | Armes en vue subjective : modèles 3D tenus par des bras CC0 | accepté |
 | [0030](0030-props-dynamiques.md) | Props dynamiques : un préfixe glTF et un groupe de collision à part | accepté |
 | [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres — `DoorSystem`/`VitreSystem`, collider actif seulement fermé | accepté |
+| [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables — `SanitaireSystem`, calqué sur `VitreSystem` | accepté |

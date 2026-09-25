@@ -6,6 +6,7 @@ import "./ui/theme/tokens.css";
 import { initAudio } from "./core/audio";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
+import { initWaterAmbience } from "./core/waterAmbience";
 import { startLoop } from "./core/loop";
 import { runGameplaySync } from "./core/runtime";
 import { initPhysics } from "./physics/world";
@@ -14,11 +15,11 @@ import { RenderService } from "./render/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
 import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
-import { applyRenderSettings, initGraphicsSettingsAtBoot } from "./game/graphicsSettings";
+import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
 import { useGameStore } from "./game/state";
 import { resolveBootChoice } from "./game/session/bootChoice";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
-import { bootGameSession, replay, returnToMenu } from "./game/session/lifecycle";
+import { bootGameSession, replay, resumeGame, returnToMenu } from "./game/session/lifecycle";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
 import { interpolateVisuals } from "./game/loop/interpolateVisuals";
@@ -47,8 +48,10 @@ async function main() {
   // déjà réglé ces deux-là ne doit pas les voir revenir à leur valeur
   // d'origine le temps d'un aller-retour en jeu. Le filtrage et la
   // résolution interne, eux, ont besoin de `scene`/`camera`/`renderer` —
-  // appliqués plus bas, juste après `buildGameEngine`.
-  const graphicsSettings = initGraphicsSettingsAtBoot();
+  // appliqués plus bas via `registerRenderTarget`, juste après
+  // `buildGameEngine` (qui relit `current` lui-même, pas de valeur à
+  // transporter jusque-là).
+  initGraphicsSettingsAtBoot();
 
   // Un seul acteur pour toute la durée de vie de l'onglet, créé AVANT le
   // choix du niveau ci-dessous — jamais recréé par `replay`/`returnToMenu`.
@@ -78,12 +81,34 @@ async function main() {
   await letBrowserPaint();
 
   input.attach(canvas);
+
+  // Pause automatique sur perte du verrouillage du pointeur PENDANT une
+  // partie — Échap le libère toujours au niveau du navigateur, mais ne
+  // livre pas nécessairement son évènement clavier à la page (les deux
+  // moteurs de rendu testés en diffèrent) : le changement de verrouillage
+  // est le signal robuste, celui que `PauseScreen`/l'acteur de flux
+  // écoutent réellement. Écouteur DOM ponctuel, hors du pas fixe ET de la
+  // boucle d'affichage (un changement de flux est un évènement DISCRET, pas
+  // un flux à 60 Hz — voir le skill `react-hud-bridge`) ; `flowActor` est
+  // fermé par référence, `engine` n'a pas besoin d'exister encore.
+  // see: docs/systems/session.md#pause
+  document.addEventListener("pointerlockchange", () => {
+    if (document.pointerLockElement === canvas) return; // verrouillage OBTENU, pas perdu
+    if (flowActor.getSnapshot().value !== "playing") return;
+    input.clearPendingEdges();
+    flowActor.send({ type: "PAUSE" });
+  });
+
   // Pools de SFX (tir, impact), placeholders synthétiques (invariant #9).
   // see: docs/systems/hud-audio.md#assets-sonores
   initAudio();
   // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
   // see: docs/systems/hud-audio.md#musique-et-nappe-dambiance
   initMusic();
+  // Boucle d'eau positionnelle des sanitaires cassés — module séparé lui
+  // aussi (mise à jour continue par frame, pas un pool de sons ponctuels).
+  // see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+  initWaterAmbience();
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).
@@ -111,11 +136,13 @@ async function main() {
 
   // Filtrage des textures réduites + résolution interne : les deux seuls
   // réglages graphiques qui ont besoin d'un moteur construit (voir la doc de
-  // tête de `game/graphicsSettings.ts`). Appelé AVANT `bootGameSession` : le
-  // filtrage posé ici devient le mode par défaut de `configureRetroTexture`
+  // tête de `game/graphicsSettings.ts`). Enregistré AVANT `bootGameSession` :
+  // le filtrage posé ici devient le mode par défaut de `configureRetroTexture`
   // pour CHAQUE texture chargée ensuite (premier niveau, `replay()`, hot
   // reload), sans qu'aucun de ces chemins n'ait besoin d'y penser.
-  applyRenderSettings(graphicsSettings, persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);
+  // `registerRenderTarget` applique aussi `graphicsSettings` immédiatement, et
+  // reste la cible de tout changement fait EN JEU depuis la pause.
+  registerRenderTarget(persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);
 
   const session = bootGameSession(persistentEngine, choice);
   const engine: GameEngine = { ...persistentEngine, session };
@@ -133,9 +160,15 @@ async function main() {
   finishLoading();
 
   // `<App/>` monté APRÈS la construction du monde : `onReplay`/
-  // `onReturnToMenu` ferment sur `engine`.
+  // `onReturnToMenu`/`onResume` ferment sur `engine`.
   // see: docs/systems/hud.md#composition-de-app
-  root.render(createElement(App, { onReplay: () => replay(engine), onReturnToMenu: () => returnToMenu(engine) }));
+  root.render(
+    createElement(App, {
+      onReplay: () => replay(engine),
+      onReturnToMenu: () => returnToMenu(engine),
+      onResume: () => resumeGame(engine),
+    }),
+  );
 
   startLoop({
     snapshotPrevious: () => snapshotPrevious(engine),

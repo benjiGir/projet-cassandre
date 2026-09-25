@@ -1,10 +1,18 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { playDoorMovementSfx, playEnemySfx, playImpactSfx, playPropBreakSfx, playWeaponFireSfx } from "../../core/audio";
+import {
+  playDoorMovementSfx,
+  playEnemySfx,
+  playImpactSfx,
+  playPropBreakSfx,
+  playSfx,
+  playWeaponFireSfx,
+} from "../../core/audio";
 import { input } from "../../core/input";
 import { inputRecorder } from "../../core/inputRecorder";
 import { toggleMusic } from "../../core/music";
+import { updateWaterAmbience } from "../../core/waterAmbience";
 import { runGameplaySync } from "../../core/runtime";
 import { type LoopStats } from "../../core/loop";
 import { FLESH_MATERIAL } from "../player/weapons";
@@ -22,6 +30,8 @@ import {
 import { startPlayback, startRecording } from "../session/recording";
 import { toggleNotarget } from "../devtools/cheats";
 import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
+import type { GameSession } from "../session/gameSession";
+import type { LevelHandle } from "../level/loader";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -51,9 +61,55 @@ const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
 };
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
+/**
+ * Handles de colliders JAMAIS éligibles à un decal d'impact : `prop_*`
+ * (poussables), `door_*` (animées), `vitre_*`/`sanitaire_*` (cassables) — un
+ * decal posé dessus resterait accroché à un point du MONDE alors que la
+ * surface a bougé ou disparu depuis (le second retour de playtest, « les
+ * impacts restent dans le vide »). Le troisième cas, un ennemi (`flesh`),
+ * n'a pas besoin d'entrer dans cet ensemble : il est déjà distingué par
+ * `HitEvent.material` (voir la boucle plus bas).
+ *
+ * Reconstruit UNIQUEMENT quand la RÉFÉRENCE du `LevelHandle` courant change
+ * (un nouveau niveau ou un hot reload en construit un NOUVEAU, voir
+ * `loader.ts`/`hotReload.ts`), jamais par frame. Lu depuis des champs
+ * PUBLICS déjà exposés par `LevelHandle` (`doors`/`vitres`/`sanitaires`/
+ * `props`, chacun avec son `.collider`) : aucun nouveau couplage vers
+ * `game/level/*`, dont les maps `byColliderHandle` internes restent privées
+ * à chaque système (`PropSystem`, `DoorSystem`, `VitreSystem`,
+ * `SanitaireSystem`) — ce module se contente de lire, il ne duplique aucune
+ * logique de jeu.
+ */
+let movableHandlesLevel: LevelHandle | null | undefined;
+let movableHandles: ReadonlySet<number> = new Set();
+
+function isMovableOrBreakableHandle(session: GameSession, colliderHandle: number): boolean {
+  const handle = session.gltfLevelSession?.current ?? null;
+  if (handle !== movableHandlesLevel) {
+    movableHandlesLevel = handle;
+    const set = new Set<number>();
+    if (handle) {
+      for (const door of handle.doors) set.add(door.collider.handle);
+      for (const vitre of handle.vitres) if (vitre.collider) set.add(vitre.collider.handle);
+      for (const sanitaire of handle.sanitaires) set.add(sanitaire.collider.handle);
+      for (const prop of handle.props) set.add(prop.collider.handle);
+    }
+    movableHandles = set;
+  }
+  return movableHandles.has(colliderHandle);
+}
+
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
+
+// Scratch de la boucle d'eau positionnelle (`core/waterAmbience.ts`) : l'axe
+// X local de la caméra (sa "droite"), recalculé chaque frame, et le tableau
+// des origines de jets actifs, rempli SANS allouer par
+// `SanitaireSystem.collectActiveJetOrigins` — voir sa doc pour pourquoi ce
+// n'est pas `activeJets`.
+const waterListenerRightScratch = new THREE.Vector3();
+const waterJetOriginScratch: THREE.Vector3[] = [];
 
 const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 
@@ -95,13 +151,24 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // CETTE MÊME fonction, après tous ses lecteurs — jamais ici, avant
         // qu'ils aient fini de lire.
         for (const event of session.weapons.fireEvents) {
+          // Le pied-de-biche n'a pas de canon : AUCUN muzzle flash (ni quad
+          // ni lumière) sur un coup de mêlée — retiré après un retour de
+          // playtest (« cette espèce de carré blanc… ça fait mal aux yeux »).
+          // Cause vérifiée : ce bloc appelait `spawnMuzzleFlash` pour CHAQUE
+          // arme sans distinction, avec l'œil du joueur comme origine pour la
+          // mêlée — un quad blanc à 15 cm de la caméra. Voir la doc de tête
+          // de `MUZZLE_FLASH_PRESETS` (`render/fx.ts`). Le retour du coup
+          // passe par ce qui existe déjà : impact (particules), son,
+          // hitmarker, screenshake — inchangés plus bas dans cette fonction.
           // L'éclair d'une arme à feu naît au bout du canon affiché, pas au
-          // centre de l'écran ; le pied-de-biche garde son étincelle devant l'œil.
-          const flashOrigin =
-            event.weapon === "melee"
-              ? event.muzzlePosition
-              : engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon);
-          engine.fx.spawnMuzzleFlash(flashOrigin, event.muzzleDirection, event.weapon);
+          // centre de l'écran.
+          if (event.weapon !== "melee") {
+            engine.fx.spawnMuzzleFlash(
+              engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon),
+              event.muzzleDirection,
+              event.weapon,
+            );
+          }
           if (event.weapon === "shotgun") {
             engine.fx.spawnShellCasing(event.muzzlePosition, event.muzzleDirection);
           }
@@ -128,8 +195,6 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           }
         }
         for (const hit of session.weapons.hitEvents) {
-          engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
-          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon);
           // Distinction mur/ennemi (retour playtest Phase 3, `IMPACT_VARIANTS`
           // dans `weaponConfig.ts`) : un hit ENEMY confirmé (matière `"flesh"`,
           // voir `FLESH_MATERIAL`/`materialForCollider` dans `weapons.ts`)
@@ -137,6 +202,18 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           // shake générique. Le hitstop, lui, est déjà branché à la source
           // dans `weapons.ts` (`triggerHitstopFor`) — pas dupliqué ici.
           const isEnemyHit = hit.material === FLESH_MATERIAL;
+          // Un decal ne se pose JAMAIS sur une surface qui peut bouger ou
+          // disparaître (retour playtest, « les impacts restent dans le
+          // vide ») : un ennemi (`isEnemyHit`), un `prop_*` poussable, une
+          // porte animée, une vitre ou un sanitaire cassables
+          // (`isMovableOrBreakableHandle`). Ces surfaces gardent quand même
+          // leur giclée de particules, juste en dessous — un objet jetable,
+          // jamais un decal attaché à un point du monde qui n'a plus rien
+          // dessus.
+          if (!isEnemyHit && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
+            engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
+          }
+          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, hit.material);
           engine.fx.triggerShake(
             isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
             isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
@@ -209,11 +286,14 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           session.playerHp = Math.max(0, session.playerHp - event.amount);
           useGameStore.getState().setPlayerHp(session.playerHp);
           // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
-          // modification de `render/fx.ts` : decal + particules au point
-          // d'impact sur le joueur, léger screenshake dédié (`suitConfig`, pas
+          // modification de `render/fx.ts` : particules au point d'impact sur
+          // le joueur, léger screenshake dédié (`suitConfig`, pas
           // `weaponConfig` — c'est le coup encaissé, pas un tir du joueur).
-          engine.fx.spawnImpactDecal(event.point, event.normal, "flesh");
-          engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+          // PAS de decal ici : le joueur bouge en permanence, un decal
+          // « collé » à ce point du monde flotterait dès le pas suivant —
+          // même règle que pour un ennemi touché (voir la boucle
+          // `weapons.hitEvents` plus haut).
+          engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
           // PV bas / mort (Phase 6) — voir la doc de `handlePlayerHit`.
           handlePlayerHit(engine, session);
@@ -266,8 +346,9 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         for (const event of session.directorManager.playerHitEvents) {
           session.playerHp = Math.max(0, session.playerHp - event.amount);
           useGameStore.getState().setPlayerHp(session.playerHp);
-          engine.fx.spawnImpactDecal(event.point, event.normal, "flesh");
-          engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun");
+          // PAS de decal ici, même raison que le bloc équivalent du Costard
+          // juste au-dessus (le joueur bouge en permanence).
+          engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
           handlePlayerHit(engine, session);
         }
@@ -312,6 +393,23 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           vitres.clearFrameEvents();
         }
 
+        // Sanitaires (`sanitaire_*`) — même contrat de lecture non destructive
+        // que les vitrages juste au-dessus. La casse pose une gerbe de faïence
+        // ET un jet d'eau PERMANENT (`engine.fx`, bouchons `retro-render` —
+        // voir sa doc de tête) : contrairement à un `prop_*`/`vitre_*`, la
+        // destruction laisse une trace visible durable, pas juste un flash de
+        // débris.
+        const sanitaires = session.sanitaireSystem;
+        if (sanitaires) {
+          for (const event of sanitaires.destroyedEvents) {
+            engine.fx.spawnCeramicBurst(event.point, event.direction);
+            engine.fx.addWaterJet(event.jetOrigin);
+            engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
+            playSfx("sanitaire_break");
+          }
+          sanitaires.clearFrameEvents();
+        }
+
         // Portes animées — un son au DÉBUT de chaque ouverture depuis l'état
         // fermé (voir `DoorSystem.movementEvents`), jamais à la fermeture.
         const doors = session.doorSystem;
@@ -319,6 +417,35 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           for (const event of doors.movementEvents) playDoorMovementSfx(event.movement);
           doors.clearFrameEvents();
         }
+      });
+
+      yield* Effect.sync(() => {
+        // Boucle d'eau positionnelle des jets permanents ci-dessus — CONTINU,
+        // pas un évènement : mise à jour à chaque frame d'affichage, jamais le
+        // pas fixe (invariant #2), voir `core/waterAmbience.ts`. Lecture
+        // directe de la rotation caméra (invariant #3, comme
+        // `interpolateVisuals.ts`) : l'axe X local de `camera.quaternion` est
+        // sa "droite", recalculé ici plutôt que lu depuis `matrixWorld` — pas
+        // encore remis à jour à ce point de la frame (seul `renderer.render()`
+        // le fait, plus bas dans `core/loop.ts`).
+        //
+        // Coupée hors de l'état "playing" (menu, mort, fin de niveau) — même
+        // lecture directe de l'acteur que la garde de CONTENU du pas fixe
+        // dans `updateGameplay.ts`. `jets` retombe aussi à vide tout seul à
+        // chaque rechargement de niveau/hot reload/reset, sans code dédié ici
+        // : `session.sanitaireSystem` devient une instance neuve, sans aucun
+        // sanitaire cassé (voir la doc d'`updateWaterAmbience`).
+        // see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+        if (session.sanitaireSystem) session.sanitaireSystem.collectActiveJetOrigins(waterJetOriginScratch);
+        else waterJetOriginScratch.length = 0;
+        waterListenerRightScratch.set(1, 0, 0).applyQuaternion(engine.camera.quaternion);
+        updateWaterAmbience(
+          engine.camera.position,
+          waterListenerRightScratch,
+          waterJetOriginScratch,
+          realDt,
+          engine.flowActor.getSnapshot().value === "playing",
+        );
       });
 
       yield* Effect.sync(() => {

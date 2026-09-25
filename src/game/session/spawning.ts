@@ -13,6 +13,7 @@ import { LightPool } from "../../render/lightPool";
 import { PropSystem } from "../level/props";
 import { DoorSystem } from "../level/doors";
 import { VitreSystem } from "../level/vitres";
+import { SanitaireSystem } from "../level/sanitaires";
 import { dressWeaponPickup } from "../../render/viewmodel";
 import { Suit } from "../entities/suit";
 import { suitConfig } from "../entities/suitConfig";
@@ -115,6 +116,13 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
     // rapporteur parce que seul l'appelant sait ce qui vient après lui.
     onProgress: (fraction) => reportLoading("Chargement du niveau", 0.3 + fraction * 0.55),
     onLoaded: (handle, info) => {
+      // Jets d'eau permanents des sanitaires cassés (`FxSystem.addWaterJet`) :
+      // propres au niveau qui vient de disparaître — un hot reload comme un
+      // premier chargement doivent tous deux repartir sans jet fantôme, même
+      // raison que le rechargement de `session.vitreSystem`/`propSystem` plus
+      // bas (les corps Rapier du niveau précédent n'existent déjà plus).
+      engine.fx.clearWaterJets();
+
       // Le glTF est là mais tout ce qui suit est SYNCHRONE et bloque : on
       // annonce l'étape avant de la commencer, sinon le libellé n'apparaît
       // qu'une fois le travail fini — c'est-à-dire jamais.
@@ -151,6 +159,12 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
       // reload remplace les corps/colliders du niveau, les vitres reviennent
       // donc intactes avec le fichier (comme les PV des props).
       session.vitreSystem = new VitreSystem(handle.vitres);
+
+      // Sanitaires : même raison de les reconstruire ici que les vitres — un
+      // hot reload remplace les corps/colliders du niveau, ils reviennent donc
+      // intacts avec le fichier (délai de soulagement à part : c'est un état
+      // de PARTIE, dans `session.sanitaireReliefCooldown`, pas touché ici).
+      session.sanitaireSystem = new SanitaireSystem(handle.sanitaires);
 
       // Pool de lampes : reconstruit à CHAQUE chargement (le hot reload peut
       // ajouter, déplacer ou retirer des `light_*`), et dès maintenant plutôt
@@ -205,6 +219,7 @@ export function loadGltfLevel(engine: PersistentEngine, session: GameSession, na
           `lampes ${handle.stats.lightCount} (${session.lightPool.stats.actives} allumées), ` +
           `props ${handle.stats.propCount}, ` +
           `vitres ${handle.stats.vitreCount} (${handle.stats.vitreBatchCount} lots), ` +
+          `sanitaires ${handle.stats.sanitaireCount} (${handle.stats.sanitaireBatchCount} lots), ` +
           `lots de décor ${handle.stats.decorBatchCount}`,
       );
       // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur

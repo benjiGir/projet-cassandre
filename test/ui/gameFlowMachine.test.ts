@@ -98,6 +98,39 @@ describe("gameFlowMachine", () => {
     expect(actor.getSnapshot().value).toBe("mainMenu");
   });
 
+  it("playing -> paused via PAUSE", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "PAUSE" });
+    expect(actor.getSnapshot().value).toBe("paused");
+  });
+
+  it("paused -> playing via RESUME", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "PAUSE" });
+    actor.send({ type: "RESUME" });
+    expect(actor.getSnapshot().value).toBe("playing");
+  });
+
+  it("paused -> mainMenu via RETURN_TO_MENU (quitter depuis la pause)", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "PAUSE" });
+    actor.send({ type: "RETURN_TO_MENU" });
+    expect(actor.getSnapshot().value).toBe("mainMenu");
+  });
+
+  it("le contenu du pas fixe reste ignoré indépendamment de PAUSE : DIED/LEVEL_COMPLETED sont des no-op depuis paused (pas déclarés pour cet état)", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "PAUSE" });
+    actor.send({ type: "DIED" });
+    expect(actor.getSnapshot().value).toBe("paused");
+    actor.send({ type: "LEVEL_COMPLETED" });
+    expect(actor.getSnapshot().value).toBe("paused");
+  });
+
   it("scénario complet : boot -> menu -> jeu -> mort -> rejouer -> jeu", () => {
     const actor = createGameFlowActor();
     actor.send({ type: "ENTER_MENU" });

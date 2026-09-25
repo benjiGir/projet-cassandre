@@ -8,6 +8,8 @@ import type { NavGraph } from "../level/pathfinding";
 import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
+import type { SanitaireSystem } from "../level/sanitaires";
+import { type SessionStats } from "./score";
 import { type BillboardSprite } from "../../render/billboard";
 import { type DirectorManager } from "../entities/directorManager";
 import { type SuitManager } from "../entities/suitManager";
@@ -74,6 +76,21 @@ export interface GameSession {
    * reconstruits à chaque `onLoaded`, comme `propSystem`/`doorSystem`.
    * see: docs/reference/conventions-nommage.md#préfixe-vitre */
   vitreSystem: VitreSystem | null;
+  /** Sanitaires (`sanitaire_*`) du niveau COURANT — état de casse de CETTE
+   * partie, reconstruit à chaque `onLoaded` comme `vitreSystem`.
+   * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
+  sanitaireSystem: SanitaireSystem | null;
+  /**
+   * Délai de gameplay restant, en SECONDES, avant le prochain soulagement
+   * possible sur un sanitaire intact (règle Duke 3D : max/10 PV, 220 s de
+   * délai GLOBAL, partagé par tous les sanitaires du niveau — un seul
+   * compteur, pas un par appareil). Décrémenté au pas fixe par `gameplayDt`
+   * (hitstop inclus, jamais `Date.now()`/temps mural — invariant #1/#13),
+   * jamais par la casse d'un sanitaire ni un hot reload : c'est un état de
+   * PARTIE, remis à 0 par `bootGameSession`.
+   * see: docs/decisions/0032-sanitaires-utilisables.md
+   */
+  sanitaireReliefCooldown: number;
 
   /** Carte lâchée par le Directeur : mesh visible tant qu'elle n'a pas été ramassée — voir `game/loop/updateGameplay.ts`. */
   droppedCardMesh: THREE.Mesh | null;
@@ -107,4 +124,22 @@ export interface GameSession {
   levelCompleteHandled: boolean;
   /** Cooldown global des répliques du héros (15 s) — PROPRE À CETTE PARTIE : une réplique juste avant la mort ne doit pas geler le canal de la partie suivante. */
   lastHeroLineAt: number;
+  /**
+   * Générateur RNG DÉDIÉ au choix de la réplique de soulagement des
+   * sanitaires (`game/session/sanitaires.ts`) — invariant #12, jamais
+   * `Math.random()` : la réplique est choisie DANS le pas fixe (un appui sur
+   * E), donc le rejeu d'input en dépend. Construit UNE FOIS par partie
+   * (`bootGameSession`, via `DeterministicRandom.forSeed`), même pattern que
+   * `WeaponSystem.nextRandom`.
+   */
+  sanitaireReliefRandom: () => number;
+
+  /**
+   * Récap de fin de partie (`game/session/score.ts`) — compteurs avancés AU
+   * PAS FIXE (`game/loop/updateGameplay.ts`), jamais par un évènement lu au
+   * taux d'affichage (invariants #1/#12/#13). Remis à zéro à chaque
+   * `bootGameSession`, comme le reste de cet objet.
+   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+   */
+  stats: SessionStats;
 }

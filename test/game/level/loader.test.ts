@@ -140,6 +140,8 @@ describe("buildLevelFromGltf (jalon M2) — chemin heureux", () => {
       vitreCount: 0,
       vitreBatchCount: 0,
       doorBatchCount: 1, // un vantail seul de son matériau : son propre lot
+      sanitaireCount: 0,
+      sanitaireBatchCount: 0,
     });
 
     expect(handle.spawnSuits.map((s) => s.name)).toEqual(["spawn_suit_1"]);

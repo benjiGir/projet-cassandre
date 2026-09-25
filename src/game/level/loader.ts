@@ -23,14 +23,25 @@ import {
   type DoorMovement,
 } from "./doors";
 import { mergeVitreDecor, type VitreCandidate, type VitreInfo } from "./vitres";
+import {
+  mergeSanitaireDecor,
+  DEFAULT_SANITAIRE_KIND,
+  SANITAIRE_KINDS,
+  parseSanitaireKind,
+  type SanitaireCandidate,
+  type SanitaireInfo,
+  type SanitaireKind,
+  type SanitaireRendu,
+} from "./sanitaires";
 import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
 
-// `DoorInfo`/`VitreInfo` sont DÉFINIS dans `./doors`/`./vitres` (comme
-// `PropInfo` dans `./props`) — ce fichier reste le seul point d'import public
-// historique (`devtools/consoleApi.ts` importe `DoorInfo` depuis `./loader`),
-// d'où ce ré-export.
+// `DoorInfo`/`VitreInfo`/`SanitaireInfo` sont DÉFINIS dans `./doors`/
+// `./vitres`/`./sanitaires` (comme `PropInfo` dans `./props`) — ce fichier
+// reste le seul point d'import public historique (`devtools/consoleApi.ts`
+// importe `DoorInfo` depuis `./loader`), d'où ce ré-export.
 export type { DoorInfo, DoorMovement } from "./doors";
 export type { VitreInfo } from "./vitres";
+export type { SanitaireInfo, SanitaireKind, SanitaireRendu } from "./sanitaires";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -155,6 +166,15 @@ export interface LevelStats {
    * par au moins deux `door_*`, plus un par vantail seul de son matériau.
    */
   doorBatchCount: number;
+  /** `sanitaire_*` rencontrés (cuvettes et urinoirs), cassés ou non. */
+  sanitaireCount: number;
+  /**
+   * Lots de dessin ajoutés par les sanitaires APRÈS fusion
+   * (`mergeSanitaireDecor`) : un par matériau pour tout le niveau, quel que
+   * soit `sanitaireCount` — même contrat que `vitreBatchCount`.
+   * see: docs/decisions/0032-sanitaires-utilisables.md
+   */
+  sanitaireBatchCount: number;
 }
 
 export interface LevelHandle {
@@ -177,6 +197,14 @@ export interface LevelHandle {
    * (`game/level/vitres.ts`), reconstruit à chaque chargement comme `PropSystem`.
    * see: docs/reference/conventions-nommage.md#préfixe-vitre */
   vitres: VitreInfo[];
+  /** Sanitaires `sanitaire_*` (cuvettes, urinoirs) — l'état de partie (cassé,
+   * délai de soulagement) vit dans `SanitaireSystem` (`game/level/sanitaires.ts`)
+   * et `session.sanitaireReliefCooldown`, reconstruits à chaque chargement
+   * comme `VitreSystem`.
+   * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
+  sanitaires: SanitaireInfo[];
+  /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
+  sanitaireRendus: SanitaireRendu[];
   /** Lampes `light_*` instanciées, déjà rattachées à `root`. Exposées pour le
    * pool de lampes (`render/lightPool.ts`), qui décide lesquelles restent
    * allumées — leur nombre seul ne suffit pas à ça.
@@ -298,6 +326,26 @@ export class InvalidVitrePvWarning extends Schema.TaggedError<InvalidVitrePvWarn
   { name: Schema.String, value: Schema.String },
 ) {}
 
+/** `sanitaire_*` dont `extras.sorte` n'est pas `"cuvette"`/`"urinoir"` —
+ * OBLIGATOIRE, contrairement à `matiere`/`mouvement` : absent OU inconnu
+ * avertit bruyamment (jamais un silence). Jamais bloquant : le sanitaire est
+ * construit avec `DEFAULT_SANITAIRE_KIND`. `value` vaut `"(absent)"` quand la
+ * propriété n'existe pas du tout, pour distinguer les deux cas dans le
+ * message sans dupliquer la classe d'erreur. */
+export class UnknownSanitaireKindWarning extends Schema.TaggedError<UnknownSanitaireKindWarning>()(
+  "UnknownSanitaireKindWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
+/** `sanitaire_*` dont `extras.pv` n'est pas un nombre strictement positif —
+ * jamais bloquant : le sanitaire est construit incassable AU TIR DU JOUEUR
+ * (même règle que `pv` sur un `vitre_*`/`prop_*` — un tir ENNEMI le casse
+ * quand même d'un coup, voir `SanitaireSystem.tryBreakByColliderHandle`). */
+export class InvalidSanitairePvWarning extends Schema.TaggedError<InvalidSanitairePvWarning>()(
+  "InvalidSanitairePvWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
 /** `col_hull_*` dont `RAPIER.ColliderDesc.convexHull` retourne `null`
  * (sommets dégénérés) — toujours suivi d'un repli sur un collider trimesh
  * pour ce même mesh, jamais d'absence totale de collider. */
@@ -392,6 +440,21 @@ function formatInvalidVitrePv(error: InvalidVitrePvWarning): string {
   return (
     `[level] "${error.name}" (vitre_*) : propriété "pv" = "${error.value}", ` +
     `qui n'est pas un nombre strictement positif — vitre laissée incassable.`
+  );
+}
+
+function formatUnknownSanitaireKind(error: UnknownSanitaireKindWarning): string {
+  return (
+    `[level] "${error.name}" (sanitaire_*) : propriété "sorte" = "${error.value}", ` +
+    `qui n'est pas une sorte connue (${SANITAIRE_KINDS.join(", ")}), et OBLIGATOIRE — ` +
+    `repli sur "${DEFAULT_SANITAIRE_KIND}".`
+  );
+}
+
+function formatInvalidSanitairePv(error: InvalidSanitairePvWarning): string {
+  return (
+    `[level] "${error.name}" (sanitaire_*) : propriété "pv" = "${error.value}", ` +
+    `qui n'est pas un nombre strictement positif — sanitaire laissé incassable (au tir du joueur).`
   );
 }
 
@@ -972,6 +1035,109 @@ function buildVitreCandidateEffect(
   });
 }
 
+/** Lit `sorte` d'un `sanitaire_*` : OBLIGATOIRE, contrairement à
+ * `matiere`/`mouvement` — absente ou inconnue avertit bruyamment dans LES
+ * DEUX CAS (jamais un silence pour une propriété obligatoire), repli sur
+ * `DEFAULT_SANITAIRE_KIND`. */
+function readSanitaireKind(name: string, raw: unknown): Effect.Effect<SanitaireKind> {
+  return Effect.gen(function* () {
+    const sorte = parseSanitaireKind(raw);
+    if (sorte) return sorte;
+    const value = raw === undefined || raw === null || raw === "" ? "(absent)" : String(raw);
+    yield* Effect.fail(new UnknownSanitaireKindWarning({ name, value })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownSanitaireKind(error)))),
+    );
+    return DEFAULT_SANITAIRE_KIND;
+  });
+}
+
+/** Lit `pv` d'un `sanitaire_*` : absent -> `null` (incassable au tir du
+ * joueur) sans bruit, présent mais pas un nombre strictement positif ->
+ * `null` AVEC avertissement bruyant (même règle que `pv` sur un `vitre_*`). */
+function readSanitairePv(name: string, raw: unknown): Effect.Effect<number | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(value) && value > 0) return value;
+    yield* Effect.fail(new InvalidSanitairePvWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidSanitairePv(error)))),
+    );
+    return null;
+  });
+}
+
+/**
+ * `sanitaire_*` : cuvette ou urinoir, UN mesh UN matériau — jamais de
+ * `col_*` jumeau, le loader construit lui-même un collider cuboïde FIXE sur
+ * la bbox monde, groupe WORLD (comme un `vitre_*` solide). Ne construit QUE
+ * le candidat — la fusion (`mergeSanitaireDecor`) et l'état de partie
+ * (`SanitaireSystem`) vivent ailleurs, même séparation que `vitre_*`/`prop_*`.
+ * see: docs/reference/conventions-nommage.md#préfixe-sanitaire
+ */
+function buildSanitaireCandidateEffect(
+  mesh: THREE.Mesh,
+  name: string,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<SanitaireCandidate> {
+  return Effect.gen(function* () {
+    const extras = cleanExtras(mesh);
+    const kind = yield* readSanitaireKind(name, extras.sorte);
+    const maxHp = yield* readSanitairePv(name, extras.pv);
+
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+    const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
+
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+    const discardedPosition = new THREE.Vector3();
+    mesh.matrixWorld.decompose(discardedPosition, worldQuat, worldScale);
+    const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
+
+    const halfExtents = new THREE.Vector3(
+      Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+      Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+      Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+    );
+
+    const body = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+        .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+    );
+    const collider = physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
+        COLLISION_GROUPS.WORLD,
+      ),
+      body,
+    );
+    bodies.push(body);
+
+    // Bbox MONDE réelle (le kit ne pose ses pièces qu'à des rotations
+    // multiples de 90°, comme tout `col_box_*`/`prop_*`/`vitre_*` — même
+    // hypothèse qu'ailleurs dans ce fichier) : sert au jet d'eau (bas-centre,
+    // vers le haut), aussi l'ancrage du volume de visée du jet une fois cassé
+    // (`SanitaireSystem.resolveAim`) — pas stockée telle quelle, seul
+    // `jetOrigin` survit sur le candidat.
+    const worldMin = worldCenter.clone().sub(halfExtents);
+    const worldMax = worldCenter.clone().add(halfExtents);
+    const jetOrigin = new THREE.Vector3((worldMin.x + worldMax.x) / 2, worldMin.y, (worldMin.z + worldMax.z) / 2);
+
+    return {
+      name,
+      mesh: mesh as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>,
+      collider,
+      body,
+      kind,
+      maxHp,
+      jetOrigin,
+      extras,
+    };
+  });
+}
+
 /**
  * Masse d'un `prop_*` qui ne déclare pas `masse`, en kg.
  *
@@ -1277,6 +1443,7 @@ function buildLevelResourceEffect(
     const doors: DoorInfo[] = [];
     const props: PropInfo[] = [];
     const vitreCandidates: VitreCandidate[] = [];
+    const sanitaireCandidates: SanitaireCandidate[] = [];
     const useObjects: UseObject[] = [];
     const secrets: SecretZone[] = [];
 
@@ -1407,6 +1574,11 @@ function buildLevelResourceEffect(
         continue; // reste visible : le rendu de la vitre EST son mesh, fusionné plus bas comme le décor
       }
 
+      if (name.startsWith("sanitaire_")) {
+        sanitaireCandidates.push(yield* buildSanitaireCandidateEffect(obj, name, physics, bodies));
+        continue; // reste visible : le rendu du sanitaire EST son mesh, fusionné plus bas comme le décor
+      }
+
       if (name.startsWith("prop_")) {
         props.push(yield* buildPropEffect(obj, name, root, physics, bodies));
         continue; // reste visible : un prop EST son rendu, il n'a pas de proxy séparé
@@ -1439,6 +1611,11 @@ function buildLevelResourceEffect(
     // adressable pour se casser individuellement sans jamais coûter un lot de
     // dessin de plus (voir `LevelStats.vitreBatchCount`).
     const vitreMerge = mergeVitreDecor(root, vitreCandidates);
+    // Fusion DÉDIÉE des sanitaires (voir `mergeSanitaireDecor`) : même raison
+    // exacte que les vitres — chaque sanitaire garde sa propre plage de
+    // sommets adressable pour se casser individuellement (voir
+    // `LevelStats.sanitaireBatchCount`).
+    const sanitaireMerge = mergeSanitaireDecor(root, sanitaireCandidates);
     // Vantaux regroupés par matériau (voir `batchDoorMeshes`) : un vantail
     // animé ne rejoint jamais le décor fusionné, mais vingt vantaux n'ont pas
     // à coûter vingt lots de dessin.
@@ -1460,6 +1637,8 @@ function buildLevelResourceEffect(
       vitreCount: vitreMerge.vitres.length,
       vitreBatchCount: vitreMerge.batchCount,
       doorBatchCount,
+      sanitaireCount: sanitaireMerge.sanitaires.length,
+      sanitaireBatchCount: sanitaireMerge.batchCount,
     };
 
     return {
@@ -1472,6 +1651,8 @@ function buildLevelResourceEffect(
       doors,
       props,
       vitres: vitreMerge.vitres,
+      sanitaires: sanitaireMerge.sanitaires,
+      sanitaireRendus: sanitaireMerge.rendus,
       useObjects,
       secrets,
       lights,
@@ -1530,6 +1711,8 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
     doors: resource.doors,
     props: resource.props,
     vitres: resource.vitres,
+    sanitaires: resource.sanitaires,
+    sanitaireRendus: resource.sanitaireRendus,
     useObjects: resource.useObjects,
     secrets: resource.secrets,
     lights: resource.lights,

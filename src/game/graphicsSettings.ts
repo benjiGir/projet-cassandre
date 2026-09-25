@@ -25,18 +25,22 @@ import { weaponConfig } from "./player/weaponConfig";
  * côté rendu — il donne juste un accès humain, sans console, à un réglage
  * qui existe déjà.
  *
- * **Limite connue, assumée** : il n'existe pas de menu de pause (invariant
- * #9 — pas de système inventé pour cette tâche). Les réglages ne sont donc
- * accessibles que depuis le menu principal, avant `bootGameSession` : à cet
- * instant, `scene`/`camera`/`renderer` n'existent pas encore. Le filtrage et
- * la résolution sont donc seulement PERSISTÉS au moment du clic, et
- * réellement APPLIQUÉS une fois — juste après la construction du moteur
- * (`main.ts`, `initGraphicsSettingsAtBoot`/`applyRenderSettings`), avant le
- * tout premier chargement de niveau. Le FOV et le screenshake, eux, sont de
+ * **Les quatre réglages s'appliquent à chaud EN JEU, depuis la pause**
+ * (`ui/screens/pause/PauseScreen/PauseScreen.tsx`, qui réutilise
+ * `OptionsScreen` tel quel — voir `docs/systems/session.md#pause`).
+ * `registerRenderTarget(scene, camera, renderer)`, appelée UNE FOIS par
+ * `main.ts` juste après `buildGameEngine`, retient la scène/caméra/renderer
+ * VIVANTS pour le reste de l'onglet (ils ne sont jamais reconstruits par un
+ * "Rejouer"/"Retour au menu", voir `docs/systems/session.md#létat-persistant-du-process-gameengine`) :
+ * `setGraphicsSettings` applique alors le filtrage/la résolution
+ * IMMÉDIATEMENT dès qu'une cible est enregistrée, en plus de les persister.
+ * **Avant** cet enregistrement — au tout premier menu principal, avant que le
+ * moteur existe — un changement reste PERSISTÉ SEULEMENT, repris au prochain
+ * boot (`initGraphicsSettingsAtBoot`). Le FOV et le screenshake, eux, sont de
  * simples champs mutables lus en continu par le jeu (`moveConfig.fovBase` à
  * chaque frame dans `interpolateVisuals`, `weaponConfig.shakeAmplitude` à
  * chaque déclenchement de secousse) : les muter s'applique immédiatement,
- * qu'un niveau soit chargé ou non.
+ * qu'un moteur existe ou non, qu'un niveau soit chargé ou non.
  *
  * **Pourquoi le filtrage survit à un rechargement de niveau sans code
  * dédié** : `game/level/loader.ts::toLambert` appelle
@@ -160,7 +164,8 @@ function applyNonRenderSettings(settings: GraphicsSettings): void {
  * aussi ce qui pose le mode par défaut pour tout futur chargement de
  * niveau, voir la doc de tête) et un couple caméra/renderer déjà construits
  * — donc seulement appelable une fois `buildGameEngine` passé (`main.ts`),
- * jamais depuis l'écran de réglages lui-même.
+ * jamais depuis l'écran de réglages lui-même (qui passe par
+ * `setGraphicsSettings`/`registerRenderTarget` ci-dessous).
  */
 export function applyRenderSettings(
   settings: GraphicsSettings,
@@ -173,12 +178,34 @@ export function applyRenderSettings(
   setResolutionInterne(renderer, camera, preset.width, preset.height);
 }
 
+interface RenderTarget {
+  scene: THREE.Object3D;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+}
+
+/** `null` tant qu'aucun moteur n'est construit (menu principal, avant `buildGameEngine`) — voir `registerRenderTarget`. */
+let renderTarget: RenderTarget | null = null;
+
+/**
+ * Enregistre la scène/caméra/renderer VIVANTS du moteur — appelée UNE FOIS
+ * par `main.ts`, juste après `buildGameEngine`. Applique aussitôt le
+ * réglage courant (comme le faisait l'ancien appel explicite à
+ * `applyRenderSettings` dans `main.ts`), puis reste la cible de tout futur
+ * `setGraphicsSettings` pour le reste de l'onglet — y compris pendant une
+ * partie, en pause (voir la doc de tête).
+ */
+export function registerRenderTarget(scene: THREE.Object3D, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer): void {
+  renderTarget = { scene, camera, renderer };
+  applyRenderSettings(current, scene, camera, renderer);
+}
+
 /**
  * Appelée UNE FOIS, tout en haut de `main()`, avant même le menu principal —
  * charge le réglage persisté et applique immédiatement ce qui peut l'être
  * sans moteur construit (FOV, screenshake). Retourne le réglage chargé pour
- * que `main.ts` puisse appliquer le reste (filtrage, résolution) une fois
- * `scene`/`camera`/`renderer` prêts.
+ * que `main.ts` puisse appliquer le reste (filtrage, résolution) via
+ * `registerRenderTarget` une fois `scene`/`camera`/`renderer` prêts.
  */
 export function initGraphicsSettingsAtBoot(): GraphicsSettings {
   current = loadPersisted();
@@ -189,15 +216,17 @@ export function initGraphicsSettingsAtBoot(): GraphicsSettings {
 /**
  * Appelée par l'écran de réglages à chaque interaction humaine (jamais par
  * frame — invariant #2). Persiste toujours ; applique immédiatement le FOV
- * et le screenshake (aucun moteur requis) ; le filtrage/la résolution ne
- * peuvent être appliqués pour de vrai qu'au prochain boot (voir la doc de
- * tête) — persister suffit, `initGraphicsSettingsAtBoot`/`applyRenderSettings`
- * les reprendront alors.
+ * et le screenshake (aucun moteur requis) ; applique aussi immédiatement le
+ * filtrage/la résolution SI une cible est enregistrée (voir
+ * `registerRenderTarget`) — sinon persister suffit,
+ * `initGraphicsSettingsAtBoot`/`registerRenderTarget` les reprendront au
+ * prochain boot.
  */
 export function setGraphicsSettings(partial: Partial<GraphicsSettings>): GraphicsSettings {
   current = { ...current, ...partial };
   savePersisted(current);
   applyNonRenderSettings(current);
+  if (renderTarget) applyRenderSettings(current, renderTarget.scene, renderTarget.camera, renderTarget.renderer);
   return current;
 }
 

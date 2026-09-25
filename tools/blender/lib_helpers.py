@@ -434,6 +434,20 @@ def _repeindre_sur_palette(mesh) -> None:
     couleur sur le nuancier commun, TOUT le kit tient dans un seul matériau et
     se fond en un lot — et il passe au passage sous la charte de couleurs du
     projet, ce qu'un import brut n'aurait pas fait.
+
+    Remettre `poly.material_index` à 0 n'est pas cosmétique. Trouvé le
+    2026-09-24 en construisant les `sanitaire_*` : sans ça, chaque polygone
+    garde l'index de son matériau D'ORIGINE (0/1/2 pour bois/métal/métal
+    sombre), alors que `import_kit` ne pose plus qu'UN SEUL matériau sur
+    l'objet fusionné. Invisible dans Blender (les index hors plage retombent
+    sur le slot 0 à l'affichage) et invisible à `validate_level.py` (qui ne
+    compte que `len(o.data.materials)`, où il n'y a bien qu'UN matériau) — mais
+    l'exportateur glTF, lui, regroupe les primitives par cet index BRUT avant
+    résolution : trois valeurs d'index, trois primitives, MÊME MATÉRIAU. Trois
+    primitives, c'est un `THREE.Group` pour le loader (`GLTFLoader.loadMesh`,
+    `meshes.length === 1` sinon `Group`), jamais un `THREE.Mesh` — silencieux
+    tant qu'aucun préfixe n'exige un mesh (tout le mobilier `mob_k_*`), révélé
+    dès qu'un `sanitaire_*` en a besoin. Corrige tout le kit d'un coup.
     """
     uv = mesh.uv_layers.get("UVMap") or mesh.uv_layers.new(name="UVMap")
     coords = [_uv_palette_la_plus_proche(_couleur_materiau(m)) for m in mesh.materials] or [(0.5, 0.5)]
@@ -441,6 +455,7 @@ def _repeindre_sur_palette(mesh) -> None:
         u, v = coords[min(poly.material_index, len(coords) - 1)]
         for li in poly.loop_indices:
             uv.data[li].uv = (u, v)
+        poly.material_index = 0
 
 
 def import_kit(name: str, glb_path: str, atlas: str, coll: bpy.types.Collection,

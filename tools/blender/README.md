@@ -104,6 +104,44 @@ Pièges payés, tous silencieux :
 - **Jamais d'extra `pivot`** : `GLTFLoader` le réserve (voir docs/systems/rendu.md).
 - **Un bras de 1,80 m n'atteint pas le fût** : les bras sont au gabarit 2,20 m.
 
+### Pistolet — refonte 2026-09-25
+
+`construire_pistolet` a été entièrement réécrite d'après
+[`docs/assets/board-pistolet.md`](../../docs/assets/board-pistolet.md) (board
+de références, cotes, priorités de silhouette) : un Beretta 92FS deux tons
+plutôt que le pavé « sèche-cheveux » d'origine (1,01 de rapport hauteur/
+longueur, poignée-tube de 12 cm, aucune pièce en contact). Le nouveau modèle
+tient dans **350-420 triangles** (mesuré : 360 pour `world_pistol`, plafond
+dur 500) — culasse à profil hexagonal chanfreiné (biseaux 3 mm), dessus
+ouvert avec le canon visible entre deux rails clairs, hausse à cran, guidon,
+chien armé, deux leviers de sûreté, pontet AJOURÉ (un vrai trou, trois
+barres), poignée inclinée à 18°, et 5 bandes de stries peintes par découpe de
+face sur les flancs (aucun relief, donc aucun z-fighting).
+
+`construire_pistolet(vue_subjective: bool)` applique, uniquement en vue
+subjective, les trois exagérations de la planche (section 3.2), injectées
+directement dans les formules de coordonnées plutôt qu'en post-transform :
+section de culasse ×1,2 autour de l'axe du canon, chien ×1,3, points de
+visée ×2. Le modèle au sol (`vue_subjective=False`) garde ses vraies cotes.
+
+Deux constantes ont bougé en tête de fichier : `PRISE_PISTOLET` recule et
+descend à `(0.16, 0.30, -0.20)` (la culasse, plus basse sur ce modèle,
+demandait de reculer la prise pour garder le bout du canon au même endroit à
+l'écran), et `BOUT_CANON_PISTOLET = (0, 0.141, 0.077)` (nouveau, lu à la fois
+par la construction du canon et par le calcul de l'extra `bout_canon` — un
+seul endroit à changer si la cote bouge). Le pied-de-biche et la pompe sont
+inchangés : `construire_pied_de_biche`/`construire_pompe` n'ont pas été
+touchées, et un export avant/après (comptes de sommets et triangles) confirme
+des `vm_crowbar`/`vm_shotgun`/`vm_shotgun_pump`/`world_crowbar`/
+`world_shotgun` identiques bit à bit en topologie.
+
+**Non implémenté, par choix de budget** : le quadrillage des plaquettes de
+poignée (section 3.8 de la planche, explicitement « au sol seulement », la
+plus basse priorité de tout le document) et la bande de jointure culasse/
+carcasse + la fausse occlusion peinte (mêmes raisons — un ajout de ~80-160
+triangles pour un gain de lecture marginal à 640×360, alors que les dix
+éléments de silhouette prioritaires tenaient déjà dans le budget cible).
+
 ```bash
 # Kit modulaire
 blender -b --factory-startup -P tools/blender/build_kit.py -- --out assets_src/blender/kit_hypermarche.blend
@@ -1229,3 +1267,74 @@ sur `zone_c_rayons`/`zone_d_reserve` : seul le warning attendu "sans
 exactement les "sans `target`" attendus pour `use_pa_mic`/`use_toilet`,
 aucun autre nouveau. Vérifié en jeu (`cassandre.level.stats()`) sur les
 trois fichiers : comptes `useCount` exacts.
+
+### Sanitaires (`sanitaire_*`) — cuvettes et urinoirs utilisables/cassables (2026-09-24)
+
+Suite de la salle des toilettes construite le même jour (niveau v2,
+`tools/level_v2/build_niveau.py::habiller_toilettes`). Demande : les cuvettes
+et urinoirs jouables façon Duke Nukem 3D — utilisables (soin), cassables (jet
+d'eau qui se boit). Le runtime (loader, soin, jet d'eau) est écrit en
+parallèle ; ce qui suit est le contrat côté Blender, à ne pas changer sans le
+signaler à l'autre bout.
+
+**Contrat** : préfixe `sanitaire_*`, UN seul objet mesh à UN seul matériau
+(le `palette` commun des meubles Kenney repeints — même règle que pour un
+vantail `door_*`). Custom property `sorte` (`"cuvette"` ou `"urinoir"`,
+obligatoire) et `pv` (nombre > 0, cassable). **Jamais de `col_*` jumeau** :
+le loader construit lui-même un cuboïde FIXE sur la bbox monde de l'objet,
+comme il le fait pour un `prop_*` — sauf qu'un sanitaire ne bouge jamais. Le
+jet d'eau part du bas-centre de cette bbox : pour un urinoir mural, la bbox
+posée est donc celle de la cuvette SEULE (sans la descente d'eau ni la
+séparation, qui restent du décor).
+
+`PV` choisi contre `src/game/player/weaponConfig.ts::damageForWeapon` : 50,
+entre un coup de pied-de-biche (`meleeDamage` = 40, ne casse pas seul) et un
+tir de pompe à bout portant (9 plombs × `shotgunDamagePerPellet` = 54, casse
+en un coup). Deux coups de pied-de-biche cassent (2 × 40 = 80 ≥ 50).
+
+**Piège trouvé en construisant ceci, qui dépasse largement les sanitaires** :
+un objet posé par `B.meuble(...)`/`poser(...)` (donc sourcé du Kenney
+Furniture Kit repeint, `lib_helpers.import_kit(..., repeindre=True)`) exporte
+en PLUSIEURS primitives glTF malgré un seul matériau Blender
+(`len(o.data.materials) == 1`). Cause : `_repeindre_sur_palette` recopiait
+l'UV de chaque polygone d'après son `material_index` D'ORIGINE (0/1/2 pour
+`wood`/`metal`/`metalDark` dans le kit source) mais ne remettait jamais cet
+index à 0 une fois le mesh fusionné sur un seul matériau — résidu invisible
+dans Blender (l'affichage retombe sur le slot 0 pour un index hors plage) et
+invisible à `validate_level.py` d'avant cette passe (qui ne comptait que les
+SLOTS de matériaux, pas les valeurs de `material_index`). L'exportateur glTF,
+lui, regroupe les primitives par cet index BRUT avant résolution : trois
+valeurs d'index, trois primitives, même matériau au final. Trois primitives,
+c'est un `THREE.Group` pour `GLTFLoader` (`loadMesh` : `meshes.length === 1`
+sinon `Group`), jamais un `THREE.Mesh` — et `loader.ts` ne reconnaît que
+`instanceof THREE.Mesh`. Resté invisible tout le chantier N9 parce qu'aucun
+`mob_k_*` n'avait encore besoin d'être reconnu comme UN mesh par un préfixe
+de gameplay ; `sanitaire_cuvette*` est le premier cas. Corrigé à la racine
+(`_repeindre_sur_palette` remet `poly.material_index = 0` après le report
+d'UV) : tout le mobilier `mob_k_*` du niveau exporte maintenant en une seule
+primitive, pas seulement les sanitaires. `validate_level.py` porte désormais
+un contrôle dédié sur les `sanitaire_*` (`material_index` distincts sur les
+polygones, pas seulement le compte de slots) pour que ce défaut précis ne
+puisse plus passer inaperçu.
+
+**Mesuré** (build headless, niveau complet, fichier jetable) :
+`validate_level.py --strict` → 0 erreur, 6 warnings (7 avant cette passe,
+`use_toilet: interactif sans custom property 'target'` disparaît avec
+l'objet lui-même) ; `Sanitaires cuvette:3 urinoir:2` dans le résumé.
+`audit_niveau.py` → 0 trou, 0 bord ouvert, 0 interpénétration, 0 objet
+flottant, 0 spawn encombré (`PREFIXES_PHYSIQUES` compte maintenant les
+`sanitaire_*`, et `hors_sol` exclut nommément `urinoir` — mural par nature,
+sa bbox commence à 0,55 m du sol, le signaler flottant serait un faux
+positif). Export `.glb` : `[export] contenu vérifié`, chaque `sanitaire_*`
+relu à une seule primitive, un seul matériau, extras `sorte`/`pv` intacts.
+Rendu (`render_ingame.py`, vues dans la salle) : cuvettes et urinoirs à leur
+place, plaque de chasse (`wc_plaque_chasse`, DÉCOR — plus un `use_*`, qui
+aurait volé la portée d'usage à la cuvette voisine) bien positionnée au-dessus
+de la cabine 0.
+
+**Non vérifié depuis Blender** : le budget de lots annoncé pour la salle
+(2 lots de décor, sol commun avec la cafétéria + plafond `bo.boite`) et la
+fusion des `sanitaire_*` entre eux en un lot supplémentaire — ce sont des
+comportements du RUNTIME (loader/fusion Three.js), pas mesurables depuis
+un `.blend`. Et bien sûr : jouer — la vraie touche E sur une cuvette, casser
+un urinoir au pompe, boire l'eau.

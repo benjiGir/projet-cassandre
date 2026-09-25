@@ -8,8 +8,33 @@ export type GameFlowState =
   | "options"
   | "levelSelect"
   | "playing"
+  | "paused"
   | "dead"
   | "levelComplete";
+
+/**
+ * Une ligne du récap de fin de partie : ce qui a été compté, comment ça se
+ * calcule (`detail`, un texte déjà formaté — l'écran ne refait aucun calcul),
+ * ce que ça rapporte. DÉFINI ICI plutôt que dans `game/session/score.ts` et
+ * réimporté par lui, même pattern que `GameFlowState` ci-dessus (ADR 0020,
+ * `game/state.ts` reste une FEUILLE de dépendances — c'est aux autres
+ * modules d'importer depuis lui, jamais l'inverse).
+ * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+ */
+export interface RecapLine {
+  label: string;
+  detail: string;
+  points: number;
+}
+
+/** Voir `RecapLine` ci-dessus pour pourquoi ce type vit ici. Construit par `game/session/score.ts::buildLevelRecap`, pur calcul sans dépendance à ce store. */
+export interface LevelRecap {
+  lines: RecapLine[];
+  total: number;
+  elapsedSeconds: number;
+  parTimeSeconds: number | null;
+  accuracy: number;
+}
 
 export interface DebugState {
   fps: number;
@@ -103,6 +128,14 @@ interface GameState {
   flowState: GameFlowState;
   setFlowState: (state: GameFlowState) => void;
 
+  /** Récap de fin de partie — `null` tant qu'aucune partie ne s'est encore
+   * terminée. Poussé UNE FOIS par `game/session/score.ts::publishLevelRecap`,
+   * à la mort (récap partiel) ou à la fin de niveau (récap complet), jamais
+   * par image (invariant #2).
+   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie */
+  recap: LevelRecap | null;
+  setRecap: (recap: LevelRecap | null) => void;
+
   /** Remet `debug` à ses valeurs de boot et efface les messages transitoires — ne touche jamais `flowState`. */
   // see: docs/systems/session.md#construire-une-partie
   resetGameStore: () => void;
@@ -158,5 +191,8 @@ export const useGameStore = create<GameState>((set) => ({
   flowState: "boot",
   setFlowState: (state) => set({ flowState: state }),
 
-  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, hudMessage: null, heroLine: null }),
+  recap: null,
+  setRecap: (recap) => set({ recap }),
+
+  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, hudMessage: null, heroLine: null, recap: null }),
 }));

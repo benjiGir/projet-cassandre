@@ -163,6 +163,7 @@ export class SuitManager {
     hitEvents: ReadonlyArray<HitEvent>,
     navGraph: NavGraph | null = null,
     vitreSystem?: VitreHitTarget,
+    sanitaireSystem?: VitreHitTarget,
   ) {
     const aggregated = this.consumeNewHits(hitEvents);
 
@@ -173,6 +174,7 @@ export class SuitManager {
       playerEyePosition,
       navGraph,
       vitreSystem,
+      sanitaireSystem,
     };
 
     for (const suit of this.suits) {
@@ -187,6 +189,28 @@ export class SuitManager {
     }
 
     aggregated.clear();
+  }
+
+  /**
+   * DEV UNIQUEMENT : tue immédiatement `suit`, en poussant un vrai
+   * `deathEvent` (comme un kill au tir) — sans passer par `weapons.hitEvents`,
+   * donc sans viser. Sert à vérifier le récap de fin de partie
+   * (`game/session/score.ts`) et l'écran de fin de niveau/mort depuis la
+   * console, le verrouillage du pointeur étant hors de portée de
+   * l'automatisation (même précédent que `PropSystem.destroyByName`).
+   * Retourne `false` sans effet si `suit` est déjà mort.
+   */
+  debugKill(suit: Suit): boolean {
+    if (!suit.isAlive) return false;
+    const damage: AggregatedHit = {
+      totalDamage: Number.MAX_SAFE_INTEGER,
+      gibs: false,
+      gibPoint: null,
+      gibDirection: null,
+      anyPoint: suit.position.clone(),
+    };
+    this.applyAggregatedHit(suit, damage, suit.position);
+    return true;
   }
 
   private applyAggregatedHit(suit: Suit, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {

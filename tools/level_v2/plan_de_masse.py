@@ -147,7 +147,7 @@ SPACES: list[Space] = [
     Space(
         id="cafeteria", nom="Cafétéria",
         x=(34, 56), y=(0, 20), z=0, hauteur=4.0, densite="moyenne",
-        role="Optionnelle : soin, toilettes (+1 PV) derrière la porte est, secret 3 (bouche d'aération)",
+        role="Optionnelle : soin, toilettes (Duke : +10 PV) derrière la porte est, secret 3 (bouche d'aération)",
         duree="0:30", arrivee=(35, 7),
         ennemis="2 Costards attablés — réveil à l'entrée",
         spawns=[("suit_ca1", 54, 5, None), ("suit_ca2", 52, 16, None)],
@@ -321,17 +321,24 @@ SPACES: list[Space] = [
     Space(
         id="toilettes", nom="Toilettes",
         x=(56, 64), y=(6, 16), z=0, hauteur=3.0, densite="moyenne",
-        role="Optionnelles, au fond de la cafétéria : la chasse d'eau rend 1 PV",
+        role="Optionnelles, au fond de la cafétéria : les cuvettes et urinoirs sont "
+             "utilisables et cassables façon Duke — +10 PV en se soulageant (délai 220 s), "
+             "+1 PV par gorgée à l'eau d'un sanitaire cassé",
         duree="0:10", arrivee=(57, 11),
         ennemis="aucun — une cabine fermée, des chaussures dépassent sous la porte",
         notes=[
             "Jusqu'au 2026-09-24, les toilettes n'étaient qu'un `use_toilet` flottant au milieu "
             "de la cafétéria : un cube, pas une pièce.",
             "Trois cabines au nord, deux lavabos et leurs miroirs au sud, deux urinoirs à l'est.",
+            "Même jour, passe suivante : cuvettes et urinoirs deviennent des `sanitaire_*` — "
+            "le +1 PV de la chasse d'eau (un `use_*` qui aurait volé l'appui sur E à la cuvette "
+            "voisine) cède la place à la mécanique Duke, directement sur l'appareil. La plaque "
+            "de chasse (`wc_plaque_chasse`) reste, en décor.",
         ],
         reperes=[
-            # La plaque de chasse d'eau de la première cabine, sur le mur nord.
-            ("toilettes +1 PV", 60.5, 15.75, "objet"),
+            # Position de la plaque de chasse d'eau (décor) au-dessus du réservoir
+            # de la première cabine, sur le mur nord — plus un `use_*`.
+            ("toilettes +10 PV", 60.5, 15.75, "objet"),
         ],
     ),
     Space(

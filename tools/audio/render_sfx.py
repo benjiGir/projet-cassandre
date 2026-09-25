@@ -18,7 +18,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from recipes import RECIPES              # noqa: E402
+from enregistrements import PriseIndisponible  # noqa: E402
+from recipes import BOUCLES_EXACTES, RECIPES  # noqa: E402
 from synth import SR, crush, write_wav   # noqa: E402
 
 # Grain retro, RETIRE DU DEFAUT le 2026-09-20 apres mesure.
@@ -61,6 +62,7 @@ def main() -> None:
     os.makedirs(args.out, exist_ok=True)
 
     rendered, total = [], 0.0
+    manquants: list[str] = []
     for name, (fn, cat, nvar) in RECIPES.items():
         if names and name not in names:
             continue
@@ -69,7 +71,14 @@ def main() -> None:
 
         seeds = range(nvar) if (args.variants and nvar > 1) else [0]
         for s in seeds:
-            sig = fn(seed=s)
+            # Une recette qui pose une PRISE reelle (enregistrements.py) depend
+            # d'un fichier ignore par git. S'il manque, on le DIT et on sort en
+            # erreur : le remplacer en silence donnerait un autre sprite.
+            try:
+                sig = fn(seed=s)
+            except PriseIndisponible as e:
+                manquants.append(f"{name} (seed {s}) : {e}")
+                continue
             # Deux categories y echappent meme quand on le demande, pour des
             # raisons opposees : l'ambiance est une nappe tenue ou le grain
             # s'entend en continu, et l'UI est faite de sinus purs ou la
@@ -77,7 +86,8 @@ def main() -> None:
             if args.crush and cat not in ("ambience", "ui"):
                 sig = crush(sig, **CRUSH)
             stem = name if len(list(seeds)) == 1 else f"{name}_{s}"
-            info = write_wav(os.path.join(args.out, f"{stem}.wav"), sig, SR)
+            info = write_wav(os.path.join(args.out, f"{stem}.wav"), sig, SR,
+                             boucle=name in BOUCLES_EXACTES)
             info.update(name=stem, cat=cat, seed=s)
             rendered.append(info)
             total += info["duration"]
@@ -100,6 +110,13 @@ def main() -> None:
         with open(args.manifest, "w") as f:
             json.dump(rendered, f, indent=2)
         print(f"[rendu] manifeste -> {args.manifest}\n")
+
+    if manquants:
+        print("PRISES INDISPONIBLES — ces sons n'ont PAS ete rendus :")
+        for m in manquants:
+            print(f"  {m}")
+        print("Ne pas empaqueter ce dossier : le sprite perdrait ces sons.\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

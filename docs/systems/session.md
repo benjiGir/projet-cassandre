@@ -2,7 +2,7 @@
 title: Session de partie
 tags: [systeme, core]
 status: stable
-updated: 2026-09-19
+updated: 2026-09-24
 ---
 
 # Session de partie
@@ -182,7 +182,11 @@ est un type satellite du même fichier — voir
 `doorSystem`/`vitreSystem` (`DoorSystem`/`VitreSystem`) sont, eux,
 reconstruits à chaque `onLoaded` comme `propSystem`/`currentNavGraph` — voir
 [Spawn et chargement de niveau](#spawn-et-chargement-de-niveau) et
-[ADR 0031](../decisions/0031-portes-animees-et-vitres.md).
+[ADR 0031](../decisions/0031-portes-animees-et-vitres.md). `sanitaireSystem`
+(`SanitaireSystem`, [ADR 0032](../decisions/0032-sanitaires-utilisables.md))
+suit exactement le même sort ; `sanitaireReliefCooldown`, lui, est un état de
+PARTIE au même titre que `lastHeroLineAt` juste au-dessus — un délai en
+cours ne doit pas se réinitialiser au hot reload, seulement à un « Rejouer ».
 
 ## Construire une partie
 
@@ -328,7 +332,12 @@ derrière une porte automatique fermée au chargement ne reçoit jamais
 d'arête), les réactive juste après, puis rouvre silencieusement toute porte
 déjà dans `session.unlockedDoors` (hot reload EN COURS DE PARTIE — voir
 [Portes et fin de niveau](#portes-et-fin-de-niveau)). `session.vitreSystem`
-(`VitreSystem`) est reconstruit juste après, comme `propSystem`. Le
+(`VitreSystem`) et `session.sanitaireSystem` (`SanitaireSystem`,
+[ADR 0032](../decisions/0032-sanitaires-utilisables.md)) sont reconstruits
+juste après, comme `propSystem` — et le callback commence par
+`engine.fx.clearWaterJets()` avant tout le reste : les jets d'eau permanents
+d'un sanitaire cassé appartiennent au niveau qui vient de disparaître, hot
+reload ou premier chargement. Le
 callback logue aussi des diagnostics, et surtout ne repositionne le joueur /
 ne fait apparaître les Costards et le Directeur QUE si `info.isFirstLoad` —
 un hot reload pendant une partie ne doit JAMAIS respawn le joueur ni
@@ -435,6 +444,100 @@ dans la même frame. Sans ce flag, un second appel enverrait un second
 `DIED` (no-op côté machine XState) et un second `exitPointerLock()`
 (idempotent côté DOM) : inoffensif, mais le flag documente l'intention
 plutôt que de compter sur ces deux idempotences accidentelles.
+
+## Récapitulatif de fin de partie
+
+`game/session/score.ts` construit le récap affiché par `DeathScreen`/
+`LevelCompleteScreen` (`ui/components/RecapTable/RecapTable.tsx`) : kills,
+secrets, précision, vandalisme, bonus de rapidité — traduits en points par
+un barème à constantes nommées (`SCORE_SUIT_KILL`, `SCORE_DIRECTOR_KILL`,
+`SCORE_SECRET`, `SCORE_ALL_SECRETS_BONUS`, `SCORE_ACCURACY_MAX_POINTS`,
+`SCORE_VANDALISM_*`, `SCORE_PAR_TIME_POINTS_PER_SECOND`).
+
+Le module se découpe en deux parties, séparées par une frontière
+délibérée :
+
+- **`SessionStats`** (compteurs bruts : kills, tirs/hits, casse, temps de
+  gameplay écoulé) vit sur `session.stats`, avancée AU PAS FIXE, dans
+  `game/loop/updateGameplay.ts` — jamais `Date.now()`/`performance.now()`,
+  jamais un évènement lu au taux d'affichage (invariants #1/#12/#13). Les
+  files d'évènements des managers (`suitManager.deathEvents`,
+  `propSystem.destroyedEvents`...) s'accumulent sur toute la frame
+  d'affichage et ne sont vidées que plus tard par `updateFx.ts` :
+  `updateGameplay.ts` compare leur longueur AVANT/APRÈS chaque appel
+  d'`update()` précis pour isoler exactement ce que CE pas fixe vient de
+  produire, sans jamais les consommer lui-même. Un tir de pompe (plusieurs
+  plombs, plusieurs `HitEvent` possibles) reste UN SEUL `shotsFired` — la
+  précision compte des TIRS, pas des impacts.
+- **`buildLevelRecap`** (le barème lui-même) est une fonction PURE : des
+  `SessionStats` déjà figés en entrée, une liste de `RecapLine` (`label`,
+  `detail` déjà formaté, `points`) et un total en sortie. Aucune ligne
+  n'apparaît pour ce qui ne concerne pas le niveau (pas de Directeur sur un
+  niveau qui n'en a pas, pas de secrets sur un niveau qui n'en a pas, pas de
+  vandalisme si rien n'a été cassé) — l'écran n'affiche que ce que la partie
+  a produit.
+
+`publishLevelRecap(session, includeTimeBonus)` est le seul point d'entrée
+IMPUR (il écrit dans `useGameStore`) : appelé par
+`game/session/doors.ts::triggerLevelComplete` (fin de niveau,
+`includeTimeBonus: true`) et par
+`game/session/feedback.ts::handlePlayerHit` (mort, `includeTimeBonus:
+false` — récap PARTIEL, sans bonus de chrono pour une partie qui ne s'est
+pas terminée par la sortie). `LevelRecap`/`RecapLine` sont DÉFINIS dans
+`game/state.ts`, pas dans `score.ts` (même principe que `GameFlowState`,
+voir [HUD et interface — Flux d'écran](hud.md#flux-décran)) : ADR 0020,
+`game/state.ts` reste une feuille de dépendances.
+
+`LevelDef.parTime` (`game/level/levels.ts`, secondes) fixe le temps de
+référence du bonus de rapidité ; son absence (gym, zones de test) retire
+simplement la ligne "Rapidité" du récap plutôt que d'afficher un temps
+arbitraire.
+
+## Pause
+
+Un état `paused` de l'acteur de flux (`ui/gameFlowMachine.ts`), au même
+niveau que `dead`/`levelComplete` : le monde Rapier reste vivant
+(`isPhysicsSessionLive` inclut `paused`, voir [Savoir si le monde physique
+est vivant](#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive)),
+le pas fixe continue de tourner (invariant #1), seul son CONTENU est
+ignoré — `updateGameplay.ts` retourne tôt dès que
+`flowActor.getSnapshot().value !== "playing"`, garde déjà en place avant
+la pause et qui couvre `paused` sans modification. Les ennemis ne tirent
+donc plus, la boucle d'eau positionnelle se coupe (déjà hors de `playing`,
+voir [HUD et audio](hud-audio.md#boucle-deau-positionnelle)) : rien de
+neuf à câbler là, seule la nouvelle valeur de `flowState` suffit.
+
+**Déclenchement, PAS un bouton** : `main.ts` écoute `pointerlockchange` sur
+`document` et envoie `PAUSE` dès que le verrouillage du pointeur est perdu
+PENDANT `playing`. Échap libère toujours le verrouillage au niveau du
+navigateur, mais ne livre pas nécessairement son évènement clavier à la
+page (constaté selon le moteur de rendu) — la perte du verrouillage est le
+signal robuste, celui qui couvre aussi bien Échap qu'un alt-tab ou un
+changement d'onglet. `input.clearPendingEdges()` est appelé au même
+moment : sans lui, une touche de gameplay pressée par erreur pendant le
+menu de pause (ou pendant une capture de rebinding dans son onglet
+Paramètres) resterait "juste pressée" au tout premier pas fixe après la
+reprise — un appui fantôme.
+
+`PauseScreen` (`ui/screens/pause/PauseScreen/PauseScreen.tsx`) affiche
+REPRENDRE / PARAMÈTRES / QUITTER VERS LE MENU. "Paramètres" réutilise
+`OptionsScreen` tel quel (même composant que le menu principal, `onBack`
+pointé vers le menu de pause plutôt que vers `MainMenu`) plutôt que d'en
+dupliquer le câblage — léger écart assumé à « un écran ne connaît pas un
+autre écran » ([composition](../reference/react-composition.md)), justifié
+parce qu'il s'agit d'une composition, pas d'un couplage de navigation
+(`OptionsScreen` reste utilisable seul, ne sait rien de la pause).
+"Reprendre" appelle `game/session/lifecycle.ts::resumeGame(engine)` : vide
+les fronts en attente, redemande le verrouillage du pointeur (le clic sur
+le bouton EST le geste utilisateur exigé par l'API navigateur) puis envoie
+`RESUME`. "Quitter vers le menu" réutilise `returnToMenu(engine)` tel
+quel — le pointeur est déjà déverrouillé en pause, aucun appel
+supplémentaire à `exitPointerLock()` n'est nécessaire.
+
+**Les quatre réglages d'affichage s'appliquent à chaud, y compris en
+pause** — voir [HUD et interface — Options](hud.md#options-contrôles-et-affichage)
+pour le mécanisme (`game/graphicsSettings.ts::registerRenderTarget`). Le
+rebinding et la musique étaient déjà immédiats avant cette tâche.
 
 ## Harnais F9 et F10
 

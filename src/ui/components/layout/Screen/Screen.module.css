@@ -15,3 +15,15 @@
   color: var(--text);
   font-family: var(--font-mono);
 }
+
+/* Pause : le jeu tourne encore dessous (invariant #1, le rendu n'est jamais
+   coupé) — un fond opaque le cacherait pour rien. `backdrop-filter` est du
+   compositeur pur, aucun coût côté React/boucle (invariant #2). */
+[data-backdrop="dim"] {
+  background: rgba(2, 5, 2, 0.45);
+  backdrop-filter: blur(calc(var(--vpx) * 1.5)) brightness(0.55) saturate(0.7);
+}
+
+[data-tone="alert"][data-backdrop="dim"] {
+  background: rgba(8, 2, 2, 0.45);
+}

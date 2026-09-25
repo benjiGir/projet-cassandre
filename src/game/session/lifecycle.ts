@@ -3,6 +3,11 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { createElement } from "react";
 
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
+import { DeterministicRandom } from "../../core/random";
+import { input } from "../../core/input";
+import { runGameplaySync } from "../../core/runtime";
+import { SANITAIRE_RELIEF_LINE_SEED } from "./sanitaires";
+import { createInitialStats } from "./score";
 import { PlayerController } from "../player/controller";
 import { WeaponSystem } from "../player/weapons";
 import { buildGym } from "../level/gym";
@@ -148,6 +153,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     propSystem: null,
     doorSystem: null,
     vitreSystem: null,
+    sanitaireSystem: null,
+    sanitaireReliefCooldown: 0,
     droppedCardMesh: null,
     cards: new Set(),
     unlockedDoors: new Set(),
@@ -160,6 +167,10 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     deathHandled: false,
     levelCompleteHandled: false,
     lastHeroLineAt: -Infinity,
+    sanitaireReliefRandom: runGameplaySync(
+      DeterministicRandom.useSync((random) => random.forSeed(SANITAIRE_RELIEF_LINE_SEED)),
+    ),
+    stats: createInitialStats(),
   };
 
   // Loadout de départ : `LevelDef.startUnarmed` (registre `game/level/levels.ts`).
@@ -218,6 +229,12 @@ export function teardownGameSession(engine: PersistentEngine, session: GameSessi
   // `dispose()` dessus.
   if (session.droppedCardMesh) engine.scene.remove(session.droppedCardMesh);
 
+  // Jets d'eau permanents des sanitaires cassés (`FxSystem.addWaterJet`) :
+  // propres à CETTE partie/CE niveau, comme les corps Rapier qui disparaissent
+  // juste en dessous — un "Rejouer"/"Retour au menu" ne doit pas laisser un
+  // jet de l'ancienne partie flotter dans la nouvelle.
+  engine.fx.clearWaterJets();
+
   session.physics.world.free();
 }
 
@@ -256,7 +273,30 @@ export function returnToMenu(engine: GameEngine): void {
 
   resolveBootChoice(engine.root).then((choice) => {
     engine.session = bootGameSession(engine, choice);
-    engine.root.render(createElement(App, { onReplay: () => replay(engine), onReturnToMenu: () => returnToMenu(engine) }));
+    engine.root.render(
+      createElement(App, {
+        onReplay: () => replay(engine),
+        onReturnToMenu: () => returnToMenu(engine),
+        onResume: () => resumeGame(engine),
+      }),
+    );
     engine.flowActor.send({ type: "PLAY" });
   });
+}
+
+/**
+ * "Reprendre" depuis la pause : redemande le verrouillage du pointeur —
+ * geste utilisateur obligatoire, satisfait ici par le clic même sur le
+ * bouton "Reprendre" (`PauseScreen`) — puis envoie `RESUME` à l'acteur de
+ * flux. `clearPendingEdges()` vide les fronts de touches accumulés PENDANT
+ * la pause (ex. taper une lettre en rebindant une touche dans l'onglet
+ * Paramètres) : sans ça, une touche de gameplay pressée par erreur pendant
+ * le menu serait consommée comme une vraie action au tout premier pas fixe
+ * après la reprise.
+ * see: docs/systems/session.md#pause
+ */
+export function resumeGame(engine: GameEngine): void {
+  input.clearPendingEdges();
+  input.requestPointerLockNow();
+  engine.flowActor.send({ type: "RESUME" });
 }

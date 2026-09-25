@@ -2,7 +2,7 @@
 title: Conventions de nommage
 tags: [reference, pipeline]
 status: stable
-updated: 2026-09-19
+updated: 2026-09-24
 ---
 
 # Conventions de nommage
@@ -27,6 +27,7 @@ quel, **sans collider**, silencieusement — c'est le comportement voulu.
 | `secret_*` | zone comptée dans le compteur de secrets |
 | `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |
 | `vitre_*` | vitrage (voir plus bas) — collider cuboid tant que `solide !== false`, cassable si `pv` |
+| `sanitaire_*` | cuvette ou urinoir UTILISABLE (voir plus bas) — collider cuboid toujours actif, cassable si `pv` |
 | `kit_*` | pièce du kit modulaire |
 
 Blender suffixe automatiquement les doublons (`col_wall.001`). Toute regex de
@@ -50,6 +51,8 @@ Properties** à l'export, sinon tout le paramétrage est perdu silencieusement.
 | `masse` | `prop_*` | masse en kg (défaut 25) |
 | `pv` | `prop_*` | points de vie — **absent = indestructible** |
 | `matiere` | `prop_*` | `bois`, `carton`, `verre` ou `metal` |
+| `sorte` | `sanitaire_*` | `cuvette` ou `urinoir` — **OBLIGATOIRE**, voir plus bas |
+| `pv` | `sanitaire_*` | points de vie — absent = incassable AU TIR DU JOUEUR (reste utilisable et cassable d'un coup par un tir ennemi) |
 
 La propriété s'appelle bien `target`, pas `use_target` : c'est le nom que
 `loader.ts::buildUseObject` lit dans `extras`. (Cette table a porté
@@ -297,6 +300,83 @@ l'effet Duke Nukem voulu, détaillé dans
 
 En console : `cassandre.vitres.liste()` (PV, cassée, givre) et
 `cassandre.vitres.casser("vitre_surgeles_1")`.
+
+### Préfixe sanitaire
+
+Une cuvette ou un urinoir UTILISABLE, façon Duke Nukem 3D. UN mesh, UN
+matériau (le matériau `palette` commun, comme les meubles Kenney) — **jamais
+de `col_*` jumeau** : le loader construit lui-même un collider cuboid FIXE
+sur la bbox monde, groupe WORLD, **toujours actif** (contrairement à
+`vitre_*`, un sanitaire n'a pas de variante `solide: false`).
+
+| Propriété | Sens | Défaut |
+|---|---|---|
+| `sorte` | `"cuvette"` ou `"urinoir"` — **OBLIGATOIRE** | (aucun — absente ou inconnue avertit bruyamment, repli sur `"cuvette"`) |
+| `pv` | nombre > 0 = cassable au tir du JOUEUR ; absent = incassable à ce tir-là (mais toujours utilisable, et cassable d'un coup par un tir ENNEMI) | (aucun — incassable au joueur) |
+
+`sorte` est la seule custom property de tout le contrat de nommage dont
+l'ABSENCE avertit bruyamment (même règle que l'invalidité) : sur
+`prop_*`/`door_*`, l'absence d'une propriété facultative est silencieuse,
+seule une valeur présente-mais-fausse avertit. Ici, l'objet n'a pas de
+comportement par défaut raisonnable sans savoir de quel appareil il s'agit —
+la cuvette est le repli choisi (la plus fréquente au plan de masse), jamais
+un silence.
+
+**Deux gestes, une seule règle de soin** (`game/session/sanitaires.ts`,
+partagée avec le `use_toilet` historique du niveau `hypermarche_complet`) :
+
+| Ce qu'on fait | Effet |
+|---|---|
+| Toucher E devant un sanitaire INTACT | soulagement : +10 % du PV max (arrondi), plafonné au max, puis un délai GLOBAL de 220 s de GAMEPLAY avant le prochain — un seul compteur pour tout le niveau. La chasse d'eau (`sanitaire_use`) part dans tous les cas ; pendant le délai ou à PV pleins hors délai, rien ne soigne (message HUD court, délai non consommé à PV pleins) |
+| Toucher E devant un sanitaire CASSÉ | une gorgée au jet d'eau permanent : +1 PV par appui, illimité, plafonné au max, son `water_drink` (aucun son à PV pleins) |
+
+Écarts volontaires par rapport à `player.c` (Duke 3D, cas TOILET/STALL de
+`checksectors`) : Duke fige le joueur ~2 s pendant l'acte — **on ne le fait
+pas** (invariant #10, aucune animation ne bloque le joueur) ; à PV pleins ET
+hors délai, Duke consommerait quand même le délai — ici il ne l'est PAS,
+plus amical.
+
+Un tir ENNEMI qui rencontre un sanitaire intact le CASSE D'UN COUP, sans
+passer par ses PV — même effet Duke Nukem que `vitre_*`
+(`enemyMachine.ts::handleEnemyShotMiss`, généralisé pour accepter plusieurs
+cibles cassables plutôt que dupliqué).
+
+**Portée d'usage — exige de VISER l'appareil** (révision du 2026-09-24, retour
+de playtest : « je peux quand même activer [...] même si je regarde pas les
+toilettes »), "neartag" façon Duke 3D plutôt qu'une simple distance. Un rayon
+Rapier part de l'œil du joueur (même origine que les armes) dans la direction
+de visée courante, filtré WORLD :
+
+- un sanitaire **INTACT** doit être le PREMIER collider touché, à
+  `SANITAIRE_AIM_RANGE_METERS` (1,4 m — volontairement plus court que les 2 m
+  d'un `use_*` générique : viser une cuvette suppose de s'y tenir devant et de
+  baisser les yeux) — une cloison de cabine plus proche bloque, comme un mur
+  bloquerait un tir ;
+- un sanitaire **CASSÉ** n'a plus de collider (désactivé à la casse) : viser
+  son jet compte à la place — le volume vertical au-dessus de `jetOrigin`
+  (~1,5 m de haut, ~0,3 m de rayon), à condition qu'aucun mur/cloison ne soit
+  plus proche sur le même rayon.
+
+`SanitaireSystem.resolveAim` fait l'interprétation géométrique,
+`game/session/sanitaires.ts::trySanitaire` lance le rayon. Détail complet :
+[ADR 0032](../decisions/0032-sanitaires-utilisables.md), section
+« Portée — visée ».
+
+**Budget de lots, même stratégie que `vitre_*`** : tous les `sanitaire_*`
+d'un même matériau fusionnent en un seul lot de dessin POUR TOUT LE NIVEAU,
+sans découpe en cellules — une salle de toilettes pèse quelques centaines de
+triangles, la fusion sert ici à tenir le budget de LOTS. Casser un sanitaire
+écrase sa propre plage de sommets sur son centre, le lot reste un seul mesh
+pour toujours.
+
+En console : `cassandre.sanitaires.liste()` (sorte, PV, cassé),
+`cassandre.sanitaires.casser("sanitaire_urinoir_2")`,
+`cassandre.sanitaires.jets()` (jets d'eau actifs) et
+`cassandre.sanitaires.delai()`/`forcerDelai(secondes)` (lit/force le délai de
+soulagement — le seul moyen de juger le "Rien ne vient." sans attendre 220 s
+en jouant).
+
+see: [ADR 0032](../decisions/0032-sanitaires-utilisables.md)
 
 ## Constantes de construction
 

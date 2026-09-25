@@ -129,6 +129,12 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           engine.camera.position,
         );
+        // Sanitaires : même élagage, même portée — une cuvette est aussi
+        // petite qu'une trousse (voir `SanitaireMergeResult.rendus`).
+        engine.useObjectCulling.update(
+          session.gltfLevelSession?.current?.sanitaireRendus ?? [],
+          engine.camera.position,
+        );
 
         // Costards : position/forward interpolés (jamais les valeurs brutes du
         // pas fixe, voir la doc de `BillboardSprite.updatePose`), une fois par

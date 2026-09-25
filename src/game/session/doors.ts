@@ -4,6 +4,7 @@ import { playDoorSfx } from "../../core/audio";
 import { LOYALTY_CARD_LABELS, type LoyaltyCard } from "../player/loyaltyCards";
 import { hasCard } from "./cards";
 import { showHudMessage } from "./feedback";
+import { publishLevelRecap } from "./score";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
@@ -107,6 +108,11 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
 export function triggerLevelComplete(engine: GameEngine, session: GameSession): void {
   if (session.levelCompleteHandled) return;
   session.levelCompleteHandled = true;
+  // Récap COMPLET (bonus de chrono compris) — AVANT l'envoi de l'évènement,
+  // pour que `LevelCompleteScreen` trouve `state.recap` déjà rempli dès son
+  // premier rendu après le changement de `flowState`.
+  // see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+  publishLevelRecap(session, true);
   engine.flowActor.send({ type: "LEVEL_COMPLETED" });
   document.exitPointerLock();
 }

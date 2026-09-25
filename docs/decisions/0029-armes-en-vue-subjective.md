@@ -59,3 +59,35 @@ des horloges avancées au pas fixe et lues par le rendu seul.
 - Si le balayage paraît mou ou illisible en jouant, ce sont les amplitudes
   (`SWING_*`, `render/viewmodel.ts`) et `VIEWMODEL_TIMING.strike` qui se
   règlent — pas un retour à un sprite.
+
+## Révision du 2026-09-25 — refonte du modèle du pistolet
+
+Retour de l'utilisateur, mot pour mot : « Refaire le modèle du pistolet,
+parce qu'il est vraiment horrible. » Diagnostic chiffré et modèle de
+remplacement écrits dans
+[`docs/assets/board-pistolet.md`](../assets/board-pistolet.md) avant toute
+retouche du script (`reference-driven-authoring`) : le pistolet d'origine
+avait un rapport hauteur/longueur de 1,01 (un Beretta fait 0,63, un Glock
+0,68), une poignée-tube qui flottait sous la carcasse, un canon-clou de
+3,5 cm, et surtout une CULASSE PLUS SOMBRE que la carcasse — l'inverse de ce
+que dit le commentaire du code d'origine, et l'inverse de ce qu'exige la
+lisibilité sous l'éclairage très faible de la vue subjective (0,06 à 0,18 de
+la lumière de la scène, mesuré).
+
+`construire_pistolet` (`tools/blender/build_weapons.py`) est réécrite
+d'après ce board : Beretta 92FS deux tons (culasse inox, carcasse noire),
+raccourci vers le gabarit du 92 Compact, dessus de culasse ouvert (le canon
+visible entre deux rails, la vraie signature d'un Beretta vu de dos), hausse,
+guidon, chien, leviers de sûreté, pontet ajouré. 350-420 triangles (mesuré :
+360 pour le modèle au sol), contre 108 avant — le budget n'était pas le
+problème, la forme l'était. `PRISE_PISTOLET` et le nouveau `bout_canon`
+(`BOUT_CANON_PISTOLET`) ont été recalés en conséquence ; pied-de-biche et
+pompe n'ont pas été touchés (vérifié par comparaison des comptes de sommets/
+triangles avant/après, identiques). Détail dans
+`tools/blender/README.md#pistolet--refonte-2026-09-25`.
+
+**Ce qui reste hors de portée de ce modèle, chiffré dans le board** :
+l'éclairage de la vue subjective écrase toute palette (même un blanc pur
+n'y dépasse pas `#38`-`#61` à l'écran, mesuré par approximation d'exposition
+faute d'outil de capture en jeu pour cet agent) — un sujet de rendu
+(`retro-render`), pas de modèle. **En attente du verdict de playtest.**

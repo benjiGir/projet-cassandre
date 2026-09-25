@@ -1,17 +1,25 @@
+/* Échelle en --vpx (même unité que le HUD, invariant #4) : un `max()` garde
+   un plancher lisible aux formats très étroits (375 px portrait), où --vpx
+   s'effondre sous 0.6 puisqu'il suit la largeur de l'image 640 px du jeu.
+   see: docs/reference/react-css.md#lunité-du-hud */
 .panel {
-  --title-glow-radius: 16px;
-  gap: 16px;
-  padding: 44px 56px 36px;
+  --title-glow-radius: calc(var(--vpx) * 8);
+  gap: max(calc(var(--vpx) * 4), 7px);
+  /* `clamp` plutôt que `max(…, 92vw)` : un simple plancher px l'emporterait
+     sur `max-width` et déborderait sur un très petit écran (voir le piège de
+     largeur figée trouvé au premier passage mobile). */
+  width: clamp(280px, calc(var(--vpx) * 300), 92vw);
+  padding: max(calc(var(--vpx) * 22), 22px) max(calc(var(--vpx) * 28), 26px) max(calc(var(--vpx) * 18), 18px);
 }
 
 .title {
-  font-size: 34px;
+  font-size: max(calc(var(--vpx) * 17), 24px);
 }
 
 .body {
-  max-width: 360px;
+  max-width: clamp(230px, calc(var(--vpx) * 170), 420px);
   margin: 0;
-  font-size: 13.5px;
+  font-size: max(calc(var(--vpx) * 6.75), 12px);
   line-height: 1.6;
   text-align: center;
   color: #e6b8b8;
@@ -19,10 +27,28 @@
 
 .stat {
   margin: 0;
-  font-size: 12px;
+  font-size: max(calc(var(--vpx) * 6), 11px);
   color: var(--text-dim);
 }
 
+.partialNote {
+  margin: max(calc(var(--vpx) * 2), 4px) 0 0;
+  font-size: max(calc(var(--vpx) * 5), 9.5px);
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  opacity: 0.85;
+}
+
+.recap {
+  width: 100%;
+  max-width: 640px;
+}
+
 .actions {
-  margin-top: 6px;
+  margin-top: max(calc(var(--vpx) * 1.5), 4px);
+}
+
+.actionButton {
+  padding: max(calc(var(--vpx) * 5), 9px) max(calc(var(--vpx) * 9), 14px);
+  font-size: max(calc(var(--vpx) * 6.25), 11px);
 }

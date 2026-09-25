@@ -101,7 +101,7 @@ export type PersistentEngine = Omit<GameEngine, "session">;
  */
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
   const value = engine.flowActor.getSnapshot().value;
-  return value === "playing" || value === "dead" || value === "levelComplete";
+  return value === "playing" || value === "paused" || value === "dead" || value === "levelComplete";
 }
 
 /**

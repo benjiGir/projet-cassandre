@@ -2,7 +2,7 @@
 title: Ce que coûte une image — mesures
 tags: [systemes, rendu, performance]
 status: stable
-updated: 2026-09-12
+updated: 2026-09-24
 ---
 
 # Ce que coûte une image — mesures
@@ -198,6 +198,7 @@ a son remède, et les trois sont le même : regrouper ou élaguer.
 | `prop_*` (mobilier poussable) | 37 lots au spawn du parking | élagage à 36 m ([ADR 0030](../decisions/0030-props-dynamiques.md)) | 6 |
 | `door_*` (vantaux animés) | 13 lots au bout du hub, 20 vantaux | `BatchedMesh` par matériau (`batchDoorMeshes`) | 6 pour tout le niveau |
 | `vitre_*` (vitrages) | 6 lots au spawn du parking | un lot par matériau, sans découpe en cellules | 1 pour tout le niveau |
+| `sanitaire_*` (cuvettes/urinoirs) | 1 lot, mais visible depuis le parking extérieur à 80 m (77 poses sur 240 du parking le dessinaient) | un lot par matériau comme `vitre_*` ([ADR 0032](../decisions/0032-sanitaires-utilisables.md)), PLUS l'élagage à 48 m des `use_*` | 1 dans la salle des toilettes, 0 ailleurs |
 | `use_*` (ramassages, lecteurs) | 21 lots depuis les caisses, dont une trousse à 150 m | élagage à 48 m (`render/useObjectCulling.ts`) | 3 à 5 |
 
 **Pourquoi trois réglages différents.** Un vantail ne peut pas être élagué :
@@ -207,6 +208,15 @@ six matériaux. Une vitre ne peut pas non plus être élaguée (on voit à trave
 une galerie entière), mais tout le verre du niveau pèse quelques centaines de
 triangles : un seul lot, sans cellules, coûte toujours un. Un ramassage, lui,
 est petit : à 48 m, une trousse fait deux pixels de haut.
+
+**Remesuré le 2026-09-24, protocole différent, résultat à lire comme tel.**
+Joueur laissé au spawn du parking, quarante ennemis en vie, caméra seule
+déplacée sur une grille de 10 points × 24 caps dans le parking extérieur
+(`renderBench(1)`) : pire pose **211 lots** en (−10 ; 1,6 ; 30) vers le
+nord-est, AVANT comme APRÈS les sanitaires — liste des objets dessinés
+identique, objet par objet, entre les deux `.glb`. Ce protocole ne
+reproduit donc pas les 198 annoncés plus bas et dans CLAUDE.md : le
+dépassement n'est pas neuf, mais il existe à cette pose.
 
 **État du budget après cette passe** (200 lots, quarante ennemis encore en
 vie, ramassages proches visibles) : pire vue mesurée **188 lots** (la ligne

@@ -8,7 +8,9 @@ import type { GameFlowState } from "../game/state";
  * ni `PhysicsWorld`, ni `scene`, ni `bootGameSession`/`teardownGameSession`.
  * Le câblage runtime réel est volontairement plus grossier que la table de
  * transition testée ci-dessous (les états `options`/`levelSelect` ne sont
- * jamais atteints par l'acteur réel de l'application).
+ * jamais atteints par l'acteur réel de l'application) — `paused`, lui, EST
+ * atteint réellement (`main.ts`, sur perte du verrouillage du pointeur
+ * pendant `playing`), voir `docs/systems/session.md#pause`.
  * see: docs/decisions/0019-machine-xstate-flux-ecran.md
  * see: docs/systems/hud.md#flux-décran
  */
@@ -22,7 +24,9 @@ export type GameFlowEvent =
   | { type: "DIED" }
   | { type: "LEVEL_COMPLETED" }
   | { type: "REPLAY" }
-  | { type: "RETURN_TO_MENU" };
+  | { type: "RETURN_TO_MENU" }
+  | { type: "PAUSE" }
+  | { type: "RESUME" };
 
 export const gameFlowMachine = setup({
   types: {} as {
@@ -59,6 +63,17 @@ export const gameFlowMachine = setup({
       on: {
         DIED: "dead",
         LEVEL_COMPLETED: "levelComplete",
+        PAUSE: "paused",
+      },
+    },
+    // Le pas fixe continue de tourner en pause (invariant #1), seul son
+    // CONTENU est ignoré (`updateGameplay.ts`, garde `flowState !== "playing"`
+    // déjà en place) — même mécanisme que "dead"/"levelComplete", pas un
+    // système séparé. see: docs/systems/session.md#pause
+    paused: {
+      on: {
+        RESUME: "playing",
+        RETURN_TO_MENU: "mainMenu",
       },
     },
     dead: {

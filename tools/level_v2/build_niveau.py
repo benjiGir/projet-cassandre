@@ -1682,8 +1682,13 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
 # Demandées le 2026-09-24 (« il manque une vraie salle pour les toilettes ») :
 # jusque-là, le +1 PV du plan tenait dans un cube `use_toilet` flottant au milieu
 # de la cafétéria. Une salle carrelée derrière une porte « WC » : trois cabines
-# au nord, deux lavabos au sud, deux urinoirs à l'est. La plaque de chasse d'eau
-# de la première cabine EST l'objet interactif.
+# au nord, deux lavabos au sud, deux urinoirs à l'est.
+#
+# Passe suivante, MÊME JOUR : les cuvettes et les urinoirs deviennent
+# `sanitaire_*`, utilisables et cassables façon Duke Nukem 3D (contrat détaillé
+# dans `tools/blender/README.md#sanitaires`) — la plaque de chasse d'eau
+# (`wc_plaque_chasse`) redevient un simple décor, un `use_*` posé à côté d'un
+# `sanitaire_*` lui aurait volé la portée d'usage.
 
 WC_CABINES_X = 60.0                        # bord ouest de la première cabine
 WC_CABINE_L, WC_CABINE_P = 1.25, 1.75      # largeur, profondeur depuis le mur nord
@@ -1723,6 +1728,33 @@ def _collider_epaissi(nom: str, b, z_sol: float, col_coll) -> None:
         c = (y0 + y1) / 2
         y0, y1 = min(y0, c - WC_COLLIDER_MIN / 2), max(y1, c + WC_COLLIDER_MIN / 2)
     H.col_box(nom, (x0, y0, z_sol, x1, y1, z1), col_coll)
+
+
+# PV d'un `sanitaire_*` cassable (2026-09-24, contrat runtime partagé avec le
+# loader/`SanitaireSystem`, écrit en parallèle). Choisi contre
+# `src/game/player/weaponConfig.ts::damageForWeapon` : un coup de pied-de-biche
+# (`meleeDamage` = 40) ne casse PAS la faïence d'un coup, il en faut deux
+# (2 × 40 = 80) ; un coup de pompe à bout portant, où les neuf plombs du cône de
+# 5° convergent tous sur une cible aussi proche (9 × `shotgunDamagePerPellet` =
+# 9 × 6 = 54), casse en un seul tir. 50 tient entre les deux.
+SANITAIRE_PV = 50
+
+
+def _rendre_sanitaire(nom_pose: str, nom_final: str, sorte: str) -> None:
+    """Renomme une copie posée par `poser`/`L.place` en `sanitaire_<sorte>` et
+    lui donne ses extras (`sorte`, `pv`).
+
+    Contrairement à un meuble ordinaire, un `sanitaire_*` ne garde AUCUN
+    `col_box` jumeau : le loader en construit un lui-même, fixe, sur sa bbox
+    monde (même logique que pour un `prop_*`, sauf que celui-ci ne bouge
+    jamais). C'est pour ça que `MEUBLES["toilet"]` porte `collider=False` —
+    sans quoi `L.place` aurait copié un `col_box_toilet_<suffixe>` que
+    personne ne renomme ni ne retire ici.
+    """
+    obj = bpy.data.objects[nom_pose]
+    obj.name = nom_final
+    obj["sorte"] = sorte
+    obj["pv"] = SANITAIRE_PV
 
 
 def habiller_toilettes(space, gris, props, col_coll, logic) -> dict:
@@ -1778,12 +1810,18 @@ def habiller_toilettes(space, gris, props, col_coll, logic) -> dict:
     for i, sx in enumerate(xs):
         poser(B.meuble("toilet"), sx + (WC_CABINE_L - lx) / 2, nord - ly, z, "-y", props, col_coll,
               f"wc_cuvette{i}")
+        _rendre_sanitaire(f"mob_k_toilet_wc_cuvette{i}", f"sanitaire_cuvette{i}", "cuvette")
     # La plaque de chasse d'eau, au-dessus du réservoir de la première cabine.
+    # DÉCOR pur depuis le 2026-09-24 (`wc_plaque_chasse`, plus un `use_*`) : un
+    # `use_*` passe AVANT un `sanitaire_*` au test de portée du joueur et
+    # volerait l'appui sur E à la cuvette juste à côté — le soin façon Duke
+    # (« +10 PV en se soulageant ») vient maintenant de `sanitaire_cuvette0`
+    # elle-même, lue par le système qui gère `sanitaire_*` (hors scope ici).
     # Centrée SUR la face du mur, comme les lecteurs de carte : son origine reste
-    # sur la grille. La portée d'usage (2 m) se mesure jusqu'à elle.
+    # sur la grille.
     rx, ry = next((r[1], r[2]) for r in space.reperes if "toilettes" in r[0])
-    bo.boite_centree("use_toilet", (rx, ry, z + 1.25), (0.25, 0.08, 0.2), "repere",
-                     {"repere": H.textured_material("metal_bac_acier")}, logic)
+    H.box("wc_plaque_chasse", (rx - 0.125, ry - 0.04, z + 1.15, rx + 0.125, ry + 0.04, z + 1.35),
+          "metal_bac_acier", props)
 
     # Lavabos et miroirs contre le mur sud, poubelle, sèche-mains.
     mx, _, _ = _emprise(B.meuble("bathroomMirror"))
@@ -1795,15 +1833,24 @@ def habiller_toilettes(space, gris, props, col_coll, logic) -> dict:
     H.box("wc_seche_mains", (60.25, sud, z + 1.2, 60.55, sud + 0.2, z + 1.5), "metal_bac_acier", props)
 
     # Urinoirs contre le mur est : la cuvette, sa lèvre 2 cm devant (jamais à
-    # fleur), la descente d'eau, une séparation entre les deux.
-    urinoirs, tuyaux = [], []
-    for uy in WC_URINOIRS_Y:
-        urinoirs.append(((est - 0.33, uy - 0.2, z + 0.55, est, uy + 0.2, z + 1.15), "aplat:#f2efe6"))
-        urinoirs.append(((est - 0.35, uy - 0.15, z + 0.60, est - 0.30, uy + 0.15, z + 0.72), "aplat:#a2a3a1"))
+    # fleur). Chacun est son propre `sanitaire_urinoir<i>` (UN mesh, UN
+    # matériau — cuvette + lèvre, sans la descente d'eau ni la séparation :
+    # le jet d'eau du jeu part du bas-centre de la bbox de l'appareil, qui
+    # doit donc être celle de la cuvette seule). La descente d'eau et la
+    # séparation entre les deux appareils restent du DÉCOR (`wc_tuyaux`,
+    # `wc_urinoir_separation`), jamais cassables.
+    tuyaux = []
+    for i, uy in enumerate(WC_URINOIRS_Y):
+        cuvette = (est - 0.33, uy - 0.2, z + 0.55, est, uy + 0.2, z + 1.15)
+        levre = (est - 0.35, uy - 0.15, z + 0.60, est - 0.30, uy + 0.15, z + 0.72)
+        obj = H.boxes(f"sanitaire_urinoir{i}",
+                      [(cuvette, "aplat:#f2efe6"), (levre, "aplat:#a2a3a1")], "palette", props)
+        obj["sorte"] = "urinoir"
+        obj["pv"] = SANITAIRE_PV
         tuyaux.append(((est - 0.06, uy - 0.015, z + 1.15, est - 0.03, uy + 0.015, z + 1.45), "world"))
     ym = sum(WC_URINOIRS_Y) / 2
-    urinoirs.append(((est - 0.45, ym - e, z + 0.5, est, ym + e, z + 1.4), f"aplat:{WC_STRATIFIE}"))
-    H.boxes("wc_urinoirs", urinoirs, "palette", props)
+    H.box("wc_urinoir_separation", (est - 0.45, ym - e, z + 0.5, est, ym + e, z + 1.4), "palette", props,
+          uv=f"aplat:{WC_STRATIFIE}")
     H.boxes("wc_tuyaux", tuyaux, "metal_bac_acier", props)
 
     rampes, lampes = _neons(space, props, logic, WC_NEONS_X, WC_NEONS_Y, WC_NEONS_MORTS, "wc")
@@ -2422,6 +2469,23 @@ PORTES_LIBRES = {
         # côté rayons : hors de la portée d'usage (2 m) depuis la surface de vente.
         use_centre=(-43.75, 86.5, 1.25), use_taille=(0.1, 0.5, 0.5),
         message="Porte coupe-feu ouverte : raccourci vers les rayons"),
+    # La bouche d'aération du secret 3 : un « trou béant » avant cette passe
+    # (2026-09-24, retour de playtest) — la baie n'était fermée par RIEN, le
+    # local et sa lumière orange se voyaient depuis toute la cafétéria.
+    # `metal_tole_perforee` (déjà le rideau `door_argent`) donne le grillage
+    # sans ouvrir un nouveau matériau de vantail : toujours 7 lots de portes
+    # pour tout le niveau, pas 8.
+    frozenset({"cafeteria", "secret3"}): dict(
+        porte="door_secret_vmc", use="use_grille_vmc", texture="metal_tole_perforee",
+        # Près du haut de la grille (z = 3,75, sur la grille 0,25 m) : à au
+        # moins 2,85 m de tout point du SOL de la cafétéria (`playerPosition`
+        # est le centre de capsule, ~0,9 m au-dessus des pieds — la seule
+        # composante VERTICALE dépasse déjà la portée de 2 m, quel que soit
+        # l'endroit où l'on se tient), à moins de 1,3 m de qui se tient sur le
+        # distributeur voisin (1,9 m de haut).
+        use_centre=(36.0, 19.75, 3.75), use_taille=(0.3, 0.08, 0.3),
+        message="La grille cède sans un bruit : il y a toujours une bouche "
+                "d'aération quelque part."),
 }
 
 
@@ -2439,6 +2503,18 @@ def _porte_libre(o, spec, props, logic) -> None:
         bo.boite_centree(spec["porte"], centre, taille, "repere",
                          {"repere": H.textured_material(spec["texture"])}, props,
                          extras={"mouvement": "descend"})
+    elif spec["porte"] == "door_secret_vmc":
+        # Un seul vantail, charnière côté ouest (`bout="min"`) : la baie fait
+        # 2 m de large sur 2 m de haut, DÉCOLLÉE du sol (le mur reste plein en
+        # dessous, la grille commence à `o.z + 2.0`, comme `ca_bouche_cadre`/
+        # `vmc_cadre` construits à la main dans `habiller_cafeteria`/
+        # `habiller_vmc`). `sens` reste "auto" — pas de `_sens_vers` forcé :
+        # la porte s'ouvre en s'éloignant de qui appuie sur E (`resolveAutoOpenSign`),
+        # donc loin du joueur perché sur le distributeur, vers le local.
+        e = EP_VANTAIL / 2
+        vantail(spec["porte"], _monde(o, a + 0.02, -e, o.z + 2.0, b - 0.02, e, o.z + 4.0),
+                spec["texture"], "world", props,
+                dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto"))
     else:
         # La porte coupe-feu : double, rouge, barres anti-panique côté personnel
         # — le côté d'où elle s'ouvre (`plan.PORTES_SENS_UNIQUE`).
@@ -2748,9 +2824,12 @@ def poser_props_physiques(space, coll) -> int:
 
 
 # Repères que l'habillage pose lui-même, en vrai objet : le blockout ne doit donc
-# plus poser leur silhouette grise — ni le cube flottant de `use_toilet`, devenu
-# la plaque de chasse d'eau de `habiller_toilettes`.
-SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton", "use_toilet"})
+# plus poser leur silhouette grise. `use_toilet` en faisait partie jusqu'au
+# 2026-09-24 (le cube flottant devenait la plaque de chasse d'eau de
+# `habiller_toilettes`) ; le repère « toilettes » est désormais du genre
+# "rien" dans `REGLES_REPERES` (plus aucun `use_*` à sauter), donc plus rien à
+# lister ici pour lui.
+SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
 
 
 HABILLAGE = {

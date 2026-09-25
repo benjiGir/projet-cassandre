@@ -171,6 +171,7 @@ export class DirectorManager {
     hitEvents: ReadonlyArray<HitEvent>,
     navGraph: NavGraph | null = null,
     vitreSystem?: VitreHitTarget,
+    sanitaireSystem?: VitreHitTarget,
   ) {
     this._droppedCard?.tick(dt);
 
@@ -183,6 +184,7 @@ export class DirectorManager {
       playerEyePosition,
       navGraph,
       vitreSystem,
+      sanitaireSystem,
     };
 
     for (const director of this.directors) {
@@ -207,6 +209,19 @@ export class DirectorManager {
    */
   tryCollectCard(playerPosition: THREE.Vector3): boolean {
     return this._droppedCard?.tryCollect(playerPosition, this.cfg.cardPickupRadius, this.cfg.cardPickupDelay) ?? false;
+  }
+
+  /**
+   * DEV UNIQUEMENT : tue immédiatement `director` — même contrat que
+   * `SuitManager.debugKill` (vrai `deathEvent`, carte lâchée comprise, sans
+   * viser). Sert à vérifier le récap de fin de partie sans combattre le
+   * boss. Retourne `false` sans effet si `director` est déjà mort.
+   */
+  debugKill(director: Director): boolean {
+    if (!director.isAlive) return false;
+    const damage: AggregatedHit = { totalDamage: Number.MAX_SAFE_INTEGER, anyPoint: director.position.clone() };
+    this.applyAggregatedHit(director, damage, director.position);
+    return true;
   }
 
   private applyAggregatedHit(director: Director, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {

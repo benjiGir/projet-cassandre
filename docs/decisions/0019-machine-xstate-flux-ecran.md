@@ -76,3 +76,15 @@ Si du code en dehors des tests attend un jour que `flowState` vaille
 état), il faudra câbler `main.ts` pour envoyer `OPEN_OPTIONS`/`CHOOSE_ZONE`
 à l'acteur réel à ces moments-là — jusque-là, ces deux états sont des
 artefacts de la table de transition, pas un comportement observable en jeu.
+
+## Révision — pause (récap + pause EN JEU, 2026-09-24)
+
+Un 8ᵉ état, `paused`, rejoint le graphe (`playing --PAUSE--> paused
+--RESUME--> playing`, plus `paused --RETURN_TO_MENU--> mainMenu`) — voir
+[Session de partie — Pause](../systems/session.md#pause). Contrairement à
+`options`/`levelSelect` ci-dessus, `paused` **est** atteint par l'acteur
+réel : `main.ts` envoie `PAUSE` sur perte du verrouillage du pointeur
+pendant `playing`. Aucune remise en cause de la décision — la pause suit
+exactement le même principe que `dead`/`levelComplete` (le monde reste
+vivant, seul le contenu du pas fixe est ignoré) plutôt que d'introduire un
+mécanisme séparé.

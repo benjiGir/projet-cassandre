@@ -101,7 +101,13 @@ def est_source(o: bpy.types.Object) -> bool:
 # collision en jeu, et il est sujet aux MÊMES défauts que le reste — une caisse
 # posée dans un rack ou en l'air. Pire, même : un prop encastré ne reste pas
 # encastré, il est violemment éjecté au premier pas de simulation.
-PREFIXES_PHYSIQUES = ("col_", "prop_")
+#
+# `sanitaire_*` (2026-09-24) suit la même règle, en statique : le loader lui
+# construit un collider FIXE depuis sa boîte englobante, sans `col_*` jumeau.
+# Ne pas le compter ici le rendrait invisible à `interpenetrations`/
+# `spawns_encombres` — un Costard pourrait apparaître dans une cuvette sans
+# que l'audit le voie.
+PREFIXES_PHYSIQUES = ("col_", "prop_", "sanitaire_")
 
 
 def porte_collision(nom: str) -> bool:
@@ -298,7 +304,10 @@ def hors_sol(cols):
     for o in cols:
         mini, maxi = aabb(o)
         # Un sol, un mur ou un plafond n'a pas à « poser » sur quoi que ce soit.
-        if any(mot in o.name for mot in ("sol", "mur", "plafond", "rampe", "quai", "mezzanine")):
+        # `urinoir` non plus : un `sanitaire_urinoir*` est mural par nature, sa
+        # bbox commence à 0,55 m du sol — le signaler « flottant » serait un
+        # faux positif systématique, pas un défaut de placement.
+        if any(mot in o.name for mot in ("sol", "mur", "plafond", "rampe", "quai", "mezzanine", "urinoir")):
             continue
         if maxi.z - mini.z > 3.0:          # pilier, rack, portique : posés autrement
             continue

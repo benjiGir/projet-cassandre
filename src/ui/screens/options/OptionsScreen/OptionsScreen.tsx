@@ -5,7 +5,7 @@ import { ButtonRow } from "../../../components/controls/ButtonRow/ButtonRow";
 import { CornerFrame } from "../../../components/layout/CornerFrame/CornerFrame";
 import { RecIndicator } from "../../../components/text/RecIndicator/RecIndicator";
 import { Scanlines } from "../../../components/effects/Scanlines/Scanlines";
-import { Screen } from "../../../components/layout/Screen/Screen";
+import { Screen, type ScreenBackdrop } from "../../../components/layout/Screen/Screen";
 import { ScreenTitle } from "../../../components/text/ScreenTitle/ScreenTitle";
 import { ControlsTab } from "../controls/ControlsTab/ControlsTab";
 import { DisplayTab } from "../display/DisplayTab/DisplayTab";
@@ -14,19 +14,28 @@ import styles from "./OptionsScreen.module.css";
 
 export interface OptionsScreenProps {
   onBack: () => void;
+  /** Transmis tel quel à `Screen` — voir sa doc. `PauseScreen` passe `"dim"`
+   * pour garder le jeu visible derrière quand on ouvre les réglages EN jeu ;
+   * le menu principal ne passe rien (opaque, comportement historique). */
+  backdrop?: ScreenBackdrop;
 }
 
 /**
- * Écran « Options » depuis le menu principal : contrôles et affichage, un
- * seul bouton RETOUR. Il n'existe pas de menu de pause : les réglages se
- * changent avant de jouer (invariant #9, pas de système inventé pour ça).
+ * Écran « Options » : contrôles et affichage, un seul bouton RETOUR. Monté
+ * depuis DEUX endroits, sans rien savoir duquel — `onBack` seul décide de la
+ * suite : le menu principal (`game/session/bootChoice.ts`, retour vers
+ * `MainMenu`) et la pause en jeu (`ui/screens/pause/PauseScreen/PauseScreen.tsx`,
+ * retour vers le menu de pause). Les quatre réglages de `DisplayTab`
+ * s'appliquent à chaud dans les deux cas dès qu'un moteur existe (voir
+ * `game/graphicsSettings.ts::registerRenderTarget`).
  * see: docs/systems/hud.md#options-contrôles-et-affichage
+ * see: docs/systems/session.md#pause
  */
-export function OptionsScreen({ onBack }: OptionsScreenProps) {
+export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
   const [tab, setTab] = useState<OptionsTab>("controles");
 
   return (
-    <Screen>
+    <Screen backdrop={backdrop}>
       <Scanlines />
       <RecIndicator placement="corner">CONFIGURATION DU SIGNAL</RecIndicator>
 

@@ -150,15 +150,23 @@ export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput):
 // de type depuis `suit.ts`/`director.ts` pour ne rien casser côté appelants).
 
 /**
- * Vue minimale de `VitreSystem` (`game/level/vitres.ts`) utile à
- * `resolveAttack` — interface STRUCTURELLE plutôt qu'un import direct, pour
- * ne pas alourdir le couplage de ce fichier au-delà de ce qu'il utilise
- * réellement (un seul appel). `VitreSystem` la satisfait sans rien déclarer
- * de spécial.
+ * Vue minimale d'un système de décor CASSABLE D'UN COUP par un tir ennemi
+ * (`game/level/vitres.ts::VitreSystem`, `game/level/sanitaires.ts::SanitaireSystem`)
+ * utile à `resolveAttack` — interface STRUCTURELLE plutôt qu'un import
+ * direct, pour ne pas alourdir le couplage de ce fichier au-delà de ce qu'il
+ * utilise réellement (un seul appel). Les deux systèmes la satisfont sans
+ * rien déclarer de spécial — voir `handleEnemyShotMiss` pour comment
+ * plusieurs cibles cohabitent sans dupliquer cette logique par système.
+ * see: docs/decisions/0032-sanitaires-utilisables.md
  */
-export interface VitreHitTarget {
+export interface BreakableHitTarget {
   tryBreakByColliderHandle(colliderHandle: number, point: THREE.Vector3, direction: THREE.Vector3): boolean;
 }
+
+/** Alias historique : `VitreSystem` était le seul type à satisfaire cette
+ * interface avant les sanitaires — conservé pour ne pas casser les imports
+ * existants (`suitManager.ts`/`directorManager.ts`/leurs tests). */
+export type VitreHitTarget = BreakableHitTarget;
 
 export interface EnemyUpdateContext {
   physics: PhysicsWorld;
@@ -174,7 +182,14 @@ export interface EnemyUpdateContext {
    * Duke Nukem voulu, voir `handleEnemyShotMiss`.
    * see: docs/decisions/0031-portes-animees-et-vitres.md
    */
-  vitreSystem?: VitreHitTarget;
+  vitreSystem?: BreakableHitTarget;
+  /**
+   * Sanitaires du niveau courant (`session.sanitaireSystem`), même contrat et
+   * même raison d'être optionnelle que `vitreSystem` ci-dessus — un tir
+   * ennemi qui rate le joueur mais rencontre un sanitaire intact le casse.
+   * see: docs/decisions/0032-sanitaires-utilisables.md
+   */
+  sanitaireSystem?: BreakableHitTarget;
 }
 
 // Contexte XState — TOUT ce qu'une entité porte, hors id/rendu/`revealed`.
@@ -581,22 +596,30 @@ function applyAimJitter(ctx: EnemyMachineContext, dir: THREE.Vector3, out: THREE
 
 /**
  * Un rayon d'attaque ennemi qui ne touche PAS le joueur peut quand même avoir
- * touché une vitre entre-temps (le jitre de visée dévie légèrement le tir de
- * la ligne de mire exacte, qui elle passait déjà la vérification de ligne de
- * vue) — la casse plutôt que de laisser le rayon s'arrêter dessus sans rien
- * signaler, effet Duke Nukem voulu par le contrat de `vitre_*`. EXPORTÉE pour
- * un test direct (logique pure, sans machine à états ni PRNG à faire
- * atterrir sur le bon jitter) : see: docs/decisions/0031-portes-animees-et-vitres.md
+ * touché une vitre ou un sanitaire entre-temps (le jitter de visée dévie
+ * légèrement le tir de la ligne de mire exacte, qui elle passait déjà la
+ * vérification de ligne de vue) — la casse plutôt que de laisser le rayon
+ * s'arrêter dessus sans rien signaler, effet Duke Nukem voulu par le contrat
+ * de `vitre_*`/`sanitaire_*`. GÉNÉRALISÉE (jalon sanitaires, ADR 0032) pour
+ * accepter PLUSIEURS cibles cassables plutôt que de dupliquer cette fonction
+ * une deuxième fois pour `sanitaireSystem` : le premier collider AU HANDLE
+ * connu d'une cible de la liste la casse, les suivantes ne sont pas
+ * essayées. EXPORTÉE pour un test direct (logique pure, sans machine à
+ * états ni PRNG à faire atterrir sur le bon jitter) :
+ * see: docs/decisions/0031-portes-animees-et-vitres.md
+ * see: docs/decisions/0032-sanitaires-utilisables.md
  */
 export function handleEnemyShotMiss(
-  vitreSystem: VitreHitTarget | undefined,
+  breakables: ReadonlyArray<BreakableHitTarget | undefined>,
   hitCollider: RAPIER.Collider,
   hitIsPlayer: boolean,
   point: THREE.Vector3,
   direction: THREE.Vector3,
 ): void {
-  if (hitIsPlayer || !vitreSystem) return;
-  vitreSystem.tryBreakByColliderHandle(hitCollider.handle, point, direction);
+  if (hitIsPlayer) return;
+  for (const target of breakables) {
+    if (target?.tryBreakByColliderHandle(hitCollider.handle, point, direction)) return;
+  }
 }
 
 /**
@@ -645,7 +668,13 @@ function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext):
       eye.y + ctx.scratchJitteredDir.y * hit.timeOfImpact,
       eye.z + ctx.scratchJitteredDir.z * hit.timeOfImpact,
     );
-    handleEnemyShotMiss(updateCtx.vitreSystem, hit.collider, false, point, ctx.scratchJitteredDir);
+    handleEnemyShotMiss(
+      [updateCtx.vitreSystem, updateCtx.sanitaireSystem],
+      hit.collider,
+      false,
+      point,
+      ctx.scratchJitteredDir,
+    );
     return;
   }
 

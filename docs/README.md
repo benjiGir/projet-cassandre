@@ -46,10 +46,12 @@ signale.
 - [Textures](pipeline/textures.md)
 - [Assets et références](pipeline/assets.md)
 - [Board de références — hypermarché](assets/board-hypermarche.md) — fiche de spec du niveau v2
+- [Board de références — pistolet](assets/board-pistolet.md) — diagnostic du premier pistolet, Beretta 92FS bicolore retenu, cotes et palette
 - [Harmonisation des assets du niveau v2](pipeline/harmonisation-assets.md) — palette, textures, import des packs CC0
 
 ## Référence
 
+- [État des lieux du code et de l’architecture](reference/etat-des-lieux-code-architecture.md) — audit senior du 2026-09-24 et plan de remédiation
 - [Valeurs de déplacement](reference/valeurs-deplacement.md)
 - [Valeurs des ennemis](reference/valeurs-ennemis.md)
 - [Conventions de nommage](reference/conventions-nommage.md)

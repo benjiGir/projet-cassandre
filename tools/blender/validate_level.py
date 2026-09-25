@@ -49,6 +49,7 @@ SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_", "prop_", "vitre_",
+    "sanitaire_",
 )
 
 # Extras d'un `door_*` animé — doivent rester identiques à ce que lit
@@ -69,6 +70,11 @@ LOYALTY_CARDS = ("argent", "or", "platine")
 # Matières de props — doit rester identique à `PROP_MATERIALS` dans
 # src/game/level/props.ts.
 PROP_MATIERES = ("bois", "carton", "verre", "metal")
+
+# Sortes de `sanitaire_*` — cuvette et urinoir, utilisables et cassables façon
+# Duke Nukem 3D (2026-09-24). Doit rester identique à ce que lit le runtime
+# côté loader (voir `docs/reference/conventions-nommage.md#sanitaires`).
+SANITAIRE_SORTES = ("cuvette", "urinoir")
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -242,6 +248,66 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                     err(f"{o.name}: un collider statique ({autre.name}) est posé au même "
                         "endroit — un prop physique n'en veut pas")
 
+        # --- sanitaire_* : cuvette ou urinoir, utilisable et cassable façon
+        # Duke Nukem 3D (2026-09-24). UN mesh, UN matériau — comme un vantail,
+        # deux matériaux feraient deux primitives glTF et le loader ne
+        # reconnaîtrait plus un seul objet. Le loader lui construit lui-même
+        # un collider FIXE sur sa bbox monde (même logique qu'un `prop_*`,
+        # sauf qu'il ne bouge jamais) : jamais de `col_*` jumeau.
+        if n.startswith("sanitaire_") and o.type == "MESH":
+            sorte = str(o.get("sorte", "")).strip().lower()
+            if sorte not in SANITAIRE_SORTES:
+                err(f"{o.name}: 'sorte' = '{o.get('sorte')!r}' n'est pas 'cuvette' ou 'urinoir' "
+                    f"({', '.join(SANITAIRE_SORTES)})")
+            if "pv" in o.keys():
+                try:
+                    pv = float(o["pv"])
+                except (TypeError, ValueError):
+                    pv = 0.0
+                if not pv > 0:
+                    err(f"{o.name}: 'pv' = '{o['pv']}' n'est pas un nombre > 0")
+            if len(o.data.materials) > 1:
+                err(f"{o.name}: {len(o.data.materials)} matériaux — un sanitaire n'en a qu'UN "
+                    "(deux primitives glTF, et le loader ne voit plus un seul objet)")
+            # Compter les SLOTS ne suffit pas : un mesh issu d'un import repeint
+            # (Kenney Furniture Kit, `lib_helpers._repeindre_sur_palette`) peut
+            # n'avoir qu'UN matériau et pourtant garder des `material_index` de
+            # 0/1/2 sur ses polygones, résidus des matériaux D'ORIGINE avant
+            # fusion. Invisible ici et dans Blender (l'affichage retombe sur le
+            # slot 0), mais l'exportateur glTF regroupe les primitives par cet
+            # index BRUT avant résolution — trouvé sur `mob_k_toilet` le
+            # 2026-09-24, trois `material_index` distincts pour un seul
+            # matériau, donc trois primitives glTF et un `THREE.Group` côté
+            # loader plutôt qu'un `THREE.Mesh`.
+            indices = {p.material_index for p in o.data.polygons}
+            if len(indices) > 1:
+                err(f"{o.name}: {len(indices)} valeurs de 'material_index' sur les polygones "
+                    f"({sorted(indices)}) — un seul matériau Blender ne suffit pas, l'exporteur "
+                    "glTF regroupe les primitives par cet index brut (voir "
+                    "lib_helpers._repeindre_sur_palette)")
+            empreinte = centre_monde(o)
+            for autre in objects:
+                if autre is o or autre.type != "MESH":
+                    continue
+                if not base_name(autre.name).startswith("col_"):
+                    continue
+                if (centre_monde(autre) - empreinte).length < 0.05:
+                    err(f"{o.name}: un collider statique ({autre.name}) est posé au même "
+                        "endroit — un sanitaire n'en veut pas, le loader construit le sien")
+
+
+def check_sanitaires(objects) -> Counter:
+    """Compte les `sanitaire_*` par sorte, pour le résumé du rapport. Les
+    ERREURS elles-mêmes sont levées dans `check_naming`, qui a déjà la boucle
+    et le contexte (`objects` complet, pour détecter un `col_*` jumeau)."""
+    kinds: Counter = Counter()
+    for o in objects:
+        n = base_name(o.name)
+        if n.startswith("sanitaire_") and o.type == "MESH":
+            sorte = str(o.get("sorte", "?")).strip().lower()
+            kinds[sorte if sorte in SANITAIRE_SORTES else "?"] += 1
+    return kinds
+
 
 # --- 4. Colliders ------------------------------------------------------------
 def is_cuboid(obj) -> bool:
@@ -407,6 +473,7 @@ def main() -> None:
     check_transforms(meshes)
     check_naming(objects, kit_mode)
     kinds = check_colliders(meshes)
+    sanitaires = check_sanitaires(objects)
     check_textures()
     check_vertex_colors(meshes)
     tris = check_budget(meshes)
@@ -422,6 +489,8 @@ def main() -> None:
     print("  Colliders         " + (
         "  ".join(f"{k}:{v}" for k, v in sorted(kinds.items())) or "aucun"
     ))
+    if sanitaires:
+        print("  Sanitaires        " + "  ".join(f"{k}:{v}" for k, v in sorted(sanitaires.items())))
     print("-" * 62)
 
     for w in warnings:

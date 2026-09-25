@@ -32,6 +32,15 @@ export interface LevelDef {
    * de fond du renderer, ce qu'il faut à un niveau entièrement clos.
    * see: docs/systems/rendu.md#ciel */
   ciel?: string;
+  /**
+   * Temps de référence, en secondes, pour le bonus de rapidité du récap de
+   * fin de partie (`game/session/score.ts`). Absent = pas de ligne « Rapidité »
+   * dans le récap — la gym et les zones de test n'ont pas vocation à être
+   * chronométrées. `niveau_v2` reprend les « 8-10 minutes » annoncées par
+   * `CLAUDE.md` pour le proto complet.
+   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+   */
+  parTime?: number;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
@@ -80,6 +89,9 @@ export const LEVEL_CHOICES: LevelDef[] = [
     lighting: "hybride",
     // La nuit au-dessus du parking d'arrivée et derrière les verrières.
     ciel: "nuit",
+    // 10 minutes — le haut de la fourchette « 8-10 minutes » du proto
+    // (CLAUDE.md), pour laisser une vraie marge de bonus à qui explore.
+    parTime: 600,
   },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {

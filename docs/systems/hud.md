@@ -46,10 +46,15 @@ la réplique s'y empilent dans le flux, si bien que la réplique suit la
 hauteur RÉELLE de ce qui la précède. Elle a longtemps été un bloc `fixed`
 indépendant posé à une hauteur en dur, qui aurait recouvert le compteur à la
 première retouche de la webcam — même défaut, déjà corrigé une fois, que
-celui de la légende contre le compteur. `DeathScreen`/`LevelCompleteScreen` restent montés en
-permanence et rendent `null` tant que leur condition n'est pas remplie —
-pas de montage/démontage conditionnel, plus simple et sans risque de rater
-un changement d'état pendant que le composant serait démonté.
+celui de la légende contre le compteur. `PauseScreen`/`DeathScreen`/
+`LevelCompleteScreen` restent montés en permanence et rendent `null` tant
+que leur condition n'est pas remplie — pas de montage/démontage
+conditionnel, plus simple et sans risque de rater un changement d'état
+pendant que le composant serait démonté. Voir [Session de partie —
+Pause](session.md#pause) pour `PauseScreen` : contrairement aux deux
+autres, il n'est jamais atteint par un envoi d'évènement CÔTÉ ÉCRAN (aucun
+bouton "Pause" — `PAUSE` part de `main.ts`, sur perte du verrouillage du
+pointeur).
 
 **Build de production** : `DebugPanel` et `TuningPanel` n'y sont pas
 montés (`import.meta.env.DEV`, constante au build — ils quittent le bundle).
@@ -92,6 +97,10 @@ stateDiagram-v2
 
     playing --> dead: DIED
     playing --> levelComplete: LEVEL_COMPLETED
+    playing --> paused: PAUSE
+
+    paused --> playing: RESUME
+    paused --> mainMenu: RETURN_TO_MENU
 
     dead --> playing: REPLAY
     dead --> mainMenu: RETURN_TO_MENU
@@ -103,19 +112,23 @@ stateDiagram-v2
 Ce diagramme est la table de transition testée (`test/ui/gameFlowMachine.test.ts`)
 lue directement dans `ui/gameFlowMachine.ts`. Le câblage réel dans `main.ts`
 est volontairement plus grossier qu'elle : seuls les événements `ENTER_MENU`,
-`PLAY`, `DIED`, `LEVEL_COMPLETED`, `REPLAY` et `RETURN_TO_MENU` sont
-réellement envoyés par l'application (`main.ts`, `game/session/lifecycle.ts`,
-`game/session/doors.ts`, `game/session/feedback.ts`) — vérifié par grep sur
-`src/`. Les états `options` et `levelSelect` existent dans le graphe et sont
-couverts par les tests, mais ne sont **jamais atteints par l'acteur réel** :
+`PLAY`, `DIED`, `LEVEL_COMPLETED`, `REPLAY`, `RETURN_TO_MENU`, `PAUSE` et
+`RESUME` sont réellement envoyés par l'application (`main.ts`,
+`game/session/lifecycle.ts`, `game/session/doors.ts`,
+`game/session/feedback.ts`) — vérifié par grep sur `src/`. Les états
+`options` et `levelSelect` existent dans le graphe et sont couverts par les
+tests, mais ne sont **jamais atteints par l'acteur réel** :
 `OPEN_OPTIONS`/`CHOOSE_ZONE` ne sont envoyés nulle part côté application
 (`MainMenu`/`LevelMenu`/`OptionsScreen` sont affichés directement par
-`bootChoice.ts`, voir plus haut, sans passer par cette machine). Le graphe
-reste néanmoins complet et testé pour rester correct si ce câblage évoluait.
+`bootChoice.ts`, voir plus haut, sans passer par cette machine). `paused`,
+lui, EST atteint réellement — voir [Session de partie —
+Pause](session.md#pause) pour le déclenchement (perte du verrouillage du
+pointeur pendant `playing`, jamais un bouton). Le graphe reste néanmoins
+complet et testé pour rester correct si ce câblage évoluait.
 
-`App`/`DeathScreen`/`LevelCompleteScreen` ne lisent que `state.flowState`
-(poussé par `actor.subscribe(...)`), jamais l'acteur XState directement —
-même pont zustand que le reste du HUD (invariant #2).
+`App`/`PauseScreen`/`DeathScreen`/`LevelCompleteScreen` ne lisent que
+`state.flowState` (poussé par `actor.subscribe(...)`), jamais l'acteur
+XState directement — même pont zustand que le reste du HUD (invariant #2).
 
 `flowActor` (créé dans `main.ts`) est construit AVANT même la résolution du
 choix de niveau (voir [Session de partie — Choix du niveau au
@@ -123,13 +136,17 @@ boot](session.md#choix-du-niveau-au-boot)) : `boot` est l'état initial de la
 machine, et `setFlowState` doit le refléter dans le store dès que possible,
 pas seulement une fois la partie commencée.
 
-`GameFlowState` (le type des 7 états) est DÉFINI dans `game/state.ts`, pas
+`GameFlowState` (le type des 8 états) est DÉFINI dans `game/state.ts`, pas
 dans `ui/gameFlowMachine.ts` puis importé : garder le sens de dépendance
 déjà établi par ce fichier (les écrans et les widgets du HUD importent déjà
 `useGameStore` DEPUIS `game/state.ts`, jamais l'inverse) plutôt que d'en
 ouvrir un second. `ui/gameFlowMachine.ts` réutilise ce type tel quel pour
 ses clés d'état ; TypeScript vérifie la correspondance structurelle sans
-qu'aucun des deux fichiers n'ait besoin de dupliquer la liste des 7 états.
+qu'aucun des deux fichiers n'ait besoin de dupliquer la liste des 8 états.
+`LevelRecap`/`RecapLine` (voir [Récapitulatif de fin de
+partie](session.md#récapitulatif-de-fin-de-partie)) suivent le même
+principe : définis dans `game/state.ts`, réimportés par
+`game/session/score.ts`, jamais l'inverse.
 Voir [ADR 0020](../decisions/0020-state-feuille-de-dependances.md) pour la
 règle générale (`game/state.ts` n'importe jamais un autre module de
 `src/game/*`).
@@ -271,8 +288,16 @@ depuis `App.tsx` — pas des rechargements de page. Voir [ADR
 0019](../decisions/0019-machine-xstate-flux-ecran.md) pour la décision, et
 [Session de partie — Rejouer et retour au
 menu](session.md#rejouer-et-retour-au-menu) pour le mécanisme de reset
-lui-même. `LevelCompleteScreen` n'a pas de chrono — le plan le marque
-explicitement optionnel, pas construit ici.
+lui-même.
+
+Les deux écrans affichent aussi un récap détaillé (`RecapTable`,
+`components/RecapTable/RecapTable.tsx`) : kills, secrets, précision,
+vandalisme, bonus de rapidité (fin de niveau seulement — un récap de mort
+est PARTIEL, sans ce bonus). `RecapTable` ne connaît AUCUNE règle de
+barème, elle affiche `state.recap` (`LevelRecap`, `null` tant qu'aucune
+partie ne s'est terminée) tel que construit par
+`game/session/score.ts::buildLevelRecap` — voir [Session de partie —
+Récapitulatif de fin de partie](session.md#récapitulatif-de-fin-de-partie).
 
 ## Rebinding
 
@@ -335,14 +360,17 @@ Logique non visuelle isolée dans `game/graphicsSettings.ts`, hors de `src/ui/` 
 d'application. Le FOV et le screenshake sont de simples champs mutables lus
 en continu par le jeu — les muter s'applique immédiatement, qu'un niveau
 soit chargé ou non. Le filtrage et la résolution ont besoin d'un moteur
-construit (`scene`/`camera`/`renderer`) : persistés au clic, ils ne
-s'appliquent réellement qu'au prochain boot, juste après `buildGameEngine`
-dans `main.ts` — le filtrage posé à cet instant devient le mode par défaut
-de `configureRetroTexture` pour chaque texture chargée ensuite (premier
-niveau, `replay()`, hot reload), sans qu'aucun de ces chemins n'ait besoin
-d'y penser. **Limite connue, assumée** : il n'existe pas de menu de pause
-(invariant #9) — les quatre réglages ne se changent que depuis le menu
-principal, avant de jouer.
+construit (`scene`/`camera`/`renderer`) : `registerRenderTarget`, appelée
+UNE FOIS par `main.ts` juste après `buildGameEngine`, retient cette cible
+pour le reste de l'onglet — tant qu'elle n'existe pas encore (menu
+principal, avant de jouer), un changement reste persisté seulement, repris
+au prochain boot ; une fois enregistrée, `setGraphicsSettings` les applique
+IMMÉDIATEMENT, y compris pendant une partie EN PAUSE (voir [Session de
+partie — Pause](session.md#pause)), qui réutilise cet écran tel quel. Le
+filtrage appliqué au dernier changement devient aussi le mode par défaut de
+`configureRetroTexture` pour chaque texture chargée ensuite (niveau
+suivant, `replay()`, hot reload), sans qu'aucun de ces chemins n'ait besoin
+d'y penser.
 
 ## Panneau de tuning à chaud
 

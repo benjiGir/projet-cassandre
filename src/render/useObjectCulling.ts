@@ -2,7 +2,8 @@ import * as THREE from "three";
 
 /**
  * Élagage par distance des objets interactifs (`use_*`) — trousses, boîtes de
- * munitions, cartes, armes au sol, lecteurs de carte, boutons.
+ * munitions, cartes, armes au sol, lecteurs de carte, boutons — et du lot des
+ * `sanitaire_*`.
  *
  * Pourquoi : un `use_*` ne rejoint jamais le décor fusionné (il doit pouvoir
  * disparaître seul quand on le ramasse), et three.js n'élimine que par le cône

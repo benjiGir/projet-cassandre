@@ -42,11 +42,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from synth import (SR, bandpass, brown, crush, delay, env_ad, env_adsr,
-                   env_exp, fade, highpass, layer, lowpass, loop_seamless,
-                   noise_burst, norm, pink, reverb, resonant, rng, saturate,
-                   sine, sine_drop, slapback, sweep_lowpass, t, transient,
-                   white)
+from enregistrements import prise
+from synth import (SR, bandpass, brown, bubble, bubbles, chocs, crush, delay,
+                   env_ad, env_adsr, env_exp, eq_circulaire, fade, highpass,
+                   layer, limiteur, lowpass, loop_seamless, noise_burst, norm, periodique,
+                   pink, reverb, resonant, rng, saturate, sine, sine_drop,
+                   slapback, sweep_lowpass, t, transient, turbulence, white)
 
 # Signature acoustique du lieu : hypermarche vide, beton, plafond a 5 m.
 ROOM = dict(room=0.42, mix=0.22, damp=3200)
@@ -538,6 +539,355 @@ def cart_roll(seed=0):
     return reverb(layer(base * wobble * env_ad(n, 0.1, 1.2), *ticks), **ROOM)
 
 
+# ============================================================ SANITAIRES
+#
+# Les toilettes du niveau v2, facon Duke Nukem 3D : une cuvette ou un urinoir
+# intact se tire la chasse (et soigne), casse il laisse un jet d'eau qu'on boit.
+#
+# STATUT, a lire avant d'ecouter : ce sont des PLACEHOLDERS. La direction
+# arretee le 2026-09-21 veut de VRAIS enregistrements pour tout ce qui est un
+# objet — l'eau et la faience en sont. Aucun enregistrement d'eau ni de
+# deglutition n'existe sur disque sous une licence confirmee ; la liste de ce
+# qu'il faut telecharger est dans assets_src/cc0_raw/freesound/README.md
+# (ignore par git), resumee dans docs/systems/hud-audio.md#catalogue--doù-vient-chaque-son.
+#
+#   toilet_flush   synthese pure
+#   ceramic_break  HYBRIDE : faience reelle (Kenney, assiettes CC0) + eau synthetique
+#   water_gulp     synthese pure
+#   amb_water_jet  synthese pure, BOUCLE du jet permanent (hors sprite)
+#
+# Ce que la synthese sait faire ici, et rien de plus : une structure juste
+# (dans quel ordre, a quelle hauteur, combien de temps). Ce qu'elle ne sait
+# pas faire, quatre passes rejetees l'ont montre : le desordre qui fait dire a
+# l'oreille « ca, c'est de l'eau ». Le modele de bulles (`synth.bubble`) est ce
+# qui s'en approche le plus sans enregistrement — il ne le remplace pas.
+
+# Toilettes : petite piece carrelee. Queue courte, mais CLAIRE — le carrelage
+# renvoie l'aigu que le beton de l'hypermarche absorbe.
+ROOM_WC = dict(room=0.30, mix=0.20, damp=6500)
+
+# Faience reelle : Kenney « Impact Sounds » (CC0, registre des licences). Ce
+# sont des ASSIETTES qui heurtent une surface, pas une cuvette qui eclate :
+# elles donnent la matiere, la recette donne l'evenement.
+ASSIETTE = "kenney_audio/kenney_impact-sounds/Audio/impactPlate_{}.ogg"
+
+
+def _rampe(n: int, points: list[tuple[float, float]]) -> np.ndarray:
+    """Enveloppe par points (seconde, niveau), interpolee lineairement."""
+    xs, ys = zip(*points)
+    return np.interp(np.arange(n) / SR, xs, ys)
+
+
+def toilet_flush(seed=0):
+    """
+    Chasse d'eau. PLACEHOLDER DE SYNTHESE, a remplacer par un enregistrement.
+
+    L'ordre est ce qui fait une chasse, pas le timbre d'un moment : le declic
+    du levier, la ruee qui tourbillonne, le siphon qui avale de l'air (le
+    glouglou final, le moment le plus reconnaissable d'une vraie chasse), puis
+    le robinet flotteur qui siffle en remplissant le reservoir, et s'eteint.
+    Une vraie chasse dure huit secondes et le remplissage une minute : tout est
+    comprime en 1,6 s, parce qu'un joueur appuie sur E et repart.
+
+    L'eau est une NUEE DE BULLES (`synth.bubbles`) posee sur du bruit. Le bruit
+    seul s'entend comme du vent ; les bulles montantes, par centaines, sont ce
+    qui s'approche le plus d'un liquide sans enregistrement.
+
+    Contrat de masquage : la telegraphie d'un Costard met 76 % de son energie
+    entre 200 et 800 Hz. Une premiere version y mettait 88 % de la sienne
+    (recouvrement 0,855, conflit) — deux secondes de chasse d'eau et le joueur
+    n'entendait plus qu'on le visait. La bande est donc CREUSEE : l'eau passe
+    par le grondement de la canalisation (sous 200 Hz) et par le chuintement
+    (au-dessus de 800 Hz), et les grosses bulles du siphon restent sous 300 Hz.
+    """
+    g = rng(seed)
+    dur = 1.62
+    n = int(dur * SR)
+    tt = t(dur)
+
+    # 1. Le declic : le levier (plastique dur) qui claque, puis la soupape qui
+    # se souleve dans le reservoir, un « tok » sourd.
+    lever = layer(transient(0.004, seed, hp=1800) * 0.9,
+                  resonant(noise_burst(0.035, 900, 6000, 120, seed=seed + 1), 2600, q=9) * 0.55,
+                  resonant(noise_burst(0.02, 600, 3000, 180, seed=seed + 11), 1250, q=7) * 0.35)
+    valve = delay(layer(
+        sine_drop(0.07, 150, 95, curve=1.5) * env_ad(int(0.07 * SR), 0.002, 55) * 0.45,
+        lowpass(white(0.05, seed + 2), 220) * env_exp(int(0.05 * SR), 70) * 0.25), 0.055)
+
+    # 2. La ruee. Le chuintement tourne (une resonance qui balaie, de 3,4 a
+    # 2 tours par seconde : la cuvette se vide) et s'assombrit a mesure que
+    # l'eau descend ; la canalisation gronde dessous ; la turbulence empeche
+    # tout d'etre lisse, ce qu'un liquide n'est jamais.
+    ruee_env = _rampe(n, [(0, 0), (0.07, 0), (0.14, 1.0), (0.35, 0.9), (0.75, 0.55),
+                          (0.92, 0.35), (1.10, 0.10), (1.25, 0)])
+    tours = np.cumsum(np.interp(tt, [0, 1.2], [3.4, 2.0])) / SR
+    tourbillon = 0.5 + 0.5 * np.sin(2 * np.pi * tours + float(g.uniform(0, 2 * np.pi)))
+    bruit = white(dur, seed + 3)
+    bas = bandpass(bruit, 900, 2000)
+    haut = bandpass(bruit, 2000, 6500)
+    chuinte = bas * (0.4 + 0.6 * tourbillon) + haut * (0.9 - 0.5 * tourbillon)
+    chuinte = sweep_lowpass(chuinte, 7000, 2600) * turbulence(dur, 9, 0.35, seed + 4)
+    chuinte = chuinte * ruee_env * 0.26
+    canal = lowpass(brown(dur, seed + 5), 170) * turbulence(dur, 5, 0.4, seed + 6) * ruee_env * 0.55
+    remous = bubbles(dur, 520, 0.8, 3.6, seed=seed + 7, xi=0.15, beta=1.8,
+                     density=ruee_env) * 0.22
+
+    # 3. Le siphon : l'air aspire dans le coude. De GROSSES bulles (sous
+    # 300 Hz) qui montent fort, en gorgees — le « glou-glou » — et le
+    # chuintement de l'air qui passe.
+    siphon_env = _rampe(n, [(0, 0), (0.82, 0), (0.90, 1.0), (1.14, 0.7), (1.30, 0)])
+    gorgees = 0.15 + 0.85 * np.sin(2 * np.pi * 6.0 * tt) ** 2
+    glou = bubbles(dur, 70, 12.0, 28.0, seed=seed + 8, xi=0.5, beta=1.2,
+                   density=siphon_env * gorgees, damping=6.0) * 0.55
+    aspire = sweep_lowpass(bandpass(white(dur, seed + 9), 900, 4000), 4000, 1200)
+    aspire = aspire * siphon_env * gorgees * 0.16
+
+    # 4. Le remplissage : le robinet flotteur siffle (bruit etroit, un
+    # sifflement vers 3,4 kHz), un filet d'eau retombe, et tout s'eteint.
+    remplit_env = _rampe(n, [(0, 0), (1.02, 0), (1.18, 1.0), (1.40, 0.7), (dur, 0)])
+    sifflet = layer(resonant(bandpass(white(dur, seed + 10), 2400, 7500), 3400, q=7) * 0.8,
+                    bandpass(white(dur, seed + 12), 2400, 7500) * 0.3)
+    sifflet = sifflet * remplit_env * 0.10
+    filet = bubbles(dur, 140, 0.8, 2.2, seed=seed + 13, xi=0.1, beta=2.0,
+                    density=remplit_env) * 0.09
+
+    return reverb(layer(lever, valve, chuinte, canal, remous, glou, aspire, sifflet, filet),
+                  **ROOM_WC)
+
+
+def ceramic_break(seed=0):
+    """
+    Cuvette ou urinoir en faience qui eclate, et la gerbe d'eau qui part.
+    HYBRIDE : la faience est un VRAI enregistrement, l'eau est synthetique.
+
+    La faience vient de prises d'ASSIETTES (Kenney Impact Sounds, CC0). Une
+    assiette n'est pas une cuvette de 20 kg : la prise principale est
+    transposee de 4 demi-tons vers le bas (plus lourd, plus lent), doublee
+    d'une seconde prise 20 ms plus tard (la piece cede en deux temps), et les
+    eclats qui retombent sur le carrelage sont de petites prises transposees
+    vers le HAUT (un petit morceau de la meme matiere). Les prises brutes
+    portent 65 a 80 % de leur energie sous 80 Hz — la table, pas l'assiette :
+    passe-haut systematique. La masse, elle, est un coup sourd de synthese
+    SOUS 200 Hz : la cuvette est pleine d'eau et boulonnee, elle ne chante pas.
+
+    Ce qui le separe de impact_glass, mesure et pas espere : le verre vit
+    entre 3 et 16 kHz et tinte longtemps (q 28) ; la faience est plus grave,
+    plus epaisse, ses eclats claquent sans chanter. Et il y a l'eau.
+
+    La gerbe : l'alimentation sous pression cede JUSTE APRES la fracture (la
+    faience d'abord, 50 ms seule), un souffle large et turbulent, des gouttes
+    (bulles tres petites) et l'eau de la cuvette qui se renverse.
+
+    Meme contrat de masquage que la chasse : on casse une cuvette EN COMBAT,
+    au fusil. La bande 200-800 Hz de la telegraphie est laissee libre.
+    """
+    g = rng(seed)
+    lourdes = ["heavy_001", "heavy_003", "heavy_000", "heavy_002"]
+    moyennes = ["medium_002", "medium_000", "medium_004", "medium_003"]
+    legeres = ["light_000", "light_001", "light_002", "light_003", "light_004", "medium_001"]
+
+    fracture = prise(ASSIETTE.format(lourdes[seed % 4]), duree=0.32,
+                     semitons=-4, passe_haut=600) * 0.80
+    seconde = delay(prise(ASSIETTE.format(moyennes[seed % 4]), duree=0.24,
+                          semitons=-2, passe_haut=700) * 0.50, 0.021)
+    masse = layer(
+        sine_drop(0.14, 135, 70, curve=1.6) * env_ad(int(0.14 * SR), 0.002, 30) * 0.55,
+        lowpass(white(0.12, seed), 190) * env_exp(int(0.12 * SR), 38) * 0.45)
+
+    eclats = []
+    for i in range(7):
+        dt = float(g.uniform(0.07, 0.52))
+        morceau = prise(ASSIETTE.format(legeres[int(g.integers(len(legeres)))]),
+                        duree=0.10, semitons=float(g.uniform(3, 8)), passe_haut=900)
+        eclats.append(delay(morceau * float(g.uniform(0.12, 0.30)) * (1.1 - dt), dt))
+
+    dur = 0.66
+    n = int(dur * SR)
+    gerbe_env = _rampe(n, [(0, 0), (0.05, 0), (0.09, 0.9), (0.25, 0.65),
+                           (0.48, 0.25), (dur, 0)])
+    souffle = bandpass(pink(dur, seed + 11), 1100, 7000)
+    souffle = souffle * turbulence(dur, 14, 0.45, seed + 12) * gerbe_env * 0.26
+    gouttes = bubbles(dur, 380, 0.6, 2.2, seed=seed + 13, xi=0.12, beta=2.2,
+                      density=gerbe_env) * 0.14
+    # L'eau de la cuvette qui se renverse : une eclaboussure, pas un bourdon —
+    # 250 ms, bulles brisees par la turbulence (damping).
+    renverse_env = _rampe(n, [(0, 0), (0.05, 0), (0.09, 1.0), (0.20, 0.30), (0.32, 0)])
+    renverse = layer(
+        bubbles(dur, 110, 12.0, 24.0, seed=seed + 14, xi=0.3, beta=1.4,
+                density=renverse_env, damping=6.0) * 0.40,
+        lowpass(white(dur, seed + 15), 200) * renverse_env * 0.30,
+    )
+
+    return reverb(layer(fracture, seconde, masse, souffle, gouttes, renverse, *eclats),
+                  **ROOM_WC)
+
+
+def water_gulp(seed=0):
+    """
+    Une gorgee au jet d'eau. PLACEHOLDER DE SYNTHESE.
+
+    Joue a chaque appui sur E, donc souvent et vite : court (0,3 s), sec
+    (c'est dans la tete, pas dans la piece — presque aucune reverb), et bas.
+
+    Deux contraintes de la telegraphie d'un Costard, qui dessine une diagonale
+    MONTANTE de 380 a 900 Hz :
+    - ne pas la masquer (76 % de son energie entre 200 et 800 Hz) ;
+    - ne pas lui RESSEMBLER. Une premiere version faisait monter son « gloup »
+      de 250 a 700 Hz : la meme diagonale, en plus court. Le gloup vit donc
+      sous 250 Hz, l'eau dans la bouche au-dessus de 1 kHz, et rien ne monte
+      entre les deux.
+
+    Trois temps : l'eau aspiree (bruit mouille et petites bulles), la
+    deglutition (un claquement de langue, un coup sourd de gorge, une grosse
+    bulle tres grave), deux petites bulles qui descendent avec l'eau.
+    """
+    g = rng(seed)
+    n1 = int(0.08 * SR)
+    aspire = layer(
+        bandpass(white(0.08, seed), 1500, 6000) * env_ad(n1, 0.015, 45) * 0.14,
+        bubbles(0.08, 160, 0.7, 2.0, seed=seed + 1, xi=0.15, beta=2.0) * 0.20,
+    )
+    j = float(g.uniform(0.085, 0.10))
+    langue = layer(transient(0.003, seed + 3, hp=2500) * 0.12,
+                   resonant(noise_burst(0.015, 800, 3000, 250, seed=seed + 4), 1400, q=6) * 0.10)
+    gorge = sine_drop(0.07, 150, 85, curve=1.6) * env_ad(int(0.07 * SR), 0.004, 55) * 0.70
+    coup = lowpass(white(0.05, seed + 2), 240) * env_ad(int(0.05 * SR), 0.002, 70) * 0.35
+    n2 = int(0.10 * SR)
+    gloup = bubble(float(g.uniform(15, 19)), xi=0.35)[:n2]
+    gloup = gloup * env_exp(len(gloup), 38) * 0.45
+    deglutit = delay(layer(langue, gorge, coup, gloup), j)
+    apres = layer(*[delay(bubble(float(g.uniform(1.8, 3.0)), xi=0.2) * 0.10,
+                          j + float(g.uniform(0.08, 0.16))) for _ in range(2)])
+    return reverb(layer(aspire, deglutit, apres), room=0.10, mix=0.04, damp=5000)
+
+
+# Duree de la boucle du jet, en ECHANTILLONS : 441 trames AAC de 1024, soit
+# 10,24 s a 44 100 Hz. Pas une coquetterie :
+# - l'AAC code par trames de 1024 ; une boucle qui en fait un nombre entier ne
+#   laisse AUCUN remplissage en fin de fichier, meme pour un decodeur qui
+#   ignorerait la liste d'edition du .m4a ;
+# - 10,24 s font aussi un nombre entier d'echantillons a 48 000 Hz (491 520),
+#   la frequence ou le navigateur reechantillonne presque toujours ;
+# - au-dela de 6-8 s, aucun motif ne se repere au tour suivant.
+JET_N = 441 * 1024
+
+
+def _unite(x: np.ndarray) -> np.ndarray:
+    """Ramene une couche a une puissance unite : les gains du melange en dB se lisent."""
+    return x / (np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+
+def _db(v: float) -> float:
+    return 10 ** (v / 20)
+
+
+def amb_water_jet(seed=0):
+    """
+    Jet d'eau PERMANENT d'un sanitaire casse, en boucle. PLACEHOLDER DE SYNTHESE.
+
+    Le tuyau crache sous pression, l'eau monte d'un metre et demi et retombe en
+    pluie sur le carrelage. Pas un robinet (un filet, des bulles graves), pas
+    une douche (sans pression), pas une pluie dehors (sans piece), pas du vent
+    (sans grain) : ce qui separe le jet de tout ca, c'est le GRAIN du souffle
+    et le CREPITEMENT de ce qui retombe.
+
+    Joue en boucle par le jeu, attenue et panoramique selon la distance au jet :
+    le fichier est une source a plein volume vue de pres.
+
+    Quatre couches :
+    1. le jet : un souffle aigu (1-10 kHz) dont le timbre bascule sans cesse
+       entre deux bandes, ride d'une rugosite rapide et coupe de petites
+       poches d'air — le tuyau « crache », il ne souffle pas ;
+    2. la pluie sur le carrelage : des milliers de chocs secs (gouttes sur
+       carreau nu, gouttes dans la pellicule d'eau, bruine) dont la densite
+       suit le debit du jet avec 1,1 s de retard — le temps de vol d'une
+       goutte lancee a 1,5 m ;
+    3. la flaque : des bulles minuscules (Minnaert, 1 a 7 kHz), la brique qui
+       fait lire un LIQUIDE ;
+    4. la canalisation sous pression : un grondement sous 150 Hz.
+
+    BOUCLE EXACTE, pas un fondu croise : tout est fabrique periodique
+    (`synth.periodique`, `boucle=True`), queue de reverb comprise — le raccord
+    est un echantillon comme les autres. Un fondu croise creuserait le niveau
+    de 3 dB au milieu du fondu, et un jet qui respire une fois par tour se
+    repere mieux qu'un clic.
+
+    Contrat de masquage, plus dur que pour la chasse : un bruit CONTINU pres
+    duquel on se bat. La telegraphie d'un Costard met 76 % de son energie
+    entre 200 et 800 Hz (diagonale 380 -> 900 Hz). Aucune couche n'y monte, et
+    l'egaliseur final creuse 320-850 Hz de 18 dB par-dessus : la bande finit
+    30 a 45 dB sous le maximum du jet, 0,04 % de son energie (recouvrement
+    0,239, le plancher). Ce qu'il couvre encore de pres : le cliquet de la
+    telegraphie a 3,6 kHz, pas sa montee.
+    """
+    n = JET_N
+    dur = n / SR
+    g = rng(seed)
+
+    # 0. Le debit, qui n'est jamais regulier : lent (la pression du reseau),
+    # moyen (le jet qui se tord). Tout le reste en depend.
+    debit = (turbulence(dur, 0.9, 0.15, seed, boucle=True)
+             * turbulence(dur, 4.0, 0.20, seed + 1, boucle=True))
+
+    # 1. Le jet. Deux bandes dont le poids bascule sans cesse (le timbre bouge,
+    # pas seulement le niveau), une rugosite rapide, et des poches d'air : le
+    # jet se coupe a moitie, 30 a 70 ms, trois fois par seconde. Pente rose
+    # au-dessus de 2,5 kHz : un plateau BLANC s'entend comme de la vapeur ou un
+    # poste mal regle, pas comme de l'eau. La bande basse du souffle reste
+    # discrete : 1-2 kHz appartient aux bulles de la flaque, l'indice qui dit
+    # LIQUIDE (a poids egal, le souffle y couvrait 70 % des trames de 5 ms).
+    src = white(dur, seed + 2)
+    bas = periodique(lambda s: bandpass(s, 700, 3000), src)
+    haut = periodique(lambda s: bandpass(s, 3000, 11000), src)
+    bascule = turbulence(dur, 7.0, 1.0, seed + 3, boucle=True) / 2.0      # 0..1
+    grain = turbulence(dur, 90.0, 0.35, seed + 4, boucle=True)
+    poches = np.ones(n)
+    for _ in range(int(g.poisson(3.0 * dur))):
+        i, k = int(g.integers(n)), int(g.uniform(0.03, 0.07) * SR)
+        poches[(i + np.arange(k)) % n] *= 1.0 - g.uniform(0.2, 0.5) * np.hanning(k)
+    jet = (bas * (0.2 + 0.4 * bascule) + haut * (1.0 - 0.5 * bascule)) * grain * poches * debit
+    jet = eq_circulaire(jet, [(2500, 0), (5000, -3), (10000, -7), (16000, -14)])
+
+    # 2. La pluie : la densite suit le debit, avec le temps de vol d'une goutte.
+    pluie = np.roll(debit, int(1.1 * SR))
+    pluie = (pluie - pluie.min()) / (pluie.max() - pluie.min()) * 0.5 + 0.5
+    carreau = chocs(dur, 650, seed + 5, ms=(0.25, 1.4), db=(-18, 0), density=pluie, boucle=True)
+    carreau = periodique(lambda s: layer(highpass(s, 1800) * 0.7, resonant(s, 3400, q=2.5)), carreau)
+    pellicule = chocs(dur, 420, seed + 6, ms=(0.8, 3.0), db=(-18, 0), density=pluie, boucle=True)
+    pellicule = periodique(lambda s: bandpass(s, 500, 4500), pellicule)
+    bruine = chocs(dur, 1400, seed + 7, ms=(0.15, 0.5), db=(-18, 0), density=pluie, boucle=True)
+    bruine = periodique(lambda s: highpass(s, 5000), bruine)
+
+    # 3. La flaque : bulles de 0,45 a 3,2 mm (1 a 7 kHz), jamais plus grosses —
+    # une bulle de 4 mm chanterait a 800 Hz, dans la telegraphie.
+    flaque = bubbles(dur, 400, 0.45, 3.2, seed=seed + 8, xi=0.1, beta=2.0,
+                     density=pluie, damping=3.0, boucle=True)
+
+    # 4. La canalisation.
+    canal = periodique(lambda s: lowpass(s, 150), white(dur, seed + 9))
+    canal = canal * turbulence(dur, 3.0, 0.35, seed + 10, boucle=True) * debit
+
+    sig = (_unite(jet) * _db(-2) + _unite(carreau) * _db(-3) + _unite(pellicule) * _db(-6)
+           + _unite(bruine) * _db(-10) + _unite(flaque) * _db(-3) + _unite(canal) * _db(-20))
+    sig = periodique(lambda s: reverb(s, **ROOM_WC), sig)
+    sig = eq_circulaire(sig, [(25, -18), (60, 0), (160, 0), (220, -8), (320, -18),
+                              (850, -18), (1100, -6), (1400, 0), (12000, 0), (18000, -12)])
+    # Les chocs les plus forts portent le facteur de crete a 20 dB, celui d'un
+    # impact : normalise a -1 dBFS, le fichier n'aurait plus de corps. Rabotes
+    # jusqu'a 12,5 dB, celui d'un bruit continu. APRES l'egaliseur, qui en
+    # remontait 1,4.
+    return limiteur(sig, 0.40, boucle=True)
+
+
+# Recettes rendues comme des boucles EXACTES : `write_wav(boucle=True)`, sans
+# fondu aux bords ni filtre qui demarre au repos (voir synth.write_wav).
+# Les trois ambiances de zone n'y sont PAS, et c'est un ecart connu : elles
+# se referment par `loop_seamless`, mais le fondu de 2,5 ms que `write_wav`
+# pose aux bords de tout son ouvre un trou a chaque tour. Les y ajouter change
+# leurs octets ; a trancher le jour ou on les branche en jeu.
+BOUCLES_EXACTES = {"amb_water_jet"}
+
+
 # ============================================================ UI
 
 def ui_hover(seed=0):
@@ -601,6 +951,12 @@ RECIPES = {
     "door_shutter":   (door_shutter,       "interact", 2),
     "cart_roll":      (cart_roll,          "interact", 3),
 
+    # Sanitaires : placeholders (voir la section). Le jeu ne joue que la seed 0 ;
+    # les variantes servent a la page d'ecoute.
+    "toilet_flush":   (toilet_flush,       "interact", 2),
+    "ceramic_break":  (ceramic_break,      "impact",   3),
+    "water_gulp":     (water_gulp,         "pickup",   4),
+
     "ui_hover":       (ui_hover,           "ui",       1),
     "ui_confirm":     (ui_confirm,         "ui",       1),
     "ui_deny":        (ui_deny,            "ui",       1),
@@ -608,4 +964,6 @@ RECIPES = {
     "amb_hypermarche": (amb_hypermarche,   "ambience", 1),
     "amb_reserve":     (amb_reserve,       "ambience", 1),
     "amb_parking":     (amb_parking,       "ambience", 1),
+    # Boucle positionnelle, jouee pres de chaque sanitaire casse (placeholder).
+    "amb_water_jet":   (amb_water_jet,     "ambience", 2),
 }

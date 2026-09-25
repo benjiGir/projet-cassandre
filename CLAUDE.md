@@ -123,6 +123,7 @@ dans le dépôt.
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
 | `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |
 | `vitre_*` | vitrage : collider cuboid tant que `solide !== false`, cassable si `pv` (`VitreSystem`, `game/level/vitres.ts`) |
+| `sanitaire_*` | cuvette/urinoir façon Duke 3D : `sorte` (`cuvette`/`urinoir`) OBLIGATOIRE, cassable si `pv`, UN mesh UN matériau, pas de `col_*` jumeau (`SanitaireSystem`, `game/level/sanitaires.ts`, [ADR 0032](docs/decisions/0032-sanitaires-utilisables.md)) |
 
 Custom properties Blender lues sur un `prop_*` : `masse` (kg, défaut 25), `pv`
 (ABSENT = indestructible, seulement poussable) et `matiere` (`bois`/`carton`/
@@ -253,6 +254,78 @@ public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (génér�
 > annonce une contrainte ne l'applique pas**, et celui-là a traversé tout le
 > retrofit Effect du jalon M2 sans que personne le vérifie.
 >
+> **Sept retours de playtest traités (2026-09-25), EN ATTENTE DU VERDICT.**
+> Tous délégués aux agents, construits et vérifiés autant que l'automatisation
+> le permet :
+> 1. **Toilettes trop faciles à activer** : « neartag » de Duke — un rayon Rapier
+>    depuis l'œil, dans la direction visée, à 1,4 m ; une cloison bloque ; on
+>    boit en visant le JET (`SanitaireSystem.resolveAim`, ADR 0032).
+> 2. **Carré blanc au pied-de-biche** : c'était un muzzle flash déclenché pour
+>    la mêlée aussi, quad blanc à 15 cm de l'œil. Supprimé ; le typage n'admet
+>    plus `"melee"` pour un flash.
+> 3. **Impacts qui flottent** : decal seulement sur le décor fixe (jamais sur
+>    ennemi, joueur, prop, porte, vitre, sanitaire), giclée de sang sur un
+>    ennemi (`updateFx.ts::isMovableOrBreakableHandle`).
+> 4. **Secret 3 visible depuis la cafétéria** : la baie de 2 × 2 m n'avait
+>    jamais eu de porte ; `door_secret_vmc`, grille de tôle perforée (matériau
+>    du rideau Argent, donc 0 lot de plus), ouverte par `use_grille_vmc`,
+>    hors de portée depuis le sol. Construit et exporté dans la session live.
+> 5. **Pistolet « horrible »** : planche de références `docs/assets/board-pistolet.md`
+>    (agent de recherche), puis Beretta 92FS bicolore reconstruit
+>    (`build_weapons.py`, 360 triangles, culasse inox claire, prise et
+>    `bout_canon` recalés, pompe et pied-de-biche identiques à l'octet). Vu en
+>    jeu : lisible dans l'allée éclairée ET au parking de nuit.
+> 6. **Écran de fin avec récap** : `game/session/score.ts` (comptage au pas
+>    fixe, barème nommé : Costard 100, Directeur 1 000, secret 500 + 1 000 si
+>    tous, précision ≤ 1 000, 10 pts/s sous `parTime`, vandalisme), récap
+>    partiel à la mort, `RecapTable` révélé ligne par ligne.
+> 7. **Réglages en jeu** : état `paused` de la machine de flux (déclenché par la
+>    perte du verrouillage du pointeur), jeu flouté derrière, Paramètres
+>    appliqués à chaud (`registerRenderTarget` dans `graphicsSettings.ts`).
+> Au passage : `vitest.config.ts` exclut `.claude/**` (les worktrees de tâches
+> parallèles faisaient échouer `pnpm test`). **Non vérifié** : tout ce qui
+> passe par un vrai pointeur verrouillé (E, tir, Échap). `pnpm test` 391/391.
+>
+> **Toilettes façon Duke 3D (2026-09-24), EN ATTENTE DU VERDICT DE PLAYTEST.**
+> Demande : « utilisables comme dans Duke, redonnent de la vie ; cassées, de
+> l'eau jaillit et on la boit pour se soigner ». Règle de `player.c` : se
+> soulager sur une cuvette ou un urinoir intact rend +10 % des PV, puis 220 s
+> de délai de GAMEPLAY (chasse d'eau seule pendant ce délai) ; un sanitaire
+> cassé laisse un jet permanent, +1 PV par gorgée (touche E), illimité. Écarts
+> voulus : pas de gel du joueur (invariant #10), délai non consommé à PV
+> pleins. Le `use_toilet` historique suit la même règle. Nouveau préfixe
+> `sanitaire_*` (3 cuvettes, 2 urinoirs, 50 PV), un lot fusionné élagué à
+> 48 m comme les `use_*` ; la plaque de chasse n'est plus un `use_*` (elle
+> volait l'appui E à la cuvette voisine). Fait par quatre agents
+> (`level-pipeline`, `retro-render`, `level-forge`, `sound-forge`), construit
+> et exporté dans la session Blender ouverte. **Trois pièges payés** :
+> (1) des gouttes de 2,5 mm — la taille était appliquée deux fois, par la
+> géométrie ET l'échelle d'instance —, dessinées au compte de lots et
+> invisibles à l'écran : l'agent les avait « vues » dans sa scène de test ;
+> (2) un `InstancedMesh` en `frustumCulled = false` coûte un lot dans TOUTES
+> les vues, même vide ; (3) `_repeindre_sur_palette` laissait des
+> `material_index` résiduels : tout meuble Kenney exportait en plusieurs
+> primitives glTF, donc en `Group`, jamais en `Mesh` — invisible jusqu'ici
+> faute d'objet préfixé qui l'exige, `validate_level.py` le contrôle
+> désormais. **Budget, à lire honnêtement** : un protocole caméra seule
+> (joueur au spawn, 40 ennemis) donne **211 lots** à la pire pose du parking
+> extérieur, AVANT comme APRÈS ce chantier (liste d'objets identique) — les
+> 198 notés ci-dessous venaient d'un autre protocole. Mesuré :
+> `validate_level.py --strict` 0 erreur et 6 warnings connus, audit à zéro,
+> export vérifié, `pnpm test` 329/329. **Non vérifié** : la vraie touche E
+> (soulagement, gorgée), casser au tir, et le SON — trois placeholders de
+> synthèse (`toilet_flush`, `ceramic_break` avec de vraies assiettes Kenney,
+> `water_gulp`) à juger sur `http://localhost:5173/audition/`, en attendant
+> les enregistrements Freesound listés dans `docs/systems/hud-audio.md`.
+> **Boucle d'eau positionnelle ajoutée le même jour** : `amb_water_jet`
+> (placeholder de synthèse, 10,24 s, bouclée par construction et vérifiée
+> après décodage `.ogg`/`.m4a`), un `Howl` en Web Audio
+> (`core/waterAmbience.ts`, calcul pur dans `waterAmbienceMix.ts`) piloté
+> depuis `updateFx` : plein volume (0,35) à ≤ 1,5 m, silence à 11 m, pan
+> ±0,55, coupé hors de l'état `playing`. Vérifié en jeu par
+> `cassandre.sfx.eau()` : 0,35 près du jet, 0,18 à 6 m, arrêtée à 15 m.
+> `pnpm test` 352/352.
+>
 > **Quatrième passe en direct dans Blender (2026-09-23/24), EN ATTENTE DU
 > VERDICT DE PLAYTEST.** Trois retours, trois corrections à la source :
 > - **« Des trous entre les jonctions de murs »** : 18 angles vides de 25 cm,
@@ -268,7 +341,8 @@ public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (génér�
 > - **Une vraie salle pour les toilettes** (12 sur le plan de masse, à l'est de
 >   la cafétéria) : porte « WC » à la main (atlas `portes_2`, `validate_level`
 >   plafonne les textures à 128×128), trois cabines, lavabos et miroirs Kenney,
->   urinoirs ; le +1 PV est la plaque de chasse d'eau. Plan de masse et SVG à
+>   urinoirs ; le +1 PV était la plaque de chasse d'eau (remplacé le jour
+>   même par les `sanitaire_*`, voir au-dessus). Plan de masse et SVG à
 >   jour (la carte n'avait pas été régénérée depuis N8).
 > **Piège de budget payé** : le décor fusionne par cellule de 48 m EN 3D, le
 > centre de l'objet faisant foi — un sol n'est jamais dans la tranche d'un

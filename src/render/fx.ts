@@ -44,20 +44,27 @@ interface MuzzleFlashPreset {
 }
 
 /**
- * Un preset par arme. Le pied-de-biche N'A PAS DE CANON : `weapons.ts`
- * pousse quand même un `fireEvent` à chaque coup, et le câblage
- * (`game/loop/updateFx.ts`) demande un muzzle flash pour CHAQUE tir,
- * indépendamment de l'arme. Interprété ici comme une étincelle de choc au
- * point de swing plutôt qu'un vrai flash d'arme à feu : amplitude et taille
- * nettement réduites par rapport au pompe.
+ * Un preset par arme À FEU. Le pied-de-biche N'A PAS DE CANON, et n'a PLUS DE
+ * MUZZLE FLASH DU TOUT (ni quad ni lumière) — retiré après un retour de
+ * playtest (« cette espèce de carré blanc qui apparaît à l'écran », « ça fait
+ * mal aux yeux »). Cause vérifiée avant correctif, PAS un decal ni des
+ * particules : `game/loop/updateFx.ts` demandait un muzzle flash pour CHAQUE
+ * `fireEvent`, mêlée comprise, avec `event.muzzlePosition` (l'œil du joueur)
+ * comme origine — `spawnMuzzleFlash` plaçait alors le quad à seulement
+ * `offset` (0,15 m) devant la caméra, orienté FACE À ELLE. Un quad blanc
+ * (`color: 0xffffff` sur `createMuzzleFlashSlot`, ci-dessous) à 15 cm de
+ * l'œil couvre l'essentiel du champ de vision à 640×360 : le carré n'était
+ * pas un artefact, c'était le comportement demandé, au mauvais endroit et
+ * pour la mauvaise arme. Le retour du coup de pied-de-biche passe par ce qui
+ * existe déjà : impact (particules), son, hitmarker, screenshake — voir
+ * `game/loop/updateFx.ts`.
  */
-const MUZZLE_FLASH_PRESETS: Record<"melee" | "pistol" | "shotgun", MuzzleFlashPreset> = {
+const MUZZLE_FLASH_PRESETS: Record<"pistol" | "shotgun", MuzzleFlashPreset> = {
   // Pistolet : plus petit et plus court que le pompe, mais même origine (bout
   // du canon affiché, voir `Viewmodel.muzzleWorldPosition`).
   pistol: { color: 0xfff0b0, intensity: 28, range: 4, size: 0.12, offset: 0.06 },
   // Le pompe part du bout du canon affiché (`Viewmodel.muzzleWorldPosition`) : juste devant.
   shotgun: { color: 0xfff2c0, intensity: 60, range: 6, size: 0.22, offset: 0.06 },
-  melee: { color: 0xd8d8e8, intensity: 12, range: 2.5, size: 0.08, offset: 0.15 },
 };
 
 interface MuzzleFlashSlot {
@@ -69,6 +76,24 @@ interface MuzzleFlashSlot {
 
 // Decals d'impact
 
+/**
+ * Pool de decals — UNIQUEMENT pour du décor STATIQUE (voir la garde posée par
+ * `game/loop/updateFx.ts` avant chaque `spawnImpactDecal`). Un decal est un
+ * quad posé une fois au point d'impact, jamais reparenté ni suivi : sur un
+ * ennemi, un `prop_*` poussable, une porte animée, une vitre ou un sanitaire
+ * cassables, il resterait accroché à un point du MONDE alors que la surface a
+ * bougé ou disparu — l'impact « flotte dans le vide », le second retour de
+ * playtest corrigé ici. Plutôt que reparenter (un decal enfant d'un mesh
+ * détruit/cassé exigerait un retrait explicite à chaque système de casse —
+ * `props.ts`/`vitres.ts`/`sanitaires.ts` — pour un gain cosmétique mineur),
+ * le choix retenu est le plus simple qui ne laisse jamais rien flotter :
+ * AUCUN decal sur ces surfaces, seulement les particules d'impact
+ * (`spawnImpactParticles`), qui sont déjà des objets libres, jetables, avec
+ * une durée de vie courte — rien à désolidariser. Ce module ne connaît lui-
+ * même aucun de ces systèmes (`fx.ts` reste découplé de `game/level/*`,
+ * voir docs/systems/rendu.md#découplage-entre-render-et-game) : la garde vit
+ * entièrement côté appelant.
+ */
 const DECAL_POOL_SIZE = 24;
 const DECAL_SIZE = 0.12; // m
 /** Détachement le long de la normale, évite le z-fighting avec la surface touchée. */
@@ -159,6 +184,98 @@ const FROST_COLOR = 0xdcf2fb; // blanc légèrement bleuté
 const FROST_GEOMETRY = new THREE.BoxGeometry(FROST_SIZE, FROST_SIZE, FROST_SIZE);
 const FROST_MATERIAL = new THREE.MeshLambertMaterial({ color: FROST_COLOR });
 
+// Sanitaires cassables (`sanitaire_*`, casse au tir) — éclats de faïence +
+// eau. Deux régimes DÉLIBÉRÉMENT différents, dans l'esprit du reste du
+// fichier (voir la doc de tête, « trois régimes de pooling ») :
+// - `spawnCeramicBurst` réutilise `spawnChunks` telle quelle (éclats de
+//   faïence + gerbe d'eau initiale) : un évènement RARE (casser un
+//   sanitaire), la même raison qu'un `spawnGibs`/`spawnDebris`/
+//   `spawnFrostBurst` — allouer quelques meshes à cet instant précis est
+//   sans coût.
+// - `addWaterJet` est au contraire PERMANENT, tourne à CHAQUE frame jusqu'à
+//   `clearWaterJets` : zéro allocation tolérée en régime établi (voir la
+//   doc de tête du module). Toute la fontaine (gouttes en l'air +
+//   éclaboussures au sol, N jets confondus) tient dans un SEUL
+//   `THREE.InstancedMesh` à pool fixe — UN lot de dessin, quel que soit le
+//   nombre de jets actifs (0 à `WATER_MAX_JETS`), parce qu'un
+//   `InstancedMesh` dessine tout son buffer d'instances en un seul appel :
+//   voir docs/systems/cout-de-rendu.md (« les triangles ne coûtent presque
+//   rien ») — une centaine de petits cubes, cachés (échelle nulle) ou
+//   visibles, ne pèse rien à côté du budget de LOTS, la vraie contrainte de
+//   ce niveau (pire vue mesurée : 198/200).
+
+const CERAMIC_LIFETIME = 1.1; // s
+const CERAMIC_COUNT = 7;
+const CERAMIC_SIZE = 0.07; // m
+const CERAMIC_SPEED_MIN = 2; // m/s
+const CERAMIC_SPEED_MAX = 5; // m/s
+const CERAMIC_SPREAD = 1.0;
+const CERAMIC_COLOR = 0xe8e4da; // faïence blanc cassé
+const CERAMIC_GEOMETRY = new THREE.BoxGeometry(CERAMIC_SIZE, CERAMIC_SIZE, CERAMIC_SIZE);
+const CERAMIC_MATERIAL = new THREE.MeshLambertMaterial({ color: CERAMIC_COLOR });
+
+/** Bleu pâle partagé par la gerbe initiale (`spawnChunks`) ET la fontaine permanente (`InstancedMesh`) — même eau, deux régimes de rendu. */
+const WATER_COLOR = 0xb7dff0;
+/**
+ * Cube partagé par la gerbe initiale et la fontaine permanente : « gouttes
+ * en petits carrés francs », jamais de flou ni de shader d'eau — voir le
+ * skill `build-engine-look`. La géométrie sert aussi de base aux
+ * éclaboussures au sol (`WATER_SPLASH_*`), aplaties par l'échelle
+ * d'instance plutôt qu'avec une géométrie séparée : un `InstancedMesh` ne
+ * porte qu'UNE géométrie.
+ */
+const WATER_DROPLET_SIZE = 0.05; // m
+const WATER_GEOMETRY = new THREE.BoxGeometry(WATER_DROPLET_SIZE, WATER_DROPLET_SIZE, WATER_DROPLET_SIZE);
+/**
+ * Un peu d'émissif : les toilettes sont une pièce sombre, et une eau éclairée
+ * par la seule lumière ambiante y sortait du même gris que le carrelage
+ * (constaté en jeu). L'eau des jeux Build accroche toujours la lumière.
+ */
+const WATER_EMISSIVE = 0x2f5566;
+const WATER_MATERIAL = new THREE.MeshLambertMaterial({ color: WATER_COLOR, emissive: WATER_EMISSIVE });
+
+// Gerbe initiale (spawnCeramicBurst) — infrastructure spawnChunks/ToyParticle,
+// direction fixe `UP_DIRECTION` (comme le givre) : casser un sanitaire fait
+// jaillir l'eau vers le haut quelle que soit la direction du coup, pas vers
+// la cible.
+const WATER_BURST_LIFETIME = 0.7; // s — la fontaine PERMANENTE prend le relais tout de suite après, cette gerbe n'a pas besoin de durer
+const WATER_BURST_COUNT = 10;
+const WATER_BURST_SPEED_MIN = 2.5; // m/s
+const WATER_BURST_SPEED_MAX = 5; // m/s
+const WATER_BURST_SPREAD = 0.5;
+
+// Fontaine permanente (addWaterJet) — pool fixe, un seul InstancedMesh.
+const WATER_MAX_JETS = 8; // 5 sanitaires posés dans le niveau, marge de sécurité (voir la tâche)
+// Huit gouttes par jet se lisaient comme trois points isolés à 640×360, pas
+// comme un jet : il en faut assez pour que la colonne paraisse continue.
+const WATER_DROPLETS_PER_JET = 28; // gouttes en l'air, en vol continu
+const WATER_SPLASHES_PER_JET = 6; // éclaboussures au sol, round-robin PAR JET
+const WATER_DROPLET_TOTAL = WATER_MAX_JETS * WATER_DROPLETS_PER_JET;
+const WATER_SPLASH_TOTAL = WATER_MAX_JETS * WATER_SPLASHES_PER_JET;
+/** Taille totale du pool d'instances — CONSTANTE, jamais redimensionnée après construction du `InstancedMesh`. */
+const WATER_INSTANCE_COUNT = WATER_DROPLET_TOTAL + WATER_SPLASH_TOTAL;
+
+/** Hauteur visée du jet, tirée au hasard PAR GOUTTE : « gicle verticalement ~1 à 1,5 m ». */
+const WATER_JET_HEIGHT_MIN = 1.0; // m
+const WATER_JET_HEIGHT_MAX = 1.5; // m
+/** Vitesse horizontale au départ : « retombe en éventail » plutôt qu'une colonne droite. */
+const WATER_FAN_SPEED_MIN = 0.1; // m/s
+const WATER_FAN_SPEED_MAX = 0.5; // m/s
+/**
+ * Goutte étirée à la verticale, en facteurs de `WATER_GEOMETRY` : un filet
+ * d'eau qui tombe se lit comme un trait, un cube se lit comme une particule.
+ */
+const WATER_DROPLET_STRETCH = new THREE.Vector3(0.8, 1.8, 0.8);
+
+const WATER_SPLASH_LIFETIME = 0.18; // s — rythme vif, plusieurs éclaboussures par seconde et par jet
+const WATER_SPLASH_SIZE = 0.09; // m, rayon max de la marque au sol
+const WATER_SPLASH_FLATNESS = 0.015; // m, hauteur écrasée : une flaque, pas un cube
+const WATER_SPLASH_JITTER = 0.12; // m, décalage horizontal aléatoire autour du pied du jet
+/** Fraction de `WATER_SPLASH_LIFETIME` passée à grossir avant de s'évanouir PAR L'ÉCHELLE (le matériau reste opaque, voir la doc de tête — aucun tri de transparence à gérer sur un `InstancedMesh`). */
+const WATER_SPLASH_GROW_FRACTION = 0.3;
+/** Marge autour des jets actifs pour la sphère d'élagage : l'éventail, les éclaboussures, la gerbe initiale. */
+const WATER_BOUNDS_MARGIN = 0.8; // m
+
 interface ToyParticle {
   mesh: THREE.Mesh;
   velocity: THREE.Vector3;
@@ -169,12 +286,51 @@ interface ToyParticle {
   gravityScale: number;
 }
 
+// État persistant du pool `InstancedMesh` de la fontaine permanente — voir
+// `addWaterJet`. Ces objets sont créés UNE FOIS au constructeur, jamais par
+// frame (contrairement à `ToyParticle`, alloué à chaque `spawnChunks`).
+
+interface WaterDropletState {
+  position: THREE.Vector3;
+  velocity: THREE.Vector3;
+}
+
+interface WaterSplashState {
+  position: THREE.Vector3;
+  /** Secondes restantes avant extinction. `<= 0` = éteinte (matrice d'instance déjà à échelle nulle). */
+  life: number;
+}
+
+interface WaterJetSlot {
+  active: boolean;
+  origin: THREE.Vector3;
+  /** Curseur round-robin parmi les `WATER_SPLASHES_PER_JET` de CE jet — indépendant des autres jets. */
+  splashCursor: number;
+}
+
 // Géométries/matériaux PARTAGÉS entre toutes les particules/douilles (comme
 // `materialFor` dans `gym.ts`) : chaque `spawn*` alloue une nouvelle `Mesh`
 // (léger, nécessaire vu la durée de vie/le mouvement individuels) mais
 // jamais de nouvelle géométrie ni de nouveau matériau.
 const PARTICLE_GEOMETRY = new THREE.BoxGeometry(PARTICLE_SIZE, PARTICLE_SIZE, PARTICLE_SIZE);
+/** Poussière/débris génériques (béton, décor) — tout ce qui n'est pas un hit ENEMY. */
 const PARTICLE_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x2c2620 });
+/**
+ * Giclée sur un ennemi touché : même géométrie/durée de vie que
+ * `PARTICLE_MATERIAL`, seule la couleur distingue « ça, c'est du sang » de la
+ * poussière générique — voir `spawnImpactParticles`. Choisie distinctement du
+ * rouge/brun de `GIB_COLOR` (bout portant, chunks plus gros) : une giclée
+ * n'est pas une explosion.
+ */
+const BLOOD_COLOR = 0x5a1418;
+const BLOOD_MATERIAL = new THREE.MeshLambertMaterial({ color: BLOOD_COLOR });
+/**
+ * Réplique locale de `FLESH_MATERIAL` (`game/player/weapons.ts`) : ce module
+ * ne l'importe pas (voir docs/systems/rendu.md#découplage-entre-render-et-game
+ * — `fx.ts` ne dépend jamais de `game/player/*`), même discipline que le
+ * type `"melee" | "pistol" | "shotgun"` déjà dupliqué en dur dans ce fichier.
+ */
+const FLESH_SURFACE = "flesh";
 const SHELL_GEOMETRY = new THREE.CylinderGeometry(0.012, 0.012, 0.05, 6);
 const SHELL_MATERIAL = new THREE.MeshLambertMaterial({ color: 0xc98a2c }); // laiton
 
@@ -183,6 +339,12 @@ const PLANE_DEFAULT_NORMAL = new THREE.Vector3(0, 0, 1);
 
 /** Direction de base d'une bouffée de givre (`spawnFrostBurst`) — elle n'a pas de normale de surface comme un impact, juste "vers le haut". Réutilisée en lecture seule, jamais mutée. */
 const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
+
+/** Rotation identité des gouttes/éclaboussures d'eau — jamais tournées, « carrés francs » axés sur les axes du monde. Réutilisée en lecture seule, jamais mutée. */
+const IDENTITY_QUATERNION = new THREE.Quaternion();
+
+/** Matrice à échelle nulle : cache une instance d'`InstancedMesh` sans la retirer du pool (voir `WATER_INSTANCE_COUNT`). Réutilisée en lecture seule, jamais mutée. */
+const ZERO_SCALE_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
 export class FxSystem {
   private readonly scene: THREE.Scene;
@@ -204,6 +366,16 @@ export class FxSystem {
   private readonly gibs: ToyParticle[] = [];
   private readonly debris: ToyParticle[] = [];
   private readonly frost: ToyParticle[] = [];
+  private readonly ceramic: ToyParticle[] = [];
+  private readonly waterBurst: ToyParticle[] = [];
+
+  // Fontaine permanente (sanitaires cassés) — pool fixe, un seul InstancedMesh
+  // pour tous les jets actifs (voir la doc de tête, section « sanitaires »).
+  private readonly waterJetMesh: THREE.InstancedMesh<THREE.BoxGeometry, THREE.MeshLambertMaterial>;
+  private readonly waterJets: WaterJetSlot[] = [];
+  private readonly waterDroplets: WaterDropletState[] = [];
+  private readonly waterSplashes: WaterSplashState[] = [];
+  private waterJetCursor = 0;
 
   /**
    * Un `MeshLambertMaterial` par couleur de débris, créé à la première
@@ -214,6 +386,9 @@ export class FxSystem {
 
   // Scratch, zéro allocation en régime établi
   private readonly scratchDir = new THREE.Vector3();
+  private readonly scratchBox = new THREE.Box3();
+  private readonly scratchScale = new THREE.Vector3();
+  private readonly scratchMatrix = new THREE.Matrix4();
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -224,6 +399,31 @@ export class FxSystem {
     for (let i = 0; i < DECAL_POOL_SIZE; i++) {
       this.decals.push(this.createDecalSlot());
     }
+
+    this.waterJetMesh = new THREE.InstancedMesh(WATER_GEOMETRY, WATER_MATERIAL, WATER_INSTANCE_COUNT);
+    // Élagué comme n'importe quel mesh, mais sur une sphère englobante tenue
+    // À LA MAIN autour des jets actifs (`updateWaterBounds`) : celle que
+    // three.js calcule seul l'est une fois pour toutes, au premier rendu,
+    // quand toutes les instances sont encore à l'origine. Et caché tant
+    // qu'aucun jet n'est actif. Toujours dessiné, il coûtait un lot dans
+    // TOUTES les vues du niveau, pire vue comprise (198/200).
+    this.waterJetMesh.boundingSphere = new THREE.Sphere();
+    this.waterJetMesh.visible = false;
+    this.scene.add(this.waterJetMesh);
+
+    for (let j = 0; j < WATER_MAX_JETS; j++) {
+      this.waterJets.push({ active: false, origin: new THREE.Vector3(), splashCursor: 0 });
+    }
+    for (let i = 0; i < WATER_DROPLET_TOTAL; i++) {
+      this.waterDroplets.push({ position: new THREE.Vector3(), velocity: new THREE.Vector3() });
+    }
+    for (let i = 0; i < WATER_SPLASH_TOTAL; i++) {
+      this.waterSplashes.push({ position: new THREE.Vector3(), life: 0 });
+    }
+    for (let i = 0; i < WATER_INSTANCE_COUNT; i++) {
+      this.waterJetMesh.setMatrixAt(i, ZERO_SCALE_MATRIX);
+    }
+    this.waterJetMesh.instanceMatrix.needsUpdate = true;
   }
 
   private createMuzzleFlashSlot(): MuzzleFlashSlot {
@@ -293,7 +493,7 @@ export class FxSystem {
 
   // Muzzle flash
 
-  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun") {
+  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun") {
     const preset = MUZZLE_FLASH_PRESETS[weapon];
     const slot = this.muzzleFlashes[this.muzzleFlashCursor]!;
     this.muzzleFlashCursor = (this.muzzleFlashCursor + 1) % this.muzzleFlashes.length;
@@ -321,10 +521,16 @@ export class FxSystem {
 
   // Decals d'impact
 
+  /**
+   * À appeler UNIQUEMENT pour un point d'impact sur du décor STATIQUE — voir
+   * la doc de tête de `DECAL_POOL_SIZE` : ce module ne le vérifie pas
+   * lui-même (aucune dépendance vers `game/level/*`), c'est
+   * `game/loop/updateFx.ts` qui garde cet appel derrière la bonne condition.
+   * `material` : placeholder pour un futur tag de matériau (voir
+   * `PLACEHOLDER_MATERIAL` dans `weapons.ts`) — conservé dans l'API pour ne
+   * pas devoir la changer plus tard, sans effet cette phase.
+   */
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string) {
-    // `material` : placeholder pour un futur tag de matériau (voir
-    // `PLACEHOLDER_MATERIAL` dans `weapons.ts`) — conservé dans l'API pour ne
-    // pas devoir la changer plus tard, sans effet cette phase.
     void material;
 
     const slot = this.decals[this.decalCursor]!;
@@ -337,11 +543,20 @@ export class FxSystem {
 
   // Particules d'impact
 
-  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun") {
+  /**
+   * `material` choisit UNIQUEMENT la couleur (giclée sombre sur `"flesh"`,
+   * poussière générique sinon) — même chaîne que `HitEvent.material`, passée
+   * telle quelle par l'appelant. Contrairement au decal, ces particules sont
+   * des objets jetables sans point d'attache : elles restent correctes même
+   * quand la surface touchée bouge ou disparaît juste après (ennemi, `prop_*`,
+   * porte, vitre, sanitaire) — voir la doc de tête de `DECAL_POOL_SIZE`.
+   */
+  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun", material: string) {
     const count = weapon === "shotgun" ? PARTICLES_PER_HIT_SHOTGUN : PARTICLES_PER_HIT_MELEE;
+    const particleMaterial = material === FLESH_SURFACE ? BLOOD_MATERIAL : PARTICLE_MATERIAL;
 
     for (let i = 0; i < count; i++) {
-      const mesh = new THREE.Mesh(PARTICLE_GEOMETRY, PARTICLE_MATERIAL);
+      const mesh = new THREE.Mesh(PARTICLE_GEOMETRY, particleMaterial);
       mesh.position.copy(point);
       this.scene.add(mesh);
 
@@ -455,6 +670,145 @@ export class FxSystem {
   }
 
   /**
+   * Casse d'un `sanitaire_*` (cuvette/urinoir) : éclats de faïence blanc
+   * cassé projetés dans la direction du coup, plus une gerbe d'eau initiale
+   * qui part vers le haut — jamais vers `direction` : l'eau jaillit du tuyau
+   * cassé, pas dans l'axe du coup de feu (même raisonnement que
+   * `spawnFrostBurst`/`UP_DIRECTION`). Réutilise `spawnChunks` telle quelle
+   * (ADR 0018) : évènement rare, allouer quelques meshes ici est sans coût —
+   * voir la doc de tête.
+   *
+   * Ne pose PAS le jet permanent : c'est `addWaterJet`, à appeler séparément
+   * par l'appelant une fois la casse confirmée (deux méthodes, deux régimes
+   * de coût — voir la doc de tête).
+   */
+  spawnCeramicBurst(point: THREE.Vector3, direction: THREE.Vector3) {
+    this.spawnChunks(this.ceramic, point, direction, CERAMIC_GEOMETRY, CERAMIC_MATERIAL, {
+      count: CERAMIC_COUNT,
+      lifetime: CERAMIC_LIFETIME,
+      spread: CERAMIC_SPREAD,
+      speedMin: CERAMIC_SPEED_MIN,
+      speedMax: CERAMIC_SPEED_MAX,
+      gravityScale: 1,
+    });
+    this.spawnChunks(this.waterBurst, point, UP_DIRECTION, WATER_GEOMETRY, WATER_MATERIAL, {
+      count: WATER_BURST_COUNT,
+      lifetime: WATER_BURST_LIFETIME,
+      spread: WATER_BURST_SPREAD,
+      speedMin: WATER_BURST_SPEED_MIN,
+      speedMax: WATER_BURST_SPEED_MAX,
+      gravityScale: 1,
+    });
+  }
+
+  /**
+   * Jet d'eau PERMANENT au-dessus d'un sanitaire cassé, jusqu'à
+   * `clearWaterJets`. `origin` est le bas-centre de la bbox de l'appareil
+   * (au sol pour une cuvette, ~0,55 m pour un urinoir — décision de
+   * l'appelant). Ce `y` sert à la fois de point d'émission ET de niveau de
+   * « sol » où LES GOUTTES DE CE JET éclaboussent et repartent : chaque jet
+   * a son propre plancher, jamais `SHELL_GROUND_Y` (qui suppose un sol plat
+   * à `y = 0`, faux pour un urinoir en hauteur).
+   *
+   * Pool round-robin de `WATER_MAX_JETS` (même pattern que les decals/
+   * muzzle flashes plus haut) : au-delà, le jet le plus ANCIEN est réécrit —
+   * sans conséquence en pratique, le niveau n'en pose que 5.
+   */
+  addWaterJet(origin: THREE.Vector3) {
+    const jetIndex = this.waterJetCursor;
+    this.waterJetCursor = (this.waterJetCursor + 1) % WATER_MAX_JETS;
+
+    const slot = this.waterJets[jetIndex]!;
+    slot.active = true;
+    slot.origin.copy(origin);
+    slot.splashCursor = 0;
+    this.updateWaterBounds();
+
+    for (let d = 0; d < WATER_DROPLETS_PER_JET; d++) {
+      const droplet = this.waterDroplets[jetIndex * WATER_DROPLETS_PER_JET + d]!;
+      this.resetWaterDroplet(droplet, slot.origin);
+      // Phase de départ tirée dans le temps de vol : sans elle, toutes les
+      // gouttes partent ensemble et le jet naît comme une bouffée synchrone.
+      const flight = Math.random() * ((2 * droplet.velocity.y) / -TOY_GRAVITY);
+      droplet.position.addScaledVector(droplet.velocity, flight);
+      droplet.position.y += 0.5 * TOY_GRAVITY * flight * flight;
+      droplet.velocity.y += TOY_GRAVITY * flight;
+    }
+    for (let s = 0; s < WATER_SPLASHES_PER_JET; s++) {
+      this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + s]!.life = 0;
+      this.waterJetMesh.setMatrixAt(WATER_DROPLET_TOTAL + jetIndex * WATER_SPLASHES_PER_JET + s, ZERO_SCALE_MATRIX);
+    }
+    this.waterJetMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Retire tous les jets d'eau — nouveau niveau, hot reload, reset de partie. */
+  clearWaterJets() {
+    for (const slot of this.waterJets) slot.active = false;
+    for (const splash of this.waterSplashes) splash.life = 0;
+    for (let i = 0; i < WATER_INSTANCE_COUNT; i++) {
+      this.waterJetMesh.setMatrixAt(i, ZERO_SCALE_MATRIX);
+    }
+    this.waterJetMesh.instanceMatrix.needsUpdate = true;
+    this.waterJetCursor = 0;
+    this.updateWaterBounds();
+  }
+
+  /**
+   * Sphère englobante des jets ACTIFS (appelée seulement quand un jet naît ou
+   * que tous s'éteignent, jamais par frame) et visibilité du mesh : sans jet
+   * actif, il ne coûte aucun lot.
+   */
+  private updateWaterBounds() {
+    const box = this.scratchBox.makeEmpty();
+    for (const slot of this.waterJets) {
+      if (!slot.active) continue;
+      box.expandByPoint(slot.origin);
+      // Sommet du jet, et une marge horizontale pour l'éventail et les éclaboussures.
+      this.scratchDir.set(slot.origin.x, slot.origin.y + WATER_JET_HEIGHT_MAX, slot.origin.z);
+      box.expandByPoint(this.scratchDir);
+    }
+    this.waterJetMesh.visible = !box.isEmpty();
+    if (box.isEmpty()) return;
+    box.expandByScalar(WATER_BOUNDS_MARGIN);
+    box.getBoundingSphere(this.waterJetMesh.boundingSphere!);
+  }
+
+  /**
+   * Réinitialise une goutte au pied du jet : vitesse verticale tirée pour
+   * viser une hauteur dans `[WATER_JET_HEIGHT_MIN, WATER_JET_HEIGHT_MAX]`
+   * (`v0 = sqrt(2 · g · h)`, tir vertical sous `TOY_GRAVITY`), composante
+   * horizontale aléatoire pour l'éventail de retombée. Le fait que `v0`
+   * varie d'une goutte à l'autre suffit à désynchroniser la fontaine dans le
+   * temps (temps de vol différent), sans avoir besoin d'un déphasage
+   * explicite au premier `addWaterJet`.
+   */
+  private resetWaterDroplet(droplet: WaterDropletState, origin: THREE.Vector3) {
+    droplet.position.copy(origin);
+    const height = WATER_JET_HEIGHT_MIN + Math.random() * (WATER_JET_HEIGHT_MAX - WATER_JET_HEIGHT_MIN);
+    const upSpeed = Math.sqrt(2 * -TOY_GRAVITY * height);
+    const fanAngle = Math.random() * Math.PI * 2;
+    const fanSpeed = WATER_FAN_SPEED_MIN + Math.random() * (WATER_FAN_SPEED_MAX - WATER_FAN_SPEED_MIN);
+    droplet.velocity.set(Math.cos(fanAngle) * fanSpeed, upSpeed, Math.sin(fanAngle) * fanSpeed);
+  }
+
+  /**
+   * Déclenche une éclaboussure au pied du jet `jetIndex`, round-robin parmi
+   * ses `WATER_SPLASHES_PER_JET` (curseur propre à CE jet, voir
+   * `WaterJetSlot.splashCursor`) — jamais de nouvelle allocation.
+   */
+  private triggerWaterSplash(jetIndex: number) {
+    const slot = this.waterJets[jetIndex]!;
+    const local = slot.splashCursor;
+    slot.splashCursor = (slot.splashCursor + 1) % WATER_SPLASHES_PER_JET;
+
+    const splash = this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + local]!;
+    splash.position.copy(slot.origin);
+    splash.position.x += (Math.random() * 2 - 1) * WATER_SPLASH_JITTER;
+    splash.position.z += (Math.random() * 2 - 1) * WATER_SPLASH_JITTER;
+    splash.life = WATER_SPLASH_LIFETIME;
+  }
+
+  /**
    * Corps commun des gibs, débris et givre : un lot de cubes jouets projetés
    * dans un cône autour de `direction`, géométrie et matériau PARTAGÉS
    * (jamais une allocation par morceau).
@@ -509,6 +863,78 @@ export class FxSystem {
     this.updateToyPhysics(this.gibs, realDt);
     this.updateToyPhysics(this.debris, realDt);
     this.updateToyPhysics(this.frost, realDt);
+    this.updateToyPhysics(this.ceramic, realDt);
+    this.updateToyPhysics(this.waterBurst, realDt);
+    this.updateWaterJets(realDt);
+  }
+
+  /**
+   * Simule les jets d'eau permanents : gouttes en vol (gravité jouet, comme
+   * le reste du fichier) qui retombent au pied de LEUR jet, déclenchent une
+   * éclaboussure, et repartent aussitôt — pool fixe, aucune allocation,
+   * aucune suppression. Écrit directement les matrices d'instance de
+   * `waterJetMesh` (zéro `Mesh` par goutte, contrairement à `ToyParticle`).
+   */
+  private updateWaterJets(realDt: number) {
+    let matricesDirty = false;
+
+    for (let j = 0; j < WATER_MAX_JETS; j++) {
+      const slot = this.waterJets[j]!;
+      if (!slot.active) continue;
+      matricesDirty = true;
+
+      for (let d = 0; d < WATER_DROPLETS_PER_JET; d++) {
+        const idx = j * WATER_DROPLETS_PER_JET + d;
+        const droplet = this.waterDroplets[idx]!;
+
+        droplet.velocity.y += TOY_GRAVITY * realDt;
+        droplet.position.addScaledVector(droplet.velocity, realDt);
+
+        // Retombée au pied DE CE JET (pas un sol global, voir addWaterJet) :
+        // éclabousse et repart aussitôt, jamais de suppression.
+        if (droplet.position.y <= slot.origin.y && droplet.velocity.y < 0) {
+          this.triggerWaterSplash(j);
+          this.resetWaterDroplet(droplet, slot.origin);
+        }
+
+        // Échelle en FACTEURS : `WATER_GEOMETRY` mesure DÉJÀ
+        // `WATER_DROPLET_SIZE`. Une échelle d'instance à `WATER_DROPLET_SIZE`
+        // rendait des gouttes de 2,5 mm, dessinées mais invisibles à 640×360
+        // (constaté en jeu).
+        this.scratchScale.copy(WATER_DROPLET_STRETCH);
+        this.scratchMatrix.compose(droplet.position, IDENTITY_QUATERNION, this.scratchScale);
+        this.waterJetMesh.setMatrixAt(idx, this.scratchMatrix);
+      }
+
+      for (let s = 0; s < WATER_SPLASHES_PER_JET; s++) {
+        const local = j * WATER_SPLASHES_PER_JET + s;
+        const splash = this.waterSplashes[local]!;
+        if (splash.life <= 0) continue; // déjà éteinte, matrice déjà à échelle nulle
+
+        splash.life -= realDt;
+        const instanceIdx = WATER_DROPLET_TOTAL + local;
+        if (splash.life <= 0) {
+          this.waterJetMesh.setMatrixAt(instanceIdx, ZERO_SCALE_MATRIX);
+          continue;
+        }
+
+        // Grossit vite puis s'évanouit PAR L'ÉCHELLE (le matériau reste
+        // opaque, voir la doc de tête — pas de tri de transparence à gérer
+        // sur un InstancedMesh).
+        const t = 1 - splash.life / WATER_SPLASH_LIFETIME;
+        const scaleFactor =
+          t < WATER_SPLASH_GROW_FRACTION
+            ? t / WATER_SPLASH_GROW_FRACTION
+            : 1 - (t - WATER_SPLASH_GROW_FRACTION) / (1 - WATER_SPLASH_GROW_FRACTION);
+        // Cotes voulues en mètres, ramenées en facteur de la géométrie de base.
+        const radial = (WATER_SPLASH_SIZE * scaleFactor) / WATER_DROPLET_SIZE;
+        this.scratchScale.set(radial, WATER_SPLASH_FLATNESS / WATER_DROPLET_SIZE, radial);
+        this.scratchMatrix.compose(splash.position, IDENTITY_QUATERNION, this.scratchScale);
+        this.waterJetMesh.setMatrixAt(instanceIdx, this.scratchMatrix);
+      }
+    }
+
+    if (matricesDirty) this.waterJetMesh.instanceMatrix.needsUpdate = true;
   }
 
   private updateToyPhysics(list: ToyParticle[], realDt: number) {

@@ -34,6 +34,8 @@ function fakeHandle(): LevelHandle {
     doors: [],
     props: [],
     vitres: [],
+    sanitaires: [],
+    sanitaireRendus: [],
     useObjects: [],
     secrets: [],
     lights: [],
@@ -53,6 +55,8 @@ function fakeHandle(): LevelHandle {
       vitreCount: 0,
       vitreBatchCount: 0,
       doorBatchCount: 0,
+      sanitaireCount: 0,
+      sanitaireBatchCount: 0,
     },
     dispose: vi.fn(),
   };

@@ -9,11 +9,22 @@ import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
 import { grantCard } from "../session/cards";
 import { showHudMessage, triggerHeroLine } from "../session/feedback";
+import { relieveAtSanitaire, trySanitaire } from "../session/sanitaires";
+import {
+  advanceGameplayTime,
+  recordDirectorKills,
+  recordPropsDestroyed,
+  recordSanitairesDestroyed,
+  recordShot,
+  recordSuitKills,
+  recordVitresDestroyed,
+} from "../session/score";
 import { type GameEngine } from "../session/gameEngine";
 import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/directorConfig";
 import { suitConfig } from "../entities/suitConfig";
 import { moveConfig } from "../player/moveConfig";
 import { recordSafeGround, shouldRescue } from "../session/fallRescue";
+import { FLESH_MATERIAL } from "../player/weapons";
 import { type DoorActor } from "../level/doors";
 import { type GameSession } from "../session/gameSession";
 
@@ -21,15 +32,14 @@ import { type GameSession } from "../session/gameSession";
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/systems/boucle-de-jeu.md#origine-des-modules
 
-// Objets interactifs "signature Duke" (micro d'annonces, toilettes) — PV
-// rendus par les toilettes : "+1 PV" au sens LITTÉRAL du plan (blague
-// assumée sur la valeur dérisoire, pas un vrai levier de gameplay). Leurs
-// répliques passent par `triggerHeroLine`, EXACTEMENT comme les autres
-// répliques — un seul canal, une seule discipline de cooldown, jamais un
-// chemin parallèle.
+// Objets interactifs "signature Duke" (micro d'annonces, sanitaires) — le
+// micro reste un simple texte HUD placeholder (invariant #9, pas de vraie VO
+// cette passe). Les sanitaires (`use_toilet` historique ET `sanitaire_*` du
+// niveau v2) passent tous les deux par LA MÊME règle de soulagement
+// (`game/session/sanitaires.ts::relieveAtSanitaire`, voir
+// [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)) —
+// aucune constante de soin/réplique dédiée ici, elles vivent dans ce module.
 const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
-const HERO_LINE_TOILET = "Ça va mieux.";
-const TOILET_HEAL_AMOUNT = 1;
 const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
 
 // Constante de fin de niveau (Zone E, `door_e_exit`) — voir la doc
@@ -144,6 +154,22 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
     Effect.gen(function* () {
       const gameplayDt = engine.clock.tick(dt);
 
+      // Récap de fin de partie (`game/session/score.ts`) : temps de GAMEPLAY
+      // écoulé, somme du VRAI `gameplayDt` (hitstop compris), jamais une
+      // horloge murale — invariants #1/#12/#13, même discipline que le délai
+      // de soulagement des sanitaires juste en dessous.
+      advanceGameplayTime(session.stats, gameplayDt);
+
+      // Délai de soulagement des sanitaires (`game/session/sanitaires.ts`) :
+      // décrémenté par le VRAI `gameplayDt` (hitstop inclus), jamais un temps
+      // mural — invariants #1/#13. Pas un `stateTimer` XState (`session` n'a
+      // pas de machine à états), mais le même principe que `TICK` dans
+      // `enemyMachine.ts` : une durée de gameplay vit dans un champ mutable,
+      // avancée explicitement au pas fixe, jamais un `setTimeout` réel.
+      if (session.sanitaireReliefCooldown > 0) {
+        session.sanitaireReliefCooldown = Math.max(0, session.sanitaireReliefCooldown - gameplayDt);
+      }
+
       const activeFrame = yield* Effect.sync((): InputFrame => {
         let frame: InputFrame | null;
         if (inputRecorder.isPlaying()) {
@@ -221,28 +247,36 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onPaMicUse: () => {
               triggerHeroLine(session, HERO_LINE_PA_MIC);
             },
-            onToiletUse: () => {
-              const maxHp = useGameStore.getState().debug.playerMaxHp;
-              if (session.playerHp >= maxHp) {
-                showHudMessage("Vous êtes déjà en pleine forme.");
-                return;
-              }
-              session.playerHp = Math.min(maxHp, session.playerHp + TOILET_HEAL_AMOUNT);
-              useGameStore.getState().setPlayerHp(session.playerHp);
-              // Info FACTUELLE (canal système, sans cooldown) + réplique
-              // (canal dédié, cooldownée) — voir la ligne de partage documentée
-              // sur `hudMessage`/`heroLine` dans `game/state.ts`.
-              showHudMessage(`+${TOILET_HEAL_AMOUNT} PV`);
-              triggerHeroLine(session, HERO_LINE_TOILET);
-            },
+            // `use_toilet` (niveau `hypermarche_complet`, historique) : TOUJOURS
+            // une cuvette intacte, jamais de variante cassée — même règle que
+            // `sanitaire_*`, voir `game/session/sanitaires.ts::relieveAtSanitaire`.
+            onToiletUse: () => relieveAtSanitaire(session),
           },
         );
 
-        // Portes manœuvrables à la main (`manuelle`) : le même appui, s'il
-        // n'a servi à aucun `use_*`. Sinon, le bouton de la porte coupe-feu et
-        // la porte elle-même réagiraient tous les deux — elle s'ouvrirait et
-        // se refermerait dans le même pas fixe.
-        if (activeFrame.use && !consomme) session.doorSystem?.actionner(session.player.position);
+        // Sanitaires `sanitaire_*` (niveau v2) : le même appui, s'il n'a servi
+        // à aucun `use_*` — un lecteur de carte ou un pickup à portée passe
+        // toujours avant, même priorité que les portes manœuvrables ci-dessous.
+        // Exige de VISER l'appareil ("neartag", ADR 0032 section "Portée —
+        // visée") : `session.player.eyeOffset`/`activeFrame.yaw`/`.pitch`,
+        // mêmes origine/direction authentiques du pas fixe courant que
+        // `weaponEyeOrigin` un peu plus bas — jamais une valeur interpolée.
+        const consommeSanitaire = !consomme && trySanitaire(
+          session,
+          activeFrame.use,
+          session.player.position,
+          session.player.eyeOffset,
+          activeFrame.yaw,
+          activeFrame.pitch,
+        );
+
+        // Portes manœuvrables à la main (`manuelle`) : le même appui, s'il n'a
+        // servi ni à un `use_*` ni à un sanitaire. Sinon, le bouton de la porte
+        // coupe-feu et la porte elle-même réagiraient tous les deux — elle
+        // s'ouvrirait et se refermerait dans le même pas fixe.
+        if (activeFrame.use && !consomme && !consommeSanitaire) {
+          session.doorSystem?.actionner(session.player.position);
+        }
       });
 
       // Boîtes de munitions : même ramassage sans touche que les trousses. Une
@@ -292,7 +326,26 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.player.position.y + session.player.eyeOffset,
           session.player.position.z,
         );
+        // Récap : précision (`game/session/score.ts`). Capturé AVANT l'appel
+        // pour comparer par DELTA — `fireEvents`/`hitEvents` s'accumulent sur
+        // toute la frame d'affichage (plusieurs pas fixes possibles) et ne
+        // sont vidés que plus tard, dans `updateFx.ts` ; au plus UN nouveau
+        // `fireEvent` par appel ici (`frame.fire` ne déclenche qu'une seule
+        // arme à la fois), donc pas d'ambiguïté sur QUEL tir a produit quels
+        // impacts.
+        const fireCountBefore = session.weapons.fireEvents.length;
+        const hitCountBefore = session.weapons.hitEvents.length;
         session.weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
+        if (session.weapons.fireEvents.length > fireCountBefore) {
+          let hitEnemy = false;
+          for (let i = hitCountBefore; i < session.weapons.hitEvents.length; i++) {
+            if (session.weapons.hitEvents[i]!.material === FLESH_MATERIAL) {
+              hitEnemy = true;
+              break;
+            }
+          }
+          recordShot(session.stats, hitEnemy);
+        }
       });
 
       // APRÈS `weapons.update` : les `hitEvents` du pas courant existent déjà
@@ -302,6 +355,13 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // jamais une position interpolée — sert de cible de ligne de
       // vue/visée pour les Costards.
       yield* Effect.sync(() => {
+        // Récap : kills/casse (`game/session/score.ts`). Même technique de
+        // delta qu'au-dessus pour `weapons.update` — chaque `update()`
+        // ci-dessous pousse ses évènements de CE pas fixe dans une file qui
+        // ne sera vidée que plus tard par `updateFx.ts` ; comparer la
+        // longueur avant/après CET appel précis isole exactement ce qu'il
+        // vient de produire, peu importe quand la file sera vidée.
+        const suitDeathsBefore = session.suitManager.deathEvents.length;
         session.suitManager.update(
           gameplayDt,
           session.player.position,
@@ -309,7 +369,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.weapons.hitEvents,
           session.currentNavGraph,
           session.vitreSystem ?? undefined,
+          session.sanitaireSystem ?? undefined,
         );
+        recordSuitKills(session.stats, session.suitManager.deathEvents.length - suitDeathsBefore);
+
+        const directorDeathsBefore = session.directorManager.deathEvents.length;
         session.directorManager.update(
           gameplayDt,
           session.player.position,
@@ -317,7 +381,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.weapons.hitEvents,
           session.currentNavGraph,
           session.vitreSystem ?? undefined,
+          session.sanitaireSystem ?? undefined,
         );
+        recordDirectorKills(session.stats, session.directorManager.deathEvents.length - directorDeathsBefore);
+
         // Mobilier physique : même file `hitEvents`, lue de la même façon (non
         // destructivement) que les deux managers ci-dessus. Un tir traverse un
         // prop détruit et un ennemi mort de la même manière — c'est le collider
@@ -325,10 +392,24 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         //
         // AVANT `physics.step` (voir `core/loop.ts`) : l'impulsion posée ici
         // est intégrée par le pas qui suit immédiatement, jamais le suivant.
+        const propsDestroyedBefore = session.propSystem?.destroyedEvents.length ?? 0;
         session.propSystem?.update(session.weapons.hitEvents);
+        recordPropsDestroyed(session.stats, (session.propSystem?.destroyedEvents.length ?? 0) - propsDestroyedBefore);
+
         // Vitrages : même file, mêmes deux raisons (déterminisme du rejeu,
         // pas fixe strict) que le mobilier physique juste au-dessus.
+        const vitresDestroyedBefore = session.vitreSystem?.destroyedEvents.length ?? 0;
         session.vitreSystem?.update(session.weapons.hitEvents);
+        recordVitresDestroyed(session.stats, (session.vitreSystem?.destroyedEvents.length ?? 0) - vitresDestroyedBefore);
+
+        // Sanitaires : même file, même contrat que les vitrages juste au-dessus.
+        const sanitairesDestroyedBefore = session.sanitaireSystem?.destroyedEvents.length ?? 0;
+        session.sanitaireSystem?.update(session.weapons.hitEvents);
+        recordSanitairesDestroyed(
+          session.stats,
+          (session.sanitaireSystem?.destroyedEvents.length ?? 0) - sanitairesDestroyedBefore,
+        );
+
         // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
         // #1) — `interpolateVisuals.ts` ne fait qu'interpoler entre deux
         // poses déjà décidées. `collectDoorActors` lit le joueur et les

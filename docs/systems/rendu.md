@@ -400,6 +400,202 @@ Les gibs (`spawnGibs`) réutilisent tel quel `ToyParticle`/`updateToyPhysics`
 — seuls géométrie, couleur, quantité, vitesse et dispersion diffèrent des
 particules d'impact, aucune duplication du pattern générique.
 
+### Le pied-de-biche n'a plus de muzzle flash (2026-09-24)
+
+Deux retours de playtest, corrigés ensemble : « ce carré blanc qui apparaît à
+l'écran [au coup de pied-de-biche], ça fait mal aux yeux » et « les impacts
+restent dans le vide [quand l'ennemi touché se déplace] ».
+
+**Cause du carré blanc, vérifiée avant correctif** (pas supposée) :
+`game/loop/updateFx.ts` appelait `FxSystem.spawnMuzzleFlash` pour CHAQUE
+`fireEvent`, mêlée comprise, avec `event.muzzlePosition` — l'œil du joueur —
+comme origine pour la mêlée (contrairement au pistolet/pompe, qui partent du
+bout du canon AFFICHÉ). `spawnMuzzleFlash` place le quad à `position +
+direction * preset.offset`, `offset` valant 0,15 m pour le preset `melee` :
+un quad blanc (`color: 0xffffff` sur le matériau du quad, quel que soit le
+preset — seul l'`emissive` change) à 15 cm de la caméra couvre l'essentiel du
+champ de vision à 640×360. Pas un artefact : le comportement demandé, à
+l'endroit et pour l'arme qu'il ne fallait pas.
+
+**Correctif** : le pied-de-biche N'A PAS DE CANON, il n'a donc plus de muzzle
+flash DU TOUT — `game/loop/updateFx.ts` n'appelle `spawnMuzzleFlash` que pour
+`event.weapon !== "melee"`, et `MUZZLE_FLASH_PRESETS`
+(`render/fx.ts`) n'accepte plus que `"pistol" | "shotgun"` (garde vérifiée à
+la compilation, pas seulement à l'exécution — passer `"melee"` à
+`spawnMuzzleFlash` est désormais une erreur de type). Le retour du coup passe
+par ce qui existait déjà et reste inchangé : impact (particules), son,
+hitmarker, screenshake. Pistolet et pompe gardent leur flash tel quel — seul
+le branchement pour la mêlée a changé.
+
+**Cause des impacts qui flottent** : un decal (`spawnImpactDecal`) est un quad
+posé UNE FOIS au point d'impact, jamais reparenté ni suivi. `updateFx.ts` en
+posait un pour CHAQUE `HitEvent`, y compris sur un ennemi (qui marche), un
+`prop_*` (qui bouge), une porte animée, une vitre ou un sanitaire (qui
+disparaissent à la casse) — la surface s'en va, le decal reste accroché à son
+point du monde d'origine.
+
+**Correctif, le plus simple qui ne laisse jamais rien flotter** : AUCUN decal
+sur ces cinq cas, seulement des particules d'impact (déjà des objets libres,
+jetables, courte durée de vie — rien à désolidariser). Deux vérifications
+distinctes avant d'appeler `spawnImpactDecal` dans `game/loop/updateFx.ts` :
+
+- **Ennemi** : `hit.material === FLESH_MATERIAL` (même test que la
+  distinction de shake/hitmarker déjà en place) — pas de nouvelle donnée.
+- **`prop_*`/porte/vitre/sanitaire** : `isMovableOrBreakableHandle(session,
+  hit.colliderHandle)`, une fonction NOUVELLE qui construit un
+  `Set<number>` de handles de colliders à partir de champs **déjà publics**
+  du `LevelHandle` courant (`session.gltfLevelSession.current.doors /
+  vitres / sanitaires / props`, chacun avec son `.collider`) — reconstruit
+  UNIQUEMENT quand la référence du `LevelHandle` change (nouveau niveau, hot
+  reload), jamais par frame. Aucun nouveau couplage vers `game/level/*` : les
+  maps `byColliderHandle` internes de `PropSystem`/`DoorSystem`/
+  `VitreSystem`/`SanitaireSystem` restent privées, `updateFx.ts` ne fait que
+  lire des tableaux déjà exposés. `PROP` est déjà un groupe de collision
+  séparé de `WORLD` (invariant existant), mais doors/vitres/sanitaires
+  partagent TOUS `COLLISION_GROUPS.WORLD` avec le décor statique — les
+  distinguer par groupe de collision seul est impossible, d'où cette
+  seconde vérification par handle.
+
+Une alternative existait (decal PARENTÉ au mesh, retiré à la casse) et a été
+écartée : elle exige un retrait explicite dans CHAQUE système de casse
+(`props.ts`/`vitres.ts`/`sanitaires.ts`/`doors.ts`) pour un gain cosmétique
+mineur sur des surfaces déjà bien servies par leurs propres effets de casse
+(débris, eau, givre). Le même raisonnement s'applique au joueur touché par un
+ennemi (`suitManager.playerHitEvents`/`directorManager.playerHitEvents`,
+toujours matière `"flesh"`) : il bouge en permanence, plus de decal là non
+plus, seulement la giclée de particules — écart trouvé en même temps que le
+reste, jamais signalé par playtest mais identique dans sa cause.
+
+**L'impact se lit maintenant selon ce qu'il touche.** `spawnImpactParticles`
+gagne un paramètre `material` (même chaîne que `HitEvent.material`, déjà
+disponible, aucun changement au calcul du tir) : `"flesh"` sélectionne
+`BLOOD_MATERIAL` (rouge sombre, `0x5a1418`), tout le reste garde
+`PARTICLE_MATERIAL` (le gris/brun générique existant — sert de « poussière »
+sur le décor). Pas d'étincelles dédiées au métal : aucun tag de matériau
+n'existe pour le décor statique (`weapons.ts::PLACEHOLDER_MATERIAL` reste
+`"concrete"` pour tout ce qui n'est pas un ennemi, délibérément — un vrai
+système de tags par collider serait une sur-ingénierie hors scope de ce
+correctif, voir le commentaire de tête de `PLACEHOLDER_MATERIAL`). `fx.ts`
+duplique la chaîne `"flesh"` sous `FLESH_SURFACE` plutôt que d'importer
+`FLESH_MATERIAL` de `game/player/weapons.ts` — même discipline de
+découplage que le type `"melee" | "pistol" | "shotgun"` déjà en dur dans ce
+fichier (voir « Découplage entre render et game » plus haut).
+
+**Coût de rendu** : nul. `spawnImpactDecal` est appelé moins souvent qu'avant
+(jamais sur un ennemi/prop/porte/vitre/sanitaire) — le pool de 24 decals
+existant n'a pas changé de taille. Les particules restent des `THREE.Mesh`
+jetables à durée de vie courte (< 0,4 s), déjà hors du calcul du budget de
+lots (pire vue déjà mesurée sans elles). Aucun nouveau draw call permanent.
+
+**Vérifié en jeu (2026-09-24/25)**, gym, en pilotant `WeaponSystem.update`
+directement par les CHEMINS DE CODE RÉELS (le verrouillage du pointeur reste
+hors de portée de l'automatisation) : un coup de pied-de-biche contre un mur
+ne montre plus aucun carré/flash, sur des captures prises sur plusieurs
+frames d'affichage consécutives après le tir (`renderer` en logiciel,
+`--use-gl=angle --use-angle=swiftshader`, headless Chrome piloté par CDP sur
+pipe — le port distant TCP est refusé par le bac à sable de cet
+environnement). Un coup de pied-de-biche sur un Costard produit un vrai
+`HitEvent` (`material: "flesh"`, confirmé en lisant l'état réel de
+`WeaponSystem` après le tir) : avec le correctif, ce chemin de code ne peut
+PAS appeler `spawnImpactDecal` (branche non atteinte, garantie par la
+condition `!isEnemyHit`). **Non vérifié** : une capture visuelle directe du
+flash pistolet/pompe (toujours présent, code inchangé) et de la giclée de
+sang sur l'ennemi — la fenêtre de vie du flash (2 frames d'affichage) s'est
+révélée plus courte que la latence d'aller-retour de l'automatisation CDP
+utilisée ici, côté flash comme côté regression repro (code d'avant, même
+technique, même résultat blanc/négatif) ; la preuve retenue pour le flash est
+donc la lecture de cause (dérivation géométrique ci-dessus, confirmée
+compiler-level par le nouveau type `"pistol" | "shotgun"`), pas un pixel
+capturé en direct.
+
+### Sanitaires cassés : gerbe jetable + fontaine permanente (`InstancedMesh`)
+
+Casser un `sanitaire_*` ([ADR 0032](../decisions/0032-sanitaires-utilisables.md))
+déclenche deux effets de nature différente, volontairement séparés en deux
+méthodes :
+
+- `spawnCeramicBurst(point, direction)` — éclats de faïence blanc cassé
+  (`direction` = sens du coup) plus une gerbe d'eau initiale qui part
+  toujours VERS LE HAUT (`UP_DIRECTION`, comme `spawnFrostBurst`, jamais vers
+  `direction` : l'eau jaillit du tuyau cassé, pas dans l'axe du tir). Un
+  évènement rare, réutilise `spawnChunks`/`ToyParticle` telle quelle (ADR
+  0018) — allouer quelques `Mesh` à cet instant précis est sans coût, même
+  raisonnement que `spawnGibs`/`spawnDebris`/`spawnFrostBurst`.
+- `addWaterJet(origin)` — le jet PERMANENT qui reste après la gerbe, jusqu'à
+  `clearWaterJets()`. Régime de coût opposé : ça tourne à CHAQUE frame
+  d'affichage tant qu'un jet existe, donc zéro allocation tolérée en régime
+  établi — pas de nouveau `Mesh` par goutte.
+
+**Un seul `THREE.InstancedMesh` porte TOUS les jets actifs.** Pool fixe de
+`WATER_MAX_JETS × (WATER_DROPLETS_PER_JET + WATER_SPLASHES_PER_JET)` = 8 ×
+(28 + 6) = 272 instances (8 jets : marge au-delà des 5 sanitaires réels du
+niveau), construit une fois au constructeur de `FxSystem`, jamais
+redimensionné. Chaque goutte en vol et chaque éclaboussure au sol est une
+instance dont la matrice est réécrite à la main (`setMatrixAt`) au lieu
+d'être un `Mesh` séparé : **un jet actif coûte 1 lot de dessin, N jets actifs
+coûtent toujours 1 lot** — `InstancedMesh` dessine tout son buffer en un seul
+appel, indépendamment du nombre d'instances utilisées (voir
+[Ce que coûte une image](cout-de-rendu.md) : « les triangles ne coûtent
+presque rien », et le pire point de vue du niveau est déjà au plafond).
+
+**Élagué comme un mesh ordinaire, sur une sphère tenue à la main.** three.js
+calcule la sphère englobante d'un `InstancedMesh` UNE fois, au premier rendu,
+quand toutes les instances sont encore à l'origine : elle ne couvrirait
+jamais les jets. Plutôt que `frustumCulled = false` (qui dessinait le mesh
+dans TOUTES les vues du niveau, pire vue comprise, même sans aucun jet),
+`updateWaterBounds` recalcule la sphère autour des jets ACTIFS quand un jet
+naît ou que tous s'éteignent — jamais par frame — et cache le mesh tant
+qu'aucun jet n'existe : zéro lot sans sanitaire cassé, zéro lot hors champ.
+Une instance inactive est cachée par une matrice à ÉCHELLE NULLE
+(`ZERO_SCALE_MATRIX`, partagée en lecture seule) plutôt que retirée du pool —
+la géométrie dégénère en un point, invisible, sans jamais changer le nombre
+d'instances dessinées.
+
+**Chaque jet a son propre plancher.** `origin.y` (bas-centre de la bbox de
+l'appareil — au sol pour une cuvette, ~0,55 m pour un urinoir) sert à la fois
+de point d'émission et de niveau où LES GOUTTES DE CE JET éclaboussent et
+repartent, jamais un sol global comme `SHELL_GROUND_Y` (qui suppose `y = 0`
+partout, faux pour un urinoir en hauteur). Une goutte qui retombe déclenche
+une éclaboussure (round-robin parmi les 4 dédiées à son jet) puis repart
+aussitôt du pied du jet avec une nouvelle vitesse aléatoire — jamais de
+suppression, jamais de nouvelle allocation. À la naissance d'un jet, chaque
+goutte est avancée d'une fraction aléatoire de son temps de vol : sans ça,
+elles partent toutes ensemble et le jet naît comme une bouffée synchrone.
+
+**Look retro assumé, pas un shader d'eau.** Gouttes et éclaboussures
+partagent UNE géométrie (`WATER_GEOMETRY`, un cube de 5 cm) : « des gouttes en
+petits carrés francs », comme demandé par le skill `build-engine-look` — pas
+de flou, pas de sprite alpha, pas de simulation de surface. Les échelles
+d'instance sont des FACTEURS de ce cube, jamais des cotes en mètres : la
+première version multipliait 5 cm par 0,05 et dessinait des gouttes de
+2,5 mm, bien présentes au compte de lots et invisibles à l'écran. Une goutte
+est étirée à la verticale (`WATER_DROPLET_STRETCH`, 4 × 9 cm) — un filet qui
+tombe se lit comme un trait —, et le matériau porte un peu d'émissif : dans
+la salle sombre des toilettes, l'eau éclairée par la seule ambiance sortait
+du même gris que le carrelage. Une éclaboussure
+est le MÊME cube, aplati et élargi par l'échelle d'instance (jamais une
+géométrie séparée — un `InstancedMesh` n'en porte qu'une), et grossit puis
+s'évanouit PAR L'ÉCHELLE plutôt que par un canal alpha : le matériau reste
+opaque, ce qui évite tout tri de transparence entre instances (three.js ne
+trie pas les instances d'un `InstancedMesh` entre elles).
+
+**Vérifié en jeu (2026-09-24)**, `cassandre.sanitaires.casser(...)` sur un
+urinoir puis une cuvette : colonne d'eau lisible à 640×360 au-dessus de
+l'appareil cassé, sphère d'élagage centrée sur les jets actifs, mesh caché
+tant qu'aucun jet n'existe. Non jugé : le rendu en mouvement, en jouant.
+
+**Vérifié hors-jeu, avant le correctif d'échelle** (scène de test jetable, capture par Chrome headless à
+résolution interne 640×360, supprimée après coup — aucun fichier de test
+resté dans le dépôt) : les 96 instances sont bien à échelle nulle au repos ;
+`addWaterJet` fait apparaître des gouttes qui montent, retombent et
+éclaboussent en continu (trajectoire Y suivie sur plus d'une seconde,
+plusieurs cycles observés) ; deux jets simultanés cohabitent sans
+interférence ; au-delà de 8 appels le jet le plus ancien est bien réécrit
+(round-robin) ; `clearWaterJets()` désactive les 8 jets et remet les 96
+matrices à zéro. `renderer.info.render.calls` confirme le compte de lots :
+scène de test à 4 lots en régime établi (sol + 2 amers de test + LA fontaine,
+quel que soit le nombre de jets actifs parmi eux).
+
 ## Overlays canvas 2D hors React (réticule et hitmarker)
 
 Réticule et hitmarker sont deux canaux de feedback ajoutés après un retour

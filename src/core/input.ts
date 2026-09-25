@@ -301,6 +301,34 @@ class InputManager {
   }
 
   /**
+   * Redemande le verrouillage du pointeur, hors du clic sur le canvas déjà
+   * câblé dans `attach()`. Sert au bouton "Reprendre" de la pause
+   * (`game/session/lifecycle.ts::resumeGame`) : le clic React qui l'appelle
+   * EST le geste utilisateur exigé par l'API navigateur, la chaîne d'appel
+   * synchrone jusqu'ici suffit à le faire compter comme tel. Nommée
+   * `...Now` pour ne pas ombrer le champ privé `requestPointerLock` déjà lié
+   * au clic du canvas.
+   * see: docs/systems/session.md#pause
+   */
+  requestPointerLockNow(): void {
+    this.requestPointerLock();
+  }
+
+  /**
+   * Vide les deux vues de fronts de touche en attente, SANS toucher
+   * `keysDown` (les touches physiquement enfoncées restent enfoncées). Sert
+   * à ignorer ce qui a été tapé pendant un menu superposé au jeu (pause,
+   * capture de rebinding) : sans ça, une touche de gameplay pressée pendant
+   * ce menu resterait "juste pressée" au pas fixe suivant, une fois le menu
+   * refermé — un appui fantôme.
+   * see: docs/systems/session.md#pause
+   */
+  clearPendingEdges(): void {
+    this.edgesPendingFixedStep.clear();
+    this.edgesThisDisplayFrame.clear();
+  }
+
+  /**
    * Read once per render frame, outside the fixed step — camera look must
    * track the mouse at display rate or aiming gains perceptible latency.
    */

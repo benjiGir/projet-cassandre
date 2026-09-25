@@ -1,0 +1,107 @@
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: max(calc(var(--vpx) * 4), 6px);
+  width: 100%;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: max(calc(var(--vpx) * 2), 3px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "label points" "detail points";
+  column-gap: max(calc(var(--vpx) * 6), 10px);
+  font-size: max(calc(var(--vpx) * 6), 11px);
+  color: var(--text);
+  /* Révélation ligne par ligne, dans l'ordre du barème — voir RecapTable.tsx. */
+  animation: reveal-line 320ms ease-out both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+@keyframes reveal-line {
+  from {
+    opacity: 0;
+    transform: translateY(max(calc(var(--vpx) * 2), 3px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.label {
+  grid-area: label;
+  color: var(--text-strong);
+}
+
+.detail {
+  grid-area: detail;
+  color: var(--text-dim);
+  font-size: max(calc(var(--vpx) * 5.5), 10px);
+}
+
+.points {
+  grid-area: points;
+  align-self: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le total ferme la révélation (même `--i`, une case après la dernière
+   ligne) et se détache franchement du reste : c'est le seul chiffre que le
+   joueur doit pouvoir lire à un mètre de son écran. */
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: max(calc(var(--vpx) * 2), 2px);
+  padding: max(calc(var(--vpx) * 3), 6px) max(calc(var(--vpx) * 4), 8px);
+  background: var(--control-bg);
+  border-top: max(calc(var(--vpx) * 0.75), 1px) solid var(--control-edge);
+  animation: reveal-total 360ms ease-out both;
+  animation-delay: calc(var(--i) * 90ms);
+}
+
+@keyframes reveal-total {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.totalLabel {
+  font-size: max(calc(var(--vpx) * 6), 11px);
+  letter-spacing: 1px;
+  color: var(--text-strong);
+}
+
+.totalPoints {
+  font-size: max(calc(var(--vpx) * 12), 20px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--title);
+  text-shadow: 0 0 max(calc(var(--vpx) * 4), 6px) var(--title-glow);
+}
+
+/* Doit rester APRÈS les règles `.line`/`.total` ci-dessus : même spécificité,
+   c'est l'ordre dans la feuille qui tranche. Posée avant `.total`, cette
+   règle perdait contre l'`animation` inconditionnelle de `.total` — mesuré
+   (`prefers-reduced-motion: reduce` émulé, `.total` restait à opacity 0,
+   bloqué par son propre `animation-delay`) avant d'être déplacée ici. */
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .total {
+    animation: none;
+  }
+}

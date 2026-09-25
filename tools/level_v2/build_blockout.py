@@ -555,7 +555,12 @@ REGLES_REPERES = [
     ("pistolet", "use", "use_pistol"),
     ("boîte de munitions", "munitions", None),   # quantité lue dans le libellé, comme une trousse
     ("micro d'annonces", "use", "use_pa_mic"),
-    ("toilettes", "use", "use_toilet"),
+    # Jusqu'au 2026-09-24 : `use_toilet`, un `use_*` généré ici (toujours sauté,
+    # déjà dans `SIGNATURES_HABILLEES`) que `habiller_toilettes` remplaçait par
+    # le vrai objet. Depuis : les cuvettes/urinoirs sont des `sanitaire_*`
+    # utilisables directement (façon Duke), et la plaque de chasse n'est plus
+    # qu'un décor (`wc_plaque_chasse`) — plus rien à poser depuis le plan.
+    ("toilettes", "rien", None),
     ("trousse de soin", "soin", None),    # PV lus dans le libellé : « trousse de soin +25 »
     ("carte Argent", "carte", "argent"),
     ("carte Or", "carte", "or"),
