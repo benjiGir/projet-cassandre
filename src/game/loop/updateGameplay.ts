@@ -216,12 +216,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           {
-            onCrowbarPickup: () => session.weapons.pickUpMelee(),
-            onShotgunPickup: () => session.weapons.pickUpShotgun(),
-            onPistolPickup: () => {
-              session.weapons.pickUpPistol();
-              showHudMessage("Pistolet récupéré");
-            },
             // `use_exit_door` du niveau actuel : son `.glb` est antérieur à
             // la convention `requires` (jalon N7) et ne déclare donc aucune
             // carte. On lui applique la Platine — celle que le Directeur
@@ -292,6 +286,54 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             showHudMessage(`+${pris} munitions`);
             playSfx("ammo_pickup");
             return true;
+          },
+        ),
+      );
+
+      // Armes au sol (`use_crowbar`/`use_shotgun`/`use_pistol`) : même
+      // ramassage sans touche que les trousses/boîtes ci-dessus, jamais à la
+      // touche E (`interactive.ts::isWeaponPickupName` l'exclut déjà de
+      // `update()`). `WeaponSystem.tryCollectXxx` porte toute la décision
+      // « déjà possédée » (voir sa doc) ; ce bloc ne fait que le HUD/son sur
+      // un ramassage réussi, même pipeline que `heal_pickup`/`ammo_pickup`.
+      yield* Effect.sync(() =>
+        engine.interaction.collectWeapons(
+          session.gltfLevelSession?.current?.useObjects ?? [],
+          session.player.position,
+          {
+            onCrowbarPickup: () => {
+              const pris = session.weapons.tryCollectMelee();
+              if (pris) {
+                showHudMessage("Pied-de-biche récupéré");
+                playSfx("ammo_pickup");
+              }
+              return pris;
+            },
+            onShotgunPickup: () => {
+              const pris = session.weapons.tryCollectShotgun();
+              if (pris) {
+                showHudMessage("Fusil à pompe récupéré");
+                playSfx("ammo_pickup");
+              }
+              return pris;
+            },
+            onPistolPickup: () => {
+              // `dejaPossede`/`avantAmmo` lus AVANT `tryCollectPistol()` :
+              // après coup, `true` ne dit plus si c'était la première arme
+              // ou une simple recharge — voir la doc de `hasPistolAlready`.
+              const dejaPossede = session.weapons.hasPistolAlready;
+              const avantAmmo = session.weapons.pistolAmmo;
+              const pris = session.weapons.tryCollectPistol();
+              if (pris) {
+                showHudMessage(
+                  dejaPossede
+                    ? `+${session.weapons.pistolAmmo - avantAmmo} munitions`
+                    : "Pistolet récupéré",
+                );
+                playSfx("ammo_pickup");
+              }
+              return pris;
+            },
           },
         ),
       );

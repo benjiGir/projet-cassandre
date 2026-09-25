@@ -8,13 +8,12 @@ import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
-import { dressAmmoPickup, dressHealPickup } from "../../render/pickups";
+import { dressAmmoPickup, dressHealPickup, dressWeaponPickup, type WeaponPickupBillboard } from "../../render/pickups";
 import { LightPool } from "../../render/lightPool";
 import { PropSystem } from "../level/props";
 import { DoorSystem } from "../level/doors";
 import { VitreSystem } from "../level/vitres";
 import { SanitaireSystem } from "../level/sanitaires";
-import { dressWeaponPickup } from "../../render/viewmodel";
 import { Suit } from "../entities/suit";
 import { suitConfig } from "../entities/suitConfig";
 import { Director } from "../entities/director";
@@ -153,6 +152,10 @@ export function loadGltfLevel(
 
         // La boîte du `.glb` cède la place au vrai modèle, posé sur la surface
         // réellement sous elle. Ces mutations restent confinées au candidat.
+        // Armes au sol : billboards dressés (`render/pickups.ts`), collectés
+        // ici pour être animés au taux d'affichage (`updateFx`) — voir la doc
+        // de tête de `WeaponPickupBillboard`.
+        const weaponPickupBillboards: WeaponPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
           if (useObject.heals !== null) {
             dressHealPickup(useObject.object, groundBelow(session, useObject.position));
@@ -171,11 +174,8 @@ export function loadGltfLevel(
                   ? "shotgun"
                   : null;
           if (!weapon) continue;
-          dressWeaponPickup(
-            useObject.object,
-            weapon,
-            engine.weaponModels,
-            groundBelow(session, useObject.position),
+          weaponPickupBillboards.push(
+            dressWeaponPickup(useObject.object, weapon, groundBelow(session, useObject.position)),
           );
         }
 
@@ -208,6 +208,7 @@ export function loadGltfLevel(
           session.sanitaireSystem = sanitaireSystem;
           session.lightPool = lightPool;
           session.propSystem = propSystem;
+          session.weaponPickupBillboards = weaponPickupBillboards;
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).

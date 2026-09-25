@@ -324,35 +324,12 @@ export class Viewmodel {
   }
 }
 
-/**
- * Remplace la boîte d'un `use_crowbar`/`use_shotgun` par l'arme posée à plat,
- * alignée sur la plus grande dimension horizontale de la boîte. L'arme devient
- * enfant de l'objet : le ramassage, qui cache l'objet, la cache avec.
- *
- * @param groundY Hauteur de la surface sous la boîte (les boîtes `use_*`
- *   flottent souvent au-dessus du sol) ; à défaut, le dessous de la boîte.
- */
-export function dressWeaponPickup(
-  object: THREE.Object3D,
-  weapon: "melee" | "pistol" | "shotgun",
-  models: WeaponModels,
-  groundY: number | null,
-): void {
-  const box = new THREE.Box3().setFromObject(object);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-
-  const mesh = object as THREE.Mesh;
-  if (mesh.isMesh) mesh.material = HIDDEN_MATERIAL;
-
-  const geometrie =
-    weapon === "melee" ? models.worldCrowbar : weapon === "pistol" ? models.worldPistol : models.worldShotgun;
-  const model = new THREE.Mesh(geometrie, models.material);
-  model.position.set(center.x, groundY ?? box.min.y, center.z);
-  // Les modèles au sol sont longs selon -Z (le +Y de Blender).
-  model.rotation.y = size.x > size.z ? Math.PI / 2 : 0;
-  object.attach(model);
-}
-
-/** Matériau jamais dessiné, pour la boîte d'un ramassage habillé. */
-const HIDDEN_MATERIAL = new THREE.MeshLambertMaterial({ visible: false });
+// L'ancien `dressWeaponPickup` (arme au sol posée à plat sur `worldCrowbar`/
+// `worldPistol`/`worldShotgun`) a été retiré le 2026-09-25 : à plat, l'arme ne
+// présentait que son ÉPAISSEUR à la caméra (2,5 à 5 cm réels), sous le pixel
+// dès 5 m. Remplacé par un billboard dressé, skill `billboard-sprites-8dir` —
+// voir `render/pickups.ts::dressWeaponPickup`/`WeaponPickupBillboard` et
+// `docs/systems/rendu.md#armes-au-sol`. `worldCrowbar`/`worldPistol`/
+// `worldShotgun` restent chargés (armes.glb inchangé, ADR 0029) mais ne sont
+// plus utilisés par le rendu — libre à une passe future de les retirer du
+// script Blender si aucun autre usage n'apparaît.

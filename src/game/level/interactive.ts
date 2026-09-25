@@ -17,12 +17,6 @@ import type { LoyaltyCard } from "../player/loyaltyCards";
  * niveau v2 pose trois cartes et trois portes ; les câbler par nom aurait
  * demandé six entrées ici, et une septième à chaque niveau suivant. */
 export interface InteractionHandlers {
-  /** `use_crowbar` : ramasse le pied-de-biche. Appelle `weapons.pickUpMelee()` côté `main.ts`. */
-  onCrowbarPickup(): void;
-  /** `use_shotgun` : ramasse le pompe (niveau complet, Zone B). Appelle `weapons.pickUpShotgun()` côté `main.ts`. */
-  onShotgunPickup(): void;
-  /** `use_pistol` : ramasse le pistolet, avec sa dotation de munitions. */
-  onPistolPickup(): void;
   /** `use_exit_door` (Zone E) : tentative d'ouverture de la porte de sortie.
    * `targetName` = nom du `door_*` visé (lu dans `extras.target`, voir
    * `loader.ts::buildUseObject`) — `main.ts` décide seul si le badge est en
@@ -58,10 +52,42 @@ export interface InteractionHandlers {
   onDoorUse(targetName: string, message: string | null): void;
 }
 
-/** Distance entre le centre de capsule du joueur et le centre d'une trousse
- * sous laquelle on la ramasse, mètres. Le centre de capsule est à ~0,9 m du
- * sol et la boîte à ~0,25 m : 1,2 m laisse environ 1 m à l'horizontale, soit
- * « marcher dessus » sans devoir viser la boîte au centimètre. */
+/**
+ * Callbacks du ramassage AUTOMATIQUE des armes au sol (`use_crowbar`,
+ * `use_shotgun`, `use_pistol`), voir `InteractionSystem.collectWeapons` —
+ * même mécanique « marcher dessus » que `collectHeals`/`collectAmmo`,
+ * jamais la touche E (elle lui volerait l'appui, voir `update()`).
+ *
+ * Chaque callback tente le ramassage et retourne s'il faut faire disparaître
+ * l'objet du monde : `true` consomme (comme `collectHeals` quand `tryHeal`
+ * accepte), `false` le laisse au sol pour plus tard (comme une trousse sur un
+ * joueur à PV pleins). La décision « déjà possédée » vit côté appelant, qui
+ * seul connaît l'inventaire (`WeaponSystem`) — ce système-ci ne fait que de
+ * la géométrie et de la consommation.
+ */
+export interface WeaponPickupHandlers {
+  /** `use_crowbar`. Le pied-de-biche n'a pas de munitions : un joueur qui
+   * l'a déjà n'a rien à en tirer, l'appelant renvoie alors `false` et
+   * l'objet reste au sol indéfiniment (voir `docs/systems/armes.md`). */
+  onCrowbarPickup(): boolean;
+  /** `use_shotgun`. Même contrat que `onCrowbarPickup` — le pompe garde sa
+   * dotation unique (aucun mécanisme de recharge n'existe pour lui), donc un
+   * second ramassage n'a également rien à offrir : `false`, reste au sol. */
+  onShotgunPickup(): boolean;
+  /** `use_pistol`. Seule arme des trois qui PEUT rendre `true` alors
+   * qu'elle était déjà possédée : l'appelant lui fait alors jouer le rôle
+   * d'une boîte de munitions (même dotation que le premier ramassage),
+   * `false` seulement si le joueur est déjà au plafond de munitions. */
+  onPistolPickup(): boolean;
+}
+
+/** Distance entre le centre de capsule du joueur et le centre d'un ramassage
+ * au sol (trousse, boîte de munitions, arme) sous laquelle il est pris,
+ * mètres. Le centre de capsule est à ~0,9 m du sol et la boîte à ~0,25 m :
+ * 1,2 m laisse environ 1 m à l'horizontale, soit « marcher dessus » sans
+ * devoir viser la boîte au centimètre. Les armes au sol partagent cette même
+ * géométrie de boîte (voir `gltf-level-conventions`) : aucune raison de leur
+ * donner un rayon différent. */
 export const HEAL_PICKUP_RADIUS = 1.2;
 
 export class InteractionSystem {
@@ -118,6 +144,9 @@ export class InteractionSystem {
       // Trousse et boîte de munitions : ramassées en marchant dessus, voir
       // `collectHeals`/`collectAmmo` — jamais proposées à la touche E.
       if (useObject.heals !== null || useObject.ammo !== null) continue;
+      // Armes au sol : même règle, voir `collectWeapons` — sinon elles
+      // voleraient l'appui E à un sanitaire ou une porte à portée.
+      if (isWeaponPickupName(useObject.name)) continue;
       const rangeSq = useObject.range * useObject.range;
       const distanceSq = playerPosition.distanceToSquared(useObject.position);
       if (distanceSq > rangeSq) continue;
@@ -177,6 +206,34 @@ export class InteractionSystem {
     }
   }
 
+  /**
+   * Un pas fixe de ramassage des armes au sol (`use_crowbar`, `use_shotgun`,
+   * `use_pistol`), SANS touche — même mécanique que `collectHeals`/
+   * `collectAmmo`, mais par NOM Blender exact plutôt que par une quantité
+   * déclarée dans le `.glb` : ces trois noms sont câblés en dur, comme dans
+   * l'ancien `dispatch()` par touche E qu'ils remplacent ici.
+   *
+   * @param useObjects Même contrat de fraîcheur que pour `update`.
+   * @param handlers Voir `WeaponPickupHandlers` — chaque callback décide
+   *   lui-même (déjà possédée ou non) et retourne si l'objet doit disparaître.
+   */
+  collectWeapons(
+    useObjects: readonly UseObject[],
+    playerPosition: THREE.Vector3,
+    handlers: WeaponPickupHandlers,
+  ): void {
+    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+    for (const useObject of useObjects) {
+      if (this.consumed.has(useObject.object)) continue;
+      const handler = weaponPickupHandlerFor(useObject.name, handlers);
+      if (!handler) continue;
+      if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
+      if (!handler()) continue; // déjà possédée sans rien à offrir : reste au sol
+      useObject.object.visible = false;
+      this.consumed.add(useObject.object);
+    }
+  }
+
   /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),
    * ensuite par NOM Blender exact — voir la doc de tête de fichier. */
   private dispatch(useObject: UseObject, handlers: InteractionHandlers): void {
@@ -197,27 +254,10 @@ export class InteractionSystem {
     }
 
     switch (useObject.name) {
-      case "use_crowbar":
-        handlers.onCrowbarPickup();
-        useObject.object.visible = false;
-        // Marque consommé : un appui maintenu sur plusieurs pas fixes
-        // produit plusieurs fronts `use` distincts, sinon re-déclencherait.
-        this.consumed.add(useObject.object);
-        break;
-
-      case "use_pistol":
-        // Même contrat que `use_crowbar`/`use_shotgun` : autoportant, consommé.
-        handlers.onPistolPickup();
-        useObject.object.visible = false;
-        this.consumed.add(useObject.object);
-        break;
-
-      case "use_shotgun":
-        // Même contrat que `use_crowbar` (pickup autoportant, pas de `targetName`).
-        handlers.onShotgunPickup();
-        useObject.object.visible = false;
-        this.consumed.add(useObject.object);
-        break;
+      // `use_crowbar`/`use_shotgun`/`use_pistol` ne passent plus ici : ils se
+      // ramassent en marchant dessus (`collectWeapons`), jamais à la touche E
+      // — voir `isWeaponPickupName`, qui les retire de `nearest` dans
+      // `update()` avant que `dispatch` ne soit jamais appelé pour eux.
 
       case "use_exit_door":
         // PAS marqué consommé : un essai refusé doit rester réessayable —
@@ -250,5 +290,26 @@ export class InteractionSystem {
         // `loader.ts` (voir sa doc) — ne pas le dupliquer ici.
         break;
     }
+  }
+}
+
+/** Les trois noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
+function isWeaponPickupName(name: string): boolean {
+  return name === "use_crowbar" || name === "use_shotgun" || name === "use_pistol";
+}
+
+/** Résout le callback de `WeaponPickupHandlers` pour un nom donné, `null` si
+ * ce n'est pas une arme au sol — factorisé pour que `isWeaponPickupName` et
+ * `collectWeapons` ne puissent pas diverger sur la liste des trois noms. */
+function weaponPickupHandlerFor(name: string, handlers: WeaponPickupHandlers): (() => boolean) | null {
+  switch (name) {
+    case "use_crowbar":
+      return handlers.onCrowbarPickup;
+    case "use_shotgun":
+      return handlers.onShotgunPickup;
+    case "use_pistol":
+      return handlers.onPistolPickup;
+    default:
+      return null;
   }
 }

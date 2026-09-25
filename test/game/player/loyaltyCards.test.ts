@@ -143,9 +143,6 @@ describe("Convention glTF des cartes (jalon N7)", () => {
 /** Handlers muets, sauf ceux qu'un test remplace. */
 function handlersDeTest(overrides: Partial<InteractionHandlers> = {}): InteractionHandlers {
   return {
-    onCrowbarPickup: () => {},
-    onShotgunPickup: () => {},
-    onPistolPickup: () => {},
     onExitDoorUse: () => {},
     onFrozenStorageUse: () => {},
     onDoorUse: () => {},
@@ -234,18 +231,16 @@ describe("InteractionSystem — objets à carte", () => {
     expect(onCardPickup).not.toHaveBeenCalled();
   });
 
-  it("un use_* nommé sans propriété de carte garde son chemin historique", () => {
+  it("use_crowbar n'est plus jamais proposé à la touche E (ramassage automatique, voir pickups.test.ts)", () => {
     const handle = build([useObjet("use_crowbar", { target: "rien" })]);
-    const onCrowbarPickup = vi.fn();
+    const system = new InteractionSystem();
 
-    new InteractionSystem().update(
-      true,
-      handle.useObjects,
-      handle.useObjects[0].position.clone(),
-      handlersDeTest({ onCrowbarPickup }),
-    );
+    system.update(true, handle.useObjects, handle.useObjects[0].position.clone(), handlersDeTest());
 
-    expect(onCrowbarPickup).toHaveBeenCalledTimes(1);
+    // Aucun handler d'arme dans `InteractionHandlers` : s'il était encore
+    // dispatché ici, ce test ne compilerait même pas.
+    expect(system.nearestInRangeName).toBeNull();
+    expect(handle.useObjects[0].object.visible).toBe(true);
   });
 });
 

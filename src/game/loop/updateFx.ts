@@ -10,6 +10,7 @@ import {
   playWeaponFireSfx,
 } from "../../core/audio";
 import { input } from "../../core/input";
+import { advanceWeaponPickupClock } from "../../render/pickups";
 import { inputRecorder } from "../../core/inputRecorder";
 import { toggleMusic } from "../../core/music";
 import { updateWaterAmbience } from "../../core/waterAmbience";
@@ -237,6 +238,15 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // Décroissance TEMPS RÉEL du flash de dégâts de chaque Costard — jamais
         // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
         for (const sprite of session.suitSprites.values()) sprite.updateFlash(realDt);
+
+        // Billboards des armes au sol : flottement + pouls d'émissive,
+        // purement cosmétiques, TEMPS RÉEL comme le flash ci-dessus — voir
+        // `render/pickups.ts::WeaponPickupBillboard`. Horloge partagée
+        // avancée UNE FOIS (`advanceWeaponPickupClock`), puis chaque pickup
+        // recale son cap vers la caméra déjà posée par `interpolateVisuals`
+        // cette même frame.
+        advanceWeaponPickupClock(realDt);
+        for (const billboard of session.weaponPickupBillboards) billboard.update(engine.camera);
 
         // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
         // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs

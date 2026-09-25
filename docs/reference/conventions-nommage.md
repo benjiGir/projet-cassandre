@@ -2,7 +2,7 @@
 title: Conventions de nommage
 tags: [reference, pipeline]
 status: stable
-updated: 2026-09-24
+updated: 2026-09-25
 ---
 
 # Conventions de nommage
@@ -23,7 +23,7 @@ quel, **sans collider**, silencieusement — c'est le comportement voulu.
 | `spawn_director_*` | point d'apparition Directeur (boss unique) |
 | `trig_*` | volume de trigger, box, sensor |
 | `door_*` | porte ANIMÉE (voir plus bas) — corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` |
-| `use_*` | objet interactif, portée d'usage 2 m |
+| `use_*` | objet interactif, portée d'usage 2 m — sauf `use_crowbar`/`use_shotgun`/`use_pistol` (armes au sol) et `soin`/`munitions` (voir plus bas) : ramassés en marchant dessus, jamais à la touche E |
 | `secret_*` | zone comptée dans le compteur de secrets |
 | `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |
 | `vitre_*` | vitrage (voir plus bas) — collider cuboid tant que `solide !== false`, cassable si `pv` |
@@ -140,6 +140,31 @@ console : `cassandre.ammo()`.
 
 Dans le niveau v2, elles se déclarent au plan de masse comme les trousses,
 quantité dans le libellé : `("boîte de munitions +24", x, y, "munitions")`.
+
+### Armes au sol
+
+`use_crowbar`, `use_shotgun` et `use_pistol` — trois noms câblés en dur
+(comme `use_toilet`/`use_pa_mic`, pas par une custom property), sans
+`target`. **Ramassées en marchant dessus** (2026-09-25), pas à la touche E
+: même mécanique et même rayon que les trousses/boîtes de munitions
+(`HEAL_PICKUP_RADIUS`, 1,2 m) — un joueur qui appuie sur E juste à côté ne
+les voit plus proposées, elles ne lui voleraient sinon l'appui destiné à un
+sanitaire ou une porte manœuvrable à portée. Avant ce jalon, les trois se
+ramassaient à la touche E ; le contrat glTF (nom, absence de cible,
+avertissement « sans cible » connu) n'a pas changé.
+
+Une arme déjà possédée n'est pas forcément ramassée, à la Duke :
+
+| Arme | Déjà possédée |
+|---|---|
+| Pied-de-biche | reste au sol — pas de munitions à offrir |
+| Pompe | reste au sol — dotation UNIQUE, aucun mécanisme de recharge |
+| Pistolet | ramassée comme une boîte de munitions (même dotation que le premier ramassage), sauf au plafond : reste alors au sol |
+
+Détail des trois méthodes (`WeaponSystem.tryCollectMelee`/
+`tryCollectShotgun`/`tryCollectPistol`) et du câblage
+`InteractionSystem.collectWeapons` :
+[Armes du joueur](../systems/armes.md#ramassage-automatique-2026-09-25).
 
 ### Props physiques
 

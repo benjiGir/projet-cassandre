@@ -329,6 +329,62 @@ export class WeaponSystem {
   }
 
   /**
+   * Ramassage AUTOMATIQUE (marcher sur `use_crowbar`, voir
+   * `interactive.ts::collectWeapons`) : jamais rien à offrir à un joueur qui
+   * a déjà le pied-de-biche — il n'a pas de munitions, contrairement au
+   * pistolet — donc `false`, l'appelant laisse l'objet au sol pour de bon
+   * (`docs/systems/armes.md`).
+   */
+  tryCollectMelee(): boolean {
+    if (this.hasMelee) return false;
+    this.pickUpMelee();
+    return true;
+  }
+
+  /**
+   * Même contrat que `tryCollectMelee`, pour `use_shotgun`. Un pompe déjà
+   * possédé ne redonne rien non plus : le pompe garde une dotation UNIQUE
+   * (`shotgunStartingAmmo`, jamais de plafond ni de mécanisme de recharge —
+   * voir « Architecture munitions » dans `docs/systems/armes.md`), donc
+   * inventer un montant à lui donner ici serait une décision d'équilibrage
+   * hors de la portée de ce ramassage automatique, pas une simple
+   * généralisation de la règle du pistolet.
+   */
+  tryCollectShotgun(): boolean {
+    if (this.hasShotgun) return false;
+    this.pickUpShotgun();
+    return true;
+  }
+
+  /**
+   * Même contrat, pour `use_pistol` — mais SEULE arme des trois qui peut
+   * rendre `true` alors qu'elle était déjà possédée : à la Duke, un
+   * pistolet déjà en poche se comporte alors comme une boîte de munitions
+   * (même dotation que `pickUpPistol()`, via `addPistolAmmo`), `false`
+   * seulement si le joueur est déjà au plafond (`pistolMaxAmmo`) — l'objet
+   * reste alors au sol, comme une boîte de munitions ordinaire.
+   */
+  tryCollectPistol(): boolean {
+    if (!this.hasPistol) {
+      this.pickUpPistol();
+      return true;
+    }
+    return this.addPistolAmmo(this.cfg.pistolStartingAmmo) > 0;
+  }
+
+  /**
+   * Le pistolet était-il déjà possédé ? Lecture publique pour le seul appelant
+   * qui en a besoin : `updateGameplay.ts` doit savoir, AVANT d'appeler
+   * `tryCollectPistol()`, si un ramassage réussi doit afficher « Pistolet
+   * récupéré » ou « +N munitions » — deux messages différents pour la même
+   * valeur de retour (`true`). Sans intérêt pour le pied-de-biche/le pompe,
+   * qui n'ont pas ce second message (voir `tryCollectMelee`/`tryCollectShotgun`).
+   */
+  get hasPistolAlready(): boolean {
+    return this.hasPistol;
+  }
+
+  /**
    * Pose de recul du viewmodel interpolée pour le rendu, EXACTEMENT sur le
    * modèle de `PlayerController.viewBob(alpha, out)` (prev/current + lerp).
    * `retro-render` l'utilise pour positionner son mesh/sprite d'arme — ce ne

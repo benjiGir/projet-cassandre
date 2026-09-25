@@ -160,6 +160,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ballMesh,
     ballBody,
     gltfLevelSession: null,
+    weaponPickupBillboards: [],
     levelLoadGeneration: 0,
     currentNavGraph: null,
     lightPool: null,

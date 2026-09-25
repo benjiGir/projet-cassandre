@@ -2,7 +2,7 @@
 title: Armes du joueur
 tags: [systeme, armes, combat]
 status: stable
-updated: 2026-09-06
+updated: 2026-09-25
 ---
 
 # Armes du joueur
@@ -79,6 +79,41 @@ l'exige — pas tranché ici.
 - `hasPistol` fait exception aux deux autres : `false` par défaut. Le
   pistolet est arrivé après `gym.ts` et les zones A-E, qui doivent démarrer
   exactement comme avant.
+
+### Ramassage automatique (2026-09-25)
+
+Les trois armes au sol (`use_crowbar`, `use_shotgun`, `use_pistol`) se
+ramassent **en marchant dessus**, comme les trousses de soin et les boîtes
+de munitions — plus de touche E (voir
+[Conventions de nommage](../reference/conventions-nommage.md#armes-au-sol)
+pour le contrat `use_*` complet). `InteractionSystem.collectWeapons`
+(`game/level/interactive.ts`) fait la géométrie (même
+`HEAL_PICKUP_RADIUS`, 1,2 m — même boîte au sol que les autres ramassages,
+aucune raison de lui donner un rayon différent) ; `WeaponSystem` porte
+seule la décision « déjà possédée », via trois méthodes symétriques de
+`pickUpMelee()`/`pickUpShotgun()`/`pickUpPistol()` mais qui disent en plus
+si l'objet doit disparaître du monde :
+
+- `tryCollectMelee()`/`tryCollectShotgun()` : `false` si déjà possédée —
+  ni l'un ni l'autre n'a de munitions à offrir à un second ramassage (le
+  pompe garde sa **dotation unique**, voir « Architecture munitions »
+  ci-dessus : aucun plafond ni mécanisme de recharge n'existe pour lui,
+  en inventer un ici pour symétriser avec le pistolet serait une décision
+  d'équilibrage hors de la portée de ce ramassage automatique). L'objet
+  reste au sol pour de bon, comme le pied-de-biche le veut explicitement.
+- `tryCollectPistol()` : SEULE exception. Déjà possédé, il se comporte
+  comme une boîte de munitions — `addPistolAmmo(pistolStartingAmmo)`,
+  `false` seulement au plafond (`pistolMaxAmmo`). `hasPistolAlready` est
+  lu par l'appelant AVANT l'appel, pour choisir entre le message
+  « Pistolet récupéré » (première fois) et `+N munitions` (recharge) — la
+  seule information qu'un simple booléen de retour ne peut plus porter
+  après coup.
+
+Rejeu déterministe : ces trois méthodes ne lisent ni n'écrivent rien au
+taux d'affichage (aucune horloge murale, aucun `Math.random()`), et
+`collectWeapons` est appelée depuis le même bloc du pas fixe que
+`collectHeals`/`collectAmmo` dans `updateGameplay.ts` — un rejeu F9/F10
+retombe donc sur la même séquence de ramassages.
 
 ## Matériau perçu et hitstop mur/ennemi
 

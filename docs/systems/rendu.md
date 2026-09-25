@@ -731,15 +731,149 @@ dupliquer toutes les lampes sur une couche dédiée.
 
 ### Ramassages au sol
 
-`use_crowbar` et `use_shotgun` gardent leur boîte `.glb` (portée d'interaction,
-contrat du loader) mais la rendent invisible : `dressWeaponPickup` y accroche
-le modèle `world_*`, aligné sur la plus grande dimension horizontale de la boîte
-et posé sur la surface **réellement** sous elle, trouvée par un rayon au
-chargement — les boîtes `use_*` du niveau v2 flottent à 25 cm du sol. Le modèle
-est l'enfant de la boîte : le ramassage, qui cache la boîte, le cache avec.
+`use_crowbar`, `use_pistol` et `use_shotgun` gardent leur boîte `.glb` (portée
+d'interaction, contrat du loader) mais la rendent invisible ; `dressWeaponPickup`
+(`render/pickups.ts`) y accroche un **billboard**, posé sur la surface
+**réellement** sous elle, trouvée par un rayon au chargement — les boîtes
+`use_*` du niveau v2 flottent à 25 cm du sol.
+
+#### Armes au sol (2026-09-25)
+
+Retour de playtest, mot pour mot : « je voudrais que ce soit plus visible […]
+comme un billboard ». Avant cette passe, `dressWeaponPickup` posait le vrai
+modèle `world_*` À PLAT sur le sol (`Matrix.Rotation(90°, Y)` dans
+`tools/blender/build_weapons.py::armes_au_sol`) : de loin, la caméra ne voit
+que son ÉPAISSEUR — 2,4 à 5 cm réels, le diamètre de la barre du pied-de-biche
+ou la carcasse du pompe, jamais sa longueur. Chiffré avec le FOV vertical
+75° (`moveConfig.fovBase`) et 360 px internes (invariant #4) :
+
+```
+pixelsPerMètre(d) = (360 / 2) / (d × tan(37,5°)) ≈ 234,6 / d
+```
+
+| Distance | px/m | Hauteur à plat (≈ 0,03 m) | Hauteur du billboard, pied-de-biche (0,8 m) |
+|---|---|---|---|
+| 5 m | 46,9 | 1,4 px | 37,5 px |
+| 10 m | 23,5 | 0,7 px | 18,8 px |
+| 20 m | 11,7 | 0,4 px | 9,4 px |
+
+Ces chiffres restent une borne haute théorique (bounding box du billboard) :
+la silhouette réelle à l'intérieur — même grossie par `dilater()` — n'occupe
+pas 100 % du carré ; voir « Vérifié en jeu » plus bas pour des mesures
+directes sur la vraie capture.
+
+Aucun réglage de matériau ne corrige un objet sous-pixel : il fallait un vrai
+billboard yaw-only (skill `billboard-sprites-8dir`), comme les ramassages de
+Duke 3D — le sprite reste toujours face à la caméra, quel que soit l'angle
+d'approche, plutôt que de se réduire à sa tranche.
+
+**Première version (retirée le jour même) : icône procédurale par canvas +
+disque d'ombre.** Vérifiée en jeu par `retro-render` (Chrome headless piloté
+par CDP, `--use-gl=angle --use-angle=swiftshader`, voir plus bas) et
+REFUSÉE : à 4 m l'icône ne faisait qu'un trait de quelques pixels (le dessin
+procédural ne remplissait pas son propre quad), le disque au sol se lisait
+comme un trou noir dans le bitume de nuit, et le pouls d'émissive
+(0,18-0,6) était invisible au parking. Trois défauts, une seule cause
+commune : personne n'avait regardé le résultat avant de le livrer.
+
+**Ce que `dressWeaponPickup` pose désormais** (`render/pickups.ts`,
+`WeaponPickupBillboard`) : une icône plane DRESSÉE (yaw-only, toujours face
+caméra), **PRÉ-RENDUE depuis le vrai modèle** `world_*`
+(`tools/blender/render_weapon_pickups.py`, régénérable) — la même arme que
+celle tenue en main, pas un dessin. Le disque au sol a été RETIRÉ (option
+offerte par la vérification : « retire-le, ou fais-en une lueur claire » —
+le retrait est plus sûr qu'une lueur mal réglée sur un sol jamais vu
+d'avance). `MeshLambertMaterial`/`alphaTest`/`transparent: false` (invariant
+#5, contrat du skill : pas de tri de profondeur).
+
+**Le cadrage du générateur, et pourquoi il roule à 45°.** Une arme posée à
+plat est longue et fine dans les trois dimensions sauf une (0,7-0,85 m de
+long, 2-5 cm de section) : une caméra de profil DROITE la cadre en rectangle
+lame de rasoir, quelle que soit la taille du billboard — c'est très
+exactement ce qui s'est produit dans la version dessinée à la main aussi.
+`render_weapon_pickups.py::cadrage_profil` vise l'axe de plus petite
+extension de la boîte englobante (l'épaisseur) et **roule la caméra de 45°**
+autour de cet axe : la diagonale de l'arme couvre alors un cadre PROCHE DU
+CARRÉ, mesuré exactement (pas une formule approchée) en projetant les 8
+coins de la boîte sur les axes caméra une fois le roulis appliqué — même
+geste que les icônes de ramassage de Duke 3D/Doom, qui montrent l'arme en
+biais plutôt que droite. Un second passage, `dilater()`, grossit la
+silhouette de ~1,8 cm par côté (4-voisins, sur le buffer SUPERSAMPLÉ avant
+réduction) : à sa vraie épaisseur, même en biais, un pied-de-biche reste un
+trait fin d'un bord franc à l'autre — la vérification en jeu l'a montré
+illisible SANS ce grossissement. Bord toujours net après (la réduction par
+bloc + seuil d'alpha 0,5 fait le reste), donc toujours dans le registre
+build-engine-look (jamais de flou).
+
+**Taille du billboard : lisibilité, pas échelle réelle.**
+`WEAPON_SPRITE_SIZE` (0,8 m pied-de-biche, 0,8 m pistolet, 1,1 m pompe — relevés
+le 2026-09-25 après vérification en jeu : à 0,5 m, le pistolet n'était qu'une
+tache grise sur le terrazzo à 6 m) ne
+respecte PAS les proportions relatives mesurées par le générateur (0,58/
+0,28/0,75 m) — un pistolet à sa vraie taille se serait relu comme un pixel à
+10 m, même défaut que la version à plat. Même liberté que Duke 3D/Doom, dont
+les icônes de ramassage ne respectent pas non plus l'échelle relative des
+armes entre elles.
+
+**Émissif mesuré, pas décoratif.** Au parking de nuit (`niveau_v2`), le canal
+DIFFUS d'un `MeshLambertMaterial` dépend de l'éclairage de scène et y tombe
+quasi à zéro ; l'émissif, lui, s'ajoute indépendamment des lumières — c'est
+le seul levier qui porte la lisibilité dans le noir. Relevé de 0,18-0,6
+(invisible, retour de vérification) à 0,55-1,3. Mesuré en jeu (capture de 5
+images espacées de 500 ms, moyenne du canal rouge sur la zone connue du
+pied-de-biche) : 137 → 164 → 164 → 132 → 120 — un battement mesuré d'environ
+35 % d'amplitude, pas une valeur statique.
+
+**Partage obligatoire, pas seulement une optimisation.**
+`loader.ts::disposeLevelResource` traverse tout `THREE.Mesh` sous la racine
+du niveau et dispose sans distinction géométrie/matériau/texture. Un clone
+par instance (le patron `BillboardSprite`, ADR 0017) serait donc libéré sous
+les pieds des deux autres pickups au premier hot reload. Les trois pickups
+partagent un atlas (chargé UNE FOIS via `THREE.TextureLoader`, qui rend la
+`Texture` immédiatement et la peuple en tâche de fond — nécessaire :
+`dressWeaponPickup` tourne SYNCHRONE dans le chargement de niveau, invariant
+#11, et ne peut pas attendre un fetch), une géométrie par arme (UV figés
+dedans, pas de `texture.offset` mutable) et un matériau de sprite — zéro
+`.clone()`, même précédent que `sharedKit`/`sharedAmmo` du même fichier.
+Conséquence : le pouls d'émissive (propriété du matériau partagé) est
+GLOBAL aux trois pickups, avancé une seule fois par frame
+(`advanceWeaponPickupClock`) ; seul le flottement, propriété du mesh
+(position), varie par instance (déphasage dérivé de la position, déterministe
+et hors invariant #12 — purement cosmétique, aucun RNG).
+
+**Coût** : avant la toute première passe, 1 mesh par pickup (3 lots). La
+version pré-rendue actuelle : 1 sprite par pickup, un seul matériau partagé
+pour les trois — 3 lots, identique au compte d'origine (le disque d'ombre,
+qui aurait ajouté 3 lots, a été retiré). Élagage par distance déjà acquis :
+le sprite est enfant de la boîte `use_*`, `render/useObjectCulling.ts`
+éteint le parent au-delà de 48 m et l'enfant avec lui — rien à câbler en
+plus.
+
+**Vérifié en jeu (2026-09-25, `retro-render`)** : Chrome headless piloté par
+CDP en pipe HTTP (`--headless=new --use-gl=angle --use-angle=swiftshader`,
+port de debug local — pas de dépendance `puppeteer`/`playwright` dans ce
+dépôt, WebSocket natif Node 22 suffit), sur le serveur de dev 5173,
+`niveau_v2`, `cassandre.notarget(true)`, `cassandre.player.spawn(-8, 0, 38)`
+puis `(-8, 0, 32)` (10 m puis 4 m du pied-de-biche du parking). Captures et
+mesures dans le scratchpad de la session : forme reconnaissable (crochet +
+barre) aux deux distances, aucun disque noir, pouls mesuré (ci-dessus).
+Console vérifiée sans nouvelle erreur/avertissement (le seul avertissement
+Three.js observé pendant l'itération — « Texture marked for update but no
+image data found », `WebGLRenderer` tentant un upload avant l'arrivée de
+l'image — venait de `configureRetroTexture` appelée trop tôt ; corrigé en la
+reportant dans le callback `onLoad` de `TextureLoader`). **Non vérifié** :
+pistolet et pompe en conditions réelles (seul le pied-de-biche a été
+positionné et photographié ; les deux autres partagent le même code et le
+même atlas, contrôlés seulement par lecture de l'image générée).
 
 **Repli** : si `armes.glb` ne se charge pas, `loadWeaponModelsOrPlaceholder`
-reprend les boîtes historiques, avec une erreur en console.
+reprend les boîtes historiques pour le VIEWMODEL (arme tenue) — sans effet sur
+le ramassage au sol, qui n'en dépend plus. `armes.glb` garde ses nœuds
+`world_crowbar`/`world_pistol`/`world_shotgun` (ADR 0029, inchangé) : c'est
+maintenant `render_weapon_pickups.py` qui les rend (import direct de
+`build_weapons.armes_au_sol`, pas de round-trip par `armes.glb`) ; une passe
+future pourra retirer ces nœuds du `.glb` lui-même si aucun autre usage
+n'apparaît.
 
 ## Bascule wireframe de debug
 

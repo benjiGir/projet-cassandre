@@ -16,6 +16,7 @@ import { type SuitManager } from "../entities/suitManager";
 import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
 import { type LightPool } from "../../render/lightPool";
+import { type WeaponPickupBillboard } from "../../render/pickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
@@ -83,6 +84,11 @@ export interface GameSession {
    * partie, reconstruit à chaque commit comme `vitreSystem`.
    * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
   sanitaireSystem: SanitaireSystem | null;
+  /** Billboards des armes au sol (`use_crowbar`/`use_pistol`/`use_shotgun`)
+   * du niveau COURANT — animés au taux d'affichage (`updateFx`), reconstruits
+   * à chaque commit comme `propSystem`/`doorSystem`.
+   * see: docs/systems/rendu.md#armes-au-sol */
+  weaponPickupBillboards: WeaponPickupBillboard[];
   /**
    * Délai de gameplay restant, en SECONDES, avant le prochain soulagement
    * possible sur un sanitaire intact (règle Duke 3D : max/10 PV, 220 s de
