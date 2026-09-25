@@ -1,6 +1,6 @@
 // Enregistrement / rejeu d'input, pas fixe par pas fixe (harnais A/B de
 // feel-tuner, preuve de déterminisme).
-// see: docs/systems/boucle-de-jeu.md#enregistrement-et-rejeu-déterministe
+// see: docs/systems/boucle-de-jeu.md#enregistrement-et-rejeu-dinput
 
 /** État d'input consommé par un pas fixe de gameplay. */
 export interface InputFrame {

@@ -541,7 +541,7 @@ function cleanExtras(obj: THREE.Object3D): Record<string, unknown> {
  *
  * Extras lus (tous optionnels) : `color` (« #rrggbb »), `intensity`,
  * `distance`, `decay`. Les défauts correspondent à un tube de néon de plafond.
- * see: docs/systems/rendu.md#éclairage-hybride-lampes-temps-réel--ombre-cuite
+ * see: docs/systems/rendu.md#éclairage-hybride-lampes-temps-réel-ombre-cuite
  */
 function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
   const extras = cleanExtras(obj);

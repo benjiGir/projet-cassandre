@@ -364,7 +364,7 @@ densité de l'atlas ne changent rien : ce qui se lit, ce sont des masses et des
 valeurs. Les sprites sont donc dessinés pour ça, dans
 `tools/blender/render_enemy_sprites.py` : membres épaissis, tête agrandie,
 veste gris ardoise plutôt que noire, plastron blanc, lunettes et cravate plus
-larges que nature. Détail et mesures dans l'[ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md#révision-du-2026-09-14--lisibilité).
+larges que nature. Détail et mesures dans l'[ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md#révision-du-2026-09-14-lisibilité).
 
 ## Effets visuels de tir (FxSystem)
 

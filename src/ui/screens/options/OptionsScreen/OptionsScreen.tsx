@@ -43,7 +43,9 @@ export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
         <ScreenTitle className={styles.title}>PARAMÈTRES</ScreenTitle>
         <OptionsTabs value={tab} onChange={setTab} />
 
-        {tab === "controles" ? <ControlsTab /> : <DisplayTab />}
+        <div id={`options-panel-${tab}`} role="tabpanel" aria-labelledby={`options-tab-${tab}`} tabIndex={0}>
+          {tab === "controles" ? <ControlsTab /> : <DisplayTab />}
+        </div>
 
         <ButtonRow className={styles.footer}>
           <Button variant="primary" onClick={onBack}>

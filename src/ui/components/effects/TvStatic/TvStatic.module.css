@@ -10,6 +10,10 @@
   animation: flicker 0.15s steps(2) infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .static { animation: none; }
+}
+
 @keyframes flicker {
   0% { opacity: 0.04; }
   50% { opacity: 0.09; }

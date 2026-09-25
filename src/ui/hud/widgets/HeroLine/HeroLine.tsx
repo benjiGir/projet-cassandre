@@ -12,7 +12,7 @@ export function HeroLine() {
   if (!line) return null;
 
   return (
-    <div className={styles.bubble}>
+    <div className={styles.bubble} role="status" aria-live="polite">
       <span className={styles.speaker}>RÉVEIL_DU_PEUPLE dit :</span>
       {line}
     </div>

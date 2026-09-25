@@ -24,6 +24,7 @@ import { presentPlayerDamage, showHudMessage } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import type { LevelHandle } from "../level/loader";
+import { astarMetricsSnapshot } from "../level/pathfinding";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -478,6 +479,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         engine.debugAccumulator += realDt;
         if (engine.debugAccumulator >= DEBUG_UPDATE_INTERVAL) {
           engine.debugAccumulator = 0;
+          const astar = astarMetricsSnapshot();
           useGameStore.getState().setDebug({
             fps: engine.fpsSmoothed,
             position: { x: engine.camera.position.x, y: engine.camera.position.y, z: engine.camera.position.z },
@@ -486,6 +488,12 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : voir la doc de
             // `LoopStats` (`core/loop.ts`) pour la définition exacte.
             gameplayMs: stats.gameplayMs,
+            gameplayP95Ms: stats.gameplayP95Ms,
+            astarQueries: astar.queries,
+            astarMisses: astar.misses,
+            astarExpandedNodes: astar.expandedNodes,
+            astarLastMs: astar.lastMs,
+            astarMaxMs: astar.maxMs,
             physicsMs: stats.physicsMs,
             renderMs: stats.renderMs,
             drawCalls: engine.renderer.info.render.calls,

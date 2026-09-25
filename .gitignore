@@ -26,4 +26,4 @@ __pycache__/
 public/audition/
 # Atlas intermediaire du sprite audio : seuls les .ogg/.m4a encodes partent
 # dans le jeu, le WAV se regenere par tools/audio/build_sprite.py
-public/audio/**/*.wav
+public/assets/audio/sfx/*.wav

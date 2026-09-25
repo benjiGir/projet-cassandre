@@ -11,7 +11,7 @@ export function HudMessage() {
   if (!message) return null;
 
   return (
-    <div className={styles.message}>
+    <div className={styles.message} role="status" aria-live="polite">
       <span className={styles.tick} aria-hidden="true">
         ▌
       </span>{" "}

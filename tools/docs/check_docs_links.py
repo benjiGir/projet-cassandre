@@ -21,7 +21,7 @@ WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.M)
 CODE_FENCE = re.compile(r"```.*?```", re.S)
 INLINE_CODE = re.compile(r"`[^`\n]*`")
-CODE_ANCHOR = re.compile(r"\b(?:see|voir|cf)\s*:?\s*(docs/[\w./-]+?)(#[\w-]+)?(?=[\s,;)\"']|$)", re.I)
+CODE_ANCHOR = re.compile(r"\b(?:see|voir|cf)\s*:?\s*(docs/[\w./-]+?\.md)(#[\w-]+)?(?=[\s,;)\"'.]|$)", re.I)
 SRC_EXTS = (".ts", ".tsx", ".js", ".jsx", ".mts", ".cts")
 SKIP_DIRS = {"node_modules", "dist", "build", ".git", ".obsidian"}
 
@@ -49,6 +49,11 @@ def strip_code(text: str) -> str:
     return INLINE_CODE.sub(" ", CODE_FENCE.sub(" ", text))
 
 
+def heading_slugs(path: str) -> set[str]:
+    with open(path, encoding="utf-8", errors="replace") as source:
+        return {slugify(m.group(2)) for m in HEADING.finditer(strip_code(source.read()))}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("docs")
@@ -67,9 +72,7 @@ def main() -> None:
     for p in md_files:
         text = open(p, encoding="utf-8", errors="replace").read()
         bodies[p] = text
-        headings[os.path.normpath(p)] = {
-            slugify(m.group(2)) for m in HEADING.finditer(strip_code(text))
-        }
+        headings[os.path.normpath(p)] = heading_slugs(p)
 
     errors: list[str] = []
     warnings: list[str] = []
@@ -88,9 +91,12 @@ def main() -> None:
                     continue
                 dest = os.path.normpath(os.path.join(base, target))
                 if dest not in headings:
-                    errors.append(f"{p}: lien casse -> {target}")
-                    continue
-                inbound[dest] += 1
+                    if not os.path.isfile(dest):
+                        errors.append(f"{p}: lien casse -> {target}")
+                        continue
+                    headings[dest] = heading_slugs(dest)
+                if dest in md_files:
+                    inbound[dest] += 1
             else:
                 dest = os.path.normpath(p)
             if anchor:

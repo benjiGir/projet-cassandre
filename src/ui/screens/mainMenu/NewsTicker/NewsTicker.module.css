@@ -20,6 +20,10 @@
   animation: scroll 22s linear infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .track { animation: none; padding-left: 0; }
+}
+
 @keyframes scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }

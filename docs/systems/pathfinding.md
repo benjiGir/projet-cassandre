@@ -157,6 +157,14 @@ scope de ce chantier.
 
 ## Coût
 
+Le panneau de debug lit `astarMetricsSnapshot()` : nombre cumulé de recherches
+A* réelles, échecs, nœuds développés, durée de la dernière et durée maximale
+en millisecondes. Les demandes dont la cellule de départ ou d'arrivée est
+introuvable, ainsi que les demandes déjà dans la cellule cible, ne lancent
+pas A* et ne sont pas comptées. Ces compteurs sont diagnostiques : l'horloge
+ne change ni le chemin choisi ni le RNG. Leur état est cumulé depuis le
+chargement de la page, y compris entre deux niveaux.
+
 Le bake a lieu au CHARGEMENT du niveau, jamais dans le pas fixe. Un niveau
 de la taille du niveau combiné (`hypermarche_complet.glb`) peut représenter
 plusieurs dizaines de milliers de cellules ; non mesuré en conditions

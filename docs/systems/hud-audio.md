@@ -18,7 +18,7 @@ c'est le rôle de `core/music.ts`, volontairement séparé du premier parce
 que les deux jeux de contraintes (pooling/pitch d'un côté, streaming en
 boucle de l'autre) n'ont rien en commun. **Les vingt-trois SFX sont
 synthétisés par code** depuis le 2026-09-20 — un seul mêle une vraie prise,
-voir [le catalogue](#catalogue--doù-vient-chaque-son) — et livrés en un seul
+voir [le catalogue](#catalogue-doù-vient-chaque-son) — et livrés en un seul
 audio sprite ; la musique, elle, reste un placeholder.
 
 ## Effets sonores ponctuels
@@ -59,7 +59,7 @@ fichier, un seul décodage, une seule requête, latence minimale. Le manifeste
 Les ambiances en sont exclues — longues et bouclées, les mettre dans l'atlas
 gonflerait le décodage initial pour rien. Chacune part en DEUX fichiers,
 `.ogg` et `.m4a`, pour la même raison que le sprite : Howler ne se rabat pas
-d'un format sur l'autre (voir [Boucles exactes](#boucles-exactes--le-jet-deau)).
+d'un format sur l'autre (voir [Boucles exactes](#boucles-exactes-le-jet-deau)).
 
 ```bash
 ./.venv-refs/bin/python3 tools/audio/render_sfx.py --out /tmp/wav

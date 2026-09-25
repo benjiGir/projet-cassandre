@@ -20,7 +20,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import { initPhysics, PhysicsWorld, COLLISION_GROUPS } from "../../../src/physics/world";
 import { GameLayer } from "../../../src/core/runtime";
-import { navGraphStats, PathNotFoundError, PathfindingService, type NavGraph } from "../../../src/game/level/pathfinding";
+import { astarMetricsSnapshot, navGraphStats, PathNotFoundError, PathfindingService, type NavGraph } from "../../../src/game/level/pathfinding";
 
 await initPhysics();
 
@@ -57,7 +57,12 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
 
       const from = new THREE.Vector3(-8, 0, 0);
       const to = new THREE.Vector3(8, 0, 0);
+      const metricsBefore = astarMetricsSnapshot();
       const path = yield* pf.findPath(graph, from, to);
+      const metricsAfter = astarMetricsSnapshot();
+      assert.strictEqual(metricsAfter.queries, metricsBefore.queries + 1);
+      assert.isAbove(metricsAfter.expandedNodes, metricsBefore.expandedNodes);
+      assert.isAtLeast(metricsAfter.lastMs, 0);
 
       assert.isAbove(path.length, 0);
       const last = path[path.length - 1]!;

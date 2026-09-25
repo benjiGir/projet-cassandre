@@ -11,6 +11,10 @@
   transition: background 120ms linear, color 120ms linear, box-shadow 120ms linear;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .button { transition: none; }
+}
+
 .button:hover {
   color: var(--hover-text, var(--text-strong));
   background: var(--control-bg-hover);

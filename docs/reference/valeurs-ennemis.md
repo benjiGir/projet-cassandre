@@ -228,7 +228,7 @@ seuil de PV sans attendre un sprite dédié.
 
 | Paramètre | Valeur |
 |---|---|
-| `cardPickupRadius` | 1.5 m (même ordre de grandeur que la portée `use_*`, 2 m, mais consommé par proximité seule — pas de touche E, voir [Entités et IA](../systems/entites.md#badge-du-directeur)) |
+| `cardPickupRadius` | 1.5 m (même ordre de grandeur que la portée `use_*`, 2 m, mais consommé par proximité seule — pas de touche E, voir [Entités et IA](../systems/entites.md#carte-lâchée-par-le-directeur)) |
 | `cardPickupDelay` | 0.6 s |
 
 `cardPickupDelay` existe pour une raison précise : sans lui, un kill à bout

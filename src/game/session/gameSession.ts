@@ -87,7 +87,7 @@ export interface GameSession {
   /** Billboards des armes au sol (`use_crowbar`/`use_pistol`/`use_shotgun`)
    * du niveau COURANT — animés au taux d'affichage (`updateFx`), reconstruits
    * à chaque commit comme `propSystem`/`doorSystem`.
-   * see: docs/systems/rendu.md#armes-au-sol */
+   * see: docs/systems/rendu.md#armes-au-sol-2026-09-25 */
   weaponPickupBillboards: WeaponPickupBillboard[];
   /**
    * Délai de gameplay restant, en SECONDES, avant le prochain soulagement

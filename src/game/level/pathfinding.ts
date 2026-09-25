@@ -450,8 +450,26 @@ function reconstructPath(cameFrom: Int32Array, startIdx: number, goalIdx: number
   return path;
 }
 
+export interface AStarMetrics {
+  queries: number;
+  misses: number;
+  expandedNodes: number;
+  lastMs: number;
+  maxMs: number;
+}
+
+const astarMetrics: AStarMetrics = { queries: 0, misses: 0, expandedNodes: 0, lastMs: 0, maxMs: 0 };
+
+/** Compteurs de diagnostic uniquement ; ils n'entrent jamais dans les décisions de simulation. */
+export function astarMetricsSnapshot(): Readonly<AStarMetrics> {
+  return { ...astarMetrics };
+}
+
 /** A* sur `graph`. Retourne `null` si `goalIdx` n'est pas atteignable depuis `startIdx` (composantes non connectées du graphe). */
 function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | null {
+  const startedAt = performance.now();
+  astarMetrics.queries++;
+  let expandedNodes = 0;
   const size = graph.cols * graph.rows;
   const gScore = new Float64Array(size).fill(Infinity);
   const cameFrom = new Int32Array(size).fill(-1);
@@ -461,38 +479,46 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
   gScore[startIdx] = 0;
   open.push({ index: startIdx, f: heuristic(graph, startIdx, goalIdx) });
 
-  while (open.size > 0) {
-    const current = open.pop()!;
-    if (closed[current.index] === 1) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
-    if (current.index === goalIdx) return reconstructPath(cameFrom, startIdx, goalIdx);
-    closed[current.index] = 1;
+  try {
+    while (open.size > 0) {
+      const current = open.pop()!;
+      if (closed[current.index] === 1) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
+      expandedNodes++;
+      if (current.index === goalIdx) return reconstructPath(cameFrom, startIdx, goalIdx);
+      closed[current.index] = 1;
 
-    const mask = graph.neighborMask[current.index]!;
-    if (mask === 0) continue;
+      const mask = graph.neighborMask[current.index]!;
+      if (mask === 0) continue;
 
-    const ix = current.index % graph.cols;
-    const iz = Math.floor(current.index / graph.cols);
+      const ix = current.index % graph.cols;
+      const iz = Math.floor(current.index / graph.cols);
 
-    for (let dirIndex = 0; dirIndex < DIRS.length; dirIndex++) {
-      if ((mask & (1 << dirIndex)) === 0) continue;
-      const dir = DIRS[dirIndex]!;
-      const nx = ix + dir.dx;
-      const nz = iz + dir.dz;
-      if (nx < 0 || nx >= graph.cols || nz < 0 || nz >= graph.rows) continue;
+      for (let dirIndex = 0; dirIndex < DIRS.length; dirIndex++) {
+        if ((mask & (1 << dirIndex)) === 0) continue;
+        const dir = DIRS[dirIndex]!;
+        const nx = ix + dir.dx;
+        const nz = iz + dir.dz;
+        if (nx < 0 || nx >= graph.cols || nz < 0 || nz >= graph.rows) continue;
 
-      const nIdx = nz * graph.cols + nx;
-      if (closed[nIdx] === 1) continue;
+        const nIdx = nz * graph.cols + nx;
+        if (closed[nIdx] === 1) continue;
 
-      const tentativeG = gScore[current.index]! + dir.cost * graph.cellSize;
-      if (tentativeG < gScore[nIdx]!) {
-        gScore[nIdx] = tentativeG;
-        cameFrom[nIdx] = current.index;
-        open.push({ index: nIdx, f: tentativeG + heuristic(graph, nIdx, goalIdx) });
+        const tentativeG = gScore[current.index]! + dir.cost * graph.cellSize;
+        if (tentativeG < gScore[nIdx]!) {
+          gScore[nIdx] = tentativeG;
+          cameFrom[nIdx] = current.index;
+          open.push({ index: nIdx, f: tentativeG + heuristic(graph, nIdx, goalIdx) });
+        }
       }
     }
+    astarMetrics.misses++;
+    return null;
+  } finally {
+    const elapsed = performance.now() - startedAt;
+    astarMetrics.expandedNodes += expandedNodes;
+    astarMetrics.lastMs = elapsed;
+    astarMetrics.maxMs = Math.max(astarMetrics.maxMs, elapsed);
   }
-
-  return null;
 }
 
 /**

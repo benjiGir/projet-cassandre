@@ -500,7 +500,7 @@ de contenu de `dist` évitera le retour de ces fichiers.
 | 1 — simulation | Terminée | Dégâts et mort dans le pas fixe, curseurs sur les cinq lecteurs d'impacts, visée capturée avant simulation, tests 0/1/N et regroupements 1/2/15. |
 | 2 — cycle de vie | Terminée | Chargement transactionnel, arrêt en vol attendu, boot/replay unifiés, retry visible, horloge et FX remis à zéro. |
 | 3 — architecture | Terminée | Shell `src/app/`, port de flux sans React/XState dans `game/`, `updateFx` limité à des capacités de présentation, RNG isolés, graphe aligné sur le KCC. |
-| 4 — livraison | Non commencée | — |
+| 4 — livraison | Terminée, sous réserve du playtest humain | 5 tests DOM ciblés, accessibilité des onglets/progression/annonces et mouvement réduit ; WAV et studio exclus de `dist` ; checker documentaire strict en CI, 0 erreur/0 warning ; première migration `src/core/` ; compteurs A* et p95 gameplay visibles en debug. |
 
 La gate applicative de l'étape 3 est verte : typecheck, 432 tests et build de
 production. `game/session/lifecycle.ts` n’importe plus React et son teardown
@@ -510,6 +510,18 @@ ne voit plus les drapeaux de kill ou de seuil de vie, et les commandes de dev
 qui modifient le jeu sont consommées au pas fixe. La purge des files
 d’événements reste une mutation de **présentation**, pas de simulation. Le
 checker documentaire reste informatif jusqu’à l’étape 4.
+
+La gate applicative de l'étape 4 est verte : typecheck, 439 tests et build de
+production ; le checker documentaire strict et ses trois tests de régression
+passent. Le build ne contient ni `audition/` ni `sfx.wav`. En navigateur, le
+menu et les options ont été inspectés sans erreur console ; le passage d'un
+onglet à l'autre au clavier conserve le focus et met à jour `aria-selected`.
+La passe de migration limitée à `src/core/assetPath.ts` fait passer l'audit de
+`src/core/` de 51,7 % à 51,5 % de lignes de commentaires, sans perdre la
+raison du préfixe d'assets. Les mesures A* et p95 sont instrumentées, mais
+aucune valeur représentative en combat chargé ni verdict de playtest n'est
+encore disponible : il serait prématuré d'optimiser les buffers ou de changer
+la planification des recherches.
 
 ### Étape 0 — rétablir la confiance dans le signal
 

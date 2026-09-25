@@ -33,7 +33,15 @@ export function LoadingScreen({ title = "PROJET_CASSANDRE" }: LoadingScreenProps
             <span>{label}</span>
             <span>{percent} %</span>
           </div>
-          <div className={styles.track}>
+          <div
+            className={styles.track}
+            role="progressbar"
+            aria-label="Chargement du niveau"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-valuetext={`${label}, ${percent} %`}
+          >
             <div
               className={`${styles.fill} ${status === "failed" ? styles.fillFailed : ""}`}
               style={cssVars({ "--progress": percent / 100 })}

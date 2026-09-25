@@ -42,7 +42,8 @@ un `setState` par pas fixe (invariant #2) :
 - **Throttlée à 10 Hz** (`setDebug`, constante `DEBUG_UPDATE_INTERVAL` dans
   `game/loop/updateFx.ts`) pour les valeurs continues lues au taux
   d'affichage : `fps`, `position`, `entityCount`, `steps`, `gameplayMs`/
-  `physicsMs`/`renderMs` (voir [Boucle de jeu — Mesure des temps de frame
+  `gameplayP95Ms`/`physicsMs`/`renderMs` et les compteurs A* (voir
+  [Boucle de jeu — Mesure des temps de frame
   (LoopStats)](boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats)),
   `isGrounded`/`horizontalSpeed`/`verticalSpeed`/`numCollisions`/
   `groundNormal`.
@@ -206,7 +207,7 @@ Dans `cassandre.lighting()`, une lampe éteinte par le pool apparaît avec
 enregistrée dans un monde Rapier minimal (un sol, un `PlayerController`),
 sans rendu ni horloge réelle — base commune du harnais A/B de feel et de la
 preuve de déterminisme ci-dessous. Voir [Boucle de jeu — Enregistrement et
-rejeu déterministe](boucle-de-jeu.md#enregistrement-et-rejeu-déterministe)
+rejeu déterministe](boucle-de-jeu.md#enregistrement-et-rejeu-dinput)
 pour ce qui est enregistré et pourquoi (l'input tel que consommé par le pas
 fixe, pas les évènements bruts du navigateur).
 

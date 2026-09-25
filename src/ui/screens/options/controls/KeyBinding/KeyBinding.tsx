@@ -17,6 +17,7 @@ export function KeyBinding({ label, keyLabel, listening, modified, onRequestCapt
       <button
         type="button"
         className={styles.key}
+        aria-label={`${label} : ${listening ? "en attente d'une touche" : keyLabel}`}
         aria-pressed={listening}
         data-modified={modified}
         onClick={onRequestCapture}

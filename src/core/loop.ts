@@ -1,4 +1,5 @@
 import { input } from "./input";
+import { RollingP95 } from "./rollingP95";
 
 export const FIXED_DT = 1 / 60;
 const MAX_FRAME = 0.25; // garde-fou anti spiral of death
@@ -20,6 +21,7 @@ export interface LoopStats {
    * see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
    */
   gameplayMs: number;
+  gameplayP95Ms: number;
   physicsMs: number;
   renderMs: number;
 }
@@ -54,6 +56,9 @@ export function startLoop(callbacks: LoopCallbacks) {
   // Frame précédente : `renderMs` ne peut se mesurer avant sa propre fin.
   // see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
   let lastRenderMs = 0;
+  const gameplayP95 = new RollingP95();
+  let gameplayP95Ms = 0;
+  let frameNumber = 0;
 
   function frame(now: number) {
     requestAnimationFrame(frame);
@@ -81,11 +86,13 @@ export function startLoop(callbacks: LoopCallbacks) {
       accumulator -= FIXED_DT;
       steps++;
     }
+    gameplayP95.record(gameplayMs);
+    if (++frameNumber % 6 === 0) gameplayP95Ms = gameplayP95.value();
 
     const alpha = accumulator / FIXED_DT;
     const renderStart = performance.now();
     callbacks.interpolateVisuals(alpha);
-    callbacks.updateFx(frameTime, { steps, accumulator, alpha, gameplayMs, physicsMs, renderMs: lastRenderMs });
+    callbacks.updateFx(frameTime, { steps, accumulator, alpha, gameplayMs, gameplayP95Ms, physicsMs, renderMs: lastRenderMs });
     callbacks.render();
     lastRenderMs = performance.now() - renderStart;
 

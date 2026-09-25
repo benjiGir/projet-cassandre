@@ -48,6 +48,12 @@ export interface DebugState {
 
   // see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
   gameplayMs: number;
+  gameplayP95Ms: number;
+  astarQueries: number;
+  astarMisses: number;
+  astarExpandedNodes: number;
+  astarLastMs: number;
+  astarMaxMs: number;
   physicsMs: number;
   renderMs: number;
 
@@ -152,6 +158,12 @@ const INITIAL_DEBUG: DebugState = {
   entityCount: 0,
   steps: 0,
   gameplayMs: 0,
+  gameplayP95Ms: 0,
+  astarQueries: 0,
+  astarMisses: 0,
+  astarExpandedNodes: 0,
+  astarLastMs: 0,
+  astarMaxMs: 0,
   physicsMs: 0,
   renderMs: 0,
   drawCalls: 0,

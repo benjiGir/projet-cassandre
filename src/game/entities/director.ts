@@ -265,7 +265,7 @@ export function configureDirectorCharacterController(
  * Badge droppé par le Directeur à sa mort — pur objet de logique (position +
  * rayon + état ramassé/non ramassé), aucune référence à `THREE.Scene`/
  * `THREE.Object3D`. Pas de contrat `use_*` : ramassage par proximité seule.
- * see: docs/systems/entites.md#badge-du-directeur
+ * see: docs/systems/entites.md#carte-lâchée-par-le-directeur
  */
 export class DroppedCard {
   readonly position: THREE.Vector3;

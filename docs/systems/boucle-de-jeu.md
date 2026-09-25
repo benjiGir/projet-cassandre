@@ -182,6 +182,10 @@ dégradation doit être visible immédiatement).
 
 - `gameplayMs`/`physicsMs` sont la SOMME sur tous les pas fixes exécutés
   PENDANT la frame d'affichage courante (`steps` peut dépasser 1).
+- `gameplayP95Ms` est le 95e percentile des 120 dernières images d'affichage,
+  calculé tous les six affichages sans allocation par échantillon. Les images
+  sans pas fixe comptent pour zéro ; il s'agit du coût de gameplay par image
+  affichée, pas du coût d'un pas individuel. Lire `steps` à côté.
 - `renderMs` couvre `interpolateVisuals` + `updateFx` + `render` ensemble
   (tout ce qui tourne au taux d'affichage) — mais MESURÉ SUR LA FRAME
   PRÉCÉDENTE : la durée réelle de ces trois callbacks n'est connue qu'après
