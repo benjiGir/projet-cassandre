@@ -293,15 +293,15 @@ export function exposeDebugApi(engine: GameEngine): void {
       completeLevel: () => triggerLevelComplete(engine, engine.session),
       killPlayer: () => {
         applyPlayerDamage(engine, engine.session, engine.session.playerHp);
-        presentPlayerDamage(engine.session);
+        presentPlayerDamage(engine.session.playerHp);
       },
     },
     /** Pause (`docs/systems/session.md#pause`) : `pause()`/`resume()` envoient
      * directement PAUSE/RESUME à l'acteur de flux — le déclenchement réel
      * (perte du verrouillage du pointeur) est hors de portée de
      * l'automatisation navigateur, comme le reste du verrouillage. */
-    pause: () => engine.flowActor.send({ type: "PAUSE" }),
-    resume: () => engine.flowActor.send({ type: "RESUME" }),
+    pause: () => engine.flow.pause(),
+    resume: () => engine.flow.resume(),
   };
 }
 

@@ -113,6 +113,5 @@ export function triggerLevelComplete(engine: GameEngine, session: GameSession): 
   // premier rendu après le changement de `flowState`.
   // see: docs/systems/session.md#récapitulatif-de-fin-de-partie
   publishLevelRecap(session, true);
-  engine.flowActor.send({ type: "LEVEL_COMPLETED" });
-  document.exitPointerLock();
+  engine.flow.levelCompleted();
 }

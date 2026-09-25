@@ -7,7 +7,7 @@ import * as THREE from "three";
  * `game/loop/updateFx.ts`), JAMAIS sur le pas fixe.
  *
  * Découplage délibéré de `game/player/weapons.ts` (primitives uniquement,
- * aucun `Math.random()` seedé — hors harnais de rejeu F9/F10), trois régimes
+ * flux de présentation seedé et séparé de la simulation), trois régimes
  * de pooling volontairement pas uniformisés, et le choix de « physique
  * jouet » sans Rapier pour les débris cosmétiques (ADR 0018) :
  * see: docs/systems/rendu.md#découplage-entre-render-et-game
@@ -347,6 +347,12 @@ const IDENTITY_QUATERNION = new THREE.Quaternion();
 const ZERO_SCALE_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
 export class FxSystem {
+  private random: () => number = () => 0.5;
+
+  /** Flux cosmétique indépendant, remplacé à chaque nouvelle partie. */
+  setRandom(random: () => number): void {
+    this.random = random;
+  }
   private readonly scene: THREE.Scene;
 
   // Screenshake
@@ -507,19 +513,18 @@ export class FxSystem {
 
   /**
    * Offset courant à additionner à `camera.position`, tiré uniformément
-   * dans une sphère de rayon = amplitude courante. `Math.random()` ordinaire
-   * — voir la doc de tête, ceci est purement cosmétique et hors harnais de
-   * déterminisme.
+   * dans une sphère de rayon = amplitude courante. Le flux cosmétique seedé
+   * reste indépendant de la simulation et du regroupement des pas fixes.
    */
   currentShakeOffset(out: THREE.Vector3): THREE.Vector3 {
     const amp = this.currentShakeAmplitude();
     if (amp <= 0) return out.set(0, 0, 0);
 
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
+    const theta = this.random() * Math.PI * 2;
+    const phi = Math.acos(2 * this.random() - 1);
     // Racine cubique : distribution uniforme en VOLUME dans la sphère (pas
     // seulement sur sa surface), cosmétique, précision de raison suffisante.
-    const r = amp * Math.cbrt(Math.random());
+    const r = amp * Math.cbrt(this.random());
     const sinPhi = Math.sin(phi);
     out.set(r * sinPhi * Math.cos(theta), r * sinPhi * Math.sin(theta), r * Math.cos(phi));
     return out;
@@ -595,12 +600,12 @@ export class FxSystem {
       this.scene.add(mesh);
 
       // Cône jouet autour de la normale (réflexion approximative), plus une
-      // légère composante ascendante. `Math.random()` ordinaire — cosmétique,
+      // légère composante ascendante. RNG de présentation — cosmétique,
       // AUCUN rapport avec la dispersion seedée du pompe dans `weapons.ts`.
-      const vx = normal.x + (Math.random() * 2 - 1) * PARTICLE_SPREAD;
-      const vy = normal.y + (Math.random() * 2 - 1) * PARTICLE_SPREAD + 0.5;
-      const vz = normal.z + (Math.random() * 2 - 1) * PARTICLE_SPREAD;
-      const speed = PARTICLE_SPEED_MIN + Math.random() * (PARTICLE_SPEED_MAX - PARTICLE_SPEED_MIN);
+      const vx = normal.x + (this.random() * 2 - 1) * PARTICLE_SPREAD;
+      const vy = normal.y + (this.random() * 2 - 1) * PARTICLE_SPREAD + 0.5;
+      const vz = normal.z + (this.random() * 2 - 1) * PARTICLE_SPREAD;
+      const speed = PARTICLE_SPEED_MIN + this.random() * (PARTICLE_SPEED_MAX - PARTICLE_SPEED_MIN);
       const velocity = new THREE.Vector3(vx, vy, vz).normalize().multiplyScalar(speed);
 
       this.particles.push({ mesh, velocity, life: PARTICLE_LIFETIME, bounce: false, gravityScale: 1 });
@@ -763,7 +768,7 @@ export class FxSystem {
       this.resetWaterDroplet(droplet, slot.origin);
       // Phase de départ tirée dans le temps de vol : sans elle, toutes les
       // gouttes partent ensemble et le jet naît comme une bouffée synchrone.
-      const flight = Math.random() * ((2 * droplet.velocity.y) / -TOY_GRAVITY);
+      const flight = this.random() * ((2 * droplet.velocity.y) / -TOY_GRAVITY);
       droplet.position.addScaledVector(droplet.velocity, flight);
       droplet.position.y += 0.5 * TOY_GRAVITY * flight * flight;
       droplet.velocity.y += TOY_GRAVITY * flight;
@@ -818,10 +823,10 @@ export class FxSystem {
    */
   private resetWaterDroplet(droplet: WaterDropletState, origin: THREE.Vector3) {
     droplet.position.copy(origin);
-    const height = WATER_JET_HEIGHT_MIN + Math.random() * (WATER_JET_HEIGHT_MAX - WATER_JET_HEIGHT_MIN);
+    const height = WATER_JET_HEIGHT_MIN + this.random() * (WATER_JET_HEIGHT_MAX - WATER_JET_HEIGHT_MIN);
     const upSpeed = Math.sqrt(2 * -TOY_GRAVITY * height);
-    const fanAngle = Math.random() * Math.PI * 2;
-    const fanSpeed = WATER_FAN_SPEED_MIN + Math.random() * (WATER_FAN_SPEED_MAX - WATER_FAN_SPEED_MIN);
+    const fanAngle = this.random() * Math.PI * 2;
+    const fanSpeed = WATER_FAN_SPEED_MIN + this.random() * (WATER_FAN_SPEED_MAX - WATER_FAN_SPEED_MIN);
     droplet.velocity.set(Math.cos(fanAngle) * fanSpeed, upSpeed, Math.sin(fanAngle) * fanSpeed);
   }
 
@@ -837,8 +842,8 @@ export class FxSystem {
 
     const splash = this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + local]!;
     splash.position.copy(slot.origin);
-    splash.position.x += (Math.random() * 2 - 1) * WATER_SPLASH_JITTER;
-    splash.position.z += (Math.random() * 2 - 1) * WATER_SPLASH_JITTER;
+    splash.position.x += (this.random() * 2 - 1) * WATER_SPLASH_JITTER;
+    splash.position.z += (this.random() * 2 - 1) * WATER_SPLASH_JITTER;
     splash.life = WATER_SPLASH_LIFETIME;
   }
 
@@ -862,16 +867,16 @@ export class FxSystem {
       // cube parfait pour lire « chunk » plutôt que « particule » à l'œil,
       // sans allouer de géométrie par morceau (la géométrie reste partagée,
       // comme PARTICLE_GEOMETRY/SHELL_GEOMETRY plus haut).
-      mesh.scale.set(0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8, 0.6 + Math.random() * 0.8);
+      mesh.scale.set(0.6 + this.random() * 0.8, 0.6 + this.random() * 0.8, 0.6 + this.random() * 0.8);
       this.scene.add(mesh);
 
       // Cône jouet autour de `direction`, plus large que celui des particules
-      // d'impact et légèrement plus ascendant : `Math.random()` ordinaire —
+      // d'impact et légèrement plus ascendant : RNG de présentation —
       // cosmétique, hors harnais de déterminisme (voir la doc de tête).
-      const vx = direction.x + (Math.random() * 2 - 1) * opts.spread;
-      const vy = direction.y + (Math.random() * 2 - 1) * opts.spread + 0.8;
-      const vz = direction.z + (Math.random() * 2 - 1) * opts.spread;
-      const speed = opts.speedMin + Math.random() * (opts.speedMax - opts.speedMin);
+      const vx = direction.x + (this.random() * 2 - 1) * opts.spread;
+      const vy = direction.y + (this.random() * 2 - 1) * opts.spread + 0.8;
+      const vz = direction.z + (this.random() * 2 - 1) * opts.spread;
+      const speed = opts.speedMin + this.random() * (opts.speedMax - opts.speedMin);
       const velocity = new THREE.Vector3(vx, vy, vz).normalize().multiplyScalar(speed);
 
       list.push({ mesh, velocity, life: opts.lifetime, bounce: false, gravityScale: opts.gravityScale });

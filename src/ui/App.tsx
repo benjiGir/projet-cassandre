@@ -18,7 +18,7 @@ export interface AppProps {
 
 /**
  * Racine React montée en jeu, une fois le niveau chargé. Les menus d'avant la
- * partie sont rendus hors de cet arbre (`game/session/bootChoice.ts`).
+ * partie sont rendus hors de cet arbre (`app/bootChoice.ts`).
  * `onReplay`/`onReturnToMenu`/`onResume` sont de vrais resets/transitions :
  * `main.ts`/`game/session/lifecycle.ts` restent les seuls à savoir QUOI faire
  * quand on clique.

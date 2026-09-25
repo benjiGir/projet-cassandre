@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import type { createRoot } from "react-dom/client";
 
 import { GameClock } from "../../core/time";
 import { type Recording } from "../../core/inputRecorder";
@@ -15,7 +14,7 @@ import { type EnemySpriteSheet } from "../../render/enemySprites";
 import { weaponConfig } from "../player/weaponConfig";
 import { moveConfig } from "../player/moveConfig";
 import { InteractionSystem } from "../level/interactive";
-import { type GameFlowActor } from "../../ui/gameFlowMachine";
+import type { GameFlowPort } from "./flowPort";
 import type { GameSession } from "./gameSession";
 
 /**
@@ -28,10 +27,8 @@ export interface GameEngine {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
-  /** Racine React de `#ui-root` — `App`/`LevelMenu`/`MainMenu`/`OptionsScreen` s'y montent tour à tour. */
-  root: ReturnType<typeof createRoot>;
-  /** Acteur XState du flux d'écran (Jalon M8) — UN SEUL pour toute la durée de l'onglet, jamais recréé par `bootGameSession`/`replay`/`returnToMenu` (contrairement à `session`). */
-  flowActor: GameFlowActor;
+  /** Port applicatif du flux d'écran, sans dépendance vers React ou XState. */
+  flow: GameFlowPort;
 
   /** Horloge persistante dont l'état transitoire est remis à zéro à chaque boot. */
   clock: GameClock;
@@ -95,13 +92,12 @@ export type PersistentEngine = Omit<GameEngine, "session">;
 /**
  * `true` ssi le monde Rapier de `engine.session` est garanti vivant — pas
  * encore construit, ou déjà `free()`-é pendant la fenêtre transitoire de
- * `returnToMenu()`. À ne pas confondre avec la garde `flowActor`.
+ * `returnToMenu()`. À ne pas confondre avec `flow.isPlaying()`.
  * see: docs/systems/session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
  * see: docs/decisions/0013-garde-flux-vs-monde-physique.md
  */
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
-  const value = engine.flowActor.getSnapshot().value;
-  return value === "playing" || value === "paused" || value === "dead" || value === "levelComplete";
+  return engine.flow.isPhysicsLive();
 }
 
 /**
@@ -112,8 +108,7 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
  */
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
-  root: ReturnType<typeof createRoot>,
-  flowActor: GameFlowActor,
+  flow: GameFlowPort,
   sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet },
   weaponModels: WeaponModels,
 ): PersistentEngine {
@@ -228,8 +223,7 @@ export function buildGameEngine(
     scene,
     camera,
     renderer,
-    root,
-    flowActor,
+    flow,
     clock,
     fx,
     viewmodel,

@@ -8,7 +8,7 @@ import { runGameplaySync } from "../../core/runtime";
 import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
 import { grantCard } from "../session/cards";
-import { applyPlayerDamage, showHudMessage, triggerHeroLine } from "../session/feedback";
+import { applyPlayerDamage, grantKillViews, showHudMessage, triggerHeroLine, VIEWS_DIRECTOR_MULTIPLIER } from "../session/feedback";
 import { relieveAtSanitaire, trySanitaire } from "../session/sanitaires";
 import {
   advanceGameplayTime,
@@ -27,6 +27,7 @@ import { recordSafeGround, shouldRescue } from "../session/fallRescue";
 import { FLESH_MATERIAL } from "../player/weapons";
 import { type DoorActor } from "../level/doors";
 import { type GameSession } from "../session/gameSession";
+import { handleDevGameplayInput } from "./devGameplayInput";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -41,6 +42,16 @@ import { type GameSession } from "../session/gameSession";
 // aucune constante de soin/réplique dédiée ici, elles vivent dans ce module.
 const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
 const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
+const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
+
+function recordKillFeedback(session: GameSession, count: number, multiplier = 1): void {
+  for (let i = 0; i < count; i++) {
+    grantKillViews(session, multiplier);
+    if (session.firstKillTriggered) continue;
+    session.firstKillTriggered = true;
+    triggerHeroLine(session, HERO_LINE_FIRST_KILL);
+  }
+}
 
 // Constante de fin de niveau (Zone E, `door_e_exit`) — voir la doc
 // d'`ExitDoorTracking` dans `session/gameSession.ts`.
@@ -137,6 +148,9 @@ function captureInputFrame(engine: GameEngine): InputFrame {
 // see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks
 export function updateGameplay(engine: GameEngine, dt: number): void {
   const session = engine.session;
+  if (import.meta.env.DEV && engine.flow.isPhysicsLive()) {
+    runGameplaySync(Effect.sync(() => handleDevGameplayInput(engine, session)));
+  }
 
   // Mort / niveau terminé : le pas fixe continue de tourner (invariant #1),
   // seul le CONTENU de ce pas est ignoré une fois hors de l'état "playing".
@@ -145,7 +159,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
   // Lecture DIRECTE de l'acteur de flux, jamais un aller-retour par zustand
   // (`state.flowState` n'existe que pour React, voir sa doc dans
   // `game/state.ts`) — l'acteur est déjà synchrone et disponible ici.
-  if (engine.flowActor.getSnapshot().value !== "playing") return;
+  if (!engine.flow.isPlaying()) return;
 
   // Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : le corps du pas fixe devient un
   // seul Effect composé, séquencé en phases nommées — EXACTEMENT le même
@@ -414,7 +428,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.vitreSystem ?? undefined,
           session.sanitaireSystem ?? undefined,
         );
-        recordSuitKills(session.stats, session.suitManager.deathEvents.length - suitDeathsBefore);
+        const suitKills = session.suitManager.deathEvents.length - suitDeathsBefore;
+        recordSuitKills(session.stats, suitKills);
+        recordKillFeedback(session, suitKills);
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
           applyPlayerDamage(engine, session, session.suitManager.playerHitEvents[i]!.amount);
         }
@@ -430,7 +446,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.vitreSystem ?? undefined,
           session.sanitaireSystem ?? undefined,
         );
-        recordDirectorKills(session.stats, session.directorManager.deathEvents.length - directorDeathsBefore);
+        const directorKills = session.directorManager.deathEvents.length - directorDeathsBefore;
+        recordDirectorKills(session.stats, directorKills);
+        recordKillFeedback(session, directorKills, VIEWS_DIRECTOR_MULTIPLIER);
         for (let i = directorPlayerHitsBefore; i < session.directorManager.playerHitEvents.length; i++) {
           applyPlayerDamage(engine, session, session.directorManager.playerHitEvents[i]!.amount);
         }

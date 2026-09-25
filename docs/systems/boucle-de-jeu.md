@@ -225,12 +225,13 @@ que `interpolateVisuals`/`updateFx` ne les aient lus les rendrait aveugles.
 Pour les bindings rebindables (`GameAction`) posés par-dessus ce moteur bas
 niveau, voir [Contrôles et bindings](../reference/controles.md).
 
-## Enregistrement et rejeu déterministe
+## Enregistrement et rejeu d'input
 
 `core/inputRecorder.ts` enregistre/rejoue l'input pas fixe par pas fixe, pour
-deux usages seulement : le harnais A/B de `feel-tuner` (rejouer la même
-course sur deux configs de déplacement différentes) et une preuve de
-déterminisme (même séquence d'input, même état final).
+le harnais A/B de `feel-tuner` (rejouer la même course sur deux configs de
+déplacement différentes). Ce n'est pas une preuve de déterminisme global :
+l'état complet du niveau, des ennemis, armes et RNG n'est pas restauré
+([ADR 0033](../decisions/0033-rng-presentation-et-portee-du-rejeu.md)).
 
 Ce qui est enregistré est l'input TEL QUE CONSOMMÉ PAR LE PAS FIXE, pas les
 événements bruts du navigateur : le yaw/pitch est produit au taux

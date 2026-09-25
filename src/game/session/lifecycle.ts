@@ -1,10 +1,9 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
-import { createElement } from "react";
 
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/random";
-import { input } from "../../core/input";
+import { setAudioRandom } from "../../core/audio";
 import { runGameplaySync } from "../../core/runtime";
 import { SANITAIRE_RELIEF_LINE_SEED } from "./sanitaires";
 import { createInitialStats } from "./score";
@@ -14,19 +13,11 @@ import { buildGym } from "../level/gym";
 import { SuitManager } from "../entities/suitManager";
 import { DirectorManager } from "../entities/directorManager";
 import { useGameStore } from "../state";
-import { App } from "../../ui/App";
 import { type LevelDef } from "../level/levels";
 import { chargerCiel } from "../../render/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
-import { resolveBootChoice } from "./bootChoice";
 import { type GameSession } from "./gameSession";
-import { type GameEngine, type PersistentEngine } from "./gameEngine";
-import {
-  beginLoading,
-  finishLoading,
-  letBrowserPaint,
-  waitForLoadingRetry,
-} from "../../core/loadingProgress";
+import { type PersistentEngine } from "./gameEngine";
 
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -91,6 +82,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   // partie. Le reset précède toute construction de la nouvelle session.
   engine.clock.reset();
   engine.fx.resetSession();
+  engine.fx.setRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xf00d517))));
+  setAudioRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa0d105))));
 
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
   // `session.playerHp` ci-dessous lit `debug.playerMaxHp` fraîchement reset.
@@ -160,7 +153,6 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ballMesh,
     ballBody,
     gltfLevelSession: null,
-    weaponPickupBillboards: [],
     levelLoadGeneration: 0,
     currentNavGraph: null,
     lightPool: null,
@@ -168,6 +160,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     doorSystem: null,
     vitreSystem: null,
     sanitaireSystem: null,
+    weaponPickupBillboards: [],
     sanitaireReliefCooldown: 0,
     droppedCardMesh: null,
     cards: new Set(),
@@ -178,6 +171,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     playerHp: useGameStore.getState().debug.playerMaxHp,
     firstKillTriggered: false,
     lowHpLineTriggered: false,
+    viewsRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0x71e75))),
     deathHandled: false,
     levelCompleteHandled: false,
     lastHeroLineAt: -Infinity,
@@ -251,96 +245,4 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   engine.fx.resetSession();
 
   session.physics.world.free();
-}
-
-/**
- * "Rejouer" — reconstruit EXACTEMENT le même `LevelDef` que la partie qui
- * vient de se terminer. Aucun `root.render()` ici : `App` reste monté tout
- * du long, seul `state.flowState` change — c'est ce qui rend "Rejouer"
- * sans rechargement de page, après validation du nouveau niveau.
- * see: docs/systems/session.md#rejouer-et-retour-au-menu
- */
-export async function replay(engine: GameEngine): Promise<void> {
-  const choice = engine.session.choice;
-  engine.flowActor.send({ type: "REPLAY" });
-  beginLoading("Redémarrage de la partie", 0.02);
-  await letBrowserPaint();
-  await teardownGameSession(engine, engine.session);
-  engine.session = bootGameSession(engine, choice);
-  await waitForGameSessionReady(engine, engine.session);
-}
-
-/**
- * "Retour au menu principal" — détruit la partie courante puis réaffiche
- * `MainMenu` en réutilisant `resolveBootChoice` telle quelle.
- *
- * PIÈGE : `resolveBootChoice` relit `window.location.search` fraîchement à
- * chaque appel — retirer `level` de l'URL (`history.replaceState`, sans
- * rechargement) doit donc se faire AVANT de la rappeler, sinon une partie
- * démarrée via `?level=...` reviendrait silencieusement au même niveau au
- * lieu du vrai menu principal.
- * see: docs/systems/session.md#rejouer-et-retour-au-menu
- */
-export async function returnToMenu(engine: GameEngine): Promise<void> {
-  engine.flowActor.send({ type: "RETURN_TO_MENU" });
-  await teardownGameSession(engine, engine.session);
-
-  const url = new URL(window.location.href);
-  url.searchParams.delete("level");
-  window.history.replaceState(null, "", url.toString());
-
-  const choice = await resolveBootChoice(engine.root);
-  engine.flowActor.send({ type: "BEGIN_LOAD" });
-  beginLoading("Démarrage", 0.02);
-  engine.root.render(
-    createElement(App, {
-      onReplay: () => void replay(engine),
-      onReturnToMenu: () => void returnToMenu(engine),
-      onResume: () => resumeGame(engine),
-    }),
-  );
-  await letBrowserPaint();
-  engine.session = bootGameSession(engine, choice);
-  await waitForGameSessionReady(engine, engine.session);
-}
-
-/**
- * Frontière unique entre « session construite » et « jeu autorisé ». Un
- * premier échec ne résout jamais silencieusement vers `playing` : l'écran
- * expose l'erreur, attend un clic, puis relance exactement la même session.
- */
-export async function waitForGameSessionReady(engine: GameEngine, session: GameSession): Promise<boolean> {
-  const levelSession = session.gltfLevelSession;
-  if (levelSession) {
-    let result = await levelSession.firstLoad;
-    while (result.status === "failed") {
-      engine.flowActor.send({ type: "LOAD_FAILED" });
-      await waitForLoadingRetry(result.error);
-      engine.flowActor.send({ type: "RETRY_LOAD" });
-      beginLoading("Nouvelle tentative", 0.3);
-      result = await levelSession.reload();
-    }
-    if (result.status === "cancelled") return false;
-  }
-
-  finishLoading();
-  engine.flowActor.send({ type: "PLAY" });
-  return true;
-}
-
-/**
- * "Reprendre" depuis la pause : redemande le verrouillage du pointeur —
- * geste utilisateur obligatoire, satisfait ici par le clic même sur le
- * bouton "Reprendre" (`PauseScreen`) — puis envoie `RESUME` à l'acteur de
- * flux. `clearPendingEdges()` vide les fronts de touches accumulés PENDANT
- * la pause (ex. taper une lettre en rebindant une touche dans l'onglet
- * Paramètres) : sans ça, une touche de gameplay pressée par erreur pendant
- * le menu serait consommée comme une vraie action au tout premier pas fixe
- * après la reprise.
- * see: docs/systems/session.md#pause
- */
-export function resumeGame(engine: GameEngine): void {
-  input.clearPendingEdges();
-  input.requestPointerLockNow();
-  engine.flowActor.send({ type: "RESUME" });
 }

@@ -88,6 +88,12 @@ const POOL_LECTURES = 12;
 
 /** Variation de pitch systématique sur tout son répété — ±8 %, cf. skill `audio-sfx-pipeline`. */
 const PITCH_VARIATION = 0.08;
+let audioRandom: () => number = () => 0.5;
+
+/** Flux de présentation indépendant, remis à zéro à chaque nouvelle partie. */
+export function setAudioRandom(random: () => number): void {
+  audioRandom = random;
+}
 
 const SFX_TABLE: Record<SfxId, SfxDef> = {
   melee_fire: { sprite: "crowbar_swing", volume: 0.7, pitch: 0.04 },
@@ -277,7 +283,7 @@ export function playSfx(id: SfxId, volumeScale = 1) {
   const lecture = atlas.play(def.sprite);
   if (lecture === undefined) return;
   const p = def.pitch ?? PITCH_VARIATION;
-  atlas.rate(1 - p + Math.random() * p * 2, lecture);
+  atlas.rate(1 - p + audioRandom() * p * 2, lecture);
   atlas.volume(def.volume * volumeScale, lecture);
 }
 

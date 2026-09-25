@@ -195,6 +195,23 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
       assert.instanceOf(error, PathNotFoundError);
     }).pipe(Effect.provide(GameLayer)),
   );
+
+  it.effect("un rebord vertical de 0,8 m ne crée pas de chemin pour le KCC à 0,35 m", () =>
+    Effect.gen(function* () {
+      const physics = new PhysicsWorld();
+      box(physics, { x: -1, y: -0.1, z: 0 }, { x: 1, y: 0.1, z: 1 });
+      box(physics, { x: 1, y: 0.3, z: 0 }, { x: 1, y: 0.5, z: 1 });
+      physics.step(0);
+
+      const pf = yield* PathfindingService;
+      const graph = yield* pf.bake(
+        physics,
+        new THREE.Box3(new THREE.Vector3(-2, -1, -1), new THREE.Vector3(2, 2, 1)),
+      );
+      const error = yield* Effect.flip(pf.findPath(graph, new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0.8, 0)));
+      assert.instanceOf(error, PathNotFoundError);
+    }).pipe(Effect.provide(GameLayer)),
+  );
 });
 
 describe("PathfindingService.test (jalon M4) — Layer scriptée, sans monde Rapier", () => {

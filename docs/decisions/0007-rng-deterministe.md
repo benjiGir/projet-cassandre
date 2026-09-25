@@ -11,10 +11,14 @@ updated: 2026-09-05
 
 Accepté. Invariant du projet (`CLAUDE.md` #12).
 
+Portée du harnais F9/F10 et isolation du rendu précisées par
+[ADR 0033](0033-rng-presentation-et-portee-du-rejeu.md).
+
 ## Contexte
 
-Le rejeu d'input déterministe (F9/F10, `core/inputRecorder.ts`) dépend
-d'une source aléatoire strictement reproductible à graine égale.
+La simulation déterministe dépend d'une source aléatoire strictement
+reproductible à graine égale. F9/F10 ne restaure pas le monde complet :
+voir [ADR 0033](0033-rng-presentation-et-portee-du-rejeu.md).
 `Math.random()` et le service `Random` par défaut d'Effect ne le sont pas.
 
 Avant le nettoyage du 2026-09-05 (jalon M9, `PLAN_EFFECT_XSTATE.md` §11),

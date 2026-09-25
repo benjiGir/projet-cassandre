@@ -22,8 +22,8 @@ d'états qui décide quel composant React est monté.
 
 ## Le cycle de vie d'une partie, du boot au reset
 
-Construit par lecture directe de `main.ts`,
-`game/session/bootChoice.ts`/`gameEngine.ts`/`lifecycle.ts` :
+Construit par lecture directe de `main.ts`, `app/bootChoice.ts`,
+`app/sessionFlow.ts`, `game/session/gameEngine.ts` et `lifecycle.ts` :
 
 ```mermaid
 flowchart TD
@@ -131,11 +131,11 @@ d’abord `LevelSession.stop()` puis libère Rapier ; la garde empêche donc la
 boucle de toucher l’ancien monde pendant toute la transition, avant comme
 après son `free()`.
 
-Utilisée UNIQUEMENT par `loop/stepPhysics.ts` et le harnais F9/F10 —
+Utilisée par `loop/stepPhysics.ts` et le harnais F9/F10 —
 `updateGameplay`/`interpolateVisuals`/`updateFx` ne touchent jamais Rapier
 directement et n'ont pas besoin de cette garde. Voir [ADR
 0013](../decisions/0013-garde-flux-vs-monde-physique.md) pour la
-distinction complète avec la garde `flowActor`, une préoccupation
+distinction complète avec la garde `flow.isPlaying()`, une préoccupation
 différente qu'il ne faut pas confondre avec celle-ci.
 
 ## L'état propre à une partie (GameSession)
@@ -509,7 +509,7 @@ niveau que `dead`/`levelComplete` : le monde Rapier reste vivant
 est vivant](#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive)),
 le pas fixe continue de tourner (invariant #1), seul son CONTENU est
 ignoré — `updateGameplay.ts` retourne tôt dès que
-`flowActor.getSnapshot().value !== "playing"`, garde déjà en place avant
+`!engine.flow.isPlaying()`, garde déjà en place avant
 la pause et qui couvre `paused` sans modification. Les ennemis ne tirent
 donc plus, la boucle d'eau positionnelle se coupe (déjà hors de `playing`,
 voir [HUD et audio](hud-audio.md#boucle-deau-positionnelle)) : rien de
@@ -535,7 +535,7 @@ dupliquer le câblage — léger écart assumé à « un écran ne connaît pas 
 autre écran » ([composition](../reference/react-composition.md)), justifié
 parce qu'il s'agit d'une composition, pas d'un couplage de navigation
 (`OptionsScreen` reste utilisable seul, ne sait rien de la pause).
-"Reprendre" appelle `game/session/lifecycle.ts::resumeGame(engine)` : vide
+"Reprendre" appelle `app/sessionFlow.ts::resume()` : vide
 les fronts en attente, redemande le verrouillage du pointeur (le clic sur
 le bouton EST le geste utilisateur exigé par l'API navigateur) puis envoie
 `RESUME`. "Quitter vers le menu" réutilise `returnToMenu(engine)` tel
@@ -551,9 +551,9 @@ rebinding et la musique étaient déjà immédiats avant cette tâche.
 
 `startRecording`/`startPlayback` (`recording.ts`) sont de fins wrappers
 autour d'`inputRecorder` (voir [Boucle de jeu — Enregistrement et rejeu
-déterministe](boucle-de-jeu.md#enregistrement-et-rejeu-déterministe) pour
+d'input](boucle-de-jeu.md#enregistrement-et-rejeu-dinput) pour
 le fonctionnement et l'usage du harnais lui-même). La détection des touches
-F9/F10 vit dans `game/loop/updateFx.ts`, pas ici — ce fichier ne fait que
+F9/F10 vit dans `game/loop/devGameplayInput.ts`, au pas fixe — ce fichier ne fait que
 capturer/restaurer l'état initial du joueur (position, vitesse, yaw/pitch).
 
 ## Origine des modules game/session
@@ -562,12 +562,14 @@ Le 2026-09-05, `src/main.ts` (2229 lignes, une seule fonction `main()` de
 ~1530 lignes fermée sur ~35 variables locales par ~15 fonctions imbriquées
 et les 5 callbacks de `startLoop`) a été éclaté en modules. Les fonctions et
 types qui géraient le cycle de vie d'une partie ont rejoint
-`src/game/session/` (`bootChoice.ts`, `doors.ts`, `feedback.ts`,
+`src/game/session/` (`doors.ts`, `feedback.ts`,
 `gameEngine.ts`, `gameSession.ts`, `lifecycle.ts`, `recording.ts`,
 `spawning.ts`) — extraction structurelle pure, chaque fonction reçoit
 désormais `engine`/`session` en paramètres explicites à la place de la
 fermeture qu'elle avait sur le scope de `main()`, sans changement de
-comportement observable. `main.ts` (129 lignes après coup) reste
+comportement observable. Depuis l'étape 3 de l'audit, `bootChoice.ts` et
+l'orchestration replay/menu vivent dans `src/app/`, et `game/session/` ne
+dépend plus de React/XState. `main.ts` reste
 l'orchestrateur : il construit l'acteur de flux, résout le choix de niveau,
 construit `GameEngine`/`GameSession`, monte `<App/>` et câble les callbacks
 de `game/loop/`. Voir [Boucle de jeu — Origine des modules

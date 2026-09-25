@@ -14,7 +14,7 @@ const HUD_MESSAGE_DURATION_MS = 1800;
  */
 export function showHudMessage(text: string): void {
   useGameStore.getState().showHudMessage(text);
-  window.setTimeout(() => {
+  globalThis.setTimeout(() => {
     if (useGameStore.getState().hudMessage === text) {
       useGameStore.getState().showHudMessage(null);
     }
@@ -43,7 +43,7 @@ export function triggerHeroLine(session: GameSession, text: string): boolean {
   session.lastHeroLineAt = now;
   useGameStore.getState().showHeroLine(text);
   duckMusicForHeroLine();
-  window.setTimeout(() => {
+  globalThis.setTimeout(() => {
     if (useGameStore.getState().heroLine === text) {
       useGameStore.getState().showHeroLine(null);
     }
@@ -53,18 +53,15 @@ export function triggerHeroLine(session: GameSession, text: string): boolean {
 }
 
 // Compteur de "vues" (Phase 6, voir `debug.views` dans `game/state.ts`) —
-// gain ALÉATOIRE par kill (le gag du "clip qui buzz" disproportionné),
-// plage et multiplicateur ARBITRAIRES. `Math.random()` ici est SANS
-// CONSÉQUENCE sur le déterminisme du pas fixe : cette fonction n'est
-// appelée que depuis les boucles `deathEvents`, lues au TAUX D'AFFICHAGE
-// dans `game/loop/updateFx.ts` (jamais depuis `updateGameplay`).
+// gain par kill (le gag du "clip qui buzz" disproportionné), décidé au pas
+// fixe avec un flux dédié : le taux d'affichage n'influence pas l'audience.
 const VIEWS_GAIN_MIN = 40;
 const VIEWS_GAIN_MAX = 200;
-/** "La plus grosse révélation de la chaîne" mérite un pic plus marqué qu'un Costard ordinaire — utilisé par `game/loop/updateFx.ts` pour le kill du Directeur. */
+/** "La plus grosse révélation de la chaîne" mérite un pic plus marqué qu'un Costard ordinaire. */
 export const VIEWS_DIRECTOR_MULTIPLIER = 4;
 
-export function grantKillViews(multiplier = 1): void {
-  const gain = Math.round((VIEWS_GAIN_MIN + Math.random() * (VIEWS_GAIN_MAX - VIEWS_GAIN_MIN)) * multiplier);
+export function grantKillViews(session: GameSession, multiplier = 1): void {
+  const gain = Math.round((VIEWS_GAIN_MIN + session.viewsRandom() * (VIEWS_GAIN_MAX - VIEWS_GAIN_MIN)) * multiplier);
   useGameStore.getState().incrementViews(gain);
 }
 
@@ -80,24 +77,20 @@ export function applyPlayerDamage(engine: GameEngine, session: GameSession, amou
   session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
   recordHpLost(session.stats, hpBefore - session.playerHp);
 
+  const maxHp = useGameStore.getState().debug.playerMaxHp;
+  if (session.playerHp > 0 && !session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
+    session.lowHpLineTriggered = true;
+    triggerHeroLine(session, HERO_LINE_LOW_HP);
+  }
+
   if (!session.deathHandled && session.playerHp <= 0) {
     session.deathHandled = true;
     publishLevelRecap(session, false);
-    engine.flowActor.send({ type: "DIED" });
+    engine.flow.playerDied();
   }
 }
 
 /** Publie les PV et les retours perceptifs, au taux d'affichage. */
-export function presentPlayerDamage(session: GameSession): void {
-  useGameStore.getState().setPlayerHp(session.playerHp);
-  if (session.playerHp <= 0) {
-    document.exitPointerLock();
-    return;
-  }
-
-  const maxHp = useGameStore.getState().debug.playerMaxHp;
-  if (!session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
-    session.lowHpLineTriggered = true;
-    triggerHeroLine(session, HERO_LINE_LOW_HP);
-  }
+export function presentPlayerDamage(playerHp: number): void {
+  useGameStore.getState().setPlayerHp(playerHp);
 }

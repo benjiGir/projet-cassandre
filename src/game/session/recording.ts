@@ -4,7 +4,7 @@ import { moveConfig } from "../player/moveConfig";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
 
-// Harnais F9/F10 (voir `game/loop/updateFx.ts` pour la détection des
+// Harnais F9/F10 (voir `game/loop/devGameplayInput.ts` pour la détection des
 // touches, `game/devtools/consoleApi.ts` pour l'exposition console).
 // see: docs/systems/session.md#harnais-f9-et-f10
 

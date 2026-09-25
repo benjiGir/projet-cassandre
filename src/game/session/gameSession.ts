@@ -127,6 +127,8 @@ export interface GameSession {
   playerHp: number;
   firstKillTriggered: boolean;
   lowHpLineTriggered: boolean;
+  /** Flux déterministe des gains de vues, indépendant des FX et des armes. */
+  viewsRandom: () => number;
   /** Idempotence de `game/session/feedback.ts::applyPlayerDamage` — voir sa doc. */
   deathHandled: boolean;
   /** Idempotence de `game/session/doors.ts::triggerLevelComplete` — voir sa doc. */

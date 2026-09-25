@@ -170,7 +170,7 @@ navigateur.
   d'options l'appelle, il ne l'héberge pas.
 - **L'état de jeu** : `game/state.ts` (zustand). L'interface le lit, la boucle
   l'écrit — voir [bonnes pratiques](react-bonnes-pratiques.md#le-contexte-qui-change-tout).
-- **Le choix de l'écran de démarrage** : `game/session/bootChoice.ts`, qui monte
+- **Le choix de l'écran de démarrage** : `app/bootChoice.ts`, qui monte
   `MainMenu`, `OptionsScreen` et `LevelMenu` avant que la partie existe.
 
 ## Tests

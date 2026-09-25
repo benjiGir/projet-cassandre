@@ -280,6 +280,15 @@ valider le passage avec la forme réelle et refuser une diagonale si les deux
 cellules orthogonales ne sont pas praticables. Ajouter des tests à 0,35 m,
 0,36 m, 1 m et dans un coin étroit.
 
+**Traité à l’étape 3 (25 septembre 2026), sous réserve de playtest.** Le seuil
+de marche et l’angle de pente viennent désormais du KCC Costard. Les arêtes
+plates balaient sa capsule Rapier, les diagonales exigent les deux passages
+orthogonaux, et la fixture de rebord de 0,8 m est refusée sans fermer la rampe
+à 45°. Le balayage horizontal sur pente produisait un faux contact avec le
+sol montant : ces arêtes restent contrôlées par normale et dénivelé, pas par
+une simulation complète du KCC. Les seuils voisins de 0,35 m et les rampes
+du vrai niveau restent à éprouver en jeu.
+
 ### P1 — les gates de livraison ne protègent pas `main`
 
 La configuration Vitest ne déclare ni `include` ni exclusions
@@ -393,6 +402,10 @@ Deux options sont honnêtes :
 La seconde option est nécessaire avant d’utiliser F9/F10 comme preuve de
 déterminisme global.
 
+**Décidé à l’étape 3.** F9/F10 garde le contrat restreint de harnais d’input
+pour le tuning du déplacement. Les promesses plus larges ont été retirées des
+documents ; voir [ADR 0033](../decisions/0033-rng-presentation-et-portee-du-rejeu.md).
+
 ### `Math.random()` est une contradiction de gouvernance
 
 Le texte de l’invariant 12 interdit tout `Math.random()`, tandis que des ADR
@@ -406,6 +419,11 @@ contredisent. Décider une seule politique et la consigner. La solution la plus
 cohérente avec les captures déterministes est un flux RNG de présentation,
 seedé par session et séparé du RNG gameplay. Au minimum, le gain de vues doit
 quitter `Math.random()` puisqu’il modifie un état utilisateur observable.
+
+**Résolu à l’étape 3.** Les vues sont décidées au pas fixe avec un RNG propre
+à la session. FX et audio ont deux flux cosmétiques seedés et réinitialisés au
+boot, indépendants des flux gameplay. Aucun appel exécutable à `Math.random()`
+ne reste dans `src/`.
 
 ## UI React : bonne base, application incomplète
 
@@ -481,12 +499,17 @@ de contenu de `dist` évitera le retour de ces fichiers.
 | 0 — signal | Terminée | Vitest borné au vrai dossier de tests, commande `pnpm check`, gate CI avant déploiement. |
 | 1 — simulation | Terminée | Dégâts et mort dans le pas fixe, curseurs sur les cinq lecteurs d'impacts, visée capturée avant simulation, tests 0/1/N et regroupements 1/2/15. |
 | 2 — cycle de vie | Terminée | Chargement transactionnel, arrêt en vol attendu, boot/replay unifiés, retry visible, horloge et FX remis à zéro. |
-| 3 — architecture | Non commencée | — |
+| 3 — architecture | Terminée | Shell `src/app/`, port de flux sans React/XState dans `game/`, `updateFx` limité à des capacités de présentation, RNG isolés, graphe aligné sur le KCC. |
 | 4 — livraison | Non commencée | — |
 
-La gate applicative de l'étape 2 est verte : typecheck, 416 tests et build de
-production. Le checker documentaire reste informatif jusqu’à l’étape 4 ; sa
-dette de référence doit être comparée à la baseline de l’étape 1.
+La gate applicative de l'étape 3 est verte : typecheck, 432 tests et build de
+production. `game/session/lifecycle.ts` n’importe plus React et son teardown
+se teste sans monter d’interface ; les menus et l’orchestration de replay
+vivent dans `src/app/`. `updateFx` reçoit une vue TypeScript restreinte : il
+ne voit plus les drapeaux de kill ou de seuil de vie, et les commandes de dev
+qui modifient le jeu sont consommées au pas fixe. La purge des files
+d’événements reste une mutation de **présentation**, pas de simulation. Le
+checker documentaire reste informatif jusqu’à l’étape 4.
 
 ### Étape 0 — rétablir la confiance dans le signal
 

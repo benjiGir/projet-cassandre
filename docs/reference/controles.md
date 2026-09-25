@@ -44,7 +44,8 @@ rebindables via cette API.
 
 ## Touches de dev
 
-Lues au taux d'affichage dans `game/loop/updateFx.ts` (sauf le panneau de
+F8/F9/F10 sont consommées au pas fixe dans `game/loop/devGameplayInput.ts` ;
+V/B restent lues au taux d'affichage dans `game/loop/updateFx.ts` (sauf le panneau de
 tuning, qui écoute lui-même), jamais rebindables. **Absentes du build de
 production** : leur lecture est sous `import.meta.env.DEV`, constante au
 build, donc la branche n'existe pas dans le bundle livré — même régime que le
@@ -55,7 +56,7 @@ ou les gizmos en jouant.
 | Touche | Effet |
 |---|---|
 | `F8` | **Ennemis passifs** (`notarget`) : ils ne voient plus le joueur et leurs attaques ne font rien — pour parcourir un niveau et le regarder |
-| `F9` / `F10` | Enregistre / rejoue une séquence d'input (harnais A/B, preuve de déterminisme) |
+| `F9` / `F10` | Enregistre / rejoue une séquence d'input pour le tuning du déplacement ; pas un rejeu complet du monde |
 | `KeyV` | Wireframe de toute la scène |
 | `KeyB` | Gizmos balistiques (actifs par défaut en dev, éteints en prod) |
 | `` ` `` | Panneau de tuning à chaud (`ui/dev/tuning/TuningPanel/TuningPanel.tsx`) |

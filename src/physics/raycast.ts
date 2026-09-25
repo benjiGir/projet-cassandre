@@ -4,8 +4,8 @@ import { Context, Effect, Layer } from "effect";
 import type { PhysicsWorld } from "./world";
 
 /**
- * Enveloppe Effect des trois requêtes physiques Rapier utilisées par le jeu
- * (`castRay`, `castRayAndGetNormal`, `intersectionsWithShape`) — le jeu
+ * Enveloppe Effect des requêtes physiques Rapier utilisées par le jeu
+ * (`castRay`, `castRayAndGetNormal`, `castShape`, `intersectionsWithShape`) — le jeu
  * n'utilise pas `THREE.Raycaster`.
  *
  * `physics: PhysicsWorld` est un PARAMÈTRE de chaque méthode, jamais stocké
@@ -55,6 +55,20 @@ export interface RaycastServiceShape {
     filterExcludeRigidBody?: RAPIER.RigidBody,
     filterPredicate?: (collider: RAPIER.Collider) => boolean,
   ) => Effect.Effect<RAPIER.RayColliderIntersection | null>;
+
+  /** Balayage de la capsule réelle entre deux cellules de navigation. */
+  readonly castShape: (
+    physics: PhysicsWorld,
+    shapePos: RAPIER.Vector,
+    shapeRot: RAPIER.Rotation,
+    shapeVel: RAPIER.Vector,
+    shape: RAPIER.Shape,
+    targetDistance: number,
+    maxToi: number,
+    stopAtPenetration: boolean,
+    filterFlags?: RAPIER.QueryFilterFlags,
+    filterGroups?: RAPIER.InteractionGroups,
+  ) => Effect.Effect<RAPIER.ColliderShapeCastHit | null>;
 
   /**
    * Miroir de `RAPIER.World.intersectionsWithShape` : les colliders touchés
@@ -130,6 +144,12 @@ export class RaycastService extends Context.Service<RaycastService, RaycastServi
           ),
         ),
 
+      castShape: (physics, shapePos, shapeRot, shapeVel, shape, targetDistance, maxToi, stopAtPenetration, filterFlags, filterGroups) =>
+        Effect.sync(() => physics.world.castShape(
+          shapePos, shapeRot, shapeVel, shape, targetDistance, maxToi, stopAtPenetration,
+          filterFlags, filterGroups,
+        )),
+
       intersectionsWithShape: (
         physics,
         shapePos,
@@ -176,6 +196,7 @@ export class RaycastService extends Context.Service<RaycastService, RaycastServi
       RaycastService.of({
         castRay: () => Effect.succeed(null),
         castRayAndGetNormal: () => Effect.succeed(null),
+        castShape: () => Effect.succeed(null),
         intersectionsWithShape: () => Effect.succeed([]),
         ...overrides,
       }),

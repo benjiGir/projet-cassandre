@@ -46,6 +46,25 @@ function buildWallWorld() {
 }
 
 describe("RaycastService (jalon M3) — contre un vrai monde Rapier", () => {
+  it.effect("castShape détecte un mur avec la capsule entière", () =>
+    Effect.gen(function* () {
+      const { physics, collider } = buildWallWorld();
+      const raycast = yield* RaycastService;
+      const hit = yield* raycast.castShape(
+        physics,
+        { x: 0, y: 0, z: 0 },
+        { x: 0, y: 0, z: 0, w: 1 },
+        { x: 0, y: 0, z: 10 },
+        new RAPIER.Capsule(0.5, 0.3),
+        0, 1, false,
+        RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+        COLLISION_GROUPS.WORLD,
+      );
+      assert.isNotNull(hit);
+      assert.strictEqual(hit!.collider.handle, collider.handle);
+    }).pipe(Effect.provide(RaycastService.layer)),
+  );
+
   it.effect("castRay touche un mur connu : bon collider, bon timeOfImpact", () =>
     Effect.gen(function* () {
       const { physics, collider } = buildWallWorld();

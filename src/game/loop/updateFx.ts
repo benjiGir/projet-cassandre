@@ -10,8 +10,6 @@ import {
   playWeaponFireSfx,
 } from "../../core/audio";
 import { input } from "../../core/input";
-import { advanceWeaponPickupClock } from "../../render/pickups";
-import { inputRecorder } from "../../core/inputRecorder";
 import { toggleMusic } from "../../core/music";
 import { updateWaterAmbience } from "../../core/waterAmbience";
 import { runGameplaySync } from "../../core/runtime";
@@ -21,26 +19,15 @@ import { weaponConfig } from "../player/weaponConfig";
 import { suitConfig } from "../entities/suitConfig";
 import { directorConfig } from "../entities/directorConfig";
 import { useGameStore } from "../state";
-import {
-  grantKillViews,
-  presentPlayerDamage,
-  showHudMessage,
-  triggerHeroLine,
-  VIEWS_DIRECTOR_MULTIPLIER,
-} from "../session/feedback";
-import { startPlayback, startRecording } from "../session/recording";
-import { toggleNotarget } from "../devtools/cheats";
-import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
+import { advanceWeaponPickupClock } from "../../render/pickups";
+import { presentPlayerDamage, showHudMessage } from "../session/feedback";
+import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import type { LevelHandle } from "../level/loader";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/systems/boucle-de-jeu.md#origine-des-modules
-
-// Kill = réplique "premier lézard" (une seule fois par partie, Costard OU
-// Directeur confondus — voir la doc de `GameSession.firstKillTriggered`).
-const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
 
 /**
  * Couleur et quantité des éclats par matière de `prop_*`.
@@ -84,7 +71,7 @@ const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 let movableHandlesLevel: LevelHandle | null | undefined;
 let movableHandles: ReadonlySet<number> = new Set();
 
-function isMovableOrBreakableHandle(session: GameSession, colliderHandle: number): boolean {
+function isMovableOrBreakableHandle(session: FxSession, colliderHandle: number): boolean {
   const handle = session.gltfLevelSession?.current ?? null;
   if (handle !== movableHandlesLevel) {
     movableHandlesLevel = handle;
@@ -117,7 +104,17 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 // Tourne au taux d'affichage, comme `interpolateVisuals` — même frontière
 // Effect synchrone stricte (`runGameplaySync`) que le pas fixe.
 // see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
-export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): void {
+type FxSession = Readonly<Pick<GameSession,
+  "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
+  "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
+  "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons"
+>>;
+type FxEngine = Omit<Pick<GameEngine,
+  "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
+  "flow" | "fpsSmoothed" | "fx" | "hitmarker" | "renderer" | "viewmodel" | "wireframeToggle"
+>, "session"> & { readonly session: FxSession };
+
+export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): void {
   const session = engine.session;
   let playerWasHit = false;
   runGameplaySync(
@@ -284,14 +281,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           // par des gibs, donc potentiellement moins lisible ce pas-ci).
           engine.hitmarker.trigger("kill");
           playEnemySfx("death");
-          // Compteur de "vues" (Phase 6) + réplique "premier kill" (une seule
-          // fois par partie, Costard OU Directeur confondus — voir la doc de
-          // `GameSession.firstKillTriggered`).
-          grantKillViews();
-          if (!session.firstKillTriggered) {
-            session.firstKillTriggered = true;
-            triggerHeroLine(session, HERO_LINE_FIRST_KILL);
-          }
+          // Les vues et le premier kill sont déjà décidés dans le pas fixe.
         }
         for (const event of session.suitManager.playerHitEvents) {
           playerWasHit = true;
@@ -342,14 +332,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
           engine.hitmarker.trigger("kill");
           playEnemySfx("death");
-          // Multiplicateur dédié : voir `VIEWS_DIRECTOR_MULTIPLIER`. Même garde
-          // `firstKillTriggered` que le Costard — un seul flag, peu importe qui
-          // décroche le tout premier kill de la partie.
-          grantKillViews(VIEWS_DIRECTOR_MULTIPLIER);
-          if (!session.firstKillTriggered) {
-            session.firstKillTriggered = true;
-            triggerHeroLine(session, HERO_LINE_FIRST_KILL);
-          }
+          // Le multiplicateur de vues du Directeur est déjà appliqué au pas fixe.
         }
         for (const event of session.directorManager.playerHitEvents) {
           playerWasHit = true;
@@ -358,7 +341,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
         }
-        if (playerWasHit) presentPlayerDamage(session);
+        if (playerWasHit) presentPlayerDamage(session.playerHp);
         session.directorManager.clearFrameEvents();
       });
 
@@ -451,7 +434,7 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           waterListenerRightScratch,
           waterJetOriginScratch,
           realDt,
-          engine.flowActor.getSnapshot().value === "playing",
+          engine.flow.isPlaying(),
         );
       });
 
@@ -468,27 +451,6 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
         // basculerait pas le wireframe en jouant.
         // see: docs/reference/controles.md#touches-de-dev
         if (import.meta.env.DEV) {
-          // Outillage (hors gameplay, lu au taux d'affichage) : F9 enregistre,
-          // F10 rejoue. Sert de harnais A/B et de preuve de déterminisme.
-          // Gardé par `isPhysicsSessionLive()` : `startRecording`/`startPlayback`
-          // appellent `session.player.spawn(...)`, qui touche Rapier. Cas
-          // limite dev-only, coût de la garde nul.
-          // see: docs/decisions/0013-garde-flux-vs-monde-physique.md
-          if (isPhysicsSessionLive(engine)) {
-            if (input.wasJustPressed("F9")) {
-              if (inputRecorder.isRecording()) {
-                engine.lastRecording = inputRecorder.stopRecording();
-                console.info(`[recorder] ${engine.lastRecording?.frames.length ?? 0} pas fixes enregistrés`);
-              } else {
-                startRecording(engine, session);
-                console.info("[recorder] enregistrement démarré");
-              }
-            }
-            if (input.wasJustPressed("F10") && engine.lastRecording) {
-              startPlayback(engine, session, engine.lastRecording);
-              console.info(`[recorder] rejeu de ${engine.lastRecording.frames.length} pas fixes`);
-            }
-          }
           // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
           // (invariant #2 — pas de lecture continue, pas de setState par frame).
           if (input.wasJustPressed("KeyV")) {
@@ -501,16 +463,6 @@ export function updateFx(engine: GameEngine, realDt: number, stats: LoopStats): 
           if (input.wasJustPressed("KeyB")) {
             const enabled = engine.ballisticsDebug.toggle();
             console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
-          }
-          // F8 : les ennemis cessent de voir le joueur (`notarget`), pour
-          // parcourir un niveau et le regarder. Même bascule ponctuelle que
-          // KeyV/KeyB, mais elle touche le GAMEPLAY — d'où le message HUD, qui
-          // évite de croire plus tard à une IA cassée.
-          // see: docs/reference/controles.md#touches-de-dev
-          if (input.wasJustPressed("F8")) {
-            const on = toggleNotarget();
-            showHudMessage(on ? "Dev : ennemis passifs" : "Dev : ennemis à nouveau hostiles");
-            console.info(`[debug] notarget ${on ? "activé" : "désactivé"}`);
           }
         }
         // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev

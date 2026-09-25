@@ -1,11 +1,11 @@
 import { createElement } from "react";
 import type { createRoot } from "react-dom/client";
 
-import { LEVEL_CHOICES, type LevelDef } from "../level/levels";
-import { LevelMenu } from "../../ui/dev/LevelMenu/LevelMenu";
-import { ZoneChooserLink } from "../../ui/dev/ZoneChooserLink/ZoneChooserLink";
-import { MainMenu } from "../../ui/screens/mainMenu/MainMenu/MainMenu";
-import { OptionsScreen } from "../../ui/screens/options/OptionsScreen/OptionsScreen";
+import { LEVEL_CHOICES, type LevelDef } from "../game/level/levels";
+import { LevelMenu } from "../ui/dev/LevelMenu/LevelMenu";
+import { ZoneChooserLink } from "../ui/dev/ZoneChooserLink/ZoneChooserLink";
+import { MainMenu } from "../ui/screens/mainMenu/MainMenu/MainMenu";
+import { OptionsScreen } from "../ui/screens/options/OptionsScreen/OptionsScreen";
 
 // Ni l'une ni l'autre des deux fonctions ci-dessous n'envoie d'évènement à
 // l'acteur de flux — voir `ui/gameFlowMachine.ts` et `main.ts` pour les

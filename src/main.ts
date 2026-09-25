@@ -17,15 +17,10 @@ import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
 import { useGameStore } from "./game/state";
-import { resolveBootChoice } from "./game/session/bootChoice";
+import { resolveBootChoice } from "./app/bootChoice";
+import { createSessionFlow, waitForGameSessionReady } from "./app/sessionFlow";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
-import {
-  bootGameSession,
-  replay,
-  resumeGame,
-  returnToMenu,
-  waitForGameSessionReady,
-} from "./game/session/lifecycle";
+import { bootGameSession } from "./game/session/lifecycle";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
 import { updateDisplayInput } from "./game/loop/updateDisplayInput";
@@ -65,6 +60,23 @@ async function main() {
   // see: docs/decisions/0019-machine-xstate-flux-ecran.md
   // see: docs/systems/hud.md#flux-décran
   const flowActor = createGameFlowActor();
+  const flow = {
+    isPlaying: () => flowActor.getSnapshot().value === "playing",
+    isPhysicsLive: () => {
+      const value = flowActor.getSnapshot().value;
+      return value === "playing" || value === "paused" || value === "dead" || value === "levelComplete";
+    },
+    playerDied: () => {
+      flowActor.send({ type: "DIED" });
+      void document.exitPointerLock();
+    },
+    levelCompleted: () => {
+      flowActor.send({ type: "LEVEL_COMPLETED" });
+      void document.exitPointerLock();
+    },
+    pause: () => flowActor.send({ type: "PAUSE" }),
+    resume: () => flowActor.send({ type: "RESUME" }),
+  };
   flowActor.subscribe((snapshot) => {
     useGameStore.getState().setFlowState(snapshot.value);
   });
@@ -135,8 +147,7 @@ async function main() {
   // see: docs/systems/session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
   const persistentEngine = buildGameEngine(
     canvas,
-    root,
-    flowActor,
+    flow,
     { suit: suitSheet, director: directorSheet },
     weaponModels,
   );
@@ -164,16 +175,17 @@ async function main() {
   // Frontière explicite : le flux ne passe à `playing` qu'après un commit de
   // niveau réussi. Un échec reste sur l'écran de chargement et propose une
   // relance, sans démarrer la boucle sur une scène vide.
-  await waitForGameSessionReady(engine, session);
+  await waitForGameSessionReady(flowActor, session);
+  const sessionFlow = createSessionFlow(engine, root, flowActor);
 
   // `<App/>` monté APRÈS la construction du monde : `onReplay`/
   // `onReturnToMenu`/`onResume` ferment sur `engine`.
   // see: docs/systems/hud.md#composition-de-app
   root.render(
     createElement(App, {
-      onReplay: () => void replay(engine),
-      onReturnToMenu: () => void returnToMenu(engine),
-      onResume: () => resumeGame(engine),
+      onReplay: () => void sessionFlow.replay(),
+      onReturnToMenu: () => void sessionFlow.returnToMenu(),
+      onResume: sessionFlow.resume,
     }),
   );
 

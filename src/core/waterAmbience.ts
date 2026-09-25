@@ -122,7 +122,7 @@ export function waterAmbienceDebugState(): { charge: boolean; joue: boolean; vol
  * `active = false` coupe la boucle en fondu court : le mélange CIBLE devient
  * silence, et `smoothTowards` fait le fondu tout seul, sur la même constante
  * de temps qu'un simple changement de distance — aucun code de fondu séparé.
- * L'appelant passe `engine.flowActor.getSnapshot().value === "playing"`
+ * L'appelant passe `engine.flow.isPlaying()`
  * (même lecture directe de l'acteur que la garde de contenu du pas fixe dans
  * `updateGameplay.ts`) : `false` au menu, à la mort, en fin de niveau.
  *

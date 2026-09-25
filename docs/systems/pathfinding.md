@@ -115,18 +115,19 @@ donc pas besoin de simuler une trajectoire Y : il décide seulement si deux
 cellules adjacentes de la grille sont reliées par une surface que le KCC
 peut gravir, sans jamais produire lui-même de Y.
 
-Seuil retenu : 1.0 m — calculé pour couvrir confortablement la montée
-verticale d'UNE cellule (0.5 m) sur la pente la plus raide déjà documentée
-du kit (escalier à 45°) tout en restant nettement inférieur à la hauteur de
-la mezzanine de la Zone D (2 m) : deux cellules situées de part et d'autre
-d'un simple rebord (rez-de-chaussée / mezzanine, sans rampe entre les deux)
-ne doivent jamais être reliées directement, seule une vraie suite de
-cellules d'escalier doit permettre la montée.
+Un rebord vertical est limité à `suitConfig.autostepMaxHeight` (0,35 m),
+exactement comme le KCC ennemi. Une cellule de pente continue peut monter
+plus haut si sa normale est franchissable et si le dénivelé reste sous
+`tan(maxSlopeClimbAngleDeg) × distance horizontale`. La fixture de pente à
+45° reste reliée ; celle d'un rebord de 0,8 m est refusée. Une diagonale
+n'existe que si ses deux passages orthogonaux sont également ouverts, pour
+éviter de couper l'angle d'un obstacle. Sur les arêtes plates, un balayage de
+la capsule Rapier complète le rayon d'œil ; sur une rampe, ce balayage
+horizontal donnerait un faux contact avec le sol montant.
 
-Hypothèse documentée, PAS vérifiée en jeu réel : si le KCC n'arrive pas à
-gravir la vraie pente malgré un chemin de graphe correct, c'est un réglage
-du KCC (`autostepMaxHeight`/`maxSlopeClimbAngleDeg`) à ajuster séparément,
-pas un défaut de ce graphe.
+Ce bake reste une approximation 2,5D, pas une simulation du KCC déplacé
+sur chaque arête. Le ressenti et l'accessibilité des rampes du niveau exporté
+doivent encore être vérifiés en jeu réel.
 
 ## Un service qui ne garde aucun état
 

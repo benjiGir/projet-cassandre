@@ -23,7 +23,7 @@ export interface OptionsScreenProps {
 /**
  * Écran « Options » : contrôles et affichage, un seul bouton RETOUR. Monté
  * depuis DEUX endroits, sans rien savoir duquel — `onBack` seul décide de la
- * suite : le menu principal (`game/session/bootChoice.ts`, retour vers
+ * suite : le menu principal (`app/bootChoice.ts`, retour vers
  * `MainMenu`) et la pause en jeu (`ui/screens/pause/PauseScreen/PauseScreen.tsx`,
  * retour vers le menu de pause). Les quatre réglages de `DisplayTab`
  * s'appliquent à chaud dans les deux cas dès qu'un moteur existe (voir

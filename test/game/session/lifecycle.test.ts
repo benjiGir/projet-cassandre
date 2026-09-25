@@ -3,12 +3,10 @@ import * as THREE from "three";
 
 import { loadingSnapshot } from "../../../src/core/loadingProgress";
 import type { LevelHandle } from "../../../src/game/level/loader";
-import type { GameEngine, PersistentEngine } from "../../../src/game/session/gameEngine";
+import type { PersistentEngine } from "../../../src/game/session/gameEngine";
 import type { GameSession } from "../../../src/game/session/gameSession";
-import {
-  teardownGameSession,
-  waitForGameSessionReady,
-} from "../../../src/game/session/lifecycle";
+import { teardownGameSession } from "../../../src/game/session/lifecycle";
+import { waitForGameSessionReady } from "../../../src/app/sessionFlow";
 import { createGameFlowActor } from "../../../src/ui/gameFlowMachine";
 
 describe("cycle de vie d'une GameSession", () => {
@@ -63,9 +61,7 @@ describe("cycle de vie d'une GameSession", () => {
         reload,
       },
     } as unknown as GameSession;
-    const engine = { flowActor: actor } as unknown as GameEngine;
-
-    const waiting = waitForGameSessionReady(engine, session);
+    const waiting = waitForGameSessionReady(actor, session);
     await vi.waitFor(() => expect(actor.getSnapshot().value).toBe("loadFailed"));
     expect(reload).not.toHaveBeenCalled();
 

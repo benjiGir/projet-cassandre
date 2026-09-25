@@ -47,3 +47,4 @@ un lien vers son successeur.
 | [0030](0030-props-dynamiques.md) | Props dynamiques : un préfixe glTF et un groupe de collision à part | accepté |
 | [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres — `DoorSystem`/`VitreSystem`, collider actif seulement fermé | accepté |
 | [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables — `SanitaireSystem`, calqué sur `VitreSystem` | accepté |
+| [0033](0033-rng-presentation-et-portee-du-rejeu.md) | RNG de présentation séparé et portée du rejeu F9/F10 | accepté |

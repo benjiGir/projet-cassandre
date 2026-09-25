@@ -27,16 +27,15 @@ const RAY_MARGIN_DOWN = 2;
 
 /**
  * `normal.y` minimale d'un hit vertical pour être compté comme un sol —
- * cos(60°) = 0.5 : généreux (couvre la pente à 45° de l'escalier de la Zone D,
- * cos(45°) ≈ 0.71 > 0.5), tout en excluant un mur quasi vertical (`normal.y`
- * proche de 0) touché par accident à son arête supérieure.
+ * Alignée sur `suitConfig.maxSlopeClimbAngleDeg` du KCC : une pente que le
+ * contrôleur refuserait ne doit pas devenir un sol navigable.
  */
-const MIN_FLOOR_NORMAL_Y = 0.5;
+const MIN_FLOOR_NORMAL_Y = Math.cos((suitConfig.maxSlopeClimbAngleDeg * Math.PI) / 180);
 
-/** Différence de hauteur de sol maximale entre deux cellules adjacentes pour
- * qu'une arête soit créée, mètres — le réglage qui fait passer l'escalier de
- * la Zone D. see: docs/systems/pathfinding.md#la-marche-verticale-maximale-entre-deux-cellules-reliées-max_step_height */
-const MAX_STEP_HEIGHT = 1.0;
+/** Marche verticale maximale du KCC ennemi. Les pentes continues sont
+ * traitées à part avec l'angle de montée du même contrôleur.
+ * see: docs/systems/pathfinding.md#la-marche-verticale-maximale-entre-deux-cellules-reliées-max_step_height */
+const MAX_STEP_HEIGHT = suitConfig.autostepMaxHeight;
 
 /** Décalage vertical du centre de la capsule de test d'élagage au-dessus du sol détecté — évite qu'une capsule tangente au sol touche par accident un collider adjacent qui affleure aussi au niveau du sol (ex. le pied d'un mur). */
 const STAND_CLEARANCE = 0.05;
@@ -205,6 +204,7 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
     const size = cols * rows;
 
     const groundY = new Float32Array(size).fill(Number.NaN);
+    const floorNormalY = new Float32Array(size);
     const walkable = new Uint8Array(size);
     const neighborMask = new Uint8Array(size);
 
@@ -215,6 +215,8 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
     const standingCapsule = new RAPIER.Capsule(capsuleHalfHeight, capsuleRadius);
     const verticalRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 });
     const horizontalRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 });
+    const capsuleStart: RAPIER.Vector = { x: 0, y: 0, z: 0 };
+    const capsuleVelocity: RAPIER.Vector = { x: 0, y: 0, z: 0 };
 
     // Passe 1 : hauteur de sol + élagage, cellule par cellule.
     for (let iz = 0; iz < rows; iz++) {
@@ -252,6 +254,7 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
         if (overlaps.length > 0) continue; // pas assez de dégagement vertical pour se tenir debout ici.
 
         groundY[idx] = groundHeight;
+        floorNormalY[idx] = hit.normal.y;
         walkable[idx] = 1;
       }
     }
@@ -272,7 +275,10 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
           if (walkable[nIdx] !== 1) continue;
 
           const heightDiff = Math.abs(groundY[nIdx]! - groundY[idx]!);
-          if (heightDiff > MAX_STEP_HEIGHT) continue;
+          const horizontalDistance = cellSize * Math.hypot(dir.dx, dir.dz);
+          const touchesRamp = floorNormalY[idx]! < 0.999 || floorNormalY[nIdx]! < 0.999;
+          const rampRise = Math.tan((suitConfig.maxSlopeClimbAngleDeg * Math.PI) / 180) * horizontalDistance;
+          if (heightDiff > (touchesRamp ? rampRise + STAND_CLEARANCE : MAX_STEP_HEIGHT)) continue;
 
           const fromX = originX + ix * cellSize;
           const fromZ = originZ + iz * cellSize;
@@ -301,8 +307,51 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
           );
           if (wallHit) continue; // mur entre les deux cellules.
 
+          // Sur sol plat, un rayon d'œil ne suffit pas pour un obstacle bas
+          // ou un plafond : balayer la capsule réelle. Sur une pente, un
+          // balayage horizontal produit un faux contact avec le sol montant ;
+          // la pente est validée par sa normale et son dénivelé ci-dessus.
+          if (!touchesRamp) {
+            capsuleStart.x = fromX;
+            capsuleStart.y = Math.max(groundY[idx]!, groundY[nIdx]!) +
+              STAND_CLEARANCE + capsuleHalfHeight + capsuleRadius;
+            capsuleStart.z = fromZ;
+            capsuleVelocity.x = dxw;
+            capsuleVelocity.y = 0;
+            capsuleVelocity.z = dzw;
+            const blocked = yield* raycast.castShape(
+              physics, capsuleStart, IDENTITY_ROTATION, capsuleVelocity,
+              standingCapsule, 0, 1, false,
+              RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, WORLD_ONLY_RAY_GROUPS,
+            );
+            if (blocked) continue;
+          }
+
           neighborMask[idx] |= 1 << dirIndex;
           neighborMask[nIdx] |= 1 << ((dirIndex + 4) % 8);
+        }
+      }
+    }
+
+    // Une diagonale ne coupe pas l'angle de deux obstacles : les deux chemins
+    // orthogonaux qui la bordent doivent être physiquement ouverts.
+    for (let iz = 0; iz < rows; iz++) {
+      for (let ix = 0; ix < cols; ix++) {
+        const idx = iz * cols + ix;
+        for (const dirIndex of [3, 5]) {
+          if ((neighborMask[idx]! & (1 << dirIndex)) === 0) continue;
+          const dir = DIRS[dirIndex]!;
+          const nIdx = (iz + dir.dz) * cols + ix + dir.dx;
+          const horizontal = dir.dx > 0 ? 2 : 6;
+          const vertical = dir.dz > 0 ? 4 : 0;
+          const oppositeHorizontal = (horizontal + 4) % 8;
+          const oppositeVertical = (vertical + 4) % 8;
+          if ((neighborMask[idx]! & (1 << horizontal)) !== 0 &&
+              (neighborMask[idx]! & (1 << vertical)) !== 0 &&
+              (neighborMask[nIdx]! & (1 << oppositeHorizontal)) !== 0 &&
+              (neighborMask[nIdx]! & (1 << oppositeVertical)) !== 0) continue;
+          neighborMask[idx] &= ~(1 << dirIndex);
+          neighborMask[nIdx] &= ~(1 << ((dirIndex + 4) % 8));
         }
       }
     }
