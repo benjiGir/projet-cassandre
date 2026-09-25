@@ -191,7 +191,7 @@ graphe à chaque casse coûterait bien plus que ce que ça résoudrait ici
   au chargement comme `vitreCount`/`vitreBatchCount`
   (`game/session/spawning.ts`).
 - **`GameSession` gagne trois champs** : `sanitaireSystem` (reconstruit à
-  chaque `onLoaded`, hot reload compris — les sanitaires reviennent intacts
+  chaque commit de niveau, hot reload compris — les sanitaires reviennent intacts
   avec le fichier), `sanitaireReliefCooldown` (état de PARTIE, remis à 0 par
   `bootGameSession`) et `sanitaireReliefRandom` (générateur RNG dédié au
   choix de la réplique de soulagement, invariant #12 — jamais

@@ -33,7 +33,7 @@ export interface GameEngine {
   /** Acteur XState du flux d'écran (Jalon M8) — UN SEUL pour toute la durée de l'onglet, jamais recréé par `bootGameSession`/`replay`/`returnToMenu` (contrairement à `session`). */
   flowActor: GameFlowActor;
 
-  /** PURE ACCUMULATEUR DE HITSTOP, aucun état de partie. */
+  /** Horloge persistante dont l'état transitoire est remis à zéro à chaque boot. */
   clock: GameClock;
   /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx.ts`. */
   fx: FxSystem;
@@ -151,9 +151,8 @@ export function buildGameEngine(
   sun.position.set(5, 10, 5);
   scene.add(sun);
 
-  // `clock` : PURE ACCUMULATEUR DE HITSTOP, aucun état de partie (Jalon M8) —
-  // reste vivant à travers un reset, jamais reconstruit par
-  // `bootGameSession`/`teardownGameSession`.
+  // L'objet reste vivant à travers un reset ; `bootGameSession` remet son
+  // temps écoulé et tout hitstop actif à zéro.
   const clock = new GameClock();
   // Rendu de l'impact de tir (muzzle flash, decals, particules, douilles,
   // screenshake) et mesh d'arme affiché à l'écran — voir `render/fx.ts` et

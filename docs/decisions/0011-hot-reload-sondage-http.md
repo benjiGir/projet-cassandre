@@ -2,7 +2,7 @@
 title: Hot reload de niveau par sondage HTTP HEAD
 tags: [adr, pipeline]
 status: accepte
-updated: 2026-09-05
+updated: 2026-09-25
 ---
 
 # ADR 0011 — Hot reload de niveau par sondage HTTP HEAD plutôt qu'un watcher fichier
@@ -81,3 +81,21 @@ déclenche toujours « changement détecté » suivi d'un rechargement complet.
 de fond. La leçon est moins le bug que sa durée de vie — **un commentaire qui
 annonce une contrainte ne l'applique pas**, et celui-ci a survécu à tout le
 retrofit Effect du jalon M2 sans que personne le vérifie.
+
+## Révision du 2026-09-25 — cycle de vie transactionnel
+
+`stop()` retourne désormais une promesse : il interrompt le sondage, attend le
+chargement en vol, puis dispose le handle courant. Un handle qui arrive après
+l’arrêt est disposé sans préparation ni publication ; le monde Rapier n’est
+donc jamais libéré pendant qu’un loader peut encore y ajouter des corps.
+Un token `levelLoadGeneration` invalide aussi l’installation différée d’un
+autre fichier demandée depuis la console si un second choix ou un teardown la
+dépasse.
+
+Un reload prépare ses systèmes dérivés dans des variables locales. L’ancien
+handle est suspendu en mémorisant la visibilité de sa racine et l’état actif de
+chaque corps. Le commit publie le nouvel ensemble en une fois et dispose
+l’ancien ; toute exception dispose le candidat et restaure exactement
+l’ancien état. `firstLoad` expose un résultat discriminé (`committed`,
+`failed`, `cancelled`) pour que le boot puisse proposer un retry sans confondre
+« tentative terminée » et « niveau prêt ».

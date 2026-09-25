@@ -56,6 +56,30 @@ afterEach(() => {
 });
 
 describe("buildLevelFromGltf (jalon M2) — chemin heureux", () => {
+  it("suspend() masque le candidat et restaure l'état individuel des corps", () => {
+    const spawnPlayer = new THREE.Object3D();
+    spawnPlayer.name = "spawn_player";
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), whiteMat());
+    wall.name = "col_box_wall";
+    const { handle, physics } = build([spawnPlayer, wall]);
+    const bodies: RAPIER.RigidBody[] = [];
+    physics.world.forEachRigidBody((body) => bodies.push(body));
+    expect(bodies.length).toBeGreaterThan(0);
+    bodies[0]!.setEnabled(false);
+
+    const restore = handle.suspend();
+    expect(handle.root.visible).toBe(false);
+    expect(bodies.every((body) => !body.isEnabled())).toBe(true);
+
+    restore();
+    restore();
+    expect(handle.root.visible).toBe(true);
+    expect(bodies[0]!.isEnabled()).toBe(false);
+    expect(bodies.slice(1).every((body) => body.isEnabled())).toBe(true);
+
+    handle.dispose();
+  });
+
   it("construit un LevelHandle complet sans aucun console.error", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 

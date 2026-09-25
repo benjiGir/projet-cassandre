@@ -2,7 +2,7 @@
 title: Deux gardes distinctes — état de flux vs existence du monde physique
 tags: [adr, core, loop]
 status: accepte
-updated: 2026-09-05
+updated: 2026-09-25
 ---
 
 # ADR 0013 — Deux gardes distinctes — état de flux vs existence du monde physique
@@ -54,6 +54,12 @@ Deux fonctions à connaître et à ne pas confondre. Un futur callback ajouté
 au pas fixe ou à la frame d'affichage doit se demander explicitement
 laquelle des deux préoccupations s'applique (gameplay à ignorer, ou monde
 physique potentiellement absent) — parfois les deux.
+
+Depuis le 25 septembre 2026, `loading` et `loadFailed` rendent
+`isPhysicsSessionLive` faux. Le teardown attend `LevelSession.stop()` avant
+`world.free()` : la garde couvre toute la transition asynchrone, tandis que
+`engine.session` est remplacée immédiatement après la libération et avant la
+prochaine attente de chargement.
 
 ## Comment on saurait qu'on a eu tort
 

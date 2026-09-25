@@ -19,7 +19,13 @@ import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphic
 import { useGameStore } from "./game/state";
 import { resolveBootChoice } from "./game/session/bootChoice";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
-import { bootGameSession, replay, resumeGame, returnToMenu } from "./game/session/lifecycle";
+import {
+  bootGameSession,
+  replay,
+  resumeGame,
+  returnToMenu,
+  waitForGameSessionReady,
+} from "./game/session/lifecycle";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
 import { updateDisplayInput } from "./game/loop/updateDisplayInput";
@@ -28,7 +34,7 @@ import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
 import { maybeRenderDevPreview } from "./ui/dev/devPreview/devPreview";
 import { LoadingScreen } from "./ui/screens/loading/LoadingScreen/LoadingScreen";
-import { finishLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
+import { beginLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
 
 // Orchestrateur mince depuis le refactor du 2026-09-05 (2229 -> 129 lignes,
 // extraction structurelle pure, aucun comportement observable changé).
@@ -70,14 +76,14 @@ async function main() {
     flowActor.send({ type: "ENTER_MENU" });
   }
   const choice = await resolveBootChoice(root);
-  flowActor.send({ type: "PLAY" });
+  flowActor.send({ type: "BEGIN_LOAD" });
 
   // L'écran de chargement prend la place du menu IMMÉDIATEMENT, et le garde
   // jusqu'à ce que le niveau soit réellement là. Avant ça, le menu restait
   // affiché, figé, pendant les 29 Mo du niveau v2 — puis le HUD apparaissait
   // sur une scène vide, le décor surgissant d'un coup quelques secondes plus
   // tard. see: docs/systems/hud.md#écran-de-chargement
-  reportLoading("Démarrage", 0.02);
+  beginLoading("Démarrage", 0.02);
   root.render(createElement(LoadingScreen));
   await letBrowserPaint();
 
@@ -152,21 +158,21 @@ async function main() {
   // chemin glTF, `bootGameSession` ne fait que LANCER le chargement : sans
   // cette attente la boucle démarrait aussitôt et le joueur tombait dans le
   // vide depuis (0, 2, 0) — position transitoire documentée dans
-  // `lifecycle.ts` — jusqu'à ce que `onLoaded` le repose sur `spawn_player`.
+  // `lifecycle.ts` — jusqu'à ce que le commit du niveau le repose sur
+  // `spawn_player`.
   //
-  // `firstLoadSettled` et pas `ready` : sur un `.glb` absent ou corrompu,
-  // `ready` ne se résout jamais et l'écran de chargement resterait affiché
-  // pour toujours, cachant l'erreur au lieu de la montrer.
-  await session.gltfLevelSession?.firstLoadSettled;
-  finishLoading();
+  // Frontière explicite : le flux ne passe à `playing` qu'après un commit de
+  // niveau réussi. Un échec reste sur l'écran de chargement et propose une
+  // relance, sans démarrer la boucle sur une scène vide.
+  await waitForGameSessionReady(engine, session);
 
   // `<App/>` monté APRÈS la construction du monde : `onReplay`/
   // `onReturnToMenu`/`onResume` ferment sur `engine`.
   // see: docs/systems/hud.md#composition-de-app
   root.render(
     createElement(App, {
-      onReplay: () => replay(engine),
-      onReturnToMenu: () => returnToMenu(engine),
+      onReplay: () => void replay(engine),
+      onReturnToMenu: () => void returnToMenu(engine),
       onResume: () => resumeGame(engine),
     }),
   );

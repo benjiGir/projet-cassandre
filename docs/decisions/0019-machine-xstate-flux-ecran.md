@@ -2,7 +2,7 @@
 title: Machine XState de flux d'écran plutôt que rechargement de page
 tags: [adr, ui, xstate]
 status: accepte
-updated: 2026-09-05
+updated: 2026-09-25
 ---
 
 # ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page
@@ -88,3 +88,13 @@ pendant `playing`. Aucune remise en cause de la décision — la pause suit
 exactement le même principe que `dead`/`levelComplete` (le monde reste
 vivant, seul le contenu du pas fixe est ignoré) plutôt que d'introduire un
 mécanisme séparé.
+
+## Révision — chargement explicite et récupérable (2026-09-25)
+
+Deux états complètent le graphe : `loading` interdit toute simulation pendant
+la construction d’une session, et `loadFailed` attend une action explicite de
+l’utilisateur. Le boot envoie `BEGIN_LOAD`; replay envoie `REPLAY` vers
+`loading`; seul `waitForGameSessionReady` envoie `PLAY` après un commit réussi.
+Un premier échec envoie `LOAD_FAILED`, puis le bouton « Réessayer » provoque
+`RETRY_LOAD`. Le graphe représente ainsi la disponibilité réelle du monde au
+lieu d’assimiler « session allouée » à « niveau jouable ».

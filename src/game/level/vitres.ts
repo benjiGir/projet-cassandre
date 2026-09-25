@@ -219,7 +219,7 @@ interface VitreState {
 const DEFAULT_BREAK_DIRECTION = new THREE.Vector3(0, 1, 0);
 
 /**
- * Les vitres d'UN niveau chargé. Reconstruit à chaque `onLoaded` (hot reload
+ * Les vitres d'UN niveau chargé. Reconstruit à chaque commit (hot reload
  * compris, comme `PropSystem`/`currentNavGraph`/`lightPool`) : les vitres
  * reviennent intactes au rechargement, avec le fichier.
  */

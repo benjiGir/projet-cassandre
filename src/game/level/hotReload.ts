@@ -21,10 +21,12 @@ export interface LevelSessionOptions {
    * les 60 s cibles, sans matraquer le serveur dev. Sans effet en production,
    * où le sondage n'existe pas (voir plus bas). */
   pollIntervalMs?: number;
-  /** Appelé après CHAQUE (re)chargement réussi, le tout premier compris.
-   * `info.isFirstLoad` distingue le boot (où repositionner le joueur sur
-   * `handle.spawnPlayer` a du sens) d'un hot reload (où NE JAMAIS le faire). */
-  onLoaded?: (handle: LevelHandle, info: { isFirstLoad: boolean }) => void;
+  /**
+   * Prépare les systèmes dérivés sans muter la session appelante, puis
+   * retourne un commit synchrone sans exception. `isFirstLoad` ne bascule
+   * qu'après ce commit.
+   */
+  prepare?: (handle: LevelHandle, info: { isFirstLoad: boolean }) => (() => void) | void;
   /** Appelé si un (re)chargement échoue (export Blender à moitié écrit,
    * glb temporairement invalide pendant l'écriture...). La session garde le
    * niveau précédent affiché — jamais d'écran noir sur une erreur transitoire. */
@@ -35,21 +37,24 @@ export interface LevelSessionOptions {
   onProgress?: (fraction: number) => void;
 }
 
+export type LevelLoadResult =
+  | { status: "committed"; handle: LevelHandle; isFirstLoad: boolean }
+  | { status: "failed"; error: unknown; previousRetained: boolean }
+  | { status: "cancelled" };
+
 export interface LevelSession {
   /** Niveau actuellement affiché, `null` avant le tout premier chargement réussi. */
   readonly current: LevelHandle | null;
-  /** Résolu après le PREMIER chargement réussi — pratique pour `await` la
-   * position de spawn au boot sans dupliquer la logique de `onLoaded`. */
+  /** Résolu après le PREMIER chargement validé — pratique pour `await` la
+   * position de spawn au boot sans dupliquer la logique de préparation. */
   readonly ready: Promise<LevelHandle>;
-  /** Résolu après le premier essai, QU'IL AIT RÉUSSI OU NON. `ready` seul ne
-   * suffit pas à un écran de chargement : sur un `.glb` absent ou corrompu il
-   * ne se résout jamais, et l'écran resterait affiché pour toujours au lieu de
-   * laisser voir l'erreur. */
-  readonly firstLoadSettled: Promise<void>;
+  /** Résultat du premier essai. Un échec reste distinct d'un succès et peut
+   * donc ouvrir un chemin de retry sans laisser entrer dans le jeu. */
+  readonly firstLoad: Promise<LevelLoadResult>;
   /** Force un rechargement immédiat, sans attendre le prochain sondage. */
-  reload(): Promise<void>;
-  /** Arrête le sondage (s'il tourne) et libère le niveau courant. */
-  stop(): void;
+  reload(): Promise<LevelLoadResult>;
+  /** Arrête le sondage, attend le chargement en vol, puis libère le niveau. */
+  stop(): Promise<void>;
 }
 
 /**
@@ -72,14 +77,12 @@ export function createLevelSession(
   let currentHandle: LevelHandle | null = null;
   let lastSignature: string | null = null;
   let isFirstLoad = true;
-  let reloadInFlight: Promise<void> | null = null;
+  let stopped = false;
+  let reloadInFlight: Promise<LevelLoadResult> | null = null;
+  let stopInFlight: Promise<void> | null = null;
   let resolveReady!: (handle: LevelHandle) => void;
   const ready = new Promise<LevelHandle>((resolve) => {
     resolveReady = resolve;
-  });
-  let settleFirstLoad!: () => void;
-  const firstLoadSettled = new Promise<void>((resolve) => {
-    settleFirstLoad = resolve;
   });
 
   // Garde-fou structurel EN PLUS de `reloadInFlight` (ne le remplace pas —
@@ -87,37 +90,63 @@ export function createLevelSession(
   // coalescer). see: docs/pipeline/niveau-blender.md#hot-reload
   const reloadSemaphore = Semaphore.makeUnsafe(1);
 
-  function performLoadEffect(): Effect.Effect<void> {
-    return Effect.tryPromise({
-      try: () => loadLevel(url, scene, physics, options.onProgress),
-      catch: (cause) => cause,
-    }).pipe(
-      Effect.map((nextHandle) => {
-        currentHandle?.dispose();
-        currentHandle = nextHandle;
-        const info = { isFirstLoad };
-        if (isFirstLoad) {
-          isFirstLoad = false;
-          resolveReady(nextHandle);
-        }
-        options.onLoaded?.(nextHandle, info);
-        settleFirstLoad();
-      }),
-      Effect.catch((error) =>
-        Effect.sync(() => {
-          console.error(`[level] échec du (re)chargement de "${url}" — niveau précédent conservé.`, error);
-          options.onError?.(error);
-          settleFirstLoad();
+  async function performLoadAttempt(): Promise<LevelLoadResult> {
+    let candidate: LevelHandle | null = null;
+    let restorePrevious: (() => void) | null = null;
+    const previous = currentHandle;
+    const firstLoad = isFirstLoad;
+
+    try {
+      candidate = await loadLevel(url, scene, physics, options.onProgress);
+      if (stopped) {
+        candidate.dispose();
+        candidate = null;
+        return { status: "cancelled" };
+      }
+
+      restorePrevious = previous?.suspend() ?? null;
+      const commit = options.prepare?.(candidate, { isFirstLoad: firstLoad });
+      if (stopped) {
+        candidate.dispose();
+        candidate = null;
+        restorePrevious?.();
+        return { status: "cancelled" };
+      }
+
+      commit?.();
+      previous?.dispose();
+      currentHandle = candidate;
+      const committed = candidate;
+      candidate = null;
+      if (firstLoad) {
+        isFirstLoad = false;
+        resolveReady(committed);
+      }
+      return { status: "committed", handle: committed, isFirstLoad: firstLoad };
+    } catch (error) {
+      candidate?.dispose();
+      restorePrevious?.();
+      if (stopped) return { status: "cancelled" };
+
+      console.error(`[level] échec du (re)chargement de "${url}" — niveau précédent conservé.`, error);
+      options.onError?.(error);
+      return { status: "failed", error, previousRetained: previous !== null };
+    }
+  }
+
+  function performLoad(): Promise<LevelLoadResult> {
+    return GameRuntime.runPromise(
+      reloadSemaphore.withPermit(
+        Effect.tryPromise({
+          try: performLoadAttempt,
+          catch: (cause) => cause,
         }),
       ),
     );
   }
 
-  function performLoad(): Promise<void> {
-    return GameRuntime.runPromise(reloadSemaphore.withPermit(performLoadEffect()));
-  }
-
-  function reload(): Promise<void> {
+  function reload(): Promise<LevelLoadResult> {
+    if (stopped) return Promise.resolve({ status: "cancelled" });
     if (!reloadInFlight) {
       reloadInFlight = performLoad().finally(() => {
         reloadInFlight = null;
@@ -144,7 +173,7 @@ export function createLevelSession(
 
       if (lastSignature !== null && signature !== lastSignature) {
         console.info(`[level] changement détecté sur "${url}" — rechargement.`);
-        yield* Effect.promise(() => reload());
+        yield* Effect.promise(() => reload()).pipe(Effect.asVoid);
       }
       lastSignature = signature;
     });
@@ -170,22 +199,29 @@ export function createLevelSession(
     );
   }
 
-  void reload();
+  const firstLoad = reload();
 
   return {
     get current() {
       return currentHandle;
     },
     ready,
-    firstLoadSettled,
+    firstLoad,
     reload,
     stop() {
-      currentHandle?.dispose();
-      currentHandle = null;
+      if (stopInFlight) return stopInFlight;
+      stopped = true;
       if (pollFiber) {
         pollFiber.interruptUnsafe();
         pollFiber = null;
       }
+      const pending = reloadInFlight;
+      stopInFlight = (async () => {
+        if (pending) await pending;
+        currentHandle?.dispose();
+        currentHandle = null;
+      })();
+      return stopInFlight;
     },
   };
 }

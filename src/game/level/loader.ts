@@ -212,6 +212,13 @@ export interface LevelHandle {
   lights: THREE.PointLight[];
   stats: LevelStats;
   /**
+   * Cache le rendu et désactive temporairement les corps du niveau, en
+   * conservant l'état individuel de chacun. Retourne une restauration
+   * idempotente, utilisée pendant la préparation transactionnelle d'un hot
+   * reload.
+   */
+  suspend(): () => void;
+  /**
    * Retire `root` de la scène et libère tous les corps/colliders Rapier et
    * ressources GPU de ce niveau. Sûr à appeler plusieurs fois — idempotence
    * GARANTIE par `Scope.close`, pas par un flag maintenu à la main.
@@ -1403,7 +1410,7 @@ function validateSpawnPlayerCountEffect(count: number): Effect.Effect<void> {
  * `acquireLevelResourceEffect`/`toLevelHandle`). `bodies` est gardé ici, pas
  * dans `LevelStats`, parce que c'est une donnée de CYCLE DE VIE (nécessaire à
  * la libération), pas une statistique destinée à `main.ts`/`DebugPanel`. */
-interface LevelResource extends Omit<LevelHandle, "dispose"> {
+interface LevelResource extends Omit<LevelHandle, "dispose" | "suspend"> {
   readonly bodies: readonly RAPIER.RigidBody[];
 }
 
@@ -1701,6 +1708,7 @@ function acquireLevelResourceEffect(
  * `buildLevelFromGltfEffect`/`loadLevelEffect`), ce qui déclenche le
  * finalizer enregistré par `acquireLevelResourceEffect`. */
 function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
+  let restoreSuspension: (() => void) | null = null;
   return {
     root: resource.root,
     gltf: resource.gltf,
@@ -1717,6 +1725,24 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
     secrets: resource.secrets,
     lights: resource.lights,
     stats: resource.stats,
+    suspend: () => {
+      if (restoreSuspension) return restoreSuspension;
+      const rootWasVisible = resource.root.visible;
+      const enabledBodies = resource.bodies.map((body) => body.isEnabled());
+      resource.root.visible = false;
+      for (const body of resource.bodies) body.setEnabled(false);
+      let restored = false;
+      restoreSuspension = () => {
+        if (restored) return;
+        restored = true;
+        resource.root.visible = rootWasVisible;
+        for (let i = 0; i < resource.bodies.length; i++) {
+          resource.bodies[i]!.setEnabled(enabledBodies[i]!);
+        }
+        restoreSuspension = null;
+      };
+      return restoreSuspension;
+    },
     dispose: () => GameRuntime.runSync(Scope.close(scope, Exit.void)),
   };
 }

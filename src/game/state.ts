@@ -7,6 +7,8 @@ export type GameFlowState =
   | "mainMenu"
   | "options"
   | "levelSelect"
+  | "loading"
+  | "loadFailed"
   | "playing"
   | "paused"
   | "dead"

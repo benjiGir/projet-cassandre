@@ -85,15 +85,20 @@ stateDiagram-v2
     [*] --> boot
 
     boot --> mainMenu: ENTER_MENU
-    boot --> playing: PLAY
+    boot --> loading: BEGIN_LOAD
 
-    mainMenu --> playing: PLAY
+    mainMenu --> loading: BEGIN_LOAD
     mainMenu --> options: OPEN_OPTIONS
     mainMenu --> levelSelect: CHOOSE_ZONE
 
     options --> mainMenu: BACK_TO_MENU
 
-    levelSelect --> playing: PLAY
+    levelSelect --> loading: BEGIN_LOAD
+
+    loading --> playing: PLAY
+    loading --> loadFailed: LOAD_FAILED
+    loadFailed --> loading: RETRY_LOAD
+    loadFailed --> mainMenu: RETURN_TO_MENU
 
     playing --> dead: DIED
     playing --> levelComplete: LEVEL_COMPLETED
@@ -102,18 +107,19 @@ stateDiagram-v2
     paused --> playing: RESUME
     paused --> mainMenu: RETURN_TO_MENU
 
-    dead --> playing: REPLAY
+    dead --> loading: REPLAY
     dead --> mainMenu: RETURN_TO_MENU
 
-    levelComplete --> playing: REPLAY
+    levelComplete --> loading: REPLAY
     levelComplete --> mainMenu: RETURN_TO_MENU
 ```
 
 Ce diagramme est la table de transition testée (`test/ui/gameFlowMachine.test.ts`)
 lue directement dans `ui/gameFlowMachine.ts`. Le câblage réel dans `main.ts`
-est volontairement plus grossier qu'elle : seuls les événements `ENTER_MENU`,
-`PLAY`, `DIED`, `LEVEL_COMPLETED`, `REPLAY`, `RETURN_TO_MENU`, `PAUSE` et
-`RESUME` sont réellement envoyés par l'application (`main.ts`,
+est volontairement plus grossier qu'elle : les événements de chargement
+`BEGIN_LOAD`/`LOAD_FAILED`/`RETRY_LOAD` encadrent désormais `PLAY`, en plus de
+`ENTER_MENU`, `DIED`, `LEVEL_COMPLETED`, `REPLAY`, `RETURN_TO_MENU`, `PAUSE` et
+`RESUME` (`main.ts`,
 `game/session/lifecycle.ts`, `game/session/doors.ts`,
 `game/session/feedback.ts`) — vérifié par grep sur `src/`. Les états
 `options` et `levelSelect` existent dans le graphe et sont couverts par les
@@ -136,7 +142,7 @@ boot](session.md#choix-du-niveau-au-boot)) : `boot` est l'état initial de la
 machine, et `setFlowState` doit le refléter dans le store dès que possible,
 pas seulement une fois la partie commencée.
 
-`GameFlowState` (le type des 8 états) est DÉFINI dans `game/state.ts`, pas
+`GameFlowState` (le type des 10 états) est DÉFINI dans `game/state.ts`, pas
 dans `ui/gameFlowMachine.ts` puis importé : garder le sens de dépendance
 déjà établi par ce fichier (les écrans et les widgets du HUD importent déjà
 `useGameStore` DEPUIS `game/state.ts`, jamais l'inverse) plutôt que d'en
@@ -236,19 +242,20 @@ honnête plutôt que de prétendre avoir fait quelque chose.
 
 ## Écran de chargement
 
-`screens/loading/LoadingScreen/LoadingScreen.tsx` occupe l'écran entre le menu et la partie, et il attend
-le niveau pour de bon : `main.ts` ne monte `<App/>` et ne démarre la boucle
-qu'après `gltfLevelSession.firstLoadSettled`.
+`screens/loading/LoadingScreen/LoadingScreen.tsx` occupe l'écran entre le menu
+et la partie, au boot comme au replay. `waitForGameSessionReady` n’envoie
+`PLAY` qu’après un résultat `committed` de `LevelSession`.
 
 Avant lui (jusqu'au 2026-09-21), le menu restait affiché **figé** pendant les
 29 Mo du niveau v2, puis le HUD apparaissait sur une scène vide, le joueur
-tombant depuis la position transitoire `(0, 2, 0)` jusqu'à ce que `onLoaded`
-le repose sur `spawn_player`. Le décor surgissait ensuite d'un coup.
+tombant depuis la position transitoire `(0, 2, 0)` jusqu'au callback de
+chargement. Le décor surgissait ensuite d'un coup.
 
-**Pourquoi `firstLoadSettled` et pas `ready`** : `ready` ne se résout que sur
-un SUCCÈS. Sur un `.glb` absent ou corrompu, l'écran de chargement resterait
-affiché indéfiniment et cacherait l'erreur au lieu de la montrer.
-`firstLoadSettled` se résout après le premier essai, qu'il ait réussi ou non.
+**Résultat typé plutôt que promesse ambiguë.** `firstLoad` distingue
+`committed`, `failed` et `cancelled`. Sur un `.glb` absent ou corrompu,
+l’acteur passe à `loadFailed`; l’écran affiche le message et le bouton
+« Réessayer ». Le retry repasse par `loading` et conserve `isFirstLoad` tant
+qu’aucun candidat n’a été committé.
 
 **La progression est réelle**, pas une animation : `GLTFLoader` remonte les
 octets par son `onProgress`, que `LevelSessionOptions.onProgress` fait

@@ -1,4 +1,5 @@
 import { RecIndicator } from "../../../components/text/RecIndicator/RecIndicator";
+import { Button } from "../../../components/controls/Button/Button";
 import { Scanlines } from "../../../components/effects/Scanlines/Scanlines";
 import { Screen } from "../../../components/layout/Screen/Screen";
 import { ScreenTitle } from "../../../components/text/ScreenTitle/ScreenTitle";
@@ -18,7 +19,7 @@ export interface LoadingScreenProps {
  * see: docs/systems/hud.md#écran-de-chargement
  */
 export function LoadingScreen({ title = "PROJET_CASSANDRE" }: LoadingScreenProps) {
-  const { label, percent, quip } = useLoadingStatus();
+  const { status, label, percent, quip, message, retry } = useLoadingStatus();
 
   return (
     <Screen>
@@ -33,12 +34,24 @@ export function LoadingScreen({ title = "PROJET_CASSANDRE" }: LoadingScreenProps
             <span>{percent} %</span>
           </div>
           <div className={styles.track}>
-            <div className={styles.fill} style={cssVars({ "--progress": percent / 100 })} />
-            <div className={styles.sheen} />
+            <div
+              className={`${styles.fill} ${status === "failed" ? styles.fillFailed : ""}`}
+              style={cssVars({ "--progress": percent / 100 })}
+            />
+            {status === "loading" && <div className={styles.sheen} />}
           </div>
         </div>
 
-        <p className={styles.quip}>{quip}</p>
+        {status === "failed" ? (
+          <div className={styles.failure} role="alert">
+            <p className={styles.failureMessage}>{message}</p>
+            <Button variant="primary" onClick={() => retry?.()}>
+              RÉESSAYER
+            </Button>
+          </div>
+        ) : (
+          <p className={styles.quip}>{quip}</p>
+        )}
       </div>
     </Screen>
   );

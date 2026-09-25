@@ -4,6 +4,13 @@ export class GameClock {
   private hitstopRemaining = 0;
   private hitstopScale = 1;
 
+  /** Repart d'une horloge neutre au changement de partie. */
+  reset(): void {
+    this.elapsed = 0;
+    this.hitstopRemaining = 0;
+    this.hitstopScale = 1;
+  }
+
   /** Slows gameplay dt (not physics dt) for `duration` seconds. */
   triggerHitstop(duration: number, scale = 0.05) {
     this.hitstopRemaining = duration;

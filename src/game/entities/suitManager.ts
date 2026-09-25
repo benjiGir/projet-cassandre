@@ -151,7 +151,7 @@ export class SuitManager {
    *
    * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : graphe de praticabilité
    * du niveau COURANT (`session.currentNavGraph`), `null` tant qu'aucun bake
-   * n'a encore eu lieu — rebaké dans le callback `onLoaded` de
+   * n'a encore eu lieu — rebaké pendant la préparation transactionnelle de
    * `createLevelSession` (voir `game/session/spawning.ts::loadGltfLevel`).
    * Simplement transmis à chaque `Suit` via `SuitUpdateContext`, ce manager
    * ne l'interprète jamais lui-même.

@@ -21,15 +21,19 @@ describe("gameFlowMachine", () => {
     expect(actor.getSnapshot().value).toBe("mainMenu");
   });
 
-  it("boot -> playing via PLAY (bypass ?level=, sans passer par le menu)", () => {
+  it("boot -> loading -> playing sans exposer le jeu avant PLAY", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    expect(actor.getSnapshot().value).toBe("loading");
     actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
   });
 
-  it("mainMenu -> playing via PLAY", () => {
+  it("mainMenu -> loading -> playing", () => {
     const actor = createGameFlowActor();
     actor.send({ type: "ENTER_MENU" });
+    actor.send({ type: "BEGIN_LOAD" });
+    expect(actor.getSnapshot().value).toBe("loading");
     actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
   });
@@ -43,17 +47,18 @@ describe("gameFlowMachine", () => {
     expect(actor.getSnapshot().value).toBe("mainMenu");
   });
 
-  it("mainMenu -> levelSelect via CHOOSE_ZONE, puis levelSelect -> playing via PLAY", () => {
+  it("mainMenu -> levelSelect via CHOOSE_ZONE, puis levelSelect -> loading", () => {
     const actor = createGameFlowActor();
     actor.send({ type: "ENTER_MENU" });
     actor.send({ type: "CHOOSE_ZONE" });
     expect(actor.getSnapshot().value).toBe("levelSelect");
-    actor.send({ type: "PLAY" });
-    expect(actor.getSnapshot().value).toBe("playing");
+    actor.send({ type: "BEGIN_LOAD" });
+    expect(actor.getSnapshot().value).toBe("loading");
   });
 
   it("playing -> dead via DIED", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "DIED" });
     expect(actor.getSnapshot().value).toBe("dead");
@@ -61,37 +66,46 @@ describe("gameFlowMachine", () => {
 
   it("playing -> levelComplete via LEVEL_COMPLETED", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "LEVEL_COMPLETED" });
     expect(actor.getSnapshot().value).toBe("levelComplete");
   });
 
-  it("dead -> playing via REPLAY (rejouer)", () => {
+  it("dead -> loading via REPLAY, puis playing après succès", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "DIED" });
     actor.send({ type: "REPLAY" });
+    expect(actor.getSnapshot().value).toBe("loading");
+    actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
   });
 
   it("dead -> mainMenu via RETURN_TO_MENU", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "DIED" });
     actor.send({ type: "RETURN_TO_MENU" });
     expect(actor.getSnapshot().value).toBe("mainMenu");
   });
 
-  it("levelComplete -> playing via REPLAY (rejouer le même niveau)", () => {
+  it("levelComplete -> loading via REPLAY, puis playing après succès", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "LEVEL_COMPLETED" });
     actor.send({ type: "REPLAY" });
+    expect(actor.getSnapshot().value).toBe("loading");
+    actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
   });
 
   it("levelComplete -> mainMenu via RETURN_TO_MENU", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "LEVEL_COMPLETED" });
     actor.send({ type: "RETURN_TO_MENU" });
@@ -100,6 +114,7 @@ describe("gameFlowMachine", () => {
 
   it("playing -> paused via PAUSE", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "PAUSE" });
     expect(actor.getSnapshot().value).toBe("paused");
@@ -107,6 +122,7 @@ describe("gameFlowMachine", () => {
 
   it("paused -> playing via RESUME", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "PAUSE" });
     actor.send({ type: "RESUME" });
@@ -115,6 +131,7 @@ describe("gameFlowMachine", () => {
 
   it("paused -> mainMenu via RETURN_TO_MENU (quitter depuis la pause)", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "PAUSE" });
     actor.send({ type: "RETURN_TO_MENU" });
@@ -123,6 +140,7 @@ describe("gameFlowMachine", () => {
 
   it("le contenu du pas fixe reste ignoré indépendamment de PAUSE : DIED/LEVEL_COMPLETED sont des no-op depuis paused (pas déclarés pour cet état)", () => {
     const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "PAUSE" });
     actor.send({ type: "DIED" });
@@ -134,15 +152,18 @@ describe("gameFlowMachine", () => {
   it("scénario complet : boot -> menu -> jeu -> mort -> rejouer -> jeu", () => {
     const actor = createGameFlowActor();
     actor.send({ type: "ENTER_MENU" });
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "DIED" });
     actor.send({ type: "REPLAY" });
+    actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
   });
 
   it("scénario complet : boot -> menu -> jeu -> fin de niveau -> retour au menu", () => {
     const actor = createGameFlowActor();
     actor.send({ type: "ENTER_MENU" });
+    actor.send({ type: "BEGIN_LOAD" });
     actor.send({ type: "PLAY" });
     actor.send({ type: "LEVEL_COMPLETED" });
     actor.send({ type: "RETURN_TO_MENU" });
@@ -154,5 +175,19 @@ describe("gameFlowMachine", () => {
     actor.send({ type: "ENTER_MENU" });
     actor.send({ type: "DIED" }); // pas de transition DIED déclarée depuis mainMenu
     expect(actor.getSnapshot().value).toBe("mainMenu");
+  });
+
+  it("un échec de chargement impose un retry explicite avant de pouvoir jouer", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    actor.send({ type: "LOAD_FAILED" });
+    expect(actor.getSnapshot().value).toBe("loadFailed");
+
+    actor.send({ type: "PLAY" });
+    expect(actor.getSnapshot().value).toBe("loadFailed");
+    actor.send({ type: "RETRY_LOAD" });
+    expect(actor.getSnapshot().value).toBe("loading");
+    actor.send({ type: "PLAY" });
+    expect(actor.getSnapshot().value).toBe("playing");
   });
 });

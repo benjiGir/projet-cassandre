@@ -23,7 +23,10 @@ import { createLevelSession } from "../../../src/game/level/hotReload";
 
 const loadLevelMock = vi.mocked(loadLevel);
 
-function fakeHandle(): LevelHandle {
+type FakeHandle = LevelHandle & { restore: ReturnType<typeof vi.fn> };
+
+function fakeHandle(): FakeHandle {
+  const restore = vi.fn();
   return {
     root: new THREE.Object3D(),
     gltf: {} as never,
@@ -58,6 +61,8 @@ function fakeHandle(): LevelHandle {
       sanitaireCount: 0,
       sanitaireBatchCount: 0,
     },
+    restore,
+    suspend: vi.fn(() => restore),
     dispose: vi.fn(),
   };
 }
@@ -115,7 +120,7 @@ describe("createLevelSession (jalon M2) — mutex de rechargement", () => {
     expect(loadLevelMock).toHaveBeenCalledTimes(1);
     expect(session.current).toBe(handle);
 
-    session.stop();
+    await session.stop();
   });
 
   it("un nouvel appel à reload() APRÈS complétion déclenche bien un nouveau chargement", async () => {
@@ -142,11 +147,12 @@ describe("createLevelSession (jalon M2) — mutex de rechargement", () => {
 
     expect(loadLevelMock).toHaveBeenCalledTimes(2);
     expect(session.current).toBe(handleB);
+    expect(handleA.suspend).toHaveBeenCalledTimes(1);
     // L'ancien handle est disposé au profit du nouveau (même séquence
     // qu'avant cette migration : `currentHandle?.dispose()` avant affectation).
     expect(handleA.dispose).toHaveBeenCalledTimes(1);
 
-    session.stop();
+    await session.stop();
   });
 
   it("stop() interrompt le sondage et dispose le niveau courant", async () => {
@@ -158,7 +164,7 @@ describe("createLevelSession (jalon M2) — mutex de rechargement", () => {
     });
     await session.reload();
 
-    session.stop();
+    await session.stop();
 
     expect(handle.dispose).toHaveBeenCalledTimes(1);
     expect(session.current).toBeNull();
@@ -188,6 +194,100 @@ describe("createLevelSession (jalon M2) — mutex de rechargement", () => {
       boom,
     );
 
-    session.stop();
+    await session.stop();
+  });
+
+  it("stop() attend le chargement en vol puis dispose son résultat sans le publier", async () => {
+    let resolveLoad!: (handle: LevelHandle) => void;
+    loadLevelMock.mockReturnValueOnce(
+      new Promise<LevelHandle>((resolve) => {
+        resolveLoad = resolve;
+      }),
+    );
+    const prepare = vi.fn(() => vi.fn());
+    const session = createLevelSession("/fake.glb", {} as never, {} as never, {
+      pollIntervalMs: 60_000,
+      prepare,
+    });
+
+    const stopPromise = session.stop();
+    const lateHandle = fakeHandle();
+    resolveLoad(lateHandle);
+    await stopPromise;
+
+    expect(prepare).not.toHaveBeenCalled();
+    expect(lateHandle.dispose).toHaveBeenCalledTimes(1);
+    expect(session.current).toBeNull();
+  });
+
+  it("un échec de préparation dispose le candidat et réactive le niveau courant", async () => {
+    const handleA = fakeHandle();
+    const handleB = fakeHandle();
+    const boom = new Error("construction dérivée impossible");
+    const prepare = vi.fn((handle: LevelHandle) => {
+      if (handle === handleB) throw boom;
+      return vi.fn();
+    });
+    const onError = vi.fn();
+    loadLevelMock.mockResolvedValueOnce(handleA);
+    const session = createLevelSession("/fake.glb", {} as never, {} as never, {
+      pollIntervalMs: 60_000,
+      prepare,
+      onError,
+    });
+    await session.reload();
+
+    loadLevelMock.mockResolvedValueOnce(handleB);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(session.reload()).resolves.toEqual({
+      status: "failed",
+      error: boom,
+      previousRetained: true,
+    });
+
+    expect(handleA.suspend).toHaveBeenCalledTimes(1);
+    expect(handleA.restore).toHaveBeenCalledTimes(1);
+    expect(handleA.dispose).not.toHaveBeenCalled();
+    expect(handleB.dispose).toHaveBeenCalledTimes(1);
+    expect(session.current).toBe(handleA);
+    expect(onError).toHaveBeenCalledWith(boom);
+    expect(errorSpy).toHaveBeenCalled();
+
+    await session.stop();
+  });
+
+  it("un premier échec reste retentable et le premier succès conserve isFirstLoad", async () => {
+    const boom = new Error("niveau absent au boot");
+    const handle = fakeHandle();
+    const commits: boolean[] = [];
+    const prepare = vi.fn((_handle: LevelHandle, info: { isFirstLoad: boolean }) => () => {
+      commits.push(info.isFirstLoad);
+    });
+    loadLevelMock.mockRejectedValueOnce(boom);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const session = createLevelSession("/fake.glb", {} as never, {} as never, {
+      pollIntervalMs: 60_000,
+      prepare,
+    });
+
+    await expect(session.firstLoad).resolves.toEqual({
+      status: "failed",
+      error: boom,
+      previousRetained: false,
+    });
+    expect(session.current).toBeNull();
+
+    loadLevelMock.mockResolvedValueOnce(handle);
+    await expect(session.reload()).resolves.toMatchObject({
+      status: "committed",
+      handle,
+      isFirstLoad: true,
+    });
+    await expect(session.ready).resolves.toBe(handle);
+    expect(commits).toEqual([true]);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+
+    await session.stop();
   });
 });

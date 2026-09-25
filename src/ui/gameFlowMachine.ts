@@ -20,6 +20,9 @@ export type GameFlowEvent =
   | { type: "OPEN_OPTIONS" }
   | { type: "BACK_TO_MENU" }
   | { type: "CHOOSE_ZONE" }
+  | { type: "BEGIN_LOAD" }
+  | { type: "LOAD_FAILED" }
+  | { type: "RETRY_LOAD" }
   | { type: "PLAY" }
   | { type: "DIED" }
   | { type: "LEVEL_COMPLETED" }
@@ -39,12 +42,12 @@ export const gameFlowMachine = setup({
     boot: {
       on: {
         ENTER_MENU: "mainMenu",
-        PLAY: "playing",
+        BEGIN_LOAD: "loading",
       },
     },
     mainMenu: {
       on: {
-        PLAY: "playing",
+        BEGIN_LOAD: "loading",
         OPEN_OPTIONS: "options",
         CHOOSE_ZONE: "levelSelect",
       },
@@ -56,7 +59,20 @@ export const gameFlowMachine = setup({
     },
     levelSelect: {
       on: {
+        BEGIN_LOAD: "loading",
+      },
+    },
+    loading: {
+      on: {
         PLAY: "playing",
+        LOAD_FAILED: "loadFailed",
+        RETURN_TO_MENU: "mainMenu",
+      },
+    },
+    loadFailed: {
+      on: {
+        RETRY_LOAD: "loading",
+        RETURN_TO_MENU: "mainMenu",
       },
     },
     playing: {
@@ -78,13 +94,13 @@ export const gameFlowMachine = setup({
     },
     dead: {
       on: {
-        REPLAY: "playing",
+        REPLAY: "loading",
         RETURN_TO_MENU: "mainMenu",
       },
     },
     levelComplete: {
       on: {
-        REPLAY: "playing",
+        REPLAY: "loading",
         RETURN_TO_MENU: "mainMenu",
       },
     },

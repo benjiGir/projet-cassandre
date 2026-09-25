@@ -6,9 +6,12 @@ import { LOADING_QUIPS } from "./loadingQuips";
 const QUIP_MS = 2400;
 
 export interface LoadingStatus {
+  status: "loading" | "failed";
   label: string;
   percent: number;
   quip: string;
+  message: string | null;
+  retry: (() => void) | null;
 }
 
 /** Progression réelle du chargement, et une petite phrase qui tourne à côté. */
@@ -25,8 +28,11 @@ export function useLoadingStatus(): LoadingStatus {
   }, []);
 
   return {
+    status: state?.status ?? "loading",
     label: state?.label ?? "Initialisation…",
     percent: Math.round((state?.progress ?? 0) * 100),
     quip: LOADING_QUIPS[(first + tick) % LOADING_QUIPS.length] ?? "",
+    message: state?.status === "failed" ? state.message : null,
+    retry: state?.status === "failed" ? state.retry : null,
   };
 }

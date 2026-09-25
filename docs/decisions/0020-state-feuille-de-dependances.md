@@ -2,7 +2,7 @@
 title: game/state.ts comme feuille de dépendances
 tags: [adr, architecture, ui]
 status: accepte
-updated: 2026-09-06
+updated: 2026-09-25
 ---
 
 # ADR 0020 — `game/state.ts` comme feuille de dépendances
@@ -24,8 +24,8 @@ module de `src/game/*` (`entities/`, `level/`, `loop/`, `player/`,
 Deux champs de `DebugState`/`GameFlowState` recoupent pourtant du vocabulaire
 possédé ailleurs : `activeWeapon: "none" | "melee" | "shotgun"` recopie
 l'union de `WeaponSystem.activeWeapon` (`game/player/weapons.ts`), et
-`GameFlowState` (7 états : `boot`/`mainMenu`/`options`/`levelSelect`/
-`playing`/`dead`/`levelComplete`) est la table de clés d'état de
+`GameFlowState` (10 états, dont `loading`, `loadFailed` et `paused`) est la
+table de clés d'état de
 `ui/gameFlowMachine.ts`.
 
 ## Décision
@@ -38,7 +38,7 @@ partage :
   `ui/*` puis importé — c'est le cas de `GameFlowState`. `ui/gameFlowMachine.ts`
   le réutilise tel quel pour ses clés d'état ; TypeScript vérifie la
   correspondance structurelle sans qu'aucun des deux fichiers n'ait besoin de
-  dupliquer la liste des 7 états.
+  dupliquer la liste des états.
 - **Le type est possédé par un module de gameplay** (`game/player/weapons.ts`
   pour `activeWeapon`) : l'union est RECOPIÉE À LA MAIN plutôt qu'importée.
 

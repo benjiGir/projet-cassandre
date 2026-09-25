@@ -213,6 +213,14 @@ et conserver l’ancien état.
 **Preuves attendues.** Tests avec promesse différée pour « stop avant
 résolution », « deux reloads concurrents » et « construction dérivée qui lève ».
 
+**Résolu à l’étape 2 (25 septembre 2026).** `LevelSession.stop()` est
+asynchrone et attend le chargement en vol. Un résultat tardif est disposé sans
+être publié. Le nouveau niveau est préparé localement ; l’ancien est suspendu
+en conservant l’état individuel de ses corps, puis restauré si la préparation
+échoue. Le commit seul publie graphe, portes, vitres, sanitaires, lampes et
+props. Les trois scénarios ci-dessus sont couverts, ainsi que le retry après un
+premier échec.
+
 ### P1 — les chemins de redémarrage activent une session trop tôt
 
 Le premier boot attend `firstLoadSettled` avant de démarrer la boucle
@@ -227,6 +235,12 @@ chargement du glTF.
 `create → await first load → activate`, utilisé au démarrage, au replay et au
 changement de niveau. Distinguer un premier chargement fatal d’un hot reload
 échoué pour lequel l’ancien niveau peut rester jouable.
+
+**Résolu à l’étape 2 (25 septembre 2026).** `waitForGameSessionReady` est la
+frontière d’activation commune au boot, au replay et au retour du menu. La
+machine passe par `loading`; elle n’accepte `PLAY` qu’après un commit réussi.
+Un premier échec mène à `loadFailed` avec une action « Réessayer ». Un échec de
+hot reload conserve au contraire le niveau courant.
 
 ### P1 — états de session conservés par erreur
 
@@ -245,6 +259,11 @@ frontière de session.
 `reset()` appelé par le même use case de boot. Ajouter `FxSystem.resetSession()`
 avec un contrat explicite pour les pools persistants et leur contenu
 transitoire.
+
+**Résolu à l’étape 2 (25 septembre 2026).** `GameClock.reset()` neutralise
+temps écoulé et hitstop. `FxSystem.resetSession()` efface shake, flashes,
+decals, particules, douilles, gibs, débris, givre, céramique et jets d’eau sans
+recréer les pools. `bootGameSession` appelle les deux avant toute construction.
 
 ### P1 — le graphe de navigation promet plus que le KCC ne franchit
 
@@ -461,14 +480,13 @@ de contenu de `dist` évitera le retour de ces fichiers.
 |---|---|---|
 | 0 — signal | Terminée | Vitest borné au vrai dossier de tests, commande `pnpm check`, gate CI avant déploiement. |
 | 1 — simulation | Terminée | Dégâts et mort dans le pas fixe, curseurs sur les cinq lecteurs d'impacts, visée capturée avant simulation, tests 0/1/N et regroupements 1/2/15. |
-| 2 — cycle de vie | Non commencée | Prochaine étape ; aucun changement engagé pendant l'étape 1. |
+| 2 — cycle de vie | Terminée | Chargement transactionnel, arrêt en vol attendu, boot/replay unifiés, retry visible, horloge et FX remis à zéro. |
 | 3 — architecture | Non commencée | — |
 | 4 — livraison | Non commencée | — |
 
-La gate applicative de l'étape 1 est verte : typecheck, 405 tests et build
-de production. Le checker documentaire reste informatif et retrouve la dette
-de l'audit (6 erreurs, 6 warnings), sans nouvelle régression introduite par
-cette étape.
+La gate applicative de l'étape 2 est verte : typecheck, 416 tests et build de
+production. Le checker documentaire reste informatif jusqu’à l’étape 4 ; sa
+dette de référence doit être comparée à la baseline de l’étape 1.
 
 ### Étape 0 — rétablir la confiance dans le signal
 

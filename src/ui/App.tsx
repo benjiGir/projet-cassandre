@@ -6,6 +6,8 @@ import { HudMessage } from "./hud/overlays/HudMessage/HudMessage";
 import { DeathScreen } from "./screens/death/DeathScreen/DeathScreen";
 import { LevelCompleteScreen } from "./screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
 import { PauseScreen } from "./screens/pause/PauseScreen/PauseScreen";
+import { LoadingScreen } from "./screens/loading/LoadingScreen/LoadingScreen";
+import { useGameStore } from "../game/state";
 
 export interface AppProps {
   onReplay: () => void;
@@ -24,6 +26,9 @@ export interface AppProps {
  * see: docs/decisions/0019-machine-xstate-flux-ecran.md
  */
 export function App({ onReplay, onReturnToMenu, onResume }: AppProps) {
+  const flowState = useGameStore((state) => state.flowState);
+  if (flowState === "loading" || flowState === "loadFailed") return <LoadingScreen />;
+
   // `import.meta.env.DEV` est une constante au build : les panneaux de dev
   // quittent le bundle de production, pas seulement l'écran.
   return (

@@ -367,7 +367,7 @@ function rayJetVolumeEntry(
 }
 
 /**
- * Les sanitaires d'UN niveau chargé. Reconstruit à chaque `onLoaded` (hot
+ * Les sanitaires d'UN niveau chargé. Reconstruit à chaque commit (hot
  * reload compris, comme `PropSystem`/`VitreSystem`) : ils reviennent intacts
  * au rechargement, avec le fichier.
  */

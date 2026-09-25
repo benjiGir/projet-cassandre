@@ -57,27 +57,30 @@ export interface GameSession {
 
   /** Session de niveau glTF (chemin "gltf" seulement) — `LevelSession.dispose()` (via `.stop()`) gère déjà lui-même le retrait de sa géométrie de `scene` et la libération GPU (voir `loader.ts::disposeLevelResource`), donc `teardownGameSession` n'a qu'à appeler `.stop()`. */
   gltfLevelSession: LevelSession | null;
-  /** Graphe de praticabilité (Jalon M4) du niveau COURANT — rebaké à chaque `onLoaded`, voir `game/session/spawning.ts::loadGltfLevel`. */
+  /** Invalide une installation de niveau différée (changement console ou
+   * teardown) avant qu'elle puisse publier une session sur un monde libéré. */
+  levelLoadGeneration: number;
+  /** Graphe de praticabilité (Jalon M4) du niveau COURANT — rebaké à chaque préparation validée, voir `game/session/spawning.ts::loadGltfLevel`. */
   currentNavGraph: NavGraph | null;
-  /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque `onLoaded`, comme `currentNavGraph`. */
+  /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque commit, comme `currentNavGraph`. */
   lightPool: LightPool | null;
   /** Mobilier physique (`prop_*`) du niveau COURANT — PV et destructions de
-   * CETTE partie. Reconstruit à chaque `onLoaded`, comme `currentNavGraph` et
+   * CETTE partie. Reconstruit à chaque commit, comme `currentNavGraph` et
    * `lightPool` : un hot reload rend leurs PV aux props, exactement comme il
    * rend le niveau à son état de fichier.
    * see: docs/systems/physique.md#props-dynamiques */
   propSystem: PropSystem | null;
   /** Portes animées (`door_*`) du niveau COURANT — reconstruites à chaque
-   * `onLoaded`, comme `propSystem`. Remplace l'ancien `openingDoor` (une
+   * commit, comme `propSystem`. Remplace l'ancien `openingDoor` (une
    * seule porte à la fois) : voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
    * see: docs/reference/conventions-nommage.md#portes-animées */
   doorSystem: DoorSystem | null;
   /** Vitrages (`vitre_*`) du niveau COURANT — PV et casses de CETTE partie,
-   * reconstruits à chaque `onLoaded`, comme `propSystem`/`doorSystem`.
+   * reconstruits à chaque commit, comme `propSystem`/`doorSystem`.
    * see: docs/reference/conventions-nommage.md#préfixe-vitre */
   vitreSystem: VitreSystem | null;
   /** Sanitaires (`sanitaire_*`) du niveau COURANT — état de casse de CETTE
-   * partie, reconstruit à chaque `onLoaded` comme `vitreSystem`.
+   * partie, reconstruit à chaque commit comme `vitreSystem`.
    * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
   sanitaireSystem: SanitaireSystem | null;
   /**

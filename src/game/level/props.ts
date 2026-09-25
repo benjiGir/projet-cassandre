@@ -161,7 +161,7 @@ const lerpPosScratch = new THREE.Vector3();
 const lerpQuatScratch = new THREE.Quaternion();
 
 /**
- * Les props d'UN niveau chargé. Reconstruit à chaque `onLoaded` (donc à chaque
+ * Les props d'UN niveau chargé. Reconstruit à chaque commit (donc à chaque
  * hot reload), au même titre que `currentNavGraph` et `lightPool` — voir
  * `game/session/spawning.ts`.
  */

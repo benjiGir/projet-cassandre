@@ -14,12 +14,20 @@
  * `main.ts`.
  */
 
-export interface LoadingState {
+interface LoadingBaseState {
   /** Ce qu'on est en train de faire, en clair. */
   label: string;
   /** Fraction du chargement total, 0..1. */
   progress: number;
 }
+
+export type LoadingState =
+  | (LoadingBaseState & { status: "loading" })
+  | (LoadingBaseState & {
+      status: "failed";
+      message: string;
+      retry: () => void;
+    });
 
 let state: LoadingState | null = null;
 let done = false;
@@ -36,8 +44,39 @@ function emit() {
  */
 export function reportLoading(label: string, progress: number) {
   if (done) return;
-  state = { label, progress: Math.max(0, Math.min(1, progress)) };
+  state = { status: "loading", label, progress: Math.max(0, Math.min(1, progress)) };
   emit();
+}
+
+/** Ouvre une nouvelle séquence de chargement (boot, replay ou retry). */
+export function beginLoading(label = "Démarrage", progress = 0): void {
+  done = false;
+  reportLoading(label, progress);
+}
+
+/**
+ * Publie un échec récupérable et attend l'action explicite de l'utilisateur.
+ * La promesse ne résout qu'une fois, même si le bouton reçoit deux clics.
+ */
+export function waitForLoadingRetry(error: unknown): Promise<void> {
+  done = false;
+  const message = error instanceof Error ? error.message : String(error);
+  return new Promise((resolve) => {
+    let consumed = false;
+    const retry = () => {
+      if (consumed) return;
+      consumed = true;
+      resolve();
+    };
+    state = {
+      status: "failed",
+      label: "Chargement interrompu",
+      progress: state?.progress ?? 0,
+      message: message || "Le niveau n’a pas pu être chargé.",
+      retry,
+    };
+    emit();
+  });
 }
 
 /** Chargement terminé — l'écran peut disparaître, et plus rien ne le rouvre. */

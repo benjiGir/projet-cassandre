@@ -64,8 +64,9 @@ fois par `buildGameEngine`, avant le tout premier `bootGameSession`, il
 survit à un reset (`bootGameSession`/`teardownGameSession`), contrairement
 à `GameSession` (voir plus bas).
 
-Ce qu'il possède : scène/caméra/renderer, `clock` (pur accumulateur de
-hitstop, aucun état de partie), les systèmes de rendu cosmétiques
+Ce qu'il possède : scène/caméra/renderer, `clock` et les pools `fx` (objets
+persistants dont l’état transitoire est remis à zéro à chaque boot), les
+systèmes de rendu cosmétiques
 (`fx`/`viewmodel`/`crosshair`/`hitmarker`/`ballisticsDebug`/
 `wireframeToggle`), les atlas et géométries partagés entre TOUTES les
 parties (`suitAtlas`/`directorAtlas`/`badgeGeometry`/`badgeMaterial` — voir
@@ -118,18 +119,17 @@ pour la décision de séparer les deux types plutôt que d'utiliser un unique
 
 ## Savoir si le monde physique est vivant (isPhysicsSessionLive)
 
-Entre deux parties, il existe une fenêtre où `engine.session` pointe encore
-vers un objet JS valide, mais dont le monde Rapier sous-jacent a déjà été
-libéré — `isPhysicsSessionLive(engine)` (`gameEngine.ts`) répond à la
+Entre deux parties, `engine.session` peut pointer vers l’ancienne session
+pendant que son chargement en vol se termine puis pendant sa démolition —
+`isPhysicsSessionLive(engine)` (`gameEngine.ts`) répond à la
 question « est-il sûr de toucher `engine.session.physics.world`
 maintenant ? ». Elle est fausse dans deux cas : avant le tout premier
 `bootGameSession` (`boot`/`mainMenu`/`options`/`levelSelect`, le monde n'a
 pas encore été construit), et pendant la fenêtre transitoire de
-`returnToMenu()` (`teardownGameSession` libère le monde PUIS attend,
-potentiellement plusieurs secondes le temps que l'utilisateur navigue le
-menu, avant qu'un nouveau `bootGameSession` n'en construise un — `session`
-continue de pointer vers l'ancien objet JS pendant cette fenêtre, mais son
-`physics.world` Rapier sous-jacent est détruit côté WASM).
+`returnToMenu()` et `replay()` (`loading`/`loadFailed`). Le teardown attend
+d’abord `LevelSession.stop()` puis libère Rapier ; la garde empêche donc la
+boucle de toucher l’ancien monde pendant toute la transition, avant comme
+après son `free()`.
 
 Utilisée UNIQUEMENT par `loop/stepPhysics.ts` et le harnais F9/F10 —
 `updateGameplay`/`interpolateVisuals`/`updateFx` ne touchent jamais Rapier
@@ -180,7 +180,7 @@ Groupes de champs :
 est un type satellite du même fichier — voir
 [Portes et fin de niveau](#portes-et-fin-de-niveau) pour son usage.
 `doorSystem`/`vitreSystem` (`DoorSystem`/`VitreSystem`) sont, eux,
-reconstruits à chaque `onLoaded` comme `propSystem`/`currentNavGraph` — voir
+reconstruits à chaque commit de niveau comme `propSystem`/`currentNavGraph` — voir
 [Spawn et chargement de niveau](#spawn-et-chargement-de-niveau) et
 [ADR 0031](../decisions/0031-portes-animees-et-vitres.md). `sanitaireSystem`
 (`SanitaireSystem`, [ADR 0032](../decisions/0032-sanitaires-utilisables.md))
@@ -198,8 +198,10 @@ exclusives), et tout l'état de suivi par partie. Appelée une fois au tout
 premier boot, puis à nouveau à chaque « Rejouer »/« Retour au menu » — ce
 réemploi est ce qui rend le reset possible.
 
-`resetGameStore()` (`game/state.ts`), appelée en tout premier dans
-`bootGameSession`, reconstruit `debug` en un TOUT NOUVEL objet à chaque
+`GameClock.reset()` et `FxSystem.resetSession()` sont appelés avant toute
+construction : aucun hitstop, shake, flash, decal, particule ou jet d’eau ne
+traverse une frontière de partie. `resetGameStore()` (`game/state.ts`)
+reconstruit ensuite `debug` en un TOUT NOUVEL objet à chaque
 appel (jamais `INITIAL_DEBUG` partagé par référence) — `setDebug`/
 `setPlayerHp`/etc. ne mutent jamais leur cible en place, mais repartir
 d'une copie fraîche à chaque reset reste la garantie la plus simple à
@@ -216,22 +218,21 @@ Costards de test sont posés à 15-22 m du spawn (au-delà de la portée de
 mêlée, en-deçà de `suitConfig.sightRange`) : positions de test de la gym
 uniquement, sans rapport avec le contenu d'un niveau glTF.
 
-Chemin glTF : le joueur est positionné provisoirement (0, 2, 0) — il tombe
-quelques pas fixes dans le vide (gravité −25 m/s², invariant #7) jusqu'à ce
-que le callback `onLoaded` de `loadGltfLevel` (voir [Spawn et chargement de
-niveau](#spawn-et-chargement-de-niveau)) le repositionne sur
-`spawn_player`.
+Chemin glTF : le joueur est positionné provisoirement `(0, 2, 0)`, puis le
+commit de `loadGltfLevel` le repositionne sur `spawn_player`. L’état de flux
+reste `loading` pendant cet intervalle : aucun pas de gameplay ou de physique
+ne le fait tomber dans le vide.
 
 Ce qui n'est PAS reconstruit ici : tout ce qui vit sur `GameEngine` (voir
-[L'état persistant du process](#létat-persistant-du-process-gameengine)) —
-ces systèmes sont stateless vis-à-vis d'une partie précise, ou leur état
-interne s'auto-invalide sans code de reset dédié (le `WeakSet`
-d'`interaction`, par exemple).
+[L'état persistant du process](#létat-persistant-du-process-gameengine)). Les
+objets persistants qui portent un état transitoire de partie exposent un reset
+explicite ; les autres sont sans état de session ou s’auto-invalident (le
+`WeakSet` d'`interaction`, par exemple).
 
 ## Démolir une partie
 
 `teardownGameSession(engine, session)` (`lifecycle.ts`) détruit une partie
-complète, dans un ordre précis : dispose la session de niveau glTF (déjà
+complète, dans un ordre précis : attend la session de niveau glTF (déjà
 gérée par `LevelSession.stop()`), retire la géométrie propre à `session` de
 `scene` (gym + balle de test, en un seul `scene.remove(gymRoot)`) puis
 dispose géométries/matériaux, dispose les sprites billboard (Costards +
@@ -250,10 +251,11 @@ sont ramassés par le GC JS normal.
 ## Rejouer et retour au menu
 
 `replay(engine)` reconstruit exactement le même `LevelDef` que la partie
-qui vient de se terminer (`session.choice`). Aucun `root.render()` n'est
-nécessaire : `<App/>` reste monté tout du long (voir `main.ts`), seul
-`state.flowState` change — c'est ce qui rend « Rejouer » instantané, sans
-rechargement de page.
+qui vient de se terminer (`session.choice`). `<App/>` reste monté : `REPLAY`
+passe d’abord le flux à `loading`, le teardown asynchrone attend tout
+chargement en vol, puis `waitForGameSessionReady` n’envoie `PLAY` qu’après le
+premier commit réussi. Un échec affiche l’action « Réessayer » et conserve le
+flux hors du jeu.
 
 `returnToMenu(engine)` détruit la partie courante puis réaffiche le menu
 principal en réutilisant `resolveBootChoice` telle quelle (même fonction
@@ -267,6 +269,11 @@ appel, donc `returnToMenu` DOIT retirer `level` de l'URL (via
 `history.replaceState`, sans rechargement de page) AVANT de la rappeler —
 sans ce retrait, une partie démarrée via `?level=zone_a_parking` reviendrait
 silencieusement au même niveau au lieu du vrai menu principal.
+
+Le boot initial, le replay et le niveau choisi après ce retour convergent tous
+vers `waitForGameSessionReady`. C’est l’unique frontière
+`construire → attendre → activer`; elle distingue un premier chargement échoué
+d’un hot reload échoué, pour lequel l’ancien niveau reste jouable.
 
 ## Choix du niveau au boot
 
@@ -325,26 +332,24 @@ claire.
 `loadGltfLevel(engine, session, name)` charge (ou recharge)
 `public/assets/levels/<name>.glb` dans `session` via `createLevelSession`
 (voir [ADR 0011](../decisions/0011-hot-reload-sondage-http.md) pour le
-mécanisme de hot reload lui-même). Son callback `onLoaded` : construit
-D'ABORD `session.doorSystem` (`DoorSystem`) et désactive les colliders de ses
+mécanisme de hot reload lui-même). Sa phase `prepare` construit localement un
+`DoorSystem` et désactive les colliders de ses
 groupes `auto` AVANT de baker le graphe de praticabilité (sinon un bureau
 derrière une porte automatique fermée au chargement ne reçoit jamais
 d'arête), les réactive juste après, puis rouvre silencieusement toute porte
 déjà dans `session.unlockedDoors` (hot reload EN COURS DE PARTIE — voir
-[Portes et fin de niveau](#portes-et-fin-de-niveau)). `session.vitreSystem`
-(`VitreSystem`) et `session.sanitaireSystem` (`SanitaireSystem`,
-[ADR 0032](../decisions/0032-sanitaires-utilisables.md)) sont reconstruits
-juste après, comme `propSystem` — et le callback commence par
-`engine.fx.clearWaterJets()` avant tout le reste : les jets d'eau permanents
-d'un sanitaire cassé appartiennent au niveau qui vient de disparaître, hot
-reload ou premier chargement. Le
-callback logue aussi des diagnostics, et surtout ne repositionne le joueur /
+[Portes et fin de niveau](#portes-et-fin-de-niveau)). `VitreSystem` et
+`SanitaireSystem`
+[ADR 0032](../decisions/0032-sanitaires-utilisables.md)) sont préparés juste
+après, comme `PropSystem` et `LightPool`. Tant que toute cette construction
+n’a pas réussi, aucun champ de `GameSession` ne change. Le commit synchrone
+publie ensuite l’ensemble, efface les jets d’eau de l’ancien niveau, met à jour
+les secrets et surtout ne repositionne le joueur /
 ne fait apparaître les Costards et le Directeur QUE si `info.isFirstLoad` —
 un hot reload pendant une partie ne doit JAMAIS respawn le joueur ni
 dupliquer un ennemi, c'est le cœur du contrat < 60 s du pipeline de niveau.
-Le compteur de secrets (`debug.secretsTotal`), lui, est mis à jour à CHAQUE
-chargement (pas seulement `isFirstLoad`) puisqu'il décrit une propriété du
-niveau chargé, pas un évènement ponctuel de partie.
+Si la préparation lève, le candidat est disposé et l’ancien niveau est
+restauré avec l’état actif/inactif exact de chacun de ses corps.
 
 Le `LightPool` du niveau (`session.lightPool`, voir
 [Rendu](rendu.md#le-pool-de-lampes)) est reconstruit là aussi, à CHAQUE
@@ -378,7 +383,7 @@ Comme le badge avant elles, les cartes survivent à un hot reload : c'est un
 
 Depuis [ADR 0031](../decisions/0031-portes-animees-et-vitres.md), le
 mouvement d'un vantail vit entièrement dans `session.doorSystem`
-(`DoorSystem`, `game/level/doors.ts`) — reconstruit à chaque `onLoaded`
+(`DoorSystem`, `game/level/doors.ts`) — reconstruit à chaque commit de niveau
 (hot reload compris), au même titre que `propSystem`/`currentNavGraph`/
 `lightPool` (voir [Spawn et chargement de niveau](#spawn-et-chargement-de-niveau)).
 `session/doors.ts` n'est plus qu'un fin habillage par-dessus : feedback

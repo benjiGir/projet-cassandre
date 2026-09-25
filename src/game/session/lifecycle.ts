@@ -21,6 +21,12 @@ import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { resolveBootChoice } from "./bootChoice";
 import { type GameSession } from "./gameSession";
 import { type GameEngine, type PersistentEngine } from "./gameEngine";
+import {
+  beginLoading,
+  finishLoading,
+  letBrowserPaint,
+  waitForLoadingRetry,
+} from "../../core/loadingProgress";
 
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -80,6 +86,12 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
  * see: docs/systems/session.md#construire-une-partie
  */
 export function bootGameSession(engine: PersistentEngine, choice: LevelDef): GameSession {
+  // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
+  // de recréer leurs pools, mais leur état transitoire appartient à UNE
+  // partie. Le reset précède toute construction de la nouvelle session.
+  engine.clock.reset();
+  engine.fx.resetSession();
+
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
   // `session.playerHp` ci-dessous lit `debug.playerMaxHp` fraîchement reset.
   useGameStore.getState().resetGameStore();
@@ -124,8 +136,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     // Chemin glTF : pas de spawn connu ici (le chargement, plus bas, est
     // asynchrone). Position transitoire sûre et documentée : le joueur
     // tombe quelques pas fixes dans le vide (gravité −25 m/s², invariant
-    // #7) jusqu'à ce que le callback `onLoaded` de `loadGltfLevel` le
-    // repositionne sur `spawn_player` du `.glb`.
+    // #7) jusqu'à ce que le commit de `loadGltfLevel` le repositionne sur
+    // `spawn_player` du `.glb`.
     player.spawn(0, 2, 0);
     engine.look.yaw = 0;
     engine.look.pitch = 0;
@@ -148,6 +160,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ballMesh,
     ballBody,
     gltfLevelSession: null,
+    levelLoadGeneration: 0,
     currentNavGraph: null,
     lightPool: null,
     propSystem: null,
@@ -205,8 +218,9 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
  * pourquoi l'ordre compte.
  * see: docs/systems/session.md#démolir-une-partie
  */
-export function teardownGameSession(engine: PersistentEngine, session: GameSession): void {
-  session.gltfLevelSession?.stop();
+export async function teardownGameSession(engine: PersistentEngine, session: GameSession): Promise<void> {
+  session.levelLoadGeneration += 1;
+  await session.gltfLevelSession?.stop();
 
   if (session.gymRoot) {
     session.gymRoot.traverse((obj) => {
@@ -233,7 +247,7 @@ export function teardownGameSession(engine: PersistentEngine, session: GameSessi
   // propres à CETTE partie/CE niveau, comme les corps Rapier qui disparaissent
   // juste en dessous — un "Rejouer"/"Retour au menu" ne doit pas laisser un
   // jet de l'ancienne partie flotter dans la nouvelle.
-  engine.fx.clearWaterJets();
+  engine.fx.resetSession();
 
   session.physics.world.free();
 }
@@ -242,14 +256,17 @@ export function teardownGameSession(engine: PersistentEngine, session: GameSessi
  * "Rejouer" — reconstruit EXACTEMENT le même `LevelDef` que la partie qui
  * vient de se terminer. Aucun `root.render()` ici : `App` reste monté tout
  * du long, seul `state.flowState` change — c'est ce qui rend "Rejouer"
- * instantané, sans rechargement de page.
+ * sans rechargement de page, après validation du nouveau niveau.
  * see: docs/systems/session.md#rejouer-et-retour-au-menu
  */
-export function replay(engine: GameEngine): void {
+export async function replay(engine: GameEngine): Promise<void> {
   const choice = engine.session.choice;
-  teardownGameSession(engine, engine.session);
-  engine.session = bootGameSession(engine, choice);
   engine.flowActor.send({ type: "REPLAY" });
+  beginLoading("Redémarrage de la partie", 0.02);
+  await letBrowserPaint();
+  await teardownGameSession(engine, engine.session);
+  engine.session = bootGameSession(engine, choice);
+  await waitForGameSessionReady(engine, engine.session);
 }
 
 /**
@@ -263,25 +280,51 @@ export function replay(engine: GameEngine): void {
  * lieu du vrai menu principal.
  * see: docs/systems/session.md#rejouer-et-retour-au-menu
  */
-export function returnToMenu(engine: GameEngine): void {
-  teardownGameSession(engine, engine.session);
+export async function returnToMenu(engine: GameEngine): Promise<void> {
   engine.flowActor.send({ type: "RETURN_TO_MENU" });
+  await teardownGameSession(engine, engine.session);
 
   const url = new URL(window.location.href);
   url.searchParams.delete("level");
   window.history.replaceState(null, "", url.toString());
 
-  resolveBootChoice(engine.root).then((choice) => {
-    engine.session = bootGameSession(engine, choice);
-    engine.root.render(
-      createElement(App, {
-        onReplay: () => replay(engine),
-        onReturnToMenu: () => returnToMenu(engine),
-        onResume: () => resumeGame(engine),
-      }),
-    );
-    engine.flowActor.send({ type: "PLAY" });
-  });
+  const choice = await resolveBootChoice(engine.root);
+  engine.flowActor.send({ type: "BEGIN_LOAD" });
+  beginLoading("Démarrage", 0.02);
+  engine.root.render(
+    createElement(App, {
+      onReplay: () => void replay(engine),
+      onReturnToMenu: () => void returnToMenu(engine),
+      onResume: () => resumeGame(engine),
+    }),
+  );
+  await letBrowserPaint();
+  engine.session = bootGameSession(engine, choice);
+  await waitForGameSessionReady(engine, engine.session);
+}
+
+/**
+ * Frontière unique entre « session construite » et « jeu autorisé ». Un
+ * premier échec ne résout jamais silencieusement vers `playing` : l'écran
+ * expose l'erreur, attend un clic, puis relance exactement la même session.
+ */
+export async function waitForGameSessionReady(engine: GameEngine, session: GameSession): Promise<boolean> {
+  const levelSession = session.gltfLevelSession;
+  if (levelSession) {
+    let result = await levelSession.firstLoad;
+    while (result.status === "failed") {
+      engine.flowActor.send({ type: "LOAD_FAILED" });
+      await waitForLoadingRetry(result.error);
+      engine.flowActor.send({ type: "RETRY_LOAD" });
+      beginLoading("Nouvelle tentative", 0.3);
+      result = await levelSession.reload();
+    }
+    if (result.status === "cancelled") return false;
+  }
+
+  finishLoading();
+  engine.flowActor.send({ type: "PLAY" });
+  return true;
 }
 
 /**

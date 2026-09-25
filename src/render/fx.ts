@@ -452,6 +452,40 @@ export class FxSystem {
   }
 
   /**
+   * Efface tout effet appartenant à la partie qui se termine, sans détruire
+   * les pools persistants liés à la scène.
+   */
+  resetSession(): void {
+    this.shakePeak = 0;
+    this.shakeElapsed = 0;
+    this.shakeDurationActive = 0;
+
+    for (const slot of this.muzzleFlashes) {
+      slot.framesRemaining = 0;
+      slot.light.visible = false;
+      slot.quad.visible = false;
+    }
+    this.muzzleFlashCursor = 0;
+
+    for (const slot of this.decals) slot.mesh.visible = false;
+    this.decalCursor = 0;
+
+    this.clearToyParticles(this.particles);
+    this.clearToyParticles(this.casings);
+    this.clearToyParticles(this.gibs);
+    this.clearToyParticles(this.debris);
+    this.clearToyParticles(this.frost);
+    this.clearToyParticles(this.ceramic);
+    this.clearToyParticles(this.waterBurst);
+    this.clearWaterJets();
+  }
+
+  private clearToyParticles(list: ToyParticle[]): void {
+    for (const particle of list) this.scene.remove(particle.mesh);
+    list.length = 0;
+  }
+
+  /**
    * (Re)démarre ou renforce le screenshake. PAS de sommation entre
    * déclenchements qui se chevauchent (voir la doc de tête) : le MAX de
    * l'amplitude courante (déjà partiellement décroissante) et de la nouvelle,

@@ -1,6 +1,6 @@
 import type { Root } from "react-dom/client";
 
-import { reportLoading } from "../../../core/loadingProgress";
+import { beginLoading, waitForLoadingRetry } from "../../../core/loadingProgress";
 import { useGameStore } from "../../../game/state";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
@@ -24,7 +24,17 @@ import styles from "./devPreview.module.css";
  * see: docs/systems/hud.md
  */
 
-const PREVIEW_SCREENS = ["mainMenu", "options", "death", "levelComplete", "loading", "hud", "debug", "tuning"] as const;
+const PREVIEW_SCREENS = [
+  "mainMenu",
+  "options",
+  "death",
+  "levelComplete",
+  "loading",
+  "loadFailed",
+  "hud",
+  "debug",
+  "tuning",
+] as const;
 type PreviewScreen = (typeof PREVIEW_SCREENS)[number];
 
 function isPreviewScreen(value: string): value is PreviewScreen {
@@ -83,7 +93,12 @@ export function maybeRenderDevPreview(root: Root): boolean {
       root.render(<LevelCompleteScreen onReplay={noop} onReturnToMenu={noop} />);
       break;
     case "loading":
-      reportLoading("Chargement du niveau", 0.47);
+      beginLoading("Chargement du niveau", 0.47);
+      root.render(<LoadingScreen />);
+      break;
+    case "loadFailed":
+      beginLoading("Chargement du niveau", 0.47);
+      void waitForLoadingRetry(new Error("Le fichier du niveau est absent ou invalide."));
       root.render(<LoadingScreen />);
       break;
     case "hud":
