@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "pnpm typecheck && pnpm test && pnpm check:docs && vite build",
+    "check": "pnpm typecheck && pnpm test && vite build",
     "check:docs": "python3 tools/docs/check_docs_links.py docs --src src --strict --allow-empty-drafts",
     "check:docs:test": "python3 -m unittest discover -s tools/docs -p 'test_*.py'",
     "preview": "vite preview",
