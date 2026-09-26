@@ -24,10 +24,10 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 - `src/ui/screens/` contient les écrans de pause, mort, chargement et fin de niveau.
 - `src/ui/dev/` contient les panneaux de debug et de réglage réservés au développement.
 - `src/app/bootChoice.ts` gère le choix avant le montage de l'arbre React `App`.
-- [Structure React](../reference/react-structure.md) fixe l'organisation des composants et dossiers.
-- [Bonnes pratiques React](../reference/react-bonnes-pratiques.md) précise les conventions du dépôt.
-- [CSS](../reference/react-css.md) fixe les règles de styles.
-- [Composition](../reference/react-composition.md) décrit les primitives et leur composition.
+- [Structure React](../6-reference/react-structure.md) fixe l'organisation des composants et dossiers.
+- [Bonnes pratiques React](../6-reference/react-bonnes-pratiques.md) précise les conventions du dépôt.
+- [CSS](../6-reference/react-css.md) fixe les règles de styles.
+- [Composition](../6-reference/react-composition.md) décrit les primitives et leur composition.
 
 ## Où ça s'insère dans la boucle
 

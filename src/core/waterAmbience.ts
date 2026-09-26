@@ -21,7 +21,7 @@ import { computeWaterAmbienceMix, smoothTowards, type Vec3Like, type WaterAmbien
  * une boucle HTML5 a un trou audible au raccord de bouclage, et surtout
  * `stereo()` — utilisé ici à chaque frame — n'a d'effet qu'en Web Audio.
  *
- * see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+ * see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
  */
 
 const WATER_AMBIENCE_BASE_PATH = assetUrl("assets/audio/sfx");

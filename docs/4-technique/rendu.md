@@ -51,7 +51,7 @@ La rotation de caméra suit directement les entrées au taux d'affichage. L'inte
 
 Le menu Affichage expose aussi les préréglages 960×540, 1280×720 et 1600×900. `graphicsSettings.ts` applique leur taille au renderer et met à jour le rapport de la caméra. `cassandre.resolution(l, h)` fournit un réglage de diagnostic direct. Les canevas 2D restent en 640×360.
 
-**Écart à arbitrer** : [l'invariant #4](../3-architecture/invariants.md) présente 640×360 comme une résolution interne non négociable, alors que ces préréglages changent effectivement la taille interne. L'écart est consigné dans `docs/_chantier/ecarts.md`. La résolution d'origine reste le réglage par défaut ; cette page décrit les capacités du code sans décider si les préréglages sont compatibles avec l'invariant.
+**Arbitrage en attente** : [l'invariant #4](../3-architecture/invariants.md) présente 640×360 comme une résolution interne non négociable, alors que ces préréglages changent effectivement la taille interne. La proposition de résolution interne configurable est suivie dans [ADR 0034](../decisions/0034-resolution-interne-configurable.md). La résolution d'origine reste le réglage par défaut jusqu'à décision.
 
 ### Textures et matériaux
 

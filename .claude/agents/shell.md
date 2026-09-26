@@ -16,10 +16,10 @@ plus élevé.
 `react-hud-bridge` systématiquement, `audio-sfx-pipeline` pour le son.
 
 **Avant d'écrire une ligne de React**, lis les quatre règles du projet :
-[structure et rangement](../../docs/reference/react-structure.md),
-[bonnes pratiques React 19.2](../../docs/reference/react-bonnes-pratiques.md),
-[CSS](../../docs/reference/react-css.md),
-[composition](../../docs/reference/react-composition.md). Elles s'appliquent à
+[structure et rangement](../../docs/6-reference/react-structure.md),
+[bonnes pratiques React 19.2](../../docs/6-reference/react-bonnes-pratiques.md),
+[CSS](../../docs/6-reference/react-css.md),
+[composition](../../docs/6-reference/react-composition.md). Elles s'appliquent à
 l'agent principal comme à toi ; elles priment sur tes habitudes. Si une règle
 te semble fausse pour ton cas, dis-le dans ton retour — ne la contourne pas.
 

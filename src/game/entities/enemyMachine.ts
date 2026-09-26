@@ -26,7 +26,7 @@ import type { EnemyAnimationInput } from "../../render/enemySprites";
  * restent réaffectables depuis les tests, la discipline zéro-allocation, et
  * pourquoi `after` — transitions retardées par temps mural — est interdit
  * ici) sont documentés en détail :
- * see: docs/systems/entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
+ * see: docs/archive/systems-entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
  *
  * Rappel le plus susceptible d'être violé par erreur en éditant ce fichier :
  * toute action MUTE `context` directement (`context.stateTimer = 0`), ne
@@ -123,7 +123,7 @@ const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
 /**
  * Traduit l'état courant en entrées d'animation du sprite, écrites dans `out`
  * (zéro allocation par frame). Lecture seule : l'animation ne décide rien.
- * see: docs/systems/rendu.md#animation-des-sprites-dennemis
+ * see: docs/archive/systems-rendu.md#animation-des-sprites-dennemis
  */
 export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput): EnemyAnimationInput {
   const snapshot = actor.getSnapshot();
@@ -209,7 +209,7 @@ export interface EnemyMachineContext {
   hp: number;
   stateTimer: number;
   /** PAS un `stateTimer` : persiste à travers toutes les transitions, remis à zéro par des règles précises. */
-  // see: docs/systems/entites.md#deux-catégories-de-données-dans-le-contexte-minuteurs-détat-et-mémoire-persistante
+  // see: docs/archive/systems-entites.md#deux-catégories-de-données-dans-le-contexte-minuteurs-détat-et-mémoire-persistante
   timeSinceLastSeen: number;
   /** Idem. */
   attackCooldownRemaining: number;
@@ -728,7 +728,7 @@ function integratePhysics(ctx: EnemyMachineContext, dt: number, updateCtx: Enemy
 }
 
 // Machine XState — graphe + actions d'entrée.
-// see: docs/systems/entites.md#pourquoi-le-calcul-de-transition-vit-hors-des-gardes-xstate
+// see: docs/archive/systems-entites.md#pourquoi-le-calcul-de-transition-vit-hors-des-gardes-xstate
 
 export type EnemyEvent =
   | { type: "SAW_PLAYER" }
@@ -852,7 +852,7 @@ export function createEnemyActor(context: EnemyMachineContext): EnemyActor {
 /**
  * Réservé aux SETTERS publics `Suit.state`/`Director.state` — jamais appelé
  * par le chemin de production (`tickEnemy`/`applyEnemyDamageCore`).
- * see: docs/systems/entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
+ * see: docs/archive/systems-entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
  */
 export function forceEnemyState(actor: EnemyActor, next: EnemyState): void {
   const context = actor.getSnapshot().context;

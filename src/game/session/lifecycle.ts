@@ -28,7 +28,7 @@ const SPAWN_FEET_GUARD = 0.1;
  * Rayon de la balle de test (chemin "gym" seulement) — témoin de
  * non-régression des colliders et de `setApplyImpulsesToDynamicBodies`.
  * Trajectoire vérifiée par calcul pour rester contenue dans le hub.
- * see: docs/systems/session.md#construire-une-partie
+ * see: docs/archive/systems-session.md#construire-une-partie
  */
 const BALL_RADIUS = 0.4;
 
@@ -56,7 +56,7 @@ const BALL_RADIUS = 0.4;
  * Réglage PAR NIVEAU et non global : les zones A-E ont été éclairées à l'œil
  * SOUS l'ancien rig, les basculer changerait leur aspect sans que personne
  * l'ait demandé — la bascule se décidera au jalon N10.
- * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+ * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
  */
 function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   const mode = choice.lighting ?? "temps-reel";
@@ -74,7 +74,7 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
  * partie. Appelée une fois au tout premier boot ET à nouveau à chaque
  * "Rejouer"/"Retour au menu" — ce réemploi est ce qui rend le reset
  * possible.
- * see: docs/systems/session.md#construire-une-partie
+ * see: docs/archive/systems-session.md#construire-une-partie
  */
 export function bootGameSession(engine: PersistentEngine, choice: LevelDef): GameSession {
   // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
@@ -211,7 +211,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
  * billboard, mesh du badge, puis `physics.world.free()` EN DERNIER —
  * libérer le monde Rapier libère tous ses corps/colliders d'un coup, voir
  * pourquoi l'ordre compte.
- * see: docs/systems/session.md#démolir-une-partie
+ * see: docs/archive/systems-session.md#démolir-une-partie
  */
 export async function teardownGameSession(engine: PersistentEngine, session: GameSession): Promise<void> {
   session.levelLoadGeneration += 1;

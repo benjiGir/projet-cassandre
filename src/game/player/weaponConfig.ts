@@ -91,7 +91,7 @@ export interface WeaponConfig {
    * changer `hitstopDuration` directement est la façon normale de le retuner.
    *
    * Distinction mur/ennemi (pourquoi `enemyHitstopDuration` existe) :
-   * see: docs/systems/armes.md#matériau-perçu-et-hitstop-murennemi
+   * see: docs/archive/systems-armes.md#matériau-perçu-et-hitstop-murennemi
    */
   hitstopDuration: number;
   /**
@@ -128,7 +128,7 @@ export interface WeaponConfig {
   // Canal de feedback nouveau en Phase 3 (angle mort identifié en playtest),
   // désactivé par défaut volontairement — pourquoi, et le contrat avec
   // `render/hitmarker.ts` :
-  // see: docs/systems/armes.md#confirmation-de-hit-à-lécran-hitmarker_variants
+  // see: docs/archive/systems-armes.md#confirmation-de-hit-à-lécran-hitmarker_variants
   /** Active/désactive le hitmarker. Désactivé par défaut, voir note ci-dessus. */
   hitmarkerEnabled: boolean;
   /** Durée d'affichage du marqueur sur un hit simple, en secondes. */
@@ -151,7 +151,7 @@ export interface WeaponConfig {
   // Contrairement au hitmarker, demande EXPLICITE du playtest : activé par
   // défaut. Sa position au centre exact du canvas est une CORRECTITUDE
   // géométrique, pas une variante — preuve complète :
-  // see: docs/systems/armes.md#réticule-permanent-crosshair_variants
+  // see: docs/archive/systems-armes.md#réticule-permanent-crosshair_variants
   /** Active/désactive le réticule permanent. Activé par défaut (demande explicite du playtest, pas un choix de feel). */
   crosshairEnabled: boolean;
   /** Forme du réticule. */
@@ -287,7 +287,7 @@ export function damageForWeapon(weapon: "melee" | "pistol" | "shotgun"): number 
 
 // Variantes de recul — harnais A/B, même mécanique que `FEEL_VARIANTS` dans
 // `moveConfig.ts`. Axe, usage console et protocole F9/F10 :
-// see: docs/systems/armes.md#recul-du-viewmodel-recoil_variants
+// see: docs/archive/systems-armes.md#recul-du-viewmodel-recoil_variants
 
 export interface RecoilVariant {
   meleeRecoil: RecoilKick;
@@ -322,7 +322,7 @@ export const RECOIL_VARIANTS: Record<"A" | "B" | "C", RecoilVariant> = {
 // Variantes d'impact (hitstop + screenshake) — harnais A/B, retour playtest
 // Phase 3. Axe, fait mécanique vérifié (non-cumul entre plombs) et protocole
 // F9/F10 (limite de restauration des PV ennemis) :
-// see: docs/systems/armes.md#hitstop-et-shake-murennemi-impact_variants
+// see: docs/archive/systems-armes.md#hitstop-et-shake-murennemi-impact_variants
 
 export interface ImpactVariant {
   hitstopDuration: number;
@@ -375,7 +375,7 @@ export const IMPACT_VARIANTS: Record<"A" | "B" | "C", ImpactVariant> = {
 
 // Variantes de hitmarker — harnais A/B, canal de feedback absent du jeu
 // jusqu'à son ajout en Phase 3. Axe, usage console :
-// see: docs/systems/armes.md#confirmation-de-hit-à-lécran-hitmarker_variants
+// see: docs/archive/systems-armes.md#confirmation-de-hit-à-lécran-hitmarker_variants
 
 export interface HitmarkerVariant {
   hitmarkerEnabled: boolean;
@@ -433,7 +433,7 @@ export const HITMARKER_VARIANTS: Record<"OFF" | "SOBRE" | "ARCADE", HitmarkerVar
 // Variantes de réticule — harnais A/B. `crosshairEnabled` reste VRAI dans
 // les trois (demande explicite, pas un axe de comparaison, voir doc du
 // champ ci-dessus) ; seul le style varie. Usage, protocole F9/F10 :
-// see: docs/systems/armes.md#réticule-permanent-crosshair_variants
+// see: docs/archive/systems-armes.md#réticule-permanent-crosshair_variants
 
 export interface CrosshairVariant {
   crosshairEnabled: boolean;

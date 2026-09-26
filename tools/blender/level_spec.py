@@ -151,7 +151,7 @@ ZONE_B = {
 
     # Dalle de sol SUR-MESURE (`build_level.py::build_floor_patches`) pour
     # l'alcôve du secret 1, X∈[-15,-12] Y∈[10,12] (3×2 m) : ne tile pas en
-    # 4 m avec kit_floor_4x4. see: docs/pipeline/niveau-blender.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
+    # 4 m avec kit_floor_4x4. see: docs/5-guides/modifier-le-niveau.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
     "floor_patches": [
         {"name": "floor_secret_1b", "x": (-15.0, -12.0), "y": (10.0, 12.0)},
     ],
@@ -347,7 +347,7 @@ ZONE_C = {
     # de gondole + 3.0 m d'allée (kit_spec.py::kit_gondola_4m). Rangées à
     # X = -4.25 / 0.0 / 4.25 → deux allées centrales de 3 m + deux couloirs
     # latéraux ouverts (~7 m chacun). Convention coin/rotation des rangées :
-    # voir docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
+    # voir docs/5-guides/modifier-le-niveau.md#convention-de-placement-des-rangées-gondoles-racks-escalier
     "gondolas": {
         "piece": "kit_gondola_4m",
         "end_piece": "kit_gondola_end",
@@ -490,7 +490,7 @@ ZONE_D = {
     # Travée centrale ~8.8m entre les deux rangées, couloirs latéraux ouverts
     # entre chaque rangée et le mur le plus proche. Empreinte réelle (coin +
     # rotation +90°, voir build_level.py::build_racks/_build_row_run et
-    # docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier) :
+    # docs/5-guides/modifier-le-niveau.md#convention-de-placement-des-rangées-gondoles-racks-escalier) :
     # X∈[-7.2,-6.0] (ouest) / X∈[2.8,4.0] (est), pas centrée sur X=0 malgré
     # des origines symétriques (-6.0/4.0). Travée réelle 2.8-(-6.0)=8.8m,
     # conforme au plan.
@@ -519,7 +519,7 @@ ZONE_D = {
             # AVANT rotation) — `build_level.py::build_mezzanine_stairs`
             # compense la rotation +90° pour que l'empreinte réelle tombe
             # sur X∈[-2,2] plutôt que sous la rambarde voisine. Voir
-            # docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
+            # docs/5-guides/modifier-le-niveau.md#convention-de-placement-des-rangées-gondoles-racks-escalier
             "positions": [(-2.0, 20.0, 0.0), (0.0, 20.0, 0.0)],  # côte à côte, montent vers +Y
         },
         "railing": {
@@ -631,7 +631,7 @@ ZONE_D = {
 # -----------------------------------------------------------------------------
 #
 # Historique de scope (géométrie seule -> Directeur réel -> badge -> porte
-# verrouillée) : voir docs/game/niveau-hypermarche.md. `door_frame`
+# verrouillée) : voir docs/2-fonctionnel/le-niveau.md. `door_frame`
 # ci-dessous pose `kit_door_2m` (l'encadrement) ET son vantail
 # (`kit_door_leaf` renommé `door_e_exit`, build_level.py::build_door_leaf)
 # avec son déclencheur `use_exit_door` — la brèche n'est plus un simple

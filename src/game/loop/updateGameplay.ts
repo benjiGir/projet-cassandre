@@ -31,7 +31,7 @@ import { handleDevGameplayInput } from "./devGameplayInput";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
-// see: docs/systems/boucle-de-jeu.md#origine-des-modules
+// see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
 // Objets interactifs "signature Duke" (micro d'annonces, sanitaires) — le
 // micro reste un simple texte HUD placeholder (invariant #9, pas de vraie VO
@@ -62,7 +62,7 @@ const EXIT_CROSSING_MARGIN = 1.0;
 // Acteurs pris en compte par `DoorSystem` (proximité des portes `auto`, refus
 // de refermeture sur une capsule qui chevauche encore le vantail) —
 // RECYCLÉS d'un pas fixe à l'autre plutôt que réalloués, comme `liveFrame`
-// ci-dessus. see: docs/reference/conventions-nommage.md#portes-animées
+// ci-dessus. see: docs/archive/reference-conventions-nommage.md#portes-animées
 const doorActorPool: DoorActor[] = [];
 
 function doorActorSlot(index: number): DoorActor {
@@ -145,7 +145,7 @@ function captureInputFrame(engine: GameEngine): InputFrame {
 
 // Décide le mouvement AVANT le step (latence nulle) : la translation cible
 // est consommée par `world.step()` du même pas fixe.
-// see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks
+// see: docs/archive/systems-boucle-de-jeu.md#ordre-des-callbacks
 export function updateGameplay(engine: GameEngine, dt: number): void {
   const session = engine.session;
   if (import.meta.env.DEV && engine.flow.isPhysicsLive()) {
@@ -154,7 +154,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
 
   // Mort / niveau terminé : le pas fixe continue de tourner (invariant #1),
   // seul le CONTENU de ce pas est ignoré une fois hors de l'état "playing".
-  // see: docs/systems/boucle-de-jeu.md#fin-de-partie-pendant-le-pas-fixe
+  // see: docs/archive/systems-boucle-de-jeu.md#fin-de-partie-pendant-le-pas-fixe
 
   // Lecture DIRECTE de l'acteur de flux, jamais un aller-retour par zustand
   // (`state.flowState` n'existe que pour React, voir sa doc dans

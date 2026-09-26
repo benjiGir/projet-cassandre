@@ -51,12 +51,12 @@ export type { SanitaireInfo, SanitaireKind, SanitaireRendu } from "./sanitaires"
  *
  * Pièges déjà rencontrés (transforms, renommage `GLTFLoader`, hiérarchie des
  * colliders, invariants #4/#5, cycle de vie Effect, erreurs typées) :
- * see: docs/pipeline/niveau-blender.md
+ * see: docs/5-guides/modifier-le-niveau.md
  */
 
 export interface SpawnPoint {
   /** Position MONDE, pieds du joueur (pas les yeux).
-   * see: docs/pipeline/niveau-blender.md#convention-spawn_player */
+   * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
   position: THREE.Vector3;
   /** Yaw, radians. Convention `main.ts`/`gym.ts` (Euler 'YXZ') : yaw=0 -> avant = -Z. */
   yaw: number;
@@ -95,21 +95,21 @@ export interface UseObject {
   targetName: string | null;
   /** Carte de fidélité DONNÉE par cet objet (custom property Blender `card`)
    * — en fait un ramassage, consommé au premier usage. `null` si absent.
-   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
   grantsCard: LoyaltyCard | null;
   /** Carte de fidélité EXIGÉE par cet objet (custom property Blender
    * `requires`) pour agir sur sa cible. `null` = aucune condition.
-   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
   requiresCard: LoyaltyCard | null;
   /** Munitions de pistolet données par cet objet (custom property Blender
    * `munitions`, nombre > 0) — une boîte, ramassée en marchant dessus comme
    * une trousse. `null` si absent.
-   * see: docs/reference/conventions-nommage.md#boîtes-de-munitions */
+   * see: docs/archive/reference-conventions-nommage.md#boîtes-de-munitions */
   ammo: number | null;
   /** PV rendus par cet objet (custom property Blender `soin`, nombre > 0) —
    * une trousse de soin, ramassée en marchant dessus et non à la touche E.
    * `null` si absent.
-   * see: docs/reference/conventions-nommage.md#trousses-de-soin */
+   * see: docs/archive/reference-conventions-nommage.md#trousses-de-soin */
   heals: number | null;
   extras: Record<string, unknown>;
 }
@@ -191,17 +191,17 @@ export interface LevelHandle {
   secrets: SecretZone[];
   /** Mobilier physique `prop_*` — l'état de partie (PV, destruction) vit dans
    * `PropSystem` (`game/level/props.ts`), reconstruit à chaque chargement.
-   * see: docs/reference/conventions-nommage.md#props-physiques */
+   * see: docs/archive/reference-conventions-nommage.md#props-physiques */
   props: PropInfo[];
   /** Vitrages `vitre_*` — l'état de partie (PV, casse) vit dans `VitreSystem`
    * (`game/level/vitres.ts`), reconstruit à chaque chargement comme `PropSystem`.
-   * see: docs/reference/conventions-nommage.md#préfixe-vitre */
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-vitre */
   vitres: VitreInfo[];
   /** Sanitaires `sanitaire_*` (cuvettes, urinoirs) — l'état de partie (cassé,
    * délai de soulagement) vit dans `SanitaireSystem` (`game/level/sanitaires.ts`)
    * et `session.sanitaireReliefCooldown`, reconstruits à chaque chargement
    * comme `VitreSystem`.
-   * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire */
   sanitaires: SanitaireInfo[];
   /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
   sanitaireRendus: SanitaireRendu[];
@@ -222,7 +222,7 @@ export interface LevelHandle {
    * Retire `root` de la scène et libère tous les corps/colliders Rapier et
    * ressources GPU de ce niveau. Sûr à appeler plusieurs fois — idempotence
    * GARANTIE par `Scope.close`, pas par un flag maintenu à la main.
-   * see: docs/pipeline/niveau-blender.md#cycle-de-vie-du-levelhandle
+   * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
    */
   dispose(): void;
 }
@@ -236,7 +236,7 @@ const MAX_COLLIDER_TRIANGLES = 50_000;
 
 // Erreurs typées (jalon M2) — une par cas de dégradation. Patron uniforme
 // "fail immédiatement rattrapé au point de détection" pour les 7 cas.
-// see: docs/pipeline/niveau-blender.md#cycle-de-vie-du-levelhandle
+// see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
 
 /** `col_*`/`col_hull_*`/`col_mesh_*` sans géométrie valide (position absente)
  * ou avec 0 triangle. `prefixLabel` est le libellé du chemin emprunté
@@ -474,7 +474,7 @@ function formatDegenerateConvexHull(error: DegenerateConvexHullError): string {
 }
 
 // Conversion de matériau — invariant #5.
-// see: docs/systems/rendu.md#invariant-5-reconversion-depuis-gltfloader
+// see: docs/archive/systems-rendu.md#invariant-5-reconversion-depuis-gltfloader
 
 function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLambertMaterial {
   const src = mat as THREE.MeshStandardMaterial;
@@ -514,7 +514,7 @@ function convertToLambert(mesh: THREE.Mesh): void {
  * `obj.name`, pour tout ce qui touche au contrat de nommage. Exception :
  * `findClipForObject` lit `mesh.name` (mangled) à dessein, car les pistes
  * d'animation sont nommées à partir de ce même nom réécrit.
- * see: docs/pipeline/niveau-blender.md#le-nom-tel-que-tapé-dans-blender
+ * see: docs/archive/pipeline-niveau-blender.md#le-nom-tel-que-tapé-dans-blender
  */
 function blenderName(obj: THREE.Object3D): string {
   const raw = (obj.userData as Record<string, unknown> | undefined)?.name;
@@ -541,7 +541,7 @@ function cleanExtras(obj: THREE.Object3D): Record<string, unknown> {
  *
  * Extras lus (tous optionnels) : `color` (« #rrggbb »), `intensity`,
  * `distance`, `decay`. Les défauts correspondent à un tube de néon de plafond.
- * see: docs/systems/rendu.md#éclairage-hybride-lampes-temps-réel-ombre-cuite
+ * see: docs/archive/systems-rendu.md#éclairage-hybride-lampes-temps-réel-ombre-cuite
  */
 function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
   const extras = cleanExtras(obj);
@@ -562,7 +562,7 @@ function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
 }
 
 // Géométrie monde — voir le piège des transforms.
-// see: docs/pipeline/niveau-blender.md#extraction-et-le-piège-des-transforms
+// see: docs/archive/pipeline-niveau-blender.md#extraction-et-le-piège-des-transforms
 
 function worldSpaceGeometry(mesh: THREE.Mesh): THREE.BufferGeometry {
   const geo = mesh.geometry.clone();
@@ -580,7 +580,7 @@ function buildSequentialIndex(vertexCount: number): Uint32Array {
  * bounding box locale — vérifié en espace LOCAL, pas monde : un cuboid
  * tourné par son parent reste valide (la rotation est portée par le corps
  * Rapier), une déformation non uniforme échoue quel que soit son alignement.
- * see: docs/pipeline/niveau-blender.md#hiérarchie-des-colliders */
+ * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
 function isAxisAlignedBox(geometry: THREE.BufferGeometry, epsilon = 1e-4): boolean {
   const position = geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
   if (!position || position.count === 0) return false;
@@ -677,7 +677,7 @@ function buildStaticColliderSafe(
  * revalidation géométrique). Corps FIXED, groupe `COLLISION_GROUPS.WORLD`
  * (jamais `TRIGGER`/sensor — un `col_box_*` est un mur, pas un volume
  * logique). Centré sur la bounding box locale, comme `buildTriggerEffect`.
- * see: docs/pipeline/niveau-blender.md#hiérarchie-des-colliders */
+ * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
 function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RAPIER.RigidBody[]): void {
   mesh.geometry.computeBoundingBox();
   const bb = mesh.geometry.boundingBox!;
@@ -715,7 +715,7 @@ function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RA
  * automatique sur `buildStaticColliderEffect` (trimesh) pour ce même mesh —
  * un `col_hull_*` ne doit jamais rester sans AUCUN collider. Version
  * "brute" : `buildConvexHullColliderSafe` fait le rattrapage complet.
- * see: docs/pipeline/niveau-blender.md#hiérarchie-des-colliders */
+ * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
 function buildConvexHullColliderEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -971,7 +971,7 @@ function buildDoorEffect(
  * FIXE, groupe WORLD, tant que `solide !== false` — une verrière au plafond
  * (`solide: false`) n'a AUCUN collider et est incassable : un collider
  * au-dessus d'un sol serait pris pour le sol par le bake du graphe de
- * navigation, piège déjà connu des plafonds (voir `docs/reference/conventions-nommage.md`).
+ * navigation, piège déjà connu des plafonds (voir `docs/6-reference/conventions-nommage.md`).
  *
  * Double face + pas d'écriture de profondeur : une teinte unique de vitrage
  * rend l'ordre de mélange indifférent, pas besoin de trier les fragments.
@@ -1079,7 +1079,7 @@ function readSanitairePv(name: string, raw: unknown): Effect.Effect<number | nul
  * la bbox monde, groupe WORLD (comme un `vitre_*` solide). Ne construit QUE
  * le candidat — la fusion (`mergeSanitaireDecor`) et l'état de partie
  * (`SanitaireSystem`) vivent ailleurs, même séparation que `vitre_*`/`prop_*`.
- * see: docs/reference/conventions-nommage.md#préfixe-sanitaire
+ * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire
  */
 function buildSanitaireCandidateEffect(
   mesh: THREE.Mesh,
@@ -1243,7 +1243,7 @@ function readVitrePv(name: string, raw: unknown): Effect.Effect<number | null> {
  *
  * Extras lus (tous optionnels) : `masse` (kg), `pv` (absent = indestructible),
  * `matiere` (son de casse + couleur des débris).
- * see: docs/reference/conventions-nommage.md#props-physiques
+ * see: docs/archive/reference-conventions-nommage.md#props-physiques
  */
 function buildPropEffect(
   mesh: THREE.Mesh,
@@ -1305,7 +1305,7 @@ function buildPropEffect(
 /** `use_*` : objet interactif, portée 2 m. Cible lue dans `extras.target`.
  * Absence de cible = `UntargetedUseObjectWarning`, loggué immédiatement
  * (jamais bloquant) — l'objet est quand même retourné avec
- * `targetName: null`. see: docs/pipeline/niveau-blender.md#objets-interactifs */
+ * `targetName: null`. see: docs/archive/pipeline-niveau-blender.md#objets-interactifs */
 /** Lit une propriété de carte (`card`/`requires`) : absente -> `null` sans
  * bruit, présente mais inconnue -> `null` AVEC avertissement bruyant. */
 function readCardProperty(name: string, property: string, raw: unknown): Effect.Effect<LoyaltyCard | null> {
@@ -1433,7 +1433,7 @@ function buildLevelResourceEffect(
     const root = gltf.scene;
     scene.add(root);
     // Un seul passage sur tout le sous-arbre AVANT toute lecture de matrixWorld.
-    // see: docs/pipeline/niveau-blender.md#extraction-et-le-piège-des-transforms
+    // see: docs/archive/pipeline-niveau-blender.md#extraction-et-le-piège-des-transforms
     root.updateWorldMatrix(true, true);
 
     const nodes: THREE.Object3D[] = [];
@@ -1548,7 +1548,7 @@ function buildLevelResourceEffect(
 
       if (name.startsWith("col_")) {
         // Rétrocompatibilité (Zones A/B) : trimesh, sauf boîte détectée -> cuboid.
-        // see: docs/pipeline/niveau-blender.md#hiérarchie-des-colliders
+        // see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders
         if (isAxisAlignedBox(obj.geometry)) {
           buildCuboidCollider(obj, physics, bodies);
           colliderCount++;
@@ -1692,7 +1692,7 @@ function disposeLevelResource(resource: LevelResource, scene: THREE.Scene, physi
  * `Scope` GÉRÉ MANUELLEMENT (pas `Effect.scoped`, qui le fermerait —donc
  * libérerait le niveau — immédiatement après sa construction) : le niveau
  * doit rester vivant jusqu'à un appel explicite à `dispose()`.
- * see: docs/pipeline/niveau-blender.md#cycle-de-vie-du-levelhandle */
+ * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle */
 function acquireLevelResourceEffect(
   gltf: GLTF,
   scene: THREE.Scene,
@@ -1750,7 +1750,7 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
 /**
  * Version Effect de `buildLevelFromGltf`, exportée UNIQUEMENT pour les
  * tests (`@effect/vitest`) — `main.ts` n'importe jamais ce nom.
- * see: docs/pipeline/niveau-blender.md#cycle-de-vie-du-levelhandle
+ * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
  */
 export function buildLevelFromGltfEffect(
   gltf: GLTF,

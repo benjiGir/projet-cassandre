@@ -18,7 +18,7 @@ charger que ce que le joueur voit** avec un préchargement pour éviter
 l'apparition d'objets sous ses yeux.
 
 Plutôt que d'arbitrer sur des ordres de grandeur supposés, on a mesuré. Les
-chiffres, la méthode et leurs limites : [Ce que coûte une image](../systems/cout-de-rendu.md).
+chiffres, la méthode et leurs limites : [Ce que coûte une image](../4-technique/budget-de-rendu.md).
 
 ## Ce que la mesure dit
 
@@ -98,7 +98,7 @@ porte beaucoup plus de matériaux distincts, et 32 m coûtait **163 lots de
 dessin sur 200** au pire point de vue contre **122 à 48 m**, pour 3,7 % de
 triangles en plus seulement. Le levier annoncé ici a donc été tiré, au moment
 où la mesure l'a réclamé et pas avant. Tableaux complets dans
-[Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+[Ce que coûte une image](../archive/systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
 
 **Le budget sous tension est celui des lots, pas celui des triangles** (33 % du
 budget). À re-mesurer quand les dix espaces seront habillés : si 48 m ne suffit

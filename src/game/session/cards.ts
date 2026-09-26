@@ -12,7 +12,7 @@ import { type GameSession } from "./gameSession";
  * ([ADR 0020](../../../docs/decisions/0020-state-feuille-de-dependances.md),
  * et invariant #2 — React ne décide rien dans la boucle).
  *
- * see: docs/systems/session.md#cartes-de-fidélité
+ * see: docs/archive/systems-session.md#cartes-de-fidélité
  */
 
 /** La carte est-elle en poche ? */

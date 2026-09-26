@@ -25,7 +25,7 @@ vide. Corrigé le 2026-09-11 (`refreshSceneQueries()`), mesuré le 2026-09-12
 ## Contexte
 
 `enemyMachine.ts::hasClearWorldPath` (voir [Entités et IA —
-Navigation](../systems/entites.md#navigation)) tire un rayon `WORLD_ONLY_RAY_GROUPS`
+Navigation](../archive/systems-entites.md#navigation)) tire un rayon `WORLD_ONLY_RAY_GROUPS`
 entre les yeux de l'ennemi et ceux du joueur ; un `spawn_suit_*`/
 `spawn_director_*` posé derrière une rangée de gondoles (Zone C) ou de racks
 (Zone D) est censé rester `idle`/`alert` sans jamais atteindre `attack` tant
@@ -78,7 +78,7 @@ n'a pas été testée.
 
 Rapier ne rend un collider visible aux rayons qu'après un `world.step()`
 (voir [Physique — Colliders invisibles aux rayons avant le premier
-pas](../systems/physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
+pas](../archive/systems-physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
 Au chargement d'un niveau, rien n'avançait la simulation avant la première
 passe d'IA : si le premier rayon de ligne de vue d'un ennemi part avant le
 premier pas de physique, il ne rencontre aucun collider et « voit » le

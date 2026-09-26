@@ -7,7 +7,7 @@ description: Découplage entre la boucle de jeu et l'UI React — store zustand,
 
 > **Note** — Ce skill couvre le pont entre la boucle et React. La FORME du code
 > React (rangement, CSS, composition, API de React 19.2) est fixée par quatre
-> règles à lire avant d'écrire : `docs/reference/react-structure.md`,
+> règles à lire avant d'écrire : `docs/6-reference/react-structure.md`,
 > `react-bonnes-pratiques.md`, `react-css.md`, `react-composition.md`.
 
 ## Le principe
@@ -77,7 +77,7 @@ Personne ne perçoit une barre de vie mise à jour 60 fois par seconde.
 ## Machines XState : même pont, pas `@xstate/react`
 
 Le flux d'écran (`src/ui/gameFlowMachine.ts`, jalon M8 de
-`PLAN_EFFECT_XSTATE.md`) pousse son état dans ce même store via
+`docs/journal/plan-effect-xstate-2026-09.md`) pousse son état dans ce même store via
 `actor.subscribe((snapshot) => useGameStore.getState().setFlowState(snapshot.value))`
 — React ne s'abonne toujours qu'au store zustand, jamais directement à
 l'acteur (`@xstate/react` est interdit). Un changement d'état de flux est un

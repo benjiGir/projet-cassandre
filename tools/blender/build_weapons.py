@@ -64,7 +64,7 @@ PALETTE = {
     "manche": "#4a5a33",
     "poignet": "#3b4829",
     "peau": "#c89a78",
-    # Pistolet (docs/assets/board-pistolet.md section 3.7) : inox clair sur
+    # Pistolet (docs/journal/playtests-2026-09.md section 3.7) : inox clair sur
     # carcasse noire, trois valeurs d'inox pour peindre l'éclairage à la
     # manière du Build. `acier_bleui` reprend `acier_sombre` (même hex,
     # #2c2e33) : c'est la même famille de teinte, pas une nouvelle couleur.
@@ -84,7 +84,7 @@ PRISE_PDB = (0.27, 0.40, -0.26)
 AXE_PDB = (-0.15, 0.90, 0.60)          # la barre pointe devant, le col s'arrête sous le réticule
 PRISE_POMPE = (0.21, 0.30, -0.25)
 AXE_CANON = (-0.06, 1.0, 0.07)         # presque droit devant : on voit le flanc gauche
-# Board de références (docs/assets/board-pistolet.md, section 3.3) : la
+# Board de références (docs/journal/playtests-2026-09.md, section 3.3) : la
 # culasse descend d'environ 3,4 cm à prise égale par rapport à l'ancien
 # modèle (dessus à +0,085 contre +0,119) — la prise recule et descend pour
 # garder le bout du canon au même endroit à l'écran.
@@ -259,7 +259,7 @@ def construire_pistolet(vue_subjective: bool = False) -> bpy.types.Object:
     """Repère de l'arme : canon vers +Y, Z en haut, origine au milieu de la
     poignée (là où se referme le poing). Beretta 92FS deux tons, gabarit
     compact — cotes et priorités de silhouette dans
-    `docs/assets/board-pistolet.md`.
+    `docs/journal/playtests-2026-09.md`.
 
     `vue_subjective` applique les trois exagérations de la section 3.2 (le
     modèle au sol garde ses vraies cotes, `1,0` partout) : la CULASSE

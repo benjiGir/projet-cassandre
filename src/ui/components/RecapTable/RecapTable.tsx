@@ -21,7 +21,7 @@ export interface RecapTableProps {
  * variable au rendu, aucun `setInterval`/état React (invariant #2). Les
  * boutons de l'écran qui contient cette table sont des frères, jamais
  * masqués par elle : la révélation ne retarde aucune action.
- * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+ * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
  */
 export function RecapTable({ recap, className }: RecapTableProps) {
   if (!recap) return null;

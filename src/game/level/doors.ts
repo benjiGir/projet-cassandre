@@ -4,7 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { attributeKey, materialKey } from "./mergeStaticDecor";
 
 /**
- * `door_*` animés — voir `docs/reference/conventions-nommage.md#portes-animées`
+ * `door_*` animés — voir `docs/archive/reference-conventions-nommage.md#portes-animées`
  * et [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md) pour
  * la cause racine (aucune porte ne bougeait jamais à l'écran depuis la porte à
  * badge de la Zone E, 2026-08-23 : `session/doors.ts::unlockDoor` désactivait

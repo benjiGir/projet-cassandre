@@ -13,7 +13,7 @@ Accepté.
 
 ## Contexte
 
-Avant le jalon M8 (`PLAN_EFFECT_XSTATE.md`, §10), la fin de partie (mort,
+Avant le jalon M8 (`docs/journal/plan-effect-xstate-2026-09.md`, §10), la fin de partie (mort,
 niveau terminé) et les boutons « Rejouer »/« Retour au menu principal »
 passaient par `window.location.reload()`/`assign()` (`ui/screenNav.ts`) :
 tout état de process (config de tuning à chaud, etc.) était perdu, et
@@ -37,7 +37,7 @@ Le VRAI reset (dispose + reconstruction de `PhysicsWorld`/`SuitManager`/
 `game/session/lifecycle.ts` (`replay`/`returnToMenu`), déclenché par les
 mêmes boutons qui envoient `REPLAY`/`RETURN_TO_MENU` à l'acteur — voir
 [Session de partie — Rejouer et retour au
-menu](../systems/session.md#rejouer-et-retour-au-menu). Les écrans
+menu](../archive/systems-session.md#rejouer-et-retour-au-menu). Les écrans
 (`DeathScreen`, `LevelCompleteScreen`) reçoivent `onReplay`/`onReturnToMenu`
 comme de vraies fonctions en props, même pattern de callback que
 `MainMenu`/`RebindScreen` (`onPlay`/`onOptions`/`onBack`) — pas un nouveau
@@ -81,7 +81,7 @@ artefacts de la table de transition, pas un comportement observable en jeu.
 
 Un 8ᵉ état, `paused`, rejoint le graphe (`playing --PAUSE--> paused
 --RESUME--> playing`, plus `paused --RETURN_TO_MENU--> mainMenu`) — voir
-[Session de partie — Pause](../systems/session.md#pause). Contrairement à
+[Session de partie — Pause](../archive/systems-session.md#pause). Contrairement à
 `options`/`levelSelect` ci-dessus, `paused` **est** atteint par l'acteur
 réel : `main.ts` envoie `PAUSE` sur perte du verrouillage du pointeur
 pendant `playing`. Aucune remise en cause de la décision — la pause suit

@@ -33,7 +33,7 @@ import { beginLoading, letBrowserPaint, reportLoading } from "./core/loadingProg
 
 // Orchestrateur mince depuis le refactor du 2026-09-05 (2229 -> 129 lignes,
 // extraction structurelle pure, aucun comportement observable changé).
-// see: docs/systems/session.md#origine-des-modules-gamesession
+// see: docs/archive/systems-session.md#origine-des-modules-gamesession
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const uiRoot = document.getElementById("ui-root") as HTMLDivElement;
@@ -58,7 +58,7 @@ async function main() {
   // Un seul acteur pour toute la durée de vie de l'onglet, créé AVANT le
   // choix du niveau ci-dessous — jamais recréé par `replay`/`returnToMenu`.
   // see: docs/decisions/0019-machine-xstate-flux-ecran.md
-  // see: docs/systems/hud.md#flux-décran
+  // see: docs/4-technique/interface-react.md#flux-décran
   const flowActor = createGameFlowActor();
   const flow = {
     isPlaying: () => flowActor.getSnapshot().value === "playing",
@@ -83,7 +83,7 @@ async function main() {
 
   // Choix du niveau (Phase 5), tout en haut de `main()` — voir l'ordre exact
   // et pourquoi `ENTER_MENU` n'est envoyé qu'ici.
-  // see: docs/systems/session.md#choix-du-niveau-au-boot
+  // see: docs/archive/systems-session.md#choix-du-niveau-au-boot
   if (!new URLSearchParams(window.location.search).get("level")) {
     flowActor.send({ type: "ENTER_MENU" });
   }
@@ -94,7 +94,7 @@ async function main() {
   // jusqu'à ce que le niveau soit réellement là. Avant ça, le menu restait
   // affiché, figé, pendant les 29 Mo du niveau v2 — puis le HUD apparaissait
   // sur une scène vide, le décor surgissant d'un coup quelques secondes plus
-  // tard. see: docs/systems/hud.md#écran-de-chargement
+  // tard. see: docs/archive/systems-hud.md#écran-de-chargement
   beginLoading("Démarrage", 0.02);
   root.render(createElement(LoadingScreen));
   await letBrowserPaint();
@@ -110,7 +110,7 @@ async function main() {
   // boucle d'affichage (un changement de flux est un évènement DISCRET, pas
   // un flux à 60 Hz — voir le skill `react-hud-bridge`) ; `flowActor` est
   // fermé par référence, `engine` n'a pas besoin d'exister encore.
-  // see: docs/systems/session.md#pause
+  // see: docs/archive/systems-session.md#pause
   document.addEventListener("pointerlockchange", () => {
     if (document.pointerLockElement === canvas) return; // verrouillage OBTENU, pas perdu
     if (flowActor.getSnapshot().value !== "playing") return;
@@ -122,11 +122,11 @@ async function main() {
   // see: docs/systems/hud-audio.md#assets-sonores
   initAudio();
   // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
-  // see: docs/systems/hud-audio.md#musique-et-nappe-dambiance
+  // see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
   initMusic();
   // Boucle d'eau positionnelle des sanitaires cassés — module séparé lui
   // aussi (mise à jour continue par frame, pas un pool de sons ponctuels).
-  // see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+  // see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
   initWaterAmbience();
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
@@ -144,7 +144,7 @@ async function main() {
   // État PERSISTANT (survit à un reset) : `buildGameEngine` ne construit PAS
   // `session` (ordre de construction circulaire) — `bootGameSession` la
   // construit juste après, à partir de ce même `persistentEngine`.
-  // see: docs/systems/session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
+  // see: docs/archive/systems-session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
   const persistentEngine = buildGameEngine(
     canvas,
     flow,
@@ -180,7 +180,7 @@ async function main() {
 
   // `<App/>` monté APRÈS la construction du monde : `onReplay`/
   // `onReturnToMenu`/`onResume` ferment sur `engine`.
-  // see: docs/systems/hud.md#composition-de-app
+  // see: docs/archive/systems-hud.md#composition-de-app
   root.render(
     createElement(App, {
       onReplay: () => void sessionFlow.replay(),
@@ -193,7 +193,7 @@ async function main() {
     updateDisplayInput: () => updateDisplayInput(engine),
     snapshotPrevious: () => snapshotPrevious(engine),
     // Décide le mouvement AVANT le step.
-    // see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks
+    // see: docs/archive/systems-boucle-de-jeu.md#ordre-des-callbacks
     updateGameplay: (dt) => updateGameplay(engine, dt),
     stepPhysics: (dt) => stepPhysics(engine, dt),
     interpolateVisuals: (alpha) => interpolateVisuals(engine, alpha),
@@ -208,7 +208,7 @@ async function main() {
 
   // `window.cassandre` est un outil de dev, pas une API joueur : il donne des
   // cartes, téléporte, rend les ennemis passifs. Absent du build de production.
-  // see: docs/systems/debug.md#point-dentrée-console-windowcassandre
+  // see: docs/archive/systems-debug.md#point-dentrée-console-windowcassandre
   if (import.meta.env.DEV) exposeDebugApi(engine);
 }
 

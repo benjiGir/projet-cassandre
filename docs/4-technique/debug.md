@@ -24,7 +24,7 @@ Ils sont séparés des commandes de jeu et absents du build de production.
 - `src/ui/dev/tuning/TuningPanel/TuningPanel.tsx` expose les paramètres de tuning.
 - `src/core/inputRecorder.ts` définit le format des séquences d'input.
 - `src/game/session/recording.ts` restaure une séquence dans la session pour son rejeu.
-- [Page de debug historique](../systems/debug.md) conserve des explications détaillées du système.
+- [Page de debug historique](./debug.md) conserve des explications détaillées du système.
 
 ## Où ça s'insère dans la boucle
 

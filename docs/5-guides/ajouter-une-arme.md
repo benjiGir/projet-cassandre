@@ -18,6 +18,8 @@ vérification.
 - Lisez [Armes](../4-technique/armes.md), [Sprites et
   viewmodel](../4-technique/sprites-et-viewmodel.md) et
   [Contrôles](../6-reference/controles.md).
+- Consultez les [valeurs de référence](../6-reference/valeurs-armes.md)
+  avant de modifier les dégâts, cadence, portée ou munitions.
 - Déterminez si l'arme est au contact, hitscan ou projectile et comment
   ses munitions sont gérées.
 - Vérifiez que son ajout ne viole pas le contrat du pas fixe, du RNG ou

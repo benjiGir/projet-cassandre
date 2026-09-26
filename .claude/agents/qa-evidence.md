@@ -55,7 +55,7 @@ Un dépassement est un échec de gate, pas une note de bas de page.
 
 ## Gates de phase
 
-Tu valides contre les critères écrits dans `PLAN_PROTO_BOOMER_SHOOTER.md`,
+Tu valides contre les critères écrits dans `docs/journal/plan-prototype-2026-08.md`,
 pas contre ton propre jugement. Les critères de feel (« c'est agréable après
 2 minutes ») sont **hors de ta portée** : tu constates que le test a été fait
 et par qui, tu ne le juges pas.

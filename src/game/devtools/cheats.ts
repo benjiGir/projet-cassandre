@@ -12,7 +12,7 @@
  * `notarget` actif ne rejoue pas la même partie s'il est relu sans — la
  * continuité du RNG est intacte (invariant #12), mais les ennemis, eux, ne
  * prennent plus les mêmes décisions.
- * see: docs/reference/controles.md#touches-de-dev
+ * see: docs/archive/reference-controles.md#touches-de-dev
  */
 export interface Cheats {
   /** Les ennemis ne voient plus le joueur, et leurs attaques ne font rien. */

@@ -52,8 +52,11 @@ puis contrôler et exporter le résultat destiné au jeu.
 9. Mettez à jour les repères de spawn après un changement des volumes ou
    props voisins.
 10. Relancez la construction depuis la session Blender ouverte avec le
-    connecteur prévu. Le script doit reconstruire la scène à partir des
-    sources versionnées.
+    connecteur Blender MCP. Vérifiez qu'il vise le `.blend` attendu, puis
+    utilisez son action d'exécution Python pour lancer
+    `tools/level_v2/build_niveau.py`. Le script reconstruit la scène à
+    partir des sources versionnées ; les noms exacts des commandes MCP
+    dépendent de l'installation.
 11. Regardez le résultat à hauteur du joueur et depuis les points de vue
     qui révèlent l'intersection ou l'occultation.
 12. Corrigez la source, puis relancez la construction. Ne gardez pas un

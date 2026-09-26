@@ -6,7 +6,7 @@
  * rayons, Or dans l'électroménager, Platine lâchée par le Directeur. Rien
  * ici ne connaît le niveau : quelle carte se trouve où, et quelle porte en
  * demande laquelle, est écrit dans le `.glb` (voir
- * `docs/reference/conventions-nommage.md#cartes-de-fidélité`), jamais dans ce
+ * `docs/archive/reference-conventions-nommage.md#cartes-de-fidélité`), jamais dans ce
  * fichier.
  *
  * Source unique de la liste et de ses libellés. `game/state.ts` redéclare

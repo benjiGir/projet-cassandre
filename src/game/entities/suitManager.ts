@@ -20,7 +20,7 @@ import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
  * malgré un `weapons.hitEvents` qui accumule sur PLUSIEURS pas fixes d'une
  * même frame — remis à 0 UNIQUEMENT par `clearFrameEvents()`, jamais inféré.
  * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
- * see: docs/systems/entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
+ * see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
  */
 
 export interface SuitAlertEvent {

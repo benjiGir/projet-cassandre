@@ -20,10 +20,10 @@ lecture, ni à `src/core/`, ni à `src/render/`.
 boucle de travail — elle parle de Blender, sa méthode vaut telle quelle ici.
 
 **Avant d'écrire une ligne de React**, lis les quatre règles du projet :
-[structure et rangement](../../docs/reference/react-structure.md),
-[bonnes pratiques React 19.2](../../docs/reference/react-bonnes-pratiques.md),
-[CSS](../../docs/reference/react-css.md),
-[composition](../../docs/reference/react-composition.md). Elles s'appliquent à
+[structure et rangement](../../docs/6-reference/react-structure.md),
+[bonnes pratiques React 19.2](../../docs/6-reference/react-bonnes-pratiques.md),
+[CSS](../../docs/6-reference/react-css.md),
+[composition](../../docs/6-reference/react-composition.md). Elles s'appliquent à
 l'agent principal comme à toi. Être créatif sur le rendu n'autorise aucun
 écart sur la forme du code : une proposition audacieuse s'écrit avec les mêmes
 primitives, les mêmes jetons et un `.module.css` par composant.

@@ -21,7 +21,7 @@ import type { GameSession } from "./gameSession";
  * État PERSISTANT du process (construit une fois, survit à un reset de
  * partie) — pendant de `GameSession` (`gameSession.ts`), l'état PROPRE À
  * une partie.
- * see: docs/systems/session.md#létat-persistant-du-process-gameengine
+ * see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
  */
 export interface GameEngine {
   scene: THREE.Scene;
@@ -84,7 +84,7 @@ export interface GameEngine {
 /**
  * `GameEngine` moins `session` — rompt un ordre de construction circulaire
  * entre `buildGameEngine` et la toute première `GameSession`.
- * see: docs/systems/session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
+ * see: docs/archive/systems-session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
  * see: docs/decisions/0014-gameengine-persistentengine-separes.md
  */
 export type PersistentEngine = Omit<GameEngine, "session">;
@@ -93,7 +93,7 @@ export type PersistentEngine = Omit<GameEngine, "session">;
  * `true` ssi le monde Rapier de `engine.session` est garanti vivant — pas
  * encore construit, ou déjà `free()`-é pendant la fenêtre transitoire de
  * `returnToMenu()`. À ne pas confondre avec `flow.isPlaying()`.
- * see: docs/systems/session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
+ * see: docs/archive/systems-session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
  * see: docs/decisions/0013-garde-flux-vs-monde-physique.md
  */
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
@@ -104,7 +104,7 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
  * Construit TOUT l'état PERSISTANT du jeu, appelée UNE SEULE FOIS par
  * `main()` avant le tout premier `bootGameSession`. Retourne
  * `PersistentEngine`, pas `GameEngine` : `session` n'existe pas encore.
- * see: docs/systems/session.md#létat-persistant-du-process-gameengine
+ * see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
  */
 export function buildGameEngine(
   canvas: HTMLCanvasElement,

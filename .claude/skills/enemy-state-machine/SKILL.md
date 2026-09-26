@@ -28,13 +28,14 @@ joueur est un état inutile : supprime-le plutôt que de l'implémenter.
 
 Implémentée comme une **seule machine XState partagée** entre Costard et
 Directeur (`src/game/entities/enemyMachine.ts`, jalon M5 de
-`PLAN_EFFECT_XSTATE.md` — avant, deux implémentations dupliquées). Aucune
+`docs/journal/plan-effect-xstate-2026-09.md` — avant, deux implémentations dupliquées). Aucune
 transition retardée par `after` (`setTimeout` réel) : toute durée d'état
 (`alertDuration`, `attackTelegraphDuration`, `staggerDuration`,
 `deathFrameDuration`...) vit dans `context.stateTimer`, décrémentée par un
 évènement `TICK` envoyé une fois par pas fixe avec le `gameplayDt` réel —
-sinon le hitstop ne ralentirait plus les ennemis. Voir invariant #13 de
-`CLAUDE.md` et le skill `effect-xstate-cassandre`.
+sinon le hitstop ne ralentirait plus les ennemis. C'était l'invariant #13,
+retiré le 2026-09-25 : le mécanisme reste le choix actuel du code. Voir le
+skill `effect-xstate-cassandre`.
 
 ## Les quatre règles de lisibilité
 
@@ -52,7 +53,7 @@ sinon le hitstop ne ralentirait plus les ennemis. Voir invariant #13 de
 ## Navigation
 
 **Un vrai pathfinding 2.5D existe** (`PathfindingService`,
-`src/game/level/pathfinding.ts`, jalon M4 de `PLAN_EFFECT_XSTATE.md`) : un
+`src/game/level/pathfinding.ts`, jalon M4 de `docs/journal/plan-effect-xstate-2026-09.md`) : un
 graphe de praticabilité baké par niveau, pas seulement l'évitement local
 d'avant. L'évitement à 3 rayons (avant, avant-gauche 30°, avant-droit 30°)
 décrit ci-dessous **reste utilisé** pour l'esquive fine à courte portée —

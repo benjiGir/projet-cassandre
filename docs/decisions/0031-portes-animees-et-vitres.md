@@ -7,6 +7,8 @@ updated: 2026-09-19
 
 # ADR 0031 — Portes animées et vitres : `DoorSystem`/`VitreSystem`, collider actif seulement fermé
 
+> **Note** — L'invariant #13 cité ici a été retiré le 2026-09-25.
+
 ## Contexte
 
 Retour de playtest : « j'aimerais des vraies portes qui bougent, des vraies
@@ -175,7 +177,7 @@ progressif : un raté qui frôle une vitre la fait logiquement voler en
   et la bouffée de givre, eux, utilisent `Math.random()` — cosmétiques,
   vivent dans `render/fx.ts`, hors du pas fixe, même statut que les gibs/
   débris de prop ([ADR 0018](0018-physique-jouet-debris-cosmetiques.md)).
-- **`docs/reference/conventions-nommage.md`** documente l'API complète des
+- **`docs/6-reference/conventions-nommage.md`** documente l'API complète des
   extras (`mouvement`, `charniere`, `angle`, `sens`, `course`, `duree`,
   `auto`, `referme`, `delai`, `groupe`, `portee` pour `door_*` ; `solide`,
   `pv`, `givre` pour `vitre_*`).
@@ -222,7 +224,7 @@ main à chaque point de vue) :
 
 Pire vue mesurée après ces trois corrections : **188 lots sur un budget de
 200** (contre 219 avant, et 198 avant toute cette passe). Tableau complet et
-méthode : [Ce que coûte une image](../systems/cout-de-rendu.md#ce-qui-ne-fusionne-jamais).
+méthode : [Ce que coûte une image](../archive/systems-cout-de-rendu.md#ce-qui-ne-fusionne-jamais).
 
 **Un défaut trouvé par le test du regroupement, pas par l'œil** :
 `DoorSystem.interpolate` sautait un vantail dès que ses poses précédente et

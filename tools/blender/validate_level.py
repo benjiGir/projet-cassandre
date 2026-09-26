@@ -28,7 +28,7 @@ MAX_TEXTURE = 128
 # Exception décidée le 2026-09-15 : l'atlas des affiches de marques (`aff_*`)
 # ne se répète pas sur un mur, il porte quinze affiches lisibles en UN seul
 # matériau. Le découper en textures de 128 coûterait un lot de dessin par
-# affiche. Voir docs/pipeline/harmonisation-assets.md#affiches-de-marques.
+# affiche. Voir docs/4-technique/generateurs.md#affiches-de-marques.
 MAX_TEXTURE_AFFICHES = 512
 TEXEL_DENSITY = 64.0          # px/m
 MAX_STEP = 0.35               # autostep du character controller
@@ -53,7 +53,7 @@ PREFIXES = (
 )
 
 # Extras d'un `door_*` animé — doivent rester identiques à ce que lit
-# src/game/level/doorSystem.ts (docs/reference/conventions-nommage.md#portes).
+# src/game/level/doorSystem.ts (docs/6-reference/conventions-nommage.md#portes).
 MOUVEMENTS_PORTE = ("descend", "monte", "battant", "coulisse")
 CHARNIERES = ("min", "max")
 SENS_PORTE = ("auto", "+", "-")
@@ -73,7 +73,7 @@ PROP_MATIERES = ("bois", "carton", "verre", "metal")
 
 # Sortes de `sanitaire_*` — cuvette et urinoir, utilisables et cassables façon
 # Duke Nukem 3D (2026-09-24). Doit rester identique à ce que lit le runtime
-# côté loader (voir `docs/reference/conventions-nommage.md#sanitaires`).
+# côté loader (voir `docs/6-reference/conventions-nommage.md#sanitaires`).
 SANITAIRE_SORTES = ("cuvette", "urinoir")
 
 errors: list[str] = []

@@ -12,8 +12,8 @@ import * as THREE from "three";
  * Découplage de `game/*`, objets 3D réels non éclairés (pas une entorse à
  * l'invariant #5 — calque de diagnostic transitoire), temps réel (géométrie
  * figée sur l'instant du tir, seule la décroissance est temps réel) :
- * see: docs/systems/rendu.md#découplage-entre-render-et-game
- * see: docs/systems/rendu.md#gizmos-balistiques-de-debug
+ * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
+ * see: docs/archive/systems-rendu.md#gizmos-balistiques-de-debug
  */
 
 /** "Quelques centaines de ms", auto-effacé — voir la doc de tête. */

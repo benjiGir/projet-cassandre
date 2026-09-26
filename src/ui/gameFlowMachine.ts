@@ -10,9 +10,9 @@ import type { GameFlowState } from "../game/state";
  * transition testée ci-dessous (les états `options`/`levelSelect` ne sont
  * jamais atteints par l'acteur réel de l'application) — `paused`, lui, EST
  * atteint réellement (`main.ts`, sur perte du verrouillage du pointeur
- * pendant `playing`), voir `docs/systems/session.md#pause`.
+ * pendant `playing`), voir `docs/archive/systems-session.md#pause`.
  * see: docs/decisions/0019-machine-xstate-flux-ecran.md
- * see: docs/systems/hud.md#flux-décran
+ * see: docs/4-technique/interface-react.md#flux-décran
  */
 
 export type GameFlowEvent =
@@ -85,7 +85,7 @@ export const gameFlowMachine = setup({
     // Le pas fixe continue de tourner en pause (invariant #1), seul son
     // CONTENU est ignoré (`updateGameplay.ts`, garde `flowState !== "playing"`
     // déjà en place) — même mécanisme que "dead"/"levelComplete", pas un
-    // système séparé. see: docs/systems/session.md#pause
+    // système séparé. see: docs/archive/systems-session.md#pause
     paused: {
       on: {
         RESUME: "playing",

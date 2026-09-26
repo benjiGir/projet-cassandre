@@ -17,14 +17,14 @@ import type { PhysicsWorld } from "./world";
  * construits par l'appelant (scratch réutilisé) — ce service n'en fabrique
  * jamais lui-même.
  *
- * see: docs/systems/physique.md#service-de-raycasting-raycastservice
+ * see: docs/archive/systems-physique.md#service-de-raycasting-raycastservice
  */
 export interface RaycastServiceShape {
   /**
    * Miroir 1:1 de `RAPIER.World.castRay` — hit/pas-hit avec collider et
    * timeOfImpact, sans normale.
    *
-   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
+   * see: docs/archive/systems-physique.md#service-de-raycasting-raycastservice
    */
   readonly castRay: (
     physics: PhysicsWorld,
@@ -42,7 +42,7 @@ export interface RaycastServiceShape {
    * Miroir 1:1 de `RAPIER.World.castRayAndGetNormal` — hit détaillé avec
    * normale.
    *
-   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
+   * see: docs/archive/systems-physique.md#service-de-raycasting-raycastservice
    */
   readonly castRayAndGetNormal: (
     physics: PhysicsWorld,
@@ -75,7 +75,7 @@ export interface RaycastServiceShape {
    * sont collectés dans un tableau retourné plutôt qu'exposés via un
    * callback, pour rester un `Effect.sync` direct.
    *
-   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
+   * see: docs/archive/systems-physique.md#service-de-raycasting-raycastservice
    */
   readonly intersectionsWithShape: (
     physics: PhysicsWorld,
@@ -188,7 +188,7 @@ export class RaycastService extends Context.Service<RaycastService, RaycastServi
    * passer un override par méthode pour scripter un résultat précis (voir
    * `test/physics/raycast.test.ts`).
    *
-   * see: docs/systems/physique.md#service-de-raycasting-raycastservice
+   * see: docs/archive/systems-physique.md#service-de-raycasting-raycastservice
    */
   static readonly test = (overrides: Partial<RaycastServiceShape> = {}) =>
     Layer.succeed(

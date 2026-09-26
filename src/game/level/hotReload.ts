@@ -9,7 +9,7 @@ import { GameRuntime } from "../../core/runtime";
  * Hot reload DEV SEULEMENT pour les niveaux `.glb` — sondage HTTP HEAD plutôt
  * qu'un watcher fichier (voir ADR 0011), préserve la position du joueur, et
  * retrofit Effect au jalon M2 (erreurs typées, mutex de rechargement,
- * polling par `Schedule`). see: docs/pipeline/niveau-blender.md#hot-reload
+ * polling par `Schedule`). see: docs/archive/pipeline-niveau-blender.md#hot-reload
  *
  * `LevelSession.current` DOIT rester un accès JS brut, sans la moindre
  * indirection Effect : `main.ts` le lit À CHAQUE PAS FIXE (invariant #11,
@@ -87,7 +87,7 @@ export function createLevelSession(
 
   // Garde-fou structurel EN PLUS de `reloadInFlight` (ne le remplace pas —
   // un Semaphore seul sérialiserait les appels concurrents au lieu de les
-  // coalescer). see: docs/pipeline/niveau-blender.md#hot-reload
+  // coalescer). see: docs/archive/pipeline-niveau-blender.md#hot-reload
   const reloadSemaphore = Semaphore.makeUnsafe(1);
 
   async function performLoadAttempt(): Promise<LevelLoadResult> {

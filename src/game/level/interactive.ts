@@ -6,7 +6,7 @@ import type { LoyaltyCard } from "../player/loyaltyCards";
 /**
  * Système d'interaction (`use_*`) — voir `loader.ts` pour la construction de
  * `UseObject` (portée, position monde, `targetName`).
- * see: docs/pipeline/niveau-blender.md#objets-interactifs
+ * see: docs/archive/pipeline-niveau-blender.md#objets-interactifs
  */
 
 /** Un appelant `main.ts` fournit une callback par effet nommé reconnu. Étendre cette interface au fur et à mesure que de nouveaux `use_*` nommés gagnent un effet — jamais un système générique de callbacks indexé par nom.
@@ -68,7 +68,7 @@ export interface InteractionHandlers {
 export interface WeaponPickupHandlers {
   /** `use_crowbar`. Le pied-de-biche n'a pas de munitions : un joueur qui
    * l'a déjà n'a rien à en tirer, l'appelant renvoie alors `false` et
-   * l'objet reste au sol indéfiniment (voir `docs/systems/armes.md`). */
+   * l'objet reste au sol indéfiniment (voir `docs/4-technique/armes.md`). */
   onCrowbarPickup(): boolean;
   /** `use_shotgun`. Même contrat que `onCrowbarPickup` — le pompe garde sa
    * dotation unique (aucun mécanisme de recharge n'existe pour lui), donc un
@@ -93,7 +93,7 @@ export const HEAL_PICKUP_RADIUS = 1.2;
 export class InteractionSystem {
   /** Objets `use_*` déjà consommés, PAR RÉFÉRENCE DE MESH, pas par nom — un
    * hot reload remplace tout mesh, donc redevient déclenchable (dev-only).
-   * see: docs/pipeline/niveau-blender.md#objets-interactifs */
+   * see: docs/archive/pipeline-niveau-blender.md#objets-interactifs */
   private readonly consumed = new WeakSet<THREE.Object3D>();
 
   private nearestName: string | null = null;

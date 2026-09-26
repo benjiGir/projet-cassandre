@@ -17,7 +17,7 @@ import { assetUrl } from "../core/assetPath";
  *
  * Les six faces sont générées par `tools/textures/generate_ciel.py` dans
  * `public/assets/sky/<nom>/`.
- * see: docs/systems/rendu.md#ciel
+ * see: docs/archive/systems-rendu.md#ciel
  */
 
 const FACES = ["px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"];

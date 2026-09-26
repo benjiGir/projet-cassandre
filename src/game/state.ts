@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // see: docs/decisions/0020-state-feuille-de-dependances.md
-// see: docs/systems/hud.md#flux-décran
+// see: docs/4-technique/interface-react.md#flux-décran
 export type GameFlowState =
   | "boot"
   | "mainMenu"
@@ -21,7 +21,7 @@ export type GameFlowState =
  * réimporté par lui, même pattern que `GameFlowState` ci-dessus (ADR 0020,
  * `game/state.ts` reste une FEUILLE de dépendances — c'est aux autres
  * modules d'importer depuis lui, jamais l'inverse).
- * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+ * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
  */
 export interface RecapLine {
   label: string;
@@ -46,7 +46,7 @@ export interface DebugState {
   /** Pas fixes exécutés pendant la dernière frame d'affichage (spirale de rattrapage si > 2 durablement). */
   steps: number;
 
-  // see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
+  // see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
   gameplayMs: number;
   gameplayP95Ms: number;
   astarQueries: number;
@@ -57,13 +57,13 @@ export interface DebugState {
   physicsMs: number;
   renderMs: number;
 
-  // see: docs/systems/debug.md#coût-de-rendu
+  // see: docs/archive/systems-debug.md#coût-de-rendu
   /** Draw calls de la dernière image rendue (`renderer.info.render.calls`). */
   drawCalls: number;
   /** Triangles de la dernière image rendue (`renderer.info.render.triangles`). */
   triangles: number;
 
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   isGrounded: boolean;
   /** Vitesse horizontale, m/s. */
   horizontalSpeed: number;
@@ -74,11 +74,11 @@ export interface DebugState {
   /** Normale du sol sous les pieds. */
   groundNormal: { x: number; y: number; z: number };
 
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   playerHp: number;
   playerMaxHp: number;
 
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   shotgunAmmo: number;
   shotgunMaxAmmo: number;
   pistolAmmo: number;
@@ -87,7 +87,7 @@ export interface DebugState {
   // see: docs/decisions/0020-state-feuille-de-dependances.md
   activeWeapon: "none" | "melee" | "pistol" | "shotgun";
 
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   secretsFound: number;
   secretsTotal: number;
 
@@ -97,7 +97,7 @@ export interface DebugState {
    * see: docs/decisions/0020-state-feuille-de-dependances.md */
   cards: readonly ("argent" | "or" | "platine")[];
 
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   views: number;
 }
 
@@ -109,7 +109,7 @@ interface GameState {
    */
   setDebug: (partial: Partial<DebugState>) => void;
   /** Écrit `debug.playerHp`. Appeler PONCTUELLEMENT au dégât — jamais par frame (invariant #2). */
-  // see: docs/systems/debug.md#champs-de-debugstate
+  // see: docs/archive/systems-debug.md#champs-de-debugstate
   setPlayerHp: (hp: number) => void;
   /** Incrémente `debug.secretsFound` de 1 — même discipline ponctuelle que `setPlayerHp`, appelé UNE FOIS par secret nouvellement trouvé. */
   incrementSecretsFound: () => void;
@@ -121,17 +121,17 @@ interface GameState {
   incrementViews: (amount: number) => void;
 
   /** Canal SYSTÈME, sans cooldown — distinct de `heroLine` ci-dessous. */
-  // see: docs/systems/hud.md#deux-canaux-de-message-hudmessage-et-heroline
+  // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline
   hudMessage: string | null;
   showHudMessage: (text: string | null) => void;
 
   /** Canal RÉPLIQUE — cooldown global de 15 s appliqué côté appelant, pas ici. */
-  // see: docs/systems/hud.md#deux-canaux-de-message-hudmessage-et-heroline
+  // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline
   heroLine: string | null;
   showHeroLine: (text: string | null) => void;
 
   /** État courant du flux d'écran — permet aux composants React de réagir à un changement d'écran. */
-  // see: docs/systems/hud.md#flux-décran
+  // see: docs/4-technique/interface-react.md#flux-décran
   // see: docs/decisions/0019-machine-xstate-flux-ecran.md
   flowState: GameFlowState;
   setFlowState: (state: GameFlowState) => void;
@@ -140,12 +140,12 @@ interface GameState {
    * terminée. Poussé UNE FOIS par `game/session/score.ts::publishLevelRecap`,
    * à la mort (récap partiel) ou à la fin de niveau (récap complet), jamais
    * par image (invariant #2).
-   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie */
+   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie */
   recap: LevelRecap | null;
   setRecap: (recap: LevelRecap | null) => void;
 
   /** Remet `debug` à ses valeurs de boot et efface les messages transitoires — ne touche jamais `flowState`. */
-  // see: docs/systems/session.md#construire-une-partie
+  // see: docs/archive/systems-session.md#construire-une-partie
   resetGameStore: () => void;
 }
 

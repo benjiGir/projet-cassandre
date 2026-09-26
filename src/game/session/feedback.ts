@@ -10,7 +10,7 @@ const HUD_MESSAGE_DURATION_MS = 1800;
  * Message HUD transitoire SYSTÈME (canal FACTUEL, sans cooldown,
  * indépendant de toute partie en cours) — voir `triggerHeroLine` ci-dessous
  * pour l'autre canal, celui des répliques.
- * see: docs/systems/session.md#feedback-joueur
+ * see: docs/archive/systems-session.md#feedback-joueur
  */
 export function showHudMessage(text: string): void {
   useGameStore.getState().showHudMessage(text);
@@ -34,8 +34,8 @@ const HERO_LINE_DISPLAY_MS = 4000;
  * Tente d'afficher une réplique du héros (`state.heroLine`) — TOUTES les
  * répliques du jeu passent par cette fonction. Respecte le cooldown global,
  * PROPRE À `session` : retourne `false` sans effet si non écoulé.
- * see: docs/systems/session.md#feedback-joueur
- * see: docs/systems/hud-audio.md#ducking-pendant-les-répliques
+ * see: docs/archive/systems-session.md#feedback-joueur
+ * see: docs/archive/systems-hud-audio.md#ducking-pendant-les-répliques
  */
 export function triggerHeroLine(session: GameSession, text: string): boolean {
   const now = performance.now();

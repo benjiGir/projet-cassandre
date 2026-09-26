@@ -41,7 +41,7 @@ exactement là que les avertissements disparaissent sans qu'on le voie.
      Le document existe AVANT que le commentaire disparaisse.
 
 4. Puis retirer du code et poser l'ancre
-     // see: docs/systems/loop.md#hitstop
+     // see: docs/3-architecture/boucle-et-temps.md#hitstop
 
 5. Valider le graphe
      python3 tools/docs/check_docs_links.py docs/ --src src/

@@ -549,7 +549,7 @@ def cart_roll(seed=0):
 # objet — l'eau et la faience en sont. Aucun enregistrement d'eau ni de
 # deglutition n'existe sur disque sous une licence confirmee ; la liste de ce
 # qu'il faut telecharger est dans assets_src/cc0_raw/freesound/README.md
-# (ignore par git), resumee dans docs/systems/hud-audio.md#catalogue--doù-vient-chaque-son.
+# (ignore par git), resumee dans docs/4-technique/audio-runtime.md#catalogue--doù-vient-chaque-son.
 #
 #   toilet_flush   synthese pure
 #   ceramic_break  HYBRIDE : faience reelle (Kenney, assiettes CC0) + eau synthetique

@@ -28,7 +28,7 @@ import { astarMetricsSnapshot } from "../level/pathfinding";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
-// see: docs/systems/boucle-de-jeu.md#origine-des-modules
+// see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
 /**
  * Couleur et quantité des éclats par matière de `prop_*`.
@@ -36,7 +36,7 @@ import { astarMetricsSnapshot } from "../level/pathfinding";
  * Traduction `game/` -> `render/` : `FxSystem.spawnDebris` ne prend qu'un
  * nombre, il ne connaît pas les matières du niveau — même frontière que
  * `material: string` sur `spawnImpactDecal`.
- * see: docs/systems/rendu.md#découplage-entre-render-et-game
+ * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
  */
 const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   bois: { color: 0x6b4a2a, count: 10 },
@@ -104,7 +104,7 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 
 // Tourne au taux d'affichage, comme `interpolateVisuals` — même frontière
 // Effect synchrone stricte (`runGameplaySync`) que le pas fixe.
-// see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
+// see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
   "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
@@ -426,7 +426,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // chaque rechargement de niveau/hot reload/reset, sans code dédié ici
         // : `session.sanitaireSystem` devient une instance neuve, sans aucun
         // sanitaire cassé (voir la doc d'`updateWaterAmbience`).
-        // see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+        // see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
         if (session.sanitaireSystem) session.sanitaireSystem.collectActiveJetOrigins(waterJetOriginScratch);
         else waterJetOriginScratch.length = 0;
         waterListenerRightScratch.set(1, 0, 0).applyQuaternion(engine.camera.quaternion);
@@ -450,7 +450,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // `import.meta.env.DEV` y vaut `false` à la compilation, la branche
         // disparaît — un joueur qui aurait rebindé une action sur `V` ne
         // basculerait pas le wireframe en jouant.
-        // see: docs/reference/controles.md#touches-de-dev
+        // see: docs/archive/reference-controles.md#touches-de-dev
         if (import.meta.env.DEV) {
           // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
           // (invariant #2 — pas de lecture continue, pas de setState par frame).

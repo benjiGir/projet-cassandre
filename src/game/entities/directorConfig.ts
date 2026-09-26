@@ -11,7 +11,7 @@
  * Valeurs de départ arbitraires (même discipline que `suitConfig.ts`), sauf
  * mention contraire explicite (`attackTelegraphDuration`, plancher non
  * négociable du skill `enemy-state-machine`).
- * see: docs/reference/valeurs-ennemis.md
+ * see: docs/6-reference/valeurs-ennemis.md
  */
 
 import { type LoyaltyCard } from "../player/loyaltyCards";
@@ -113,7 +113,7 @@ export interface DirectorConfig {
    * Délai minimum, en secondes, entre l'apparition de la carte et le premier
    * pas fixe où il peut être ramassé — sans lui, un kill à bout portant
    * ramasserait la carte sur le pas fixe même de sa création, donc jamais
-   * visible. Voir docs/reference/valeurs-ennemis.md#badge-du-directeur pour
+   * visible. Voir docs/archive/reference-valeurs-ennemis.md#badge-du-directeur pour
    * l'historique du bug que ce délai corrige.
    */
   cardPickupDelay: number;
@@ -185,6 +185,6 @@ export const directorConfig: DirectorConfig = {
  * (jalon N7). Une constante plutôt qu'un champ de `DirectorConfig` : ce n'est
  * pas un réglage de ressenti à faire varier en A/B, c'est une règle de
  * progression du niveau.
- * see: docs/reference/conventions-nommage.md#cartes-de-fidélité
+ * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
  */
 export const DIRECTOR_DROPPED_CARD: LoyaltyCard = "platine";

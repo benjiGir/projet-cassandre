@@ -78,7 +78,7 @@ MEUBLES = {
     # Toilettes de la cafétéria. La cuvette n'a PAS de collider ici (2026-09-24) :
     # posée en `sanitaire_cuvette*` par `habiller_toilettes`, elle n'en veut
     # aucun jumeau — le loader construit lui-même un cuboïde fixe sur sa bbox
-    # monde, comme pour un `prop_*` (voir `docs/reference/conventions-nommage.md`).
+    # monde, comme pour un `prop_*` (voir `docs/6-reference/conventions-nommage.md`).
     "toilet": (0.78, False),
     "bathroomSink": (0.88, True),
     "bathroomMirror": (0.70, False),

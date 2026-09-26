@@ -8,7 +8,7 @@ export function cx(...classes: ReadonlyArray<string | false | null | undefined>)
 /**
  * Seule forme de `style` admise dans `src/ui/` : des propriétés personnalisées
  * portant une valeur calculée au rendu, que le CSS du composant consomme.
- * see: docs/reference/react-css.md#la-règle-et-ses-deux-seules-exceptions
+ * see: docs/6-reference/react-css.md#la-règle-et-ses-deux-seules-exceptions
  */
 export function cssVars(vars: Readonly<Record<`--${string}`, string | number>>): CSSProperties {
   return vars as CSSProperties;

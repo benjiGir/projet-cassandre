@@ -17,8 +17,8 @@ Les commandes du projet viennent de `package.json`. PNPM utilise la version verr
 | `pnpm typecheck` | Lance uniquement `tsc --noEmit`. |
 | `pnpm test` | Exécute Vitest une fois. |
 | `pnpm test:watch` | Garde Vitest actif en mode interactif. |
-| `pnpm check` | Typecheck, tests Vitest et build de production. |
-| `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. |
+| `pnpm check` | Typecheck, tests Vitest, contrôle documentaire strict et build de production. |
+| `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. Aussi exécuté par `pnpm check` et la CI. |
 | `pnpm check:docs:test` | Exécute les tests Python du vérificateur documentaire. |
 
 ## Audio

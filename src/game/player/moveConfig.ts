@@ -66,7 +66,7 @@ export interface MoveConfig {
    * PLAFONNÉ BAS, et c'est mesuré, pas esthétique : ne pas remonter cette
    * valeur sans mesurer au même harnais Rapier headless que celui qui a
    * trouvé le bug. Chiffres, méthode et alternative écartée :
-   * see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
+   * see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
    */
   groundStickSpeed: number;
   /** Vitesse de chute maximale, m/s. Garde-fou anti-tunneling après une longue chute. */
@@ -102,7 +102,7 @@ export interface MoveConfig {
   pitchLimitDeg: number;
 
   // Vue : head bob — positionnel uniquement, jamais angulaire (invariant #3) :
-  // see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
+  // see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
 
   /**
    * Distance horizontale parcourue pour UN CYCLE complet de bob, en mètres.
@@ -212,7 +212,7 @@ export const moveConfig: MoveConfig = {
 };
 
 // Variantes de feel de la VUE — harnais A/B (usage, axe de comparaison) :
-// see: docs/systems/joueur.md#harnais-ab-feel_variants
+// see: docs/archive/systems-joueur.md#harnais-ab-feel_variants
 
 /** Champs de vue seulement — aucune variante ne touche au déplacement. */
 export type FeelVariant = Partial<
@@ -315,7 +315,7 @@ export function capsuleTotalHeight(cfg: MoveConfig): number {
  * interne entre franchissable et non franchissable.
  *
  * Le bug historique que ce filtre corrige, et pourquoi le filtrer sans lui
- * cassait sol/pentes/marches : see: docs/systems/joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
+ * cassait sol/pentes/marches : see: docs/archive/systems-joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
  */
 export function wallNormalYThreshold(cfg: MoveConfig): number {
   return Math.cos((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);

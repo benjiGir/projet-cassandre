@@ -579,7 +579,7 @@ def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,
     ATTENTION AU BUDGET : un prop ne rejoint jamais un lot de décor fusionné,
     il se dessine seul. Chaque prop posé est un lot de dessin de plus, sur un
     budget mesuré à 200 pour tout le niveau.
-    see: docs/reference/conventions-nommage.md#props-physiques
+    see: docs/archive/reference-conventions-nommage.md#props-physiques
     """
     if matiere is not None and matiere not in PROP_MATIERES:
         raise ValueError(f"{name}: matiere '{matiere}' inconnue ({', '.join(PROP_MATIERES)})")

@@ -45,7 +45,7 @@ protéger le plus férocement pendant une migration.
 **4. Les nombres magiques, avec renvoi vers leur tuning**
 
 ```ts
-// see: docs/reference/valeurs-deplacement.md
+// see: docs/6-reference/valeurs-deplacement.md
 const GROUND_ACCEL_TIME = 0.08;
 ```
 
@@ -66,10 +66,10 @@ issue, soit tu le supprimes.
 | Code commenté | **supprimé** — git a l'historique |
 | Bannières `// ===== HELPERS =====` | supprimé + signaler la découpe du fichier |
 | JSDoc qui ne fait que répéter les types | supprimé — TypeScript les porte déjà |
-| Explication longue d'un algorithme | `docs/systems/` |
+| Explication longue d'un algorithme | `docs/4-technique/` |
 | Historique, « on avait essayé X » | `docs/decisions/` (ADR) |
-| Tutoriel, mode d'emploi | `docs/systems/` ou `docs/pipeline/` |
-| Tables de valeurs, conventions | `docs/reference/` |
+| Tutoriel, mode d'emploi | `docs/5-guides/` ou `docs/4-technique/` |
+| Tables de valeurs, conventions | `docs/6-reference/` |
 | Changelog dans le fichier | `CHANGELOG.md` |
 
 ## La forme de l'ancre
@@ -77,7 +77,7 @@ issue, soit tu le supprimes.
 Une seule ligne, format fixe, validable automatiquement :
 
 ```ts
-// see: docs/systems/loop.md#hitstop
+// see: docs/3-architecture/boucle-et-temps.md#hitstop
 ```
 
 `see:`, `voir:` et `cf:` sont reconnus par `check_docs_links.py --src`. Le

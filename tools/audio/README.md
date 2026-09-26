@@ -58,7 +58,7 @@ vérifier ses fichiers encodés par `build_sprite.py`.
 
 `analyze_sfx.py --boucle` situe le raccord parmi toutes les positions du fichier
 (rangs 0-100 : un clic sort au-dessus de 99, un trou sous 1). Détail, étalonnage
-et limites : `docs/systems/hud-audio.md#boucles-exactes--le-jet-deau`.
+et limites : `docs/4-technique/audio-runtime.md#boucles-exactes--le-jet-deau`.
 
 Écart connu : les trois ambiances de zone portent encore le fondu de 2,5 ms que
 `write_wav` pose aux bords de tout son — un clic à chaque tour, mesuré. Pas

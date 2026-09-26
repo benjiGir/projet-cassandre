@@ -14,7 +14,7 @@ export interface CornerFrameProps {
  * l'interface, des menus jusqu'à la webcam du HUD. Les coins se règlent par
  * variables CSS (`--corner-size`, `--corner-offset`, `--corner-width`), pas
  * par props.
- * see: docs/reference/react-composition.md#les-primitives-didentité
+ * see: docs/6-reference/react-composition.md#les-primitives-didentité
  */
 export function CornerFrame({ className, children }: CornerFrameProps) {
   return (

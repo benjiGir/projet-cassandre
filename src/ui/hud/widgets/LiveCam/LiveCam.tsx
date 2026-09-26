@@ -4,7 +4,7 @@ import styles from "./LiveCam.module.css";
 /**
  * Webcam factice du héros, en 16:9 : la tête passe sous le badge EN DIRECT,
  * jamais derrière.
- * see: docs/systems/hud.md#hud-de-production
+ * see: docs/archive/systems-hud.md#hud-de-production
  */
 export function LiveCam() {
   return (

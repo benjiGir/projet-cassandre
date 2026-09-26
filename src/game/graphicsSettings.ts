@@ -27,11 +27,11 @@ import { weaponConfig } from "./player/weaponConfig";
  *
  * **Les quatre réglages s'appliquent à chaud EN JEU, depuis la pause**
  * (`ui/screens/pause/PauseScreen/PauseScreen.tsx`, qui réutilise
- * `OptionsScreen` tel quel — voir `docs/systems/session.md#pause`).
+ * `OptionsScreen` tel quel — voir `docs/archive/systems-session.md#pause`).
  * `registerRenderTarget(scene, camera, renderer)`, appelée UNE FOIS par
  * `main.ts` juste après `buildGameEngine`, retient la scène/caméra/renderer
  * VIVANTS pour le reste de l'onglet (ils ne sont jamais reconstruits par un
- * "Rejouer"/"Retour au menu", voir `docs/systems/session.md#létat-persistant-du-process-gameengine`) :
+ * "Rejouer"/"Retour au menu", voir `docs/archive/systems-session.md#létat-persistant-du-process-gameengine`) :
  * `setGraphicsSettings` applique alors le filtrage/la résolution
  * IMMÉDIATEMENT dès qu'une cible est enregistrée, en plus de les persister.
  * **Avant** cet enregistrement — au tout premier menu principal, avant que le

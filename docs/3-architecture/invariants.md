@@ -207,8 +207,8 @@ Ancienne règle : pas d'assets finaux avant que le gameplay soit validé.
 **Retiré** parce que dépassé — N9 a habillé les dix espaces du niveau
 (`HABILLAGE` dans `tools/level_v2/build_niveau.py`), `CLAUDE.md` note « Plus
 un seul volume gris ». La règle ne décrivait plus une contrainte active, elle
-était franchie plutôt que violée en silence ; l'écart est resté consigné dans
-`docs/_chantier/ecarts.md` jusqu'à cette décision de retrait explicite.
+était dépassée plutôt que violée en silence ; le retrait est maintenant
+explicite.
 
 ### #13 — XState sans temps mural (retiré le 2026-09-25)
 

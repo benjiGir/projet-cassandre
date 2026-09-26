@@ -7,7 +7,7 @@
  * (même raison que `core/random.ts` reste un fichier à part de tout ce qui
  * consomme le RNG).
  *
- * see: docs/systems/hud-audio.md#boucle-deau-positionnelle
+ * see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
  */
 
 /** Un point 3D minimal — `THREE.Vector3` le satisfait par structure, sans que ce module ait besoin d'importer `three`. */

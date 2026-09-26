@@ -22,7 +22,7 @@ import * as THREE from "three";
  * Portée de rendu, mètres. Plus généreuse que les 36 m des props : une trousse
  * ou une caisse de munitions est un SIGNAL de jeu, qu'on repère de loin dans
  * un couloir, alors qu'un carton n'est qu'un décor qui bouge.
- * see: docs/systems/cout-de-rendu.md
+ * see: docs/4-technique/budget-de-rendu.md
  */
 export const USE_RENDER_DISTANCE = 48;
 const USE_RENDER_DISTANCE_SQ = USE_RENDER_DISTANCE * USE_RENDER_DISTANCE;

@@ -11,7 +11,7 @@ export interface HudCornerProps {
 /**
  * Un coin du calque en jeu. Ses enfants s'y empilent dans le flux : un bloc
  * suit la hauteur réelle du précédent, jamais une position devinée.
- * see: docs/systems/hud.md#composition-de-app
+ * see: docs/archive/systems-hud.md#composition-de-app
  */
 export function HudCorner({ position, children }: HudCornerProps) {
   return <div className={cx(styles.corner, styles[position])}>{children}</div>;

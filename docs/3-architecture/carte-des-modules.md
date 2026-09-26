@@ -64,7 +64,7 @@ flowchart TD
 
 ### Règle écrite vs constat
 
-- **Écrite (invariant #2 / #14, `docs/reference/react-structure.md`)** : React
+- **Écrite (invariant #2 / #14, `docs/6-reference/react-structure.md`)** : React
   ne touche jamais la boucle, un widget du HUD lit ses propres données du
   store, et un module qui persiste ou pilote le moteur ne vit pas dans
   `src/ui/`. **Constat** : tenue — `ui/hud/*` n'importe que `game/state.ts` ;
@@ -129,7 +129,7 @@ fichiers listés à droite n'est réimporté par celui de gauche) :
 5. Affichage React qui ne pilote jamais le moteur → `src/ui/<famille par
    rôle>` (`hud/`, `screens/`, `components/`, `dev/`), un dossier par
    composant, jamais d'`index.ts` — détail :
-   [conventions React](../reference/react-structure.md).
+   [conventions React](../6-reference/react-structure.md).
 6. Orchestration du boot ou du flux d'une session → `src/app/`.
 7. Aucun de ces cas : ne pas créer de dossier de premier niveau sans en
    discuter — la carte ci-dessus doit rester à jour.

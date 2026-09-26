@@ -17,8 +17,9 @@ simulation ou le contrat des collisions existants.
 - Lisez [Ennemis et IA](../4-technique/ennemis-et-ia.md),
   [Pathfinding](../4-technique/pathfinding.md) et [les valeurs de
   référence](../6-reference/valeurs-ennemis.md).
-- Lisez le skill `.claude/skills/enemy-state-machine/SKILL.md` avant de
-  modifier la machine partagée.
+- Une attaque doit avoir au moins **0,2 s** de télégraphie, avec un
+  signal visuel et sonore, avant les dégâts. Voir le plancher décrit dans
+  [Valeurs des ennemis](../6-reference/valeurs-ennemis.md).
 - Vérifiez si le nouveau personnage est un nouveau type ou une variante
   des paramètres d'un ennemi existant.
 - Les entités sont dans `src/game/entities/`. L'invariant interdit l'ECS
@@ -53,8 +54,8 @@ simulation ou le contrat des collisions existants.
     `Math.random()` ni au service `Random` standard.
 11. Si l'ennemi suit le graphe de navigation, utilisez les mêmes
     requêtes `WORLD` que le système existant.
-12. Une attaque doit avertir le joueur avant d'appliquer des dégâts.
-    Respectez le seuil minimal de télégraphie du skill.
+12. Une attaque doit avertir le joueur au moins 0,2 s avant les dégâts,
+    avec un signal visuel et un son distinct.
 13. Envoyez dégâts et effets via les événements de gameplay et de
     présentation déjà présents ; ne mettez pas le son ou Three.js dans
     la machine d'états.

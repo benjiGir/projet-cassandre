@@ -78,7 +78,7 @@ Déplacer un mur dans Blender, exporter, le voir en jeu **en moins de
 C'est le livrable principal de ce pipeline. S'il n'est pas atteint, le reste
 du travail sur le niveau sera pénible pendant tout le projet.
 
-## Retrofit Effect (jalon M2, `PLAN_EFFECT_XSTATE.md`)
+## Retrofit Effect (jalon M2, `docs/journal/plan-effect-xstate-2026-09.md`)
 
 `src/game/level/loader.ts`/`hotReload.ts` sont entièrement passés par
 `Effect.gen` avec des erreurs TYPÉES (`MissingColliderGeometryError`,

@@ -25,8 +25,9 @@ runtime.
 - Repérez le lecteur de ces données dans `src/game/level/loader.ts`.
 - Pour un nouveau préfixe, vérifiez si un système déjà existant peut
   héberger sa logique.
-- Gardez les propriétés inconnues bruyantes : une custom property
-  silencieusement ignorée devient un bug de contenu.
+- Un préfixe neuf doit être enregistré dans le dispatch par nom de
+  `src/game/level/loader.ts` ; le validateur ne devine pas le comportement
+  runtime d'un préfixe qu'il ne connaît pas.
 
 ## Étapes
 
@@ -39,12 +40,18 @@ runtime.
 3. Étendez le type d'objet ou de données lu par
    `src/game/level/loader.ts`. Gardez la conversion glTF → runtime à cet
    endroit.
+   Ajoutez aussi une branche `startsWith(...)` dans le dispatch des noms,
+   avant le traitement générique qui pourrait capturer ce préfixe. Ajoutez
+   le résultat au `LevelHandle` typé si un système doit y accéder.
 4. Créez ou étendez un système dans `src/game/level/` si l'objet possède
    un état individuel en cours de partie.
 5. Pour une règle de soin, de score ou de progression, placez la règle
    dans `src/game/session/`, pas dans le loader.
 6. Branchez le système au cycle de la session depuis les modules de
    `src/game/session/`.
+   Pour une nouvelle carte, étendez également la liste et le type dans
+   `src/game/player/loyaltyCards.ts`, la validation Python et la règle de
+   session ; leurs valeurs doivent rester identiques.
 7. Si l'objet doit lire des événements de tir, consommez les événements
    au pas fixe avant leur nettoyage par la boucle.
 8. Si son mesh change d'apparence à l'interaction, exposez la plage de
@@ -77,6 +84,8 @@ runtime.
   [Modifier le niveau](modifier-le-niveau.md).
 - Rechargez le glTF exporté et inspectez l'objet, son préfixe et ses
   extras.
+- Vérifiez qu'un préfixe neuf atteint sa branche de dispatch et que ses
+  données figurent dans le `LevelHandle` attendu.
 - En jeu, vérifiez portée, priorité d'appui E, consommation une seule
   fois et retour visuel/sonore.
 - Vérifiez aussi le comportement au reset : aucun ancien mesh, collider

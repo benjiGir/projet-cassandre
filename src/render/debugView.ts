@@ -7,7 +7,7 @@ import * as THREE from "three";
  * caméra elle-même est ajoutée à `scene` (`game/session/gameEngine.ts`).
  *
  * Méthode, limite assumée et restriction à `MeshLambertMaterial` :
- * see: docs/systems/rendu.md#bascule-wireframe-de-debug
+ * see: docs/archive/systems-rendu.md#bascule-wireframe-de-debug
  */
 export function createWireframeToggle(scene: THREE.Scene) {
   let enabled = false;

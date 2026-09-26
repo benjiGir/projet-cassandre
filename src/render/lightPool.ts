@@ -14,7 +14,7 @@ import * as THREE from "three";
  * Le niveau v2 en demanderait environ 1 140 à la densité de la salle d'essai.
  *
  * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
- * see: docs/systems/cout-de-rendu.md
+ * see: docs/4-technique/budget-de-rendu.md
  */
 
 /**

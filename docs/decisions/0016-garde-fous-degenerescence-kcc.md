@@ -69,7 +69,7 @@ Avec `groundStickSpeed=0.2` : hub 2.1-2.4 % de pas fixes affectés,
 comparable au bruit de fond déjà mesuré aux coutures géométriques du
 niveau (2.4-4.3 %). Valeur partagée avec les ennemis
 (`SuitConfig.groundStickSpeed`/`DirectorConfig.groundStickSpeed` — voir
-[Valeurs des ennemis](../reference/valeurs-ennemis.md)) : les ennemis se
+[Valeurs des ennemis](../6-reference/valeurs-ennemis.md)) : les ennemis se
 déplacent nettement plus lentement que le joueur, donc le risque mesuré
 côté joueur est déjà une borne haute pour eux.
 

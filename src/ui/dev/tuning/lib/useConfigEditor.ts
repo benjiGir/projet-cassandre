@@ -13,7 +13,7 @@ export interface ConfigEditor<T extends object> {
  * pas. Exception assumée à la règle « pas d'état externe lu au rendu »,
  * réservée à `dev/` : une copie dans l'état React devrait être resynchronisée
  * à chaque variante appliquée depuis la console.
- * see: docs/reference/react-bonnes-pratiques.md#état
+ * see: docs/6-reference/react-bonnes-pratiques.md#état
  */
 export function useConfigEditor<T extends object>(config: T): ConfigEditor<T> {
   const [, refresh] = useReducer((revision: number) => revision + 1, 0);

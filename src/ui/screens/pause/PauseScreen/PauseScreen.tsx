@@ -28,7 +28,7 @@ export interface PauseScreenProps {
  * d'en dupliquer le câblage (`ControlsTab`/`DisplayTab` restent chacun à un
  * seul endroit) : seul le bouton RETOUR change de cible (ce menu de pause,
  * pas le menu principal). Léger écart à la règle « un écran ne connaît pas
- * un autre écran » (`docs/reference/react-composition.md`), justifié ici :
+ * un autre écran » (`docs/6-reference/react-composition.md`), justifié ici :
  * pas de couplage de NAVIGATION (aucun état de flux partagé), seulement une
  * composition — `OptionsScreen` reste utilisable seul, sans rien savoir de
  * la pause.
@@ -38,7 +38,7 @@ export interface PauseScreenProps {
  * (invariant #1, `render()` tourne à chaque frame), la scène figée reste
  * visible et assombrie derrière le panneau — propagé à `OptionsScreen` pour
  * que l'onglet Paramètres garde la même transparence.
- * see: docs/systems/session.md#pause
+ * see: docs/archive/systems-session.md#pause
  */
 export function PauseScreen({ onResume, onReturnToMenu }: PauseScreenProps) {
   const flowState = useGameStore((s) => s.flowState);

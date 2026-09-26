@@ -57,6 +57,15 @@ L'audit et les corrections géométriques restent dans les scripts afin que le r
 La scène source Blender est un résultat de construction, pas la seule source du niveau.
 Avant de sauvegarder une session ouverte, vérifier que son état correspond aux scripts courants.
 
+Pour une modification, ouvrez d'abord `assets_src/blender/niveau_v2.blend`
+dans Blender et vérifiez que le connecteur MCP vise cette session. Depuis son
+action d'exécution de Python dans Blender, demandez l'exécution de
+`tools/level_v2/build_niveau.py` ; les noms exacts des commandes du connecteur
+dépendent de son installation et ne sont pas définis par le dépôt. Attendez
+la fin du script, inspectez la scène dans le viewport à hauteur de joueur,
+puis corrigez les scripts avant une nouvelle construction. Les contrôles,
+l'export et le rechargement dans le jeu suivent ensuite la section Vérifier.
+
 ### Niveaux historiques
 
 `tools/blender/level_spec.py` décrit les zones consommées par `build_level.py`.

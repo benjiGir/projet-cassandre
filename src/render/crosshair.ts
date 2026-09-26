@@ -8,8 +8,8 @@
  * Découplage de `game/*` (invariant #2, canvas 2D hors React), position
  * garantie géométriquement (pas une valeur tunable — seul le style l'est,
  * `CROSSHAIR_VARIANTS`) :
- * see: docs/systems/rendu.md#découplage-entre-render-et-game
- * see: docs/systems/rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
+ * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
+ * see: docs/archive/systems-rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
  */
 
 import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";

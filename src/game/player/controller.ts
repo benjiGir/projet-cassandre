@@ -28,7 +28,7 @@ const TAU = Math.PI * 2;
  *
  * Rampe linéaire et non approche exponentielle — pourquoi, et pourquoi
  * `weapons.ts` réutilise cette même fonction pour le recul du viewmodel :
- * see: docs/systems/joueur.md#rampe-linéaire-pas-exponentielle-approach
+ * see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
  */
 export function approach(
   current: number,
@@ -49,7 +49,7 @@ export function approach(
  * (invariant #6 : jamais de résolution capsule-vs-monde maison). Découpage
  * de la résolution du pas fixe et aucun nombre de gameplay ici (tout vient
  * de `moveConfig`) :
- * see: docs/systems/joueur.md#résolution-du-pas-fixe
+ * see: docs/archive/systems-joueur.md#résolution-du-pas-fixe
  */
 export class PlayerController {
   readonly body: RAPIER.RigidBody;
@@ -78,7 +78,7 @@ export class PlayerController {
 
   // État de VUE (head bob, FOV, réception) — les trois règles qui le
   // gouvernent (pas fixe, échantillons prev/current, jamais angulaire) :
-  // see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
+  // see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
 
   /** `distanceTravelled` au pas fixe précédent. Interpolation de la phase du bob. */
   previousDistanceTravelled = 0;
@@ -311,7 +311,7 @@ export class PlayerController {
       // Poussée descendante constante : maintient le contact et stabilise
       // `computedGrounded` (sinon il clignote sur terrain plat). Ne PAS
       // remonter cette valeur sans mesurer, voir ADR 0016 :
-      // see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
+      // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       this.velocity.y = -cfg.groundStickSpeed;
     }
 
@@ -422,7 +422,7 @@ export class PlayerController {
   /**
    * Grandeurs de vue du pas fixe. Séparé de `update` pour que la lecture du
    * déplacement reste lisible — même pas fixe, mêmes règles :
-   * see: docs/systems/joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
+   * see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
    */
   private updateViewState(dt: number, impactSpeed: number) {
     const cfg = this.cfg;

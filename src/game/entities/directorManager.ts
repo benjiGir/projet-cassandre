@@ -30,7 +30,7 @@ import {
  * `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss
  * est attendu en pratique, mais garder la forme tableau (invariant #8) ne
  * coûte rien et évite un type spécial pour « exactement un ennemi ».
- * see: docs/systems/entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
+ * see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
  * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
  */
 

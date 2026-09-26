@@ -7,10 +7,10 @@ updated: 2026-09-25
 
 # Comment lire cette doc
 
-Brouillon de la future `docs/1-introduction/comment-lire-cette-doc.md`,
-déplacée telle quelle au jalon D2. Les liens ci-dessous pointent vers des
-pages pas encore écrites : ils restent en texte simple avec le chemin prévu
-entre backticks, pas de lien cassé.
+Cette page présente les six parties de la documentation et propose un
+parcours selon votre tâche. L'index racine donne accès aux pages actuelles;
+les pages historiques sont dans l'archive et les chantiers livrés dans le
+journal.
 
 ## Les six parties, plus décisions/journal/archive
 
@@ -81,7 +81,7 @@ entre backticks, pas de lien cassé.
 - Une page dit toujours si ce qu'elle décrit est **validé en playtest** ou
   **en attente de verdict** (section « État » des pages fonctionnelles) — ne
   prenez pas un brouillon pour un acquis.
-- Si une page semble contredire le code, ne corrigez ni l'un ni l'autre :
-  regardez `docs/_chantier/ecarts.md` pendant le chantier, ou signalez-le une
-  fois le chantier terminé — le code fait foi, mais l'écart mérite d'être
-  tranché consciemment.
+- Si une page semble contredire le code, vérifiez d'abord le comportement
+  actuel, puis corrigez la page dans le même changement. Si le comportement
+  ou l'invariant doit être arbitré, consignez la question dans un ADR proposé
+  et demandez une décision au responsable du projet.

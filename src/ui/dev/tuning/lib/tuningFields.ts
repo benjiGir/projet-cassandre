@@ -6,7 +6,7 @@ import type { SuitConfig } from "../../../../game/entities/suitConfig";
  * Les curseurs du panneau de tuning, en DONNÉES : ajouter un réglage, c'est
  * ajouter une ligne ici. Les bornes encadrent la valeur de départ sans la
  * trancher — le panneau expose, il ne décide pas.
- * see: docs/systems/hud.md#panneau-de-tuning-à-chaud
+ * see: docs/archive/systems-hud.md#panneau-de-tuning-à-chaud
  */
 export interface TuningField<K extends string> {
   key: K;
@@ -50,7 +50,7 @@ export const MOVE_GROUPS: ReadonlyArray<FieldGroup<MoveField>> = [
       { key: "jumpBufferTime", label: "Jump buffer", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
       // 0,6 laisse trois fois la valeur par défaut sans franchir la falaise de
       // stabilité mesurée entre 0,5 et 1 m/s.
-      // see: docs/systems/joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
+      // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       { key: "groundStickSpeed", label: "Collage au sol", min: 0, max: 0.6, step: 0.02, decimals: 2, unit: "m/s" },
       { key: "maxFallSpeed", label: "Vitesse de chute max", min: 10, max: 100, step: 1, decimals: 0, unit: "m/s" },
     ],

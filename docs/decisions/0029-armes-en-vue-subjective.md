@@ -65,7 +65,7 @@ des horloges avancées au pas fixe et lues par le rendu seul.
 Retour de l'utilisateur, mot pour mot : « Refaire le modèle du pistolet,
 parce qu'il est vraiment horrible. » Diagnostic chiffré et modèle de
 remplacement écrits dans
-[`docs/assets/board-pistolet.md`](../assets/board-pistolet.md) avant toute
+[`docs/journal/playtests-2026-09.md`](../journal/playtests-2026-09.md) avant toute
 retouche du script (`reference-driven-authoring`) : le pistolet d'origine
 avait un rapport hauteur/longueur de 1,01 (un Beretta fait 0,63, un Glock
 0,68), une poignée-tube qui flottait sous la carcasse, un canon-clou de

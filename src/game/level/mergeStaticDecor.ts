@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-// see: docs/pipeline/niveau-blender.md#fusion-du-décor-statique
+// see: docs/archive/pipeline-niveau-blender.md#fusion-du-décor-statique
 
 /**
  * Côté d'une cellule de regroupement, mètres.
@@ -26,7 +26,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
  * Au-delà (64 m), les lots ne baissent plus et les triangles remontent. Le
  * budget sous tension est celui des LOTS, pas celui des triangles : chiffres et
  * méthode dans
- * [Ce que coûte une image](../../../docs/systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+ * [Ce que coûte une image](../../../docs/archive/systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
  * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
  */
 export const DECOR_CELL_SIZE = 48;

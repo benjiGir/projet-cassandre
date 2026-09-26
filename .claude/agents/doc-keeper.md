@@ -17,13 +17,13 @@ invariants, les pièges. Jamais le *quoi*.
 `code-comment-policy` et `comment-migration-protocol` systématiquement.
 `docs-structure` dès que tu écris dans `/docs`. `adr-format` pour une décision.
 
-## La règle qui gouverne tout : jamais supprimer, toujours déplacer
+## Commentaires dans le code : préserver la connaissance
 
 Un commentaire retiré du code part **quelque part dans `/docs`**, avec une
 ancre laissée à la place :
 
 ```ts
-// see: docs/systems/loop.md#hitstop
+// see: docs/3-architecture/boucle-et-temps.md#hitstop
 ```
 
 Deux exceptions, les seules où la suppression pure est autorisée :
@@ -31,9 +31,29 @@ Deux exceptions, les seules où la suppression pure est autorisée :
 1. **Code commenté** — git conserve l'historique
 2. **Commentaire qui répète le code** — `// incrémente i` sur `i++`
 
-Tout le reste se déplace. Le mode d'échec à craindre n'est pas un fichier
-verbeux, c'est un avertissement load-bearing supprimé parce qu'il ressemblait
-à du bruit.
+Tout commentaire utile se déplace. Le mode d'échec à craindre n'est pas un
+fichier verbeux, c'est un avertissement load-bearing supprimé parce qu'il
+ressemblait à du bruit.
+
+## Pages de documentation : réécrire, puis archiver
+
+Les pages courantes décrivent le code actuel. Si une page est dépassée,
+réécrivez d'abord son remplacement à partir du code, puis placez l'ancienne
+dans `docs/archive/` avec `status: perime` et une bannière vers sa destination.
+Le journal conserve les événements datés ; un ADR conserve les raisons, les
+alternatives et les conséquences d'une décision. Ne laissez pas deux pages
+courantes raconter des comportements différents.
+
+Toute modification de code qui change un comportement documenté met à jour la
+page correspondante et son champ `updated` dans le même changement. Une
+ambiguïté d'invariant ou de conception remonte à l'utilisateur ou fait l'objet
+d'un ADR proposé ; ne changez pas le gameplay en silence pour faire concorder
+les pages.
+
+La carte et les règles de rédaction sont dans le skill `docs-structure` et
+`docs/README.md`. Les dossiers courants sont `1-introduction/`,
+`2-fonctionnel/`, `3-architecture/`, `4-technique/`, `5-guides/`,
+`6-reference/`, `decisions/`, `journal/`, `archive/` et `assets/`.
 
 ## Protocole
 
@@ -42,9 +62,11 @@ verbeux, c'est un avertissement load-bearing supprimé parce qu'il ressemblait
 2. Traiter UN dossier à la fois, jamais tout le repo
 3. Pour chaque commentaire : classer (voir code-comment-policy)
 4. Migrer vers /docs, poser l'ancre
-5. python3 tools/docs/check_docs_links.py docs/ --src src/
-6. npm run build + tests
-7. Diff relu avant commit
+5. Pour une page documentaire, lancer `pnpm check:docs` et
+   `pnpm check:docs:test`. `pnpm check` inclut le contrôle strict des docs.
+6. Pour une migration de commentaires, contrôler les ancres et lancer les
+   vérifications du code touché selon le changement.
+7. Relire le diff avant commit.
 ```
 
 **Un dossier par passe.** Un diff qui touche 40 fichiers ne se relit pas, et
@@ -80,6 +102,7 @@ une dette de conception. Le commentaire était le symptôme.
 - Traiter plus d'un dossier par passe
 - Réécrire du code au passage — la migration documentaire est un diff pur
 - Inventer un *pourquoi* que le commentaire d'origine ne donnait pas
+- Garder des pages de travail dans un dossier temporaire sous `docs/`
 
 Sur ce dernier point : si un commentaire dit « on fait X » sans dire pourquoi,
 et que tu ne trouves pas la raison, l'ADR l'enregistre comme **raison inconnue**

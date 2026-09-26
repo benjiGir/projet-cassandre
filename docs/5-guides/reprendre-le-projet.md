@@ -25,7 +25,7 @@ Ouvrez le navigateur sur le serveur Vite. Les contrôles initiaux sont dans [Con
 
 Lisez la [vue d'ensemble](../3-architecture/vue-d-ensemble.md), les [invariants](../3-architecture/invariants.md), la [carte des modules](../3-architecture/carte-des-modules.md), puis [boucle et temps](../3-architecture/boucle-et-temps.md). Pour une modification React, lisez les quatre [références React](../6-reference/README.md). Pour le niveau, suivez [Chargement de niveau](../4-technique/chargement-de-niveau.md).
 
-Les sources d'autorité sont le code actuel et les contrats des pages techniques. Le vieux dossier `docs/systems/` contient l'ancienne documentation tant que la phase I n'a pas été faite. Lisez-le comme source d'historique, pas comme documentation de référence.
+Le code actuel et les pages techniques sont les sources d'autorité. Les anciennes pages conservées dans [`archive/`](../archive/README.md) servent uniquement à retrouver l'historique; utilisez la page actuelle indiquée dans leur bandeau.
 
 ## 4. Choisir une tâche
 
@@ -44,4 +44,6 @@ Rédigez ou mettez à jour un ADR lorsqu'une décision contraint durablement l'a
 - [README de la documentation](../README.md) — carte et état des six parties.
 - [Guide technique](../4-technique/README.md) — systèmes et chemins source.
 - [Référence](../6-reference/README.md) — commandes, valeurs, console, contrôles.
-- [Plan documentaire](../../PLAN_DOCUMENTATION.md) — jalons et contenu prévu. Cette phase s'arrête avant le journal et l'archivage de la phase I.
+- [Journal](../journal/README.md) — chantiers datés, livraisons et retours de playtest.
+- [Archive](../archive/README.md) — documentation précédente conservée avec ses remplacements.
+- [Plan documentaire](../../PLAN_DOCUMENTATION.md) — validation et entretien documentaire.

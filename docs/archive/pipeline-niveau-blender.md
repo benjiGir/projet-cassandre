@@ -1,0 +1,716 @@
+---
+title: "Niveau — Blender vers glTF — archive"
+tags: [archive]
+status: perime
+updated: 2026-09-26
+---
+
+> **Archive — ne plus utiliser comme référence courante.** Cette page est conservée pour son historique. Voir [Niveau — Blender vers glTF](../5-guides/modifier-le-niveau.md) pour la documentation à jour.
+
+# Niveau — Blender vers glTF
+
+Un niveau part d'un fichier Blender et finit en géométrie jouable : colliders
+Rapier, points de spawn, portes, objets à ramasser. Entre les deux, une
+chaîne d'étapes séparées (chacune un script headless indépendant) construit,
+éclaire, vérifie et exporte la scène, puis un chargeur côté jeu la relit et
+la traduit en monde physique + scène Three.js. `src/game/level/loader.ts` est
+le SEUL endroit qui connaît la correspondance entre un préfixe de nom Blender
+et son effet en jeu — voir [Conventions de nommage](./reference-conventions-nommage.md)
+pour la table complète des préfixes et custom properties. Ce document couvre
+la mécanique de chaque étape (pièges, hiérarchie des colliders, cycle de vie,
+hot reload), pas le contrat de nommage lui-même.
+
+## Vue d'ensemble du pipeline
+
+Chaque flèche ci-dessous est un appel Blender headless séparé (voir
+`tools/blender/README.md` pour la chaîne de commandes complète) — rien
+n'appelle automatiquement l'étape suivante, c'est l'ordre documenté qui
+protège le résultat, pas un enchaînement dans le code.
+
+```mermaid
+flowchart LR
+    KIT["kit_hypermarche.blend\n(pièces + proxies col_*)"] --> BUILD["build_level.py\n(assemble une zone)"]
+    BUILD --> COMBINE["build_combined_level.py\n(fusionne les 5 zones, optionnel)"]
+    COMBINE --> BAKE["bake_vertex_lighting.py\n(éclairage -> vertex colors)"]
+    BUILD --> BAKE
+    BAKE --> VALIDATE["validate_level.py\n(contrat de nommage, grille)"]
+    VALIDATE --> EXPORT["export_level.py\n(-> .glb)"]
+    EXPORT --> GLB[("public/assets/levels/*.glb")]
+    GLB --> LOADER["game/level/loader.ts\n(parse par préfixe)"]
+    LOADER --> WORLD["Monde Rapier + scène Three.js"]
+    LOADER -. "sondage HTTP HEAD, dev only" .-> HOT["hotReload.ts"]
+    HOT -.-> LOADER
+```
+
+Trois points qui ne sont pas visibles dans le diagramme mais changent son
+issue :
+
+- **`validate_level.py` n'est jamais appelé par `export_level.py`** : c'est
+  une étape manuelle séparée dans la chaîne documentée, pas une garantie du
+  script d'export lui-même — un `export_level.py` lancé seul, sans
+  validation préalable, exporterait un `.glb` non vérifié sans avertissement
+  (écart connu, sans conséquence tant que l'ordre documenté est respecté).
+- **`build_kit.py` (le kit source) tourne une seule fois**, séparément de
+  cette chaîne — les étapes ci-dessus consomment `kit_hypermarche.blend` en
+  lecture, elles ne le régénèrent jamais.
+- **Le hot reload ne referme pas la boucle vers Blender** : il recharge un
+  `.glb` déjà exporté quand son ETag/Last-Modified change, il ne déclenche
+  aucune étape amont. Voir [Hot reload](#hot-reload) plus bas.
+
+## Convention spawn_player
+
+`SpawnPoint.position` est une position MONDE dont l'origine de l'Empty
+Blender représente les PIEDS du joueur (le sol), pas les yeux — même
+convention que `gym.spawn`, consommée par `player.spawn(x, feetY, z)`. Si un
+pipeline Blender place un jour ses Empties `spawn_player` au niveau des yeux
+plutôt qu'au sol, cette convention doit être ajustée à un seul endroit
+(`loader.ts::extractSpawnPoint`), pas dans chaque appelant.
+
+`SpawnPoint.yaw` suit la convention `main.ts`/`gym.ts` (Euler `'YXZ'`) :
+`yaw = 0` → avant = `-Z`, la même dérivation que `wishX`/`wishZ` dans
+`PlayerController.update` (`forward = (-sin(yaw), 0, -cos(yaw))`).
+
+## Extraction et le piège des transforms
+
+Un mesh `col_*`/`trig_*` peut être imbriqué n'importe où dans la hiérarchie
+Blender (collections, empties parents...). Extraire
+`geometry.attributes.position` SANS appliquer `mesh.matrixWorld` donne des
+colliders qui matchent la géométrie LOCALE, décalée d'un offset constant par
+rapport au mesh rendu dès que le mesh a un parent non identité.
+
+Séquence correcte, appliquée uniformément via `worldSpaceGeometry` :
+
+1. `root.updateWorldMatrix(true, true)` UNE FOIS avant toute lecture de
+   `matrixWorld` — fait au tout début de `buildLevelResourceEffect`, couvre
+   tout le sous-arbre en un seul passage.
+2. Cloner la géométrie et lui appliquer `matrixWorld` AVANT de la passer à
+   Rapier.
+
+Symptôme si cette séquence est cassée : un niveau où toutes les collisions
+sont décalées d'un offset constant — facile à diagnostiquer à tort comme un
+bug de character controller plutôt que comme un problème d'espace de
+coordonnées.
+
+## Le nom tel que tapé dans Blender
+
+`GLTFLoader` RÉÉCRIT `.name` de chaque nœud importé via sa méthode interne
+`createUniqueName()` (nécessaire pour cibler l'animation). Deux Empties
+nommés identiquement `spawn_player` dans Blender ressortent donc de l'import
+comme `spawn_player` et `spawn_player_1` — un contrôle de préfixe/égalité
+sur `obj.name` ne verrait JAMAIS ce doublon, silencieusement.
+
+`GLTFLoader` préserve heureusement le nom BRUT du glTF dans
+`node.userData.name` (assigné avant la réécriture). C'est cette valeur que
+`blenderName()` lit pour tout ce qui touche au contrat de nommage — jamais
+`obj.name` directement.
+
+Exception délibérée : `findClipForObject` continue de lire `mesh.name`
+(mangled) à dessein, parce que `GLTFLoader` construit les noms de piste
+d'animation à partir de ce même nom réécrit — les deux restent cohérents
+entre eux même après mangling.
+
+`cleanExtras` retire la clé `name` que `GLTFLoader` injecte lui-même dans
+`userData` pour tout nœud nommé — ce n'est pas une custom property Blender,
+l'exposer dans `extras` polluerait la seule donnée qu'un futur consommateur
+doit pouvoir lire telle quelle (`extras.target`, `extras.hp`...).
+
+## Hiérarchie des colliders
+
+Les sous-préfixes `col_box_*`/`col_hull_*`/`col_mesh_*` DOIVENT être testés
+AVANT le `col_*` générique : un sous-préfixe est aussi un `col_*` valide
+(`"col_box_test".startsWith("col_")` est vrai), donc tester le générique en
+premier ferait tomber le routage dans le mauvais cas, silencieusement.
+
+- **`col_box_*`** : cuboid inconditionnel — voir le skill
+  `collision-proxy-authoring` (cuboid en tête de la hiérarchie de choix,
+  coût minimal, pas d'arêtes internes donc pas de ghost collisions). On fait
+  confiance au sous-préfixe donné par l'artiste, sans revalidation
+  géométrique. Corps FIXED, groupe `WORLD` — jamais `TRIGGER`, jamais de
+  sensor.
+- **`col_hull_*`** : convex hull, sommets en espace monde. Si
+  `RAPIER.ColliderDesc.convexHull` retourne `null` (hull dégénéré, sommets
+  coplanaires), repli automatique sur un collider trimesh pour ce même
+  mesh — un `col_hull_*` ne doit jamais rester silencieusement sans AUCUN
+  collider.
+- **`col_mesh_*`** : alias explicite du chemin trimesh (dernier recours) —
+  un branchement nommé plutôt qu'un fallthrough implicite dans le `col_*`
+  générique.
+- **`col_*` nu** (rétrocompatibilité Zones A/B) : comportement historique
+  trimesh, SAUF gain silencieux si la géométrie LOCALE s'avère être une
+  boîte axis-aligned (même test que `trig_*`, réutilisé tel quel) → cuboid
+  à la place. Pas d'avertissement dans ce cas : pur gain de perf/stabilité,
+  pas une anomalie signalée.
+
+`isAxisAlignedBox` : un mesh est une « box » si TOUS ses sommets sont sur un
+coin de sa propre bounding box locale — plus robuste qu'une comparaison de
+nom ou un `instanceof THREE.BoxGeometry` (Blender exporte toujours des
+`BufferGeometry` génériques). Vérifié en espace LOCAL, pas monde : un cuboid
+tourné par son parent reste une box valide (la rotation est portée par le
+corps Rapier), une déformation non uniforme (cisaillement) échoue quel que
+soit son alignement.
+
+## Triggers et secrets
+
+`trig_*` doit être une géométrie box axis-aligned (même test que ci-dessus)
+— sinon le trigger est ignoré et signalé (avertissement bruyant, jamais
+bloquant pour le reste du niveau). Sensor Rapier, groupe `TRIGGER`.
+
+`secret_*` subit le même traitement géométrique côté extraction (bounding
+box monde) mais SANS aucune exigence de forme box : un secret peut être une
+zone irrégulière, sa détection appartient à `game/level/interactive.ts`/
+`main.ts`, pas au loader.
+
+## Portes
+
+Corps **FIXE**, posé une fois pour toutes à la pose FERMÉE : seul le MESH
+s'anime (`game/level/doors.ts::DoorSystem`), et seul le collider s'active ou
+se désactive. Une porte n'existe donc, pour Rapier, qu'ouverte ou fermée —
+jamais « à moitié », jamais capable de coincer le joueur en cours de
+mouvement. Le mouvement (`battant`, `coulisse`, `monte`, `descend`), la
+charnière, la portée d'ouverture automatique et le groupe de vantaux se
+déclarent en extras Blender : voir
+[Conventions de nommage](./reference-conventions-nommage.md#portes-animées) et
+[ADR 0031](../decisions/0031-portes-animees-et-vitres.md).
+
+**Ce que l'ADR 0031 corrige** : de la porte à badge de la Zone E
+(2026-08-23) au 2026-09-19, AUCUNE porte n'a jamais bougé à l'écran. Le jeu
+faisait glisser le corps Rapier — invisible — et coupait son collider ; rien
+ne recopiait cette pose sur le mesh, qui restait planté dans l'ouverture
+qu'on venait de franchir. Seuls les `prop_*` synchronisaient leur mesh.
+
+Conséquence côté données : le corps est maintenant recentré sur la boîte
+englobante locale, comme `col_box_*` — le piège de la translation brute
+décrit par [ADR 0012](../decisions/0012-porte-collider-non-recentre.md)
+n'existe plus pour un corps fixe. Les `.glb` déjà exportés ne changent pas
+de comportement : leurs vantaux sont déjà recentrés côté Blender.
+
+`DoorInfo.clip` reste PARSÉ, PAS JOUÉ : aucune porte du jeu n'est animée par
+un clip glTF, tout vient des extras.
+
+**Coût de rendu** : un vantail animé ne peut pas rejoindre le décor fusionné,
+et three.js n'élimine que par le cône de vue. Les vantaux qui partagent un
+matériau sont donc regroupés en un `BatchedMesh` au chargement
+(`batchDoorMeshes`) : un lot de dessin par matériau pour tout le niveau, avec
+élimination par vantail. Les vingt vantaux du niveau v2 tiennent en six lots.
+
+## Objets interactifs
+
+**Extraction** (`loader.ts`) : portée 2 m, constante du contrat (voir
+[Conventions de nommage](./reference-conventions-nommage.md)), jamais un
+réglage par objet. La cible est lue dans `extras.target` (custom property
+Blender `target`, string) ; son absence est un avertissement bruyant non
+bloquant — l'objet est quand même retourné, avec `targetName: null`.
+
+**Dispatch** (`InteractionSystem`, `interactive.ts`) : discipline de
+déterminisme identique à `WeaponSystem`/`SuitManager` — `update()` doit être
+appelé UNE FOIS PAR PAS FIXE, jamais au taux d'affichage. La détection de
+proximité dépend de `player.position` (avancée par `player.update` ce
+pas-ci) et le déclenchement dépend du front `use` consommé une seule fois
+par `InputFrame.use` (`core/inputRecorder.ts`) : les rejouer au taux
+d'affichage romprait le rejeu déterministe F9/F10, exactement comme pour les
+armes.
+
+Le dispatch se fait PAR NOM Blender exact, jamais par un système générique
+indexé sur `targetName` : `use_exit_door`/`use_frozen_storage` référencent
+chacun un `door_*` via `targetName`, mais le routage reste un `switch` sur
+le nom de l'objet. Deux cas concrets ne justifient pas encore la
+généralisation (invariants #8/#9 — pas d'abstraction avant que la douleur
+de duplication soit réelle).
+
+Les objets consommés (pickups à usage unique) sont suivis dans un
+`WeakSet<THREE.Object3D>` PAR RÉFÉRENCE DE MESH, pas par nom. Effet de bord
+documenté plutôt que résolu : un hot reload remplace tout `LevelHandle`
+(donc tout mesh) — un `use_crowbar` déjà ramassé avant un rechargement
+redevient, après coup, un objet entièrement nouveau, absent de ce
+`WeakSet`, donc à nouveau visible et déclenchable. Cas limite dev-only
+(itération Blender), pas un bug de la version jouée : un niveau ne se
+recharge jamais à chaud en dehors du pipeline de dev.
+
+`use_exit_door`/`use_frozen_storage` ne sont volontairement PAS marqués
+consommés (contrairement aux pickups) : un essai refusé (porte verrouillée)
+doit rester réessayable tant que le joueur reste à portée — `main.ts` garde
+sa propre garde pour ignorer un ré-essai une fois la porte déjà
+déverrouillée.
+
+## Cycle de vie du LevelHandle
+
+Depuis le jalon M2 (`PLAN_EFFECT_XSTATE.md` §4), `LevelHandle` est géré par
+`Effect.acquireRelease`/`Scope` plutôt que par un flag `disposed` maintenu à
+la main : `dispose()` est GARANTI idempotent par `Scope.close` lui-même
+(no-op si le scope est déjà fermé), pas par une discipline de code à
+maintenir.
+
+Les 7 cas de dégradation déjà documentés plus haut (géométrie de collider
+manquante, collider surdimensionné, `spawn_player` absent/dupliqué, trigger
+non-box, `use_*` sans cible, hull dégénéré, échec réseau) sont modélisés en
+`Schema.TaggedError`, avec un patron uniforme : chacun est un `Effect.fail`
+immédiatement rattrapé au point même de sa détection, jamais laissé
+remonter. Conséquence : `buildLevelFromGltf` ne peut jamais échouer
+(`Effect<LevelHandle>` sans erreur visible), exactement comme avant cette
+migration — sauf `loadLevel`, dont l'échec réseau/parsing
+(`LevelFetchError`) a toujours été une vraie erreur propagée à l'appelant,
+jamais un warning.
+
+La frontière Effect→Promise/plain-JS est préservée à l'identique :
+`buildLevelFromGltf` reste synchrone, `loadLevel` reste asynchrone, aucune
+signature publique n'a changé — `main.ts` n'a pas eu besoin d'être modifié
+par ce jalon.
+
+Détail complet du raisonnement (pourquoi `Effect.acquireRelease` plutôt
+qu'`Effect.scoped`, pourquoi un `Semaphore` en plus du mutex JS de
+rechargement, remplacement du `setTimeout` récursif par
+`Effect.repeat(Schedule.spaced(...))`) : `PLAN_EFFECT_XSTATE.md` §4 et le
+skill `effect-xstate-cassandre`.
+
+## Fusion du décor statique
+
+À la fin de la construction du niveau, `mergeStaticDecor`
+(`game/level/mergeStaticDecor.ts`) regroupe les meshes de décor sans
+préfixe par **contenu de matériau** (texture, couleurs, vertex colors,
+transparence), par jeu d'attributs de géométrie et par **cellule spatiale de
+48 m**, puis fusionne chaque groupe en un seul mesh rattaché à `root`. Mesuré
+sur `hypermarche_complet` : 615 meshes de décor deviennent 43 lots, et le jeu
+passe de 513 à quelques dizaines de draw calls selon l'endroit où l'on se
+tient. Décision et alternatives :
+[ADR 0023](../decisions/0023-fusion-decor-au-chargement.md), révisée par
+l'[ADR 0026](../decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
+pour la découpe en cellules.
+
+La cellule est celle du **centre de la boîte** du mesh, pas de son origine :
+un sol de 42 × 36 m dont l'origine est dans un coin appartient à la cellule
+qu'il couvre vraiment. Un objet plus grand qu'une cellule tombe entier dans
+une seule, et c'est voulu.
+
+La clé se fait sur le contenu parce que `toLambert` crée **un matériau par
+mesh** : deux meshes à la même texture ont deux instances différentes.
+
+Chaque géométrie est copiée dans le lot avec ses propres sommets, donc ses
+propres vertex colors bakées : le piège instancing-vs-bake (voir plus bas)
+ne se pose pas, contrairement à une instanciation GPU.
+
+**Restent individuels** : tout mesh préfixé (`col_*`, `door_*`, `use_*`,
+`trig_*`, `secret_*`), tout mesh sous une porte ou un objet interactif, toute
+cible d'une piste d'animation, les meshes multi-matériaux, skinnés, instanciés
+ou à morph targets, et les meshes à **échelle négative** — la transformation
+inverserait l'ordre des sommets et le back-face culling ferait disparaître
+leurs faces.
+
+Contrepartie : un lot est dessiné en entier dès qu'une de ses parties est
+dans le champ. C'est précisément la raison de la découpe en cellules — sans
+elle, un lot couvrait toute la carte et n'était donc JAMAIS écarté par le tri
+d'écart : le niveau se dessinait en entier à chaque image, derrière les murs
+compris (82 836 triangles pour une pièce close de 28 × 26 m du blockout,
+contre 11 184 après). Le prix est un lot de plus par cellule occupée et par
+matériau ; si l'habillage approche des 200 draw calls, **remonter
+`DECOR_CELL_SIZE` est le premier levier**, les triangles ayant bien plus de
+marge que les lots. Courbe complète :
+[Ce que coûte une image](./systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
+
+`LevelStats.unprefixedMeshCount` reste compté avant la fusion (les
+contrôles de non-régression existants s'appuient dessus) ;
+`LevelStats.decorBatchCount` donne le nombre d'objets de décor réellement
+rendus après fusion.
+
+## Hot reload
+
+Voir [ADR 0011](../decisions/0011-hot-reload-sondage-http.md) pour le choix
+du mécanisme (sondage HTTP HEAD plutôt qu'un watcher fichier) et ses
+alternatives.
+
+**Développement uniquement.** La fibre de sondage n'est créée que sous
+`import.meta.env.DEV`, donc elle n'existe pas dans un build de production —
+où le `.glb` ne changera jamais. Ça n'a pas toujours été vrai : voir la
+révision du 2026-09-20 de l'ADR.
+
+**Préservation de la position du joueur** : `createLevelSession` ne touche
+JAMAIS `player.position`/`player.velocity`. Un rechargement dispose
+l'ancien `LevelHandle` et en construit un nouveau, point final. Le SEUL
+moment où l'appelant (`main.ts`) est autorisé à repositionner le joueur est
+`onLoaded` avec `info.isFirstLoad === true` — le tout premier chargement.
+
+**Cas limite connu, volontairement non traité** : si le mur qu'on vient de
+déplacer dans Blender finit par recouvrir la position courante du joueur,
+celui-ci se retrouve embarqué dans le nouveau collider. Rien ne le
+dépénètre activement. En pratique, le `KinematicCharacterController` du
+joueur recalcule `computeColliderMovement` à CHAQUE pas fixe suivant à
+partir de la géométrie réelle, donc un chevauchement se résorbe le plus
+souvent tout seul dès le prochain déplacement volontaire — mais un joueur
+immobile dans un mur fraîchement apparu peut rester visuellement coincé.
+Documenté ici plutôt que contourné en douce : cas dev-only (itération
+Blender), un niveau ne se recharge jamais à chaud en dehors de ce pipeline.
+
+**Double mécanisme de mutex de rechargement** : une garde JS
+(`reloadInFlight`, correcte par construction en JS mono-thread) assure le
+COALESCING observable — un seul rechargement réseau pour N appels
+concurrents à `reload()`. Un `Effect.Semaphore(1)` enveloppe en plus le
+travail réel (`performLoadEffect`) comme garde-fou structurel
+supplémentaire : un `Semaphore` seul SÉRIALISERAIT les appels concurrents
+(chacun finirait par déclencher un vrai rechargement) plutôt que de les
+coalescer, ce qui aurait changé le comportement observable. Les deux
+mécanismes sont donc conservés, chacun pour son propre rôle — détail complet
+dans `PLAN_EFFECT_XSTATE.md` §4.
+
+## Kit modulaire et assemblage de niveau (côté Blender)
+
+Cette section couvre `tools/blender/` — la moitié Blender du pipeline,
+en amont du loader décrit plus haut. Détail complet des scripts et de la
+chaîne de commandes : `tools/blender/README.md`.
+
+### Piège instancing-vs-bake
+
+`modular-kit-design` recommande de partager un même mesh-datablock entre
+toutes les instances d'une pièce — correct pour la bibliothèque du kit
+(`_KIT`, une pièce n'y existe qu'une fois), **faux pour un niveau assemblé** :
+les couleurs de sommet (`"Col"`) vivent sur le mesh-datablock, pas sur
+l'objet. Vingt-quatre murs partageant un seul mesh ne pourraient recevoir
+qu'un seul bake, valide pour un seul d'entre eux.
+
+`build_level.py::place_kit_piece` fait donc un `mesh.copy()` par instance
+**rendue** placée dans un niveau (chacune bake sa propre exposition). Les
+proxies `col_*`, jamais bakés ni rendus, restent partagés — correct et moins
+coûteux en mémoire. Même règle appliquée par `build_door_leaf` pour le
+vantail de porte (voir plus bas).
+
+### Piège du parent inverse non réévalué
+
+`build_kit.py` pose chaque proxy en enfant du mesh rendu de sa pièce, avec
+une `location` locale nulle — jamais `proxy.location = location` combiné à
+`matrix_parent_inverse = obj.matrix_world.inverted()`. `obj.matrix_world`
+n'est réévalué qu'après un passage du depsgraph ; juste après avoir écrit
+`obj.location`, l'inverse lu vaut encore l'identité, donc l'offset
+d'étalage du kit est appliqué **deux fois** — le proxy atterrit à
+`2 × location`, sur une autre pièce du kit, et scelle son bake (mesuré :
+`kit_wall_1m`, `kit_vent`, `kit_camera` sortaient noirs).
+
+`inspect_kit.py` a par ailleurs longtemps masqué ce même bug : sa
+comparaison proxy/rendu passait par `c.location - obj.location`, qui
+annule exactement le double-transform et affiche `0 warnings` sur un kit
+dont 24 proxies sur 25 étaient mal placés. Corrigé en comparant par
+`matrix_local` (repère de la pièce), qui est la vraie position du proxy —
+**un vérificateur qui compense un bug le rend invisible.**
+
+### Convention de placement des rangées (gondoles, racks, escalier)
+
+`build_level.py::_build_row_run` (partagée par `build_gondolas` et
+`build_racks`) et `build_mezzanine_stairs` tournent chaque pièce de +90°
+pour aligner sa longueur locale sur l'axe des rangées. Deux conséquences
+mécaniques, pas des décisions de layout :
+
+1. **`row["x"]`/la position donnée est un COIN de la pièce, jamais un
+   centre.** Centrer une gondole (profondeur 1.25 m) ou un rack (1.2 m) sur
+   une coordonnée demanderait un décalage qui n'est pas nécessairement un
+   multiple de la grille 0.25 m, et ferait échouer `validate_level.py`
+   sous `--strict`. Utiliser la coordonnée telle quelle comme un bord
+   garde chaque pièce sur la grille, au prix de rangées à des abscisses
+   symétriques qui ne produisent pas des empreintes miroir l'une de
+   l'autre (Zone C : couloirs 6.5 m/7.75 m au lieu de ~7 m des deux côtés ;
+   Zone D : travée réelle X∈[-7.2,-6.0]/[2.8,4.0], pas centrée sur X=0).
+2. **La rotation +90° décale l'empreinte vers -X, jamais vers +X.** Pour
+   l'escalier double de la Zone D, un placement naïf des coordonnées du
+   plan aurait fait atterrir les deux marches exactement sous le segment
+   de rambarde voisin (collision réelle entre deux pièces, pas une
+   asymétrie cosmétique). `build_mezzanine_stairs` compense en ajoutant la
+   largeur locale de la pièce à chaque abscisse avant l'appel — la
+   position de la brèche ne change pas, seule la valeur intermédiaire
+   passée à Blender est ajustée pour l'atteindre.
+
+### Vantail de porte recentré (kit_door_leaf)
+
+`loader.ts::buildDoor` ne recentre pas la géométrie d'un `door_*` — voir
+[ADR 0012](../decisions/0012-porte-collider-non-recentre.md) pour le
+raisonnement complet côté runtime. Côté Blender, `build_level.py::
+build_door_leaf` est la contrepartie de cette décision : c'est le **seul**
+objet posé par ce script dont l'origine locale est recentrée sur le centre
+de sa boîte englobante (par décalage direct des sommets de la copie posée
+en niveau) plutôt que laissée au coin — le mesh-datablock `kit_door_leaf`
+du kit lui-même reste inchangé, convention coin comme le reste du kit.
+
+Placement du centre monde : Z au milieu exact de l'ouverture (vantail posé
+au sol), X au centre de l'ouverture dans le repère local du cadre, Y **calé
+sur la face intérieure du cadre** plutôt que centré dans l'épaisseur du mur
+— un centrage dans l'épaisseur (0.25 m) donnerait un Y qui n'est pas un
+multiple de la grille 0.25 m pour les dimensions de ce kit. Le centre local
+est ensuite tourné de `rot_deg` autour de Z avant translation, exactement
+comme `plan_wall_run` le ferait pour n'importe quelle pièce de mur postée à
+ce même coin avec cette même rotation.
+
+### Vantaux et vitres du niveau v2 (côté Blender)
+
+Posés par `tools/level_v2/build_niveau.py` (`poser_portes_animees`,
+`habiller_etage`) ; le contrat lu par le jeu est dans
+[conventions de nommage](./reference-conventions-nommage.md). Ce qui ne
+se voit qu'en construisant :
+
+- **Un vantail = un mesh, UN matériau.** Deux matériaux font deux
+  primitives glTF, que `GLTFLoader` range sous un groupe : le loader ne
+  voit plus de `door_*`. La poignée prend ses UV dans un pavé de la texture
+  du vantail (`uv="quincaillerie:<vantail>"`), le verre d'une porte vitrée
+  est dans l'ALPHA de sa texture (`portes_verre.png`, voir
+  `tools/textures/generate_portes.py`). `validate_level.py` en fait une
+  erreur.
+- **Origine au centre de la boîte**, jamais de rotation d'objet. La boîte
+  englobante est le collider ET décide de la charnière : une poignée posée
+  hors de la hauteur du vantail l'étire sans rien dire (arrivé à l'étage, à
+  z = 4 : les poignées étaient à hauteur absolue). `vantail()` refuse
+  désormais toute quincaillerie hors du vantail.
+- **`charniere` se lit dans le repère three.js.** Le +Y de Blender y devient
+  −Z : pour un vantail long en y (façade perpendiculaire à x), `min` et
+  `max` s'échangent. `_charniere()` fait la conversion.
+- **Les vitres partagent un seul matériau**, `mat_verre` (la palette en aplat,
+  alpha constant 0,3) : l'exporteur écrit `alphaMode: BLEND` dès qu'une alpha
+  constante vaut moins de 1, ou qu'une alpha d'image est branchée. Une vitre
+  CASSABLE doit être la première chose que le tir rencontre : le collider
+  du meuble derrière commence après le verre (`armoire_surgeles`,
+  `bac_surgeles`).
+- **Une vraie fenêtre ne perce que le RENDU d'un mur de coque**
+  (`vraie_fenetre`), son collider reste plein et la vitre est `solide:
+  false`. Ne percer que des murs qui donnent hors du bâtiment : il n'a pas
+  de toits, et un plafond ne se voit que d'en dessous.
+- **Voir la transparence dans Blender** demande le mode *Material Preview* :
+  en *Solid*, le verre sort opaque et masque tout ce qu'il y a derrière.
+
+### Dalles sur-mesure et chevauchement dans le niveau combiné
+
+`build_level.py::build_floor_patches` pose une dalle limitée à l'empreinte
+réelle d'un besoin (ex. l'alcôve du secret 1, Zone B) plutôt que d'étendre
+le rectangle englobant du `"floor"` existant. Étendre ce rectangle semblait
+anodin sur la zone testée seule, mais une fois cette zone **translatée**
+dans le niveau combiné (`build_combined_level.py`), l'extension peut
+retomber exactement sur la géométrie d'une autre zone ou d'un connecteur —
+mesuré en assemblant `hypermarche_complet` : la Zone B étendue à l'ouest
+chevauchait exactement le connecteur A-B une fois translatée, dupliquant
+une tuile de sol au même endroit (2 meshes noirs au bake, auto-occultation).
+Une dalle sur-mesure, bornée à l'empreinte réelle du besoin, ne peut par
+construction chevaucher rien d'autre.
+
+### Mondes orphelins dans le niveau combiné
+
+`geo_utils.wipe_scene()` ne touche jamais `bpy.data.worlds` (seulement
+collections/objets/meshes/matériaux/lampes/images). `build_level.py::
+build_lighting` crée un nouveau monde et le rend actif à chaque appel — sans
+conséquence pour un fichier de zone isolée (un seul appel), mais
+`build_combined_level.py` l'appelle cinq fois plus le monde par défaut de
+`--factory-startup` : six mondes après assemblage, pas cinq. Les cinq mondes
+de zone partagent la même couleur/force de fond, donc lequel reste actif
+n'affecte pas le bake — `build_combined_level.py` supprime les cinq mondes
+inutilisés après coup (comparaison par nom, pas par identité d'objet Python)
+par propreté, pas par nécessité de correction.
+
+### Occlusion des rangées de kit — ce sur quoi on peut compter
+
+Une rangée de `kit_gondola_*`/`kit_rack_4m` **bloque réellement** la ligne de
+vue ennemie : un `spawn_suit_*` posé derrière reste `idle`. Mesuré au jalon
+N5 sur les `.glb` réellement exportés ([ADR
+0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md),
+`test/game/entities/lineOfSight.test.ts`), après une période de défiance
+fondée sur un symptôme dont la cause était ailleurs ([ADR
+0022](../decisions/0022-occlusion-rangees-non-bloquante.md) : le premier
+rayon partait avant le premier pas de physique).
+
+Trois limites à garder en tête en posant un ennemi :
+
+- **une allée ne couvre rien** — c'est une ligne droite dégagée d'un bout à
+  l'autre ; l'embuscade se pose dans une allée transversale, jamais dans
+  celle que le joueur regarde ;
+- **rien sous 1,6 m ne bloque un rayon** — `kit_checkout` (1,10 m), palettes
+  et comptoirs bas sont des obstacles de déplacement, pas du couvert. Un
+  couvert utile dépasse 1,6 m, et 1,8 m face au Directeur ;
+- un collider créé **après** le chargement (porte, prop dynamique) n'est
+  visible aux rayons qu'après un pas de physique.
+
+## Bake d'éclairage (vertex colors)
+
+`tools/blender/bake_vertex_lighting.py` bake l'attribut `"Col"` (voir
+[ADR 0005](../decisions/0005-eclairage-vertex-colors.md)) en Cycles,
+Combined, 128 samples (procédure complète : skill
+`vertex-color-sector-lighting`).
+
+### Les proxies sont des occultants, pas seulement des non-cibles
+
+Un proxy `col_*` est par construction coïncident avec la géométrie qu'il
+double. Laissé visible aux rayons pendant le bake, il scelle la pièce :
+zéro lumière directe, indirecte ou ambiante, et l'opérateur Cycles retourne
+`FINISHED` sans rien signaler — l'attribut fraîchement créé reste au noir
+de sa valeur par défaut. Retirer les proxies de la liste des **cibles** ne
+suffit donc pas : il faut aussi les retirer des **rayons**. Le script masque
+`col_*`/`trig_*`/`secret_*` du rendu le temps du bake et restaure l'état
+d'origine dans un `finally` (`--keep-proxies` reproduit la régression pour
+la mesurer : 19 des 25 pièces du kit sortent alors noires).
+
+### Diagnostic d'un mesh entièrement noir
+
+Pour chaque mesh sorti tout noir, le script tire un rayon depuis le centre
+de chaque face échantillonnée (pas les sommets — un sommet est sur une
+arête ou un coin, ses rayons s'échappent presque toujours et le verdict est
+faux) et nomme la cause plutôt que de la laisser chercher :
+
+- **occulté par un autre objet** → c'est cet objet qu'il faut masquer
+- **occulté par lui-même** → faces coïncidentes ou géométrie intérieure,
+  c'est le mesh qu'il faut corriger (voir `kit_crate` ci-dessous)
+- **exposé mais noir** → seul cas où regarder les lampes est le bon réflexe
+
+Les faces coïncidentes (deux faces coplanaires superposées regardant dans
+le même sens) sont détectées séparément par comparaison de bounding box par
+groupe de normale — c'est ce qui a identifié `kit_crate` : ses quatre
+tasseaux d'angle, posés au ras du cube avec 16 paires de faces exactement
+coïncidentes, produisaient un z-fighting garanti et un bake entièrement
+noir. Corrigé en supprimant les tasseaux plutôt qu'en les décollant (les
+décoller aurait fait déborder l'empreinte de 1×1, désynchronisant le proxy
+cuboid du rendu) — `kit_crate` fait maintenant 24 sommets/12 triangles.
+
+### Combined vs Diffuse
+
+`--type combined` (défaut) bake la couleur de base ET la lumière ensemble ;
+`COLOR_0` est ensuite **remultiplié par la base color** au rendu runtime
+(piège de colorspace déjà noté dans [Textures](./pipeline-textures.md)) — sur un
+matériau coloré, le doublement assombrit la surface au carré. Le kit utilise
+des couleurs claires et peu saturées précisément pour que ce doublement
+reste discret. `--type diffuse` bake la lumière seule (Direct + Indirect,
+sans albédo) quand ce doublement devient gênant.
+
+**Niveau v2 texturé : `--type diffuse` obligatoire.** Mesuré le 2026-09-11
+sur une scène d'essai (caisse texturée rouge sur carrelage, une lampe) : en
+`combined`, la caisse enregistre du rouge (0,50 / 0,15 / 0,15), que le jeu
+multiplierait une seconde fois par la texture ; en `diffuse`, une lumière
+neutre (0,55 / 0,53 / 0,51), légèrement chaude par rebond sur le sol beige —
+exactement « texture × lumière ». Les valeurs en lumière seule sont plus
+claires (0,83 sur le sol contre 0,57 en `combined`) : la puissance des
+lampes est à recalibrer pour les zones du niveau v2.
+
+### Un bake par sommet exige des sommets
+
+Une couleur cuite vit SUR un sommet : un mur de 16 m qui n'en a que huit ne
+peut porter aucun dégradé, il sort d'un seul aplat. Pire, ses huit sommets
+sont les coins — précisément les points que la géométrie voisine vient
+sceller. Au jalon N4, 42 meshes sur 262 sont ressortis entièrement noirs
+pour cette seule raison : panneaux de fond, plinthes et montants dont chaque
+coin touchait une autre pièce.
+
+`lib_helpers.subdivide` découpe donc toute arête plus longue qu'un seuil
+(0.75 m par défaut, 0.8 m pour les sols, murs et plafonds). Seules les
+arêtes trop longues sont coupées : une boîte de produit de 20 cm reste
+intacte. Après subdivision, zéro mesh noir sur la même scène.
+`validate_level.py` contrôle ce point (« subdivision insuffisante pour le
+bake », moins d'un sommet par m²).
+
+### Le plancher d'éclairage d'une salle close
+
+Une salle de vente est une boîte fermée : aucune lumière d'environnement n'y
+entre — vérifié en mesurant, faire varier la couleur du monde de 0.10 à 0.22
+ne change pas la luminance d'un iota. Tout ce qu'une rampe n'atteint pas
+directement (dessous de tablette, flanc de gondole, recoin) tombe donc au
+noir.
+
+Monter la puissance des lampes ne corrige pas ça : ×2 sur les lampes ne
+donne que +50 % de luminance moyenne, parce que le gain part en écrêtage sur
+les surfaces déjà exposées. `bake_vertex_lighting.py --ambient A` applique
+après le bake le terme d'ambiant global des moteurs de l'époque :
+`c' = A + (1 − A) · c`. Il remappe l'intervalle au lieu de décaler puis
+saturer, donc il ne crée aucun écrêtage et conserve intégralement le dégradé.
+
+Valeur retenue pour la salle d'essai : 0.12, avec des rampes à 180 W.
+
+### La forme de la source fait l'ombre
+
+Deuxième retour de jeu sur la salle d'essai : « ça manque d'ombre ». Le défaut
+n'était pas la puissance mais la **forme des sources** — seize carrés de 3,2 m
+sous le plafond. Un carré de trois mètres éclaire une salle de partout et n'y
+projette presque rien.
+
+Trois changements donnent le relief d'un plafond de néons, et aucun n'est un
+réglage de puissance :
+
+- **La source a la forme du tube** : un rectangle de 3,9 × 0,3 m
+  (`lib_helpers.area_light(..., size_y=...)`). La lumière chute alors
+  franchement en travers de l'allée.
+- **Rien n'éclaire directement au-dessus des rangées.** Les rampes courent
+  au-dessus des allées et des dégagements ; les gondoles reçoivent la lumière
+  de biais, leurs tablettes basses restent dans l'ombre des hautes. C'est cette
+  verticale qui fait lire un rayon comme un volume et non comme un mur d'images.
+- **Quelques tubes sont morts** (`lib_rayons.neon(..., eteint=True)` : même
+  rampe, tube nommé `_tube_mort`, donc hors du marqueur émissif). Un plafond
+  dont toutes les rampes fonctionnent n'a pas d'âge, et une salle sans coin
+  sombre ne donne envie d'aller nulle part.
+
+Blanc légèrement froid (0.86, 0.93, 1.0) : un tube fluorescent n'est jamais
+neutre. Un unique bloc de secours vert au-dessus de la sortie est la seule autre
+couleur de la salle — donc le seul repère qui se voit de loin dans l'ombre.
+
+Le sol descend à `subdiv=0.5` : c'est lui qui porte les flaques de lumière, et
+le bord d'une flaque ne peut pas être plus fin que la maille.
+
+Réglages retenus : tubes à 320 W, `--ambient 0.07`. Plus de plancher d'ambiant
+efface précisément les ombres qu'on vient de créer.
+
+### Une couleur par sommet ne peut pas montrer une arête
+
+Sur le domaine POINT, il y a **une couleur par sommet, partagée par toutes les
+faces qui s'y rejoignent**. Les huit sommets d'une boîte appartiennent chacun à
+trois faces : le dessus d'un carton sous un néon et son flanc reçoivent donc
+forcément la même valeur. Aucune arête ne se détache, et la salle paraît
+éclairée à plat même quand le bake, lui, porte du contraste — c'est exactement
+ce qu'un joueur décrit comme « on dirait une lumière d'ambiance qui éclaire
+tout ».
+
+`--domain corner` donne une couleur **par face**. L'exporteur glTF dédouble
+alors les sommets dont les coins diffèrent, comme il le fait déjà pour les UV
+et les normales : plus de sommets dans le `.glb`, aucun surcoût de rendu.
+Mesuré sur la salle d'essai, le plafond passe d'une moyenne de 0,39 à 0,57 —
+sa sous-face s'éclaire enfin sans être moyennée avec son dessus.
+
+### Le rebond diffus décide du contraste
+
+Cycles rebondit quatre fois par défaut. Dans une salle de vente blanche, sol et
+plafond se renvoient la lumière jusqu'à effacer les ombres qu'un plafond de
+néons devrait creuser — le plafond finissait la surface la plus claire de la
+pièce. `--bounces 1` durcit l'éclairage ; `--bounces 0` l'assèche trop
+(luminance moyenne 0,44 → 0,36 → 0,28). Un éclairage de jeu Build est plus dur
+que la réalité, c'est délibéré.
+
+### Cuire l'indirect seul — le montage hybride
+
+`--pass indirect` ne cuit que la lumière rebondie. C'est la moitié Blender de
+l'[ADR 0024](../decisions/0024-eclairage-hybride.md) : le direct est rendu en
+temps réel par les lampes que le niveau porte lui-même, et la couleur de sommet
+ne sert plus que de **masque d'ombrage**.
+
+Deux éclairages cohabitent alors dans le `.blend`, et ils n'ont pas le même
+métier. Les **area lights** servent au bake et ne partent jamais en jeu. Les
+**empties `light_*`** ne servent qu'au jeu et sont invisibles au bake — ce sont
+des empties, donc Cycles les ignore sans qu'on ait rien à masquer.
+
+Chaîne pour un niveau hybride :
+
+```bash
+blender -b <niveau>.blend -P tools/blender/bake_vertex_lighting.py -- \
+    --type diffuse --pass indirect --samples 128 --ambient 0.5 \
+    --domain corner --bounces 3 --save
+```
+
+`--ambient 0.5` remappe le masque dans [0.5, 1.0] : au-dessous, l'ombre cuite
+éteindrait la lumière temps réel au lieu de la nuancer.
+
+### Une source de lumière ressort noire
+
+Une surface qui ÉMET la lumière n'en reçoit pas : le tube d'une rampe de
+néons, l'objet le plus lumineux de la salle, sort noir d'un bake de lumière
+seule. `bake_vertex_lighting.py --emissive-marker` (défaut `_neon`) remet à
+blanc la couleur de sommet de tout objet dont le nom contient ce marqueur,
+après le bake. C'est une convention de nommage au même titre que `col_*` :
+un objet nommé `*_neon*` est une source, pas une surface éclairée. La lueur
+d'un néon dans un jeu Build est peinte, pas simulée.
+
+**Le bake n'est pas le seul éclairage du jeu.** Voir
+[Rendu — Éclairage de scène selon le niveau](./systems-rendu.md#éclairage-de-scène-selon-le-niveau) :
+sans un `LevelDef.lighting` adapté, un soleil temps réel hérité de la Phase 1
+multiplie tout le bake par une direction arbitraire.
+
+## Critère de validation
+
+Déplacer un mur dans Blender, exporter, le voir en jeu en MOINS DE 60
+SECONDES, chronométré réellement. C'est le livrable principal de ce
+pipeline — pas encore vérifié en conditions réelles par un agent (pas de
+serveur dev/navigateur dans cet environnement d'exécution), à valider en
+jouant réellement.
+
+Retour à la [carte de la documentation](../README.md).

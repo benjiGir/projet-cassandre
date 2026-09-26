@@ -16,7 +16,7 @@ import type { ViewmodelClocks, WeaponKind, WeaponSystem } from "../game/player/w
  * `WeaponSystem`. Aucune animation ne retarde un tir (invariant #10).
  *
  * Hiérarchie de scène (enfant de caméra), prérequis `scene.add(camera)` :
- * see: docs/systems/rendu.md#le-mesh-darme-affiché-à-lécran-viewmodel
+ * see: docs/archive/systems-rendu.md#le-mesh-darme-affiché-à-lécran-viewmodel
  */
 
 // --- Modèles -----------------------------------------------------------------
@@ -137,7 +137,7 @@ export async function loadWeaponModelsOrPlaceholder(): Promise<WeaponModels> {
 
 // --- Animation ---------------------------------------------------------------
 
-/** Durées de l'animation, en secondes de gameplay. Voir docs/systems/rendu.md. */
+/** Durées de l'animation, en secondes de gameplay. Voir docs/4-technique/rendu.md. */
 export const VIEWMODEL_TIMING = {
   /** L'ancienne arme descend… */
   lower: 0.12,
@@ -329,7 +329,7 @@ export class Viewmodel {
 // présentait que son ÉPAISSEUR à la caméra (2,5 à 5 cm réels), sous le pixel
 // dès 5 m. Remplacé par un billboard dressé, skill `billboard-sprites-8dir` —
 // voir `render/pickups.ts::dressWeaponPickup`/`WeaponPickupBillboard` et
-// `docs/systems/rendu.md#armes-au-sol`. `worldCrowbar`/`worldPistol`/
+// `docs/4-technique/rendu.md#armes-au-sol`. `worldCrowbar`/`worldPistol`/
 // `worldShotgun` restent chargés (armes.glb inchangé, ADR 0029) mais ne sont
 // plus utilisés par le rendu — libre à une passe future de les retirer du
 // script Blender si aucun autre usage n'apparaît.

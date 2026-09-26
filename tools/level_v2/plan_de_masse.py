@@ -31,7 +31,7 @@ EYE_HEIGHT = 1.6           # moveConfig.ts, suitConfig.ts
 JUMP_HEIGHT = 1.1          # moveConfig.ts
 USE_RANGE = 2.0            # loader.ts::USE_RANGE_METERS
 
-# Budget RÉVISÉ, mesuré (ADR 0026, docs/systems/cout-de-rendu.md) : le
+# Budget RÉVISÉ, mesuré (ADR 0026, docs/4-technique/budget-de-rendu.md) : le
 # chiffre de 200 000 triangles posé au jalon N1 l'avait été a priori, sans
 # machine en face. 1,45 M de triangles coûtent 4,9 ms de GPU carte entière
 # dans le champ. Ce sont les lampes qui ont un mur, pas les triangles.

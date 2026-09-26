@@ -5,7 +5,7 @@
  * comportement/combat codé en dur ailleurs que dans ce fichier. Valeurs de
  * départ, pas des choix de tuning arrêtés, sauf mention contraire explicite
  * ci-dessous.
- * see: docs/reference/valeurs-ennemis.md
+ * see: docs/6-reference/valeurs-ennemis.md
  */
 export interface SuitConfig {
   /** Points de vie max, en PV. */
@@ -111,7 +111,7 @@ export interface SuitConfig {
 export const suitConfig: SuitConfig = {
   // 50 : calé pour qu'un tir de pompe totalement à bout portant (9 plombs)
   // tue de façon fiable en un coup — condition nécessaire à la mécanique de
-  // gibs. see: docs/reference/valeurs-ennemis.md#vie
+  // gibs. see: docs/archive/reference-valeurs-ennemis.md#vie
   maxHp: 50,
 
   capsuleRadius: 0.4,
@@ -145,7 +145,7 @@ export const suitConfig: SuitConfig = {
   deathFrameDuration: 0.12,
 
   // 10 à l'origine, baissé après un playtest du niveau v2 : face à plusieurs
-  // Costards, le joueur fondait. see: docs/reference/valeurs-ennemis.md#combat
+  // Costards, le joueur fondait. see: docs/6-reference/valeurs-ennemis.md#combat
   attackDamage: 6,
   aimJitterDeg: 2.5,
   gibDistance: 3,
@@ -166,7 +166,7 @@ export const suitConfig: SuitConfig = {
  * été tunés humainement ; candidats identifiés par le retour playtest
  * Phase 3. Protocole F9/F10 : le recorder ne restaure pas l'état des
  * Costards, voir la doc du harnais.
- * see: docs/reference/valeurs-ennemis.md#variantes-de-knockback-costard-harnais-ab
+ * see: docs/archive/reference-valeurs-ennemis.md#variantes-de-knockback-costard-harnais-ab
  */
 export interface KnockbackVariant {
   knockbackSpeed: number;
@@ -185,7 +185,7 @@ export const KNOCKBACK_VARIANTS: Record<"A" | "B" | "C", KnockbackVariant> = {
 
 /**
  * Variantes de flash de dégât — harnais A/B (`cassandre.applyFlashVariant("B")`).
- * see: docs/reference/valeurs-ennemis.md#variantes-de-flash-costard-harnais-ab
+ * see: docs/archive/reference-valeurs-ennemis.md#variantes-de-flash-costard-harnais-ab
  */
 export interface FlashVariant {
   hitFlashDuration: number;

@@ -2250,7 +2250,7 @@ def habiller_direction(space, gris, props, col_coll, logic) -> dict:
 # comme une porte.
 #
 # Le mouvement se déclare en extras, lus par le jeu (voir
-# docs/reference/conventions-nommage.md#portes) : `battant` autour d'une
+# docs/6-reference/conventions-nommage.md#portes) : `battant` autour d'une
 # charnière, `coulisse`, `monte`, `descend`. Une porte `auto` s'ouvre devant qui
 # s'approche, joueur OU ennemi : seules les portes verrouillées (carte, sens
 # unique, secret) gardent les Costards de leur côté, et le graphe de navigation

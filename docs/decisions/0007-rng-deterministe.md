@@ -21,7 +21,7 @@ reproductible à graine égale. F9/F10 ne restaure pas le monde complet :
 voir [ADR 0033](0033-rng-presentation-et-portee-du-rejeu.md).
 `Math.random()` et le service `Random` par défaut d'Effect ne le sont pas.
 
-Avant le nettoyage du 2026-09-05 (jalon M9, `PLAN_EFFECT_XSTATE.md` §11),
+Avant le nettoyage du 2026-09-05 (jalon M9, `docs/journal/plan-effect-xstate-2026-09.md` §11),
 l'algorithme mulberry32 existait en trois copies indépendantes :
 `src/core/random.ts`, `game/player/weapons.ts` (dispersion du pompe) et
 `game/entities/enemyMachine.ts::createEnemyPrng`. Une copie dupliquée peut

@@ -2,49 +2,65 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-09-19
+updated: 2026-09-26
 ---
 
 # Architecture Decision Records
 
-Un ADR répond à « pourquoi c'est fait comme ça ? ». Format et règles : skill
-`adr-format`.
+Un ADR explique pourquoi un choix a été retenu, les options écartées et ses
+conséquences. Le format est défini par le skill `adr-format`. Un ADR remplacé
+reste conservé et renvoie à son successeur.
 
-**Un ADR ne se supprime jamais.** Remplacé, il passe en statut `remplace` avec
-un lien vers son successeur.
+## Moteur et présentation
 
 | # | Décision | Statut |
 |---|---|---|
-| [0001](0001-moteur-threejs.md) | Three.js vanilla plutôt que Godot, Unity ou R3F | accepté |
-| [0002](0002-fixed-timestep.md) | Boucle à pas fixe 1/60 avec interpolation | accepté |
-| [0003](0003-react-hors-boucle.md) | React en overlay DOM, jamais dans la boucle | accepté |
-| [0004](0004-colliders-cuboid.md) | Colliders cuboid plutôt que trimesh | accepté |
-| [0005](0005-eclairage-vertex-colors.md) | Éclairage baké en vertex colors | accepté |
-| [0006](0006-air-strafing.md) | Air strafing façon Quake | **proposé** |
-| [0007](0007-rng-deterministe.md) | RNG déterministe unique — DeterministicRandom | accepté |
-| [0008](0008-collision-ennemi-ennemi.md) | Collision ennemi-ennemi activée | accepté |
-| [0009](0009-machine-partagee-suit-director.md) | Machine XState partagée entre Costard et Directeur | accepté |
-| [0010](0010-curseur-evenements-multi-pas-fixe.md) | Curseur explicite d'événements multi-pas-fixe, jamais inféré | accepté |
-| [0011](0011-hot-reload-sondage-http.md) | Hot reload de niveau par sondage HTTP HEAD plutôt qu'un watcher fichier | accepté |
-| [0012](0012-porte-collider-non-recentre.md) | Collider de porte non recentré automatiquement dans loader.ts | remplacé par 0031 |
-| [0013](0013-garde-flux-vs-monde-physique.md) | Deux gardes distinctes — état de flux vs existence du monde physique | accepté |
-| [0014](0014-gameengine-persistentengine-separes.md) | GameEngine et PersistentEngine séparés plutôt qu'un champ session nullable | accepté |
-| [0015](0015-rampe-lineaire-lissage-vue.md) | Rampe linéaire plutôt qu'approche exponentielle pour le lissage de vue | accepté |
-| [0016](0016-garde-fous-degenerescence-kcc.md) | Deux garde-fous contre la dégénérescence de `computeColliderMovement` | accepté |
-| [0017](0017-clone-texture-sprite-billboard.md) | Clone de texture par instance de sprite billboard | accepté |
-| [0018](0018-physique-jouet-debris-cosmetiques.md) | Physique jouet plutôt que Rapier pour les débris cosmétiques | accepté |
-| [0019](0019-machine-xstate-flux-ecran.md) | Machine XState de flux d'écran plutôt que rechargement de page | accepté |
-| [0020](0020-state-feuille-de-dependances.md) | `game/state.ts` comme feuille de dépendances — jamais d'import vers `src/game/*` | accepté |
-| [0021](0021-export-vertex-color-enum.md) | `export_vertex_color="ACTIVE"` plutôt que `export_colors` (export glTF Blender 5.x) | accepté |
-| [0022](0022-occlusion-rangees-non-bloquante.md) | Occlusion des rangées de kit non fiable pour la ligne de vue ennemie | remplacé par 0025 |
-| [0023](0023-fusion-decor-au-chargement.md) | Fusion du décor statique au chargement plutôt qu'instanciation GPU | accepté, granularité révisée par 0026 |
-| [0024](0024-eclairage-hybride.md) | Éclairage hybride — lampes temps réel et ombre cuite | accepté |
-| [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | L'occlusion des lignes de vue ennemies est fiable, et le level design peut s'y fier | accepté |
-| [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU | accepté |
-| [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie sur les textures réduites, gros pixel conservé à l'agrandissement | **proposé** |
-| [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle 3D CC0 | accepté |
-| [0029](0029-armes-en-vue-subjective.md) | Armes en vue subjective : modèles 3D tenus par des bras CC0 | accepté |
-| [0030](0030-props-dynamiques.md) | Props dynamiques : un préfixe glTF et un groupe de collision à part | accepté |
-| [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres — `DoorSystem`/`VitreSystem`, collider actif seulement fermé | accepté |
-| [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables — `SanitaireSystem`, calqué sur `VitreSystem` | accepté |
-| [0033](0033-rng-presentation-et-portee-du-rejeu.md) | RNG de présentation séparé et portée du rejeu F9/F10 | accepté |
+| [0001](0001-moteur-threejs.md) | Three.js vanilla plutôt que Godot, Unity ou React Three Fiber | accepté |
+| [0002](0002-fixed-timestep.md) | Simulation à pas fixe de 1/60 s avec interpolation | accepté |
+| [0003](0003-react-hors-boucle.md) | React en overlay DOM, hors de la boucle de jeu | accepté |
+| [0005](0005-eclairage-vertex-colors.md) | Éclairage baké en vertex colors plutôt qu'en lightmap | accepté |
+| [0015](0015-rampe-lineaire-lissage-vue.md) | Lissage de caméra linéaire, avec une latence mesurable | accepté |
+| [0024](0024-eclairage-hybride.md) | Lampes temps réel et ombre cuite en vertex colors | accepté |
+| [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie à la réduction, nearest à l'agrandissement | proposé |
+| [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle CC0 | accepté |
+| [0034](0034-resolution-interne-configurable.md) | Résolution interne configurable, 640×360 proposé comme défaut | proposé |
+
+## Simulation, mouvement et combat
+
+| # | Décision | Statut |
+|---|---|---|
+| [0004](0004-colliders-cuboid.md) | Colliders simples plutôt que trimesh pour les objets de jeu | accepté |
+| [0006](0006-air-strafing.md) | Air strafing inspiré de Quake | proposé |
+| [0007](0007-rng-deterministe.md) | Un seul RNG déterministe pour permettre le rejeu | accepté |
+| [0008](0008-collision-ennemi-ennemi.md) | Les ennemis se bloquent physiquement entre eux | accepté |
+| [0010](0010-curseur-evenements-multi-pas-fixe.md) | Curseur explicite pour consommer les événements sur plusieurs pas | accepté |
+| [0016](0016-garde-fous-degenerescence-kcc.md) | Deux garde-fous contre la dégénérescence du contrôleur Rapier | accepté |
+| [0018](0018-physique-jouet-debris-cosmetiques.md) | Débris cosmétiques pilotés par une physique jouet | accepté |
+| [0033](0033-rng-presentation-et-portee-du-rejeu.md) | RNG de présentation séparé et limites explicites du rejeu | accepté |
+
+## Entités et cycle de vie
+
+| # | Décision | Statut |
+|---|---|---|
+| [0009](0009-machine-partagee-suit-director.md) | Une machine XState partagée pour le Costard et le Directeur | accepté |
+| [0014](0014-gameengine-persistentengine-separes.md) | Séparer le moteur persistant de la session de jeu | accepté |
+| [0019](0019-machine-xstate-flux-ecran.md) | Machine de flux d'écran plutôt qu'un rechargement de page | accepté |
+| [0020](0020-state-feuille-de-dependances.md) | Garder `game/state.ts` comme feuille de dépendances | accepté |
+
+## Niveau, chargement et objets
+
+| # | Décision | Statut |
+|---|---|---|
+| [0011](0011-hot-reload-sondage-http.md) | Détecter les changements de niveau par sondage HTTP | accepté |
+| [0012](0012-porte-collider-non-recentre.md) | Conserver le collider de porte à son origine glTF | remplacé par 0031 |
+| [0013](0013-garde-flux-vs-monde-physique.md) | Distinguer l'état de flux du monde physique chargé | accepté |
+| [0017](0017-clone-texture-sprite-billboard.md) | Cloner la texture pour chaque instance de sprite billboard | accepté |
+| [0021](0021-export-vertex-color-enum.md) | Utiliser l'option d'export vertex color de Blender 5.x | accepté |
+| [0022](0022-occlusion-rangees-non-bloquante.md) | Ne pas faire confiance à l'occlusion des rangées pour la visée | remplacé par 0025 |
+| [0023](0023-fusion-decor-au-chargement.md) | Fusionner le décor statique au chargement | accepté, précisé par 0026 |
+| [0025](0025-occlusion-lignes-de-vue-cause-racine.md) | Autoriser le level design à s'appuyer sur l'occlusion testée | accepté |
+| [0026](0026-visibilite-par-espace-et-pool-de-lampes.md) | Visibilité par espace et pool de lampes plutôt que streaming | accepté |
+| [0029](0029-armes-en-vue-subjective.md) | Armes 3D en vue subjective, tenues par des bras CC0 | accepté |
+| [0030](0030-props-dynamiques.md) | Props dynamiques dans un groupe de collision distinct | accepté |
+| [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres cassables avec colliders pilotés | accepté |
+| [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables, soignants et cassables | accepté |

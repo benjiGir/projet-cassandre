@@ -51,7 +51,7 @@ et les murs de chaque zone, aucune pièce sur-mesure inventée pour l'occasion.
 `build_level.py::build_lighting` crée un nouveau monde à CHAQUE appel — sans
 conséquence pour un fichier de zone isolée, mais appelé cinq fois ici ; voir
 le nettoyage en fin de `main()` pour le détail (mondes orphelins, aussi
-documenté dans docs/pipeline/niveau-blender.md#mondes-orphelins-dans-le-niveau-combiné).
+documenté dans docs/5-guides/modifier-le-niveau.md#mondes-orphelins-dans-le-niveau-combiné).
 Même chose, cosmétique, pour les noms `ceiling_light_N` (chaque zone
 recompte depuis 0, Blender suffixe les doublons) — sans conséquence, les
 lampes ne sont jamais exportées (`export_lights=False`).
@@ -623,7 +623,7 @@ def main() -> None:
     # --- Nettoyage des mondes orphelins -------------------------------------
     # 6 mondes existent à ce stade, pas 5 (wipe_scene() ne touche jamais
     # bpy.data.worlds) : voir
-    # docs/pipeline/niveau-blender.md#mondes-orphelins-dans-le-niveau-combiné
+    # docs/5-guides/modifier-le-niveau.md#mondes-orphelins-dans-le-niveau-combiné
     # pour le détail. Seul le DERNIER assigné (celui de la Zone E) doit
     # rester ; comparaison par NOM plutôt que par identité Python d'objet —
     # pas de raison de faire confiance à `is` pour des wrappers RNA capturés

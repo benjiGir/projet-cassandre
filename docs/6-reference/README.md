@@ -15,6 +15,7 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Console cassandre](console-cassandre.md) — propriétés et fonctions de l'API de développement.
 - [Arborescence](arborescence.md) — rôle des dossiers suivis.
 - [Valeurs de déplacement](valeurs-deplacement.md) — mouvement, caméra et capsule du joueur.
+- [Valeurs des armes](valeurs-armes.md) — dégâts, cadences, portées, dispersion et munitions.
 - [Valeurs des ennemis](valeurs-ennemis.md) — différences de paramètres du Costard et du Directeur.
 - [Conventions de nommage glTF](conventions-nommage.md) — préfixes et extras de niveau.
 - [Contrôles et bindings](controles.md) — touches joueur, remapping et raccourcis dev.

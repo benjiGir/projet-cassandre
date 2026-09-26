@@ -16,7 +16,7 @@ import {
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../entities/suitConfig";
 
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
-// see: docs/systems/debug.md#origine-du-module-gamedevtools
+// see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
 /**
  * Simulation hors écran d'une séquence enregistrée : même monde minimal, même
@@ -43,7 +43,7 @@ export function simulateRecording(rec: Recording, cfg: MoveConfig) {
   }
 
   // alpha = 1 : décalage de bob EFFECTIVEMENT RENDU au dernier pas fixe.
-  // see: docs/systems/debug.md#simulation-hors-écran-et-preuve-de-déterminisme
+  // see: docs/archive/systems-debug.md#simulation-hors-écran-et-preuve-de-déterminisme
   sim.viewBob(1, simBobScratch);
 
   const result = {
@@ -66,7 +66,7 @@ const simBobScratch = new THREE.Vector3();
  * Rejoue deux fois la même séquence : écart max doit rester sous 1e-6,
  * position/vitesse ET grandeurs de vue (bob/FOV/réception) comprises — ces
  * dernières finissent en pixels au même titre que la position.
- * see: docs/systems/debug.md#simulation-hors-écran-et-preuve-de-déterminisme
+ * see: docs/archive/systems-debug.md#simulation-hors-écran-et-preuve-de-déterminisme
  */
 export function checkDeterminism(rec: Recording) {
   const a = simulateRecording(rec, moveConfig);
@@ -103,7 +103,7 @@ interface FeelVariantReport {
 
 /**
  * Applique une variante de feel de la VUE, à chaud.
- * see: docs/systems/joueur.md#harnais-ab-feel_variants
+ * see: docs/archive/systems-joueur.md#harnais-ab-feel_variants
  */
 export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantReport {
   Object.assign(moveConfig, FEEL_VARIANTS[name]);
@@ -154,7 +154,7 @@ interface ImpactVariantReport {
 
 /**
  * Applique une variante de feedback d'impact, à chaud.
- * see: docs/systems/armes.md#hitstop-et-shake-murennemi-impact_variants
+ * see: docs/archive/systems-armes.md#hitstop-et-shake-murennemi-impact_variants
  */
 export function applyImpactVariant(name: keyof typeof IMPACT_VARIANTS): ImpactVariantReport {
   Object.assign(weaponConfig, IMPACT_VARIANTS[name]);

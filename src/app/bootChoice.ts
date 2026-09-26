@@ -46,7 +46,7 @@ function chooseZone(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
  * une fixture glTF brute — flexibilité délibérément préservée, ne pas la
  * retirer. Sans `?level=`, c'est le choix de zone en dev, le niveau
  * principal en production.
- * see: docs/systems/session.md#choix-du-niveau-au-boot
+ * see: docs/archive/systems-session.md#choix-du-niveau-au-boot
  */
 export function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
   const levelParam = new URLSearchParams(window.location.search).get("level");
@@ -69,7 +69,7 @@ export function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise
  * dans l'URL : les deux chemins historiques par URL doivent continuer à
  * fonctionner exactement comme avant. Réutilisée par
  * `lifecycle.ts::returnToMenu` exactement comme au tout premier boot.
- * see: docs/systems/session.md#choix-du-niveau-au-boot
+ * see: docs/archive/systems-session.md#choix-du-niveau-au-boot
  */
 export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
   const levelParam = new URLSearchParams(window.location.search).get("level");

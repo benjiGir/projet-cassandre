@@ -17,7 +17,7 @@ import { type GameEngine } from "./gameEngine";
  * toute porte à carte/`use_*`. Retourne `false` sans effet si `targetName` ne
  * correspond à aucun `door_*` du niveau courant (erreur de données Blender,
  * pas un état de jeu valide).
- * see: docs/systems/session.md#portes-et-fin-de-niveau
+ * see: docs/archive/systems-session.md#portes-et-fin-de-niveau
  * see: docs/decisions/0031-portes-animees-et-vitres.md
  */
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
@@ -41,7 +41,7 @@ export function unlockDoor(session: GameSession, targetName: string, successMess
  * de `ExitDoorTracking`) : une autre porte à carte partage exactement la même
  * mécanique sans jamais être une sortie.
  *
- * see: docs/systems/session.md#cartes-de-fidélité
+ * see: docs/archive/systems-session.md#cartes-de-fidélité
  */
 /**
  * Les portes qui terminent le niveau, par NOM. `door_e_exit` est celle de
@@ -103,7 +103,7 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
  * l'acteur de flux) et libère le pointeur, même geste qu'à la mort — voir
  * `feedback.ts::applyPlayerDamage` pour la même discussion d'idempotence
  * appliquée à `session.levelCompleteHandled`.
- * see: docs/systems/session.md#portes-et-fin-de-niveau
+ * see: docs/archive/systems-session.md#portes-et-fin-de-niveau
  */
 export function triggerLevelComplete(engine: GameEngine, session: GameSession): void {
   if (session.levelCompleteHandled) return;
@@ -111,7 +111,7 @@ export function triggerLevelComplete(engine: GameEngine, session: GameSession): 
   // Récap COMPLET (bonus de chrono compris) — AVANT l'envoi de l'évènement,
   // pour que `LevelCompleteScreen` trouve `state.recap` déjà rempli dès son
   // premier rendu après le changement de `flowState`.
-  // see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+  // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   publishLevelRecap(session, true);
   engine.flow.levelCompleted();
 }

@@ -18,7 +18,7 @@ export async function initPhysics(): Promise<typeof RAPIER> {
 // ((a >> 16) & b) != 0 && ((b >> 16) & a) != 0 — condition SYMÉTRIQUE :
 // mettre ENEMY_SHOT dans le filtre de PLAYER sans l'inverse ne produit
 // aucune interaction. La matrice ci-dessous est symétrisée par construction.
-// see: docs/systems/physique.md#groupes-de-collision
+// see: docs/4-technique/physique.md#groupes-de-collision
 
 /** Bits d'appartenance (16 bits utiles). */
 export const GROUP = {
@@ -52,7 +52,7 @@ const ALL_GROUPS =
  * Les débris ne collisionnent qu'avec le monde : sinon douilles et gibs
  * bloquent les tirs pour zéro gameplay.
  *
- * see: docs/systems/physique.md#groupes-de-collision
+ * see: docs/4-technique/physique.md#groupes-de-collision
  * see: docs/decisions/0008-collision-ennemi-ennemi.md
  */
 export const COLLISION_GROUPS = {
@@ -144,7 +144,7 @@ export class PhysicsWorld {
   }
 
   /** Rapier ne peuple sa broad-phase qu'au `step()` : un pas de durée nulle rend les colliders neufs visibles aux rayons sans rien simuler. */
-  // see: docs/systems/physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas
+  // see: docs/archive/systems-physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas
   refreshSceneQueries() {
     const dt = this.world.timestep;
     this.world.timestep = 0;

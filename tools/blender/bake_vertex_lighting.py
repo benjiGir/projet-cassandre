@@ -44,7 +44,7 @@ Code retour : 0 = bake fait et plausible, 1 = échec ou bake inexploitable.
 Procédure ("Col", Point, Byte Color, Cycles 128 samples, Combined ->
 Active Color Attribute), piège des proxies-occultants, méthodologie de
 diagnostic d'un mesh noir, lecture du rapport de luminance : voir
-docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors
+docs/5-guides/modifier-le-niveau.md#bake-déclairage-vertex-colors
 """
 
 from __future__ import annotations

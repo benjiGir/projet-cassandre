@@ -21,7 +21,7 @@ contournée silencieusement.
 | 6 | Character controller = `KinematicCharacterController` de Rapier | ~6 semaines perdues, classiquement |
 | 7 | Gravité −25 m/s² | Saut mou et flottant |
 | 8 | Pas d'ECS avant 12 types d'ennemis | Un moteur magnifique et zéro jeu |
-| 9 | Boîtes blanches jusqu'à la Phase 5 | Un joli niveau retarde le diagnostic d'un combat mou |
+| 9 | *(Retiré le 2026-09-25 — « boîtes blanches jusqu'à la Phase 5 », dépassé par l'habillage du niveau. Ne pas le réintroduire par habitude.)* | — |
 | 10 | Aucune animation ne bloque le joueur | Casse le rythme d'un boomer shooter |
 
 ## Hiérarchie de décision

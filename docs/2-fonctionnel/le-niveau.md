@@ -29,7 +29,7 @@ milliers de mètres carrés praticables — largement de quoi remplir les
 
 Vue de dessus des espaces et de leurs liaisons :
 
-![Plan de masse du niveau](../game/images/niveau-v2-plan-de-masse.svg)
+![Plan de masse du niveau](../assets/niveau-v2-plan-de-masse.svg)
 
 ### Les espaces
 

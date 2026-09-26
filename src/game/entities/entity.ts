@@ -3,7 +3,7 @@ import * as THREE from "three";
 /**
  * Contrat minimal partagé par toute entité de jeu (invariant #8, pas d'ECS
  * avant 12 types). Volontairement squelettique, à garder ainsi.
- * see: docs/systems/entites.md#le-contrat-minimal-partagé-par-toute-entité-entity
+ * see: docs/archive/systems-entites.md#le-contrat-minimal-partagé-par-toute-entité-entity
  */
 export interface Entity {
   readonly id: number;

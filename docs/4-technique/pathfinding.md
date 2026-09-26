@@ -163,9 +163,8 @@ marche du KCC ennemi — pas une valeur indépendante.** Le graphe ne simule
 aucune trajectoire Y : il décide seulement si deux cellules adjacentes sont
 reliées par une surface que le `KinematicCharacterController` (invariant #6)
 peut réellement gravir. Utiliser une constante différente romprait cette
-garantie sans avertissement — [écart historique](../_chantier/ecarts.md)
-déjà revérifié à ce jalon (D30) : les deux valeurs sont bien identiques dans
-le code actuel, `MAX_STEP_HEIGHT = suitConfig.autostepMaxHeight`.
+garantie sans avertissement : les deux valeurs sont identiques dans le code
+actuel, `MAX_STEP_HEIGHT = suitConfig.autostepMaxHeight`.
 
 **Broad-phase vide au premier bake.** Un `bake` lancé avant le premier
 `world.step()` de la session (colliders du niveau qui vient d'être chargé

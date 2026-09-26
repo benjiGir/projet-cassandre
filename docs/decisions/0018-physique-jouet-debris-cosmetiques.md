@@ -18,7 +18,7 @@ purement cosmétiques et de courte durée de vie : particules d'impact
 (< 0.4 s), douilles éjectées (1.6 s, avec un rebond), et gibs de mise à mort
 à bout portant (0.9 s). Aucun n'a d'effet de gameplay — `render/` ne touche
 jamais Rapier, par discipline de découplage (voir [Rendu — Découplage entre
-render/ et game/](../systems/rendu.md#découplage-entre-render-et-game)). Le
+render/ et game/](../archive/systems-rendu.md#découplage-entre-render-et-game)). Le
 rebond des douilles nécessite néanmoins une notion de sol.
 
 ## Décision

@@ -1,13 +1,13 @@
 // Deux vues d'un même appui (pas fixe vs taux d'affichage), deux Sets, deux
 // règles de vidage différentes — voir la doc pour le pourquoi.
-// see: docs/systems/boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
+// see: docs/archive/systems-boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
 
 /**
  * Actions de GAMEPLAY rebindables. Les touches de debug (`F9`/`F10`/`KeyV`/
  * `KeyB` dans `game/loop/updateFx.ts`) sont volontairement absentes — jamais
  * montrées au joueur, jamais persistées, jamais rebindables via cette API.
  *
- * see: docs/reference/controles.md
+ * see: docs/6-reference/controles.md
  */
 export type GameAction =
   | "moveForward"
@@ -29,7 +29,7 @@ export type GameAction =
  * physique de la touche, indépendante du layout — voir la doc pour le détail
  * vérifié et les mécanismes de remapping.
  *
- * see: docs/reference/controles.md#pourquoi-ça-marche-déjà-en-azerty
+ * see: docs/archive/reference-controles.md#pourquoi-ça-marche-déjà-en-azerty
  */
 export const DEFAULT_BINDINGS: Record<GameAction, string> = {
   moveForward: "KeyW",
@@ -81,7 +81,7 @@ export const ACTION_LABELS: Record<GameAction, string> = {
  * `formatKeyCode("KeyW")` reste `"W"` même en AZERTY. Alternatives et
  * pourquoi ce n'est pas corrigé ici : voir la doc.
  *
- * see: docs/reference/controles.md#limite-libellés-de-touches-en-azerty
+ * see: docs/archive/reference-controles.md#limite-libellés-de-touches-en-azerty
  */
 const CODE_LABELS: Record<string, string> = {
   Space: "Espace",
@@ -308,7 +308,7 @@ class InputManager {
    * synchrone jusqu'ici suffit à le faire compter comme tel. Nommée
    * `...Now` pour ne pas ombrer le champ privé `requestPointerLock` déjà lié
    * au clic du canvas.
-   * see: docs/systems/session.md#pause
+   * see: docs/archive/systems-session.md#pause
    */
   requestPointerLockNow(): void {
     this.requestPointerLock();
@@ -321,7 +321,7 @@ class InputManager {
    * capture de rebinding) : sans ça, une touche de gameplay pressée pendant
    * ce menu resterait "juste pressée" au pas fixe suivant, une fois le menu
    * refermé — un appui fantôme.
-   * see: docs/systems/session.md#pause
+   * see: docs/archive/systems-session.md#pause
    */
   clearPendingEdges(): void {
     this.edgesPendingFixedStep.clear();
@@ -342,7 +342,7 @@ class InputManager {
 
   // Couche par ACTION (rebindable), pure traduction vers les méthodes par
   // code ci-dessus — voir la doc pour le contrat de déterminisme.
-  // see: docs/reference/controles.md#persistance-et-couche-par-action
+  // see: docs/archive/reference-controles.md#persistance-et-couche-par-action
 
   /** Miroir de `isDown`, indexé par action plutôt que par code. */
   isActionDown(action: GameAction): boolean {
@@ -423,7 +423,7 @@ class InputManager {
    * des règles de vidage différentes (l'un inconditionnel, l'autre
    * conditionné aux pas fixes exécutés) : voir la doc.
    *
-   * see: docs/systems/boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
+   * see: docs/archive/systems-boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe
    */
   endFrame() {
     this.edgesThisDisplayFrame.clear();

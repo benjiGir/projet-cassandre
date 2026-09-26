@@ -16,7 +16,7 @@ export interface LoadingScreenProps {
  * barre. Le reflet est une animation CSS de `transform`, jouée par le
  * compositeur : c'est la seule chose qui bouge encore quand la construction
  * des colliders bloque le fil principal.
- * see: docs/systems/hud.md#écran-de-chargement
+ * see: docs/archive/systems-hud.md#écran-de-chargement
  */
 export function LoadingScreen({ title = "PROJET_CASSANDRE" }: LoadingScreenProps) {
   const { status, label, percent, quip, message, retry } = useLoadingStatus();

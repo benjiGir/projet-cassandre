@@ -62,7 +62,7 @@ Interpoler la rotation caméra ajoute jusqu'à 16 ms de latence perçue à la
 visée. C'est l'erreur la plus coûteuse et la plus difficile à diagnostiquer
 après coup, parce qu'elle se ressent sans se voir.
 
-## Orchestration Effect (`PLAN_EFFECT_XSTATE.md`, jalons M6/M7)
+## Orchestration Effect (`docs/journal/plan-effect-xstate-2026-09.md`, jalons M6/M7)
 
 Dans ce projet, `updateGameplay` ET `interpolateVisuals` exécutent leur
 corps via `runGameplaySync` (`src/core/runtime.ts`) plutôt qu'en TypeScript

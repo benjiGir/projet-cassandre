@@ -14,7 +14,7 @@ Accepté.
 ## Contexte
 
 Le jalon qui a introduit un vrai chemin de reset de partie (`bootGameSession`/
-`teardownGameSession`, voir [Session de partie](../systems/session.md)) a dû
+`teardownGameSession`, voir [Session de partie](../3-architecture/cycle-de-vie.md)) a dû
 distinguer deux catégories d'état : ce qui survit à un reset (scène/caméra/
 renderer, horloge de hitstop, systèmes de rendu cosmétiques, atlas/
 géométries partagés, visée, interaction) et ce qui est détruit/reconstruit à
@@ -55,7 +55,7 @@ appellent les mêmes fonctions sans caster quoi que ce soit.
   d'être mesuré face à ce qu'il achète : la classe de bug « cette fonction a
   lu l'ancienne session en cours de remplacement au lieu de la nouvelle en
   cours de construction » (voir la doc de `spawnSuitAt` dans [Session de
-  partie](../systems/session.md#spawn-et-chargement-de-niveau)) est
+  partie](../archive/systems-session.md#spawn-et-chargement-de-niveau)) est
   détectée par le compilateur, pas laissée à la discipline d'un
   commentaire.
 - `PersistentEngine`-typé signifie littéralement « ce code ne peut pas

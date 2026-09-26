@@ -27,7 +27,7 @@ const TICKER_ITEMS = [
 /**
  * Menu principal, habillé en « signal intercepté » : l'identité stream du
  * HUD commence dès le premier écran.
- * see: docs/systems/hud.md#menu-principal-et-écran-de-choix-de-niveau
+ * see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
  */
 export function MainMenu({ onPlay, onOptions, devTools }: MainMenuProps) {
   const [quitRefused, setQuitRefused] = useState(false);

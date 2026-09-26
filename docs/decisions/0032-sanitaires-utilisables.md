@@ -7,6 +7,8 @@ updated: 2026-09-24
 
 # ADR 0032 — Sanitaires utilisables : `SanitaireSystem`, calqué sur `VitreSystem`
 
+> **Note** — L'invariant #13 cité ici a été retiré le 2026-09-25.
+
 ## Statut
 
 Accepté.

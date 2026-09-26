@@ -34,7 +34,7 @@ export interface ExitDoorTracking {
  * TOUT l'état d'UNE PARTIE — ce qui est détruit et reconstruit à chaque
  * `bootGameSession`/`teardownGameSession`. Ce qui reste vivant à travers un
  * reset vit sur `GameEngine` (`gameEngine.ts`), pas ici.
- * see: docs/systems/session.md#létat-propre-à-une-partie-gamesession
+ * see: docs/archive/systems-session.md#létat-propre-à-une-partie-gamesession
  */
 export interface GameSession {
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */
@@ -69,25 +69,25 @@ export interface GameSession {
    * CETTE partie. Reconstruit à chaque commit, comme `currentNavGraph` et
    * `lightPool` : un hot reload rend leurs PV aux props, exactement comme il
    * rend le niveau à son état de fichier.
-   * see: docs/systems/physique.md#props-dynamiques */
+   * see: docs/archive/systems-physique.md#props-dynamiques */
   propSystem: PropSystem | null;
   /** Portes animées (`door_*`) du niveau COURANT — reconstruites à chaque
    * commit, comme `propSystem`. Remplace l'ancien `openingDoor` (une
    * seule porte à la fois) : voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
-   * see: docs/reference/conventions-nommage.md#portes-animées */
+   * see: docs/archive/reference-conventions-nommage.md#portes-animées */
   doorSystem: DoorSystem | null;
   /** Vitrages (`vitre_*`) du niveau COURANT — PV et casses de CETTE partie,
    * reconstruits à chaque commit, comme `propSystem`/`doorSystem`.
-   * see: docs/reference/conventions-nommage.md#préfixe-vitre */
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-vitre */
   vitreSystem: VitreSystem | null;
   /** Sanitaires (`sanitaire_*`) du niveau COURANT — état de casse de CETTE
    * partie, reconstruit à chaque commit comme `vitreSystem`.
-   * see: docs/reference/conventions-nommage.md#préfixe-sanitaire */
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire */
   sanitaireSystem: SanitaireSystem | null;
   /** Billboards des armes au sol (`use_crowbar`/`use_pistol`/`use_shotgun`)
    * du niveau COURANT — animés au taux d'affichage (`updateFx`), reconstruits
    * à chaque commit comme `propSystem`/`doorSystem`.
-   * see: docs/systems/rendu.md#armes-au-sol-2026-09-25 */
+   * see: docs/archive/systems-rendu.md#armes-au-sol-2026-09-25 */
   weaponPickupBillboards: WeaponPickupBillboard[];
   /**
    * Délai de gameplay restant, en SECONDES, avant le prochain soulagement
@@ -106,7 +106,7 @@ export interface GameSession {
   /** Cartes de fidélité en poche — les clés du niveau v2 (jalon N7). Survit
    * à un hot reload, comme le faisait le badge : c'est un état de PARTIE, pas
    * de niveau chargé.
-   * see: docs/reference/conventions-nommage.md#cartes-de-fidélité */
+   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
   cards: Set<LoyaltyCard>;
 
   unlockedDoors: Set<string>;

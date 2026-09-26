@@ -13,7 +13,7 @@ import { type GameSession } from "./gameSession";
  * zustand) : `SessionStats`/`createInitialStats`/les `record*`/
  * `buildLevelRecap` ne dépendent ni de Three.js ni de Rapier ni du DOM —
  * testable avec de simples objets (`test/game/session/score.test.ts`).
- * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+ * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
  */
 
 export interface SessionStats {

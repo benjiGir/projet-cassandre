@@ -44,7 +44,12 @@ Valeurs initiales de `src/game/entities/suitConfig.ts` et `src/game/entities/dir
 | Temps de décroissance du recul | 0,3 | 0,3 | s |
 | Impulsion verticale du recul | 1,5 | 1 | m/s |
 
-Le télégraphe d'attaque reste au moins assez long pour une réaction humaine. Le bruit de visée de chaque ennemi utilise le RNG déterministe. Les valeurs ne font pas appel à `Math.random()`.
+Toute télégraphie d'attaque dure au moins **0,2 s** et combine un signal
+visuel et sonore avant les dégâts. C'est un plancher de lisibilité du combat,
+pas une valeur de configuration validée automatiquement. Les valeurs
+actuelles (0,35 s et 0,4 s) sont dans le tableau ci-dessus. Le bruit de visée
+de chaque ennemi utilise le RNG déterministe ; le code n'appelle pas
+`Math.random()`.
 
 ## Directeurs
 

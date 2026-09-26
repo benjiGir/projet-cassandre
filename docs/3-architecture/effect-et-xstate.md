@@ -145,7 +145,7 @@ perception (`RaycastService`) et le suivi de chemin (`PathfindingService`).
 2026-09-25 — voir [Invariants retirés](invariants.md#invariants-retirés)),
 telle qu'appliquée** :
 `CLAUDE.md` décrit un évènement `TICK` envoyé par pas fixe — ce n'est pas ce
-que fait le code ([écart noté](../_chantier/ecarts.md)). `tickEnemy(actor,
+que fait le code. `tickEnemy(actor,
 dt, ctx)` est un **appel de fonction direct** depuis `Suit.update`/
 `Director.update`, pas un `send({ type: "TICK" })` : aucun évènement `TICK`
 n'existe dans le dépôt. Il MUTE `ctx.stateTimer`/`ctx.attackCooldownRemaining`/
@@ -200,4 +200,4 @@ flux, isolé de la simulation : [Simulation et présentation](simulation-et-pres
 - [ADR 0009 — Machine XState partagée entre Costard et Directeur](../decisions/0009-machine-partagee-suit-director.md)
 - [ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page](../decisions/0019-machine-xstate-flux-ecran.md)
 - [ADR 0033 — RNG de présentation séparé et portée du rejeu F9/F10](../decisions/0033-rng-presentation-et-portee-du-rejeu.md)
-- `PLAN_EFFECT_XSTATE.md` (racine du dépôt) — plan du chantier M0-M9 qui a introduit ces deux bibliothèques ; historique, ira au journal.
+- `docs/journal/plan-effect-xstate-2026-09.md` (racine du dépôt) — plan du chantier M0-M9 qui a introduit ces deux bibliothèques ; historique, ira au journal.

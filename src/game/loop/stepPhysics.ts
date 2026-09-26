@@ -5,7 +5,7 @@ import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
-// see: docs/systems/boucle-de-jeu.md#origine-des-modules
+// see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
 export function snapshotPrevious(engine: GameEngine): void {
   const session = engine.session;

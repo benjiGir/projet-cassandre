@@ -22,7 +22,7 @@ doivent parfois s'abstenir d'agir, mais pas pour la même raison :
   les états `dead`/`levelComplete`. Le monde Rapier reste alors parfaitement
   vivant : seul le contenu du pas est ignoré, la boucle continue de tourner
   (invariant #1, voir [Fin de partie pendant le pas
-  fixe](../systems/boucle-de-jeu.md#fin-de-partie-pendant-le-pas-fixe)).
+  fixe](../archive/systems-boucle-de-jeu.md#fin-de-partie-pendant-le-pas-fixe)).
 - `stepPhysics`, et le harnais d'enregistrement/rejeu F9/F10 dans `updateFx`,
   se gardent au contraire par `isPhysicsSessionLive(engine)` — un test sur
   l'EXISTENCE du monde Rapier lui-même. Nécessaire parce que

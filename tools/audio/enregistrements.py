@@ -5,7 +5,7 @@ Prises reelles (enregistrements CC0) utilisables comme COUCHES d'une recette.
     faience = prise("kenney_audio/kenney_impact-sounds/Audio/impactPlate_heavy_001.ogg",
                     duree=0.30, passe_haut=90)
 
-Le son se fait a deux mains (docs/systems/hud-audio.md#assets-sonores) : de
+Le son se fait a deux mains (docs/archive/systems-hud-audio.md#assets-sonores) : de
 vrais enregistrements pour ce qui est un OBJET, la synthese pour ce qui n'existe
 pas physiquement. Les deux se rejoignent ICI : une recette de `recipes.py` peut
 poser une prise sous, sur ou a cote de couches de synthese, et le resultat suit

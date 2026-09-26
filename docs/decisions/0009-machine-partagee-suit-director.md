@@ -9,7 +9,7 @@ updated: 2026-09-05
 
 ## Statut
 
-Accepté. Jalon M5 de `PLAN_EFFECT_XSTATE.md` (§7).
+Accepté. Jalon M5 de `docs/journal/plan-effect-xstate-2026-09.md` (§7).
 
 ## Contexte
 
@@ -18,7 +18,7 @@ Avant ce jalon, `suit.ts` et `director.ts` portaient chacun leur propre copie
 `runChase`/`runAttack`/`resolveAttack`/`computeAvoidedDirection`/
 `applyAimJitter`/`updateKnockback`/`integratePhysics`, la table de transition
 d'états, et les timers associés. Le Directeur (2ᵉ type d'ennemi du jeu,
-`PLAN_PROTO_BOOMER_SHOOTER.md`, boss unique de la Zone E) a été créé en
+`docs/journal/plan-prototype-2026-08.md`, boss unique de la Zone E) a été créé en
 dupliquant `Suit` plutôt qu'en le réutilisant — cohérent avec l'invariant #8
 (pas d'ECS/abstraction avant 12 types d'ennemis) au moment où il n'y avait
 qu'un seul type, mais la duplication texto-identique de la logique de
@@ -41,7 +41,7 @@ n'a **pas** de sens à partager :
   `createEnemyBody`, `configureEnemyCharacterController` — mais l'instance
   elle-même est propre à chaque entité) ;
 - la config (`SuitConfig`/`DirectorConfig` — objets **distincts**,
-  volontairement, voir `docs/reference/valeurs-ennemis.md`) ;
+  volontairement, voir `docs/6-reference/valeurs-ennemis.md`) ;
 - le PRNG dérivé de la graine de l'instance (`createEnemyPrng`, une par
   entité, jamais partagé) ;
 - l'acteur XState lui-même (un par entité, jamais partagé) ;
@@ -57,7 +57,7 @@ en paramètre, jamais d'horloge murale ; le `KinematicCharacterController` est
 une seule instance partagée par tous les Costards (respectivement tous les
 Directeurs), possédée par `SuitManager`/`DirectorManager`.
 
-Voir [Entités et IA](../systems/entites.md) pour le détail de fonctionnement
+Voir [Entités et IA](../4-technique/ennemis-et-ia.md) pour le détail de fonctionnement
 de la machine partagée (frontière exacte, pièges internes).
 
 ## Alternatives écartées
@@ -75,7 +75,7 @@ de la machine partagée (frontière exacte, pièges internes).
   distinctes : aucune confusion possible entre les deux jeux de valeurs.
 - Deux champs de `EnemyMachineContext` (`attackCooldownRemaining`,
   `timeSinceLastSeen`) ne suivent pas la convention `stateTimer` du reste de
-  la machine — documenté dans `docs/systems/entites.md`, pas une
+  la machine — documenté dans `docs/4-technique/ennemis-et-ia.md`, pas une
   incohérence involontaire.
 - Le filet de test de caractérisation (`suit.test.ts`/`director.test.ts`,
   écrit contre le code pré-refactor) continue d'assigner directement

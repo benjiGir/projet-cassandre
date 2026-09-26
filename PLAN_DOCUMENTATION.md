@@ -345,11 +345,15 @@ sans mémoire, sans accès au code au départ) reçoit dix questions réelles
 (« où changer les dégâts du pompe ? », « comment ajouter un préfixe glTF ? »,
 « pourquoi pas de `Math.random()` ? »…) et doit y répondre avec la doc seule,
 puis vérifier sa réponse dans le code. Chaque échec devient une correction.
+*Terminé le 2026-09-26 : dix questions passées ; corrections et compte rendu
+dans `docs/journal/validation-documentation-2026-09.md`.*
 **D69 — Votre relecture complète**, parcours « je découvre » de bout en bout.
 **D70 — Règles d'entretien** : une modification qui change un comportement
 documenté met à jour sa page dans le même commit ; `pnpm check:docs` rejoint
 `pnpm check` et la CI ; le skill `docs-structure` et l'agent `doc-keeper`
 reflètent la nouvelle organisation. Suppression de `docs/_chantier/`.
+*Terminé le 2026-09-26 : règles et contrôles intégrés, espace de travail
+archivé ou migré. D69 est le seul jalon restant de la phase.*
 
 ---
 

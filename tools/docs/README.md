@@ -6,13 +6,22 @@ Aucun ne dépend de Blender ni de Node. **Les deux sont testés.**
 |---|---|
 | `audit_comments.py` | classe les commentaires d'une base TS/JS, signale les candidats à la migration |
 | `check_docs_links.py` | valide le graphe `/docs` et les ancres laissées dans le code |
+| `remap_anchors.py` | prévisualise ou applique la réécriture des renvois `docs/...` depuis `src/`, `tools/`, `.agents/`, `.claude/`, `docs/` et les `.md` racine, d'après `tools/docs/correspondance.tsv` |
 
 ```bash
 python3 tools/docs/audit_comments.py src/
 python3 tools/docs/audit_comments.py src/core/ --json audit.json --max-ratio 0.15
 python3 tools/docs/check_docs_links.py docs/ --src src/
 python3 tools/docs/check_docs_links.py docs/ --src src/ --strict
+python3 tools/docs/remap_anchors.py --dry-run
+python3 tools/docs/remap_anchors.py --dry-run --diff out.patch
+python3 tools/docs/remap_anchors.py --archive-plan
 ```
+
+La réécriture D65 a été appliquée après archivage des anciennes pages. Les
+archives sont exclues du parcours. Pour toute
+modification ultérieure de la table, relire le diff de `--dry-run` avant
+d'utiliser `--apply`.
 
 ## Ce que l'audit détecte
 

@@ -28,8 +28,8 @@ export interface OptionsScreenProps {
  * retour vers le menu de pause). Les quatre réglages de `DisplayTab`
  * s'appliquent à chaud dans les deux cas dès qu'un moteur existe (voir
  * `game/graphicsSettings.ts::registerRenderTarget`).
- * see: docs/systems/hud.md#options-contrôles-et-affichage
- * see: docs/systems/session.md#pause
+ * see: docs/archive/systems-hud.md#options-contrôles-et-affichage
+ * see: docs/archive/systems-session.md#pause
  */
 export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
   const [tab, setTab] = useState<OptionsTab>("controles");

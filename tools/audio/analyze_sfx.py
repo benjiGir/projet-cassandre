@@ -27,7 +27,7 @@ from synth import read_wav  # noqa: E402
 
 EPS = 1e-12
 
-# Budget du projet — voir docs/systems/hud-audio.md
+# Budget du projet — voir docs/4-technique/audio-runtime.md
 BUDGET = {
     "peak_dbfs_max": -0.5,
     "peak_dbfs_min": -6.0,

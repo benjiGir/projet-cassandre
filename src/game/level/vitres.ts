@@ -7,7 +7,7 @@ import type { HitEvent } from "../player/weapons";
 
 /**
  * Préfixe `vitre_*` — vitrage cassable ou non, voir
- * `docs/reference/conventions-nommage.md#préfixe-vitre` et
+ * `docs/archive/reference-conventions-nommage.md#préfixe-vitre` et
  * [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
  *
  * Même séparation que `game/level/props.ts` : `loader.ts` construit les

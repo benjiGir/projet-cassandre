@@ -6,7 +6,7 @@ collision. `place()` en dépose une copie dans la scène.
 
 Conventions suivies : origine au coin au sol, un seul matériau par objet,
 64 px/m, proxy cuboid `col_box_<nom>`, nommage `mob_`/`prd_`/`sig_`/`str_`/
-`deco_`/`gp_` — voir `docs/pipeline/harmonisation-assets.md`.
+`deco_`/`gp_` — voir `docs/4-technique/generateurs.md`.
 
 Pourquoi un objet par matériau plutôt qu'un objet par pièce : la fusion au
 chargement (ADR 0023) regroupe par matériau. Une gondole en vingt petits
@@ -71,7 +71,7 @@ def place(asset: str, location, rot_deg: float, coll: bpy.types.Collection,
     restent alignés sur les axes du monde (donc de vraies boîtes pour Rapier,
     voir `loader.ts`), et chaque copie rendue garde son propre mesh — sans
     quoi toutes les instances partageraient un seul bake d'éclairage
-    (docs/pipeline/niveau-blender.md, piège instancing-vs-bake).
+    (docs/5-guides/modifier-le-niveau.md, piège instancing-vs-bake).
     """
     src = bpy.data.collections.get(asset)
     if src is None:

@@ -7,7 +7,7 @@ import { assetUrl } from "./assetPath";
  * `core/audio.ts` (SFX ponctuels) — voir la doc pour la répartition des
  * rôles et le statut placeholder des pistes.
  *
- * see: docs/systems/hud-audio.md#musique-et-nappe-dambiance
+ * see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
  */
 
 const MUSIC_BASE_PATH = assetUrl("assets/audio/music");
@@ -129,7 +129,7 @@ function warnMissingOnce(id: string) {
  * remontée sont deux fonctions SÉPARÉES, pas un minuteur interne — voir la
  * doc pour le pourquoi.
  *
- * see: docs/systems/hud-audio.md#ducking-pendant-les-répliques
+ * see: docs/archive/systems-hud-audio.md#ducking-pendant-les-répliques
  */
 export function duckMusicForHeroLine() {
   music?.fade(music.volume(), baseMusicVolume() * DUCK_ATTENUATION, DUCK_ATTACK_MS);

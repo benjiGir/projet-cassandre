@@ -22,7 +22,7 @@ export const INTERNAL_HEIGHT = 360;
  *   ce qui compte pour les SOLS, vus en fuyante : un sol rasant est le pire
  *   cas du mipmap classique, qui le floute d'un coup.
  *
- * see: docs/systems/rendu.md#filtrage-des-textures
+ * see: docs/archive/systems-rendu.md#filtrage-des-textures
  */
 export type FiltrageTexture = "nearest" | "mipmap" | "aniso";
 

@@ -10,8 +10,8 @@ import * as THREE from "three";
  * flux de présentation seedé et séparé de la simulation), trois régimes
  * de pooling volontairement pas uniformisés, et le choix de « physique
  * jouet » sans Rapier pour les débris cosmétiques (ADR 0018) :
- * see: docs/systems/rendu.md#découplage-entre-render-et-game
- * see: docs/systems/rendu.md#effets-visuels-de-tir-fxsystem
+ * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
+ * see: docs/archive/systems-rendu.md#effets-visuels-de-tir-fxsystem
  */
 
 // Screenshake
@@ -20,7 +20,7 @@ import * as THREE from "three";
  * Fraction du pic d'amplitude considérée négligeable à la fin de la fenêtre
  * de décroissance : `k = -ln(fraction) / duration`, donc à `t = duration`,
  * `amplitude(t) = pic * fraction`. Valeurs retenues :
- * see: docs/reference/valeurs-deplacement.md#impact
+ * see: docs/archive/reference-valeurs-deplacement.md#impact
  */
 const SHAKE_NEGLIGIBLE_FRACTION = 0.05;
 const SHAKE_DECAY_RATE = -Math.log(SHAKE_NEGLIGIBLE_FRACTION); // ≈ 2.9957
@@ -91,7 +91,7 @@ interface MuzzleFlashSlot {
  * (`spawnImpactParticles`), qui sont déjà des objets libres, jetables, avec
  * une durée de vie courte — rien à désolidariser. Ce module ne connaît lui-
  * même aucun de ces systèmes (`fx.ts` reste découplé de `game/level/*`,
- * voir docs/systems/rendu.md#découplage-entre-render-et-game) : la garde vit
+ * voir docs/archive/systems-rendu.md#découplage-entre-render-et-game) : la garde vit
  * entièrement côté appelant.
  */
 const DECAL_POOL_SIZE = 24;
@@ -159,7 +159,7 @@ const GIB_MATERIAL = new THREE.MeshLambertMaterial({ color: GIB_COLOR });
 // La couleur est un `number`, pas une matière : `render/` ne connaît pas les
 // matières de `game/level/props.ts`, c'est `loop/updateFx.ts` qui traduit —
 // même frontière que `material: string` sur `spawnImpactDecal`.
-// see: docs/systems/rendu.md#découplage-entre-render-et-game
+// see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
 const DEBRIS_LIFETIME = 1.4; // s
 const DEBRIS_SIZE = 0.06; // m
 const DEBRIS_SPEED_MIN = 2;
@@ -199,7 +199,7 @@ const FROST_MATERIAL = new THREE.MeshLambertMaterial({ color: FROST_COLOR });
 //   `THREE.InstancedMesh` à pool fixe — UN lot de dessin, quel que soit le
 //   nombre de jets actifs (0 à `WATER_MAX_JETS`), parce qu'un
 //   `InstancedMesh` dessine tout son buffer d'instances en un seul appel :
-//   voir docs/systems/cout-de-rendu.md (« les triangles ne coûtent presque
+//   voir docs/4-technique/budget-de-rendu.md (« les triangles ne coûtent presque
 //   rien ») — une centaine de petits cubes, cachés (échelle nulle) ou
 //   visibles, ne pèse rien à côté du budget de LOTS, la vraie contrainte de
 //   ce niveau (pire vue mesurée : 198/200).
@@ -326,7 +326,7 @@ const BLOOD_COLOR = 0x5a1418;
 const BLOOD_MATERIAL = new THREE.MeshLambertMaterial({ color: BLOOD_COLOR });
 /**
  * Réplique locale de `FLESH_MATERIAL` (`game/player/weapons.ts`) : ce module
- * ne l'importe pas (voir docs/systems/rendu.md#découplage-entre-render-et-game
+ * ne l'importe pas (voir docs/archive/systems-rendu.md#découplage-entre-render-et-game
  * — `fx.ts` ne dépend jamais de `game/player/*`), même discipline que le
  * type `"melee" | "pistol" | "shotgun"` déjà dupliqué en dur dans ce fichier.
  */

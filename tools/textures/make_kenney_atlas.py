@@ -11,7 +11,7 @@ lots de dessin, et un pack à vingt textures séparées en coûterait vingt.
 
 Deux contraintes du projet s'appliquent quand même à ces atlas : 128 px au
 maximum (`validate_level.py`) et la palette commune du niveau v2
-(`docs/pipeline/harmonisation-assets.md`).
+(`docs/4-technique/generateurs.md`).
 
 Réduction en NEAREST, jamais en BOX : les UV du pack visent le CENTRE d'une
 pastille, mais un filtre moyennant mélangerait les pastilles voisines aux

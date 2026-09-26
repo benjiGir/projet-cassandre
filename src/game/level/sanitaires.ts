@@ -7,7 +7,7 @@ import type { HitEvent } from "../player/weapons";
 
 /**
  * Préfixe `sanitaire_*` — cuvette ou urinoir utilisable/cassable ("Duke
- * Nukem 3D"), voir `docs/reference/conventions-nommage.md#préfixe-sanitaire`
+ * Nukem 3D"), voir `docs/archive/reference-conventions-nommage.md#préfixe-sanitaire`
  * et [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md).
  *
  * Architecture CALQUÉE sur `vitre_*` (`game/level/vitres.ts`, à lire en

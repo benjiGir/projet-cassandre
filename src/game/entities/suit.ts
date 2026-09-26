@@ -30,7 +30,7 @@ import type { EnemyAnimationInput } from "../../render/enemySprites";
  * partagée avec `Director` (`enemyMachine.ts`) : ne possède que le
  * corps/collider Rapier, sa config, son PRNG et son acteur XState — voir la
  * frontière exacte et la discipline de pureté/déterminisme tenue ici.
- * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+ * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
  * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 

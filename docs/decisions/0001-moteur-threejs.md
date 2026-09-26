@@ -32,7 +32,7 @@ en overlay DOM pour le HUD.
 ## Conséquences
 
 - Le pipeline de niveau doit être construit à la main — c'est le point dur,
-  voir [pipeline](../pipeline/niveau-blender.md)
+  voir [pipeline](../5-guides/modifier-le-niveau.md)
 - Pas d'éditeur de niveau intégré : Blender + conventions de nommage
 - Le projet a de fortes chances d'être terminé, parce que c'est la stack
   familière du développeur — argument qui pèse plus que la technique sur un

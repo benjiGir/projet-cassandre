@@ -36,7 +36,7 @@ export const GameRuntime = ManagedRuntime.make(GameLayer);
  * avec un message explicite en console pour qu'un bug de ce genre soit
  * bruyant plutôt que silencieux.
  *
- * see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
+ * see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
  */
 export function runGameplaySync<A, E>(
   effect: Effect.Effect<A, E, GameServices>,

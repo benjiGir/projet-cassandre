@@ -19,7 +19,7 @@ modification du kit passe par `kit_spec.py`, jamais par le .blend.
 Le kit est un instrument, pas un niveau : ce script n'assemble rien, ne place
 aucune pièce. Structure de collections produite, format de pièce (mesh rendu
 + proxies, transforms déjà appliqués) : voir
-docs/pipeline/niveau-blender.md#kit-modulaire-et-assemblage-de-niveau-côté-blender
+docs/5-guides/modifier-le-niveau.md#kit-modulaire-et-assemblage-de-niveau-côté-blender
 et le skill `blender-level-conventions`.
 """
 
@@ -262,7 +262,7 @@ def main() -> None:
             # seul l'offset d'étalage) — ne pas la mettre à `location` avec
             # un `matrix_parent_inverse` calculé ici : le depsgraph n'a pas
             # encore tourné, l'offset serait appliqué deux fois.
-            # see: docs/pipeline/niveau-blender.md#piège-du-parent-inverse-non-réévalué
+            # see: docs/5-guides/modifier-le-niveau.md#piège-du-parent-inverse-non-réévalué
             proxy.parent = obj
             piece_coll.objects.link(proxy)
             proxy_count[kind] += 1

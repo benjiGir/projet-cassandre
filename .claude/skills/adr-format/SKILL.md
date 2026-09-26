@@ -89,4 +89,5 @@ Séquentielle, quatre chiffres, jamais réutilisée :
 
 **Une page.** Un ADR de cinq pages ne sera pas lu, donc n'existe pas.
 
-Si le contexte déborde, il appartient à `docs/systems/` et l'ADR y renvoie.
+Si le contexte déborde, il appartient à la page pertinente de `docs/3-architecture/`
+ou `docs/4-technique/`, et l'ADR y renvoie.

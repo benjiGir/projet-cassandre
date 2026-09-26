@@ -8,7 +8,7 @@ import { type GameEngine } from "../session/gameEngine";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
-// see: docs/systems/boucle-de-jeu.md#origine-des-modules
+// see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
 // Scratch vectors ci-dessous : locaux à CE fichier (contrairement à
 // `ballPrevPos`/`ballCurrPos`, partagés avec `loop/stepPhysics.ts` via
@@ -32,7 +32,7 @@ const enemyAnimationScratch = createEnemyAnimationInput();
 
 // Tourne au taux d'affichage, pas le pas fixe — même frontière Effect
 // synchrone stricte (`runGameplaySync`) que le pas fixe.
-// see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
+// see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 export function interpolateVisuals(engine: GameEngine, alpha: number): void {
   const session = engine.session;
   runGameplaySync(

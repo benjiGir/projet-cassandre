@@ -45,7 +45,7 @@ script séparé (`bake_vertex_lighting.py`), suivi par `validate_level.py` puis
 `place_kit_piece` fait un `mesh.copy()` pour chaque instance RENDUE placée
 (chaque copie porte son propre bake), et garde les proxies `col_*` partagés
 (jamais bakés ni rendus). Pourquoi : voir
-docs/pipeline/niveau-blender.md#piège-instancing-vs-bake
+docs/archive/pipeline-niveau-blender.md#piège-instancing-vs-bake
 """
 
 from __future__ import annotations
@@ -345,7 +345,7 @@ def build_floor_patches(patches: list[dict] | None, materials_lookup: dict,
 
     Bornée à l'empreinte réelle du besoin plutôt que d'étendre le
     rectangle englobant du `"floor"` existant — voir
-    docs/pipeline/niveau-blender.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
+    docs/5-guides/modifier-le-niveau.md#dalles-sur-mesure-et-chevauchement-dans-le-niveau-combiné
     pour le piège que ça évite une fois la zone translatée."""
     if not patches:
         return 0
@@ -452,7 +452,7 @@ def build_door_leaf(door_spec: dict | None, mesh_lookup, proxy_map,
     `door_spec["rot_deg"]` (défaut 0.0) avant translation, comme
     `plan_wall_run` le ferait pour n'importe quel module de mur posé à ce
     coin avec cette rotation. Détail complet :
-    docs/pipeline/niveau-blender.md#vantail-de-porte-recentré-kit_door_leaf
+    docs/5-guides/modifier-le-niveau.md#vantail-de-porte-recentré-kit_door_leaf
     """
     if door_spec is None or not door_spec.get("leaf_name"):
         return 0
@@ -541,7 +541,7 @@ def build_kit_details(details: list[dict] | None, mesh_lookup, proxy_map,
 # n'est PAS automatiquement un vide — ça dépend de l'orientation relative des
 # deux `outward`. La méthode générale et fiable est donc un test direct de
 # recouvrement (ce bloc), pas une classification manuelle convexe/concave
-# par coin — voir docs/pipeline/niveau-blender.md#coins-de-mur-détection-automatique
+# par coin — voir docs/5-guides/modifier-le-niveau.md#coins-de-mur-détection-automatique
 # pour le détail du raisonnement et deux exemples opposés (un coin sans vide,
 # un coin avec).
 #
@@ -714,7 +714,7 @@ def _build_row_run(piece_name: str, end_name: str | None, x: float,
 
     `x` est le COIN de la pièce, jamais le centre de sa profondeur (grille
     0.25 m exacte, pas une décision de layout) : voir
-    docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
+    docs/5-guides/modifier-le-niveau.md#convention-de-placement-des-rangées-gondoles-racks-escalier
     pour la mécanique complète et ses conséquences (asymétrie des couloirs).
     """
     piece_len = spec.find_piece(piece_name)["dims"][0]
@@ -800,7 +800,7 @@ def build_mezzanine_stairs(stairs_spec: dict | None, mesh_lookup, proxy_map,
     l'escalier sous la rambarde voisine (collision réelle, pas cosmétique).
     Compensé en ajoutant `dims[1]` à chaque abscisse avant `place_kit_piece`
     (mécanique, la position de la brèche ne change pas). Détail complet :
-    docs/pipeline/niveau-blender.md#convention-de-placement-des-rangées-gondoles-racks-escalier
+    docs/5-guides/modifier-le-niveau.md#convention-de-placement-des-rangées-gondoles-racks-escalier
     """
     if stairs_spec is None:
         return 0

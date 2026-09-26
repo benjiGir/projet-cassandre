@@ -50,8 +50,8 @@ flowchart TD
 `pnpm test` lance `vitest run` sur les fichiers `test/**/*.test.ts`.
 `pnpm typecheck` lance le contrôle TypeScript sans produire de bundle.
 `pnpm build` exécute TypeScript puis Vite.
-`pnpm check` enchaîne typecheck, tests et build.
-`pnpm check:docs` lance le validateur documentaire en mode strict, tout en tolérant les pages de phase encore vides.
+`pnpm check` enchaîne typecheck, tests, contrôle documentaire strict et build.
+`pnpm check:docs` lance seul le validateur documentaire en mode strict, tout en tolérant les pages volontairement vides.
 `pnpm check:docs:test` lance les tests Python du validateur.
 
 ### Tests TypeScript
@@ -69,15 +69,15 @@ Un résultat de commande doit être lu avec ses avertissements et son code de so
 ### Documentation
 
 `check_docs_links.py` vérifie les champs de frontmatter, les chemins de sources, les liens Markdown et les ancres.
-Le mode `--allow-empty-drafts` permet de poursuivre le chantier quand certaines pages futures sont encore des stubs.
-Ces stubs restent signalés en avertissements ; une sortie conforme n'indique donc pas que toutes les pages prévues sont rédigées.
+Le mode `--allow-empty-drafts` tolère les squelettes explicitement marqués brouillon.
+Les pages documentaires actuelles passent aussi en mode strict.
 Les tests du checker valident ses règles et cas d'entrée, pas le contenu métier de chaque page.
 
 ### Contenu et assets
 
 Le validateur Blender contrôle les conventions d'objet et de scène ; `audit_niveau.py` contrôle des défauts géométriques.
 L'analyse audio mesure les fichiers rendus et l'empaquetage.
-Ces outils sont des commandes séparées, pas des étapes automatiques de `pnpm check`.
+Ces outils de contenu sont des commandes séparées, pas des étapes automatiques de `pnpm check`; le vérificateur documentaire, lui, est inclus.
 La validation sensorielle nécessite de voir la scène au rendu jeu, d'écouter les sons et de jouer la situation concernée.
 Une validation documentaire ne certifie pas les pages contre l'expérience en jeu.
 
@@ -86,7 +86,7 @@ Une validation documentaire ne certifie pas les pages contre l'expérience en je
 - Un typecheck propre ne prouve pas que le jeu se comporte correctement.
 - Un test vert couvre uniquement les assertions de son fichier.
 - `pnpm build` ne remplace pas les tests Vitest.
-- `pnpm check:docs` peut réussir avec des avertissements de pages volontairement vides.
+- `pnpm check:docs` tolère les squelettes explicitement marqués brouillon, mais échoue sur les liens et ancres invalides.
 - Le validateur Blender ne remplace pas l'audit géométrique ni l'export glTF.
 - Les contrôles audio ne disent pas si le son est évocateur à l'écoute.
 - Une capture isolée ne confirme pas qu'une interaction complète fonctionne.

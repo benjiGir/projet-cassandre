@@ -11,7 +11,7 @@ import * as THREE from "three";
  * jamais se déclencher. Quand il se déclenche, il le dit en console avec les
  * coordonnées — c'est ainsi qu'un playtest signale un trou à
  * `tools/level_v2/audit_niveau.py`.
- * see: docs/systems/boucle-de-jeu.md#filet-de-chute
+ * see: docs/archive/systems-boucle-de-jeu.md#filet-de-chute
  */
 
 /**

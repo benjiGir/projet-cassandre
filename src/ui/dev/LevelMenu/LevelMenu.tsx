@@ -14,7 +14,7 @@ export interface LevelMenuProps {
 /**
  * Choix d'une zone au démarrage, DEV UNIQUEMENT : la gym, les blockouts et
  * les zones de test n'ont rien à faire devant un joueur.
- * see: docs/systems/hud.md#menu-principal-et-écran-de-choix-de-niveau
+ * see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
  */
 export function LevelMenu({ options, onChoose, title = "PROJET_CASSANDRE" }: LevelMenuProps) {
   return (

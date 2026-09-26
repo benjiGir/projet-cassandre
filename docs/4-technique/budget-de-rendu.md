@@ -23,7 +23,7 @@ Cette page explique comment le runtime contrôle le coût de dessin d'un niveau 
 - `src/game/devtools/consoleApi.ts` et `src/game/devtools/testHarness.ts` — commandes de diagnostic et banc `renderBench`.
 - `tools/level_v2/plan_de_masse.py` et `tools/blender/validate_level.py` — cible de lots planifiée et contrôles de contenu.
 - `test/game/level/mergeStaticDecor.test.ts` — règles de fusion géométrique.
-- [Mesures historiques](../systems/cout-de-rendu.md) — protocole et relevés antérieurs à l'archive de phase I.
+- [Mesures historiques](./budget-de-rendu.md) — protocole et relevés antérieurs à l'archive de phase I.
 
 ## Où ça s'insère dans la boucle
 

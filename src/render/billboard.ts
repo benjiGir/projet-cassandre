@@ -13,9 +13,9 @@ import { configureRetroTexture } from "./renderer";
  * fixe interpolé (`updatePose`) — même discipline que le reste de `render/`.
  * Convention de direction, mapping V de l'atlas, canaux teinte/flash, et le
  * piège de partage de texture (évité par le clone d'instance, ADR 0017) :
- * see: docs/systems/rendu.md#découplage-entre-render-et-game
- * see: docs/systems/rendu.md#temps-réel-contre-pas-fixe-dans-render
- * see: docs/systems/rendu.md#sprites-billboard-8-directions
+ * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
+ * see: docs/archive/systems-rendu.md#temps-réel-contre-pas-fixe-dans-render
+ * see: docs/archive/systems-rendu.md#sprites-billboard-8-directions
  */
 
 /**
@@ -32,7 +32,7 @@ export const BILLBOARD_COLUMNS = 8;
  * `SHAKE_NEGLIGIBLE_FRACTION` dans `fx.ts`). Durée elle-même passée par
  * l'appelant (`SuitConfig.hitFlashDuration`), tunable à chaud — historique du
  * passage d'une constante en dur à ce champ :
- * see: docs/reference/valeurs-ennemis.md#feedback-visuel-dun-coup-reçu-par-un-ennemi
+ * see: docs/archive/reference-valeurs-ennemis.md#feedback-visuel-dun-coup-reçu-par-un-ennemi
  */
 const FLASH_NEGLIGIBLE_FRACTION = 0.05;
 /** Durée de repli si `setFlash` est appelée sans second argument (compat / tests) — mêmes 0.25 s que l'ancienne constante en dur. */
@@ -68,7 +68,7 @@ export interface BillboardSpriteOptions {
    * plafonnier presque à l'horizontale et reste sombre : incliné, il la capte
    * comme le ferait un volume. La géométrie ne bouge pas, seul l'éclairage
    * Lambert change.
-   * see: docs/systems/rendu.md#éclairage-des-sprites
+   * see: docs/archive/systems-rendu.md#éclairage-des-sprites
    */
   normalTilt?: number;
 }
@@ -156,7 +156,7 @@ export class BillboardSprite {
    * @param row Ligne de l'atlas (frame/état), 0-indexée. Défaut 0. Clampée à
    *   `[0, rows - 1]` (`rows` fixé au constructeur).
    */
-  // see: docs/systems/rendu.md#sprites-billboard-8-directions
+  // see: docs/archive/systems-rendu.md#sprites-billboard-8-directions
   updatePose(camera: THREE.Camera, position: THREE.Vector3, forward: THREE.Vector3, row = 0): void {
     this.mesh.position.copy(position);
 
@@ -197,7 +197,7 @@ export class BillboardSprite {
     // Mapping U : colonne 0 à gauche, croissant vers la droite (comme X).
     // Mapping V : ATTENTION, three.js flip l'axe V par défaut (v=0 = BAS de
     // l'image source) alors que `row = 0` doit sélectionner la ligne du HAUT.
-    // see: docs/systems/rendu.md#sprites-billboard-8-directions
+    // see: docs/archive/systems-rendu.md#sprites-billboard-8-directions
     this.texture.offset.set(this.lastDirection / BILLBOARD_COLUMNS, 1 - (clampedRow + 1) / this.rows);
   }
 
@@ -229,7 +229,7 @@ export class BillboardSprite {
    * `Director.tintColor`). Idempotente et bon marché, mais le pattern
    * attendu est de l'appeler UNE FOIS, au moment de l'événement de
    * transition — pas à chaque frame par défaut.
-   * see: docs/systems/rendu.md#sprites-billboard-8-directions
+   * see: docs/archive/systems-rendu.md#sprites-billboard-8-directions
    */
   setTint(color: number): void {
     this.mesh.material.color.set(color);
@@ -279,7 +279,7 @@ export class BillboardSprite {
 
 // Atlas placeholder : repli quand une planche de `render/enemySprites.ts` ne
 // se charge pas. Format complet :
-// see: docs/pipeline/textures.md#atlas-placeholder-de-billboard
+// see: docs/archive/pipeline-textures.md#atlas-placeholder-de-billboard
 
 const PLACEHOLDER_CELL_WIDTH = 32; // px, largement sous la limite 128×128/texture (invariant #4)
 const PLACEHOLDER_CELL_HEIGHT = 48; // px, portrait — gabarit humanoïde approximatif

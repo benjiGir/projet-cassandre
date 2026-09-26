@@ -27,7 +27,7 @@ import type { HitEvent } from "../player/weapons";
  *    `render/fx.ts`, exactement comme `SuitManager` et ses `hurtEvents`.
  *
  * see: docs/decisions/0030-props-dynamiques.md
- * see: docs/systems/physique.md#props-dynamiques
+ * see: docs/archive/systems-physique.md#props-dynamiques
  */
 
 /**

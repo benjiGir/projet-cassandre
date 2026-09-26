@@ -22,7 +22,7 @@ export interface AppProps {
  * `onReplay`/`onReturnToMenu`/`onResume` sont de vrais resets/transitions :
  * `main.ts`/`game/session/lifecycle.ts` restent les seuls à savoir QUOI faire
  * quand on clique.
- * see: docs/systems/hud.md#composition-de-app
+ * see: docs/archive/systems-hud.md#composition-de-app
  * see: docs/decisions/0019-machine-xstate-flux-ecran.md
  */
 export function App({ onReplay, onReturnToMenu, onResume }: AppProps) {

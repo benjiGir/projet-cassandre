@@ -62,7 +62,7 @@ import {
 } from "./testHarness";
 
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
-// see: docs/systems/debug.md#origine-du-module-gamedevtools
+// see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
 /**
  * Point d'entrée console pour l'A/B de `feel-tuner` et les preuves de
@@ -70,7 +70,7 @@ import {
  * JAMAIS mis en cache dans une variable locale : `window.cassandre` doit
  * rester correct après un "Rejouer"/"Retour au menu" (`main()` appelle
  * cette fonction UNE SEULE FOIS, jamais reconstruite à chaque reset).
- * see: docs/systems/debug.md#point-dentrée-console-windowcassandre
+ * see: docs/archive/systems-debug.md#point-dentrée-console-windowcassandre
  */
 export function exposeDebugApi(engine: GameEngine): void {
   window.cassandre = {
@@ -296,7 +296,7 @@ export function exposeDebugApi(engine: GameEngine): void {
         presentPlayerDamage(engine.session.playerHp);
       },
     },
-    /** Pause (`docs/systems/session.md#pause`) : `pause()`/`resume()` envoient
+    /** Pause (`docs/archive/systems-session.md#pause`) : `pause()`/`resume()` envoient
      * directement PAUSE/RESUME à l'acteur de flux — le déclenchement réel
      * (perte du verrouillage du pointeur) est hors de portée de
      * l'automatisation navigateur, comme le reste du verrouillage. */
@@ -318,7 +318,7 @@ export function exposeDebugApi(engine: GameEngine): void {
  * a soit `vertexColors: false` (le bake n'arrive pas au matériau), soit un
  * `range` écrasé (le bake lui-même est plat) — ce ne sont pas les mêmes
  * corrections.
- * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+ * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
  */
 function inspectLighting(engine: GameEngine) {
   const lights: { name: string; type: string; intensity: number; color: string; visible: boolean }[] = [];
@@ -496,7 +496,7 @@ declare global {
         completeLevel: () => void;
         killPlayer: () => void;
       };
-      /** Pause (`docs/systems/session.md#pause`) : envoie directement PAUSE/RESUME à l'acteur de flux. */
+      /** Pause (`docs/archive/systems-session.md#pause`) : envoie directement PAUSE/RESUME à l'acteur de flux. */
       pause: () => void;
       resume: () => void;
     };

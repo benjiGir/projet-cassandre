@@ -3,7 +3,7 @@
 Boomer shooter rétro façon Duke Nukem 3D / Ion Fury, en Three.js vanilla.
 Un youtubeur complotiste à 200 abonnés avait raison sur toute la ligne.
 
-Prototype : un niveau (l'hypermarché), deux armes, un type d'ennemi de base
+Prototype : un niveau (l'hypermarché), trois armes (pied-de-biche, pistolet, pompe), un type d'ennemi de base
 plus un boss, quelques minutes de jeu.
 
 ## Stack

@@ -63,6 +63,14 @@ Un appel avant disponibilité, ou une clé absente, ne bloque pas la partie ; un
 Le manifeste est généré par `tools/audio/build_sprite.py` et ne se modifie pas à la main.
 Le générateur fournit Ogg et M4A car Howler choisit un format pris en charge sans repli d'une source à l'autre.
 
+`window.cassandre.sfx.liste()` expose `present` pour chaque identifiant. Ce
+champ indique seulement que sa clé figure dans le manifeste JSON chargé ; il
+ne révèle pas si Howler a fini de télécharger ou décoder le fichier. Pour
+vérifier un son, contrôlez dans l'onglet Réseau que `sfx.json` et le format
+choisi par le navigateur (`.ogg` ou `.m4a`) se chargent sans erreur, vérifiez
+l'absence d'avertissement `[audio]` dans la console, puis déclenchez le son
+avec `window.cassandre.sfx.joue("shotgun_fire")`.
+
 `setAudioRandom` injecte le flux aléatoire de présentation utilisé pour la variation de hauteur.
 Ce flux est distinct de la simulation.
 L'absence d'un son ne change donc pas les décisions de gameplay ni le rejeu.
@@ -113,7 +121,7 @@ Aucun fichier vocal n'est chargé par le runtime.
 ## Comment vérifier que ça marche
 
 Lancer `pnpm test -- test/core/waterAmbienceMix.test.ts`.
-Dans le navigateur de développement, utiliser `window.cassandre.sfx.liste()` pour comparer les identifiants du jeu aux clés présentes.
-Déclencher un son avec `window.cassandre.sfx.joue("shotgun_fire")`.
+Dans le navigateur de développement, utiliser `window.cassandre.sfx.liste()` pour comparer les identifiants du jeu aux clés du manifeste ; `present` ne confirme pas le décodage du son.
+Contrôler les réponses Réseau pour `sfx.json` et le format audio choisi, puis déclencher `window.cassandre.sfx.joue("shotgun_fire")` et écouter le résultat.
 Casser un sanitaire, puis observer `window.cassandre.sfx.eau()` pour vérifier l'état de la boucle.
 Basculer le thème avec la touche M et vérifier qu'elle ne coupe pas la nappe.

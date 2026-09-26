@@ -20,7 +20,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Compteur de « vues » | Gag du HUD façon stream : gain de points disproportionné par ennemi neutralisé (×4 pour le Directeur), sans aucun lien avec le score du récapitulatif. | `src/game/session/feedback.ts`, `src/game/state.ts` |
 | Costard (Suit) | L'ennemi de base : humain en costume noir, cravate rouge, jusqu'à sa mort. Partage sa machine à états avec le Directeur. | `src/game/entities/suit.ts`, `src/game/entities/enemyMachine.ts` |
 | Directeur (Director) | Boss unique du niveau. Costume beige, révélation reptilienne à la mort, lâche la carte Platine. | `src/game/entities/director.ts`, `src/game/entities/directorConfig.ts` |
-| Espace | Une zone nommée du niveau (rayons, réserve, bureaux…), reliée aux autres par le hub. | `docs/reference/conventions-nommage.md` |
+| Espace | Une zone nommée du niveau (rayons, réserve, bureaux…), reliée aux autres par le hub. | `docs/6-reference/conventions-nommage.md` |
 | Gibs | Explosion de morceaux jouets qui remplace l'animation de mort normale d'un Costard tué au pompe à bout portant (distance ≤ `gibDistance`) ; purement cosmétique, la simulation le garde `dead`/`corpse` normalement. | `src/render/fx.ts::spawnGibs`, `src/game/entities/suitManager.ts` |
 | Hub | Zone centrale à la Duke 3D d'où partent les espaces du niveau, débloqués par les cartes de fidélité. | CLAUDE.md (section « Chantier Niveau v2 ») |
 | Hypermarché | Le décor du prototype : un hypermarché des années 90, univers satirique. | `docs/1-introduction/le-projet.md` |
@@ -117,15 +117,15 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 |---|---|---|
 | Empty Blender | Nœud sans géométrie utilisé comme repère de spawn, lumière ou caméra ; il est exporté comme nœud glTF. | `src/game/level/loader.ts` |
 | Blockout | Version en volumes gris d'un espace, jouable avant tout habillage. | CLAUDE.md (« Chantier Niveau v2 ») |
-| Custom property (extras) | Propriété Blender personnalisée lue par le loader depuis les `extras` du glTF (ex. `masse`, `pv`, `card`, `requires`). | `src/game/level/loader.ts`, `docs/reference/conventions-nommage.md` |
+| Custom property (extras) | Propriété Blender personnalisée lue par le loader depuis les `extras` du glTF (ex. `masse`, `pv`, `card`, `requires`). | `src/game/level/loader.ts`, `docs/6-reference/conventions-nommage.md` |
 | glTF / `.glb` | Format d'export du niveau depuis Blender ; seul fichier lu par le jeu en runtime (`public/assets/levels/`). | `src/game/level/loader.ts` |
 | Graphe de navigation / pathfinding 2.5D | Structure construite au chargement du niveau à partir des colliders `WORLD`, utilisée par les ennemis pour se déplacer. | `src/game/level/pathfinding.ts` |
 | Habillage | Passe qui remplace les volumes gris d'un espace par du décor texturé, sans retoucher la structure validée au blockout. | CLAUDE.md (« Chantier Niveau v2 », N9) |
 | Hot reload | Rechargement du niveau en développement par sondage HTTP (`HEAD`, ETag/Last-Modified), actif uniquement sous `import.meta.env.DEV`. | `src/game/level/hotReload.ts` |
-| Kit modulaire | Ensemble de pièces paramétriques réutilisées pour construire le niveau (murs, sols, gondoles…). | `docs/reference/conventions-nommage.md` |
-| `_KIT` / `_LIB` | Collections Blender portant les patrons d'assets (kit modulaire, bibliothèque), jamais exportées telles quelles dans le niveau. | `docs/_chantier/ecarts.md` (écart sur un export fautif qui les incluait) |
+| Kit modulaire | Ensemble de pièces paramétriques réutilisées pour construire le niveau (murs, sols, gondoles…). | `docs/6-reference/conventions-nommage.md` |
+| `_KIT` / `_LIB` | Collections Blender portant les patrons d'assets (kit modulaire, bibliothèque), jamais exportées telles quelles dans le niveau. | `docs/6-reference/conventions-nommage.md` |
 | Plan de masse | Vue de dessus du niveau reliant les espaces entre eux, régénérée à chaque changement de structure. | CLAUDE.md (« Chantier Niveau v2 ») |
-| Préfixes de nommage (`col_*`, `spawn_*`, `trig_*`, `door_*`, `use_*`, `secret_*`, `prop_*`, `vitre_*`, `sanitaire_*`, `ecran_*`, `light_*`, `cam_*`) | Convention de nommage d'objet Blender qui pilote l'import : chaque préfixe déclenche un traitement précis au chargement (collider, spawn, trigger, porte animée, interactif, secret, prop physique, vitrage, sanitaire, écran, lumière ou caméra). | `src/game/level/loader.ts`, `docs/reference/conventions-nommage.md` |
+| Préfixes de nommage (`col_*`, `spawn_*`, `trig_*`, `door_*`, `use_*`, `secret_*`, `prop_*`, `vitre_*`, `sanitaire_*`, `ecran_*`, `light_*`, `cam_*`) | Convention de nommage d'objet Blender qui pilote l'import : chaque préfixe déclenche un traitement précis au chargement (collider, spawn, trigger, porte animée, interactif, secret, prop physique, vitrage, sanitaire, écran, lumière ou caméra). | `src/game/level/loader.ts`, `docs/6-reference/conventions-nommage.md` |
 
 ## Audio
 
@@ -159,9 +159,9 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Terme | Définition | Où le voir |
 |---|---|---|
 | Acteur XState | Instance vivante d'une machine qui reçoit des événements et expose un snapshot de son état courant. | `src/ui/gameFlowMachine.ts`, `src/main.ts` |
-| Barrel | Module de réexport qui rassemble plusieurs fichiers derrière un point d'entrée, souvent nommé `index.ts` ; les conventions React du dépôt l'interdisent. | `docs/reference/react-structure.md` |
+| Barrel | Module de réexport qui rassemble plusieurs fichiers derrière un point d'entrée, souvent nommé `index.ts` ; les conventions React du dépôt l'interdisent. | `docs/6-reference/react-structure.md` |
 | Callback | Fonction transmise par un composant parent pour déléguer une action à une autre couche. | `src/ui/App.tsx` |
-| CSS Modules | Système de styles dont les classes sont propres au composant qui importe le fichier CSS. | `docs/reference/react-css.md` |
+| CSS Modules | Système de styles dont les classes sont propres au composant qui importe le fichier CSS. | `docs/6-reference/react-css.md` |
 | Composant React | Unité d'interface qui rend une partie de l'arbre React et peut lire les données nécessaires à son affichage. | `src/ui/` |
 | Sélecteur Zustand | Fonction d'abonnement qui choisit dans le store la valeur utilisée par un composant React. | `src/game/state.ts`, `src/ui/` |
 | Snapshot XState | Valeur immuable publiée par un acteur XState après un changement de son état courant. | `src/main.ts` |

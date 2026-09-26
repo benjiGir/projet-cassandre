@@ -101,7 +101,7 @@ const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
  * de forme, hitstop, et l'état de recul du viewmodel (nombres seulement,
  * aucun mesh/matériau/texture créé ici — c'est le travail de `retro-render`).
  * Architecture munitions (pool unique, pas de magasin) :
- * see: docs/systems/armes.md#architecture-munitions-un-seul-pool
+ * see: docs/archive/systems-armes.md#architecture-munitions-un-seul-pool
  *
  * DISCIPLINE DE DÉTERMINISME (critique) : `update()` doit recevoir l'origine
  * de tir AUTHENTIQUE du pas fixe courant (`player.position` + `player.eyeOffset`)
@@ -204,7 +204,7 @@ export class WeaponSystem {
   // Files d'événements de la frame d'affichage courante, accumulées au fil
   // des pas fixes (une frame lente peut en exécuter plusieurs) : contrat
   // complet (qui lit, qui vide, dans quel ordre) —
-  // see: docs/systems/armes.md#files-dévénements-de-frame-fireeventshitevents
+  // see: docs/archive/systems-armes.md#files-dévénements-de-frame-fireeventshitevents
   private readonly _fireEvents: FireEvent[] = [];
   private readonly _hitEvents: HitEvent[] = [];
 
@@ -333,7 +333,7 @@ export class WeaponSystem {
    * `interactive.ts::collectWeapons`) : jamais rien à offrir à un joueur qui
    * a déjà le pied-de-biche — il n'a pas de munitions, contrairement au
    * pistolet — donc `false`, l'appelant laisse l'objet au sol pour de bon
-   * (`docs/systems/armes.md`).
+   * (`docs/4-technique/armes.md`).
    */
   tryCollectMelee(): boolean {
     if (this.hasMelee) return false;
@@ -345,7 +345,7 @@ export class WeaponSystem {
    * Même contrat que `tryCollectMelee`, pour `use_shotgun`. Un pompe déjà
    * possédé ne redonne rien non plus : le pompe garde une dotation UNIQUE
    * (`shotgunStartingAmmo`, jamais de plafond ni de mécanisme de recharge —
-   * voir « Architecture munitions » dans `docs/systems/armes.md`), donc
+   * voir « Architecture munitions » dans `docs/4-technique/armes.md`), donc
    * inventer un montant à lui donner ici serait une décision d'équilibrage
    * hors de la portée de ce ramassage automatique, pas une simple
    * généralisation de la règle du pistolet.
@@ -551,7 +551,7 @@ export class WeaponSystem {
    * l'ancienne sphère unique ne pouvait géométriquement pas toucher à bout
    * portant. Dérivation géométrique complète (construction de la capsule,
    * projection du point d'impact, approximation de la normale) :
-   * see: docs/systems/armes.md#pied-de-biche-portée-en-capsule
+   * see: docs/archive/systems-armes.md#pied-de-biche-portée-en-capsule
    */
   private fireMelee(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);

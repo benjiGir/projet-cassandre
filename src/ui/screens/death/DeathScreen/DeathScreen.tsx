@@ -25,7 +25,7 @@ export interface DeathScreenProps {
  * n'a jamais été franchie — `.partialNote` ci-dessous le dit en toutes
  * lettres, la ligne "Rapidité" n'existe simplement pas dans `recap.lines`
  * plutôt que de l'expliquer par son absence.
- * see: docs/systems/hud.md#écrans-de-mort-et-de-fin-de-niveau
+ * see: docs/archive/systems-hud.md#écrans-de-mort-et-de-fin-de-niveau
  * see: docs/decisions/0019-machine-xstate-flux-ecran.md
  */
 export function DeathScreen({ onReplay, onReturnToMenu }: DeathScreenProps) {

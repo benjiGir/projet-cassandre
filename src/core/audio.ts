@@ -21,7 +21,7 @@ import type { DoorMovement } from "../game/level/doors";
  * choix ; la dernière parce que deux armes mesuraient 0,976 de ressemblance
  * de timbre. Un son fabriqué se règle, un enregistrement se subit.
  *
- * see: docs/systems/hud-audio.md#assets-sonores
+ * see: docs/archive/systems-hud-audio.md#assets-sonores
  */
 
 /**

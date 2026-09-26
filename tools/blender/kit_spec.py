@@ -10,7 +10,7 @@ Repère Blender, Z vers le haut, 1 unité = 1 mètre. Origine à un coin au sol
 pour chaque pièce (coordonnées locales positives, x∈[0,W] y∈[0,D] z∈[0,H]),
 classes de pièce (SHELL/PROP/DETAIL) et leurs contraintes de grille, exceptions
 d'origine (sol/plafond) : voir
-docs/reference/conventions-nommage.md#classes-de-pièce-du-kit-modulaire-toolsblenderkit_specpy
+docs/6-reference/conventions-nommage.md#classes-de-pièce-du-kit-modulaire-toolsblenderkit_specpy
 
 Proxies de collision : `col_box_*` cuboid, `col_hull_*` convexHull,
 `col_mesh_*` trimesh (aucun dans ce kit — c'est le but) — voir le skill
@@ -193,7 +193,7 @@ def _checkout_parts(length=3.0, depth=1.0, height=1.1):
 def _crate_parts(side=1.0):
     """Caisse : cube plein, SANS tasseaux d'angle — des tasseaux au ras du
     cube bakaient entièrement noir (faces coïncidentes, auto-occultation).
-    see: docs/pipeline/niveau-blender.md#diagnostic-dun-mesh-entièrement-noir
+    see: docs/5-guides/modifier-le-niveau.md#diagnostic-dun-mesh-entièrement-noir
     """
     return [box(0.0, 0.0, 0.0, side, side, side, MAT_STORAGE)]
 

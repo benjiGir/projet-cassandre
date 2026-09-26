@@ -6,7 +6,7 @@ import { type GameEngine } from "./gameEngine";
 
 // Harnais F9/F10 (voir `game/loop/devGameplayInput.ts` pour la détection des
 // touches, `game/devtools/consoleApi.ts` pour l'exposition console).
-// see: docs/systems/session.md#harnais-f9-et-f10
+// see: docs/archive/systems-session.md#harnais-f9-et-f10
 
 export function startRecording(engine: GameEngine, session: GameSession): void {
   inputRecorder.startRecording(

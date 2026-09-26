@@ -126,5 +126,5 @@ ennemis et des objets cassables) : `6-reference/valeurs-armes.md`.
 - Le fonctionnement interne des tirs, des tests de portée et de la
   dispersion : `4-technique/armes.md`.
 - Les modèles d'armes tenus à l'écran et leurs animations : `4-technique/sprites-et-viewmodel.md`.
-- Toutes les valeurs numériques de combat : `6-reference/valeurs-armes.md`.
+- Toutes les valeurs numériques de combat : [Valeurs des armes](../6-reference/valeurs-armes.md).
 - Ce qui se casse au tir dans le niveau : [Objets interactifs](objets-interactifs.md).

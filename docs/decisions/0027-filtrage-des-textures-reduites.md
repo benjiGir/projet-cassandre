@@ -70,7 +70,7 @@ budget d'image de 16,6 ms. Le mipmap ajoute aussi un tiers de mémoire de
 texture, sur des atlas de 128 px : négligeable.
 
 **Limite connue de cette mesure** : le banc capte surtout le temps CPU de
-soumission des commandes (voir [Ce que coûte une image](../systems/cout-de-rendu.md)).
+soumission des commandes (voir [Ce que coûte une image](../4-technique/budget-de-rendu.md)).
 Il voit un écart réel entre les modes de filtrage, mais il ne voit PAS le coût
 de remplissage — c'est pourquoi le même banc ne montre aucune différence entre
 640×360 et 1920×1080, ce qui ne prouve évidemment pas que la résolution est

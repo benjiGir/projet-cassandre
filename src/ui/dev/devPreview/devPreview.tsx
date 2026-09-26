@@ -21,7 +21,7 @@ import styles from "./devPreview.module.css";
  * l'automatisation du navigateur n'obtient pas le verrouillage du pointeur.
  * Activé par `?uiPreview=<écran>` depuis `main.ts`, derrière une garde
  * `import.meta.env.DEV` : ce fichier n'entre jamais dans le bundle livré.
- * see: docs/systems/hud.md
+ * see: docs/4-technique/interface-react.md
  */
 
 const PREVIEW_SCREENS = [

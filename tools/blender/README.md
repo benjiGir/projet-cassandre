@@ -40,7 +40,7 @@ aucune arête ne se détache), `--bounces` (une salle blanche renvoie tant de
 lumière qu'elle efface ses ombres), `--pass indirect` (montage hybride,
 ADR 0024), `--ambient` (plancher d'éclairage) et `--emissive-marker` (une
 source ne s'éclaire pas elle-même). Leur raison d'être est dans
-[docs/pipeline/niveau-blender.md](../../docs/pipeline/niveau-blender.md#bake-déclairage-vertex-colors).
+[docs/5-guides/modifier-le-niveau.md](../../docs/5-guides/modifier-le-niveau.md#bake-déclairage-vertex-colors).
 
 ```bash
 # Sprites des ennemis (ADR 0028) — ~10 s par personnage
@@ -101,13 +101,13 @@ Pièges payés, tous silencieux :
   (vers la paume), pour les deux mains ; positive, la main s'ouvre à l'envers.
 - **Retirer l'action d'animation** après la pose de départ, sinon une
   réévaluation écrase les poses figées.
-- **Jamais d'extra `pivot`** : `GLTFLoader` le réserve (voir docs/systems/rendu.md).
+- **Jamais d'extra `pivot`** : `GLTFLoader` le réserve (voir docs/4-technique/rendu.md).
 - **Un bras de 1,80 m n'atteint pas le fût** : les bras sont au gabarit 2,20 m.
 
 ### Pistolet — refonte 2026-09-25
 
 `construire_pistolet` a été entièrement réécrite d'après
-[`docs/assets/board-pistolet.md`](../../docs/assets/board-pistolet.md) (board
+[`docs/journal/playtests-2026-09.md`](../../docs/journal/playtests-2026-09.md) (board
 de références, cotes, priorités de silhouette) : un Beretta 92FS deux tons
 plutôt que le pavé « sèche-cheveux » d'origine (1,01 de rapport hauteur/
 longueur, poignée-tube de 12 cm, aucune pièce en contact). Le nouveau modèle

@@ -19,7 +19,7 @@ un défaut et non une remarque : un lot qui couvre la carte n'est jamais écart�
 par le tri d'écart, donc le niveau entier se dessinait à chaque image, derrière
 les murs compris — 82 836 triangles pour une pièce close de 28 × 26 m, contre
 11 184 après la découpe. Voir l'[ADR 0026](0026-visibilite-par-espace-et-pool-de-lampes.md)
-et [Ce que coûte une image](../systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+et [Ce que coûte une image](../archive/systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
 
 ## Contexte
 
@@ -33,7 +33,7 @@ un mur, donc presque tout le niveau est dessiné à chaque image.
 Deux contraintes existantes pèsent sur la solution :
 
 - **Le piège instancing-vs-bake** ([Niveau : Blender vers
-  glTF](../pipeline/niveau-blender.md#piège-instancing-vs-bake)) : chaque
+  glTF](../archive/pipeline-niveau-blender.md#piège-instancing-vs-bake)) : chaque
   objet rendu porte sa propre géométrie pour recevoir son propre éclairage
   baké en vertex colors. Des instances partagent leur géométrie, donc leurs
   vertex colors.
@@ -74,7 +74,7 @@ par image, et le plafond existant de 200 000 triangles.
 - Le nombre de draw calls du décor suit désormais le **nombre de matériaux
   distincts**, pas le nombre d'objets : la palette et les atlas partagés du
   niveau v2 (voir [Harmonisation des
-  assets](../pipeline/harmonisation-assets.md)) deviennent aussi un levier de
+  assets](../4-technique/generateurs.md)) deviennent aussi un levier de
   performance.
 - Les meshes à échelle négative restent individuels (inversion de l'ordre
   des sommets) ; un asset importé en miroir coûte donc un draw call de plus.

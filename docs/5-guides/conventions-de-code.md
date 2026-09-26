@@ -47,10 +47,10 @@ Le HUD se met à jour via Zustand à 10 Hz au maximum. Ne placez pas la boucle, 
 - Un contrat plus large va dans `docs/`, avec une ancre `see:` à proximité dans le code.
 - Une ancre n'est pas un garde-fou. Toute contrainte qui doit tenir en production doit être appliquée par le code ou par le build.
 - La documentation cite les chemins depuis la racine, emploie des liens relatifs, respecte quatre champs de frontmatter et ne crée pas de fichier `index.ts`.
-- Quand le code et une ancienne doc divergent, notez l'écart dans `docs/_chantier/ecarts.md` et documentez l'état actuel sans corriger le gameplay.
+- Quand le code et une ancienne doc divergent, vérifiez le comportement actuel et corrigez la page dans le même changement. Si un invariant ou un choix de conception reste ambigu, ouvrez un ADR proposé; ne modifiez pas le gameplay pour faire correspondre le texte sans décision.
 
 ## Commandes de travail
 
-Utilisez `pnpm dev` pour lancer, `pnpm typecheck` pour les types, `pnpm test` pour Vitest et `pnpm build` pour le paquet de production. `pnpm check` exécute ces trois validations ensemble. Les commandes documentaires sont listées dans [Commandes](../6-reference/commandes.md).
+Utilisez `pnpm dev` pour lancer, `pnpm typecheck` pour les types, `pnpm test` pour Vitest et `pnpm build` pour le paquet de production. `pnpm check` exécute le typecheck, Vitest, le contrôle documentaire strict et le build. Les commandes documentaires sont listées dans [Commandes](../6-reference/commandes.md).
 
 Les changements de sensation demandent une comparaison A/B et des preuves ; voir [Régler la sensation](regler-la-sensation.md). Les changements d'architecture qui contraignent les prochains travaux demandent un [ADR](ecrire-un-adr.md).

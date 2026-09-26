@@ -31,7 +31,7 @@ import type { EnemyAnimationInput } from "../../render/enemySprites";
  * (`enemyMachine.ts`) : possède le corps/collider Rapier, son PRNG, l'acteur
  * XState, ET, propre à ce type d'ennemi seulement, `revealed`/`justRevealed`
  * (bascule costume humain -> reptilien) et le badge droppé à la mort.
- * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+ * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
  * see: docs/decisions/0009-machine-partagee-suit-director.md
  */
 
@@ -66,7 +66,7 @@ export class Director implements Entity {
    * l'apparence (teinte) via ce champ, pas via `state` : orthogonal à la
    * machine à états partagée (un Directeur révélé continue de traverser
    * idle/alert/chase/attack/stagger normalement).
-   * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+   * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
    */
   revealed = false;
 
@@ -216,7 +216,7 @@ export class Director implements Entity {
    * soustraction — donc AVANT que l'action `enterDead` (machine partagée) ne
    * le remette à 0 en cas de coup fatal. Inverser casse `justRevealed` sur un
    * coup qui tue et révèle en même temps.
-   * see: docs/systems/entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
+   * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
    */
   applyDamage(amount: number, physics: PhysicsWorld, knockbackDirection: THREE.Vector3): DirectorDamageResult {
     const wasRevealed = this.revealed;
@@ -265,7 +265,7 @@ export function configureDirectorCharacterController(
  * Badge droppé par le Directeur à sa mort — pur objet de logique (position +
  * rayon + état ramassé/non ramassé), aucune référence à `THREE.Scene`/
  * `THREE.Object3D`. Pas de contrat `use_*` : ramassage par proximité seule.
- * see: docs/systems/entites.md#carte-lâchée-par-le-directeur
+ * see: docs/archive/systems-entites.md#carte-lâchée-par-le-directeur
  */
 export class DroppedCard {
   readonly position: THREE.Vector3;

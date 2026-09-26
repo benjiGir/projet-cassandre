@@ -18,7 +18,7 @@ export interface LoopStats {
    * mesuré sur la frame PRÉCÉDENTE (décalage d'une frame, sans conséquence
    * pour un indicateur de debug déjà lissé).
    *
-   * see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
+   * see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
    */
   gameplayMs: number;
   gameplayP95Ms: number;
@@ -48,13 +48,13 @@ export interface LoopCallbacks {
  * une décision de conception délibérée — ne pas l'inverser sans relire la
  * doc.
  *
- * see: docs/systems/boucle-de-jeu.md#ordre-des-callbacks
+ * see: docs/archive/systems-boucle-de-jeu.md#ordre-des-callbacks
  */
 export function startLoop(callbacks: LoopCallbacks) {
   let accumulator = 0;
   let last = performance.now();
   // Frame précédente : `renderMs` ne peut se mesurer avant sa propre fin.
-  // see: docs/systems/boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
+  // see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
   let lastRenderMs = 0;
   const gameplayP95 = new RollingP95();
   let gameplayP95Ms = 0;
@@ -97,7 +97,7 @@ export function startLoop(callbacks: LoopCallbacks) {
     lastRenderMs = performance.now() - renderStart;
 
     // DOIT rester le dernier appel de la frame.
-    // see: docs/systems/boucle-de-jeu.md#ordre-de-la-frame-daffichage
+    // see: docs/archive/systems-boucle-de-jeu.md#ordre-de-la-frame-daffichage
     input.endFrame();
   }
 

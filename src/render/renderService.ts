@@ -12,7 +12,7 @@ import { Context, Effect, Layer } from "effect";
  * stockés dans le service — ces objets naissent après `GameLayer`/
  * `GameRuntime` (construction dans `game/session/gameEngine.ts`), donc le
  * service ne peut pas en dépendre à la construction de la Layer.
- * see: docs/systems/boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
+ * see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
  */
 export interface RenderServiceShape {
   readonly render: (

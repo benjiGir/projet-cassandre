@@ -13,7 +13,7 @@ import { suitConfig } from "../entities/suitConfig";
  * chargement du niveau (échantillonnage, élagage, arêtes, A* déterministe),
  * dimensionné sur le gabarit du Costard, jamais celui du Directeur, et
  * stateless comme `RaycastService`/`DeterministicRandom`.
- * see: docs/systems/pathfinding.md
+ * see: docs/4-technique/pathfinding.md
  */
 
 // Constantes de bake.
@@ -34,7 +34,7 @@ const MIN_FLOOR_NORMAL_Y = Math.cos((suitConfig.maxSlopeClimbAngleDeg * Math.PI)
 
 /** Marche verticale maximale du KCC ennemi. Les pentes continues sont
  * traitées à part avec l'angle de montée du même contrôleur.
- * see: docs/systems/pathfinding.md#la-marche-verticale-maximale-entre-deux-cellules-reliées-max_step_height */
+ * see: docs/archive/systems-pathfinding.md#la-marche-verticale-maximale-entre-deux-cellules-reliées-max_step_height */
 const MAX_STEP_HEIGHT = suitConfig.autostepMaxHeight;
 
 /** Décalage vertical du centre de la capsule de test d'élagage au-dessus du sol détecté — évite qu'une capsule tangente au sol touche par accident un collider adjacent qui affleure aussi au niveau du sol (ex. le pied d'un mur). */
@@ -85,7 +85,7 @@ const FORWARD_DIR_INDICES: ReadonlyArray<number> = [2, 3, 4, 5];
  * Graphe de praticabilité 2.5D immuable. Tableaux typés indexés par
  * `iz * cols + ix`, délibérément PAS une `Map`/`Set` (déterminisme
  * d'itération, accès O(1), inspectable depuis `cassandre.pathfinding`).
- * see: docs/systems/pathfinding.md#limite-verticale-acceptée
+ * see: docs/archive/systems-pathfinding.md#limite-verticale-acceptée
  */
 export interface NavGraph {
   readonly cellSize: number;
@@ -132,7 +132,7 @@ export interface PathfindingServiceShape {
    * que l'implémentation consulte `RaycastService` en interne, cette
    * dépendance est fournie PAR LE SERVICE LUI-MÊME (voir
    * `PathfindingService.layer`), jamais exposée à l'appelant.
-   * see: docs/systems/pathfinding.md
+   * see: docs/4-technique/pathfinding.md
    */
   readonly bake: (physics: PhysicsWorld, bounds: THREE.Box3) => Effect.Effect<NavGraph>;
 
@@ -191,7 +191,7 @@ export function navGraphStats(graph: NavGraph): {
 
 /** Implémentation réelle de `PathfindingServiceShape.bake`. Toutes les
  * requêtes physiques passent par `RaycastService`, jamais un accès direct à
- * `physics.world.*`. see: docs/systems/pathfinding.md#comment-le-graphe-est-construit */
+ * `physics.world.*`. see: docs/archive/systems-pathfinding.md#comment-le-graphe-est-construit */
 const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.Effect<NavGraph, never, RaycastService> =>
   Effect.gen(function* () {
     const raycast = yield* RaycastService;

@@ -60,6 +60,13 @@ avertissement et retombent sur le comportement documenté. Une propriété glTF
 inconnue n'est pas nécessairement signalée ; seuls les extras reconnus ont un
 effet.
 
+Ajouter une nouvelle catégorie de carte exige de mettre à jour ensemble
+`src/game/player/loyaltyCards.ts` (liste, type et libellé),
+`src/game/level/loader.ts` (lecture de `card` et `requires`),
+`tools/blender/validate_level.py` (valeurs acceptées), les types et règles de
+session concernés, leurs tests et cette référence. Le validateur ne peut pas
+détecter une faute de frappe dans un extra qu'il ne connaît pas.
+
 Le validateur couvre notamment les cartes, les aliments, les montants `soin`
 et `munitions`, les matières et contenus de prop, les valeurs de porte, la
 chaîne d'écran, les caméras référencées et la sorte de sanitaire. Certaines

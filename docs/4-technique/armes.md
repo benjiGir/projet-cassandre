@@ -127,6 +127,11 @@ Rapier (`GROUP.ENEMY`) — jamais du filtre.
 ternaire recopié dans chaque manager — un ternaire à trois armes se trompe en
 silence quand une nouvelle arme s'ajoute.
 
+Les dégâts et les autres valeurs configurées sont récapitulés dans la
+[référence des armes](../6-reference/valeurs-armes.md). Pour le pompe,
+`damageForWeapon` renvoie les dégâts par plomb ; le total dépend du nombre de
+plombs qui touchent.
+
 **RNG** : le pompe et le pistolet partagent le même flux
 `DeterministicRandom.forSeed(SHOTGUN_SPREAD_SEED)`, construit une fois à la
 création de `WeaponSystem` (invariant #12) — jamais `Math.random()`. La

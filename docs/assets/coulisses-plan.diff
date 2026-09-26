@@ -1,0 +1,126 @@
+--- /Users/benji/Developer/boomer-shooter/tools/level_v2/plan_de_masse.py	2026-09-24 11:06:24
++++ plan_propose.py	2026-09-26 14:39:56
+@@ -360,6 +360,72 @@
+             ("secret 3 — aération", 38.5, 22, "secret"),
+             ("trousse de soin +50", 40, 21, "soin"),
+         ],
++    ),
++
++    # ===== PROPOSITION 2026-09-26 : les coulisses =====
++    Space(
++        id="vestiaires", nom="Vestiaires du personnel",
++        x=(10, 26), y=(140, 150), z=0, hauteur=3.0, densite="moyenne",
++        role="Casiers à ouvrir (E) : nourriture, munitions ; douches ; un Costard qui se change",
++        duree="0:30", arrivee=(18, 141),
++        ennemis="1 Costard derrière la rangée de casiers",
++        spawns=[("suit_vs1", 22, 147, "rangée de casiers (1,9 m)")],
++        reperes=[("casiers (E)", 14, 147, "objet"), ("sandwich +10", 24, 142, "nourriture"),
++                 ("boîte de munitions +24", 12, 142, "munitions")],
++    ),
++    Space(
++        id="fournil", nom="Fournil et rôtisserie",
++        x=(26, 44), y=(140, 152), z=0, hauteur=4.0, densite="elevee",
++        role="Labo boulangerie : fours, rôtissoire, sacs de farine cassables (nuage blanc)",
++        duree="0:40", arrivee=(36, 141),
++        ennemis="2 Costards entre les chariots à grilles",
++        spawns=[("suit_fo1", 30, 149, "four à sole"), ("suit_fo2", 41, 148, "chariots à grilles")],
++        reperes=[("poulet rôti +25", 42, 145, "nourriture"), ("baguettes +5", 32, 143, "nourriture"),
++                 ("sacs de farine (cassables)", 28, 146, "objet")],
++    ),
++    Space(
++        id="pc_secu", nom="PC sécurité",
++        x=(44, 56), y=(132, 144), z=0, hauteur=3.0, densite="moyenne",
++        role="Mur de moniteurs VIVANTS façon Duke : E sur la console = voir par les caméras (dont le Directeur)",
++        duree="0:30", arrivee=(45, 136),
++        ennemis="aucun — le vigile dort, tête sur la console (décor)",
++        reperes=[("console vidéosurveillance (E)", 52, 140, "objet"), ("donuts +5", 50, 134, "nourriture"),
++                 ("trousse de soin +25", 54, 134, "soin")],
++    ),
++    Space(
++        id="boucherie", nom="Chambre froide et marée",
++        x=(-64, -44), y=(112, 136), z=0, hauteur=4.0, densite="elevee",
++        role="Carcasses suspendues, vivier à homards cassable (eau), trancheuse, néons froids",
++        duree="0:45", arrivee=(-45, 124),
++        ennemis="2 Costards entre les carcasses",
++        spawns=[("suit_bc1", -56, 130, "rangée de carcasses"), ("suit_bc2", -60, 116, None)],
++        reperes=[("jambon +15", -62, 132, "nourriture"), ("vivier à homards (cassable)", -50, 116, "objet"),
++                 ("boîte de munitions +24", -62, 114, "munitions")],
++    ),
++    Space(
++        id="sav", nom="Atelier SAV",
++        x=(-64, -44), y=(88, 112), z=0, hauteur=4.0, densite="elevee",
++        role="Retours clients : 40 téléviseurs allumés (programmes animés), tous cassables",
++        duree="0:45", arrivee=(-45, 100),
++        ennemis="2 Costards derrière les rayonnages de retours",
++        spawns=[("suit_sv1", -58, 94, "rayonnage de retours"), ("suit_sv2", -56, 108, "rayonnage de retours")],
++        reperes=[("mur de TV animées", -63, 100, "objet"), ("trousse de soin +25", -48, 90, "soin"),
++                 ("micro-ondes (cassable)", -52, 104, "objet")],
++    ),
++    Space(
++        id="compacteur", nom="Local compacteur",
++        x=(-36, -24), y=(104, 124), z=0, hauteur=5.0, densite="faible",
++        role="Balles de carton poussables, bouton du compacteur (gag + casse), cache du secret 4",
++        duree="0:20", arrivee=(-35, 114),
++        ennemis="aucun",
++        reperes=[("bouton compacteur (E)", -26, 110, "objet"), ("balles de carton (props)", -30, 122, "objet")],
++    ),
++    Space(
++        id="secret4", nom="Planque du vigile (secret 4)",
++        x=(-36, -28), y=(124, 130), z=0, hauteur=2.5, densite="faible",
++        role="Secret 4 : derrière les balles de carton — canapé, TV qui passe le foot, provisions",
++        reperes=[("secret 4 — planque", -32, 127, "secret"), ("pizza +25", -34.5, 125, "nourriture"),
++                 ("boîte de munitions +36", -29.5, 125, "munitions")],
+     ),
+ ]
+ 
+@@ -692,6 +758,10 @@
+ JONCTIONS_SCELLEES: set[frozenset[str]] = {
+     frozenset({"reserve", "c_bu"}),        # les bureaux ne s'atteignent que par le souterrain
+     frozenset({"reserve", "c_short_ramp"}), # idem, côté raccourci
++    frozenset({"reserve", "compacteur"}),
++    frozenset({"fournil", "pc_secu"}),
++    frozenset({"boucherie", "sav"}),
++    frozenset({"c_short_w", "secret4"}),
+ }
+ 
+ 
+@@ -715,6 +785,14 @@
+     # Dans l'axe de l'allée entre les rangées 0 et 1 : centrée sur x = −40, la
+     # porte donnait sur le bout d'une gondole à deux mètres.
+     frozenset({"c_short_w", "rayons"}): (2.5, -42.5),     # la porte coupe-feu
++    frozenset({"c_bu", "vestiaires"}): (2.0, 18.0),
++    frozenset({"c_bu", "fournil"}): (2.5, 36.0),
++    frozenset({"vestiaires", "fournil"}): (1.5, 145.0),
++    frozenset({"c_bu", "pc_secu"}): (1.5, 136.0),
++    frozenset({"c_short_w", "boucherie"}): (2.5, 124.0),
++    frozenset({"c_short_w", "sav"}): (2.5, 100.0),
++    frozenset({"c_short_w", "compacteur"}): (2.5, 114.0),
++    frozenset({"compacteur", "secret4"}): (1.5, -32.0),
+ }
+ 
+ PORTES_SENS_UNIQUE: dict[frozenset[str], tuple[str, str]] = {
+@@ -819,6 +897,7 @@
+ 
+ # --- Vue de dessus cotée, en SVG ---------------------------------------------
+ 
++NOUVEAUX = {"vestiaires","fournil","pc_secu","boucherie","sav","compacteur","secret4"}
+ PX_PAR_M = 4.0
+ MARGE = 56.0
+ # Place à droite pour les étiquettes des repères : sans elle, celles des pièces
+@@ -845,6 +924,7 @@
+     "depart": ("#6fd3ff", "▶"),
+     "soin": ("#5fe07a", "✚"),
+     "munitions": ("#e0b45f", "▪"),
++    "nourriture": ("#ff9fd0", "♥"),
+ }
+ 
+ 
+@@ -900,7 +980,7 @@
+                for label, rx, ry, nature, *_alt in sp.reperes]
+     occupe += [(px(rx) - 5, py(ry) - 5, px(rx) + 5, py(ry) + 5) for _l, rx, ry, _c, _g in reperes]
+     for i, sp in enumerate(SPACES, start=1):
+-        col = COULEUR[sp.densite]
++        col = "#ff5fa2" if sp.id in NOUVEAUX else COULEUR[sp.densite]
+         parts.append(
+             f'<rect x="{px(sp.x[0]):.1f}" y="{py(sp.y[1]):.1f}" '
+             f'width="{(sp.largeur * PX_PAR_M):.1f}" height="{(sp.profondeur * PX_PAR_M):.1f}" '

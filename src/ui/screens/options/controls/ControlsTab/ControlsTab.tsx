@@ -12,7 +12,7 @@ import styles from "./ControlsTab.module.css";
 /**
  * Onglet CONTRÔLES : musique et remappage des touches. `input` n'est pas
  * réactif : la copie locale des touches est relue après chaque changement.
- * see: docs/reference/controles.md
+ * see: docs/6-reference/controles.md
  */
 export function ControlsTab() {
   const [bindings, setBindings] = useState(() => input.getAllBindings());

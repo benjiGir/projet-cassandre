@@ -5,7 +5,7 @@ import type { PhysicsWorld } from "../../physics/world";
 /**
  * Gym boîte blanche — Phase 1 (Déplacement). N'est pas un décor : c'est un
  * instrument de mesure, chaque zone encadre un seuil du character
- * controller. Layout et valeurs de seuil : see: docs/game/plan-prototype.md
+ * controller. Layout et valeurs de seuil : see: docs/5-guides/reprendre-le-projet.md
  */
 
 // Constantes générales.

@@ -66,8 +66,11 @@ l'écoute.
 17. Lancez `python3 tools/audio/audition.py` ou ouvrez la page d'écoute
     locale, sélectionnez les variantes pertinentes et écoutez au casque.
 18. En jeu, utilisez `cassandre.sfx.liste()` et
-    `cassandre.sfx.joue("id")` pour tester le son sans provoquer sa
-    situation de gameplay.
+    `cassandre.sfx.joue("id")` pour déclencher le son sans provoquer sa
+    situation de gameplay. `present` confirme seulement que la clé existe
+    dans le manifeste ; contrôlez aussi le chargement réseau de `sfx.json`
+    et du format choisi par le navigateur, puis l'absence d'avertissement
+    `[audio]`.
 19. Mettez à jour le budget et la documentation runtime si l'identifiant
     ou le comportement change.
 
@@ -80,6 +83,9 @@ l'écoute.
   runtime au nom de recette.
 - Le son est déclenchable en jeu par l'action attendue et par la console
   dev.
+- `cassandre.sfx.liste().present` est un contrôle de clé de manifeste, pas
+  un indicateur de décodage. Vérifiez le chargement audio dans Réseau et
+  écoutez le résultat.
 - Une personne écoute le son au casque ; les mesures seules ne valident
   pas son identité.
 - Vérifiez le masquage de la télégraphie contre les armes si le son peut

@@ -84,7 +84,7 @@ def reset_scene() -> None:
 
 def build_shell(shell, col_coll) -> None:
     """Sol, murs, plafond. Le plafond n'a PAS de proxy : le bake du pathfinding
-    prendrait son dessus pour le sol (docs/systems/pathfinding.md)."""
+    prendrait son dessus pour le sol (docs/4-technique/pathfinding.md)."""
     # Trois dalles jointives plutôt qu'une grande et des bandes par-dessus :
     # deux meshes coplanaires ressortiraient noirs au bake (auto-occultation).
     # `subdiv` serré : le sol et les murs portent l'essentiel du dégradé lumineux

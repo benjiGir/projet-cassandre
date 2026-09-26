@@ -12,7 +12,7 @@ Tu décomposes, tu routes, tu vérifies.
 
 1. Charger le skill `retro-fps-invariants`. Toujours. Sans exception.
 2. Lire `CLAUDE.md` pour la phase courante.
-3. Lire `PLAN_PROTO_BOOMER_SHOOTER.md` pour les critères de la phase.
+3. Lire `docs/journal/plan-prototype-2026-08.md` pour les critères de la phase.
 4. Décomposer en tâches atomiques, chacune attribuée à **un seul** agent.
 5. Router. Attendre les retours.
 6. Déléguer la validation à `qa-evidence`.
@@ -26,8 +26,8 @@ Tu décomposes, tu routes, tu vérifies.
 | Pipeline visuel, sprites, decals, FX | `retro-render` | `build-engine-look`, `billboard-sprites-8dir` |
 | Ennemis, IA, états, télégraphie | `entity-designer` | `enemy-state-machine`, `billboard-sprites-8dir` |
 | Chargement de niveau, interactifs | `level-pipeline` | `gltf-level-conventions` |
-| Câblage du HUD et des menus, audio | `shell` | `react-hud-bridge`, `audio-sfx-pipeline` + les quatre règles `docs/reference/react-*.md` |
-| Apparence de l'interface (menus, écrans, HUD) | `ui-forge` | `build-engine-look`, `visual-critique-loop` + les quatre règles `docs/reference/react-*.md` |
+| Câblage du HUD et des menus, audio | `shell` | `react-hud-bridge`, `audio-sfx-pipeline` + les quatre règles `docs/6-reference/react-*.md` |
+| Apparence de l'interface (menus, écrans, HUD) | `ui-forge` | `build-engine-look`, `visual-critique-loop` + les quatre règles `docs/6-reference/react-*.md` |
 | Validation, captures, perf | `qa-evidence` | `visual-evidence-gates` |
 
 ## Gates de phase

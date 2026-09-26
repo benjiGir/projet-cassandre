@@ -28,7 +28,7 @@ import { type PersistentEngine } from "./gameEngine";
 /**
  * Normales des sprites d'ennemis inclinées de 45° vers le haut : les lampes du
  * niveau v2 sont des néons de plafond, qu'un quad vertical ne voit presque pas.
- * see: docs/systems/rendu.md#éclairage-des-sprites
+ * see: docs/archive/systems-rendu.md#éclairage-des-sprites
  */
 const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
@@ -41,7 +41,7 @@ const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
  * lui faire lire `engine.session` pousserait le Costard dans l'ANCIENNE
  * partie pendant un `bootGameSession` en cours (bug silencieux : l'entité
  * semblerait juste ne jamais apparaître).
- * see: docs/systems/session.md#spawn-et-chargement-de-niveau
+ * see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
  */
 export function spawnSuitAt(engine: PersistentEngine, session: GameSession, x: number, feetY: number, z: number): Suit {
   const facing = new THREE.Vector3(session.player.position.x - x, 0, session.player.position.z - z);
@@ -104,7 +104,7 @@ function groundBelow(session: GameSession, point: THREE.Vector3): number | null 
  * Charge (ou recharge) `public/assets/levels/<name>.glb` dans `session` —
  * voir `game/level/hotReload.ts` pour le mécanisme de hot reload lui-même.
  * `engine`/`session` explicites, même raison que `spawnSuitAt` ci-dessus.
- * see: docs/systems/session.md#spawn-et-chargement-de-niveau
+ * see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
  */
 export function loadGltfLevel(
   engine: PersistentEngine,
@@ -212,7 +212,7 @@ export function loadGltfLevel(
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
-          // see: docs/systems/session.md#spawn-et-chargement-de-niveau
+          // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
           if (info.isFirstLoad && handle.spawnPlayer) {
             session.player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
             engine.look.yaw = handle.spawnPlayer.yaw;

@@ -30,7 +30,7 @@ de l'ADR 0022 est levée.
 La cause du symptôme n'était pas l'occlusion mais **l'ordre des opérations au
 chargement** : Rapier ne rend un collider visible aux requêtes de scène
 qu'après un `world.step()` (voir [Physique — Colliders invisibles aux rayons
-avant le premier pas](../systems/physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
+avant le premier pas](../archive/systems-physique.md#colliders-invisibles-aux-rayons-avant-le-premier-pas)).
 Le premier rayon de ligne de vue partait dans une broad-phase encore vide,
 ne rencontrait rien, et l'ennemi « voyait » à travers la rangée. La
 transition `alert -> chase` étant inconditionnelle
@@ -99,7 +99,7 @@ L'hypothèse de l'ADR 0022 (« un gap général sur l'occlusion des pièces
 - Les spawns des Zones C et D pourraient revenir à leur position de plan
   d'origine. **Non fait, délibérément** : ces zones sont remplacées par le
   niveau v2 au jalon N10, le travail serait jeté.
-- `docs/pipeline/niveau-blender.md` ne porte plus d'« écart connu » sur
+- `docs/5-guides/modifier-le-niveau.md` ne porte plus d'« écart connu » sur
   l'occlusion : il porte les règles ci-dessus.
 - La consigne « vérifier en jeu, pas seulement par calcul » garde sa valeur,
   pour une autre raison qu'en 2026-09-06 : le calcul géométrique était juste,

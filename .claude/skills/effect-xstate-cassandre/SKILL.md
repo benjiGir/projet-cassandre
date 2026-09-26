@@ -1,12 +1,12 @@
 ---
 name: effect-xstate-cassandre
-description: Patterns Effect-TS/XState spécifiques à PROJET_CASSANDRE — frontière synchrone stricte du pas fixe, RNG déterministe unique, machines XState sans temps mural. Charger avant toute tâche qui touche à Effect (services, layers, erreurs typées) ou XState dans ce repo, en complément du skill générique `effect-ts`.
+description: Patterns Effect-TS/XState spécifiques à PROJET_CASSANDRE — frontière synchrone stricte du pas fixe, RNG déterministe unique, machines XState sans transition `after`. Charger avant toute tâche qui touche à Effect (services, layers, erreurs typées) ou XState dans ce repo, en complément du skill générique `effect-ts`.
 ---
 
 # Effect + XState dans PROJET_CASSANDRE
 
 Ce skill documente les patterns propres à ce repo (issus de
-`PLAN_EFFECT_XSTATE.md`, jalons M0-M9), pas les concepts génériques d'Effect
+`docs/journal/plan-effect-xstate-2026-09.md`, jalons M0-M9), pas les concepts génériques d'Effect
 ou XState. Pour ceux-là : skill `effect-ts` (bootstrap) et
 `node_modules/effect/AGENTS.md` (référence complète, à lire **en entier**
 avant tout code Effect nouveau — pas seulement ce skill).
@@ -62,10 +62,12 @@ const nextRandom = runGameplaySync(
 (`() => number`), pas un `Effect` — mêmes deux variantes que sur tout
 `Context.Service` de ce projet.
 
-## XState sans temps mural
+## XState sans temps mural (ex-invariant #13, retiré le 2026-09-25)
 
-Interdiction des transitions retardées `after` (`setTimeout` réel) dans
-**toute** machine XState de ce projet. Pattern à la place :
+Ce n'est plus une règle non négociable — l'utilisateur a retiré l'invariant
+#13 le 2026-09-25. **Le mécanisme reste le choix actuel du code** : ne pas
+réintroduire de transition `after` par habitude tant que
+`enemyMachine.ts` n'a pas été changé délibérément. Pattern en place :
 
 ```ts
 // Dans le context de la machine :

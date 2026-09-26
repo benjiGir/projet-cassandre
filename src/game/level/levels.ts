@@ -1,6 +1,6 @@
 /**
  * Registre de niveaux — remplace le hardcode qui vivait dans `main.ts`.
- * see: docs/game/niveau-hypermarche.md
+ * see: docs/2-fonctionnel/le-niveau.md
  */
 
 export interface LevelDef {
@@ -24,13 +24,13 @@ export interface LevelDef {
    *   le rendu vaut exactement texture × couleur cuite.
    * - `"hybride"` : le niveau porte ses propres lampes (`light_*`) et sa
    *   couleur cuite ne sert plus que de masque d'ombre.
-   * see: docs/systems/rendu.md#éclairage-de-scène-selon-le-niveau
+   * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
    */
   lighting?: "temps-reel" | "bake" | "hybride";
   /** Ciel en fond de scène, nom d'un dossier de `public/assets/sky/` — six
    * faces générées par `tools/textures/generate_ciel.py`. Absent = la couleur
    * de fond du renderer, ce qu'il faut à un niveau entièrement clos.
-   * see: docs/systems/rendu.md#ciel */
+   * see: docs/archive/systems-rendu.md#ciel */
   ciel?: string;
   /**
    * Temps de référence, en secondes, pour le bonus de rapidité du récap de
@@ -38,13 +38,13 @@ export interface LevelDef {
    * dans le récap — la gym et les zones de test n'ont pas vocation à être
    * chronométrées. `niveau_v2` reprend les « 8-10 minutes » annoncées par
    * `CLAUDE.md` pour le proto complet.
-   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
    */
   parTime?: number;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
-// see: docs/game/niveau-hypermarche.md
+// see: docs/2-fonctionnel/le-niveau.md
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
   { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },

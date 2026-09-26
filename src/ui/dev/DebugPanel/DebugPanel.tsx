@@ -18,7 +18,7 @@ const STEPS_WARNING = 2;
  * Panneau de debug, DEV UNIQUEMENT (le build de production monte
  * `FpsCounter` à sa place). Il lit `state.debug` en entier : acceptable pour
  * un outil qu'on démonte, pas pour le HUD.
- * see: docs/systems/debug.md#champs-de-debugstate
+ * see: docs/archive/systems-debug.md#champs-de-debugstate
  */
 export function DebugPanel() {
   const debug = useGameStore((s) => s.debug);

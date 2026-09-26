@@ -12,7 +12,7 @@ import { configureRetroTexture } from "./renderer";
  *
  * Aucune dépendance vers `game/` : l'appelant fournit une `EnemyAnimationInput`
  * déjà traduite depuis la machine à états.
- * see: docs/systems/rendu.md#animation-des-sprites-dennemis
+ * see: docs/archive/systems-rendu.md#animation-des-sprites-dennemis
  */
 
 /** Animations d'une planche, mêmes noms que les clés du manifeste. */
