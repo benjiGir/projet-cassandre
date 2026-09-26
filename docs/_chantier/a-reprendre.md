@@ -1,0 +1,50 @@
+---
+title: Contenus à reprendre
+tags: [chantier]
+status: brouillon
+updated: 2026-09-25
+---
+
+# Contenus à reprendre
+
+Sections de l'ancienne doc non reprises par la page qui les a lues, avec leur destination. À consulter au jalon de la page cible.
+
+| Source | Section | Destination | Relevé en |
+|---|---|---|---|
+| `docs/systems/boucle-de-jeu.md` | Origine des modules `game/loop/` | `journal/` | D11 |
+| `docs/systems/boucle-de-jeu.md` | Entrée synchronisée au pas fixe (`InputManager`) | `4-technique/debug.md` ou page input | D11 |
+| `docs/systems/boucle-de-jeu.md` | Enregistrement et rejeu d'input | `4-technique/rejeu-et-determinisme.md` | D11 ✔ D32 |
+| `docs/systems/boucle-de-jeu.md` | Mesure des temps de frame (`LoopStats`) | `4-technique/debug.md` | D11 |
+| `docs/systems/boucle-de-jeu.md` | Filet de chute | `4-technique/session-et-score.md` | D11 ✔ D31 |
+| `docs/systems/session.md` | Cartes de fidélité | `2-fonctionnel/objets-interactifs.md` | D13 |
+| `docs/systems/session.md` | Portes et fin de niveau (détail du suivi de franchissement) | `4-technique/systemes-de-niveau.md` | D13 |
+| `docs/systems/session.md` | Feedback joueur (messages HUD, répliques du héros) | `4-technique/session-et-score.md` | D13 ✔ D31 |
+| `docs/systems/session.md` | Récapitulatif de fin de partie | `4-technique/session-et-score.md` | D13 ✔ D31 |
+| `docs/systems/session.md` | Pause | `2-fonctionnel/interface.md` (ce que vit le joueur) et `4-technique/interface-react.md` (câblage) | D13 |
+| `docs/systems/session.md` | Harnais F9 et F10 | `4-technique/rejeu-et-determinisme.md` | D13 ✔ D32 |
+| `docs/systems/session.md` | Origine des modules `game/session` | `journal/` | D13 |
+| `docs/pipeline/niveau-blender.md` | Extraction et piège des transforms, hiérarchie des colliders, triggers/secrets, portes, objets interactifs, cycle de vie du `LevelHandle`, fusion du décor statique, hot reload | `4-technique/chargement-de-niveau.md` | D16 |
+| `docs/pipeline/niveau-blender.md` | Kit modulaire et assemblage côté Blender (pièges instancing-vs-bake, parent inverse, placement des rangées, vantail recentré, dalles sur-mesure, mondes orphelins, occlusion des rangées) | `4-technique/outillage-blender.md` | D16 |
+| `docs/pipeline/niveau-blender.md` | Bake d'éclairage en vertex colors (occultants, diagnostic mesh noir, combined vs diffuse, plancher d'éclairage, forme de la source, montage hybride indirect) | `4-technique/eclairage.md` | D16 |
+| `docs/pipeline/textures.md` | Contrat `configureRetroTexture`, atlas placeholder de billboard | `4-technique/rendu.md` ou `4-technique/outillage-blender.md` | D16 |
+| `docs/pipeline/harmonisation-assets.md` | Textures/étiquettes/trim sheets, affiches de marques, import d'un asset, bibliothèque livrée, rayons à thème, pièges de composition, nommage | `4-technique/outillage-blender.md` ou `4-technique/generateurs.md` | D16 |
+| `docs/pipeline/assets.md` | Chemins des assets au déploiement | `4-technique/outillage-blender.md` ou `4-technique/chargement-de-niveau.md` | D16 |
+| `docs/game/niveau-hypermarche.md` | Détail des zones A-E individuelles (`kind: "gltf"`, `startUnarmed`) et du niveau complet fusionné, pour du test ciblé | `2-fonctionnel/le-niveau.md` (ce que ça change pour le joueur) et `4-technique/chargement-de-niveau.md` (le registre `LEVEL_CHOICES`) | D21 |
+| `docs/game/niveau-v2-plan-de-masse.md`, `PLAN_NIVEAU_V2.md` | Cotes précises des dix espaces, plan de masse SVG, budget de triangles/lots par espace, table `GOULOTS` (quels espaces chaque porte à carte commande) | `2-fonctionnel/le-niveau.md` (plan de masse, ordre des espaces) et `4-technique/budget-de-rendu.md` (chiffres de budget) | D21 |
+| `docs/game/plan-prototype.md` | Critères de validation et de rollback phase par phase (Phases 0-6), durée visée par phase | `journal/` (historique des phases) ; la durée totale visée (8-10 min) est déjà reprise dans `2-fonctionnel/experience-de-jeu.md` (D17) | D17 (fait, partiel) / journal à écrire |
+| `docs/systems/joueur.md` | Résolution du pas fixe du contrôleur (KCC, reclip anti-vitesse-fantôme, `groundStickSpeed`, snap-to-ground suspendu, vitesse d'impact), système de vue (`approach()`, rampe linéaire, échantillons `previous*`), harnais `FEEL_VARIANTS` A/B/C | `4-technique/joueur.md` | D18 (lu, non repris — page fonctionnelle, zéro implémentation) / D27 à écrire ✔ D27 |
+| `docs/reference/controles.md` | Contrat complet de `InputManager` (deux files de fronts pas-fixe/affichage, persistance `localStorage`, couche par action, touches de dev F8-F10/V/B, limite des libellés de touches en AZERTY) | `6-reference/controles.md` (table et limites) et `4-technique/debug.md` (touches de dev) | D18 (lu, non repris) / D46 à écrire |
+| `docs/systems/entites.md` | Détail interne de la machine à états partagée (table de transition complète, pourquoi `stateTimer`/`timeSinceLastSeen` ne sont pas de même nature, pourquoi pas de `guard:` XState, discipline zéro-allocation, réassignation d'état depuis les tests, les deux fines couches `Suit`/`Director`, les managers `SuitManager`/`DirectorManager` et leur curseur d'évènements multi-pas-fixe) | `4-technique/ennemis-et-ia.md` | D20 (lu, non repris — page fonctionnelle, zéro implémentation) / D29 à écrire ✔ D29 |
+| `docs/systems/pathfinding.md` | Construction du graphe de navigation, `MAX_STEP_HEIGHT` vs marche réelle d'un ennemi, repli sur l'évitement local, limite connue à revérifier (voir `docs/_chantier/ecarts.md`) | `4-technique/pathfinding.md` | D20 (lu, non repris) / D30 à écrire ✔ D30 |
+| `docs/reference/valeurs-ennemis.md` | Table chiffrée complète (PV, portées, délais, dégâts, variantes de knockback/flash A/B/C non tunées) | `6-reference/valeurs-ennemis.md` | D20 (lu, non repris) / D46 à écrire |
+| `docs/systems/hud.md` | Composition de l'arbre React (`App`, montage conditionnel des écrans), câblage détaillé de `gameFlowMachine` (table de transition complète, acteur unique, écart entre le graphe testé et le câblage réel), implémentation du rebinding (`useInputCapture`, capture de `KeyboardEvent.code`, garde contre un `code` vide), implémentation du panneau de tuning à chaud (`useEffectEvent`, démontage complet fermé) | `4-technique/interface-react.md` (composition, flux, rebinding) et `4-technique/debug.md` (panneau de tuning) | D24 (lu, non repris — page fonctionnelle, zéro implémentation) / D46 et D... à écrire |
+| `docs/systems/hud.md` | Détail des props/état interne de chaque écran et widget (`OptionsScreen`/`PauseScreen`/`DeathScreen`/`LevelCompleteScreen`/`LoadingScreen`, sélecteurs zustand exacts de chaque widget du HUD) | `4-technique/interface-react.md` | D24 (lu, non repris) / à écrire |
+| `docs/systems/hud-audio.md` | Mécanique du sprite Howler (pooling, identifiants de lecture, variation de pitch ±8 %/±2,5 %), `SFX_TABLE`, chargement/vérification du manifeste, déblocage du contexte audio, boucle d'eau positionnelle (calcul du mélange, cycle de vie du `Howl`) | `4-technique/audio-runtime.md` | D25 (lu, non repris — page fonctionnelle, zéro implémentation) / D40 à écrire |
+| `docs/systems/hud-audio.md` | Historique daté des deux passes d'enregistrements rejetées (corrélations mesurées : 0,976 entre pompe et pistolet, paires d'armes au-dessus de 0,840), la bascule vers la synthèse le 2026-09-20, le retrait du grain rétro (`crush`) le même jour | `journal/` (chantier son) | D25 (lu, non repris) / journal à écrire |
+| `docs/systems/hud-audio.md`, `tools/audio/README.md` | Méthodologie de mesure (spectre moyen 30 bandes log, distance de timbre < 0,55, facteur de crête, masquage contre la télégraphie, détecteur de raccord de boucle par rangs 0-100), pièges d'encodeur (dépassement Vorbis, numéro de série Ogg déterministe, absence de libvorbis Homebrew) | `4-technique/studio-audio.md` | D25 (lu, non repris) / D42 à écrire |
+| `tools/audio/README.md`, `tools/audio/recipes.py` (en-têtes et docstrings) | Détail des scripts (`synth.py`, `recipes.py`, `enregistrements.py`, `render_sfx.py`, `analyze_sfx.py`, `build_sprite.py`, `audition.py`), chaîne de commandes complète, construction d'une boucle exacte (`BOUCLES_EXACTES`, `synth.periodique`), contrats DSP précis par recette (bandes en Hz, couches, garde-fous de distance de timbre) | `4-technique/studio-audio.md` | D25 (lu, non repris) / D42 à écrire |
+| `assets_src/cc0_raw/freesound/README.md` | Convention de nommage des prises (`<famille>_<contributeur>.wav`), procédure du registre de licences (`assets_src/LICENCES_ASSETS.md`), liste d'achats détaillée par famille (chasse, jet, faïence, gorgée) avec requêtes Freesound et pièges à éviter | `3-architecture/pipelines-de-contenu.md` (chaîne CC0 → sprite) et `4-technique/studio-audio.md` (contrat `enregistrements.prise()`) | D25 (lu, non repris) / D16 et D42 à écrire |
+| `docs/systems/joueur.md` | Protocole de comparaison des `FEEL_VARIANTS` pas a pas (F9, courir/sauter ~15 s dans le couloir nord du hub, F10, `cassandre.applyFeelVariant(...)`, répéter par variante) | `5-guides/regler-la-sensation.md` | D27 |
+| `docs/systems/armes.md` | Discipline de déterminisme détaillée (origine authentique du pas fixe vs position interpolée, portée exacte de l'invariant #12 sur `WeaponSystem.update`) | `4-technique/rejeu-et-determinisme.md` | D28 (lu, non repris — résumé d'un paragraphe dans `4-technique/armes.md`, le détail complet appartient à la page dédiée) / D32 à écrire ✔ D32 |
+| `docs/systems/armes.md` | Protocole complet des quatre harnais A/B (`RECOIL_VARIANTS`/`IMPACT_VARIANTS`/`HITMARKER_VARIANTS`/`CROSSHAIR_VARIANTS`) : axe de comparaison par harnais, tableaux de profils par variante, limite connue du F9/F10 sur les PV/positions des Costards, procédure de respawn d'une cible fraîche | `5-guides/regler-la-sensation.md` | D28 (lu, non repris — `4-technique/armes.md` ne fait que renvoyer aux quatre tables de `weaponConfig.ts`) / D57 à écrire |
+| `docs/systems/armes.md` | Rendu du viewmodel (recul interpolé, muzzle flash positionné au bout du canon affiché, douille éjectée) | `4-technique/sprites-et-viewmodel.md` | D28 (lu, non repris — hors responsabilité de `WeaponSystem`) / D36 à écrire |

@@ -1,0 +1,89 @@
+---
+title: Commandes
+tags: [reference, commandes]
+status: brouillon
+updated: 2026-09-26
+---
+
+# Commandes
+
+Les commandes du projet viennent de `package.json`. PNPM utilise la version verrouillée des dépendances.
+
+| Commande | Effet |
+|---|---|
+| `pnpm dev` | Lance Vite en développement. |
+| `pnpm build` | Vérifie TypeScript puis produit le build Vite. |
+| `pnpm preview` | Sert le build déjà présent pour une vérification locale. |
+| `pnpm typecheck` | Lance uniquement `tsc --noEmit`. |
+| `pnpm test` | Exécute Vitest une fois. |
+| `pnpm test:watch` | Garde Vitest actif en mode interactif. |
+| `pnpm check` | Typecheck, tests Vitest et build de production. |
+| `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. |
+| `pnpm check:docs:test` | Exécute les tests Python du vérificateur documentaire. |
+
+## Audio
+
+Voir `tools/audio/README.md` pour la chaîne complète et ses dépendances. Le Python doit disposer de NumPy et SciPy ; Matplotlib sert aux planches de spectrogrammes.
+
+| Script | Options |
+|---|---|
+| `tools/audio/render_sfx.py --out DIR` | `--only NOMS`, `--cat CATEGORIE`, `--variants`, `--crush`, `--manifest FICHIER`. |
+| `tools/audio/analyze_sfx.py [DIR]` | `--sheet PNG`, `--mask A B`, `--timbre WAV...`, `--boucle FICHIER...`, `--contre WAV`, `--strict`. |
+| `tools/audio/build_sprite.py DIR --out DIR` | `--gap SECONDES`, `--peak NIVEAU`. |
+| `tools/audio/audition.py` | `--cat CATEGORIE`, `--no-variants`. Écrit une page locale d'écoute. |
+| `tools/audio/propose_pistol.py --out DIR` | Rend les propositions sonores de pistolet. |
+
+`tools/audio/synth.py`, `tools/audio/recipes.py` et `tools/audio/enregistrements.py` sont des bibliothèques importées par les outils, pas des commandes autonomes.
+
+## Blender et niveau
+
+Pour un script Blender, la forme est `blender -b FICHIER -P SCRIPT -- OPTIONS`. L'option `--factory-startup` appartient à Blender et précède `-P`. Voir `tools/blender/README.md` pour les séquences de construction historiques. Le niveau v2 se modifie dans la session Blender live ; les options CLI ne remplacent pas l'inspection de cette scène.
+
+| Script | Options du script |
+|---|---|
+| `tools/blender/build_kit.py` | `--out`, `--checker`, `--light-energy`, `--no-lights`. |
+| `tools/blender/build_level.py` | `--zone CLE`, `--kit`, `--out`, `--light-energy`. Les clés de zone sont a à e. |
+| `tools/blender/build_combined_level.py` | `--kit`, `--out`, `--light-energy`. |
+| `tools/blender/build_library.py` | `--save` ou `--out FICHIER`. |
+| `tools/blender/build_salle_essai.py` | `--out`, `--light-energy`. |
+| `tools/blender/inspect_kit.py` | `--piece NOM`, `--strict`, `--verbose`. |
+| `tools/blender/bake_vertex_lighting.py` | `--type`, `--pass`, `--samples`, `--ambient`, `--domain`, `--bounces`, `--emissive-marker`, `--save`, `--out`, `--dry-run`, `--strict`, `--keep-proxies`. |
+| `tools/blender/validate_level.py` | `--strict`, `--kit`. |
+| `tools/blender/export_level.py` | `--out FICHIER`. |
+| `tools/blender/render_preview.py` | `--out DIR`, `--res-x N`, `--res-y N`, `--spawn NOM`. |
+| `tools/blender/render_ingame.py` | `--out DIR`, `--eye M`, `--res-x N`, `--res-y N`, répétition de `--view X,Y,CAP`. |
+| `tools/blender/render_enemy_sprites.py` | `--personnage`, `--anims`, `--directions`, `--out DIR`. |
+| `tools/blender/build_weapons.py` | `--out FICHIER`, `--renders DIR`, `--debug`. |
+| `tools/blender/render_weapon_pickups.py` | `--out PNG`. |
+| `tools/level_v2/build_blockout.py` | `--out FICHIER`. |
+| `tools/level_v2/build_niveau.py` | `--out FICHIER`. |
+| `tools/level_v2/audit_niveau.py` | `--pas M`, `--csv FICHIER`. |
+| `tools/level_v2/plan_de_masse.py` | `--ascii`, `--svg FICHIER`. |
+
+`--save` réécrit le fichier Blender d'entrée pour la bibliothèque et le bake ; préférez `--out` pour conserver la source. Les valeurs par défaut sont documentées près des commandes dans `tools/blender/README.md`, `tools/level_v2/build_blockout.py` et `tools/level_v2/build_niveau.py`. L'audit accepte aussi une ouverture de fichier en cours dans Blender. Ne traitez pas l'absence de sortie d'un bake sans `--save` ou `--out` comme un résultat exporté.
+
+## Textures, palette et documentation
+
+| Script | Options |
+|---|---|
+| `tools/textures/make_textures.py [NOM...]` | Sans argument, génère toutes les textures du script ; un ou plusieurs noms limitent la génération. |
+| `tools/refs/extract_palette.py DOSSIER` | `--colors N` (défaut 24), `--out FICHIER`. |
+| `tools/textures/build_palette.py` | Pas d'option CLI ; écrit la palette configurée dans le script. |
+| `tools/textures/generate_affiches.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_banners.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_chaines.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_ciel.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_ecrans.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_facade.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_kiosque.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_labels.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_portes.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_surgeles.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_trims.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/make_kenney_atlas.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/docs/check_docs_links.py DOCS` | `--src DIR`, `--strict`, `--allow-empty-drafts`. |
+| `tools/docs/audit_comments.py RACINE` | `--max-ratio N`, `--long-block N`, `--json FICHIER`. |
+| `tools/docs/remap_anchors.py` | `--root DIR`, `--table FICHIER`, `--dry-run`, `--diff FICHIER`, `--archive-plan`. `--apply` est réservé à la phase I, D65. |
+| `python3 -m unittest discover -s tools/docs -p 'test_*.py'` | Lance les tests de `tools/docs/test_check_docs_links.py` et `tools/docs/test_remap_anchors.py`. |
+
+Les scripts Blender de support, les spécifications et les helpers Python comme `tools/blender/kit_spec.py`, `tools/blender/level_spec.py`, `tools/blender/geo_utils.py` et `tools/blender/lib_helpers.py` fournissent des fonctions aux commandes ci-dessus ; ils ne sont pas des commandes autonomes.
