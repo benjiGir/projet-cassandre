@@ -3,9 +3,9 @@ import { type GameSession } from "./gameSession";
 
 /**
  * Récapitulatif de fin de partie : ce que le joueur a fait, traduit en
- * points. Compté AU PAS FIXE, dans `session.stats` (invariants #1/#12/#13 —
- * jamais `Date.now()`/`performance.now()`, jamais un évènement lu au taux
- * d'affichage) : `game/loop/updateGameplay.ts` avance `SessionStats` via les
+ * points. Compté AU PAS FIXE, dans `session.stats` (jamais `Date.now()`/
+ * `performance.now()`, jamais un évènement lu au taux d'affichage) :
+ * `game/loop/updateGameplay.ts` avance `SessionStats` via les
  * fonctions `record*`/`advanceGameplayTime` ci-dessous, au même pas fixe que
  * les systèmes qu'il orchestre déjà.
  *

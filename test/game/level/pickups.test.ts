@@ -62,6 +62,40 @@ describe("Convention glTF des trousses de soin", () => {
   });
 });
 
+describe("Convention glTF de la nourriture (`aliment`, chantier « Les coulisses »)", () => {
+  it("`aliment` sans `soin` explicite : `heals` prend le barème de l'aliment, `aliment` renseigné", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const handle = build({ aliment: "sandwich" });
+
+    expect(handle.useObjects[0].heals).toBe(10);
+    expect(handle.useObjects[0].aliment).toBe("sandwich");
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("`soin` explicite prime sur `aliment`", () => {
+    const handle = build({ aliment: "donut", soin: 99 });
+
+    expect(handle.useObjects[0].heals).toBe(99);
+    expect(handle.useObjects[0].aliment).toBe("donut");
+  });
+
+  it("valeur inconnue : avertissement bruyant, `aliment` et `heals` restent nuls", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const handle = build({ aliment: "caviar" });
+
+    expect(handle.useObjects[0].aliment).toBeNull();
+    expect(handle.useObjects[0].heals).toBeNull();
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[level] "use_soin_caisses_1" (use_*) : propriété "aliment" = "caviar", ' +
+        "qui n'est pas un aliment connu (donut, sandwich, jambon, poulet, pizza) — propriété ignorée.",
+    );
+    errorSpy.mockRestore();
+  });
+});
+
 describe("InteractionSystem.collectHeals", () => {
   it("à portée : soigne, disparaît, ne se reprend pas", () => {
     const handle = build({ soin: 25 });
@@ -73,7 +107,7 @@ describe("InteractionSystem.collectHeals", () => {
     system.collectHeals(handle.useObjects, trousse.position.clone(), tryHeal);
 
     expect(tryHeal).toHaveBeenCalledTimes(1);
-    expect(tryHeal).toHaveBeenCalledWith(25);
+    expect(tryHeal).toHaveBeenCalledWith(25, trousse);
     expect(trousse.object.visible).toBe(false);
   });
 
@@ -151,7 +185,7 @@ describe("Convention glTF des boîtes de munitions", () => {
     system.collectAmmo(handle.useObjects, joueur, tryTake);
 
     expect(tryTake).toHaveBeenCalledTimes(1);
-    expect(tryTake).toHaveBeenCalledWith(24);
+    expect(tryTake).toHaveBeenCalledWith(24, boite);
     expect(boite.object.visible).toBe(false);
   });
 
@@ -206,6 +240,7 @@ describe("InteractionSystem.collectWeapons — armes au sol ramassées en marcha
       onToiletUse: () => {},
       onCardPickup: () => {},
       onCardDoorUse: () => {},
+      onCameraConsoleUse: () => {},
     });
 
     expect(system.nearestInRangeName).toBeNull();

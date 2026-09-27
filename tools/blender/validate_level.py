@@ -49,7 +49,7 @@ SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_", "prop_", "vitre_",
-    "sanitaire_",
+    "sanitaire_", "ecran_", "cam_",
 )
 
 # Extras d'un `door_*` animé — doivent rester identiques à ce que lit
@@ -68,13 +68,24 @@ MANUELLE_PORTE = ("true", "1", "fermer")
 LOYALTY_CARDS = ("argent", "or", "platine")
 
 # Matières de props — doit rester identique à `PROP_MATERIALS` dans
-# src/game/level/props.ts.
-PROP_MATIERES = ("bois", "carton", "verre", "metal")
+# src/game/level/props.ts. Les trois dernières datent du chantier
+# « Les coulisses » (2026-09-26, fournil/chambre froide/atelier SAV).
+PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique")
+
+# Aliments ramassables (`use_*` portant `aliment`) — doit rester identique à
+# `FOOD_ITEMS` dans src/game/level/food.ts.
+ALIMENTS = ("donut", "sandwich", "jambon", "poulet", "pizza")
 
 # Sortes de `sanitaire_*` — cuvette et urinoir, utilisables et cassables façon
 # Duke Nukem 3D (2026-09-24). Doit rester identique à ce que lit le runtime
 # côté loader (voir `docs/6-reference/conventions-nommage.md#sanitaires`).
 SANITAIRE_SORTES = ("cuvette", "urinoir")
+
+# Chaînes d'un `ecran_*` (chantier « Les coulisses », système 2) — doit rester
+# identique aux clés de `tools/textures/generate_chaines.py::CHAINES` (moins
+# "casse", état interne atteint par la casse, jamais choisi à la pose) et à
+# `ECRAN_CHAINES` dans `src/game/level/ecrans.ts`.
+ECRAN_CHAINES = ("journal", "pub", "mire", "foot", "cctv")
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -144,7 +155,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
-        if n.startswith("use_") and not {"target", "card", "soin", "munitions"} & set(o.keys()):
+        if n.startswith("use_") and not {"target", "card", "soin", "munitions", "aliment", "cameras"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -152,8 +163,14 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             # sur un futur `use_*` qui référence vraiment une cible.
             # Exception "card" : une carte de fidélité à ramasser se suffit à
             # elle-même, il n'y a rien à cibler (jalon N7, même règle que
-            # `loader.ts::buildUseObjectEffect`). Idem pour "soin", une trousse.
+            # `loader.ts::buildUseObjectEffect`). Idem pour "soin", une trousse,
+            # et "aliment", sa variante (chantier « Les coulisses »).
             warn(f"{o.name}: interactif sans custom property 'target'")
+        if n.startswith("use_") and "aliment" in o.keys():
+            valeur = str(o["aliment"]).strip().lower()
+            if valeur not in ALIMENTS:
+                err(f"{o.name}: 'aliment' = '{o['aliment']}' n'est pas un aliment connu "
+                    f"({', '.join(ALIMENTS)})")
         # Cartes de fidélité (jalon N7) : une valeur mal tapée rendrait la
         # porte ouverte à tous, ou la carte introuvable. Côté jeu c'est un
         # avertissement bruyant ; ici c'est une ERREUR, parce qu'on peut
@@ -174,6 +191,21 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre de {unite} > 0")
         if n.startswith("use_") and "requires" in o.keys() and "target" not in o.keys():
             warn(f"{o.name}: 'requires' sans 'target' — aucune porte à ouvrir")
+        # Console de vidéosurveillance (chantier « Les coulisses », système
+        # 4) : `cameras` liste les `cam_*` du cycle, séparés par des virgules
+        # — voir `loader.ts::buildUseObjectEffect`/`ecrans.ts`. Un nom qui ne
+        # correspond à aucun `cam_*` de la scène planterait silencieusement
+        # le cycle en jeu (rien à afficher), donc ERREUR ici.
+        if n.startswith("use_") and "cameras" in o.keys():
+            noms_cam = [c.strip() for c in str(o["cameras"]).split(",") if c.strip()]
+            if not noms_cam:
+                err(f"{o.name}: 'cameras' est vide — aucune caméra à cycler")
+            connus = {base_name(a.name) for a in objects if base_name(a.name).startswith("cam_")}
+            for nom_cam in noms_cam:
+                if not nom_cam.startswith("cam_"):
+                    err(f"{o.name}: 'cameras' référence '{nom_cam}', qui ne commence pas par 'cam_'")
+                elif nom_cam not in connus:
+                    err(f"{o.name}: 'cameras' référence '{nom_cam}', introuvable dans la scène")
         if n.startswith("secret_") and "secret_id" not in o.keys():
             warn(f"{o.name}: secret sans 'secret_id'")
 
@@ -196,8 +228,13 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 err(f"{o.name}: {len(o.data.materials)} matériaux — un vantail n'en a qu'UN "
                     "(deux primitives glTF, et le loader ne voit plus une porte)")
 
-        # --- vitre_* : du verre. `pv` absent = incassable.
+        # --- vitre_* : vitrage ou obstacle cassable. `pv` absent = incassable.
         if n.startswith("vitre_") and o.type == "MESH":
+            if "matiere" in o.keys():
+                valeur = str(o["matiere"]).strip().lower()
+                if valeur not in PROP_MATIERES:
+                    err(f"{o.name}: 'matiere' = '{o['matiere']}' n'est pas une matière "
+                        f"({', '.join(PROP_MATIERES)})")
             if "pv" in o.keys():
                 try:
                     pv = float(o["pv"])
@@ -230,6 +267,16 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                         quantite = 0.0
                     if not quantite > 0:
                         err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre > 0")
+            # "contenu" (chantier « Les coulisses », système 3) : ce que le
+            # prop lâche à sa casse, format "nom:nombre" — voir
+            # `loader.ts::readPropContent`. Le NOM n'est pas restreint ici
+            # (le runtime décide seul quoi faire d'un nom reconnu ou non).
+            if "contenu" in o.keys():
+                valeur = str(o["contenu"]).strip()
+                m = re.match(r"^[a-zA-Z_]+:(\d+)$", valeur)
+                if not m or int(m.group(1)) <= 0:
+                    err(f"{o.name}: 'contenu' = '{o['contenu']}' n'est pas au format "
+                        "'nom:nombre' (nombre entier > 0)")
             # Un prop porte SON PROPRE collider dynamique : lui en poser un
             # `col_*` jumeau par-dessus le fige dans le décor, exactement
             # l'inverse de ce qu'on voulait, et sans aucune erreur visible.
@@ -294,6 +341,37 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 if (centre_monde(autre) - empreinte).length < 0.05:
                     err(f"{o.name}: un collider statique ({autre.name}) est posé au même "
                         "endroit — un sanitaire n'en veut pas, le loader construit le sien")
+
+        # --- ecran_* : écran/façade animé (chantier « Les coulisses »,
+        # système 2). `chaine` choisit la boucle jouée (`prd_chaines.png`),
+        # `pv` absent = incassable. UN mesh, UN matériau, même raison que
+        # `sanitaire_*`/un vantail — deux matériaux donneraient deux
+        # primitives glTF, donc un `THREE.Group` que le loader ne reconnaît
+        # plus comme un `ecran_*`.
+        if n.startswith("ecran_") and o.type == "MESH":
+            chaine = str(o.get("chaine", "")).strip().lower()
+            if chaine not in ECRAN_CHAINES:
+                err(f"{o.name}: 'chaine' = '{o.get('chaine')!r}' n'est pas une chaîne connue "
+                    f"({', '.join(ECRAN_CHAINES)})")
+            if "pv" in o.keys():
+                try:
+                    pv = float(o["pv"])
+                except (TypeError, ValueError):
+                    pv = 0.0
+                if not pv > 0:
+                    err(f"{o.name}: 'pv' = '{o['pv']}' n'est pas un nombre > 0")
+            if len(o.data.materials) > 1:
+                err(f"{o.name}: {len(o.data.materials)} matériaux — un ecran n'en a qu'UN "
+                    "(deux primitives glTF, et le loader ne voit plus un seul objet)")
+
+        # --- cam_* : point de vue d'une console de vidéosurveillance
+        # (chantier « Les coulisses », système 4). Empty, jamais un mesh —
+        # `nom` est l'étiquette affichée pendant le cycle (`use_*.cameras`).
+        if n.startswith("cam_"):
+            if o.type != "EMPTY":
+                err(f"{o.name}: 'cam_*' doit être un EMPTY (orientation de la vue), pas {o.type}")
+            if "nom" not in o.keys() or not str(o["nom"]).strip():
+                warn(f"{o.name}: caméra sans 'nom' — la console affichera un intitulé vide")
 
 
 def check_sanitaires(objects) -> Counter:

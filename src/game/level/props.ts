@@ -3,6 +3,10 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import { damageForWeapon } from "../player/weaponConfig";
 import type { HitEvent } from "../player/weapons";
+import { runGameplaySync } from "../../core/runtime";
+import { DeterministicRandom } from "../../core/random";
+import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "./food";
+import { HEAL_PICKUP_RADIUS } from "./interactive";
 
 /**
  * `prop_*` — mobilier PHYSIQUE du niveau : poussable par le joueur et les
@@ -35,7 +39,20 @@ import type { HitEvent } from "../player/weapons";
  * son de destruction et de la couleur des débris — jamais de la physique
  * (c'est `masse` qui la porte).
  */
-export const PROP_MATERIALS = ["bois", "carton", "verre", "metal"] as const;
+export const PROP_MATERIALS = [
+  "bois",
+  "carton",
+  "verre",
+  "metal",
+  // Chantier « Les coulisses » (2026-09-26), système « destruction étendue » :
+  // le fournil (sacs de farine), la chambre froide (vivier d'eau) et
+  // l'atelier SAV (télévisions) demandent trois matières de plus, chacune sa
+  // couleur de débris (`updateFx.ts::PROP_DEBRIS`) et son son (`core/audio.ts`
+  // — placeholders réutilisés, aucune recette neuve).
+  "farine",
+  "eau",
+  "electronique",
+] as const;
 export type PropMaterial = (typeof PROP_MATERIALS)[number];
 
 /** Matière par défaut d'un `prop_*` qui n'en déclare pas. */
@@ -75,6 +92,17 @@ export interface PropInfo {
   /** PV de départ, lus dans `pv`. `null` = INDESTRUCTIBLE (poussable seulement). */
   maxHp: number | null;
   matiere: PropMaterial;
+  /**
+   * Contenu lâché à la casse (custom property Blender `contenu`, format
+   * `"nom:nombre"` — ex. `"canette:3"`, `"donut:1"`). `null` si absent. Seuls
+   * les noms qui résolvent en `FoodItem` (`game/level/food.ts`) produisent
+   * réellement des pickups à la casse (`PropSystem.destroy`) — un nom
+   * inconnu (une future matière non-nourriture) est conservé ici sans effet
+   * cette passe, pas rejeté : `contenu` décrit un FORMAT, pas une liste
+   * fermée de noms.
+   * see: docs/archive/reference-conventions-nommage.md#props-physiques
+   */
+  contenu: { item: string; count: number } | null;
   extras: Record<string, unknown>;
 }
 
@@ -161,6 +189,37 @@ const lerpPosScratch = new THREE.Vector3();
 const lerpQuatScratch = new THREE.Quaternion();
 
 /**
+ * Nourriture lâchée par un `prop_*` détruit (`contenu`, chantier « Les
+ * coulisses », système 3). Graine séparée de `WeaponSystem`/`enemyMachine`
+ * (invariant #12, `DeterministicRandom.forSeed`) : chaque flux déterministe
+ * est isolé pour ne pas faire dépendre l'ordre des casses de celui des tirs.
+ */
+const FOOD_DROP_SEED = 0x8f00d;
+/** Dispersion horizontale des drops autour du point de casse, mètres. */
+const FOOD_DROP_SCATTER_RADIUS = 0.5;
+/** Placeholder de rendu — géométrie/couleurs PARTAGÉES le temps que
+ * `level-forge` pose un vrai modèle en Blender (lot 3/5 du chantier « Les
+ * coulisses ») ; le collectible fonctionne dès maintenant. */
+const FOOD_DROP_GEOMETRY = new THREE.SphereGeometry(0.12, 8, 6);
+const FOOD_DROP_COLORS: Record<FoodItem, number> = {
+  donut: 0xe8a0c0,
+  sandwich: 0xd8b478,
+  jambon: 0xc76a5a,
+  poulet: 0xd9a441,
+  pizza: 0xd9622b,
+};
+
+/** Un aliment lâché par un prop détruit, encore au sol ou déjà ramassé. */
+interface FoodDropState {
+  item: FoodItem;
+  heals: number;
+  /** Position MONDE, figée à la création — ces drops ne bougent jamais. */
+  position: THREE.Vector3;
+  object: THREE.Mesh;
+  collected: boolean;
+}
+
+/**
  * Les props d'UN niveau chargé. Reconstruit à chaque commit (donc à chaque
  * hot reload), au même titre que `currentNavGraph` et `lightPool` — voir
  * `game/session/spawning.ts`.
@@ -180,14 +239,24 @@ export class PropSystem {
    * l'interdit dans le `.glb`) verrait ses props dériver.
    */
   private readonly rootInverse: THREE.Matrix4;
+  /** Racine du niveau — conservée pour y attacher les drops de nourriture
+   * (voir `spawnFoodDrops`), même parent que le décor et les props eux-mêmes. */
+  private readonly root: THREE.Object3D;
 
   private readonly _hitEvents: PropHitEvent[] = [];
   private readonly _destroyedEvents: PropDestroyedEvent[] = [];
+  private readonly foodDrops: FoodDropState[] = [];
   private hitCursor = 0;
+
+  /** Flux déterministe dédié aux drops de nourriture — voir `FOOD_DROP_SEED`. */
+  private readonly nextFoodRandom = runGameplaySync(
+    DeterministicRandom.useSync((random) => random.forSeed(FOOD_DROP_SEED)),
+  );
 
   constructor(props: readonly PropInfo[], root: THREE.Object3D) {
     root.updateWorldMatrix(true, false);
     this.rootInverse = root.matrixWorld.clone().invert();
+    this.root = root;
 
     for (const info of props) {
       const t = info.body.translation();
@@ -324,6 +393,64 @@ export class PropSystem {
       direction,
       matiere: state.info.matiere,
     });
+
+    // Contenu (chantier « Les coulisses », système 3) : seuls les noms qui
+    // résolvent en `FoodItem` produisent un pickup — voir `PropInfo.contenu`.
+    if (state.info.contenu) {
+      const item = parseFoodItem(state.info.contenu.item);
+      if (item) this.spawnFoodDrops(point, item, state.info.contenu.count);
+    }
+  }
+
+  /**
+   * Pas fixe (appelée depuis `destroy`, donc AVANT `physics.step`, même
+   * discipline que le reste de cette classe) : pose `count` pickups de
+   * nourriture autour du point de casse, dispersion tirée du RNG déterministe
+   * dédié (`nextFoodRandom`, invariants #1/#11/#12) — jamais `Math.random()`.
+   */
+  private spawnFoodDrops(origin: THREE.Vector3, item: FoodItem, count: number): void {
+    for (let i = 0; i < count; i++) {
+      const angle = this.nextFoodRandom() * Math.PI * 2;
+      const radius = this.nextFoodRandom() * FOOD_DROP_SCATTER_RADIUS;
+      const position = new THREE.Vector3(
+        origin.x + Math.cos(angle) * radius,
+        origin.y,
+        origin.z + Math.sin(angle) * radius,
+      );
+
+      const mesh = new THREE.Mesh(
+        FOOD_DROP_GEOMETRY,
+        new THREE.MeshLambertMaterial({ color: FOOD_DROP_COLORS[item] }),
+      );
+      mesh.position.copy(position).applyMatrix4(this.rootInverse);
+      this.root.add(mesh);
+
+      this.foodDrops.push({ item, heals: FOOD_HEAL_AMOUNTS[item], position, object: mesh, collected: false });
+    }
+  }
+
+  /**
+   * Pas fixe : ramassage marche-dessus des drops de nourriture, même contrat
+   * que `InteractionSystem.collectHeals`/`HEAL_PICKUP_RADIUS` — un joueur à
+   * PV pleins laisse le drop au sol pour plus tard (`tryHeal` renvoie
+   * `false`).
+   */
+  collectFoodDrops(playerPosition: THREE.Vector3, tryHeal: (amount: number, item: FoodItem) => boolean): void {
+    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+    for (const drop of this.foodDrops) {
+      if (drop.collected) continue;
+      if (playerPosition.distanceToSquared(drop.position) > radiusSq) continue;
+      if (!tryHeal(drop.heals, drop.item)) continue;
+      drop.collected = true;
+      drop.object.visible = false;
+    }
+  }
+
+  /** Nombre de drops de nourriture encore au sol — console de debug. */
+  get foodDropCount(): number {
+    let alive = 0;
+    for (const drop of this.foodDrops) if (!drop.collected) alive++;
+    return alive;
   }
 
   /**

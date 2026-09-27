@@ -34,6 +34,17 @@ import {
   type SanitaireRendu,
 } from "./sanitaires";
 import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
+import { FOOD_HEAL_AMOUNTS, FOOD_ITEMS, parseFoodItem, type FoodItem } from "./food";
+import {
+  mergeEcranDecor,
+  DEFAULT_ECRAN_CHAINE,
+  ECRAN_CHAINES,
+  parseEcranChaine,
+  type EcranCandidate,
+  type EcranChaine,
+  type EcranInfo,
+} from "./ecrans";
+import type { CamPoint } from "./cameras";
 
 // `DoorInfo`/`VitreInfo`/`SanitaireInfo` sont DÉFINIS dans `./doors`/
 // `./vitres`/`./sanitaires` (comme `PropInfo` dans `./props`) — ce fichier
@@ -42,6 +53,8 @@ import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loy
 export type { DoorInfo, DoorMovement } from "./doors";
 export type { VitreInfo } from "./vitres";
 export type { SanitaireInfo, SanitaireKind, SanitaireRendu } from "./sanitaires";
+export type { EcranInfo, EcranChaine } from "./ecrans";
+export type { CamPoint } from "./cameras";
 
 /**
  * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
@@ -111,6 +124,19 @@ export interface UseObject {
    * `null` si absent.
    * see: docs/archive/reference-conventions-nommage.md#trousses-de-soin */
   heals: number | null;
+  /** Aliment ramassé (custom property Blender `aliment`, chantier « Les
+   * coulisses ») — VARIANTE de `soin` : donne le montant de PV par le NOM de
+   * l'aliment (voir `game/level/food.ts::FOOD_HEAL_AMOUNTS`) plutôt qu'un
+   * nombre explicite. `null` si absent. Un `use_*` qui porte `aliment` SANS
+   * `soin` explicite a quand même `heals` renseigné — c'est ce champ qui
+   * calcule le montant, voir `readAmountProperty`/`buildUseObjectEffect`.
+   * see: docs/6-reference/conventions-nommage.md#nourriture */
+  aliment: FoodItem | null;
+  /** Console de vidéosurveillance (chantier « Les coulisses », système 4) —
+   * custom property Blender `cameras`, liste de noms `cam_*` séparés par des
+   * virgules, dans l'ORDRE de défilement. `null` si absente.
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-cam */
+  cameras: readonly string[] | null;
   extras: Record<string, unknown>;
 }
 
@@ -175,6 +201,14 @@ export interface LevelStats {
    * see: docs/decisions/0032-sanitaires-utilisables.md
    */
   sanitaireBatchCount: number;
+  /** `ecran_*` rencontrés (chantier « Les coulisses »), cassés ou non. */
+  ecranCount: number;
+  /**
+   * Lots de dessin ajoutés par les écrans APRÈS fusion (`mergeEcranDecor`) :
+   * un par matériau pour tout le niveau, quel que soit `ecranCount` — même
+   * contrat que `vitreBatchCount`/`sanitaireBatchCount`.
+   */
+  ecranBatchCount: number;
 }
 
 export interface LevelHandle {
@@ -205,6 +239,13 @@ export interface LevelHandle {
   sanitaires: SanitaireInfo[];
   /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
   sanitaireRendus: SanitaireRendu[];
+  /** Écrans `ecran_*` (chantier « Les coulisses ») — l'état de partie (PV,
+   * frame courante, casse) vit dans `EcranSystem` (`game/level/ecrans.ts`),
+   * reconstruit à chaque chargement comme `VitreSystem`. */
+  ecrans: EcranInfo[];
+  /** `cam_*` du niveau — points de vue fixes cyclés par une console
+   * (`UseObject.cameras`), voir `game/level/cameras.ts::CameraViewSystem`. */
+  cams: CamPoint[];
   /** Lampes `light_*` instanciées, déjà rattachées à `root`. Exposées pour le
    * pool de lampes (`render/lightPool.ts`), qui décide lesquelles restent
    * allumées — leur nombre seul ne suffit pas à ça.
@@ -302,6 +343,15 @@ export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmou
   { name: Schema.String, value: Schema.String, property: Schema.String },
 ) {}
 
+/** `use_*` dont `extras.aliment` ne nomme aucun aliment connu — une faute de
+ * frappe dans Blender, qui rendrait sinon le pickup muet en silence. Jamais
+ * bloquant : l'objet est retourné avec `aliment: null` (donc sans le PV
+ * dérivé, `heals` retombe sur `soin` s'il existe). */
+export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()(
+  "UnknownFoodItemWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
 /** `prop_*` dont `extras.matiere` n'est pas une matière connue — jamais
  * bloquant : le prop est construit avec `DEFAULT_PROP_MATERIAL`. */
 export class UnknownPropMaterialWarning extends Schema.TaggedError<UnknownPropMaterialWarning>()(
@@ -315,6 +365,14 @@ export class UnknownPropMaterialWarning extends Schema.TaggedError<UnknownPropMa
 export class InvalidPropNumberWarning extends Schema.TaggedError<InvalidPropNumberWarning>()(
   "InvalidPropNumberWarning",
   { name: Schema.String, property: Schema.String, value: Schema.String },
+) {}
+
+/** `prop_*` dont `extras.contenu` n'est pas au format `"nom:nombre"` (nombre
+ * entier strictement positif) — jamais bloquant : le prop est construit sans
+ * contenu, il ne lâche rien à sa casse. */
+export class InvalidPropContentWarning extends Schema.TaggedError<InvalidPropContentWarning>()(
+  "InvalidPropContentWarning",
+  { name: Schema.String, value: Schema.String },
 ) {}
 
 /** `door_*` dont `extras.mouvement` n'est pas une valeur connue — jamais
@@ -350,6 +408,20 @@ export class UnknownSanitaireKindWarning extends Schema.TaggedError<UnknownSanit
  * quand même d'un coup, voir `SanitaireSystem.tryBreakByColliderHandle`). */
 export class InvalidSanitairePvWarning extends Schema.TaggedError<InvalidSanitairePvWarning>()(
   "InvalidSanitairePvWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
+/** `ecran_*` dont `extras.chaine` n'est pas une chaîne connue — repli sur
+ * `DEFAULT_ECRAN_CHAINE`, même règle que `sorte` sur un `sanitaire_*`. */
+export class UnknownEcranChaineWarning extends Schema.TaggedError<UnknownEcranChaineWarning>()(
+  "UnknownEcranChaineWarning",
+  { name: Schema.String, value: Schema.String },
+) {}
+
+/** `ecran_*` dont `extras.pv` n'est pas un nombre strictement positif — jamais
+ * bloquant, même règle que `pv` sur un `vitre_*`/`sanitaire_*`. */
+export class InvalidEcranPvWarning extends Schema.TaggedError<InvalidEcranPvWarning>()(
+  "InvalidEcranPvWarning",
   { name: Schema.String, value: Schema.String },
 ) {}
 
@@ -417,6 +489,13 @@ function formatInvalidHealAmount(error: InvalidHealAmountWarning): string {
   );
 }
 
+function formatUnknownFoodItem(error: UnknownFoodItemWarning): string {
+  return (
+    `[level] "${error.name}" (use_*) : propriété "aliment" = "${error.value}", ` +
+    `qui n'est pas un aliment connu (${FOOD_ITEMS.join(", ")}) — propriété ignorée.`
+  );
+}
+
 function formatUnknownPropMaterial(error: UnknownPropMaterialWarning): string {
   return (
     `[level] "${error.name}" (prop_*) : propriété "matiere" = "${error.value}", ` +
@@ -433,6 +512,13 @@ function formatInvalidPropNumber(error: InvalidPropNumberWarning): string {
   return (
     `[level] "${error.name}" (prop_*) : propriété "${error.property}" = "${error.value}", ` +
     `qui n'est pas un nombre strictement positif — ${repli}.`
+  );
+}
+
+function formatInvalidPropContent(error: InvalidPropContentWarning): string {
+  return (
+    `[level] "${error.name}" (prop_*) : propriété "contenu" = "${error.value}", ` +
+    `qui n'est pas au format "nom:nombre" (nombre entier > 0) — prop laissé sans contenu.`
   );
 }
 
@@ -462,6 +548,20 @@ function formatInvalidSanitairePv(error: InvalidSanitairePvWarning): string {
   return (
     `[level] "${error.name}" (sanitaire_*) : propriété "pv" = "${error.value}", ` +
     `qui n'est pas un nombre strictement positif — sanitaire laissé incassable (au tir du joueur).`
+  );
+}
+
+function formatUnknownEcranChaine(error: UnknownEcranChaineWarning): string {
+  return (
+    `[level] "${error.name}" (ecran_*) : propriété "chaine" = "${error.value}", ` +
+    `qui n'est pas une chaîne connue (${ECRAN_CHAINES.join(", ")}) — repli sur "${DEFAULT_ECRAN_CHAINE}".`
+  );
+}
+
+function formatInvalidEcranPv(error: InvalidEcranPvWarning): string {
+  return (
+    `[level] "${error.name}" (ecran_*) : propriété "pv" = "${error.value}", ` +
+    `qui n'est pas un nombre strictement positif — écran laissé incassable.`
   );
 }
 
@@ -991,6 +1091,15 @@ function buildVitreCandidateEffect(
     const solide = extras.solide !== false;
     const maxHp = solide ? yield* readVitrePv(name, extras.pv) : null;
     const givre = extras.givre === true;
+    let matiere: PropMaterial = "verre";
+    if (extras.matiere !== undefined && extras.matiere !== null && extras.matiere !== "") {
+      const parsed = parsePropMaterial(extras.matiere);
+      if (parsed) matiere = parsed;
+      else console.error(
+        `[level] "${name}" (vitre_*) : propriété "matiere" = "${String(extras.matiere)}" ` +
+        `inconnue (${PROP_MATERIALS.join(", ")}) — défaut "verre".`,
+      );
+    }
 
     const material = mesh.material as THREE.MeshLambertMaterial;
     material.side = THREE.DoubleSide;
@@ -1036,6 +1145,7 @@ function buildVitreCandidateEffect(
       collider,
       body,
       maxHp,
+      matiere,
       givre,
       extras,
     };
@@ -1145,6 +1255,97 @@ function buildSanitaireCandidateEffect(
   });
 }
 
+/** Lit `chaine` d'un `ecran_*` : OBLIGATOIRE (comme `sorte` sur un
+ * `sanitaire_*`), absente ou inconnue -> avertissement bruyant, repli sur
+ * `DEFAULT_ECRAN_CHAINE`. */
+function readEcranChaine(name: string, raw: unknown): Effect.Effect<EcranChaine> {
+  return Effect.gen(function* () {
+    const chaine = parseEcranChaine(raw);
+    if (chaine) return chaine;
+    const value = raw === undefined || raw === null || raw === "" ? "(absente)" : String(raw);
+    yield* Effect.fail(new UnknownEcranChaineWarning({ name, value })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownEcranChaine(error)))),
+    );
+    return DEFAULT_ECRAN_CHAINE;
+  });
+}
+
+/** Lit `pv` d'un `ecran_*` : absent -> `null` (incassable) sans bruit,
+ * présent mais pas un nombre strictement positif -> `null` AVEC avertissement
+ * bruyant, même règle que `pv` sur un `vitre_*`/`sanitaire_*`. */
+function readEcranPv(name: string, raw: unknown): Effect.Effect<number | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const value = typeof raw === "number" ? raw : Number(raw);
+    if (Number.isFinite(value) && value > 0) return value;
+    yield* Effect.fail(new InvalidEcranPvWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidEcranPv(error)))),
+    );
+    return null;
+  });
+}
+
+/**
+ * `ecran_*` : écran/façade animé, UN mesh UN matériau — le loader lui
+ * construit lui-même un collider FIXE sur sa bbox monde, jamais de `col_*`
+ * jumeau, même construction que `buildSanitaireCandidateEffect`. Ne
+ * construit QUE le candidat — la fusion (`mergeEcranDecor`) et l'état de
+ * partie (`EcranSystem`) vivent dans `./ecrans`.
+ * see: docs/archive/reference-conventions-nommage.md#préfixe-ecran
+ */
+function buildEcranCandidateEffect(
+  mesh: THREE.Mesh,
+  name: string,
+  physics: PhysicsWorld,
+  bodies: RAPIER.RigidBody[],
+): Effect.Effect<EcranCandidate> {
+  return Effect.gen(function* () {
+    const extras = cleanExtras(mesh);
+    const chaine = yield* readEcranChaine(name, extras.chaine);
+    const maxHp = yield* readEcranPv(name, extras.pv);
+
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox!;
+    const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
+    const localCenter = new THREE.Vector3().addVectors(bb.min, bb.max).multiplyScalar(0.5);
+
+    const worldQuat = new THREE.Quaternion();
+    const worldScale = new THREE.Vector3();
+    const discardedPosition = new THREE.Vector3();
+    mesh.matrixWorld.decompose(discardedPosition, worldQuat, worldScale);
+    const worldCenter = localCenter.clone().applyMatrix4(mesh.matrixWorld);
+
+    const halfExtents = new THREE.Vector3(
+      Math.max(1e-3, Math.abs((localSize.x * worldScale.x) / 2)),
+      Math.max(1e-3, Math.abs((localSize.y * worldScale.y) / 2)),
+      Math.max(1e-3, Math.abs((localSize.z * worldScale.z) / 2)),
+    );
+
+    const body = physics.world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
+        .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
+    );
+    const collider = physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
+        COLLISION_GROUPS.WORLD,
+      ),
+      body,
+    );
+    bodies.push(body);
+
+    return {
+      name,
+      mesh: mesh as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>,
+      collider,
+      body,
+      maxHp,
+      chaine,
+      extras,
+    };
+  });
+}
+
 /**
  * Masse d'un `prop_*` qui ne déclare pas `masse`, en kg.
  *
@@ -1224,6 +1425,31 @@ function readVitrePv(name: string, raw: unknown): Effect.Effect<number | null> {
   });
 }
 
+/** Format attendu de `contenu` : `"nom:nombre"`, nombre entier strictement
+ * positif — voir `PropInfo.contenu`. */
+const PROP_CONTENT_PATTERN = /^([a-z_]+):(\d+)$/i;
+
+/** Lit `contenu` d'un `prop_*` (chantier « Les coulisses », système 3) :
+ * absent -> `null` sans bruit, présent mais mal formé -> `null` AVEC
+ * avertissement bruyant (même règle que `matiere`/`masse`/`pv`). Le NOM n'est
+ * volontairement pas restreint à une liste connue ici — `contenu` couvre
+ * n'importe quel objet lâché à la casse, pas seulement la nourriture (voir
+ * `PropSystem.destroy`, qui décide seul quoi faire d'un nom reconnu ou non). */
+function readPropContent(name: string, raw: unknown): Effect.Effect<{ item: string; count: number } | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const match = PROP_CONTENT_PATTERN.exec(String(raw).trim());
+    const count = match ? Number(match[2]) : NaN;
+    if (match && Number.isFinite(count) && count > 0) {
+      return { item: match[1]!.toLowerCase(), count };
+    }
+    yield* Effect.fail(new InvalidPropContentWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatInvalidPropContent(error)))),
+    );
+    return null;
+  });
+}
+
 /**
  * `prop_*` : mobilier physique. Corps DYNAMIQUE libre (contrairement à
  * `door_*`, dynamique mais verrouillé), collider cuboid, groupe
@@ -1257,6 +1483,7 @@ function buildPropEffect(
     const matiere = yield* readPropMaterial(name, extras.matiere);
     const masse = yield* readPropNumber(name, "masse", extras.masse);
     const maxHp = yield* readPropNumber(name, "pv", extras.pv);
+    const contenu = yield* readPropContent(name, extras.contenu);
 
     root.attach(mesh);
     mesh.updateMatrixWorld(true);
@@ -1298,7 +1525,7 @@ function buildPropEffect(
     );
     bodies.push(body);
 
-    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, extras };
+    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu, extras };
   });
 }
 
@@ -1335,6 +1562,20 @@ function readAmountProperty(name: string, property: string, raw: unknown): Effec
   });
 }
 
+/** Lit `aliment` : absente -> `null` sans bruit, présente mais inconnue ->
+ * `null` AVEC avertissement bruyant (même règle que `card`/`requires`). */
+function readFoodItem(name: string, raw: unknown): Effect.Effect<FoodItem | null> {
+  return Effect.gen(function* () {
+    if (raw === undefined || raw === null || raw === "") return null;
+    const item = parseFoodItem(raw);
+    if (item) return item;
+    yield* Effect.fail(new UnknownFoodItemWarning({ name, value: String(raw) })).pipe(
+      Effect.catch((error) => Effect.sync(() => console.error(formatUnknownFoodItem(error)))),
+    );
+    return null;
+  });
+}
+
 function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<UseObject> {
   return Effect.gen(function* () {
     const position = new THREE.Vector3();
@@ -1344,20 +1585,35 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
     const targetName = typeof extras.target === "string" ? extras.target : null;
     const grantsCard = yield* readCardProperty(name, "card", extras.card);
     const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
-    const heals = yield* readAmountProperty(name, "soin", extras.soin);
+    const explicitHeals = yield* readAmountProperty(name, "soin", extras.soin);
     const ammo = yield* readAmountProperty(name, "munitions", extras.munitions);
+    const aliment = yield* readFoodItem(name, extras.aliment);
+    // `aliment` est une VARIANTE de `soin` : un `use_*` qui porte l'un sans
+    // l'autre calcule quand même `heals` par le barème de
+    // `game/level/food.ts`. Un `soin` explicite reste prioritaire (aucun
+    // niveau n'a besoin des deux, mais rien ne l'interdit).
+    const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
+    // Console de vidéosurveillance (chantier « Les coulisses », système 4) :
+    // liste ORDONNÉE de `cam_*`, séparés par des virgules — validée par
+    // `validate_level.py` (noms existants, préfixe `cam_`), reprise ici sans
+    // second contrôle : un nom introuvable au chargement est un
+    // avertissement de `CameraViewSystem`/`main.ts`, pas de ce fichier.
+    const cameras =
+      typeof extras.cameras === "string"
+        ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
+        : null;
 
-    // Une carte ou une trousse à ramasser se suffit à elle-même : pas de
-    // cible, donc pas d'avertissement — même exception de fond que
-    // `use_crowbar`/`use_shotgun`, qui eux le déclenchent encore (leur effet
-    // est câblé par nom, pas déclaré dans le `.glb`).
-    if (!targetName && !grantsCard && heals === null && ammo === null) {
+    // Une carte, une trousse, un aliment ou une console à ramasser/utiliser
+    // se suffit à lui-même : pas de cible, donc pas d'avertissement — même
+    // exception de fond que `use_crowbar`/`use_shotgun`, qui eux le
+    // déclenchent encore (leur effet est câblé par nom, pas déclaré dans le `.glb`).
+    if (!targetName && !grantsCard && heals === null && ammo === null && !cameras) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, aliment, cameras, extras };
   });
 }
 
@@ -1451,6 +1707,8 @@ function buildLevelResourceEffect(
     const props: PropInfo[] = [];
     const vitreCandidates: VitreCandidate[] = [];
     const sanitaireCandidates: SanitaireCandidate[] = [];
+    const ecranCandidates: EcranCandidate[] = [];
+    const cams: CamPoint[] = [];
     const useObjects: UseObject[] = [];
     const secrets: SecretZone[] = [];
 
@@ -1504,6 +1762,19 @@ function buildLevelResourceEffect(
         const position = new THREE.Vector3();
         obj.getWorldPosition(position);
         spawnDirectors.push({ name, position });
+        continue;
+      }
+      if (name.startsWith("cam_")) {
+        // Empty, jamais un mesh (voir `validate_level.py`) : position ET
+        // orientation MONDE, figées à la construction.
+        const position = new THREE.Vector3();
+        const quaternion = new THREE.Quaternion();
+        obj.getWorldPosition(position);
+        obj.getWorldQuaternion(quaternion);
+        const label = typeof (obj.userData as Record<string, unknown>).nom === "string"
+          ? ((obj.userData as Record<string, unknown>).nom as string)
+          : name;
+        cams.push({ name, position, quaternion, label });
         continue;
       }
 
@@ -1586,6 +1857,11 @@ function buildLevelResourceEffect(
         continue; // reste visible : le rendu du sanitaire EST son mesh, fusionné plus bas comme le décor
       }
 
+      if (name.startsWith("ecran_")) {
+        ecranCandidates.push(yield* buildEcranCandidateEffect(obj, name, physics, bodies));
+        continue; // reste visible : le rendu de l'écran EST son mesh, fusionné plus bas comme le décor
+      }
+
       if (name.startsWith("prop_")) {
         props.push(yield* buildPropEffect(obj, name, root, physics, bodies));
         continue; // reste visible : un prop EST son rendu, il n'a pas de proxy séparé
@@ -1623,6 +1899,11 @@ function buildLevelResourceEffect(
     // sommets adressable pour se casser individuellement (voir
     // `LevelStats.sanitaireBatchCount`).
     const sanitaireMerge = mergeSanitaireDecor(root, sanitaireCandidates);
+    // Fusion DÉDIÉE des écrans (voir `mergeEcranDecor`) : même raison exacte
+    // que les vitres/sanitaires — chaque écran garde sa propre plage de
+    // sommets adressable pour changer de frame/se casser individuellement
+    // (voir `LevelStats.ecranBatchCount`).
+    const ecranMerge = mergeEcranDecor(root, ecranCandidates);
     // Vantaux regroupés par matériau (voir `batchDoorMeshes`) : un vantail
     // animé ne rejoint jamais le décor fusionné, mais vingt vantaux n'ont pas
     // à coûter vingt lots de dessin.
@@ -1646,6 +1927,8 @@ function buildLevelResourceEffect(
       doorBatchCount,
       sanitaireCount: sanitaireMerge.sanitaires.length,
       sanitaireBatchCount: sanitaireMerge.batchCount,
+      ecranCount: ecranMerge.ecrans.length,
+      ecranBatchCount: ecranMerge.batchCount,
     };
 
     return {
@@ -1660,6 +1943,8 @@ function buildLevelResourceEffect(
       vitres: vitreMerge.vitres,
       sanitaires: sanitaireMerge.sanitaires,
       sanitaireRendus: sanitaireMerge.rendus,
+      ecrans: ecranMerge.ecrans,
+      cams,
       useObjects,
       secrets,
       lights,
@@ -1721,6 +2006,8 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
     vitres: resource.vitres,
     sanitaires: resource.sanitaires,
     sanitaireRendus: resource.sanitaireRendus,
+    ecrans: resource.ecrans,
+    cams: resource.cams,
     useObjects: resource.useObjects,
     secrets: resource.secrets,
     lights: resource.lights,

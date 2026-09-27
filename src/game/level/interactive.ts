@@ -27,7 +27,7 @@ export interface InteractionHandlers {
    * mécanique de porte/glissement côté `main.ts`, juste aucune garde. */
   onFrozenStorageUse(targetName: string): void;
   /** `use_pa_mic` (Zone C) : déclenche une réplique du héros (texte HUD
-   * placeholder — invariant #9, pas de vraie VO cette passe). Répétable à
+   * placeholder — pas de vraie VO cette passe). Répétable à
    * volonté, contrairement aux pickups ci-dessus. */
   onPaMicUse(): void;
   /** `use_toilet` (Zone D) : +1 PV. Répétable (plafonné au PV max côté
@@ -50,6 +50,12 @@ export interface InteractionHandlers {
    * unique d'une porte ne se code pas ici : il tient à l'endroit où le `.glb`
    * pose son `use_*`, hors de portée depuis l'autre côté. */
   onDoorUse(targetName: string, message: string | null): void;
+  /** `use_*` portant `extras.cameras` (chantier « Les coulisses », système
+   * 4) : console de vidéosurveillance. `cameraNames` est la liste ORDONNÉE
+   * des `cam_*` à cycler, telle que déclarée dans `extras.cameras`
+   * (`loader.ts::buildUseObjectEffect`) — jamais consommée, comme
+   * `onPaMicUse`/`onToiletUse` : une console s'utilise à volonté. */
+  onCameraConsoleUse(cameraNames: readonly string[]): void;
 }
 
 /**
@@ -170,12 +176,17 @@ export class InteractionSystem {
    * `tryHeal`. Elle n'est consommée que si `tryHeal` renvoie `true` — un
    * joueur en pleine forme la laisse au sol pour plus tard, comme dans Doom.
    *
+   * Couvre aussi bien une vraie trousse (`soin`) qu'un aliment (`aliment`,
+   * chantier « Les coulisses ») — les deux remplissent `UseObject.heals`
+   * (voir `loader.ts::buildUseObjectEffect`), `tryHeal` reçoit l'objet en
+   * second paramètre pour distinguer le son à jouer (`useObject.aliment`).
+   *
    * @param useObjects Même contrat de fraîcheur que pour `update`.
    */
   collectHeals(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
-    tryHeal: (amount: number) => boolean,
+    tryHeal: (amount: number, useObject: UseObject) => boolean,
   ): void {
     this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal);
   }
@@ -184,7 +195,7 @@ export class InteractionSystem {
   collectAmmo(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
-    tryTake: (amount: number) => boolean,
+    tryTake: (amount: number, useObject: UseObject) => boolean,
   ): void {
     this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake);
   }
@@ -193,14 +204,14 @@ export class InteractionSystem {
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     quantite: (useObject: UseObject) => number | null,
-    prendre: (amount: number) => boolean,
+    prendre: (amount: number, useObject: UseObject) => boolean,
   ): void {
     const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
     for (const useObject of useObjects) {
       const amount = quantite(useObject);
       if (amount === null || this.consumed.has(useObject.object)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!prendre(amount)) continue;
+      if (!prendre(amount, useObject)) continue;
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }
@@ -237,6 +248,14 @@ export class InteractionSystem {
   /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),
    * ensuite par NOM Blender exact — voir la doc de tête de fichier. */
   private dispatch(useObject: UseObject, handlers: InteractionHandlers): void {
+    // Console de caméras : déclarative comme une carte, mais JAMAIS
+    // consommée — une console se réutilise pour cycler (voir
+    // `CameraViewSystem.activate`).
+    if (useObject.cameras) {
+      handlers.onCameraConsoleUse(useObject.cameras);
+      return;
+    }
+
     // Ramassage de carte : autoportant, consommé, comme `use_crowbar`.
     if (useObject.grantsCard) {
       handlers.onCardPickup(useObject.grantsCard, useObject.name);

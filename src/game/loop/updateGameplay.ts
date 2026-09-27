@@ -34,7 +34,7 @@ import { handleDevGameplayInput } from "./devGameplayInput";
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
 // Objets interactifs "signature Duke" (micro d'annonces, sanitaires) — le
-// micro reste un simple texte HUD placeholder (invariant #9, pas de vraie VO
+// micro reste un simple texte HUD placeholder (pas de vraie VO
 // cette passe). Les sanitaires (`use_toilet` historique ET `sanitaire_*` du
 // niveau v2) passent tous les deux par LA MÊME règle de soulagement
 // (`game/session/sanitaires.ts::relieveAtSanitaire`, voir
@@ -170,13 +170,13 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
 
       // Récap de fin de partie (`game/session/score.ts`) : temps de GAMEPLAY
       // écoulé, somme du VRAI `gameplayDt` (hitstop compris), jamais une
-      // horloge murale — invariants #1/#12/#13, même discipline que le délai
-      // de soulagement des sanitaires juste en dessous.
+      // horloge murale — même discipline que le délai de soulagement des
+      // sanitaires juste en dessous.
       advanceGameplayTime(session.stats, gameplayDt);
 
       // Délai de soulagement des sanitaires (`game/session/sanitaires.ts`) :
       // décrémenté par le VRAI `gameplayDt` (hitstop inclus), jamais un temps
-      // mural — invariants #1/#13. Pas un `stateTimer` XState (`session` n'a
+      // mural. Pas un `stateTimer` XState (`session` n'a
       // pas de machine à états), mais le même principe que `TICK` dans
       // `enemyMachine.ts` : une durée de gameplay vit dans un champ mutable,
       // avancée explicitement au pas fixe, jamais un `setTimeout` réel.
@@ -255,6 +255,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onPaMicUse: () => {
               triggerHeroLine(session, HERO_LINE_PA_MIC);
             },
+            onCameraConsoleUse: (cameraNames) => {
+              session.cameraView?.activate(cameraNames, activeFrame.yaw, activeFrame.pitch);
+            },
             // `use_toilet` (niveau `hypermarche_complet`, historique) : TOUJOURS
             // une cuvette intacte, jamais de variante cassée — même règle que
             // `sanitaire_*`, voir `game/session/sanitaires.ts::relieveAtSanitaire`.
@@ -285,6 +288,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         if (activeFrame.use && !consomme && !consommeSanitaire) {
           session.doorSystem?.actionner(session.player.position);
         }
+
+        // Vue par caméra (système 4) : sort au premier mouvement, invariant
+        // #10 — voir `CameraViewSystem.update`. Après le bloc E ci-dessus,
+        // pour qu'une PREMIÈRE activation ce pas-ci (E vient d'être pressé)
+        // ne se retrouve pas évaluée contre le mouvement de CE MÊME pas.
+        session.cameraView?.update(activeFrame);
       });
 
       // Boîtes de munitions : même ramassage sans touche que les trousses. Une
@@ -358,17 +367,35 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         engine.interaction.collectHeals(
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
-          (amount) => {
+          (amount, useObject) => {
             const maxHp = useGameStore.getState().debug.playerMaxHp;
             if (session.playerHp >= maxHp) return false; // laissée au sol pour plus tard
             const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
             session.playerHp += healed;
             useGameStore.getState().setPlayerHp(session.playerHp);
             showHudMessage(`+${healed} PV`);
-            playSfx("heal_pickup");
+            // Un aliment (chantier « Les coulisses ») a son propre son —
+            // jamais le carillon de trousse de soin, voir `UseObject.aliment`.
+            playSfx(useObject.aliment ? "food_eat" : "heal_pickup");
             return true;
           },
         ),
+      );
+
+      // Nourriture lâchée par un `prop_*` détruit (`contenu`) : même règle de
+      // soin que ci-dessus, mais lue depuis `PropSystem` plutôt que
+      // `useObjects` (voir `props.ts::PropSystem.collectFoodDrops`).
+      yield* Effect.sync(() =>
+        session.propSystem?.collectFoodDrops(session.player.position, (amount) => {
+          const maxHp = useGameStore.getState().debug.playerMaxHp;
+          if (session.playerHp >= maxHp) return false;
+          const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
+          session.playerHp += healed;
+          useGameStore.getState().setPlayerHp(session.playerHp);
+          showHudMessage(`+${healed} PV`);
+          playSfx("food_eat");
+          return true;
+        }),
       );
 
       // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
@@ -477,6 +504,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.stats,
           (session.sanitaireSystem?.destroyedEvents.length ?? 0) - sanitairesDestroyedBefore,
         );
+
+        // Écrans (`ecran_*`, chantier « Les coulisses ») : même file de
+        // impacts, plus l'horloge d'animation propre à `EcranSystem.update`
+        // (voir sa doc) — avancée au pas fixe, jamais un dt réel.
+        session.ecranSystem?.update(gameplayDt, session.weapons.hitEvents);
 
         // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
         // #1) — `interpolateVisuals.ts` ne fait qu'interpoler entre deux

@@ -1,5 +1,5 @@
 .counter {
-  position: fixed;
+  position: absolute;
   top: calc(var(--vpx) * 3);
   left: calc(var(--vpx) * 3);
   padding: calc(var(--vpx) * 1) calc(var(--vpx) * 2);

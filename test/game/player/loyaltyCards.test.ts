@@ -150,6 +150,7 @@ function handlersDeTest(overrides: Partial<InteractionHandlers> = {}): Interacti
     onToiletUse: () => {},
     onCardPickup: () => {},
     onCardDoorUse: () => {},
+    onCameraConsoleUse: () => {},
     ...overrides,
   };
 }

@@ -377,8 +377,8 @@ ZONE_C = {
 
     # Micro d'annonces (objet interactif "signature Duke" du plan, PAS un
     # secret) : déclenche une réplique du héros dans les haut-parleurs
-    # (texte HUD placeholder côté jeu, aucune VO réelle pour l'instant —
-    # invariant #9). Posé contre le mur nord, X=0 (centré), à l'écart des
+    # (texte HUD placeholder côté jeu, aucune VO réelle pour l'instant).
+    # Posé contre le mur nord, X=0 (centré), à l'écart des
     # spawns `spawn_suit_3`/`spawn_suit_4` (Y=21, X=±6.0) et de tout mobilier
     # — zone dégagée entre le bloc de gondoles (fin Y=16) et le mur nord
     # (Y=26). Aucune cible (`target`) : effet autoportant, même contrat que

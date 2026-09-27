@@ -1,5 +1,5 @@
 .message {
-  position: fixed;
+  position: absolute;
   top: 72%;
   left: 50%;
   transform: translateX(-50%);

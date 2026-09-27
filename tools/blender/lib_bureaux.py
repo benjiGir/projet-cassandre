@@ -82,6 +82,16 @@ MEUBLES = {
     "toilet": (0.78, False),
     "bathroomSink": (0.88, True),
     "bathroomMirror": (0.70, False),
+    # PC sécurité, 2e reprise (2026-09-26) : des cubes maison remplacés par de
+    # vrais modèles, un objet non identifiable à 2-3 m valant moins qu'un
+    # meuble reconnaissable même approximatif (retour « je ne sais pas à quoi
+    # ça correspond »).
+    "desk": (0.75, True),
+    "deskCorner": (0.75, True),          # la console en L du vigile
+    "computerScreen": (0.35, False),
+    "computerKeyboard": (0.04, False),
+    "books": (0.14, False),              # la main courante, en pile
+    "lampRoundTable": (0.35, False),      # la lampe de bureau chaude
 }
 
 
@@ -97,6 +107,117 @@ def meuble(modele: str) -> str:
     if collider:
         lx, ly, lz = H.kit_bounds(obj)
         H.col_box(name[4:], (0, 0, 0, lx, ly, lz), coll)
+    return name
+
+
+def vigile_assis() -> str:
+    """Pose statique du modèle Quaternius dans une animation assise.
+
+    Le GLB reste un asset source : on fige son armature ici, puis on fusionne
+    la pose sur la palette commune pour l'export du niveau. Aucun rig ni
+    matériau externe ne part dans le runtime.
+    """
+    import bmesh
+    import bpy
+    from mathutils import Vector
+
+    name = "mob_vigile_assis"
+    coll, done = asset_coll(name)
+    if done:
+        return name
+
+    glb = os.path.join(H.ROOT, "assets_src", "cc0_raw", "quaternius_man_in_suit", "man_in_suit.glb")
+    objets_avant = set(bpy.data.objects)
+    materiaux_avant = set(bpy.data.materials)
+    images_avant = set(bpy.data.images)
+    actions_avant = set(bpy.data.actions)
+    scene = bpy.context.scene
+    frame_avant, sous_image_avant = scene.frame_current, scene.frame_subframe
+
+    bpy.ops.import_scene.gltf(filepath=glb)
+    importes = [o for o in bpy.data.objects if o not in objets_avant]
+    armature = next((o for o in importes if o.type == "ARMATURE"), None)
+    corps = next((o for o in importes if o.type == "MESH" and o.find_armature() == armature), None)
+    action = next((a for a in bpy.data.actions if a not in actions_avant and a.name.endswith("Man_Sitting")), None)
+    if armature is None or corps is None or action is None:
+        raise RuntimeError("Le modèle Quaternius doit contenir son armature et l'animation Man_Sitting")
+
+    armature.animation_data_create()
+    racine = armature.parent
+
+    def actionner(action_source, frame):
+        armature.animation_data.action = action_source
+        if action_source.slots:
+            armature.animation_data.action_slot = action_source.slots[0]
+        for bone in armature.pose.bones:
+            bone.location = (0, 0, 0)
+            bone.rotation_quaternion = (1, 0, 0, 0)
+            bone.rotation_euler = (0, 0, 0)
+            bone.scale = (1, 1, 1)
+        if racine is not None:
+            racine.location = (0, 0, 0)
+        scene.frame_set(frame)
+        bpy.context.view_layer.update()
+
+    # Quaternius livre le personnage à ~5 unités pour 1,8 m. On mesure la
+    # pose debout du même rig, puis applique cette conversion à la pose assise.
+    debout = next((a for a in bpy.data.actions if a not in actions_avant and a.name.endswith("Man_Standing")), None)
+    if debout is None:
+        debout = next(a for a in bpy.data.actions if a not in actions_avant and a.name.endswith("Man_Idle"))
+    d0, d1 = debout.frame_range
+    actionner(debout, round(d0 + (d1 - d0) * 0.5))
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    ref = corps.evaluated_get(depsgraph)
+    points = [ref.matrix_world @ vert.co for vert in ref.data.vertices]
+    facteur = 1.8 / max(max(p.z for p in points) - min(p.z for p in points), 1e-6)
+
+    debut, fin = action.frame_range
+    actionner(action, round(debut + (fin - debut) * 0.8))
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    corps_pose = corps.evaluated_get(depsgraph)
+    pose = bpy.data.meshes.new_from_object(corps_pose, preserve_all_data_layers=True, depsgraph=depsgraph)
+    pose.transform(corps_pose.matrix_world)
+
+    couleurs = {
+        "Shirt": "#444a54", "Pants": "#2f3541", "Skin": "#deb789",
+        "Hair": "#111014", "Eyes": "#111014", "Details": "#babcbc",
+        "TieTexture": "#f2efe6",
+    }
+    for mat in pose.materials:
+        hexa = couleurs.get(mat.name)
+        if hexa is None:
+            continue
+        srgb = [int(hexa[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        rgb = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in srgb]
+        mat.diffuse_color = (*rgb, 1.0)
+        bsdf = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if mat.use_nodes else None
+        if bsdf:
+            bsdf.inputs["Base Color"].default_value = (*rgb, 1.0)
+    H._repeindre_sur_palette(pose)
+
+    bm = bmesh.new()
+    bm.from_mesh(pose)
+    bpy.data.meshes.remove(pose)
+    bas = Vector(tuple(min(v.co[i] for v in bm.verts) for i in range(3)))
+    for vert in bm.verts:
+        vert.co = (vert.co - bas) * facteur
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.validate(verbose=False)
+    objet = bpy.data.objects.new(name, mesh)
+    mesh.materials.append(H.textured_material("palette"))
+    coll.objects.link(objet)
+
+    for objet_source in importes:
+        bpy.data.objects.remove(objet_source, do_unlink=True)
+    for mat in [m for m in bpy.data.materials if m not in materiaux_avant and m.users == 0]:
+        bpy.data.materials.remove(mat)
+    for image in [i for i in bpy.data.images if i not in images_avant and i.users == 0]:
+        bpy.data.images.remove(image)
+    for action_source in [a for a in bpy.data.actions if a not in actions_avant and a.users == 0]:
+        bpy.data.actions.remove(action_source)
+    scene.frame_set(frame_avant, subframe=sous_image_avant)
     return name
 
 

@@ -40,6 +40,7 @@ contrôler la géométrie sans lancer le serveur de dev.
 from __future__ import annotations
 
 import math
+import json
 import os
 import sys
 
@@ -77,6 +78,10 @@ def rewire_as_game(mat: bpy.types.Material, ambiant: float = 1.0,
     if not mat.use_nodes:
         mat.use_nodes = True
     nt = mat.node_tree
+    principled = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    alpha_input = principled.inputs.get("Alpha") if principled else None
+    alpha_link = alpha_input.links[0].from_socket if alpha_input and alpha_input.is_linked else None
+    alpha_value = float(alpha_input.default_value) if alpha_input and not alpha_input.is_linked else 1.0
     # Nœuds cherchés par TYPE : une interface Blender en français traduit les noms.
     image = next((n for n in nt.nodes if n.type == "TEX_IMAGE"), None)
     out = next((n for n in nt.nodes if n.type == "OUTPUT_MATERIAL"), None)
@@ -98,8 +103,23 @@ def rewire_as_game(mat: bpy.types.Material, ambiant: float = 1.0,
     emit.inputs["Strength"].default_value = ambiant
     nt.links.new(mix.outputs["Color"], emit.inputs["Color"])
 
+    def surface_avec_alpha(surface):
+        """Garde l'alpha d'origine dans les vues de contrôle Blender."""
+        if alpha_link is None and alpha_value >= 0.999:
+            nt.links.new(surface, out.inputs["Surface"])
+            return
+        transparent = nt.nodes.new("ShaderNodeBsdfTransparent")
+        melange = nt.nodes.new("ShaderNodeMixShader")
+        nt.links.new(transparent.outputs["BSDF"], melange.inputs[1])
+        nt.links.new(surface, melange.inputs[2])
+        if alpha_link is not None:
+            nt.links.new(alpha_link, melange.inputs[0])
+        else:
+            melange.inputs[0].default_value = alpha_value
+        nt.links.new(melange.outputs["Shader"], out.inputs["Surface"])
+
     if not eclaire:
-        nt.links.new(emit.outputs["Emission"], out.inputs["Surface"])
+        surface_avec_alpha(emit.outputs["Emission"])
         return
 
     diffuse = nt.nodes.new("ShaderNodeBsdfDiffuse")
@@ -107,7 +127,7 @@ def rewire_as_game(mat: bpy.types.Material, ambiant: float = 1.0,
     somme = nt.nodes.new("ShaderNodeAddShader")
     nt.links.new(diffuse.outputs["BSDF"], somme.inputs[0])
     nt.links.new(emit.outputs["Emission"], somme.inputs[1])
-    nt.links.new(somme.outputs["Shader"], out.inputs["Surface"])
+    surface_avec_alpha(somme.outputs["Shader"])
 
 
 def blanchir_meshes_sans_col() -> int:
@@ -210,6 +230,42 @@ def find_spawn() -> bpy.types.Object | None:
     return None
 
 
+def cadrer_ecrans_preview(scene: bpy.types.Scene) -> int:
+    """Montre la première frame de chaque `ecran_*` comme dans le jeu.
+
+    Le générateur pose volontairement des UV neutres : `EcranSystem` les
+    réécrit au chargement puis à chaque frame. Sans ce passage, les captures
+    affichent des morceaux arbitraires de l'atlas et font prendre les CRTs
+    pour des panneaux publicitaires.
+    """
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    chemin = os.path.join(root, "assets_src", "textures", "prd_chaines.json")
+    with open(chemin, encoding="utf-8") as f:
+        atlas = json.load(f)
+    taille = atlas["atlas_px"]
+    nombre = 0
+    for obj in scene.objects:
+        if obj.type != "MESH" or not obj.name.startswith("ecran_"):
+            continue
+        frames = atlas["chaines"].get(str(obj.get("chaine", "")), {}).get("frames", [])
+        uv = obj.data.uv_layers.active
+        if not frames or uv is None:
+            continue
+        x, y, w, h = frames[0]
+        u0, v0, du, dv = x / taille, 1.0 - (y + h) / taille, w / taille, h / taille
+        u_min = min(loop.uv.x for loop in uv.data)
+        u_max = max(loop.uv.x for loop in uv.data)
+        v_min = min(loop.uv.y for loop in uv.data)
+        v_max = max(loop.uv.y for loop in uv.data)
+        u_span, v_span = max(u_max - u_min, 1e-6), max(v_max - v_min, 1e-6)
+        for loop in uv.data:
+            nu, nv = (loop.uv.x - u_min) / u_span, (loop.uv.y - v_min) / v_span
+            loop.uv = (u0 + nu * du, v0 + nv * dv)
+        obj.data.update()
+        nombre += 1
+    return nombre
+
+
 def main() -> None:
     args = get_args()
     out_dir = os.path.abspath(arg_value(args, "--out", "renders"))
@@ -240,6 +296,10 @@ def main() -> None:
     sans_col = blanchir_meshes_sans_col()
     if sans_col:
         print(f"[rendu] {sans_col} mesh(es) sans attribut `Col` — masque d'ombre neutre posé")
+
+    ecrans = cadrer_ecrans_preview(scene)
+    if ecrans:
+        print(f"[rendu] {ecrans} écran(s) affiché(s) sur leur première frame")
 
     lampes = build_game_lights(scene)
     for mat in bpy.data.materials:

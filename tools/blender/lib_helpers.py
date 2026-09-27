@@ -30,13 +30,17 @@ for _labels in ("prd_etiquettes", "prd_kiosque", "prd_ecrans", "prd_surgeles"):
 # les tranches. Voir `_uv_porte`.
 PORTES_DESIGN = {}
 for _portes in ("portes_verre", "portes", "portes_2"):
-    for _nom, _meta in json.load(open(os.path.join(TEX_DIR, _portes + ".json")))["portes"].items():
-        PORTES_DESIGN[_nom] = dict(_meta, atlas=_portes)
+    _porte_json = json.load(open(os.path.join(TEX_DIR, _portes + ".json")))
+    for _nom, _meta in _porte_json["portes"].items():
+        PORTES_DESIGN[_nom] = dict(_meta, atlas=_portes, atlas_px=_porte_json["atlas_px"])
+_porte_json = json.load(open(os.path.join(TEX_DIR, "portes_pc.json")))
+for _nom, _meta in _porte_json["portes"].items():
+    PORTES_DESIGN[_nom] = dict(_meta, atlas="portes_pc", atlas_px=_porte_json["atlas_px"])
 # Textures dont l'ALPHA est lu : le verre d'un vantail tient dans sa texture,
 # pas dans un second matériau (un `door_*` doit rester un seul mesh à un seul
 # matériau). La transparence est compatible avec l'invariant #5, qui porte sur
 # le modèle d'éclairage : `toLambert` recopie `transparent`/`opacity`.
-TEXTURES_ALPHA = frozenset({"portes_verre"})
+TEXTURES_ALPHA = frozenset({"portes_verre", "portes_pc"})
 # Le verre des `vitre_*` : un aplat de la palette à 30 % d'opacité. Un seul
 # matériau pour TOUTES les vitres du niveau — le jeu les regroupe en un lot par
 # cellule, et une teinte unique rend l'ordre de mélange indifférent.
@@ -269,7 +273,7 @@ def _uv_porte(nom: str, bounds):
     meta = PORTES_DESIGN[nom]
     x, y, w, h = meta["px"]
     cx, cy = meta["chant"]
-    a = 128.0
+    a = float(meta["atlas_px"])
     u0, u1, v_bot, v_top = x / a, (x + w) / a, 1 - (y + h) / a, 1 - y / a
     chant = ((cx + 0.5) / a, 1 - (cy + 0.5) / a)
     x0, y0, z0, x1, y1, z1 = bounds
@@ -298,7 +302,8 @@ def _uv_quincaillerie(nom: str):
     d'une porte partage ainsi le matériau de son vantail."""
     meta = PORTES_DESIGN[nom]
     x, y, w, h = meta["metal"]
-    u, v = (x + w / 2) / 128.0, 1 - (y + h / 2) / 128.0
+    a = float(meta["atlas_px"])
+    u, v = (x + w / 2) / a, 1 - (y + h / 2) / a
 
     def fn(face, uv):
         for loop in face.loops:
@@ -309,6 +314,11 @@ def _uv_quincaillerie(nom: str):
 def _mapper(uv: str, bounds, front: str):
     if uv == "world":
         return _uv_world
+    if uv == "ecran":
+        # `EcranSystem` normalise les UV sur tout le mesh avant de replacer la
+        # dalle dans l'atlas animé. La face avant couvre donc 0..1 et les
+        # côtés restent dans ce carré au lieu d'écraser sa plage.
+        return _uv_case(0.0, 1.0, 0.0, 1.0, bounds, front)
     if uv.startswith("trim:"):
         return _uv_trim(uv[5:], bounds)
     if uv.startswith("enseigne:"):
@@ -555,13 +565,15 @@ def kit_bounds(obj: bpy.types.Object) -> tuple[float, float, float]:
 
 
 # Matières de props — doit rester identique à `PROP_MATERIALS` dans
-# src/game/level/props.ts, et à `PROP_MATIERES` dans validate_level.py.
-PROP_MATIERES = ("bois", "carton", "verre", "metal")
+# src/game/level/props.ts, et à `PROP_MATIERES` dans validate_level.py. Les
+# trois dernières datent du chantier « Les coulisses » (2026-09-26,
+# fournil/chambre froide/atelier SAV).
+PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique")
 
 
 def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,
          uv: str = "world", masse: float | None = None, pv: float | None = None,
-         matiere: str | None = None, **kw) -> bpy.types.Object:
+         matiere: str | None = None, contenu: str | None = None, **kw) -> bpy.types.Object:
     """Mobilier PHYSIQUE `prop_<name>` : poussable, et cassable si `pv` est donné.
 
     Trois différences avec `box`, toutes les trois nécessaires :
@@ -574,7 +586,8 @@ def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,
        dynamique, construit par `loader.ts` depuis sa boîte englobante. Lui
        poser un collider statique par-dessus le figerait dans le décor.
     3. **Des custom properties** : `masse` (kg), `pv` (absent = indestructible),
-       `matiere` (son de casse et couleur des débris).
+       `matiere` (son de casse et couleur des débris), `contenu` (format
+       "nom:nombre" — nourriture lâchée à la casse, chantier « Les coulisses »).
 
     ATTENTION AU BUDGET : un prop ne rejoint jamais un lot de décor fusionné,
     il se dessine seul. Chaque prop posé est un lot de dessin de plus, sur un
@@ -593,6 +606,8 @@ def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,
         obj["pv"] = float(pv)
     if matiere is not None:
         obj["matiere"] = matiere
+    if contenu is not None:
+        obj["contenu"] = contenu
     return obj
 
 
@@ -630,4 +645,44 @@ def area_light(name: str, location, size: float, energy: float, coll: bpy.types.
     obj = bpy.data.objects.new(name, data)
     obj.location = location
     coll.objects.link(obj)
+    return obj
+
+
+# Doit rester identique à `ECRAN_CHAINES` dans `validate_level.py` et
+# `src/game/level/ecrans.ts` — `"casse"` en est absent exprès, voir ces deux
+# fichiers : c'est un état interne, jamais posé dans Blender.
+ECRAN_CHAINES = ("journal", "pub", "mire", "foot", "cctv")
+
+
+def ecran(name: str, bounds, chaine: str, coll: bpy.types.Collection,
+          pv: float | None = None, front: str = "-y") -> bpy.types.Object:
+    """Écran/façade animé `ecran_<name>` (chantier « Les coulisses », système 2) :
+    UN mesh, UN matériau `prd_chaines`. L'UV avant couvre 0..1 pour que le
+    re-mapping complet effectué par `EcranSystem` préserve toute l'image.
+    `pv` absent = incassable."""
+    if chaine not in ECRAN_CHAINES:
+        raise ValueError(f"{name}: chaine '{chaine}' inconnue ({', '.join(ECRAN_CHAINES)})")
+    obj = box(f"ecran_{name}", bounds, "prd_chaines", coll, uv="ecran", front=front)
+    obj["chaine"] = chaine
+    if pv is not None:
+        obj["pv"] = float(pv)
+    return obj
+
+
+def cam(name: str, location, target, coll: bpy.types.Collection, nom: str) -> bpy.types.Object:
+    """Empty `cam_<name>` (chantier « Les coulisses », système 4) : point de vue
+    fixe d'une console de vidéosurveillance, visé sur `target` (coordonnées
+    monde). Le repère local +Y de Blender devient le −Z de three.js — le sens
+    de vue d'une caméra three — d'où `to_track_quat('Y', 'Z')`, PAS le
+    `'-Z'`/`'Y'` habituel d'une caméra Blender."""
+    from mathutils import Vector
+    obj = bpy.data.objects.new(f"cam_{name}", None)
+    obj.location = location
+    direction = Vector(target) - Vector(location)
+    obj.rotation_mode = "QUATERNION"
+    obj.rotation_quaternion = direction.to_track_quat("Y", "Z")
+    obj.empty_display_type = "PLAIN_AXES"
+    obj.empty_display_size = 0.5
+    coll.objects.link(obj)
+    obj["nom"] = nom
     return obj

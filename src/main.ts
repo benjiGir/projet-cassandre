@@ -1,5 +1,6 @@
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
+import * as THREE from "three";
 
 import "./ui/theme/tokens.css";
 
@@ -118,8 +119,8 @@ async function main() {
     flowActor.send({ type: "PAUSE" });
   });
 
-  // Pools de SFX (tir, impact), placeholders synthétiques (invariant #9).
-  // see: docs/systems/hud-audio.md#assets-sonores
+  // Pools de SFX (tir, impact), placeholders synthétiques (pas d'assets finaux tant que le gameplay n'est pas validé).
+  // see: docs/archive/systems-hud-audio.md#assets-sonores
   initAudio();
   // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
   // see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
@@ -189,6 +190,12 @@ async function main() {
     }),
   );
 
+  // Scratch de la substitution caméra pendant une vue par caméra (voir
+  // `render()` ci-dessous) — hors de la boucle : le pas fixe ne doit rien
+  // allouer, même règle que les scratches de `game/level/props.ts`.
+  const cameraViewPrevPos = new THREE.Vector3();
+  const cameraViewPrevQuat = new THREE.Quaternion();
+
   startLoop({
     updateDisplayInput: () => updateDisplayInput(engine),
     snapshotPrevious: () => snapshotPrevious(engine),
@@ -197,12 +204,40 @@ async function main() {
     updateGameplay: (dt) => updateGameplay(engine, dt),
     stepPhysics: (dt) => stepPhysics(engine, dt),
     interpolateVisuals: (alpha) => interpolateVisuals(engine, alpha),
-    updateFx: (realDt, stats) => updateFx(engine, realDt, stats),
+    updateFx: (realDt, stats) => {
+      updateFx(engine, realDt, stats);
+      // Vue par caméra (chantier « Les coulisses », système 4) : le
+      // grésillement de l'overlay avance au dt RÉEL, jamais le pas fixe
+      // (voir `CameraViewOverlay.update`) — même contrat que le réticule.
+      engine.cameraViewOverlay.update(realDt);
+    },
     render() {
+      // Vue par caméra : substitue transitoirement la transform de
+      // `engine.camera` par celle du `cam_*` courant, le temps d'un seul
+      // appel de rendu — jamais un second `WebGLRenderTarget`, la résolution
+      // interne (640×360) reste la même pour les deux (invariant #4). Restauré
+      // aussitôt après : `interpolateVisuals` (pas fixe suivant) continue de
+      // piloter `engine.camera` depuis la visée réelle du joueur, jamais depuis
+      // cette valeur transitoire.
+      const cam = engine.session.cameraView?.currentCam ?? null;
+      if (cam) {
+        cameraViewPrevPos.copy(engine.camera.position);
+        cameraViewPrevQuat.copy(engine.camera.quaternion);
+        engine.camera.position.copy(cam.position);
+        engine.camera.quaternion.copy(cam.quaternion);
+        engine.camera.updateMatrixWorld(true);
+      }
+
       // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : seul appel qui touche
       // vraiment une API externe dans le chemin de rendu — voir
       // `RenderService` (`render/renderService.ts`).
       runGameplaySync(RenderService.use((rs) => rs.render(engine.renderer, engine.scene, engine.camera)));
+
+      if (cam) {
+        engine.camera.position.copy(cameraViewPrevPos);
+        engine.camera.quaternion.copy(cameraViewPrevQuat);
+      }
+      engine.cameraViewOverlay.render(cam !== null, cam?.label ?? null);
     },
   });
 

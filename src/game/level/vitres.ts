@@ -4,9 +4,10 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { damageForWeapon } from "../player/weaponConfig";
 import type { HitEvent } from "../player/weapons";
+import type { PropMaterial } from "./props";
 
 /**
- * Préfixe `vitre_*` — vitrage cassable ou non, voir
+ * Préfixe `vitre_*` — vitrage ou panneau mince cassable, voir
  * `docs/archive/reference-conventions-nommage.md#préfixe-vitre` et
  * [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
  *
@@ -41,6 +42,8 @@ export interface VitreCandidate {
   body: RAPIER.RigidBody | null;
   /** PV de départ, lus dans `pv`. `null` = incassable (absent, invalide, ou `solide: false`). */
   maxHp: number | null;
+  /** Matière des débris/du son, `verre` par défaut. */
+  matiere?: PropMaterial;
   givre: boolean;
   extras: Record<string, unknown>;
 }
@@ -57,6 +60,7 @@ export interface VitreInfo {
   collider: RAPIER.Collider | null;
   body: RAPIER.RigidBody | null;
   maxHp: number | null;
+  matiere: PropMaterial;
   givre: boolean;
   extras: Record<string, unknown>;
   batchGeometry: THREE.BufferGeometry;
@@ -102,6 +106,7 @@ function passthroughVitreInfo(candidate: VitreCandidate): VitreInfo {
     collider: candidate.collider,
     body: candidate.body,
     maxHp: candidate.maxHp,
+    matiere: candidate.matiere ?? "verre",
     givre: candidate.givre,
     extras: candidate.extras,
     batchGeometry: candidate.mesh.geometry,
@@ -168,6 +173,7 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
         collider: candidate.collider,
         body: candidate.body,
         maxHp: candidate.maxHp,
+        matiere: candidate.matiere ?? "verre",
         givre: candidate.givre,
         extras: candidate.extras,
         batchGeometry: merged,
@@ -201,12 +207,13 @@ export interface VitreHitEvent {
   fatal: boolean;
 }
 
-/** Une vitre dont les PV viennent de tomber à zéro (ou cassée d'un coup par un tir ennemi). */
+/** Un `vitre_*` dont les PV viennent de tomber à zéro (ou cassé par un tir ennemi). */
 export interface VitreDestroyedEvent {
   name: string;
   point: THREE.Vector3;
   direction: THREE.Vector3;
   givre: boolean;
+  matiere: PropMaterial;
 }
 
 interface VitreState {
@@ -329,7 +336,13 @@ export class VitreSystem {
     position.needsUpdate = true;
 
     const finalDirection = direction.lengthSq() < 1e-8 ? DEFAULT_BREAK_DIRECTION.clone() : direction.clone().normalize();
-    this._destroyedEvents.push({ name: state.info.name, point: point.clone(), direction: finalDirection, givre: state.info.givre });
+    this._destroyedEvents.push({
+      name: state.info.name,
+      point: point.clone(),
+      direction: finalDirection,
+      givre: state.info.givre,
+      matiere: state.info.matiere,
+    });
   }
 
   /** Résumé lisible pour la console de dev (`cassandre.vitres()`). */

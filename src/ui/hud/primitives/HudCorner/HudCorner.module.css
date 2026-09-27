@@ -1,6 +1,6 @@
 /* Le calque est au-dessus du jeu : un clic intercepté casserait la visée. */
 .corner {
-  position: fixed;
+  position: absolute;
   pointer-events: none;
   user-select: none;
   font-family: var(--font-mono);

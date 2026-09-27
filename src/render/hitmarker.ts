@@ -56,19 +56,12 @@ export class HitmarkerOverlay {
 
     const canvas = document.createElement("canvas");
     canvas.id = "hitmarker";
+    canvas.className = "game-overlay";
     canvas.width = INTERNAL_WIDTH;
     canvas.height = INTERNAL_HEIGHT;
-    // Même contrat CSS que `canvas#game` (voir `index.html`) : plein écran,
-    // aucune interception de pointeur (le hitmarker est purement décoratif),
-    // filtrage au plus proche pour rester dans l'identité visuelle rétro
-    // (invariant #4/#5).
-    canvas.style.position = "fixed";
-    canvas.style.inset = "0";
-    canvas.style.width = "100vw";
-    canvas.style.height = "100vh";
-    canvas.style.display = "block";
+    // Même cadre 16:9 que le jeu (voir `index.html`), sans étirement selon
+    // l'écran ; le hitmarker reste décoratif et au plus proche.
     canvas.style.pointerEvents = "none";
-    canvas.style.imageRendering = "pixelated";
     container.appendChild(canvas);
 
     const ctx = canvas.getContext("2d");

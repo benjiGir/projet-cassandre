@@ -108,6 +108,33 @@ COQUE = {
     # sol est celui de la cafétéria, d'un seul tenant (`SOL_COMMUN`) ; le plafond,
     # en plâtre, est posé par `habiller_toilettes` (`PLAFOND_SUR_MESURE`).
     "toilettes": ("sol_damier", "sol_carrelage_blanc", "mur_platre"),
+
+    # ===== Les coulisses, v2 (2026-09-26) =====
+    # Vestiaires et fournil sont des locaux d'hygiène (douches, denrées) :
+    # même carrelage blanc que les caisses. Labo boucherie/marée et chambre
+    # froide gardent ce carrelage (grès du labo, section 3.2.D du board) ; le
+    # compacteur reste brut, comme la réserve dont il dépend ; la planque du
+    # vigile (secret 4) tranche exprès avec sa moquette, seul confort des
+    # coulisses. La gaine VMC n'a ni sol ni mur propres (un conduit), elle
+    # prend le béton du couloir qu'elle double.
+    "vestiaires": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "fournil": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "gaine": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
+    # `pc_secu` (le pilote) a sa propre moquette institutionnelle et son
+    # plafond sombre construits à la main (`PLAFOND_SUR_MESURE`) — l'entrée de
+    # `plafond_dalles` ci-dessous ne sert donc qu'à documenter le défaut avant
+    # override, jamais lue par `plafond()`. Un bureau de contrôle et un
+    # atelier de retours : béton de la réserve qu'ils prolongent, pas la
+    # faïence des locaux d'hygiène voisins.
+    # `mur_platre` (propre) et pas `mur_platre_use` (rouillé) : une peinture
+    # institutionnelle, pas un mur d'usine — corrigé après critique du pilote
+    # (2026-09-26, 2e passe), le rendu confondait les deux à l'œil.
+    "pc_secu": ("sol_moquette", "mur_platre", "plafond_dalles"),
+    "sav": ("sol_beton", "mur_platre_use", "plafond_dalles"),
+    "labo": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "chambre_froide": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "compacteur": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
+    "secret4": ("sol_moquette", "mur_platre_use", "plafond_dalles"),
 }
 COQUE_COULOIR = ("sol_terrazzo", "mur_platre", "plafond_dalles")
 
@@ -144,7 +171,7 @@ def materiaux_espace(space, gris: dict, cache: dict) -> dict:
 
 # Espaces dont l'habillage construit son propre plafond (percé, à redans...) :
 # `plafond()` les laisse tranquilles plutôt que d'en poser un second par-dessus.
-PLAFOND_SUR_MESURE = frozenset({"galerie", "toilettes"})
+PLAFOND_SUR_MESURE = frozenset({"galerie", "toilettes", "pc_secu"})
 
 # Idem pour le SOL, quand l'habillage le découpe en bandes de textures
 # différentes. Le défaut est volontairement l'inverse — `main()` pose un sol
@@ -260,6 +287,12 @@ def poser_linteaux(ouvertures, gris, cache, coll) -> int:
             continue
         pa, pb = _plafond_au_bord(a, o.axe, o.at), _plafond_au_bord(b, o.axe, o.at)
         if abs(pa - pb) < 1e-6:
+            continue
+        if frozenset({o.a, o.b}) == frozenset({"pc_secu", "gaine"}):
+            # Le puits d'accès VMC prolonge l'escalier au-dessus du plafond du
+            # PC. Sa grille cassable ferme toute la hauteur du raccord
+            # (z=2..4 m) ; un linteau côté gaine la couperait et recréerait une
+            # ouverture au-dessus d'elle.
             continue
         # Le linteau appartient au côté HAUT, posé dans l'emprise de ses murs
         # (règle 3 du blockout : jamais à cheval sur la ligne de façade).
@@ -1653,6 +1686,13 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
                                 ((ventx + 1.99, y1 - 0.3, z + 2.0, ventx + 2.08, y1 - 0.24, z + 4.0), "world")],
             "metal_bac_acier", props)
 
+    # Chantier « Les coulisses » (2026-09-26) : un distributeur CASSABLE, à
+    # l'écart des tables et du comptoir (mêmes matière/contenu que ceux du
+    # couloir du personnel, `habiller_c_short_ramp`/`_w`).
+    H.prop("ca_distributeur", (35.0, 12.0, z, 35.9, 12.75, z + 1.9),
+          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
+          contenu="canette:3")
+
     L.place(B.fontaine_eau(), (x0 + 0.6, 2.0, z), 0, props, col_coll, "ca_fontaine")
     for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.4, y1 - 1.4))):
         L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"ca_pou{i}")
@@ -2210,6 +2250,11 @@ def habiller_direction(space, gris, props, col_coll, logic) -> dict:
         poser(B.meuble("cabinetTelevision"), ouest, ty, z, "+x", props, col_coll, f"di_meuble_tv{i}")
         poser(B.meuble("televisionModern"), ouest + 0.1, ty + 0.15, z + h_meuble, "+x",
               props, col_coll, f"di_tv{i}")
+        # Le Directeur surveille son magasin : un vrai écran `ecran_*`, en
+        # saillie sur la façade du téléviseur (chantier « Les coulisses »).
+        H.ecran(f"di_tv{i}", (ouest + 0.16, ty + 0.30, z + h_meuble + 0.10,
+                              ouest + 0.20, ty + 0.70, z + h_meuble + 0.42),
+                "cctv", props)
 
     # Deux vraies fenêtres à l'ouest, sur la ville : l'une au-dessus des
     # écrans, l'autre au-dessus du canapé.
@@ -2272,6 +2317,7 @@ HAUTEUR_VANTAIL = {
     frozenset({"c_short_w", "rayons"}): 2.25,
     frozenset({"galerie", "secret1"}): bo.HAUTEUR_PORTE,
     frozenset({"cafeteria", "toilettes"}): 2.0,
+    frozenset({"c_bu", "pc_secu"}): 2.1,
     "sortie": 2.25,
 }
 
@@ -2550,6 +2596,43 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
             poses += sas_vitre(o, "sas_ext", 1, props, col_coll)
         elif cle == frozenset({"c_pk_ga", "galerie"}):
             poses += sas_vitre(o, "sas_int", -1, props, col_coll)
+        elif cle == frozenset({"c_bu", "pc_secu"}):
+            # Porte d'accès depuis le couloir ; le passage intérieur vers le
+            # poste des caméras reste ouvert, sans second vantail.
+            porte_double(o, ("door_pc_entree_g", "door_pc_entree_d"), HAUTEUR_VANTAIL[cle],
+                         "portes_pc", "porte:porte_pc", props,
+                         dict(sens="auto", auto=True, portee=1.8, referme=True, delai=0.7,
+                              groupe="pc_entree"), vers=1)
+            poses += 2
+        elif cle == frozenset({"pc_secu", "gaine"}):
+            # Grille métallique posée dans le raccord surélevé (z=2..4 m).
+            # Le mesh `vitre_*` fournit son collider et sa casse ; aucun bouton
+            # ni animation de porte ne ferme ce passage.
+            lo, hi = o.span
+            espaces = {s.id: s for s in plan.ALL}
+            z0 = max(o.z_a, o.z_b)
+            z1 = max(_plafond_au_bord(espaces[o.a], o.axe, o.at),
+                     _plafond_au_bord(espaces[o.b], o.axe, o.at))
+            e = EP_VANTAIL / 2
+            rail = 0.07
+            parts = [
+                (_monde(o, lo, -e, z0, lo + rail, e, z1), "world"),
+                (_monde(o, hi - rail, -e, z0, hi, e, z1), "world"),
+                (_monde(o, lo + rail, -e, z0, hi - rail, e, z0 + rail), "world"),
+                (_monde(o, lo + rail, -e, z1 - rail, hi - rail, e, z1), "world"),
+            ]
+            for i in range(1, 5):
+                centre = lo + (hi - lo) * i / 5
+                parts.append((_monde(o, centre - 0.025, -e, z0 + rail,
+                                     centre + 0.025, e, z1 - rail), "world"))
+            for hauteur in (0.65, 1.30):
+                if z0 + hauteur < z1 - rail:
+                    parts.append((_monde(o, lo + rail, -e, z0 + hauteur,
+                                         hi - rail, e, z0 + hauteur + 0.045), "world"))
+            grille = H.boxes("vitre_pc_gaine", parts, "metal_tole_perforee", props)
+            grille["pv"] = 45
+            grille["matiere"] = "metal"
+            poses += 1
         elif cle == frozenset({"hub", "c_hb_rs"}):
             # Va-et-vient « PRIVÉ » : elles battent des deux côtés, se referment
             # seules, et laissent passer les Costards.
@@ -2731,6 +2814,554 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
     return {"meubles": 7 + meubles, "lampes": lampes}
 
 
+# --- Habillage : PC sécurité, le PILOTE des coulisses v2 --------------------
+#
+# Seule pièce habillée de cette passe (voir `HABILLAGE` : vestiaires, fournil,
+# gaine, labo, chambre froide, compacteur, secret4 et sav restent gris tant
+# que la disposition v2 n'a pas tenu la comparaison au board de références).
+# `pc_secu` exerce les systèmes d'écrans et de caméras : huit CRT construits
+# ici, un poste E qui parcourt six caméras, le vigile endormi et son guichet.
+
+# (nom, chaîne) des six caméras de la console — voir `poser_cameras_pc_secu`
+# pour leur position/visée réelle. Dans l'ordre où E les fait défiler.
+PC_SECU_CAMS = ("cam_rayons", "cam_hub", "cam_reserve", "cam_souterrain",
+               "cam_electro", "cam_direction")
+
+
+def poser_cameras_pc_secu(props, logic) -> int:
+    """Les six `cam_*` cyclées par `use_pc_secu` — un point de vue par grand
+    espace du niveau, dont un cadrant le Directeur à son poste
+    (`spawn_director_bu1`, plan de masse). Empties : rendues dans `logic`,
+    jamais dans `props` (voir `validate_level.py::cam_*`, EMPTY obligatoire)."""
+    H.cam("rayons", (-30.0, 75.0, 2.6), (-30.0, 50.0, 1.0), logic, "RAYONS")
+    H.cam("hub", (0.0, 86.0, 3.2), (0.0, 48.0, 1.0), logic, "ALLEE CENTRALE")
+    H.cam("reserve", (8.0, 126.0, 5.0), (-8.0, 100.0, 1.0), logic, "RESERVE")
+    H.cam("souterrain", (68.0, 118.0, -4.0), (34.0, 96.0, -5.0), logic, "PARKING -1")
+    H.cam("electro", (38.0, 74.0, 3.0), (14.0, 52.0, 1.0), logic, "ELECTROMENAGER")
+    H.cam("direction", (-42.0, 149.0, 6.2), (-38.0, 159.0, 5.2), logic, "DIRECTION")
+    return len(PC_SECU_CAMS)
+
+
+# La cloison sépare le sas d'accueil du poste. Une seconde délimite le passage
+# technique à l'est; la grille de gaine reste au niveau haut des marches.
+PS_PARTITION_Y0, PS_PARTITION_Y1 = 144.25, 144.5   # cloison, épaisseur 0,25 m
+PS_PORTE_INT = (37.25, 38.75)                       # passage aligné sur l'entrée
+PS_FENETRE_INT = (39.25, 42.0)                      # guichet vitré intérieur
+PS_SERVICE_X0, PS_SERVICE_X1 = 42.35, 42.60         # séparation poste / passage technique
+PS_SERVICE_PORTE = (150.35, 151.50)                # accès aux marches de la gaine
+PS_GAINE_PUITS_X = (43.75, 45.75)
+PS_GAINE_PUITS_Y = (150.0, 152.0)
+
+
+def habiller_pc_secu(space, gris, props, col_coll, logic) -> dict:
+    """Poste de surveillance du board (`docs/assets/board-coulisses.md`, 3.2.C).
+
+    Une porte vitrée donne sur le couloir, puis un passage cadré sans vantail
+    mène au guichet et au poste. Consoles, meubles CRT, chaise et supports sont
+    construits ici; seuls le vigile CC0 et les flux animés viennent d'assets.
+    Le plafond reste continu au-dessus de l'escalier d'accès à la gaine."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    t = bo.EPAISSEUR_MUR
+    ht = z + space.hauteur
+    # Nettement plus sombre que `mur_platre` (institutionnel clair) : après la
+    # 1ère passe, `#444a54` s'y confondait à l'œil (soubassement invisible au
+    # rendu). `#2f3541` est déjà la couleur du plafond — cohérent, et lisible.
+    WAINSCOT, CEILING_DARK = "#2f3541", "#2f3541"
+
+    def wainscot(nom, x_a, x_b, y_a, y_b):
+        """Soubassement peint, 1 m de haut, 3 cm en saillie du mur — jamais à
+        fleur (z-fighting, voir `retro-texture-density`)."""
+        H.box(nom, (x_a, y_a, z, x_b, y_b, z + 1.0), "palette", props, uv=f"aplat:{WAINSCOT}")
+
+    # --- Plafond sombre, continu au-dessus des dernières marches.
+    H.box("plafond_ps_guichet", (x0, y0, ht, x1, PS_PARTITION_Y0, ht + EPAISSEUR_PLAFOND),
+          "palette", props, uv=f"aplat:{CEILING_DARK}")
+    px0, px1 = PS_GAINE_PUITS_X
+    py0, py1 = PS_GAINE_PUITS_Y
+    ceiling_parts = [
+        ((x0, PS_PARTITION_Y1, ht, px0, y1, ht + EPAISSEUR_PLAFOND), f"aplat:{CEILING_DARK}"),
+        ((px1, PS_PARTITION_Y1, ht, x1, y1, ht + EPAISSEUR_PLAFOND), f"aplat:{CEILING_DARK}"),
+        ((px0, PS_PARTITION_Y1, ht, px1, py0, ht + EPAISSEUR_PLAFOND), f"aplat:{CEILING_DARK}"),
+        ((px0, py0, ht, px1, py1, ht + EPAISSEUR_PLAFOND), f"aplat:{CEILING_DARK}"),
+    ]
+    H.boxes("plafond_ps_moniteurs", ceiling_parts, "palette", props)
+    puits_walls = [
+        ((px0 + 0.12, py0, ht, px1 - 0.12, py0 + 0.12, ht + 1.0), f"aplat:{WAINSCOT}"),
+        ((px0, py0 + 0.12, ht, px0 + 0.12, py1, ht + 1.0), f"aplat:{WAINSCOT}"),
+        ((px1 - 0.12, py0 + 0.12, ht, px1, py1, ht + 1.0), f"aplat:{WAINSCOT}"),
+    ]
+    H.boxes("ps_gaine_puits", puits_walls, "palette", props)
+    for i, (bounds, _uv) in enumerate(puits_walls):
+        H.col_box(f"ps_gaine_puits_{i}", bounds, col_coll)
+
+    # --- Cloison vitrée entre sas et poste : passage central aligné avec la
+    # porte extérieure, guichet à droite, parois pleines jusqu'aux murs latéraux.
+    px0, px1 = PS_PORTE_INT
+    fx0, fx1 = PS_FENETRE_INT
+    # Insérée entre les murs est/ouest de la coque (`x0 + t` .. `x1 - t`) :
+    # aux bornes brutes `x0`/`x1`, elle recouvrait 0,25 m du mur périmétrique
+    # (trouvé par `audit_niveau.py`).
+    for a, b in ((x0 + t, px0), (px1, fx0), (fx1, x1 - t)):
+        if b - a > 0.01:
+            cloison_pleine(f"ps_cloison_{a:.2f}", (a, PS_PARTITION_Y0, z, b, PS_PARTITION_Y1, ht), props, col_coll,
+                            texture="mur_platre")
+    H.box("ps_cloison_allege", (fx0, PS_PARTITION_Y0, z, fx1, PS_PARTITION_Y1, z + 0.9),
+          "metal_bac_acier", props)
+    H.col_box("ps_cloison_allege", (fx0, PS_PARTITION_Y0, z, fx1, PS_PARTITION_Y1, z + 0.9), col_coll)
+    H.box("ps_cloison_bandeau", (fx0, PS_PARTITION_Y0, z + 2.2, fx1, PS_PARTITION_Y1, ht),
+          "mur_platre", props)
+    # Le guichet garde une fente étroite au-dessus du comptoir; la vitre reste
+    # pleine du point de vue du joueur, avec un collider sur toute la baie.
+    gx_mid0, gx_mid1 = 40.2, 41.0
+    vitre_parts = [
+        ((fx0, PS_PARTITION_Y0, z + 0.9, fx1, PS_PARTITION_Y1, z + 1.12), f"aplat:{H.VERRE_TEINTE}"),
+        ((fx0, PS_PARTITION_Y0, z + 1.30, fx1, PS_PARTITION_Y1, z + 2.2), f"aplat:{H.VERRE_TEINTE}"),
+        ((fx0, PS_PARTITION_Y0, z + 1.12, gx_mid0, PS_PARTITION_Y1, z + 1.30), f"aplat:{H.VERRE_TEINTE}"),
+        ((gx_mid1, PS_PARTITION_Y0, z + 1.12, fx1, PS_PARTITION_Y1, z + 1.30), f"aplat:{H.VERRE_TEINTE}"),
+    ]
+    H.boxes("vitre_ps_cloison", vitre_parts, "verre", props)
+    H.col_box("ps_cloison_vitre", (fx0, PS_PARTITION_Y0, z + 0.9, fx1, PS_PARTITION_Y1, z + 2.2), col_coll)
+    cloison_pleine("ps_cloison_linteau_passe", (px0, PS_PARTITION_Y0, z + 2.15,
+                                                   px1, PS_PARTITION_Y1, ht), props, col_coll,
+                    texture="mur_platre")
+    H.boxes("ps_passe_poste_cadre", [
+        ((px0 - 0.07, PS_PARTITION_Y0 - 0.035, z, px0, PS_PARTITION_Y1 + 0.035, z + 2.12),
+         "aplat:#444a54"),
+        ((px1, PS_PARTITION_Y0 - 0.035, z, px1 + 0.07, PS_PARTITION_Y1 + 0.035, z + 2.12),
+         "aplat:#444a54"),
+        ((px0, PS_PARTITION_Y0 - 0.035, z + 2.15, px1, PS_PARTITION_Y1 + 0.035, z + 2.22),
+         "aplat:#767676"),
+    ], "palette", props)
+    porte_double(plan.Opening("pc_secu", "pc_poste", "y",
+                              (PS_PARTITION_Y0 + PS_PARTITION_Y1) / 2,
+                              (px0, px1), z, z),
+                 ("door_pc_poste_g", "door_pc_poste_d"), 2.15,
+                 "portes_pc", "porte:porte_pc", props,
+                 dict(sens="auto", auto=True, portee=1.8, referme=True, delai=0.6,
+                      groupe="pc_poste"), vers=1)
+
+    # Passage technique à l'est : le poste de surveillance fait 8,1 × 7,25 m
+    # (≈59 m²). L'ouverture au nord mène directement aux marches de la gaine.
+    sy0, sy1 = PS_SERVICE_PORTE
+    for a, b in ((PS_PARTITION_Y1, sy0), (sy1, y1 - t)):
+        if b - a > 0.01:
+            cloison_pleine("ps_cloison_service", (PS_SERVICE_X0, a, z, PS_SERVICE_X1, b, ht),
+                            props, col_coll, texture="mur_platre")
+    H.boxes("ps_passage_technique_cadre", [
+        ((PS_SERVICE_X0 - 0.04, sy0 - 0.08, z, PS_SERVICE_X1 + 0.04, sy0, z + 2.35), "aplat:#444a54"),
+        ((PS_SERVICE_X0 - 0.04, sy1, z, PS_SERVICE_X1 + 0.04, sy1 + 0.08, z + 2.35), "aplat:#444a54"),
+        ((PS_SERVICE_X0 - 0.04, sy0, z + 2.35, PS_SERVICE_X1 + 0.04, sy1, z + 2.45), "aplat:#babcbc"),
+    ], "palette", props)
+    # =========================== SAS D'ACCUEIL ==============================
+    gy0, gy1 = y0, PS_PARTITION_Y0
+    wainscot("ps_g_soub_o", x0 + t, x0 + t + 0.03, gy0 + t, gy1 - t)
+    wainscot("ps_g_soub_e", x1 - t - 0.03, x1 - t, gy0 + t, gy1 - t)
+
+    # L'entrée sud vitrée déclarée au plan : cadre métallique et panneau de
+    # vidéosurveillance, vu dès l'approche depuis le couloir.
+    entree = next(o for o in plan.openings()
+                  if frozenset({o.a, o.b}) == frozenset({"c_bu", "pc_secu"}))
+    ex0, ex1 = entree.span
+    cadre_entree = [
+        ((ex0, y0 - 0.07, z, ex0 + 0.09, y0 + 0.07, z + 2.18), "aplat:#444a54"),
+        ((ex1 - 0.09, y0 - 0.07, z, ex1, y0 + 0.07, z + 2.18), "aplat:#444a54"),
+        ((ex0, y0 - 0.07, z + 2.10, ex1, y0 + 0.07, z + 2.20), "aplat:#444a54"),
+        ((ex0 + 0.04, y0 - 0.04, z, ex1 - 0.04, y0 + 0.04, z + 0.025), "aplat:#babcbc"),
+    ]
+    H.boxes("ps_entree_dormant", cadre_entree, "palette", props)
+    H.col_box("pc_entree_linteau",
+              (ex0, y0 - 0.25, z + HAUTEUR_VANTAIL[frozenset({"c_bu", "pc_secu"})],
+               ex1, y0 + 0.25, ht), col_coll)
+    H.box("ps_entree_enseigne", ((ex0 + ex1) / 2 - 1.0, y0 - 0.30, z + 2.37,
+                                 (ex0 + ex1) / 2 + 1.0, y0 - 0.25, z + 2.82),
+          "palette", props, uv="aplat:#d8231f", front="-y")
+    H.boxes("ps_entree_icone", [
+        (((ex0 + ex1) / 2 - 0.42, y0 - 0.34, z + 2.54,
+          (ex0 + ex1) / 2 + 0.18, y0 - 0.31, z + 2.68), "aplat:#dbd0c4", "-y"),
+        (((ex0 + ex1) / 2 + 0.18, y0 - 0.34, z + 2.57,
+          (ex0 + ex1) / 2 + 0.34, y0 - 0.31, z + 2.65), "aplat:#dbd0c4", "-y"),
+        (((ex0 + ex1) / 2 - 0.08, y0 - 0.34, z + 2.43,
+          (ex0 + ex1) / 2 + 0.02, y0 - 0.31, z + 2.54), "aplat:#dbd0c4", "-y"),
+    ], "palette", props)
+
+    # Comptoir de réception dans la cloison intérieure, face au sas. Deux
+    # montants portent le plateau jusqu'au sol; la vitre et son hygiaphone
+    # cadrent la fente de service.
+    H.box("ps_guichet_comptoir", (fx0 + 0.12, PS_PARTITION_Y0 - 0.48, z + 0.91,
+                                  fx1 - 0.12, PS_PARTITION_Y0 + 0.02, z + 1.02),
+          "metal_bac_acier", props)
+    H.col_box("ps_guichet_comptoir", (fx0 + 0.12, PS_PARTITION_Y0 - 0.48, z + 0.91,
+                                      fx1 - 0.12, PS_PARTITION_Y0 + 0.02, z + 1.02), col_coll)
+    piliers_comptoir = [
+        ((fx0 + 0.18, PS_PARTITION_Y0 - 0.20, z, fx0 + 0.32, PS_PARTITION_Y0 - 0.04, z + 0.91), "world"),
+        ((fx1 - 0.32, PS_PARTITION_Y0 - 0.20, z, fx1 - 0.18, PS_PARTITION_Y0 - 0.04, z + 0.91), "world"),
+    ]
+    H.boxes("ps_guichet_piliers", piliers_comptoir, "metal_bac_acier", props)
+    for i, (bounds, _uv) in enumerate(piliers_comptoir):
+        H.col_box(f"ps_guichet_pilier_{i}", bounds, col_coll)
+    H.box("ps_guichet_plateau", (40.15, PS_PARTITION_Y0 - 0.40, z + 1.02,
+                                  40.95, PS_PARTITION_Y0 - 0.08, z + 1.06),
+          "palette", props, uv="aplat:#bdae9a")
+    H.boxes("ps_guichet_hygiaphone", [
+        ((40.35, PS_PARTITION_Y0 - 0.035, z + 1.35, 40.85, PS_PARTITION_Y0 - 0.015, z + 1.51), "aplat:#767676"),
+        ((40.43, PS_PARTITION_Y0 - 0.04, z + 1.52, 40.77, PS_PARTITION_Y0 - 0.015, z + 1.57), "aplat:#babcbc"),
+    ], "palette", props)
+    H.boxes("ps_guichet_perforations", [
+        ((40.45 + i * 0.055, PS_PARTITION_Y0 - 0.045, z + 1.39,
+          40.47 + i * 0.055, PS_PARTITION_Y0 - 0.041, z + 1.46), "aplat:#111014")
+        for i in range(5)
+    ], "palette", props)
+    H.box("ps_guichet_panneau", (39.85, PS_PARTITION_Y0 - 0.025, z + 2.40,
+                                 41.35, PS_PARTITION_Y0 + 0.01, z + 2.78),
+          "palette", props, uv="aplat:#deb789")
+    H.box("ps_guichet_panneau_bandeau", (39.85, PS_PARTITION_Y0 - 0.03, z + 2.63,
+                                          41.35, PS_PARTITION_Y0 - 0.01, z + 2.78),
+          "palette", props, uv="aplat:#d8231f")
+
+    # Affiche de consignes, bien en vue en entrant : un aplat blanc cassé, un
+    # bandeau rouge — lisible comme une affiche réglementaire sans texte.
+    H.box("ps_affiche", (x0 + t, gy0 + 2.6, z + 1.3, x0 + t + 0.03, gy0 + 3.3, z + 2.0),
+          "palette", props, uv="aplat:#deb789")
+    H.box("ps_affiche_bandeau", (x0 + t + 0.031, gy0 + 2.6, z + 1.85, x0 + t + 0.034, gy0 + 3.3, z + 2.0),
+          "palette", props, uv="aplat:#d8231f")
+
+    # Vue sur l'intérieur allumé, depuis le couloir sombre : une petite source
+    # chaude juste derrière la vitre, en plus du tube du guichet.
+    lampe(logic, "light_ps_guichet_vitre", (40.6, PS_PARTITION_Y1 + 0.75, z + 1.65),
+          color="#f2b25a", intensity=1.2, distance=3.0)
+
+    # ========================= SALLE DES MONITEURS ===========================
+    my0, my1 = PS_PARTITION_Y1, y1
+    wainscot("ps_m_soub_o", x0 + t, x0 + t + 0.03, my0 + t, my1 - t)
+    wainscot("ps_m_soub_e", x1 - t - 0.03, x1 - t, my0 + t, my1 - t)
+
+    # --- Mur de huit CRT fabriqués ici, en deux rangées de quatre. Chaque
+    # écran a un caisson, un bezel, des boutons et une vraie tablette de support.
+    ny = y1 - t
+    centres = (35.25, 37.25, 39.25, 41.25)
+    rangs = ((0.42, 1.47), (1.56, 2.61))
+    chaines = ("cctv", "cctv", "cctv", "foot", "cctv", "journal", "pub", "cctv")
+    hs = 6
+    n = 0
+    caissons, bezels, commandes, cadres = [], [], [], []
+    ecrans = []
+    for row, (bas, haut) in enumerate(rangs):
+        for col, cx in enumerate(centres):
+            i = row * 4 + col
+            bas, haut = z + bas, z + haut
+            caissons.append(((cx - 0.85, ny - 0.42, bas, cx + 0.85, ny, haut),
+                              "aplat:#443e3b"))
+            ex0, ex1 = cx - 0.61, cx + 0.61
+            ez0, ez1 = bas + 0.18, haut - 0.23
+            ey0, ey1 = ny - 0.48, ny - 0.42
+            bezels.extend([
+                ((cx - 0.69, ey0, ez0 - 0.06, cx - 0.60, ey1, ez1 + 0.06), "aplat:#111014"),
+                ((cx + 0.60, ey0, ez0 - 0.06, cx + 0.69, ey1, ez1 + 0.06), "aplat:#111014"),
+                ((cx - 0.60, ey0, ez0 - 0.06, cx + 0.60, ey1, ez0), "aplat:#111014"),
+                ((cx - 0.60, ey0, ez1, cx + 0.60, ey1, ez1 + 0.06), "aplat:#111014"),
+            ])
+            ecrans.append((i, (ex0, ey0 - 0.012, ez0, ex1, ey0 + 0.012, ez1)))
+            # Trois boutons et une bande de voyants identifient la commande de
+            # chaque canal; un voyant rouge fixe signale le CRT hors service.
+            for j, color in enumerate(("#babcbc", "#f2c230", "#d8231f")):
+                commandes.append(((cx - 0.32 + j * 0.16, ny - 0.49, bas + 0.045,
+                                   cx - 0.25 + j * 0.16, ny - 0.46, bas + 0.115),
+                                  f"aplat:{'#d8231f' if i == hs and j == 2 else color}"))
+            cadres.append(((cx - 0.82, ny - 0.12, bas, cx - 0.77, ny - 0.04, haut), "aplat:#767676"))
+            cadres.append(((cx + 0.77, ny - 0.12, bas, cx + 0.82, ny - 0.04, haut), "aplat:#767676"))
+    H.boxes("ps_crt_caissons", caissons, "palette", props)
+    H.boxes("ps_crt_bezels", bezels, "palette", props)
+    H.boxes("ps_crt_commandes", commandes, "palette", props)
+    H.boxes("ps_crt_rails", cadres, "palette", props)
+    H.boxes("ps_crt_support", [
+        ((34.35, ny - 0.46, z, 42.15, ny, z + 0.28), "aplat:#2f3541"),
+        ((34.35, ny - 0.46, z + 1.47, 42.15, ny, z + 1.56), "aplat:#767676"),
+        *((((centre_gauche + centre_droit) / 2 - 0.035, ny - 0.40, z + 0.28,
+              (centre_gauche + centre_droit) / 2 + 0.035, ny - 0.05, z + 2.61), "aplat:#767676")
+          for centre_gauche, centre_droit in zip(centres, centres[1:])),
+    ], "palette", props)
+    H.col_box("ps_crt_support", (34.35, ny - 0.46, z, 42.15, ny, z + 2.61), col_coll)
+    for i, (index, bounds) in enumerate(ecrans):
+        if index == hs:
+            H.box("ps_ecran_hs", bounds, "prd_ecrans", props, uv="label:ecran_eteint")
+        else:
+            H.ecran(f"ps_{n}", bounds, chaines[index], props, pv=30)
+            n += 1
+
+    # Trois magnétoscopes time-lapse fabriqués sur un rack indépendant, contre
+    # le côté est du poste, hors du passage menant aux marches VMC.
+    vx, vw = 41.15, 0.86
+    vy, vfin = 148.10, 149.05
+    chassi, fentes, diodes, commandes = [], [], [], []
+    for i in range(3):
+        vz = z + 0.48 + i * 0.24
+        chassi.append(((vx, vy, vz, vx + vw, vfin, vz + 0.20), "aplat:#605c58"))
+        fentes.append(((vx + 0.12, vy - 0.025, vz + 0.09, vx + 0.62, vy - 0.005, vz + 0.14), "aplat:#111014"))
+        diodes.append(((vx + 0.69, vy - 0.03, vz + 0.06, vx + 0.74, vy - 0.005, vz + 0.11), "aplat:#d8231f"))
+        commandes.append(((vx + 0.12, vy - 0.025, vz + 0.04, vx + 0.20, vy - 0.005, vz + 0.08), "aplat:#babcbc"))
+    H.boxes("ps_vcr_chassis", chassi, "palette", props)
+    H.boxes("ps_vcr_fentes", fentes, "palette", props)
+    H.boxes("ps_vcr_diodes", diodes, "palette", props)
+    H.boxes("ps_vcr_commandes", commandes, "palette", props)
+    # Le bloc de magnétoscopes repose sur un rack métallique étroit. Le plateau
+    # rejoint exactement le dessous du premier magnétoscope (z = 0,48 m); les
+    # montants restent hors de la façade et de ses commandes.
+    rx0, rx1 = vx - 0.08, vx + vw + 0.08
+    ry0, ry1 = vy - 0.05, vfin + 0.08
+    H.box("ps_vcr_rack_plateau", (rx0, ry0, z + 0.42, rx1, ry1, z + 0.48),
+          "metal_bac_acier", props)
+    H.boxes("ps_vcr_rack_pieds", [
+        ((rx0, ry0, z, rx0 + 0.06, ry0 + 0.06, z + 0.43), "world"),
+        ((rx1 - 0.06, ry0, z, rx1, ry0 + 0.06, z + 0.43), "world"),
+        ((rx0, ry1 - 0.06, z, rx0 + 0.06, ry1, z + 0.43), "world"),
+        ((rx1 - 0.06, ry1 - 0.06, z, rx1, ry1, z + 0.43), "world"),
+    ], "metal_bac_acier", props)
+
+    # --- Console fabriquée en U ouvert côté opérateur. Le vigile est pile en
+    # face du poste; le gros écran de commande et son interaction sont centrés.
+    cx = 38.30
+    dy0, dy1 = 148.75, 149.80
+    console_parts = [
+        ((36.60, dy0, z + 0.12, 37.25, dy1 - 0.08, z + 0.91), "aplat:#443e3b"),
+        ((39.35, dy0, z + 0.12, 40.00, dy1 - 0.08, z + 0.91), "aplat:#443e3b"),
+        ((36.60, dy0, z + 0.12, 40.00, dy0 + 0.10, z + 0.23), "aplat:#2f3541"),
+        ((36.48, dy0 - 0.03, z + 0.91, 40.12, dy1, z + 1.04), "aplat:#605c58"),
+        ((36.48, dy1 - 0.09, z + 1.04, 40.12, dy1, z + 1.16), "aplat:#767676"),
+    ]
+    H.boxes("ps_console_structure", console_parts, "palette", props)
+    H.col_box("ps_console", (36.48, dy0, z + 0.12, 40.12, dy1, z + 0.96), col_coll)
+    H.boxes("ps_console_facades", [
+        ((36.78, dy0 - 0.025, z + 0.38, 37.07, dy0 + 0.015, z + 0.72), "aplat:#2f3541"),
+        ((39.56, dy0 - 0.025, z + 0.38, 39.85, dy0 + 0.015, z + 0.72), "aplat:#2f3541"),
+        ((36.78, dy0 - 0.03, z + 0.77, 37.07, dy0 + 0.015, z + 0.82), "aplat:#d8231f"),
+        ((39.56, dy0 - 0.03, z + 0.77, 39.85, dy0 + 0.015, z + 0.82), "aplat:#f2c230"),
+    ], "palette", props)
+    # Écran de commande, monté dans un boîtier incliné par son socle; son face
+    # tournée vers le sud regarde exactement le vigile assis.
+    mx = cx + 0.65
+    H.box("ps_console_ecran_pied", (mx - 0.08, dy1 - 0.20, z + 1.04,
+                                    mx + 0.08, dy1 - 0.10, z + 1.14),
+          "palette", props, uv="aplat:#767676")
+    H.box("ps_console_ecran_boitier", (mx - 0.50, dy1 - 0.08, z + 1.13,
+                                        mx + 0.50, dy1 + 0.01, z + 1.64),
+          "palette", props, uv="aplat:#111014")
+    H.box("ps_console_ecran_bord", (mx - 0.44, dy1 - 0.095, z + 1.19,
+                                     mx + 0.44, dy1 - 0.075, z + 1.58),
+          "palette", props, uv="aplat:#767676")
+    console_screen = (mx - 0.39, dy1 - 0.11, z + 1.23,
+                      mx + 0.39, dy1 - 0.09, z + 1.54)
+    H.ecran("ps_console", console_screen, "cctv", props, pv=30)
+    n += 1
+    boutons = []
+    for i, color in enumerate(("#d8231f", "#f2c230", "#babcbc", "#babcbc", "#d8231f",
+                               "#f2c230", "#babcbc", "#babcbc", "#d8231f", "#f2c230")):
+        bx = 37.05 + (i % 5) * 0.25
+        by = 148.94 + (i // 5) * 0.26
+        boutons.append(((bx, by, z + 1.04, bx + 0.12, by + 0.10, z + 1.09), f"aplat:{color}"))
+    H.boxes("ps_console_boutons", boutons, "palette", props)
+    # Téléphone rouge dédié aux urgences; combiné et socle reposent sur le
+    # plateau, à gauche des commandes vidéo.
+    H.boxes("ps_console_telephone", [
+        ((36.78, 149.52, z + 1.04, 37.15, 149.76, z + 1.09), "aplat:#d8231f"),
+        ((36.82, 149.57, z + 1.09, 37.10, 149.67, z + 1.14), "aplat:#111014"),
+        ((36.79, 149.54, z + 1.15, 37.14, 149.70, z + 1.20), "aplat:#babcbc"),
+    ], "palette", props)
+    H.cylinder("ps_console_joystick", (39.68, 149.42), 0.055, z + 1.04, z + 1.18,
+               "metal_bac_acier", props, segments=8)
+    H.box("ps_console_boule_joystick", (39.61, 149.35, z + 1.17,
+                                        39.75, 149.49, z + 1.24),
+          "palette", props, uv="aplat:#d8231f")
+
+    # Chaise métallique à roulettes, elle aussi construite dans ce script.
+    sx, sy = cx, 147.58
+    H.boxes("ps_chaise_structure", [
+        ((sx - 0.43, sy - 0.22, z + 0.55, sx + 0.43, sy + 0.30, z + 0.68), "aplat:#2f3541"),
+        ((sx - 0.39, sy - 0.28, z + 0.68, sx - 0.30, sy - 0.18, z + 1.18), "aplat:#444a54"),
+        ((sx + 0.30, sy - 0.28, z + 0.68, sx + 0.39, sy - 0.18, z + 1.18), "aplat:#444a54"),
+        ((sx - 0.30, sy - 0.28, z + 0.68, sx + 0.30, sy - 0.18, z + 1.18), "aplat:#2f3541"),
+        ((sx - 0.52, sy - 0.16, z + 0.65, sx - 0.41, sy + 0.23, z + 0.76), "aplat:#767676"),
+        ((sx + 0.41, sy - 0.16, z + 0.65, sx + 0.52, sy + 0.23, z + 0.76), "aplat:#767676"),
+        ((sx - 0.045, sy - 0.03, z + 0.14, sx + 0.045, sy + 0.03, z + 0.55), "aplat:#767676"),
+        ((sx - 0.48, sy - 0.035, z + 0.09, sx + 0.48, sy + 0.035, z + 0.15), "aplat:#767676"),
+        ((sx - 0.035, sy - 0.42, z + 0.09, sx + 0.035, sy + 0.42, z + 0.15), "aplat:#767676"),
+    ], "palette", props)
+    for i, (wx, wy) in enumerate(((sx - 0.43, sy), (sx + 0.43, sy), (sx, sy - 0.36),
+                                  (sx, sy + 0.36))):
+        H.box(f"ps_chaise_roulette_{i}", (wx - 0.07, wy - 0.07, z + 0.02,
+                                          wx + 0.07, wy + 0.07, z + 0.10),
+              "palette", props, uv="aplat:#111014")
+    vigile = B.vigile_assis()
+    largeur_vigile, _, _ = _emprise(vigile)
+    # `poser` prend le coin inférieur de l'emprise : le centrer explicitement
+    # sur l'assise évite le décalage de 28 cm dû à l'origine asymétrique du GLB.
+    # Un léger recul place le bassin contre le dossier, le rehaussement de 10 cm
+    # pose les cuisses sur l'assise sans modifier l'alignement face aux écrans.
+    poser(vigile, sx - largeur_vigile / 2, sy - 0.14, z + 0.10, "+y", props, props, "ps_vigile")
+
+    bo.boite_centree("use_pc_secu", (cx, dy0 + 0.10, z + 1.11), (0.12, 0.12, 0.12),
+                     "repere", {"repere": H.textured_material("metal_bac_acier")}, logic,
+                     extras={"cameras": ",".join(PC_SECU_CAMS)})
+
+    # Tableau à clés mural ouvert : cinq badges pendent, un crochet reste vide.
+    ax0, ay0 = x0 + t, my0 + 1.65
+    H.box("ps_cle_tableau", (ax0, ay0, z + 1.05, ax0 + 0.08, ay0 + 1.18, z + 2.2),
+          "palette", props, uv="aplat:#605c58")
+    H.boxes("ps_cle_cadre", [
+        ((ax0 + 0.08, ay0 - 0.03, z + 1.02, ax0 + 0.13, ay0 + 1.21, z + 2.24), "aplat:#babcbc"),
+        ((ax0 + 0.08, ay0 - 0.03, z + 1.02, ax0 + 0.13, ay0 + 1.21, z + 1.08), "aplat:#babcbc"),
+        ((ax0 + 0.08, ay0 - 0.03, z + 2.18, ax0 + 0.13, ay0 + 1.21, z + 2.24), "aplat:#babcbc"),
+    ], "palette", props)
+    crochets, badges, anneaux, cles, dents = [], [], [], [], []
+    for i in range(6):
+        hy = ay0 + 0.12 + i * 0.18
+        crochets.append(((ax0 + 0.13, hy, z + 1.94, ax0 + 0.30, hy + 0.035, z + 1.99), "aplat:#babcbc"))
+        if i != 4:
+            badges.append(((ax0 + 0.24, hy - 0.045, z + 1.84, ax0 + 0.29, hy + 0.045, z + 1.93),
+                           "aplat:#f2c230" if i % 2 == 0 else "aplat:#d8231f"))
+            anneaux.extend([
+                ((ax0 + 0.27, hy - 0.055, z + 1.75, ax0 + 0.31, hy + 0.055, z + 1.78), "aplat:#d5d7d8"),
+                ((ax0 + 0.27, hy - 0.055, z + 1.83, ax0 + 0.31, hy + 0.055, z + 1.86), "aplat:#d5d7d8"),
+                ((ax0 + 0.27, hy - 0.055, z + 1.78, ax0 + 0.31, hy - 0.03, z + 1.83), "aplat:#d5d7d8"),
+                ((ax0 + 0.27, hy + 0.03, z + 1.78, ax0 + 0.31, hy + 0.055, z + 1.83), "aplat:#d5d7d8"),
+            ])
+            cles.append(((ax0 + 0.28, hy - 0.012, z + 1.56, ax0 + 0.32, hy + 0.012, z + 1.75),
+                         "aplat:#d5d7d8"))
+            dents.append(((ax0 + 0.28, hy + 0.012, z + 1.56, ax0 + 0.32, hy + 0.06, z + 1.60),
+                          "aplat:#d5d7d8"))
+    H.boxes("ps_cle_crochets", crochets, "palette", props)
+    H.boxes("ps_cle_badges", badges, "palette", props)
+    H.boxes("ps_cle_anneaux", anneaux, "palette", props)
+    H.boxes("ps_cle_cles", cles, "palette", props)
+    H.boxes("ps_cle_dents", dents, "palette", props)
+
+    # Tableau de planning des rondes, et tableau incendie près de la porte.
+    H.box("ps_planning", (x1 - t - 0.08, my0 + 1.5, z + 1.2, x1 - t - 0.03, my0 + 2.7, z + 2.0),
+          "palette", props, uv="aplat:#deb789", front="-x")
+
+    # Tableau de signalisation incendie, près de la porte.
+    H.box("ps_tableau_incendie", (x0 + t + 0.03, my0 + 0.3, z + 1.3, x0 + t + 0.08, my0 + 1.1, z + 2.0),
+          "palette", props, uv="aplat:#d8231f", front="+x")
+
+    # Petit coin de pause dans le passage technique : le placard porte la
+    # machine à café et le plateau de donuts à hauteur de main (aucun objet ne
+    # flotte au-dessus du meuble).
+    H.box("ps_pause_meuble", (44.42, 145.38, z, 45.65, 146.62, z + 0.86),
+          "metal_bac_acier", props)
+    H.col_box("ps_pause_meuble", (44.42, 145.38, z, 45.65, 146.62, z + 0.86), col_coll)
+    H.box("ps_pause_plateau", (44.28, 145.27, z + 0.86, 45.65, 146.73, z + 0.95),
+          "palette", props, uv="aplat:#605c58")
+    H.box("ps_cafe_machine", (44.96, 145.78, z + 0.95, 45.48, 146.35, z + 1.82),
+          "palette", props, uv="aplat:#d8231f", front="-x")
+    H.box("ps_cafe_ecran", (44.93, 145.91, z + 1.42, 44.96, 146.22, z + 1.63),
+          "palette", props, uv="aplat:#111014", front="-x")
+    H.box("ps_cafe_bec", (44.86, 146.02, z + 1.17, 44.95, 146.09, z + 1.34),
+          "metal_bac_acier", props)
+    H.box("ps_pause_plateau_donuts", (44.38, 145.72, z + 0.95, 44.90, 146.28, z + 1.00),
+          "palette", props, uv="aplat:#bdae9a")
+
+    # Escalier de cinq marches régulières (0,40 m), puis trappe grillagée
+    # fermée vers la gaine. Le vide du plafond suit l'escalier : les 2 m de
+    # dégagement restent libres jusqu'à l'autre côté de la porte.
+    marches, nez_marches = [], []
+    marche_x0, marche_x1 = 44.18, 45.32
+    marche_y0 = PS_GAINE_PUITS_Y[0]
+    for i in range(8):
+        y_a, y_b = marche_y0 + i * 0.25, marche_y0 + (i + 1) * 0.25
+        z_haut = z + (i + 1) * 0.25
+        marches.append(((marche_x0, y_a, z, marche_x1, y_b, z_haut), "world"))
+        nez_marches.append(((marche_x0, y_a - 0.015, z_haut - 0.045,
+                             marche_x1, y_a + 0.015, z_haut - 0.01),
+                            "aplat:#f2c230"))
+        H.col_box(f"ps_gaine_marche_{i}", (marche_x0, y_a, z, marche_x1, y_b, z_haut), col_coll)
+    H.boxes("ps_gaine_marches", marches, "metal_bac_acier", props)
+    H.boxes("ps_gaine_nez_marches", nez_marches, "palette", props)
+    # Joues de seuil : elles ferment les bandes de 18 cm de part et d'autre de
+    # la dernière marche, tout en laissant 1,14 m de passage utile.
+    joues = [
+        (44.0, y1 - 0.25, z, marche_x0, y1, z + 2.0),
+        (marche_x1, y1 - 0.25, z, 45.5, y1, z + 2.0),
+    ]
+    H.boxes("ps_gaine_joues", [(b, "aplat:#444a54") for b in joues], "palette", props)
+    for i, bounds in enumerate(joues):
+        H.col_box(f"ps_gaine_joue_{i}", bounds, col_coll)
+    # Cadre rouge et jaune lisible depuis la salle, autour du vantail à z=2..4.
+    H.boxes("ps_gaine_cadre", [
+        ((43.96, y1 - 0.04, z + 2.0, 44.02, y1 + 0.04, z + 4.0), "aplat:#444a54"),
+        ((45.48, y1 - 0.04, z + 2.0, 45.54, y1 + 0.04, z + 4.0), "aplat:#444a54"),
+    ], "palette", props)
+
+    # --- Lumière : froide et pauvre. Un seul tube faible côté guichet, la
+    # lueur bleutée des écrans domine la salle des moniteurs, une lampe de
+    # bureau chaude sur la console — jamais la grille neutre par défaut.
+    lampe(logic, "light_ps_guichet", (x0 + 6.0, y0 + 2.0, ht - 0.4), color="#7fb0d8", intensity=1.5, distance=6.0)
+    lampe(logic, "light_ps_ecrans_a", (38.0, ny - 1.0, z + 2.25), color="#5fa0d0", intensity=3.5, distance=7.0)
+    lampe(logic, "light_ps_ecrans_b", (34.8, ny - 1.0, z + 2.2), color="#5fa0d0", intensity=2.5, distance=5.0)
+    lampe(logic, "light_ps_bureau", (cx, 149.4, z + 1.0), color="#f2b25a", intensity=1.8, distance=3.5)
+
+    return {"écrans animés/cassables": n, "écran HS": 1, "clés": 5, "lampes": 4}
+
+
+def habiller_c_short_ramp(space, gris, props, col_coll, logic) -> dict:
+    """Raccourci du couloir du personnel : néons dont un mort, une palette
+    poussable, un distributeur cassable (`electronique`), une fuite au sol."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    cy = (y0 + y1) / 2
+
+    lampes = eclairage_couloir(space, props, logic)
+    # Un tube grillé de plus, sans lampe : le raccourci n'est pas éclairé à
+    # neuf, contrairement au couloir du personnel qu'il prolonge.
+    L.place(L.neon(2.0, eteint=True), (x0 + 10.0 - 1.0, cy - 0.17, z + space.hauteur - 0.18),
+            0, props, props, "csr_neon_mort")
+
+    L.place(R.transpalette(), (x0 + 4.0, y0 + 1.5, z), 90, props, col_coll, "csr_transpal")
+    L.place(L.palette_cartons(), (x0 + 20.0, y1 - 2.0, z), 180, props, col_coll, "csr_palette_deco")
+    H.prop("csr_palette", (x0 + 26.0, cy - 0.5, z, x0 + 27.2, cy + 0.5, z + 0.15),
+          "bois_palette", props, masse=20, matiere="bois")
+
+    H.prop("csr_distributeur", (x1 - 4.0, y0 + 1.0, z, x1 - 3.1, y0 + 1.75, z + 1.9),
+          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
+          contenu="donut:2")
+
+    # Fuite : une flaque au sol, un seau posé dessous — visuel seulement, sans
+    # goutte-à-goutte sonore (hors scope Blender de ce lot).
+    H.box("csr_flaque", (x0 + 9.3, cy - 1.0, z + 0.005, x0 + 10.7, cy + 1.0, z + 0.006),
+          "palette", props, uv="aplat:#111014")
+    H.cylinder("csr_seau", (x0 + 10.0, cy), 0.2, z, z + 0.3, "metal_bac_acier", props)
+
+    return {"meubles": 4, "lampes": lampes}
+
+
+def habiller_c_short_w(space, gris, props, col_coll, logic) -> dict:
+    """Couloir de la porte coupe-feu : mêmes ingrédients que `c_short_ramp`,
+    étalés sur son grand axe nord-sud, à l'écart de la porte (y = 84)."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    cx = (x0 + x1) / 2
+
+    lampes = eclairage_couloir(space, props, logic)
+    L.place(L.neon(2.0, eteint=True), (cx - 0.17, y1 - 10.0 - 1.0, z + space.hauteur - 0.18),
+            90, props, props, "csw_neon_mort")
+
+    L.place(R.transpalette(), (x0 + 1.5, y0 + 6.0, z), 0, props, col_coll, "csw_transpal")
+    H.prop("csw_palette", (cx - 0.6, y0 + 20.0, z, cx + 0.6, y0 + 21.2, z + 0.15),
+          "bois_palette", props, masse=20, matiere="bois")
+
+    H.prop("csw_distributeur", (x1 - 1.75, y1 - 4.0, z, x1 - 1.0, y1 - 3.1, z + 1.9),
+          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
+          contenu="canette:3")
+
+    H.box("csw_flaque", (cx - 1.0, y0 + 29.3, z + 0.005, cx + 1.0, y0 + 30.7, z + 0.006),
+          "palette", props, uv="aplat:#111014")
+    H.cylinder("csw_seau", (cx, y0 + 30.0), 0.2, z, z + 0.3, "metal_bac_acier", props)
+
+    return {"meubles": 4, "lampes": lampes}
+
+
 # --- Mobilier physique (`prop_*`) --------------------------------------------
 #
 # Le seul décor du niveau qui BOUGE. Posé ici, pour TOUS les espaces d'un coup,
@@ -2849,6 +3480,14 @@ HABILLAGE = {
     "secret1": habiller_labo,
     "secret3": habiller_vmc,
     "toilettes": habiller_toilettes,
+    # Les coulisses, v2 (2026-09-26) : v1 rejetée par l'utilisateur (« posé au
+    # pif, aucun plaisir à explorer »). Seul le PILOTE (`pc_secu`) est habillé
+    # dans cette passe — vestiaires, fournil, gaine, labo, chambre_froide,
+    # compacteur, secret4 et sav restent GRIS (`bo.volumes()`), pièces à
+    # habiller une fois la disposition validée en jeu.
+    "pc_secu": habiller_pc_secu,
+    "c_short_ramp": habiller_c_short_ramp,
+    "c_short_w": habiller_c_short_w,
 }
 
 
@@ -3045,6 +3684,7 @@ def main() -> None:
     bo.poser_palier_sortie(materiaux_espace(plan.SPACES[-1], gris, cache), shell, col_coll)
     reperes = bo.poser_reperes(gris, props, col_coll, logic_coll, sauter=SIGNATURES_HABILLEES)
     costards, directeurs = bo.poser_spawns(logic_coll)
+    cams = poser_cameras_pc_secu(props, logic_coll)
     recales = recaler_spawns()
 
     # La bibliothèque est un dépôt de patrons, jamais du décor : exclue de la
@@ -3066,8 +3706,9 @@ def main() -> None:
     print(f"[niveau] {lampes} light_* (le pool n'en allume que 48, voir ADR 0026)")
     print(f"[niveau] {physiques} prop_* physiques (autant de lots de dessin qu'il y en a de VISIBLES)")
     print(f"[niveau] {portes} portes, {reperes['use']} use_*, {reperes['secret']} secrets, "
-          f"{reperes['signature']} emplacements signature")
+          f"{reperes['signature']} emplacements signature, {reperes['nourriture']} repères nourriture")
     print(f"[niveau] {costards} spawn_suit_*, {directeurs} spawn_director_*, {reperes['spawn']} spawn_player")
+    print(f"[niveau] {cams} cam_* (console pc_secu)")
     for ligne in recales:
         print(f"[niveau] spawn recalé : {ligne}")
     print(f"[niveau] écrit : {out}")

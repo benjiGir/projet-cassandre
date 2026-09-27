@@ -67,6 +67,28 @@ def porte_auto() -> tuple[Image.Image, dict]:
     return img, {"metal": [60, 60, 3, 8], "chant": [1, 64]}
 
 
+def porte_pc() -> tuple[Image.Image, dict]:
+    """Vantail vitré du PC sécurité : aluminium sombre, vitrage clair, bande
+    dépolie lisible à hauteur d'yeux. Aucun texte, pour une paire symétrique."""
+    img = Image.new("RGBA", (L, H), VERRE + (55,))
+    d = ImageDraw.Draw(img)
+    d.rectangle((0, 0, L - 1, H - 1), outline=ALU_SOMBRE + (255,), width=3)
+    d.rectangle((4, 4, L - 5, 5), fill=ALU_CLAIR + (255,))
+    d.rectangle((4, 4, 5, H - 5), fill=ALU + (255,))
+    d.rectangle((L - 6, 4, L - 5, H - 5), fill=ALU + (255,))
+    # Deux reflets fins et une bande dépolie continue signalent le vitrage.
+    d.line((10, 39, 28, 12), fill=BLANC + (145,))
+    d.line((18, 39, 36, 12), fill=BLANC + (110,))
+    y = _y(1.45, 2.1)
+    d.rectangle((6, y - 3, L - 7, y + 4), fill=BLANC + (220,))
+    for x in range(9, L - 9, 6):
+        d.rectangle((x, y - 1, x + 1, y + 1), fill=ALU_SOMBRE + (255,))
+    y0 = _y(0.28, 2.1)
+    d.rectangle((4, y0, L - 5, H - 5), fill=ALU + (255,))
+    d.line((4, y0, L - 5, y0), fill=ALU_SOMBRE + (255,))
+    return img, {"metal": [50, 65, 5, 9], "chant": [2, 64]}
+
+
 def porte_vav() -> tuple[Image.Image, dict]:
     """Porte va-et-vient de la réserve : PVC gris-bleu, hublot, plaque de
     poussée, tôle de coup de pied rayée par des années de transpalettes."""
@@ -194,6 +216,7 @@ def porte_wc() -> tuple[Image.Image, dict]:
 
 ATLAS = {
     "portes_verre": (("porte_auto", porte_auto), ("porte_vav", porte_vav)),
+    "portes_pc": (("porte_pc", porte_pc),),
     "portes": (("porte_bureau", porte_bureau), ("porte_capitonnee", porte_capitonnee)),
     "portes_2": (("porte_wc", porte_wc),),
 }
@@ -212,7 +235,7 @@ def quantifier(img: Image.Image) -> Image.Image:
 
 def main() -> None:
     for nom, vantaux in ATLAS.items():
-        mode = "RGBA" if nom == "portes_verre" else "RGB"
+        mode = "RGBA" if nom in {"portes_verre", "portes_pc"} else "RGB"
         atlas = Image.new(mode, (2 * L, H))
         meta = {}
         for i, (porte, fn) in enumerate(vantaux):

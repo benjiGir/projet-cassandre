@@ -32,8 +32,9 @@ import type { EnemyAnimationInput } from "../../render/enemySprites";
  * toute action MUTE `context` directement (`context.stateTimer = 0`), ne
  * jamais utiliser `assign(...)` (réallouerait `context` à chaque
  * transition) ; aucune durée d'état ne doit passer par `after`/`setTimeout`
- * (invariant #13 de CLAUDE.md) — seul `context.stateTimer`, incrémenté par
- * `tickEnemy` avec le `dt` de gameplay, mesure le temps.
+ * (choix du code, ex-invariant #13 de CLAUDE.md, retiré le 2026-09-25) —
+ * seul `context.stateTimer`, incrémenté par `tickEnemy` avec le `dt` de
+ * gameplay, mesure le temps.
  */
 
 const TAU = Math.PI * 2;

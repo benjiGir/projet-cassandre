@@ -47,6 +47,13 @@ const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   // clairs, c'est LUI qui fait lire « ça s'est cassé » à 640×360.
   verre: { color: 0xa8d8e8, count: 18 },
   metal: { color: 0x8a8f96, count: 8 },
+  // Chantier « Les coulisses » (2026-09-26) : trois matières de plus.
+  // La farine part en nuage clair et nombreux (un sac qui explose, pas des
+  // éclats), l'eau réutilise la teinte claire du verre (seul bleu du
+  // catalogue), l'électronique en éclats sombres façon carcasse de TV.
+  farine: { color: 0xe8e0c8, count: 16 },
+  eau: { color: 0x6fb8ff, count: 14 },
+  electronique: { color: 0x2f2f38, count: 10 },
 };
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
@@ -107,7 +114,7 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 // see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
 type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
-  "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
+  "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
   "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons"
 >>;
 type FxEngine = Omit<Pick<GameEngine,
@@ -304,7 +311,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // Même contrat (lecture non destructive, `clearFrameEvents()` en tout
         // dernier) pour le Directeur. Pas de réutilisation des sons `enemy_*` en
         // tant que "faits exprès pour le boss" — ce sont les mêmes placeholders
-        // génériques que pour le Costard (invariant #9, aucun son dédié encore).
+        // génériques que pour le Costard (aucun son dédié encore, pas d'assets finaux).
         for (const sprite of session.directorSprites.values()) sprite.updateFlash(realDt);
 
         for (const event of session.directorManager.alertEvents) {
@@ -367,19 +374,16 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
-        // Vitrages (`vitre_*`) — même contrat de lecture non destructive que
-        // les blocs ci-dessus. Un impact non fatal n'a rien de plus à faire
-        // ici (decal/particules/son générique déjà partis avec
-        // `weapons.hitEvents`) ; la casse réutilise le débris "verre" déjà
-        // défini pour les `prop_*` — même matière, même lecture visuelle.
+        // Obstacles cassables (`vitre_*`) : débris et son suivent leur matière
+        // (`verre` par défaut), sans changer le coût du lot fusionné.
         const vitres = session.vitreSystem;
         if (vitres) {
           for (const event of vitres.destroyedEvents) {
-            const debris = PROP_DEBRIS.verre ?? DEFAULT_PROP_DEBRIS;
+            const debris = PROP_DEBRIS[event.matiere] ?? DEFAULT_PROP_DEBRIS;
             engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
             if (event.givre) engine.fx.spawnFrostBurst(event.point);
             engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
-            playPropBreakSfx("verre");
+            playPropBreakSfx(event.matiere);
           }
           vitres.clearFrameEvents();
         }
@@ -399,6 +403,18 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             playSfx("sanitaire_break");
           }
           sanitaires.clearFrameEvents();
+        }
+
+        // Écrans (`ecran_*`) — même contrat que les vitrages : l'image passe à
+        // l'état « casse » côté `EcranSystem`, ici seulement les étincelles.
+        const ecrans = session.ecranSystem;
+        if (ecrans) {
+          for (const event of ecrans.destroyedEvents) {
+            const debris = PROP_DEBRIS.electronique ?? DEFAULT_PROP_DEBRIS;
+            engine.fx.spawnDebris(event.point, new THREE.Vector3(0, 1, 0), debris.color, debris.count);
+            playPropBreakSfx("electronique");
+          }
+          ecrans.clearFrameEvents();
         }
 
         // Portes animées — un son au DÉBUT de chaque ouverture depuis l'état

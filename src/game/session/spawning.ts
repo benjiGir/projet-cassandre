@@ -14,6 +14,8 @@ import { PropSystem } from "../level/props";
 import { DoorSystem } from "../level/doors";
 import { VitreSystem } from "../level/vitres";
 import { SanitaireSystem } from "../level/sanitaires";
+import { EcranSystem } from "../level/ecrans";
+import { CameraViewSystem } from "../level/cameras";
 import { Suit } from "../entities/suit";
 import { suitConfig } from "../entities/suitConfig";
 import { Director } from "../entities/director";
@@ -147,6 +149,8 @@ export function loadGltfLevel(
 
         const vitreSystem = new VitreSystem(handle.vitres);
         const sanitaireSystem = new SanitaireSystem(handle.sanitaires);
+        const ecranSystem = new EcranSystem(handle.ecrans);
+        const cameraView = new CameraViewSystem(handle.cams);
         const lightPool = new LightPool(handle.lights);
         const propSystem = new PropSystem(handle.props, handle.root);
 
@@ -194,7 +198,9 @@ export function loadGltfLevel(
             `lampes ${handle.stats.lightCount} (${lightPool.stats.actives} allumées), ` +
             `props ${handle.stats.propCount}, vitres ${handle.stats.vitreCount} ` +
             `(${handle.stats.vitreBatchCount} lots), sanitaires ${handle.stats.sanitaireCount} ` +
-            `(${handle.stats.sanitaireBatchCount} lots), lots de décor ${handle.stats.decorBatchCount}`,
+            `(${handle.stats.sanitaireBatchCount} lots), écrans ${handle.stats.ecranCount} ` +
+            `(${handle.stats.ecranBatchCount} lots), caméras ${handle.cams.length}, ` +
+            `lots de décor ${handle.stats.decorBatchCount}`,
         );
 
         return () => {
@@ -206,6 +212,8 @@ export function loadGltfLevel(
           session.doorSystem = doorSystem;
           session.vitreSystem = vitreSystem;
           session.sanitaireSystem = sanitaireSystem;
+          session.ecranSystem = ecranSystem;
+          session.cameraView = cameraView;
           session.lightPool = lightPool;
           session.propSystem = propSystem;
           session.weaponPickupBillboards = weaponPickupBillboards;

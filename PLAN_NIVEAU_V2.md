@@ -89,7 +89,7 @@ Ce chantier réserve leur **emplacement** et pose leur géométrie. Leurs **syst
 3. **Un seul sol praticable par colonne.** Le pathfinding est un graphe 2.5D avec une seule hauteur de sol par cellule (`groundY` dans `src/game/level/pathfinding.ts`, échantillonné par un rayon vertical descendant). Deux espaces praticables superposés en vue de dessus ne peuvent pas être représentés : les ennemis du niveau inférieur n'auraient aucun chemin. **Contrainte de level design dure** : l'emprise au sol du parking souterrain (et de tout étage de bureaux) ne doit recouvrir, en vue de dessus, celle d'**aucun** autre espace praticable — ni la surface de vente, ni le parking extérieur, qui est lui aussi praticable. Il faut le décaler hors de ces emprises, sous une zone qui n'a **aucun collider** au-dessus (par exemple l'arrière du bâtiment, hors d'atteinte du joueur), en y descendant par une rampe ; son propre plafond n'a pas de collider, comme tout plafond (voir N5). Un pathfinding multicouche serait un chantier à part.
 4. **Occlusion des lignes de vue non fiable** ([ADR 0022](docs/decisions/0022-occlusion-rangees-non-bloquante.md), cause inconnue). La nouvelle structure repose sur la couverture (allées transversales, piliers du parking souterrain). Le jalon N5 doit lever ce risque avant tout placement d'ennemis derrière un obstacle. *Piste sérieuse depuis le 2026-09-11 : les colliders neufs sont invisibles aux rayons avant le premier pas de physique (voir N5).*
 5. **Draw calls.** Le loader n'a aucune instanciation, et le niveau combiné compte déjà environ 615 meshes de décor. Une bibliothèque 5 à 10 fois plus fournie impose le jalon N1 avant toute densification. *Levé le 2026-09-11 : fusion au chargement, 513 → 25 draw calls (N1, ADR 0023).*
-6. **Conflit instanciation / bake.** Chaque objet rendu porte aujourd'hui sa propre géométrie pour recevoir son propre bake (piège documenté dans `tools/blender/build_level.py` et `docs/pipeline/niveau-blender.md`), ce qui empêche l'instanciation GPU telle quelle. N1 tranche. *Tranché le 2026-09-11 : la fusion garde un bake par objet, l'instanciation n'est pas utilisée (ADR 0023).*
+6. **Conflit instanciation / bake.** Chaque objet rendu porte aujourd'hui sa propre géométrie pour recevoir son propre bake (piège documenté dans `tools/blender/build_level.py` et `docs/5-guides/modifier-le-niveau.md`), ce qui empêche l'instanciation GPU telle quelle. N1 tranche. *Tranché le 2026-09-11 : la fusion garde un bake par objet, l'instanciation n'est pas utilisée (ADR 0023).*
 7. **Moins de reproductibilité.** Travailler en direct fait des `.blend` versionnés la source de vérité des assets ; on perd le « tout se reconstruit depuis un script » du kit actuel. Mitigation : commits fréquents, scripts de validation conservés, décisions consignées ici.
 8. **Sécurité du MCP.** Il exécute du Python sans garde-fou dans Blender. Uniquement sur des fichiers versionnés, sauvegarde avant chaque session.
 9. **Dix espaces en 8-10 minutes.** Risque de niveau trop long ou trop dilué. Le garde-fou est le blockout joué et chronométré (N8), pas la théorie.
@@ -123,7 +123,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 >
 > **Écart avec l'action 4 :** la bibliothèque vit dans son propre dossier, `assets_src/library/lib_hypermarche_v2.blend`, et non dans `assets_src/blender/`. Blender range les catégories de l'Asset Browser dans un fichier `blender_assets.cats.txt` placé à côté du `.blend` ; dans `assets_src/blender/`, ce fichier aurait couvert aussi le kit et les zones. Les six catégories (`assets_src/library/blender_assets.cats.txt`) sont vérifiées dans l'Asset Browser. La bibliothèque contient les collections `_REF` (repère humain de 1,8 m, exclu du rendu), `_RAW` (imports bruts) et `LIB` avec une sous-collection par catégorie ; unités en mètres, snap sur la grille absolue, grille du viewport à 0,25 m. `assets_src/cc0_raw/` est gitignoré, `assets_src/LICENCES_ASSETS.md` créé (vide). `assets_src/textures/` et `tools/textures/` seront créés en N3 avec leur premier contenu. La bibliothèque n'est pas enregistrée dans les préférences Blender de l'utilisateur ; elle s'utilise comme « Fichier courant » quand elle est ouverte.
 >
-> **Board complété** avec 5 sujets (`hypermarche_90s`, `galerie_marchande`, `cafeteria`, `electromenager_tv`, `parking_souterrain`), hors-sujet retiré après une planche contact. Fiche de spec versionnée dans `docs/assets/board-hypermarche.md` (liée depuis `docs/README.md`) ; `refs/SPEC.md` n'est plus qu'un renvoi. **Manques relevés** : Commons ne fournit presque rien sur les hypermarchés français des années 90 (seul le parking souterrain a le bon « jus »), l'électroménager (2 images) et la galerie (3 images) sont sous le seuil de 5 images, et le board n'a aucune référence de style Build / Ion Fury. À compléter par l'utilisateur si possible avant N3.
+> **Board complété** avec 5 sujets (`hypermarche_90s`, `galerie_marchande`, `cafeteria`, `electromenager_tv`, `parking_souterrain`), hors-sujet retiré après une planche contact. Fiche de spec versionnée dans `docs/journal/niveau-v2-2026-09.md` (liée depuis `docs/README.md`) ; `refs/SPEC.md` n'est plus qu'un renvoi. **Manques relevés** : Commons ne fournit presque rien sur les hypermarchés français des années 90 (seul le parking souterrain a le bon « jus »), l'électroménager (2 images) et la galerie (3 images) sont sous le seuil de 5 images, et le board n'a aucune référence de style Build / Ion Fury. À compléter par l'utilisateur si possible avant N3.
 
 **Objectif.** Poser l'environnement de travail et les dossiers, sans produire de contenu.
 
@@ -138,7 +138,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
    - `assets_src/LICENCES_ASSETS.md` : registre des licences, versionné ;
    - `tools/textures/` : scripts de quantification et de génération d'étiquettes.
 5. Compléter le board `refs/` (local, gitignoré) avec un dossier `hypermarche_90s/` : hypermarchés français des années 90, signalétique, carrelage, PLV, galerie marchande, cafétéria. Même méthode que le board initial (images libres, Wikimedia Commons). Relancer `tools/refs/extract_palette.py` (dépendances dans `.venv-refs/`) et mettre à jour `refs/SPEC.md`.
-6. Versionner la fiche de spec, qui est du texte dérivé sans image, par exemple sous `docs/assets/board-hypermarche.md`. Les images restent locales.
+6. Versionner la fiche de spec, qui est du texte dérivé sans image, par exemple sous `docs/journal/niveau-v2-2026-09.md`. Les images restent locales.
 
 **Critères d'acceptation.** Connexion MCP vérifiée ; arborescence et registre créés ; `.gitignore` à jour ; board complété, fiche de spec versionnée.
 
@@ -148,13 +148,13 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 
 > **✅ Livré (2026-09-11)**, fait directement en session principale (pas d'agent), après N2 et N3.
 >
-> **Compteur** : `drawCalls` / `triangles` ajoutés à `DebugState` (lus sur `renderer.info.render`, dans le bloc throttlé à 10 Hz de `updateFx.ts`) et affichés par `DebugPanel`. Juste parce que le jeu fait une seule passe WebGL par image (`main.ts`) — voir `docs/systems/debug.md#coût-de-rendu`.
+> **Compteur** : `drawCalls` / `triangles` ajoutés à `DebugState` (lus sur `renderer.info.render`, dans le bloc throttlé à 10 Hz de `updateFx.ts`) et affichés par `DebugPanel`. Juste parce que le jeu fait une seule passe WebGL par image (`main.ts`) — voir `docs/archive/systems-debug.md#coût-de-rendu`.
 >
 > **Référence mesurée** au point de départ de `hypermarche_complet` : 513 draw calls, 46 746 triangles, 1,40 ms de rendu CPU. Cause : un draw call par mesh de décor (615), et `toLambert` crée un matériau par mesh.
 >
 > **Décision** : fusion du décor statique au chargement plutôt qu'instanciation GPU ([ADR 0023](docs/decisions/0023-fusion-decor-au-chargement.md)). `game/level/mergeStaticDecor.ts` regroupe par contenu de matériau et par jeu d'attributs ; chaque objet garde ses sommets, donc son bake — le conflit instanciation / bake (risque 6) ne se pose plus. Portes, objets interactifs, cibles d'animation, meshes multi-matériaux et à échelle négative restent individuels. **Mesuré après** : 615 meshes → 5 lots, **25 draw calls**, 0,70 ms de rendu, statistiques du niveau identiques (plus un champ `decorBatchCount`). **Budget du niveau v2 : 200 draw calls au plus par image**, 200 000 triangles. Les FPS n'ont pas pu être comparés : le panneau du navigateur de l'automatisation était masqué et bride l'affichage (même une boucle `requestAnimationFrame` vide tombe à 2 images/s) ; à constater en jouant. 3 tests Vitest ajoutés (`test/game/level/mergeStaticDecor.test.ts`), 119/119 verts, build propre.
 >
-> **Bake lumière seule validé** sur une scène d'essai texturée : en `combined` une caisse rouge enregistre du rouge (0,50 / 0,15 / 0,15), que le jeu multiplierait une seconde fois par sa texture ; en `diffuse`, une lumière neutre (0,55 / 0,53 / 0,51). `--type diffuse` devient la règle du niveau v2 (`docs/pipeline/niveau-blender.md#combined-vs-diffuse`). Les valeurs sont plus claires qu'en `combined` (0,83 contre 0,57 sur le sol) : puissance des lampes à recalibrer en N4.
+> **Bake lumière seule validé** sur une scène d'essai texturée : en `combined` une caisse rouge enregistre du rouge (0,50 / 0,15 / 0,15), que le jeu multiplierait une seconde fois par sa texture ; en `diffuse`, une lumière neutre (0,55 / 0,53 / 0,51). `--type diffuse` devient la règle du niveau v2 (`docs/5-guides/modifier-le-niveau.md#combined-vs-diffuse`). Les valeurs sont plus claires qu'en `combined` (0,83 contre 0,57 sur le sol) : puissance des lampes à recalibrer en N4.
 >
 > **Pas fait, et inutile à ce stade** : l'instanciation GPU (voir l'ADR pour le signal qui la rendrait nécessaire) et la scène de test synthétique de plusieurs centaines d'objets — remplacée par la mesure sur le vrai niveau (615 meshes bakés) et un test unitaire à texture partagée.
 
@@ -209,7 +209,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 >
 > **Contrôle en 3D** : salle d'essai jetable dans Blender via MCP, UV à 64 px/m, rendu Workbench à 640×360 depuis 1,6 m, en éclairage studio puis plat. Échelle et lisibilité validées (carreaux de 50 cm, motifs nets) ; le rendu reste plus « photo réduite PS1 » que pixel art Ion Fury, à juger en jouant N4.
 >
-> **Fiche d'harmonisation** écrite : [docs/pipeline/harmonisation-assets.md](docs/pipeline/harmonisation-assets.md) (textures, étapes d'import, nommage `str_` / `mob_` / `prd_` / `sig_` / `deco_` / `gp_`).
+> **Fiche d'harmonisation** écrite : [docs/4-technique/generateurs.md](docs/4-technique/generateurs.md) (textures, étapes d'import, nommage `str_` / `mob_` / `prd_` / `sig_` / `deco_` / `gp_`).
 >
 > **Étiquettes** (`generate_labels.py`) : atlas de 16 faces de 32×32 — les 13 marques inventées validées par l'utilisateur (Pyramides, Traînées Blanches, Eau Plate de la Terre Plate, 5G Cola, Raviolis du Bunker, ALU-PROTECT, Sablés Reptiliens, Café Réveillé, Illumi, Profonde, Coquillettes du Nouvel Ordre, Sans-Fluor, Lune Truquée) et trois pastilles génériques. Police pixel 3×5 codée à la main ; exception de densité assumée (environ 100 px/m sur les produits, sinon aucun nom ne se lirait). **Trim sheet** (`generate_trims.py`) : 8 bandes répétables (tranche d'étagère avec prix, plinthe, bandeau « HYPER », bord de quai, grille, néon, cornière, joint). Les deux vérifiées en 3D à 640×360 : noms et pictos lisibles à 1,5 m, tranche d'étagère immédiatement identifiable. Le bandeau porte « HYPER » en attendant un nom d'enseigne pour le magasin.
 
@@ -235,7 +235,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > (sources en forme de tube, rien au-dessus des rangées, trois tubes morts,
 > blanc froid, bloc de secours vert) et **voir grand** — reporté en N6, c'est
 > une consigne de plan, pas une correction. Détail des deux premières dans
-> `docs/pipeline/harmonisation-assets.md` et `docs/pipeline/niveau-blender.md`.
+> `docs/4-technique/generateurs.md` et `docs/5-guides/modifier-le-niveau.md`.
 >
 > **Suite du retour (2026-09-12) : éclairage hybride adopté.** « J'ai
 > l'impression qu'il y a une ambient light qui éclaire tout » — vérifié :
@@ -279,7 +279,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > en Geometry Nodes — le bake travaille par sommet sur de la géométrie réelle,
 > et une réalisation GN produit un mesh multi-matériaux que la fusion au
 > chargement refuse (ADR 0023). Raisonnement complet dans
-> `docs/pipeline/harmonisation-assets.md`.
+> `docs/4-technique/generateurs.md`.
 >
 > **Non utilisé** : le Supermarket de PensamientoAzul, dont la licence reste
 > « à confirmer ». Les gondoles sont remontées en pièces simples, les produits
@@ -374,9 +374,9 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > d'essai n'en consomme que 18 pour 90 000 triangles, il y a de la marge.
 
 > **🔶 Proposé (2026-09-12), en attente de la validation de l'utilisateur.**
-> Livrable : [docs/game/niveau-v2-plan-de-masse.md](docs/game/niveau-v2-plan-de-masse.md)
+> Livrable : [docs/2-fonctionnel/le-niveau.md](docs/2-fonctionnel/le-niveau.md)
 > (dix fiches, parcours, vérifications) + le plan coté en SVG
-> (`docs/game/images/niveau-v2-plan-de-masse.svg`).
+> (`docs/assets/niveau-v2-plan-de-masse.svg`).
 >
 > **Les cotes ne vivent pas dans le Markdown mais dans
 > `tools/level_v2/plan_de_masse.py`** : les contrôles de ce jalon sont des
@@ -402,7 +402,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > (2) **Budget de rendu mesuré**, à la demande de l'utilisateur (« faire une
 > recherche sur comment gérer ça proprement ») plutôt que posé a priori —
 > voir [ADR 0026](docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md)
-> et [docs/systems/cout-de-rendu.md](docs/systems/cout-de-rendu.md).
+> et [docs/4-technique/budget-de-rendu.md](docs/4-technique/budget-de-rendu.md).
 >
 > **Résultat de la mesure, contre-intuitif : les triangles ne sont pas le
 > problème, les lampes le sont.** 1,45 million de triangles avec la carte
@@ -472,7 +472,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > TypeScript. Le dispatch par nom historique (`use_crowbar`, `use_toilet`…)
 > reste intact et prioritaire nulle part : ce que le `.glb` déclare passe
 > avant. Détail dans
-> [docs/reference/conventions-nommage.md](docs/reference/conventions-nommage.md#cartes-de-fidélité),
+> [docs/6-reference/conventions-nommage.md](docs/archive/reference-conventions-nommage.md#cartes-de-fidélité),
 > table de `CLAUDE.md` à jour.
 >
 > **Une valeur mal tapée ne passe jamais en silence** — c'est le risque
@@ -622,7 +622,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > 82 836 triangles** — tout le reste du niveau, derrière les murs. Après
 > découpe : 11 184. Les 32 m sont le coude d'une courbe mesurée (48 → 32 paie,
 > 32 → 24 ne paie plus), pas un ordre de grandeur ; tableau complet dans
-> [Ce que coûte une image](docs/systems/cout-de-rendu.md#découpe-du-décor-en-cellules).
+> [Ce que coûte une image](docs/archive/systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
 >
 > **Piège de mesure à connaître avant de refaire ce genre de banc** :
 > `cassandre.player.spawn(...)` ne déplace PAS la caméra tant que la boucle
@@ -1006,9 +1006,9 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 **Actions.**
 1. Le nouveau niveau devient la cible du bouton « Jouer » à la place de `hypermarche_complet`. Les anciennes zones restent dans le menu dev ou en sortent, selon la décision de l'utilisateur.
 2. `CLAUDE.md` : phase courante, tableau des conventions glTF (cartes), mention des textures dans la stack.
-3. `docs/` : `docs/game/niveau-hypermarche.md` réécrit pour le nouveau niveau ; `docs/pipeline/` (bibliothèque `.blend`, MCP, harmonisation CC0, textures) ; ADRs pour les textures et la palette, la bibliothèque `.blend` comme source de vérité des assets, les packs CC0 comme source, et la décision instanciation / fusion de N1 ; mise à jour de l'ADR 0022.
+3. `docs/` : `docs/2-fonctionnel/le-niveau.md` réécrit pour le nouveau niveau ; `docs/pipeline/` (bibliothèque `.blend`, MCP, harmonisation CC0, textures) ; ADRs pour les textures et la palette, la bibliothèque `.blend` comme source de vérité des assets, les packs CC0 comme source, et la décision instanciation / fusion de N1 ; mise à jour de l'ADR 0022.
 4. Skills : `modular-kit-design` (bibliothèque v2), `blender-python-automation` (arbitrage script / MCP mis à jour avec l'usage réel), `gltf-level-conventions` (cartes).
-5. Ce fichier est tenu à jour jalon par jalon (« ✅ Livré » avec date et constats, comme `PLAN_EFFECT_XSTATE.md`).
+5. Ce fichier est tenu à jour jalon par jalon (« ✅ Livré » avec date et constats, comme `docs/journal/plan-effect-xstate-2026-09.md`).
 
 ---
 

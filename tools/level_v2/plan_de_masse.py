@@ -71,7 +71,7 @@ class Space:
     # axe et arrive à `z_arrivee` au bord haut. `None` = sol plat à `z`.
     rampe: tuple[str, float, float] | None = None
     # Repères de gameplay : (libellé, x, y, nature) avec nature ∈
-    # {carte, secret, objet, porte, depart, soin, munitions}. Une trousse de
+    # {carte, secret, objet, porte, depart, soin, munitions, nourriture}. Une trousse de
     # soin et une boîte de munitions portent leur quantité dans leur libellé
     # (« trousse de soin +25 ») : c'est lui que lit `build_blockout.py`, pas
     # une seconde table à tenir synchro. Un cinquième terme, facultatif, donne
@@ -142,6 +142,10 @@ SPACES: list[Space] = [
         reperes=[
             ("machine à pinces", -26, 6, "objet"),
             ("photomaton", -29, 6.5, "objet"),
+            # Chantier « Les coulisses » (2026-09-26) : un « sandwich chaud »
+            # tient lieu de hot-dog de galerie marchande — `_aliment_pour_label`
+            # ne connaît que les mots du plan, pas les plats composés.
+            ("sandwich chaud +10", 3, 3, "nourriture"),
         ],
     ),
     Space(
@@ -159,6 +163,8 @@ SPACES: list[Space] = [
         reperes=[
             # Récompense du détour : la seule trousse double avant les bureaux.
             ("trousse de soin +50", 52, 16, "soin"),
+            # Chantier « Les coulisses » (2026-09-26) : un plateau de self.
+            ("plateau de jambon +15", 37, 3, "nourriture"),
         ],
     ),
     Space(
@@ -296,6 +302,9 @@ SPACES: list[Space] = [
             # Devant la porte du Directeur : laissée au sol si le joueur arrive
             # en forme, elle attend qu'il revienne la chercher en plein combat.
             ("trousse de soin +50", -27, 152, "soin"),
+            # Chantier « Les coulisses » (2026-09-26) : la salle de pause, au
+            # nord de `suit_bu3` (cloison de la salle de pause, 2, 161).
+            ("donuts +5", 4, 164, "nourriture"),
         ],
     ),
     Space(
@@ -360,6 +369,91 @@ SPACES: list[Space] = [
             ("secret 3 — aération", 38.5, 22, "secret"),
             ("trousse de soin +50", 40, 21, "soin"),
         ],
+    ),
+
+    # ===== Les coulisses, v2 (2026-09-26) =====
+    # v1 rejetée par l'utilisateur (« posé au pif, aucun plaisir à explorer »).
+    # Disposition v2 : docs/assets/board-coulisses.md section 4 +
+    # docs/assets/coulisses-plan-v2.py (mutations reportées ici en dur).
+    Space(
+        id="pc_secu", nom="PC sécurité",
+        x=(34, 46), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
+        role="Entrée vitrée depuis le couloir, sas d'accueil et guichet intérieur face au poste des caméras.",
+        duree="0:30", arrivee=(40, 141),
+        ennemis="aucun — le vigile dort",
+        reperes=[("console caméras (E)", 38.3, 149.3, "objet"), ("guichet vitré", 40.5, 144.3, "objet"),
+                 ("donuts +5", 44.65, 146, "nourriture", 0.95)],
+    ),
+    Space(
+        id="vestiaires", nom="Vestiaires + pointeuse",
+        x=(20, 34), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
+        role="Pointeuse (gag), rangées de casiers, douches ; casier du vigile cadenassé (à casser)",
+        duree="0:30", arrivee=(27, 141),
+        ennemis="1 Costard entre les casiers",
+        spawns=[("suit_vs1", 23, 147, "rangée de casiers (1,9 m)")],
+        reperes=[("pointeuse (E)", 33, 141, "objet"), ("casier du vigile (cassable)", 21, 148, "objet"),
+                 ("sandwich +10", 30, 148, "nourriture")],
+    ),
+    Space(
+        id="fournil", nom="Fournil / rôtisserie",
+        x=(8, 20), y=(140, 156), z=0, hauteur=4.5, densite="elevee",
+        role="Labo chaud : four à sole, chambre de pousse qui déborde (gag), rôtissoire. Plan de travail → gaine",
+        duree="0:40", arrivee=(14, 141),
+        ennemis="2 Costards",
+        spawns=[("suit_fo1", 10, 153, "four à sole"), ("suit_fo2", 18, 154, "chariots à grilles")],
+        reperes=[("chambre de pousse (E)", 10, 146, "objet"), ("poulet rôti +25", 18, 145, "nourriture"),
+                 ("sacs de farine", 12, 155, "objet")],
+    ),
+    Space(
+        id="gaine", nom="Gaine VMC",
+        x=(20, 46), y=(152, 154), z=2.0, hauteur=2.0, densite="faible",
+        role="Route parallèle du fournil au PC sécurité, cache à mi-chemin",
+        grimpable=True,
+        reperes=[("cache gaine (munitions +24)", 30, 153, "munitions")],
+    ),
+    Space(
+        id="labo", nom="Labo boucherie / marée",
+        x=(-60, -44), y=(84, 98), z=0, hauteur=3.5, densite="elevee",
+        role="Blanc vif. Vitre sur les rayons : vu depuis la surface de vente bien avant. Trancheuse, vivier",
+        duree="0:40", arrivee=(-45, 91),
+        ennemis="2 Costards, visibles depuis les rayons",
+        spawns=[("suit_lb1", -58, 96, "étal réfrigéré (1,7 m)"), ("suit_lb2", -54, 87, "vivier")],
+        reperes=[("vitre sur les rayons", -48, 84.25, "objet"), ("vivier à homards", -56, 93, "objet"),
+                 ("jambon +15", -58, 86, "nourriture")],
+    ),
+    Space(
+        id="chambre_froide", nom="Chambre froide",
+        x=(-60, -44), y=(98, 116), z=0, hauteur=4.0, densite="elevee",
+        role="Froid, sombre. Carcasses sur rail jusqu'au labo, rideau à lanières. Bouton « personne enfermée »",
+        duree="0:40", arrivee=(-45, 107),
+        ennemis="2 Costards entre les carcasses",
+        spawns=[("suit_cf1", -56, 113, "rangée de carcasses"), ("suit_cf2", -54, 101, "rangée de carcasses")],
+        reperes=[("bouton personne enfermée (E)", -59.5, 114, "objet"), ("rail + lanières", -52, 98.25, "objet")],
+    ),
+    Space(
+        id="compacteur", nom="Local compacteur",
+        x=(-36, -24), y=(112, 128), z=0, hauteur=5.0, densite="faible",
+        role="Répit, un projecteur. Grille sur le quai (déjà traversé), porte à sens unique vers la réserve. Balles de carton",
+        duree="0:20", arrivee=(-35, 120),
+        ennemis="aucun",
+        reperes=[("bouton compacteur (E)", -34, 114, "objet"), ("grille sur le quai", -24.25, 120, "objet"),
+                 ("balle mal cerclée", -32, 127, "objet")],
+    ),
+    Space(
+        id="secret4", nom="Planque du vigile (secret 4)",
+        x=(-36, -28), y=(128, 132), z=0, hauteur=2.5, densite="faible",
+        role="Butin sous antivol, clé du crochet vide, télé qui passe le foot",
+        reperes=[("secret 4", -32, 130, "secret"), ("pizza +25", -35, 129, "nourriture")],
+    ),
+    Space(
+        id="sav", nom="Atelier SAV",
+        x=(12, 32), y=(80, 90), z=0, hauteur=4.0, densite="elevee",
+        role="Derrière l'électroménager : guichet SAV sur le rayon TV, mur de téléviseurs en réparation",
+        duree="0:30", arrivee=(22, 81),
+        ennemis="2 Costards derrière les établis",
+        spawns=[("suit_sv1", 14, 88, "établi"), ("suit_sv2", 30, 88, "rayonnage")],
+        reperes=[("guichet + sonnette (E)", 22, 80.25, "objet"), ("mur de TV", 22, 89.5, "objet"),
+                 ("micro-ondes", 28, 84, "objet")],
     ),
 ]
 
@@ -692,6 +786,26 @@ class Opening:
 JONCTIONS_SCELLEES: set[frozenset[str]] = {
     frozenset({"reserve", "c_bu"}),        # les bureaux ne s'atteignent que par le souterrain
     frozenset({"reserve", "c_short_ramp"}), # idem, côté raccourci
+    # Coulisses v2 : la vitre labo/rayons est une baie VUE, pas une porte —
+    # sceller la façade brute pour que build_niveau.py y pose du verre, pas
+    # une ouverture franchissable. reserve↔labo et reserve↔chambre_froide ne
+    # se touchent pas réellement (façades non adjacentes) : sceau sans effet,
+    # gardé pour lisibilité si les cotes bougent.
+    frozenset({"rayons", "labo"}),
+    frozenset({"reserve", "labo"}),
+    frozenset({"reserve", "chambre_froide"}),
+    # Secret 4 : n'entre QUE par le compacteur (la balle mal cerclée), jamais
+    # en coupant depuis le couloir de service ou la porte coupe-feu.
+    frozenset({"c_short_ramp", "secret4"}),
+    frozenset({"c_short_w", "secret4"}),
+    # La gaine ne se prend que depuis le plan de travail du fournil : on ne
+    # grimpe pas dedans depuis les vestiaires, ni depuis l'étage des bureaux.
+    frozenset({"fournil", "c_escalier"}),
+    frozenset({"vestiaires", "gaine"}),
+    # Le PC sécurité est fermé côté vestiaires : aucune porte sur ce mur.
+    frozenset({"pc_secu", "vestiaires"}),
+    frozenset({"bureaux", "fournil"}),
+    frozenset({"bureaux", "gaine"}),
 }
 
 
@@ -715,10 +829,36 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     # Dans l'axe de l'allée entre les rangées 0 et 1 : centrée sur x = −40, la
     # porte donnait sur le bout d'une gondole à deux mètres.
     frozenset({"c_short_w", "rayons"}): (2.5, -42.5),     # la porte coupe-feu
+    # Coulisses v2 : le PC arrive depuis le couloir, sans porte latérale vers
+    # les vestiaires ; ceux-ci gardent leur accès depuis le couloir du personnel.
+    frozenset({"c_bu", "pc_secu"}): (1.5, 38.0),
+    frozenset({"c_bu", "vestiaires"}): (1.5, 24.0),
+    frozenset({"vestiaires", "fournil"}): (1.5, 145.0),
+    frozenset({"c_bu", "fournil"}): (2.0, 16.0),
+    # Gaine VMC, prise depuis le plan de travail du fournil, débouchant au PC
+    # sécurité : route parallèle au couloir du personnel.
+    frozenset({"fournil", "gaine"}): (1.5, 153.0),
+    # Décalé à 44,75 (et non 44,0) : la salle des moniteurs du pilote v2 loge
+    # sa baie d'écrans mur à mur contre le mur nord jusqu'à x = 43,9, le
+    # raccord de gaine prend le reste, contre le mur est.
+    frozenset({"pc_secu", "gaine"}): (1.5, 44.75),
+    # Labo boucherie/marée collé aux rayons (vitre, section 4.2 du board) et
+    # relié à la chambre froide par le rail et le rideau à lanières.
+    frozenset({"c_short_w", "labo"}): (2.0, 91.0),
+    frozenset({"labo", "chambre_froide"}): (2.0, -52.0),
+    frozenset({"c_short_w", "chambre_froide"}): (1.5, 107.0),
+    # Compacteur : grille sur le quai déjà traversé (couloir de service) +
+    # porte à sens unique vers la réserve (grande boucle, jamais l'inverse).
+    frozenset({"c_short_w", "compacteur"}): (2.5, 122.0),
+    frozenset({"compacteur", "reserve"}): (2.5, 116.0),
+    frozenset({"compacteur", "secret4"}): (1.5, -32.0),
+    # SAV derrière l'électroménager (option A du board), guichet sur le rayon TV.
+    frozenset({"electro", "sav"}): (1.5, 14.0),
 }
 
 PORTES_SENS_UNIQUE: dict[frozenset[str], tuple[str, str]] = {
     frozenset({"c_short_w", "rayons"}): ("c_short_w", "rayons"),
+    frozenset({"compacteur", "reserve"}): ("compacteur", "reserve"),
 }
 
 
@@ -845,6 +985,7 @@ STYLE_REPERES = {
     "depart": ("#6fd3ff", "▶"),
     "soin": ("#5fe07a", "✚"),
     "munitions": ("#e0b45f", "▪"),
+    "nourriture": ("#ff9fd0", "♥"),
 }
 
 

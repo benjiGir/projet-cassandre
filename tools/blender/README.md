@@ -1057,7 +1057,7 @@ la vérification en jeu restent à faire par l'humain (voir CLAUDE.md).
 
 ### Secrets — Zone B (surgelés) et Zone C (toit de gondole) (2026-08-24)
 
-**Les deux secrets prévus par le plan** (`PLAN_PROTO_BOOMER_SHOOTER.md` :
+**Les deux secrets prévus par le plan** (`docs/journal/plan-prototype-2026-08.md` :
 « secret 1, mur cassable, surgelés » en Zone B, « secret 2, toit, via
 palettes » en Zone C) **ont leur géométrie côté Blender.** Design entièrement
 pré-décidé par l'humain (placement, dimensions, mécanique de saut) — cette

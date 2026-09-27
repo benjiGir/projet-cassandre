@@ -96,7 +96,7 @@ export interface DirectorConfig {
 
   /** Teinte (`material.color`, voir `BillboardSprite.setTint`) tant que le Directeur porte encore son costume humain — blanc = atlas affiché sans teinte, identique au rendu du Costard. */
   humanTintColor: number;
-  /** Teinte appliquée dès la révélation (`Director.revealed === true`) — PLACEHOLDER explicite (invariant #9, pas d'art final). */
+  /** Teinte appliquée dès la révélation (`Director.revealed === true`) — PLACEHOLDER explicite (pas d'art final). */
   revealedTintColor: number;
   /** Amplitude du screenshake au moment de la révélation, en mètres (via `fx.triggerShake`, API publique existante). */
   revealShakeAmplitude: number;

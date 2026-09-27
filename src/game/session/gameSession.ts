@@ -9,6 +9,8 @@ import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
 import type { SanitaireSystem } from "../level/sanitaires";
+import type { EcranSystem } from "../level/ecrans";
+import type { CameraViewSystem } from "../level/cameras";
 import { type SessionStats } from "./score";
 import { type BillboardSprite } from "../../render/billboard";
 import { type DirectorManager } from "../entities/directorManager";
@@ -84,6 +86,14 @@ export interface GameSession {
    * partie, reconstruit à chaque commit comme `vitreSystem`.
    * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire */
   sanitaireSystem: SanitaireSystem | null;
+  /** Écrans (`ecran_*`) du niveau COURANT — état de partie (PV, frame,
+   * casse), reconstruit à chaque commit comme `vitreSystem`.
+   * see: docs/archive/reference-conventions-nommage.md#préfixe-ecran */
+  ecranSystem: EcranSystem | null;
+  /** Vue par caméra du niveau COURANT (console `use_*`/`cam_*`) — état de
+   * partie (console active, index courant), reconstruit à chaque commit
+   * comme `ecranSystem`. */
+  cameraView: CameraViewSystem | null;
   /** Billboards des armes au sol (`use_crowbar`/`use_pistol`/`use_shotgun`)
    * du niveau COURANT — animés au taux d'affichage (`updateFx`), reconstruits
    * à chaque commit comme `propSystem`/`doorSystem`.
@@ -94,7 +104,7 @@ export interface GameSession {
    * possible sur un sanitaire intact (règle Duke 3D : max/10 PV, 220 s de
    * délai GLOBAL, partagé par tous les sanitaires du niveau — un seul
    * compteur, pas un par appareil). Décrémenté au pas fixe par `gameplayDt`
-   * (hitstop inclus, jamais `Date.now()`/temps mural — invariant #1/#13),
+   * (hitstop inclus, jamais `Date.now()`/temps mural),
    * jamais par la casse d'un sanitaire ni un hot reload : c'est un état de
    * PARTIE, remis à 0 par `bootGameSession`.
    * see: docs/decisions/0032-sanitaires-utilisables.md
@@ -148,9 +158,9 @@ export interface GameSession {
   /**
    * Récap de fin de partie (`game/session/score.ts`) — compteurs avancés AU
    * PAS FIXE (`game/loop/updateGameplay.ts`), jamais par un évènement lu au
-   * taux d'affichage (invariants #1/#12/#13). Remis à zéro à chaque
-   * `bootGameSession`, comme le reste de cet objet.
-   * see: docs/systems/session.md#récapitulatif-de-fin-de-partie
+   * taux d'affichage. Remis à zéro à chaque `bootGameSession`, comme le
+   * reste de cet objet.
+   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
    */
   stats: SessionStats;
 }

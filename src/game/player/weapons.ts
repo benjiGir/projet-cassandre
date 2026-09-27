@@ -28,7 +28,7 @@ export interface ViewmodelClocks {
 
 /**
  * Matériau de repli pour tout ce qui n'est pas un ennemi. La gym est en
- * boîtes blanches (invariant #9) : il n'existe aucun système de tag de
+ * boîtes blanches : il n'existe aucun système de tag de
  * matériau par collider et il n'y en aura pas cette phase. Le champ
  * `HitEvent.material` reste un `string` libre pour qu'un futur système
  * puisse le peupler plus finement SANS changer l'API — construire un vrai

@@ -17,7 +17,7 @@ bouge là-bas bouge ici, sans retouche.
 
 Pourquoi des boîtes grises et non le kit modulaire (`kit_spec.py`) : un
 blockout se juge sur la circulation et les volumes, pas sur la matière —
-invariant #9, « boîtes blanches » tant que le gameplay n'est pas validé. Le
+pas d'assets finaux tant que le gameplay n'est pas validé. Le
 kit impose en plus un pavage par modules de 4/2/1 m, qui n'apporte rien ici et
 laisserait des restes sur des pièces de 42 × 36 m.
 
@@ -315,6 +315,11 @@ def _parapets(space, ouvertures, materiaux, coll, col_coll) -> int:
     for o in ouvertures:
         if space.id not in (o.a, o.b) or not o.sens_unique:
             continue
+        if space.id == "pc_secu" and frozenset({o.a, o.b}) == frozenset({"pc_secu", "gaine"}):
+            # Ici le dénivelé est franchi par l'escalier sur mesure du PC. Un
+            # parapet sous la porte haute occupait la dernière marche et
+            # bloquait le passage; l'escalier et la porte ferment déjà ce lien.
+            continue
         z_ici = o.z_a if o.a == space.id else o.z_b
         z_face = o.z_b if o.a == space.id else o.z_a
         if z_face <= z_ici:
@@ -459,6 +464,47 @@ def volumes(space, materiaux, coll, col_coll) -> int:
             poser(f"bureau_bu{i}", (x0 + 4 + (i % 2) * 12, y0 + 5 + (i // 2) * 9, z), (3.0, 1.5, 0.8))
         poser("cloison_bu", (x0 + 2, y0 + 14, z), (12.0, 0.25, 2.0))
 
+    elif space.id == "vestiaires":
+        # Rangée de casiers (1,9 m, sous les yeux) entre l'arrivée et le
+        # Costard : couvert déclaré au plan, vérifié ici pour la première fois.
+        # Pièce v2 large de 14 m (20..34) : la rangée s'arrête à 2 m du mur
+        # est, elle ne le touchait plus qu'à 0,25 m sur les cotes v1 reprises
+        # telles quelles (trouvé par `audit_niveau.py`).
+        poser("casiers_vs", (x0 + 4, y0 + 4, z), (8.0, 1.0, 1.9))
+
+    elif space.id == "fournil":
+        # Décalés des deux spawns (10, 153) et (18, 154) : un volume de cover
+        # ne doit pas englober le point où le Costard apparaît. Pièce v2
+        # étroite (12 m, 8..20) : les chariots reculés du mur est, sinon même
+        # défaut qu'aux casiers des vestiaires.
+        poser("four_fo", (x0 + 1, y0 + 1, z), (4.0, 2.5, 2.0))
+        poser("chariots_fo", (x0 + 6, y0 + 1, z), (2.0, 3.0, 1.7))
+
+    elif space.id == "labo":
+        # Étal réfrigéré (suit_lb1, -58, 96) et vivier (suit_lb2, -54, 87) :
+        # couvert déclaré au plan, chacun à l'écart de son propre spawn.
+        poser("etal_lb", (x0 + 1, y1 - 5, z), (4.0, 2.0, 1.7))
+        poser("vivier_lb", (x1 - 6, y0 + 1, z), (3.0, 2.0, 1.0))
+
+    elif space.id == "chambre_froide":
+        # Rangée de carcasses au milieu de la pièce, à l'écart des deux
+        # spawns (-56, 113) et (-54, 101).
+        for i in range(3):
+            poser(f"carcasse_cf{i}", (x0 + 3 + i * 5, y0 + 8, z), (1.0, 1.0, 3.5))
+
+    elif space.id == "sav":
+        # Pièce v2 large mais peu profonde (20 × 10 m, 80..90) : les deux
+        # rangées de retours longent les murs est/ouest, courtes, à l'écart
+        # des deux spawns (14, 88) et (30, 88) posés près du mur nord.
+        poser("etabli_sv", (x0 + 2, y0 + 1, z), (16.0, 1.0, 1.0))
+        poser("rayonnage_sv0", (x0 + 0.5, y0 + 3, z), (1.0, 4.0, 2.2))
+        poser("rayonnage_sv1", (x1 - 1.5, y0 + 3, z), (1.0, 4.0, 2.2))
+
+    elif space.id == "compacteur":
+        for i in range(3):
+            poser(f"balle_carton_co{i}", (x0 + 3 + i * 3, y1 - 4, z), (2.0, 2.0, 2.0))
+        poser("bouton_compacteur_co", (x1 - 3, y0 + 2, z), (0.5, 0.5, 1.0))
+
     return poses
 
 
@@ -571,11 +617,70 @@ REGLES_REPERES = [
     ("secret 1", "secret", "secret_1_photomaton"),
     ("secret 2", "secret", "secret_2_gondoles"),
     ("secret 3", "secret", "secret_3_aeration"),
+    ("secret 4", "secret", "secret_4_planque"),
     ("porte Argent", "rien", None),       # posée depuis les ouvertures
     ("porte Or", "rien", None),
     ("porte coupe-feu", "rien", None),    # posée par l'habillage, qui porte aussi son bouton
     ("SORTIE", "rien", None),
+
+    # ===== Les coulisses (2026-09-26) =====
+    # Nourriture : variante walk-over de `soin` (système 1, câblé côté runtime
+    # depuis le lot 2) — vrai `use_*` portant `aliment`, voir `_aliment_pour_label`.
+    ("sandwich", "nourriture", None),
+    ("poulet rôti", "nourriture", None),
+    ("baguettes", "nourriture", None),
+    ("donuts", "nourriture", None),
+    ("jambon", "nourriture", None),
+    ("pizza", "nourriture", None),
+    # La gaine VMC : une vraie cache, pas un décor — c'est `boîte de
+    # munitions`/`trousse de soin` qui portent la quantité ailleurs, ici le
+    # libellé est différent mais la mécanique (regex `+N`) est la même.
+    ("cache gaine", "munitions", None),
+    # Décor : posé en volume gris par `volumes()` (toutes ces pièces restent
+    # grises depuis le rejet de la v1, `pc_secu` exceptée), ou déjà construit
+    # en vrai par `habiller_pc_secu` (console, guichet).
+    ("casiers", "rien", None),
+    ("pointeuse", "rien", None),
+    ("casier du vigile", "rien", None),
+    ("chambre de pousse", "rien", None),
+    ("sacs de farine", "rien", None),
+    ("console caméras", "rien", None),
+    ("guichet vitré", "rien", None),
+    ("vitre sur les rayons", "rien", None),
+    ("vivier à homards", "rien", None),
+    ("bouton personne enfermée", "rien", None),
+    ("rail + lanières", "rien", None),
+    ("mur de TV animées", "rien", None),
+    ("mur de TV", "rien", None),
+    ("micro-ondes", "rien", None),
+    ("bouton compacteur", "rien", None),
+    ("grille sur le quai", "rien", None),
+    ("balles de carton", "rien", None),
+    ("balle mal cerclée", "rien", None),
+    ("guichet + sonnette", "rien", None),
 ]
+
+
+# Mot du libellé du plan → nom d'aliment connu du runtime (`FOOD_ITEMS` dans
+# `src/game/level/food.ts`). « baguettes » n'a pas de nom dédié côté jeu : le
+# libellé du plan lui donne +5, la même valeur que « donut », donc c'est
+# celui-là qui est posé — aucun écart de PV avec ce qu'annonce le plan.
+ALIMENTS_PAR_MOT = {
+    "donut": "donut",
+    "sandwich": "sandwich",
+    "jambon": "jambon",
+    "poulet": "poulet",
+    "pizza": "pizza",
+    "baguette": "donut",
+}
+
+
+def _aliment_pour_label(label: str) -> str:
+    bas = label.lower()
+    for mot, aliment in ALIMENTS_PAR_MOT.items():
+        if mot in bas:
+            return aliment
+    raise SystemExit(f"[blockout] repère nourriture sans aliment reconnu : {label!r}")
 
 
 def _z_du_sol(space, x: float, y: float) -> float:
@@ -598,7 +703,7 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
     (`build_niveau.py`) s'en sert pour remplacer une silhouette grise par le
     vrai objet, sans dupliquer la lecture du plan ni toucher au reste.
     """
-    comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0}
+    comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0, "nourriture": 0}
     for space in plan.ALL:
         compteurs: dict[str, int] = {}
         for label, rx, ry, nature, *altitude in space.reperes:
@@ -638,6 +743,15 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
                 boite_centree(cible, (rx, ry, z + 1.5), (3.0, 3.0, 3.0), "repere",
                               materiaux, logic_coll, extras={"secret_id": cible})
                 comptes["secret"] += 1
+            elif genre == "nourriture":
+                # Vrai `use_*` walk-over (système 1, câblé côté runtime) :
+                # l'aliment est dérivé du libellé, jamais écrit en dur ici.
+                aliment = _aliment_pour_label(label)
+                compteurs["nourriture"] = compteurs.get("nourriture", 0) + 1
+                boite_centree(f"use_nourriture_{space.id}_{compteurs['nourriture']}",
+                              (rx, ry, z + 0.25), (0.5, 0.5, 0.5), "repere", materiaux,
+                              logic_coll, extras={"aliment": aliment})
+                comptes["nourriture"] += 1
             elif genre == "signature":
                 # Emplacement réservé d'un objet « signature Duke » : sa
                 # silhouette, pas son mécanisme (hors scope, reliquat Phase 5).
@@ -704,7 +818,7 @@ def main() -> None:
     print("\n[blockout] " + "-" * 52)
     print(f"[blockout] {sols} sols, {murs} morceaux de mur, {vols} volumes gris")
     print(f"[blockout] {portes} portes, {reperes['use']} use_*, {reperes['secret']} secrets, "
-          f"{reperes['signature']} emplacements signature")
+          f"{reperes['signature']} emplacements signature, {reperes['nourriture']} repères nourriture")
     print(f"[blockout] {costards} spawn_suit_*, {directeurs} spawn_director_*, {reperes['spawn']} spawn_player")
     print(f"[blockout] écrit : {out}")
 

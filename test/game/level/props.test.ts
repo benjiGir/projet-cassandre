@@ -304,3 +304,105 @@ describe("PropSystem — interpolation du rendu", () => {
     expect(prop.object.position.x).toBeCloseTo(2.5, 5); // centre 3 − demi-boîte 0,5
   });
 });
+
+describe("chargement d'un prop_* — matières étendues (chantier « Les coulisses »)", () => {
+  it("accepte farine, eau et electronique comme matiere valide", () => {
+    const { handle } = build([
+      propMesh("prop_sac", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { matiere: "farine" }),
+      propMesh("prop_vivier", new THREE.Vector3(1, 1, 1), new THREE.Vector3(3, 0, 0), { matiere: "eau" }),
+      propMesh("prop_tv", new THREE.Vector3(1, 1, 1), new THREE.Vector3(6, 0, 0), { matiere: "electronique" }),
+    ]);
+
+    expect(handle.props.find((p) => p.name === "prop_sac")!.matiere).toBe("farine");
+    expect(handle.props.find((p) => p.name === "prop_vivier")!.matiere).toBe("eau");
+    expect(handle.props.find((p) => p.name === "prop_tv")!.matiere).toBe("electronique");
+  });
+
+  it("lit `contenu` au format 'nom:nombre', sans avertissement", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { handle } = build([
+      propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { contenu: "donut:3" }),
+    ]);
+
+    expect(handle.props[0]!.contenu).toEqual({ item: "donut", count: 3 });
+    expect(propWarnings(errorSpy)).toHaveLength(0);
+    errorSpy.mockRestore();
+  });
+
+  it("avertit bruyamment sur un `contenu` mal formé, sans refuser le prop", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { handle } = build([
+      propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { contenu: "donut" }),
+    ]);
+
+    expect(handle.props).toHaveLength(1);
+    expect(handle.props[0]!.contenu).toBeNull();
+    const warnings = propWarnings(errorSpy);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("contenu");
+    errorSpy.mockRestore();
+  });
+});
+
+describe("PropSystem — nourriture lâchée à la casse (`contenu`)", () => {
+  it("fait apparaître le bon nombre de pickups, ramassables en marchant dessus", () => {
+    const { handle } = build([
+      propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), {
+        pv: 10,
+        contenu: "sandwich:2",
+      }),
+    ]);
+    const props = new PropSystem(handle.props, handle.root);
+    const prop = handle.props[0]!;
+
+    props.destroyByName(prop.name);
+    expect(props.foodDropCount).toBe(2);
+
+    const point = prop.body.translation();
+    const tryHeal = vi.fn(() => true);
+    // Rayon de ramassage généreux : peu importe la dispersion exacte tirée du RNG.
+    props.collectFoodDrops(new THREE.Vector3(point.x, point.y, point.z), tryHeal);
+
+    expect(tryHeal).toHaveBeenCalledTimes(2);
+    expect(tryHeal).toHaveBeenCalledWith(10, "sandwich"); // FOOD_HEAL_AMOUNTS.sandwich
+    expect(props.foodDropCount).toBe(0);
+  });
+
+  it("un nom de contenu qui n'est pas un aliment connu ne fait rien apparaître", () => {
+    const { handle } = build([
+      propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), {
+        pv: 10,
+        contenu: "canette:3",
+      }),
+    ]);
+    const props = new PropSystem(handle.props, handle.root);
+
+    props.destroyByName(handle.props[0]!.name);
+    expect(props.foodDropCount).toBe(0);
+  });
+
+  it("reproduit exactement les mêmes positions de drop pour la même graine (déterminisme, invariant #12)", () => {
+    function positions(): THREE.Vector3[] {
+      const { handle } = build([
+        propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), {
+          pv: 10,
+          contenu: "poulet:3",
+        }),
+      ]);
+      // Un `PropSystem` neuf par appel : sa graine (`FOOD_DROP_SEED`) repart
+      // du même point à chaque construction, comme au chargement d'un niveau.
+      const props = new PropSystem(handle.props, handle.root);
+      props.destroyByName("prop_frigo");
+      return handle.root.children
+        .filter((obj): obj is THREE.Mesh => obj instanceof THREE.Mesh && obj !== handle.props[0]!.object)
+        .map((mesh) => mesh.position.clone());
+    }
+
+    const a = positions();
+    const b = positions();
+    expect(a).toHaveLength(3);
+    expect(a.map((p) => p.toArray())).toEqual(b.map((p) => p.toArray()));
+  });
+});

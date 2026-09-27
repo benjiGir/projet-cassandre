@@ -53,7 +53,8 @@ export type SfxId =
   | "prop_break_glass"
   | "sanitaire_use"
   | "sanitaire_break"
-  | "water_drink";
+  | "water_drink"
+  | "food_eat";
 
 interface SfxDef {
   /**
@@ -157,6 +158,11 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   sanitaire_use: { sprite: "toilet_flush", volume: 0.8 },
   sanitaire_break: { sprite: "ceramic_break", volume: 0.9 },
   water_drink: { sprite: "water_gulp", volume: 0.7 },
+  // Nourriture (chantier « Les coulisses », système 1) : PLACEHOLDER assumé,
+  // aucune recette de mastication n'existe encore dans `tools/audio/recipes.py`
+  // — réutilise le carillon de trousse de soin, le geste (soin walk-over) est
+  // le même. À remplacer dès qu'une vraie recette existe.
+  food_eat: { sprite: "pickup_health", volume: 0.65 },
 };
 
 /** Son de tir par arme. */
@@ -191,6 +197,12 @@ const PROP_BREAK_SFX: Record<string, SfxId> = {
   carton: "prop_break_wood",
   verre: "prop_break_glass",
   metal: "impact_metal",
+  // Trois matières de plus (chantier « Les coulisses », fournil/chambre
+  // froide/atelier SAV) : PLACEHOLDERS assumés, aucune recette dédiée —
+  // réutilisent le timbre le plus proche du lot existant.
+  farine: "prop_break_wood", // sac de papier qui éclate : même famille sèche que le bois/carton
+  eau: "water_drink", // seul timbre liquide du catalogue (le vivier de la chambre froide)
+  electronique: "impact_metal",
 };
 const DEFAULT_PROP_BREAK_SFX: SfxId = "prop_break_wood";
 

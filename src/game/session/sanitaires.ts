@@ -35,7 +35,7 @@ import { type GameSession } from "./gameSession";
  *   puis un délai GLOBAL de gameplay (`SANITAIRE_RELIEF_COOLDOWN_SECONDS`)
  *   avant le prochain — un seul compteur pour tous les sanitaires du niveau,
  *   `session.sanitaireReliefCooldown`, décrémenté au pas fixe par le VRAI
- *   `gameplayDt` (hitstop compris, jamais un temps mural — invariants #1/#13).
+ *   `gameplayDt` (hitstop compris, jamais un temps mural).
  *   Pendant le délai, ou à PV pleins, la chasse d'eau part quand même
  *   (`sanitaire_use`) mais rien ne soigne. Écart volontaire à Duke : à PV
  *   pleins ET hors délai, le délai n'est PAS consommé — plus amical, ça évite

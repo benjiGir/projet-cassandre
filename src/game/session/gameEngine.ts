@@ -9,6 +9,7 @@ import { Viewmodel, type WeaponModels } from "../../render/viewmodel";
 import { createWireframeToggle } from "../../render/debugView";
 import { HitmarkerOverlay } from "../../render/hitmarker";
 import { CrosshairOverlay } from "../../render/crosshair";
+import { CameraViewOverlay } from "../../render/cameraView";
 import { BallisticsDebugOverlay } from "../../render/ballisticsDebug";
 import { type EnemySpriteSheet } from "../../render/enemySprites";
 import { weaponConfig } from "../player/weaponConfig";
@@ -42,6 +43,9 @@ export interface GameEngine {
   crosshair: CrosshairOverlay;
   hitmarker: HitmarkerOverlay;
   ballisticsDebug: BallisticsDebugOverlay;
+  /** Bruit/scanlines/étiquette pendant une vue par caméra (chantier « Les
+   * coulisses », système 4) — voir `render/cameraView.ts`. */
+  cameraViewOverlay: CameraViewOverlay;
 
   /** Éclairage temps réel de la scène, réglé PAR NIVEAU (`LevelDef.lighting`) — voir `lifecycle.ts::applyLightRig`. */
   ambientLight: THREE.AmbientLight;
@@ -172,10 +176,14 @@ export function buildGameEngine(
   // 3D RÉELS ajoutés à `scene`, pas un overlay canvas — actif PAR DÉFAUT en
   // dev, bascule à chaud via `KeyB` dans `loop/updateFx.ts` ; éteint en prod.
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
+  // Overlay de la vue par caméra (chantier « Les coulisses », système 4) :
+  // même conteneur/canvas 2D que le réticule/hitmarker ci-dessus, voir
+  // `render/cameraView.ts`.
+  const cameraViewOverlay = new CameraViewOverlay(document.getElementById("app") as HTMLDivElement);
 
   // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager
-  // restent purs de tout rendu, voir leur doc de tête) — placeholder simple
-  // (invariant #9), retiré de la scène au ramassage OU à un `teardownGameSession`.
+  // restent purs de tout rendu, voir leur doc de tête) — placeholder simple,
+  // retiré de la scène au ramassage OU à un `teardownGameSession`.
   // Géométrie/matériau PARTAGÉS entre parties (jamais mutés en place ailleurs
   // que par cette identité de couleur), seule l'INSTANCE de mesh
   // (`session.droppedCardMesh`) est propre à une partie.
@@ -232,6 +240,7 @@ export function buildGameEngine(
     crosshair,
     hitmarker,
     ballisticsDebug,
+    cameraViewOverlay,
     ambientLight,
     sunLight: sun,
     suitSheet: sheets.suit,

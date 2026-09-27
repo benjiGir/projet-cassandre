@@ -46,18 +46,12 @@ export class CrosshairOverlay {
 
     const canvas = document.createElement("canvas");
     canvas.id = "crosshair";
+    canvas.className = "game-overlay";
     canvas.width = INTERNAL_WIDTH;
     canvas.height = INTERNAL_HEIGHT;
-    // Même contrat CSS que `canvas#game`/`canvas#hitmarker` (voir
-    // `index.html`/`hitmarker.ts`) : plein écran, aucune interception de
-    // pointeur, filtrage au plus proche (invariant #4/#5).
-    canvas.style.position = "fixed";
-    canvas.style.inset = "0";
-    canvas.style.width = "100vw";
-    canvas.style.height = "100vh";
-    canvas.style.display = "block";
+    // Même cadre 16:9 que le jeu (voir `index.html`), sans étirement selon
+    // l'écran ; aucune interception de pointeur, pixels au plus proche.
     canvas.style.pointerEvents = "none";
-    canvas.style.imageRendering = "pixelated";
     container.appendChild(canvas);
 
     const ctx = canvas.getContext("2d");

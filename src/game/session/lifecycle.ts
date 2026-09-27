@@ -160,6 +160,8 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     doorSystem: null,
     vitreSystem: null,
     sanitaireSystem: null,
+    ecranSystem: null,
+    cameraView: null,
     weaponPickupBillboards: [],
     sanitaireReliefCooldown: 0,
     droppedCardMesh: null,
