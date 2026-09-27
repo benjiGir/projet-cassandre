@@ -15,18 +15,27 @@
       #app {
         position: fixed;
         inset: 0;
+        overflow: hidden;
       }
-      canvas#game {
-        width: 100vw;
-        height: 100vh;
+      /* L'image interne reste en 16:9. On la contient dans tout format
+         d'écran au lieu de l'étirer (les bandes sont remplies par #app). */
+      canvas#game,
+      canvas.game-overlay,
+      #ui-root {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: min(100vw, 177.77777778vh);
+        height: min(100vh, 56.25vw);
+      }
+      canvas#game,
+      canvas.game-overlay {
         display: block;
         image-rendering: pixelated;
         image-rendering: -moz-crisp-edges;
         image-rendering: crisp-edges;
       }
       #ui-root {
-        position: fixed;
-        inset: 0;
         pointer-events: none;
       }
     </style>
