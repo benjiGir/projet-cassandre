@@ -555,6 +555,7 @@ def cart_roll(seed=0):
 #   ceramic_break  HYBRIDE : faience reelle (Kenney, assiettes CC0) + eau synthetique
 #   water_gulp     synthese pure
 #   amb_water_jet  synthese pure, BOUCLE du jet permanent (hors sprite)
+#   amb_shower     synthese pure, BOUCLE du pommeau en marche (hors sprite)
 #
 # Ce que la synthese sait faire ici, et rien de plus : une structure juste
 # (dans quel ordre, a quelle hauteur, combien de temps). Ce qu'elle ne sait
@@ -770,6 +771,9 @@ def water_gulp(seed=0):
 #   la frequence ou le navigateur reechantillonne presque toujours ;
 # - au-dela de 6-8 s, aucun motif ne se repere au tour suivant.
 JET_N = 441 * 1024
+# 20.48 s = 882 trames AAC de 1024 echantillons a 44,1 kHz. Une oscillation
+# complete par boucle place la modulation de douche a 0,0488 Hz sans derive.
+SHOWER_N = 882 * 1024
 
 
 def _unite(x: np.ndarray) -> np.ndarray:
@@ -879,13 +883,68 @@ def amb_water_jet(seed=0):
     return limiteur(sig, 0.40, boucle=True)
 
 
+def amb_shower(seed=0):
+    """Douche en marche : pluie du pommeau, impact sur le carrelage, gouttes."""
+    n = SHOWER_N
+    dur = n / SR
+    tt = t(dur)
+
+    # Un cycle entier sur la boucle : la douche varie légèrement sans dériver
+    # d'un tour à l'autre. Le débit garde une rugosité périodique plus rapide.
+    respiration = 1.0 + 0.08 * np.sin(2 * np.pi * tt / dur)
+    debit = (turbulence(dur, 0.45, 0.12, seed, boucle=True)
+             * turbulence(dur, 3.2, 0.10, seed + 1, boucle=True))
+    grain = turbulence(dur, 34.0, 0.12, seed + 2, boucle=True)
+
+    # Le pommeau disperse le flux : souffle doux dans le médium et jet fin
+    # dans l'aigu. Pas de poches de coupure, caractéristiques d'un tuyau qui
+    # crache, ni de grondement de plomberie dominant.
+    spray_mid = periodique(lambda s: bandpass(s, 650, 3200), pink(dur, seed + 3))
+    spray_high = periodique(lambda s: bandpass(s, 2600, 10000), white(dur, seed + 4))
+    spray = (spray_mid * 0.72 + spray_high * 0.30) * debit * grain * respiration
+
+    # Les gouttes frappent le sol nu et la mince pellicule d'eau. La densité
+    # suit le débit, mais reste élevée pour conserver un fond continu.
+    density = (debit - debit.min()) / (np.ptp(debit) + 1e-12) * 0.24 + 0.76
+    tile = chocs(dur, 820, seed + 5, ms=(0.25, 1.3), db=(-20, -2),
+                 density=density, boucle=True)
+    tile = periodique(lambda s: layer(highpass(s, 1450) * 0.48,
+                                      resonant(s, 3100, q=2.5) * 0.52), tile)
+    film = chocs(dur, 480, seed + 6, ms=(0.7, 2.6), db=(-23, -5),
+                 density=density, boucle=True)
+    film = periodique(lambda s: bandpass(s, 420, 4300), film)
+
+    # Quelques gouttes faibles, séparées du rideau dense du jet.
+    gouttes = chocs(dur, 7.0, seed + 7, ms=(0.5, 1.8), db=(-32, -19),
+                    boucle=True)
+    gouttes = periodique(lambda s: resonant(highpass(s, 1800), 3600, q=3.0), gouttes)
+
+    tuyau = periodique(lambda s: lowpass(s, 170), white(dur, seed + 8))
+    tuyau *= turbulence(dur, 0.35, 0.14, seed + 9, boucle=True) * debit
+
+    sig = (_unite(spray) * _db(-2)
+           + _unite(tile) * _db(-5)
+           + _unite(film) * _db(-8)
+           + _unite(gouttes) * _db(-31)
+           + _unite(tuyau) * _db(-24))
+    sig = periodique(lambda s: reverb(s, **ROOM_WC), sig)
+    # Creux modéré dans la zone de montée de la télégraphie ennemie, tout en
+    # gardant le corps de l'eau dans le médium et les éclaboussures au-dessus.
+    sig = eq_circulaire(sig, [(25, -22), (80, -12), (180, -5), (320, -2),
+                              (500, -7), (800, -10), (1200, -4), (2200, 0),
+                              (4000, -2), (7000, -7), (10000, -12), (18000, -19)])
+    # Lisser legerement les eclats les plus secs sans effacer la texture du jet.
+    sig = periodique(lambda s: lowpass(s, 14500, order=2), sig)
+    return limiteur(sig, 0.42, boucle=True)
+
+
 # Recettes rendues comme des boucles EXACTES : `write_wav(boucle=True)`, sans
 # fondu aux bords ni filtre qui demarre au repos (voir synth.write_wav).
 # Les trois ambiances de zone n'y sont PAS, et c'est un ecart connu : elles
 # se referment par `loop_seamless`, mais le fondu de 2,5 ms que `write_wav`
 # pose aux bords de tout son ouvre un trou a chaque tour. Les y ajouter change
 # leurs octets ; a trancher le jour ou on les branche en jeu.
-BOUCLES_EXACTES = {"amb_water_jet"}
+BOUCLES_EXACTES = {"amb_water_jet", "amb_shower"}
 
 
 # ============================================================ UI
@@ -966,4 +1025,6 @@ RECIPES = {
     "amb_parking":     (amb_parking,       "ambience", 1),
     # Boucle positionnelle, jouee pres de chaque sanitaire casse (placeholder).
     "amb_water_jet":   (amb_water_jet,     "ambience", 2),
+    # Son distinct de douche en marche, hors sprite et boucle exacte.
+    "amb_shower":      (amb_shower,        "ambience", 1),
 }
