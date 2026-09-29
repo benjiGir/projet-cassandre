@@ -2,7 +2,7 @@
 title: Documentation PROJET_CASSANDRE
 tags: [index]
 status: stable
-updated: 2026-09-26
+updated: 2026-09-29
 ---
 
 # PROJET_CASSANDRE
@@ -37,6 +37,7 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Ajouter un ennemi](5-guides/ajouter-un-ennemi.md) — recette pas à pas.
 - [Ajouter une arme](5-guides/ajouter-une-arme.md) — recette pas à pas.
 - [Chargement de niveau](4-technique/chargement-de-niveau.md) — loader, extras et hot reload.
+- [Board des voitures](assets/board-voitures.md) et [board des motos](assets/board-motos.md) — références des véhicules proposés.
 
 ### Je cherche une valeur, une commande ou une convention
 

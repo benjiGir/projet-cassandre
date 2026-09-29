@@ -26,6 +26,8 @@ from __future__ import annotations
 import os
 import random
 
+import bpy
+
 import lib_helpers as H
 from lib_rayons import asset_coll
 
@@ -43,6 +45,14 @@ from lib_rayons import asset_coll
 CAR_GLB = os.path.join(H.ROOT, "assets_src", "cc0_raw", "kenney_car-kit",
                        "Models", "GLB format")
 
+PROPOSITIONS_VOITURES_DIR = os.path.join(
+    H.ROOT, "assets_src", "blender", "propositions_voitures")
+PROPOSITIONS_VOITURES = {
+    "citadine": "citadine.glb",
+    "berline": "berline.glb",
+    "suv": "suv.glb",
+    "muscle": "muscle.glb",
+}
 # (modèle, largeur, longueur, hauteur) en mètres RÉELS. Le pack est modélisé à
 # des proportions de jouet — une berline mise à 4,40 m de long en fait 2,59 de
 # large et 2,24 de HAUT, plus qu'un homme. Chaque axe est donc remis à sa cote,
@@ -214,6 +224,96 @@ def voiture(modele: str, largeur: float, longueur: float, hauteur: float) -> str
     lx, ly, lz = H.kit_bounds(obj)
     H.col_box(name[4:], (0, 0, 0, lx, ly, lz), coll)
     return name
+
+
+def voiture_proposition(modele: str) -> tuple[str, tuple[float, float, float]]:
+    """Charge un modèle original pour le parking extérieur seulement.
+
+    Les GLB proposés gardent leurs deux matériaux et leurs couleurs de sommets.
+    L'importeur glTF place la conversion Y-up → Z-up dans la matrice monde du
+    mesh : elle est cuite dans les sommets avant de ramener la base en (0,0,0),
+    comme les assets de la bibliothèque. La même boîte englobante donne le
+    proxy cuboid et l'offset qui aligne le véhicule sur sa place.
+    """
+    if modele not in PROPOSITIONS_VOITURES:
+        raise ValueError(f"modèle de voiture original inconnu : {modele}")
+
+    name = f"veh_proposition_{modele}"
+    coll, done = asset_coll(name)
+    if not done:
+        path = os.path.join(PROPOSITIONS_VOITURES_DIR, PROPOSITIONS_VOITURES[modele])
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"modèle original absent : {path}")
+
+        avant_objets = set(bpy.data.objects)
+        avant_materiaux = set(bpy.data.materials)
+        avant_images = set(bpy.data.images)
+        avant_collections = set(bpy.data.collections)
+        bpy.ops.import_scene.gltf(filepath=path)
+        bpy.context.view_layer.update()
+        importes = [obj for obj in bpy.data.objects if obj not in avant_objets]
+        meshes = [obj for obj in importes if obj.type == "MESH"]
+        if len(meshes) != 1:
+            for obj in importes:
+                bpy.data.objects.remove(obj, do_unlink=True)
+            raise RuntimeError(f"{path} doit contenir un seul mesh, trouvé : {len(meshes)}")
+
+        obj = meshes[0]
+        obj.data = obj.data.copy()
+        obj.data.transform(obj.matrix_world.copy())
+        couleur = obj.data.color_attributes.get("Color")
+        if couleur is not None and obj.data.color_attributes.get("Col") is None:
+            couleur.name = "Col"
+            obj.data.color_attributes.active_color_index = obj.data.color_attributes.find("Col")
+        obj.parent = None
+        for other in importes:
+            if other is not obj:
+                bpy.data.objects.remove(other, do_unlink=True)
+
+        for index, material in enumerate(obj.data.materials):
+            if material is None:
+                continue
+            base_name = material.name.split(".")[0]
+            canonical = bpy.data.materials.get(base_name) or material
+            obj.data.materials[index] = canonical
+
+        coords = [vertex.co for vertex in obj.data.vertices]
+        mins = tuple(min(co[axis] for co in coords) for axis in range(3))
+        maxs = tuple(max(co[axis] for co in coords) for axis in range(3))
+        for vertex in obj.data.vertices:
+            vertex.co.x -= mins[0]
+            vertex.co.y -= mins[1]
+            vertex.co.z -= mins[2]
+        obj.location = (0, 0, 0)
+        obj.rotation_euler = (0, 0, 0)
+        obj.scale = (1, 1, 1)
+        obj.name = name
+        obj.data.name = name
+
+        for source in list(obj.users_collection):
+            source.objects.unlink(obj)
+        coll.objects.link(obj)
+
+        for material in set(bpy.data.materials) - avant_materiaux:
+            if material.users == 0:
+                bpy.data.materials.remove(material)
+        for image in set(bpy.data.images) - avant_images:
+            if image.users == 0:
+                bpy.data.images.remove(image)
+        for source in set(bpy.data.collections) - avant_collections:
+            if not source.objects and not source.children:
+                for parent in bpy.data.collections:
+                    if source.name in parent.children:
+                        parent.children.unlink(source)
+                bpy.data.collections.remove(source)
+
+        bounds = tuple(maxs[axis] - mins[axis] for axis in range(3))
+        H.col_box(f"proposition_{modele}", (0, 0, 0, *bounds), coll)
+
+    obj = bpy.data.objects.get(name)
+    if obj is None or obj.type != "MESH":
+        raise RuntimeError(f"asset original incomplet : {name}")
+    return name, H.kit_bounds(obj)
 
 
 # Petits accessoires du même pack, donc du MÊME atlas : ils ne coûtent pas un

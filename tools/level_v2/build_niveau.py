@@ -1568,26 +1568,22 @@ def habiller_parking(space, gris, props, col_coll, logic) -> dict:
     y0, y1 = space.y
     z = space.z
 
+    # Le parking extérieur utilise les quatre propositions originales. Le
+    # parking souterrain garde son parc Kenney via R.voiture(). Trois voitures
+    # occupent des places, la muscle car conserve l'emplacement près du
+    # pied-de-biche (repère à -8, -28).
     voitures = 0
-    for j, vy in enumerate(PK_VOITURES_Y):
-        for i, vx in enumerate(PK_VOITURES_X):
-            # Un emplacement sur cinq reste vide : un parking plein au cordeau
-            # se lit comme une grille, pas comme un parking.
-            if (i + j) % 5 == 3:
-                continue
-            modele = R.MODELES_VOITURE[(i + 3 * j) % len(R.MODELES_VOITURE)]
-            L.place(R.voiture(*modele), (vx + modele[2], vy, z), 90,
-                    props, col_coll, f"pk_au{j}{i}")
-            voitures += 1
-
-    # Une voiture de plus à côté du pied-de-biche. Le plan le veut « sur le
-    # capot » ; le repère du blockout est à 0,50 m du sol, sous la ligne de
-    # capot (0,86 m), donc il est POSÉ À CÔTÉ et non dessus — écart assumé
-    # plutôt qu'un pickup noyé dans la carrosserie.
-    modele_pdb = R.MODELES_VOITURE[3]
-    L.place(R.voiture(*modele_pdb), (-13.5 + modele_pdb[2], -29.5, z), 90,
-            props, col_coll, "pk_au_pdb")
-    voitures += 1
+    placements = (
+        ("citadine", PK_VOITURES_X[0], PK_VOITURES_Y[0], "pk_au_citadine"),
+        ("berline", PK_VOITURES_X[2], PK_VOITURES_Y[0], "pk_au_berline"),
+        ("suv", PK_VOITURES_X[4], PK_VOITURES_Y[1], "pk_au_suv"),
+        ("muscle", -13.5, -29.5, "pk_au_muscle_pdb"),
+    )
+    for modele, vx, vy, suffix in placements:
+        asset, bounds = R.voiture_proposition(modele)
+        L.place(asset, (vx + bounds[1], vy, z), 90,
+                props, col_coll, suffix)
+        voitures += 1
 
     # Cônes, pneu et caisses semés : même atlas que les voitures, donc aucun lot
     # de dessin de plus, et c'est ce qui distingue un parking utilisé d'un
