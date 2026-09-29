@@ -419,7 +419,7 @@ SPACES: list[Space] = [
         ennemis="2 Costards, visibles depuis les rayons",
         spawns=[("suit_lb1", -58, 96, "étal réfrigéré (1,7 m)"), ("suit_lb2", -54, 87, "vivier")],
         reperes=[("vitre sur les rayons", -48, 84.25, "objet"), ("vivier à homards", -56, 93, "objet"),
-                 ("jambon +15", -58, 86, "nourriture")],
+                 ("jambon +15", -51.8, 90.35, "nourriture", 0.85)],
     ),
     Space(
         id="chambre_froide", nom="Chambre froide",

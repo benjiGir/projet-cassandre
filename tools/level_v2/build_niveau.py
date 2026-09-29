@@ -110,9 +110,9 @@ COQUE = {
     "toilettes": ("sol_damier", "sol_carrelage_blanc", "mur_platre"),
 
     # ===== Les coulisses, v2 (2026-09-26) =====
-    # Vestiaires et fournil sont des locaux d'hygiène (douches, denrées) :
-    # carrelage blanc, et plâtre propre pour les vestiaires. Labo boucherie/
-    # marée et chambre froide gardent ce carrelage (grès du labo, section 3.2.D) ; le
+    # Vestiaires, fournil et préparation alimentaire sont des locaux d'hygiène :
+    # carrelage blanc et plâtre propre lavable. Le labo boucherie/marée ajoute
+    # son grès rouge (section 3.2.D) ; le
     # compacteur reste brut, comme la réserve dont il dépend ; la planque du
     # vigile (secret 4) tranche exprès avec sa moquette, seul confort des
     # coulisses. La gaine VMC n'a ni sol ni mur propres (un conduit), elle
@@ -131,8 +131,8 @@ COQUE = {
     # (2026-09-26, 2e passe), le rendu confondait les deux à l'œil.
     "pc_secu": ("sol_moquette", "mur_platre", "plafond_dalles"),
     "sav": ("sol_beton", "mur_platre_use", "plafond_dalles"),
-    "labo": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
-    "chambre_froide": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "labo": ("sol_carrelage_blanc", "mur_platre", "plafond_dalles"),
+    "chambre_froide": ("sol_carrelage_blanc", "mur_platre", "plafond_dalles"),
     "compacteur": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
     "secret4": ("sol_moquette", "mur_platre_use", "plafond_dalles"),
 }
@@ -2386,6 +2386,8 @@ HAUTEUR_VANTAIL = {
     frozenset({"c_bu", "vestiaires"}): 2.1,
     frozenset({"c_bu", "fournil"}): 2.1,
     frozenset({"vestiaires", "fournil"}): 2.1,
+    frozenset({"c_short_w", "labo"}): 2.1,
+    frozenset({"c_short_w", "chambre_froide"}): 2.25,
     "sortie": 2.25,
 }
 
@@ -2690,6 +2692,21 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
                          dict(sens="auto", auto=True, portee=1.7, referme=True, delai=0.7,
                               groupe="vestiaires_fournil"))
             poses += 2
+        elif cle == frozenset({"c_short_w", "labo"}):
+            porte_double(o, ("door_labo_boucherie_g", "door_labo_boucherie_d"),
+                         HAUTEUR_VANTAIL[cle], "portes_verre", "porte:porte_vav", props,
+                         dict(sens="auto", auto=True, portee=1.8, referme=True, delai=0.7,
+                              groupe="labo_boucherie_entree"))
+            poses += 2
+        elif cle == frozenset({"c_short_w", "chambre_froide"}):
+            lo, hi = o.span
+            vantail("door_chambre_froide_couloir",
+                    _monde(o, lo + 0.015, -EP_VANTAIL / 2, o.z + 0.01,
+                           hi - 0.015, EP_VANTAIL / 2, o.z + HAUTEUR_VANTAIL[cle]),
+                    "palette", "aplat:#d5d7d8", props,
+                    dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto",
+                         angle=105, manuelle=True, referme=False, groupe="porte_chambre_froide"))
+            poses += 1
         elif cle == frozenset({"pc_secu", "gaine"}):
             # Grille métallique posée dans le raccord surélevé (z=2..4 m).
             # Le mesh `vitre_*` fournit son collider et sa casse ; aucun bouton
@@ -3573,6 +3590,314 @@ def habiller_vestiaires(space, gris, props, col_coll, logic) -> dict:
             "bancs": 1, "lampes": lampes}
 
 
+# --- Habillage D : laboratoire boucherie / marée ----------------------------
+
+def habiller_labo_boucherie(space, gris, props, col_coll, logic) -> dict:
+    """Postes de découpe regroupés autour de leur chaîne du froid."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    t = bo.EPAISSEUR_MUR
+    ix0, ix1, iy0, iy1 = x0 + t, x1 - t, y0 + t, y1 - t
+
+    # Grès rouge avec joints à pas régulier : lecture nette du labo au seuil.
+    H.box("lb_sol_gres_rouge", (ix0, iy0, z + 0.002, ix1, iy1, z + 0.012),
+          "palette", props, uv="aplat:#89432e", subdiv=SUBDIV_BAKE)
+    joints = []
+    for i in range(1, round((ix1 - ix0) / 0.25)):
+        x = ix0 + i * 0.25
+        joints.append(((x - 0.008, iy0, z + 0.013, x + 0.008, iy1, z + 0.016),
+                       "aplat:#69252a"))
+    for i in range(1, round((iy1 - iy0) / 0.25)):
+        y = iy0 + i * 0.25
+        joints.append(((ix0, y - 0.008, z + 0.013, ix1, y + 0.008, z + 0.016),
+                       "aplat:#69252a"))
+    H.boxes("lb_joints_gres", joints, "palette", props, subdiv=1e9)
+
+    # Grande baie côté rayon : la coque reste pleine en collision. Le vitrage
+    # montre le rail et les postes de travail avant que le joueur entre.
+    fenetre = (-54.5, y0, z + 1.0, -48.0, y0 + t, z + 2.5)
+    vraie_fenetre("labo_boucherie_rayons", "labo", fenetre, props)
+    H.box("lb_tablette_vitrine", (-54.38, y0 + t + 0.02, z + 0.82,
+                                   -48.12, y0 + t + 0.42, z + 0.91),
+          "metal_bac_acier", props, subdiv=1e9)
+
+    # Table de découpe, placée sous le rail mais hors de l'axe entre les portes.
+    tx0, tx1, ty0, ty1 = -54.2, -49.4, 89.7, 91.0
+    pieds = []
+    for x in (tx0 + 0.08, tx1 - 0.20):
+        for y in (ty0 + 0.08, ty1 - 0.20):
+            pieds.append(((x, y, z + 0.04, x + 0.12, y + 0.12, z + 0.84), "world"))
+    pieds.append(((tx0 + 0.08, ty0 + 0.08, z + 0.34,
+                   tx1 - 0.08, ty1 - 0.08, z + 0.40), "world"))
+    H.boxes("lb_table_viande_structure", pieds, "metal_bac_acier", props, subdiv=1e9)
+    H.box("lb_table_viande_plateau", (tx0, ty0, z + 0.84, tx1, ty1, z + 0.94),
+          "metal_bac_acier", props, subdiv=SUBDIV_BAKE)
+    H.col_box("lb_table_viande", (tx0, ty0, z, tx1, ty1, z + 0.96), col_coll)
+    H.box("lb_planche_decoupe", (-52.4, 89.82, z + 0.94, -50.0, 90.84, z + 1.01),
+          "palette", props, uv="aplat:#f2efe6", subdiv=1e9)
+    viande = L.kenney_produit("meat-raw", 0.10)
+    viande_x, viande_y, _ = _emprise(viande)
+    L.place(viande, (-51.2 - viande_x / 2, 90.33 - viande_y / 2, z + 1.012),
+            0, props, col_coll, "lb_viande_planche")
+
+    # Scie à os verticale : arceau haut, lame claire et socle sombre.
+    H.box("lb_scie_socle", (-53.95, 90.02, z + 0.96, -53.05, 90.75, z + 1.32),
+          "palette", props, uv="aplat:#444a54", subdiv=1e9)
+    H.boxes("lb_scie_arceau", [
+        ((-53.88, 90.08, z + 1.28, -53.78, 90.18, z + 2.03), "world"),
+        ((-53.22, 90.08, z + 1.28, -53.12, 90.18, z + 2.03), "world"),
+        ((-53.88, 90.08, z + 1.93, -53.12, 90.18, z + 2.03), "world"),
+        ((-53.75, 90.12, z + 1.38, -53.70, 90.16, z + 1.91), "world"),
+    ], "metal_bac_acier", props, subdiv=1e9)
+    H.box("lb_scie_guide", (-53.94, 90.10, z + 1.02, -53.35, 90.16, z + 1.08),
+          "palette", props, uv="aplat:#f2c230", subdiv=1e9)
+
+    # Poste marée : bac de rinçage à gauche, glace et poissons alignés à droite.
+    fx0, fx1, fy0, fy1 = -58.8, -55.2, 85.6, 86.65
+    pieds_maree = []
+    for x in (fx0 + 0.07, fx1 - 0.19):
+        for y in (fy0 + 0.07, fy1 - 0.19):
+            pieds_maree.append(((x, y, z + 0.03, x + 0.12, y + 0.12, z + 0.82), "world"))
+    H.boxes("lb_table_maree_pieds", pieds_maree, "metal_bac_acier", props, subdiv=1e9)
+    H.box("lb_table_maree_plateau", (fx0, fy0, z + 0.82, fx1, fy1, z + 0.92),
+          "metal_bac_acier", props, subdiv=SUBDIV_BAKE)
+    H.col_box("lb_table_maree", (fx0, fy0, z, fx1, fy1, z + 0.94), col_coll)
+    H.boxes("lb_bac_rincage", [
+        ((-58.62, 85.77, z + 0.92, -57.52, 86.50, z + 1.00), "aplat:#babcbc"),
+        ((-58.50, 85.88, z + 0.94, -57.64, 86.39, z + 0.97), "aplat:#444a54"),
+    ], "palette", props, subdiv=1e9)
+    H.box("lb_glace_poisson", (-57.35, 85.70, z + 0.92, -55.38, 86.58, z + 1.04),
+          "palette", props, uv="aplat:#b5d2e8", subdiv=1e9)
+    poisson = L.kenney_produit("fish", 0.18)
+    poisson_x, poisson_y, _ = _emprise(poisson)
+    for i, cx in enumerate((-57.02, -56.36, -55.70)):
+        # Le modèle est allongé sur Y. Rotation de 90° : trois poissons
+        # parallèles au bord du bac, posés dans l'emprise de la glace.
+        L.place(poisson, (cx + poisson_y / 2, 86.14 - poisson_x / 2, z + 1.045),
+                90, props, col_coll, f"lb_poisson_{i + 1}")
+    robinet = [((-58.16, 86.32, z + 0.96, -58.10, 86.38, z + 1.29), "world"),
+               ((-58.15, 86.32, z + 1.24, -57.78, 86.38, z + 1.30), "world"),
+               ((-57.84, 86.32, z + 1.04, -57.78, 86.38, z + 1.27), "world")]
+    H.boxes("lb_robinet_maree", robinet, "metal_bac_acier", props, subdiv=1e9)
+    H.boxes("lb_robinet_poignees", [
+        ((-58.34, 86.28, z + 0.97, -58.23, 86.42, z + 1.05), "aplat:#d8231f"),
+        ((-58.02, 86.28, z + 0.97, -57.91, 86.42, z + 1.05), "aplat:#1f5fbf"),
+    ], "palette", props, subdiv=1e9)
+
+    # Vivier rectangulaire adossé au poste marée, regardé depuis l'entrée.
+    vx0, vx1, vy0, vy1 = -59.35, -56.25, 89.1, 92.0
+    H.boxes("lb_vivier_soubassement", [
+        ((vx0, vy0, z, vx1, vy1, z + 0.34), "aplat:#444a54"),
+        ((vx0 + 0.05, vy0 + 0.05, z + 0.34, vx1 - 0.05, vy1 - 0.05, z + 0.39),
+         "aplat:#babcbc"),
+        ((vx1 - 0.12, vy0, z + 0.34, vx1 - 0.05, vy1, z + 1.32), "aplat:#babcbc"),
+    ], "palette", props, subdiv=SUBDIV_BAKE)
+    vitres_vivier = H.boxes("vitre_lb_vivier", [
+        ((vx1 - 0.07, vy0 + 0.06, z + 0.39, vx1 - 0.035, vy1 - 0.06, z + 1.28),
+         f"aplat:{H.VERRE_TEINTE}"),
+        ((vx0 + 0.06, vy0 + 0.06, z + 0.39, vx0 + 0.095, vy1 - 0.06, z + 1.28),
+         f"aplat:{H.VERRE_TEINTE}"),
+        ((vx0 + 0.06, vy0 + 0.06, z + 0.39, vx1 - 0.06, vy0 + 0.095, z + 1.28),
+         f"aplat:{H.VERRE_TEINTE}"),
+        ((vx0 + 0.06, vy1 - 0.095, z + 0.39, vx1 - 0.06, vy1 - 0.06, z + 1.28),
+         f"aplat:{H.VERRE_TEINTE}"),
+    ], "verre", props, subdiv=1e9)
+    vitres_vivier["pv"] = 30
+    vitres_vivier["matiere"] = "verre"
+    H.box("lb_vivier_eau", (vx0 + 0.12, vy0 + 0.12, z + 0.78,
+                             vx1 - 0.12, vy1 - 0.12, z + 0.84),
+          "palette", props, uv="aplat:#b5d2e8", subdiv=SUBDIV_BAKE)
+    homards = [((-57.9, 89.9, z + 0.87), (0.28, 0.10, 0.075)),
+               ((-58.7, 90.8, z + 0.87), (0.25, 0.09, 0.07)),
+               ((-57.1, 91.2, z + 0.87), (0.24, 0.09, 0.07))]
+    blobs_fournil("lb_homards_vivier", homards, "#b02931", props)
+    H.boxes("lb_homards_pinces", [
+        ((-58.14, 89.80, z + 0.87, -58.02, 89.75, z + 0.91), "aplat:#b02931"),
+        ((-57.76, 89.80, z + 0.87, -57.64, 89.75, z + 0.91), "aplat:#b02931"),
+        ((-58.93, 90.71, z + 0.87, -58.82, 90.66, z + 0.91), "aplat:#b02931"),
+        ((-58.53, 90.71, z + 0.87, -58.42, 90.66, z + 0.91), "aplat:#b02931"),
+    ], "palette", props, subdiv=1e9)
+
+    # Tubes nus, calés sur les deux lignes de travail.
+    reglettes, tubes = [], []
+    for i, (cx, cy) in enumerate(((-55.5, 88.0), (-49.0, 94.2)), start=1):
+        reglettes.append(((cx - 1.55, cy - 0.11, z + 3.22,
+                           cx + 1.55, cy + 0.11, z + 3.34), "world"))
+        tubes.append(((cx - 1.35, cy - 0.035, z + 3.18,
+                       cx + 1.35, cy + 0.035, z + 3.23), "aplat:#f2efe6"))
+        lampe(logic, f"light_lb_poste_{i}", (cx, cy, z + 2.95),
+              color="#fff4df", intensity=5.0, distance=8.0)
+    H.boxes("lb_reglettes", reglettes, "metal_bac_acier", props, subdiv=1e9)
+    H.boxes("lb_tubes", tubes, "palette", props, subdiv=1e9)
+    return {"tables de travail": 2, "vivier cassable": 1, "fenêtre sur les rayons": 1,
+            "lampes": 2}
+
+
+# --- Habillage D : chambre froide --------------------------------------------
+
+def habiller_chambre_froide(space, gris, props, col_coll, logic) -> dict:
+    """Rail continu, rideau PVC, panneaux isolés et froid bleuté."""
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+    t = bo.EPAISSEUR_MUR
+    ix0, ix1, iy0, iy1 = x0 + t, x1 - t, y0 + t, y1 - t
+
+    H.box("cf_sol_isole", (ix0, iy0, z + 0.002, ix1, iy1, z + 0.012),
+          "palette", props, uv="aplat:#b5d2e8", subdiv=SUBDIV_BAKE)
+    H.boxes("cf_givre_angles", [
+        ((ix0, iy0, z + 0.014, ix0 + 0.35, iy1, z + 0.02), "aplat:#d5d7d8"),
+        ((ix1 - 0.20, iy0, z + 0.014, ix1, iy1, z + 0.02), "aplat:#d5d7d8"),
+        ((ix0 + 0.35, iy1 - 0.20, z + 0.014, ix1 - 0.20, iy1, z + 0.02), "aplat:#d5d7d8"),
+    ], "palette", props, subdiv=SUBDIV_BAKE)
+
+    # Habillage isotherme clair posé sur le vieux mur, avec les joints en relief
+    # devant : la chambre froide se lit comme une enceinte lavable et isolée.
+    faces_panneaux = [
+        ((ix0 + 0.012, iy0, z + 0.03, ix0 + 0.022, iy1, z + 3.72), "aplat:#f1f1f1"),
+        ((ix1 - 0.022, iy0, z + 0.03, ix1 - 0.012, 106.12, z + 3.72), "aplat:#f1f1f1"),
+        ((ix1 - 0.022, 107.88, z + 0.03, ix1 - 0.012, iy1, z + 3.72), "aplat:#f1f1f1"),
+        ((ix0, iy0 + 0.012, z + 0.03, -53.10, iy0 + 0.022, z + 3.72), "aplat:#f1f1f1"),
+        ((-50.90, iy0 + 0.012, z + 0.03, ix1, iy0 + 0.022, z + 3.72), "aplat:#f1f1f1"),
+        ((ix0, iy1 - 0.022, z + 0.03, ix1, iy1 - 0.012, z + 3.72), "aplat:#f1f1f1"),
+    ]
+    H.boxes("cf_faces_panneaux", faces_panneaux, "palette", props, subdiv=SUBDIV_BAKE)
+
+    # Panneaux sandwich et joints visibles, sans recouvrir les deux accès.
+    panneaux = []
+    for yy in (101.0, 104.0, 107.0, 110.0, 113.0):
+        panneaux.append(((ix0, yy - 0.025, z, ix0 + 0.035, yy + 0.025, z + 3.7), "aplat:#babcbc"))
+    for yy0, yy1 in ((iy0, 106.05), (108.45, iy1)):
+        panneaux.append(((ix1 - 0.035, yy0, z, ix1, yy1, z + 3.7), "aplat:#babcbc"))
+    for xx in (-57.0, -54.0, -51.0, -48.0):
+        panneaux.append(((xx - 0.025, iy1 - 0.035, z, xx + 0.025, iy1, z + 3.7),
+                         "aplat:#babcbc"))
+    H.boxes("cf_joints_panneaux", panneaux, "palette", props, subdiv=SUBDIV_BAKE)
+
+    # Rideau à lanières au passage labo/chambre froide, indépendant du rail.
+    rideau = []
+    ouverture_lo, ouverture_hi = -53.0, -51.0
+    largeur = 0.16
+    pas = 0.20
+    x = ouverture_lo + 0.02
+    i = 0
+    while x + largeur <= ouverture_hi - 0.01:
+        bas = 0.05 if i % 2 == 0 else 0.11
+        rideau.append(((x, 97.975, z + bas, x + largeur, 98.025, z + 2.35),
+                       f"aplat:{H.VERRE_TEINTE}"))
+        x += pas
+        i += 1
+    H.boxes("cf_rideau_lanieres", rideau, "verre", props, subdiv=1e9)
+    H.box("cf_rail_rideau", (ouverture_lo, 97.91, z + 2.35,
+                              ouverture_hi, 98.09, z + 2.43),
+          "metal_bac_acier", props, subdiv=1e9)
+
+    # L'axe du labo arrive sur un aiguillage. Les deux voies de stockage restent
+    # contre le mur ouest et dégagent une allée entière jusqu'à la porte est.
+    centres = [(-57.5, 101.3), (-57.5, 105.5), (-57.5, 109.7),
+               (-54.5, 103.4), (-54.5, 107.6), (-54.5, 111.0)]
+    rails, suspentes = [], []
+    voies = ((-52.0, 88.5, 99.2), (-57.5, 99.2, 112.5), (-54.5, 99.2, 112.5))
+    for rail_x, start_y, end_y in voies:
+        rails.append(((rail_x - 0.055, start_y, z + 2.96,
+                       rail_x + 0.055, end_y, z + 3.06), "world"))
+        support_y = start_y + 0.5
+        while support_y < end_y:
+            suspentes.append(((rail_x - 0.035, support_y - 0.035, z + 3.06,
+                                rail_x + 0.035, support_y + 0.035, z + 3.70), "world"))
+            support_y += 2.5
+    # Barre de transfert au seuil de la chambre froide, raccordée aux deux voies.
+    for transfer_y in (99.2, 112.5):
+        rails.append(((-57.5, transfer_y - 0.055, z + 2.96,
+                       -52.0, transfer_y + 0.055, z + 3.06), "world"))
+        for support_x in (-56.0, -54.0, -52.0):
+            suspentes.append(((support_x - 0.035, transfer_y - 0.035, z + 3.06,
+                                support_x + 0.035, transfer_y + 0.035, z + 3.70), "world"))
+    H.boxes("cf_rails_aeriens", rails + suspentes, "metal_bac_acier", props, subdiv=1e9)
+
+    # Six flancs de bœuf : masse continue, quartier d'épaule asymétrique,
+    # puis un seul jarret pris dans un crochet relié au rail.
+    volumes_viande, volumes_gras, crochets = [], [], []
+    deports = (-0.06, 0.04, 0.08, -0.03, -0.08, 0.05)
+    for i, (cx, cy) in enumerate(centres):
+        cote = -1 if i % 2 == 0 else 1
+        dx = deports[i]
+        hx = cx + cote * 0.11
+        volumes_viande.extend([
+            # Flanc large et lourd, sans taille ni paire de jambes.
+            ((cx + dx, cy, z + 1.36), (0.43, 0.20, 0.69)),
+            # Épaule/brisket débordant d'un côté; alternance gauche/droite.
+            ((cx + dx + cote * 0.17, cy - 0.015, z + 1.57), (0.30, 0.205, 0.40)),
+            # Jarret unique, qui rejoint la viande et reçoit la pointe du crochet.
+            ((hx, cy, z + 2.19), (0.13, 0.13, 0.25)),
+        ])
+        # Un capuchon de gras étroit sur le flanc visible, jamais en anneaux.
+        volumes_gras.append(
+            ((cx + dx - cote * 0.27, cy - 0.17, z + 1.30), (0.075, 0.028, 0.48)))
+        crochets.extend([
+            # Tige depuis le rail, coude déporté puis pointe entrant dans le jarret.
+            ((cx - 0.025, cy - 0.025, z + 2.60,
+              cx + 0.025, cy + 0.025, z + 2.96), "world"),
+            ((min(cx, hx), cy - 0.04, z + 2.56,
+              max(cx, hx), cy + 0.04, z + 2.62), "world"),
+            ((hx - 0.03, cy - 0.035, z + 2.42,
+              hx + 0.03, cy + 0.035, z + 2.59), "world"),
+        ])
+    blobs_fournil("cf_carcasses", volumes_viande, "#89432e", props)
+    blobs_fournil("cf_tranches_gras", volumes_gras, "#dbd0c4", props)
+    H.boxes("cf_crochets", crochets, "metal_bac_acier", props, subdiv=1e9)
+    for i, (cx, cy) in enumerate(centres):
+        dx = deports[i]
+        H.col_box(f"cf_carcasse_{i}", (cx + dx - 0.52, cy - 0.24, z + 0.06,
+                                        cx + dx + 0.52, cy + 0.24, z + 2.49), col_coll)
+
+    # Évaporateur mural à deux ventilateurs : repère lisible de la chambre froide.
+    H.box("cf_evaporateur", (-57.8, iy1 - 0.68, z + 2.88,
+                              -48.2, iy1 - 0.08, z + 3.66),
+          "metal_bac_acier", props, subdiv=SUBDIV_BAKE)
+    ventilateurs = [((-55.6, iy1 - 0.70, z + 3.27), (0.31, 0.055, 0.31)),
+                    ((-50.4, iy1 - 0.70, z + 3.27), (0.31, 0.055, 0.31))]
+    blobs_fournil("cf_evaporateur_ventilateurs", ventilateurs, "#444a54", props)
+    ailettes = []
+    for cx in (-55.6, -50.4):
+        ailettes.extend([
+            ((cx - 0.22, iy1 - 0.78, z + 3.25, cx + 0.22, iy1 - 0.75, z + 3.29), "world"),
+            ((cx - 0.025, iy1 - 0.78, z + 3.06, cx + 0.025, iy1 - 0.75, z + 3.48), "world"),
+        ])
+    H.boxes("cf_evaporateur_grilles", ailettes, "metal_bac_acier", props, subdiv=1e9)
+
+    # Cadre isolant et déverrouillage intérieur sur le vantail côté couloir.
+    H.boxes("cf_cadre_porte", [
+        ((-44.31, 106.18, z, -44.25, 106.30, z + 2.32), "aplat:#d5d7d8"),
+        ((-44.31, 107.70, z, -44.25, 107.82, z + 2.32), "aplat:#d5d7d8"),
+        ((-44.31, 106.18, z + 2.24, -44.25, 107.82, z + 2.34), "aplat:#d5d7d8"),
+        ((-44.27, 106.28, z + 0.04, -44.24, 107.72, z + 0.09), "aplat:#444a54"),
+    ], "palette", props, subdiv=1e9)
+    use = H.box("use_chambre_froide_secours", (-44.60, 107.70, z + 0.91,
+                                                 -44.40, 108.30, z + 1.59),
+                "palette", props, uv="aplat:#d8231f", subdiv=1e9)
+    _centrer_origine(use)
+    use["target"] = "door_chambre_froide_couloir"
+    use["message"] = "Déverrouillage intérieur de la porte frigorifique."
+    H.box("cf_bouton_secours", (-44.62, 108.03, z + 1.25,
+                                 -44.53, 108.20, z + 1.43),
+          "palette", props, uv="aplat:#d8231f", subdiv=1e9)
+    H.boxes("cf_bouton_legende", [
+        ((-44.55, 108.24, z + 1.43, -44.52, 108.35, z + 1.49), "aplat:#f2efe6"),
+        ((-44.55, 108.24, z + 1.32, -44.52, 108.35, z + 1.36), "aplat:#f2efe6"),
+    ], "palette", props, subdiv=1e9)
+
+    H.box("cf_reglette", (-54.1, 106.4, z + 3.70, -50.3, 106.6, z + 3.78),
+          "metal_bac_acier", props, subdiv=1e9)
+    H.box("cf_tube", (-53.8, 106.46, z + 3.66, -50.6, 106.54, z + 3.70),
+          "palette", props, uv="aplat:#d5d7d8", subdiv=1e9)
+    lampe(logic, "light_chambre_froide", (-52.2, 106.5, z + 3.42),
+          color="#b5d2e8", intensity=2.2, distance=7.0)
+    return {"carcasses suspendues": len(centres), "rails": 2,
+            "rideau à lanières": 1, "déverrouillage intérieur": 1, "lampes": 1}
+
+
 # --- Habillage : PC sécurité, le PILOTE des coulisses v2 --------------------
 # `pc_secu` exerce les systèmes d'écrans et de caméras : huit CRT construits
 # ici, un poste E qui parcourt six caméras, le vigile endormi et son guichet.
@@ -4242,6 +4567,8 @@ HABILLAGE = {
     # restent gris jusqu'à leur tour.
     "vestiaires": habiller_vestiaires,
     "fournil": habiller_fournil,
+    "labo": habiller_labo_boucherie,
+    "chambre_froide": habiller_chambre_froide,
     "pc_secu": habiller_pc_secu,
     "c_short_ramp": habiller_c_short_ramp,
     "c_short_w": habiller_c_short_w,
