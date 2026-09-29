@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { WebGLNodesHandler } from "three/addons/tsl/WebGLNodesHandler.js";
 
 export const INTERNAL_WIDTH = 640;
 export const INTERNAL_HEIGHT = 360;
@@ -41,6 +42,7 @@ export function anisotropieDisponible(): number {
 
 export function createRenderer(canvas: HTMLCanvasElement): THREE.WebGLRenderer {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+  renderer.setNodesHandler(new WebGLNodesHandler());
   renderer.setPixelRatio(1);
   renderer.setSize(INTERNAL_WIDTH, INTERNAL_HEIGHT, false); // false: ne touche pas au style CSS
   renderer.setClearColor(0x1a1a1a);

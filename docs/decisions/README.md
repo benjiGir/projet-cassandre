@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-09-26
+updated: 2026-09-28
 ---
 
 # Architecture Decision Records
@@ -24,6 +24,7 @@ reste conservé et renvoie à son successeur.
 | [0027](0027-filtrage-des-textures-reduites.md) | Mipmaps et anisotropie à la réduction, nearest à l'agrandissement | proposé |
 | [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle CC0 | accepté |
 | [0034](0034-resolution-interne-configurable.md) | Résolution interne configurable, 640×360 proposé comme défaut | proposé |
+| [0035](0035-materiaux-tsl-cibles.md) | Matériaux TSL ciblés via l'adaptateur WebGL | accepté |
 
 ## Simulation, mouvement et combat
 

@@ -30,6 +30,11 @@ export interface InteractionHandlers {
    * placeholder — pas de vraie VO cette passe). Répétable à
    * volonté, contrairement aux pickups ci-dessus. */
   onPaMicUse(): void;
+  /** `use_pointeuse` (vestiaires) : déclenche la réplique sur les heures sup'.
+   * Répétable, comme les autres interactions de décor. */
+  onPunchClockUse(): void;
+  /** `use_douche_1/2` : allume ou coupe l'eau du poste visé. */
+  onShowerToggleUse(name: string): void;
   /** `use_toilet` (Zone D) : +1 PV. Répétable (plafonné au PV max côté
    * `main.ts`), pas un pickup à usage unique — la blague de la valeur
    * dérisoire (+1 PV) fonctionne mieux en libre-service. */
@@ -291,6 +296,15 @@ export class InteractionSystem {
 
       case "use_pa_mic":
         handlers.onPaMicUse();
+        break;
+
+      case "use_pointeuse":
+        handlers.onPunchClockUse();
+        break;
+
+      case "use_douche_1":
+      case "use_douche_2":
+        handlers.onShowerToggleUse(useObject.name);
         break;
 
       case "use_toilet":

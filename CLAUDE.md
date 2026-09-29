@@ -43,8 +43,8 @@ explication**, pas contournée.
    un appel. Monter la résolution interne ne corrige PAS ce défaut-là (plus de
    fragments qui échantillonnent au hasard) et coûte le look ;
    `cassandre.resolution(l, h)` existe pour s'en convaincre.
-5. **`MeshLambertMaterial` uniquement.** Pas de PBR, pas de
-   `MeshStandardMaterial`, pas de map de rugosité ni de métalness.
+5. *(Retiré le 2026-09-28 — exclusivité `MeshLambertMaterial` supprimée ; les
+   matériaux classiques et TSL peuvent coexister.)*
 6. **Character controller = celui de Rapier** (`KinematicCharacterController`).
    Jamais d'implémentation maison capsule-vs-monde.
 7. **Gravité −25 m/s².** Le réalisme donne un saut mou.

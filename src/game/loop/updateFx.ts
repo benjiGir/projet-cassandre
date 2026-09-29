@@ -12,6 +12,7 @@ import {
 import { input } from "../../core/input";
 import { toggleMusic } from "../../core/music";
 import { updateWaterAmbience } from "../../core/waterAmbience";
+import { updateShowerAmbience } from "../../core/showerAmbience";
 import { runGameplaySync } from "../../core/runtime";
 import { type LoopStats } from "../../core/loop";
 import { FLESH_MATERIAL } from "../player/weapons";
@@ -25,6 +26,7 @@ import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import type { LevelHandle } from "../level/loader";
 import { astarMetricsSnapshot } from "../level/pathfinding";
+import { collectActiveShowerOrigins } from "../level/douches";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -106,6 +108,7 @@ const muzzleScratch = new THREE.Vector3();
 // n'est pas `activeJets`.
 const waterListenerRightScratch = new THREE.Vector3();
 const waterJetOriginScratch: THREE.Vector3[] = [];
+const showerOriginScratch: THREE.Vector3[] = [];
 
 const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 
@@ -450,6 +453,15 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           engine.camera.position,
           waterListenerRightScratch,
           waterJetOriginScratch,
+          realDt,
+          engine.flow.isPlaying(),
+        );
+        const levelRoot = session.gltfLevelSession?.current?.root ?? null;
+        collectActiveShowerOrigins(levelRoot, showerOriginScratch);
+        updateShowerAmbience(
+          engine.camera.position,
+          waterListenerRightScratch,
+          showerOriginScratch,
           realDt,
           engine.flow.isPlaying(),
         );

@@ -26,6 +26,7 @@ import { moveConfig } from "../player/moveConfig";
 import { recordSafeGround, shouldRescue } from "../session/fallRescue";
 import { FLESH_MATERIAL } from "../player/weapons";
 import { type DoorActor } from "../level/doors";
+import { basculerEau, updateDouches } from "../level/douches";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
 
@@ -41,6 +42,7 @@ import { handleDevGameplayInput } from "./devGameplayInput";
 // [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)) —
 // aucune constante de soin/réplique dédiée ici, elles vivent dans ce module.
 const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
+const HERO_LINE_POINTEUSE = "Heures sup' non payées. Et ma carte porte un numéro qui n'existe pas.";
 const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
 const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
 
@@ -254,6 +256,17 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             },
             onPaMicUse: () => {
               triggerHeroLine(session, HERO_LINE_PA_MIC);
+            },
+            onPunchClockUse: () => {
+              triggerHeroLine(session, HERO_LINE_POINTEUSE);
+            },
+            onShowerToggleUse: (name) => {
+              const root = session.gltfLevelSession?.current?.root;
+              if (!root) return;
+              const allumee = basculerEau(root, name);
+              if (allumee === null) return;
+              const poste = name.slice("use_douche_".length);
+              showHudMessage(allumee ? `Douche ${poste} : eau ouverte` : `Douche ${poste} : eau coupée`);
             },
             onCameraConsoleUse: (cameraNames) => {
               session.cameraView?.activate(cameraNames, activeFrame.yaw, activeFrame.pitch);
@@ -509,6 +522,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // impacts, plus l'horloge d'animation propre à `EcranSystem.update`
         // (voir sa doc) — avancée au pas fixe, jamais un dt réel.
         session.ecranSystem?.update(gameplayDt, session.weapons.hitEvents);
+        updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
         // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
         // #1) — `interpolateVisuals.ts` ne fait qu'interpoler entre deux

@@ -8,6 +8,7 @@ import { initAudio } from "./core/audio";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
 import { initWaterAmbience } from "./core/waterAmbience";
+import { initShowerAmbience } from "./core/showerAmbience";
 import { startLoop } from "./core/loop";
 import { runGameplaySync } from "./core/runtime";
 import { initPhysics } from "./physics/world";
@@ -129,6 +130,8 @@ async function main() {
   // aussi (mise à jour continue par frame, pas un pool de sons ponctuels).
   // see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
   initWaterAmbience();
+  // Boucle dédiée au bruit de douche, lancée uniquement si un poste est ouvert.
+  initShowerAmbience();
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).

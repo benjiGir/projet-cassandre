@@ -155,7 +155,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
-        if n.startswith("use_") and not {"target", "card", "soin", "munitions", "aliment", "cameras"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_pointeuse", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -165,6 +165,8 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             # elle-même, il n'y a rien à cibler (jalon N7, même règle que
             # `loader.ts::buildUseObjectEffect`). Idem pour "soin", une trousse,
             # et "aliment", sa variante (chantier « Les coulisses »).
+            # `use_pointeuse` et les commandes de douche sont traités par leur
+            # nom côté runtime : réplique ou bascule d'eau, sans cible porte.
             warn(f"{o.name}: interactif sans custom property 'target'")
         if n.startswith("use_") and "aliment" in o.keys():
             valeur = str(o["aliment"]).strip().lower()

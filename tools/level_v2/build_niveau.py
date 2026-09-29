@@ -111,14 +111,14 @@ COQUE = {
 
     # ===== Les coulisses, v2 (2026-09-26) =====
     # Vestiaires et fournil sont des locaux d'hygiène (douches, denrées) :
-    # même carrelage blanc que les caisses. Labo boucherie/marée et chambre
-    # froide gardent ce carrelage (grès du labo, section 3.2.D du board) ; le
+    # carrelage blanc, et plâtre propre pour les vestiaires. Labo boucherie/
+    # marée et chambre froide gardent ce carrelage (grès du labo, section 3.2.D) ; le
     # compacteur reste brut, comme la réserve dont il dépend ; la planque du
     # vigile (secret 4) tranche exprès avec sa moquette, seul confort des
     # coulisses. La gaine VMC n'a ni sol ni mur propres (un conduit), elle
     # prend le béton du couloir qu'elle double.
-    "vestiaires": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
-    "fournil": ("sol_carrelage_blanc", "mur_platre_use", "plafond_dalles"),
+    "vestiaires": ("sol_carrelage_blanc", "mur_platre", "plafond_dalles"),
+    "fournil": ("sol_carrelage_blanc", "mur_platre", "plafond_dalles"),
     "gaine": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
     # `pc_secu` (le pilote) a sa propre moquette institutionnelle et son
     # plafond sombre construits à la main (`PLAFOND_SUR_MESURE`) — l'entrée de
@@ -1993,17 +1993,82 @@ def vraie_fenetre(nom: str, espace: str, bornes, props) -> None:
     bpy.context.view_layer.update()
 
 
-def cylindre_aplat(nom: str, centre, rayon: float, z0: float, z1: float, couleur: str, coll):
+def cylindre_aplat(nom: str, centre, rayon: float, z0: float, z1: float, couleur: str, coll,
+                   segments: int = 8):
     """Cylindre d'UNE couleur du nuancier : `H.cylinder` projette ses UV comme une
     boîte, ce qui sur `palette.png` donnerait un arc-en-ciel. Ses UV sont donc
     ramenées sur le pavé de la couleur voulue — un matériau de plus : aucun."""
-    obj = H.cylinder(nom, centre, rayon, z0, z1, "palette", coll)
+    obj = H.cylinder(nom, centre, rayon, z0, z1, "palette", coll, segments=segments)
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     couche = bm.loops.layers.uv.active
     teinte = H._uv_aplat(couleur)
     for face in bm.faces:
         teinte(face, couche)
+    bm.to_mesh(obj.data)
+    bm.free()
+    return obj
+
+
+def _fournil_mesh_aplat(nom: str, bm, couleur: str, coll):
+    """Finalise un petit mesh de fournil à couleur uniforme de palette."""
+    bm.normal_update()
+    uv = bm.loops.layers.uv.new("UVMap")
+    mapper = H._uv_aplat(couleur)
+    for face in bm.faces:
+        mapper(face, uv)
+    me = bpy.data.meshes.new(nom)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(nom, me)
+    obj.data.materials.append(H.textured_material("palette"))
+    coll.objects.link(obj)
+    return obj
+
+
+def cuve_ouverte(nom: str, centre, rayon: float, z0: float, zhaut: float,
+                 couleur: str, coll, segments: int = 20):
+    """Cuve à paroi creuse, avec un rebord lisible depuis le dessus."""
+    bm = bmesh.new()
+    profil = ((rayon * 0.62, z0), (rayon * 0.90, z0 + 0.10),
+              (rayon, zhaut - 0.09), (rayon * 0.96, zhaut),
+              (rayon * 0.82, zhaut), (rayon * 0.55, z0 + 0.16))
+    anneaux = []
+    for r, zz in profil:
+        anneaux.append([bm.verts.new((centre[0] + r * math.cos(2 * math.pi * i / segments),
+                                      centre[1] + r * math.sin(2 * math.pi * i / segments), zz))
+                        for i in range(segments)])
+    for bas, haut in zip(anneaux, anneaux[1:]):
+        for i in range(segments):
+            j = (i + 1) % segments
+            bm.faces.new((bas[i], bas[j], haut[j], haut[i]))
+    bm.faces.new(tuple(reversed(anneaux[0])))
+    bm.faces.new(anneaux[-1])
+    return _fournil_mesh_aplat(nom, bm, couleur, coll)
+
+
+def blobs_fournil(nom: str, volumes, couleur: str, coll):
+    """Volumes bouffis très simples pour rendre la pâte lisible à distance."""
+    bm = bmesh.new()
+    for centre, echelle in volumes:
+        resultat = bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=6, radius=1.0)
+        for v in resultat["verts"]:
+            v.co = (centre[0] + v.co.x * echelle[0],
+                    centre[1] + v.co.y * echelle[1],
+                    centre[2] + v.co.z * echelle[2])
+    return _fournil_mesh_aplat(nom, bm, couleur, coll)
+
+
+def roulette_fournil(nom: str, x: float, y: float, z: float, coll):
+    """Roue latérale en low poly, axe X, d'un chariot inox."""
+    obj = cylindre_aplat(nom, (x, y), 0.095, z - 0.055, z + 0.055,
+                         "#444a54", coll, segments=12)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    for v in bm.verts:
+        dx, dy, dz = v.co.x - x, v.co.y - y, v.co.z - z
+        v.co = (x + dz, y + dy, z - dx)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(obj.data)
     bm.free()
     return obj
@@ -2318,6 +2383,9 @@ HAUTEUR_VANTAIL = {
     frozenset({"galerie", "secret1"}): bo.HAUTEUR_PORTE,
     frozenset({"cafeteria", "toilettes"}): 2.0,
     frozenset({"c_bu", "pc_secu"}): 2.1,
+    frozenset({"c_bu", "vestiaires"}): 2.1,
+    frozenset({"c_bu", "fournil"}): 2.1,
+    frozenset({"vestiaires", "fournil"}): 2.1,
     "sortie": 2.25,
 }
 
@@ -2604,6 +2672,24 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
                          dict(sens="auto", auto=True, portee=1.8, referme=True, delai=0.7,
                               groupe="pc_entree"), vers=1)
             poses += 2
+        elif cle == frozenset({"c_bu", "vestiaires"}):
+            porte_double(o, ("door_vestiaires_entree_g", "door_vestiaires_entree_d"),
+                         HAUTEUR_VANTAIL[cle], "portes_verre", "porte:porte_vav", props,
+                         dict(sens="auto", auto=True, portee=1.7, referme=True, delai=0.7,
+                              groupe="vestiaires_entree"), vers=1)
+            poses += 2
+        elif cle == frozenset({"c_bu", "fournil"}):
+            porte_double(o, ("door_fournil_couloir_g", "door_fournil_couloir_d"),
+                         HAUTEUR_VANTAIL[cle], "portes_verre", "porte:porte_vav", props,
+                         dict(sens="auto", auto=True, portee=1.8, referme=True, delai=0.7,
+                              groupe="fournil_couloir"), vers=1)
+            poses += 2
+        elif cle == frozenset({"vestiaires", "fournil"}):
+            porte_double(o, ("door_vestiaires_fournil_g", "door_vestiaires_fournil_d"),
+                         HAUTEUR_VANTAIL[cle], "portes_verre", "porte:porte_vav", props,
+                         dict(sens="auto", auto=True, portee=1.7, referme=True, delai=0.7,
+                              groupe="vestiaires_fournil"))
+            poses += 2
         elif cle == frozenset({"pc_secu", "gaine"}):
             # Grille métallique posée dans le raccord surélevé (z=2..4 m).
             # Le mesh `vitre_*` fournit son collider et sa casse ; aucun bouton
@@ -2632,6 +2718,34 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
             grille = H.boxes("vitre_pc_gaine", parts, "metal_tole_perforee", props)
             grille["pv"] = 45
             grille["matiere"] = "metal"
+            poses += 1
+        elif cle == frozenset({"fournil", "gaine"}):
+            # Bouche cassable : le conduit est surélevé et s'atteint depuis
+            # le plan de travail du fournil.
+            lo, hi = o.span
+            espaces = {s.id: s for s in plan.ALL}
+            z0 = max(o.z_a, o.z_b)
+            z1 = max(_plafond_au_bord(espaces[o.a], o.axe, o.at),
+                     _plafond_au_bord(espaces[o.b], o.axe, o.at))
+            e = EP_VANTAIL / 2
+            rail = 0.07
+            parts = [
+                (_monde(o, lo, -e, z0, lo + rail, e, z1), "world"),
+                (_monde(o, hi - rail, -e, z0, hi, e, z1), "world"),
+                (_monde(o, lo + rail, -e, z0, hi - rail, e, z0 + rail), "world"),
+                (_monde(o, lo + rail, -e, z1 - rail, hi - rail, e, z1), "world"),
+            ]
+            for i in range(1, 5):
+                centre = lo + (hi - lo) * i / 5
+                parts.append((_monde(o, centre - 0.025, -e, z0 + rail,
+                                     centre + 0.025, e, z1 - rail), "world"))
+            for hauteur in (0.65, 1.30):
+                if z0 + hauteur < z1 - rail:
+                    parts.append((_monde(o, lo + rail, -e, z0 + hauteur,
+                                         hi - rail, e, z0 + hauteur + 0.045), "world"))
+            bouche = H.boxes("vitre_fournil_gaine", parts, "metal_tole_perforee", props)
+            bouche["pv"] = 45
+            bouche["matiere"] = "metal"
             poses += 1
         elif cle == frozenset({"hub", "c_hb_rs"}):
             # Va-et-vient « PRIVÉ » : elles battent des deux côtés, se referment
@@ -2805,7 +2919,13 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
     # son bouton est juste à l'est (x ≈ 8), la fontaine et le banc au-delà.
     L.place(B.fontaine_eau(), (10.5, nord - 0.36, z), 0, props, col_coll, "cbu_fontaine")
     L.place(F.banc(), (13.0, nord - 0.5, z), 0, props, col_coll, "cbu_banc")
-    L.place(R.extincteur(), (24.42, nord, z + 1.0), 180, props, props, "cbu_ext")
+    # L'extincteur ne doit pas empiéter sur l'entrée des vestiaires (x=24).
+    L.place(R.extincteur(), (22.0, nord, z + 1.0), 180, props, props, "cbu_ext")
+    H.boxes("cbu_ext_pictogramme", [
+        ((21.57, nord - 0.24, z + 1.78, 22.01, nord - 0.19, z + 2.25), "aplat:#f2efe6", "-y"),
+        ((21.74, nord - 0.27, z + 1.88, 21.85, nord - 0.24, z + 2.12), "aplat:#d8231f", "-y"),
+        ((21.81, nord - 0.27, z + 2.10, 21.94, nord - 0.24, z + 2.18), "aplat:#d8231f", "-y"),
+    ], "palette", props)
     meubles = semer(props, col_coll, "cbu_k", (
         ("pottedPlant", 1.6, nord - 0.45, z, 0),
         ("pottedPlant", 8.9, nord - 0.45, z, 0),
@@ -2814,11 +2934,646 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
     return {"meubles": 7 + meubles, "lampes": lampes}
 
 
+# --- Habillage B : fournil --------------------------------------------------
+
+def habiller_fournil(space, gris, props, col_coll, logic) -> dict:
+    """Ligne de production du sud vers le nord, avec une allée centrale libre."""
+    z = space.z
+    # Les silhouettes sont groupées par aplat pour garder peu de lots de dessin.
+    inox, noir, orange = "#babcbc", "#444a54", "#e8741c"
+    pieces = {c: [] for c in (inox, noir, orange, "#deb789", "#f2efe6", "#b8612e")}
+    def add(c, b):
+        pieces[c].append((b, f"aplat:{c}"))
+    decalage_four = .8
+    def add_four(c, b):
+        x0, y0, z0, x1, y1, z1 = b
+        add(c, (x0, y0 + decalage_four, z0, x1, y1 + decalage_four, z1))
+
+    # Four à sole focal, sur le mur nord : quatre étages et hublots orange.
+    add_four(noir, (11, 154, .2, 17, 154.85, 2.75))
+    for tier in range(4):
+        zz = .36 + tier * .54
+        add_four(inox, (11.25, 153.92, zz, 16.75, 154.02, zz + .42))
+        for door in range(4):
+            xx = 11.42 + door * 1.28
+            add_four(noir, (xx, 153.82, zz + .15, xx + 1.12, 153.9, zz + .38))
+            add_four(orange, (xx + .43, 153.79, zz + .20, xx + .72, 153.81, zz + .31))
+    add_four(inox, (11.2, 153.5, 2.9, 16.8, 154, 3.15))
+    add_four(noir, (12, 153.5, 3.15, 16, 154, 3.55))
+
+    # Pétrin à cuve ronde et deux plans contre le flanc ouest.
+    add(inox, (8.8, 143, .91, 10.5, 144.3, 1.03))
+    add(noir, (9.05, 143.2, .12, 10.3, 144.1, .9))
+    add(noir, (8.96, 143.22, 1.03, 9.43, 144.08, 1.72))
+    add(inox, (9.26, 143.57, 1.55, 9.89, 143.72, 1.64))
+    add("#b8612e", (9.37, 143.52, 1.66, 9.46, 143.77, 1.78))
+    cuve_ouverte("fournil_petrin_cuve", (9.87, 143.68), .47, 1.00, 1.49,
+                 inox, props, segments=24)
+    cylindre_aplat("fournil_petrin_pate", (9.87, 143.68), .34, 1.30, 1.35,
+                    "#f2efe6", props, segments=20)
+    add(inox, (9.69, 143.64, 1.34, 9.75, 143.72, 1.61))
+    add(inox, (9.62, 143.59, 1.32, 9.81, 143.76, 1.37))
+    for ya in (145, 149):
+        add(noir, (8.45, ya, .78, 11.6, ya + 1, .9))
+        for xx in (8.6, 11.2): add(inox, (xx, ya + .08, .08, xx + .14, ya + .92, .78))
+
+    # Chambre de pousse : tournée vers l'allée, dos plaqué au mur ouest.
+    # Son assemblage dédié permet de pivoter coque, porte, commande et collider
+    # d'un seul tenant sans faire tourner les autres appareils du fournil.
+    pousse_root = bpy.data.objects.new("grp_fournil_pousse", None)
+    props.objects.link(pousse_root)
+    pousse_pieces = {c: [] for c in (inox, noir)}
+
+    def add_pousse(c, b):
+        pousse_pieces[c].append((b, f"aplat:{c}"))
+
+    def attacher_pousse(obj):
+        pose_monde = obj.matrix_world.copy()
+        obj.parent = pousse_root
+        obj.matrix_world = pose_monde
+        return obj
+
+    add_pousse(inox, (8.55, 150.8, .10, 10.4, 152, .20))
+    add_pousse(inox, (8.55, 150.8, 2.34, 10.4, 152, 2.45))
+    add_pousse(inox, (8.55, 151.88, .20, 10.4, 152, 2.34))
+    add_pousse(inox, (8.55, 150.82, .20, 8.68, 151.88, 2.34))
+    add_pousse(inox, (10.27, 150.82, .20, 10.4, 151.88, 2.34))
+    # Jambages et linteau fixes encadrent le vantail animé.
+    add_pousse(inox, (8.58, 150.64, .12, 8.72, 150.82, 2.40))
+    add_pousse(inox, (10.23, 150.64, .12, 10.37, 150.82, 2.40))
+    add_pousse(inox, (8.72, 150.64, 2.28, 10.23, 150.82, 2.42))
+    # Rails latéraux du chariot et six plateaux ouverts.
+    for xx in (8.91, 9.98):
+        add_pousse(inox, (xx, 151.02, .28, xx + .045, 151.68, 2.12))
+    for level in range(7):
+        zz = .36 + level * .245
+        add_pousse(noir, (8.94, 151.00, zz, 10.02, 151.055, zz + .026))
+        add_pousse(inox, (8.94, 151.63, zz, 10.02, 151.68, zz + .026))
+        for xx in (9.04, 9.30, 9.56, 9.82):
+            add_pousse(inox, (xx, 151.055, zz, xx + .028, 151.63, zz + .022))
+    for c, parts in pousse_pieces.items():
+        if parts:
+            attacher_pousse(H.boxes(f"fournil_pousse_{c[1:]}", parts, "palette", props))
+    attacher_pousse(blobs_fournil("fournil_pate_pousse", (
+        ((9.30, 151.16, 1.47), (.24, .20, .15)),
+        ((9.68, 151.20, 1.58), (.36, .25, .22)),
+        ((9.48, 151.48, 1.77), (.26, .17, .16)),
+    ), "#f2efe6", props))
+
+    # Trois chariots à échelles : cadres tubulaires ouverts, plateaux-grilles
+    # espacés et roulettes basses. Rangés en baie au nord-est, près du four ;
+    # la porte des vestiaires et son débouché restent libres.
+    chariots = []
+    for no, x0 in enumerate((16.95, 17.85, 18.75), start=1):
+        x1, y0, y1 = x0 + .88, 150.35, 150.97
+        chariots.append((no, x0, x1, y0, y1))
+        for xx in (x0, x0 + .055, x1 - .055, x1):
+            add(inox, (xx, y0 + .035, .20, xx + .035, y1 - .035, 1.90))
+        for ya in (y0 + .035, y1 - .075):
+            add(inox, (x0 + .025, ya, .20, x1 - .025, ya + .04, .28))
+            add(inox, (x0 + .025, ya, 1.84, x1 - .025, ya + .04, 1.90))
+        for level in range(7):
+            zz = .38 + level * .225
+            # Chaque niveau forme un plateau ajouré, lisible de face sans
+            # remplir le volume comme un bloc noir.
+            add(inox, (x0 + .055, y0 + .045, zz, x1 - .055, y0 + .09, zz + .028))
+            add(inox, (x0 + .055, y1 - .09, zz, x1 - .055, y1 - .045, zz + .028))
+            for rod in range(1, 4):
+                xx = x0 + .055 + rod * .19
+                add(inox, (xx, y0 + .085, zz, xx + .026, y1 - .085, zz + .022))
+        # Petite poignée supérieure, tournée vers l'allée.
+        add(noir, (x0 + .08, y0 - .045, 1.82, x1 - .08, y0 - .005, 1.87))
+
+    # Îlot de façonnage au centre : plan fariné, pâtons et cuve à gauche,
+    # balance à droite. Il laisse 2 m entre son bord et le four : axe de service
+    # dégagé depuis la porte sud, avec une boucle libre vers les vestiaires.
+    add(inox, (12.40, 146.45, .79, 15.00, 148.05, .91))
+    for xx in (12.48, 14.86):
+        for yy in (146.53, 147.91):
+            add(inox, (xx, yy, .16, xx + .07, yy + .07, .79))
+    add(noir, (12.55, 146.62, .34, 14.92, 147.90, .42))
+    add(inox, (12.55, 146.62, .42, 14.92, 147.90, .47))
+    # Planche en bois, plaque de cuisson et pains en cours de façonnage.
+    add("#deb789", (12.62, 146.58, .92, 13.86, 147.78, .98))
+    add(noir, (13.98, 146.62, .92, 14.54, 147.36, .98))
+    for edge in (13.98, 14.52):
+        add(inox, (edge, 146.62, .98, edge + .035, 147.36, 1.04))
+    add(inox, (13.98, 146.62, .98, 14.55, 146.655, 1.04))
+    add(inox, (13.98, 147.325, .98, 14.55, 147.36, 1.04))
+    blobs_fournil("fournil_pains_faconnage", (
+        ((12.91, 146.86, 1.07), (.17, .12, .09)),
+        ((13.35, 146.90, 1.07), (.17, .12, .09)),
+        ((12.91, 147.30, 1.07), (.17, .12, .09)),
+        ((13.35, 147.34, 1.07), (.17, .12, .09)),
+    ), "#b8612e", props)
+    cuve_ouverte("fournil_desserte_cuve", (14.02, 147.82), .25, .91, 1.17,
+                 inox, props, segments=16)
+    cylindre_aplat("fournil_desserte_pate", (14.02, 147.82), .17, 1.105, 1.13,
+                    "#f2efe6", props, segments=16)
+    # Afficheur orange de la balance, visible depuis les deux accès.
+    add(noir, (14.58, 147.48, 1.00, 14.84, 147.64, 1.30))
+    add(inox, (14.68, 147.54, .91, 14.74, 147.60, 1.00))
+    add(orange, (14.61, 147.455, 1.19, 14.81, 147.47, 1.25))
+
+    # Rôtissoire sur la ligne chaude au fond, hors du débouché des deux portes.
+    # Ligne chaude plaquée au mur nord, alignée sur le four à sole.
+    rot_y = 154.70
+    add(noir, (17, rot_y, .15, 19.1, rot_y + 1.05, 1.35))
+    add(inox, (17.08, rot_y - .07, .32, 19, rot_y, 1.22))
+    add(noir, (17.24, rot_y - .11, .36, 18.84, rot_y - .08, 1.17))
+    add(inox, (17.16, rot_y - .12, .30, 17.24, rot_y, 1.24))
+    add(inox, (18.84, rot_y - .12, .30, 18.92, rot_y, 1.24))
+    add(inox, (17.16, rot_y - .12, 1.20, 18.92, rot_y, 1.28))
+    add(inox, (17.16, rot_y - .12, .27, 18.92, rot_y, .34))
+    for xx in (17.55, 18.05, 18.55):
+        add("#b8612e", (xx, rot_y - .04, .54, xx + .16, rot_y - .01, 1.02))
+        add(inox, (xx + .07, rot_y - .07, .48, xx + .09, rot_y + .01, 1.08))
+    add(orange, (17.55, rot_y - .08, 1.08, 18.55, rot_y - .06, 1.15))
+    for c, parts in pieces.items():
+        if parts: H.boxes(f"fournil_{c[1:]}", parts, "palette", props)
+
+    # Vitre de la rôtissoire : on voit les broches et les poulets, le halo est
+    # une résistance fine en partie haute plutôt qu'un grand panneau orange.
+    vitre_rotissoire = H.box("vitre_fournil_rotissoire",
+                            (17.25, rot_y - .095, .36, 18.83, rot_y - .075, 1.17),
+                            "verre", props, uv=f"aplat:{H.VERRE_TEINTE}")
+    vitre_rotissoire["solide"] = False
+
+    # Chariot à grilles dans l'étuve, puis roues des chariots de refroidissement.
+    for no, x0, x1, y0, y1 in chariots:
+        for xi in (x0 + .055, x1 - .055):
+            for yi in (y0 + .08, y1 - .08):
+                roulette_fournil(f"fournil_chariot_{no}_roulette_{xi:.2f}_{yi:.2f}",
+                                 xi, yi, .14, props)
+        col_coll.objects.link(geo_utils.build_proxy_object(
+            f"col_box_fournil_chariot_{no}", "box", (x0, y0, 0),
+            (x1 - x0, y1 - y0, 1.90)))
+
+    # Collider de l'îlot ; l'allée de service reste >1,2 m sur ses deux côtés.
+    col_coll.objects.link(geo_utils.build_proxy_object(
+        "col_box_fournil_desserte", "box", (12.40, 146.45, 0), (2.60, 1.60, 1.17)))
+
+    # Vantail vitré à cadre inox : seul le verre est enfant du door_ animé.
+    bx0, by0, bz0, bx1, by1, bz1 = (8.72, 150.70, .20, 10.23, 150.78, 2.28)
+    cadre = [
+        ((bx0, by0, bz0, bx1, by1, bz0 + .08), f"aplat:{inox}"),
+        ((bx0, by0, bz1 - .08, bx1, by1, bz1), f"aplat:{inox}"),
+        ((bx0, by0, bz0, bx0 + .08, by1, bz1), f"aplat:{inox}"),
+        ((bx1 - .08, by0, bz0, bx1, by1, bz1), f"aplat:{inox}"),
+        ((9.445, by0, bz0 + .08, 9.505, by1, bz1 - .08), f"aplat:{inox}"),
+        ((bx0 + .08, by0, 1.19, bx1 - .08, by1, 1.25), f"aplat:{inox}"),
+    ]
+    door = H.boxes("door_fournil_pousse", cadre, "palette", props)
+    _centrer_origine(door)
+    for cle, valeur in dict(mouvement="battant", charniere="min", sens="-", angle=105,
+                            manuelle=True, referme=False).items():
+        door[cle] = valeur
+    attacher_pousse(door)
+    fenetres = [
+        ((8.81, 150.724, .29, 9.43, 150.756, 1.17), f"aplat:{H.VERRE_TEINTE}"),
+        ((9.52, 150.724, .29, 10.14, 150.756, 1.17), f"aplat:{H.VERRE_TEINTE}"),
+        ((8.81, 150.724, 1.27, 9.43, 150.756, 2.19), f"aplat:{H.VERRE_TEINTE}"),
+        ((9.52, 150.724, 1.27, 10.14, 150.756, 2.19), f"aplat:{H.VERRE_TEINTE}"),
+    ]
+    vitre = H.boxes("vitre_door_fournil_pousse", fenetres, "verre", props)
+    vitre["solide"] = False
+    bpy.context.view_layer.update()
+    vitre.parent = door
+    vitre.matrix_parent_inverse = door.matrix_world.inverted()
+    bpy.context.view_layer.update()
+
+    # Desserte à poulet, juste devant la rôtissoire : plateau, étagère basse
+    # et pieds ouverts. Le repère alimentaire sera posé sur son plateau.
+    desserte_y = rot_y - .88
+    poulet_y = rot_y - .60
+    desserte = [
+        ((17.62, desserte_y, .86, 17.72, desserte_y + .10, .96), "aplat:#444a54"),
+        ((18.78, desserte_y, .86, 18.88, desserte_y + .10, .96), "aplat:#444a54"),
+        ((17.62, desserte_y + .46, .86, 17.72, desserte_y + .56, .96), "aplat:#444a54"),
+        ((18.78, desserte_y + .46, .86, 18.88, desserte_y + .56, .96), "aplat:#444a54"),
+        ((17.62, desserte_y, .91, 18.88, desserte_y + .56, .99), "aplat:#babcbc"),
+        ((17.68, desserte_y + .06, .32, 18.82, desserte_y + .50, .38), "aplat:#babcbc"),
+        ((17.68, desserte_y + .03, .38, 17.76, desserte_y + .51, .42), "aplat:#444a54"),
+        ((18.74, desserte_y + .03, .38, 18.82, desserte_y + .51, .42), "aplat:#444a54"),
+    ]
+    H.boxes("fournil_desserte_poulet", desserte, "palette", props, subdiv=.1)
+    cylindre_aplat("fournil_poulet_plateau", (18.25, poulet_y), .28, .99, 1.035,
+                    inox, props, segments=12)
+    col_coll.objects.link(geo_utils.build_proxy_object(
+        "col_box_fournil_desserte_poulet", "box", (17.62, desserte_y, 0), (1.26, .56, 1.035)))
+
+    # Plans de préparation solides : le joueur ne peut plus les traverser.
+    for index, ya in enumerate((145, 149), start=1):
+        col_coll.objects.link(geo_utils.build_proxy_object(
+            f"col_box_fournil_table_{index}", "box", (8.45, ya, 0), (3.15, 1.0, .90)))
+
+    poussoir_centre = Vector((10.5, 150.5, 1.25))
+    poussoir = H.boxes("use_fournil_pousse", [
+        ((10.31, 150.62, 1.02, 10.69, 150.74, 1.48), f"aplat:{noir}"),
+        ((10.35, 150.58, 1.06, 10.65, 150.62, 1.44), f"aplat:{inox}"),
+        ((10.42, 150.54, 1.18, 10.58, 150.58, 1.34), f"aplat:{orange}"),
+        ((10.45, 150.535, 1.38, 10.55, 150.58, 1.42), "aplat:#65814b"),
+    ], "palette", logic, subdiv=0.1)
+    for vertex in poussoir.data.vertices:
+        vertex.co -= poussoir_centre
+    poussoir.location = poussoir_centre
+    poussoir["target"] = "door_fournil_pousse"
+    poussoir["message"] = "La pâte a pris toute la chambre."
+    attacher_pousse(poussoir)
+
+    col_pousse = geo_utils.build_proxy_object(
+        "col_box_fournil_pousse", "box", (8.55, 150.8, .1), (1.85, 1.2, 2.35))
+    col_coll.objects.link(col_pousse)
+    attacher_pousse(col_pousse)
+
+    # Rotation de 90° : le dos (+Y local) vient contre la face intérieure du
+    # mur ouest (x=8.25), et le vantail s'ouvre vers l'allée (+X monde).
+    pousse_root.matrix_world = (
+        Matrix.Translation(Vector((8.85, 151.4, 0)))
+        @ Matrix.Rotation(math.pi / 2, 4, "Z")
+        @ Matrix.Translation(Vector((-9.475, -151.4, 0)))
+    )
+
+    # Reprend le repère nourriture du plan pour placer le poulet à côté de la
+    # rôtissoire et lui donner un nom explicite ; le loader instancie le modèle.
+    ancien_poulet = bpy.data.objects.get("use_nourriture_fournil_1")
+    if ancien_poulet is not None:
+        bpy.data.objects.remove(ancien_poulet, do_unlink=True)
+    bo.boite_centree("use_fournil_poulet", (18.25, poulet_y, 1.35), (0.5, 0.5, 0.5),
+                     "repere", gris, logic, extras={"aliment": "poulet"})
+
+    # Sacs cassables : silhouette resserrée, col ficelé et étiquette lisible.
+    alphabet = {
+        "F": ("11111", "10000", "11110", "10000", "10000", "10000", "10000"),
+        "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
+        "R": ("11110", "10001", "10001", "11110", "10100", "10010", "10001"),
+        "I": ("11111", "00100", "00100", "00100", "00100", "00100", "11111"),
+        "N": ("10001", "11001", "11001", "10101", "10011", "10011", "10001"),
+        "E": ("11111", "10000", "10000", "11110", "10000", "10000", "11111"),
+    }
+    for i, (x, y) in enumerate(((8.8, 141.8), (9.55, 141.8), (8.8, 142.55), (9.55, 142.55)), start=1):
+        sack = H.prop(f"fournil_farine_{i}", (x, y, .05, x + .58, y + .48, .82),
+                      "palette", props, uv="aplat:#bdae9a", masse=8, pv=12, matiere="farine")
+        cx, cy = x + .29, y + .24
+        for vertex in sack.data.vertices:
+            scale = .68 if vertex.co.z > .5 else .88
+            vertex.co.x = cx + (vertex.co.x - cx) * scale
+        sack.data.update()
+
+        details = [
+            ((x + .20, y + .12, .79, x + .38, y + .36, .84), "aplat:#a58a60"),
+            ((x + .25, y + .17, .84, x + .33, y + .31, .89), "aplat:#b8612e"),
+            ((x + .04, y - .013, .19, x + .54, y - .006, .68), "aplat:#654933"),
+            ((x + .055, y - .021, .205, x + .525, y - .013, .665), "aplat:#f2efe6"),
+            ((x + .105, y - .032, .555, x + .475, y - .021, .625), "aplat:#b8612e"),
+        ]
+        pixel_w, pixel_h = .0115, .023
+        text_x, text_z = cx - 35 * pixel_w / 2, .315
+        for letter_index, letter in enumerate("FARINE"):
+            for row, line in enumerate(alphabet[letter]):
+                for column, bit in enumerate(line):
+                    if bit == "1":
+                        px = text_x + (letter_index * 6 + column) * pixel_w
+                        pz = text_z + (6 - row) * pixel_h
+                        details.append(((px, y - .032, pz, px + pixel_w * .78,
+                                         y - .021, pz + pixel_h * .78), "aplat:#444a54"))
+        label = H.boxes(f"fournil_farine_details_{i}", details, "palette", props)
+        bpy.context.view_layer.update()
+        label.parent = sack
+        label.matrix_parent_inverse = sack.matrix_world.inverted()
+
+    for name, origin, size in (
+        ("four", (11, 154 + decalage_four, 0), (6, .9, 2.85)),
+        ("petrin", (8.8, 143, .1), (1.82, 1.3, 1.75)),
+        ("rotissoire", (17, rot_y, 0), (2.1, 1.05, 1.35)),
+    ):
+        col_coll.objects.link(geo_utils.build_proxy_object(f"col_box_fournil_{name}", "box", origin, size))
+
+    for i, x in enumerate((9.5, 13, 17)):
+        lampe(logic, f"light_fournil_neutre_{i}", (x, 147.5, 4), color="#e8eff0", intensity=2.2, distance=7)
+        L.place(L.neon(2.0), (x - 1.0, 147.33, 4.32), 0,
+                props, props, f"fournil_neon_{i}")
+    lampe(logic, "light_fournil_four", (14, 153 + decalage_four, 1.8), color="#ff8a3a", intensity=3.8, distance=6)
+    lampe(logic, "light_fournil_rotissoire", (18.1, rot_y - .35, 1.2), color="#ff9a45", intensity=1.5, distance=3.5)
+    return {"props": 4, "lampes": 5}
+
+
+# --- Habillage A : vestiaires et pointeuse ----------------------------------
+
+def habiller_vestiaires(space, gris, props, col_coll, logic) -> dict:
+    """Vestiaires du personnel : deux îlots qui cadrent le Costard, casier
+    du vigile cassable, pointeuse face à l'entrée, banc et douches au fond.
+
+    Les ouvertures du plan restent la seule circulation : arrivée au sud,
+    sortie vers le fournil à l'ouest. Le mur vers le PC et le plafond de la
+    gaine restent pleins.
+    """
+    x0, x1 = space.x
+    y0, y1 = space.y
+    z = space.z
+
+    # Échantillons réels de palette : gris neutre, beige, olive. La palette du
+    # jeu est fermée (aucun aplat inventé à la modélisation).
+    CASIER, PORTE, VERT = "#a2a3a1", "#bdae9a", "#65814b"
+    SOMBRE, ACIER, PAPIER = "#111014", "#babcbc", "#f2efe6"
+
+    caissons, portes, details = [], [], []
+    rangs = ((144.5, 145.5), (141.5, 142.5))
+    # Une petite banque à l'est complète la rangée de jeu sans obstruer la
+    # pointeuse au fond. La rangée basse reste à l'ouest, dégagée de l'entrée.
+    # L'allée au nord de la banque est réservée à l'accès de la salle de douches.
+    segments = (((24.75, 26.75, 5), (28.25, 30.25, 5)), ((24.75, 26.75, 5),))
+    niveaux = ((0.12, 0.88), (0.98, 1.74))
+
+    for no_rang, (face_sud, face_nord) in enumerate(rangs):
+        for no_segment, (debut, fin, nombre) in enumerate(segments[no_rang]):
+            largeur = (fin - debut) / nombre
+            for i in range(nombre):
+                xa, xb = debut + i * largeur, debut + (i + 1) * largeur
+                fente_costard = no_rang == 0 and no_segment == 0 and i == 4
+                if fente_costard:
+                    # Vrai passage visuel, et balistique, vers le Costard
+                    # derrière le casier : carcasse latérale, tablette basse
+                    # et tablette haute. Le reste de la banque reste plein.
+                    xa_fente, xb_fente = xa + 0.035, xb - 0.035
+                    caissons.extend([
+                        ((xa + 0.012, face_sud + 0.025, z + 0.06,
+                          xb - 0.012, face_nord - 0.025, z + 0.98), f"aplat:{CASIER}"),
+                        ((xa + 0.012, face_sud + 0.025, z + 0.98,
+                          xa_fente, face_nord - 0.025, z + 1.82), f"aplat:{CASIER}"),
+                        ((xb_fente, face_sud + 0.025, z + 0.98,
+                          xb - 0.012, face_nord - 0.025, z + 1.82), f"aplat:{CASIER}"),
+                        ((xa_fente, face_sud + 0.025, z + 1.70,
+                          xb_fente, face_nord - 0.025, z + 1.82), f"aplat:{CASIER}"),
+                    ])
+                else:
+                    caissons.append(((xa + 0.012, face_sud + 0.025, z + 0.06,
+                                      xb - 0.012, face_nord - 0.025, z + 1.82),
+                                     f"aplat:{CASIER}"))
+                for cote, face_y in ((0, face_sud), (1, face_nord)):
+                    for niveau, (bas, haut) in enumerate(niveaux):
+                        ouvert = no_rang == 0 and no_segment == 0 and i == 4 and cote == 0 and niveau == 1
+                        sens = "-y" if cote == 0 else "+y"
+                        if ouvert:
+                            # Pas de panneau noir peint : la fente traverse la
+                            # carcasse, le Costard réel forme la silhouette.
+                            # Vantail écarté à 90°, sa tranche forme une ligne
+                            # dans l'axe de la fente centrale.
+                            portes.append(((xa + 0.025, face_y - 0.43, z + bas,
+                                            xa + 0.065, face_y - 0.005, z + haut),
+                                           f"aplat:{VERT}", "-x"))
+                            continue
+
+                        teinte = VERT if (i + no_rang * 3 + cote) % 8 == 0 else PORTE
+                        portes.append(((xa + 0.035, face_y - 0.018 if cote == 0 else face_y - 0.005,
+                                        z + bas, xb - 0.035,
+                                        face_y + 0.005 if cote == 0 else face_y + 0.018,
+                                        z + haut), f"aplat:{teinte}", sens))
+
+                        # Poignée et deux fentes d'aération, visibles à 640×360.
+                        hy0, hy1 = ((face_y - 0.050, face_y - 0.022) if cote == 0
+                                    else (face_y + 0.022, face_y + 0.050))
+                        details.append(((xb - 0.095, hy0, z + bas + 0.32,
+                                         xb - 0.055, hy1, z + bas + 0.43),
+                                        f"aplat:{ACIER}", sens))
+                        for dz in (0.17, 0.23):
+                            details.append(((xa + 0.12, hy0, z + haut - dz - 0.018,
+                                             xa + 0.22, hy1, z + haut - dz),
+                                            f"aplat:{SOMBRE}", sens))
+
+            # La fente reste libre au tir. Son linteau supérieur est décoratif
+            # et n'a pas de collider séparé, qui flotterait au-dessus du sol.
+            if no_rang == 0 and no_segment == 0:
+                xa_fente, xb_fente = debut + 4 * largeur + 0.035, debut + 5 * largeur - 0.035
+                H.col_box("vs_banque_0_0_gauche",
+                          (debut, face_sud, z, xa_fente, face_nord, z + 1.82), col_coll)
+                H.col_box("vs_banque_0_0_bas",
+                          (xa_fente, face_sud, z, fin, face_nord, z + 0.98), col_coll)
+            else:
+                H.col_box(f"vs_banque_{no_rang}_{no_segment}",
+                          (debut, face_sud, z, fin, face_nord, z + 1.82), col_coll)
+
+    H.boxes("vs_casiers_caissons", caissons, "palette", props)
+    H.boxes("vs_casiers_portes", portes, "palette", props)
+    H.boxes("vs_casiers_details", details, "palette", props)
+
+    # Rangée de dix casiers de 40 cm le long du mur ouest, décalée au nord pour
+    # dégager la porte vers le fournil. Le sixième est le casier cassable.
+    wx0, wx1 = x0 + bo.EPAISSEUR_MUR, x0 + bo.EPAISSEUR_MUR + 0.50
+    wy0, pas, n_casiers, emplacement = 147.5, 0.40, 10, 5
+    mur_casiers, facades_casiers, details_mur = [], [], []
+    for i in range(n_casiers):
+        ya = wy0 + i * pas
+        yb = ya + pas
+        if i == emplacement:
+            continue
+        mur_casiers.append(((wx0, ya + 0.025, z, wx1, yb - 0.025, z + 1.8),
+                            f"aplat:{CASIER}"))
+        for niveau, (bas, haut) in enumerate(niveaux):
+            teinte = VERT if i == 6 and niveau == 0 else PORTE
+            facades_casiers.append(((wx1 - 0.012, ya + 0.04, z + bas,
+                                     wx1 + 0.018, yb - 0.04, z + haut),
+                                    f"aplat:{teinte}", "+x"))
+            details_mur.append(((wx1 + 0.018, ya + 0.31, z + bas + 0.32,
+                                 wx1 + 0.045, ya + 0.36, z + bas + 0.43),
+                                f"aplat:{ACIER}", "+x"))
+            for dz in (0.17, 0.23):
+                details_mur.append(((wx1 + 0.018, ya + 0.15, z + haut - dz - 0.018,
+                                     wx1 + 0.045, ya + 0.25, z + haut - dz),
+                                    f"aplat:{SOMBRE}", "+x"))
+
+    H.boxes("vs_casiers_ouest", mur_casiers, "palette", props)
+    H.boxes("vs_casiers_ouest_portes", facades_casiers, "palette", props)
+    H.boxes("vs_casiers_ouest_details", details_mur, "palette", props)
+    H.col_box("vs_casiers_ouest_sud", (wx0, wy0, z, wx1, wy0 + emplacement * pas, z + 1.8), col_coll)
+    H.col_box("vs_casiers_ouest_nord",
+              (wx0, wy0 + (emplacement + 1) * pas, z, wx1, wy0 + n_casiers * pas, z + 1.8), col_coll)
+
+    cy0 = wy0 + emplacement * pas
+    casier_vigile = H.boxes("prop_vestiaires_casier_vigile", [
+        ((wx0, cy0, z, wx1, cy0 + pas, z + 1.8), f"aplat:{CASIER}"),
+        ((wx1 - 0.012, cy0 + 0.035, z + 0.08, wx1 + 0.018, cy0 + pas - 0.035, z + 1.72),
+         f"aplat:{PORTE}", "+x"),
+        # Cadenas rouge identifiable : anse acier, corps rouge, trou de serrure.
+        ((wx1 + 0.018, cy0 + 0.18, z + 0.35, wx1 + 0.05, cy0 + 0.34, z + 0.50),
+         "aplat:#d8231f", "+x"),
+        ((wx1 + 0.024, cy0 + 0.235, z + 0.39, wx1 + 0.055, cy0 + 0.285, z + 0.45),
+         f"aplat:{SOMBRE}", "+x"),
+        ((wx1 + 0.018, cy0 + 0.19, z + 0.49, wx1 + 0.045, cy0 + 0.22, z + 0.61),
+         f"aplat:{ACIER}", "+x"),
+        ((wx1 + 0.018, cy0 + 0.30, z + 0.49, wx1 + 0.045, cy0 + 0.33, z + 0.61),
+         f"aplat:{ACIER}", "+x"),
+        ((wx1 + 0.018, cy0 + 0.19, z + 0.58, wx1 + 0.045, cy0 + 0.33, z + 0.61),
+         f"aplat:{ACIER}", "+x"),
+    ], "palette", props, subdiv=1e9)
+    casier_vigile["masse"] = 55.0
+    casier_vigile["pv"] = 35.0
+    casier_vigile["matiere"] = "metal"
+    casier_vigile["contenu"] = "sandwich:1"
+
+    # Pointeuse murale au fond, face à la porte d'arrivée : boîtier posé hors
+    # du mur, horloge au-dessus, râteliers de cartes et manette lisibles.
+    # L'origine du mesh interactif est centrée sur son volume : la portée E
+    # correspond donc bien à l'objet, pas à l'origine du niveau.
+    support = H.box("vs_pointeuse_support", (24.20, 151.58, z + 0.72,
+                                              26.80, 151.70, z + 2.82),
+                    "palette", props, uv=f"aplat:{ACIER}")
+    H.box("vs_pointeuse_plaque", (24.28, 151.48, z + 0.78,
+                                   26.72, 151.59, z + 2.72),
+          "palette", props, uv=f"aplat:{CASIER}")
+    use_pointeuse = H.box("use_pointeuse", (25.12, 151.27, z + 0.88,
+                                             25.88, 151.57, z + 1.95),
+                           "palette", props, uv=f"aplat:{CASIER}")
+    _centrer_origine(use_pointeuse)
+    pointage = []
+    pointage.extend([
+        # Afficheur mécanique, carte marquée en attente et fente de lecture.
+        ((25.25, 151.22, z + 1.53, 25.75, 151.27, z + 1.78), f"aplat:{SOMBRE}", "-y"),
+        ((25.31, 151.19, z + 1.59, 25.68, 151.22, z + 1.72), "aplat:#d8231f", "-y"),
+        ((25.28, 151.20, z + 1.28, 25.72, 151.27, z + 1.34), f"aplat:{ACIER}", "-y"),
+        ((25.39, 151.17, z + 1.24, 25.61, 151.20, z + 1.28), f"aplat:{PAPIER}", "-y"),
+        # Manette jaune et poignée rouge, saillantes devant la façade.
+        ((25.35, 151.02, z + 1.02, 25.70, 151.18, z + 1.11), "aplat:#f2c230", "-y"),
+        ((25.58, 151.00, z + 1.03, 25.68, 151.14, z + 1.32), "aplat:#d8231f", "-y"),
+        # Horloge murale analogique, cadran et aiguilles sous le plafond.
+        ((25.20, 151.24, z + 2.16, 25.80, 151.31, z + 2.70), f"aplat:{SOMBRE}", "-y"),
+        ((25.25, 151.20, z + 2.21, 25.75, 151.24, z + 2.65), f"aplat:{PAPIER}", "-y"),
+        ((25.48, 151.18, z + 2.40, 25.52, 151.20, z + 2.61), f"aplat:{SOMBRE}", "-y"),
+        ((25.50, 151.17, z + 2.39, 25.69, 151.20, z + 2.43), f"aplat:{SOMBRE}", "-y"),
+    ])
+    for centre_x in (24.65, 26.35):
+        pointage.append(((centre_x - 0.31, 151.30, z + 0.96,
+                          centre_x + 0.31, 151.56, z + 1.82), f"aplat:{SOMBRE}", "-y"))
+        pointage.append(((centre_x - 0.27, 151.26, z + 1.00,
+                          centre_x + 0.27, 151.30, z + 1.78), f"aplat:{CASIER}", "-y"))
+        for carte in range(5):
+            zz = 1.12 + carte * 0.12
+            pointage.append(((centre_x - 0.22, 151.23, z + zz,
+                              centre_x + 0.22, 151.26, z + zz + 0.065), f"aplat:{PAPIER}", "-y"))
+            pointage.append(((centre_x - 0.18, 151.21, z + zz + 0.02,
+                              centre_x - 0.10, 151.23, z + zz + 0.04),
+                             "aplat:#d8231f" if carte == 4 else f"aplat:{ACIER}", "-y"))
+    H.boxes("vs_pointeuse_details", pointage, "palette", props)
+
+    # Tableau d'affichage face à la porte d'arrivée : planning et portrait du
+    # Directeur, à gauche de la pointeuse, sans se cacher derrière les casiers.
+    H.boxes("vs_tableau_affichage", [
+        ((21.00, 151.58, z + 0.94, 23.35, 151.70, z + 2.60), f"aplat:{CASIER}", "-y"),
+        ((21.08, 151.48, z + 1.02, 23.27, 151.58, z + 2.52), "aplat:#806e5a", "-y"),
+        ((21.16, 151.42, z + 1.10, 23.19, 151.48, z + 2.44), f"aplat:{PAPIER}", "-y"),
+        ((21.28, 151.38, z + 1.28, 21.98, 151.42, z + 2.22), "aplat:#2f3541", "-y"),
+        ((21.38, 151.35, z + 1.42, 21.88, 151.38, z + 2.10), f"aplat:{VERT}", "-y"),
+        ((21.44, 151.32, z + 1.86, 21.51, 151.35, z + 1.93), "aplat:#f2c230", "-y"),
+        ((21.72, 151.32, z + 1.86, 21.79, 151.35, z + 1.93), "aplat:#f2c230", "-y"),
+        ((22.12, 151.38, z + 1.25, 22.55, 151.42, z + 1.34), "aplat:#d8231f", "-y"),
+        ((22.12, 151.38, z + 1.40, 22.55, 151.42, z + 1.48), "aplat:#6eb4d6", "-y"),
+        ((22.12, 151.38, z + 1.93, 22.85, 151.42, z + 2.20), "aplat:#d8231f", "-y"),
+    ], "palette", props)
+
+    # Banc et patères près de l'entrée, hors du passage vers le fournil.
+    L.place(F.banc(), (22.5, 142.5, z), 0, props, col_coll, "vs_banc")
+    crochets = [((20.28, 141.00, z + 1.78, 20.36, 143.40, z + 1.86), "world", "+x")]
+    for i in range(5):
+        hy = 141.15 + i * 0.43
+        crochets.extend([
+            ((20.33, hy, z + 1.52, 20.58, hy + 0.045, z + 1.78), "world", "+x"),
+            ((20.52, hy - 0.06, z + 1.70, 20.59, hy + 0.10, z + 1.76), "world", "+x"),
+        ])
+    H.boxes("vs_patères", crochets, "metal_bac_acier", props)
+
+    # Salle de douches séparée, attenante aux vestiaires : deux postes ouverts,
+    # grand sol carrelé commun, aucun bac ni cabine qui rétrécit l'espace.
+    porte_douches = (30.25, 31.75)
+    parois = [
+        ((27.75, 147.0, z, 28.0, 151.75, z + 3.0), f"aplat:{ACIER}"),
+        ((28.0, 146.875, z, porte_douches[0], 147.125, z + 3.0), f"aplat:{ACIER}"),
+        ((porte_douches[1], 146.875, z, 33.75, 147.125, z + 3.0), f"aplat:{ACIER}"),
+        ((porte_douches[0], 146.875, z + 2.15, porte_douches[1], 147.125, z + 3.0),
+         f"aplat:{ACIER}"),
+    ]
+    H.boxes("vs_douches_cloison", parois, "palette", props)
+    for i, (bounds, _) in enumerate(parois):
+        # La traverse au-dessus de la porte commence à 2,15 m : son mesh
+        # ferme visuellement l'ouverture, mais n'a pas besoin de collider.
+        if i < 3:
+            H.col_box(f"vs_douches_cloison_{i}", bounds, col_coll)
+
+    # Double porte vitrée dépolie, qui s'ouvre dans la pièce humide. La traverse
+    # au-dessus est pleine : aucune vue ni ouverture vers la gaine ou le PC.
+    ouverture_douches = plan.Opening("vestiaires", "douches", "y", 147.0,
+                                     porte_douches, z, z)
+    porte_double(ouverture_douches, ("door_douches_g", "door_douches_d"), 2.15,
+                 "portes_verre", "porte:porte_vav", props,
+                 dict(sens="auto", auto=True, portee=1.4, referme=True, delai=0.8,
+                      groupe="vestiaires_douches"), vers=1)
+
+    # Plaque pictogramme au-dessus de l'entrée : douche immédiatement lisible.
+    H.boxes("vs_panneau_douches", [
+        ((30.42, 146.72, z + 2.32, 31.58, 146.84, z + 2.80), "aplat:#2f3541", "-y"),
+        ((30.63, 146.68, z + 2.61, 31.27, 146.72, z + 2.66), f"aplat:{PAPIER}", "-y"),
+        ((31.18, 146.68, z + 2.47, 31.23, 146.72, z + 2.62), f"aplat:{PAPIER}", "-y"),
+        ((30.62, 146.68, z + 2.42, 30.67, 146.72, z + 2.57), f"aplat:{PAPIER}", "-y"),
+    ], "palette", props)
+
+    # Sol humide à niveau, avec caniveau affleurant — rien à enjamber.
+    H.box("vs_douches_sol", (28.02, 147.28, z + 0.004,
+                              33.73, 151.72, z + 0.014),
+          "palette", props, uv="aplat:#8999b1")
+    caniveau = [((30.93, 147.55, z + 0.015, 31.07, 151.52, z + 0.025), f"aplat:{SOMBRE}")]
+    for i in range(12):
+        yy = 147.70 + i * 0.32
+        caniveau.append(((30.84, yy, z + 0.016, 31.16, yy + 0.035, z + 0.026),
+                         f"aplat:{ACIER}"))
+    H.boxes("vs_douches_caniveau", caniveau, "palette", props)
+
+    tuyaux = []
+    for numero, cx in enumerate((29.25, 32.50), start=1):
+        # Réseau apparent, pommeau en disque, commande dédiée à chaque poste.
+        tuyaux.extend([
+            ((cx - 0.04, 151.45, z + 0.72, cx + 0.04, 151.58, z + 2.12), "world"),
+            ((cx - 0.04, 150.95, z + 2.06, cx + 0.04, 151.50, z + 2.14), "world"),
+            ((cx - 0.18, 150.82, z + 2.02, cx + 0.18, 151.02, z + 2.08), "world"),
+            ((cx - 0.18, 151.43, z + 1.02, cx + 0.18, 151.60, z + 1.37), f"aplat:{ACIER}"),
+            ((cx - 0.11, 151.25, z + 1.13, cx + 0.11, 151.44, z + 1.21), "aplat:#f2c230"),
+        ])
+        commande = H.box(f"use_douche_{numero}",
+                         (cx - 0.14, 151.35, z + 0.96, cx + 0.14, 151.58, z + 1.30),
+                         "palette", props, uv=f"aplat:{ACIER}")
+        _centrer_origine(commande)
+        # Colonne continue ; le shader TSL ajoute les filets qui défilent.
+        flux = H.box(f"fx_douche_{numero}_stream_0",
+                     (cx - 0.11, 150.85, z + 0.25,
+                      cx + 0.11, 150.99, z + 2.02),
+                     "palette", props, uv="aplat:#6eb4d6")
+        _centrer_origine(flux)
+    H.boxes("vs_douches_tuyaux", tuyaux, "metal_bac_acier", props)
+    lampe(logic, "light_vs_douches", (31.0, 149.4, z + 2.25),
+          color="#a7d5e2", intensity=4.5, distance=6.5)
+
+    # Six réglettes au-dessus des allées; une est grillée (un tube sur six).
+    reglettes, tubes = [], []
+    lampes = 0
+    positions = ((22.5, 142.5), (27.0, 142.5), (31.5, 142.5),
+                 (22.5, 150.0), (27.0, 150.0), (31.5, 150.0))
+    mort = (31.5, 150.0)
+    for i, (lx, ly) in enumerate(positions):
+        reglettes.append(((lx - 1.25, ly - 0.10, z + 2.76,
+                           lx + 1.25, ly + 0.10, z + 2.90), "world"))
+        teinte = "#767676" if (lx, ly) == mort else "#d5d7d8"
+        tubes.append(((lx - 1.10, ly - 0.035, z + 2.72,
+                       lx + 1.10, ly + 0.035, z + 2.77), f"aplat:{teinte}"))
+        if (lx, ly) != mort:
+            lampe(logic, f"light_vs_{i}", (lx, ly, z + 2.25),
+                  color="#c6d2b9", intensity=5.0, distance=9.0)
+            lampes += 1
+    H.boxes("vs_reglettes", reglettes, "metal_bac_acier", props)
+    H.boxes("vs_tubes", tubes, "palette", props)
+
+    return {"façades de casiers": 4, "modules": 30, "douches": 2,
+            "bancs": 1, "lampes": lampes}
+
+
 # --- Habillage : PC sécurité, le PILOTE des coulisses v2 --------------------
-#
-# Seule pièce habillée de cette passe (voir `HABILLAGE` : vestiaires, fournil,
-# gaine, labo, chambre froide, compacteur, secret4 et sav restent gris tant
-# que la disposition v2 n'a pas tenu la comparaison au board de références).
 # `pc_secu` exerce les systèmes d'écrans et de caméras : huit CRT construits
 # ici, un poste E qui parcourt six caméras, le vigile endormi et son guichet.
 
@@ -3481,10 +4236,12 @@ HABILLAGE = {
     "secret3": habiller_vmc,
     "toilettes": habiller_toilettes,
     # Les coulisses, v2 (2026-09-26) : v1 rejetée par l'utilisateur (« posé au
-    # pif, aucun plaisir à explorer »). Seul le PILOTE (`pc_secu`) est habillé
-    # dans cette passe — vestiaires, fournil, gaine, labo, chambre_froide,
-    # compacteur, secret4 et sav restent GRIS (`bo.volumes()`), pièces à
-    # habiller une fois la disposition validée en jeu.
+    # pif, aucun plaisir à explorer »). Le PC sécurité a servi de pilote ; les
+    # vestiaires sont la première salle construite depuis le board. Le fournil,
+    # la gaine, le labo, la chambre froide, le compacteur, secret4 et le SAV
+    # restent gris jusqu'à leur tour.
+    "vestiaires": habiller_vestiaires,
+    "fournil": habiller_fournil,
     "pc_secu": habiller_pc_secu,
     "c_short_ramp": habiller_c_short_ramp,
     "c_short_w": habiller_c_short_w,

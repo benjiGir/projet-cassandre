@@ -2,7 +2,7 @@
 title: Éclairage
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-09-28
 ---
 
 # Éclairage
@@ -59,7 +59,7 @@ Ces valeurs sont définies dans `lifecycle.ts::applyLightRig`. Le mode est régl
 
 `GLTFLoader` lit `COLOR_0` comme attribut `color` et active le paramètre de vertex colors du matériau importé. Le loader remplace ce matériau par un `MeshLambertMaterial` et doit recopier ce paramètre. Si le flag disparaît, le mesh reste visible, mais le bake ne contribue plus comme prévu.
 
-Dans le mode `bake`, la couleur de texture est modulée par la couleur de sommet sous une lumière ambiante à 1, sans soleil directionnel. Dans le mode `hybride`, les lampes donnent l'éclairage direct et la couleur de sommet assombrit les zones qui restent à l'ombre. L'invariant [#5](../3-architecture/invariants.md) impose Lambert aux matériaux du monde.
+Dans le mode `bake`, la couleur de texture est modulée par la couleur de sommet sous une lumière ambiante à 1, sans soleil directionnel. Dans le mode `hybride`, les lampes donnent l'éclairage direct et la couleur de sommet assombrit les zones qui restent à l'ombre. Le décor importé reste Lambert par défaut ; le retrait de l'exclusivité [#5](../3-architecture/invariants.md#invariants-retirés) permet des effets TSL ciblés.
 
 ### Lampes du glTF
 

@@ -2,7 +2,7 @@
 title: Pipelines de contenu
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-09-28
 ---
 
 # Pipelines de contenu
@@ -211,8 +211,9 @@ d'écrire cette page (`retro3d_car`, `retro3d_office`,
 - [Invariant #4](invariants.md) — résolution interne et filtrage : les
   textures produites doivent rester compatibles `NearestFilter` à
   l'agrandissement.
-- [Invariant #5](invariants.md) — `MeshLambertMaterial` uniquement : tout
-  `.glb` importé est reconverti par `loader.ts`, jamais pris tel quel.
+- Ex-invariant [#5](invariants.md#invariants-retirés) (retiré le
+  2026-09-28) : les `.glb` importés restent reconvertis en Lambert par défaut ;
+  des effets ciblés peuvent recevoir un matériau TSL après le chargement.
 - Ex-invariant #9 (retiré le 2026-09-25, voir
   [Invariants retirés](invariants.md#invariants-retirés)) — boîtes blanches
   jusqu'à la Phase 5 : c'était la raison d'être du blockout

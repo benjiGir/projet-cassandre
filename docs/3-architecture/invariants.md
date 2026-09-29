@@ -2,14 +2,14 @@
 title: Invariants
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-09-28
 ---
 
 # Invariants
 
 ## Rôle
 
-Onze règles actives (numérotées #1 à #14, deux retirées le 2026-09-25 — voir
+Onze règles actives (numérotées #1 à #14, trois retirées — voir
 « Invariants retirés » en bas de page) tiennent la simulation déterministe,
 rétro et lisible : une proposition qui en viole une se **refuse avec
 explication**, on n'y déroge jamais discrètement. Un 14e point renvoie aux
@@ -23,7 +23,7 @@ règles React.
 | 2 | React ne touche jamais la boucle | Non |
 | 3 | Rotation caméra jamais interpolée | Non |
 | 4 | 640×360, `NearestFilter` à l'agrandissement | Non |
-| 5 | `MeshLambertMaterial` uniquement, pas de PBR | Oui |
+| 5 | *Retiré 2026-09-28* — exclusivité `MeshLambertMaterial` | — |
 | 6 | Déplacement = KCC de Rapier, jamais maison | Non |
 | 7 | Gravité −25 m/s² | Non |
 | 8 | Pas d'ECS avant 12 types d'ennemis | Non |
@@ -89,19 +89,6 @@ négociable ; la RÉDUCTION utilise mipmaps + anisotropie.
 - **Code** : `INTERNAL_WIDTH`/`HEIGHT`, `configureRetroTexture` (`renderer.ts`).
   **Test** : aucun. **Décision** : [ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md)
   (amendement proposé, en attente).
-
-### #5 — `MeshLambertMaterial` uniquement
-
-Un seul matériau dans tout le jeu. Pas de PBR, pas de `MeshStandardMaterial`,
-pas de rugosité ni de métalness.
-
-- **Pourquoi / casse si violé** : le PBR vise le photoréalisme, hors du look
-  plat recherché ; `GLTFLoader` pose du `MeshStandardMaterial` par défaut,
-  donc sans reconversion chaque niveau viole l'invariant en silence.
-- **Code** : `loader.ts` reconvertit tout matériau importé (roughness/
-  metalness/normal/env map absents) ; `viewmodel.ts` idem. **Test** :
-  `loader.test.ts` (prop reconverti en `MeshLambertMaterial`). **Décision** :
-  aucun ADR, règle dans `CLAUDE.md` (#5).
 
 ### #6 — Déplacement = `KinematicCharacterController` de Rapier
 
@@ -200,6 +187,14 @@ données du store. Un module qui persiste ou pilote le moteur ne vit pas dans
   pas d'ADR, `CLAUDE.md` (« Conventions React », 2026-09-23).
 
 ## Invariants retirés
+
+### #5 — Exclusivité `MeshLambertMaterial` (retirée le 2026-09-28)
+
+À la demande de l'utilisateur, le jeu peut mélanger ses matériaux classiques
+avec des matériaux TSL ciblés. `WebGLNodesHandler` les rend sur le
+`WebGLRenderer` existant ; les niveaux glTF gardent leur conversion Lambert
+par défaut. Le premier usage est le jet d'eau, animé depuis le pas fixe.
+L'intégration est consignée dans [ADR 0035](../decisions/0035-materiaux-tsl-cibles.md).
 
 ### #9 — Boîtes blanches jusqu'à la Phase 5 (retiré le 2026-09-25)
 

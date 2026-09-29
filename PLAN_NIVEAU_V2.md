@@ -97,7 +97,7 @@ Ce chantier réserve leur **emplacement** et pose leur géométrie. Leurs **syst
 
 ### Hors scope (explicitement)
 
-Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · génération 3D par IA · pathfinding multicouche (sauf décision contraire, voir risque 3) · systèmes des objets signature (bris de verre, écrans en render-to-texture, mécanique de la machine à pinces) · voix réelles · refonte du rendu (sprites 8 directions, post-traitement) · changement d'un invariant de `CLAUDE.md`.
+Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · génération 3D par IA · pathfinding multicouche (sauf décision contraire, voir risque 3) · systèmes des objets signature (bris de verre, écrans en render-to-texture, mécanique de la machine à pinces) · voix réelles · refonte du rendu (sprites 8 directions, post-traitement) · changement d'un invariant de `CLAUDE.md` (exception : retrait du #5 autorisé par ADR 0035).
 
 ---
 
@@ -106,7 +106,7 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 1. **Voir avant de livrer.** Toute étape dans Blender suit la boucle capture → critique → correction (skill `visual-critique-loop`). Quand un board existe, on compare côte à côte en rouvrant les références à chaque itération, pas seulement son propre rendu précédent (skill `reference-driven-authoring`). Une étape n'est finie qu'après une capture effectivement regardée.
 2. **Blender ouvert, connexion vérifiée, sauvegarde faite** avant chaque session : `get_blendfile_summary_path_info` répond, le fichier ouvert est versionné et sauvegardé. Commits fréquents.
 3. **Tester en jeu tôt.** Exporter un module avant d'en finir dix. La vue Blender ne suffit pas : le loader, la conversion Lambert, le `NearestFilter` et le nombre de draw calls ne se voient qu'en jeu.
-4. **Invariants de `CLAUDE.md` inchangés**, en particulier #4 (`NearestFilter`, pas de mipmaps), #5 (`MeshLambertMaterial` uniquement), #2 (HUD à 10 Hz max) et #11-13 (Effect synchrone, RNG déterministe, XState sans temps mural) pour tout code de jeu touché.
+4. **Respecter les invariants actifs de `CLAUDE.md`** pour tout code de jeu touché. L'exclusivité Lambert de #5 a été retirée le 2026-09-28 : des effets TSL ciblés sont permis via `WebGLNodesHandler`. Les matériaux glTF restent Lambert par défaut ; #11-12 gardent les frontières Effect synchrone et le RNG déterministe.
 5. **Densité de texels constante : 64 px/m**, textures 128×128 maximum, palette commune (skill `retro-texture-density`). Le matériau damier `mat_kit_checker` du kit sert de contrôle.
 6. **Budgets de triangles** (skill `prop-silhouette-design`) : pièce de kit 50-300, prop courant 100-500, prop signature 500-2 000, niveau entier < 200 000. Budget de draw calls fixé au jalon N1, sur mesure.
 7. **Licences tracées.** Chaque asset importé a son entrée au registre : source, auteur, licence, date, modifications. CC0 uniquement.
@@ -426,8 +426,9 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > colliders APRÈS le `refreshSceneQueries()` du chargement, le piège même de
 > l'ADR 0025. WebGPU n'est pas nécessaire (il ne répond pas au mur mesuré),
 > mais reste ouvert : three 0.185 convertit `MeshLambertMaterial` en
-> `MeshLambertNodeMaterial` tout seul, donc l'invariant #5 survivrait à une
-> bascule.
+> `MeshLambertNodeMaterial` tout seul. **Mise à jour 2026-09-28 :** l'invariant
+> #5 a été retiré par l'ADR 0035 ; TSL peut être utilisé sur le renderer WebGL
+> courant via `WebGLNodesHandler`, sans bascule globale.
 >
 > **Outils ajoutés au passage** (`src/game/devtools/`) : `cassandre.renderBench()`
 > mesure le coût de rendu hors boucle de jeu — indispensable, les images par

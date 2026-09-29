@@ -520,6 +520,11 @@ PORTES = {
     # double de service (2 × 1 m) : un vantail de 4 m pour un escalier se
     # lisait comme une porte de hangar.
     frozenset({"c_bu", "c_escalier"}): ("door_or", "or", 2.0),
+    # L'enfilade du personnel reste lisible : le couloir dessert les vestiaires,
+    # puis une porte intérieure relie les vestiaires au fournil.
+    frozenset({"c_bu", "fournil"}): ("door_fournil_couloir", None, 2.0),
+    frozenset({"c_bu", "vestiaires"}): ("door_vestiaires_entree", None, 1.5),
+    frozenset({"vestiaires", "fournil"}): ("door_vestiaires_fournil", None, 1.5),
 }
 
 # La sortie ne relie aucun espace : c'est l'issue de secours du bureau du

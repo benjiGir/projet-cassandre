@@ -2,7 +2,7 @@
 title: Glossaire
 tags: [introduction]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-09-28
 ---
 
 # Glossaire
@@ -102,11 +102,14 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Decal | Plan texturé posé sur le décor STATIQUE pour un impact de tir ; jamais sur une entité mobile (prop, porte, ennemi, joueur). | `src/render/fx.ts` |
 | Fusion du décor par cellule | Le décor statique est regroupé par matériau et par cellule cubique de 48 m (`DECOR_CELL_SIZE`) pour limiter le nombre de lots de dessin. | `src/game/level/mergeStaticDecor.ts` |
 | Lot de dessin (draw call) | Une soumission de géométrie au GPU ; le budget du niveau v2 est mesuré en lots par pire vue (~200). | `src/game/level/mergeStaticDecor.ts` |
-| `MeshLambertMaterial` | Seul matériau autorisé par l'invariant #5 : pas de PBR, pas de rugosité/métalness. | `src/render/viewmodel.ts` |
+| `MeshLambertMaterial` | Matériau Lambert classique, utilisé par défaut pour les niveaux et les viewmodels. | `src/render/viewmodel.ts` |
+| `MeshLambertNodeMaterial` | Variante nodale du Lambert classique ; permet de composer un shader avec TSL en gardant l'éclairage Lambert. | `src/game/level/doucheShader.ts` |
+| TSL | Three.js Shading Language : langage nodal pour composer des matériaux et shaders Three.js. | `src/game/level/doucheShader.ts` |
+| `WebGLNodesHandler` | Adaptateur qui permet au `WebGLRenderer` de dessiner des matériaux Node/TSL. | `src/render/renderer.ts` |
 | Muzzle flash | Éclair lumineux posé au bout du canon affiché à chaque tir d'une arme À FEU ; le pied-de-biche n'en a pas (pas de canon), le typage l'empêche d'en recevoir un. | `src/render/fx.ts` |
 | Mipmap / anisotropie | Réglages de filtrage à la RÉDUCTION d'une texture (vue de loin) : le mipmap précalcule des versions réduites pour éviter le crénelage, l'anisotropie affine ce filtrage sur les surfaces vues en biais (sols, couloirs). Distinct de `NearestFilter`, qui régit l'AGRANDISSEMENT (invariant #4). | `src/render/renderer.ts` |
 | `NearestFilter` | Filtrage sans interpolation à l'agrandissement des textures, responsable du gros pixel rétro (invariant #4). | `src/render/renderer.ts` |
-| PBR (Physically Based Rendering) | Modèle d'éclairage visant le photoréalisme (réflexions dépendant du point de vue, rugosité, métalness) ; explicitement interdit par l'invariant #5 au profit de `MeshLambertMaterial`. | `docs/3-architecture/invariants.md` |
+| PBR (Physically Based Rendering) | Famille de modèles d'éclairage fondés sur des propriétés de surface comme la rugosité et le métalness ; `MeshStandardMaterial` en est un exemple. | `docs/3-architecture/invariants.md` |
 | Pool de lampes | `LightPool` ne garde que 48 lampes allumées par vue, les plus proches par distance au bord de leur sphère d'influence. | `src/render/lightPool.ts` |
 | Résolution interne 640×360 | Résolution de rendu réelle, upscalée à l'écran (invariant #4). | `src/render/renderer.ts` |
 | Viewmodel | Modèle d'arme en vue subjective, tenu par les avant-bras du joueur, animé procéduralement au pas fixe. | `src/render/viewmodel.ts` |

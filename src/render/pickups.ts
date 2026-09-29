@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { assetUrl } from "../core/assetPath";
+import type { FoodItem } from "../game/level/food";
 import { configureRetroTexture } from "./renderer";
 
 /**
@@ -24,6 +25,116 @@ const KIT_GLOW = 0.35;
 const AMMO_SIZE = { width: 0.42, height: 0.22, depth: 0.3 } as const;
 
 const CELL = 32;
+
+type FoodPart = {
+  geometry: THREE.BufferGeometry;
+  material: THREE.MeshLambertMaterial;
+  position: THREE.Vector3;
+  rotation: THREE.Euler;
+};
+
+const foodMaterials = new Map<string, THREE.MeshLambertMaterial>();
+const foodParts = new Map<FoodItem, FoodPart[]>();
+
+function foodMaterial(color: string): THREE.MeshLambertMaterial {
+  let material = foodMaterials.get(color);
+  if (!material) {
+    material = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.12, flatShading: true });
+    foodMaterials.set(color, material);
+  }
+  return material;
+}
+
+function foodPart(
+  geometry: THREE.BufferGeometry,
+  color: string,
+  position: [number, number, number],
+  rotation: [number, number, number] = [0, 0, 0],
+): FoodPart {
+  return {
+    geometry,
+    material: foodMaterial(color),
+    position: new THREE.Vector3(...position),
+    rotation: new THREE.Euler(...rotation),
+  };
+}
+
+/** Géométries courtes et à silhouette distincte, lisibles à la résolution du jeu. */
+function modeleNourriture(item: FoodItem): FoodPart[] {
+  const cached = foodParts.get(item);
+  if (cached) return cached;
+
+  let parts: FoodPart[];
+  switch (item) {
+    case "donut":
+      parts = [
+        foodPart(new THREE.TorusGeometry(0.14, 0.052, 6, 12), "#a95730", [0, 0.105, 0], [Math.PI / 2, 0, 0]),
+        foodPart(new THREE.TorusGeometry(0.14, 0.022, 6, 12), "#e887a8", [0, 0.142, 0], [Math.PI / 2, 0, 0]),
+      ];
+      break;
+    case "sandwich":
+      parts = [
+        foodPart(new THREE.BoxGeometry(0.28, 0.075, 0.20), "#d9a75d", [0, 0.055, 0]),
+        foodPart(new THREE.BoxGeometry(0.29, 0.035, 0.21), "#5d9b43", [0, 0.105, 0]),
+        foodPart(new THREE.BoxGeometry(0.27, 0.035, 0.19), "#c64e3c", [0, 0.14, 0]),
+        foodPart(new THREE.BoxGeometry(0.28, 0.065, 0.20), "#edc27b", [0, 0.19, 0]),
+      ];
+      break;
+    case "jambon":
+      parts = [
+        foodPart(new THREE.BoxGeometry(0.30, 0.055, 0.22), "#b94e58", [0, 0.045, 0]),
+        foodPart(new THREE.BoxGeometry(0.28, 0.045, 0.20), "#d97878", [0.015, 0.095, -0.005]),
+        foodPart(new THREE.BoxGeometry(0.24, 0.025, 0.035), "#f0d6b8", [-0.01, 0.13, 0.01]),
+      ];
+      break;
+    case "poulet": {
+      const drumstick = new THREE.CapsuleGeometry(0.033, 0.105, 2, 6);
+      const bone = new THREE.SphereGeometry(0.035, 6, 4);
+      parts = [
+        foodPart(new THREE.SphereGeometry(1, 10, 6), "#b9602e", [0, 0.145, 0]),
+        foodPart(new THREE.SphereGeometry(1, 8, 5), "#cf7434", [-0.105, 0.12, 0.015]),
+        foodPart(drumstick, "#a74d27", [-0.15, 0.085, 0], [0, 0, -1.1]),
+        foodPart(drumstick, "#a74d27", [0.15, 0.085, 0], [0, 0, 1.1]),
+        foodPart(bone, "#f1dfbd", [-0.23, 0.115, 0]),
+        foodPart(bone, "#f1dfbd", [0.23, 0.115, 0]),
+      ];
+      parts[0].geometry.scale(0.19, 0.13, 0.15);
+      parts[1].geometry.scale(0.11, 0.09, 0.11);
+      break;
+    }
+    case "pizza": {
+      const toppings = [[-0.08, 0.115, -0.055], [0.045, 0.115, -0.07], [0.09, 0.115, 0.035], [-0.045, 0.115, 0.075]] as const;
+      parts = [
+        foodPart(new THREE.CylinderGeometry(0.205, 0.205, 0.065, 12), "#bd6b34", [0, 0.04, 0]),
+        foodPart(new THREE.CylinderGeometry(0.177, 0.177, 0.018, 12), "#edc34e", [0, 0.081, 0]),
+        ...toppings.map((position) =>
+          foodPart(new THREE.SphereGeometry(0.027, 6, 4), "#b63d34", [position[0], position[1], position[2]]),
+        ),
+      ];
+      break;
+    }
+  }
+  foodParts.set(item, parts);
+  return parts;
+}
+
+/** Remplace le repère de santé par l'aliment réellement indiqué dans le niveau. */
+export function dressFoodPickup(object: THREE.Object3D, groundY: number | null, item: FoodItem): void {
+  const bounds = new THREE.Box3().setFromObject(object);
+  const center = bounds.getCenter(new THREE.Vector3());
+  const marker = object as THREE.Mesh;
+  if (marker.isMesh) marker.material = HIDDEN_MATERIAL;
+
+  const model = new THREE.Group();
+  model.position.set(center.x, groundY ?? bounds.min.y, center.z);
+  for (const part of modeleNourriture(item)) {
+    const mesh = new THREE.Mesh(part.geometry, part.material);
+    mesh.position.copy(part.position);
+    mesh.rotation.copy(part.rotation);
+    model.add(mesh);
+  }
+  object.attach(model);
+}
 
 interface ModeleRamassage {
   geometry: THREE.BoxGeometry;

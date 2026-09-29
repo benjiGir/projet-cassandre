@@ -8,7 +8,7 @@ import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
-import { dressAmmoPickup, dressHealPickup, dressWeaponPickup, type WeaponPickupBillboard } from "../../render/pickups";
+import { dressAmmoPickup, dressFoodPickup, dressHealPickup, dressWeaponPickup, type WeaponPickupBillboard } from "../../render/pickups";
 import { LightPool } from "../../render/lightPool";
 import { PropSystem } from "../level/props";
 import { DoorSystem } from "../level/doors";
@@ -162,7 +162,9 @@ export function loadGltfLevel(
         const weaponPickupBillboards: WeaponPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
           if (useObject.heals !== null) {
-            dressHealPickup(useObject.object, groundBelow(session, useObject.position));
+            const ground = groundBelow(session, useObject.position);
+            if (useObject.aliment) dressFoodPickup(useObject.object, ground, useObject.aliment);
+            else dressHealPickup(useObject.object, ground);
             continue;
           }
           if (useObject.ammo !== null) {

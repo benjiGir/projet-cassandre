@@ -125,7 +125,24 @@ function passthroughVitreInfo(candidate: VitreCandidate): VitreInfo {
  */
 export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly VitreCandidate[]): VitreMergeResult {
   const groups = new Map<string, VitreCandidate[]>();
+  const vitres: VitreInfo[] = [];
   for (const candidate of candidates) {
+    // Un vitrage enfant d'un vantail doit garder sa hiérarchie glTF : le
+    // détacher pour le lot global le laisserait immobile pendant l'ouverture.
+    let parent = candidate.mesh.parent;
+    let suitPorte = false;
+    while (parent) {
+      if (parent.name.startsWith("door_")) {
+        suitPorte = true;
+        break;
+      }
+      parent = parent.parent;
+    }
+    if (suitPorte) {
+      vitres.push(passthroughVitreInfo(candidate));
+      continue;
+    }
+
     const key = materialKey(candidate.mesh.material);
     const list = groups.get(key);
     if (list) list.push(candidate);
@@ -134,7 +151,6 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
 
   const rootInverse = root.matrixWorld.clone().invert();
   const toRootSpace = new THREE.Matrix4();
-  const vitres: VitreInfo[] = [];
   let batchCount = 0;
 
   for (const group of groups.values()) {

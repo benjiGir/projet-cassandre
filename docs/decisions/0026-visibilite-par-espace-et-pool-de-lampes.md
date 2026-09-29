@@ -2,7 +2,7 @@
 title: Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU
 tags: [adr, rendu, performance, niveau-v2]
 status: accepte
-updated: 2026-09-12
+updated: 2026-09-28
 ---
 
 # ADR 0026 — Visibilité par espace et pool de lampes
@@ -125,6 +125,11 @@ si la mesure sur la vraie carte le réclame.
 | **Occlusion culling dynamique** | three.js n'en a pas, et l'écrire est un projet en soi. Le graphe de pièces donne 90 % du bénéfice pour quelques lignes |
 | **`BatchedMesh`** | Vrai candidat, gardé en réserve : un seul appel de dessin avec tri d'écart **par objet** (`perObjectFrustumCulled`, activé par défaut), et il préserve les couleurs de sommets du bake, contrairement à l'instanciation. Mais il impose un matériau unique par lot, donc un atlas de textures. Inutile tant que la découpe en cellules tient le budget — c'est le recours si l'habillage de N9 fait dépasser 200 lots |
 | **Relever le budget de triangles et ne rien faire d'autre** | Le budget mérite effectivement d'être relevé (voir ci-dessous), mais ça ne soigne pas les lampes, qui est le vrai mur |
+
+Mise à jour du 2026-09-28 : l'invariant #5 cité ici a été retiré par
+[ADR 0035](0035-materiaux-tsl-cibles.md). TSL s'emploie sur des effets ciblés
+avec `WebGLRenderer` ; la décision sur le budget de lampes et une migration
+générale vers WebGPU reste inchangée.
 
 ## Budget révisé
 

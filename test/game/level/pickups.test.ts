@@ -237,6 +237,8 @@ describe("InteractionSystem.collectWeapons — armes au sol ramassées en marcha
       onFrozenStorageUse: () => {},
       onDoorUse: () => {},
       onPaMicUse: () => {},
+      onPunchClockUse: () => {},
+      onShowerToggleUse: () => {},
       onToiletUse: () => {},
       onCardPickup: () => {},
       onCardDoorUse: () => {},

@@ -86,6 +86,10 @@ généreuse. Le contraste vient des **textures**, pas de l'éclairage dynamique.
 Un niveau Build est éclairé par ses textures et sa lumière de secteur, pas par
 un système d'ombres.
 
+Un effet ciblé peut utiliser `MeshLambertNodeMaterial` et TSL via
+`WebGLNodesHandler`, sans changer le renderer. Ses uniformes animés avancent
+au pas fixe. Le reste du niveau garde le pipeline Lambert du loader.
+
 ## Diagnostic
 
 Vérifier systématiquement : résolution interne réelle du drawing buffer,

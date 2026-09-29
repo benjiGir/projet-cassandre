@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-09-28
 ---
 
 # Rendu
@@ -66,6 +66,8 @@ Le menu Affichage expose aussi les préréglages 960×540, 1280×720 et 1600×90
 `cassandre.filtrage(mode)` réapplique le mode à toutes les textures déjà chargées. Les textures sont parcourues une fois par identité, même si plusieurs meshes partagent la même texture. `graphicsSettings.ts` persiste le choix du menu ; un changement est appliqué à chaud dès que le renderer existe.
 
 Le loader reconvertit les matériaux glTF en `MeshLambertMaterial`. Le matériau garde la couleur diffuse, la texture, l'opacité/transparence et les vertex colors. L'attribut glTF `COLOR_0` devient `geometry.attributes.color` dans Three.js et porte le bake de couleur ou d'ombre du niveau. Les raisons sont dans [Éclairage](eclairage.md) et l'[ADR 0005 — Éclairage en vertex colors](../decisions/0005-eclairage-vertex-colors.md).
+
+Le renderer WebGL installe `WebGLNodesHandler` pour accepter des matériaux TSL ciblés à côté des matériaux classiques. Un effet qui anime son shader reçoit son temps depuis la simulation au pas fixe. Le reste du niveau garde les matériaux Lambert produits par le loader.
 
 ### Frontières des couches
 

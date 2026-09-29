@@ -45,6 +45,7 @@ import {
   type EcranInfo,
 } from "./ecrans";
 import type { CamPoint } from "./cameras";
+import { initialiserDouches } from "./douches";
 
 // `DoorInfo`/`VitreInfo`/`SanitaireInfo` sont DÉFINIS dans `./doors`/
 // `./vitres`/`./sanitaires` (comme `PropInfo` dans `./props`) — ce fichier
@@ -1607,7 +1608,16 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
     // se suffit à lui-même : pas de cible, donc pas d'avertissement — même
     // exception de fond que `use_crowbar`/`use_shotgun`, qui eux le
     // déclenchent encore (leur effet est câblé par nom, pas déclaré dans le `.glb`).
-    if (!targetName && !grantsCard && heals === null && ammo === null && !cameras) {
+    if (
+      !targetName &&
+      !grantsCard &&
+      heals === null &&
+      ammo === null &&
+      !cameras &&
+      name !== "use_pointeuse" &&
+      name !== "use_douche_1" &&
+      name !== "use_douche_2"
+    ) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),
       );
@@ -1872,6 +1882,10 @@ function buildLevelResourceEffect(
         continue; // reste visible (objet interactif physique, ex. un terminal)
       }
 
+      if (name.startsWith("fx_douche_")) {
+        continue; // reste adressable pour l'animation et l'interrupteur d'eau
+      }
+
       if (name.startsWith("secret_")) {
         secrets.push(buildSecretZone(obj, name));
         obj.visible = false; // volume logique, comme trig_*
@@ -1883,6 +1897,10 @@ function buildLevelResourceEffect(
       unprefixedMeshCount++;
       if (!isMovable(obj)) decorCandidates.push(obj);
     }
+
+    // Après convertToLambert : le filet de douche remplace volontairement
+    // son matériau classique par le matériau TSL ciblé (ADR 0035).
+    initialiserDouches(root);
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
 

@@ -390,8 +390,8 @@ SPACES: list[Space] = [
         role="Pointeuse (gag), rangées de casiers, douches ; casier du vigile cadenassé (à casser)",
         duree="0:30", arrivee=(27, 141),
         ennemis="1 Costard entre les casiers",
-        spawns=[("suit_vs1", 23, 147, "rangée de casiers (1,9 m)")],
-        reperes=[("pointeuse (E)", 33, 141, "objet"), ("casier du vigile (cassable)", 21, 148, "objet"),
+        spawns=[("suit_vs1", 26.33, 146.2, "banque sud (fente visible, 1,82 m)")],
+        reperes=[("pointeuse (E)", 25, 151, "objet"), ("casier du vigile (cassable)", 21, 150, "objet"),
                  ("sandwich +10", 30, 148, "nourriture")],
     ),
     Space(

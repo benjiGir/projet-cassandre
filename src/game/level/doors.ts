@@ -244,6 +244,13 @@ export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[]
   let seuls = 0;
   for (const door of doors) {
     const mesh = door.object as THREE.Mesh;
+    // Le mesh reste parent de ses pièces mobiles (panneaux vitrés, par
+    // exemple). Le BatchedMesh ne contient que la géométrie du vantail et
+    // masquerait ces enfants : on garde alors cet ensemble animé en un lot.
+    if (mesh.children.length > 0) {
+      seuls++;
+      continue;
+    }
     if (!mesh.isMesh || Array.isArray(mesh.material) || !(mesh.material instanceof THREE.MeshLambertMaterial)) {
       seuls++;
       continue;
