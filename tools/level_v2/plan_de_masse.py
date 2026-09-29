@@ -447,13 +447,19 @@ SPACES: list[Space] = [
     ),
     Space(
         id="sav", nom="Atelier SAV",
-        x=(12, 32), y=(80, 90), z=0, hauteur=4.0, densite="elevee",
-        role="Derrière l'électroménager : guichet SAV sur le rayon TV, mur de téléviseurs en réparation",
-        duree="0:30", arrivee=(22, 81),
+        # Bord est du couloir de la porte coupe-feu, au nord de la chambre
+        # froide : on l'atteint en longeant le couloir après en être sorti.
+        # La façade commune avec la chambre froide reste un mur plein.
+        x=(-54, -44), y=(116, 136), z=0, hauteur=3.5, densite="elevee",
+        role="Atelier SAV sur le couloir coupe-feu : guichet, établis, mur de réglage",
+        duree="0:30", arrivee=(-45, 118),
         ennemis="2 Costards derrière les établis",
-        spawns=[("suit_sv1", 14, 88, "établi"), ("suit_sv2", 30, 88, "rayonnage")],
-        reperes=[("guichet + sonnette (E)", 22, 80.25, "objet"), ("mur de TV", 22, 89.5, "objet"),
-                 ("micro-ondes", 28, 84, "objet")],
+        spawns=[("suit_sv1", -51.2, 122, "devant l'établi ouest"),
+                ("suit_sv2", -51.2, 130, "devant l'établi est")],
+        reperes=[("guichet + sonnette (E)", -45.75, 124.25, "objet"),
+                 ("mur de TV", -53.5, 126, "objet"),
+                 ("micro-ondes", -48.65, 122.47, "objet")],
+        notes=["Porte sur le couloir coupe-feu seulement ; façade sud scellée avec la chambre froide."],
     ),
 ]
 
@@ -794,6 +800,7 @@ JONCTIONS_SCELLEES: set[frozenset[str]] = {
     frozenset({"rayons", "labo"}),
     frozenset({"reserve", "labo"}),
     frozenset({"reserve", "chambre_froide"}),
+    frozenset({"chambre_froide", "sav"}),  # deux salles distinctes, chacune ouverte sur le couloir
     # Secret 4 : n'entre QUE par le compacteur (la balle mal cerclée), jamais
     # en coupant depuis le couloir de service ou la porte coupe-feu.
     frozenset({"c_short_ramp", "secret4"}),
@@ -852,8 +859,8 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     frozenset({"c_short_w", "compacteur"}): (2.5, 122.0),
     frozenset({"compacteur", "reserve"}): (2.5, 116.0),
     frozenset({"compacteur", "secret4"}): (1.5, -32.0),
-    # SAV derrière l'électroménager (option A du board), guichet sur le rayon TV.
-    frozenset({"electro", "sav"}): (1.5, 14.0),
+    # Entrée du SAV depuis le couloir coupe-feu, après la chambre froide.
+    frozenset({"c_short_w", "sav"}): (1.5, 118.0),
 }
 
 PORTES_SENS_UNIQUE: dict[frozenset[str], tuple[str, str]] = {
