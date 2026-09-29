@@ -1609,6 +1609,16 @@ def placer_voitures_exterieur(space, props, col_coll) -> int:
     return len(PK_VEHICULES)
 
 
+def placer_caddies_parking(space, props, col_coll):
+    # File parallèle au rail, côté entrée, avec les poignées vers l'ouest.
+    placed = []
+    for i in range(3):
+        placed.extend(L.place(L.caddie(),
+                              (PK_ABRI[0] + 1.95 + i, PK_ABRI[1] + 1.25, space.z),
+                              90, props, col_coll, f"pk_cd{i}"))
+    return placed
+
+
 def habiller_parking(space, gris, props, col_coll, logic) -> dict:
     x0, x1 = space.x
     y0, y1 = space.y
@@ -1627,9 +1637,7 @@ def habiller_parking(space, gris, props, col_coll, logic) -> dict:
                 props, col_coll, f"pk_acc{i}")
 
     L.place(R.abri_caddies(6.0), (PK_ABRI[0], PK_ABRI[1], z), 0, props, col_coll, "pk_abri")
-    for i, dy in enumerate((0.4, 1.35, 2.30)):
-        L.place(L.caddie(), (PK_ABRI[0] + 2.6, PK_ABRI[1] + 0.5 + dy, z), 0,
-                props, col_coll, f"pk_cd{i}")
+    placer_caddies_parking(space, props, col_coll)
 
     # Marquages au sol : UN par emplacement, aligné sur la voiture qui s'y range.
     # Les voitures du blockout sont alignées le long de X, museau à l'ouest —
@@ -1676,6 +1684,17 @@ CA_NEON_Y = (6.0, 14.0)
 CA_NEONS_MORTS = frozenset({(52.0, 6.0)})
 
 
+def placer_distributeurs_cafeteria(space, props, col_coll):
+    # Façades vers l'ouest, dos à 5 cm de la face intérieure du mur est.
+    placed = []
+    back_x = space.x[1] - bo.EPAISSEUR_MUR - 0.05
+    for i, facade in enumerate(B.FACADES_DISTRIBUTEUR):
+        placed.extend(L.place(B.distributeur(facade),
+                              (back_x - 0.75, space.y[0] + 2.90 + i, space.z),
+                              270, props, col_coll, f"ca_dist{i}"))
+    return placed
+
+
 def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     x0, x1 = space.x
     y0, y1 = space.y
@@ -1689,9 +1708,7 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     for i, (tx, ty) in enumerate(CA_TABLES):
         L.place(B.table_cafeteria(i % 3), (tx, ty, z), 0, props, col_coll, f"ca_tb{i}")
 
-    for i, facade in enumerate(B.FACADES_DISTRIBUTEUR):
-        L.place(B.distributeur(facade), (x1 - 1.05, y0 + 2.0 + i * 1.0, z), 90,
-                props, col_coll, f"ca_dist{i}")
+    placer_distributeurs_cafeteria(space, props, col_coll)
 
     # Accès au secret 3 : la bouche d'aération du mur nord (`plan.PASSAGES`), au-
     # dessus d'un distributeur de 1,90 m, devant lequel traîne une caisse d'un

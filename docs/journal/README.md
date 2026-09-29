@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-09-26
+updated: 2026-09-29
 ---
 
 # Journal
@@ -12,6 +12,8 @@ conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
 
 ## Septembre 2026
+
+- [Analyse de l’agencement](analyse-agencement-2026-09-29.md) — circulation, placement du mobilier et recommandations par priorité.
 
 - [Validation de la documentation](validation-documentation-2026-09.md) — test à froid D68 et lacunes corrigées.
 - [Son et studio](son-et-studio-2026-09.md) — enregistrements, sprite et limites des placeholders.
