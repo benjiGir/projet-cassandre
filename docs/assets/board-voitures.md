@@ -1,7 +1,7 @@
 ---
 title: Board de références — voitures du parking
 tags: [assets, references, voitures, parking]
-status: proposition
+status: brouillon
 updated: 2026-09-29
 ---
 
@@ -64,7 +64,7 @@ primitives dans un seul objet. La scène source et les aperçus sont dans
 | Berline | 4,58 m | 1,73 m | 1,52 m | capot + habitacle rehaussé + coffre séparé |
 | SUV | 4,45 m | 1,82 m | 1,84 m | garde au sol, pavillon haut, roues épaisses, galerie |
 | Camion | 6,40 m | 2,12 m | 2,90 m | cabine courte, caisse fermée, hayon arrière replié |
-| Muscle 72 | 4,86 m | 1,94 m | 1,30 m | coupé 2 portes bas, long capot, habitacle reculé, roues arrière larges |
+| Muscle 72 | 4,86 m | 1,94 m | 1,42 m | coupé 2 portes, long capot, habitacle reculé et rehaussé, roues arrière larges |
 
 Les largeurs sont mesurées hors rétroviseurs ; la hauteur du SUV inclut sa
 galerie de toit.
@@ -85,3 +85,55 @@ la berline ont été rehaussés de 7 cm ; leurs phares et détails de calandre s
 maintenant posés sur le nez incliné, à l'extérieur de la carrosserie. Le hayon
 du camion est représenté replié contre sa porte arrière ; `camion_hayon.png` en
 donne une vue dédiée. `muscle_72.png` présente le coupé en vue trois quarts.
+
+Le pavillon de la muscle car est rehaussé de 12 cm. Les vitres, montants et
+dossiers suivent cette nouvelle hauteur, y compris dans les trois livrées.
+
+## Extension : pickup, sportive, 4×4 et couleurs
+
+Trois silhouettes originales rejoignent les propositions. Les cotes viennent de
+références constructeur ; les carrosseries, vitrages et détails sont dessinés
+pour le jeu.
+
+- [Toyota Hilux, communiqué et cotes 2005](https://media.toyota.co.uk/bigger-and-better-the-toyota-hilux-moves-one-size-up/) : longueur 5,255 m, largeur 1,76 m et hauteur 1,68 à 1,81 m selon version. Le pickup proposé mesure 5,22 × 1,82 × 1,72 m. Il a une cabine courte, une benne réellement creuse et des phares visibles sur la face avant.
+- [Porsche 924 GTP, fiche Porsche Classic](https://www.porsche.com/uk/accessoriesandservice/classic/924-gtp-restoration/) : longueur 4,20 m, largeur 1,85 m, hauteur 1,20 m. La sportive proposée mesure 4,23 × 1,84 × 1,29 m. Sa ligne en coin, son habitacle vitré et ses prises d'air latérales la distinguent de la muscle car à long capot.
+- [Suzuki Jimny, dimensions constructeur](https://www.globalsuzuki.com/globalnews/2021/0120.html) : longueur 3,645 m, largeur 1,645 m et hauteur 1,72 m. Le 4×4 proposé est un véhicule utilitaire original de 4,25 × 1,72 × 1,90 m, roue de secours incluse. Deux portes, empattement court, garde au sol haute, admission surélevée et roue extérieure le distinguent du SUV familial.
+
+Trois teintes par voiture sont livrées en GLB séparés. La première teinte de
+chaque ligne reprend la couleur du modèle initial ; les deux autres sont des
+variantes nouvelles. Le camion de livraison garde sa livrée propre.
+
+| Voiture | Teinte initiale | Variante 1 | Variante 2 |
+|---|---|---|---|
+| Citadine | miel `#bd8d3c` | bleu orage `#537384` | rouge brique `#a94f42` |
+| Berline | bleu acier `#71899a` | ivoire `#b8afa0` | vert sauge `#687e69` |
+| SUV | olive `#6f7c57` | sable `#b09265` | bleu pétrole `#456c76` |
+| Muscle car | prune `#684266` | cuivre `#a65c3f` | noir bleuté `#374650` |
+| Pickup | terre `#7b5d44` | crème `#bdad8d` | vert pin `#4a6960` |
+| Sportive | turquoise `#2f6570` | rouge corail `#a7433b` | argent `#9aabb0` |
+| 4×4 | sable `#b29b72` | vert forêt `#536953` | bleu ardoise `#536c78` |
+
+La source Blender `assets_src/blender/propositions_extension.blend` contient les
+cinq nouveaux modèles et les 21 versions colorées des voitures. Les GLB et aperçus
+sont dans `assets_src/blender/propositions_extension/`. Le script reproductible
+est `tools/blender/propositions_extension_vehicules.py`.
+
+## Placement dans le niveau
+
+Le parking extérieur contient dix véhicules : les quatre voitures initiales,
+un pickup crème, une sportive turquoise, un 4×4 sable, une seconde citadine
+rouge, un roadster et un scooter. Le camion est réservé au quai de la réserve,
+hayon orienté vers le mur nord.
+
+Le sous-sol utilise les modèles originaux et leurs teintes, avec des deux-roues.
+Les places occupées et les exclusions autour des ramassages et apparitions
+restent celles du placement déterministe initial. Le pickup et la muscle car
+sont exclus de ces places de cinq mètres : leur encombrement réel dépasse la
+limite de 4,90 m.
+
+Les placements sont partagés avec le générateur dans
+`tools/level_v2/build_niveau.py`. Pour actualiser uniquement les véhicules d'une
+source existante, ouvrir `niveau_v2.blend` avec Blender et exécuter
+`tools/blender/refresh_level_vehicles.py`. Le script sauvegarde une copie dans
+un dossier temporaire, remplace les meshes et leurs proxies, puis réexporte
+le niveau sans reconstruire son décor.

@@ -35,3 +35,17 @@ Z=0. Chaque GLB est un seul objet avec un matériau à couleurs de sommets.
 La source est `assets_src/blender/propositions_motos.blend`. Les exports et
 aperçus sont dans `assets_src/blender/propositions_motos/` ; le script de
 construction est `tools/blender/propositions_motos.py`.
+
+## Extension : roadster et scooter
+
+- [Honda CB650R, dimensions constructeur](https://www.honda.co.uk/motorcycles/range/street/cb650r/specifications-and-price.html) : 2,12 m de long, 1,45 m d'empattement, selle à 0,81 m. Le roadster proposé mesure 2,12 m de long ; sa posture droite, son moteur apparent, son phare rond et son réservoir bleu le distinguent du custom bas et de la motocross.
+- [Vespa Primavera 125, fiche technique constructeur](https://wlassets.vespa.com/wlassets/vespa/master/APAC/tech_spec/2024/Primavera/Vespa_Primavera125_technical_sheet_EN/original/Vespa_Primavera125_technical_sheet_EN.pdf?1716448991615=) : 1,87 m de long, 0,735 m de large hors rétroviseurs et 1,34 m d'empattement. Le scooter proposé reprend ces proportions, avec un plancher ouvert, un tablier avant et une coque arrière dessinés pour le jeu.
+
+Les deux modèles sont dans `assets_src/blender/propositions_extension.blend`.
+Leurs GLB et rendus sont dans `assets_src/blender/propositions_extension/`.
+La planche `silhouettes.png` permet de comparer les cinq nouveaux véhicules
+de profil, sans couleur.
+
+Le roadster et le scooter occupent deux places du parking extérieur. Les quatre
+types de deux-roues sont aussi répartis dans les places occupées du sous-sol ;
+ils utilisent les mêmes proxies de collision que les autres véhicules originaux.

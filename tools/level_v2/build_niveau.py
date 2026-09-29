@@ -1318,9 +1318,7 @@ def habiller_reserve(space, gris, props, col_coll, logic) -> dict:
     # Un camion de livraison à quai. C'est ce qui explique le quai : sans
     # véhicule, une plateforme surélevée n'est qu'une estrade. Posé sur la
     # plateforme, reculé contre une porte.
-    camion = ("truck", 2.40, 7.20, 3.10)
-    L.place(R.voiture(*camion), (-11.0, y1 - 0.9, z + 3.0), 180,
-            props, col_coll, "rs_camion")
+    placer_camion_reserve(space, props, col_coll)
 
     # Portes de quai sur le mur nord, au-dessus de la plateforme.
     portes = 0
@@ -1472,6 +1470,55 @@ def _points_reserves_so(space) -> list[tuple[float, float]]:
     return points
 
 
+SO_VEHICULES = (
+    "citadine_bleu_orage", "berline_ivoire", "suv_sable", "citadine_miel",
+    "sportive_rouge_corail", "tout_terrain_vert_foret", "citadine_rouge_brique",
+    "berline_vert_sauge", "motocross", "custom", "roadster", "scooter",
+    "suv_bleu_petrole", "berline_bleu_acier", "sportive_argent",
+)
+
+
+def placer_voitures_souterrain(space, props, col_coll) -> int:
+    z = space.z
+    # Voitures DANS les places, dans le sens des places. Tirage déterministe,
+    # jamais sur un spawn, un ramassage ou un meuble physique.
+    reserves = _points_reserves_so(space)
+    rng = random.Random(SEED + 17)
+    modeles = [m for m in R.MODELES_VOITURE if m[2] <= SO_PROF_PLACE - 0.1]
+    voitures = 0
+    for file, xa, xb, fond, avant in _places_so(space):
+        ya, yb = min(fond, avant), max(fond, avant)
+        if any(xa - 1.0 < px < xb + 1.0 and ya - 1.0 < py < yb + 1.0 for px, py in reserves):
+            continue
+        if rng.random() > SO_TAUX_OCCUPATION:
+            continue
+        # Garder les tirages initiaux pour conserver places et orientations.
+        rng.randrange(len(modeles))
+        modele = SO_VEHICULES[voitures % len(SO_VEHICULES)]
+        asset, bounds = R.voiture_proposition(modele)
+        w, lng = bounds[:2]
+        if lng > SO_PROF_PLACE - 0.1:
+            raise ValueError(f"Véhicule trop long pour une place : {modele}")
+        cx = (xa + xb) / 2
+        # Rangée à 30 cm du fond de la place, comme on se gare.
+        cy = fond + (0.3 + lng / 2) * (1 if avant > fond else -1)
+        if rng.random() < 0.5:
+            origine, rot = (cx - w / 2, cy - lng / 2, z), 0
+        else:
+            origine, rot = (cx + w / 2, cy + lng / 2, z), 180
+        L.place(asset, origine, rot, props, col_coll, f"so_au{voitures}")
+        voitures += 1
+
+    return voitures
+
+
+def placer_camion_reserve(space, props, col_coll):
+    asset, _bounds = R.voiture_proposition("camion")
+    # Le hayon arrière (-Y du modèle) fait face au quai nord.
+    return L.place(asset, (-11.0, space.y[1] - 0.9, space.z + 3.0),
+                   180, props, col_coll, "rs_camion")
+
+
 def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
     x0, x1 = space.x
     y0, y1 = space.y
@@ -1492,29 +1539,7 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
 
     places = _marquages_so(space, props)
 
-    # Voitures DANS les places, dans le sens des places. Tirage déterministe,
-    # jamais sur un spawn, un ramassage ou un meuble physique.
-    reserves = _points_reserves_so(space)
-    rng = random.Random(SEED + 17)
-    modeles = [m for m in R.MODELES_VOITURE if m[2] <= SO_PROF_PLACE - 0.1]
-    voitures = 0
-    for file, xa, xb, fond, avant in _places_so(space):
-        ya, yb = min(fond, avant), max(fond, avant)
-        if any(xa - 1.0 < px < xb + 1.0 and ya - 1.0 < py < yb + 1.0 for px, py in reserves):
-            continue
-        if rng.random() > SO_TAUX_OCCUPATION:
-            continue
-        modele = modeles[rng.randrange(len(modeles))]
-        w, lng = modele[1], modele[2]
-        cx = (xa + xb) / 2
-        # Rangée à 30 cm du fond de la place, comme on se gare.
-        cy = fond + (0.3 + lng / 2) * (1 if avant > fond else -1)
-        if rng.random() < 0.5:
-            origine, rot = (cx - w / 2, cy - lng / 2, z), 0
-        else:
-            origine, rot = (cx + w / 2, cy + lng / 2, z), 180
-        L.place(R.voiture(*modele), origine, rot, props, col_coll, f"so_au{voitures}")
-        voitures += 1
+    voitures = placer_voitures_souterrain(space, props, col_coll)
 
     # Détails du même atlas, donc gratuits en lots de dessin : deux cônes qui
     # interdisent de stationner devant la rampe de sortie (sur les côtés — un
@@ -1563,27 +1588,33 @@ PK_POSE_MAT = {"+y": ((-0.26, -0.26), 0), "-y": ((0.26, 0.26), 180),
 PK_TETE = 1.19                                 # porte-à-faux de la tête
 
 
+PK_VEHICULES = (
+    ("citadine_miel", -20.0, -34.0, "pk_au_citadine"),
+    ("berline_bleu_acier", -6.0, -34.0, "pk_au_berline"),
+    ("suv_olive", 8.0, -16.0, "pk_au_suv"),
+    ("muscle_prune", -13.5, -29.5, "pk_au_muscle_pdb"),
+    ("pickup_creme", 1.0, -34.0, "pk_au_pickup"),
+    ("sportive_turquoise", 15.0, -34.0, "pk_au_sportive"),
+    ("tout_terrain_sable", -20.0, -16.0, "pk_au_4x4"),
+    ("citadine_rouge_brique", -6.0, -16.0, "pk_au_citadine_rouge"),
+    ("roadster", -13.0, -16.0, "pk_au_roadster"),
+    ("scooter", 1.0, -16.0, "pk_au_scooter"),
+)
+
+
+def placer_voitures_exterieur(space, props, col_coll) -> int:
+    for modele, vx, vy, suffix in PK_VEHICULES:
+        asset, bounds = R.voiture_proposition(modele)
+        L.place(asset, (vx + bounds[1], vy, space.z), 90, props, col_coll, suffix)
+    return len(PK_VEHICULES)
+
+
 def habiller_parking(space, gris, props, col_coll, logic) -> dict:
     x0, x1 = space.x
     y0, y1 = space.y
     z = space.z
 
-    # Le parking extérieur utilise les quatre propositions originales. Le
-    # parking souterrain garde son parc Kenney via R.voiture(). Trois voitures
-    # occupent des places, la muscle car conserve l'emplacement près du
-    # pied-de-biche (repère à -8, -28).
-    voitures = 0
-    placements = (
-        ("citadine", PK_VOITURES_X[0], PK_VOITURES_Y[0], "pk_au_citadine"),
-        ("berline", PK_VOITURES_X[2], PK_VOITURES_Y[0], "pk_au_berline"),
-        ("suv", PK_VOITURES_X[4], PK_VOITURES_Y[1], "pk_au_suv"),
-        ("muscle", -13.5, -29.5, "pk_au_muscle_pdb"),
-    )
-    for modele, vx, vy, suffix in placements:
-        asset, bounds = R.voiture_proposition(modele)
-        L.place(asset, (vx + bounds[1], vy, z), 90,
-                props, col_coll, suffix)
-        voitures += 1
+    voitures = placer_voitures_exterieur(space, props, col_coll)
 
     # Cônes, pneu et caisses semés : même atlas que les voitures, donc aucun lot
     # de dessin de plus, et c'est ce qui distingue un parking utilisé d'un

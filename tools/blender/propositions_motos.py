@@ -507,4 +507,5 @@ def run():
         print(result)
 
 
-run()
+if __name__ == "__main__":
+    run()

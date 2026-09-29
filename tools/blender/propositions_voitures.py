@@ -558,8 +558,9 @@ def make_suv(builder):
 
 
 def make_muscle(builder):
+    cabin_raise = 0.12
     spec = {
-        "kind": "muscle", "length": 4.86, "body_width": 1.94, "height": 1.30,
+        "kind": "muscle", "length": 4.86, "body_width": 1.94, "height": 1.42,
         "wheelbase": 2.79, "wheel_z": 0.36, "wheel_radius": 0.34,
         "tire_width": 0.23, "rear_tire_width": 0.30, "arch_radius": 0.42,
         "top_front": 0.98, "top_rear": 0.94, "cladding": "#2d292d",
@@ -571,21 +572,24 @@ def make_muscle(builder):
                      spec["body_width"], spec["body_color"],
                      chamfer_top_edges=(1, 2, 3, 4),
                      chamfer_width=0.11, chamfer_height=0.055)
-    cabin = [(0.45, 0.88), (-0.03, 1.30), (-0.94, 1.30), (-1.68, 0.88)]
+    cabin = [(0.45, 0.88), (-0.03, 1.30 + cabin_raise),
+             (-0.94, 1.30 + cabin_raise), (-1.68, 0.88)]
     add_cabin_structure(builder, cabin, 1.70, spec["body_color"], 0.24,
                         (-0.32, -1.05), roof_color="#29272c")
     for side in (-1, 1):
         x = side * 0.858
-        add_glass_side(builder, x, [(0.34, 0.99), (-0.04, 1.23),
-                                    (-0.70, 1.23), (-0.75, 0.99)])
-        add_glass_side(builder, x, [(-0.83, 0.99), (-0.83, 1.23),
-                                    (-0.94, 1.23), (-1.52, 0.97)])
-        builder.beam_yz(side * 0.83, (-0.78, 0.96), (-0.76, 1.28),
+        add_glass_side(builder, x, [(0.34, 0.99), (-0.04, 1.23 + cabin_raise),
+                                    (-0.70, 1.23 + cabin_raise), (-0.75, 0.99)])
+        add_glass_side(builder, x, [(-0.83, 0.99), (-0.83, 1.23 + cabin_raise),
+                                    (-0.94, 1.23 + cabin_raise), (-1.52, 0.97)])
+        builder.beam_yz(side * 0.83, (-0.78, 0.96), (-0.76, 1.28 + cabin_raise),
                         0.045, 0.065, "#bcb7ad")
     builder.quad([(-0.69, 0.39, 0.98), (0.69, 0.39, 0.98),
-                  (0.68, -0.02, 1.24), (-0.68, -0.02, 1.24)], "#ffffff", 1)
+                  (0.68, -0.02, 1.24 + cabin_raise),
+                  (-0.68, -0.02, 1.24 + cabin_raise)], "#ffffff", 1)
     builder.quad([(-0.66, -1.57, 0.96), (0.66, -1.57, 0.96),
-                  (0.67, -0.96, 1.24), (-0.67, -0.96, 1.24)], "#ffffff", 1)
+                  (0.67, -0.96, 1.24 + cabin_raise),
+                  (-0.67, -0.96, 1.24 + cabin_raise)], "#ffffff", 1)
     for side in (-1, 1):
         x = side * 0.24
         builder.quad([(x - 0.075, 2.10, 1.049), (x + 0.075, 2.10, 1.049),
@@ -850,7 +854,7 @@ def run():
             ("BERLINE", "4,58 × 1,73 × 1,52 m"),
             ("SUV", "4,45 × 1,82 × 1,84 m"),
             ("CAMION", "6,40 × 2,12 × 2,90 m"),
-            ("MUSCLE 72", "4,86 × 1,94 × 1,30 m"),
+            ("MUSCLE 72", "4,86 × 1,94 × 1,42 m"),
         ]
         camera_position = Vector((11.0, 19.0, 12.0))
         camera_target = Vector((0.0, 0.2, 1.00))
@@ -1017,6 +1021,7 @@ def run():
                 filepath=glb_path,
                 export_format="GLB",
                 use_selection=True,
+                use_active_scene=True,
                 export_apply=True,
                 export_extras=True,
                 export_vertex_color="ACTIVE",
@@ -1072,4 +1077,5 @@ def run():
         print(result)
 
 
-run()
+if __name__ == "__main__":
+    run()

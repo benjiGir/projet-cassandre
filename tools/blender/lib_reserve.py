@@ -52,6 +52,27 @@ PROPOSITIONS_VOITURES = {
     "berline": "berline.glb",
     "suv": "suv.glb",
     "muscle": "muscle.glb",
+    "camion": "camion.glb",
+}
+EXTENSION_DIR = os.path.join(H.ROOT, "assets_src", "blender", "propositions_extension")
+VARIANTES_VOITURES = (
+    "citadine_miel", "citadine_bleu_orage", "citadine_rouge_brique",
+    "berline_bleu_acier", "berline_ivoire", "berline_vert_sauge",
+    "suv_olive", "suv_sable", "suv_bleu_petrole",
+    "muscle_prune", "muscle_cuivre", "muscle_noir_bleute",
+    "pickup_terre", "pickup_creme", "pickup_vert_pin",
+    "sportive_turquoise", "sportive_rouge_corail", "sportive_argent",
+    "tout_terrain_sable", "tout_terrain_vert_foret", "tout_terrain_bleu_ardoise",
+)
+PROPOSITIONS_PATHS = {
+    **{kind: os.path.join(PROPOSITIONS_VOITURES_DIR, filename)
+       for kind, filename in PROPOSITIONS_VOITURES.items()},
+    **{kind: os.path.join(EXTENSION_DIR, "variantes", kind + ".glb")
+       for kind in VARIANTES_VOITURES},
+    **{kind: os.path.join(EXTENSION_DIR, kind + ".glb")
+       for kind in ("roadster", "scooter", "pickup", "sportive", "tout_terrain")},
+    **{kind: os.path.join(H.ROOT, "assets_src", "blender", "propositions_motos", kind + ".glb")
+       for kind in ("motocross", "custom")},
 }
 # (modèle, largeur, longueur, hauteur) en mètres RÉELS. Le pack est modélisé à
 # des proportions de jouet — une berline mise à 4,40 m de long en fait 2,59 de
@@ -227,7 +248,7 @@ def voiture(modele: str, largeur: float, longueur: float, hauteur: float) -> str
 
 
 def voiture_proposition(modele: str) -> tuple[str, tuple[float, float, float]]:
-    """Charge un modèle original pour le parking extérieur seulement.
+    """Charge un véhicule original et son proxy de collision pour le niveau.
 
     Les GLB proposés gardent leurs deux matériaux et leurs couleurs de sommets.
     L'importeur glTF place la conversion Y-up → Z-up dans la matrice monde du
@@ -235,13 +256,13 @@ def voiture_proposition(modele: str) -> tuple[str, tuple[float, float, float]]:
     comme les assets de la bibliothèque. La même boîte englobante donne le
     proxy cuboid et l'offset qui aligne le véhicule sur sa place.
     """
-    if modele not in PROPOSITIONS_VOITURES:
+    if modele not in PROPOSITIONS_PATHS:
         raise ValueError(f"modèle de voiture original inconnu : {modele}")
 
     name = f"veh_proposition_{modele}"
     coll, done = asset_coll(name)
     if not done:
-        path = os.path.join(PROPOSITIONS_VOITURES_DIR, PROPOSITIONS_VOITURES[modele])
+        path = PROPOSITIONS_PATHS[modele]
         if not os.path.isfile(path):
             raise FileNotFoundError(f"modèle original absent : {path}")
 
