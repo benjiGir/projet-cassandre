@@ -161,6 +161,31 @@ public/assets/weapons/ armes en vue subjective + modèles au sol (générés)
 public/assets/audio/sfx/ audio sprite (sfx.ogg/.m4a/.json) + ambiances (générés)
 ```
 
+## Outillage Blender — commandes `cassandre`
+
+Tout travail Blender sur le niveau passe par `tools/blender/cassandre.py`
+plutôt que par du `bpy` écrit à la volée : les recettes (build, contrôles,
+rendu, export) y sont figées, pièges compris, et rendent un JSON compact au
+lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
+
+- **Session Blender ouverte (MCP)** : `import cassandre as C; result = C.check()`
+  — l'extension `tools/blender/extension/cassandre/` met le module sur le
+  chemin.
+- **Headless, sous-agents compris** :
+  `blender -b <f>.blend -P tools/blender/cassandre_cli.py -- <commande> cle=valeur`.
+- Commandes : `status` · `build` · `check` · `shot` · `export` · `find` ·
+  `where` · `budget`.
+- **Avant de lire `build_niveau.py` ou un `lib_*.py`** : `C.where(objet)` donne
+  la ligne qui l'a posé (relevé du dernier `build()`), et
+  `python3 tools/blender/api_index.py [module | --grep motif]` liste les
+  fonctions sans ouvrir le fichier.
+- **Jeu ↔ Blender** : `cassandre.pose()` dans la console du jeu → `C.shot("joueur")` ;
+  `C.shot` rend en retour la commande `cassandre.tp(x, y, z, cap)`. Le budget de
+  lots exact reste `cassandre.renderBench(3).drawCalls` en jeu ; `C.budget`
+  n'est qu'une estimation (−12 % à +5 %).
+- Une recette qui manque s'ajoute à `cassandre.py`, pas dans un appel MCP
+  jetable.
+
 ## Phase courante
 
 Le chantier gameplay courant porte sur les coulisses du niveau v2. La fiche de

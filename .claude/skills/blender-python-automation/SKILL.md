@@ -5,6 +5,47 @@ description: Automatisation Blender par script bpy headless — patterns, exécu
 
 # Automatisation Blender
 
+## D'abord : les commandes `cassandre`
+
+Avant d'écrire du `bpy`, vérifier que la tâche n'est pas déjà une commande de
+`tools/blender/cassandre.py`. Elles lancent les scripts du pipeline tels quels
+et absorbent ce qui casse à chaque fois : modules périmés en cache, `sys.exit`
+refusé par le MCP, caméra de rendu oubliée avant l'export, capture trop lourde,
+session ouverte plus vieille que son fichier.
+
+| Besoin | Commande |
+|---|---|
+| Fraîcheur de la session, du `.blend`, du `.glb` | `status()` |
+| Reconstruire le niveau v2 (copie de sécurité si la session est modifiée) | `build()` |
+| Contrat + audit, verdicts seuls | `check(strict=False)` |
+| Regarder : spawn, pose du jeu, point, dessus d'un espace, objet | `shot("spawn" \| "joueur" \| (x, y, cap) \| "dessus:<espace>" \| nom)` |
+| Exporter le `.glb` vérifié | `export()` |
+| Trouver des objets | `find("motif*", pres=(x, y))` |
+| Quelle ligne a posé cet objet | `where(nom \| "motif*" \| pres=(x, y))` |
+| Lots de dessin d'une vue, matériaux réutilisables d'une cellule | `budget(vue=…)`, `budget(cellule_de=(x, y))` |
+| Relancer n'importe quel script du dépôt | `run(script, *args, keep="[prefixe]")` |
+| Relire les `lib_*.py` modifiés | `reload()` |
+
+```python
+# Session ouverte, par le MCP : une ligne, un dict en retour
+import cassandre as C; result = C.check()
+```
+
+```bash
+# Headless (sous-agents sans MCP) : une ligne `[cassandre] {...}` en sortie
+blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- shot 'vue=[0,60,180]'
+```
+
+**Pour modifier le niveau sans relire 5 000 lignes** : `where` rend le `site`
+(fichier:ligne fonction où l'objet a été posé) et, pour une instance de la
+bibliothèque, le `patron_site` (où l'asset est défini). `python3
+tools/blender/api_index.py lib_rayons` liste les fonctions d'un module, `--grep
+motif` cherche partout. Ouvrir ensuite seulement les lignes désignées.
+
+Les images et logs vont dans `renders/_cassandre/` (gitignoré). Une recette qui
+manque s'ajoute à `cassandre.py` — pas dans un appel MCP jetable qu'il faudra
+retaper.
+
 ## Deux canaux
 
 **Scripts bpy headless** — le défaut. Versionnable, déterministe, exécutable en
@@ -23,9 +64,9 @@ argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 ```
 
 **Blender MCP** — pour l'assemblage exploratoire sur une scène ouverte, en
-dialogue. Il existe plusieurs implémentations (`ahujasid/blender-mcp` et ses
-forks, plus un serveur officiel côté Blender). Elles exposent l'API Python de
-Blender à l'agent.
+dialogue. Le projet utilise le serveur officiel (Blender Lab) ; il expose l'API
+Python de Blender à l'agent. Seul l'agent principal y a accès : les
+sous-agents passent par `cassandre_cli.py`.
 
 ## Où chaque canal est bon
 
