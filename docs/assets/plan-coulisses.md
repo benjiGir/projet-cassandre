@@ -1,3 +1,10 @@
+---
+title: Plan Les coulisses
+tags: [niveau, assets, plan]
+status: brouillon
+updated: 2026-09-30
+---
+
 # Plan « Les coulisses » (validé le 2026-09-26)
 
 Enrichir le couloir du personnel / raccourci / couloir de service (92 m vides)
@@ -13,6 +20,19 @@ A vestiaires (casiers E) · B fournil (farine cassable, poulet) · C PC sécurit
 SAV (~40 TV animées cassables) · F compacteur (balles de carton, bouton gag) ·
 ★4 planque du vigile (secret 4, derrière les balles). Couloir de service
 habillé (transpalettes/palettes props, distributeurs, néon qui clignote, fuite).
+
+Habillage F et ★4 intégré le 30 septembre : presse verticale en maintenance,
+balles cerclées, benne, palettes, caméra masquée ; canapé, télé sur la chaîne
+foot, casier et butin dans la planque. Deux balles cassables masquent son
+entrée. La pizza +25 est conservée sur la table basse. Le bouton gag et le
+cycle de compression restent à construire. Vues, contrôles et limites dans
+le [suivi de l’étape 3](../journal/analyse-agencement-2026-09-29.md#mise-en-œuvre-par-étapes).
+
+Deux repères complètent le couloir coupe-feu le 30 septembre : entrée du SAV
+bleue avec chariot de retours, entrée de la chambre froide jaune avec matériel
+de maintenance. Palette, seau et fuite sont regroupés contre le mur est.
+Le [suivi de l’étape 4](../journal/analyse-agencement-2026-09-29.md#mise-en-œuvre-par-étapes)
+conserve les vues et les vérifications en jeu encore attendues.
 
 ## Systèmes
 1. **Nourriture** : variante walk-over de `soin` (extra `aliment`), modèle +

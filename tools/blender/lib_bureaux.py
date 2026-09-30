@@ -18,8 +18,11 @@ entrant, après quatre espaces de rayonnage.
 
 from __future__ import annotations
 
+import math
 import os
 import random
+
+from mathutils import Matrix, Vector
 
 import lib_helpers as H
 from lib_rayons import asset_coll
@@ -333,6 +336,29 @@ def distributeur(facade: str) -> str:
 
 # --- Bureaux -----------------------------------------------------------------
 
+def orienter_equipements_poste(plateau, fauteuil, pied, dos, ecran, clavier) -> bool:
+    """Oriente écran et clavier vers le fauteuil, y compris sur un poste déjà posé."""
+    def centre(obj):
+        points = [obj.matrix_world @ v.co for v in obj.data.vertices]
+        return Vector(tuple((min(p[i] for p in points)+max(p[i] for p in points))/2
+                            for i in range(3)))
+
+    pivot = centre(plateau)
+    facade = centre(ecran)-centre(dos)
+    vers_fauteuil = centre(fauteuil)-pivot
+    facade.z = vers_fauteuil.z = 0
+    if facade.dot(vers_fauteuil) >= 0:
+        return False
+    rotation = (Matrix.Translation(pivot) @ Matrix.Rotation(math.pi, 4, "Z")
+                @ Matrix.Translation(-pivot))
+    for obj in (pied, dos, ecran, clavier):
+        if obj.data.users > 1:
+            obj.data = obj.data.copy()
+        obj.data.transform(obj.matrix_world.inverted() @ rotation @ obj.matrix_world)
+        obj.data.update()
+    return True
+
+
 def poste_bureau(seed: int = 0) -> str:
     """Poste de travail : bureau, caisson, fauteuil, écran, paperasse.
 
@@ -343,11 +369,14 @@ def poste_bureau(seed: int = 0) -> str:
     name = f"mob_poste_bureau_{seed}"
     coll, done = asset_coll(name)
     if done:
+        parts = {obj.name.split(".")[0].removeprefix(name+"_"): obj for obj in coll.objects}
+        orienter_equipements_poste(*(parts[key] for key in
+                                    ("plateau", "fauteuil", "pied_ecran", "ecran_dos", "ecran", "clavier")))
         return name
     rng = random.Random(seed or 2)
     lo, pr, ht = 3.0, 1.5, 0.80
 
-    H.box(f"{name}_plateau", (0, 0, ht - 0.05, lo, pr, ht), "bois_palette", coll, subdiv=0.8)
+    plateau = H.box(f"{name}_plateau", (0, 0, ht - 0.05, lo, pr, ht), "bois_palette", coll, subdiv=0.8)
     H.box(f"{name}_caisson", (0.06, 0.10, 0, 0.70, pr - 0.10, ht - 0.05),
           "metal_bac_acier", coll)
     H.boxes(f"{name}_pieds", [
@@ -356,13 +385,13 @@ def poste_bureau(seed: int = 0) -> str:
     ], "metal_bac_acier", coll)
 
     # Écran, clavier, corbeille à papier : ce qui distingue un bureau d'une table.
-    H.box(f"{name}_pied_ecran", (1.35, 0.90, ht, 1.65, 1.10, ht + 0.12),
+    pied = H.box(f"{name}_pied_ecran", (1.35, 0.90, ht, 1.65, 1.10, ht + 0.12),
           "metal_bac_acier", coll)
-    H.box(f"{name}_ecran_dos", (1.10, 0.92, ht + 0.12, 1.90, 1.02, ht + 0.62),
+    dos = H.box(f"{name}_ecran_dos", (1.10, 0.92, ht + 0.12, 1.90, 1.02, ht + 0.62),
           "metal_bac_acier", coll)
-    H.box(f"{name}_ecran", (1.13, 0.88, ht + 0.15, 1.87, 0.92, ht + 0.59),
+    ecran = H.box(f"{name}_ecran", (1.13, 0.88, ht + 0.15, 1.87, 0.92, ht + 0.59),
           "prd_ecrans", coll, uv=f"label:{rng.choice(ECRANS)}", front="-y")
-    H.box(f"{name}_clavier", (1.20, 0.30, ht, 1.80, 0.52, ht + 0.03),
+    clavier = H.box(f"{name}_clavier", (1.20, 0.30, ht, 1.80, 0.52, ht + 0.03),
           "trim_hypermarche", coll, uv="trim:joint_caoutchouc")
     # Piles de dossiers, en désordre.
     piles = []
@@ -377,7 +406,7 @@ def poste_bureau(seed: int = 0) -> str:
     fx, fy = 1.50 + a, pr + 0.55
     # Ardoise unie sur le nuancier : en `trim_hypermarche` projeté monde, le
     # fauteuil prenait des rayures de chantier jaunes et noires.
-    H.boxes(f"{name}_fauteuil", [
+    fauteuil = H.boxes(f"{name}_fauteuil", [
         ((fx - 0.28, fy - 0.28, 0.42, fx + 0.28, fy + 0.28, 0.50), "aplat:#2f3541"),
         ((fx - 0.28, fy + 0.16, 0.50, fx + 0.28, fy + 0.28, 1.02), "aplat:#2f3541"),
         ((fx - 0.06, fy - 0.06, 0.06, fx + 0.06, fy + 0.06, 0.42), "aplat:#444a54"),
@@ -385,6 +414,7 @@ def poste_bureau(seed: int = 0) -> str:
         ((fx - 0.05, fy - 0.30, 0.04, fx + 0.05, fy + 0.30, 0.10), "aplat:#444a54"),
     ], "palette", coll)
 
+    orienter_equipements_poste(plateau, fauteuil, pied, dos, ecran, clavier)
     H.col_box(name[4:], (0, 0, 0, lo, pr, ht), coll)
     return name
 

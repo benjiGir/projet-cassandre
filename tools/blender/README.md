@@ -13,13 +13,17 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `status()` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
 | `build(out=…, detail=False)` | rejoue `build_niveau.py` ; copie de sécurité si la session est modifiée, car le build vide la scène |
 | `check(strict=False, audit=True)` | `validate_level.py` + `audit_niveau.py`, verdicts seuls |
-| `shot(vue, mode="solid"\|"material", nom=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
+| `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
 | `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
+| `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
 | `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
 | `run(script, *args, keep=…)` | n'importe quel script du dépôt, `sys.exit` absorbé |
 | `reload()` | oublie les modules de `tools/` après une modification d'un `lib_*.py` |
+| `compose_public(preview=…)` | six compositions locales dans la galerie, la cafétéria et les rayons ; candidat isolé si `preview` est fourni, sinon source sauvegardée et exportée |
+| `direction_covers()` | essai isolé de deux meubles bas dans le bureau du Directeur, vues avant/après et comparaison aux hauteurs de tir ; source et export livrés conservés |
+| `orient_office_screens(preview=…)` | tourne écran et clavier vers le fauteuil des postes de bureau ; correction locale avec sauvegarde, ou candidat séparé si `preview` est fourni |
 
 `where` lit le relevé écrit par le dernier `build()` dans
 `renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par

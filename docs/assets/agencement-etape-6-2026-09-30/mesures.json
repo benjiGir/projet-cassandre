@@ -1,0 +1,42 @@
+{
+  "candidate": "renders/_cassandre/direction_covers.blend",
+  "source_hashes": {
+    "/Users/benji/Developer/boomer-shooter/assets_src/blender/niveau_v2.blend": "8dab27b864ecab975653767188b4213950a239e4947b705978a62f52591479b0",
+    "/Users/benji/Developer/boomer-shooter/public/assets/levels/niveau_v2.glb": "6aba537f1a986ba21237ada1bb13338787ffd165f20ce680fc9ca1e13f3c9fdc"
+  },
+  "floor_z": 4.0,
+  "player_eye_height": 1.6,
+  "director_eye_height": 1.8,
+  "cover_height": 1.2,
+  "min_eye_ray_clearance": 0.4,
+  "central_gap": 5.65,
+  "new_meshes": 2,
+  "new_cuboid_proxies": 2,
+  "covers": [
+    {
+      "name": "ouest",
+      "bounds": [
+        -42.5,
+        153.0,
+        4.0,
+        -40.1,
+        153.75,
+        5.2
+      ]
+    },
+    {
+      "name": "est",
+      "bounds": [
+        -34.4,
+        155.0,
+        4.0,
+        -32.0,
+        155.75,
+        5.2
+      ]
+    }
+  ],
+  "combat_playtest": "non réalisé ; étude géométrique uniquement",
+  "decision": "ne pas intégrer : les meubles ne coupent pas le segment de visée nominal",
+  "delivered_level_unchanged": true
+}

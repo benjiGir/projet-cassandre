@@ -97,7 +97,7 @@ def run(script: str | Path, *args: str, keep: str | None = None, tail: int = 40)
     # à chaque lancement, sinon on exécute la version d'il y a une heure. On
     # ne purge pas ce module-ci : on est en train de l'exécuter.
     for name, mod in list(sys.modules.items()):
-        if name not in (__name__, "provenance") and _sous_tools(getattr(mod, "__file__", None)):
+        if name not in (__name__, "__main__", "provenance") and _sous_tools(getattr(mod, "__file__", None)):
             del sys.modules[name]
 
     argv, sortie, code, debut = sys.argv, io.StringIO(), 0, time.time()
@@ -290,6 +290,29 @@ def where(cible=None, pres: tuple | None = None, rayon: float = 2.0, limit: int 
 _AUDIT_TITRE = re.compile(r"^\[audit\] (?P<titre>[A-ZÉÈÀ][^—]+?) — (?P<n>\d+)")
 
 
+def compose_public(preview: str | None = None) -> dict:
+    """Six compositions locales de galerie/cafétéria/rayons, source sauvegardée."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_public_compositions.py", *args, tail=12)
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def direction_covers() -> dict:
+    """Candidat isolé : deux meubles bas, vues avant/après et hauteur de tir."""
+    result = run("tools/blender/preview_director_covers.py", tail=12)
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def orient_office_screens(preview: str | None = None) -> dict:
+    """Écran et clavier face au fauteuil ; mise à jour locale sauvegardée."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_office_screens.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []
@@ -338,7 +361,8 @@ def export(out: str | Path = GLB_V2) -> dict:
 # --- Regarder ------------------------------------------------------------------
 
 def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = None,
-         sol: float | None = None, plafonds: bool | None = None) -> dict:
+         sol: float | None = None, plafonds: bool | None = None,
+         isoler: str | None = None, ajuster: bool = False) -> dict:
     """Rend une image et renvoie le chemin du PNG — sans rien laisser dans la scène.
 
     `vue` :
@@ -351,8 +375,9 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
       - `"dessus:<espace>"` : vue de dessus orthographique d'un espace du plan
                               de masse, plafonds masqués ;
       - un nom d'objet      : vue trois-quarts cadrée sur lui.
-    `mode` : `"solid"` (Workbench, textures, rapide) ou `"material"` (EEVEE —
-    vitres et portes transparentes, lampes du niveau ; plus lent).
+    `mode` : `"solid"` (Workbench texturé), `"material"` (EEVEE), ou
+    `"silhouette"` (aplat noir sur blanc). `isoler` ne montre que les meshes
+    dont le nom correspond au motif fnmatch, par exemple `"comp_ga_presse*"`.
     """
     scene = bpy.context.scene
     cam = _nouvelle_cam(scene)
@@ -363,9 +388,17 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
         # Le cadre épouse l'espace : un couloir de 12 × 48 m dans du 16:9 ne
         # remplit qu'une bande. Le plus grand côté garde la taille demandée.
         largeur, profondeur = cadrage["x"][1] - cadrage["x"][0], cadrage["y"][1] - cadrage["y"][0]
-        echelle = max(taille) / max(largeur, profondeur)
+        # `ajuster` : tenir DANS `taille` (une case de planche), sinon le plus
+        # grand côté prend la taille demandée et le cadre peut la dépasser.
+        echelle = (min(taille[0] / largeur, taille[1] / profondeur) if ajuster
+                   else max(taille) / max(largeur, profondeur))
         taille = (round(largeur * echelle), round(profondeur * echelle))
     masques = _masquer(scene, plafonds)
+    if isoler:
+        for obj in scene.objects:
+            if obj.type == "MESH" and not obj.hide_render and not fnmatch.fnmatch(obj.name, isoler):
+                masques.append((obj, False))
+                obj.hide_render = True
     restaurer = _regler_rendu(scene, mode, taille, cam)
     try:
         OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -378,6 +411,58 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
             obj.hide_render = etat
         _supprimer_cam()
     return {"png": str(png), "ko": round(png.stat().st_size / 1024), **cadrage}
+
+
+def sheet(vues, cols: int = 2, taille=(400, 225), mode: str = "solid", nom: str = "planche") -> dict:
+    """Plusieurs vues en UNE image : un seul `Read` au lieu d'un par vue.
+
+    `vues` : liste de ce que `shot` accepte (`"spawn"`, `(x, y, cap)`,
+    `"dessus:<espace>"`, un nom d'objet…). Rangées de gauche à droite puis de
+    haut en bas ; `cells` dit quelle case est quelle vue. Une vue de dessus a
+    le cadre de son espace : elle est posée en haut à gauche de sa case.
+    """
+    import numpy as np  # noqa: PLC0415 — fourni par Blender, inutile ailleurs
+
+    cases, meta = [], []
+    for i, vue in enumerate(vues):
+        vue = tuple(vue) if isinstance(vue, list) else vue
+        res = shot(vue, mode=mode, taille=taille, nom=f"_{nom}_{i}", ajuster=True)
+        png = Path(res["png"])
+        img = bpy.data.images.load(str(png))
+        try:
+            w, h = img.size
+            px = np.empty(w * h * 4, dtype=np.float32)
+            img.pixels.foreach_get(px)
+            cases.append(px.reshape(h, w, 4))
+        finally:
+            bpy.data.images.remove(img)
+            png.unlink()
+        meta.append({"i": i, "vue": vue if isinstance(vue, str) else list(vue),
+                     **{k: res[k] for k in ("pos", "cap", "espace", "objet") if k in res}})
+
+    lignes = math.ceil(len(cases) / cols)
+    cw, ch = max(c.shape[1] for c in cases), max(c.shape[0] for c in cases)
+    ecart = 4
+    W, H = cols * cw + (cols - 1) * ecart, lignes * ch + (lignes - 1) * ecart
+    planche = np.full((H, W, 4), (0.02, 0.02, 0.02, 1.0), dtype=np.float32)
+    for i, case in enumerate(cases):
+        r, c = divmod(i, cols)
+        # Les pixels de Blender sont rangés du BAS vers le haut : la première
+        # rangée d'images est donc en haut de `planche` = à la fin du tableau.
+        y0 = H - (r + 1) * ch - r * ecart
+        planche[y0 + (ch - case.shape[0]):y0 + ch, c * (cw + ecart):c * (cw + ecart) + case.shape[1]] = case
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    chemin = OUT_DIR / f"{nom}.png"
+    sortie = bpy.data.images.new(f"_{nom}", W, H, alpha=False)
+    try:
+        sortie.pixels.foreach_set(planche.ravel())
+        sortie.filepath_raw = str(chemin)
+        sortie.file_format = "PNG"
+        sortie.save()
+    finally:
+        bpy.data.images.remove(sortie)
+    return {"png": str(chemin), "ko": round(chemin.stat().st_size / 1024), "size": [W, H], "cols": cols, "cells": meta}
 
 
 def _nom_de_vue(vue) -> str:
@@ -523,6 +608,10 @@ def _regler_rendu(scene, mode: str, taille, cam):
         "fmt": r.image_settings.file_format, "camera": scene.camera,
         "light": shading.light, "color": shading.color_type,
         "view": scene.view_settings.view_transform,
+        "single": tuple(shading.single_color), "background_type": shading.background_type,
+        "background": tuple(shading.background_color), "shadows": shading.show_shadows,
+        "transparent": r.film_transparent,
+        "world_color": tuple(scene.world.color) if scene.world else None,
     }
     if mode == "material":
         moteurs = r.bl_rna.properties["engine"].enum_items.keys()
@@ -531,6 +620,16 @@ def _regler_rendu(scene, mode: str, taille, cam):
         r.engine = "BLENDER_WORKBENCH"
         shading.light = "STUDIO"
         shading.color_type = "TEXTURE"
+        if mode == "silhouette":
+            r.film_transparent = False
+            shading.light = "FLAT"
+            shading.color_type = "SINGLE"
+            shading.single_color = (0, 0, 0)
+            shading.background_type = "WORLD"
+            shading.background_color = (1, 1, 1)
+            if scene.world:
+                scene.world.color = (1, 1, 1)
+            shading.show_shadows = False
     r.resolution_x, r.resolution_y = taille
     r.resolution_percentage = 100
     r.image_settings.file_format = "PNG"
@@ -545,6 +644,12 @@ def _regler_rendu(scene, mode: str, taille, cam):
         r.image_settings.file_format = avant["fmt"]
         scene.camera = avant["camera"]
         shading.light, shading.color_type = avant["light"], avant["color"]
+        shading.single_color = avant["single"]
+        shading.background_type, shading.background_color = avant["background_type"], avant["background"]
+        shading.show_shadows = avant["shadows"]
+        r.film_transparent = avant["transparent"]
+        if scene.world and avant["world_color"] is not None:
+            scene.world.color = avant["world_color"]
         scene.view_settings.view_transform = avant["view"]
     return restaurer
 

@@ -443,7 +443,7 @@ SPACES: list[Space] = [
         id="secret4", nom="Planque du vigile (secret 4)",
         x=(-36, -28), y=(128, 132), z=0, hauteur=2.5, densite="faible",
         role="Butin sous antivol, clé du crochet vide, télé qui passe le foot",
-        reperes=[("secret 4", -32, 130, "secret"), ("pizza +25", -35, 129, "nourriture")],
+        reperes=[("secret 4", -32, 130, "secret"), ("pizza +25", -32.85, 130.35, "nourriture", .45)],
     ),
     Space(
         id="sav", nom="Atelier SAV",

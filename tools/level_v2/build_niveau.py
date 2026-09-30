@@ -61,6 +61,10 @@ import lib_electro as E               # noqa: E402
 import lib_facade as F                # noqa: E402
 import lib_reserve as R               # noqa: E402
 import lib_rayons as L                # noqa: E402
+import lib_wayfinding as W            # noqa: E402
+import lib_compacteur as C            # noqa: E402
+import lib_service_landmarks as S     # noqa: E402
+import lib_public_compositions as P   # noqa: E402
 import plan_de_masse as plan          # noqa: E402
 import build_blockout as bo           # noqa: E402
 
@@ -770,6 +774,7 @@ def habiller_rayons(space, gris, props, col_coll, logic) -> dict:
     H.box("caisse_acces_secret", (x, y, z, x + 1.0, y + 1.0, z + 1.0), "carton", props)
     H.col_box("caisse_acces_secret", (x, y, z, x + 1.0, y + 1.0, z + 1.0), col_coll)
     camp = _campement_gondoles(space, props, logic)
+    P.rayons(props)
 
     void = n_sol
     return {"gondoles": gondoles, "frigos": frais, "surgeles": surgeles, "props": props_n + 1 + camp,
@@ -1064,6 +1069,7 @@ def habiller_galerie(space, gris, props, col_coll, logic) -> dict:
 
     rampes, lampes = _neons(space, props, logic, GA_NEON_X, GA_NEON_Y, GA_NEONS_MORTS,
                             "ga", doubles=GA_NEON_X)
+    P.galerie(props, col_coll)
     return {"kiosques": len(GA_KIOSQUES), "devantures": devantures, "meubles": meubles,
             "verrieres": len(GA_VERRIERE_X), "signatures": signatures, "bancs": bancs,
             "rampes": rampes, "lampes": lampes + len(GA_VERRIERE_X)}
@@ -1133,6 +1139,7 @@ def habiller_hub(space, gris, props, col_coll, logic) -> dict:
     ))
     rampes, lampes = _neons(space, props, logic, HB_NEON_X, HB_NEON_Y,
                             HB_NEONS_MORTS, "hb", doubles=HB_NEON_X)
+    W.installer("hub", props)
     return {"panneaux": panneaux, "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
 
@@ -1557,6 +1564,7 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
     rampes, lampes = _neons(space, props, logic, (), (), SO_NEONS_MORTS, "so",
                             couleur="#c8d8e0", intensite=3.5, portee=9.0,
                             positions=SO_NEONS)
+    W.installer("souterrain", props)
     return {"piliers": piliers, "voitures": voitures, "places": places,
             "rampes": rampes, "lampes": lampes}
 
@@ -1573,6 +1581,11 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
 PK_VOITURES_X = tuple(-24.0 + 4.0 + i * 7.0 for i in range(6))
 PK_VOITURES_Y = (-34.0, -16.0)
 PK_ABRI = (14.0, -24.0)
+PK_ACCESSOIRES = (
+    (-7.8, -30.25, "cone"), (-6.8, -30.25, "cone"),
+    (21.75, -21.5, "cone"), (-22.5, -10.0, "debris-tire"),
+    (21.5, -7.0, "box"), (22.3, -7.8, "box"), (-21.0, -6.0, "box"),
+)
 # (x, y) du FÛT et côté vers lequel la crosse porte la tête. Le premier jet en
 # plantait un dans l'axe des portes automatiques, à 4 m d'elles et décalé de
 # 2 m, et un autre contre le point de départ (retour de playtest du 2026-09-18).
@@ -1626,13 +1639,7 @@ def habiller_parking(space, gris, props, col_coll, logic) -> dict:
 
     voitures = placer_voitures_exterieur(space, props, col_coll)
 
-    # Cônes, pneu et caisses semés : même atlas que les voitures, donc aucun lot
-    # de dessin de plus, et c'est ce qui distingue un parking utilisé d'un
-    # parking construit.
-    for i, (ax, ay, modele) in enumerate(((-3.0, -30.5, "cone"), (-1.0, -30.0, "cone"),
-                                          (8.0, -22.0, "cone"), (-22.5, -10.0, "debris-tire"),
-                                          (21.5, -7.0, "box"), (22.3, -7.8, "box"),
-                                          (-21.0, -6.0, "box"))):
+    for i, (ax, ay, modele) in enumerate(PK_ACCESSOIRES):
         L.place(R.accessoire_car_kit(modele), (ax, ay, z), i * 43,
                 props, col_coll, f"pk_acc{i}")
 
@@ -1757,6 +1764,7 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     ))
     rampes, lampes = _neons(space, props, logic, CA_NEON_X, CA_NEON_Y,
                             CA_NEONS_MORTS, "ca", doubles=CA_NEON_X)
+    P.cafeteria(props)
     return {"tables": len(CA_TABLES), "distributeurs": len(B.FACADES_DISTRIBUTEUR),
             "meubles": meubles, "rampes": rampes, "lampes": lampes}
 
@@ -3005,6 +3013,7 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
         ("pottedPlant", 8.9, nord - 0.45, z, 0),
     ))
     lampes = eclairage_couloir(space, props, logic)
+    W.installer("c_bu", props)
     return {"meubles": 7 + meubles, "lampes": lampes}
 
 
@@ -4737,8 +4746,7 @@ def habiller_c_short_ramp(space, gris, props, col_coll, logic) -> dict:
 
 
 def habiller_c_short_w(space, gris, props, col_coll, logic) -> dict:
-    """Couloir de la porte coupe-feu : mêmes ingrédients que `c_short_ramp`,
-    étalés sur son grand axe nord-sud, à l'écart de la porte (y = 84)."""
+    """Couloir coupe-feu : repères SAV et froid, chantier regroupé à l'est."""
     x0, x1 = space.x
     y0, y1 = space.y
     z = space.z
@@ -4760,7 +4768,9 @@ def habiller_c_short_w(space, gris, props, col_coll, logic) -> dict:
           "palette", props, uv="aplat:#111014")
     H.cylinder("csw_seau", (cx, y0 + 30.0), 0.2, z, z + 0.3, "metal_bac_acier", props)
 
-    return {"meubles": 4, "lampes": lampes}
+    S.regrouper_existants()
+    reperes = S.installer(props, col_coll)
+    return {"meubles": 4, "lampes": lampes, **reperes}
 
 
 # --- Mobilier physique (`prop_*`) --------------------------------------------
@@ -4795,16 +4805,16 @@ MODELES_PROPS = {
 # de loin : trois cartons empilés qui s'écroulent quand on les bouscule disent
 # « physique » bien plus fort qu'une boîte isolée au sol.
 PROPS_PHYSIQUES: dict[str, tuple] = {
-    # Le premier espace du jeu. La pile est droit sur le chemin du spawn
-    # (0, −36) vers les portes (0, −4) : on la bouscule sans la chercher.
-    "parking_ext": ((-1.5, -31.0, "carton", 3), (2.5, -25.0, "carton"),
-                    (-2.0, -17.0, "caisse"), (3.0, -10.0, "carton_grand")),
+    # La pile reste visible près de la voiture au pied-de-biche ; le second
+    # ensemble longe l'abri à caddies. L'approche centrale des portes est libre.
+    "parking_ext": ((-7.5, -31.5, "carton", 3), (-6.5, -31.5, "carton"),
+                    (20.75, -21.5, "caisse"), (20.75, -20.25, "carton_grand")),
     "galerie": ((-12.0, 6.0, "carton", 2), (13.5, 5.0, "caisse"),
                 (7.0, 12.5, "carton_grand")),
     "cafeteria": ((36.5, 16.5, "carton", 2), (52.0, 4.0, "casier")),
-    # Devant la ligne de caisses, là où se joue le premier vrai combat.
-    "caisses": ((-16.0, 26.0, "carton"), (6.0, 25.0, "carton_grand", 2),
-                (18.0, 38.5, "caisse"), (-9.0, 40.0, "carton")),
+    # Réassort près de la palette ouest, retours derrière une caisse à l'est.
+    "caisses": ((-22.4, 27.35, "carton"), (-21.1, 26.75, "carton_grand", 2),
+                (17.0, 34.25, "caisse"), (18.25, 34.25, "carton")),
     # 48 m de couloir : le plus gros lot du niveau, réparti sur toute la
     # longueur et TOUJOURS à x = ±3,5 — le milieu du hub reste franc.
     # Les y sont choisis dans les TROUS de la décoration déjà posée par
@@ -4817,9 +4827,9 @@ PROPS_PHYSIQUES: dict[str, tuple] = {
     # n'en voie jamais deux dans la même enfilade.
     "rayons": ((-43.75, 55.0, "carton"), (-36.25, 67.0, "carton", 2),
                (-21.25, 78.0, "carton"), (-28.75, 61.0, "carton_grand")),
-    # Un rayon électroménager est fait de cartons d'électroménager.
-    "electro": ((17.5, 58.0, "carton_grand", 2), (27.5, 62.0, "caisse"),
-                (39.0, 71.0, "carton"), (22.5, 71.0, "carton_grand")),
+    # Une pile en bout d'îlot et deux cartons près de la palette au sud.
+    "electro": ((28.9, 57.95, "carton_grand", 2), (28.9, 56.8, "caisse"),
+                (27.5, 49.5, "carton"), (25.9, 50.5, "carton_grand")),
     "reserve": ((-5.0, 102.0, "caisse"), (-5.0, 112.0, "caisse", 2),
                 (-19.0, 110.0, "caisse"), (12.0, 104.0, "carton_grand"),
                 (14.0, 118.0, "carton", 2)),
@@ -4864,6 +4874,14 @@ def poser_props_physiques(space, coll) -> int:
 SIGNATURES_HABILLEES = frozenset({"sig_machine_a_pinces", "sig_photomaton"})
 
 
+def habiller_compacteur(space, gris, props, col_coll, logic):
+    return C.habiller_compacteur(space, props, col_coll, logic, lampe)
+
+
+def habiller_planque(space, gris, props, col_coll, logic):
+    return C.habiller_planque(space, props, col_coll, logic, lampe)
+
+
 HABILLAGE = {
     "rayons": habiller_rayons,
     "caisses": habiller_caisses,
@@ -4884,13 +4902,15 @@ HABILLAGE = {
     # Les coulisses, v2 (2026-09-26) : v1 rejetée par l'utilisateur (« posé au
     # pif, aucun plaisir à explorer »). Le PC sécurité a servi de pilote ; les
     # vestiaires sont la première salle construite depuis le board. Le fournil,
-    # le SAV est désormais habillé ; gaine, compacteur et secret4 restent gris.
+    # le SAV, le compacteur et la planque sont habillés ; la gaine reste grise.
     "vestiaires": habiller_vestiaires,
     "fournil": habiller_fournil,
     "labo": habiller_labo_boucherie,
     "chambre_froide": habiller_chambre_froide,
     "sav": habiller_sav,
     "pc_secu": habiller_pc_secu,
+    "compacteur": habiller_compacteur,
+    "secret4": habiller_planque,
     "c_short_ramp": habiller_c_short_ramp,
     "c_short_w": habiller_c_short_w,
 }
@@ -5088,6 +5108,7 @@ def main() -> None:
     # chute d'un pas fixe avant l'écran de fin (trouvé par `audit_niveau.py`).
     bo.poser_palier_sortie(materiaux_espace(plan.SPACES[-1], gris, cache), shell, col_coll)
     reperes = bo.poser_reperes(gris, props, col_coll, logic_coll, sauter=SIGNATURES_HABILLEES)
+    C.actualiser_pizza(next(s for s in plan.SPACES if s.id == "secret4"), logic_coll)
     costards, directeurs = bo.poser_spawns(logic_coll)
     cams = poser_cameras_pc_secu(props, logic_coll)
     recales = recaler_spawns()

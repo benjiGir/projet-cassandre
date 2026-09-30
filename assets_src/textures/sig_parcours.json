@@ -1,0 +1,61 @@
+{
+  "width": 128,
+  "bands": {
+    "reserve_avancer": {
+      "y": 0,
+      "height": 16,
+      "text": "RESERVE",
+      "arrow": "up",
+      "pas": 128
+    },
+    "bureaux_avancer": {
+      "y": 16,
+      "height": 16,
+      "text": "BUREAUX",
+      "arrow": "up",
+      "pas": 128
+    },
+    "bureaux_gauche": {
+      "y": 32,
+      "height": 16,
+      "text": "BUREAUX",
+      "arrow": "left",
+      "pas": 128
+    },
+    "bureaux_droite": {
+      "y": 48,
+      "height": 16,
+      "text": "BUREAUX",
+      "arrow": "right",
+      "pas": 128
+    },
+    "magasin_avancer": {
+      "y": 64,
+      "height": 16,
+      "text": "RETOUR MAGASIN",
+      "arrow": "up",
+      "pas": 128
+    },
+    "magasin_gauche": {
+      "y": 80,
+      "height": 16,
+      "text": "RETOUR MAGASIN",
+      "arrow": "left",
+      "pas": 128
+    },
+    "magasin_droite": {
+      "y": 96,
+      "height": 16,
+      "text": "RETOUR MAGASIN",
+      "arrow": "right",
+      "pas": 128
+    },
+    "parking_avancer": {
+      "y": 112,
+      "height": 16,
+      "text": "PARKING",
+      "arrow": "up",
+      "pas": 128
+    }
+  }
+}
