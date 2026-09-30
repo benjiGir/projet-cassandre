@@ -181,8 +181,8 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   chemin.
 - **Headless, sous-agents compris** :
   `blender -b <f>.blend -P tools/blender/cassandre_cli.py -- <commande> cle=valeur`.
-- Commandes : `status` · `build` · `check` · `shot` · `export` · `find` ·
-  `where` · `budget`.
+- Commandes : `status` · `build` · `check` · `shot` · `sheet` (plusieurs vues en
+  UNE image) · `export` · `find` · `where` · `budget`.
 - **Avant de lire `build_niveau.py` ou un `lib_*.py`** : `C.where(objet)` donne
   la ligne qui l'a posé (relevé du dernier `build()`), et
   `python3 tools/blender/api_index.py [module | --grep motif]` liste les
@@ -193,6 +193,10 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   n'est qu'une estimation (−12 % à +5 %).
 - Une recette qui manque s'ajoute à `cassandre.py`, pas dans un appel MCP
   jetable.
+- **Mesurer en jeu, vérifier le dépôt** : `pnpm probe` rend en un JSON les draw
+  calls de `tools/probe/poses.json` (Chrome headless, ~15 s ; `-- --pose x,y,z,cap`
+  pour un point, `-- --strict` pour un code de sortie) ; `pnpm verify` = typecheck +
+  tests, sortie réduite aux échecs (`-- --level`, `-- --docs` en plus).
 
 ## Phase courante
 

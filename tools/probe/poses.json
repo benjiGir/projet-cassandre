@@ -1,0 +1,8 @@
+{
+  "parking_spawn":      [0, -36, 0, 0],
+  "parking_diagonale":  [0, -36, 0, 45],
+  "galerie_nord":       [0, 20, 0, 0],
+  "hub_nord":           [0, 60, 0, 0],
+  "hub_sud":            [0, 60, 0, 180],
+  "hub_est":            [20, 100, 0, 270]
+}

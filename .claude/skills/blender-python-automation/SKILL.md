@@ -19,6 +19,7 @@ session ouverte plus vieille que son fichier.
 | Reconstruire le niveau v2 (copie de sécurité si la session est modifiée) | `build()` |
 | Contrat + audit, verdicts seuls | `check(strict=False)` |
 | Regarder : spawn, pose du jeu, point, dessus d'un espace, objet | `shot("spawn" \| "joueur" \| (x, y, cap) \| "dessus:<espace>" \| nom)` |
+| Comparer plusieurs vues d'un coup (un seul `Read`) | `sheet([vues], cols=2)` |
 | Exporter le `.glb` vérifié | `export()` |
 | Trouver des objets | `find("motif*", pres=(x, y))` |
 | Quelle ligne a posé cet objet | `where(nom \| "motif*" \| pres=(x, y))` |
@@ -41,6 +42,11 @@ blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py 
 bibliothèque, le `patron_site` (où l'asset est défini). `python3
 tools/blender/api_index.py lib_rayons` liste les fonctions d'un module, `--grep
 motif` cherche partout. Ouvrir ensuite seulement les lignes désignées.
+
+**Hors Blender** : `pnpm probe` mesure les draw calls EXACTS du jeu à une liste
+de poses (`tools/probe/poses.json`, `-- --pose x,y,z,cap`) et rend un JSON ; il
+remplace la série d'appels navigateur à la main. `pnpm verify` lance typecheck +
+tests et ne détaille que les échecs (`-- --level` ajoute le contrat du niveau).
 
 Les images et logs vont dans `renders/_cassandre/` (gitignoré). Une recette qui
 manque s'ajoute à `cassandre.py` — pas dans un appel MCP jetable qu'il faudra

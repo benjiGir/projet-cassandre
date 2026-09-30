@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "check": "pnpm typecheck && pnpm test && vite build",
+    "probe": "node tools/probe/probe.mjs",
+    "verify": "node tools/verify.mjs",
     "check:docs": "python3 tools/docs/check_docs_links.py docs --src src --strict --allow-empty-drafts",
     "check:docs:test": "python3 -m unittest discover -s tools/docs -p 'test_*.py'",
     "preview": "vite preview",
@@ -34,6 +36,7 @@
     "@types/three": "0.185.4",
     "@vitejs/plugin-react": "6.0.5",
     "jsdom": "26.1.0",
+    "playwright-core": "^1.63.0",
     "typescript": "7.0.2",
     "vite": "8.2.1",
     "vitest": "4.1.11"
