@@ -2,6 +2,59 @@
 
 Scripts headless. Aucun ne nécessite d'interface.
 
+## Commandes `cassandre` : le pipeline en un appel
+
+`cassandre.py` enveloppe les scripts ci-dessous sans les réécrire, et rend
+un dict JSON compact (verdicts, comptes, premières erreurs) au lieu d'un log.
+Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
+
+| Commande | Rôle |
+|---|---|
+| `status()` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
+| `build(out=…, detail=False)` | rejoue `build_niveau.py` ; copie de sécurité si la session est modifiée, car le build vide la scène |
+| `check(strict=False, audit=True)` | `validate_level.py` + `audit_niveau.py`, verdicts seuls |
+| `shot(vue, mode="solid"\|"material", nom=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
+| `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
+| `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
+| `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
+| `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
+| `run(script, *args, keep=…)` | n'importe quel script du dépôt, `sys.exit` absorbé |
+| `reload()` | oublie les modules de `tools/` après une modification d'un `lib_*.py` |
+
+`where` lit le relevé écrit par le dernier `build()` dans
+`renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par
+`provenance.py` (`sys.monitoring` sur `CollectionObjects.link`), sans rien
+écrire sur les objets, puisque les propriétés personnalisées partent dans le
+`.glb`, et sans que les scripts du pipeline aient à coopérer. Angle mort : un
+objet créé par un opérateur `bpy.ops`.
+
+**Pont jeu ↔ Blender.** Dans la console du jeu (serveur de dev) :
+`cassandre.pose()` rend la pose en coordonnées Blender et la dépose dans
+`renders/_cassandre/pose.json` (plugin de `vite.config.ts`), que relit
+`C.shot("joueur")` / `C.budget(vue="joueur")`. `cassandre.tp(x, y, z, cap)`
+fait l'inverse : il place le joueur au point vu dans Blender. Le budget exact
+reste `cassandre.renderBench(3).drawCalls` en jeu, ennemis compris.
+
+Pour trouver une fonction sans ouvrir une bibliothèque de 1 000 lignes, sans
+Blender : `python3 tools/blender/api_index.py [module | --grep motif] [--all]`.
+
+Trois façons de les appeler, pour que la recette n'existe qu'une fois :
+
+```bash
+# Headless, sous-agents compris : une ligne `[cassandre] {...}` en sortie
+blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- check
+blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- shot 'vue=[0,-20,180]'
+blender -b --factory-startup -P tools/blender/cassandre_cli.py -- build
+```
+
+- Depuis le MCP Blender : `import cassandre as C; result = C.check()`.
+- Depuis la vue 3D : panneau N › Cassandre.
+
+Ces deux derniers usages demandent l'extension `extension/cassandre/`,
+installée comme **dépôt local** (Préférences › Get Extensions › Repositories
+› Add Local Repository → `tools/blender/extension/`, puis activer
+« Cassandre »). Blender lit ce dossier en place, il n'y a rien à zipper.
+
 | Script | Usage |
 |---|---|
 | `kit_spec.py` | **données** du kit modulaire (pièces, dimensions, proxies) — pas exécutable seul |

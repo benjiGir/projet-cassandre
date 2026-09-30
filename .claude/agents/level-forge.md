@@ -65,6 +65,13 @@ compétence en design.
 **Scripts bpy headless** — pour tout ce qui est répétable et vérifiable.
 C'est le défaut.
 
+**Commandes `cassandre`** — build, vérification, rendu et export du niveau
+v2 en un appel, avec un retour JSON compact au lieu d'un log :
+`blender -b <fichier>.blend -P tools/blender/cassandre_cli.py -- <status|build|check|shot|export|find|where|budget> [cle=valeur ...]`.
+`where` donne la ligne qui a posé un objet ; `python3 tools/blender/api_index.py` liste les
+fonctions d'un module sans l'ouvrir.
+À préférer à une recette retapée ; détail dans `tools/blender/README.md`.
+
 **Blender MCP** — pour l'assemblage exploratoire. Il exécute du Python
 arbitraire sans garde-fou : jamais sur un fichier non sauvegardé, dossier de
 travail isolé.

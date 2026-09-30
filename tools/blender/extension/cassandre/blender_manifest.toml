@@ -1,0 +1,13 @@
+schema_version = "1.0.0"
+
+id = "cassandre"
+version = "0.1.0"
+name = "Cassandre"
+tagline = "Pipeline du niveau PROJET_CASSANDRE en boutons"
+maintainer = "Benjamin Girard"
+type = "add-on"
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+files = "Lit les scripts du dépôt, écrit le niveau, ses exports et renders/_cassandre"

@@ -45,6 +45,7 @@ import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import { startPlayback } from "../session/recording";
 import { type GameEngine } from "../session/gameEngine";
+import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
 import {
   applyCrosshairVariant,
   applyFeelVariant,
@@ -79,6 +80,12 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.player;
     },
     recorder: inputRecorder,
+    pose: () => {
+      const pose = readBlenderPose(engine);
+      void publishBlenderPose(pose);
+      return pose;
+    },
+    tp: (x, y, z, cap) => teleportBlender(engine, x, y, z, cap),
     lastRecording: () => engine.lastRecording,
     playRecording: (rec) => startPlayback(engine, engine.session, rec),
     exportRecording: recordingToJson,
@@ -382,6 +389,10 @@ declare global {
       moveConfig: MoveConfig;
       player: PlayerController;
       recorder: typeof inputRecorder;
+      /** Pose du joueur en coordonnées BLENDER, déposée aussi pour `C.shot("joueur")` (`devtools/blenderPose.ts`). */
+      pose: () => BlenderPose;
+      /** Place le joueur en coordonnées BLENDER (pieds à `z`, cap en degrés) — la commande que rend `C.shot`. */
+      tp: (x: number, y: number, z: number, cap?: number) => BlenderPose;
       lastRecording: () => Recording | null;
       playRecording: (rec: Recording) => void;
       exportRecording: (rec: Recording) => string;
