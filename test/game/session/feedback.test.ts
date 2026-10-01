@@ -5,10 +5,13 @@ import { createInitialStats } from "../../../src/game/session/score";
 import { useGameStore } from "../../../src/game/state";
 import { type GameEngine } from "../../../src/game/session/gameEngine";
 import { type GameSession } from "../../../src/game/session/gameSession";
+import { HeroPortrait } from "../../../src/game/session/heroPortrait";
 
 function sessionWithHp(playerHp: number): GameSession {
   return {
     playerHp,
+    heroPortrait: new HeroPortrait(),
+    lastHeroLineAt: -Infinity,
     deathHandled: false,
     lowHpLineTriggered: false,
     stats: createInitialStats(),

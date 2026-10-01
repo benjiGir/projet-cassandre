@@ -2,7 +2,7 @@
 title: Interface
 tags: [fonctionnel]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-01
 ---
 
 # Interface
@@ -105,9 +105,18 @@ utilisables pendant toute la révélation. Barème complet :
 ### Le HUD « stream »
 
 Toute la partie garde la même blague en fond : le joueur est un streameur
-clandestin. En haut à droite, une fausse webcam de coin (tête et épaules en
-silhouette, badge clignotant « EN DIRECT », légende « RÉVEIL_DU_PEUPLE —
-200 abonnés ») ; sous elle, un compteur de « spectateurs en direct » qui
+clandestin. En haut à droite, une webcam de 96 × 54 pixels virtuels montre
+son visage et ses épaules, avec un badge clignotant « EN DIRECT » au-dessus
+et la légende « RÉVEIL_DU_PEUPLE — 200 abonnés » dessous.
+Ses blessures suivent cinq paliers de santé : 80–100 %, 60–79 %, 40–59 %,
+20–39 % et 1–19 %. Il réagit aux coups, tirs, éliminations, ramassages,
+soins, découvertes et répliques. La douleur prend la priorité sur les
+réactions ordinaires. Au repos, il cligne des yeux et regarde sur le côté.
+À la mort, la webcam de l'écran de mort montre son effondrement, puis
+« SIGNAL PERDU ». La bouche accompagne actuellement la durée d'affichage
+des répliques ; les prises de voix restent à intégrer.
+
+Sous la webcam, un compteur de « spectateurs en direct »
 grimpe d'un montant disproportionné à chaque ennemi neutralisé, bien plus
 pour le Directeur qu'un Costard — un gag sans lien avec le score, remis à
 zéro chaque partie ; encore sous lui, les répliques du héros, sous
@@ -119,7 +128,7 @@ restante. En bas à droite : les munitions de l'arme en main — un compte de
 cartouches pour pistolet et pompe, ou « PIED-DE-BICHE »/« À MAINS NUES ».
 
 Deux canaux de message distincts se superposent : la réplique du héros
-ci-dessus (cooldown de 15 secondes) et un message système transitoire pour
+ci-dessus (cooldown de 15 secondes de gameplay, suspendu en pause) et un message système transitoire pour
 les faits (porte déverrouillée, carte ramassée), sans aucun cooldown.
 
 Un réticule reste affiché en permanence au centre exact de l'écran, seul

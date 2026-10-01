@@ -29,6 +29,7 @@ export function hasCard(session: GameSession, card: LoyaltyCard): boolean {
 export function grantCard(session: GameSession, card: LoyaltyCard): boolean {
   if (session.cards.has(card)) return false;
   session.cards.add(card);
+  session.heroPortrait.react("discover");
   syncCardsToStore(session);
   showHudMessage(`${LOYALTY_CARD_LABELS[card]} récupérée`);
   return true;

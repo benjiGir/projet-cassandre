@@ -2,6 +2,8 @@ import type { Root } from "react-dom/client";
 
 import { beginLoading, waitForLoadingRetry } from "../../../core/loadingProgress";
 import { useGameStore } from "../../../game/state";
+import { HeroPortrait } from "../../../game/session/heroPortrait";
+import type { HeroPortraitReaction } from "../../../game/state";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
@@ -50,8 +52,21 @@ function GameBackdrop() {
 
 function seedHudState() {
   const state = useGameStore.getState();
+  const params = new URLSearchParams(window.location.search);
+  const requestedHp = Number(params.get("portraitHp") ?? 62);
+  const hp = Number.isFinite(requestedHp) ? Math.max(1, Math.min(100, requestedHp)) : 62;
+  const requestedTime = Number(params.get("portraitTime") ?? 2);
+  const time = Number.isFinite(requestedTime) ? Math.max(2, Math.min(20, requestedTime)) : 2;
+  const portrait = new HeroPortrait();
+  portrait.advance(1, hp, 100);
+  portrait.advance(time - 1, hp, 100);
+  const reactions: readonly HeroPortraitReaction[] = ["idle", "hurt", "focus", "victory", "discover", "talk", "heal"];
+  const reaction = reactions.find((value) => value === params.get("portraitReaction")) ?? "talk";
+  if (reaction === "talk") portrait.speak();
+  else portrait.react(reaction);
+  state.setHeroPortrait(portrait.view);
   state.setDebug({
-    playerHp: 62,
+    playerHp: hp,
     playerMaxHp: 100,
     shotgunAmmo: 4,
     shotgunMaxAmmo: 8,

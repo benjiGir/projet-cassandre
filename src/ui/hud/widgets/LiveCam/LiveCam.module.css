@@ -1,13 +1,15 @@
 .cam {
-  width: calc(var(--vpx) * 50);
+  width: calc(var(--vpx) * 96);
+  pointer-events: none;
 }
 
 /* Le cadre à coins des menus, réglé aux dimensions de la webcam. */
 .frame {
-  width: calc(var(--vpx) * 50);
-  height: calc(var(--vpx) * 28);
+  width: calc(var(--vpx) * 96);
+  height: calc(var(--vpx) * 54);
+  box-sizing: border-box;
   overflow: hidden;
-  --panel-bg: rgba(6, 12, 6, 0.65);
+  --panel-bg: radial-gradient(ellipse at 50% 70%, #294434, #101a15 75%);
   --panel-border: rgba(140, 255, 150, 0.4);
   --frame-border-width: calc(var(--vpx) * 1);
   --corner: var(--phosphor-edge);
@@ -17,32 +19,9 @@
   --corner-opacity: 0.9;
 }
 
-.shoulders {
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--vpx) * -5);
-  transform: translateX(-50%);
-  width: calc(var(--vpx) * 30);
-  height: calc(var(--vpx) * 12);
-  background: #163a1c;
-  border-radius: 50% 50% 0 0 / 60% 60% 0 0;
-}
-
-.head {
-  position: absolute;
-  left: 50%;
-  top: calc(var(--vpx) * 10);
-  transform: translateX(-50%);
-  width: calc(var(--vpx) * 10);
-  height: calc(var(--vpx) * 10);
-  border-radius: 50%;
-  background: #1e4a26;
-}
-
 .badge {
-  position: absolute;
-  top: calc(var(--vpx) * 1.2);
-  left: calc(var(--vpx) * 1.2);
+  width: fit-content;
+  margin-bottom: calc(var(--vpx) * 1);
   display: flex;
   align-items: center;
   gap: calc(var(--vpx) * 1.2);
@@ -74,11 +53,22 @@
 }
 
 .caption {
+  display: flex;
+  flex-direction: column;
   margin-top: calc(var(--vpx) * 1);
   color: var(--phosphor-dim);
-  font-size: calc(var(--vpx) * 8);
+  font-size: calc(var(--vpx) * 6);
   text-shadow: 1px 1px 2px #000;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.subscribers { font-size: calc(var(--vpx) * 5); opacity: .8; }
+
+.cam[data-dead="true"] .frame {
+  --panel-border: var(--alert);
+  --corner: var(--alert);
+}
+
+.cam[data-dead="true"] .lamp { animation: none; opacity: .4; }

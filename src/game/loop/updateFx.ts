@@ -119,7 +119,7 @@ type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
   "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
   "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons" |
-  "cardPickupBillboards" | "droppedCardBillboard"
+  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait"
 >>;
 type FxEngine = Omit<Pick<GameEngine,
   "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
@@ -511,6 +511,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         if (engine.debugAccumulator >= DEBUG_UPDATE_INTERVAL) {
           engine.debugAccumulator = 0;
           const astar = astarMetricsSnapshot();
+          useGameStore.getState().setHeroPortrait(session.heroPortrait.view);
           useGameStore.getState().setDebug({
             fps: engine.fpsSmoothed,
             position: { x: engine.camera.position.x, y: engine.camera.position.y, z: engine.camera.position.z },

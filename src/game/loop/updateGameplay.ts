@@ -49,6 +49,7 @@ const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pi�
 const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
 
 function recordKillFeedback(session: GameSession, count: number, multiplier = 1): void {
+  session.heroPortrait.kill(count);
   for (let i = 0; i < count; i++) {
     grantKillViews(session, multiplier);
     if (session.firstKillTriggered) continue;
@@ -171,6 +172,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
   runGameplaySync(
     Effect.gen(function* () {
       const gameplayDt = engine.clock.tick(dt);
+      session.heroPortrait.advance(gameplayDt, session.playerHp, useGameStore.getState().debug.playerMaxHp);
 
       // Récap de fin de partie (`game/session/score.ts`) : temps de GAMEPLAY
       // écoulé, somme du VRAI `gameplayDt` (hitstop compris), jamais une
@@ -325,6 +327,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             const pris = session.weapons.addPistolAmmo(amount);
             if (pris <= 0) return false;
             showHudMessage(`+${pris} munitions`);
+            session.heroPortrait.react("victory", .45);
             playSfx("ammo_pickup");
             return true;
           },
@@ -346,6 +349,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               const pris = session.weapons.tryCollectMelee();
               if (pris) {
                 showHudMessage("Pied-de-biche récupéré");
+                session.heroPortrait.react("victory", 1);
                 playSfx("ammo_pickup");
               }
               return pris;
@@ -354,6 +358,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               const pris = session.weapons.tryCollectShotgun();
               if (pris) {
                 showHudMessage("Fusil à pompe récupéré");
+                session.heroPortrait.react("victory", 1);
                 playSfx("ammo_pickup");
               }
               return pris;
@@ -366,6 +371,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               const avantAmmo = session.weapons.pistolAmmo;
               const pris = session.weapons.tryCollectPistol();
               if (pris) {
+                session.heroPortrait.react("victory", dejaPossede ? .45 : 1);
                 showHudMessage(
                   dejaPossede
                     ? `+${session.weapons.pistolAmmo - avantAmmo} munitions`
@@ -390,6 +396,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             if (session.playerHp >= maxHp) return false; // laissée au sol pour plus tard
             const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
             session.playerHp += healed;
+            session.heroPortrait.heal(session.playerHp, maxHp);
             useGameStore.getState().setPlayerHp(session.playerHp);
             showHudMessage(`+${healed} PV`);
             // Un aliment (chantier « Les coulisses ») a son propre son —
@@ -409,6 +416,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           if (session.playerHp >= maxHp) return false;
           const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
           session.playerHp += healed;
+          session.heroPortrait.heal(session.playerHp, maxHp);
           useGameStore.getState().setPlayerHp(session.playerHp);
           showHudMessage(`+${healed} PV`);
           playSfx("food_eat");
@@ -438,6 +446,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         const hitCountBefore = session.weapons.hitEvents.length;
         session.weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
         if (session.weapons.fireEvents.length > fireCountBefore) {
+          session.heroPortrait.react("focus");
           let hitEnemy = false;
           for (let i = hitCountBefore; i < session.weapons.hitEvents.length; i++) {
             if (session.weapons.hitEvents[i]!.material === FLESH_MATERIAL) {
@@ -477,11 +486,14 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         recordSuitKills(session.stats, suitKills);
         recordKillFeedback(session, suitKills);
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
-          applyPlayerDamage(engine, session, session.suitManager.playerHitEvents[i]!.amount);
+          const hit = session.suitManager.playerHitEvents[i]!;
+          applyPlayerDamage(engine, session, hit.amount, hit.normal);
         }
 
         const directorDeathsBefore = session.directorManager.deathEvents.length;
         const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
+        const directorAlertsBefore = session.directorManager.alertEvents.length;
+        const directorRevealsBefore = session.directorManager.revealEvents.length;
         session.directorManager.update(
           gameplayDt,
           session.player.position,
@@ -492,10 +504,13 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.sanitaireSystem ?? undefined,
         );
         const directorKills = session.directorManager.deathEvents.length - directorDeathsBefore;
+        if (session.directorManager.alertEvents.length > directorAlertsBefore
+          || session.directorManager.revealEvents.length > directorRevealsBefore) session.heroPortrait.react("discover");
         recordDirectorKills(session.stats, directorKills);
         recordKillFeedback(session, directorKills, VIEWS_DIRECTOR_MULTIPLIER);
         for (let i = directorPlayerHitsBefore; i < session.directorManager.playerHitEvents.length; i++) {
-          applyPlayerDamage(engine, session, session.directorManager.playerHitEvents[i]!.amount);
+          const hit = session.directorManager.playerHitEvents[i]!;
+          applyPlayerDamage(engine, session, hit.amount, hit.normal);
         }
 
         // Mobilier physique : même file `hitEvents`, lue de la même façon (non
@@ -593,6 +608,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           // (canal dédié, cooldownée) — même partage que `onToiletUse`.
           showHudMessage(`Secret trouvé ! (${found}/${total})`);
           playSfx("secret_found");
+          session.heroPortrait.react("discover");
           triggerHeroLine(session, HERO_LINE_SECRET_REACTION);
         }
       });

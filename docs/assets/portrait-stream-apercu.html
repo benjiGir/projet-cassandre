@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portrait du stream — proposition</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-monospace, monospace; color: #d1ead9; background: #080e0c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: clamp(18px, 4vw, 48px); }
+    main { max-width: 1240px; margin: auto; }
+    h1 { font-size: clamp(23px, 3vw, 37px); margin: 0 0 10px; }
+    h2 { font-size: 19px; margin: 0 0 16px; }
+    p { color: #a0b5a8; line-height: 1.6; max-width: 76ch; }
+    .eyebrow { color: #81e8a5; letter-spacing: .13em; font-size: 12px; }
+    .review { display: grid; grid-template-columns: minmax(320px, 1fr) minmax(280px, 380px); gap: 28px; margin: 32px 0; }
+    section { background: #0e1813; border: 1px solid #2b4435; padding: 24px; }
+    .camera { width: 288px; height: 162px; margin: 20px auto; position: relative; overflow: hidden; background: radial-gradient(ellipse at 50% 70%, #294434, #101a15 75%); border: 2px solid #74cc92; }
+    .camera::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(transparent 0 4px, #0002 4px 5px); }
+    .portrait { background-image: url('./portrait-stream-planche-v1.png'); background-size: 600% 500%; background-repeat: no-repeat; image-rendering: pixelated; }
+    .camera .portrait { width: 162px; height: 162px; margin: auto; }
+    .live { position: absolute; top: 7px; left: 8px; z-index: 1; font-size: 11px; padding: 3px 5px; background: #051009dd; }
+    .live::before { content: '●'; color: #ff655b; margin-right: 6px; }
+    .channel { text-align: center; color: #9ec3a8; font-size: 12px; }
+    .sizes { display: flex; justify-content: center; align-items: flex-end; gap: 25px; margin: 28px 0 8px; }
+    .small-camera { position: relative; background: #16251b; outline: 1px solid #74cc92; overflow: hidden; }
+    .small-camera .portrait { margin: auto; }
+    .current { width: 50px; height: 28px; }
+    .current .portrait { width: 28px; height: 28px; }
+    .proposed { width: 96px; height: 54px; }
+    .proposed .portrait { width: 54px; height: 54px; }
+    .size-label { text-align: center; font-size: 11px; color: #9cb5a4; margin-top: 10px; }
+    label { display: block; margin: 18px 0 8px; }
+    input { width: 100%; accent-color: #8deaa7; }
+    output { color: #ffe391; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    button { border: 1px solid #44624e; color: #c6dccd; background: #17271d; font: inherit; padding: 10px; cursor: pointer; }
+    button:hover, button[aria-pressed="true"] { background: #2d5639; border-color: #9ceab1; color: #fff; }
+    .state { font-size: 13px; color: #ffe391; min-height: 40px; }
+    .contact-sheet { overflow-x: auto; }
+    .matrix { display: grid; grid-template-columns: 115px repeat(6, minmax(115px, 1fr)); min-width: 850px; gap: 8px; align-items: center; }
+    .matrix .portrait { aspect-ratio: 1; background-color: #18251c; border: 1px solid #294632; }
+    .matrix .label { font-size: 12px; color: #a9c4b1; text-align: center; padding: 8px; }
+    .matrix .health { text-align: left; color: #ffe391; }
+    .note { font-size: 12px; }
+    a { color: #9be6b0; }
+    @media(max-width: 820px) { .review { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">PROJET CASSANDRE / DIRECTION DU PERSONNAGE</p>
+    <h1>Il garde la caméra allumée.</h1>
+    <p>Un même visage, cinq états de santé et six expressions. Faites varier sa santé et sa réaction pour voir comment son assurance résiste au combat.</p>
+    <div class="review">
+      <section>
+        <h2>Retour de stream</h2>
+        <div class="camera"><span class="live">EN DIRECT</span><div class="portrait selected"></div></div>
+        <div class="channel">RÉVEIL_DU_PEUPLE · 200 abonnés</div>
+        <div class="sizes">
+          <div><div class="small-camera current"><div class="portrait selected"></div></div><div class="size-label">Cadre actuel<br>50 × 28</div></div>
+          <div><div class="small-camera proposed"><div class="portrait selected"></div></div><div class="size-label">Cadre proposé<br>96 × 54</div></div>
+        </div>
+        <p class="note">Les petits cadres sont affichés à une échelle de 1 pixel pour 1 pixel du jeu. Le grand cadre est agrandi trois fois. Le badge restera hors du visage dans l’habillage final.</p>
+      </section>
+      <section>
+        <h2>Choisir une situation</h2>
+        <label for="hp">Santé : <output id="hp-value">100</output> / 100</label>
+        <input id="hp" type="range" min="1" max="100" value="100">
+        <p class="state" id="state"></p>
+        <label>Expression</label>
+        <div class="buttons" id="expressions"></div>
+        <p class="note">Les blessures suivent la santé, même pendant un sourire ou une réplique. Planche validée et intégrée à la webcam du jeu ; cette page permet de parcourir les portraits.</p>
+      </section>
+    </div>
+    <section class="contact-sheet">
+      <h2>Planche complète</h2>
+      <div class="matrix" id="matrix"></div>
+    </section>
+    <p class="note"><a href="./portrait-stream-planche-v1.png">Ouvrir l’image originale</a> · Proposition du 1er octobre 2026.</p>
+  </main>
+  <script>
+    const expressions = ['Au repos', 'Touché', 'Concentré', 'Victoire', 'Découverte', 'Réplique'];
+    const health = ['80–100 · Assuré', '60–79 · Éraflé', '40–59 · Blessé', '20–39 · Épuisé', '1–19 · Critique'];
+    const matrix = document.querySelector('#matrix');
+    let expression = 0;
+    function position(column, row) { return `${column * 20}% ${row * 25}%`; }
+    function label(text, className = 'label') {
+      const node = document.createElement('div'); node.className = className; node.textContent = text; matrix.append(node);
+    }
+    label('Santé / réaction'); expressions.forEach(text => label(text));
+    health.forEach((text, row) => {
+      label(text, 'label health');
+      expressions.forEach((title, column) => {
+        const node = document.createElement('div'); node.className = 'portrait';
+        node.style.backgroundPosition = position(column, row); node.title = `${text} — ${title}`;
+        matrix.append(node);
+      });
+    });
+    const buttons = expressions.map((text, column) => {
+      const button = document.createElement('button'); button.type = 'button'; button.textContent = text;
+      button.addEventListener('click', () => { expression = column; refresh(); });
+      document.querySelector('#expressions').append(button); return button;
+    });
+    function refresh() {
+      const hp = Number(document.querySelector('#hp').value);
+      const row = hp >= 80 ? 0 : hp >= 60 ? 1 : hp >= 40 ? 2 : hp >= 20 ? 3 : 4;
+      document.querySelector('#hp-value').value = hp;
+      document.querySelector('#state').textContent = health[row];
+      document.querySelectorAll('.selected').forEach(node => node.style.backgroundPosition = position(expression, row));
+      buttons.forEach((button, index) => button.setAttribute('aria-pressed', String(index === expression)));
+    }
+    document.querySelector('#hp').addEventListener('input', refresh);
+    refresh();
+  </script>
+</body>
+</html>

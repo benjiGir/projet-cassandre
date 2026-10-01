@@ -38,9 +38,10 @@ const HERO_LINE_DISPLAY_MS = 4000;
  * see: docs/archive/systems-hud-audio.md#ducking-pendant-les-répliques
  */
 export function triggerHeroLine(session: GameSession, text: string): boolean {
-  const now = performance.now();
+  const now = session.stats.gameplayElapsed * 1000;
   if (now - session.lastHeroLineAt < HERO_LINE_COOLDOWN_MS) return false;
   session.lastHeroLineAt = now;
+  session.heroPortrait.speak(HERO_LINE_DISPLAY_MS / 1000);
   useGameStore.getState().showHeroLine(text);
   duckMusicForHeroLine();
   globalThis.setTimeout(() => {
@@ -72,12 +73,15 @@ const LOW_HP_HERO_LINE_THRESHOLD = 0.3;
 const HERO_LINE_LOW_HP = "Ça va, ÇA VA. Continuez de me suivre, c'est important.";
 
 /** Résout les PV et la mort dans le pas fixe. Aucun effet visuel ou timer mural. */
-export function applyPlayerDamage(engine: GameEngine, session: GameSession, amount: number): void {
+export function applyPlayerDamage(engine: GameEngine, session: GameSession, amount: number,
+  normal?: { readonly x: number; readonly z: number }): void {
   const hpBefore = session.playerHp;
   session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
   recordHpLost(session.stats, hpBefore - session.playerHp);
 
   const maxHp = useGameStore.getState().debug.playerMaxHp;
+  const lateral = normal ? normal.x * Math.cos(engine.look.yaw) - normal.z * Math.sin(engine.look.yaw) : 0;
+  session.heroPortrait.damage(session.playerHp, maxHp, lateral < -.25 ? "left" : lateral > .25 ? "right" : "front");
   if (session.playerHp > 0 && !session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
     session.lowHpLineTriggered = true;
     triggerHeroLine(session, HERO_LINE_LOW_HP);

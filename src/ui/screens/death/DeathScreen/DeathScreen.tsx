@@ -10,6 +10,7 @@ import { StatusFlag } from "../../../components/text/StatusFlag/StatusFlag";
 import { TvStatic } from "../../../components/effects/TvStatic/TvStatic";
 import { Vignette } from "../../../components/effects/Vignette/Vignette";
 import { formatViews } from "../../../lib/format";
+import { LiveCam } from "../../../hud/widgets/LiveCam/LiveCam";
 import styles from "./DeathScreen.module.css";
 
 export interface DeathScreenProps {
@@ -41,6 +42,7 @@ export function DeathScreen({ onReplay, onReturnToMenu }: DeathScreenProps) {
       <Scanlines variant="bars" />
 
       <CornerFrame className={styles.panel}>
+        <LiveCam />
         <StatusFlag blinking>SIGNAL PERDU</StatusFlag>
         <ScreenTitle className={styles.title}>STREAM COUPÉ</ScreenTitle>
         <p className={styles.body}>Ils ont eu ta connexion. Encore une preuve, pense les 200 abonnés restants.</p>

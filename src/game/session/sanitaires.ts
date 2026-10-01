@@ -156,6 +156,7 @@ export function relieveAtSanitaire(session: GameSession): void {
 
   const healed = Math.min(maxHp, session.playerHp + Math.round(maxHp * SANITAIRE_RELIEF_HEAL_FRACTION)) - session.playerHp;
   session.playerHp += healed;
+  session.heroPortrait.heal(session.playerHp, maxHp);
   useGameStore.getState().setPlayerHp(session.playerHp);
   session.sanitaireReliefCooldown = SANITAIRE_RELIEF_COOLDOWN_SECONDS;
   showHudMessage(`+${healed} PV`);
@@ -173,6 +174,7 @@ function drinkFromSanitaire(session: GameSession): void {
   }
 
   session.playerHp = Math.min(maxHp, session.playerHp + SANITAIRE_SIP_HEAL);
+  session.heroPortrait.heal(session.playerHp, maxHp);
   useGameStore.getState().setPlayerHp(session.playerHp);
   playSfx("water_drink");
   showHudMessage(`+${SANITAIRE_SIP_HEAL} PV`);

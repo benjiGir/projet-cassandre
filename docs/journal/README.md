@@ -13,6 +13,7 @@ guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
 
+- [Portrait du stream](portrait-stream-2026-10.md) — planche du héros avec cinq états de santé, six expressions et aperçu interactif.
 - [Alternative pour les coulisses](alternative-coulisses-2026-10.md) — liaison directe depuis la réserve, carte Or au parking et plan SVG proposé.
 - [Refonte des caisses](refonte-caisses-2026-10.md) — six travées, comptoirs en L et circulation autour du passage central.
 

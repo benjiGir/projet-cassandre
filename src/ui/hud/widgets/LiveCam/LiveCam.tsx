@@ -1,22 +1,25 @@
 import { CornerFrame } from "../../../components/layout/CornerFrame/CornerFrame";
+import { useGameStore } from "../../../../game/state";
+import { HeroFace } from "../HeroFace/HeroFace";
 import styles from "./LiveCam.module.css";
 
 /**
- * Webcam factice du héros, en 16:9 : la tête passe sous le badge EN DIRECT,
- * jamais derrière.
- * see: docs/archive/systems-hud.md#hud-de-production
+ * Webcam du héros : badge hors du visage et portraits publiés à 10 Hz.
+ * see: docs/journal/portrait-stream-2026-10.md
  */
 export function LiveCam() {
+  const dead = useGameStore((s) => s.flowState === "dead");
   return (
-    <div className={styles.cam}>
+    <div className={styles.cam} data-dead={dead}>
+      <div className={styles.badge}>
+        <span className={styles.lamp} aria-hidden="true" /> {dead ? "HORS LIGNE" : "EN DIRECT"}
+      </div>
       <CornerFrame className={styles.frame}>
-        <div className={styles.shoulders} />
-        <div className={styles.head} />
-        <div className={styles.badge}>
-          <span className={styles.lamp} aria-hidden="true" /> EN DIRECT
-        </div>
+        <HeroFace />
       </CornerFrame>
-      <div className={styles.caption}>RÉVEIL_DU_PEUPLE — 200 abonnés</div>
+      <div className={styles.caption}>
+        <span>RÉVEIL_DU_PEUPLE</span><span className={styles.subscribers}>200 abonnés</span>
+      </div>
     </div>
   );
 }

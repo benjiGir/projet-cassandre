@@ -14,6 +14,21 @@ export type GameFlowState =
   | "dead"
   | "levelComplete";
 
+export type HeroPortraitReaction = "idle" | "hurt" | "focus" | "victory" | "discover" | "talk" | "heal" | "dead";
+export interface HeroPortraitView {
+  readonly sheet: "reactions" | "ambient";
+  readonly frame: number;
+  readonly reaction: HeroPortraitReaction;
+  readonly healthBand: number;
+  readonly side: "left" | "front" | "right";
+  readonly impact: number;
+  readonly combo: boolean;
+}
+
+export const INITIAL_HERO_PORTRAIT: HeroPortraitView = {
+  sheet: "reactions", frame: 0, reaction: "idle", healthBand: 0, side: "front", impact: 0, combo: false,
+};
+
 /**
  * Une ligne du récap de fin de partie : ce qui a été compté, comment ça se
  * calcule (`detail`, un texte déjà formaté — l'écran ne refait aucun calcul),
@@ -102,6 +117,8 @@ export interface DebugState {
 }
 
 interface GameState {
+  heroPortrait: HeroPortraitView;
+  setHeroPortrait: (view: HeroPortraitView) => void;
   debug: DebugState;
   /**
    * Écriture THROTTLÉE À 10 Hz MAXIMUM depuis la boucle (invariant #2).
@@ -187,6 +204,14 @@ const INITIAL_DEBUG: DebugState = {
 };
 
 export const useGameStore = create<GameState>((set) => ({
+  heroPortrait: INITIAL_HERO_PORTRAIT,
+  setHeroPortrait: (view) => set((state) => {
+    const previous = state.heroPortrait;
+    if (previous.sheet === view.sheet && previous.frame === view.frame && previous.reaction === view.reaction
+      && previous.healthBand === view.healthBand && previous.side === view.side && previous.impact === view.impact
+      && previous.combo === view.combo) return state;
+    return { heroPortrait: view };
+  }),
   debug: { ...INITIAL_DEBUG },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
@@ -208,5 +233,6 @@ export const useGameStore = create<GameState>((set) => ({
   recap: null,
   setRecap: (recap) => set({ recap }),
 
-  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, hudMessage: null, heroLine: null, recap: null }),
+  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
+    hudMessage: null, heroLine: null, recap: null }),
 }));

@@ -1,0 +1,90 @@
+.portrait {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.impact {
+  width: 100%;
+  height: 100%;
+}
+
+.impact[data-hit="true"] { animation: flinch .36s steps(3) both; }
+
+.face {
+  width: calc(var(--vpx) * 54);
+  height: calc(var(--vpx) * 54);
+  margin: 0 auto;
+  background-image: url("/assets/ui/hero-reactions.png");
+  background-size: 600% 500%;
+  background-position: var(--face-x) var(--face-y);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.face[data-atlas="ambient"] {
+  background-image: url("/assets/ui/hero-ambient.png");
+  background-size: 400% 500%;
+}
+
+.portrait[data-health="4"] .face { animation-duration: 1.25s; }
+.portrait[data-reaction="hurt"] .face { animation: none; }
+.portrait[data-reaction="focus"] .face { animation: none; }
+.portrait[data-combo="true"] .face { filter: drop-shadow(0 0 calc(var(--vpx) * 1) var(--amber)); }
+.portrait[data-reaction="dead"] .face { animation: collapse .65s steps(5) .3s both; }
+.portrait[data-paused="true"] .face,
+.portrait[data-paused="true"] .impact,
+.portrait[data-paused="true"] .interference { animation-play-state: paused; }
+
+.interference {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(transparent 0 calc(var(--vpx) * 3),
+    rgba(255, 100, 100, .35) calc(var(--vpx) * 3) calc(var(--vpx) * 4));
+  animation: signalHit .36s steps(3) both;
+}
+
+.signalLost {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--vpx) * 7);
+  color: var(--alert);
+  text-shadow: 0 0 calc(var(--vpx) * 2) #000;
+  animation: lost .95s steps(1) both;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: translateY(calc(var(--vpx) * .8)); }
+  50% { transform: translateY(0); }
+}
+
+@keyframes flinch {
+  0% { transform: translate(calc(var(--vpx) * var(--hit-shift) * 3), calc(var(--vpx) * 2)); }
+  50% { transform: translate(calc(var(--vpx) * var(--hit-shift)), 0); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes signalHit {
+  0% { opacity: .6; transform: translateX(calc(var(--vpx) * 2)); }
+  60% { opacity: .25; transform: translateX(calc(var(--vpx) * -1)); }
+  100% { opacity: 0; transform: none; }
+}
+
+@keyframes collapse {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(100%) rotate(12deg); opacity: 0; }
+}
+
+@keyframes lost { 0%, 99% { opacity: 0; } 100% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .face, .impact[data-hit="true"] { animation: none; }
+  .interference { display: none; }
+  .portrait[data-reaction="dead"] .face { animation: none; opacity: 0; }
+  .signalLost { animation: none; }
+}

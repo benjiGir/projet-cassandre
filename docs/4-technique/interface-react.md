@@ -2,7 +2,7 @@
 title: Interface React
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-01
 ---
 
 # Interface React
@@ -33,7 +33,7 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 
 Avant le jeu, `main.ts` résout le choix de démarrage et affiche le chargement.
 Après le chargement, React reçoit les transitions discrètes du flux et les changements ponctuels du store.
-La boucle appelle `updateFx` pour publier les mesures de debug au plus dix fois par seconde.
+La boucle appelle `updateFx` pour publier les mesures de debug et le portrait du héros au plus dix fois par seconde.
 Les valeurs comme les PV et les cartes sont publiées à l'événement qui les modifie.
 React ne reçoit pas une mise à jour à chaque image.
 
@@ -64,7 +64,7 @@ L'écran de menu initial est résolu avant le montage de `App`.
 
 ### Store et abonnements
 
-`useGameStore` transporte les valeurs nécessaires à l'affichage : mesures, PV, cartes, messages, flux et récapitulatif.
+`useGameStore` transporte les valeurs nécessaires à l'affichage : mesures, PV, cartes, messages, portrait, flux et récapitulatif.
 Un composant qui a besoin d'une valeur s'abonne avec un sélecteur ciblé.
 `Hud` assemble les widgets ; chaque widget garde la responsabilité de sa lecture.
 Les changements continus restent au plus à 10 Hz.
@@ -73,6 +73,25 @@ Les changements ponctuels sont envoyés quand la valeur change.
 `resetGameStore` réinitialise les mesures, messages et récapitulatif.
 Il ne remplace pas l'acteur de flux et ne modifie pas son état.
 Les callbacks `onReplay`, `onReturnToMenu` et `onResume` délèguent à la couche de session.
+
+### Portrait du héros
+
+`src/game/session/heroPortrait.ts` choisit le palier de santé, l'expression et
+la case d'atlas au pas fixe. Les appels viennent des tirs, impacts, morts
+d'ennemis, découvertes, ramassages, soins et répliques acceptées.
+La mort et la douleur prennent la priorité sur les autres réactions.
+`heroPortrait` transporte une image résolue : atlas, case, réaction, santé,
+direction d'impact et compteur de coups. Le setter ignore les images égales.
+
+`src/ui/hud/widgets/HeroFace/HeroFace.tsx` affiche une case du PNG avec des
+variables CSS. Il n'appelle ni timer, ni boucle de rendu, ni moteur.
+Les clignements et regards sont résolus au pas fixe ; les parasites et le
+recul bref restent décoratifs en CSS. Les animations se figent en pause et
+respectent la réduction des mouvements. `LiveCam` compose ce visage dans un
+cadre de 96 × 54 pixels virtuels. `DeathScreen` reprend la webcam pour rendre
+l'effondrement visible au-dessus de la superposition opaque.
+Les atlas et limites des prises de voix sont décrits dans le
+[journal du portrait](../journal/portrait-stream-2026-10.md).
 
 ### Structure des composants
 

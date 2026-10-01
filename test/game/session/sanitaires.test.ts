@@ -34,6 +34,8 @@ import {
 } from "../../../src/game/session/sanitaires";
 import { type GameSession } from "../../../src/game/session/gameSession";
 import { useGameStore } from "../../../src/game/state";
+import { HeroPortrait } from "../../../src/game/session/heroPortrait";
+import { createInitialStats } from "../../../src/game/session/score";
 
 await initPhysics();
 
@@ -78,6 +80,8 @@ function fakeSanitaireSystem(result: FakeAimedResult | null) {
 function sessionDeTest(overrides: Partial<GameSession> = {}): GameSession {
   return {
     playerHp: 100,
+    heroPortrait: new HeroPortrait(),
+    stats: createInitialStats(),
     sanitaireReliefCooldown: 0,
     sanitaireReliefRandom: () => 0,
     lastHeroLineAt: -Infinity,

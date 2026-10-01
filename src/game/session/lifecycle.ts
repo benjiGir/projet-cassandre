@@ -18,6 +18,7 @@ import { chargerCiel } from "../../render/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
+import { HeroPortrait } from "./heroPortrait";
 
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -172,6 +173,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     foundSecrets: new WeakSet(),
     lastSafeGround: new THREE.Vector3(),
     playerHp: useGameStore.getState().debug.playerMaxHp,
+    heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
     viewsRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0x71e75))),

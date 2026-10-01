@@ -24,6 +24,7 @@ import { DoorSystem } from "../../../src/game/level/doors";
 import { grantCard, hasCard, syncCardsToStore } from "../../../src/game/session/cards";
 import { tryOpenCardDoor } from "../../../src/game/session/doors";
 import { type GameSession } from "../../../src/game/session/gameSession";
+import { HeroPortrait } from "../../../src/game/session/heroPortrait";
 import { useGameStore } from "../../../src/game/state";
 
 await initPhysics();
@@ -254,7 +255,7 @@ describe("InteractionSystem — objets à carte", () => {
 
 /** Session réduite à ce que `cards.ts` touche réellement. */
 function sessionDeTest(): GameSession {
-  return { cards: new Set<LoyaltyCard>() } as unknown as GameSession;
+  return { cards: new Set<LoyaltyCard>(), heroPortrait: new HeroPortrait() } as unknown as GameSession;
 }
 
 describe("Inventaire de cartes (game/session/cards.ts)", () => {

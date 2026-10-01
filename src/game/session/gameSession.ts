@@ -21,6 +21,7 @@ import { type LightPool } from "../../render/lightPool";
 import { type WeaponPickupBillboard } from "../../render/pickups";
 import type { CardPickupBillboard } from "../../render/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
+import type { HeroPortrait } from "./heroPortrait";
 
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
@@ -138,6 +139,7 @@ export interface GameSession {
 
   /** PV courants du joueur, suivis localement — `setPlayerHp` prend une valeur absolue (voir `game/state.ts`), `game/session`/`game/loop` sont les seuls endroits qui connaissent le dégât infligé. */
   playerHp: number;
+  heroPortrait: HeroPortrait;
   firstKillTriggered: boolean;
   lowHpLineTriggered: boolean;
   /** Flux déterministe des gains de vues, indépendant des FX et des armes. */
