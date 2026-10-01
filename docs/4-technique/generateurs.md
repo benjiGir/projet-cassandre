@@ -2,7 +2,7 @@
 title: Générateurs d'assets
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-01
 ---
 
 # Générateurs d'assets
@@ -25,6 +25,7 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/blender/render_enemy_sprites.py` rend les sprites huit directions des ennemis.
 - `tools/blender/build_weapons.py` construit et exporte les armes.
 - `tools/blender/render_weapon_pickups.py` rend l'atlas des armes au sol.
+- `tools/textures/generate_card_pickups.py` dessine les trois sprites des cartes de fidélité.
 - `tools/audio/` contient le studio audio décrit dans [Studio audio](studio-audio.md).
 
 ## Où ça s'insère dans la boucle
@@ -66,6 +67,7 @@ Les fichiers JSON adjacents décrivent les cellules ou repères quand le runtime
 Les manifestes associent les directions, animations et rectangles de texture lus par le moteur.
 `build_weapons.py` écrit le modèle glTF des armes dans `public/assets/weapons/armes.glb`.
 `render_weapon_pickups.py` écrit l'atlas des armes au sol et son manifeste sous `public/assets/sprites/`.
+`generate_card_pickups.py` écrit les trois PNG RGBA de 128×80 pixels sous `public/assets/sprites/cards/`. Il réutilise la police pixel de `generate_labels.py` ; ses sorties sont directement consommées par `src/render/cardPickups.ts`.
 Les modèles et textures d'ennemis passent par un rendu Blender, pas par le pipeline de texture 2D.
 
 ### Déterminisme et provenance

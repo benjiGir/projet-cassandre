@@ -19,6 +19,7 @@ import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
 import { type LightPool } from "../../render/lightPool";
 import { type WeaponPickupBillboard } from "../../render/pickups";
+import type { CardPickupBillboard } from "../../render/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
@@ -99,6 +100,8 @@ export interface GameSession {
    * à chaque commit comme `propSystem`/`doorSystem`.
    * see: docs/archive/systems-rendu.md#armes-au-sol-2026-09-25 */
   weaponPickupBillboards: WeaponPickupBillboard[];
+  /** Cartes du niveau, reconstruites au chargement et animées à l'affichage. */
+  cardPickupBillboards: CardPickupBillboard[];
   /**
    * Délai de gameplay restant, en SECONDES, avant le prochain soulagement
    * possible sur un sanitaire intact (règle Duke 3D : max/10 PV, 220 s de
@@ -111,8 +114,8 @@ export interface GameSession {
    */
   sanitaireReliefCooldown: number;
 
-  /** Carte lâchée par le Directeur : mesh visible tant qu'elle n'a pas été ramassée — voir `game/loop/updateGameplay.ts`. */
-  droppedCardMesh: THREE.Mesh | null;
+  /** Billboard autonome de la carte lâchée par le Directeur. */
+  droppedCardBillboard: CardPickupBillboard | null;
   /** Cartes de fidélité en poche — les clés du niveau v2 (jalon N7). Survit
    * à un hot reload, comme le faisait le badge : c'est un état de PARTIE, pas
    * de niveau chargé.

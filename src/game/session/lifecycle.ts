@@ -163,8 +163,9 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     ecranSystem: null,
     cameraView: null,
     weaponPickupBillboards: [],
+    cardPickupBillboards: [],
     sanitaireReliefCooldown: 0,
-    droppedCardMesh: null,
+    droppedCardBillboard: null,
     cards: new Set(),
     unlockedDoors: new Set(),
     exitDoorTracking: null,
@@ -234,11 +235,8 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   for (const sprite of session.directorSprites.values()) sprite.dispose();
   session.directorSprites.clear();
 
-  // Géométrie/matériau du badge sont PARTAGÉS (`engine.badgeGeometry`/
-  // `engine.badgeMaterial`, persistants) — seule l'instance de mesh est
-  // propre à la partie, donc seul un `remove` est nécessaire ici, jamais de
-  // `dispose()` dessus.
-  if (session.droppedCardMesh) engine.scene.remove(session.droppedCardMesh);
+  session.droppedCardBillboard?.dispose();
+  session.droppedCardBillboard = null;
 
   // Jets d'eau permanents des sanitaires cassés (`FxSystem.addWaterJet`) :
   // propres à CETTE partie/CE niveau, comme les corps Rapier qui disparaissent

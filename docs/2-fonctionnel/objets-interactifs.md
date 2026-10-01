@@ -2,7 +2,7 @@
 title: Objets interactifs
 tags: [fonctionnel]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-01
 ---
 
 # Objets interactifs
@@ -63,10 +63,14 @@ marchant dessus, sans rien à confirmer — et seulement si vous en avez besoin 
 Les armes au sol suivent la même règle ; leur détail complet est dans
 [Armes](armes.md).
 
+Les cartes de fidélité se présentent comme des cartes à puce flottantes qui
+restent face à vous, comme les armes au sol. Argent, Or et Platine ont chacune
+leur couleur, leur nom et un nombre d'étoiles distinct.
+
 Une carte de fidélité, elle, se ramasse à la touche `E` en vous en
 approchant : elle disparaît aussitôt et ouvre la porte qui l'attend ailleurs
-dans le niveau. La carte la plus précieuse ne se ramasse jamais au sol —
-c'est le Directeur qui la laisse tomber à sa mort.
+dans le niveau. La Platine apparaît à la mort du Directeur et se récupère
+en marchant dessus.
 
 ### Le mobilier physique
 

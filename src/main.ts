@@ -15,6 +15,7 @@ import { initPhysics } from "./physics/world";
 import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
 import { RenderService } from "./render/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
+import { loadCardPickupTextures } from "./render/cardPickups";
 import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
@@ -136,11 +137,12 @@ async function main() {
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).
   reportLoading("Moteur physique et planches de sprites", 0.08);
-  const [, suitSheet, directorSheet, weaponModels] = await Promise.all([
+  const [, suitSheet, directorSheet, weaponModels, cardPickupTextures] = await Promise.all([
     initPhysics(),
     loadEnemySpriteSheetOrPlaceholder("costard"),
     loadEnemySpriteSheetOrPlaceholder("directeur"),
     loadWeaponModelsOrPlaceholder(),
+    loadCardPickupTextures(),
   ]);
   reportLoading("Chargement du niveau", 0.3);
   await letBrowserPaint();
@@ -154,6 +156,7 @@ async function main() {
     flow,
     { suit: suitSheet, director: directorSheet },
     weaponModels,
+    cardPickupTextures,
   );
 
   // Filtrage des textures réduites + résolution interne : les deux seuls

@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-01
 ---
 
 # Sprites et viewmodel
@@ -17,6 +17,7 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 - `src/render/enemySprites.ts` — charge les atlas et manifestes, puis associe les états visibles aux lignes de l'atlas.
 - `src/render/viewmodel.ts` — charge les modèles d'armes, construit leur hiérarchie caméra et anime leurs poses.
 - `src/render/pickups.ts` — rend les armes au sol sous forme de billboards.
+- `src/render/cardPickups.ts` — rend les trois cartes de fidélité et le drop du Directeur.
 - `src/game/loop/interpolateVisuals.ts` — transmet les positions et orientations interpolées des acteurs.
 - `src/game/loop/updateFx.ts` — fait décroître les flashes au temps réel.
 - `src/game/player/weapons.ts` — détient les horloges de tir et de changement d'arme consommées par le viewmodel.
@@ -75,7 +76,17 @@ Les géométries utilisent un matériau Lambert à vertex colors. Si le fichier 
 
 Le viewmodel interpole les clocks de chaque arme. Le changement fait descendre l'ancienne arme puis remonter la nouvelle ; le pied-de-biche balaie après l'appui ; le pompe recule puis pompe après le tir. Tirer avec la nouvelle arme peut la remettre en place immédiatement. Aucun de ces gestes ne retarde la possibilité de tirer, conformément à l'invariant [#10](../3-architecture/invariants.md).
 
-Les armes au sol ne sont pas le viewmodel. `src/render/pickups.ts` dessine des billboards d'armes, de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve ces objets pour leur animation de présentation.
+Les armes au sol ne sont pas le viewmodel. `src/render/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation.
+
+### Cartes de fidélité
+
+`src/render/cardPickups.ts` remplace les cubes `use_*` portant `card` par des cartes rectangulaires à coins arrondis. Les sprites RGBA de 128×80 pixels portent une puce, le nom du rang et une, deux ou trois étoiles. Argent est gris bleuté, Or doré et Platine turquoise clair. Les trois images sont générées par `tools/textures/generate_card_pickups.py` dans `public/assets/sprites/cards/`.
+
+Les textures sont préchargées dans `main.ts` à la frontière asynchrone. Chaque billboard possède sa géométrie, son matériau et une texture clonée dont les pixels sont partagés. Le nettoyage du niveau libère les instances du niveau ; `CardPickupBillboard.dispose` libère le drop autonome à son ramassage ou à la fin de partie.
+
+Le quad mesure 0,7×0,4375 m. Son bas flotte à 0,22 m de l'ancrage, avec un mouvement vertical de ±0,06 m et un léger pouls d'émissive. `updateFx` anime et oriente les cartes vers la caméra autour de l'axe vertical. L'ancrage de ramassage reste fixe ; le flottement ne change pas les distances d'interaction.
+
+Les cartes du niveau gardent la touche `E`. La Platine lâchée par le Directeur utilise le même visuel et se ramasse par proximité, après le délai prévu par le gameplay. Le drop ramassé ne recrée pas de billboard. Les cartes déjà acquises restent cachées après un hot reload.
 
 ### Horloges et poses visibles
 

@@ -6,6 +6,7 @@ import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/re
 import { FxSystem } from "../../render/fx";
 import { UseObjectCulling } from "../../render/useObjectCulling";
 import { Viewmodel, type WeaponModels } from "../../render/viewmodel";
+import type { CardPickupTextures } from "../../render/cardPickups";
 import { createWireframeToggle } from "../../render/debugView";
 import { HitmarkerOverlay } from "../../render/hitmarker";
 import { CrosshairOverlay } from "../../render/crosshair";
@@ -54,9 +55,8 @@ export interface GameEngine {
   /** Planches de sprites, chargées une fois au démarrage et partagées par tous les ennemis de toutes les parties — chaque `BillboardSprite` clone l'atlas (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`). */
   suitSheet: EnemySpriteSheet;
   directorSheet: EnemySpriteSheet;
-  /** Géométrie/matériau de la carte lâchée par le Directeur, PARTAGÉS entre parties — seule l'instance de mesh (`session.droppedCardMesh`) est propre à une partie. */
-  badgeGeometry: THREE.BoxGeometry;
-  badgeMaterial: THREE.MeshLambertMaterial;
+  /** Sources des trois cartes, préchargées avant la boucle de jeu. */
+  cardPickupTextures: CardPickupTextures;
 
   /** Scratch de la balle de test (chemin "gym" seulement) — PARTAGÉ entre `loop/stepPhysics.ts` (écrit `ballCurr*` depuis la physique) et `loop/interpolateVisuals.ts` (lit `ballPrev*`/`ballCurr*` pour lerp/slerp). */
   ballPrevPos: THREE.Vector3;
@@ -115,6 +115,7 @@ export function buildGameEngine(
   flow: GameFlowPort,
   sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet },
   weaponModels: WeaponModels,
+  cardPickupTextures: CardPickupTextures,
 ): PersistentEngine {
   const scene = new THREE.Scene();
   // Far plane : la gym expose une ligne de vue dégagée du fond de l'aile
@@ -181,15 +182,6 @@ export function buildGameEngine(
   // `render/cameraView.ts`.
   const cameraViewOverlay = new CameraViewOverlay(document.getElementById("app") as HTMLDivElement);
 
-  // Badge droppé à la mort : mesh visible géré ici (le Directeur/DirectorManager
-  // restent purs de tout rendu, voir leur doc de tête) — placeholder simple,
-  // retiré de la scène au ramassage OU à un `teardownGameSession`.
-  // Géométrie/matériau PARTAGÉS entre parties (jamais mutés en place ailleurs
-  // que par cette identité de couleur), seule l'INSTANCE de mesh
-  // (`session.droppedCardMesh`) est propre à une partie.
-  const badgeGeometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-  const badgeMaterial = new THREE.MeshLambertMaterial({ color: 0xffd54a });
-
   // Scratch de la balle de test (chemin "gym" seulement) — voir la doc de
   // `GameEngine.ballPrevPos`/`ballCurrPos` ci-dessus. Position initiale
   // (3, 4, 0) alignée sur la translation de spawn de `RAPIER.RigidBodyDesc`
@@ -245,8 +237,7 @@ export function buildGameEngine(
     sunLight: sun,
     suitSheet: sheets.suit,
     directorSheet: sheets.director,
-    badgeGeometry,
-    badgeMaterial,
+    cardPickupTextures,
     ballPrevPos,
     ballPrevQuat,
     ballCurrPos,

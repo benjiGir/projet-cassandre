@@ -152,6 +152,8 @@ export class InteractionSystem {
 
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
+      // Une carte déjà acquise reste cachée après un hot reload.
+      if (useObject.grantsCard && !useObject.object.visible) continue;
       // Trousse et boîte de munitions : ramassées en marchant dessus, voir
       // `collectHeals`/`collectAmmo` — jamais proposées à la touche E.
       if (useObject.heals !== null || useObject.ammo !== null) continue;

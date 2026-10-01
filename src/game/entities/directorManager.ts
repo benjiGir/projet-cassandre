@@ -248,10 +248,9 @@ export class DirectorManager {
         direction: this.scratchKnockback.clone(),
       });
       // Drop de la carte : AUX PIEDS du Directeur au moment de sa mort, pas au
-      // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol —
-      // sinon la carte apparaît flottante en l'air, pas posé). +0.15 = demi-
-      // hauteur du mesh placeholder (0.3m, voir `game/session/gameEngine.ts`),
-      // pour qu'il repose sur le sol plutôt que d'y être à moitié enfoncé.
+      // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol).
+      // L'ancrage logique reste à 0.15m du sol ; le billboard ajoute son
+      // flottement indépendamment du rayon de ramassage.
       const feetY = director.position.y - (this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius);
       // Une seule carte suivie à la fois (`_droppedCard`) — cohérent avec un
       // boss unique ; si un futur niveau spawnait plusieurs Directeurs, ce

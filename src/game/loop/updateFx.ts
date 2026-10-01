@@ -118,7 +118,8 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
   "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
-  "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons"
+  "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons" |
+  "cardPickupBillboards" | "droppedCardBillboard"
 >>;
 type FxEngine = Omit<Pick<GameEngine,
   "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
@@ -255,6 +256,8 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // cette même frame.
         advanceWeaponPickupClock(realDt);
         for (const billboard of session.weaponPickupBillboards) billboard.update(engine.camera);
+        for (const billboard of session.cardPickupBillboards) billboard.update(engine.camera, realDt);
+        session.droppedCardBillboard?.update(engine.camera, realDt);
 
         // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
         // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs

@@ -29,6 +29,7 @@ import { type DoorActor } from "../level/doors";
 import { basculerEau, updateDouches } from "../level/douches";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
+import { CardPickupBillboard } from "../../render/cardPickups";
 
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -541,14 +542,13 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // la doc de `DroppedCard`) — même discipline de mutation directe en
         // pas fixe que `interaction.update` ci-dessus pour `use_crowbar`.
         const dropped = session.directorManager.droppedCard;
-        if (dropped && !session.droppedCardMesh) {
-          session.droppedCardMesh = new THREE.Mesh(engine.badgeGeometry, engine.badgeMaterial);
-          session.droppedCardMesh.position.copy(dropped.position);
-          engine.scene.add(session.droppedCardMesh);
+        if (dropped && !dropped.collected && !session.droppedCardBillboard) {
+          session.droppedCardBillboard = new CardPickupBillboard(dropped.card, dropped.position, engine.cardPickupTextures);
+          engine.scene.add(session.droppedCardBillboard.spriteMesh);
         }
-        if (session.directorManager.tryCollectCard(session.player.position) && session.droppedCardMesh) {
-          engine.scene.remove(session.droppedCardMesh);
-          session.droppedCardMesh = null;
+        if (session.directorManager.tryCollectCard(session.player.position)) {
+          session.droppedCardBillboard?.dispose();
+          session.droppedCardBillboard = null;
           grantCard(session, dropped?.card ?? DIRECTOR_DROPPED_CARD);
         }
 

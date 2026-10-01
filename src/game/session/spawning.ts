@@ -9,6 +9,7 @@ import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
 import { dressAmmoPickup, dressFoodPickup, dressHealPickup, dressWeaponPickup, type WeaponPickupBillboard } from "../../render/pickups";
+import { dressCardPickup, type CardPickupBillboard } from "../../render/cardPickups";
 import { LightPool } from "../../render/lightPool";
 import { PropSystem } from "../level/props";
 import { DoorSystem } from "../level/doors";
@@ -160,7 +161,15 @@ export function loadGltfLevel(
         // ici pour être animés au taux d'affichage (`updateFx`) — voir la doc
         // de tête de `WeaponPickupBillboard`.
         const weaponPickupBillboards: WeaponPickupBillboard[] = [];
+        const cardPickupBillboards: CardPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
+          if (useObject.grantsCard) {
+            cardPickupBillboards.push(dressCardPickup(
+              useObject.object, useObject.grantsCard, groundBelow(session, useObject.position), engine.cardPickupTextures,
+            ));
+            if (session.cards.has(useObject.grantsCard)) useObject.object.visible = false;
+            continue;
+          }
           if (useObject.heals !== null) {
             const ground = groundBelow(session, useObject.position);
             if (useObject.aliment) dressFoodPickup(useObject.object, ground, useObject.aliment);
@@ -219,6 +228,7 @@ export function loadGltfLevel(
           session.lightPool = lightPool;
           session.propSystem = propSystem;
           session.weaponPickupBillboards = weaponPickupBillboards;
+          session.cardPickupBillboards = cardPickupBillboards;
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
