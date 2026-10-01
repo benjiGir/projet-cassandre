@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import bmesh
 import bpy
+from dataclasses import replace
+from mathutils import Matrix
 
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
@@ -253,3 +255,17 @@ def cloison_pleine(nom: str, bornes, props, col_coll, texture: str = "mur_platre
     d'étage est un mur : on ne la franchit que par sa porte."""
     H.box(nom, bornes, texture, props, subdiv=SUBDIV_BAKE)
     H.col_box(nom, bornes, col_coll)
+
+
+def habiller_dans_repere(space, reference_x, recipe, gris, props, col_coll, logic):
+    """Déplace une composition fixe avec ses colliders et origines d'usage."""
+    collections = (props, col_coll, logic)
+    avant = {o for c in collections for o in c.objects}
+    reference = replace(space, x=reference_x)
+    result = recipe(reference, gris, props, col_coll, logic)
+    bpy.context.view_layer.update()
+    matrice = Matrix.Translation((space.x[0] - reference_x[0], 0, 0))
+    poses = {o: o.matrix_world.copy() for c in collections for o in c.objects if o not in avant}
+    for obj, pose in poses.items():
+        obj.matrix_world = matrice @ pose
+    return result

@@ -24,10 +24,10 @@ from espaces.portes import _centrer_origine
 # --- Atelier SAV : réception, établis, puis mur de réglage -------------------
 
 def habiller_sav(space, gris, props, col_coll, logic) -> dict:
-    """Atelier du couloir coupe-feu : guichet, établis, puis mur de réglage.
+    """Atelier entre réserve et personnel : guichet, établis, puis mur de réglage.
 
     La composition est dessinée dans son repère d'origine (entrée au sud,
-    écrans au nord), puis tournée d'un quart de tour pour ouvrir sur le couloir
+    écrans au nord), puis tournée d’un quart de tour vers la réserve
     sans changer les postes, leurs colliders ni l'orientation de leurs façades.
     """
     objets_avant = set(bpy.data.objects)
@@ -267,18 +267,20 @@ def habiller_sav(space, gris, props, col_coll, logic) -> dict:
     lampe(logic, "light_sav_ecrans", (22.0, 87.3, z + 2.9),
           color="#6eb4d6", intensity=2.4, distance=8.0)
 
-    # Repère de dessin (12..32, 80..90) vers la salle (−54..−44, 116..136).
+    # Repère de dessin (12..32, 80..90) vers la salle (20..30, 112..132).
     # On transforme les matrices des objets complets : les `use_*` gardent leur
     # origine d'interaction centrée, et les boîtes de collision restent alignées.
     bpy.context.view_layer.update()
-    rotation_sav = Matrix.Rotation(math.radians(90), 4, "Z")
+    rotation_sav = Matrix.Rotation(math.radians(-90), 4, "Z")
     placement_sav = (
-        Matrix.Translation((-44.0, 116.0, 0.0))
+        Matrix.Translation((space.x[0], space.y[1], 0.0))
         @ rotation_sav
         @ Matrix.Translation((-12.0, -80.0, 0.0))
     )
-    for obj in set(bpy.data.objects) - objets_avant:
-        obj.matrix_world = placement_sav @ obj.matrix_world
+    poses = {obj: obj.matrix_world.copy() for coll in (props, col_coll, logic)
+             for obj in coll.objects if obj not in objets_avant}
+    for obj, pose in poses.items():
+        obj.matrix_world = placement_sav @ pose
 
     return {"téléviseurs de réglage": dalles, "établis": 2,
             "équipements de retour": 4, "props cassables": 2,

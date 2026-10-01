@@ -20,7 +20,7 @@
 | MCP | Officiel uniquement (`lab_blender_org/mcp`, Blender 5.1+, `localhost:9876`). Les packs sont téléchargés à la main, chacun validé avant par l'utilisateur (nom, source, taille, licence) |
 | Structure | **Hub + départements, clés à la Duke 3D.** L'allée centrale sert de hub |
 | Espaces | 10 : parking extérieur, galerie marchande, cafétéria, caisses, allée centrale (hub), rayons, électroménager / TV, réserve / quai, parking souterrain, bureaux direction |
-| Clés | **Cartes de fidélité** : Argent (dans les rayons, ouvre la réserve), Or (dans l'électroménager, ouvre les bureaux), Platine (lâchée par le Directeur, ouvre la sortie ; remplace le badge actuel) |
+| Clés | **Cartes de fidélité** : Argent (dans les rayons, ouvre la réserve), Or (près de la voiture de direction au parking souterrain, ouvre les bureaux), Platine (lâchée par le Directeur, ouvre la sortie ; remplace le badge actuel) |
 | Fin | Porte derrière le boss. Le déclencheur de fin actuel (franchissement de `door_e_exit`) est conservé |
 | Secrets | 3 : arrière-boutique du photomaton (galerie), toit des gondoles (rayons), bouche d'aération (cafétéria) |
 | Durée | 8-10 minutes, comme la définition de « terminé » du plan d'origine. Plus dense, pas plus long |
@@ -40,19 +40,31 @@
                                 │
                                 ▼
  Rayons ◄──────────── Allée centrale (hub, micro) ────────────► Électroménager / TV
- (carte Argent, surgelés, secret)                                (carte Or, mur d'écrans)
-   │                            ▲
-   ▼                            ┆ raccourci à sens unique
- [Argent] Réserve / quai        ┆
-   │                            ┆
-   ▼                            ┆
- Parking souterrain ┄┄┄┄┄┄┄┄┄┄┄┄┘
+ (carte Argent, surgelés, secret)                                (butin, mur d'écrans)
    │
    ▼
- [Or] Bureaux direction (Directeur) ──► [Platine] Sortie
+ [Argent] Réserve / quai ──► Personnel ──► [Or] Escalier / bureaux / Directeur
+                               │  ▲                          │
+                               ▼  │                          ▼
+                         Parking souterrain             [Platine] Sortie
+                         (carte Or, voiture de direction)
+
+ Personnel ──► Couloir de service ──► Coupe-feu ──► Rayons
 ```
 
-L'entrée est linéaire (tutoriel implicite). À partir de l'allée centrale, le joueur choisit l'ordre entre les rayons et l'électroménager, donc entre les cartes Argent et Or. Le raccourci à sens unique évite de refaire tout le chemin si le joueur arrive devant la porte des bureaux sans la carte Or.
+L’entrée reste linéaire. Depuis le hub, les rayons donnent la carte Argent et
+l’électroménager propose combat et butin. Après la réserve, le joueur entre
+directement dans le personnel : PC sécurité, fournil, vestiaires et SAV.
+Il descend au parking chercher la carte Or près de la voiture de direction,
+puis remonte ouvrir les bureaux. Des panneaux au verrou Or et au PC sécurité
+indiquent la cible ; la caméra du parking la cadre.
+
+Implantation révisée le 1er octobre 2026, approuvée par l’utilisateur :
+[plan et compte rendu](docs/journal/alternative-coulisses-2026-10.md).
+Le quai à +3 m est limité à l’ouest. Le parking et son escalier piéton sont
+hors de l’emprise des locaux au sol ; le raccourci coupe-feu conserve son
+ouverture depuis le personnel. Les sections datées ci-dessous documentent
+les étapes précédentes et peuvent décrire l’ancienne progression.
 
 ### Budget de temps
 
@@ -62,7 +74,7 @@ L'entrée est linéaire (tutoriel implicite). À partir de l'allée centrale, le
 | Galerie marchande | transit, gags, secret | 1:00 |
 | Caisses | premier combat, fusil à pompe | 1:00 |
 | Allée centrale + rayons | combat en couloirs, carte Argent | 2:00 |
-| Électroménager / TV | carte Or, écrans | 1:00 |
+| Électroménager / TV | exploration, butin, écrans | 1:00 |
 | Cafétéria | optionnelle, soin | 0:30 |
 | Réserve / quai | verticalité, gros combat | 1:15 |
 | Parking souterrain | tension, embuscade entre les piliers | 1:00 |

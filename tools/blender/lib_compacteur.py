@@ -178,11 +178,6 @@ def habiller_compacteur(space, props, col_coll, logic, light):
         balle(f"co_balle_quai_{i}", (-25.7, y, 0), props, col_coll)
     balle("co_balle_secret_bas", (-32.6, 126.9, 0), props, col_coll, loose=True)
     balle("co_balle_secret_haut", (-32.6, 126.9, 1.3), props, col_coll, height=1.05, loose=True)
-    H.boxes("co_quai_cadre", [
-        ((-24.34, 114.67, 0, -24.26, 114.76, 2.8), "world"),
-        ((-24.34, 117.24, 0, -24.26, 117.33, 2.8), "world"),
-        ((-24.34, 114.67, 2.7, -24.26, 117.33, 2.8), "world"),
-    ], "metal_bandes_danger", props, subdiv=.75)
     plaque("co_plaque_quai", "quai", (-24.35, 117.0, 2.84), 2.0, .25, props, "-x")
     H.box("co_projecteur_dos", (-33.18, 115.1, 4.22, -32.32, 115.55, 4.6),
           "palette", props, uv="aplat:#2f3541", subdiv=10)

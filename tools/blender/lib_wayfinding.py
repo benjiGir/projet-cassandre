@@ -14,14 +14,14 @@ BANDS = json.loads((Path(H.TEX_DIR) / "sig_parcours.json").read_text())["bands"]
 PLACEMENTS = (
     ("hub", "hub_approche", "reserve_avancer", "magasin_avancer", (-1.0, 57.0, 2.85), 0, 2.9),
     ("hub", "hub_reserve", "reserve_avancer", "magasin_avancer", (-1.0, 85.0, 2.85), 0, 2.9),
-    ("souterrain", "so_bureaux_relais", "bureaux_gauche", "bureaux_droite", (32.0, 117.5, -3.45), 270, .7),
-    ("souterrain", "so_magasin_relais", "magasin_gauche", "magasin_droite", (32.0, 117.5, -3.10), 270, .35),
-    ("souterrain", "so_bureaux_rampe", "bureaux_avancer", "parking_avancer", (39.0, 123.55, -3.45), 0, .7),
-    ("souterrain", "so_magasin_rampe", "magasin_avancer", None, (39.0, 123.55, -3.10), 0, .35),
-    ("c_bu", "personnel_bureaux", "bureaux_gauche", None, (34.6, 139.68, 2.5), 0, 0),
-    ("c_bu", "personnel_magasin", "magasin_gauche", None, (34.6, 139.68, 2.15), 0, 0),
-    ("c_bu", "escalier_bureaux", "bureaux_avancer", None, (4.0, 139.68, 2.5), 0, 0),
-    ("c_bu", "escalier_magasin", "magasin_gauche", None, (4.0, 139.68, 2.15), 0, 0),
+    ("souterrain", "so_bureaux_relais", "bureaux_gauche", "bureaux_droite", (34.0, 117.5, -3.45), 270, .7),
+    ("souterrain", "so_magasin_relais", "magasin_gauche", "magasin_droite", (34.0, 117.5, -3.10), 270, .35),
+    ("souterrain", "so_bureaux_rampe", "bureaux_avancer", "parking_avancer", (41.0, 123.55, -3.45), 0, .7),
+    ("souterrain", "so_magasin_rampe", "magasin_avancer", None, (41.0, 123.55, -3.10), 0, .35),
+    ("c_bu", "personnel_bureaux", "bureaux_gauche", None, (38.6, 139.68, 2.5), 0, 0),
+    ("c_bu", "personnel_magasin", "magasin_gauche", None, (38.6, 139.68, 2.15), 0, 0),
+    ("c_bu", "escalier_bureaux", "bureaux_avancer", None, (4.0, 139.68, 2.355), 0, 0),
+    ("c_bu", "escalier_magasin", "magasin_gauche", None, (4.0, 139.68, 2.035), 0, 0),
 )
 
 
@@ -71,8 +71,8 @@ def installer(zone, props):
     if zone == "souterrain":
         # Blue portal marks the correct ramp without narrowing its opening.
         H.boxes("sig_parcours_portique_nav_so_rampe", [
-            ((35.78, 123.71, -6, 35.95, 123.73, -2.87), "aplat:#1f5fbf"),
-            ((44.05, 123.71, -6, 44.22, 123.73, -2.87), "aplat:#1f5fbf"),
-            ((35.78, 123.71, -2.95, 44.22, 123.73, -2.80), "aplat:#1f5fbf"),
+            ((37.78, 123.71, -6, 37.95, 123.73, -2.48), "aplat:#1f5fbf"),
+            ((46.05, 123.71, -6, 46.22, 123.73, -2.48), "aplat:#1f5fbf"),
+            ((37.78, 123.71, -2.95, 46.22, 123.73, -2.48), "aplat:#1f5fbf"),
         ], "palette", props, subdiv=10)
     return placed

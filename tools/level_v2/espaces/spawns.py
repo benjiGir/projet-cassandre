@@ -89,10 +89,12 @@ def _gene(solides, x: float, y: float, sol: float, r: float):
     return None
 
 
-def recaler_spawns() -> list[str]:
+def recaler_spawns(ids=None) -> list[str]:
     solides = _solides()
     espaces = {}
     for space in plan.SPACES:
+        if ids is not None and space.id not in ids:
+            continue
         for nom, *_ in space.spawns:
             espaces["spawn_director_" + nom if nom.startswith("director") else "spawn_" + nom] = space
     journal = []

@@ -43,7 +43,7 @@ def poser_linteaux(ouvertures, gris, cache, coll) -> int:
         # Imposte au-dessus d'une porte : du haut du vantail jusqu'au plus bas
         # des deux plafonds. Le sas vitré pose la sienne (`HAUTEUR_VANTAIL`).
         paire = frozenset({o.a, o.b})
-        hauteur_vantail = HAUTEUR_VANTAIL.get(_cle_porte(o))
+        hauteur_vantail = HAUTEUR_VANTAIL.get(_cle_porte(o), HAUTEUR_PASSAGE.get(paire))
         if hauteur_vantail is not None:
             bas = o.z + hauteur_vantail
             haut = min(_plafond_au_bord(s, o.axe, o.at) for s in (a, b) if s)
@@ -118,11 +118,17 @@ def poser_linteaux(ouvertures, gris, cache, coll) -> int:
 
 EP_VANTAIL = 0.05
 
+HAUTEUR_PASSAGE = {frozenset({"reserve", "c_bu"}): 3.25}
+
 # Hauteur du vantail de chaque façade à porte : `poser_linteaux` pose l'imposte
 # au-dessus. `None` : l'installation pose elle-même ce qu'il y a au-dessus (le
 # sas vitré a une traverse d'automatisme et un vitrage, pas un pan de mur).
 # Sur la grille de 0,25 m : l'imposte a son origine au haut du vantail.
 HAUTEUR_VANTAIL = {
+    frozenset({"compacteur", "c_short_w"}): 2.7,
+    frozenset({"compacteur", "reserve"}): 2.7,
+    frozenset({"reserve", "sav"}): 2.1,
+    frozenset({"sav", "c_bu"}): 2.1,
     frozenset({"parking_ext", "c_pk_ga"}): None,
     frozenset({"c_pk_ga", "galerie"}): None,
     frozenset({"hub", "c_hb_rs"}): 2.0,
@@ -407,13 +413,34 @@ def _porte_libre(o, spec, props, logic) -> None:
               color="#4dff73", intensity=3.0, distance=7.0)
 
 
+def rideau_compacteur(o, props):
+    """Rideau manuel, rails et coffre communs aux deux accès du compacteur."""
+    cle = _cle_porte(o)
+    nom = "door_compacteur_reserve" if "reserve" in cle else "door_compacteur_service"
+    lo, hi = o.span
+    haut = o.z + HAUTEUR_VANTAIL[cle]
+    vantail(nom, _monde(o, lo + .02, -.04, o.z + .01, hi - .02, .04, haut),
+            "metal_bac_acier", "world", props,
+            dict(mouvement="monte", course=HAUTEUR_VANTAIL[cle], manuelle=True, referme=False),
+            [_monde(o, lo + .02, -.065, o.z + .01, hi - .02, .065, o.z + .09),
+             _monde(o, lo + .95, -.065, o.z + .95, hi - .95, .065, o.z + 1.0)])
+    H.boxes(nom.removeprefix("door_") + "_rails", [
+        (_monde(o, lo - .07, -.08, o.z, lo + .01, .08, haut), "world"),
+        (_monde(o, hi - .01, -.08, o.z, hi + .07, .08, haut), "world"),
+        (_monde(o, lo - .07, -.18, haut, hi + .07, .18, haut + .3), "world"),
+    ], "metal_bac_acier", props)
+
+
 def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
     """Toutes les portes des façades du plan. Les portes des bureaux, dans des
     cloisons que le plan ne connaît pas, sont posées par `habiller_etage`."""
     poses = 0
     for o in ouvertures:
         cle = _cle_porte(o)
-        if cle == frozenset({"parking_ext", "c_pk_ga"}):
+        if cle in (frozenset({"compacteur", "c_short_w"}), frozenset({"compacteur", "reserve"})):
+            rideau_compacteur(o, props)
+            poses += 1
+        elif cle == frozenset({"parking_ext", "c_pk_ga"}):
             poses += sas_vitre(o, "sas_ext", 1, props, col_coll)
         elif cle == frozenset({"c_pk_ga", "galerie"}):
             poses += sas_vitre(o, "sas_int", -1, props, col_coll)
@@ -458,16 +485,16 @@ def poser_portes_animees(ouvertures, props, col_coll, logic) -> int:
                     dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto",
                          angle=105, manuelle=True, referme=False, groupe="porte_chambre_froide"))
             poses += 1
-        elif cle == frozenset({"c_short_w", "sav"}):
+        elif cle in (frozenset({"reserve", "sav"}), frozenset({"sav", "c_bu"})):
             lo, hi = o.span
             libre = hi - 0.015
-            vantail("door_sav_couloir",
+            vantail("door_sav_reserve" if o.axe == "x" else "door_sav_personnel",
                     _monde(o, lo + 0.015, -EP_VANTAIL / 2, o.z + 0.01,
                            hi - 0.015, EP_VANTAIL / 2, o.z + HAUTEUR_VANTAIL[cle]),
                     "metal_bac_acier", "world", props,
                     dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto",
                          auto=True, angle=105, portee=1.6, referme=True, delai=0.7,
-                         groupe="sav_entree"),
+                         groupe="sav_reserve" if o.axe == "x" else "sav_personnel"),
                     _bequilles(o, libre, -1))
             poses += 1
         elif cle == frozenset({"pc_secu", "gaine"}):

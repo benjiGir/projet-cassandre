@@ -148,6 +148,7 @@ function handlersDeTest(overrides: Partial<InteractionHandlers> = {}): Interacti
     onDoorUse: () => {},
     onPaMicUse: () => {},
     onPunchClockUse: () => {},
+    onSavBellUse: () => {},
     onShowerToggleUse: () => {},
     onToiletUse: () => {},
     onCardPickup: () => {},

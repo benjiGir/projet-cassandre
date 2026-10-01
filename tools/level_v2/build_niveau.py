@@ -177,6 +177,7 @@ HABILLAGE = {
     "bureaux": habiller_etage,
     "direction": habiller_direction,
     "c_escalier": habiller_escalier,
+    "c_so_bu": lambda *args: habiller_escalier(*args, marches_count=24, prefixe="escalier_parking"),
     "c_bu": habiller_couloir_direction,
     "secret1": habiller_labo,
     "secret3": habiller_vmc,

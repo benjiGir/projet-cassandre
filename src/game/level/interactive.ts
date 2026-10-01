@@ -33,6 +33,8 @@ export interface InteractionHandlers {
   /** `use_pointeuse` (vestiaires) : déclenche la réplique sur les heures sup'.
    * Répétable, comme les autres interactions de décor. */
   onPunchClockUse(): void;
+  /** `use_sav_sonnette` : sonne au guichet après-vente. */
+  onSavBellUse(): void;
   /** `use_douche_1/2` : allume ou coupe l'eau du poste visé. */
   onShowerToggleUse(name: string): void;
   /** `use_toilet` (Zone D) : +1 PV. Répétable (plafonné au PV max côté
@@ -302,6 +304,10 @@ export class InteractionSystem {
 
       case "use_pointeuse":
         handlers.onPunchClockUse();
+        break;
+
+      case "use_sav_sonnette":
+        handlers.onSavBellUse();
         break;
 
       case "use_douche_1":

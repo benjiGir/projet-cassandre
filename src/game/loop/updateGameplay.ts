@@ -44,6 +44,7 @@ import { CardPickupBillboard } from "../../render/cardPickups";
 // aucune constante de soin/réplique dédiée ici, elles vivent dans ce module.
 const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
 const HERO_LINE_POINTEUSE = "Heures sup' non payées. Et ma carte porte un numéro qui n'existe pas.";
+const HERO_LINE_SAV_BELL = "« On arrive ! » C'est sûrement automatique.";
 const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
 const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
 
@@ -260,6 +261,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             },
             onPunchClockUse: () => {
               triggerHeroLine(session, HERO_LINE_POINTEUSE);
+            },
+            onSavBellUse: () => {
+              triggerHeroLine(session, HERO_LINE_SAV_BELL);
             },
             onShowerToggleUse: (name) => {
               const root = session.gltfLevelSession?.current?.root;

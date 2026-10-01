@@ -13,12 +13,12 @@ import lib_rayons as L            # noqa: E402
 import plan_de_masse as plan      # noqa: E402
 import build_blockout as bo       # noqa: E402
 
-from espaces.commun import lampe
+from espaces.commun import habiller_dans_repere, lampe
 from espaces.portes import _centrer_origine, porte_double
 
 # --- Habillage A : vestiaires et pointeuse ----------------------------------
 
-def habiller_vestiaires(space, gris, props, col_coll, logic) -> dict:
+def _habiller_vestiaires_reference(space, gris, props, col_coll, logic) -> dict:
     """Vestiaires du personnel : deux îlots qui cadrent le Costard, casier
     du vigile cassable, pointeuse face à l'entrée, banc et douches au fond.
 
@@ -329,3 +329,7 @@ def habiller_vestiaires(space, gris, props, col_coll, logic) -> dict:
 
     return {"façades de casiers": 4, "modules": 30, "douches": 2,
             "bancs": 1, "lampes": lampes}
+
+
+def habiller_vestiaires(space, gris, props, col_coll, logic) -> dict:
+    return habiller_dans_repere(space, (20, 34), _habiller_vestiaires_reference, gris, props, col_coll, logic)

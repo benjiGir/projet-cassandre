@@ -612,11 +612,10 @@ def hors_sol(cols):
     for o in cols:
         mini, maxi = aabb(o)
         # Un sol, un mur ou un plafond n'a pas à « poser » sur quoi que ce soit.
-        # `urinoir` non plus : un `sanitaire_urinoir*` est mural par nature, sa
-        # bbox commence à 0,55 m du sol — le signaler « flottant » serait un
-        # faux positif systématique, pas un défaut de placement.
+        # `urinoir` non plus : un `sanitaire_urinoir*` est mural. Les étagères
+        # sont elles aussi volontairement élevées et portées par le rayonnage.
         if any(mot in o.name for mot in ("sol", "mur", "plafond", "rampe", "quai", "mezzanine",
-                                         "urinoir", "linteau", "puits", "comptoir")):
+                                         "urinoir", "etagere", "linteau", "puits", "comptoir")):
             continue
         if maxi.z - mini.z > 3.0:          # pilier, rack, portique : posés autrement
             continue

@@ -1615,6 +1615,7 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
       ammo === null &&
       !cameras &&
       name !== "use_pointeuse" &&
+      name !== "use_sav_sonnette" &&
       name !== "use_douche_1" &&
       name !== "use_douche_2"
     ) {

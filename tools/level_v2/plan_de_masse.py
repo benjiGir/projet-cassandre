@@ -229,17 +229,16 @@ SPACES: list[Space] = [
     Space(
         id="electro", nom="Électroménager / TV",
         x=(10, 46), y=(48, 80), z=0, hauteur=5.0, densite="elevee",
-        role="Carte Or, mur d'écrans",
+        role="Exploration, butin et mur d’écrans",
         duree="1:00", arrivee=(11, 62),
         ennemis="5 Costards, dont 2 derrière le mur d'écrans",
         spawns=[("suit_el1", 20, 52, "cabine de démonstration"), ("suit_el2", 32, 54, None), ("suit_el3", 40, 62, None),
                 ("suit_el4", 26, 74, None), ("suit_el5", 38, 76, None)],
         notes=[
             "Mur d'écrans : géométrie posée, le rendu dans une texture reste hors scope (reliquat Phase 5).",
-            "Carte Or dans la cabine de démonstration du coin nord-est, ouverte au sud, devant le téléviseur.",
+            "Cabine de démonstration nord-est ouverte au sud ; la carte Or se récupère au parking du personnel.",
         ],
         reperes=[
-            ("carte Or", 43, 75.25, "carte"),
             ("boîte de munitions +24", 14, 52, "munitions"),
             ("trousse de soin +25", 40, 62, "soin"),
             ("mur d'écrans", 30, 50, "objet"),
@@ -248,16 +247,16 @@ SPACES: list[Space] = [
     Space(
         id="reserve", nom="Réserve / quai",
         x=(-24, 20), y=(96, 132), z=0, hauteur=8.0, densite="moyenne",
-        role="Verticalité (mezzanine), gros combat, accès au parking souterrain",
+        role="Combat dans le stock, quai ouest surélevé et accès direct au personnel",
         duree="1:15", arrivee=(0, 98),
         ennemis="7 Costards, dont 2 sur la mezzanine (le pathfinding 2.5D les gère depuis M4)",
-        spawns=[("suit_rs1", -16, 108, None), ("suit_rs2", 12, 110, None), ("suit_rs3", -8, 118, None),
+        spawns=[("suit_rs1", -16, 108, None), ("suit_rs2", 12, 110, None), ("suit_rs3", -2, 118, "rack est"),
                 ("suit_rs4", 6, 120, None), ("suit_rs5", -20, 126, None), ("suit_rs6", -12, 128, None),
-                ("suit_rs7", 14, 128, None)],
+                ("suit_rs7", 14, 125, None)],
         notes=[
             "Racks de 6 m : couvert réel, un Costard posté derrière reste `idle` (ADR 0025).",
             "Mezzanine au nord, z=3.0 — rien de praticable dessous (contrainte de colonne).",
-            "La rampe de quai descend au parking souterrain ; son dessous est plein.",
+            "Le quai plein reste à l’ouest ; une allée au sol rejoint le personnel au nord-est.",
         ],
         # Au sud, jamais sous la mezzanine : le plus gros combat du niveau.
         reperes=[
@@ -268,19 +267,20 @@ SPACES: list[Space] = [
     ),
     Space(
         id="souterrain", nom="Parking souterrain",
-        x=(28, 76), y=(92, 124), z=-6.0, hauteur=3.5, densite="faible",
-        role="Tension, embuscade entre les piliers",
-        duree="1:00", arrivee=(30, 116),
+        x=(30, 78), y=(92, 124), z=-6.0, hauteur=3.5, densite="faible",
+        role="Récupérer la carte Or près de la voiture de fonction, puis revenir au personnel",
+        duree="1:00", arrivee=(42, 122),
         ennemis="6 Costards, dispersés entre les piliers — la seule zone où l'occlusion fait tout le travail",
-        spawns=[("suit_so1", 40, 100, None), ("suit_so2", 52, 104, None), ("suit_so3", 64, 110, None),
-                ("suit_so4", 44, 116, "pilier"), ("suit_so5", 58, 118, None), ("suit_so6", 70, 114, None)],
+        spawns=[("suit_so1", 42.0, 100, None), ("suit_so2", 54.0, 104, None), ("suit_so3", 66.0, 110, None),
+                ("suit_so4", 47.25, 117.75, "pilier à 46, 119"), ("suit_so5", 60.0, 118, None), ("suit_so6", 72.0, 114, None)],
         notes=[
             "Hauteur 3,5 m, piliers tous les 8 m : pénombre, portée de vue coupée en permanence.",
             "Décalé à l'est de la réserve, jamais SOUS un espace praticable (contrainte de colonne).",
         ],
         reperes=[
-            ("boîte de munitions +24", 40, 104, "munitions"),
-            ("trousse de soin +25", 64, 110, "soin"),
+            ("carte Or", 67, 117.5, "carte"),
+            ("boîte de munitions +24", 42.0, 104, "munitions"),
+            ("trousse de soin +25", 66.0, 110, "soin"),
         ],
     ),
     Space(
@@ -378,22 +378,22 @@ SPACES: list[Space] = [
     # docs/assets/coulisses-plan-v2.py (mutations reportées ici en dur).
     Space(
         id="pc_secu", nom="PC sécurité",
-        x=(34, 46), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
+        x=(20, 32), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
         role="Entrée vitrée depuis le couloir, sas d'accueil et guichet intérieur face au poste des caméras.",
-        duree="0:30", arrivee=(40, 141),
+        duree="0:30", arrivee=(24, 141),
         ennemis="aucun — le vigile dort",
-        reperes=[("console caméras (E)", 38.3, 149.3, "objet"), ("guichet vitré", 40.5, 144.3, "objet"),
-                 ("donuts +5", 44.65, 146, "nourriture", 0.95)],
+        reperes=[("console caméras (E)", 24.299999999999997, 149.3, "objet"), ("guichet vitré", 26.5, 144.3, "objet"),
+                 ("donuts +5", 30.65, 146, "nourriture", 0.95)],
     ),
     Space(
         id="vestiaires", nom="Vestiaires + pointeuse",
-        x=(20, 34), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
+        x=(32, 46), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",
         role="Pointeuse (gag), rangées de casiers, douches ; casier du vigile cadenassé (à casser)",
-        duree="0:30", arrivee=(27, 141),
+        duree="0:30", arrivee=(36, 141),
         ennemis="1 Costard entre les casiers",
-        spawns=[("suit_vs1", 26.33, 146.2, "banque sud (fente visible, 1,82 m)")],
-        reperes=[("pointeuse (E)", 25, 151, "objet"), ("casier du vigile (cassable)", 21, 150, "objet"),
-                 ("sandwich +10", 30, 148, "nourriture")],
+        spawns=[("suit_vs1", 38.33, 146.2, "banque sud (fente visible, 1,82 m)")],
+        reperes=[("pointeuse (E)", 37.0, 151, "objet"), ("casier du vigile (cassable)", 33.0, 150, "objet"),
+                 ("sandwich +10", 42.0, 148, "nourriture")],
     ),
     Space(
         id="fournil", nom="Fournil / rôtisserie",
@@ -407,10 +407,10 @@ SPACES: list[Space] = [
     ),
     Space(
         id="gaine", nom="Gaine VMC",
-        x=(20, 46), y=(152, 154), z=2.0, hauteur=2.0, densite="faible",
+        x=(20, 32), y=(152, 154), z=2.0, hauteur=2.0, densite="faible",
         role="Route parallèle du fournil au PC sécurité, cache à mi-chemin",
         grimpable=True,
-        reperes=[("cache gaine (munitions +24)", 30, 153, "munitions")],
+        reperes=[("cache gaine (munitions +24)", 26, 153, "munitions")],
     ),
     Space(
         id="labo", nom="Labo boucherie / marée",
@@ -434,10 +434,10 @@ SPACES: list[Space] = [
     Space(
         id="compacteur", nom="Local compacteur",
         x=(-36, -24), y=(112, 128), z=0, hauteur=5.0, densite="faible",
-        role="Répit, un projecteur. Grille sur le quai (déjà traversé), porte à sens unique vers la réserve. Balles de carton",
+        role="Répit, un projecteur. Deux rideaux manuels vers le couloir de service et la réserve. Balles de carton",
         duree="0:20", arrivee=(-35, 120),
         ennemis="aucun",
-        reperes=[("bouton compacteur (E)", -34, 114, "objet"), ("grille sur le quai", -24.25, 120, "objet"),
+        reperes=[("bouton compacteur (E)", -34, 114, "objet"), ("rideau vers la réserve", -24.25, 116, "objet"),
                  ("balle mal cerclée", -32, 127, "objet")],
     ),
     Space(
@@ -448,19 +448,17 @@ SPACES: list[Space] = [
     ),
     Space(
         id="sav", nom="Atelier SAV",
-        # Bord est du couloir de la porte coupe-feu, au nord de la chambre
-        # froide : on l'atteint en longeant le couloir après en être sorti.
-        # La façade commune avec la chambre froide reste un mur plein.
-        x=(-54, -44), y=(116, 136), z=0, hauteur=3.5, densite="elevee",
-        role="Atelier SAV sur le couloir coupe-feu : guichet, établis, mur de réglage",
-        duree="0:30", arrivee=(-45, 118),
+        # Entre la réserve et le personnel ; le parking est décalé à l’est.
+        x=(20, 30), y=(112, 132), z=0, hauteur=3.5, densite="elevee",
+        role="Atelier de retours entre réserve et personnel : guichet, établis, mur de réglage",
+        duree="0:30", arrivee=(21, 130),
         ennemis="2 Costards derrière les établis",
-        spawns=[("suit_sv1", -51.2, 122, "devant l'établi ouest"),
-                ("suit_sv2", -51.2, 130, "devant l'établi est")],
-        reperes=[("guichet + sonnette (E)", -45.75, 124.25, "objet"),
-                 ("mur de TV", -53.5, 126, "objet"),
-                 ("micro-ondes", -48.65, 122.47, "objet")],
-        notes=["Porte sur le couloir coupe-feu seulement ; façade sud scellée avec la chambre froide."],
+        spawns=[("suit_sv1", 27.2, 126, "devant l'établi ouest"),
+                ("suit_sv2", 27.2, 118, "devant l'établi est")],
+        reperes=[("guichet + sonnette (E)", 21.75, 123.75, "objet"),
+                 ("mur de TV", 29.5, 122, "objet"),
+                 ("micro-ondes", 24.65, 125.53, "objet")],
+        notes=["Entrée ouest depuis la réserve et entrée nord depuis le personnel ; mur plein côté parking."],
     ),
 ]
 
@@ -479,14 +477,11 @@ CORRIDORS: list[Space] = [
     Space(id="c_hb_rs", nom="Sas carte Argent", x=(-6, 6), y=(92, 96), z=0, hauteur=4.0,
           role="hub → réserve, porte carte Argent", couloir=True, densite="faible",
           reperes=[("porte Argent", 0, 94, "porte")]),
-    Space(id="c_rs_so", nom="Rampe de quai", x=(20, 28), y=(104, 116), z=-6.0, hauteur=4.0,
-          role="réserve (z=0) → parking souterrain (z=-6), descend vers l'est, 37°",
-          couloir=True, densite="faible", rampe=("+x", 0.0, -6.0)),
-    Space(id="c_so_bu", nom="Rampe de sortie", x=(36, 44), y=(124, 132), z=-6.0, hauteur=4.0,
-          role="parking souterrain (z=-6) → couloir des bureaux (z=0), remonte vers le nord, 37°",
+    Space(id="c_so_bu", nom="Escalier piéton du parking", x=(38, 46), y=(124, 132), z=-6.0, hauteur=4.0,
+          role="personnel ↔ parking (z=-6), escalier piéton vers la carte Or",
           couloir=True, densite="faible", rampe=("+y", -6.0, 0.0)),
-    Space(id="c_bu", nom="Couloir du personnel", x=(0, 44), y=(132, 140), z=0, hauteur=4.0,
-          role="rampe de sortie → escalier des bureaux (porte carte Or) et couloir de service",
+    Space(id="c_bu", nom="Couloir du personnel", x=(0, 46), y=(132, 140), z=0, hauteur=4.0,
+          role="réserve → locaux du personnel, parking obligatoire pour la carte Or, puis bureaux",
           couloir=True, densite="faible",
           reperes=[("porte Or", 5, 140, "porte")]),
     Space(id="c_escalier", nom="Escalier des bureaux", x=(2, 8), y=(140, 150), z=0.0, hauteur=3.0,
@@ -791,8 +786,7 @@ class Opening:
 # à carte, et la progression du niveau tomberait. Le contrôle des goulots
 # ci-dessous vérifie que ces murs tiennent réellement.
 JONCTIONS_SCELLEES: set[frozenset[str]] = {
-    frozenset({"reserve", "c_bu"}),        # les bureaux ne s'atteignent que par le souterrain
-    frozenset({"reserve", "c_short_ramp"}), # idem, côté raccourci
+    frozenset({"reserve", "c_short_ramp"}), # le personnel ne traverse pas le quai ouest
     # Coulisses v2 : la vitre labo/rayons est une baie VUE, pas une porte —
     # sceller la façade brute pour que build_niveau.py y pose du verre, pas
     # une ouverture franchissable. reserve↔labo et reserve↔chambre_froide ne
@@ -801,7 +795,8 @@ JONCTIONS_SCELLEES: set[frozenset[str]] = {
     frozenset({"rayons", "labo"}),
     frozenset({"reserve", "labo"}),
     frozenset({"reserve", "chambre_froide"}),
-    frozenset({"chambre_froide", "sav"}),  # deux salles distinctes, chacune ouverte sur le couloir
+    frozenset({"sav", "souterrain"}),  # aucune chute directe depuis le SAV
+    frozenset({"fournil", "pc_secu"}),  # liaison uniquement par la gaine
     # Secret 4 : n'entre QUE par le compacteur (la balle mal cerclée), jamais
     # en coupant depuis le couloir de service ou la porte coupe-feu.
     frozenset({"c_short_ramp", "secret4"}),
@@ -839,17 +834,14 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     frozenset({"c_short_w", "rayons"}): (2.5, -42.5),     # la porte coupe-feu
     # Coulisses v2 : le PC arrive depuis le couloir, sans porte latérale vers
     # les vestiaires ; ceux-ci gardent leur accès depuis le couloir du personnel.
-    frozenset({"c_bu", "pc_secu"}): (1.5, 38.0),
-    frozenset({"c_bu", "vestiaires"}): (1.5, 24.0),
-    frozenset({"vestiaires", "fournil"}): (1.5, 145.0),
+    frozenset({"c_bu", "pc_secu"}): (1.5, 24.0),
+    frozenset({"c_bu", "vestiaires"}): (1.5, 36.0),
     frozenset({"c_bu", "fournil"}): (2.0, 16.0),
     # Gaine VMC, prise depuis le plan de travail du fournil, débouchant au PC
     # sécurité : route parallèle au couloir du personnel.
     frozenset({"fournil", "gaine"}): (1.5, 153.0),
-    # Décalé à 44,75 (et non 44,0) : la salle des moniteurs du pilote v2 loge
-    # sa baie d'écrans mur à mur contre le mur nord jusqu'à x = 43,9, le
-    # raccord de gaine prend le reste, contre le mur est.
-    frozenset({"pc_secu", "gaine"}): (1.5, 44.75),
+    # Le raccord VMC reste dans le passage technique, à l’est du poste.
+    frozenset({"pc_secu", "gaine"}): (1.5, 30.75),
     # Labo boucherie/marée collé aux rayons (vitre, section 4.2 du board) et
     # relié à la chambre froide par le rail et le rideau à lanières.
     frozenset({"c_short_w", "labo"}): (2.0, 91.0),
@@ -860,13 +852,14 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     frozenset({"c_short_w", "compacteur"}): (2.5, 122.0),
     frozenset({"compacteur", "reserve"}): (2.5, 116.0),
     frozenset({"compacteur", "secret4"}): (1.5, -32.0),
-    # Entrée du SAV depuis le couloir coupe-feu, après la chambre froide.
-    frozenset({"c_short_w", "sav"}): (1.5, 118.0),
+    # Réserve → personnel à niveau ; SAV accessible sur ses deux façades.
+    frozenset({"reserve", "c_bu"}): (4.0, 8.0),
+    frozenset({"reserve", "sav"}): (1.5, 130.0),
+    frozenset({"sav", "c_bu"}): (1.5, 21.0),
 }
 
 PORTES_SENS_UNIQUE: dict[frozenset[str], tuple[str, str]] = {
     frozenset({"c_short_w", "rayons"}): ("c_short_w", "rayons"),
-    frozenset({"compacteur", "reserve"}): ("compacteur", "reserve"),
 }
 
 

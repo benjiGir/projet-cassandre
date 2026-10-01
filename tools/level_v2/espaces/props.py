@@ -70,8 +70,8 @@ PROPS_PHYSIQUES: dict[str, tuple] = {
     "reserve": ((-5.0, 102.0, "caisse"), (-5.0, 112.0, "caisse", 2),
                 (-19.0, 110.0, "caisse"), (12.0, 104.0, "carton_grand"),
                 (14.0, 118.0, "carton", 2)),
-    "souterrain": ((30.5, 102.0, "casier"), (46.0, 110.0, "caisse"),
-                   (58.0, 96.5, "carton")),
+    "souterrain": ((32.5, 102.0, "casier"), (48.0, 110.0, "caisse"),
+                   (60.0, 96.5, "carton")),
     "bureaux": ((-17.0, 152.0, "carton", 2), (6.5, 157.0, "carton_grand"),
                 (-6.0, 163.0, "caisse")),
     # Des cartons d'archives sur le chemin de la porte Or : le couloir est

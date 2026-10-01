@@ -26,6 +26,9 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `orient_office_screens(preview=…)` | tourne écran et clavier vers le fauteuil des postes de bureau ; correction locale avec sauvegarde, ou candidat séparé si `preview` est fourni |
 | `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
 
+| `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
+| `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
+
 `where` lit le relevé écrit par le dernier `build()` dans
 `renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par
 `provenance.py` (`sys.monitoring` sur `CollectionObjects.link`), sans rien

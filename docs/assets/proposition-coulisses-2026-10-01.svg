@@ -1,0 +1,266 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1660" height="1180" viewBox="0 0 1660 1180" role="img" aria-labelledby="title desc">
+<title id="title">Alternative d'agencement : réserve, coulisses et bureaux</title>
+<desc id="desc">Le quai est regroupé à l'ouest. La réserve rejoint directement le couloir du personnel au rez-de-chaussée. Le joueur descend au parking pour récupérer la carte Or près d'une voiture de fonction, puis revient ouvrir l'escalier des bureaux. Le SAV rejoint le flanc est de la réserve.</desc>
+<defs>
+<pattern id="grid" width="70" height="70" patternUnits="userSpaceOnUse"><path d="M70 0H0V70" fill="none" stroke="#2a3947" stroke-width=".8"/></pattern>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#f4b35f"/></marker>
+<marker id="blueArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#7eb7f7"/></marker>
+<marker id="tealArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#6ed6bd"/></marker>
+</defs>
+<style>text{font-family:Arial,Helvetica,sans-serif} .room{stroke-width:2} .note{font-size:16px;fill:#a4b7c8} .small{font-size:13px;fill:#a4b7c8}</style>
+<rect width="1660" height="1180" fill="#111923"/>
+
+<text x="48" y="48" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="start">PROJET CASSANDRE / ALTERNATIVE D’AGENCEMENT</text>
+<text x="48" y="91" font-size="36" fill="#edf2f6" font-weight="700" text-anchor="start">Une aile de service reliée à la réserve</text>
+<text x="48" y="122" font-size="19" fill="#a4b7c8" font-weight="400" text-anchor="start">Le personnel distribue les locaux ; le parking contient la carte nécessaire pour monter aux bureaux.</text>
+<rect x="1375" y="46" width="237" height="37" rx="18" fill="#28364a" />
+<text x="1493" y="70" font-size="13" fill="#edf2f6" font-weight="700" text-anchor="middle">VARIANTE B · 01 OCT. 2026</text>
+<rect x="48" y="145" width="1564" height="124" rx="12" fill="#192532" />
+<text x="70" y="177" font-size="12" fill="#a4b7c8" font-weight="700" text-anchor="start">ANCIEN</text>
+<text x="208" y="178" font-size="19" fill="#a4b7c8" font-weight="400" text-anchor="start">Réserve   →   Parking −6 m   →   Personnel   →   Escalier   →   Bureaux +4 m</text>
+<text x="70" y="218" font-size="12" fill="#f4b35f" font-weight="700" text-anchor="start">RETENU</text>
+<text x="208" y="219" font-size="20" fill="#f4b35f" font-weight="700" text-anchor="start">Réserve → Personnel → Parking / carte Or → Retour personnel → Bureaux → Directeur</text>
+<text x="208" y="248" font-size="16" fill="#7eb7f7" font-weight="400" text-anchor="start">Objectif obligatoire au sous-sol : retrouver la carte Or dans la voiture de fonction d’un cadre.</text>
+<text x="48" y="308" font-size="15" fill="#edf2f6" font-weight="700" text-anchor="start">01 / IMPLANTATION RETENUE</text>
+<text x="1098" y="308" font-size="13" fill="#a4b7c8" font-weight="400" text-anchor="end">Vue de dessus · 1 m = 7 px</text>
+<rect x="48" y="325" width="1050" height="686" rx="12" fill="#192532" />
+<rect x="62" y="339" width="1022" height="654" rx="8" fill="url(#grid)" />
+<rect x="192" y="354" width="98" height="140" rx="0" fill="#c4a0ff" stroke="#c4a0ff" fill-opacity=".13" class="room"/>
+<text x="241" y="389" font-size="14" fill="#c4a0ff" font-weight="700" text-anchor="middle">Bureau du</text>
+<text x="241" y="408" font-size="14" fill="#c4a0ff" font-weight="700" text-anchor="middle">Directeur</text>
+<text x="241.0" y="482" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">+4 m</text>
+<rect x="290" y="354" width="266" height="112" rx="0" fill="#c4a0ff" stroke="#c4a0ff" fill-opacity=".13" class="room"/>
+<text x="423" y="372.8999999999999" font-size="16" fill="#c4a0ff" font-weight="700" text-anchor="middle">BUREAUX · +4 m</text>
+<text x="323.25" y="406.5" font-size="12" fill="#edf2f6" font-weight="400" text-anchor="middle">Sécurité</text>
+<polyline points="356.5,434.5 356.5,354" fill="none" stroke="#7d659d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="389.75" y="406.5" font-size="12" fill="#edf2f6" font-weight="400" text-anchor="middle">Compta.</text>
+<polyline points="423.0,434.5 423.0,354" fill="none" stroke="#7d659d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="456.25" y="406.5" font-size="12" fill="#edf2f6" font-weight="400" text-anchor="middle">RH</text>
+<polyline points="489.5,434.5 489.5,354" fill="none" stroke="#7d659d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="522.75" y="406.5" font-size="12" fill="#edf2f6" font-weight="400" text-anchor="middle">Pause</text>
+<polyline points="290,434.5 556,434.5" fill="none" stroke="#7d659d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="409" y="484.19999999999993" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">Aile surélevée · soubassement fermé</text>
+<polyline points="290,460.75 290,439.75" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="290,460.75 290,439.75" fill="none" stroke="#c4a0ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="230.5,354 251.5,354" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="230.5,354 251.5,354" fill="none" stroke="#f4b35f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="241,363.1000000000001 241,344.19999999999993" fill="none" stroke="#f4b35f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<text x="269" y="347" font-size="11" fill="#f4b35f" font-weight="700" text-anchor="start">SORTIE · Platine</text>
+<rect x="514" y="466" width="42" height="70" rx="0" fill="#c4a0ff" stroke="#c4a0ff" fill-opacity=".13" class="room"/>
+<polyline points="516.8,532.5 553.1999999999999,532.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,529.0 553.1999999999999,529.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,525.5 553.1999999999999,525.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,522.0 553.1999999999999,522.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,518.5 553.1999999999999,518.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,515.0 553.1999999999999,515.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,511.5 553.1999999999999,511.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,508.0 553.1999999999999,508.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,504.5 553.1999999999999,504.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,501.0 553.1999999999999,501.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,497.5 553.1999999999999,497.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,494.0 553.1999999999999,494.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,490.5 553.1999999999999,490.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,487.0 553.1999999999999,487.0" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="516.8,483.5 553.1999999999999,483.5" fill="none" stroke="#967fc0" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="535,532.5 535,473" fill="none" stroke="#c4a0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="479" y="514.3000000000001" font-size="12" fill="#c4a0ff" font-weight="700" text-anchor="end">Escalier</text>
+<text x="479" y="531.8000000000001" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="end">0 → +4 m</text>
+<polyline points="524.5,536 545.5,536" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="524.5,536 545.5,536" fill="none" stroke="#f4b35f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="524.5,466 545.5,466" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="524.5,466 545.5,466" fill="none" stroke="#c4a0ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="248" y="536" width="574" height="56" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="395" y="556.3000000000001" font-size="15" fill="#6ed6bd" font-weight="700" text-anchor="middle">COULOIR DU PERSONNEL · 0 m</text>
+<rect x="192" y="536" width="56" height="392" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<g transform="translate(220,760) rotate(-90)">
+<text x="0" y="0" font-size="12" fill="#6ed6bd" font-weight="700" text-anchor="middle">RETOUR MAGASIN / COUPE-FEU</text>
+</g>
+<rect x="556" y="424" width="84" height="112" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="598.0" y="471.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Fournil</text>
+<text x="598.0" y="490.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Rôtisserie</text>
+<text x="598.0" y="524" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">12 × 16 m</text>
+<rect x="640" y="452" width="84" height="84" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="682.0" y="494.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">PC sécurité</text>
+<text x="682.0" y="524" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">12 × 12 m</text>
+<rect x="724" y="452" width="98" height="84" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="773.0" y="485.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Vestiaires</text>
+<text x="773.0" y="504.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Douches</text>
+<text x="773.0" y="524" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">14 × 12 m</text>
+<rect x="640" y="438" width="84" height="14" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="682" y="448.1499999999999" font-size="10" fill="#6ed6bd" font-weight="700" text-anchor="middle">VMC + cache</text>
+<polyline points="591.0,536 605.0,536" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="591.0,536 605.0,536" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="675.0,536 689.0,536" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="675.0,536 689.0,536" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="766.0,536 780.0,536" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="766.0,536 780.0,536" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="80" y="704" width="112" height="126" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="136.0" y="758.0" font-size="14" fill="#6ed6bd" font-weight="700" text-anchor="middle">Chambre</text>
+<text x="136.0" y="777.0" font-size="14" fill="#6ed6bd" font-weight="700" text-anchor="middle">froide</text>
+<text x="136.0" y="818" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">16 × 18 m</text>
+<rect x="80" y="830" width="112" height="98" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="136.0" y="861.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Labo</text>
+<text x="136.0" y="880.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">boucherie /</text>
+<text x="136.0" y="899.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">marée</text>
+<text x="136.0" y="916" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">16 × 14 m</text>
+<polyline points="192,774.0 192,760.0" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="192,774.0 192,760.0" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="192,886.0 192,872.0" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="192,886.0 192,872.0" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="248" y="620" width="84" height="112" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="290.0" y="667.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">Presse</text>
+<text x="290.0" y="686.0" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">à balles</text>
+<text x="290.0" y="720" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">12 × 16 m</text>
+<polyline points="248,683.0 248,669.0" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="248,683.0 248,669.0" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="248" y="592" width="56" height="28" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="276" y="611.6000000000001" font-size="13" fill="#6ed6bd" font-weight="700" text-anchor="middle">★ 4</text>
+<text x="297" y="634" font-size="11" fill="#a4b7c8" font-weight="400" text-anchor="middle">Planque</text>
+<rect x="332" y="592" width="308" height="252" rx="0" fill="#f4b35f" stroke="#f4b35f" fill-opacity=".13" class="room"/>
+<text x="465" y="756.5" font-size="22" fill="#f4b35f" font-weight="700" text-anchor="middle">RÉSERVE</text>
+<text x="465" y="779.5999999999999" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">44 × 36 m · sol 0 m</text>
+<text x="465" y="799.1999999999999" font-size="11" fill="#a4b7c8" font-weight="400" text-anchor="middle">Racks / combat principal</text>
+<rect x="388" y="718" width="10.5" height="98" rx="2" fill="#8a6a43" stroke="#ba8d50" />
+<rect x="346" y="662" width="10.5" height="28" rx="2" fill="#8a6a43" stroke="#ba8d50" />
+<rect x="528" y="718" width="10.5" height="98" rx="2" fill="#8a6a43" stroke="#ba8d50" />
+<rect x="528" y="662" width="10.5" height="28" rx="2" fill="#8a6a43" stroke="#ba8d50" />
+<rect x="332" y="593.75" width="140" height="61.25" rx="0" fill="#f4b35f" stroke="#f4b35f" fill-opacity=".13" class="room"/>
+<text x="402" y="634" font-size="13" fill="#f4b35f" font-weight="700" text-anchor="middle">QUAI · +3 m</text>
+<rect x="388" y="655" width="84" height="56" rx="0" fill="#f4b35f" stroke="#f4b35f" fill-opacity=".13" class="room"/>
+<polyline points="390.09999999999997,704 469.90000000000003,704" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="390.09999999999997,697 469.90000000000003,697" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="390.09999999999997,690 469.90000000000003,690" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="390.09999999999997,683 469.90000000000003,683" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="390.09999999999997,676 469.90000000000003,676" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="390.09999999999997,669 469.90000000000003,669" fill="none" stroke="#7b6247" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="430" y="690" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">Rampe</text>
+<rect x="409" y="602.5" width="28" height="17.5" rx="2" fill="#dbc6a0" />
+<text x="402" y="610.8999999999999" font-size="11" fill="#edf2f6" font-weight="400" text-anchor="middle">Camion à hayon</text>
+<text x="598" y="623.5" font-size="12" fill="#6ed6bd" font-weight="700" text-anchor="middle">PASSAGE</text>
+<text x="598" y="637.5" font-size="12" fill="#6ed6bd" font-weight="700" text-anchor="middle">0 m</text>
+<polyline points="542.0,592 570.0,592" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="542.0,592 570.0,592" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="640" y="592" width="70" height="140" rx="0" fill="#6ed6bd" stroke="#6ed6bd" fill-opacity=".13" class="room"/>
+<text x="675.0" y="653.0" font-size="14" fill="#6ed6bd" font-weight="700" text-anchor="middle">Atelier</text>
+<text x="675.0" y="672.0" font-size="14" fill="#6ed6bd" font-weight="700" text-anchor="middle">SAV</text>
+<text x="675.0" y="720" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">10 × 20 m</text>
+<polyline points="640,611.25 640,600.75" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="640,611.25 640,600.75" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="641.75,592 652.25,592" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="641.75,592 652.25,592" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="710" y="648" width="336" height="224" rx="0" fill="#7eb7f7" stroke="#7eb7f7" fill-opacity=".13" class="room"/>
+<text x="878" y="742.5" font-size="18" fill="#7eb7f7" font-weight="700" text-anchor="middle">PARKING SOUTERRAIN</text>
+<text x="878" y="766.3000000000001" font-size="15" fill="#a4b7c8" font-weight="400" text-anchor="middle">48 × 32 m · −6 m</text>
+<text x="878" y="789.4000000000001" font-size="16" fill="#7eb7f7" font-weight="700" text-anchor="middle">OBJECTIF OBLIGATOIRE</text>
+<text x="878" y="809.6999999999999" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">Piliers, véhicules, soins et munitions</text>
+<rect x="764" y="842" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="764" y="674" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="820" y="842" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="820" y="674" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="876" y="842" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="876" y="674" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="932" y="842" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="932" y="674" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="988" y="842" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="988" y="674" width="4" height="4" rx="0" fill="#7499b7" />
+<rect x="766" y="592" width="56" height="56" rx="0" fill="#7eb7f7" stroke="#7eb7f7" fill-opacity=".13" class="room"/>
+<polyline points="769.5,642.75 818.5,642.75" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,637.5 818.5,637.5" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,632.25 818.5,632.25" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,627.0 818.5,627.0" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,621.75 818.5,621.75" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,616.5 818.5,616.5" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,611.25 818.5,611.25" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="769.5,606.0 818.5,606.0" fill="none" stroke="#466987" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="766.0,592 822.0,592" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="766.0,592 822.0,592" fill="none" stroke="#7eb7f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="794" y="617.1999999999999" font-size="12" fill="#7eb7f7" font-weight="700" text-anchor="middle">Escalier</text>
+<text x="794" y="631.9000000000001" font-size="12" fill="#7eb7f7" font-weight="700" text-anchor="middle">0 / −6</text>
+<polyline points="500,844 500,830 556,830 556,571 535,571 535,543" fill="none" stroke="#111923" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="500,844 500,830 556,830 556,571 535,571 535,543" fill="none" stroke="#f4b35f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="535,464.6000000000001 535,450.25 283,450.25 248,450.25" fill="none" stroke="#111923" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="535,464.6000000000001 535,450.25 283,450.25 248,450.25" fill="none" stroke="#f4b35f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
+<polyline points="570,564 794,564 794,669 976,669 976,679.5" fill="none" stroke="#7eb7f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#blueArrow)"/>
+<polyline points="948,718 948,690 794,690 794,578 570,578" fill="none" stroke="#7eb7f7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 5" marker-end="url(#blueArrow)"/>
+<rect x="960.25" y="652.1999999999999" width="17.5" height="33.6" rx="4" fill="#8195a6" stroke="#edf2f6" stroke-width="1"/>
+<rect x="964.25" y="659.1999999999999" width="9.5" height="12" rx="2" fill="#273749" />
+<rect x="962" y="688.5" width="14" height="10" rx="2" fill="#f4b35f" stroke="#edf2f6" />
+<text x="969" y="696.5" font-size="7" fill="#111923" font-weight="700" text-anchor="middle">OR</text>
+<text x="857" y="705.4000000000001" font-size="12" fill="#f4b35f" font-weight="700" text-anchor="middle">Carte Or · voiture de fonction</text>
+<polyline points="360,581.5 220,581.5 220,921" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="6 5" marker-end="url(#tealArrow)"/>
+<polyline points="209.5,928 230.5,928" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="209.5,928 230.5,928" fill="none" stroke="#6ed6bd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="283" y="906.3000000000001" font-size="11" fill="#a4b7c8" font-weight="400" text-anchor="start">Coupe-feu : ouverture</text>
+<text x="283" y="918.9" font-size="11" fill="#a4b7c8" font-weight="400" text-anchor="start">depuis les coulisses</text>
+<rect x="458" y="872" width="84" height="56" rx="0" fill="#82909d" stroke="#82909d" fill-opacity=".13" class="room"/>
+<text x="500.0" y="900.0" font-size="13" fill="#82909d" font-weight="700" text-anchor="middle">HUB</text>
+<rect x="458" y="844" width="84" height="28" rx="0" fill="#82909d" stroke="#82909d" fill-opacity=".13" class="room"/>
+<polyline points="486.0,858 514.0,858" fill="none" stroke="#111923" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="486.0,858 514.0,858" fill="none" stroke="#c8d1d8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="598" y="858" font-size="11" fill="#edf2f6" font-weight="700" text-anchor="start">CARTE ARGENT</text>
+<text x="598" y="876.1999999999999" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="start">Depuis le magasin</text>
+<text x="143" y="945.5" font-size="12" fill="#a4b7c8" font-weight="700" text-anchor="start">RAYONS / SURFACE DE VENTE</text>
+<text x="878" y="894.4" font-size="11" fill="#7eb7f7" font-weight="400" text-anchor="middle">Sous-sol à l’est : aucun local accessible au-dessus</text>
+<text x="878" y="911.9" font-size="12" fill="#6ed6bd" font-weight="400" text-anchor="middle">SAV = retours de l’électroménager</text>
+<polyline points="1006,401 1006,361" fill="none" stroke="#a4b7c8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1006,361 1000,371" fill="none" stroke="#a4b7c8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="1006,361 1012,371" fill="none" stroke="#a4b7c8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1006" y="351" font-size="13" fill="#a4b7c8" font-weight="700" text-anchor="middle">N</text>
+<polyline points="908,977 978,977" fill="none" stroke="#edf2f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="908,972 908,982" fill="none" stroke="#edf2f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="978,972 978,982" fill="none" stroke="#edf2f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="943" y="965" font-size="12" fill="#a4b7c8" font-weight="400" text-anchor="middle">10 m</text>
+<text x="1132" y="308" font-size="15" fill="#edf2f6" font-weight="700" text-anchor="start">02 / CE QUI CHANGE</text>
+<rect x="1132" y="332" width="480" height="154" rx="10" fill="#192532" />
+<text x="1185" y="367" font-size="19" fill="#edf2f6" font-weight="700" text-anchor="start">Une liaison de plain-pied</text>
+<text x="1153" y="397" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Quai et camion regroupés à l’ouest.</text>
+<text x="1153" y="420" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Le côté est de la réserve rejoint</text>
+<text x="1153" y="443" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">directement le couloir du personnel.</text>
+<text x="1153" y="466" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Passage utile visé : au moins 4 m.</text>
+<rect x="1132" y="500" width="480" height="154" rx="10" fill="#192532" />
+<text x="1185" y="535" font-size="19" fill="#edf2f6" font-weight="700" text-anchor="start">Les bureaux au bout du service</text>
+<text x="1153" y="565" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">La porte Or protège l’escalier.</text>
+<text x="1153" y="588" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Le joueur monte de 0 à +4 m,</text>
+<text x="1153" y="611" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">traverse les bureaux et rejoint</text>
+<text x="1153" y="634" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">le Directeur puis la sortie Platine.</text>
+<rect x="1132" y="668" width="480" height="154" rx="10" fill="#192532" />
+<text x="1185" y="703" font-size="19" fill="#edf2f6" font-weight="700" text-anchor="start">Le parking porte un objectif</text>
+<text x="1153" y="733" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Carte Or dans la voiture d’un cadre.</text>
+<text x="1153" y="756" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Descente, traversée et embuscade.</text>
+<text x="1153" y="779" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Retour au personnel pour les bureaux.</text>
+<text x="1153" y="802" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Indice au PC sécurité et au verrou Or.</text>
+<rect x="1132" y="836" width="480" height="154" rx="10" fill="#192532" />
+<text x="1185" y="871" font-size="19" fill="#edf2f6" font-weight="700" text-anchor="start">Les pièces retrouvent leur fonction</text>
+<text x="1153" y="901" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Le SAV rejoint le flanc est du stock.</text>
+<text x="1153" y="924" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">PC sécurité et vestiaires sont voisins.</text>
+<text x="1153" y="947" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Fournil, froid et labo restent</text>
+<text x="1153" y="970" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">dans les coulisses au rez-de-chaussée.</text>
+<rect x="48" y="1034" width="1564" height="108" rx="12" fill="#192532" />
+<text x="70" y="1065" font-size="13" fill="#edf2f6" font-weight="700" text-anchor="start">LECTURE DU PLAN</text>
+<rect x="230" y="1051" width="16" height="16" rx="3" fill="#f4b35f" />
+<text x="256" y="1065" font-size="15" fill="#edf2f6" font-weight="400" text-anchor="start">Réserve / parcours principal</text>
+<rect x="595" y="1051" width="16" height="16" rx="3" fill="#6ed6bd" />
+<text x="621" y="1065" font-size="15" fill="#edf2f6" font-weight="400" text-anchor="start">Coulisses · 0 m</text>
+<rect x="845" y="1051" width="16" height="16" rx="3" fill="#c4a0ff" />
+<text x="871" y="1065" font-size="15" fill="#edf2f6" font-weight="400" text-anchor="start">Bureaux · +4 m</text>
+<rect x="1110" y="1051" width="16" height="16" rx="3" fill="#7eb7f7" />
+<text x="1136" y="1065" font-size="15" fill="#edf2f6" font-weight="400" text-anchor="start">Parking · −6 m</text>
+<text x="70" y="1095" font-size="16" fill="#a4b7c8" font-weight="400" text-anchor="start">Argent → réserve et coulisses  ·  Or → étage administratif  ·  Platine → sortie après le Directeur</text>
+<text x="70" y="1122" font-size="14" fill="#a4b7c8" font-weight="400" text-anchor="start">Carte Or déplacée de l’électroménager au parking. Bleu plein : aller ; bleu pointillé : retour avec la carte. Implantation intégrée au niveau le 01/10/2026.</text>
+<circle cx="535" cy="536" r="14" fill="#f4b35f" stroke="#111923" stroke-width="3"/>
+<text x="535" y="541" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">2</text>
+<circle cx="556" cy="592" r="14" fill="#6ed6bd" stroke="#111923" stroke-width="3"/>
+<text x="556" y="597" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">1</text>
+<circle cx="675" cy="718" r="14" fill="#6ed6bd" stroke="#111923" stroke-width="3"/>
+<text x="675" y="723" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">4</text>
+<circle cx="794" cy="592" r="14" fill="#7eb7f7" stroke="#111923" stroke-width="3"/>
+<text x="794" y="597" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">3</text>
+<circle cx="1158" cy="361" r="14" fill="#6ed6bd" stroke="#111923" stroke-width="3"/>
+<text x="1158" y="366" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">1</text>
+<circle cx="1158" cy="529" r="14" fill="#f4b35f" stroke="#111923" stroke-width="3"/>
+<text x="1158" y="534" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">2</text>
+<circle cx="1158" cy="697" r="14" fill="#7eb7f7" stroke="#111923" stroke-width="3"/>
+<text x="1158" y="702" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">3</text>
+<circle cx="1158" cy="865" r="14" fill="#6ed6bd" stroke="#111923" stroke-width="3"/>
+<text x="1158" y="870" font-size="16" fill="#111923" font-weight="700" text-anchor="middle">4</text>
+</svg>

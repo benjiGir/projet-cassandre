@@ -2,7 +2,7 @@
 title: Plan Les coulisses
 tags: [niveau, assets, plan]
 status: brouillon
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 
 # Plan « Les coulisses » (validé le 2026-09-26)
@@ -10,9 +10,21 @@ updated: 2026-09-30
 Enrichir le couloir du personnel / raccourci / couloir de service (92 m vides)
 par 6 pièces + 1 secret, et ajouter 3 systèmes réutilisés dans tout le niveau.
 
-Cotes : `docs/assets/coulisses-plan.diff` (à appliquer à
-`tools/level_v2/plan_de_masse.py` ; retirer le surlignage `NOUVEAUX` du SVG,
-renommer `&` en « et » déjà fait). Contrôles du plan : tous OK.
+Cotes actuelles : `tools/level_v2/plan_de_masse.py`. Le fichier
+`docs/assets/coulisses-plan.diff` conserve la première implantation de
+septembre ; les changements d’octobre sont décrits ci-dessous.
+
+## Implantation retenue le 1er octobre 2026
+
+L’utilisateur a approuvé la liaison réserve → personnel, avec un objectif
+obligatoire au parking : la carte Or près de la voiture de direction, puis
+retour à l’escalier administratif. PC et vestiaires sont permutés, SAV
+sur le flanc est de la réserve, gaine raccourcie, parking décalé de 2 m.
+La source Blender et le GLB ont été mis à jour localement.
+[Plan et compte rendu](../journal/alternative-coulisses-2026-10.md).
+Les descriptions datées de l’implantation précédente ci-dessous restent
+historiques ; le plan de masse est la référence pour les nouvelles cotes.
+N10 reste ouvert pour le retour de jeu.
 
 ## Pièces (z = 0)
 A vestiaires (casiers E) · B fournil (farine cassable, poulet) · C PC sécurité

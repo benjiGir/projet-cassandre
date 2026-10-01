@@ -102,14 +102,13 @@ def echelle(props, col_coll):
 def installer(props, col_coll):
     blue, yellow = "aplat:#1f5fbf", "aplat:#f2c230"
     # Minces plaques de peinture contre la coque ; aucun nouveau mur solide.
-    for tag, y, color in (("sav", 118, blue), ("froid", 107, yellow)):
+    for tag, y, color in (("froid", 107, yellow),):
         H.boxes("csw_rep_cadre_" + tag, [
             ((-43.742, y - 1.5, 0, -43.72, y - .75, 2.7), color),
             ((-43.742, y + .75, 0, -43.72, y + 1.5, 2.7), color),
             ((-43.742, y - 1.5, 2.35, -43.72, y + 1.5, 2.7), color),
         ], "palette", props, subdiv=.75)
         face("csw_rep_nom_" + tag, tag, (-43.71, y - 1.5, 2.36), 3, .375, props, "+x")
-    enseigne("sav", 116.5, 1.2, props)
     enseigne("technique", 105.5, 1.8, props)
 
     # Chantier froid à l'est, hors des passages et des portes battantes.

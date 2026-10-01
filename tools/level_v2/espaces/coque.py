@@ -35,7 +35,6 @@ COQUE = {
     "bureaux": ("sol_moquette", "mur_platre", "plafond_dalles"),
     # Les rampes du souterrain sont des rampes de PARKING : même béton que le
     # parking qu'elles desservent, pas le terrazzo de la galerie marchande.
-    "c_rs_so": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
     "c_so_bu": ("sol_beton_brut", "mur_platre_use", "sol_beton_brut"),
     # Le secteur réservé au personnel (couloir de direction, montée et couloir
     # de service) prend la matière de la réserve : on sort de la surface de

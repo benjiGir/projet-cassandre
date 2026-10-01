@@ -439,12 +439,12 @@ def volumes(space, materiaux, coll, col_coll) -> int:
         for i in range(2):
             rx = x0 + 8 + i * 20
             poser(f"rack_rs{i}a", (rx, y0 + 4, z), (1.5, 14.0, 6.0))
-            poser(f"rack_rs{i}b", (rx, y0 + 22, z), (1.5, 10.0, 6.0))
+            poser(f"rack_rs{i}b", (-22.0 if i == 0 else rx, y0 + 22, z), (1.5, 4.0, 6.0))
         # Plateforme nord, PLEINE : une mezzanine sur pilotis mettrait deux
         # sols praticables dans la même colonne (contrainte du pathfinding
         # 2.5D). Un quai surélevé donne la même verticalité sans le défaut.
-        poser("plateforme_rs", (x0, y1 - 9, z), (x1 - x0, 8.75, 3.0))
-        pente("rampe_plateforme_rs", (x0 + 16, x0 + 28), (y1 - 17, y1 - 9),
+        poser("plateforme_rs", (x0, y1 - 9, z), (20.0, 8.75, 3.0))
+        pente("rampe_plateforme_rs", (x0 + 8, x0 + 20), (y1 - 17, y1 - 9),
               z, z + 3.0, "+y", materiaux, coll, col_coll)
         poses += 1
 
@@ -701,7 +701,7 @@ def _z_du_sol(space, x: float, y: float) -> float:
 
 
 def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
-                  sauter: frozenset = frozenset()) -> dict:
+                  sauter: frozenset = frozenset(), ids=None) -> dict:
     """Pose les repères de gameplay déclarés par le plan.
 
     `sauter` liste des `cible` de `REGLES_REPERES` à NE PAS poser — l'habillage
@@ -710,6 +710,8 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
     """
     comptes = {"spawn": 0, "use": 0, "secret": 0, "signature": 0, "nourriture": 0}
     for space in plan.ALL:
+        if ids is not None and space.id not in ids:
+            continue
         compteurs: dict[str, int] = {}
         for label, rx, ry, nature, *altitude in space.reperes:
             regle = next((r for r in REGLES_REPERES if r[0] in label), None)

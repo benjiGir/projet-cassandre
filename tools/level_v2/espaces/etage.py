@@ -9,6 +9,7 @@ import bpy
 
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
+import lib_backstage_route as BR
 import lib_helpers as H           # noqa: E402
 import lib_bureaux as B           # noqa: E402
 import lib_electro as E           # noqa: E402
@@ -36,7 +37,7 @@ from espaces.portes import EP_VANTAIL, _bequilles, _monde, vantail
 ES_MARCHES = 20
 
 
-def habiller_escalier(space, gris, props, col_coll, logic) -> dict:
+def habiller_escalier(space, gris, props, col_coll, logic, marches_count=ES_MARCHES, prefixe="escalier") -> dict:
     x0, x1 = space.x
     y0, y1 = space.y
     sens, z0, z1 = space.rampe
@@ -45,12 +46,12 @@ def habiller_escalier(space, gris, props, col_coll, logic) -> dict:
     rampe = bpy.data.objects.get(f"sol_{space.id}")
     if rampe is not None:
         bpy.data.objects.remove(rampe, do_unlink=True)
-    giron = (y1 - y0) / ES_MARCHES
-    contre = (z1 - z0) / ES_MARCHES
+    giron = (y1 - y0) / marches_count
+    contre = (z1 - z0) / marches_count
     marches = [((x0 + t, y0 + k * giron, z0 - bo.EPAISSEUR_SOL,
                  x1 - t, y0 + (k + 1) * giron, z0 + (k + 0.5) * contre), "world")
-               for k in range(ES_MARCHES)]
-    marches_obj = H.boxes("escalier_marches", marches, "mur_platre_use", props)
+               for k in range(marches_count)]
+    marches_obj = H.boxes(f"{prefixe}_marches", marches, "mur_platre_use", props)
     # Même jeu d'attributs que les murs de la cage (qui portent `Col`) : sans
     # lui, la fusion au chargement les laisse dans deux lots séparés.
     couleur = marches_obj.data.color_attributes.new(name="Col", type="BYTE_COLOR", domain="POINT")
@@ -59,15 +60,15 @@ def habiller_escalier(space, gris, props, col_coll, logic) -> dict:
     # et celle de la marche se battaient sur chaque marche.
     nez = [((x0 + t, y0 + k * giron - 0.01, z0 + (k + 0.5) * contre - 0.03,
              x1 - t, y0 + k * giron + 0.04, z0 + (k + 0.5) * contre + 0.005), "trim:corniere")
-           for k in range(ES_MARCHES)]
-    H.boxes("escalier_nez", nez, "trim_hypermarche", props)
+           for k in range(marches_count)]
+    H.boxes(f"{prefixe}_nez", nez, "trim_hypermarche", props)
     # Mains courantes le long des deux murs, parallèles à la pente.
     for i, (a, b) in enumerate(((x0 + t, x0 + t + 0.08), (x1 - t - 0.08, x1 - t))):
-        bo.dalle_inclinee(f"escalier_main_courante_{i}", (a, b), (y0, y1),
+        bo.dalle_inclinee(f"{prefixe}_main_courante_{i}", (a, b), (y0, y1),
                           z0 + 0.9, z1 + 0.9, sens, 0.06,
                           H.textured_material("metal_bac_acier"), props)
     lampes = eclairage_couloir(space, props, logic)
-    return {"marches": ES_MARCHES, "lampes": lampes}
+    return {"marches": marches_count, "lampes": lampes}
 
 
 # --- Habillage : l'étage des bureaux ------------------------------------------
@@ -307,7 +308,7 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
     nord = y1 - bo.EPAISSEUR_MUR          # face intérieure du mur nord
 
     # Contre le mur sud, façade vers le nord : `rot 180`, origine au coin opposé.
-    for i, ax in enumerate((8.0, 9.0, 10.0)):
+    for i, ax in enumerate((11.0, 12.0, 13.0)):
         L.place(B.armoire_dossiers(i % 2), (ax + 0.90, sud + 0.55, z), 180,
                 props, col_coll, f"cbu_ar{i}")
     L.place(B.distributeur("cafe_reveille"), (18.0 + 0.90, sud + 0.75, z), 180,
@@ -333,4 +334,5 @@ def habiller_couloir_direction(space, gris, props, col_coll, logic) -> dict:
     ))
     lampes = eclairage_couloir(space, props, logic)
     W.installer("c_bu", props)
+    BR.installer("c_bu", props)
     return {"meubles": 7 + meubles, "lampes": lampes}

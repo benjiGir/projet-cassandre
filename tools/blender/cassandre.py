@@ -323,6 +323,24 @@ def rework_checkouts(preview: str | None = None, inspect: bool = False) -> dict:
     return result
 
 
+def rework_backstage(preview: str | None = None, inspect: bool = False) -> dict:
+    """Réserve, locaux du personnel et quête de la carte Or au parking."""
+    args = ["--inspect"] if inspect else []
+    if preview:
+        args.extend(("--preview", str(Path(preview).resolve())))
+    result = run("tools/blender/refresh_backstage.py", *args, tail=15)
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def repair_backstage(preview: str | None = None) -> dict:
+    """Rétablit le sas Argent, les rideaux du compacteur et les raccords de signalétique."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/repair_backstage.py", *args, tail=12)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []

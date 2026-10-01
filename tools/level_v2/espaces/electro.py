@@ -16,7 +16,7 @@ from espaces.commun import _emprise, _neons, semer
 
 # --- Habillage : l'électroménager --------------------------------------------
 #
-# Le rayon « elevee » du plan, celui du mur d'écrans et de la carte Or.
+# Le rayon « elevee » du plan, celui du mur d’écrans et des cabines de démonstration.
 #
 # Refait le 2026-09-18, en direct dans Blender, après un retour de playtest
 # « beaucoup de props mal placés ». Le premier jet posait chaque famille
@@ -32,7 +32,7 @@ from espaces.commun import _emprise, _neons, semer
 #   centre — le mur d'écrans, AUTONOME et face à l'entrée : c'est lui qu'on
 #            voit en arrivant du carrefour, et il cache le reste du rayon.
 #   est    — gros électroménager en îlots dos à dos, petit électroménager sur
-#            les étagères des murs nord et sud, la cabine de la carte Or au
+#            les étagères des murs nord et sud, la cabine de démonstration nord-est au
 #            fond, dans le coin nord-est.
 #
 # Les spawns du plan de masse ne bougent pas ; ce sont les meubles qui leur
@@ -44,7 +44,7 @@ from espaces.commun import _emprise, _neons, semer
 EL_MUR_ECRANS = (24.0, 69.0)
 # (x, y, rot) de l'ORIGINE, emprises 5 × 5 m. L'ouverture regarde l'est pour la
 # cabine sud-ouest (on la découvre en la dépassant, suit_el1 y attend), le sud
-# pour les deux autres. Celle de la carte Or DOIT s'ouvrir au sud : la carte
+# pour les deux autres. Celle du nord-est DOIT s'ouvrir au sud : la carte
 # est un repère plat tourné vers ±y, et dans une cabine ouverte à l'ouest on ne
 # la voyait que par la tranche.
 EL_CABINES = ((21.0, 48.5, 90), (16.0, 74.5, 0), (40.5, 74.5, 0))

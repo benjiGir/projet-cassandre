@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
+import lib_backstage_route as BR
 import lib_helpers as H           # noqa: E402
 import lib_bureaux as B           # noqa: E402
 import plan_de_masse as plan      # noqa: E402
 import build_blockout as bo       # noqa: E402
 
-from espaces.commun import _emprise, cloison_pleine, lampe, poser
+from espaces.commun import habiller_dans_repere, _emprise, cloison_pleine, lampe, poser
 from espaces.coque import EPAISSEUR_PLAFOND
 from espaces.portes import HAUTEUR_VANTAIL, porte_double
 
@@ -34,7 +35,7 @@ def poser_cameras_pc_secu(props, logic) -> int:
     H.cam("rayons", (-30.0, 75.0, 2.6), (-30.0, 50.0, 1.0), logic, "RAYONS")
     H.cam("hub", (0.0, 86.0, 3.2), (0.0, 48.0, 1.0), logic, "ALLEE CENTRALE")
     H.cam("reserve", (8.0, 126.0, 5.0), (-8.0, 100.0, 1.0), logic, "RESERVE")
-    H.cam("souterrain", (68.0, 118.0, -4.0), (34.0, 96.0, -5.0), logic, "PARKING -1")
+    H.cam("souterrain", (74.0, 115.0, -3.0), (67.0, 120.0, -5.0), logic, "PARKING -1 / DIRECTION")
     H.cam("electro", (38.0, 74.0, 3.0), (14.0, 52.0, 1.0), logic, "ELECTROMENAGER")
     H.cam("direction", (-42.0, 149.0, 6.2), (-38.0, 159.0, 5.2), logic, "DIRECTION")
     return len(PC_SECU_CAMS)
@@ -51,7 +52,7 @@ PS_GAINE_PUITS_X = (43.75, 45.75)
 PS_GAINE_PUITS_Y = (150.0, 152.0)
 
 
-def habiller_pc_secu(space, gris, props, col_coll, logic) -> dict:
+def _habiller_pc_secu_reference(space, gris, props, col_coll, logic) -> dict:
     """Poste de surveillance du board (`docs/assets/board-coulisses.md`, 3.2.C).
 
     Une porte vitrée donne sur le couloir, puis un passage cadré sans vantail
@@ -161,7 +162,8 @@ def habiller_pc_secu(space, gris, props, col_coll, logic) -> dict:
     # vidéosurveillance, vu dès l'approche depuis le couloir.
     entree = next(o for o in plan.openings()
                   if frozenset({o.a, o.b}) == frozenset({"c_bu", "pc_secu"}))
-    ex0, ex1 = entree.span
+    dx = 34.0 - next(s for s in plan.ALL if s.id == "pc_secu").x[0]
+    ex0, ex1 = (v + dx for v in entree.span)
     cadre_entree = [
         ((ex0, y0 - 0.07, z, ex0 + 0.09, y0 + 0.07, z + 2.18), "aplat:#444a54"),
         ((ex1 - 0.09, y0 - 0.07, z, ex1, y0 + 0.07, z + 2.18), "aplat:#444a54"),
@@ -499,3 +501,9 @@ def habiller_pc_secu(space, gris, props, col_coll, logic) -> dict:
     lampe(logic, "light_ps_bureau", (cx, 149.4, z + 1.0), color="#f2b25a", intensity=1.8, distance=3.5)
 
     return {"écrans animés/cassables": n, "écran HS": 1, "clés": 5, "lampes": 4}
+
+
+def habiller_pc_secu(space, gris, props, col_coll, logic) -> dict:
+    result = habiller_dans_repere(space, (34, 46), _habiller_pc_secu_reference, gris, props, col_coll, logic)
+    BR.installer("pc_secu", props)
+    return result

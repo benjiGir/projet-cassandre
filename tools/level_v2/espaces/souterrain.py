@@ -10,13 +10,14 @@ import random
 
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
+import lib_backstage_route as BR
 import lib_helpers as H           # noqa: E402
 import lib_reserve as R           # noqa: E402
 import lib_rayons as L            # noqa: E402
 import lib_wayfinding as W        # noqa: E402
 import build_blockout as bo       # noqa: E402
 
-from espaces.commun import SEED, _neons
+from espaces.commun import SEED, _neons, lampe
 from espaces.props import PROPS_PHYSIQUES
 
 # --- Habillage : le parking souterrain ---------------------------------------
@@ -33,36 +34,36 @@ from espaces.props import PROPS_PHYSIQUES
 # de sortie, et des marquages qui se chevauchaient. Un parking se dessine à
 # partir d'UNE trame, celle de la structure :
 #
-#   - lignes de piliers tous les 8 m en x (36, 44, … 68) ;
+#   - lignes de piliers tous les 8 m en x (38, 46, … 70) ;
 #   - trois files de places de 5 m, perpendiculaires aux allées : le long du mur
 #     sud, en double file dos à dos au milieu (épine à y = 108), le long du mur
 #     nord — interrompue devant la rampe de sortie, que deux piliers encadrent ;
 #   - trois places par travée entre deux piliers ;
 #   - deux allées est-ouest et deux transversales, dont celle de l'ouest où
-#     débouche la rampe de quai.
+#     rejoint l’escalier piéton.
 
-SO_LIGNES_X = (36.0, 44.0, 52.0, 60.0, 68.0)
+SO_LIGNES_X = (38.0, 46.0, 54.0, 62.0, 70.0)
 SO_PILIERS_Y = (97.0, 108.0, 119.0)       # front sud, épine, front nord
 SO_PROF_PLACE = 5.0
 SO_EPINE = 108.0
-# Travées de la rampe de sortie, laissées libres au nord (x ∈ [36, 44]).
-SO_ACCES_SORTIE = (36.0, 44.0)
+# La travée de l’escalier piéton reste libre au nord (x ∈ [38, 46]).
+SO_ACCES_SORTIE = (38.0, 46.0)
 # Rampes de néons, tube le long de y, EN TRAVERS des allées est-ouest.
-SO_NEONS = tuple((x, y) for y in (98.25, 113.75) for x in (32.0, 40.0, 48.0, 56.0, 64.0, 72.0)) \
-    + ((32.0, 106.0), (72.0, 106.0))
+SO_NEONS = tuple((x, y) for y in (98.25, 113.75) for x in (34.0, 42.0, 50.0, 58.0, 66.0, 74.0)) \
+    + ((34.0, 106.0), (74.0, 106.0))
 # La MOITIÉ des tubes est morte. Sur n'importe quel autre espace ce serait de
 # la négligence ; ici c'est le sujet.
-SO_NEONS_MORTS = frozenset({(40.0, 98.25), (56.0, 98.25), (72.0, 98.25),
-                            (32.0, 113.75), (48.0, 113.75), (64.0, 113.75), (72.0, 106.0)})
+SO_NEONS_MORTS = frozenset({(42.0, 98.25), (58.0, 98.25), (74.0, 98.25),
+                            (34.0, 113.75), (50.0, 113.75), (66.0, 113.75), (74.0, 106.0)})
 # Environ une place sur trois occupée : un parking plein n'a plus d'allées
 # lisibles, un parking vide n'a jamais servi.
 SO_TAUX_OCCUPATION = 0.36
 # Deux fûts au fond du coin sud-est, une poubelle au nord-ouest : (x, y) de
 # l'origine, soit le coin sud-ouest de leur emprise.
-SO_FUTS = ((74.0, 93.0), (74.8, 93.7))
-SO_POUBELLE = (29.0, 122.5)
-SO_ACCESSOIRES = ((37.2, 121.6, "cone"), (42.8, 121.6, "cone"),
-                  (49.0, 94.0, "debris-tire"), (29.4, 120.4, "box"), (30.3, 121.3, "box"))
+SO_FUTS = ((76.0, 93.0), (76.8, 93.7))
+SO_POUBELLE = (31.0, 122.5)
+SO_ACCESSOIRES = ((39.2, 121.6, "cone"), (44.8, 121.6, "cone"),
+                  (51.0, 94.0, "debris-tire"), (31.4, 120.4, "box"), (32.3, 121.3, "box"))
 
 
 def _travees_so(space, sauf=()) -> list[tuple[float, float]]:
@@ -120,7 +121,8 @@ def _marquages_so(space, props) -> int:
 def _points_reserves_so(space) -> list[tuple[float, float]]:
     """Ce qu'une voiture ne doit jamais recouvrir : spawns, ramassages,
     mobilier physique et accessoires posés dans une place."""
-    points = [(x, y) for _n, x, y, _c in space.spawns]
+    points = [(67.0, 121.0), (67.0, 117.5)]
+    points += [(x, y) for _n, x, y, _c in space.spawns]
     points += [(r[1], r[2]) for r in space.reperes]
     points += [(e[0], e[1]) for e in PROPS_PHYSIQUES.get(space.id, ())]
     points += [(x, y) for x, y, _m in SO_ACCESSOIRES]
@@ -191,6 +193,10 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
     places = _marquages_so(space, props)
 
     voitures = placer_voitures_souterrain(space, props, col_coll)
+    placer_voiture_direction(space, props, col_coll)
+    lampe(logic, "light_so_direction", (67, 119.5, z + 2.8),
+          color="#e8dfbe", intensity=3.0, distance=7.0)
+    voitures += 1
 
     # Détails du même atlas, donc gratuits en lots de dessin : deux cônes qui
     # interdisent de stationner devant la rampe de sortie (sur les côtés — un
@@ -209,5 +215,14 @@ def habiller_souterrain(space, gris, props, col_coll, logic) -> dict:
                             couleur="#c8d8e0", intensite=3.5, portee=9.0,
                             positions=SO_NEONS)
     W.installer("souterrain", props)
+    BR.installer("souterrain", props)
     return {"piliers": piliers, "voitures": voitures, "places": places,
-            "rampes": rampes, "lampes": lampes}
+            "rampes": rampes, "lampes": lampes + 1}
+
+
+def placer_voiture_direction(space, props, col_coll):
+    """Berline réservée, face à l'allée ; la carte Or reste accessible à pied."""
+    asset, bounds = R.voiture_proposition("berline_bleu_acier")
+    width = bounds[0]
+    return L.place(asset, (67.0 + width / 2, 123.4, space.z), 180,
+                   props, col_coll, "so_direction")
