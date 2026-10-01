@@ -313,6 +313,16 @@ def orient_office_screens(preview: str | None = None) -> dict:
     return result
 
 
+def rework_checkouts(preview: str | None = None, inspect: bool = False) -> dict:
+    """Six travées numérotées ; aperçu isolé ou mise à jour locale du niveau."""
+    args = ["--inspect"] if inspect else []
+    if preview:
+        args.extend(("--preview", str(Path(preview).resolve())))
+    result = run("tools/blender/refresh_checkouts.py", *args, tail=12)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []

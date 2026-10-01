@@ -713,6 +713,12 @@ Nouveaux types d'ennemis · physique dynamique des caddies (décor statique) · 
 > verdict.** Trois espaces habillés sur dix. Les deux qui encadrent l'arrivée :
 > c'est la première impression du magasin.
 >
+> **Refonte du 2026-10-01 :** les caisses du lot initial sont remplacées par
+> six travées en L, des files de 2 m et une enseigne centrale. La caisse 4
+> express porte le pistolet. La source, l'export et la recette de build sont
+> mis à jour ; le combat reste à apprécier en jouant. Voir la
+> [note et les captures](docs/journal/refonte-caisses-2026-10.md).
+>
 > **La bibliothèque s'est étendue, comme le jalon le prévoit.** Ni caisse, ni
 > kiosque, ni photomaton n'existaient. Nouveau module `tools/blender/lib_facade.py`
 > (12 assets) à côté de `lib_rayons.py` : la coupure n'est pas arbitraire —

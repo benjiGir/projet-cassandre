@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import cassandre  # noqa: E402
 
-COMMANDES = {"status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "sheet"}
+COMMANDES = {"status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "sheet"}
 
 
 def _valeur(texte: str):

@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-09-29
+updated: 2026-10-01
 ---
 
 # Journal
@@ -10,6 +10,10 @@ updated: 2026-09-29
 Historique des chantiers, livraisons, playtests et corrections. Les pages
 conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
+
+## Octobre 2026
+
+- [Refonte des caisses](refonte-caisses-2026-10.md) — six travées, comptoirs en L et circulation autour du passage central.
 
 ## Septembre 2026
 

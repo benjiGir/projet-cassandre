@@ -65,6 +65,7 @@ import lib_wayfinding as W            # noqa: E402
 import lib_compacteur as C            # noqa: E402
 import lib_service_landmarks as S     # noqa: E402
 import lib_public_compositions as P   # noqa: E402
+import lib_checkouts as K             # noqa: E402
 import plan_de_masse as plan          # noqa: E402
 import build_blockout as bo           # noqa: E402
 
@@ -812,13 +813,11 @@ def _campement_gondoles(space, props, logic) -> int:
 
 # --- Habillage : la ligne de caisses -----------------------------------------
 #
-# Le premier vrai combat du niveau, et l'endroit où l'on ramasse le pompe. Les
-# huit caisses sont EXACTEMENT celles du blockout : 4 × 1,5 m tous les 6,5 m,
-# donc sept trouées de 2,5 m. Cette trame est ce qui a été joué — elle décide
-# où l'on peut passer sous le feu, et elle ne se redessine pas ici.
+# Premier combat : six travées longitudinales, un passage central et des
+# files latérales. Le modèle et ses proxies viennent de `lib_checkouts`.
 
 CS_CAISSES_Y = 32.0
-CS_CAISSES_X = tuple(-26.0 + 2.0 + i * 6.5 for i in range(8))
+CS_CAISSES_X = K.LANES
 # Néons : au-dessus des dégagements, jamais au-dessus de la ligne de caisses.
 CS_NEON_X = (-22.0, -11.0, 0.0, 11.0, 22.0)
 CS_NEON_Y = (22.0, 28.0, 36.0, 41.0)
@@ -846,58 +845,39 @@ def habiller_caisses(space, gris, props, col_coll, logic) -> dict:
     z = space.z
     _sol_caisses(space, props, col_coll)
 
-    for i, gx in enumerate(CS_CAISSES_X):
-        L.place(F.caisse(), (gx, CS_CAISSES_Y, z), 0, props, col_coll, f"cs{i}")
+    K.install(props, col_coll, z)
 
-    # Portiques antivol à l'entrée sud, là où le joueur débouche de la galerie
-    # (arrivée déclarée en (0, 22)). On passe ENTRE, comme dans un vrai magasin.
-    portiques = 0
-    for i, px in enumerate((-3.9, -1.0, 1.9)):
-        L.place(F.portique(), (px, y0 + 3.0, z), 0, props, col_coll, f"cs_pq{i}")
-        portiques += 1
+    # La paire antivol et le panneau central font partie du nouveau module.
+    portiques = 1
 
     # File de caddies contre le mur ouest, près de l'entrée.
-    L.place(F.rail_caddies(), (x0 + 1.5, y0 + 2.0, z), 0, props, col_coll, "cs_rail")
+    L.place(F.rail_caddies(), (x0 + 1.5, y0 + 1.5, z), 90, props, col_coll, "cs_rail")
     caddies = 0
     for i, dy in enumerate((0.2, 1.15, 2.10, 3.05)):
-        L.place(L.caddie(), (x0 + 1.85, y0 + 2.1 + dy, z), 0, props, col_coll, f"cs_cd{i}")
+        L.place(L.caddie(), (x0 + .5, y0 + 1.8 + dy, z), 0, props, col_coll, f"cs_cd{i}")
         caddies += 1
 
     # Têtes de gondole promo aux deux bouts de la ligne : elles ferment la
     # perspective et donnent une couleur à un espace autrement très blanc.
-    for i, (px, py, rot) in enumerate(((x0 + 0.5, CS_CAISSES_Y + 2.5, 0), (x1 - 1.75, CS_CAISSES_Y + 2.5, 0))):
+    for i, (px, py, rot) in enumerate(((x0 + 0.5, CS_CAISSES_Y + 6.5, 0), (x1 - 1.75, CS_CAISSES_Y + 6.5, 0))):
         L.place(L.tete_garnie(SEED + 700 + i), (px, py, z), rot, props, col_coll, f"cs_tete{i}")
 
     # Bacs promo dans le dégagement sud, là où l'on ralentit en entrant.
     for i, (px, py) in enumerate(((-16.0, 24.0), (12.0, 24.0))):
         L.place(L.bac_garni(SEED + 720 + i), (px, py, z), 0, props, col_coll, f"cs_bac{i}")
-    for i, (px, py) in enumerate(((-8.0, 25.5), (6.5, 25.5))):
+    for i, (px, py) in enumerate(((-13.0, 22.5), (13.5, 22.5))):
         L.place(L.presentoir_garni(SEED + 740 + i), (px, py, z), 0, props, col_coll, f"cs_pres{i}")
 
     for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.3, y0 + 0.8))):
         L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"cs_pou{i}")
 
-    # Îlots promo de part et d'autre de l'entrée : le dégagement sud fait
-    # 52 × 12 m et sonnait creux en rendu. Deux paires de têtes de gondole
-    # dos à dos donnent de la couleur et un obstacle à contourner, sans jamais
-    # gêner l'axe d'entrée (x ∈ [-6, 6], la trouée déclarée par le plan).
+    # Les présentoirs bas des travées portent désormais les achats d'impulsion.
     ilots = 0
-    for i, ix in enumerate((-13.0, 11.75)):
-        # `place(..., 180)` fait tourner l'asset AUTOUR DE SON ORIGINE : son
-        # empreinte part alors vers -x et -y. La seconde tête se pose donc au
-        # coin OPPOSÉ de la paire, sans quoi les deux se superposent (constaté
-        # par `audit_niveau.py`, 1,25 × 1,25 × 2,0 de recouvrement). Et 2 cm
-        # plus loin : les montants arrière débordent d'un centimètre de chaque
-        # dos, et dos à dos ils se superposaient dans les mêmes plans.
-        L.place(L.tete_garnie(SEED + 760 + i), (ix, 27.0, z), 0, props, col_coll, f"cs_il{i}a")
-        L.place(L.tete_garnie(SEED + 770 + i), (ix + 1.25, 29.52, z), 180, props, col_coll, f"cs_il{i}b")
-        ilots += 2
     for i, (px, py, rot) in enumerate(((x0 + 3.0, y0 + 6.0, 0), (x1 - 4.0, y0 + 5.0, 20))):
         L.place(L.palette_cartons(), (px, py, z), rot, props, col_coll, f"cs_pal{i}")
 
     # Caddies abandonnés dans le dégagement sud et entre deux caisses.
-    for i, (px, py, rot) in enumerate(((-6.5, 26.0, 40), (5.0, 29.5, 200),
-                                       (-20.5, 34.5, 120), (17.0, 27.5, 300))):
+    for i, (px, py, rot) in enumerate(K.CARTS):
         L.place(L.caddie(), (px, py, z), rot, props, col_coll, f"cs_cdl{i}")
         caddies += 1
 
@@ -4812,9 +4792,9 @@ PROPS_PHYSIQUES: dict[str, tuple] = {
     "galerie": ((-12.0, 6.0, "carton", 2), (13.5, 5.0, "caisse"),
                 (7.0, 12.5, "carton_grand")),
     "cafeteria": ((36.5, 16.5, "carton", 2), (52.0, 4.0, "casier")),
-    # Réassort près de la palette ouest, retours derrière une caisse à l'est.
+    # Réassort près des palettes sud, hors des files de caisse.
     "caisses": ((-22.4, 27.35, "carton"), (-21.1, 26.75, "carton_grand", 2),
-                (17.0, 34.25, "caisse"), (18.25, 34.25, "carton")),
+                (20.5, 27.0, "caisse"), (21.75, 27.25, "carton")),
     # 48 m de couloir : le plus gros lot du niveau, réparti sur toute la
     # longueur et TOUJOURS à x = ±3,5 — le milieu du hub reste franc.
     # Les y sont choisis dans les TROUS de la décoration déjà posée par

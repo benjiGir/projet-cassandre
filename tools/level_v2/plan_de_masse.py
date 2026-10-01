@@ -175,11 +175,12 @@ SPACES: list[Space] = [
         ennemis="4 Costards, arrivée par les trouées entre caisses",
         spawns=[("suit_cs1", -18, 38, None), ("suit_cs2", 18, 38, None), ("suit_cs3", -6, 41, None), ("suit_cs4", 8, 41, None)],
         notes=[
-            "Ligne de caisses en travers à y≈32, trouées de 2,5 m — obstacles de déplacement, PAS du couvert (1,10 m < 1,6 m).",
-            "`use_pistol` posé sur un tapis de caisse, à 10 m de l'entrée — la première arme à feu.",
+            "Six travées longitudinales entre y=30 et 35,2, en deux groupes autour du passage central. Files de 2 m, caisses 1 et 6 fermées, caisse 4 express.",
+            "Meubles à 0,95 m : obstacles de déplacement, pas du couvert pour les tirs à hauteur des yeux.",
+            "`use_pistol` posé dans la zone d'ensachage de la caisse 4 ; la première arme à feu reste visible depuis l'axe central.",
         ],
         reperes=[
-            ("pistolet", 2, 30, "objet"),
+            ("pistolet", 5.5, 30.5, "objet", .75),
             ("boîte de munitions +24", -18, 24, "munitions"),
             ("trousse de soin +25", -6, 41, "soin"),
         ],

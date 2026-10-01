@@ -24,6 +24,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `compose_public(preview=…)` | six compositions locales dans la galerie, la cafétéria et les rayons ; candidat isolé si `preview` est fourni, sinon source sauvegardée et exportée |
 | `direction_covers()` | essai isolé de deux meubles bas dans le bureau du Directeur, vues avant/après et comparaison aux hauteurs de tir ; source et export livrés conservés |
 | `orient_office_screens(preview=…)` | tourne écran et clavier vers le fauteuil des postes de bureau ; correction locale avec sauvegarde, ou candidat séparé si `preview` est fourni |
+| `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
 
 `where` lit le relevé écrit par le dernier `build()` dans
 `renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par
@@ -74,6 +75,9 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `export_level.py` | exporte en `.glb` avec les bons réglages (validation en étape séparée, voir la chaîne ci-dessous) |
 | `lib_helpers.py` | **briques** de la bibliothèque v2 (matériaux texturés, boîtes multi-parties à UV 64 px/m, trims, étiquettes, proxies, subdivision) — pas exécutable seul |
 | `lib_rayons.py` | **bibliothèque d'assets** du niveau v2 : gondoles, têtes de gondole, bacs, frigos, caddies, signalétique, produits, et le générateur de garnissage — pas exécutable seul |
+| `lib_checkouts.py` | six caisses en L, tapis, terminaux, présentoirs et proxies ; même recette pour le build complet et la mise à jour locale |
+| `refresh_checkouts.py` | recette locale appelée par `rework_checkouts`, copie de sécurité et captures avant sauvegarde ; exclut `_LIB` du fichier livré |
+| `../textures/generate_checkout_signs.py` | génère l'atlas 128×128 `sig_caisses.png` et ses coordonnées ; utilise Pillow et la police pixel existante |
 | `build_library.py` | construit les assets de `lib_rayons.py` dans `lib_hypermarche_v2.blend` et les range dans l'Asset Browser |
 | `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
