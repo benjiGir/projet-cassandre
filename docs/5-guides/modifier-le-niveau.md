@@ -22,8 +22,9 @@ puis contrôler et exporter le résultat destiné au jeu.
   [Conventions glTF](../6-reference/conventions-nommage.md).
 - Repérez les espaces et passages dans
   `tools/level_v2/plan_de_masse.py`.
-- Repérez le constructeur ou la table d'habillage concernée dans
-  `tools/level_v2/build_niveau.py`.
+- Repérez le constructeur de l'espace concerné dans `tools/level_v2/espaces/`
+  (un fichier par espace ; `build_niveau.py` ne garde que la table d'habillage
+  `HABILLAGE` et `main()`).
 - Pour un changement structurel, régénérez aussi le plan de masse et ses
   représentations.
 - Avant d'éditer, vérifiez que la scène Blender ouverte est la version
@@ -36,8 +37,11 @@ puis contrôler et exporter le résultat destiné au jeu.
 2. Modifiez les données de source dans `tools/level_v2/plan_de_masse.py`
    si vous changez les limites, les connexions ou les éléments placés
    par coordonnées.
-3. Modifiez `tools/level_v2/build_niveau.py` si vous changez les helpers
-   de construction, l'habillage ou la pose de props.
+3. Modifiez le module de l'espace dans `tools/level_v2/espaces/` si vous
+   changez son habillage ; les briques partagées sont dans `espaces/commun.py`,
+   les portes dans `espaces/portes.py`, les props physiques dans
+   `espaces/props.py`. `build_niveau.py` ne change que pour enregistrer un
+   nouvel espace dans `HABILLAGE`.
 4. Pour un nouvel objet de gameplay, définissez son préfixe et ses
    extras selon [les conventions
    glTF](../6-reference/conventions-nommage.md).

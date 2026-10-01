@@ -28,7 +28,7 @@ PROFONDEUR = 6
 # Helpers génériques : ils créent tout, donc ne disent rien de l'endroit à
 # modifier. Le « site » retenu est le premier cadre hors de ces fichiers et de
 # ces fonctions de pose.
-GENERIQUES = {"lib_helpers.py", "geo_utils.py"}
+GENERIQUES = {"lib_helpers.py", "geo_utils.py", "commun.py"}
 POSES = {"place", "semer", "_clone_base"}
 # Cadres sans information : l'outillage lui-même et les corps de module.
 OUTILLAGE = {"cassandre.py", "cassandre_cli.py", "provenance.py"}

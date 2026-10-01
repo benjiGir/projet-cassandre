@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1]
-DOSSIERS = (TOOLS / "blender", TOOLS / "level_v2")
+DOSSIERS = (TOOLS / "blender", TOOLS / "level_v2", TOOLS / "level_v2" / "espaces")
 EXCLUS = ("propositions_", "refresh_")        # scripts jetables, pas une API
 
 

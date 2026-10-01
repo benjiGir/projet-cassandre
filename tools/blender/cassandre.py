@@ -157,7 +157,7 @@ def status() -> dict:
         # réécrit le .blend sans que le Blender ouvert le relise.
         etat["disk_newer_than_session"] = os.path.getmtime(fichier) > _ouvert_a()
     sources = max(p.stat().st_mtime for d in ("level_v2", "blender")
-                  for p in (TOOLS / d).glob("*.py"))
+                  for p in (TOOLS / d).rglob("*.py"))
     if BLEND_V2.exists():
         blend = BLEND_V2.stat().st_mtime
         etat["v2_blend_age_min"] = round((time.time() - blend) / 60)

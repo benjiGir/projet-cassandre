@@ -22,6 +22,8 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/level_v2"))
 import build_niveau as B
+from espaces import parking as PK
+from espaces import props as PR
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
@@ -57,9 +59,9 @@ def move(obj, delta):
 moves = []
 for zone in ("parking_ext", "caisses", "electro"):
     space = next(s for s in B.plan.SPACES if s.id == zone)
-    for i, entry in enumerate(B.PROPS_PHYSIQUES[zone]):
+    for i, entry in enumerate(PR.PROPS_PHYSIQUES[zone]):
         x, y, model, *stack = entry
-        size = B.MODELES_PROPS[model][0]
+        size = PR.MODELES_PROPS[model][0]
         for floor in range(stack[0] if stack else 1):
             name = f"prop_{zone}{i}_{floor}"
             obj = bpy.data.objects.get(name)
@@ -71,7 +73,7 @@ for zone in ("parking_ext", "caisses", "electro"):
             target = Vector((x, y, space.z + (floor + .5) * size[2]))
             moves.append((obj, target - (lo + hi) / 2))
 
-for i, (x, y, model) in enumerate(B.PK_ACCESSOIRES[:3]):
+for i, (x, y, model) in enumerate(PK.PK_ACCESSOIRES[:3]):
     if model != "cone":
         raise RuntimeError("Les trois accessoires attendus sont des cônes")
     objects = [o for o in bpy.context.scene.objects

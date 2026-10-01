@@ -20,7 +20,7 @@ Repérez d'abord le comportement, puis modifiez sa source de vérité. Les fichi
 | PV, détection, poursuite ou attaque d'un Costard | `src/game/entities/suitConfig.ts`, `src/game/entities/enemyMachine.ts` | [Ennemis et IA](../4-technique/ennemis-et-ia.md), [valeurs](../6-reference/valeurs-ennemis.md) |
 | Comportement ou états communs des ennemis | `src/game/entities/enemyMachine.ts`, `src/game/entities/suit.ts`, `src/game/entities/director.ts` | [Ennemis et IA](../4-technique/ennemis-et-ia.md) |
 | Niveau sélectionnable au menu | `src/game/level/levels.ts`, `src/app/bootChoice.ts` | [Chargement de niveau](../4-technique/chargement-de-niveau.md) |
-| Géométrie / placement du niveau v2 | `tools/level_v2/plan_de_masse.py`, `tools/level_v2/build_niveau.py` | [Modifier le niveau](modifier-le-niveau.md) |
+| Géométrie / placement du niveau v2 | `tools/level_v2/plan_de_masse.py`, `tools/level_v2/espaces/` (un fichier par espace), `tools/level_v2/build_niveau.py` (registre `HABILLAGE`) | [Modifier le niveau](modifier-le-niveau.md) |
 | Niveau modulaire historique | `tools/blender/kit_spec.py`, `tools/blender/level_spec.py`, `tools/blender/build_level.py` | [Outillage Blender](../4-technique/outillage-blender.md) |
 | Import glTF et préfixe d'objet | `src/game/level/loader.ts`, `tools/blender/validate_level.py` | [Chargement de niveau](../4-technique/chargement-de-niveau.md), [noms glTF](../6-reference/conventions-nommage.md) |
 | Porte, carte ou message d'interaction | `src/game/level/doors.ts`, `src/game/session/doors.ts`, `src/game/level/interactive.ts` | [Systèmes de niveau](../4-technique/systemes-de-niveau.md) |

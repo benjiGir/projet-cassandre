@@ -52,7 +52,7 @@ servi en runtime) et `assets_src/library/` (bibliothèque d'assets v2).
 | `tools/blender/lib_*.py` | bibliothèque d'assets v2 par catégorie d'espace (`lib_rayons`, `lib_facade`, `lib_electro`, `lib_reserve`, `lib_bureaux`, `lib_helpers`) |
 | `tools/level_v2/plan_de_masse.py` | source de vérité des cotes (rectangles, ouvertures, spawns) |
 | `tools/level_v2/build_blockout.py` | blockout gris à partir du plan de masse |
-| `tools/level_v2/build_niveau.py` | niveau habillé, réutilise `build_blockout` pour la coque |
+| `tools/level_v2/build_niveau.py` + `tools/level_v2/espaces/` | niveau habillé : le registre et `main()`, puis un module par espace ; réutilise `build_blockout` pour la coque |
 | `tools/blender/bake_vertex_lighting.py` | bake d'éclairage indirect en vertex colors |
 | `tools/blender/validate_level.py` | vérifie le CONTRAT (noms, grille, budgets) |
 | `tools/level_v2/audit_niveau.py` | vérifie ce qui ne se voit qu'en jouant |

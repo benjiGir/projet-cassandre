@@ -16,6 +16,9 @@ import bpy
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/level_v2"))
 import build_niveau as B
+from espaces import parking as PK
+from espaces import reserve as RS
+from espaces import souterrain as SO
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
@@ -42,7 +45,7 @@ for obj in old:
     if mesh.users == 0:
         bpy.data.meshes.remove(mesh)
 
-kinds = {row[0] for row in B.PK_VEHICULES} | set(B.SO_VEHICULES) | {"camion"}
+kinds = {row[0] for row in PK.PK_VEHICULES} | set(SO.SO_VEHICULES) | {"camion"}
 for kind in kinds:
     template = bpy.data.collections.get(f"veh_proposition_{kind}")
     if template is None:
@@ -54,9 +57,9 @@ for kind in kinds:
             bpy.data.meshes.remove(mesh)
     bpy.data.collections.remove(template, do_unlink=True)
 
-outside = B.placer_voitures_exterieur(spaces["parking_ext"], props, colliders)
-underground = B.placer_voitures_souterrain(spaces["souterrain"], props, colliders)
-B.placer_camion_reserve(spaces["reserve"], props, colliders)
+outside = PK.placer_voitures_exterieur(spaces["parking_ext"], props, colliders)
+underground = SO.placer_voitures_souterrain(spaces["souterrain"], props, colliders)
+RS.placer_camion_reserve(spaces["reserve"], props, colliders)
 print(f"VEHICLES exterior={outside} underground={underground} truck=1 images={len(bpy.data.images)}")
 if hashlib.sha256(SOURCE.read_bytes()).hexdigest() != original_hash:
     raise RuntimeError("Le niveau a changé pendant la mise à jour ; sauvegarde annulée")

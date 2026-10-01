@@ -15,6 +15,7 @@ import bpy
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/level_v2"))
 import build_niveau as B
+from espaces import cafeteria as CA
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
@@ -37,7 +38,7 @@ for obj in old:
     if mesh.users == 0:
         bpy.data.meshes.remove(mesh)
 space = next(space for space in B.plan.SPACES if space.id == "cafeteria")
-placed = B.placer_distributeurs_cafeteria(space, bpy.data.collections["PROPS"],
+placed = CA.placer_distributeurs_cafeteria(space, bpy.data.collections["PROPS"],
                                   bpy.data.collections["COL"])
 for obj in placed:
     if not obj.name.startswith("col_box_"):

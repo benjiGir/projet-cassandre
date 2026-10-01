@@ -183,7 +183,9 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   `blender -b <f>.blend -P tools/blender/cassandre_cli.py -- <commande> cle=valeur`.
 - Commandes : `status` · `build` · `check` · `shot` · `sheet` (plusieurs vues en
   UNE image) · `export` · `find` · `where` · `budget`.
-- **Avant de lire `build_niveau.py` ou un `lib_*.py`** : `C.where(objet)` donne
+- **Avant de lire du code de niveau** (`tools/level_v2/espaces/*.py` — un fichier
+  par espace — ou un `lib_*.py`; `build_niveau.py` n'est que le registre
+  `HABILLAGE` et `main()`) : `C.where(objet)` donne
   la ligne qui l'a posé (relevé du dernier `build()`), et
   `python3 tools/blender/api_index.py [module | --grep motif]` liste les
   fonctions sans ouvrir le fichier.

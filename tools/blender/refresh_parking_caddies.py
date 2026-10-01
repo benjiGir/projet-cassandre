@@ -15,6 +15,7 @@ import bpy
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/level_v2"))
 import build_niveau as B
+from espaces import parking as PK
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
@@ -37,15 +38,15 @@ for obj in old:
     if mesh.users == 0:
         bpy.data.meshes.remove(mesh)
 space = next(space for space in B.plan.SPACES if space.id == "parking_ext")
-placed = B.placer_caddies_parking(space, bpy.data.collections["PROPS"],
+placed = PK.placer_caddies_parking(space, bpy.data.collections["PROPS"],
                                   bpy.data.collections["COL"])
 for obj in placed:
     if not obj.name.startswith("col_box_"):
         continue
     lo = tuple(min(v.co[i] for v in obj.data.vertices) for i in range(3))
     hi = tuple(max(v.co[i] for v in obj.data.vertices) for i in range(3))
-    if not (B.PK_ABRI[0] + 0.16 < lo[0] < hi[0] < B.PK_ABRI[0] + 5.84
-            and B.PK_ABRI[1] + 0.16 < lo[1] < hi[1] < B.PK_ABRI[1] + 1.96):
+    if not (PK.PK_ABRI[0] + 0.16 < lo[0] < hi[0] < PK.PK_ABRI[0] + 5.84
+            and PK.PK_ABRI[1] + 0.16 < lo[1] < hi[1] < PK.PK_ABRI[1] + 1.96):
         raise RuntimeError(f"Caddie hors de la file ou dans le rail : {obj.name}")
     print(f"CART={obj.name} BOUNDS={lo},{hi}")
 if hashlib.sha256(SOURCE.read_bytes()).hexdigest() != original_hash:
