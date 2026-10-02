@@ -4,7 +4,7 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [1.0.1] — 2026-10-02
 
 ### Retiré
 
@@ -47,4 +47,5 @@ licence MIT.
 - Déploiement continu sur GitHub Pages ; le build embarque
   `THIRD_PARTY_LICENSES.txt`, les licences des dépendances incluses.
 
+[1.0.1]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.1
 [1.0.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.0
