@@ -1,6 +1,7 @@
 import { Howl } from "howler";
 
 import { assetUrl } from "./assetPath";
+import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
 import type { DoorMovement } from "../game/level/doors";
 
 /**
@@ -224,7 +225,7 @@ interface SpriteManifest {
 
 let atlas: Howl | null = null;
 let cles: Set<string> = new Set();
-let chargement = false;
+let chargement: Promise<void> | null = null;
 const avertis = new Set<string>();
 
 function avertirUneFois(cle: string, raison: string) {
@@ -238,27 +239,28 @@ function avertirUneFois(cle: string, raison: string) {
  * (même endroit que les autres initialisations globales de `main.ts`).
  * Idempotent.
  *
- * Volontairement SYNCHRONE en apparence : elle lance le chargement et rend la
- * main. Tant que l'atlas n'est pas là, `playSfx` ne fait rien — c'est la même
- * discipline non-fatale qu'avant, et le premier son du jeu arrive de toute
- * façon des dizaines de secondes après le démarrage. En faire une promesse
- * obligerait `main.ts` à attendre le réseau avant d'afficher quoi que ce soit.
+ * La promesse permet au chargement initial d'attendre le décodage et
+ * l'amorçage silencieux du pool. Un fichier absent reste non fatal.
  */
-export function initAudio() {
-  if (atlas || chargement) return;
-  chargement = true;
+export function initAudio(): Promise<void> {
+  if (chargement) return chargement;
 
-  fetch(`${SFX_BASE_PATH}/sfx.json`)
+  chargement = fetch(`${SFX_BASE_PATH}/sfx.json`, { signal: AbortSignal.timeout(15000) })
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-    .then((manifeste: SpriteManifest) => {
+    .then(async (manifeste: SpriteManifest) => {
       cles = new Set(Object.keys(manifeste.sprite));
+      const voices = manifeste.pool ?? POOL_LECTURES;
       atlas = new Howl({
         src: manifeste.src.map((f) => `${SFX_BASE_PATH}/${f}`),
         sprite: manifeste.sprite,
         // Nombre de nœuds audio que Howler garde pour les lectures qui se
         // chevauchent. Le pompe tire 9 plombs dans le même pas fixe : à 5, le
         // défaut, les derniers voleraient le nœud des premiers.
-        pool: manifeste.pool ?? POOL_LECTURES,
+        pool: voices,
+        onload: () => {
+          const sprite = Object.keys(manifeste.sprite)[0];
+          if (sprite) warmAudioPool(atlas!, sprite, voices);
+        },
         onloaderror: () =>
           avertirUneFois("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
       });
@@ -272,11 +274,12 @@ export function initAudio() {
           avertirUneFois(id, `"${id}" pointe sur la recette "${cle}", absente du sprite`);
         }
       }
+      await waitForAudioLoad(atlas);
     })
     .catch((e) => {
-      chargement = false;
       avertirUneFois("manifeste", `manifeste audio illisible (${e})`);
     });
+  return chargement;
 }
 
 /**
@@ -291,7 +294,7 @@ export function initAudio() {
  * puisque chaque lecture a sa propre identité.
  */
 export function playSfx(id: SfxId, volumeScale = 1) {
-  if (!atlas) return;
+  if (!atlas || atlas.state() !== "loaded") return;
   const def = SFX_TABLE[id];
   if (!cles.has(def.sprite)) return;
 

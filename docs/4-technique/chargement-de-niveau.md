@@ -2,7 +2,7 @@
 title: Chargement de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-02
 ---
 
 # Chargement de niveau
@@ -45,7 +45,13 @@ flowchart TD
 
 `src/game/level/loader.ts::loadLevel` appelle `GLTFLoader.loadAsync` via `GameRuntime.runPromise`. La progression ne remonte que si la réponse fournit un `Content-Length` exploitable. `buildLevelFromGltf` reçoit un glTF déjà parsé et reste synchrone ; il sert aussi aux tests sans réseau.
 
-`src/game/session/spawning.ts::loadGltfLevel` installe une fonction `prepare`. Elle construit les systèmes du niveau et cuit le graphe de navigation pendant que le candidat est isolé. Les changements de session sont appliqués par un commit synchrone une fois cette préparation terminée.
+`src/game/session/spawning.ts::loadGltfLevel` installe une fonction `prepare`.
+Elle construit les systèmes du niveau, cuit le graphe de navigation et
+amorce le shader des douches pendant que le candidat est isolé.
+`LevelSession` attend cette préparation, qui peut être asynchrone, puis
+applique les changements de session par un commit synchrone.
+L'attente conserve les gardes d'annulation et la restauration du niveau
+précédent en cas d'erreur. Voir [Préparation des douches](rendu.md#préparation-des-douches).
 
 Dans une frame, `updateGameplay` relit `LevelSession.current` pour les objets qui peuvent changer après un hot reload. Les systèmes mettent à jour leur état au pas fixe ; `interpolateVisuals` et `updateFx` présentent le résultat au taux d'affichage. Voir [Boucle et temps](../3-architecture/boucle-et-temps.md).
 

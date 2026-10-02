@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-09-28
+updated: 2026-10-02
 ---
 
 # Rendu
@@ -68,6 +68,32 @@ Le menu Affichage expose aussi les préréglages 960×540, 1280×720 et 1600×90
 Le loader reconvertit les matériaux glTF en `MeshLambertMaterial`. Le matériau garde la couleur diffuse, la texture, l'opacité/transparence et les vertex colors. L'attribut glTF `COLOR_0` devient `geometry.attributes.color` dans Three.js et porte le bake de couleur ou d'ombre du niveau. Les raisons sont dans [Éclairage](eclairage.md) et l'[ADR 0005 — Éclairage en vertex colors](../decisions/0005-eclairage-vertex-colors.md).
 
 Le renderer WebGL installe `WebGLNodesHandler` pour accepter des matériaux TSL ciblés à côté des matériaux classiques. Un effet qui anime son shader reçoit son temps depuis la simulation au pas fixe. Le reste du niveau garde les matériaux Lambert produits par le loader.
+
+### Préparation des douches
+
+`src/game/level/doucheShader.ts::warmShaderDouches` rend les jets avant le
+commit du niveau, sous l'écran de chargement. Le pool de lampes est déjà
+configuré. Les jets deviennent temporairement visibles et ne sont pas
+éliminés par le frustum ; leur état initial éteint est restauré ensuite.
+L'horloge du shader n'avance pas pendant cette préparation.
+
+L'adaptateur `WebGLNodesHandler` ne prend pas en charge `compile` et
+`compileAsync` pour les matériaux nodaux. Deux rendus réels sont nécessaires,
+avec une microtask entre eux pour laisser l'adaptateur actualiser ses
+attributs de géométrie. Ils passent par `RenderService` et `runGameplaySync`,
+mais l'attente de préparation reste à la frontière de chargement.
+
+Le framebuffer écran est utilisé pour garder la même variante de conversion
+de couleur qu'en jeu. Un render target ordinaire prépare une variante
+linéaire, ce qui laisse une compilation à payer au premier affichage réel.
+Un dernier rendu, jets restaurés, efface l'image de préparation avant le
+prochain paint. Au hot reload, l'ancienne racine est temporairement détachée
+pour que ses lampes ne participent pas au shader du candidat : l'adaptateur
+parcourt aussi les lampes invisibles. Elle est remise en place avant le
+commit ou son éventuelle annulation.
+Chaque racine de niveau possède son matériau, partagé par ses jets. La
+libération de l'ancien niveau ne détruit donc pas le programme déjà préparé
+pour le nouveau.
 
 ### Frontières des couches
 

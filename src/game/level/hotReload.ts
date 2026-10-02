@@ -22,11 +22,11 @@ export interface LevelSessionOptions {
    * où le sondage n'existe pas (voir plus bas). */
   pollIntervalMs?: number;
   /**
-   * Prépare les systèmes dérivés sans muter la session appelante, puis
+   * Prépare les systèmes dérivés (éventuellement de façon asynchrone) sans muter la session appelante, puis
    * retourne un commit synchrone sans exception. `isFirstLoad` ne bascule
    * qu'après ce commit.
    */
-  prepare?: (handle: LevelHandle, info: { isFirstLoad: boolean }) => (() => void) | void;
+  prepare?: (handle: LevelHandle, info: { isFirstLoad: boolean }) => (() => void) | void | Promise<(() => void) | void>;
   /** Appelé si un (re)chargement échoue (export Blender à moitié écrit,
    * glb temporairement invalide pendant l'écriture...). La session garde le
    * niveau précédent affiché — jamais d'écran noir sur une erreur transitoire. */
@@ -105,7 +105,7 @@ export function createLevelSession(
       }
 
       restorePrevious = previous?.suspend() ?? null;
-      const commit = options.prepare?.(candidate, { isFirstLoad: firstLoad });
+      const commit = await options.prepare?.(candidate, { isFirstLoad: firstLoad });
       if (stopped) {
         candidate.dispose();
         candidate = null;

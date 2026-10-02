@@ -1,6 +1,7 @@
 import { Howl } from "howler";
 
 import { assetUrl } from "./assetPath";
+import { waitForAudioLoad } from "./audioPreparation";
 import { computeWaterAmbienceMix, smoothTowards, type Vec3Like, type WaterAmbienceMix } from "./waterAmbienceMix";
 
 /**
@@ -14,8 +15,7 @@ import { computeWaterAmbienceMix, smoothTowards, type Vec3Like, type WaterAmbien
  * Le calcul du mélange (gain/pan/lissage) est PUR et vit dans
  * `core/waterAmbienceMix.ts`, testable sans Howler — ce module se contente
  * de le brancher sur un vrai `Howl` et de gérer son cycle de vie
- * (démarré à la naissance du premier jet, arrêté après le fondu qui suit sa
- * disparition, voir `updateWaterAmbience`).
+ * (amorcé en silence au chargement, gain nul en l'absence de jet).
  *
  * `html5: false` (Web Audio, le défaut de Howler), jamais `html5: true` :
  * une boucle HTML5 a un trou audible au raccord de bouclage, et surtout
@@ -50,8 +50,8 @@ const GAIN_SMOOTH_TAU = 0.05;
 const PAN_SMOOTH_TAU = 0.09;
 
 /**
- * En dessous de ce gain, la boucle est considérée silencieuse et le `Howl`
- * est arrêté. Un seuil plutôt qu'une comparaison à zéro exact : un lissage
+ * En dessous de ce gain, la boucle est considérée inaudible. Un seuil
+ * plutôt qu'une comparaison à zéro exact : un lissage
  * exponentiel (`smoothTowards`) ne touche jamais exactement sa cible, il
  * s'en approche indéfiniment.
  */
@@ -62,6 +62,7 @@ let playbackId: number | null = null;
 let loaded = false;
 let warnedMissing = false;
 let isPlaying = false;
+let preparation: Promise<void> | null = null;
 let currentGain = 0;
 let currentPan = 0;
 
@@ -74,15 +75,15 @@ const targetMixScratch: WaterAmbienceMix = { gain: 0, pan: 0 };
  * Construit le `Howl` de la boucle d'eau. Idempotent (même discipline que
  * `initAudio`/`initMusic`) — à appeler UNE FOIS au boot, après `initAudio()`.
  *
- * Volontairement synchrone en apparence, comme `initAudio` : l'absence du
+ * La promesse attend le décodage et l'amorçage silencieux. L'absence du
  * fichier (`amb_water_jet.{ogg,m4a}`, pas nécessairement livré par
  * `sound-forge` au moment où ce module tourne) est NON FATALE, signalée une
  * seule fois en console. `updateWaterAmbience` continue de calculer le
  * mélange même sans fichier chargé (observable via `waterAmbienceDebugState`
  * en console) — seul le son réel manque.
  */
-export function initWaterAmbience(): void {
-  if (waterHowl) return;
+export function initWaterAmbience(): Promise<void> {
+  if (preparation) return preparation;
 
   waterHowl = new Howl({
     src: [`${WATER_AMBIENCE_BASE_PATH}/amb_water_jet.ogg`, `${WATER_AMBIENCE_BASE_PATH}/amb_water_jet.m4a`],
@@ -91,6 +92,8 @@ export function initWaterAmbience(): void {
     volume: 0,
     onload: () => {
       loaded = true;
+      playbackId = waterHowl!.play();
+      waterHowl!.stereo(0, playbackId);
     },
     onloaderror: () => {
       if (warnedMissing) return;
@@ -100,6 +103,8 @@ export function initWaterAmbience(): void {
       );
     },
   });
+  preparation = waitForAudioLoad(waterHowl).then(() => {});
+  return preparation;
 }
 
 /**
@@ -148,29 +153,10 @@ export function updateWaterAmbience(
 
   // Asset pas encore chargé (ou absent) : le mélange existe déjà pour la
   // console, mais il n'y a rien à jouer — voir `initWaterAmbience`.
-  if (!waterHowl) return;
+  if (!waterHowl || !loaded || playbackId === null) return;
 
   const audible = currentGain > AUDIBLE_GAIN_EPSILON;
-  if (audible && !isPlaying) {
-    try {
-      playbackId = waterHowl.play();
-      isPlaying = true;
-    } catch {
-      // Défensif, même discipline que `core/music.ts::initMusic` : un throw
-      // synchrone imprévu ne doit jamais remonter dans `updateFx`.
-    }
-  } else if (!audible && isPlaying) {
-    waterHowl.stop(playbackId ?? undefined);
-    isPlaying = false;
-    playbackId = null;
-  }
-
-  if (isPlaying) {
-    // `playbackId` est garanti non nul ici : posé juste au-dessus dans le
-    // même appel, ou lors d'un appel précédent tant que `isPlaying` reste
-    // vrai (seul `stop()` ci-dessus le remet à `null`, en même temps que
-    // `isPlaying`).
-    waterHowl.volume(currentGain * PEAK_VOLUME, playbackId!);
-    waterHowl.stereo(currentPan, playbackId!);
-  }
+  isPlaying = audible;
+  waterHowl.volume(audible ? currentGain * PEAK_VOLUME : 0, playbackId);
+  waterHowl.stereo(currentPan, playbackId);
 }

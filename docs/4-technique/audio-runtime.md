@@ -2,7 +2,7 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-02
 ---
 
 # Audio runtime
@@ -15,8 +15,10 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 ## Fichiers
 
 - `src/core/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
+- `src/core/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
 - `src/core/music.ts` gère le thème, la nappe de fond, le ducking et la préférence persistée.
 - `src/core/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
+- `src/core/showerAmbience.ts` gère la boucle localisée des douches.
 - `src/core/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
 - `src/core/assetPath.ts` construit les chemins d'assets servis par le jeu.
 - `src/game/loop/updateFx.ts` consomme les faits de présentation et met à jour les ambiances.
@@ -27,8 +29,11 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 
 ## Où ça s'insère dans la boucle
 
-`main.ts` initialise l'audio avant le démarrage de la boucle.
-Le chargement du sprite est asynchrone et non bloquant.
+`main.ts` lance le chargement audio avant le menu, en parallèle du démarrage.
+Avant d'entrer en jeu, il attend le décodage du sprite et des deux boucles
+d'eau. Le contexte audio est repris sur `pointerdown` ou `keydown`, dès le
+menu. L'auto-suspension Howler après trente secondes est désactivée pour
+éviter un nouveau démarrage du moteur audio au prochain son.
 Les faits de tir, d'impact, de casse et d'ennemi sont lus dans `updateFx`, au taux d'affichage.
 La boucle positionnelle d'eau calcule son mélange au même endroit.
 Le pas fixe n'appelle pas Howler et ne dépend pas de la lecture audio.
@@ -58,7 +63,11 @@ Une matière inconnue retombe sur le son d'impact ou de casse par défaut.
 Le pool Howler prévoit douze lectures simultanées par défaut.
 
 `initAudio` est idempotente.
-Elle récupère le manifeste et crée le sprite Howler sans retenir le démarrage du jeu.
+Elle récupère le manifeste et crée le sprite Howler. Sa promesse se résout
+après le décodage. Des lectures muettes amorcent les voix du pool natif
+Howler ; elles sont arrêtées puis réutilisées par les vrais sons, sans
+consommer le RNG. Le manifeste réseau et l'attente du décodage sont bornés à
+quinze secondes chacun ; une panne reste non fatale.
 Un appel avant disponibilité, ou une clé absente, ne bloque pas la partie ; un avertissement n'est émis qu'une fois par clé.
 Le manifeste est généré par `tools/audio/build_sprite.py` et ne se modifie pas à la main.
 Le générateur fournit Ogg et M4A car Howler choisit un format pris en charge sans repli d'une source à l'autre.
@@ -90,9 +99,11 @@ Les erreurs de chargement sont traitées comme non fatales.
 Il retourne un gain et un panoramique bornés, lissés ensuite par `waterAmbience.ts`.
 Le mix atteint son niveau maximal près de la source, décroît avec la distance et devient muet au-delà de sa portée.
 Plusieurs jets additionnent leurs gains jusqu'à un plafond.
-Un seul `Howl` Web Audio est démarré au premier gain audible.
-Il est arrêté une fois le gain lissé sous le seuil de silence.
+Un seul `Howl` Web Audio est amorcé à volume nul pendant le chargement,
+avec son panoramique. Il reste en boucle : le mix ne fait ensuite que régler
+volume et pan. Sous le seuil de silence, le volume est exactement nul.
 Le module s'actualise pendant le jeu ; les écrans de menu et de fin ne produisent pas de jet audible.
+La douche suit la même préparation dans `showerAmbience.ts`.
 
 ### Répliques
 
@@ -103,12 +114,12 @@ Aucun fichier vocal n'est chargé par le runtime.
 ## Pièges
 
 - Appeler Howler dans le pas fixe mélange une action de présentation à la simulation.
-- Traiter le chargement du sprite comme bloquant retarde inutilement le démarrage.
+- Confondre « manifeste disponible » et « audio décodé » reporte le coût sur la première action.
 - Modifier les offsets du manifeste à la main est perdu au prochain build du sprite.
 - Fusionner les clés de recette et les identifiants du jeu casse leur frontière de nommage.
 - Relier le réglage de musique à la nappe coupe un canal qui doit rester séparé.
 - Une boucle d'eau HTML5 ne fournit pas le contrôle de panoramique requis par le mix.
-- Un lissage exponentiel n'atteint jamais exactement zéro ; l'arrêt utilise donc un seuil.
+- Un lissage exponentiel n'atteint jamais exactement zéro ; la mise au silence utilise donc un seuil.
 - Le flux d'aléa des variations audio doit rester indépendant du RNG de gameplay.
 - La lecture audio peut être muette si l'asset attendu manque ; le runtime avertit sans interrompre le jeu.
 

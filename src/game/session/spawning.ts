@@ -17,12 +17,13 @@ import { VitreSystem } from "../level/vitres";
 import { SanitaireSystem } from "../level/sanitaires";
 import { EcranSystem } from "../level/ecrans";
 import { CameraViewSystem } from "../level/cameras";
+import { warmShaderDouches } from "../level/doucheShader";
 import { Suit } from "../entities/suit";
 import { suitConfig } from "../entities/suitConfig";
 import { Director } from "../entities/director";
 import { directorConfig } from "../entities/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/hotReload";
-import { reportLoading } from "../../core/loadingProgress";
+import { reportLoading, letBrowserPaint } from "../../core/loadingProgress";
 import { PathfindingService, navGraphStats } from "../level/pathfinding";
 import { useGameStore } from "../state";
 import { type GameSession } from "./gameSession";
@@ -123,7 +124,7 @@ export function loadGltfLevel(
       // Bornes du chargement : le `.glb` occupe la part du lion, le reste de
       // `main.ts` se partage ce qui l'encadre.
       onProgress: (fraction) => reportLoading("Chargement du niveau", 0.3 + fraction * 0.55),
-      prepare: (handle, info) => {
+      prepare: async (handle, info) => {
         // Le glTF est là mais tout ce qui suit est SYNCHRONE et bloque : on
         // annonce l'étape avant de la commencer pour laisser React l'afficher.
         reportLoading("Construction du décor et des portes", 0.86);
@@ -212,6 +213,13 @@ export function loadGltfLevel(
             `(${handle.stats.sanitaireBatchCount} lots), écrans ${handle.stats.ecranCount} ` +
             `(${handle.stats.ecranBatchCount} lots), caméras ${handle.cams.length}, ` +
             `lots de décor ${handle.stats.decorBatchCount}`,
+        );
+
+        reportLoading("Préparation des effets d’eau", 0.96);
+        if (info.isFirstLoad && !engine.flow.isPlaying()) await letBrowserPaint();
+        lightPool.update(info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position);
+        await warmShaderDouches(
+          engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
         );
 
         return () => {

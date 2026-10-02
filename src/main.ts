@@ -5,6 +5,7 @@ import * as THREE from "three";
 import "./ui/theme/tokens.css";
 
 import { initAudio } from "./core/audio";
+import { installAudioActivation } from "./core/audioPreparation";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
 import { initWaterAmbience } from "./core/waterAmbience";
@@ -47,6 +48,9 @@ async function main() {
   // s'il rend, tout le reste du boot (physique, session, boucle) ne doit
   // jamais démarrer.
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
+
+  installAudioActivation();
+  const audioReady = Promise.all([initAudio(), initWaterAmbience(), initShowerAmbience()]);
 
   // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et
   // appliqués (FOV, screenshake) AVANT le menu principal : un joueur qui a
@@ -121,18 +125,9 @@ async function main() {
     flowActor.send({ type: "PAUSE" });
   });
 
-  // Pools de SFX (tir, impact), placeholders synthétiques (pas d'assets finaux tant que le gameplay n'est pas validé).
-  // see: docs/archive/systems-hud-audio.md#assets-sonores
-  initAudio();
   // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
   // see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
   initMusic();
-  // Boucle d'eau positionnelle des sanitaires cassés — module séparé lui
-  // aussi (mise à jour continue par frame, pas un pool de sons ponctuels).
-  // see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
-  initWaterAmbience();
-  // Boucle dédiée au bruit de douche, lancée uniquement si un poste est ouvert.
-  initShowerAmbience();
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).
@@ -182,6 +177,7 @@ async function main() {
   // Frontière explicite : le flux ne passe à `playing` qu'après un commit de
   // niveau réussi. Un échec reste sur l'écran de chargement et propose une
   // relance, sans démarrer la boucle sur une scène vide.
+  await audioReady;
   await waitForGameSessionReady(flowActor, session);
   const sessionFlow = createSessionFlow(engine, root, flowActor);
 

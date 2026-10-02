@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { MeshLambertNodeMaterial } from "three/webgpu";
+import { runGameplaySync } from "../../core/runtime";
+import { RenderService } from "../../render/renderService";
 import {
   abs,
   floor,
@@ -24,8 +26,6 @@ const animations = new WeakMap<THREE.Object3D, AnimationDouche>();
 const uniformTemps = uniform(0).setName("uTempsDouche");
 const NOM_FILET = /^fx_douche_[12]_stream_.+$/;
 const PERIODE_TEMPS = 16;
-
-let materiauPartage: MeshLambertNodeMaterial | null = null;
 
 function estUnFilet(mesh: THREE.Mesh): boolean {
   const nomGlb = typeof mesh.userData.name === "string" ? mesh.userData.name : "";
@@ -99,12 +99,7 @@ function creerMateriauFilet(): MeshLambertNodeMaterial {
   return materiau;
 }
 
-function obtenirMateriauPartage(): MeshLambertNodeMaterial {
-  materiauPartage ??= creerMateriauFilet();
-  return materiauPartage;
-}
-
-/** Remplace le matériau des seuls meshes de filet d'eau par le Lambert TSL partagé. */
+/** Remplace les filets par un Lambert TSL partagé entre les jets de cette racine. */
 export function installShaderDouches(root: THREE.Object3D | null): void {
   if (!root || animations.has(root)) return;
 
@@ -115,9 +110,10 @@ export function installShaderDouches(root: THREE.Object3D | null): void {
   if (meshes.length === 0) return;
 
   const animation: AnimationDouche = { meshes, temps: 0 };
+  const material = creerMateriauFilet();
   animations.set(root, animation);
   for (const mesh of meshes) {
-    mesh.material = obtenirMateriauPartage();
+    mesh.material = material;
     mesh.visible = false;
   }
 }
@@ -131,4 +127,45 @@ export function updateShaderDouches(root: THREE.Object3D | null, dt: number): vo
 
   animation.temps = (animation.temps + dt) % PERIODE_TEMPS;
   uniformTemps.value = animation.temps;
+}
+
+/** WebGLNodesHandler ne supporte pas compileAsync : amorçage sous l'écran de chargement.
+ * see: docs/4-technique/rendu.md#préparation-des-douches */
+export async function warmShaderDouches(
+  renderer: THREE.WebGLRenderer,
+  scene: THREE.Scene,
+  camera: THREE.Camera,
+  root: THREE.Object3D,
+  previousRoot?: THREE.Object3D,
+): Promise<void> {
+  const animation = animations.get(root);
+  if (!animation) return;
+
+  const poses = animation.meshes.map((mesh) => ({ mesh, visible: mesh.visible, culled: mesh.frustumCulled }));
+  const previousTarget = renderer.getRenderTarget();
+  const previousParent = previousRoot?.parent;
+  try {
+    // L'adaptateur TSL parcourt même les lampes d'une racine invisible.
+    previousRoot?.removeFromParent();
+    for (const { mesh } of poses) {
+      mesh.visible = true;
+      mesh.frustumCulled = false;
+    }
+    // Le framebuffer écran garde la même conversion de couleur que le jeu.
+    // Un RenderTarget ordinaire ferait compiler une autre variante, en linéaire.
+    renderer.setRenderTarget(null);
+    runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
+    // L'adaptateur invalide les attributs de géométrie dans une microtask.
+    await Promise.resolve();
+    runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
+  } finally {
+    for (const { mesh, visible, culled } of poses) {
+      mesh.visible = visible;
+      mesh.frustumCulled = culled;
+    }
+    if (previousRoot && previousParent) previousParent.add(previousRoot);
+    renderer.setRenderTarget(previousTarget);
+    // Restaurer l'image avant le prochain paint, y compris lors d'un hot reload.
+    runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
+  }
 }

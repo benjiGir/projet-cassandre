@@ -1,6 +1,7 @@
 import { Howl } from "howler";
 
 import { assetUrl } from "./assetPath";
+import { waitForAudioLoad } from "./audioPreparation";
 import { computeWaterAmbienceMix, smoothTowards, type Vec3Like, type WaterAmbienceMix } from "./waterAmbienceMix";
 
 const SHOWER_AMBIENCE_PATH = assetUrl("assets/audio/sfx");
@@ -14,14 +15,14 @@ let playbackId: number | null = null;
 let loaded = false;
 let currentGain = 0;
 let currentPan = 0;
-let isPlaying = false;
+let preparation: Promise<void> | null = null;
 let warnedMissing = false;
 
 const targetMix: WaterAmbienceMix = { gain: 0, pan: 0 };
 
-/** Précharge une boucle dédiée à la douche, sans bloquer le démarrage du jeu. */
-export function initShowerAmbience(): void {
-  if (showerHowl) return;
+/** Décode et amorce la boucle en silence pendant le chargement. */
+export function initShowerAmbience(): Promise<void> {
+  if (preparation) return preparation;
 
   showerHowl = new Howl({
     src: [`${SHOWER_AMBIENCE_PATH}/amb_shower.ogg`, `${SHOWER_AMBIENCE_PATH}/amb_shower.m4a`],
@@ -30,6 +31,8 @@ export function initShowerAmbience(): void {
     volume: 0,
     onload: () => {
       loaded = true;
+      playbackId = showerHowl!.play();
+      showerHowl!.stereo(0, playbackId);
     },
     onloaderror: () => {
       loaded = false;
@@ -38,6 +41,8 @@ export function initShowerAmbience(): void {
       console.warn(`[audio] boucle de douche introuvable (${SHOWER_AMBIENCE_PATH}/amb_shower.{ogg,m4a}) — le jeu continue sans elle.`);
     },
   });
+  preparation = waitForAudioLoad(showerHowl).then(() => {});
+  return preparation;
 }
 
 /** Met à jour la boucle localisée depuis la présentation, jamais depuis le pas fixe. */
@@ -59,22 +64,8 @@ export function updateShowerAmbience(
 
   if (!showerHowl || !loaded) return;
 
-  const audible = currentGain > AUDIBLE_GAIN_EPSILON;
-  if (audible && !isPlaying) {
-    try {
-      playbackId = showerHowl.play();
-      isPlaying = true;
-    } catch {
-      playbackId = null;
-    }
-  } else if (!audible && isPlaying) {
-    showerHowl.stop(playbackId ?? undefined);
-    playbackId = null;
-    isPlaying = false;
-  }
-
-  if (isPlaying && playbackId !== null) {
-    showerHowl.volume(currentGain * PEAK_VOLUME, playbackId);
+  if (playbackId !== null) {
+    showerHowl.volume(currentGain > AUDIBLE_GAIN_EPSILON ? currentGain * PEAK_VOLUME : 0, playbackId);
     showerHowl.stereo(currentPan, playbackId);
   }
 }
