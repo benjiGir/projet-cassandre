@@ -4,8 +4,19 @@
     {
       "name": "boomer-shooter-dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "studio-sonore",
+      "runtimeExecutable": "./.venv-refs/bin/python3",
+      "runtimeArgs": [
+        "tools/audio/studio.py"
+      ],
+      "port": 8765
     }
   ]
 }

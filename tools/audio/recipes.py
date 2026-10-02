@@ -1028,3 +1028,34 @@ RECIPES = {
     # Son distinct de douche en marche, hors sprite et boucle exacte.
     "amb_shower":      (amb_shower,        "ambience", 1),
 }
+
+
+# ============================================================ RECETTES PHYSIQUES
+#
+# Depuis le 2026-10-01, les sons d'OBJETS sont refaits par modeles physiques
+# (`physique.py`, `espace.py`, recettes dans `sons_*.py`, registre dans
+# `catalogue.py`). Une recette physique REMPLACE ici la recette du meme nom ;
+# les anciennes restent dans ANCIENNES pour l'ecoute avant/apres du studio
+# (`studio.py`). Le reste de la chaine (rendu, sprite, page d'ecoute) ne voit
+# aucune difference : meme nom, meme signature (seed) -> signal.
+
+import catalogue  # noqa: E402
+import sons_armes  # noqa: E402,F401
+import sons_impacts  # noqa: E402,F401
+import sons_mecanique  # noqa: E402,F401
+import sons_costard  # noqa: E402,F401
+import sons_ramassages  # noqa: E402,F401
+
+ANCIENNES = dict(RECIPES)
+
+
+def _physique(nom: str):
+    def rendu(seed=0):
+        return catalogue.rendre(nom, seed)
+    rendu.__name__ = nom
+    rendu.__doc__ = catalogue.REGISTRE[nom].aide
+    return rendu
+
+
+for _nom, _r in catalogue.REGISTRE.items():
+    RECIPES[_nom] = (_physique(_nom), _r.categorie, _r.variantes)

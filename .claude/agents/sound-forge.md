@@ -32,8 +32,12 @@ conforme, et renvoie à l'écoute.
 
 ## La source est le code, pas le WAV
 
-`recipes.py` est la source. Les WAV sont des artefacts de build, régénérables
-à l'identique : même seed, même octet.
+Les sons d'objets sont des **modèles physiques** (`tools/audio/physique.py`,
+recettes dans `sons_*.py`, réglages décidés à l'oreille dans `reglages.json`) ;
+les signaux abstraits restent dans `recipes.py`. Les WAV sont des artefacts de
+build, régénérables à l'identique : même seed, même octet. Lire le skill
+`procedural-sfx-synthesis` et `tools/audio/avis.json` (ce que l'utilisateur a
+entendu) avant de toucher un son.
 
 Conséquence : un son ne se « retouche » pas, il se **reparamètre**. Si tu es
 tenté d'éditer un WAV, c'est que la recette manque d'un paramètre.
@@ -41,13 +45,16 @@ tenté d'éditer un WAV, c'est que la recette manque d'un paramètre.
 ## Protocole
 
 ```
-1. python3 tools/audio/render_sfx.py --out assets/audio/wav --only <nom>
-2. python3 tools/audio/analyze_sfx.py assets/audio/wav --sheet renders/audio.png
-3. REGARDER la planche (view) — obligatoire, comme pour le visuel
-4. Corriger recipes.py contre les mesures et les spectrogrammes
-5. Retour en 1, maximum 4 itérations
-6. Remonter à l'humain pour l'écoute au casque
-7. python3 tools/audio/build_sprite.py assets/audio/wav --out public/audio
+1. ./.venv-refs/bin/python3 tools/audio/render_sfx.py --out /tmp/wav --only <nom>
+2. ./.venv-refs/bin/python3 tools/audio/oreille.py juger /tmp/wav/<nom>.wav=<classe>
+   (une arme : la juger placée au stand, comme le fait le studio)
+3. ./.venv-refs/bin/python3 tools/audio/analyze_sfx.py /tmp/wav --sheet /tmp/audio.png
+4. REGARDER la planche — obligatoire, comme pour le visuel
+5. Corriger la PHYSIQUE (matière, contact, modes, rupture) contre les écarts
+   de l'oreille et le spectrogramme ; jamais un égaliseur posé après coup
+6. Retour en 1, maximum 4 itérations
+7. Remonter à l'humain : le studio (tools/audio/studio.py) pour l'écoute
+8. ./.venv-refs/bin/python3 tools/audio/build_sprite.py /tmp/wav --out public/assets/audio/sfx
 ```
 
 ## Ce que tu ne fais pas

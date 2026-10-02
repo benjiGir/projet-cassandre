@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio sonore</title>
+<style>
+  :root {
+    --fond: #0f1114; --panneau: #171a1f; --bord: #262a31; --texte: #e6e8eb;
+    --doux: #8a8f98; --accent: #f2b33d; --bon: #4fbf7a; --mauvais: #e0605a;
+    --bleu: #5aa6e0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fond); color: var(--texte);
+         font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .app { display: grid; grid-template-columns: 250px 1fr; height: 100vh; }
+  nav { border-right: 1px solid var(--bord); overflow-y: auto; padding: 14px 10px; }
+  nav h1 { font-size: 15px; margin: 0 6px 12px; letter-spacing: .02em; }
+  nav h2 { font-size: 11px; text-transform: uppercase; color: var(--doux); margin: 16px 6px 6px; letter-spacing: .08em; }
+  nav button { display: flex; justify-content: space-between; align-items: center; width: 100%;
+               background: none; border: 0; color: var(--texte); text-align: left; padding: 6px 8px;
+               border-radius: 6px; cursor: pointer; font: inherit; }
+  nav button:hover { background: var(--panneau); }
+  nav button.actif { background: #222730; color: var(--accent); }
+  .pastille { width: 8px; height: 8px; border-radius: 50%; background: var(--bord); flex: none; }
+  .pastille.bon { background: var(--bon); } .pastille.mauvais { background: var(--mauvais); }
+  main { overflow-y: auto; padding: 22px 28px 60px; }
+  .tete { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .tete h2 { margin: 0; font-size: 22px; }
+  .meta { color: var(--doux); font-size: 13px; }
+  .aide { color: #c4c8cf; white-space: pre-wrap; max-width: 860px; margin: 10px 0 18px; font-size: 13px; }
+  .bloc { background: var(--panneau); border: 1px solid var(--bord); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; max-width: 980px; }
+  .bloc h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--doux); }
+  .rangee { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { background: #232832; border: 1px solid #323844; color: var(--texte); border-radius: 7px;
+         padding: 8px 14px; cursor: pointer; font: inherit; }
+  .btn:hover { border-color: var(--accent); }
+  .btn.principal { background: var(--accent); color: #1a1406; border-color: var(--accent); font-weight: 600; }
+  .btn.bon { border-color: var(--bon); color: var(--bon); }
+  .btn.mauvais { border-color: var(--mauvais); color: var(--mauvais); }
+  .btn kbd { font-size: 10px; color: var(--doux); margin-left: 6px; }
+  .btn.principal kbd { color: #5a4310; }
+  .graine { min-width: 38px; }
+  .graine.actif { border-color: var(--accent); color: var(--accent); }
+  .prise { min-width: 38px; } .prise.actif { border-color: var(--bon); color: var(--bon); }
+  select, textarea { background: #1d2128; color: var(--texte); border: 1px solid #323844; border-radius: 7px; padding: 7px 9px; font: inherit; }
+  textarea { width: 100%; min-height: 54px; resize: vertical; }
+  .curseurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px 22px; }
+  .curseur label { display: flex; justify-content: space-between; font-size: 13px; }
+  .curseur .val { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .curseur .val.change::after { content: " •"; }
+  .curseur small { display: block; color: var(--doux); font-size: 11.5px; margin-top: 2px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .spectre { width: 100%; max-width: 940px; border-radius: 6px; display: block; min-height: 60px; background: #14161a; }
+  .verdict { font-size: 13px; }
+  .verdict .ok { color: var(--bon); font-weight: 600; } .verdict .ko { color: var(--mauvais); font-weight: 600; }
+  .verdict ul { margin: 6px 0 0; padding-left: 18px; color: #c4c8cf; }
+  .verdict .fiab { color: var(--doux); font-style: italic; }
+  .historique { font-size: 12.5px; color: #c4c8cf; margin-top: 10px; }
+  .historique div { padding: 3px 0; border-top: 1px solid var(--bord); }
+  .etat { color: var(--doux); font-size: 12px; margin-left: 6px; }
+  .vide { color: var(--doux); margin-top: 40px; }
+  @media (max-width: 760px) { .app { grid-template-columns: 1fr; height: auto; } nav { border-right: 0; border-bottom: 1px solid var(--bord); max-height: 40vh; } main { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav id="liste"><h1>Studio sonore</h1></nav>
+  <main id="principal"><p class="vide">Chargement du catalogue…</p></main>
+</div>
+<script>
+const CAT = { weapon: "Armes", impact: "Impacts", interact: "Mécanismes et portes", enemy: "Costards", pickup: "Ramassages", ui: "Interface", ambience: "Ambiances" };
+let donnees = null, courant = null, graine = 0, valeurs = {}, lieu = "", ctx = null, source = null, minuterie = null;
+
+async function charger() {
+  donnees = await (await fetch("/api/catalogue")).json();
+  const nav = document.getElementById("liste");
+  const parCat = {};
+  for (const s of donnees.sons) (parCat[s.categorie] ||= []).push(s);
+  for (const [cat, sons] of Object.entries(parCat)) {
+    const h = document.createElement("h2"); h.textContent = CAT[cat] || cat; nav.appendChild(h);
+    for (const s of sons) {
+      const b = document.createElement("button");
+      b.dataset.nom = s.nom;
+      b.innerHTML = `<span>${s.nom}</span><span class="pastille ${etatAvis(s.nom)}"></span>`;
+      b.onclick = () => choisir(s.nom);
+      nav.appendChild(b);
+    }
+  }
+  choisir(location.hash.slice(1) || donnees.sons[0].nom);
+}
+
+function etatAvis(nom) {
+  const a = donnees.avis.filter(x => x.nom === nom).pop();
+  return a ? (a.avis === "reconnaissable" ? "bon" : a.avis === "pas reconnaissable" ? "mauvais" : "") : "";
+}
+
+function son() { return donnees.sons.find(s => s.nom === courant); }
+
+function requete(extra = {}) {
+  const p = new URLSearchParams({ nom: courant, seed: graine, r: JSON.stringify(valeurs), lieu, ...extra });
+  return p.toString();
+}
+
+async function jouerUrl(url) {
+  ctx ||= new AudioContext();
+  if (source) { try { source.stop(); } catch (_) {} }
+  const r = await fetch(url);
+  if (!r.ok) { etat(r.status === 404 ? "absent" : "erreur"); return; }
+  const buf = await ctx.decodeAudioData(await r.arrayBuffer());
+  source = ctx.createBufferSource(); source.buffer = buf; source.connect(ctx.destination); source.start();
+}
+
+function etat(t) { const e = document.getElementById("etat"); if (e) e.textContent = t; }
+
+function choisir(nom) {
+  courant = nom; graine = 0; lieu = "";
+  location.hash = nom;
+  const s = son();
+  valeurs = Object.fromEntries(s.reglages.map(r => [r.cle, r.valeur]));
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("actif", b.dataset.nom === nom));
+  dessiner();
+}
+
+function dessiner() {
+  const s = son();
+  const m = document.getElementById("principal");
+  const lieux = Object.keys(donnees.lieux).map(l => `<option value="${l}">${l} — T60 1k ${donnees.lieux[l].t60[1000]} s</option>`).join("");
+  const graines = Array.from({ length: Math.max(s.variantes, 1) }, (_, i) => `<button class="btn graine ${i === graine ? "actif" : ""}" data-g="${i}">${i}</button>`).join("");
+  m.innerHTML = `
+    <div class="tete"><h2>${s.nom}</h2><span class="meta">${CAT[s.categorie] || s.categorie} · lieu ${s.lieu || "aucun"}${s.distance ? " · " + s.distance + " m" : ""} · ${s.variantes} variante(s)</span></div>
+    <div class="aide">${echapper(s.aide)}</div>
+    <div class="bloc"><h3>Écouter</h3>
+      <div class="rangee">
+        <button class="btn principal" id="jouer">Jouer <kbd>espace</kbd></button>
+        <button class="btn" id="sec">Sec <kbd>S</kbd></button>
+        <button class="btn" id="avant">Avant (ancienne recette) <kbd>A</kbd></button>
+        <button class="btn" id="reel" disabled>Réel le plus proche <kbd>R</kbd></button>
+        <span class="etat" id="etat"></span>
+      </div>
+      ${s.ia && s.ia.length ? `<div class="rangee" style="margin-top:10px"><span class="meta">Prises ElevenLabs (même niveau)</span>
+        ${s.ia.map(n => `<button class="btn prise ${s.ia_retenue === n ? "actif" : ""}" data-ia="${n}">${n}${s.ia_retenue === n ? " ✓" : ""}</button>`).join("")}
+        <button class="btn" id="retenir" title="garde pour le jeu la dernière prise écoutée">Retenir la prise écoutée</button>
+        <button class="btn" id="aucune">Aucune (physique)</button>
+        <span class="etat">${s.ia_retenue ? "retenue : " + s.ia_retenue : "aucune retenue"}</span>
+      </div>` : ""}
+      <div class="rangee" style="margin-top:10px">
+        <span class="meta">Variante</span>${graines}
+        <button class="btn" id="hasard" title="graine au hasard, pour entendre la variété">au hasard</button>
+        <span class="meta" style="margin-left:14px">Lieu</span>
+        <select id="lieu"><option value="">celui de la recette (${s.lieu || "aucun"})</option>${lieux}</select>
+      </div>
+    </div>
+    <div class="bloc"><h3>Réglages</h3>
+      ${Object.keys(s.prereglages || {}).length ? `<div class="rangee" style="margin-bottom:12px"><span class="meta">Préréglages</span>${Object.keys(s.prereglages).map(p => `<button class="btn" data-pre="${p}">${p}</button>`).join("")}</div>` : ""}
+      <div class="curseurs">${s.reglages.map(curseur).join("") || '<span class="meta">Aucun réglage exposé.</span>'}</div>
+      <div class="rangee" style="margin-top:12px">
+        <button class="btn" id="sauver">Sauver dans reglages.json</button>
+        <button class="btn" id="defauts">Revenir aux défauts</button>
+        <span class="etat" id="etatSauve"></span>
+      </div>
+    </div>
+    <div class="bloc"><h3>Spectrogramme</h3><img class="spectre" id="spectre" alt="spectrogramme"></div>
+    <div class="bloc verdict" id="verdict"><h3>Oreille (mesure contre le réel)</h3><span class="meta">…</span></div>
+    <div class="bloc"><h3>Ton avis</h3>
+      <div class="rangee">
+        <button class="btn bon" data-avis="reconnaissable">Ça ressemble à ce que c'est</button>
+        <button class="btn mauvais" data-avis="pas reconnaissable">Ça ne ressemble pas</button>
+        <button class="btn" data-avis="commentaire">Juste un commentaire</button>
+      </div>
+      <textarea id="commentaire" placeholder="Ce que tu entends — « trop sec », « on dirait du plastique », « le grave manque »…" style="margin-top:10px"></textarea>
+      <div class="historique" id="historique"></div>
+    </div>`;
+  m.querySelector("#jouer").onclick = () => jouerUrl("/api/son?" + requete());
+  m.querySelector("#sec").onclick = () => jouerUrl("/api/son?" + requete({ sec: 1 }));
+  m.querySelector("#avant").onclick = () => jouerUrl("/api/avant?nom=" + courant + "&seed=" + graine);
+  let derniereIa = null;
+  m.querySelectorAll("[data-ia]").forEach(b => b.onclick = () => { derniereIa = +b.dataset.ia; jouerUrl(`/api/ia?nom=${courant}&prise=${derniereIa}`); etat("prise " + derniereIa); });
+  const retenir = async (prise) => {
+    const r = await (await fetch("/api/ia_retenir", { method: "POST", body: JSON.stringify({ nom: courant, prise }) })).json();
+    if (r.ok) { s.ia_retenue = r.retenue; dessiner(); }
+  };
+  m.querySelector("#retenir")?.addEventListener("click", () => { if (derniereIa) retenir(derniereIa); });
+  m.querySelector("#aucune")?.addEventListener("click", () => retenir(null));
+  m.querySelector("#hasard").onclick = () => { graine = Math.floor(Math.random() * 9000) + 100; dessinerGraines(); rafraichir(true); };
+  m.querySelectorAll(".graine").forEach(b => b.onclick = () => { graine = +b.dataset.g; dessinerGraines(); rafraichir(true); });
+  m.querySelector("#lieu").onchange = e => { lieu = e.target.value; rafraichir(true); };
+  m.querySelectorAll("input[type=range]").forEach(i => i.oninput = () => {
+    valeurs[i.dataset.cle] = +i.value; majValeur(i); clearTimeout(minuterie); minuterie = setTimeout(() => rafraichir(true), 220);
+  });
+  m.querySelectorAll("[data-pre]").forEach(b => b.onclick = () => {
+    for (const r of s.reglages) valeurs[r.cle] = r.defaut;
+    Object.assign(valeurs, s.prereglages[b.dataset.pre]);
+    m.querySelectorAll("input[type=range]").forEach(i => { i.value = valeurs[i.dataset.cle]; majValeur(i); });
+    rafraichir(true);
+  });
+  m.querySelector("#sauver").onclick = sauver;
+  m.querySelector("#defauts").onclick = () => { for (const r of s.reglages) valeurs[r.cle] = r.defaut; dessiner(); };
+  m.querySelectorAll("[data-avis]").forEach(b => b.onclick = () => avis(b.dataset.avis));
+  historique();
+  rafraichir(false);
+}
+
+function dessinerGraines() {
+  document.querySelectorAll(".graine").forEach(b => b.classList.toggle("actif", +b.dataset.g === graine));
+}
+
+function curseur(r) {
+  const entier = Number.isInteger(r.defaut) && Number.isInteger(r.mini) && (r.maxi - r.mini) >= 10;
+  const pas = entier ? 1 : (r.maxi - r.mini) / 200;
+  return `<div class="curseur"><label><span>${r.cle}</span><span class="val ${r.valeur !== r.defaut ? "change" : ""}" id="v_${r.cle}">${fmt(r.valeur)} ${r.unite}</span></label>
+    <input type="range" min="${r.mini}" max="${r.maxi}" step="${pas}" value="${valeurs[r.cle]}" data-cle="${r.cle}" data-defaut="${r.defaut}" data-unite="${r.unite}">
+    <small>${echapper(r.aide)} (défaut ${fmt(r.defaut)})</small></div>`;
+}
+
+function majValeur(i) {
+  const v = document.getElementById("v_" + i.dataset.cle);
+  v.textContent = fmt(+i.value) + " " + i.dataset.unite;
+  v.classList.toggle("change", Math.abs(+i.value - +i.dataset.defaut) > 1e-9);
+}
+
+function fmt(v) { return Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(2); }
+function echapper(t) { return (t || "").replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])); }
+
+async function rafraichir(jouer) {
+  document.getElementById("spectre").src = "/api/spectro?" + requete();
+  if (jouer) jouerUrl("/api/son?" + requete());
+  const v = document.getElementById("verdict");
+  const s = son();
+  if (!s.oreille) { v.innerHTML = `<h3>Oreille (mesure contre le réel)</h3><span class="meta">Pas de classe de référence dans le corpus pour ce son : seul ton avis compte.</span>`; return; }
+  const j = await (await fetch("/api/oreille?" + requete())).json();
+  if (j.erreur) { v.innerHTML = `<h3>Oreille</h3><span class="ko">${echapper(j.erreur)}</span>`; return; }
+  const btn = document.getElementById("reel");
+  btn.disabled = false; btn.title = j.reference;
+  btn.onclick = () => jouerUrl("/api/reel?chemin=" + encodeURIComponent(j.reference));
+  v.innerHTML = `<h3>Oreille (mesure contre le réel)</h3>
+    Visé : <b>${j.visee}</b> — rang ${j.rang} sur 14, distance ${j.distance} (rayon du réel ${j.rayon}) :
+    <span class="${j.dans_le_nuage ? "ok" : "ko"}">${j.dans_le_nuage ? "dans le nuage du réel" : "hors du nuage du réel"}</span><br>
+    Classes les plus proches : ${j.classement.map(c => c[0] + " " + c[1]).join(" · ")}<br>
+    <span class="fiab">Jugé ${j.juge_dans === "sec" ? "à sec (source seule)" : "placé au " + j.juge_dans + ", comme les prises"} · étalon : ${echapper(j.fiabilite)}</span>
+    <ul>${j.ecarts.map(e => `<li>${echapper(e)}</li>`).join("")}</ul>
+    <span class="meta">Réel le plus proche : ${echapper(j.reference)}</span>`;
+}
+
+async function sauver() {
+  const r = await (await fetch("/api/sauver", { method: "POST", body: JSON.stringify({ nom: courant, reglages: valeurs }) })).json();
+  document.getElementById("etatSauve").textContent = r.ok ? "sauvé" : (r.erreur || "erreur");
+  const s = son(); for (const x of s.reglages) x.valeur = valeurs[x.cle];
+}
+
+async function avis(type) {
+  const c = document.getElementById("commentaire").value.trim();
+  if (type === "commentaire" && !c) return;
+  await fetch("/api/avis", { method: "POST", body: JSON.stringify({ nom: courant, seed: graine, avis: type, commentaire: c, reglages: valeurs }) });
+  donnees.avis.push({ date: "à l'instant", nom: courant, seed: graine, avis: type, commentaire: c });
+  document.getElementById("commentaire").value = "";
+  document.querySelector(`nav button[data-nom="${courant}"] .pastille`).className = "pastille " + etatAvis(courant);
+  historique();
+}
+
+function historique() {
+  const h = document.getElementById("historique");
+  const l = donnees.avis.filter(a => a.nom === courant).slice(-6).reverse();
+  h.innerHTML = l.map(a => `<div>${a.date} · variante ${a.seed} · <b>${a.avis}</b>${a.commentaire ? " — " + echapper(a.commentaire) : ""}</div>`).join("");
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if (k === " ") { e.preventDefault(); document.getElementById("jouer")?.click(); }
+  else if (k === "s") document.getElementById("sec")?.click();
+  else if (k === "a") document.getElementById("avant")?.click();
+  else if (k === "r") document.getElementById("reel")?.click();
+});
+
+charger();
+</script>
+</body>
+</html>

@@ -40,6 +40,15 @@ public/assets/   assets servis en runtime (.glb, audio)
 Le détail (systèmes, décisions d'architecture, pipeline Blender,
 conventions) vit dans [`docs/`](docs/README.md).
 
+## Crédits
+
+La plupart des effets sonores du jeu (armes, impacts, ennemis, portes,
+ramassages) sont générés avec [ElevenLabs](https://elevenlabs.io) (Sound
+Effects). Les autres sons et les ambiances sont synthétisés par les outils du
+dépôt (`tools/audio/`). Le détail des assets
+tiers et de leurs licences est dans
+[`assets_src/LICENCES_ASSETS.md`](assets_src/LICENCES_ASSETS.md).
+
 ## Déploiement
 
 Un push sur `main` déclenche un déploiement automatique sur GitHub Pages

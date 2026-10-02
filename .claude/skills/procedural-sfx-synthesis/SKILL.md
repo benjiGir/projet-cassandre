@@ -1,94 +1,56 @@
 ---
 name: procedural-sfx-synthesis
-description: Synthèse sonore procédurale en numpy/scipy — pourquoi le code plutôt que l'échantillon, briques DSP disponibles, structure en couches, grain rétro par réduction de bits. Charger pour toute tâche de création sonore.
+description: Synthèse sonore par modèles physiques en numpy/scipy — pourquoi la physique plutôt que le bruit filtré, briques disponibles (modes, contact de Hertz, fracture, frottement, tons éoliens, souffle, voix, pièces), le studio, l'oreille étalonnée sur le réel. Charger pour toute tâche de création sonore.
 ---
 
-# Synthèse procédurale
+# Synthèse par modèles physiques
 
-## Pourquoi le code plutôt que l'échantillon
+## Pourquoi pas le bruit filtré
 
-Pour un boomer shooter rétro, la synthèse procédurale domine la banque de sons
-sur presque tous les axes :
+Quatre passes de « bruit filtré sous enveloppe » ont été rejetées avec les
+mêmes mots : *ça ne ressemble pas à ce que c'est*. L'oreille reconnaît une
+SOURCE à des indices physiques ; un bruit filtré ne les a pas. Moffat & Reiss
+(2018) : seule la synthèse additive/modale a été jugée aussi réaliste que
+l'enregistrement sur toutes les classes testées.
 
-| Critère | Synthèse | Échantillons |
+| Indice | Physique | Brique (`tools/audio/physique.py`) |
 |---|---|---|
-| **Déterminisme** | même seed, même octet | binaire opaque |
-| **Versionnage** | recette en texte, diff lisible | blob dans git |
-| **Variantes** | changer une seed | re-sourcer, re-découper |
-| **Reparamétrage** | une ligne | retour au DAW |
-| **Licence** | aucune question | à vérifier pour chaque fichier |
-| **Poids du dépôt** | quelques Ko de Python | des Mo de binaire |
-| **Réalisme organique** | faible | fort |
+| matière | amortissement d(f) = a0 + π·η·f | `MATIERES`, `Matiere` |
+| dureté du choc | durée du contact (Hertz) : le spectre s'effondre au-dessus de ~1,5/τ | `contact`, `choc` |
+| taille, forme | fréquence et rapports des modes | `modes_barre`, `modes_plaque`, `modes_coque`, `modes_denses` |
+| objet presque symétrique | modes par paires qui battent | `modes(..., dedoublement=)` |
+| casse | rafale de micro-ruptures (PhISEM) + éclats qui retombent et rebondissent | `fracture`, `eclats_qui_tombent` |
+| grincement | frottement colle-glisse, en salves | `colle_glisse` |
+| raclement, roulement | profil de surface lu à la vitesse du contact | `raclement` |
+| objet qui fend l'air | tons éoliens f = 0,2·u/d le long de l'objet | `eolien` |
+| coup de feu | Friedlander, résonances, gaz, écrêtage | `friedlander`, `gaz`, `micro_sature` |
+| voix | source glottique + formants (Klatt) | `voix.py` |
+| lieu | sources-images + queue d'Eyring | `espace.py` |
+| liquide | bulles de Minnaert (van den Doel) | `synth.bubble(s)` |
 
-La dernière ligne est la seule où l'échantillon gagne — et elle ne concerne pas
-ce projet : les armes de Duke 3D et d'Ion Fury sont du bruit filtré sous
-enveloppe, pas des captations de terrain.
+Un objet qui CASSE cesse de vibrer d'un bloc : couper ses modes d'ensemble à
+la rupture (`sons_impacts._brise`), sinon c'est un verre cogné.
 
-Le déterminisme n'est pas un détail ici : c'est déjà un invariant du projet,
-côté boucle et côté physique. L'audio s'y conforme.
+## Le studio et l'oreille
 
-## La structure en couches
+- `tools/audio/studio.py` : page locale, curseurs, avant/après, réel le plus
+  proche, avis écrits dans `avis.json` — **lire `avis.json` avant de
+  retoucher un son**, c'est la parole de l'utilisateur.
+- `tools/audio/oreille.py` : classe un son parmi ~240 prises CC0 locales et
+  dit en clair où il s'écarte. Étalonnée (groupe exclu) : 67 % top-1, 83 %
+  top-3. Fiable pour les armes et la voix, indicative pour les impacts (sons
+  Kenney déjà traités). Elle écarte le mesurablement faux ; elle ne remplace
+  pas l'écoute.
 
-Tout SFX percussif se décompose en trois couches. C'est la grammaire de base,
-et elle explique la plupart des sons ratés.
+## Règles
 
-| Couche | Rôle | Durée typique |
-|---|---|---|
-| **Transitoire** | le clic mécanique, l'attaque | 3 à 8 ms |
-| **Corps** | le bruit filtré, ce qu'on identifie | 50 à 250 ms |
-| **Queue** | l'espace, la réverbération | 100 ms à 1 s |
-
-Un son qui manque de transitoire paraît mou. Un son qui manque de corps paraît
-creux. Un son qui manque de queue paraît collé à l'écran, sans lieu.
-
-## Briques disponibles
-
-`tools/audio/synth.py` fournit :
-
-**Bruits** — `white`, `pink` (1/f, chaud), `brown` (1/f², grondements)
-
-**Enveloppes** — `env_exp` (percussif), `env_ad`, `env_adsr`, `fade`
-
-**Filtres** — `lowpass`, `highpass`, `bandpass`, `resonant` (pic résonant,
-donne un timbre métallique), `sweep_lowpass` (coupure qui glisse)
-
-**Oscillateurs** — `sine`, `saw`, `sine_drop` (hauteur qui chute)
-
-**Traitement** — `saturate`, `crush`, `reverb`, `slapback`
-
-**Composition** — `layer`, `delay`, `loop_seamless`
-
-## Le grain rétro
-
-L'équivalent audio du 640×360 est la **réduction de bits et de taux
-d'échantillonnage**. Duke 3D tournait en 11025 Hz mono 8 bits ; c'est ce qui
-donne le grain, exactement comme le `NearestFilter` donne le pixel.
-
-Le projet utilise **10 bits / 22050 Hz** : assez de grain pour la cohérence,
-assez de définition pour que les impacts restent lisibles.
-
-**Deux catégories échappent au grain**, pour des raisons opposées :
-
-- **L'ambiance** est une nappe tenue. Le grain s'y entend en continu, alors
-  qu'il disparaît sous un transitoire.
-- **L'UI** est faite de sinus purs. La quantification leur ajoute des
-  harmoniques parasites, visibles au spectrogramme et audibles.
-
-Le crush sert les transitoires. Pas les nappes, pas les tons purs.
-
-## Deux pièges systématiques
-
-**L'offset DC.** Invisible à l'œil, s'entend comme un clic au déclenchement, et
-consomme de la marge de crête pour rien. Le bruit brun en produit (c'est un
-`cumsum`, il dérive), et une sinusoïde démarrant à phase 0 sous enveloppe
-percussive aussi. `write_wav` applique un highpass de sécurité, mais mieux vaut
-le traiter à la source.
-
-**Le clic de bord.** Tout signal coupé net claque. Un fondu de 2 ms en sortie
-suffit et c'est appliqué systématiquement par `write_wav`.
-
-## Ajouter un son
-
-Une fonction dans `recipes.py`, une entrée dans `RECIPES` avec sa catégorie et
-son nombre de variantes. Rien d'autre — le rendu, l'analyse et l'empaquetage
-suivent automatiquement.
+- Une recette rend un son **SEC** ; le lieu s'applique au rendu
+  (`@recette(lieu=, distance=)`). Pas de reverb dans une recette.
+- Tout hasard passe par le `np.random.Generator` reçu : même graine, même
+  octet (vérifié sur les 40 fichiers).
+- Les gains se règlent en dB sur des couches ramenées à crête 1
+  (`melange`).
+- L'intensité finale suit `catalogue.NIVEAUX` (l'ancien mixage) : changer de
+  synthèse ne change pas le mixage en douce.
+- Le grain rétro (`--crush`) reste hors défaut : il replie l'aigu au lieu de le
+  couper (mesuré le 2026-09-20).

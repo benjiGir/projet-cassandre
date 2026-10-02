@@ -152,6 +152,9 @@ export class Suit implements Entity {
   get pendingTelegraph(): boolean {
     return this.ctx.pendingTelegraph;
   }
+  get pendingShot(): boolean {
+    return this.ctx.pendingShot;
+  }
   get pendingAttackDamage(): number {
     return this.ctx.pendingAttackDamage;
   }

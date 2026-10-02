@@ -29,6 +29,9 @@ export interface SuitAlertEvent {
 export interface SuitTelegraphEvent {
   suit: Suit;
 }
+export interface SuitShotEvent {
+  suit: Suit;
+}
 export interface SuitHurtEvent {
   suit: Suit;
   knockbackDirection: THREE.Vector3;
@@ -71,6 +74,7 @@ export class SuitManager {
 
   private readonly _alertEvents: SuitAlertEvent[] = [];
   private readonly _telegraphEvents: SuitTelegraphEvent[] = [];
+  private readonly _shotEvents: SuitShotEvent[] = [];
   private readonly _hurtEvents: SuitHurtEvent[] = [];
   private readonly _deathEvents: SuitDeathEvent[] = [];
   private readonly _playerHitEvents: SuitPlayerHitEvent[] = [];
@@ -91,6 +95,9 @@ export class SuitManager {
   }
   get telegraphEvents(): ReadonlyArray<SuitTelegraphEvent> {
     return this._telegraphEvents;
+  }
+  get shotEvents(): ReadonlyArray<SuitShotEvent> {
+    return this._shotEvents;
   }
   get hurtEvents(): ReadonlyArray<SuitHurtEvent> {
     return this._hurtEvents;
@@ -116,6 +123,7 @@ export class SuitManager {
   clearFrameEvents() {
     this._alertEvents.length = 0;
     this._telegraphEvents.length = 0;
+    this._shotEvents.length = 0;
     this._hurtEvents.length = 0;
     this._deathEvents.length = 0;
     this._playerHitEvents.length = 0;
@@ -245,6 +253,7 @@ export class SuitManager {
   private drainSuitPendingEvents(suit: Suit) {
     if (suit.pendingAlert) this._alertEvents.push({ suit });
     if (suit.pendingTelegraph) this._telegraphEvents.push({ suit });
+    if (suit.pendingShot) this._shotEvents.push({ suit });
     if (suit.pendingAttackDamage > 0) {
       this._playerHitEvents.push({
         amount: suit.pendingAttackDamage,

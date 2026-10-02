@@ -50,7 +50,14 @@ POOL = 12
 # bloque sont des marches verticales, precisement ce qu'un encodeur ne sait pas
 # representer et compense en depassant. Retire du defaut le 2026-09-20, le
 # probleme part avec lui, et le decibel qu'il fallait sacrifier revient.
-PEAK = 0.85
+#
+# 2026-10-02 : meme defaut, autre cause. Les prises ElevenLabs retenues
+# arrivent ECRETEES A PLAT de la source (jusqu'a ~400 echantillons) : des
+# plateaux a coins vifs, que l'AAC depasse comme il depassait le crush.
+# Mesure au decodeur du navigateur : atlas a 0.85 -> m4a +0.31 dBFS (1 ech.
+# ecrete) ; a 0.78 -> m4a -0.83 dBFS, ogg -2.06, zero ecretage. Les ecarts de
+# niveau entre sons ne changent pas : toute l'atlas descend de 0,75 dB.
+PEAK = 0.78
 
 
 def dispo(programme: str) -> bool:

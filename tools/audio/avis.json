@@ -1,0 +1,21 @@
+[
+  {
+    "date": "2026-10-02 09:23",
+    "nom": "pistol_fire",
+    "seed": 0,
+    "avis": "reconnaissable",
+    "commentaire": "",
+    "reglages": {
+      "charge": 1,
+      "coup_db": -3,
+      "coup_hz": 78,
+      "serrage": 0.7,
+      "culasse_db": -12,
+      "gaz_db": -9,
+      "front_db": -3,
+      "saturation": 0.6,
+      "douille_db": -34,
+      "piece_db": 2
+    }
+  }
+]

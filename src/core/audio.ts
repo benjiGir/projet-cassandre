@@ -38,6 +38,7 @@ export type SfxId =
   | "impact_flesh"
   | "enemy_alert"
   | "enemy_telegraph"
+  | "enemy_shot"
   | "enemy_hurt"
   | "enemy_death"
   | "door_locked"
@@ -120,6 +121,10 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   // être audible et directionnelle »). Doit rester timbralement distinct
   // des trois autres, PAS une variation d'un même sample.
   enemy_telegraph: { sprite: "suit_telegraph", volume: 1.0 },
+  // Le coup de feu du Costard, quand le rayon part (touché ou non) — avant
+  // le 2026-10-01 l'attaque était muette et la télégraphie tenait lieu
+  // d'« arme ».
+  enemy_shot: { sprite: "suit_shot", volume: 0.85, pitch: 0.03 },
   enemy_hurt: { sprite: "enemy_hurt", volume: 0.7 },
   enemy_death: { sprite: "suit_death", volume: 0.9 },
   // Porte à badge (Zone E, `use_exit_door`) : événements rares et ponctuels
@@ -158,11 +163,9 @@ const SFX_TABLE: Record<SfxId, SfxDef> = {
   sanitaire_use: { sprite: "toilet_flush", volume: 0.8 },
   sanitaire_break: { sprite: "ceramic_break", volume: 0.9 },
   water_drink: { sprite: "water_gulp", volume: 0.7 },
-  // Nourriture (chantier « Les coulisses », système 1) : PLACEHOLDER assumé,
-  // aucune recette de mastication n'existe encore dans `tools/audio/recipes.py`
-  // — réutilise le carillon de trousse de soin, le geste (soin walk-over) est
-  // le même. À remplacer dès qu'une vraie recette existe.
-  food_eat: { sprite: "pickup_health", volume: 0.65 },
+  // Nourriture (chantier « Les coulisses », système 1) : une bouchée croquée
+  // puis mâchée (`tools/audio/sons_ramassages.py::manger`).
+  food_eat: { sprite: "food_eat", volume: 0.65 },
 };
 
 /** Son de tir par arme. */
@@ -336,12 +339,13 @@ export function playPropBreakSfx(matiere: string) {
 }
 
 /** Événement de feedback sonore ennemi — un par transition observable de la state machine du Costard. */
-type EnemySfxEvent = "alert" | "telegraph" | "hurt" | "death";
+type EnemySfxEvent = "alert" | "telegraph" | "shot" | "hurt" | "death";
 
 /** Son de feedback ennemi par événement — lookup encapsulé, voir `ENEMY_SFX`. */
 const ENEMY_SFX: Record<EnemySfxEvent, SfxId> = {
   alert: "enemy_alert",
   telegraph: "enemy_telegraph",
+  shot: "enemy_shot",
   hurt: "enemy_hurt",
   death: "enemy_death",
 };

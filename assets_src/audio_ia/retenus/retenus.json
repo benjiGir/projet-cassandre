@@ -1,0 +1,178 @@
+{
+ "ceramic_break": {
+  "candidat": "01",
+  "date": "2026-10-02 09:34",
+  "duree": 1.4,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A porcelain toilet bowl smashed with a crowbar, heavy ceramic crash, pieces scattering on a tiled floor, water splashing out, small tiled bathroom, dry, no music, no voice-over"
+ },
+ "door_locked": {
+  "candidat": "04",
+  "date": "2026-10-02 09:36",
+  "duree": 0.8,
+  "format": "pcm_44100",
+  "influence": 0.6,
+  "prompt": "A keycard reader refusing access: harsh double error beep and a locked door handle rattling, dry, no music, no voice-over"
+ },
+ "door_open": {
+  "candidat": "03",
+  "date": "2026-10-02 09:36",
+  "duree": 0.7,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A heavy metal fire door pushed open quickly: handle and latch click, door swinging open in half a second, soft stop, indoors, dry, no music, no voice-over"
+ },
+ "door_shutter": {
+  "candidat": "01",
+  "date": "2026-10-02 09:36",
+  "duree": 1.8,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A metal roller shutter rolling up fast for about one and a half seconds, rattling corrugated steel and electric motor, ending with a clank, dry, no music, no voice-over"
+ },
+ "door_slide": {
+  "candidat": "04",
+  "date": "2026-10-02 09:36",
+  "duree": 0.8,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "An automatic supermarket sliding door opening quickly in under half a second, short motor whir and rubber seal, dry, no music, no voice-over"
+ },
+ "door_unlock": {
+  "candidat": "03",
+  "date": "2026-10-02 09:36",
+  "duree": 0.8,
+  "format": "pcm_44100",
+  "influence": 0.6,
+  "prompt": "A keycard reader accepting a card: short confirmation beep then a magnetic door lock releasing with a clunk, dry, no music, no voice-over"
+ },
+ "enemy_hurt": {
+  "candidat": "02",
+  "date": "2026-10-02 09:35",
+  "duree": 0.5,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A man grunting in pain when shot, short, male voice, close, dry, no reverb, video game enemy, dry, no music, no voice-over"
+ },
+ "food_eat": {
+  "candidat": "01",
+  "date": "2026-10-02 09:35",
+  "duree": 0.7,
+  "format": "pcm_44100",
+  "influence": 0.55,
+  "prompt": "Someone taking a big crunchy bite of food and chewing twice, heard from very close, first person, dry, no music, no voice-over"
+ },
+ "impact_concrete": {
+  "candidat": "02",
+  "date": "2026-10-02 09:34",
+  "duree": 0.5,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A bullet hitting a concrete wall in a modern first-person shooter video game, sharp punchy crack with small debris and dust, single impact, short, dry, no music, no voice-over"
+ },
+ "impact_flesh": {
+  "candidat": "03",
+  "date": "2026-10-02 09:34",
+  "duree": 0.5,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A bullet hitting a body in a modern first-person shooter video game, short wet meaty impact, single hit, dry, no music, no voice-over"
+ },
+ "impact_glass": {
+  "candidat": "04",
+  "date": "2026-10-02 09:34",
+  "duree": 1.4,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A glass display case shattering in a video game, bright crash then shards falling and tinkling on the floor, dry, no music, no voice-over"
+ },
+ "impact_metal": {
+  "candidat": "02",
+  "date": "2026-10-02 09:34",
+  "duree": 0.6,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A bullet hitting a steel panel in a modern first-person shooter video game, sharp metallic clang, short ring, single impact, dry, no music, no voice-over"
+ },
+ "pickup_ammo": {
+  "candidat": "02",
+  "date": "2026-10-02 09:34",
+  "duree": 0.5,
+  "format": "pcm_44100",
+  "influence": 0.6,
+  "prompt": "Video game ammo pickup: a cardboard box of bullets grabbed, brass cartridges clinking, short and satisfying, dry, no music, no voice-over"
+ },
+ "pistol_fire": {
+  "candidat": "02",
+  "date": "2026-10-02 09:16",
+  "duree": 1.2,
+  "format": "pcm_44100",
+  "influence": 0.45,
+  "prompt": "Single pistol gunshot for a modern first-person shooter video game, very punchy and powerful, heavy low-end thump, sharp crack, metallic slide clack, heavily compressed, short controlled indoor tail, dry, no music, no voice-over"
+ },
+ "prop_break_wood": {
+  "candidat": "03",
+  "date": "2026-10-02 09:34",
+  "duree": 1.1,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A wooden crate smashed to pieces in a video game, loud crack, splintering wood, planks dropping, dry, no music, no voice-over"
+ },
+ "shotgun": {
+  "candidat": "01",
+  "date": "2026-10-02 09:16",
+  "duree": 1.8,
+  "format": "pcm_44100",
+  "influence": 0.45,
+  "prompt": "Single pump shotgun blast for a modern first-person shooter video game, massive punchy low-end boom, sharp crack, heavily compressed, short controlled indoor tail, then the pump racked once, dry, no music, no voice-over"
+ },
+ "suit_alert": {
+  "candidat": "04",
+  "date": "2026-10-02 09:35",
+  "duree": 0.6,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "An angry man in a suit shouting 'Hey!' in surprise, male voice, close, dry, no reverb, video game enemy, dry, no music, no voice-over"
+ },
+ "suit_death": {
+  "candidat": "02",
+  "date": "2026-10-02 09:35",
+  "duree": 1.3,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A man's death groan falling off, then his body collapsing on a hard floor, close, dry, no reverb, video game enemy, dry, no music, no voice-over"
+ },
+ "suit_shot": {
+  "candidat": "03",
+  "date": "2026-10-02 09:35",
+  "duree": 0.9,
+  "format": "pcm_44100",
+  "influence": 0.45,
+  "prompt": "A single pistol gunshot fired by an enemy a few meters away in a supermarket, punchy, short controlled tail, video game, dry, no music, no voice-over"
+ },
+ "suit_telegraph": {
+  "candidat": "02",
+  "date": "2026-10-02 09:35",
+  "duree": 0.5,
+  "format": "pcm_44100",
+  "influence": 0.55,
+  "prompt": "A pistol slide racked once, sharp metallic chk-chak, clearly audible warning, close and dry, dry, no music, no voice-over"
+ },
+ "toilet_flush": {
+  "candidat": "04",
+  "date": "2026-10-02 09:36",
+  "duree": 2.5,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A public toilet flushing, strong water rush swirling down, short, tiled bathroom, dry, no music, no voice-over"
+ },
+ "water_gulp": {
+  "candidat": "01",
+  "date": "2026-10-02 09:35",
+  "duree": 0.9,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "Someone drinking water straight from a tap, two quick gulps and swallows, close, dry, no music, no voice-over"
+ }
+}

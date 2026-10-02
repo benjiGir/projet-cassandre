@@ -16,9 +16,12 @@ import json
 import os
 import sys
 
+import numpy as np
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from enregistrements import PriseIndisponible  # noqa: E402
+import catalogue  # noqa: E402
 from recipes import BOUCLES_EXACTES, RECIPES  # noqa: E402
 from synth import SR, crush, write_wav   # noqa: E402
 
@@ -86,7 +89,13 @@ def main() -> None:
             if args.crush and cat not in ("ambience", "ui"):
                 sig = crush(sig, **CRUSH)
             stem = name if len(list(seeds)) == 1 else f"{name}_{s}"
-            info = write_wav(os.path.join(args.out, f"{stem}.wav"), sig, SR,
+            # Un son physique est rendu a l'intensite de l'ancien mixage
+            # (`catalogue.NIVEAUX`) : sa crete peut alors finir sous 0,89.
+            crete = 0.89
+            if name in catalogue.NIVEAUX and name in catalogue.REGISTRE:
+                sig = catalogue.au_niveau(sig, catalogue.NIVEAUX[name])
+                crete = float(np.max(np.abs(sig)))
+            info = write_wav(os.path.join(args.out, f"{stem}.wav"), sig, SR, peak=crete,
                              boucle=name in BOUCLES_EXACTES)
             info.update(name=stem, cat=cat, seed=s)
             rendered.append(info)

@@ -222,6 +222,8 @@ export interface EnemyMachineContext {
 
   pendingAlert: boolean;
   pendingTelegraph: boolean;
+  /** Le coup est parti ce pas (touché ou non) : le son du tir, distinct des dégâts. */
+  pendingShot: boolean;
   pendingAttackDamage: number;
   readonly pendingPlayerHitPoint: THREE.Vector3;
   readonly pendingPlayerHitNormal: THREE.Vector3;
@@ -301,6 +303,7 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
 
     pendingAlert: false,
     pendingTelegraph: false,
+    pendingShot: false,
     pendingAttackDamage: 0,
     pendingPlayerHitPoint: new THREE.Vector3(),
     pendingPlayerHitNormal: new THREE.Vector3(),
@@ -636,6 +639,7 @@ function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext):
   if (!hasClearWorldPath(updateCtx.physics, eye, targetEye, ctx.scratchRay)) return;
 
   ctx.timeSinceShot = 0; // le coup part, touché ou non.
+  ctx.pendingShot = true;
   ctx.scratchAimDir.subVectors(targetEye, eye).normalize();
   applyAimJitter(ctx, ctx.scratchAimDir, ctx.scratchJitteredDir);
 
@@ -961,6 +965,7 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
 
   ctx.pendingAlert = false;
   ctx.pendingTelegraph = false;
+  ctx.pendingShot = false;
   ctx.pendingAttackDamage = 0;
   ctx.animClock += dt;
   ctx.timeSinceShot += dt;

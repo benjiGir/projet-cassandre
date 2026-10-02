@@ -40,6 +40,9 @@ export interface DirectorAlertEvent {
 export interface DirectorTelegraphEvent {
   director: Director;
 }
+export interface DirectorShotEvent {
+  director: Director;
+}
 export interface DirectorHurtEvent {
   director: Director;
   knockbackDirection: THREE.Vector3;
@@ -79,6 +82,7 @@ export class DirectorManager {
 
   private readonly _alertEvents: DirectorAlertEvent[] = [];
   private readonly _telegraphEvents: DirectorTelegraphEvent[] = [];
+  private readonly _shotEvents: DirectorShotEvent[] = [];
   private readonly _hurtEvents: DirectorHurtEvent[] = [];
   private readonly _revealEvents: DirectorRevealEvent[] = [];
   private readonly _deathEvents: DirectorDeathEvent[] = [];
@@ -103,6 +107,9 @@ export class DirectorManager {
   }
   get telegraphEvents(): ReadonlyArray<DirectorTelegraphEvent> {
     return this._telegraphEvents;
+  }
+  get shotEvents(): ReadonlyArray<DirectorShotEvent> {
+    return this._shotEvents;
   }
   get hurtEvents(): ReadonlyArray<DirectorHurtEvent> {
     return this._hurtEvents;
@@ -130,6 +137,7 @@ export class DirectorManager {
   clearFrameEvents() {
     this._alertEvents.length = 0;
     this._telegraphEvents.length = 0;
+    this._shotEvents.length = 0;
     this._hurtEvents.length = 0;
     this._revealEvents.length = 0;
     this._deathEvents.length = 0;
@@ -267,6 +275,7 @@ export class DirectorManager {
   private drainDirectorPendingEvents(director: Director) {
     if (director.pendingAlert) this._alertEvents.push({ director });
     if (director.pendingTelegraph) this._telegraphEvents.push({ director });
+    if (director.pendingShot) this._shotEvents.push({ director });
     if (director.pendingAttackDamage > 0) {
       this._playerHitEvents.push({
         amount: director.pendingAttackDamage,

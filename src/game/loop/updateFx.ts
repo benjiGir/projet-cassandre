@@ -273,6 +273,10 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           // point de la résolution de l'attaque dans `Suit.runAttack`).
           playEnemySfx("telegraph");
         }
+        for (const event of session.suitManager.shotEvents) {
+          void event;
+          playEnemySfx("shot");
+        }
         for (const event of session.suitManager.hurtEvents) {
           // Triple feedback (skill enemy-state-machine) : flash blanc + son ici,
           // knockback déjà appliqué dans `Suit.applyDamage` (vélocité pilotée,
@@ -327,6 +331,10 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         for (const event of session.directorManager.telegraphEvents) {
           void event;
           playEnemySfx("telegraph");
+        }
+        for (const event of session.directorManager.shotEvents) {
+          void event;
+          playEnemySfx("shot");
         }
         for (const event of session.directorManager.hurtEvents) {
           session.directorSprites.get(event.director.id)?.setFlash(1, directorConfig.hitFlashDuration);

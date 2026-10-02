@@ -1,105 +1,61 @@
 ---
 name: weapon-sound-design
-description: Anatomie d'un son d'arme — les quatre couches, le rôle du sine_drop, les mécanismes, les variantes, l'erreur du bruit blanc coupé. Charger pour créer ou corriger une arme, un impact ou un son d'ennemi.
+description: Anatomie physique d'un coup de feu entendu par le tireur — onde de Friedlander, amas de résonances mesuré, jet de gaz, mécanique, écrêtage du micro, pièce — et comment le juger contre la bibliothèque d'armes réelle. Charger pour créer ou corriger une arme, un impact ou un son d'ennemi.
 ---
 
 # Son d'arme
 
-## L'erreur de départ
+## L'erreur qui a coûté quatre passes
 
-La tentative naïve est un bruit blanc sous enveloppe décroissante. Le résultat
-sonne comme une bouffée de parasites, pas comme une arme. Il manque tout ce qui
-suit.
+« Bruit filtré + transitoire + `sine_drop` pour le poids » : c'est la recette
+des passes rejetées le 2026-09-20 (« ça ne ressemble pas à ce que c'est »).
+Mesurée contre le réel le 2026-10-01, l'ancienne arme était classée **6ᵉ**
+pour « pistolet », plus proche d'un grincement de porte. Elle était claire et
+bruitée (centroïde ~7 kHz, platitude 0,09) là où les vraies prises sont
+sombres et tonales (centroïde ~1 kHz, platitude 0,01).
 
-## Les quatre couches d'un tir
+## Ce qu'est un tir (Maher 2006 ; Mengual, Moffat, Reiss 2016)
 
-| Couche | Ce qu'elle apporte | Sans elle |
+| Instant | Composante | Modèle (`physique.py` / `sons_armes.py`) |
 |---|---|---|
-| **Percuteur** | le mécanisme, l'origine physique | le son démarre de nulle part |
-| **Corps** | l'identité de l'arme | rien à reconnaître |
-| **Poids grave** | la puissance ressentie | l'arme paraît en plastique |
-| **Claquement aigu** | la portée, l'air déplacé | le son reste confiné |
+| 0 ms | percuteur — souvent noyé (−32 dB) | `choc` acier, petits modes |
+| ~1 ms | **onde de souffle** : montée instantanée, phase positive 0,45 ms × charge^(1/3), phase négative | `friedlander` |
+| 1 ms | **front de choc** : onde en N brève, large bande — l'aigu des 3 premières ms | `_front` |
+| 2-30 ms | **amas de 4 à 6 résonances très amorties** (150-600 /s), 150 Hz-1,2 kHz pour un pistolet, plus bas + une composante 40-75 Hz pour un fusil | `_souffle` — MESURÉ par faisceau matriciel sur les 16 prises |
+| 0-80 ms | **jet de gaz** : bosse 1-2 kHz, −6 dB/oct au-dessus (jamais de bruit blanc) | `_jet` |
+| 3-25 ms | **mécanique** : culasse qui recule puis revient (pistolet), canon qui sonne (fusil) — carcasse tenue, donc étouffée | `choc` matière `arme` |
+| — | **le micro écrête** : plateaux plats sur toutes les prises réelles — écrêtage DUR, pas une tanh | `micro_sature` |
+| après | **la pièce** : échos et queue (`espace.py`), appliquée au rendu | `@recette(lieu=, distance=)` |
 
-```python
-click  = transient(0.005, seed, hp=2500) * 0.45
-body   = sweep_lowpass(noise_burst(0.26, 120, 9000, decay=24, seed=seed), 9000, 900)
-weight = sine_drop(0.13, 190, 42, curve=2.2) * env_exp(n, 34) * 0.75
-crack  = noise_burst(0.05, 2500, 11000, decay=90, seed=seed+1) * 0.5
+La différence pistolet / pompe vient de la physique (racine cubique de la
+charge), pas d'un plan de bandes imposé.
+
+## Juger contre le réel
+
+```bash
+./.venv-refs/bin/python3 tools/audio/oreille.py juger w/pistol_fire.wav=pistolet
 ```
 
-## Le `sine_drop` est le levier principal
+Une arme se juge **placée au stand** (`LIEU_DU_CORPUS`) : les prises de la
+Free Firearm Library portent l'écho de leur butte à ~140 ms. Le studio
+(`tools/audio/studio.py`) le fait tout seul. Le rapport d'écarts dit quoi
+corriger (« niveau vers 10 kHz : −28 dB, réel −15 ± 2 »).
 
-C'est une sinusoïde dont la hauteur chute vite — 190 Hz vers 42 Hz en 130 ms.
+État au 2026-10-01 : pistolet 1ᵉʳ et dans le nuage du réel ; pompe dans le
+nuage au stand (classe déjà ambiguë entre vraies prises : 50 %).
 
-C'est **ce qui donne le poids**. Un tir sans elle a tout le bruit et aucune
-force. C'est la correction la plus rentable sur une arme qui paraît faible, et
-celle à laquelle on pense en dernier.
+## Pièges payés
 
-La `curve` règle la vitesse de chute : élevée = chute brutale et agressive,
-basse = chute molle et lourde.
-
-## Le `sweep_lowpass` fait la distance
-
-Une coupure qui glisse de 9 kHz vers 900 Hz sur la durée du son reproduit
-l'énergie haute qui se dissipe plus vite que la basse. C'est ce qui donne
-l'impression que le son **part** vers l'extérieur plutôt que de rester plaqué.
-
-Au spectrogramme, ça se lit comme un biseau descendant. Si le spectrogramme
-montre un rectangle, la couche manque.
-
-## Les mécanismes comptent autant que le tir
-
-Un pompe se joue en trois sons, pas un : le tir, le réarmement, la douille au
-sol. C'est cette séquence qui vend l'arme, et chacun a sa signature.
-
-Le réarmement est lui-même **deux mécanismes séparés par 90 ms** — arrière puis
-avant. Un seul clic sonne faux, et personne ne sait dire pourquoi.
-
-```python
-return reverb(layer(back, delay(fwd, 0.09)), room=0.2, mix=0.14)
-```
-
-## Impacts : la matière est dans la résonance
-
-| Matière | Recette |
-|---|---|
-| **Béton** | bruit large bande, décroissance rapide, aucune résonance |
-| **Métal** | transitoire + `resonant` à Q élevé, longue décroissance |
-| **Chair** | passe-bas serré, très court, `sine_drop` grave, zéro résonance |
-| **Verre** | éclats sparses à `delay` aléatoires, très haute fréquence |
-
-Deux résonances **désaccordées** (1850 et 3170 Hz, par exemple) donnent un
-timbre métallique crédible. Deux fréquences en rapport harmonique sonnent comme
-un instrument, pas comme un objet.
+- Une résonance unique et peu amortie s'entend comme une note — et la pièce
+  la prolonge en raie au spectrogramme. Le réel est un AMAS très amorti.
+- Un percuteur trop fort (−24 dB) 1,5 ms avant le souffle allonge l'attaque
+  mesurée et sonne « double ».
+- Le fondu d'entrée de `write_wav` (0,5 ms) rabote un choc né au premier
+  échantillon : `catalogue.au_niveau` ajoute 1 ms de silence devant.
 
 ## Les variantes
 
-Le runtime applique déjà ±8 % de pitch. Ça suffit pour des pas ou des douilles,
-mais pas pour l'arme principale : l'oreille détecte la répétition d'un même
-échantillon en quelques secondes, même repitché.
-
-Rendre **3 à 4 variantes de seed** sur le tir et sur l'impact. Le bruit change,
-la structure reste. C'est un des écarts les plus audibles entre un prototype et
-un jeu fini, pour un coût nul.
-
-```bash
-python3 tools/audio/render_sfx.py --out w --cat weapon --variants
-```
-
-## Le son ennemi est un contrat, pas une décoration
-
-La télégraphie d'attaque du Costard obéit aux règles de `enemy-state-machine` :
-au moins 200 ms avant les dégâts, timbre unique dans tout le mixage, et
-suffisamment aigu pour être localisable en panning.
-
-C'est le canal principal qui permet au joueur de savoir **qui lui tire dessus
-hors champ**. Un combat où trois ennemis tirent sans être localisables est raté,
-quelle que soit la qualité de l'IA.
-
-Vérification obligatoire avant de figer :
-
-```bash
-python3 tools/audio/analyze_sfx.py --mask shotgun.wav suit_telegraph.wav
-```
-
-Voir `audio-mix-budget` : c'est une contrainte de lisibilité, pas de goût.
+Chaque graine tire de nouvelles fréquences dans l'amas, un nouveau timing de
+culasse, de nouveaux modes : une variation PHYSIQUE (point de frappe,
+dispersion de la charge), pas un pitch aléatoire. La variation de pitch en jeu
+reste basse sur les armes (`SFX_TABLE`, ±2,5 %).
