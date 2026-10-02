@@ -49,9 +49,8 @@ résonne, parking souterrain, coulisses, bureaux de l'étage. Elle change en
 fondu quand on passe d'une zone à l'autre, son niveau respire lentement, et
 toutes les 6 à 14 secondes un bruit isolé tombe à gauche ou à droite (un néon
 qui grésille, un caddie au loin, une tôle qui travaille, un téléphone qui
-sonne dans un bureau vide). Un thème musical tourne par-dessus ; chaque
-réplique du héros le fait discrètement redescendre le temps qu'elle se dit,
-puis remonter — la musique ne couvre jamais ce que le héros a à dire.
+sonne dans un bureau vide). Le jeu n'a pas de musique : l'ambiance de
+zone et les répliques du héros suffisent à habiller le silence.
 
 ## Règles
 
@@ -66,20 +65,16 @@ puis remonter — la musique ne couvre jamais ce que le héros a à dire.
 - Le jet d'eau d'un sanitaire cassé est le seul son positionnel du jeu : son
   volume et sa direction suivent votre position et votre regard en continu,
   tant qu'il reste actif.
-- Une réplique du héros baisse toujours la musique le temps de se dire,
-  jamais les ambiances ; entre deux répliques, il y a toujours un délai
-  minimum.
+- Entre deux répliques du héros, il y a toujours un délai minimum.
 - Options › Audio règle le volume général et celui de chaque catégorie
-  (musique, effets, voix du héros, ambiances), coupe ou remet le thème, et
-  affiche ou masque les sous-titres des répliques.
+  (effets, voix du héros, ambiances), et affiche ou masque les sous-titres des répliques.
 - Mettre le jeu en pause éteint en fondu le jet d'eau positionnel et les
-  ambiances de zone ; la musique continue de tourner, et aucun nouveau son de gameplay ne peut se
+  ambiances de zone, et aucun nouveau son de gameplay ne peut se
   déclencher tant que la partie ne reprend pas.
 
 ## Valeurs
 
-Coupure de la musique : touche `M` en jeu, ou l'onglet Audio des options
-([Interface](interface.md)), qui règle aussi les volumes par catégorie ;
+Volumes par catégorie : l'onglet Audio des options ([Interface](interface.md)) ;
 détail des touches : `6-reference/controles.md`.
 
 ## État
@@ -105,7 +100,6 @@ devenir un enregistrement plus tard :
 | Sanitaires — chasse, gorgée, jet d'eau | Enregistrement | Placeholder de synthèse |
 | Sanitaires — casse de la faïence | Enregistrement | Placeholder hybride (faïence déjà réelle, eau encore synthétisée) |
 | Ambiances de zone (6 zones, nappe + bruits isolés) | Générées (ElevenLabs) | Choisies à l'écoute le 2026-10-02, pas encore jugées en jeu |
-| Musique de thème | Un morceau libre de droits, à choisir | Placeholder assumé, aucun accès réseau côté agent pour en choisir un |
 
 - Validé en playtest : rien de spécifiquement sonore n'a encore reçu de
   verdict de playtest — le jeu s'est joué jusqu'ici avec ces placeholders sans

@@ -9,23 +9,21 @@ updated: 2026-10-02
 
 ## Responsabilité
 
-Le runtime audio transforme les événements de présentation en sons ponctuels, musique et ambiances.
+Le runtime audio transforme les événements de présentation en sons ponctuels et ambiances.
 Il ne décide pas quand un événement de gameplay arrive ; cette décision appartient au jeu et à `updateFx`.
 
 ## Fichiers
 
 - `src/core/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
 - `src/core/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
-- `src/core/music.ts` gère le thème, la nappe de fond, le ducking et la préférence persistée.
 - `src/core/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
 - `src/core/showerAmbience.ts` gère la boucle localisée des douches.
 - `src/core/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
 - `src/core/assetPath.ts` construit les chemins d'assets servis par le jeu.
 - `src/game/loop/updateFx.ts` consomme les faits de présentation et met à jour les ambiances.
-- `src/game/session/feedback.ts` publie les répliques et déclenche le ducking musical.
+- `src/game/session/feedback.ts` publie les répliques.
 - `public/assets/audio/sfx/sfx.json` donne les offsets et durées du sprite.
 - `public/assets/audio/sfx/sfx.ogg` et `public/assets/audio/sfx/sfx.m4a` sont ses encodages.
-- `public/assets/audio/music/` contient les pistes de fond.
 
 ## Où ça s'insère dans la boucle
 
@@ -84,13 +82,11 @@ avec `window.cassandre.sfx.joue("shotgun_fire")`.
 Ce flux est distinct de la simulation.
 L'absence d'un son ne change donc pas les décisions de gameplay ni le rejeu.
 
-### Musique
+### Pas de musique
 
-`initMusic` crée la lecture en boucle du thème, au format HTML5.
-La préférence du thème est enregistrée dans `localStorage`.
-`setMusicEnabled` modifie le thème sans redémarrer la piste.
-Le ducking atténue le thème pendant une réplique, puis le restaure ; il ne touche pas aux ambiances.
-Les erreurs de chargement sont traitées comme non fatales.
+Le jeu n'a pas de thème musical : retiré le 2026-10-02, il n'apportait rien
+que l'ambiance de zone ne fasse déjà. Sans musique, plus de ducking : une
+réplique du héros ne baisse aucun autre canal.
 
 ### Ambiances de zone
 
@@ -138,14 +134,13 @@ et la probabilité de chaque réplique sont dans `game/session/heroLines.ts` ;
 ### Réglages du joueur
 
 Options › Audio (`ui/screens/options/audio/AudioTab/`) présente,
-`game/audioSettings.ts` persiste (`cassandre.audio`) et applique. Cinq canaux
-— général (`Howler.volume`), musique, effets, voix du héros, ambiances (nappe,
+`game/audioSettings.ts` persiste (`cassandre.audio`) et applique. Quatre canaux
+— général (`Howler.volume`), effets, voix du héros, ambiances (nappe,
 jets d'eau, douches) — chacun un gain multiplié au volume de repos de son
 module de `core/` : 100 % rend le mixage d'origine. Le gain est le carré de
 la valeur affichée (50 % ≈ −12 dB). S'y ajoutent les sous-titres des
 répliques (lus par `triggerHeroLine`) et la coupure du son quand la fenêtre
-perd le focus (`Howler.mute`). Le thème activé/coupé reste le réglage de
-`core/music.ts` (touche M). `initAudioSettingsAtBoot()` passe avant la
+perd le focus (`Howler.mute`). `initAudioSettingsAtBoot()` passe avant la
 création des `Howl`, qui reprennent les gains à leur construction.
 
 ## Pièges
@@ -154,7 +149,6 @@ création des `Howl`, qui reprennent les gains à leur construction.
 - Confondre « manifeste disponible » et « audio décodé » reporte le coût sur la première action.
 - Modifier les offsets du manifeste à la main est perdu au prochain build du sprite.
 - Fusionner les clés de recette et les identifiants du jeu casse leur frontière de nommage.
-- Relier le réglage de musique à la nappe coupe un canal qui doit rester séparé.
 - Une boucle d'eau HTML5 ne fournit pas le contrôle de panoramique requis par le mix.
 - Un lissage exponentiel n'atteint jamais exactement zéro ; la mise au silence utilise donc un seuil.
 - Le flux d'aléa des variations audio doit rester indépendant du RNG de gameplay.
@@ -163,7 +157,7 @@ création des `Howl`, qui reprennent les gains à leur construction.
 ## Tests
 
 - `test/core/waterAmbienceMix.test.ts` vérifie le calcul pur du gain, de la distance et du panoramique.
-- Les modules Howler `audio.ts` et `music.ts` n'ont pas de suite de tests d'intégration dédiée.
+- Le module Howler `audio.ts` n'a pas de suite de tests d'intégration dédiée.
 - L'analyse du studio et le contrôle des boucles sont décrits dans [Studio audio](studio-audio.md).
 
 ## Comment vérifier que ça marche
@@ -172,4 +166,3 @@ Lancer `pnpm test -- test/core/waterAmbienceMix.test.ts`.
 Dans le navigateur de développement, utiliser `window.cassandre.sfx.liste()` pour comparer les identifiants du jeu aux clés du manifeste ; `present` ne confirme pas le décodage du son.
 Contrôler les réponses Réseau pour `sfx.json` et le format audio choisi, puis déclencher `window.cassandre.sfx.joue("shotgun_fire")` et écouter le résultat.
 Casser un sanitaire, puis observer `window.cassandre.sfx.eau()` pour vérifier l'état de la boucle.
-Basculer le thème avec la touche M et vérifier qu'elle ne coupe pas la nappe.

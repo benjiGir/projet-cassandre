@@ -206,13 +206,13 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
 `CHANGELOG.md`). Les coulisses du niveau v2 sont construites ; leur fiche de
 travail reste dans [`docs/assets/plan-coulisses.md`](docs/assets/plan-coulisses.md)
 et son [board de références](docs/assets/board-coulisses.md).
-Le plan de niveau reste ouvert à la racine dans `PLAN_NIVEAU_V2.md` ; le jalon
-N10 n'est pas déclaré terminé (la bascule est faite, sa documentation non).
+Les plans de travail du niveau v2 et de la documentation ont été retirés du
+dépôt le 2026-10-02 (commit `4e88907`) ; ils restent lisibles dans
+l'historique (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem
+`PLAN_DOCUMENTATION.md`).
 
 Les sons sont générés avec ElevenLabs ou synthétisés (`tools/audio/`) ; la
 mention ElevenLabs du `README.md` est une condition de licence, à garder.
 L'état daté des chantiers livrés et des retours est conservé dans
 [`docs/journal/README.md`](docs/journal/README.md).
 
-La documentation structurée des phases A à I est en place. La phase J du
-[plan de documentation](PLAN_DOCUMENTATION.md) reste à mener.

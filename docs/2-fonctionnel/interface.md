@@ -53,10 +53,9 @@ tente de fermer l'onglet et l'explique en toutes lettres quand ça échoue.
 
 ### Paramètres du signal (options)
 
-Deux onglets (souris ou flèches) : « CONTRÔLES » et « AFFICHAGE », un seul
-bouton de sortie « ◀ RETOUR », écran identique depuis le menu principal ou
-la pause. **Contrôles** : interrupteur pour la nappe/musique (touche `M`
-en jeu), liste des actions et leur touche (cliquer une ligne attend la
+Trois onglets (souris ou flèches) : « CONTRÔLES », « AFFICHAGE » et
+« AUDIO », un seul bouton de sortie « ◀ RETOUR », écran identique depuis le
+menu principal ou la pause. **Contrôles** : liste des actions et leur touche (cliquer une ligne attend la
 prochaine touche pressée, `Échap` annule), bouton de réinitialisation.
 **Affichage**, quatre réglages : le *filtrage des textures lointaines* en
 trois choix décrits par ce qu'on voit — « gros pixel partout, y compris au

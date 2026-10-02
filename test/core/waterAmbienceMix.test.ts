@@ -4,7 +4,7 @@
  * tourne sous Node (`vitest.config.ts`, `environment: "node"`), sans DOM ni
  * `AudioContext`, comme `random.test.ts`. `core/waterAmbience.ts` (le
  * `Howl` réel) n'est volontairement pas testé ici — même absence que
- * `core/audio.ts`/`core/music.ts`, non testables sans navigateur.
+ * `core/audio.ts`, non testable sans navigateur.
  */
 import { describe, expect, it } from "vitest";
 

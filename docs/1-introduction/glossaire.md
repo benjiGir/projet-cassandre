@@ -136,7 +136,6 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 |---|---|---|
 | Audio sprite | Fichier audio unique (`sfx.ogg`/`sfx.m4a` + `sfx.json`) contenant tous les sons du jeu à des positions différentes, chargé une fois. | `src/core/audio.ts` |
 | Distance de timbre | Mesure de similarité spectrale entre deux sons (corrélation sur 30 bandes log, `ressemblance`) ; deux sons qui doivent se distinguer restent sous 0,55. | `tools/audio/analyze_sfx.py` |
-| Ducking | Baisse temporaire du volume de la musique quand une réplique ou un effet prioritaire joue. | `src/core/music.ts` |
 | Facteur de crête | Écart entre le niveau moyen et le niveau crête d'un son (`crest_db`) ; sert à juger le volume perçu, pas le pic brut. | `tools/audio/analyze_sfx.py` |
 | Masquage | Contrainte de gameplay : un son important (ex. télégraphie ennemie) ne doit pas être couvert par un son plus fort au même moment (`masking`). | `tools/audio/analyze_sfx.py` |
 | Recette | Description en texte d'un son procédural (couches DSP, paramètres), rendue en fichier par le studio audio. | `tools/audio/recipes.py` |
@@ -148,9 +147,8 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 |---|---|---|
 | Codec audio | Format ou méthode de compression utilisé pour distribuer un fichier sonore. | `tools/audio/build_sprite.py` |
 | Encodeur audio | Outil qui transforme le WAV source en format compressé lisible par les navigateurs. | `tools/audio/build_sprite.py` |
-| HTML5 audio | Mode de lecture du navigateur utilisé ici pour les longues pistes de fond en boucle. | `src/core/music.ts` |
-| `Howl` / Howler | `Howl` est une instance de lecture ; Howler est la bibliothèque qui charge et joue les sources sonores du runtime. | `src/core/audio.ts`, `src/core/music.ts` |
-| `localStorage` | Stockage navigateur persistant entre deux visites, utilisé pour mémoriser le choix de musique et les réglages graphiques. | `src/core/music.ts`, `src/game/graphicsSettings.ts` |
+| `Howl` / Howler | `Howl` est une instance de lecture ; Howler est la bibliothèque qui charge et joue les sources sonores du runtime. | `src/core/audio.ts` |
+| `localStorage` | Stockage navigateur persistant entre deux visites, utilisé pour mémoriser les réglages audio et graphiques. | `src/game/audioSettings.ts`, `src/game/graphicsSettings.ts` |
 | Manifeste d'asset | Fichier de données associé à un asset, qui décrit les clés, coordonnées ou durées dont le lecteur a besoin. | `public/assets/audio/sfx/sfx.json` |
 | Spectrogramme | Représentation de l'énergie d'un signal audio selon la fréquence et le temps. | `tools/audio/analyze_sfx.py` |
 | Test d'intégration | Test qui vérifie plusieurs modules assemblés dans un même parcours, au-delà d'une fonction isolée. | `test/game/integration/` |

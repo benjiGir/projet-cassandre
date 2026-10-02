@@ -112,7 +112,7 @@ function isResolutionId(value: unknown): value is ResolutionPresetId {
   return RESOLUTION_PRESETS.some((p) => p.id === value);
 }
 
-/** Ne throw jamais, dégrade sur les valeurs d'origine — même discipline que `core/input.ts`/`core/music.ts`. */
+/** Ne throw jamais, dégrade sur les valeurs d'origine — même discipline que `core/input.ts`. */
 function loadPersisted(): GraphicsSettings {
   if (typeof localStorage === "undefined") return { ...FACTORY_DEFAULTS };
   try {

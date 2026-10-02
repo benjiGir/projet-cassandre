@@ -4,6 +4,14 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Retiré
+
+- La musique de thème : la piste, la touche `M`, le canal « Musique » et
+  l'interrupteur de l'onglet Options › Audio. Les ambiances de zone et les
+  répliques du héros suffisent.
+
 ## [1.0.0] — 2026-10-02
 
 Première version publique : le MVP jouable, publié en open source sous

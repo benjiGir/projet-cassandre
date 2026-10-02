@@ -9,7 +9,7 @@ updated: 2026-09-26
 
 # Niveau v2 — plan de masse coté
 
-Livrable du jalon N6 de [`PLAN_NIVEAU_V2.md`](../../PLAN_NIVEAU_V2.md) :
+Livrable du jalon N6 de `PLAN_NIVEAU_V2.md` (retiré du dépôt, voir `git show 4e88907^:PLAN_NIVEAU_V2.md`) :
 passer du schéma en boîtes à un plan coté, vérifié, **avant** de construire
 quoi que ce soit. Rien ici n'est modélisé ; ce document se valide ou se
 refuse sur plan, au moment où le changer coûte le moins cher.

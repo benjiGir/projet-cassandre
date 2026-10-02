@@ -45,7 +45,6 @@ Ces entrées ne sont pas des actions de gameplay. Elles sont disponibles uniquem
 | V | Affiche la scène en fil de fer. |
 | B | Bascule les gizmos balistiques. |
 | Accent grave | Ouvre le panneau de réglage à chaud. |
-| M | Active ou coupe la musique. Cette touche est fixe. |
 
 F9/F10 enregistrent les entrées du joueur, pas la totalité de l'état du monde. Un enregistrement ne fige pas les décisions des ennemis, l'état des objets ou les variations d'environnement.
 

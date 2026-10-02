@@ -9,7 +9,7 @@ import { useInputCapture } from "./useInputCapture";
 import styles from "./ControlsTab.module.css";
 
 /**
- * Onglet CONTRÔLES : remappage des touches (la musique est dans l'onglet AUDIO). `input` n'est pas
+ * Onglet CONTRÔLES : remappage des touches. `input` n'est pas
  * réactif : la copie locale des touches est relue après chaque changement.
  * see: docs/6-reference/controles.md
  */

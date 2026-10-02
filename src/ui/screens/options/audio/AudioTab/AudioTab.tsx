@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import { isMusicEnabled, setMusicEnabled } from "../../../../../core/music";
 import {
   getAudioSettings,
   resetAudioSettings,
@@ -17,15 +16,13 @@ import { AUDIO_CHANNELS } from "./audioChannels";
 import styles from "./AudioTab.module.css";
 
 /**
- * Onglet AUDIO : table de mixage par canal, musique, sous-titres et son en
- * arrière-plan. Persisté et appliqué à chaud par `game/audioSettings.ts`
- * (la musique par `core/music.ts`) ; ce composant ne fait que présenter.
+ * Onglet AUDIO : table de mixage par canal, sous-titres et son en
+ * arrière-plan. Persisté et appliqué à chaud par `game/audioSettings.ts` ;
+ * ce composant ne fait que présenter.
  * see: docs/4-technique/audio-runtime.md#réglages-du-joueur
  */
 export function AudioTab() {
   const [settings, setSettings] = useState<AudioSettings>(getAudioSettings);
-  // `core/music.ts` n'est pas réactif : copie locale, resynchronisée à chaque bascule.
-  const [musicOn, setMusicOn] = useState(isMusicEnabled);
 
   function update(partial: Partial<AudioSettings>) {
     setSettings(setAudioSettings(partial));
@@ -35,15 +32,8 @@ export function AudioTab() {
     update({ [channel]: percent / 100 });
   }
 
-  function handleMusicToggle() {
-    setMusicEnabled(!musicOn);
-    setMusicOn(!musicOn);
-  }
-
   function handleReset() {
     setSettings(resetAudioSettings());
-    setMusicEnabled(true);
-    setMusicOn(true);
   }
 
   return (
@@ -64,14 +54,6 @@ export function AudioTab() {
 
       <OptionSection title="DIFFUSION">
         <div className={styles.toggles}>
-          <ToggleField
-            label="Thème musical"
-            pressed={musicOn}
-            onText="ACTIVÉ"
-            offText="COUPÉ"
-            hint="touche M en jeu"
-            onToggle={handleMusicToggle}
-          />
           <ToggleField
             label="Sous-titres"
             pressed={settings.sousTitres}

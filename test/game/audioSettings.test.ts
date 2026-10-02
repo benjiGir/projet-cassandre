@@ -26,7 +26,7 @@ describe("réglages audio", () => {
 
   it("d'origine : tous les canaux à 100 %, sous-titres affichés, son gardé en arrière-plan", () => {
     expect(getAudioFactoryDefaults()).toEqual({
-      general: 1, musique: 1, effets: 1, voix: 1, ambiances: 1, sousTitres: true, muetEnArrierePlan: false,
+      general: 1, effets: 1, voix: 1, ambiances: 1, sousTitres: true, muetEnArrierePlan: false,
     });
   });
 

@@ -10,7 +10,6 @@ import {
   playWeaponFireSfx,
 } from "../../core/audio";
 import { input } from "../../core/input";
-import { toggleMusic } from "../../core/music";
 import { updateWaterAmbience } from "../../core/waterAmbience";
 import { updateShowerAmbience } from "../../core/showerAmbience";
 import { updateZoneAmbience } from "../../core/zoneAmbience";
@@ -22,7 +21,7 @@ import { suitConfig } from "../entities/suitConfig";
 import { directorConfig } from "../entities/directorConfig";
 import { useGameStore } from "../state";
 import { advanceWeaponPickupClock } from "../../render/pickups";
-import { presentPlayerDamage, showHudMessage } from "../session/feedback";
+import { presentPlayerDamage } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import type { LevelHandle } from "../level/loader";
@@ -506,15 +505,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             const enabled = engine.ballisticsDebug.toggle();
             console.info(`[debug] gizmos balistiques ${enabled ? "activés" : "désactivés"}`);
           }
-        }
-        // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev
-        // comme V/B/F9/F10 ci-dessus) — coupe/remet uniquement le thème
-        // musical, jamais les ambiances. Réglage persisté, voir
-        // `core/music.ts::setMusicEnabled`. Également accessible depuis
-        // l'écran Options pour la découvrabilité.
-        if (input.wasJustPressed("KeyM")) {
-          const enabled = toggleMusic();
-          showHudMessage(enabled ? "Musique activée" : "Musique désactivée");
         }
 
         engine.debugAccumulator += realDt;

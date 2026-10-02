@@ -140,8 +140,7 @@ fonctions déjà exportées de ces trois modules.
 |---|---|---|---|---|
 | `cassandre.keybinds` | `src/core/input.ts` | Bindings action → code (`Record<GameAction, string>`) | Au chargement du module (initialiseur de champ de `InputManager`, avant `attach()`) | À chaque `rebind()`/`resetBindings()` |
 | `cassandre.graphics` | `src/game/graphicsSettings.ts` | `{ filtrage, resolution, fovBase, shakeIntensity }` | `initGraphicsSettingsAtBoot()`, tout en haut de `main()` | À chaque `setGraphicsSettings(partial)` |
-| `cassandre.musicEnabled` | `src/core/music.ts` | `"true"`/`"false"` (musique de thème coupée ou non — jamais les ambiances) | `initMusic()` au boot | À chaque bascule (touche M, Options › Audio) |
-| `cassandre.audio` | `src/game/audioSettings.ts` | `{ general, musique, effets, voix, ambiances, sousTitres, muetEnArrierePlan }` | `initAudioSettingsAtBoot()`, en haut de `main()`, avant la création des sons | À chaque `setAudioSettings(partial)` |
+| `cassandre.audio` | `src/game/audioSettings.ts` | `{ general, effets, voix, ambiances, sousTitres, muetEnArrierePlan }` | `initAudioSettingsAtBoot()`, en haut de `main()`, avant la création des sons | À chaque `setAudioSettings(partial)` |
 
 Les quatre modules partagent la même discipline : jamais de `throw`, un
 `localStorage` absent (mode privé strict), corrompu ou indisponible

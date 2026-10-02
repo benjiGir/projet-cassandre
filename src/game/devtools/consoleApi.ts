@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
-import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
 import { listSfx, playSfx, type SfxId } from "../../core/audio";
 import { listHeroVoices, playHeroVoice } from "../../core/heroVoice";
 import { zoneAmbienceDebugState } from "../../core/zoneAmbience";
@@ -242,14 +241,6 @@ export function exposeDebugApi(engine: GameEngine): void {
         return graph ? navGraphStats(graph) : null;
       },
       findPath: (from, to) => debugFindPath(engine.session, from, to),
-    },
-    /** Coupe/remet le thème (jamais `ambience`), même contrôle que la touche
-     * M en jeu et le toggle de `ui/screens/options/audio/AudioTab/AudioTab.tsx` — pour tester sans dépendre du
-     * pas fixe (voir `core/music.ts`). */
-    music: {
-      isEnabled: isMusicEnabled,
-      setEnabled: setMusicEnabled,
-      toggle: toggleMusic,
     },
     /** Répond à « pourquoi le niveau est-il éclairé comme ça ». Deux termes le
      * décident, et ils se confondent à l'œil : l'éclairage TEMPS RÉEL de la
@@ -504,11 +495,6 @@ declare global {
         graph: () => NavGraph | null;
         stats: () => ReturnType<typeof navGraphStats> | null;
         findPath: (from: THREE.Vector3, to: THREE.Vector3) => THREE.Vector3[] | null;
-      };
-      music: {
-        isEnabled: () => boolean;
-        setEnabled: (enabled: boolean) => void;
-        toggle: () => boolean;
       };
       lighting: () => ReturnType<typeof inspectLighting>;
       renderBench: (frames?: number) => RenderBenchmark;

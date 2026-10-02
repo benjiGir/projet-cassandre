@@ -1,5 +1,4 @@
 import { heroVoiceDuration, playHeroVoice } from "../../core/heroVoice";
-import { duckMusicForHeroLine, restoreMusicVolume } from "../../core/music";
 import { subtitlesEnabled } from "../audioSettings";
 import { useGameStore } from "../state";
 import { HERO_LINES, heroVoiceKey, type HeroBarkId, type HeroLineDef, type HeroLineId } from "./heroLines";
@@ -42,13 +41,12 @@ let partiePrecedentePerdue = false;
 
 /**
  * Tente de faire dire une réplique au héros : sous-titre (`state.heroLine`),
- * prise enregistrée, bouche du portrait et musique baissée. TOUTES les
+ * prise enregistrée et bouche du portrait. TOUTES les
  * répliques du jeu passent par cette fonction. Une réplique non prioritaire
  * respecte le cooldown global, PROPRE À `session`, puis sa probabilité
  * (`session.heroLineRandom`, invariant #12) ; retourne `false` sans effet si
  * elle ne se dit pas.
  * see: docs/archive/systems-session.md#feedback-joueur
- * see: docs/archive/systems-hud-audio.md#ducking-pendant-les-répliques
  */
 export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   const def: HeroLineDef = HERO_LINES[id];
@@ -67,14 +65,12 @@ export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   session.heroPortrait.speak(displayMs / 1000);
   // Sous-titres coupés (Options › Audio) : la voix seule, le canal texte reste vide.
   useGameStore.getState().showHeroLine(subtitlesEnabled() ? def.text : null);
-  duckMusicForHeroLine();
   const ligne = ++ligneAffichee;
   globalThis.setTimeout(() => {
     // Une réplique prioritaire a pu couper celle-ci : c'est à la sienne de
     // rendre la main, pas à celle qu'elle a interrompue.
     if (ligne !== ligneAffichee) return;
     useGameStore.getState().showHeroLine(null);
-    restoreMusicVolume();
   }, displayMs);
   return true;
 }

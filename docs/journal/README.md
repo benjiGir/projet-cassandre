@@ -44,5 +44,6 @@ guides et les plans ouverts à la racine du dépôt.
 - [Prototype — premières phases](premieres-phases-prototype-2026-08.md) — déplacement, combat et décisions de validation.
 - [Plan du prototype](plan-prototype-2026-08.md) — plan livré, conservé intégralement.
 
-Les chantiers encore ouverts restent à leur emplacement de travail :
-[niveau v2](../../PLAN_NIVEAU_V2.md) et [documentation](../../PLAN_DOCUMENTATION.md).
+Les plans du niveau v2 et de la documentation ont été retirés du dépôt avec
+la 1.0.0 (2026-10-02) ; ils restent lisibles dans l'historique git
+(`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem `PLAN_DOCUMENTATION.md`).

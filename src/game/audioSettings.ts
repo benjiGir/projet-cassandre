@@ -1,6 +1,5 @@
 import { setAllMuted, setMasterGain, setSfxGain } from "../core/audio";
 import { setHeroVoiceGain } from "../core/heroVoice";
-import { setMusicGain } from "../core/music";
 import { setShowerAmbienceGain } from "../core/showerAmbience";
 import { setWaterAmbienceGain } from "../core/waterAmbience";
 import { setZoneAmbienceGain } from "../core/zoneAmbience";
@@ -16,15 +15,11 @@ import { setZoneAmbienceGain } from "../core/zoneAmbience";
  * module de `core/` : 100 % rend le mixage d'origine, jamais plus fort. Le
  * curseur est perceptif — le gain est le carré de la valeur affichée, si
  * bien que 50 % sonne « à moitié » (−12 dB) au lieu de presque aussi fort.
- *
- * Le réglage « musique activée » (touche M) n'est PAS ici : il est déjà
- * persisté par `core/music.ts`, l'écran le lit là-bas.
  */
 
 export interface AudioSettings {
   /** 0 à 1, valeur affichée (pas le gain) — coiffe tous les canaux. */
   general: number;
-  musique: number;
   effets: number;
   /** Les répliques enregistrées du héros. */
   voix: number;
@@ -36,13 +31,12 @@ export interface AudioSettings {
   muetEnArrierePlan: boolean;
 }
 
-export type AudioChannel = "general" | "musique" | "effets" | "voix" | "ambiances";
+export type AudioChannel = "general" | "effets" | "voix" | "ambiances";
 
 const STORAGE_KEY = "cassandre.audio";
 
 const FACTORY_DEFAULTS: AudioSettings = {
   general: 1,
-  musique: 1,
   effets: 1,
   voix: 1,
   ambiances: 1,
@@ -50,7 +44,7 @@ const FACTORY_DEFAULTS: AudioSettings = {
   muetEnArrierePlan: false,
 };
 
-const CHANNELS: readonly AudioChannel[] = ["general", "musique", "effets", "voix", "ambiances"];
+const CHANNELS: readonly AudioChannel[] = ["general", "effets", "voix", "ambiances"];
 
 function clamp01(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : fallback;
@@ -91,7 +85,6 @@ let current: AudioSettings = loadPersisted();
 
 function apply(settings: AudioSettings): void {
   setMasterGain(channelGain(settings.general));
-  setMusicGain(channelGain(settings.musique));
   setSfxGain(channelGain(settings.effets));
   setHeroVoiceGain(channelGain(settings.voix));
   const ambiances = channelGain(settings.ambiances);

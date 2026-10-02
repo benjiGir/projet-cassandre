@@ -162,8 +162,8 @@ cassé → `drinkFromSanitaire` (+1 PV/appui, illimité). `onToiletUse`
 **Feedback joueur** : `showHudMessage` est FACTUEL, sans cooldown
 (1,8 s d'affichage). `triggerHeroLine` est une RÉACTION enregistrée
 (`heroLines.ts`) : cooldown global 15 s sauf pour les répliques
-prioritaires, tirage dans `session.heroLineRandom` pour les occasionnelles,
-ducking musical. `grantKillViews` tire dans `session.viewsRandom`
+prioritaires, tirage dans `session.heroLineRandom` pour les occasionnelles.
+`grantKillViews` tire dans `session.viewsRandom`
 (flux dédié), ×4 pour le Directeur — sans lien avec le score du récap.
 `applyPlayerDamage` décrémente `playerHp`, déclenche la réplique « PV bas »
 au premier franchissement de 30 % du max (sinon une réplique ou un cri de

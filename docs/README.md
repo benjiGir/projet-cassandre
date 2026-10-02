@@ -69,11 +69,12 @@ expliquent les liens relatifs et les statuts.
 
 ## État du chantier documentaire
 
-Les phases A à I et les jalons D68 et D70 de la phase J du
-[plan de documentation](../PLAN_DOCUMENTATION.md) sont terminés. La phase J
-attend encore votre relecture complète (D69) du parcours « je découvre ».
+Les phases A à I et les jalons D68 et D70 de la phase J du plan de
+documentation sont terminés. Le plan a été retiré du dépôt le 2026-10-02 ; il
+reste lisible dans l'historique git (`git show 4e88907^:PLAN_DOCUMENTATION.md`).
 
 Le travail de niveau v2 en cours est suivi dans
 [`board-coulisses.md`](assets/board-coulisses.md) et dans le
-[plan des coulisses](assets/plan-coulisses.md), ainsi que dans le
-[plan du niveau v2](../PLAN_NIVEAU_V2.md).
+[plan des coulisses](assets/plan-coulisses.md). Le plan du niveau v2, retiré
+du dépôt avec la 1.0.0, reste dans l'historique git
+(`git show 4e88907^:PLAN_NIVEAU_V2.md`).

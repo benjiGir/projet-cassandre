@@ -9,7 +9,6 @@ import { initHeroVoice } from "./core/heroVoice";
 import { initZoneAmbience } from "./core/zoneAmbience";
 import { installAudioActivation } from "./core/audioPreparation";
 import { input } from "./core/input";
-import { initMusic } from "./core/music";
 import { initWaterAmbience } from "./core/waterAmbience";
 import { initShowerAmbience } from "./core/showerAmbience";
 import { startLoop } from "./core/loop";
@@ -131,9 +130,6 @@ async function main() {
     flowActor.send({ type: "PAUSE" });
   });
 
-  // Musique de thème (Phase 6), module séparé de `core/audio.ts`.
-  // see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
-  initMusic();
 
   // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
   // frontière asynchrone, jamais depuis la boucle (invariant #11).

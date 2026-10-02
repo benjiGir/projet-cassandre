@@ -46,4 +46,3 @@ Rédigez ou mettez à jour un ADR lorsqu'une décision contraint durablement l'a
 - [Référence](../6-reference/README.md) — commandes, valeurs, console, contrôles.
 - [Journal](../journal/README.md) — chantiers datés, livraisons et retours de playtest.
 - [Archive](../archive/README.md) — documentation précédente conservée avec ses remplacements.
-- [Plan documentaire](../../PLAN_DOCUMENTATION.md) — validation et entretien documentaire.

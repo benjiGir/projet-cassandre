@@ -80,7 +80,7 @@ const targetMixScratch: WaterAmbienceMix = { gain: 0, pan: 0 };
 
 /**
  * Construit le `Howl` de la boucle d'eau. Idempotent (même discipline que
- * `initAudio`/`initMusic`) — à appeler UNE FOIS au boot, après `initAudio()`.
+ * `initAudio`) — à appeler UNE FOIS au boot, après `initAudio()`.
  *
  * La promesse attend le décodage et l'amorçage silencieux. L'absence du
  * fichier (`amb_water_jet.{ogg,m4a}`, pas nécessairement livré par

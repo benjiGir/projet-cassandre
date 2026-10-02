@@ -86,7 +86,6 @@ F9 enregistre une séquence d'entrée ; F10 la rejoue si elle existe.
 V bascule le mode filaire de la scène.
 B bascule les gizmos balistiques.
 Ces raccourcis sont réservés au développement.
-La touche M est une commande joueur distincte : elle coupe ou réactive le thème musical, mais laisse les ambiances de zone actives.
 
 ## Pièges
 

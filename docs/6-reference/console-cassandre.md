@@ -61,7 +61,6 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | `cassandre.heals()` / `cassandre.ammo()` | Liste trousses ou boîtes du niveau. |
 | `cassandre.sfx.liste()` / `cassandre.sfx.joue(id, volume?)` | Correspondance recette/identifiant, puis déclenchement d'un effet. |
 | `cassandre.sfx.eau()` | État de l'ambiance des jets d'eau. |
-| `cassandre.music.isEnabled()` / `cassandre.music.setEnabled(bool)` / `cassandre.music.toggle()` | Lit ou règle la musique. |
 
 ## Rendu, session et rapport
 

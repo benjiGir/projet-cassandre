@@ -57,8 +57,8 @@ voisées, une ambiance sonore par zone. Le détail des versions est dans
 `CHANGELOG.md`, l'historique daté des chantiers dans `journal/`.
 
 Restent ouverts après la 1.0.0 : l'amendement de l'invariant #4 sur le
-filtrage des textures réduites (ADR 0027, proposé), la documentation du
-jalon N10 du niveau v2 et la phase J du plan de documentation.
+filtrage des textures réduites (ADR 0027, proposé) et la documentation du
+jalon N10 du niveau v2 (`docs/2-fonctionnel/le-niveau.md` à réécrire).
 
 ## Ce que le projet n'est pas
 

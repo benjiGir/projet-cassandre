@@ -1,6 +1,6 @@
 # Registre des licences — assets tiers
 
-Tout asset tiers importé dans `assets_src/` (modèle, texture, pack) a une ligne ici **avant** d'être utilisé. CC0 uniquement (voir `PLAN_NIVEAU_V2.md`, principe transverse n° 7). Les packs bruts vivent dans `assets_src/cc0_raw/<pack>/`, ignorés par git : ils se retéléchargent depuis la source indiquée.
+Tout asset tiers importé dans `assets_src/` (modèle, texture, pack) a une ligne ici **avant** d'être utilisé. CC0 uniquement (principe transverse n° 7 du plan du niveau v2, `git show 4e88907^:PLAN_NIVEAU_V2.md`). Les packs bruts vivent dans `assets_src/cc0_raw/<pack>/`, ignorés par git : ils se retéléchargent depuis la source indiquée.
 
 La licence est **lue sur la page de la source** au moment du téléchargement, jamais supposée d'après le nom de l'auteur. Une ligne marquée « à confirmer » ne s'utilise pas dans le jeu tant qu'elle n'est pas confirmée. Les archives déposées telles quelles sont rangées dans `assets_src/cc0_raw/_archives/`.
 
