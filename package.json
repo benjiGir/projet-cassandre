@@ -2,6 +2,12 @@
   "name": "boomer-shooter",
   "version": "1.0.0",
   "description": "PROJET_CASSANDRE — prototype boomer shooter",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benjiGir/projet-cassandre.git"
+  },
+  "homepage": "https://benjigir.github.io/projet-cassandre/",
   "private": true,
   "type": "module",
   "scripts": {

@@ -312,6 +312,21 @@ describe("buildLevelFromGltf (jalon M2) — les 7 cas de dégradation", () => {
     );
   });
 
+  it("use_* câblé par nom (arme au sol, micro) : sans cible, aucun avertissement", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const player = new THREE.Object3D();
+    player.name = "spawn_player";
+    const crowbar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), whiteMat());
+    crowbar.name = "use_crowbar";
+    const mic = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), whiteMat());
+    mic.name = "use_pa_mic";
+
+    const { handle } = build([player, crowbar, mic]);
+
+    expect(handle.useObjects).toHaveLength(2);
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it("col_hull_* dégénéré (convexHull -> null) : DegenerateConvexHullError, repli sur trimesh", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     // RAPIER.ColliderDesc.convexHull ne renvoie `null` sur aucune entrée

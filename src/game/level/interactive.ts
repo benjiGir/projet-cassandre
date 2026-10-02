@@ -334,6 +334,23 @@ export class InteractionSystem {
   }
 }
 
+/** `use_*` dont l'effet est câblé par NOM (armes au sol, `switch` de
+ * `InteractionSystem`) : aucune `target` attendue dans le `.glb`, donc pas
+ * d'avertissement « sans cible » au chargement (`loader.ts`). */
+export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
+  "use_crowbar",
+  "use_shotgun",
+  "use_pistol",
+  "use_exit_door",
+  "use_frozen_storage",
+  "use_pa_mic",
+  "use_pointeuse",
+  "use_sav_sonnette",
+  "use_douche_1",
+  "use_douche_2",
+  "use_toilet",
+]);
+
 /** Les trois noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
 function isWeaponPickupName(name: string): boolean {
   return name === "use_crowbar" || name === "use_shotgun" || name === "use_pistol";

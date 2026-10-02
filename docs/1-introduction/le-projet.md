@@ -2,7 +2,7 @@
 title: Le projet
 tags: [introduction]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-02
 ---
 
 # Le projet
@@ -49,23 +49,22 @@ partie sur le niveau complet (`parTime: 600` dans `src/game/level/levels.ts`).
 
 ## Où en est le projet
 
-Les phases 0 à 6 du prototype (déplacement, arme de mêlée, ennemi Costard,
-pipeline de niveau, contenu de la Zone A à E, habillage HUD/menus/écrans)
-sont livrées et validées humainement. Le chantier d'architecture Effect/
-XState (boucle, rendu, pathfinding, machines d'ennemis, flux d'écran) est
-livré en totalité. Le niveau v2 (dix espaces habillés, remplaçant les zones
-de test) est construit de bout en bout mais n'a reçu aucun verdict de
-playtest sur son habillage. Trois décisions attendent l'utilisateur : le
-verdict de playtest du niveau v2, l'amendement de l'invariant #4 sur le
-filtrage des textures réduites, et la confirmation de licence de quatre
-packs d'assets tiers. Détail daté dans `journal/` (page à venir).
+**Version 1.0.0 livrée le 2026-10-02** : le MVP jouable, publié en open
+source sous licence MIT (`LICENSE` à la racine) et déployé sur GitHub Pages.
+Contenu : le niveau v2 (l'hypermarché, ses dix espaces et ses coulisses),
+trois armes, le Costard et le Directeur, le HUD « stream » et ses répliques
+voisées, une ambiance sonore par zone. Le détail des versions est dans
+`CHANGELOG.md`, l'historique daté des chantiers dans `journal/`.
+
+Restent ouverts après la 1.0.0 : l'amendement de l'invariant #4 sur le
+filtrage des textures réduites (ADR 0027, proposé), la documentation du
+jalon N10 du niveau v2 et la phase J du plan de documentation.
 
 ## Ce que le projet n'est pas
 
-Pas de PBR (un seul matériau, `MeshLambertMaterial`), pas d'ECS avant douze
-types d'ennemis, pas de multijoueur, pas de character controller maison
-(celui de Rapier uniquement), pas de résolution interne au-delà de
-640×360. Liste complète et non négociable : `3-architecture/invariants.md`.
+Pas de PBR, pas d'ECS avant douze types d'ennemis, pas de multijoueur, pas
+de character controller maison (celui de Rapier uniquement), pas de
+résolution interne au-delà de 640×360 par défaut. Liste complète et non négociable : `3-architecture/invariants.md`.
 
 ## Pour aller plus loin
 

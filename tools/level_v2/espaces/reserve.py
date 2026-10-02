@@ -68,7 +68,9 @@ def habiller_reserve(space, gris, props, col_coll, logic) -> dict:
     garde += [((px1 - .16, 123.2, z + h, px1 - .08, 131.58, z + h + .06), "world")
               for h in (3.45, 3.89)]
     H.boxes("rs_garde_quai", garde, "metal_bac_acier", props)
-    H.col_box("rs_garde_quai", (px1 - .16, 123.2, z + 3, px1 - .08, 131.58, z + 3.95), col_coll)
+    # Proxy élargi à 12 cm autour des montants de 8 cm : sous 10 cm, un
+    # collider fin laisse passer ce qui le traverse vite (tunneling).
+    H.col_box("rs_garde_quai", (px1 - .18, 123.2, z + 3, px1 - .06, 131.58, z + 3.95), col_coll)
 
     # La rampe dessert le quai ouest, hors de la circulation du personnel.
     bo.pente("rampe_plateforme_rs", RS_RAMPE_X, RS_RAMPE_Y, z, z + 3.0, "+y",

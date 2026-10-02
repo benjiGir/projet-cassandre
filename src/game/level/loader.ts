@@ -46,6 +46,7 @@ import {
 } from "./ecrans";
 import type { CamPoint } from "./cameras";
 import { initialiserDouches } from "./douches";
+import { NAME_WIRED_USE_OBJECTS } from "./interactive";
 
 // `DoorInfo`/`VitreInfo`/`SanitaireInfo` sont DÉFINIS dans `./doors`/
 // `./vitres`/`./sanitaires` (comme `PropInfo` dans `./props`) — ce fichier
@@ -1604,20 +1605,15 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
         ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
         : null;
 
-    // Une carte, une trousse, un aliment ou une console à ramasser/utiliser
-    // se suffit à lui-même : pas de cible, donc pas d'avertissement — même
-    // exception de fond que `use_crowbar`/`use_shotgun`, qui eux le
-    // déclenchent encore (leur effet est câblé par nom, pas déclaré dans le `.glb`).
+    // Une carte, une trousse, un aliment, une console ou un objet câblé par
+    // nom se suffit à lui-même : pas de cible, donc pas d'avertissement.
     if (
       !targetName &&
       !grantsCard &&
       heals === null &&
       ammo === null &&
       !cameras &&
-      name !== "use_pointeuse" &&
-      name !== "use_sav_sonnette" &&
-      name !== "use_douche_1" &&
-      name !== "use_douche_2"
+      !NAME_WIRED_USE_OBJECTS.has(name)
     ) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatUntargetedUseObject(error)))),

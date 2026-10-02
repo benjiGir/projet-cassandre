@@ -17,6 +17,19 @@
         "tools/audio/studio.py"
       ],
       "port": 8765
+    },
+    {
+      "name": "boomer-shooter-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "vite",
+        "preview",
+        "--port",
+        "4180",
+        "--strictPort"
+      ],
+      "port": 4180
     }
   ]
 }

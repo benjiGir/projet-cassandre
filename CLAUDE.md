@@ -202,16 +202,17 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
 
 ## Phase courante
 
-Le chantier gameplay courant porte sur les coulisses du niveau v2. La fiche de
-travail, les éléments restant à construire et les vérifications humaines
-attendues sont dans [`docs/assets/plan-coulisses.md`](docs/assets/plan-coulisses.md)
+**v1.0.0 livrée le 2026-10-02** (MVP, open source MIT — `LICENSE`,
+`CHANGELOG.md`). Les coulisses du niveau v2 sont construites ; leur fiche de
+travail reste dans [`docs/assets/plan-coulisses.md`](docs/assets/plan-coulisses.md)
 et son [board de références](docs/assets/board-coulisses.md).
 Le plan de niveau reste ouvert à la racine dans `PLAN_NIVEAU_V2.md` ; le jalon
-N10 n'est pas déclaré terminé.
+N10 n'est pas déclaré terminé (la bascule est faite, sa documentation non).
 
-Les enregistrements CC0 des sons d'objets attendent encore d'être déposés dans
-`assets_src/cc0_raw/freesound/`. L'état daté des chantiers livrés et des retours
-est conservé dans [`docs/journal/README.md`](docs/journal/README.md).
+Les sons sont générés avec ElevenLabs ou synthétisés (`tools/audio/`) ; la
+mention ElevenLabs du `README.md` est une condition de licence, à garder.
+L'état daté des chantiers livrés et des retours est conservé dans
+[`docs/journal/README.md`](docs/journal/README.md).
 
 La documentation structurée des phases A à I est en place. La phase J du
 [plan de documentation](PLAN_DOCUMENTATION.md) reste à mener.

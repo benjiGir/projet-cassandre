@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 
 let buildOutputDir: string;
 
@@ -44,6 +44,41 @@ export default defineConfig({
       },
     },
     {
+      // Le bundle minifié perd les en-têtes de licence des dépendances, que
+      // MIT et Apache-2.0 exigent de redistribuer avec le code : on les
+      // regroupe dans un fichier livré à la racine du site.
+      name: "third-party-licenses",
+      apply: "build",
+      async generateBundle(_options, bundle) {
+        const packages = new Map<string, { name: string; version: string; license: string; text: string }>();
+        for (const output of Object.values(bundle)) {
+          if (output.type !== "chunk") continue;
+          for (const id of output.moduleIds) {
+            if (!id.includes("/node_modules/")) continue;
+            const root = await findPackageRoot(id);
+            if (!root || packages.has(root)) continue;
+            const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+            const licenseFile = (await readdir(root)).find((f) => /^(licen[cs]e|copying)/i.test(f));
+            packages.set(root, {
+              name: pkg.name,
+              version: pkg.version,
+              license: pkg.license ?? "UNKNOWN",
+              text: licenseFile ? (await readFile(join(root, licenseFile), "utf8")).trim() : "",
+            });
+          }
+        }
+        const entries = [...packages.values()].sort((a, b) => a.name.localeCompare(b.name));
+        const source = entries
+          .map((p) => `${p.name}@${p.version} — ${p.license}\n\n${p.text || "(texte de licence absent du paquet)"}`)
+          .join(`\n\n${"=".repeat(72)}\n\n`);
+        this.emitFile({
+          type: "asset",
+          fileName: "THIRD_PARTY_LICENSES.txt",
+          source: `PROJET_CASSANDRE — licences des dépendances incluses dans ce build\n\n${source}\n`,
+        });
+      },
+    },
+    {
       name: "exclude-audio-studio-artifacts",
       apply: "build",
       configResolved(config) {
@@ -60,3 +95,20 @@ export default defineConfig({
     exclude: ["@dimforge/rapier3d-compat"],
   },
 });
+
+/** Remonte d'un module à la racine de son paquet npm : le premier
+ * `package.json` qui porte un nom ET une version (les sous-dossiers `dist/`
+ * ont parfois un `package.json` réduit à `"type"`). */
+async function findPackageRoot(file: string): Promise<string | null> {
+  let dir = dirname(file.replace(/^\0/, "").split("?")[0]);
+  while (dir.includes("node_modules")) {
+    try {
+      const pkg = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
+      if (pkg.name && pkg.version) return dir;
+    } catch {
+      // pas de package.json ici, on remonte
+    }
+    dir = dirname(dir);
+  }
+  return null;
+}

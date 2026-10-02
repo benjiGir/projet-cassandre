@@ -50,6 +50,18 @@ dépôt (`tools/audio/`). Le détail des assets
 tiers et de leurs licences est dans
 [`assets_src/LICENCES_ASSETS.md`](assets_src/LICENCES_ASSETS.md).
 
+## Licence
+
+Le code et les contenus originaux du projet sont publiés sous licence
+[MIT](LICENSE). Les assets tiers (packs CC0) et les contenus générés
+(ElevenLabs, images) gardent leurs propres conditions, détaillées dans
+[`assets_src/LICENCES_ASSETS.md`](assets_src/LICENCES_ASSETS.md) — les sons et
+voix générés avec ElevenLabs demandent de conserver la mention ci-dessus. Le
+build livre `THIRD_PARTY_LICENSES.txt`, les licences des dépendances npm
+incluses dans le bundle (MIT, Apache-2.0).
+
+Historique des versions : [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Déploiement
 
 Un push sur `main` déclenche un déploiement automatique sur GitHub Pages
