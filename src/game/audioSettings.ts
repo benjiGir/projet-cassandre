@@ -1,8 +1,9 @@
 import { setAllMuted, setMasterGain, setSfxGain } from "../core/audio";
 import { setHeroVoiceGain } from "../core/heroVoice";
-import { setAmbienceHumGain, setMusicGain } from "../core/music";
+import { setMusicGain } from "../core/music";
 import { setShowerAmbienceGain } from "../core/showerAmbience";
 import { setWaterAmbienceGain } from "../core/waterAmbience";
+import { setZoneAmbienceGain } from "../core/zoneAmbience";
 
 /**
  * Réglages audio — écran « Options › Audio »
@@ -27,7 +28,7 @@ export interface AudioSettings {
   effets: number;
   /** Les répliques enregistrées du héros. */
   voix: number;
-  /** Nappe de fond, jets d'eau, douches. */
+  /** Ambiances de zone, jets d'eau, douches. */
   ambiances: number;
   /** Afficher le texte des répliques sous la webcam du héros. */
   sousTitres: boolean;
@@ -94,7 +95,7 @@ function apply(settings: AudioSettings): void {
   setSfxGain(channelGain(settings.effets));
   setHeroVoiceGain(channelGain(settings.voix));
   const ambiances = channelGain(settings.ambiances);
-  setAmbienceHumGain(ambiances);
+  setZoneAmbienceGain(ambiances);
   setWaterAmbienceGain(ambiances);
   setShowerAmbienceGain(ambiances);
   applyBackgroundMute();

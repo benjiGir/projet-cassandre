@@ -43,10 +43,15 @@ faïence épaisse suivi d'une gerbe d'eau ; boire au jet d'un sanitaire cassé
 bruit en continu, plus fort à mesure qu'on s'en approche, glissant d'une
 oreille à l'autre selon la direction du regard.
 
-En fond, une nappe d'ambiance et un thème musical tournent en boucle sur toute
-la partie. Chaque réplique du héros les fait discrètement redescendre le
-temps qu'elle s'affiche, puis remonter — la musique ne couvre jamais ce que le
-héros a à dire.
+En fond, chaque zone du niveau a sa propre ambiance — parking extérieur la
+nuit, magasin fermé aux néons et vitrines frigo, réserve métallique qui
+résonne, parking souterrain, coulisses, bureaux de l'étage. Elle change en
+fondu quand on passe d'une zone à l'autre, son niveau respire lentement, et
+toutes les 6 à 14 secondes un bruit isolé tombe à gauche ou à droite (un néon
+qui grésille, un caddie au loin, une tôle qui travaille, un téléphone qui
+sonne dans un bureau vide). Un thème musical tourne par-dessus ; chaque
+réplique du héros le fait discrètement redescendre le temps qu'elle se dit,
+puis remonter — la musique ne couvre jamais ce que le héros a à dire.
 
 ## Règles
 
@@ -61,21 +66,21 @@ héros a à dire.
 - Le jet d'eau d'un sanitaire cassé est le seul son positionnel du jeu : son
   volume et sa direction suivent votre position et votre regard en continu,
   tant qu'il reste actif.
-- Une réplique du héros baisse toujours la musique le temps de s'afficher,
-  jamais la nappe d'ambiance ; entre deux répliques, il y a toujours un délai
+- Une réplique du héros baisse toujours la musique le temps de se dire,
+  jamais les ambiances ; entre deux répliques, il y a toujours un délai
   minimum.
-- La nappe et le thème musical peuvent être coupés séparément par le joueur ;
-  aucun autre réglage de volume n'existe aujourd'hui — pas de curseur de
-  volume général ni par catégorie de son.
-- Mettre le jeu en pause coupe le jet d'eau positionnel ; la musique et la
-  nappe continuent de tourner, et aucun nouveau son de gameplay ne peut se
+- Options › Audio règle le volume général et celui de chaque catégorie
+  (musique, effets, voix du héros, ambiances), coupe ou remet le thème, et
+  affiche ou masque les sous-titres des répliques.
+- Mettre le jeu en pause éteint en fondu le jet d'eau positionnel et les
+  ambiances de zone ; la musique continue de tourner, et aucun nouveau son de gameplay ne peut se
   déclencher tant que la partie ne reprend pas.
 
 ## Valeurs
 
-Coupure et réglage de la musique : touche `M` en jeu, ou l'onglet Contrôles
-des options ([Interface](interface.md)). Aucune autre valeur numérique n'est
-réglable par le joueur ; détail des touches : `6-reference/controles.md`.
+Coupure de la musique : touche `M` en jeu, ou l'onglet Audio des options
+([Interface](interface.md)), qui règle aussi les volumes par catégorie ;
+détail des touches : `6-reference/controles.md`.
 
 ## État
 
@@ -99,8 +104,8 @@ devenir un enregistrement plus tard :
 | Secret trouvé | Synthèse | Définitif |
 | Sanitaires — chasse, gorgée, jet d'eau | Enregistrement | Placeholder de synthèse |
 | Sanitaires — casse de la faïence | Enregistrement | Placeholder hybride (faïence déjà réelle, eau encore synthétisée) |
-| Ambiances de zone | Non tranché | Composées mais pas encore branchées en jeu |
-| Musique et nappe d'ambiance | Un morceau libre de droits, à choisir | Placeholder assumé, aucun accès réseau côté agent pour en choisir un |
+| Ambiances de zone (6 zones, nappe + bruits isolés) | Générées (ElevenLabs) | Choisies à l'écoute le 2026-10-02, pas encore jugées en jeu |
+| Musique de thème | Un morceau libre de droits, à choisir | Placeholder assumé, aucun accès réseau côté agent pour en choisir un |
 
 - Validé en playtest : rien de spécifiquement sonore n'a encore reçu de
   verdict de playtest — le jeu s'est joué jusqu'ici avec ces placeholders sans

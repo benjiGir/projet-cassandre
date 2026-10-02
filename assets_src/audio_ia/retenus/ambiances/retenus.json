@@ -1,0 +1,195 @@
+{
+ "bureaux": {
+  "evt_chaise": {
+   "boucle": false,
+   "date": "2026-10-02 14:01",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "An office swivel chair creaking on its own in a quiet carpeted room, dry, no music, no voice-over"
+  },
+  "evt_imprimante": {
+   "boucle": false,
+   "date": "2026-10-02 14:01",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "An office laser printer waking up, whirring and clicking briefly, then stopping, dry, no music, no voice-over"
+  },
+  "evt_telephone": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "An old office desk phone ringing once in an empty office at night, muffled, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 14:00",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_01",
+   "prompt": "Ambience of a quiet carpeted office floor upstairs in a supermarket at night: soft air conditioning, computer fans whirring, faint electrical hum, small muffled rooms, almost silent, tense corporate calm, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ },
+ "coulisses": {
+  "evt_compresseur": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "An industrial cold-room compressor starting up with a heavy clunk and shudder behind a wall, dry, no music, no voice-over"
+  },
+  "evt_porte": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A door closing with a latch click at the far end of a narrow service corridor, dry, no music, no voice-over"
+  },
+  "evt_tuyau": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "Old water pipes knocking and clanking inside a wall, close, small tiled room, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 14:00",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_01",
+   "prompt": "Ambience of narrow back-of-house service corridors behind a supermarket at night: buzzing fluorescent tubes, muffled machinery and cold-room compressors humming through the walls, water pipes, small hard tiled rooms, claustrophobic, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ },
+ "magasin": {
+  "evt_caddie": {
+   "boucle": false,
+   "date": "2026-10-02 13:54",
+   "duree": 2.5,
+   "influence": 0.5,
+   "prompt": "A lone shopping cart rattling as it rolls a short distance, far away in a large empty reverberant supermarket, dry, no music, no voice-over"
+  },
+  "evt_frigo": {
+   "boucle": false,
+   "date": "2026-10-02 13:54",
+   "duree": 2.5,
+   "influence": 0.5,
+   "prompt": "A supermarket freezer compressor clicking on with a low shudder, then humming, in a large empty hall, dry, no music, no voice-over"
+  },
+  "evt_neon": {
+   "boucle": false,
+   "date": "2026-10-02 13:54",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A fluorescent tube light flickering and buzzing for a moment in a large empty store, dry, no music, no voice-over"
+  },
+  "evt_rayon": {
+   "boucle": false,
+   "date": "2026-10-02 13:54",
+   "duree": 1.5,
+   "influence": 0.5,
+   "prompt": "A small plastic product falling off a shelf onto a tiled floor, far away in a large empty reverberant supermarket, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 13:54",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_02",
+   "prompt": "Ambience of a huge empty French hypermarket at night after closing: low electrical hum of rows of fluorescent ceiling lights, refrigerated display cases and freezer compressors droning, air conditioning, vast reverberant hall with tiled floor and high metal ceiling, eerie and lonely, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ },
+ "parking": {
+  "evt_rafale": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A gust of cold wind rattling a loose metal sign in an empty car park at night, dry, no music, no voice-over"
+  },
+  "evt_scooter": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A moped engine revving far away in a French suburb at night, outdoors, dry, no music, no voice-over"
+  },
+  "evt_voiture": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A single car passing by in the distance at night, outdoors, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 14:00",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_01",
+   "prompt": "Ambience of an empty outdoor supermarket car park on the outskirts of a French town at night: distant steady traffic hum of a ring road, light cold wind, faint electrical buzz of sodium street lamps, open air, no reverb, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ },
+ "reserve": {
+  "evt_chaine": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "Hanging steel chains clinking softly in a vast empty warehouse, echo, dry, no music, no voice-over"
+  },
+  "evt_palette": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A wooden pallet dropped on a concrete floor far away in a vast warehouse, booming echo, dry, no music, no voice-over"
+  },
+  "evt_tole": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A large metal roof creaking and groaning in a vast empty warehouse, long echo, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 14:00",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_01",
+   "prompt": "Ambience of a vast supermarket stockroom warehouse at night: deep low rumble of large ventilation ducts, tall steel pallet racks, concrete floor, very high metal roof, long cold metallic echo, dark and empty, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ },
+ "souterrain": {
+  "evt_goutte": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "Water drops falling into a puddle in an underground concrete car park, echoing, dry, no music, no voice-over"
+  },
+  "evt_pneus": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "Car tyres squealing briefly on a smooth concrete floor far away in an underground car park, echo, dry, no music, no voice-over"
+  },
+  "evt_porte": {
+   "boucle": false,
+   "date": "2026-10-02 14:00",
+   "duree": 2.0,
+   "influence": 0.5,
+   "prompt": "A heavy metal fire door slamming far away in an underground concrete car park, big echo, dry, no music, no voice-over"
+  },
+  "nappe": {
+   "boucle": true,
+   "date": "2026-10-02 14:00",
+   "duree": 12.0,
+   "influence": 0.5,
+   "prise": "nappe_01",
+   "prompt": "Ambience of an empty underground concrete car park at night: steady drone of big extraction fans, low ceiling, hard concrete reverberation, cold damp air, oppressive and lonely, continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+  }
+ }
+}

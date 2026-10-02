@@ -3,9 +3,9 @@ import { Howl } from "howler";
 import { assetUrl } from "./assetPath";
 
 /**
- * Musique et nappe d'ambiance (Phase 6). Périmètre séparé de
- * `core/audio.ts` (SFX ponctuels) — voir la doc pour la répartition des
- * rôles et le statut placeholder des pistes.
+ * Musique de thème (Phase 6). Périmètre séparé de `core/audio.ts` (SFX
+ * ponctuels) et de `core/zoneAmbience.ts` (ambiances de zone, qui ont
+ * remplacé la nappe unique d'ici le 2026-10-02).
  *
  * see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
  */
@@ -16,15 +16,12 @@ const MUSIC_BASE_PATH = assetUrl("assets/audio/music");
 const MUSIC_VOLUME = 0.32;
 /** -6 dB ≈ ×0.501 (20·log10(0.501) ≈ -6.0), valeur EXACTE demandée par le skill `audio-sfx-pipeline` pour le ducking pendant une réplique. */
 const DUCK_ATTENUATION = 0.501;
-/** Nappe d'ambiance : nettement plus discrète que la musique, c'est un bruit de fond, pas un thème. */
-const AMBIENCE_VOLUME = 0.18;
 
 /** Durée de la remontée après ducking — valeur EXACTE du skill `audio-sfx-pipeline`. */
 const DUCK_RESTORE_MS = 400;
 /** Descente rapide au déclenchement d'une réplique — volontairement plus courte que la remontée (une chute lente laisserait la ligne partiellement couverte par la musique à pleine puissance). */
 const DUCK_ATTACK_MS = 80;
 
-let ambience: Howl | null = null;
 let music: Howl | null = null;
 
 const MUSIC_ENABLED_STORAGE_KEY = "cassandre.musicEnabled";
@@ -47,14 +44,12 @@ function saveMusicEnabled(enabled: boolean): void {
   }
 }
 
-// Persisté (localStorage), jamais `ambience` — la nappe de fond reste
-// toujours audible, seul le thème peut être coupé par le joueur.
+// Persisté (localStorage) : le joueur peut couper le thème, les ambiances de
+// zone restent (leur volume se règle dans Options › Audio).
 let musicEnabled = loadMusicEnabled();
 
-// Gains des canaux « musique » et « ambiances » réglés par le joueur
-// (`game/audioSettings.ts`) — multiplient les volumes de repos ci-dessus.
+// Gain du canal « musique » réglé par le joueur (`game/audioSettings.ts`).
 let musicGain = 1;
-let ambienceGain = 1;
 
 /** Volume cible du thème compte tenu des réglages joueur — 0 si désactivé. */
 function baseMusicVolume(): number {
@@ -67,18 +62,13 @@ export function setMusicGain(gain: number): void {
   music?.volume(baseMusicVolume());
 }
 
-/** Règle le gain de la nappe d'ambiance, effectif tout de suite. */
-export function setAmbienceHumGain(gain: number): void {
-  ambienceGain = gain;
-  ambience?.volume(AMBIENCE_VOLUME * ambienceGain);
-}
 
 export function isMusicEnabled(): boolean {
   return musicEnabled;
 }
 
 /**
- * Coupe/remet le thème (jamais `ambience`). Persisté immédiatement, effectif
+ * Coupe/remet le thème (jamais les ambiances). Persisté immédiatement, effectif
  * immédiatement (fade court, même durée que la remontée post-réplique) —
  * pas besoin de relancer une partie pour que le réglage s'applique.
  * `duckMusicForHeroLine`/`restoreMusicVolume` visent toutes deux
@@ -98,20 +88,13 @@ export function toggleMusic(): boolean {
 }
 
 /**
- * Construit les deux `Howl` de fond et démarre leur lecture en boucle.
- * Idempotent (même discipline que `initAudio` dans `audio.ts`) : un second
- * appel ne recrée rien. À appeler UNE FOIS au boot, après `initAudio()`.
+ * Construit le `Howl` du thème et démarre sa lecture en boucle. Idempotent
+ * (même discipline que `initAudio` dans `audio.ts`) : un second appel ne
+ * recrée rien. À appeler UNE FOIS au boot, après `initAudio()`.
  */
 export function initMusic() {
-  if (ambience || music) return;
+  if (music) return;
 
-  ambience = new Howl({
-    src: [`${MUSIC_BASE_PATH}/ambience_hum.ogg`, `${MUSIC_BASE_PATH}/ambience_hum.m4a`],
-    html5: true,
-    loop: true,
-    volume: AMBIENCE_VOLUME * ambienceGain,
-    onloaderror: () => warnMissingOnce("ambience_hum"),
-  });
   music = new Howl({
     src: [`${MUSIC_BASE_PATH}/theme_placeholder.ogg`, `${MUSIC_BASE_PATH}/theme_placeholder.m4a`],
     html5: true,
@@ -125,7 +108,6 @@ export function initMusic() {
   // `.play()` avant unlock est sûr (voir la doc de tête) : Howler met en
   // attente, jamais d'exception.
   try {
-    ambience.play();
     music.play();
   } catch {
     // Défensif, même discipline que `SfxPool` dans `audio.ts` : un throw
@@ -141,8 +123,8 @@ function warnMissingOnce(id: string) {
 }
 
 /**
- * Ducking musique -6 dB (descente rapide). N'agit QUE sur `music`, jamais
- * `ambience`. No-op si `initMusic()` n'a pas encore tourné. Descente et
+ * Ducking musique -6 dB (descente rapide). N'agit QUE sur le thème, jamais
+ * sur les ambiances. No-op si `initMusic()` n'a pas encore tourné. Descente et
  * remontée sont deux fonctions SÉPARÉES, pas un minuteur interne — voir la
  * doc pour le pourquoi.
  *

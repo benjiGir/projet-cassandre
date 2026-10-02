@@ -4,6 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/random";
 import { setAudioRandom } from "../../core/audio";
+import { setZoneAmbienceRandom } from "../../core/zoneAmbience";
 import { runGameplaySync } from "../../core/runtime";
 import { HERO_LINE_SEED } from "./heroLines";
 import { createInitialStats } from "./score";
@@ -85,6 +86,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   engine.fx.resetSession();
   engine.fx.setRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xf00d517))));
   setAudioRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa0d105))));
+  setZoneAmbienceRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa4b1a7))));
 
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
   // `session.playerHp` ci-dessous lit `debug.playerMaxHp` fraîchement reset.

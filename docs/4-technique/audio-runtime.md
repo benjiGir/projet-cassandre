@@ -84,14 +84,31 @@ avec `window.cassandre.sfx.joue("shotgun_fire")`.
 Ce flux est distinct de la simulation.
 L'absence d'un son ne change donc pas les décisions de gameplay ni le rejeu.
 
-### Musique et nappe
+### Musique
 
-`initMusic` crée deux lectures en boucle au format HTML5 : le thème et la nappe d'ambiance.
+`initMusic` crée la lecture en boucle du thème, au format HTML5.
 La préférence du thème est enregistrée dans `localStorage`.
-La nappe reste indépendante du réglage qui coupe le thème.
 `setMusicEnabled` modifie le thème sans redémarrer la piste.
-Le ducking atténue le thème pendant une réplique, puis le restaure ; il ne change pas la nappe.
+Le ducking atténue le thème pendant une réplique, puis le restaure ; il ne touche pas aux ambiances.
 Les erreurs de chargement sont traitées comme non fatales.
+
+### Ambiances de zone
+
+`core/zoneAmbience.ts` lit `assets/audio/ambiances/ambiances.json`, écrit par
+`tools/audio/ia_ambiances.py finalize` : pour chaque zone, sa nappe, ses
+événements et les espaces du plan de masse qu'elle couvre (boîtes en repère du
+jeu, la plus petite l'emporte). Chaque nappe est amorcée en silence au
+chargement ; `updateZoneAmbience`, appelée par `updateFx` au taux
+d'affichage, choisit la zone sous la caméra (on garde la précédente entre deux
+espaces), fond les nappes en ~0,7 s, fait respirer leur niveau (0,045 Hz,
+±12 %) et lâche un événement toutes les 6 à 14 s, panoramique au hasard. Le
+tirage passe par un flux `DeterministicRandom` dédié, posé à chaque partie.
+
+Le fichier d'une nappe porte 0,5 s de marge de chaque côté et le jeu boucle sur
+la région du milieu (sprite Howler bouclé) : encodée en ogg ou m4a, une boucle
+propre en WAV sortait avec un clic au raccord, l'encodeur abîmant les bords du
+fichier. `finalize` mesure le raccord APRÈS décodage. `cassandre.sfx.ambiance()`
+donne la zone entendue et le volume de chaque nappe.
 
 ### Jet d'eau positionnel
 

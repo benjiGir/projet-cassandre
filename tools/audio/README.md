@@ -101,6 +101,16 @@ python3 tools/audio/analyze_sfx.py --boucle w/amb_shower.wav \
     --sheet /tmp/boucle.png --contre w/suit_telegraph.wav
 ```
 
+## Ambiances de zone (`ia_ambiances.py`, 2026-10-02)
+
+Une nappe en boucle par zone (paramètre `loop` du modèle) et 3 ou 4 bruits
+isolés, prompts dans `ia_prompts.py` (`AMBIANCES`, `EVENEMENTS`). La page
+d'écoute fait entendre une minute « comme en jeu » (nappe qui respire,
+événements au hasard) à côté de l'ancienne nappe. `pick zone=N` garde la nappe
+et les événements en FLAC ; `finalize` écrit `public/assets/audio/ambiances/`
+(stéréo, ogg + m4a, manifeste avec les espaces du plan de masse de chaque zone,
+table `ESPACES`) et mesure le raccord de chaque boucle après décodage.
+
 ## Répliques parlées (`ia_voix.py`, 2026-10-02)
 
 Texte → voix ElevenLabs, lu directement dans le

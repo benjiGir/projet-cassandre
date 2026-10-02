@@ -1,0 +1,601 @@
+{
+ "defaut": "magasin",
+ "zones": {
+  "bureaux": {
+   "nappe": "bureaux",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "bureaux_chaise",
+    "bureaux_imprimante",
+    "bureaux_telephone"
+   ],
+   "espaces": [
+    {
+     "espace": "bureaux",
+     "x": [
+      -30,
+      8
+     ],
+     "z": [
+      -166,
+      -150
+     ],
+     "y": [
+      3.0,
+      8.0
+     ]
+    },
+    {
+     "espace": "direction",
+     "x": [
+      -44,
+      -30
+     ],
+     "z": [
+      -166,
+      -146
+     ],
+     "y": [
+      3.0,
+      8.5
+     ]
+    },
+    {
+     "espace": "c_escalier",
+     "x": [
+      2,
+      8
+     ],
+     "z": [
+      -150,
+      -140
+     ],
+     "y": [
+      -1.0,
+      8.0
+     ]
+    }
+   ]
+  },
+  "coulisses": {
+   "nappe": "coulisses",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "coulisses_compresseur",
+    "coulisses_porte",
+    "coulisses_tuyau"
+   ],
+   "espaces": [
+    {
+     "espace": "pc_secu",
+     "x": [
+      20,
+      32
+     ],
+     "z": [
+      -152,
+      -140
+     ],
+     "y": [
+      -1.0,
+      4.0
+     ]
+    },
+    {
+     "espace": "vestiaires",
+     "x": [
+      32,
+      46
+     ],
+     "z": [
+      -152,
+      -140
+     ],
+     "y": [
+      -1.0,
+      4.0
+     ]
+    },
+    {
+     "espace": "fournil",
+     "x": [
+      8,
+      20
+     ],
+     "z": [
+      -156,
+      -140
+     ],
+     "y": [
+      -1.0,
+      5.5
+     ]
+    },
+    {
+     "espace": "gaine",
+     "x": [
+      20,
+      32
+     ],
+     "z": [
+      -154,
+      -152
+     ],
+     "y": [
+      1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "labo",
+     "x": [
+      -60,
+      -44
+     ],
+     "z": [
+      -98,
+      -84
+     ],
+     "y": [
+      -1.0,
+      4.5
+     ]
+    },
+    {
+     "espace": "chambre_froide",
+     "x": [
+      -60,
+      -44
+     ],
+     "z": [
+      -116,
+      -98
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "sav",
+     "x": [
+      20,
+      30
+     ],
+     "z": [
+      -132,
+      -112
+     ],
+     "y": [
+      -1.0,
+      4.5
+     ]
+    },
+    {
+     "espace": "secret3",
+     "x": [
+      35,
+      41
+     ],
+     "z": [
+      -24,
+      -20
+     ],
+     "y": [
+      1.0,
+      5.5
+     ]
+    },
+    {
+     "espace": "c_bu",
+     "x": [
+      0,
+      46
+     ],
+     "z": [
+      -140,
+      -132
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "c_short_ramp",
+     "x": [
+      -36,
+      0
+     ],
+     "z": [
+      -140,
+      -132
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "c_short_w",
+     "x": [
+      -44,
+      -36
+     ],
+     "z": [
+      -140,
+      -84
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    }
+   ]
+  },
+  "magasin": {
+   "nappe": "magasin",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "magasin_caddie",
+    "magasin_frigo",
+    "magasin_neon",
+    "magasin_rayon"
+   ],
+   "espaces": [
+    {
+     "espace": "galerie",
+     "x": [
+      -30,
+      30
+     ],
+     "z": [
+      -16,
+      0
+     ],
+     "y": [
+      -1.0,
+      7.0
+     ]
+    },
+    {
+     "espace": "cafeteria",
+     "x": [
+      34,
+      56
+     ],
+     "z": [
+      -20,
+      0
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "caisses",
+     "x": [
+      -26,
+      26
+     ],
+     "z": [
+      -44,
+      -20
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "hub",
+     "x": [
+      -6,
+      6
+     ],
+     "z": [
+      -92,
+      -44
+     ],
+     "y": [
+      -1.0,
+      7.0
+     ]
+    },
+    {
+     "espace": "rayons",
+     "x": [
+      -52,
+      -10
+     ],
+     "z": [
+      -84,
+      -48
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "electro",
+     "x": [
+      10,
+      46
+     ],
+     "z": [
+      -80,
+      -48
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "toilettes",
+     "x": [
+      56,
+      64
+     ],
+     "z": [
+      -16,
+      -6
+     ],
+     "y": [
+      -1.0,
+      4.0
+     ]
+    },
+    {
+     "espace": "secret1",
+     "x": [
+      -36,
+      -30
+     ],
+     "z": [
+      -10,
+      -2
+     ],
+     "y": [
+      -1.0,
+      4.5
+     ]
+    },
+    {
+     "espace": "c_pk_ga",
+     "x": [
+      -4,
+      4
+     ],
+     "z": [
+      0,
+      4
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "c_ga_cf",
+     "x": [
+      30,
+      34
+     ],
+     "z": [
+      -10,
+      -4
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    },
+    {
+     "espace": "c_ga_cs",
+     "x": [
+      -6,
+      6
+     ],
+     "z": [
+      -20,
+      -16
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "c_hb_ry",
+     "x": [
+      -10,
+      -6
+     ],
+     "z": [
+      -72,
+      -60
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "c_hb_el",
+     "x": [
+      6,
+      10
+     ],
+     "z": [
+      -68,
+      -56
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    }
+   ]
+  },
+  "parking": {
+   "nappe": "parking",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "parking_rafale",
+    "parking_scooter",
+    "parking_voiture"
+   ],
+   "espaces": [
+    {
+     "espace": "parking_ext",
+     "x": [
+      -24,
+      24
+     ],
+     "z": [
+      4,
+      40
+     ],
+     "y": [
+      -1.0,
+      7.0
+     ]
+    }
+   ]
+  },
+  "reserve": {
+   "nappe": "reserve",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "reserve_chaine",
+    "reserve_palette",
+    "reserve_tole"
+   ],
+   "espaces": [
+    {
+     "espace": "reserve",
+     "x": [
+      -24,
+      20
+     ],
+     "z": [
+      -132,
+      -96
+     ],
+     "y": [
+      -1.0,
+      9.0
+     ]
+    },
+    {
+     "espace": "compacteur",
+     "x": [
+      -36,
+      -24
+     ],
+     "z": [
+      -128,
+      -112
+     ],
+     "y": [
+      -1.0,
+      6.0
+     ]
+    },
+    {
+     "espace": "secret4",
+     "x": [
+      -36,
+      -28
+     ],
+     "z": [
+      -132,
+      -128
+     ],
+     "y": [
+      -1.0,
+      3.5
+     ]
+    },
+    {
+     "espace": "c_hb_rs",
+     "x": [
+      -6,
+      6
+     ],
+     "z": [
+      -96,
+      -92
+     ],
+     "y": [
+      -1.0,
+      5.0
+     ]
+    }
+   ]
+  },
+  "souterrain": {
+   "nappe": "souterrain",
+   "boucle": [
+    500.0,
+    11750.0
+   ],
+   "evenements": [
+    "souterrain_goutte",
+    "souterrain_pneus",
+    "souterrain_porte"
+   ],
+   "espaces": [
+    {
+     "espace": "souterrain",
+     "x": [
+      30,
+      78
+     ],
+     "z": [
+      -124,
+      -92
+     ],
+     "y": [
+      -7.0,
+      -1.5
+     ]
+    },
+    {
+     "espace": "c_so_bu",
+     "x": [
+      38,
+      46
+     ],
+     "z": [
+      -132,
+      -124
+     ],
+     "y": [
+      -7.0,
+      5.0
+     ]
+    }
+   ]
+  }
+ },
+ "_note": "Généré par tools/audio/ia_ambiances.py finalize — ne pas éditer à la main."
+}

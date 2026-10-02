@@ -6,7 +6,7 @@ import type { DoorMovement } from "../game/level/doors";
 
 /**
  * Effets sonores ponctuels (SFX) — tir, impact, feedback ennemi, portes,
- * secrets. Musique et nappe d'ambiance : `core/music.ts`, module séparé
+ * secrets. Musique : `core/music.ts` ; ambiances de zone : `core/zoneAmbience.ts`, modules séparés
  * (pooling/pitch n'ont aucun sens pour une piste en boucle streamée). Les
  * répliques du héros restent du texte HUD, câblées dans `main.ts`.
  *

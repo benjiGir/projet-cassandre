@@ -6,6 +6,7 @@ import "./ui/theme/tokens.css";
 
 import { initAudio } from "./core/audio";
 import { initHeroVoice } from "./core/heroVoice";
+import { initZoneAmbience } from "./core/zoneAmbience";
 import { installAudioActivation } from "./core/audioPreparation";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
@@ -55,7 +56,7 @@ async function main() {
   // Réglages audio persistés (`game/audioSettings.ts`) : posés AVANT la
   // création des `Howl`, qui reprennent ces gains dès leur construction.
   initAudioSettingsAtBoot();
-  const audioReady = Promise.all([initAudio(), initHeroVoice(), initWaterAmbience(), initShowerAmbience()]);
+  const audioReady = Promise.all([initAudio(), initHeroVoice(), initZoneAmbience(), initWaterAmbience(), initShowerAmbience()]);
 
   // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et
   // appliqués (FOV, screenshake) AVANT le menu principal : un joueur qui a
@@ -130,7 +131,7 @@ async function main() {
     flowActor.send({ type: "PAUSE" });
   });
 
-  // Musique + nappe d'ambiance (Phase 6), module séparé de `core/audio.ts`.
+  // Musique de thème (Phase 6), module séparé de `core/audio.ts`.
   // see: docs/archive/systems-hud-audio.md#musique-et-nappe-dambiance
   initMusic();
 

@@ -4,6 +4,7 @@ import { inputRecorder, recordingFromJson, recordingToJson, type Recording } fro
 import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
 import { listSfx, playSfx, type SfxId } from "../../core/audio";
 import { listHeroVoices, playHeroVoice } from "../../core/heroVoice";
+import { zoneAmbienceDebugState } from "../../core/zoneAmbience";
 import { waterAmbienceDebugState } from "../../core/waterAmbience";
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
 import {
@@ -208,6 +209,8 @@ export function exposeDebugApi(engine: GameEngine): void {
        * ci-dessus, verrouillage du pointeur hors de portée de
        * l'automatisation). */
       eau: () => waterAmbienceDebugState(),
+      /** Ambiance de zone (`core/zoneAmbience.ts`) : la zone entendue et le volume appliqué à chaque nappe. */
+      ambiance: () => zoneAmbienceDebugState(),
     },
     /** Voix du héros : `liste()` rend chaque prise du sprite `voix` et sa durée,
      * `joue(cle)` en fait entendre une (`"heros_depart_a"`) sans provoquer la situation. */
@@ -480,6 +483,7 @@ declare global {
         liste: () => ReturnType<typeof listSfx>;
         joue: (id: SfxId, volume?: number) => void;
         eau: () => ReturnType<typeof waterAmbienceDebugState>;
+        ambiance: () => ReturnType<typeof zoneAmbienceDebugState>;
       };
       voix: {
         liste: () => ReturnType<typeof listHeroVoices>;

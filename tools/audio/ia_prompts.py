@@ -145,7 +145,87 @@ PROMPTS: dict[str, tuple[str, float, float]] = {
         0.6, 0.7),
 }
 
-# Les ambiances (amb_*) ne sont PAS ici : ce sont des boucles exactes, vérifiées
-# à l'échantillon près par `build_sprite.py`. Un modèle génère volontiers une
-# boucle, mais il ne garantit pas le raccord ; à traiter à part, après les
-# sons ponctuels.
+# --- Ambiances de zone (`ia_ambiances.py`) -----------------------------------
+#
+# Retour du 2026-10-02 sur l'ancienne nappe : « trop monotone », « mauvaise
+# couleur », et toutes les zones sonnaient pareil. D'où trois strates par zone
+# (skill `ambience-and-loops`) : une NAPPE générée en boucle (`loop`, le modèle
+# soigne le raccord, `analyze_sfx.raccord` le vérifie), la respiration lente
+# ajoutée au mixage, et des ÉVÉNEMENTS ponctuels tirés au hasard par-dessus —
+# ce sont eux qui empêchent l'oreille de verrouiller la boucle.
+#
+# Une nappe ne contient AUCUN événement saillant : un grincement au milieu
+# d'une boucle de 12 s revient toutes les 12 s, et c'est exactement ce qui
+# s'entend comme une boucle. Les prompts le disent au modèle.
+
+NAPPE = "continuous steady room tone, no distinct events, no people, no voices, no music, seamless loop"
+
+AMBIANCES: dict[str, tuple[str, float, float]] = {
+    "magasin": (
+        "Ambience of a huge empty French hypermarket at night after closing: low electrical hum of rows of "
+        "fluorescent ceiling lights, refrigerated display cases and freezer compressors droning, air "
+        f"conditioning, vast reverberant hall with tiled floor and high metal ceiling, eerie and lonely, {NAPPE}",
+        12.0, 0.5),
+    "parking": (
+        "Ambience of an empty outdoor supermarket car park on the outskirts of a French town at night: distant "
+        "steady traffic hum of a ring road, light cold wind, faint electrical buzz of sodium street lamps, open air, "
+        f"no reverb, {NAPPE}",
+        12.0, 0.5),
+    "reserve": (
+        "Ambience of a vast supermarket stockroom warehouse at night: deep low rumble of large ventilation ducts, "
+        "tall steel pallet racks, concrete floor, very high metal roof, long cold metallic echo, dark and empty, "
+        f"{NAPPE}",
+        12.0, 0.5),
+    "souterrain": (
+        "Ambience of an empty underground concrete car park at night: steady drone of big extraction fans, low "
+        f"ceiling, hard concrete reverberation, cold damp air, oppressive and lonely, {NAPPE}",
+        12.0, 0.5),
+    "coulisses": (
+        "Ambience of narrow back-of-house service corridors behind a supermarket at night: buzzing fluorescent "
+        "tubes, muffled machinery and cold-room compressors humming through the walls, water pipes, small hard "
+        f"tiled rooms, claustrophobic, {NAPPE}",
+        12.0, 0.5),
+    "bureaux": (
+        "Ambience of a quiet carpeted office floor upstairs in a supermarket at night: soft air conditioning, "
+        "computer fans whirring, faint electrical hum, small muffled rooms, almost silent, tense corporate calm, "
+        f"{NAPPE}",
+        12.0, 0.5),
+}
+
+EVENEMENTS: dict[str, dict[str, tuple[str, float, float]]] = {
+    "magasin": {
+        "neon": (f"A fluorescent tube light flickering and buzzing for a moment in a large empty store, {SEC}",
+                 2.0, 0.5),
+        "frigo": (f"A supermarket freezer compressor clicking on with a low shudder, then humming, in a large empty hall, {SEC}",
+                  2.5, 0.5),
+        "caddie": (f"A lone shopping cart rattling as it rolls a short distance, far away in a large empty reverberant supermarket, {SEC}",
+                   2.5, 0.5),
+        "rayon": (f"A small plastic product falling off a shelf onto a tiled floor, far away in a large empty reverberant supermarket, {SEC}",
+                  1.5, 0.5),
+    },
+    "parking": {
+        "voiture": (f"A single car passing by in the distance at night, outdoors, {SEC}", 2.0, 0.5),
+        "rafale": (f"A gust of cold wind rattling a loose metal sign in an empty car park at night, {SEC}", 2.0, 0.5),
+        "scooter": (f"A moped engine revving far away in a French suburb at night, outdoors, {SEC}", 2.0, 0.5),
+    },
+    "reserve": {
+        "tole": (f"A large metal roof creaking and groaning in a vast empty warehouse, long echo, {SEC}", 2.0, 0.5),
+        "palette": (f"A wooden pallet dropped on a concrete floor far away in a vast warehouse, booming echo, {SEC}", 2.0, 0.5),
+        "chaine": (f"Hanging steel chains clinking softly in a vast empty warehouse, echo, {SEC}", 2.0, 0.5),
+    },
+    "souterrain": {
+        "goutte": (f"Water drops falling into a puddle in an underground concrete car park, echoing, {SEC}", 2.0, 0.5),
+        "porte": (f"A heavy metal fire door slamming far away in an underground concrete car park, big echo, {SEC}", 2.0, 0.5),
+        "pneus": (f"Car tyres squealing briefly on a smooth concrete floor far away in an underground car park, echo, {SEC}", 2.0, 0.5),
+    },
+    "coulisses": {
+        "tuyau": (f"Old water pipes knocking and clanking inside a wall, close, small tiled room, {SEC}", 2.0, 0.5),
+        "compresseur": (f"An industrial cold-room compressor starting up with a heavy clunk and shudder behind a wall, {SEC}", 2.0, 0.5),
+        "porte": (f"A door closing with a latch click at the far end of a narrow service corridor, {SEC}", 2.0, 0.5),
+    },
+    "bureaux": {
+        "telephone": (f"An old office desk phone ringing once in an empty office at night, muffled, {SEC}", 2.0, 0.5),
+        "imprimante": (f"An office laser printer waking up, whirring and clicking briefly, then stopping, {SEC}", 2.0, 0.5),
+        "chaise": (f"An office swivel chair creaking on its own in a quiet carpeted room, {SEC}", 2.0, 0.5),
+    },
+}

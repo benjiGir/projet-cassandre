@@ -44,7 +44,8 @@ conventions) vit dans [`docs/`](docs/README.md).
 
 La plupart des effets sonores du jeu (armes, impacts, ennemis, portes,
 ramassages) sont générés avec [ElevenLabs](https://elevenlabs.io) (Sound
-Effects), et la voix du héros avec ElevenLabs (texte → voix, voix « Callum »). Les autres sons et les ambiances sont synthétisés par les outils du
+Effects), comme les ambiances de zone, et la voix du héros avec ElevenLabs (texte → voix,
+voix « Callum »). Les autres sons et les ambiances sont synthétisés par les outils du
 dépôt (`tools/audio/`). Le détail des assets
 tiers et de leurs licences est dans
 [`assets_src/LICENCES_ASSETS.md`](assets_src/LICENCES_ASSETS.md).

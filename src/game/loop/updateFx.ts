@@ -13,6 +13,7 @@ import { input } from "../../core/input";
 import { toggleMusic } from "../../core/music";
 import { updateWaterAmbience } from "../../core/waterAmbience";
 import { updateShowerAmbience } from "../../core/showerAmbience";
+import { updateZoneAmbience } from "../../core/zoneAmbience";
 import { runGameplaySync } from "../../core/runtime";
 import { type LoopStats } from "../../core/loop";
 import { FLESH_MATERIAL } from "../player/weapons";
@@ -467,6 +468,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           realDt,
           engine.flow.isPlaying(),
         );
+        updateZoneAmbience(engine.camera.position, realDt, engine.flow.isPlaying());
         const levelRoot = session.gltfLevelSession?.current?.root ?? null;
         collectActiveShowerOrigins(levelRoot, showerOriginScratch);
         updateShowerAmbience(
@@ -507,7 +509,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         }
         // KeyM : touche fixe non-rebindable côté JOUEUR (pas un outil de dev
         // comme V/B/F9/F10 ci-dessus) — coupe/remet uniquement le thème
-        // musical, jamais la nappe d'ambiance. Réglage persisté, voir
+        // musical, jamais les ambiances. Réglage persisté, voir
         // `core/music.ts::setMusicEnabled`. Également accessible depuis
         // l'écran Options pour la découvrabilité.
         if (input.wasJustPressed("KeyM")) {
