@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ViewmodelClocks } from "../../src/game/player/weapons";
+import type { ViewmodelClocks } from "../../src/game/player/weaponTypes";
 import { VIEWMODEL_TIMING as T, viewmodelAnimationAt, type ViewmodelAnimation } from "../../src/render/viewmodel";
 
 const REPOS = 1e3;

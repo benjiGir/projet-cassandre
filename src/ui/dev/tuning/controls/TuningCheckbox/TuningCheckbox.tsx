@@ -8,7 +8,6 @@ export interface TuningCheckboxProps {
   children: ReactNode;
 }
 
-/** Une bascule du panneau de tuning. */
 export function TuningCheckbox({ checked, onChange, children }: TuningCheckboxProps) {
   return (
     <label className={styles.checkbox}>

@@ -8,7 +8,13 @@ import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";
 import { enemySpriteQuad } from "../../render/enemySprites";
-import { dressAmmoPickup, dressFoodPickup, dressHealPickup, dressWeaponPickup, type WeaponPickupBillboard } from "../../render/pickups";
+import {
+  dressAmmoPickup,
+  dressFoodPickup,
+  dressHealPickup,
+  dressWeaponPickup,
+  type WeaponPickupBillboard,
+} from "../../render/pickups";
 import { dressCardPickup, type CardPickupBillboard } from "../../render/cardPickups";
 import { LightPool } from "../../render/lightPool";
 import { PropSystem } from "../level/props";
@@ -29,24 +35,10 @@ import { useGameStore } from "../state";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 
-/**
- * Normales des sprites d'ennemis inclinées de 45° vers le haut : les lampes du
- * niveau v2 sont des néons de plafond, qu'un quad vertical ne voit presque pas.
- * see: docs/archive/systems-rendu.md#éclairage-des-sprites
- */
+// see: docs/archive/systems-rendu.md#éclairage-des-sprites
 const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
-/**
- * Fait apparaître un Costard ET son `BillboardSprite`, toujours ensemble —
- * un Costard sans sprite serait invisible mais actif, un bug de lisibilité
- * silencieux. `facing` par défaut vise la position courante du joueur.
- *
- * `session` est un paramètre EXPLICITE (pas une lecture d'`engine.session`) :
- * lui faire lire `engine.session` pousserait le Costard dans l'ANCIENNE
- * partie pendant un `bootGameSession` en cours (bug silencieux : l'entité
- * semblerait juste ne jamais apparaître).
- * see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
- */
+// see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
 export function spawnSuitAt(engine: PersistentEngine, session: GameSession, x: number, feetY: number, z: number): Suit {
   const facing = new THREE.Vector3(session.player.position.x - x, 0, session.player.position.z - z);
   if (facing.lengthSq() < 1e-6) facing.set(0, 0, 1);
@@ -104,12 +96,6 @@ function groundBelow(session: GameSession, point: THREE.Vector3): number | null 
   return hit ? point.y - hit.timeOfImpact : null;
 }
 
-/**
- * Charge (ou recharge) `public/assets/levels/<name>.glb` dans `session` —
- * voir `game/level/hotReload.ts` pour le mécanisme de hot reload lui-même.
- * `engine`/`session` explicites, même raison que `spawnSuitAt` ci-dessus.
- * see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
- */
 export function loadGltfLevel(
   engine: PersistentEngine,
   session: GameSession,
@@ -156,11 +142,7 @@ export function loadGltfLevel(
         const lightPool = new LightPool(handle.lights);
         const propSystem = new PropSystem(handle.props, handle.root);
 
-        // La boîte du `.glb` cède la place au vrai modèle, posé sur la surface
-        // réellement sous elle. Ces mutations restent confinées au candidat.
-        // Armes au sol : billboards dressés (`render/pickups.ts`), collectés
-        // ici pour être animés au taux d'affichage (`updateFx`) — voir la doc
-        // de tête de `WeaponPickupBillboard`.
+        // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
         const weaponPickupBillboards: WeaponPickupBillboard[] = [];
         const cardPickupBillboards: CardPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
@@ -240,7 +222,6 @@ export function loadGltfLevel(
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
-          // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
           if (info.isFirstLoad && handle.spawnPlayer) {
             session.player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
             engine.look.yaw = handle.spawnPlayer.yaw;
@@ -258,7 +239,8 @@ export function loadGltfLevel(
             }
           }
 
-          useGameStore.getState().setSecretsTotal(handle.stats.secretCount);
+          session.secretsTotal = handle.stats.secretCount;
+          useGameStore.getState().setSecretsTotal(session.secretsTotal);
         };
       },
     });
@@ -266,21 +248,10 @@ export function loadGltfLevel(
     return levelSession;
   };
 
-  // Au boot, l'installation reste synchrone jusqu'à l'affectation de
-  // `session.gltfLevelSession`. Lors d'un changement explicite depuis la
-  // console, le nouveau chargement ne démarre qu'après l'arrêt complet de
-  // l'ancien : aucun corps ne peut arriver après la libération de sa session.
   if (!previous) return Promise.resolve(install());
   return previous.stop().then(install);
 }
 
-/**
- * Wrapper console pour `PathfindingService.findPath` sur le graphe
- * COURANT DE `session` (`cassandre.pathfinding.findPath(...)`), pour
- * visualiser/vérifier un chemin en direct. `null` si aucun graphe n'est
- * encore baké ou si aucun chemin n'a été trouvé — jamais d'exception qui
- * remonterait à la console.
- */
 export function debugFindPath(session: GameSession, from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] | null {
   const graph = session.currentNavGraph;
   if (!graph) return null;

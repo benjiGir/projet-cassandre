@@ -1,28 +1,13 @@
 import * as THREE from "three";
 
-/**
- * Gizmos balistiques de debug — dessine BRIÈVEMENT, après chaque tir, la
- * forme EXACTE réellement testée par la requête de hit (mêmes nombres que
- * `game/player/weapons.ts`), pas une approximation pédagogique. Demande
- * explicite du playtest (« il faudrait rajouter des gizmos pour voir sur
- * quoi on tire »). ACTIF PAR DÉFAUT EN DEV, contrairement au wireframe
- * `KeyV` — `KeyB` bascule l'affichage à chaud. Éteint et sans touche dans le
- * build de production.
- *
- * Découplage de `game/*`, objets 3D réels non éclairés (pas une entorse à
- * l'invariant #5 — calque de diagnostic transitoire), temps réel (géométrie
- * figée sur l'instant du tir, seule la décroissance est temps réel) :
- * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
- * see: docs/archive/systems-rendu.md#gizmos-balistiques-de-debug
- */
+// see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
-/** "Quelques centaines de ms", auto-effacé — voir la doc de tête. */
 const TRACE_LIFETIME = 0.35; // s
 
 const SHOTGUN_TRACE_COLOR = 0xffcc33;
 const MELEE_TRACE_COLOR = 0x33ccff;
 
-/** Axe local le long duquel `THREE.CapsuleGeometry` construit sa partie cylindrique — sert à orienter le gizmo capsule sur la direction de visée, même convention que `UNIT_Y` dans `weapons.ts`. */
+// CapsuleGeometry construit son cylindre sur +Y, comme Rapier.
 const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
 interface ActiveTrace {
@@ -44,7 +29,7 @@ export class BallisticsDebugOverlay {
     return this.enabled;
   }
 
-  /** Bascule l'affichage à chaud, même contrat que `createWireframeToggle().toggle()`. Désactiver retire immédiatement toutes les traces actives. */
+  // Désactiver retire immédiatement les traces existantes.
   toggle(): boolean {
     this.enabled = !this.enabled;
     if (!this.enabled) this.clearAll();
@@ -59,14 +44,7 @@ export class BallisticsDebugOverlay {
     this.traces.length = 0;
   }
 
-  /**
-   * Pompe : une ligne PAR PLOMB, de `origin` (l'œil du joueur au tir) à son
-   * point de fin — voir la doc de `FireEvent.pelletEndpoints` dans
-   * `weapons.ts` : le point d'impact réel s'il y en a un, sinon
-   * `shotgunRange` mètres le long de sa direction dispersée si le plomb n'a
-   * rien touché. Un seul objet `LineSegments` pour les 9 plombs (pas 9
-   * objets), disposé à l'expiration.
-   */
+  // Extrémités réelles des plombs ; un seul objet pour tout le tir.
   recordShotgunFire(origin: THREE.Vector3, endpoints: ReadonlyArray<THREE.Vector3>) {
     if (!this.enabled || endpoints.length === 0) return;
 
@@ -101,15 +79,7 @@ export class BallisticsDebugOverlay {
     });
   }
 
-  /**
-   * Pied-de-biche : wireframe de la capsule RÉELLEMENT testée par
-   * `WeaponSystem.fireMelee` (même `range`/`radius` que la requête Rapier,
-   * voir sa doc) — pas une approximation. `THREE.CapsuleGeometry(radius,
-   * length, capSegments, radialSegments)` construit sa partie cylindrique de
-   * hauteur `length` centrée à l'origine locale le long de Y : EXACTEMENT la
-   * même convention que `RAPIER.Capsule(halfHeight, radius)` avec
-   * `halfHeight = range / 2` (voir `fireMelee`), donc `length = range`.
-   */
+  // Même longueur et rayon que la capsule de mêlée réellement testée.
   recordMeleeFire(origin: THREE.Vector3, direction: THREE.Vector3, range: number, radius: number) {
     if (!this.enabled || range <= 0 || radius <= 0) return;
 
@@ -136,7 +106,7 @@ export class BallisticsDebugOverlay {
     });
   }
 
-  /** Décroissance temps réel des traces actives, jamais le pas fixe — voir la doc de tête. */
+  // Delta réel d’affichage ; la requête représentée reste figée au tir.
   update(realDt: number) {
     for (let i = this.traces.length - 1; i >= 0; i--) {
       const trace = this.traces[i]!;

@@ -1,129 +1,22 @@
 import { create } from "zustand";
 
-// see: docs/decisions/0020-state-feuille-de-dependances.md
+import type { LoyaltyCard } from "./player/loyaltyCards";
+import { INITIAL_PLAYER_MAX_HP } from "./session/playerState";
+import type { GameFlowState } from "../app/gameFlowTypes";
+import type { HeroPortraitView, DebugState, LevelRecap } from "./hudTypes";
+import { INITIAL_HERO_PORTRAIT } from "./session/portraitState";
+
+// see: docs/decisions/0036-contrats-feuilles-et-store-hud.md
 // see: docs/4-technique/interface-react.md#flux-décran
-export type GameFlowState =
-  | "boot"
-  | "mainMenu"
-  | "options"
-  | "levelSelect"
-  | "loading"
-  | "loadFailed"
-  | "playing"
-  | "paused"
-  | "dead"
-  | "levelComplete";
 
-export type HeroPortraitReaction = "idle" | "hurt" | "focus" | "victory" | "discover" | "talk" | "heal" | "dead";
-export interface HeroPortraitView {
-  readonly sheet: "reactions" | "ambient";
-  readonly frame: number;
-  readonly reaction: HeroPortraitReaction;
-  readonly healthBand: number;
-  readonly side: "left" | "front" | "right";
-  readonly impact: number;
-  readonly combo: boolean;
-}
-
-export const INITIAL_HERO_PORTRAIT: HeroPortraitView = {
-  sheet: "reactions", frame: 0, reaction: "idle", healthBand: 0, side: "front", impact: 0, combo: false,
-};
-
-/**
- * Une ligne du récap de fin de partie : ce qui a été compté, comment ça se
- * calcule (`detail`, un texte déjà formaté — l'écran ne refait aucun calcul),
- * ce que ça rapporte. DÉFINI ICI plutôt que dans `game/session/score.ts` et
- * réimporté par lui, même pattern que `GameFlowState` ci-dessus (ADR 0020,
- * `game/state.ts` reste une FEUILLE de dépendances — c'est aux autres
- * modules d'importer depuis lui, jamais l'inverse).
- * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
- */
-export interface RecapLine {
-  label: string;
-  detail: string;
-  points: number;
-}
-
-/** Voir `RecapLine` ci-dessus pour pourquoi ce type vit ici. Construit par `game/session/score.ts::buildLevelRecap`, pur calcul sans dépendance à ce store. */
-export interface LevelRecap {
-  lines: RecapLine[];
-  total: number;
-  elapsedSeconds: number;
-  parTimeSeconds: number | null;
-  accuracy: number;
-}
-
-export interface DebugState {
-  fps: number;
-  /** Position des yeux du joueur, m. */
-  position: { x: number; y: number; z: number };
-  entityCount: number;
-  /** Pas fixes exécutés pendant la dernière frame d'affichage (spirale de rattrapage si > 2 durablement). */
-  steps: number;
-
-  // see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
-  gameplayMs: number;
-  gameplayP95Ms: number;
-  astarQueries: number;
-  astarMisses: number;
-  astarExpandedNodes: number;
-  astarLastMs: number;
-  astarMaxMs: number;
-  physicsMs: number;
-  renderMs: number;
-
-  // see: docs/archive/systems-debug.md#coût-de-rendu
-  /** Draw calls de la dernière image rendue (`renderer.info.render.calls`). */
-  drawCalls: number;
-  /** Triangles de la dernière image rendue (`renderer.info.render.triangles`). */
-  triangles: number;
-
-  // see: docs/archive/systems-debug.md#champs-de-debugstate
-  isGrounded: boolean;
-  /** Vitesse horizontale, m/s. */
-  horizontalSpeed: number;
-  /** Vitesse verticale, m/s. */
-  verticalSpeed: number;
-  /** Collisions du dernier `computeColliderMovement`. */
-  numCollisions: number;
-  /** Normale du sol sous les pieds. */
-  groundNormal: { x: number; y: number; z: number };
-
-  // see: docs/archive/systems-debug.md#champs-de-debugstate
-  playerHp: number;
-  playerMaxHp: number;
-
-  // see: docs/archive/systems-debug.md#champs-de-debugstate
-  shotgunAmmo: number;
-  shotgunMaxAmmo: number;
-  pistolAmmo: number;
-  pistolMaxAmmo: number;
-
-  // see: docs/decisions/0020-state-feuille-de-dependances.md
-  activeWeapon: "none" | "melee" | "pistol" | "shotgun";
-
-  // see: docs/archive/systems-debug.md#champs-de-debugstate
-  secretsFound: number;
-  secretsTotal: number;
-
-  /** Cartes de fidélité en poche, dans l'ordre Argent/Or/Platine. Miroir de
-   * `session.cards`, jamais la source de vérité — l'union est redéclarée ici
-   * plutôt qu'importée, comme `activeWeapon`.
-   * see: docs/decisions/0020-state-feuille-de-dependances.md */
-  cards: readonly ("argent" | "or" | "platine")[];
-
-  // see: docs/archive/systems-debug.md#champs-de-debugstate
-  views: number;
-}
+// see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
 
 interface GameState {
   heroPortrait: HeroPortraitView;
   setHeroPortrait: (view: HeroPortraitView) => void;
   debug: DebugState;
-  /**
-   * Écriture THROTTLÉE À 10 Hz MAXIMUM depuis la boucle (invariant #2).
-   * Jamais un appel par frame : React n'entre pas dans la boucle de jeu.
-   */
+  // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
+  /** Au plus 10 Hz depuis la boucle ; aucun appel par frame. */
   setDebug: (partial: Partial<DebugState>) => void;
   /** Écrit `debug.playerHp`. Appeler PONCTUELLEMENT au dégât — jamais par frame (invariant #2). */
   // see: docs/archive/systems-debug.md#champs-de-debugstate
@@ -133,7 +26,7 @@ interface GameState {
   /** Fixe `debug.secretsTotal` — appelé une fois au chargement d'un niveau (voir `LevelStats.secretCount`). */
   setSecretsTotal: (total: number) => void;
   /** Recopie l'inventaire de cartes — appelé PONCTUELLEMENT au ramassage, jamais par image (voir `game/session/cards.ts`). */
-  setCards: (cards: readonly ("argent" | "or" | "platine")[]) => void;
+  setCards: (cards: readonly LoyaltyCard[]) => void;
   /** Incrémente `debug.views` de `amount`, décidé par l'appelant — voir `game/session/feedback.ts::grantKillViews`. */
   incrementViews: (amount: number) => void;
 
@@ -143,21 +36,14 @@ interface GameState {
   showHudMessage: (text: string | null) => void;
 
   /** Canal RÉPLIQUE — cooldown global de 15 s appliqué côté appelant, pas ici. */
-  // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline
   heroLine: string | null;
   showHeroLine: (text: string | null) => void;
 
   /** État courant du flux d'écran — permet aux composants React de réagir à un changement d'écran. */
-  // see: docs/4-technique/interface-react.md#flux-décran
   // see: docs/decisions/0019-machine-xstate-flux-ecran.md
   flowState: GameFlowState;
   setFlowState: (state: GameFlowState) => void;
 
-  /** Récap de fin de partie — `null` tant qu'aucune partie ne s'est encore
-   * terminée. Poussé UNE FOIS par `game/session/score.ts::publishLevelRecap`,
-   * à la mort (récap partiel) ou à la fin de niveau (récap complet), jamais
-   * par image (invariant #2).
-   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie */
   recap: LevelRecap | null;
   setRecap: (recap: LevelRecap | null) => void;
 
@@ -190,8 +76,8 @@ const INITIAL_DEBUG: DebugState = {
   verticalSpeed: 0,
   numCollisions: 0,
   groundNormal: { x: 0, y: 1, z: 0 },
-  playerHp: 100,
-  playerMaxHp: 100,
+  playerHp: INITIAL_PLAYER_MAX_HP,
+  playerMaxHp: INITIAL_PLAYER_MAX_HP,
   shotgunAmmo: 0,
   shotgunMaxAmmo: 0,
   pistolAmmo: 0,

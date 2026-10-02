@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import { INITIAL_PLAYER_MAX_HP } from "./playerState";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/random";
 import { setAudioRandom } from "../../core/audio";
@@ -20,46 +21,15 @@ import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./heroPortrait";
-
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
 const SPAWN_FEET_GUARD = 0.1;
 
-/**
- * Rayon de la balle de test (chemin "gym" seulement) — témoin de
- * non-régression des colliders et de `setApplyImpulsesToDynamicBodies`.
- * Trajectoire vérifiée par calcul pour rester contenue dans le hub.
- * see: docs/archive/systems-session.md#construire-une-partie
- */
+// see: docs/archive/systems-session.md#construire-une-partie
 const BALL_RADIUS = 0.4;
 
-/**
- * Règle l'éclairage temps réel de la scène selon le niveau chargé.
- *
- * La scène porte depuis la Phase 1 une ambiante à 0.4 et un soleil à 0.8 :
- * c'est ce qui donne leur relief aux boîtes blanches de la gym, qui n'ont
- * aucune couleur cuite. Sur un niveau baké, ce rig fait double emploi, et par
- * une direction arbitraire (5, 10, 5) sans rapport avec les néons du plafond —
- * une face tournée à l'opposé perdait 60 % de sa luminosité cuite.
- *
- * Les trois modes, et ce que chacun attend du `.glb` :
- *
- * | mode | ambiante | soleil | le niveau doit fournir |
- * |---|---|---|---|
- * | `temps-reel` | 0.4 | 0.8 | rien (gym, zones A-E) |
- * | `bake` | 1.0 | 0 | une couleur de sommet portant TOUT l'éclairage |
- * | `hybride` | 0.18 | 0 | des `light_*` + une couleur de sommet d'OMBRE |
- *
- * En `hybride`, l'ambiante n'est pas nulle : les lampes du niveau ont une
- * portée finie et un recoin hors de portée de toutes tomberait au noir absolu,
- * ce qu'aucun jeu de cette époque ne fait.
- *
- * Réglage PAR NIVEAU et non global : les zones A-E ont été éclairées à l'œil
- * SOUS l'ancien rig, les basculer changerait leur aspect sans que personne
- * l'ait demandé — la bascule se décidera au jalon N10.
- * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
- */
+// see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
 function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   const mode = choice.lighting ?? "temps-reel";
   engine.ambientLight.intensity = mode === "bake" ? 1.0 : mode === "hybride" ? 0.18 : 0.4;
@@ -69,15 +39,6 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   engine.scene.background = choice.ciel ? chargerCiel(choice.ciel) : null;
 }
 
-/**
- * Construit une PARTIE complète : `PhysicsWorld` (donc `player`/`weapons`/
- * `suitManager`/`directorManager`, tous construits à partir de `physics`),
- * la géométrie du niveau (gym ou session glTF), tout l'état de suivi par
- * partie. Appelée une fois au tout premier boot ET à nouveau à chaque
- * "Rejouer"/"Retour au menu" — ce réemploi est ce qui rend le reset
- * possible.
- * see: docs/archive/systems-session.md#construire-une-partie
- */
 export function bootGameSession(engine: PersistentEngine, choice: LevelDef): GameSession {
   // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
   // de recréer leurs pools, mais leur état transitoire appartient à UNE
@@ -89,7 +50,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   setZoneAmbienceRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa4b1a7))));
 
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
-  // `session.playerHp` ci-dessous lit `debug.playerMaxHp` fraîchement reset.
+  // Le HUD est réinitialisé ; la santé canonique appartient à la nouvelle session.
   useGameStore.getState().resetGameStore();
 
   const physics = new PhysicsWorld();
@@ -99,10 +60,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   let ballMesh: THREE.Mesh | null = null;
   let ballBody: RAPIER.RigidBody | null = null;
 
-  // `buildGym` (géométrie + colliders de la gym) n'est appelé QUE sur le
-  // chemin "gym" : sur le chemin "gltf", zéro géométrie/collider de la gym
-  // ne doit exister en mémoire, pas juste être caché — les deux chemins
-  // sont mutuellement exclusifs.
+  // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
   if (choice.kind === "gym") {
     gymRoot = new THREE.Group();
     engine.scene.add(gymRoot);
@@ -129,11 +87,6 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
       ballBody,
     );
   } else {
-    // Chemin glTF : pas de spawn connu ici (le chargement, plus bas, est
-    // asynchrone). Position transitoire sûre et documentée : le joueur
-    // tombe quelques pas fixes dans le vide (gravité −25 m/s², invariant
-    // #7) jusqu'à ce que le commit de `loadGltfLevel` le repositionne sur
-    // `spawn_player` du `.glb`.
     player.spawn(0, 2, 0);
     engine.look.yaw = 0;
     engine.look.pitch = 0;
@@ -173,8 +126,11 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     unlockedDoors: new Set(),
     exitDoorTracking: null,
     foundSecrets: new WeakSet(),
+    secretsFound: 0,
+    secretsTotal: 0,
     lastSafeGround: new THREE.Vector3(),
-    playerHp: useGameStore.getState().debug.playerMaxHp,
+    playerHp: INITIAL_PLAYER_MAX_HP,
+    playerMaxHp: INITIAL_PLAYER_MAX_HP,
     heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
@@ -195,12 +151,6 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
 
   applyLightRig(engine, choice);
 
-  // 3 points de spawn dans le hub (chemin "gym" seulement — POSITIONS DE
-  // TEST DE LA GYM, pas du contenu générique de moteur) : dispersés autour
-  // du spawn joueur (0, 0, -10), à 15-22 m (au-delà de la portée de
-  // mêlée, en-deçà de `suitConfig.sightRange`), et à >= 8 m de n'importe
-  // quel mur du hub. Les niveaux glTF ont leurs propres `spawn_suit_*`,
-  // consommés dans `loadGltfLevel` ci-dessus.
   if (choice.kind === "gym") {
     spawnSuitAt(engine, session, -9, SPAWN_FEET_GUARD, 5);
     spawnSuitAt(engine, session, 9, SPAWN_FEET_GUARD, 5);
@@ -212,14 +162,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
   return session;
 }
 
-/**
- * Détruit une PARTIE complète, dans un ordre précis : session de niveau
- * glTF, géométrie propre à `session` (gym + balle de test), sprites
- * billboard, mesh du badge, puis `physics.world.free()` EN DERNIER —
- * libérer le monde Rapier libère tous ses corps/colliders d'un coup, voir
- * pourquoi l'ordre compte.
- * see: docs/archive/systems-session.md#démolir-une-partie
- */
+// see: docs/archive/systems-session.md#démolir-une-partie
 export async function teardownGameSession(engine: PersistentEngine, session: GameSession): Promise<void> {
   session.levelLoadGeneration += 1;
   await session.gltfLevelSession?.stop();
@@ -242,10 +185,6 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   session.droppedCardBillboard?.dispose();
   session.droppedCardBillboard = null;
 
-  // Jets d'eau permanents des sanitaires cassés (`FxSystem.addWaterJet`) :
-  // propres à CETTE partie/CE niveau, comme les corps Rapier qui disparaissent
-  // juste en dessous — un "Rejouer"/"Retour au menu" ne doit pas laisser un
-  // jet de l'ancienne partie flotter dans la nouvelle.
   engine.fx.resetSession();
 
   session.physics.world.free();

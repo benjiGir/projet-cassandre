@@ -18,49 +18,25 @@ import {
   snapshotEnemyPrevious,
   tickEnemy,
   type EnemyActor,
-  type EnemyMachineContext,
-  type EnemyState,
-  type EnemyUpdateContext,
 } from "./enemyMachine";
-import type { EnemyAnimationInput } from "../../render/enemySprites";
+import type { EnemyMachineContext, EnemyState, EnemyUpdateContext } from "./enemyTypes";
+import type { EnemyAnimationInput } from "../../render/enemySpriteTypes";
 
-/**
- * L'ennemi « Costard » — Phase 3 (skills `enemy-state-machine`,
- * `billboard-sprites-8dir`). Fin wrapper autour de la machine XState
- * partagée avec `Director` (`enemyMachine.ts`) : ne possède que le
- * corps/collider Rapier, sa config, son PRNG et son acteur XState — voir la
- * frontière exacte et la discipline de pureté/déterminisme tenue ici.
- * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
- * see: docs/decisions/0009-machine-partagee-suit-director.md
- */
+// see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
 
-/**
- * Frames de l'animation de mort : fixe sa durée (× `deathFrameDuration`, soit
- * 0,72 s), les frames de la planche s'étalent dessus. 6, comme la planche
- * `costard` : genoux, supplication, bascule, chute, à plat.
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
 export const DEATH_FRAME_COUNT = 6;
 
-/** États de la machine, mappés sur les noms français du plan/skill en commentaire — alias de `EnemyState` (`enemyMachine.ts`), même union littérale. */
+/** États de la machine, mappés sur les noms français du plan/skill en commentaire — alias de `EnemyState` (`enemyTypes.ts`), même union littérale. */
 export type SuitState = EnemyState;
 
-/**
- * Contexte partagé injecté à chaque `Suit.update()` par `SuitManager` — alias
- * de `EnemyUpdateContext` (`enemyMachine.ts`), inchangé au caractère près
- * pour ne rien casser côté appelants (`SuitManager`).
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 export type SuitUpdateContext = EnemyUpdateContext;
 
 export class Suit implements Entity {
   readonly id: number;
   private readonly actor: EnemyActor;
 
-  /**
-   * @param spawnPosition PIEDS du Costard au spawn (x, feetY, z) — même
-   *   convention que `PlayerController.spawn(x, feetY, z)`.
-   * @param spawnForward Orientation initiale, normalisée en interne (Y ignoré).
-   * @param seed Graine PRNG déterministe de cette instance (voir `SuitManager.spawnSuit`, jamais dérivée de `Math.random()`/`Date.now()`).
-   */
   constructor(
     physics: PhysicsWorld,
     spawnPosition: THREE.Vector3,
@@ -118,13 +94,6 @@ export class Suit implements Entity {
     return this.ctx.previousForward;
   }
 
-  /**
-   * État courant. Getter dérivé de l'acteur XState ; setter conservé pour
-   * COMPATIBILITÉ AVEC LE FILET DE TEST DE CARACTÉRISATION (voir la doc de
-   * `forceEnemyState` dans `enemyMachine.ts`) — jamais utilisé par le
-   * chemin de production, qui transite uniquement par `enemyMachine`/
-   * `tickEnemy`/`applyEnemyDamageCore`.
-   */
   get state(): SuitState {
     return this.actor.getSnapshot().value as SuitState;
   }
@@ -144,8 +113,6 @@ export class Suit implements Entity {
     this.ctx.stateTimer = value;
   }
 
-  // --- Sorties lues par `SuitManager` juste après `update()`, remises à
-  // zéro par `enemyMachine.ts::tickEnemy` au tick suivant.
   get pendingAlert(): boolean {
     return this.ctx.pendingAlert;
   }
@@ -170,15 +137,6 @@ export class Suit implements Entity {
     return value !== "dead" && value !== "corpse";
   }
 
-  /**
-   * Vélocité horizontale de poursuite/évitement, et vélocité de recul
-   * (knockback) — privées côté TypeScript mais exposées en accesseurs JS
-   * ordinaires : `test/game/entities/suit.test.ts` y accède via un cast
-   * (`(suit as unknown as { velocityHorizontal: THREE.Vector3 })`). Pas
-   * `private` : `tsc --noEmit` (`noUnusedLocals`) signalerait sinon un
-   * membre jamais lu DEPUIS LA CLASSE elle-même comme mort. Usage interne/
-   * diagnostic uniquement, comme `body`/`collider`.
-   */
   get velocityHorizontal(): THREE.Vector3 {
     return this.ctx.velocityHorizontal;
   }
@@ -206,17 +164,6 @@ export class Suit implements Entity {
     return interpolateEnemyForward(this.ctx, alpha, out);
   }
 
-  /**
-   * Applique `amount` dégâts. Retourne `{ died }`. Ne touche à AUCUN système
-   * de rendu/audio/state — `SuitManager` lit le résultat et construit
-   * l'événement approprié (`hurtEvents` ou `deathEvents`).
-   *
-   * KNOCKBACK : le Costard est kinématique, `RAPIER.RigidBody.applyImpulse`
-   * n'aurait aucun effet. `knockbackDirection` (horizontale, normalisée,
-   * fournie par l'appelant) est convertie en VÉLOCITÉ interne par l'action
-   * `enterStagger` de `enemyMachine.ts`, décroissante sur
-   * `knockbackDecayTime` (voir `updateKnockback`, `enemyMachine.ts`).
-   */
   applyDamage(amount: number, physics: PhysicsWorld, knockbackDirection: THREE.Vector3): { died: boolean } {
     const outcome = applyEnemyDamageCore(this.actor, amount);
     if (outcome === "already-dead") return { died: false }; // garde-fou : ne devrait jamais arriver, voir `SuitManager`.
@@ -230,25 +177,11 @@ export class Suit implements Entity {
     return { died: false };
   }
 
-  /**
-   * Un pas fixe. `dt` est le dt de GAMEPLAY (scalé par le hitstop, comme
-   * `player.update`/`weapons.update`) — jamais d'horloge murale.
-   *
-   * PRÉCONDITION : `SuitManager` n'appelle PAS `update()` le pas fixe où ce
-   * Costard vient d'encaisser un coup — c'est `applyDamage` qui gère ce
-   * pas-là (stagger/mort). `update()` suppose donc qu'aucun dégât n'arrive
-   * ce tick-ci.
-   */
   update(dt: number, ctx: SuitUpdateContext) {
     tickEnemy(this.actor, dt, ctx);
   }
 }
 
-/**
- * Applique la configuration `SuitConfig` à un `KinematicCharacterController`
- * brut — re-export de la fabrique PARTAGÉE (`enemyMachine.ts`), gardé sous ce
- * nom pour `SuitManager` (inchangé par ce jalon).
- */
 export function configureSuitCharacterController(controller: RAPIER.KinematicCharacterController, cfg: SuitConfig) {
   configureEnemyCharacterController(controller, cfg);
 }

@@ -21,17 +21,7 @@ export interface OptionsScreenProps {
   backdrop?: ScreenBackdrop;
 }
 
-/**
- * Écran « Options » : contrôles, affichage et audio, un seul bouton RETOUR. Monté
- * depuis DEUX endroits, sans rien savoir duquel — `onBack` seul décide de la
- * suite : le menu principal (`app/bootChoice.ts`, retour vers
- * `MainMenu`) et la pause en jeu (`ui/screens/pause/PauseScreen/PauseScreen.tsx`,
- * retour vers le menu de pause). Les quatre réglages de `DisplayTab`
- * s'appliquent à chaud dans les deux cas dès qu'un moteur existe (voir
- * `game/graphicsSettings.ts::registerRenderTarget`).
- * see: docs/archive/systems-hud.md#options-contrôles-et-affichage
- * see: docs/archive/systems-session.md#pause
- */
+// see: docs/archive/systems-hud.md#options-contrôles-et-affichage
 export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
   const [tab, setTab] = useState<OptionsTab>("controles");
 

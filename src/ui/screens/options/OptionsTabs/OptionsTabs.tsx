@@ -15,7 +15,6 @@ export interface OptionsTabsProps {
   onChange: (tab: OptionsTab) => void;
 }
 
-/** Les onglets de l'écran d'options. */
 export function OptionsTabs({ value, onChange }: OptionsTabsProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const currentIndex = TABS.findIndex((tab) => tab.id === value);

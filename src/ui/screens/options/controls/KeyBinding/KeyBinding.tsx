@@ -4,12 +4,10 @@ export interface KeyBindingProps {
   label: string;
   keyLabel: string;
   listening: boolean;
-  /** La touche diffère de la touche par défaut. */
   modified: boolean;
   onRequestCapture: () => void;
 }
 
-/** Une action et sa touche, sur une ligne de la grille des contrôles. */
 export function KeyBinding({ label, keyLabel, listening, modified, onRequestCapture }: KeyBindingProps) {
   return (
     <>

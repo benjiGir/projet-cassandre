@@ -1,73 +1,18 @@
-/**
- * Paramètres de déplacement du joueur — SOURCE UNIQUE DE VÉRITÉ.
- *
- * Toutes les valeurs ci-dessous sont des POINTS DE DÉPART issus du plan, pas
- * des constantes. Elles sont là pour être tunées (agent `feel-tuner`), et
- * l'objet est volontairement mutable pour permettre l'A/B à chaud :
- *
- *     Object.assign(moveConfig, VARIANTE_B);
- *     player.applyConfig();   // requis pour les champs lus par Rapier (capsule, KCC)
- *
- * Les variantes de feel de la VUE (head bob, FOV, réception) sont fournies
- * prêtes à l'emploi en bas de fichier — `FEEL_VARIANTS`, appliquées par
- * `cassandre.applyFeelVariant("A" | "B" | "C")`.
- *
- * Règles :
- * - Aucun nombre de déplacement ne doit apparaître ailleurs que dans ce fichier.
- * - La gravité N'EST PAS ici : elle appartient au monde physique
- *   (`PhysicsWorld.gravityY`, −25 m/s²). La dupliquer désynchroniserait la
- *   chute du joueur de celle des corps dynamiques.
- * - Les grandeurs dérivées (vitesse initiale de saut, accélération,
- *   décélération) se calculent par formule à partir des champs ci-dessous —
- *   voir les helpers en bas de fichier. Ne jamais coder « 7.4 » en dur.
- */
+// see: docs/6-reference/notes-code-gameplay-joueur.md#déplacement-et-vue
 export interface MoveConfig {
   /** Vitesse horizontale max en marche, m/s. */
   walkSpeed: number;
   /** Vitesse horizontale max en course (ShiftLeft), m/s. */
   runSpeed: number;
-  /**
-   * Temps pour atteindre la vitesse max au sol, en secondes.
-   * Détermine l'accélération : accel = vitesseCible / timeToMaxSpeed.
-   * 0 = accélération instantanée (démarrage sec, style arcade).
-   */
   timeToMaxSpeed: number;
-  /**
-   * Temps d'arrêt complet depuis la VITESSE DE COURSE, en secondes.
-   * Détermine la décélération au sol : decel = runSpeed / timeToStop.
-   * Conséquence assumée : depuis la vitesse de marche, l'arrêt est
-   * proportionnellement plus rapide (0.10 s × 9/13 ≈ 0.069 s).
-   * Aucune friction n'est appliquée en l'air (le momentum se conserve).
-   */
   timeToStop: number;
-  /**
-   * Contrôle aérien, en fraction de l'accélération sol (0 = aucun contrôle
-   * en l'air, 1 = autant qu'au sol).
-   */
   airControl: number;
 
   /** Hauteur de saut visée, en mètres. v₀ est dérivée de cette hauteur et de la gravité du monde. */
   jumpHeight: number;
-  /**
-   * Tolérance de saut après avoir quitté le sol, en secondes (« coyote time »).
-   * 0 = désactivé, mécanique brute. Champ exposé pour `feel-tuner`.
-   */
   coyoteTime: number;
-  /**
-   * Mémorisation d'un appui saut effectué juste avant de toucher le sol, en secondes.
-   * 0 = désactivé, mécanique brute. Champ exposé pour `feel-tuner`.
-   */
   jumpBufferTime: number;
-  /**
-   * Vitesse descendante appliquée en permanence quand le joueur est au sol, m/s.
-   * Maintient le contact (évite un `isGrounded` qui clignote et aide le
-   * snap-to-ground en descente de pente). Doit rester < snapToGroundDistance / dt.
-   *
-   * PLAFONNÉ BAS, et c'est mesuré, pas esthétique : ne pas remonter cette
-   * valeur sans mesurer au même harnais Rapier headless que celui qui a
-   * trouvé le bug. Chiffres, méthode et alternative écartée :
-   * see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
-   */
+  // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
   groundStickSpeed: number;
   /** Vitesse de chute maximale, m/s. Garde-fou anti-tunneling après une longue chute. */
   maxFallSpeed: number;
@@ -104,54 +49,21 @@ export interface MoveConfig {
   // Vue : head bob — positionnel uniquement, jamais angulaire (invariant #3) :
   // see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
 
-  /**
-   * Distance horizontale parcourue pour UN CYCLE complet de bob, en mètres.
-   * Un cycle = deux appuis de pied : oscillation verticale ×2, balancement
-   * latéral ×1. Plus court = cadence plus rapide à vitesse égale.
-   *
-   * Attention au calibrage : le jeu court à 13 m/s, une valeur « humaine à
-   * pied » y produit une cadence de mitraillette. 5 m = deux foulées de 2.5 m,
-   * soit exactement l'amplitude de foulée d'un sprinteur réel à cette vitesse,
-   * et ~2.6 cycles/s (5.2 appuis/s) à `runSpeed`. Une valeur de 3.4 m donnait
-   * 7.7 appuis/s, très au-delà de la référence du genre (Doom : ~2 appuis/s,
-   * mais à cadence FIXE, indépendante de la vitesse).
-   */
   bobDistancePerCycle: number;
   /** Amplitude verticale du bob à pleine intensité, en mètres (crête). */
   bobVerticalAmplitude: number;
   /** Amplitude latérale du balancement à pleine intensité, en mètres (crête). */
   bobLateralAmplitude: number;
-  /**
-   * Vitesse horizontale en dessous de laquelle le bob est nul, m/s.
-   * Zone morte : évite un fourmillement de la vue à vitesse résiduelle et
-   * garantit une immobilité EXACTE à l'arrêt (stabilité du hash de pixels).
-   */
   bobSpeedFloor: number;
-  /**
-   * Temps de réponse de l'enveloppe d'amplitude, en secondes (pas fixe).
-   * Sert à ne pas couper le bob net au décollage ni le rallumer d'un coup à la
-   * réception. 0 = commutation instantanée.
-   */
   bobResponseTime: number;
 
   /** FOV vertical au repos, en degrés. Utilisé à la construction de la caméra. */
   fovBase: number;
   /** Élargissement maximal du FOV à pleine vitesse, en degrés (ajouté à `fovBase`). */
   fovRunBoost: number;
-  /**
-   * Fraction de `runSpeed` à laquelle l'élargissement COMMENCE.
-   * Exprimé en fraction et non en m/s pour rester cohérent si `runSpeed` bouge.
-   * 0.75 × 13 = 9.75 m/s, soit 0.75 m/s au-dessus de la vitesse de marche :
-   * marcher n'élargit rien, et les micro-variations de vitesse en marche
-   * (pente, frottement d'un mur) n'allument pas le FOV par intermittence.
-   */
   fovBoostStartFraction: number;
   /** Fraction de `runSpeed` à laquelle l'élargissement est MAXIMAL. */
   fovBoostFullFraction: number;
-  /**
-   * Temps de réponse du FOV, en secondes (pas fixe). Plus haut = respiration
-   * lente et discrète ; plus bas = le FOV « claque » avec la vitesse.
-   */
   fovResponseTime: number;
 
   /** Enfoncement vertical maximal de la vue à la réception, en mètres. 0 = désactivé. */
@@ -278,18 +190,10 @@ export const FEEL_VARIANTS: Record<"A" | "B" | "C", FeelVariant> = {
 // Grandeurs dérivées : recalculées à chaque pas fixe pour rester correctes si
 // la config est modifiée à chaud, et indépendantes de FIXED_DT.
 
-/**
- * Vitesse verticale initiale, en m/s, pour atteindre `jumpHeight` sous
- * `gravityY` (négative). v₀ = √(2 · |g| · h) — 1.1 m sous −25 m/s² ≈ 7.42 m/s.
- */
 export function jumpVelocity(cfg: MoveConfig, gravityY: number): number {
   return Math.sqrt(2 * Math.abs(gravityY) * cfg.jumpHeight);
 }
 
-/**
- * Accélération horizontale au sol, en m/s², pour atteindre `targetSpeed` en
- * `timeToMaxSpeed`. `Infinity` si le temps est nul (accélération instantanée).
- */
 export function groundAcceleration(cfg: MoveConfig, targetSpeed: number): number {
   return cfg.timeToMaxSpeed > 0 ? targetSpeed / cfg.timeToMaxSpeed : Infinity;
 }
@@ -304,27 +208,11 @@ export function capsuleTotalHeight(cfg: MoveConfig): number {
   return 2 * (cfg.capsuleHalfHeight + cfg.capsuleRadius);
 }
 
-/**
- * Seuil (cosinus) qui distingue un MUR d'un simple contact de sol/pente pour
- * le reclip anti-vitesse-fantôme de `PlayerController.update`. Une collision
- * dont |normale.y| tombe SOUS ce seuil est plus raide que ce que le
- * controller sait gravir (`maxSlopeClimbAngleDeg`) : un mur quasi vertical,
- * ou une pente au-delà du seuil (y compris volontairement infranchissable,
- * comme la rampe à 55° de la gym). Réutilise `maxSlopeClimbAngleDeg` plutôt
- * qu'un second champ : c'est déjà la frontière que Rapier applique en
- * interne entre franchissable et non franchissable.
- *
- * Le bug historique que ce filtre corrige, et pourquoi le filtrer sans lui
- * cassait sol/pentes/marches : see: docs/archive/systems-joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
- */
+// see: docs/archive/systems-joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
 export function wallNormalYThreshold(cfg: MoveConfig): number {
   return Math.cos((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);
 }
 
-/**
- * Décalage vertical entre le centre de la capsule et les yeux, en mètres.
- * Le centre de la capsule est à (halfHeight + radius) au-dessus des pieds.
- */
 export function eyeOffsetFromCenter(cfg: MoveConfig): number {
   return cfg.eyeHeight - (cfg.capsuleHalfHeight + cfg.capsuleRadius);
 }
@@ -334,12 +222,6 @@ function saturate(t: number): number {
   return t < 0 ? 0 : t > 1 ? 1 : t;
 }
 
-/**
- * Amplitude VISÉE du head bob, 0..1, pour une vitesse horizontale donnée.
- * En l'air le bob est nul (aucun appui de pied) ; au sol il croît de la zone
- * morte jusqu'à `runSpeed`, si bien que marcher bobe visiblement moins que
- * courir — c'est le signal de vitesse principal de la vue.
- */
 export function bobIntensityTarget(
   cfg: MoveConfig,
   horizontalSpeed: number,
@@ -351,12 +233,6 @@ export function bobIntensityTarget(
   return saturate((horizontalSpeed - cfg.bobSpeedFloor) / span);
 }
 
-/**
- * Facteur de course VISÉ, 0..1, pour une vitesse horizontale donnée.
- * Dérivé de la vitesse RÉELLE et non de la touche sprint : courir contre un
- * mur n'élargit pas le champ, puisque le controller a déjà reclippé sa vitesse
- * horizontale sur le mouvement effectivement réalisé.
- */
 export function fovRunFactorTarget(cfg: MoveConfig, horizontalSpeed: number): number {
   const start = cfg.runSpeed * cfg.fovBoostStartFraction;
   const full = cfg.runSpeed * cfg.fovBoostFullFraction;
@@ -370,11 +246,6 @@ export function fovForRunFactor(cfg: MoveConfig, runFactor: number): number {
   return cfg.fovBase + cfg.fovRunBoost * runFactor;
 }
 
-/**
- * Enfoncement de vue provoqué par une réception à `impactSpeed` m/s.
- * Linéaire depuis 0 : descendre une marche produit un micro-tassement, une
- * grande chute produit l'enfoncement maximal.
- */
 export function landingDipFor(cfg: MoveConfig, impactSpeed: number): number {
   if (cfg.landingDipFullSpeed <= 0) return cfg.landingDipMax;
   return saturate(impactSpeed / cfg.landingDipFullSpeed) * cfg.landingDipMax;

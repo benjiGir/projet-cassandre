@@ -1,29 +1,10 @@
-/**
- * Paramètres du « Directeur » — boss unique de fin (Zone E). MÊME
- * convention que `suitConfig.ts` : objet mutable, tunable à chaud
- * (`cassandre.directorConfig.xxx = …`), source unique de vérité pour ce
- * type d'ennemi.
- *
- * DUPLIQUE délibérément la FORME de `SuitConfig` plutôt que de la
- * réutiliser ou de l'étendre — voir
- * docs/decisions/0009-machine-partagee-suit-director.md.
- *
- * Valeurs de départ arbitraires (même discipline que `suitConfig.ts`), sauf
- * mention contraire explicite (`attackTelegraphDuration`, plancher non
- * négociable du skill `enemy-state-machine`).
- * see: docs/6-reference/valeurs-ennemis.md
- */
+// see: docs/6-reference/valeurs-ennemis.md
 
 import { type LoyaltyCard } from "../player/loyaltyCards";
 export interface DirectorConfig {
   /** Points de vie max. */
   maxHp: number;
-  /**
-   * Fraction de `maxHp` EN DESSOUS DE LAQUELLE la révélation se déclenche
-   * (costume humain -> reptilien), dans `(0, 1]`. Exprimée en FRACTION
-   * plutôt qu'en PV absolus pour rester correcte si `maxHp` est retuné plus
-   * tard sans recalcul séparé.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
   revealHpFraction: number;
 
   // Mêmes conventions que `SuitConfig` (elle-même calquée sur `MoveConfig`),
@@ -61,11 +42,7 @@ export interface DirectorConfig {
 
   /** Temps passé en ALERTE avant de basculer en POURSUITE, en secondes. */
   alertDuration: number;
-  /**
-   * Temps d'anticipation de l'attaque (pose TIR tenue) avant que les dégâts
-   * ne partent, en secondes. PLANCHER NON NÉGOCIABLE du skill : >= 0.2 s. Ne
-   * jamais descendre sous ce seuil en tuning, pour l'un ou l'autre ennemi.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
   attackTelegraphDuration: number;
   /** Temps minimum entre deux attaques, en secondes. */
   attackCooldown: number;
@@ -103,19 +80,7 @@ export interface DirectorConfig {
   /** Durée de ce screenshake, en secondes. */
   revealShakeDuration: number;
 
-  /**
-   * Rayon de ramassage de la carte lâchée à la mort, en mètres. Consommé par
-   * PROXIMITÉ SEULE (pas de touche E) — voir la doc de `DroppedCard` dans
-   * `director.ts` pour la justification de cet écart avec `use_crowbar`.
-   */
   cardPickupRadius: number;
-  /**
-   * Délai minimum, en secondes, entre l'apparition de la carte et le premier
-   * pas fixe où il peut être ramassé — sans lui, un kill à bout portant
-   * ramasserait la carte sur le pas fixe même de sa création, donc jamais
-   * visible. Voir docs/archive/reference-valeurs-ennemis.md#badge-du-directeur pour
-   * l'historique du bug que ce délai corrige.
-   */
   cardPickupDelay: number;
 
   /** Amplitude du screenshake quand une attaque du Directeur touche le joueur, en mètres — plus haute que `SuitConfig.playerHitShakeAmplitude` : un coup de boss doit se sentir plus lourd qu'un coup de Costard. */
@@ -180,11 +145,5 @@ export const directorConfig: DirectorConfig = {
   playerHitShakeDuration: 0.12,
 };
 
-/**
- * Carte lâchée par le Directeur à sa mort — la Platine, qui ouvre la sortie
- * (jalon N7). Une constante plutôt qu'un champ de `DirectorConfig` : ce n'est
- * pas un réglage de ressenti à faire varier en A/B, c'est une règle de
- * progression du niveau.
- * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
- */
+// see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
 export const DIRECTOR_DROPPED_CARD: LoyaltyCard = "platine";

@@ -17,7 +17,7 @@ import {
   SanitaireSystem,
   type SanitaireCandidate,
 } from "../../../src/game/level/sanitaires";
-import type { HitEvent } from "../../../src/game/player/weapons";
+import type { HitEvent } from "../../../src/game/player/weaponTypes";
 import { weaponConfig } from "../../../src/game/player/weaponConfig";
 
 await initPhysics();

@@ -2,7 +2,7 @@
 title: Ajouter un écran ou un widget
 tags: [guide, recette]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-02
 ---
 
 # Ajouter un écran ou un widget
@@ -59,7 +59,7 @@ simulation, store Zustand, composants et styles CSS.
     le pont de flux, pas le JSX qui tente de lire le moteur.
 14. Si vous ajoutez un écran modal, raccordez-le au flux via les
     composants racines de `src/ui/App.tsx` et
-    `src/ui/gameFlowMachine.ts` selon son rôle.
+    `src/app/gameFlowMachine.ts` selon son rôle.
 15. Un écran ne décide pas du cycle de session. Les actions du moteur
     arrivent par des callbacks fournis par la couche appelante.
 16. Gardez le réglage dans le module moteur concerné ; `src/ui/` ne

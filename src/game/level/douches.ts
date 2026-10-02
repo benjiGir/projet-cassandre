@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { installShaderDouches, updateShaderDouches } from "./doucheShader";
 
+import { installShaderDouches, updateShaderDouches } from "./doucheShader";
 interface PosteDouche {
   meshes: THREE.Mesh[];
   origine: THREE.Vector3;

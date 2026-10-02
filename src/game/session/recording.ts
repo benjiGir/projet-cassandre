@@ -1,9 +1,9 @@
 import { FIXED_DT } from "../../core/loop";
-import { inputRecorder, type Recording } from "../../core/inputRecorder";
+import { inputRecorder } from "../../core/inputRecorder";
+import { type Recording } from "../../core/inputTypes";
 import { moveConfig } from "../player/moveConfig";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
-
 // Harnais F9/F10 (voir `game/loop/devGameplayInput.ts` pour la détection des
 // touches, `game/devtools/consoleApi.ts` pour l'exposition console).
 // see: docs/archive/systems-session.md#harnais-f9-et-f10

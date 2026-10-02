@@ -14,7 +14,6 @@
   box-shadow: 0 0 40px rgba(60, 220, 90, 0.08) inset;
 }
 
-/* Léger décalage chromatique : un signal analogique qui bave. */
 .title {
   font-size: 40px;
   letter-spacing: 4px;

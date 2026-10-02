@@ -1,15 +1,4 @@
-/**
- * Hitmarker — confirmation de hit à l'écran, INDÉPENDANTE de la lisibilité du
- * sprite touché. Ajouté après un retour playtest Phase 3 (« la sensation de
- * tir et de touché n'est pas bonne »). Canal de confirmation de DÉGÂT
- * (matière ENEMY uniquement, `trigger("hit")`/`trigger("kill")`), pas
- * d'impact générique — un hit mur n'alimente jamais ce module.
- *
- * Découplage de `game/*` (invariant #2, canvas 2D hors React, même
- * résolution/CSS que `canvas#game`) :
- * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
- * see: docs/archive/systems-rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
- */
+// see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
 import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
 
@@ -29,9 +18,9 @@ type HitmarkerKind = "hit" | "kill";
 
 interface ActiveMarker {
   kind: HitmarkerKind;
-  /** Secondes restantes avant extinction. */
+
   remaining: number;
-  /** Durée totale de CE déclenchement (pour calculer une fraction de decay au rendu). */
+  // Durée totale de CE déclenchement (pour calculer une fraction de decay au rendu).
   totalDuration: number;
 }
 
@@ -44,10 +33,7 @@ export class HitmarkerOverlay {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly cfg: HitmarkerConfig;
 
-  // Un marqueur "kill" prime visuellement sur un marqueur "hit" s'ils se
-  // chevauchent (voir `render`) — mais les deux ont leur propre minuteur,
-  // jamais de sommation d'intensité (même discipline que
-  // `FxSystem.triggerShake`/`BillboardSprite.setFlash`).
+  // Fenêtres distinctes : kill doit rester visible au-dessus de hit.
   private hit: ActiveMarker | null = null;
   private kill: ActiveMarker | null = null;
 
@@ -72,7 +58,6 @@ export class HitmarkerOverlay {
     this.ctx = ctx;
   }
 
-  /** Déclenche (ou renforce) un marqueur. `"kill"` a sa PROPRE fenêtre, distincte de `"hit"` — un kill est aussi un hit, mais l'appelant (`game/loop/updateFx.ts`) n'a besoin d'appeler que `trigger("kill")` pour ce coup-là. */
   trigger(kind: HitmarkerKind) {
     if (!this.cfg.hitmarkerEnabled) return;
     const duration = kind === "kill" ? this.cfg.hitmarkerKillDuration : this.cfg.hitmarkerDuration;
@@ -81,7 +66,7 @@ export class HitmarkerOverlay {
     else this.hit = marker;
   }
 
-  /** À appeler UNE FOIS PAR FRAME D'AFFICHAGE avec le delta temps réel (même hook que `FxSystem.update(realDt)`), jamais `FIXED_DT`. */
+  // Delta réel d’affichage, jamais FIXED_DT.
   update(realDt: number) {
     if (this.hit) {
       this.hit.remaining -= realDt;
@@ -93,7 +78,6 @@ export class HitmarkerOverlay {
     }
   }
 
-  /** Redessine l'overlay. À appeler après `update()`, une fois par frame. No-op (canvas effacé) si rien n'est actif ou si le hitmarker est désactivé. */
   render() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -102,10 +86,7 @@ export class HitmarkerOverlay {
     const cx = this.canvas.width / 2;
     const cy = this.canvas.height / 2;
 
-    // Le hit simple se dessine d'abord, le kill PAR-DESSUS s'il est actif en
-    // même temps — un kill doit rester visible même si un hit tout juste
-    // précédent (même pas fixe, plomb n-1 blessé puis plomb n tué) est encore
-    // en train de s'effacer.
+    // Dessiner kill en dernier préserve sa priorité après un hit proche.
     if (this.hit) this.drawMarker(ctx, cx, cy, this.hit, this.cfg.hitmarkerSize, this.cfg.hitmarkerThickness, this.cfg.hitmarkerColor);
     if (this.kill) this.drawMarker(ctx, cx, cy, this.kill, this.cfg.hitmarkerKillSize, this.cfg.hitmarkerKillThickness, this.cfg.hitmarkerKillColor);
   }
@@ -119,10 +100,6 @@ export class HitmarkerOverlay {
     thickness: number,
     color: number,
   ) {
-    // Fraction de vie linéaire [0..1], 1 = pleine intensité à l'apparition.
-    // Décroissance LINÉAIRE (pas exponentielle comme le flash/shake) : un
-    // hitmarker est un signal discret, pas un fondu — il doit rester net
-    // jusqu'à disparaître, pas s'estomper en douceur.
     const life = Math.max(0, Math.min(1, marker.remaining / marker.totalDuration));
 
     ctx.globalAlpha = life;
@@ -130,8 +107,6 @@ export class HitmarkerOverlay {
     ctx.lineWidth = thickness;
     ctx.lineCap = "square";
 
-    // Croix à 4 branches, gap central — même convention que le réticule
-    // permanent (`render/crosshair.ts`), rendu sur un canvas séparé.
     const gap = size * 0.35;
     const outer = size;
     ctx.beginPath();
@@ -148,7 +123,6 @@ export class HitmarkerOverlay {
     ctx.globalAlpha = 1;
   }
 
-  /** Retire le canvas du DOM. Non utilisé en jeu normal (le hitmarker vit toute la session), présent pour un futur écran de menu/nettoyage de test. */
   dispose() {
     this.canvas.remove();
   }

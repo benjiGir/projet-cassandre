@@ -4,20 +4,19 @@ export class GameClock {
   private hitstopRemaining = 0;
   private hitstopScale = 1;
 
-  /** Repart d'une horloge neutre au changement de partie. */
+  // see: docs/6-reference/notes-code-core.md#rejeu-et-horloge
   reset(): void {
     this.elapsed = 0;
     this.hitstopRemaining = 0;
     this.hitstopScale = 1;
   }
 
-  /** Slows gameplay dt (not physics dt) for `duration` seconds. */
+  // Le hitstop réduit le delta gameplay, jamais le pas de physique.
   triggerHitstop(duration: number, scale = 0.05) {
     this.hitstopRemaining = duration;
     this.hitstopScale = scale;
   }
 
-  /** Advances the clock by the fixed step and returns the scaled dt gameplay code should use. */
   tick(fixedDt: number): number {
     this.elapsed += fixedDt;
 

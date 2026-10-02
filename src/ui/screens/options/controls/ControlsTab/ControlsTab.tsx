@@ -1,6 +1,8 @@
 import { useState } from "react";
 
-import { ACTION_LABELS, ALL_ACTIONS, DEFAULT_BINDINGS, formatKeyCode, input, type GameAction } from "../../../../../core/input";
+import { input } from "../../../../../core/input";
+import { ACTION_LABELS, ALL_ACTIONS, DEFAULT_BINDINGS, formatKeyCode } from "../../../../../core/inputBindings";
+import type { GameAction } from "../../../../../core/inputTypes";
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { KeyBinding } from "../KeyBinding/KeyBinding";
@@ -8,11 +10,7 @@ import { OptionSection } from "../../fields/OptionSection/OptionSection";
 import { useInputCapture } from "./useInputCapture";
 import styles from "./ControlsTab.module.css";
 
-/**
- * Onglet CONTRÔLES : remappage des touches. `input` n'est pas
- * réactif : la copie locale des touches est relue après chaque changement.
- * see: docs/6-reference/controles.md
- */
+// see: docs/6-reference/controles.md
 export function ControlsTab() {
   const [bindings, setBindings] = useState(() => input.getAllBindings());
   const [listeningFor, setListeningFor] = useState<GameAction | null>(null);

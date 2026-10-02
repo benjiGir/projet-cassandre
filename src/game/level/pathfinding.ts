@@ -6,15 +6,7 @@ import { GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world
 import { RaycastService } from "../../physics/raycast";
 import { suitConfig } from "../entities/suitConfig";
 
-/**
- * `PathfindingService` (jalon M4) : premier VRAI système de pathfinding du
- * jeu, en complément des 3 rayons d'évitement local de `Suit`/`Director`
- * (`computeAvoidedDirection`). Graphe de praticabilité 2.5D, baké au
- * chargement du niveau (échantillonnage, élagage, arêtes, A* déterministe),
- * dimensionné sur le gabarit du Costard, jamais celui du Directeur, et
- * stateless comme `RaycastService`/`DeterministicRandom`.
- * see: docs/4-technique/pathfinding.md
- */
+// see: docs/4-technique/pathfinding.md
 
 // Constantes de bake.
 
@@ -25,11 +17,7 @@ export const NAV_CELL_SIZE = 0.5;
 const RAY_MARGIN_UP = 2;
 const RAY_MARGIN_DOWN = 2;
 
-/**
- * `normal.y` minimale d'un hit vertical pour être compté comme un sol —
- * Alignée sur `suitConfig.maxSlopeClimbAngleDeg` du KCC : une pente que le
- * contrôleur refuserait ne doit pas devenir un sol navigable.
- */
+// see: docs/6-reference/notes-code-gameplay-niveau.md#navigation
 const MIN_FLOOR_NORMAL_Y = Math.cos((suitConfig.maxSlopeClimbAngleDeg * Math.PI) / 180);
 
 /** Marche verticale maximale du KCC ennemi. Les pentes continues sont
@@ -71,22 +59,9 @@ const DIRS: ReadonlyArray<Dir> = [
   { dx: -1, dz: -1, cost: Math.SQRT2 },
 ];
 
-/**
- * Sous-ensemble de `DIRS` dont le voisin est TOUJOURS visité plus tard dans
- * l'itération de bake (ligne par ligne, `iz` croissant en boucle externe,
- * `ix` croissant en boucle interne) : E, SE, S, SW. Tester une arête
- * seulement depuis cet ensemble, puis appliquer le résultat aux DEUX
- * cellules (voir `bakeNavGraphEffect`), couvre chaque paire adjacente
- * exactement une fois — pas de second rayon redondant dans le sens inverse.
- */
 const FORWARD_DIR_INDICES: ReadonlyArray<number> = [2, 3, 4, 5];
 
-/**
- * Graphe de praticabilité 2.5D immuable. Tableaux typés indexés par
- * `iz * cols + ix`, délibérément PAS une `Map`/`Set` (déterminisme
- * d'itération, accès O(1), inspectable depuis `cassandre.pathfinding`).
- * see: docs/archive/systems-pathfinding.md#limite-verticale-acceptée
- */
+// see: docs/archive/systems-pathfinding.md#limite-verticale-acceptée
 export interface NavGraph {
   readonly cellSize: number;
   readonly cols: number;
@@ -123,28 +98,8 @@ export class PathNotFoundError extends Schema.TaggedError<PathNotFoundError>()("
 }) {}
 
 export interface PathfindingServiceShape {
-  /**
-   * Construit un `NavGraph` sur l'emprise `bounds`, fournie par l'APPELANT —
-   * ce service ne touche jamais `THREE.Object3D`/`LevelHandle` lui-même.
-   * Coût assumé au CHARGEMENT du niveau, jamais dans le pas fixe.
-   *
-   * Type ENTIÈREMENT RÉSOLU (`Effect<NavGraph>`, aucun `R` visible) : bien
-   * que l'implémentation consulte `RaycastService` en interne, cette
-   * dépendance est fournie PAR LE SERVICE LUI-MÊME (voir
-   * `PathfindingService.layer`), jamais exposée à l'appelant.
-   * see: docs/4-technique/pathfinding.md
-   */
   readonly bake: (physics: PhysicsWorld, bounds: THREE.Box3) => Effect.Effect<NavGraph>;
 
-  /**
-   * A* déterministe entre `from` et `to` (positions MONDE quelconques, pas
-   * nécessairement pile sur une cellule — voir `nearestWalkableCellIndex`).
-   * Le premier élément du tableau retourné n'est JAMAIS la position de
-   * départ elle-même (l'appelant y est déjà) : c'est le PROCHAIN waypoint,
-   * jusqu'au dernier qui correspond à la cellule la plus proche de `to`.
-   * PURE — aucune dépendance à `RaycastService`/`PhysicsWorld`, tout le
-   * travail géométrique a déjà été fait par `bake`.
-   */
   readonly findPath: (
     graph: NavGraph,
     from: THREE.Vector3,
@@ -307,10 +262,6 @@ const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.E
           );
           if (wallHit) continue; // mur entre les deux cellules.
 
-          // Sur sol plat, un rayon d'œil ne suffit pas pour un obstacle bas
-          // ou un plafond : balayer la capsule réelle. Sur une pente, un
-          // balayage horizontal produit un faux contact avec le sol montant ;
-          // la pente est validée par sa normale et son dénivelé ci-dessus.
           if (!touchesRamp) {
             capsuleStart.x = fromX;
             capsuleStart.y = Math.max(groundY[idx]!, groundY[nIdx]!) +
@@ -521,14 +472,6 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
   }
 }
 
-/**
- * Cellule praticable la plus proche d'une position monde (X/Z) quelconque —
- * `from`/`to` de `findPath` ne tombent presque jamais pile sur un nœud de
- * grille. Essaie d'abord la cellule exacte, puis élargit en anneaux carrés
- * jusqu'à `NEAREST_CELL_SEARCH_RADIUS`. Tie-break déterministe par distance
- * puis par index de grille croissant — jamais par ordre de balayage
- * incidentel de la boucle.
- */
 function nearestWalkableCellIndex(graph: NavGraph, x: number, z: number): number | null {
   if (graph.cols === 0 || graph.rows === 0) return null;
 
@@ -600,22 +543,17 @@ const findPathEffect = (
 export class PathfindingService extends Context.Service<PathfindingService, PathfindingServiceShape>()(
   "cassandre/game/level/PathfindingService",
 ) {
-  static readonly layer = Layer.succeed(
+  static readonly layer = Layer.effect(
     PathfindingService,
-    PathfindingService.of({
-      // RaycastService.layer fourni ICI, à l'implémentation — voir la doc de `bake` ci-dessus.
-      bake: (physics, bounds) => bakeNavGraphEffect(physics, bounds).pipe(Effect.provide(RaycastService.layer)),
-      findPath: findPathEffect,
+    Effect.gen(function* () {
+      const raycasts = yield* RaycastService;
+      return PathfindingService.of({
+        bake: (physics, bounds) => bakeNavGraphEffect(physics, bounds).pipe(Effect.provideService(RaycastService, raycasts)),
+        findPath: findPathEffect,
+      });
     }),
   );
 
-  /**
-   * Layer de test scriptée — par défaut, `bake` renvoie `EMPTY_NAV_GRAPH`
-   * (aucune cellule) et `findPath` échoue systématiquement avec
-   * `PathNotFoundError`, sans jamais toucher Rapier. Même précédent que
-   * `RaycastService.test` (M3) : passer un override par méthode pour
-   * scripter un résultat précis.
-   */
   static readonly test = (overrides: Partial<PathfindingServiceShape> = {}) =>
     Layer.succeed(
       PathfindingService,

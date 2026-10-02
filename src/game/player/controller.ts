@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import type { InputFrame } from "../../core/inputRecorder";
+import type { InputFrame } from "../../core/inputTypes";
 import { COLLISION_GROUPS, configureCharacterController, type PhysicsWorld } from "../../physics/world";
 import {
   bobIntensityTarget,
@@ -15,21 +15,9 @@ import {
   wallNormalYThreshold,
   type MoveConfig,
 } from "./moveConfig";
-
 const TAU = Math.PI * 2;
 
-/**
- * Rapproche `current` de `target` à VITESSE CONSTANTE : `range` unités
- * parcourues en `responseTime` secondes, `range` étant l'amplitude totale de la
- * grandeur (1 pour une enveloppe 0..1, `landingDipMax` pour un enfoncement).
- *
- * `dt` est le dt du PAS FIXE, jamais un temps réel : le lissage fait donc
- * partie de la simulation et se rejoue à l'identique.
- *
- * Rampe linéaire et non approche exponentielle — pourquoi, et pourquoi
- * `weapons.ts` réutilise cette même fonction pour le recul du viewmodel :
- * see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
- */
+// see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
 export function approach(
   current: number,
   target: number,
@@ -44,13 +32,7 @@ export function approach(
   return current + Math.sign(diff) * step;
 }
 
-/**
- * Déplacement du joueur, basé sur le `KinematicCharacterController` de Rapier
- * (invariant #6 : jamais de résolution capsule-vs-monde maison). Découpage
- * de la résolution du pas fixe et aucun nombre de gameplay ici (tout vient
- * de `moveConfig`) :
- * see: docs/archive/systems-joueur.md#résolution-du-pas-fixe
- */
+// see: docs/archive/systems-joueur.md#résolution-du-pas-fixe
 export class PlayerController {
   readonly body: RAPIER.RigidBody;
   readonly collider: RAPIER.Collider;
@@ -69,11 +51,7 @@ export class PlayerController {
   /** Collisions du dernier `computeColliderMovement`. Diagnostic imposé par le skill. */
   numCollisions = 0;
 
-  /**
-   * Distance horizontale cumulée réellement parcourue, en mètres.
-   * Point d'accroche pour `feel-tuner` (head bob, bruits de pas) : le bob doit
-   * suivre la distance parcourue, pas le temps, sinon il continue à l'arrêt.
-   */
+  // see: docs/6-reference/notes-code-gameplay-joueur.md#déplacement-et-vue
   distanceTravelled = 0;
 
   // État de VUE (head bob, FOV, réception) — les trois règles qui le
@@ -121,11 +99,6 @@ export class PlayerController {
     this.kcc = physics.createCharacterController(cfg);
   }
 
-  /**
-   * Réapplique la config au collider et au KCC. À appeler après avoir muté
-   * `moveConfig` à chaud (A/B de `feel-tuner`). Les vitesses, accélérations et
-   * le saut sont relus à chaque pas fixe et n'ont pas besoin de ça.
-   */
   applyConfig() {
     const cfg = this.cfg;
     this.collider.setShape(new RAPIER.Capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius));
@@ -177,33 +150,12 @@ export class PlayerController {
     this.previousLandingDip = this.landingDip;
   }
 
-  /**
-   * Position des yeux interpolée pour le rendu. La ROTATION, elle, ne s'interpole jamais.
-   *
-   * VOLONTAIREMENT NON BOBÉE : c'est la position « anatomique » des yeux, celle
-   * qui servira d'origine au raycast d'arme en Phase 2. Le head bob s'ajoute
-   * par-dessus, côté caméra, via `viewBob` — un tir ne doit jamais partir d'une
-   * caméra secouée.
-   */
   eyePosition(alpha: number, out: THREE.Vector3): THREE.Vector3 {
     out.lerpVectors(this.previousPosition, this.position, alpha);
     out.y += this.eyeOffset;
     return out;
   }
 
-  /**
-   * Décalage de head bob à appliquer à la CAMÉRA, en mètres, exprimé dans le
-   * repère de la vue : `x` = latéral (positif vers la droite du joueur),
-   * `y` = vertical, `z` inutilisé. Écrit dans `out`, aucune allocation.
-   *
-   * La phase vient de la distance parcourue interpolée : elle se fige dès que
-   * le joueur cesse d'avancer, et reste lisse quel que soit le taux
-   * d'affichage. L'enveloppe et l'enfoncement de réception, eux, sont lissés au
-   * pas fixe. Aucune composante angulaire (invariant #3).
-   *
-   * À l'arrêt complet, la sortie est EXACTEMENT (0, 0, 0) : c'est la garantie
-   * d'immobilité pixel-exacte pour les captures déterministes.
-   */
   viewBob(alpha: number, out: THREE.Vector3): THREE.Vector3 {
     const cfg = this.cfg;
     const intensity = THREE.MathUtils.lerp(this.previousBobIntensity, this.bobIntensity, alpha);
@@ -233,18 +185,10 @@ export class PlayerController {
     return THREE.MathUtils.lerp(this.previousRunFactor, this.runFactor, alpha);
   }
 
-  /**
-   * Un pas fixe de déplacement. `dt` est le dt de gameplay (déjà scalé par le
-   * hitstop) : toutes les formules ci-dessous en dépendent linéairement, aucune
-   * ne suppose 1/60.
-   */
   update(dt: number, frame: InputFrame) {
     const cfg = this.cfg;
     const gravityY = this.physics.gravityY;
 
-    // --- Direction voulue, dérivée du YAW SEUL --------------------------------
-    // Le pitch est volontairement exclu : regarder le sol ne doit pas ralentir
-    // la marche (c'est ce que fait `camera.getWorldDirection`).
     const sin = Math.sin(frame.yaw);
     const cos = Math.cos(frame.yaw);
     let wishX = 0;
@@ -271,7 +215,6 @@ export class PlayerController {
       wishZ /= wishLength;
     }
 
-    // --- Accélération / friction horizontales ---------------------------------
     const targetSpeed = frame.sprint ? cfg.runSpeed : cfg.walkSpeed;
 
     if (wishLength > 0) {
@@ -303,14 +246,10 @@ export class PlayerController {
       }
     }
 
-    // --- Vertical : gravité, collage au sol, saut -----------------------------
     this.timeSinceGrounded = this.isGrounded ? 0 : this.timeSinceGrounded + dt;
 
     this.velocity.y += gravityY * dt;
     if (this.isGrounded && this.velocity.y < 0) {
-      // Poussée descendante constante : maintient le contact et stabilise
-      // `computedGrounded` (sinon il clignote sur terrain plat). Ne PAS
-      // remonter cette valeur sans mesurer, voir ADR 0016 :
       // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       this.velocity.y = -cfg.groundStickSpeed;
     }
@@ -334,7 +273,6 @@ export class PlayerController {
     if (this.velocity.y > 0) this.kcc.disableSnapToGround();
     else this.kcc.enableSnapToGround(cfg.snapToGroundDistance);
 
-    // --- Résolution par Rapier ------------------------------------------------
     this.desired.x = this.velocity.x * dt;
     this.desired.y = this.velocity.y * dt;
     this.desired.z = this.velocity.z * dt;
@@ -350,12 +288,6 @@ export class PlayerController {
     this.numCollisions = this.kcc.numComputedCollisions();
     const grounded = this.kcc.computedGrounded();
 
-    // Un seul passage sur les collisions du pas fixe pour deux besoins :
-    //  - normale du sol : la collision dont la normale pointe le plus vers le
-    //    haut, seulement si `grounded` (sinon `groundNormal` reste (0,1,0)) ;
-    //  - détection de MUR pour le reclip de vitesse plus bas : au moins une
-    //    collision dont la normale est plus raide que `maxSlopeClimbAngleDeg`
-    //    (quasi verticale), qu'on soit au sol ou en l'air.
     this.groundNormal.set(0, 1, 0);
     let bestUp = -Infinity;
     let hitWall = false;
@@ -374,24 +306,12 @@ export class PlayerController {
     if (this.velocity.y > 0 && this.movement.y < this.desired.y - 1e-6) {
       this.velocity.y = 0; // tête dans le plafond
     }
-    // Vitesse d'impact, lue AVANT la remise à zéro : c'est la seule fenêtre où
-    // elle existe encore. Conditionnée à la TRANSITION air -> sol, sinon
-    // `groundStickSpeed` (appliqué en permanence au sol) déclencherait un
-    // enfoncement de réception à chaque pas de marche.
     let impactSpeed = 0;
     if (grounded && this.velocity.y < 0) {
       if (!this.isGrounded) impactSpeed = -this.velocity.y;
       this.velocity.y = 0; // atterrissage
     }
 
-    // Vitesse horizontale reclippée sur le mouvement réellement effectué,
-    // SEULEMENT si un vrai MUR a été touché (`hitWall`, calculé ci-dessus) :
-    // sans ce reclip, courir contre un mur conserverait une vitesse fantôme
-    // qui se libère d'un coup quand on s'en écarte. Le filtre sur la normale
-    // est nécessaire : un simple contact de sol/pente/marche compte aussi
-    // comme collision pour Rapier (`numComputedCollisions() > 0` à quasiment
-    // chaque pas fixe au sol) — reclipper sur CETTE seule condition avait
-    // pénalisé sol, pentes et marches, voir `wallNormalYThreshold`.
     if (hitWall && dt > 0) {
       this.velocity.x = this.movement.x / dt;
       this.velocity.z = this.movement.z / dt;
@@ -403,7 +323,6 @@ export class PlayerController {
     }
     this.isGrounded = grounded;
 
-    // --- Application ----------------------------------------------------------
     const current = this.body.translation();
     this.nextTranslation.x = current.x + this.movement.x;
     this.nextTranslation.y = current.y + this.movement.y;
@@ -419,11 +338,6 @@ export class PlayerController {
     this.updateViewState(dt, impactSpeed);
   }
 
-  /**
-   * Grandeurs de vue du pas fixe. Séparé de `update` pour que la lecture du
-   * déplacement reste lisible — même pas fixe, mêmes règles :
-   * see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
-   */
   private updateViewState(dt: number, impactSpeed: number) {
     const cfg = this.cfg;
     const speed = this.horizontalSpeed;
@@ -445,11 +359,6 @@ export class PlayerController {
       1,
     );
 
-    // Remontée d'abord, nouvel impact ensuite : un enfoncement tout juste
-    // déclenché garde sa pleine valeur pendant au moins une frame d'affichage.
-    // L'amplitude de référence est `landingDipMax` : un enfoncement partiel
-    // remonte donc proportionnellement plus vite, et `landingDipRecoverTime`
-    // reste le temps de remontée DEPUIS LE MAXIMUM.
     this.landingDip = approach(
       this.landingDip,
       0,

@@ -23,7 +23,6 @@ import type { CardPickupBillboard } from "../../render/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 import type { HeroLineId } from "./heroLines";
 import type { HeroPortrait } from "./heroPortrait";
-
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
@@ -35,12 +34,7 @@ export interface ExitDoorTracking {
   halfExtentOnAxis: number;
 }
 
-/**
- * TOUT l'état d'UNE PARTIE — ce qui est détruit et reconstruit à chaque
- * `bootGameSession`/`teardownGameSession`. Ce qui reste vivant à travers un
- * reset vit sur `GameEngine` (`gameEngine.ts`), pas ici.
- * see: docs/archive/systems-session.md#létat-propre-à-une-partie-gamesession
- */
+// see: docs/archive/systems-session.md#létat-propre-à-une-partie-gamesession
 export interface GameSession {
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */
   choice: LevelDef;
@@ -61,7 +55,7 @@ export interface GameSession {
   ballMesh: THREE.Mesh | null;
   ballBody: RAPIER.RigidBody | null;
 
-  /** Session de niveau glTF (chemin "gltf" seulement) — `LevelSession.dispose()` (via `.stop()`) gère déjà lui-même le retrait de sa géométrie de `scene` et la libération GPU (voir `loader.ts::disposeLevelResource`), donc `teardownGameSession` n'a qu'à appeler `.stop()`. */
+  /** Session de niveau glTF (chemin "gltf" seulement) — `LevelSession.dispose()` (via `.stop()`) gère déjà lui-même le retrait de sa géométrie de `scene` et la libération GPU (voir `levelResources.ts::LevelResources`), donc `teardownGameSession` n'a qu'à appeler `.stop()`. */
   gltfLevelSession: LevelSession | null;
   /** Invalide une installation de niveau différée (changement console ou
    * teardown) avant qu'elle puisse publier une session sur un monde libéré. */
@@ -70,16 +64,9 @@ export interface GameSession {
   currentNavGraph: NavGraph | null;
   /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque commit, comme `currentNavGraph`. */
   lightPool: LightPool | null;
-  /** Mobilier physique (`prop_*`) du niveau COURANT — PV et destructions de
-   * CETTE partie. Reconstruit à chaque commit, comme `currentNavGraph` et
-   * `lightPool` : un hot reload rend leurs PV aux props, exactement comme il
-   * rend le niveau à son état de fichier.
-   * see: docs/archive/systems-physique.md#props-dynamiques */
+  // see: docs/archive/systems-physique.md#props-dynamiques
   propSystem: PropSystem | null;
-  /** Portes animées (`door_*`) du niveau COURANT — reconstruites à chaque
-   * commit, comme `propSystem`. Remplace l'ancien `openingDoor` (une
-   * seule porte à la fois) : voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
-   * see: docs/archive/reference-conventions-nommage.md#portes-animées */
+  // see: docs/archive/reference-conventions-nommage.md#portes-animées
   doorSystem: DoorSystem | null;
   /** Vitrages (`vitre_*`) du niveau COURANT — PV et casses de CETTE partie,
    * reconstruits à chaque commit, comme `propSystem`/`doorSystem`.
@@ -97,49 +84,31 @@ export interface GameSession {
    * partie (console active, index courant), reconstruit à chaque commit
    * comme `ecranSystem`. */
   cameraView: CameraViewSystem | null;
-  /** Billboards des armes au sol (`use_crowbar`/`use_pistol`/`use_shotgun`)
-   * du niveau COURANT — animés au taux d'affichage (`updateFx`), reconstruits
-   * à chaque commit comme `propSystem`/`doorSystem`.
-   * see: docs/archive/systems-rendu.md#armes-au-sol-2026-09-25 */
+  // see: docs/archive/systems-rendu.md#armes-au-sol-2026-09-25
   weaponPickupBillboards: WeaponPickupBillboard[];
   /** Cartes du niveau, reconstruites au chargement et animées à l'affichage. */
   cardPickupBillboards: CardPickupBillboard[];
-  /**
-   * Délai de gameplay restant, en SECONDES, avant le prochain soulagement
-   * possible sur un sanitaire intact (règle Duke 3D : max/10 PV, 220 s de
-   * délai GLOBAL, partagé par tous les sanitaires du niveau — un seul
-   * compteur, pas un par appareil). Décrémenté au pas fixe par `gameplayDt`
-   * (hitstop inclus, jamais `Date.now()`/temps mural),
-   * jamais par la casse d'un sanitaire ni un hot reload : c'est un état de
-   * PARTIE, remis à 0 par `bootGameSession`.
-   * see: docs/decisions/0032-sanitaires-utilisables.md
-   */
+  // see: docs/decisions/0032-sanitaires-utilisables.md
   sanitaireReliefCooldown: number;
 
   /** Billboard autonome de la carte lâchée par le Directeur. */
   droppedCardBillboard: CardPickupBillboard | null;
-  /** Cartes de fidélité en poche — les clés du niveau v2 (jalon N7). Survit
-   * à un hot reload, comme le faisait le badge : c'est un état de PARTIE, pas
-   * de niveau chargé.
-   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
+  // see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
   cards: Set<LoyaltyCard>;
 
   unlockedDoors: Set<string>;
   exitDoorTracking: ExitDoorTracking | null;
   /** Secrets déjà trouvés CETTE partie — `WeakSet` par référence de mesh, voir sa doc historique dans `game/loop/updateGameplay.ts`. */
   foundSecrets: WeakSet<THREE.Object3D>;
+  secretsFound: number;
+  secretsTotal: number;
 
-  /**
-   * Dernier point où le joueur touchait le sol. Sert de filet : un niveau
-   * construit sans y jouer finit toujours par avoir un trou, et une chute
-   * hors du monde est sans retour (rien ne rattrape le joueur, la partie est
-   * perdue sans écran de mort). Voir `RESCUE_FALL_DEPTH` dans
-   * `game/loop/updateGameplay.ts`.
-   */
+  // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
   lastSafeGround: THREE.Vector3;
 
   /** PV courants du joueur, suivis localement — `setPlayerHp` prend une valeur absolue (voir `game/state.ts`), `game/session`/`game/loop` sont les seuls endroits qui connaissent le dégât infligé. */
   playerHp: number;
+  playerMaxHp: number;
   heroPortrait: HeroPortrait;
   firstKillTriggered: boolean;
   lowHpLineTriggered: boolean;
@@ -155,22 +124,8 @@ export interface GameSession {
   lastHeroBarkAt: number;
   /** Répliques déjà dites dans CETTE partie (règle `once` de `heroLines.ts`). */
   heroLinesSaid: Set<HeroLineId>;
-  /**
-   * Générateur RNG DÉDIÉ au tirage des répliques occasionnelles
-   * (`HeroLineDef.chance`, `feedback.ts::triggerHeroLine`) — invariant #12,
-   * jamais `Math.random()` : la réplique se décide DANS le pas fixe, donc le
-   * rejeu d'input en dépend. Construit UNE FOIS par partie
-   * (`bootGameSession`, via `DeterministicRandom.forSeed`), même pattern que
-   * `WeaponSystem.nextRandom`.
-   */
   heroLineRandom: () => number;
 
-  /**
-   * Récap de fin de partie (`game/session/score.ts`) — compteurs avancés AU
-   * PAS FIXE (`game/loop/updateGameplay.ts`), jamais par un évènement lu au
-   * taux d'affichage. Remis à zéro à chaque `bootGameSession`, comme le
-   * reste de cet objet.
-   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
-   */
+  // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   stats: SessionStats;
 }

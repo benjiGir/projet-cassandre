@@ -4,7 +4,6 @@ import styles from "./DebugPanel.module.css";
 
 type Level = "ok" | "warn" | "bad";
 
-/** Largeur fixe : un nombre qui gagne un chiffre ne doit pas faire trembler le panneau pendant qu'on court. */
 function fmt(n: number, decimals = 2, width = 6): string {
   return n.toFixed(decimals).padStart(width, " ");
 }
@@ -14,12 +13,7 @@ const FLAT_NORMAL_Y = 0.7;
 // Au-delà, la boucle rattrape son retard (skill `rapier-character-controller`).
 const STEPS_WARNING = 2;
 
-/**
- * Panneau de debug, DEV UNIQUEMENT (le build de production monte
- * `FpsCounter` à sa place). Il lit `state.debug` en entier : acceptable pour
- * un outil qu'on démonte, pas pour le HUD.
- * see: docs/archive/systems-debug.md#champs-de-debugstate
- */
+// see: docs/archive/systems-debug.md#champs-de-debugstate
 export function DebugPanel() {
   const debug = useGameStore((s) => s.debug);
 

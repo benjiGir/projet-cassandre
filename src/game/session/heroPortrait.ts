@@ -1,5 +1,5 @@
-import { INITIAL_HERO_PORTRAIT, type HeroPortraitReaction, type HeroPortraitView } from "../state";
-
+import { INITIAL_HERO_PORTRAIT } from "./portraitState";
+import type { HeroPortraitReaction, HeroPortraitView } from "../hudTypes";
 const PRIORITIES: Record<HeroPortraitReaction, number> = {
   idle: 0, talk: 10, focus: 20, victory: 30, heal: 35, discover: 40, hurt: 80, dead: 100,
 };

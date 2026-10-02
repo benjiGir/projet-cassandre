@@ -24,16 +24,11 @@ const TICKER_ITEMS = [
   "ILS SURVEILLENT CE CANAL",
 ];
 
-/**
- * Menu principal, habillé en « signal intercepté » : l'identité stream du
- * HUD commence dès le premier écran.
- * see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
- */
+// see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
 export function MainMenu({ onPlay, onOptions, devTools }: MainMenuProps) {
   const [quitRefused, setQuitRefused] = useState(false);
 
   // `window.close()` ne ferme qu'un onglet ouvert par script, et échoue sans
-  // bruit sinon : on l'essaie, puis on dit la vérité plutôt que de feindre.
   function handleQuit() {
     window.close();
     setQuitRefused(true);

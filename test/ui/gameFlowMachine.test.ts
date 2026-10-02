@@ -1,13 +1,13 @@
 /**
  * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — table de transitions complète de
- * `gameFlowMachine` (`src/ui/gameFlowMachine.ts`), testée EN ISOLATION :
+ * `gameFlowMachine` (`src/app/gameFlowMachine.ts`), testée EN ISOLATION :
  * aucun DOM, aucun Three.js, aucun Rapier — l'acteur XState est une machine
  * pure (voir la doc de tête du fichier source pour la distinction entre
  * cette table COMPLÈTE et le câblage runtime plus grossier de `main.ts`).
  */
 import { describe, expect, it } from "vitest";
 
-import { createGameFlowActor } from "../../src/ui/gameFlowMachine";
+import { createGameFlowActor } from "../../src/app/gameFlowMachine";
 
 describe("gameFlowMachine", () => {
   it("démarre sur boot", () => {

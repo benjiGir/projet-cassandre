@@ -1,7 +1,4 @@
-/* Échelle en --vpx (même unité que le HUD, invariant #4) : un `max()` garde
-   un plancher lisible aux formats très étroits (375 px portrait), où --vpx
-   s'effondre sous 0.6 puisqu'il suit la largeur de l'image 640 px du jeu.
-   see: docs/reference/react-css.md#lunité-du-hud */
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
 .panel {
   --title-glow-radius: calc(var(--vpx) * 8);
   gap: max(calc(var(--vpx) * 8), 10px);

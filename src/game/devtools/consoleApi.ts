@@ -1,7 +1,9 @@
 import * as THREE from "three";
 
-import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
-import { listSfx, playSfx, type SfxId } from "../../core/audio";
+import type { SfxId } from "../../core/audioTypes";
+import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/inputRecorder";
+import { type Recording } from "../../core/inputTypes";
+import { listSfx, playSfx } from "../../core/audio";
 import { listHeroVoices, playHeroVoice } from "../../core/heroVoice";
 import { zoneAmbienceDebugState } from "../../core/zoneAmbience";
 import { waterAmbienceDebugState } from "../../core/waterAmbience";
@@ -21,7 +23,8 @@ import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from 
 import { Director } from "../entities/director";
 import { DirectorManager } from "../entities/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
-import { type DoorInfo, type LevelStats, type SecretZone, type UseObject } from "../level/loader";
+import { type DoorInfo } from "../level/doors";
+import { type LevelStats, type SecretZone, type UseObject } from "../level/levelTypes";
 import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
@@ -41,7 +44,8 @@ import { grantCard } from "../session/cards";
 import { triggerLevelComplete } from "../session/doors";
 import { applyPlayerDamage, presentPlayerDamage } from "../session/feedback";
 import { type SessionStats } from "../session/score";
-import { useGameStore, type LevelRecap } from "../state";
+import { useGameStore } from "../state";
+import { type LevelRecap } from "../hudTypes";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import { startPlayback } from "../session/recording";
@@ -62,18 +66,10 @@ import {
   type LightBudgetReport,
   type RenderBenchmark,
 } from "./testHarness";
-
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
-/**
- * Point d'entrée console pour l'A/B de `feel-tuner` et les preuves de
- * `qa-evidence`. `engine.session` est lu à chaque accès, via des getters,
- * JAMAIS mis en cache dans une variable locale : `window.cassandre` doit
- * rester correct après un "Rejouer"/"Retour au menu" (`main()` appelle
- * cette fonction UNE SEULE FOIS, jamais reconstruite à chaque reset).
- * see: docs/archive/systems-debug.md#point-dentrée-console-windowcassandre
- */
+// see: docs/archive/systems-debug.md#point-dentrée-console-windowcassandre
 export function exposeDebugApi(engine: GameEngine): void {
   window.cassandre = {
     moveConfig,
@@ -101,7 +97,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     weaponConfig,
     recoilVariants: RECOIL_VARIANTS,
     applyRecoilVariant,
-    // --- Harnais de feedback de hit (retour playtest Phase 3) -------------
+
     impactVariants: IMPACT_VARIANTS,
     applyImpactVariant,
     hitmarkerVariants: HITMARKER_VARIANTS,
@@ -119,10 +115,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
-    /** DEV : tue le premier Costard encore vivant (vrai `deathEvent`, compté
-     * par le récap de fin de partie) — `false` si aucun n'est vivant. Le seul
-     * moyen de tester le récap sans viser, le verrouillage du pointeur étant
-     * hors de portée de l'automatisation. */
+    // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
     killSuit: () => {
       const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
       return suit ? engine.session.suitManager.debugKill(suit) : false;
@@ -146,23 +139,13 @@ export function exposeDebugApi(engine: GameEngine): void {
       load: (name) => loadGltfLevel(engine, engine.session, name),
       stats: () => engine.session.gltfLevelSession?.current?.stats ?? null,
     },
-    /** Cartes de fidélité (jalon N7, remplace `hasBadge`/`giveBadge`) :
-     * `cards()` lit l'inventaire réel, `giveCard()` force une possession pour
-     * tester une porte sans devoir trouver la carte — même précédent que
-     * `directorManager` pour ce genre de test direct. */
     cards: () => LOYALTY_CARDS.filter((card) => engine.session.cards.has(card)),
     giveCard: (card) => {
       grantCard(engine.session, card);
     },
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
-    /** Portes ANIMÉES du niveau courant (`game/level/doors.ts::DoorSystem`) :
-     * `liste()` rend l'état de chaque vantail (mouvement, groupe, ouvert/
-     * fermé), `ouvrir(nom)` en ouvre un (et tout son groupe) SANS passer par
-     * un `use_*`/une carte — le seul moyen de juger le mouvement et le son
-     * quand le verrouillage du pointeur est hors de portée de
-     * l'automatisation (même précédent que `props`).
-     * see: docs/decisions/0031-portes-animees-et-vitres.md */
+    // see: docs/decisions/0031-portes-animees-et-vitres.md
     doorSystem: {
       liste: () => engine.session.doorSystem?.describe() ?? [],
       ouvrir: (nom: string) => engine.session.doorSystem?.open(nom, engine.session.player.position) ?? false,
@@ -176,13 +159,6 @@ export function exposeDebugApi(engine: GameEngine): void {
       liste: () => engine.session.vitreSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.vitreSystem?.destroyByName(nom) ?? false,
     },
-    /** Sanitaires du niveau courant (`game/level/sanitaires.ts::SanitaireSystem`,
-     * [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)) :
-     * `liste()` rend l'état de chaque sanitaire (sorte, PV, cassé), `casser(nom)`
-     * en détruit un sans tirer dessus (même précédent que `vitres`/`props`),
-     * `jets()` les jets d'eau actifs. `delai()`/`forcerDelai(secondes)` lisent
-     * ou forcent le délai de soulagement (220 s par défaut) — le seul moyen de
-     * juger le "Rien ne vient." et le plafond de PV sans attendre en jouant. */
     sanitaires: {
       liste: () => engine.session.sanitaireSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.sanitaireSystem?.destroyByName(nom) ?? false,
@@ -193,20 +169,9 @@ export function exposeDebugApi(engine: GameEngine): void {
         return engine.session.sanitaireReliefCooldown;
       },
     },
-    /** Effets sonores : `liste()` dit quel identifiant du jeu pointe sur quelle
-     * recette du studio et si elle est bien dans le sprite, `joue(id)` déclenche
-     * n'importe lequel sans avoir à provoquer la situation qui le produit. Le
-     * verrouillage du pointeur est hors de portée de l'automatisation, donc
-     * c'est le seul moyen d'entendre un tir sans jouer. */
     sfx: {
       liste: () => listSfx(),
       joue: (id: SfxId, volume = 1) => playSfx(id, volume),
-      /** État de la boucle d'eau positionnelle (`core/waterAmbience.ts`,
-       * sanitaires cassés) : `charge` = fichier chargé, `joue` = `Howl`
-       * réellement en lecture, `volume`/`pan` = mélange courant — le seul
-       * moyen de la vérifier sans l'entendre (même limitation que `joue`
-       * ci-dessus, verrouillage du pointeur hors de portée de
-       * l'automatisation). */
       eau: () => waterAmbienceDebugState(),
       /** Ambiance de zone (`core/zoneAmbience.ts`) : la zone entendue et le volume appliqué à chaque nappe. */
       ambiance: () => zoneAmbienceDebugState(),
@@ -219,10 +184,6 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
-    /** Mobilier physique (`prop_*`) du niveau courant : `liste()` rend l'état
-     * de chaque prop (PV, matière, position), `casser(nom)` en détruit un sans
-     * tirer dessus — le seul moyen de juger les débris et le son quand le
-     * verrouillage du pointeur est hors de portée de l'automatisation. */
     props: {
       liste: () => engine.session.propSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.propSystem?.destroyByName(nom) ?? false,
@@ -242,27 +203,13 @@ export function exposeDebugApi(engine: GameEngine): void {
       },
       findPath: (from, to) => debugFindPath(engine.session, from, to),
     },
-    /** Répond à « pourquoi le niveau est-il éclairé comme ça ». Deux termes le
-     * décident, et ils se confondent à l'œil : l'éclairage TEMPS RÉEL de la
-     * scène, et la couleur CUITE dans les sommets. `lighting()` les sépare —
-     * même précédent console que `doors`/`secrets`. */
     lighting: () => inspectLighting(engine),
     /** Coût de rendu de la scène telle qu'elle est, mesuré hors de la boucle
      * de jeu — le seul chiffre exploitable quand `requestAnimationFrame` est
      * bridé (automatisation navigateur). Voir `benchmarkRender`. */
     renderBench: (frames = 120) => benchmarkRender(engine.renderer, engine.scene, engine.camera, frames),
-    /** Sans argument, rend l'état du POOL DE LAMPES du niveau chargé ; avec un
-     * argument, change son budget (`null` = tout rallumer). Passe par le vrai pool de production
-     * (`render/lightPool.ts`) : ce qu'on mesure ici est ce que le joueur aura.
-     * Sur une scène sans `light_*` (la gym), retombe sur le balayage de scène
-     * de `applyLightBudget`, qui n'a besoin d'aucun niveau chargé.
-     * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md */
-    /** Bascule le filtrage des textures RÉDUITES (vues de loin) et rend le
-     * nombre de textures rebasculées. `"nearest"` est le réglage historique,
-     * celui qui fait grésiller les surfaces lointaines ; `"mipmap"` et
-     * `"aniso"` le corrigent. L'agrandissement reste au plus proche dans les
-     * trois cas — le gros pixel de près ne bouge pas.
-     * see: docs/decisions/0027-filtrage-des-textures-reduites.md */
+    // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
+    // see: docs/decisions/0027-filtrage-des-textures-reduites.md
     filtrage: (mode: FiltrageTexture = "aniso") => ({
       mode,
       textures: appliquerFiltrage(engine.scene, mode),
@@ -285,16 +232,6 @@ export function exposeDebugApi(engine: GameEngine): void {
       }
       return pool.stats;
     },
-    /** Récap de fin de partie (`game/session/score.ts`) : `stats()` rend les
-     * compteurs BRUTS de la partie en cours (kills, tirs, casse, temps de
-     * gameplay écoulé — voir `SessionStats`), `recap()` le dernier récap
-     * PUBLIÉ dans le store (`null` tant qu'aucune partie ne s'est terminée).
-     * `completeLevel()`/`killPlayer()` déclenchent le VRAI chemin de fin de
-     * partie (mêmes fonctions que `triggerLevelComplete`/`applyPlayerDamage`
-     * en jeu, publication du récap comprise) sans avoir à finir le niveau ou
-     * à se faire tuer — même précédent que `killSuit`/`killDirector`
-     * au-dessus, le verrouillage du pointeur étant hors de portée de
-     * l'automatisation. */
     recap: {
       stats: () => engine.session.stats,
       recap: () => useGameStore.getState().recap,
@@ -304,30 +241,12 @@ export function exposeDebugApi(engine: GameEngine): void {
         presentPlayerDamage(engine.session.playerHp);
       },
     },
-    /** Pause (`docs/archive/systems-session.md#pause`) : `pause()`/`resume()` envoient
-     * directement PAUSE/RESUME à l'acteur de flux — le déclenchement réel
-     * (perte du verrouillage du pointeur) est hors de portée de
-     * l'automatisation navigateur, comme le reste du verrouillage. */
     pause: () => engine.flow.pause(),
     resume: () => engine.flow.resume(),
   };
 }
 
-/**
- * Sépare les deux termes du rendu d'un niveau : `texture × couleur de sommet ×
- * éclairage temps réel`.
- *
- * `lights` liste ce que la scène éclaire vraiment — `visible: false` marque une
- * lampe ÉTEINTE PAR LE POOL (`render/lightPool.ts`), pas une lampe absente :
- * c'est la première chose à regarder quand un espace paraît trop sombre.
- * `batches` mesure, sur la
- * géométrie réellement dessinée (donc APRÈS la fusion de `mergeStaticDecor`),
- * si la couleur cuite est bien là et quel contraste elle porte. Un niveau plat
- * a soit `vertexColors: false` (le bake n'arrive pas au matériau), soit un
- * `range` écrasé (le bake lui-même est plat) — ce ne sont pas les mêmes
- * corrections.
- * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
- */
+// see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
 function inspectLighting(engine: GameEngine) {
   const lights: { name: string; type: string; intensity: number; color: string; visible: boolean }[] = [];
   const batches: {
@@ -406,7 +325,7 @@ declare global {
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       applyRecoilVariant: (name: keyof typeof RECOIL_VARIANTS) => ReturnType<typeof applyRecoilVariant>;
-      // --- Harnais de feedback de hit (retour playtest Phase 3) -------------
+
       impactVariants: typeof IMPACT_VARIANTS;
       applyImpactVariant: (name: keyof typeof IMPACT_VARIANTS) => ReturnType<typeof applyImpactVariant>;
       hitmarkerVariants: typeof HITMARKER_VARIANTS;

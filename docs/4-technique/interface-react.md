@@ -2,7 +2,7 @@
 title: Interface React
 tags: [technique]
 status: brouillon
-updated: 2026-10-01
+updated: 2026-10-02
 ---
 
 # Interface React
@@ -17,8 +17,8 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 
 - `src/main.ts` construit l'acteur du flux d'écran, projette ses changements dans le store et monte l'interface.
 - `src/ui/App.tsx` compose les écrans en jeu et choisit les panneaux de développement.
-- `src/ui/gameFlowMachine.ts` définit les états et transitions de l'interface.
-- `src/game/state.ts` contient le store Zustand et les types exposés à React.
+- `src/app/gameFlowMachine.ts` définit les états et transitions de la session ; `gameFlowTypes.ts` porte son contrat.
+- `src/game/state.ts` contient le store Zustand ; `src/game/hudTypes.ts` porte les contrats exposés à React.
 - `src/ui/hud/Hud/Hud.tsx` compose les widgets du HUD sans s'abonner lui-même au store.
 - `src/ui/hud/widgets/` regroupe les widgets qui lisent leurs propres données.
 - `src/ui/screens/` contient les écrans de pause, mort, chargement et fin de niveau.
@@ -55,7 +55,7 @@ flowchart LR
 `createGameFlowActor` crée un acteur XState au démarrage.
 `src/main.ts` s'abonne à ses snapshots et appelle `setFlowState`.
 L'acteur vit pendant l'onglet ; relancer une partie ne le recrée pas.
-`GameFlowState` est une union de chaînes dans `src/game/state.ts`.
+`GameFlowState` est une union de chaînes dans `src/app/gameFlowTypes.ts`.
 Le store expose l'état au rendu ; il n'est pas la source des transitions.
 
 `App` rend l'écran de chargement pour `loading` ou `loadFailed`.
@@ -90,6 +90,7 @@ recul bref restent décoratifs en CSS. Les animations se figent en pause et
 respectent la réduction des mouvements. `LiveCam` compose ce visage dans un
 cadre de 96 × 54 pixels virtuels. `DeathScreen` reprend la webcam pour rendre
 l'effondrement visible au-dessus de la superposition opaque.
+La pose initiale et son contrat vivent dans des feuilles sans Zustand (`portraitState.ts`, `hudTypes.ts`).
 Les atlas et limites des prises de voix sont décrits dans le
 [journal du portrait](../journal/portrait-stream-2026-10.md).
 
@@ -112,6 +113,8 @@ Les événements du DOM sont traduits en callbacks ; ils ne récupèrent pas dir
 `window.cassandre` est également exposé seulement sous `import.meta.env.DEV`.
 En production, `App` affiche le compteur FPS à la place du panneau de debug.
 Les modules qui persistent un réglage ou pilotent le moteur restent hors de `src/ui/`.
+`src/game/devtools/movementTuning.ts` possède notamment la reconstruction Rapier et son throttle ; le panneau ne possède que les interactions de ses curseurs.
+Les interfaces partagées du tuning sont dans `src/ui/dev/tuning/lib/tuningTypes.ts`, les tables dans `tuningFields.ts` et le hook dans `useConfigEditor.ts`.
 Les écrans d'options appellent des modules de domaine pour appliquer et persister les réglages.
 Les composants d'options ne possèdent donc pas la cible Three.js ni les clés de persistance.
 

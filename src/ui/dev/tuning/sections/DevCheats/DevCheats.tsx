@@ -5,9 +5,7 @@ import { TuningNote } from "../../layout/TuningNote/TuningNote";
 import { TuningSection } from "../../layout/TuningSection/TuningSection";
 import { useConfigEditor } from "../../lib/useConfigEditor";
 
-/** Bascules de dev qui touchent au GAMEPLAY, pas seulement à l'affichage. */
 export function DevCheats() {
-  // `cheats` est aussi muté par la touche F8 et la console : on le lit en direct.
   const flags = useConfigEditor(cheats);
 
   return (

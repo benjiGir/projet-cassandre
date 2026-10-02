@@ -9,7 +9,6 @@ export interface ScreenTitleProps {
   children: ReactNode;
 }
 
-/** Titre lumineux d'un écran, dans la couleur de son ton. */
 export function ScreenTitle({ className, children }: ScreenTitleProps) {
   return <h1 className={cx(styles.title, className)}>{children}</h1>;
 }

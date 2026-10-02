@@ -7,11 +7,6 @@ import { SuitTuning } from "../SuitTuning/SuitTuning";
 import { TuningSection } from "../../../layout/TuningSection/TuningSection";
 import { useConfigEditor } from "../../../lib/useConfigEditor";
 
-/**
- * Harnais de feedback de hit. Un seul éditeur par config, partagé par les
- * groupes : « Défauts » dans le groupe Impact remet toute la config d'arme,
- * et les groupes Hitmarker et Réticule doivent se redessiner avec lui.
- */
 export function HitFeedbackTuning() {
   const weapon = useConfigEditor(weaponConfig);
   const suit = useConfigEditor(suitConfig);

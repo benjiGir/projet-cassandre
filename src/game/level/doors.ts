@@ -1,45 +1,15 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import type { LevelResources } from "./levelResources";
 import { attributeKey, materialKey } from "./mergeStaticDecor";
 
-/**
- * `door_*` animés — voir `docs/archive/reference-conventions-nommage.md#portes-animées`
- * et [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md) pour
- * la cause racine (aucune porte ne bougeait jamais à l'écran depuis la porte à
- * badge de la Zone E, 2026-08-23 : `session/doors.ts::unlockDoor` désactivait
- * le collider et glissait le CORPS Rapier, mais rien ne recopiait cette pose
- * sur le MESH — seuls les `prop_*` le faisaient).
- *
- * Ce fichier ne contient que la partie MUTABLE, propre à une partie
- * (progression d'ouverture, minuteurs) et les fonctions PURES de géométrie —
- * exactement la même séparation que `game/level/props.ts` : `loader.ts`
- * construit `DoorInfo` (corps/collider Rapier, pose fermée, bbox locale),
- * `DoorSystem` fait vivre cette donnée pas fixe après pas fixe.
- *
- * Comportement physique (délibérément simple et robuste) : le corps Rapier
- * reste FIXE à la pose FERMÉE pour toujours — seul le MESH est animé (pivot/
- * translation). Le collider n'est activé QUE quand la porte est
- * complètement fermée : désactivé dès le premier instant d'une ouverture,
- * réactivé seulement en fin de fermeture, et jamais réactivé si une capsule
- * de personnage chevauche alors le vantail (la porte rouvre plutôt que de se
- * refermer dessus). Un vantail ne bloque donc jamais physiquement le joueur
- * en cours de mouvement — il n'existe qu'ouvert ou fermé du point de vue de
- * Rapier, jamais "à moitié".
- */
+// see: docs/6-reference/notes-code-gameplay-niveau.md#portes
 
-// ---------------------------------------------------------------------------
-// Convention `mouvement` — mirroring `props.ts::PropMaterial` (donnée + parse
-// pur ici, avertissement bruyant + repli côté `loader.ts`).
-// ---------------------------------------------------------------------------
 
 export const DOOR_MOVEMENTS = ["descend", "monte", "battant", "coulisse"] as const;
 export type DoorMovement = (typeof DOOR_MOVEMENTS)[number];
 
-/** Défaut si `mouvement` est absent — comportement HISTORIQUE (la porte
- * s'enfonce de sa propre hauteur) : les `.glb` déjà exportés avant ce
- * contrat (`hypermarche_complet`, les zones A-E) doivent continuer à
- * fonctionner, et enfin se VOIR bouger. */
 export const DEFAULT_DOOR_MOVEMENT: DoorMovement = "descend";
 
 export function parseDoorMovement(raw: unknown): DoorMovement | null {
@@ -51,15 +21,6 @@ export function parseDoorMovement(raw: unknown): DoorMovement | null {
 export type DoorHinge = "min" | "max";
 export type DoorSens = "auto" | "+" | "-";
 
-/**
- * Qui déclenche l'ouverture automatique d'une porte.
- *
- * `"ennemis"` existe pour les portes qu'on manœuvre À LA MAIN : sans lui, une
- * porte de bureau refermée par le joueur se rouvrirait dans la seconde, parce
- * qu'il est encore devant. Les Costards, eux, continuent de la pousser — ce
- * qui garde le graphe de navigation utile (le bake traverse toute porte qui
- * n'est pas `"non"`).
- */
 export type DoorAuto = "non" | "tous" | "ennemis";
 
 /** Ce que la touche E peut faire à une porte, à moins de `PORTEE_ACTION_MANUELLE`. */
@@ -99,12 +60,6 @@ export interface ParsedDoorConfig {
   portee: number;
 }
 
-/**
- * Lit les extras Blender d'un `door_*`, TOUS optionnels. Aucun n'est
- * bruyant (contrairement à `mouvement`, lu séparément par `loader.ts`) : une
- * valeur absente ou mal formée retombe silencieusement sur son défaut — le
- * contrat ne réclame un avertissement que pour `mouvement`.
- */
 export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, unknown>): ParsedDoorConfig {
   const charniere: DoorHinge = extras.charniere === "max" ? "max" : "min";
 
@@ -159,10 +114,6 @@ export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, 
   };
 }
 
-// ---------------------------------------------------------------------------
-// Données du loader — mêmes conventions que `PropInfo` (`level/props.ts`).
-// ---------------------------------------------------------------------------
-
 export interface DoorInfo {
   name: string;
   object: THREE.Object3D;
@@ -174,13 +125,6 @@ export interface DoorInfo {
   /** Bounding box LOCALE du mesh (avant échelle) — dérive le pivot d'un battant et l'axe d'un coulissant. */
   localMin: THREE.Vector3;
   localMax: THREE.Vector3;
-  /**
-   * Pose FERMÉE, espace LOCAL de `root` — le mesh est rattaché sous `root`
-   * (`root.attach`, comme un `prop_*`) précisément pour que cette pose locale
-   * soit directement la pose à écrire dans le mesh (`DoorSystem` n'a besoin
-   * d'aucune matrice inverse supplémentaire, contrairement à `PropSystem` qui
-   * relit un corps DYNAMIQUE à chaque pas).
-   */
   closedPosition: THREE.Vector3;
   closedQuaternion: THREE.Quaternion;
   scale: THREE.Vector3;
@@ -213,33 +157,12 @@ export interface DoorMovementEvent {
 
 export type DoorRuntimeState = "closed" | "opening" | "open" | "closing";
 
-// ---------------------------------------------------------------------------
-// Lots de vantaux — un lot de dessin par matériau, pour tout le niveau.
-// ---------------------------------------------------------------------------
-
 export interface DoorBatchSlot {
   batch: THREE.BatchedMesh;
   instanceId: number;
 }
 
-/**
- * Regroupe les vantaux qui partagent un matériau en un `BatchedMesh` : un lot
- * de dessin par matériau pour TOUT le niveau, au lieu d'un par vantail.
- *
- * Pourquoi : un vantail animé ne peut pas rejoindre le décor fusionné, et
- * three.js n'élimine que par le cône de vue — vingt vantaux coûtaient jusqu'à
- * treize lots dans une seule vue (le bout du hub, 2026-09-19), sur un budget
- * de 200 déjà tenu à 198. Un `BatchedMesh` garde une matrice par vantail
- * (`setMatrixAt`) et élimine chaque instance hors champ séparément, en un
- * seul appel de dessin (`WEBGL_multi_draw`, repli intégré à three.js sinon).
- *
- * Le mesh d'origine reste dans la scène, CACHÉ : c'est toujours lui qui porte
- * la pose (`DoorSystem.interpolate` l'écrit, puis la recopie dans le lot). Un
- * vantail seul de son matériau (ou dont la géométrie n'a pas les mêmes
- * attributs que les autres) reste un mesh ordinaire. Retourne le nombre de
- * lots de dessin des vantaux.
- */
-export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[]): number {
+export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[], resources?: LevelResources): number {
   const groups = new Map<string, DoorInfo[]>();
   let seuls = 0;
   for (const door of doors) {
@@ -271,6 +194,7 @@ export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[]
     const vertices = meshes.reduce((n, m) => n + m.geometry.getAttribute("position").count, 0);
     const indices = meshes.reduce((n, m) => n + (m.geometry.index?.count ?? 0), 0);
     const batch = new THREE.BatchedMesh(meshes.length, vertices, indices, meshes[0]!.material);
+    resources?.batch(batch);
     batch.name = `lot_vantaux_${lots}`;
     group.forEach((door, i) => {
       const mesh = meshes[i]!;
@@ -286,10 +210,6 @@ export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[]
   return lots + seuls;
 }
 
-// ---------------------------------------------------------------------------
-// Géométrie pure — pivot d'un battant, direction "s'éloigner de l'ouvreur".
-// ---------------------------------------------------------------------------
-
 export interface DoorHingeGeometry {
   /** Point de charnière, espace LOCAL du mesh (avant échelle). */
   pivotLocal: THREE.Vector3;
@@ -300,12 +220,6 @@ export interface DoorHingeGeometry {
   axis: "x" | "z";
 }
 
-/**
- * Dérive la charnière et le grand axe horizontal LOCAL d'une bounding box
- * (skill `collision-proxy-authoring` : la rotation est portée par le corps,
- * jamais par la géométrie — travailler en LOCAL reste valide quelle que soit
- * l'orientation posée dans Blender).
- */
 export function computeHingeGeometry(
   localMin: THREE.Vector3,
   localMax: THREE.Vector3,
@@ -344,20 +258,6 @@ export function computeHingeGeometry(
   return { pivotLocal, farLocalDir, grandAxisLocalLength, axis };
 }
 
-/**
- * Signe d'ouverture d'un battant en `sens: "auto"` : la porte s'ouvre en
- * s'ÉLOIGNANT de celui qui l'ouvre. `farDirWorld` est la direction (MONDE,
- * unitaire) du bout libre depuis la charnière à la pose FERMÉE.
- *
- * Dérivation : une rotation positive (main droite) autour de +Y déplace le
- * bout libre, à l'instant initial, dans la direction `up × farDirWorld`
- * (dérivée de `R(θ)v` en `θ=0`). On appelle `normal = farDirWorld × up`
- * (l'opposé) le côté "+" du plan du vantail. Pour que le bout libre s'écarte
- * du côté OPPOSÉ à l'ouvreur, il faut que la rotation choisie déplace le bout
- * libre vers `-side · normal` où `side = signe(offset · normal)` — ce qui se
- * simplifie exactement en `openSign = side` (voir le calcul détaillé dans
- * l'ADR 0031).
- */
 export function resolveAutoOpenSign(
   pivotWorld: THREE.Vector3,
   farDirWorld: THREE.Vector3,
@@ -386,12 +286,6 @@ export function hingePivotInRootSpace(
   return out;
 }
 
-/**
- * Pose d'un battant à l'angle signé `theta` (radians, 0 = fermé) — rotation
- * autour de l'axe vertical passant par `pivotWorld`. Formule standard de
- * rotation autour d'un pivot externe : `pos' = pivot + Δq·(pos - pivot)`,
- * `quat' = Δq·quat`.
- */
 export function composeBattantPose(
   closedPosition: THREE.Vector3,
   closedQuaternion: THREE.Quaternion,
@@ -434,12 +328,6 @@ export function composeVerticalPose(
   outPosition.y += sign * distance;
 }
 
-/**
- * Une capsule de personnage (`actor`) chevauche-t-elle la boîte englobante
- * MONDE d'une porte à sa pose FERMÉE ? Test OBB-vs-point inflé, en espace
- * LOCAL du corps (rotation inversée) — pur, aucune requête Rapier : sert au
- * refus de refermeture ("rouvrir plutôt que refermer dessus").
- */
 export function isActorBlockingClosedDoor(
   closedWorldPosition: THREE.Vector3,
   closedWorldQuaternion: THREE.Quaternion,
@@ -469,10 +357,6 @@ export function advanceDoorProgress(progress: number, target: 0 | 1, dt: number,
   if (target === 1) return Math.min(1, progress + step);
   return Math.max(0, progress - step);
 }
-
-// ---------------------------------------------------------------------------
-// Système — état mutable d'une partie, reconstruit à chaque chargement.
-// ---------------------------------------------------------------------------
 
 interface DoorMember {
   info: DoorInfo;
@@ -593,14 +477,6 @@ export class DoorSystem {
     return runtimeState(group);
   }
 
-  /**
-   * Ouvre le GROUPE contenant `name` (voir `groupe`) — utilisé par les
-   * portes à carte/`use_*` (`session/doors.ts::unlockDoor`), qui restent
-   * TOUJOURS ouvertes (`permanent = true`, quel que soit `referme`).
-   * `silent` (hot reload, réouverture d'une porte déjà déverrouillée cette
-   * partie) : n'émet pas de `DoorMovementEvent`, pas de son au rechargement.
-   * Retourne `false` si `name` ne correspond à aucun `door_*` connu.
-   */
   open(name: string, openerPosition: THREE.Vector3, opts: { silent?: boolean } = {}): boolean {
     const group = this.groupByDoorName.get(name);
     if (!group) return false;
@@ -609,17 +485,6 @@ export class DoorSystem {
     return true;
   }
 
-  /**
-   * Touche E : ouvre ou referme la porte manœuvrable la plus proche de
-   * `position`, dans `PORTEE_ACTION_MANUELLE`. Retourne ce qui a été fait, ou
-   * `null` si rien n'était à portée (l'appelant peut alors laisser l'appui à
-   * quelqu'un d'autre).
-   *
-   * Une porte `manuelle: "fermer"` ne s'OUVRE jamais ainsi : c'est ce qui
-   * garde le sens unique de la porte coupe-feu, dont le bouton est hors de
-   * portée côté rayons. On peut la refermer des deux côtés ; pour la rouvrir,
-   * il faut retourner au bouton.
-   */
   actionner(position: THREE.Vector3): { name: string; action: "ouverte" | "fermee" } | null {
     const porteeSq = PORTEE_ACTION_MANUELLE * PORTEE_ACTION_MANUELLE;
     let cible: DoorGroup | null = null;
@@ -650,11 +515,6 @@ export class DoorSystem {
     return { name: nom, action: "ouverte" };
   }
 
-  /**
-   * Referme un groupe à la demande. `permanent` saute : une porte ouverte par
-   * un `use_*` (la coupe-feu) redevient une porte ordinaire, refermable, et
-   * son bouton pourra la rouvrir.
-   */
   private beginClosing(group: DoorGroup): void {
     group.permanent = false;
     group.idleTimer = 0;
@@ -686,12 +546,6 @@ export class DoorSystem {
     }
   }
 
-  /**
-   * Pas fixe. `actors` : joueur + ennemis VIVANTS, sert à la fois au
-   * déclenchement des groupes `auto` (proximité) et au refus de refermeture
-   * (une capsule qui chevauche encore le vantail). Calcule aussi la pose
-   * courante du mesh de chaque membre — invariant #1, tout au pas fixe.
-   */
   update(dt: number, actors: readonly DoorActor[]): void {
     for (const group of this.groups) {
       this.updateAutoTrigger(group, actors, dt);

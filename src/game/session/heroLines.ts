@@ -1,19 +1,4 @@
-/**
- * Répliques ENREGISTRÉES du héros : le texte de chaque prise retenue, mot pour
- * mot, et la règle qui décide si elle se dit quand l'occasion se présente.
- *
- * L'identifiant est celui du catalogue
- * (`docs/6-reference/repliques-niveau-v2.md`), et la voix est la prise
- * `heros_<identifiant>_a` du sprite `voix` (`tools/audio/ia_voix.py`). Le
- * texte affiché DOIT être celui qui est dit : `heroLines.test.ts` le compare
- * aux prises retenues.
- *
- * Rythme (section « Rythme conseillé » du catalogue) : les moments forts
- * (départ, armes, cartes, secrets, Directeur, mort) passent outre le délai
- * entre répliques ; le reste le respecte, et ce qui revient souvent (kills,
- * casse, munitions) n'est dit qu'une fois sur deux ou trois, au tirage du RNG
- * déterministe de la session.
- */
+// see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 
 /** Graine du tirage des répliques occasionnelles (`GameSession.heroLineRandom`) — famille
  * `SHOTGUN_SPREAD_SEED`/`BASE_SUIT_SEED`, jamais dérivée de `Math.random()`/`Date.now()`. */
@@ -96,11 +81,6 @@ export const HERO_LINES = {
 
 export type HeroLineId = keyof typeof HERO_LINES;
 
-/**
- * Cris courts (section 9 du catalogue) : pas de sous-titre, pas de délai de
- * réplique — seulement un écart minimal entre deux cris, et jamais par-dessus
- * une réplique qui se dit encore.
- */
 export const HERO_BARKS = {
   douleur_legere: "Aïe !",
   douleur_forte: "Argh !",

@@ -24,22 +24,14 @@ import { advanceWeaponPickupClock } from "../../render/pickups";
 import { presentPlayerDamage } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
-import type { LevelHandle } from "../level/loader";
+import type { LevelHandle } from "../level/levelTypes";
 import { astarMetricsSnapshot } from "../level/pathfinding";
 import { collectActiveShowerOrigins } from "../level/douches";
-
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
-/**
- * Couleur et quantité des éclats par matière de `prop_*`.
- *
- * Traduction `game/` -> `render/` : `FxSystem.spawnDebris` ne prend qu'un
- * nombre, il ne connaît pas les matières du niveau — même frontière que
- * `material: string` sur `spawnImpactDecal`.
- * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
- */
+// see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
 const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   bois: { color: 0x6b4a2a, count: 10 },
   // Le carton part en plus gros morceaux, et moins nombreux : un carton
@@ -49,35 +41,13 @@ const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   // clairs, c'est LUI qui fait lire « ça s'est cassé » à 640×360.
   verre: { color: 0xa8d8e8, count: 18 },
   metal: { color: 0x8a8f96, count: 8 },
-  // Chantier « Les coulisses » (2026-09-26) : trois matières de plus.
-  // La farine part en nuage clair et nombreux (un sac qui explose, pas des
-  // éclats), l'eau réutilise la teinte claire du verre (seul bleu du
-  // catalogue), l'électronique en éclats sombres façon carcasse de TV.
+  // see: docs/6-reference/notes-code-gameplay.md#boucle-et-présentation
   farine: { color: 0xe8e0c8, count: 16 },
   eau: { color: 0x6fb8ff, count: 14 },
   electronique: { color: 0x2f2f38, count: 10 },
 };
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
-/**
- * Handles de colliders JAMAIS éligibles à un decal d'impact : `prop_*`
- * (poussables), `door_*` (animées), `vitre_*`/`sanitaire_*` (cassables) — un
- * decal posé dessus resterait accroché à un point du MONDE alors que la
- * surface a bougé ou disparu depuis (le second retour de playtest, « les
- * impacts restent dans le vide »). Le troisième cas, un ennemi (`flesh`),
- * n'a pas besoin d'entrer dans cet ensemble : il est déjà distingué par
- * `HitEvent.material` (voir la boucle plus bas).
- *
- * Reconstruit UNIQUEMENT quand la RÉFÉRENCE du `LevelHandle` courant change
- * (un nouveau niveau ou un hot reload en construit un NOUVEAU, voir
- * `loader.ts`/`hotReload.ts`), jamais par frame. Lu depuis des champs
- * PUBLICS déjà exposés par `LevelHandle` (`doors`/`vitres`/`sanitaires`/
- * `props`, chacun avec son `.collider`) : aucun nouveau couplage vers
- * `game/level/*`, dont les maps `byColliderHandle` internes restent privées
- * à chaque système (`PropSystem`, `DoorSystem`, `VitreSystem`,
- * `SanitaireSystem`) — ce module se contente de lire, il ne duplique aucune
- * logique de jeu.
- */
 let movableHandlesLevel: LevelHandle | null | undefined;
 let movableHandles: ReadonlySet<number> = new Set();
 
@@ -101,11 +71,6 @@ function isMovableOrBreakableHandle(session: FxSession, colliderHandle: number):
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
 
-// Scratch de la boucle d'eau positionnelle (`core/waterAmbience.ts`) : l'axe
-// X local de la caméra (sa "droite"), recalculé chaque frame, et le tableau
-// des origines de jets actifs, rempli SANS allouer par
-// `SanitaireSystem.collectActiveJetOrigins` — voir sa doc pour pourquoi ce
-// n'est pas `activeJets`.
 const waterListenerRightScratch = new THREE.Vector3();
 const waterJetOriginScratch: THREE.Vector3[] = [];
 const showerOriginScratch: THREE.Vector3[] = [];
@@ -137,42 +102,15 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         }
 
         engine.fx.update(realDt);
-        // Pool de lampes : réévalué au taux d'affichage, avant le rendu de
-        // cette frame. C'est la position de la CAMÉRA qui décide quelle lampe
-        // reste allumée, et elle est lue à l'affichage (invariant #3) — pas au
-        // pas fixe. L'appel sort immédiatement tant que la caméra n'a pas
-        // bougé de plus de 2 m.
         // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
         session.lightPool?.update(engine.camera.position);
-        // Décroissance temps réel des minuteurs du hitmarker/réticule/gizmos —
-        // même régime que `fx.update(realDt)` juste au-dessus, jamais le pas
-        // fixe. `render()` (le dessin effectif des canvas 2D) est appelé en
-        // tout dernier dans cette fonction, APRÈS les boucles ci-dessous qui
-        // peuvent encore déclencher `hitmarker.trigger(...)`/`crosshair.notifyFire(...)`
-        // pour CETTE frame.
         engine.hitmarker.update(realDt);
         engine.crosshair.update(realDt);
         engine.ballisticsDebug.update(realDt);
       });
 
       yield* Effect.sync(() => {
-        // Lecture NON DESTRUCTIVE de `weapons.fireEvents`/`hitEvents` : ces
-        // files s'accumulent au fil des pas fixes de la frame et ne se vident
-        // jamais toutes seules. `clearFrameEvents()` est appelé plus bas DANS
-        // CETTE MÊME fonction, après tous ses lecteurs — jamais ici, avant
-        // qu'ils aient fini de lire.
         for (const event of session.weapons.fireEvents) {
-          // Le pied-de-biche n'a pas de canon : AUCUN muzzle flash (ni quad
-          // ni lumière) sur un coup de mêlée — retiré après un retour de
-          // playtest (« cette espèce de carré blanc… ça fait mal aux yeux »).
-          // Cause vérifiée : ce bloc appelait `spawnMuzzleFlash` pour CHAQUE
-          // arme sans distinction, avec l'œil du joueur comme origine pour la
-          // mêlée — un quad blanc à 15 cm de la caméra. Voir la doc de tête
-          // de `MUZZLE_FLASH_PRESETS` (`render/fx.ts`). Le retour du coup
-          // passe par ce qui existe déjà : impact (particules), son,
-          // hitmarker, screenshake — inchangés plus bas dans cette fonction.
-          // L'éclair d'une arme à feu naît au bout du canon affiché, pas au
-          // centre de l'écran.
           if (event.weapon !== "melee") {
             engine.fx.spawnMuzzleFlash(
               engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon),
@@ -187,13 +125,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           // Réticule : pulsation à CHAQUE tir déclenché (indépendant d'un hit,
           // voir `CrosshairOverlay.notifyFire`), no-op si désactivée en config.
           engine.crosshair.notifyFire();
-          // Gizmos balistiques de debug : la forme RÉELLEMENT testée par ce
-          // tir (voir `render/ballisticsDebug.ts`). Pompe : un rayon par
-          // plomb, jusqu'à son impact ou `shotgunRange` (voir
-          // `FireEvent.pelletEndpoints`). Pied-de-biche : la capsule de
-          // `WeaponSystem.fireMelee`, reconstruite ici à partir de
-          // `weaponConfig.meleeRange`/`meleeHitRadius` — mêmes nombres que la
-          // requête Rapier, aucune duplication de valeur en dur.
           if (event.weapon !== "melee" && event.pelletEndpoints) {
             engine.ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
           } else if (event.weapon === "melee") {
@@ -206,21 +137,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           }
         }
         for (const hit of session.weapons.hitEvents) {
-          // Distinction mur/ennemi (retour playtest Phase 3, `IMPACT_VARIANTS`
-          // dans `weaponConfig.ts`) : un hit ENEMY confirmé (matière `"flesh"`,
-          // voir `FLESH_MATERIAL`/`materialForCollider` dans `weapons.ts`)
-          // déclenche le shake `enemy*`, tout le reste (murs, décor) garde le
-          // shake générique. Le hitstop, lui, est déjà branché à la source
-          // dans `weapons.ts` (`triggerHitstopFor`) — pas dupliqué ici.
           const isEnemyHit = hit.material === FLESH_MATERIAL;
-          // Un decal ne se pose JAMAIS sur une surface qui peut bouger ou
-          // disparaître (retour playtest, « les impacts restent dans le
-          // vide ») : un ennemi (`isEnemyHit`), un `prop_*` poussable, une
-          // porte animée, une vitre ou un sanitaire cassables
-          // (`isMovableOrBreakableHandle`). Ces surfaces gardent quand même
-          // leur giclée de particules, juste en dessous — un objet jetable,
-          // jamais un decal attaché à un point du monde qui n'a plus rien
-          // dessus.
           if (!isEnemyHit && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
             engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
           }
@@ -234,12 +151,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           if (isEnemyHit) engine.hitmarker.trigger("hit");
           playImpactSfx(hit.material);
         }
-        // Clôture de la frame d'affichage pour les événements d'armes : TOUS
-        // les lecteurs (`retro-render` ci-dessus, l'audio ci-dessus) ont fini
-        // de lire `fireEvents`/`hitEvents` pour cette frame. Même principe que
-        // `input.endFrame()` dans `core/loop.ts` — dernier appel de la chaîne,
-        // jamais plus tôt (voir la doc de `clearFrameEvents` dans
-        // `game/player/weapons.ts`).
         session.weapons.clearFrameEvents();
       });
 
@@ -248,12 +159,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
         for (const sprite of session.suitSprites.values()) sprite.updateFlash(realDt);
 
-        // Billboards des armes au sol : flottement + pouls d'émissive,
-        // purement cosmétiques, TEMPS RÉEL comme le flash ci-dessus — voir
-        // `render/pickups.ts::WeaponPickupBillboard`. Horloge partagée
-        // avancée UNE FOIS (`advanceWeaponPickupClock`), puis chaque pickup
-        // recale son cap vers la caméra déjà posée par `interpolateVisuals`
-        // cette même frame.
         advanceWeaponPickupClock(realDt);
         for (const billboard of session.weaponPickupBillboards) billboard.update(engine.camera);
         for (const billboard of session.cardPickupBillboards) billboard.update(engine.camera, realDt);
@@ -278,11 +183,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           playEnemySfx("shot");
         }
         for (const event of session.suitManager.hurtEvents) {
-          // Triple feedback (skill enemy-state-machine) : flash blanc + son ici,
-          // knockback déjà appliqué dans `Suit.applyDamage` (vélocité pilotée,
-          // le Costard étant kinématique — voir sa doc). Durée du flash lue
-          // depuis `suitConfig.hitFlashDuration` (tunable à chaud, voir sa doc
-          // et `FLASH_VARIANTS`) au lieu de l'ancienne constante en dur.
           session.suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
           playEnemySfx("hurt");
         }
@@ -293,24 +193,12 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             // pour la persistance du cadavre — seul le RENDU change ici).
             engine.fx.spawnGibs(event.point, event.direction);
           }
-          // Kill = sa propre fenêtre de hitmarker, distincte du hit simple (voir
-          // `HitmarkerOverlay.trigger`) — confirmation visuelle qu'un Costard
-          // vient d'être tué, indépendamment du sprite (qui peut être remplacé
-          // par des gibs, donc potentiellement moins lisible ce pas-ci).
           engine.hitmarker.trigger("kill");
           playEnemySfx("death");
           // Les vues et le premier kill sont déjà décidés dans le pas fixe.
         }
         for (const event of session.suitManager.playerHitEvents) {
           playerWasHit = true;
-          // Feedback via l'API PUBLIQUE déjà livrée de `fx`/`weapons`, aucune
-          // modification de `render/fx.ts` : particules au point d'impact sur
-          // le joueur, léger screenshake dédié (`suitConfig`, pas
-          // `weaponConfig` — c'est le coup encaissé, pas un tir du joueur).
-          // PAS de decal ici : le joueur bouge en permanence, un decal
-          // « collé » à ce point du monde flotterait dès le pas suivant —
-          // même règle que pour un ennemi touché (voir la boucle
-          // `weapons.hitEvents` plus haut).
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(suitConfig.playerHitShakeAmplitude, suitConfig.playerHitShakeDuration);
         }
@@ -318,10 +206,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
-        // Même contrat (lecture non destructive, `clearFrameEvents()` en tout
-        // dernier) pour le Directeur. Pas de réutilisation des sons `enemy_*` en
-        // tant que "faits exprès pour le boss" — ce sont les mêmes placeholders
-        // génériques que pour le Costard (aucun son dédié encore, pas d'assets finaux).
         for (const sprite of session.directorSprites.values()) sprite.updateFlash(realDt);
 
         for (const event of session.directorManager.alertEvents) {
@@ -368,13 +252,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
-        // Mobilier physique — même contrat que les trois blocs ci-dessus :
-        // lecture non destructive, `clearFrameEvents()` en tout dernier.
-        //
-        // Un impact sur un prop NON fatal ne fait rien de plus ici : le decal,
-        // les particules et le son d'impact générique sont déjà partis avec
-        // `weapons.hitEvents` plus haut, comme pour n'importe quelle surface.
-        // Seule la destruction a son propre retour.
         const props = session.propSystem;
         if (props) {
           for (const event of props.destroyedEvents) {
@@ -402,12 +279,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           vitres.clearFrameEvents();
         }
 
-        // Sanitaires (`sanitaire_*`) — même contrat de lecture non destructive
-        // que les vitrages juste au-dessus. La casse pose une gerbe de faïence
-        // ET un jet d'eau PERMANENT (`engine.fx`, bouchons `retro-render` —
-        // voir sa doc de tête) : contrairement à un `prop_*`/`vitre_*`, la
-        // destruction laisse une trace visible durable, pas juste un flash de
-        // débris.
         const sanitaires = session.sanitaireSystem;
         if (sanitaires) {
           for (const event of sanitaires.destroyedEvents) {
@@ -441,21 +312,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
-        // Boucle d'eau positionnelle des jets permanents ci-dessus — CONTINU,
-        // pas un évènement : mise à jour à chaque frame d'affichage, jamais le
-        // pas fixe (invariant #2), voir `core/waterAmbience.ts`. Lecture
-        // directe de la rotation caméra (invariant #3, comme
-        // `interpolateVisuals.ts`) : l'axe X local de `camera.quaternion` est
-        // sa "droite", recalculé ici plutôt que lu depuis `matrixWorld` — pas
-        // encore remis à jour à ce point de la frame (seul `renderer.render()`
-        // le fait, plus bas dans `core/loop.ts`).
-        //
-        // Coupée hors de l'état "playing" (menu, mort, fin de niveau) — même
-        // lecture directe de l'acteur que la garde de CONTENU du pas fixe
-        // dans `updateGameplay.ts`. `jets` retombe aussi à vide tout seul à
-        // chaque rechargement de niveau/hot reload/reset, sans code dédié ici
-        // : `session.sanitaireSystem` devient une instance neuve, sans aucun
-        // sanitaire cassé (voir la doc d'`updateWaterAmbience`).
         // see: docs/archive/systems-hud-audio.md#boucle-deau-positionnelle
         if (session.sanitaireSystem) session.sanitaireSystem.collectActiveJetOrigins(waterJetOriginScratch);
         else waterJetOriginScratch.length = 0;
@@ -480,16 +336,8 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
-        // Offset de shake, ADDITIF, appliqué APRÈS le calcul de bob déjà posé
-        // dans `interpolateVisuals` (qui s'exécute juste avant `updateFx` dans
-        // l'ordre de la boucle, voir `core/loop.ts`) — jamais en écrasant
-        // `player.eyePosition`/`camera.position` de base.
         engine.camera.position.add(engine.fx.currentShakeOffset(shakeOffsetScratch));
 
-        // Touches de dev (F8-F10, V, B) : absentes du build de production.
-        // `import.meta.env.DEV` y vaut `false` à la compilation, la branche
-        // disparaît — un joueur qui aurait rebindé une action sur `V` ne
-        // basculerait pas le wireframe en jouant.
         // see: docs/archive/reference-controles.md#touches-de-dev
         if (import.meta.env.DEV) {
           // KeyV : wireframe de toute la scène, mutation ponctuelle sur appui
@@ -551,12 +399,6 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         }
       });
 
-      // Dessin du réticule/hitmarker EN TOUT DERNIER : après toutes les
-      // phases ci-dessus qui ont pu appeler `crosshair.notifyFire(...)`/
-      // `hitmarker.trigger(...)` pour cette frame (tir, hit ennemi, kill) —
-      // voir la note plus haut. Le réticule d'abord (repère permanent), le
-      // hitmarker ensuite (flash de confirmation, doit rester visible
-      // par-dessus — voir la note de construction des deux overlays).
       yield* Effect.sync(() => {
         engine.crosshair.render();
         engine.hitmarker.render();

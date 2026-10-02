@@ -4,40 +4,20 @@ import { RaycastService } from "../physics/raycast";
 import { PathfindingService } from "../game/level/pathfinding";
 import { RenderService } from "../render/renderService";
 
-/**
- * Racine de composition Effect du jeu. Chaque service ajouté par les
- * jalons suivants (RaycastService en M3, PathfindingService en M4,
- * RenderService en M7, ...) rejoint cette Layer via
- * Layer.provideMerge/Layer.merge — jamais une Layer ad hoc construite
- * ailleurs.
- */
+// see: docs/6-reference/notes-code-core.md#physique-et-services
 export const GameLayer = Layer.mergeAll(
   DeterministicRandom.layer,
   RaycastService.layer,
-  PathfindingService.layer,
+  PathfindingService.layer.pipe(Layer.provide(RaycastService.layer)),
   RenderService.layer,
 );
 
 type GameServices = Layer.Success<typeof GameLayer>;
 
-/**
- * Runtime unique du jeu, construit une fois. Ne JAMAIS en recréer un
- * second pendant une partie (perdrait l'état de tout service à état,
- * romprait le déterminisme).
- */
+// Un seul runtime par onglet ; le recréer perdrait l’état des services.
 export const GameRuntime = ManagedRuntime.make(GameLayer);
 
-/**
- * Frontière synchrone stricte du pas fixe (invariant #11, CLAUDE.md) : tout
- * Effect exécuté ici DOIT être purement synchrone — zéro
- * Effect.tryPromise/Effect.promise/Effect.async/Effect.sleep dans l'arbre.
- * Si un tel Effect suspend, `Effect.runSync` lève un
- * `Cause.AsyncFiberError` ; on le laisse remonter (ne JAMAIS l'avaler),
- * avec un message explicite en console pour qu'un bug de ce genre soit
- * bruyant plutôt que silencieux.
- *
- * see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
- */
+// Pas fixe et rendu : zéro suspension ; laisser remonter l’erreur après diagnostic.
 export function runGameplaySync<A, E>(
   effect: Effect.Effect<A, E, GameServices>,
 ): A {

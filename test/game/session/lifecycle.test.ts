@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 
 import { loadingSnapshot } from "../../../src/core/loadingProgress";
-import type { LevelHandle } from "../../../src/game/level/loader";
+import type { LevelHandle } from "../../../src/game/level/levelTypes";
 import type { PersistentEngine } from "../../../src/game/session/gameEngine";
 import type { GameSession } from "../../../src/game/session/gameSession";
 import { teardownGameSession } from "../../../src/game/session/lifecycle";
 import { waitForGameSessionReady } from "../../../src/app/sessionFlow";
-import { createGameFlowActor } from "../../../src/ui/gameFlowMachine";
+import { createGameFlowActor } from "../../../src/app/gameFlowMachine";
 
 describe("cycle de vie d'une GameSession", () => {
   it("attend l'arrêt du niveau avant de libérer le monde Rapier", async () => {

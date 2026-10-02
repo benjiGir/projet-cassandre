@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 
-import {
-  createEnemyAnimationInput,
-  enemySpriteQuad,
-  enemySpriteRow,
-  type EnemyAnimationInput,
-  type EnemySpriteSheet,
-} from "../../src/render/enemySprites";
+import { createEnemyAnimationInput, enemySpriteQuad, enemySpriteRow } from "../../src/render/enemySprites";
+import type { EnemyAnimationInput, EnemySpriteSheet } from "../../src/render/enemySpriteTypes";
 
 /** Même disposition que `public/assets/sprites/costard.json`. */
 const sheet: EnemySpriteSheet = {

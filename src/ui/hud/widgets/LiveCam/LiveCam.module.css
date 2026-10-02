@@ -3,7 +3,6 @@
   pointer-events: none;
 }
 
-/* Le cadre à coins des menus, réglé aux dimensions de la webcam. */
 .frame {
   width: calc(var(--vpx) * 96);
   height: calc(var(--vpx) * 54);

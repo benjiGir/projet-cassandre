@@ -1,20 +1,6 @@
-import { useGameStore, type LevelRecap, type RecapLine } from "../state";
-import { type GameSession } from "./gameSession";
+import type { LevelRecap, RecapLine } from "../hudTypes";
 
-/**
- * Récapitulatif de fin de partie : ce que le joueur a fait, traduit en
- * points. Compté AU PAS FIXE, dans `session.stats` (jamais `Date.now()`/
- * `performance.now()`, jamais un évènement lu au taux d'affichage) :
- * `game/loop/updateGameplay.ts` avance `SessionStats` via les
- * fonctions `record*`/`advanceGameplayTime` ci-dessous, au même pas fixe que
- * les systèmes qu'il orchestre déjà.
- *
- * Ce module est PUR jusqu'à `publishLevelRecap` (qui, seule, touche le store
- * zustand) : `SessionStats`/`createInitialStats`/les `record*`/
- * `buildLevelRecap` ne dépendent ni de Three.js ni de Rapier ni du DOM —
- * testable avec de simples objets (`test/game/session/score.test.ts`).
- * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
- */
+// see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
 
 export interface SessionStats {
   suitKills: number;
@@ -46,10 +32,7 @@ export function createInitialStats(): SessionStats {
   };
 }
 
-// --- Compteurs — appelés UNIQUEMENT depuis le pas fixe (`updateGameplay.ts`) ---
-// Chacun mute `stats` en place plutôt que de retourner un objet neuf : même
-// discipline que le reste de `GameSession` (`session.playerHp += ...`), pas
-// une reconstruction par frame qui coûterait une allocation à 60 Hz pour rien.
+// see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 
 export function advanceGameplayTime(stats: SessionStats, dt: number): void {
   stats.gameplayElapsed += dt;
@@ -85,15 +68,10 @@ export function recordHpLost(stats: SessionStats, amount: number): void {
   if (amount > 0) stats.hpLost += amount;
 }
 
-// --- Barème ---------------------------------------------------------------
-// Constantes nommées, point de départ raisonnable plutôt qu'un tuning arrêté
-// — voir le rapport de la tâche pour la justification de chaque valeur.
-
-/** Un Costard neutralisé. */
 export const SCORE_SUIT_KILL = 100;
 /** Le Directeur — dix fois un Costard, cohérent avec `VIEWS_DIRECTOR_MULTIPLIER` (`session/feedback.ts`, ×4) sans lui être identique : c'est un score de fin de partie, pas un gain de "vues" en direct. */
 export const SCORE_DIRECTOR_KILL = 1000;
-/** Un secret trouvé. */
+
 export const SCORE_SECRET = 500;
 /** Bonus si TOUS les secrets du niveau sont trouvés. */
 export const SCORE_ALL_SECRETS_BONUS = 1000;
@@ -105,10 +83,6 @@ export const SCORE_ACCURACY_MAX_POINTS = 1000;
 export const SCORE_VANDALISM_PROP = 10;
 export const SCORE_VANDALISM_VITRE = 25;
 export const SCORE_VANDALISM_SANITAIRE = 50;
-
-// `RecapLine`/`LevelRecap` sont DÉFINIS dans `game/state.ts`, pas ici — voir
-// leur doc là-bas pour pourquoi (ADR 0020, `game/state.ts` reste une feuille
-// de dépendances). Ce module les CONSTRUIT, il ne les possède pas.
 
 export interface LevelRecapInput {
   stats: SessionStats;
@@ -122,12 +96,6 @@ export interface LevelRecapInput {
   parTimeSeconds: number | null;
 }
 
-/**
- * Construit le récap à partir de compteurs déjà figés — fonction PURE, zéro
- * lecture d'horloge, zéro accès au store : ce que fait exactement une ligne
- * et pourquoi elle vaut ce nombre de points est visible ici et nulle part
- * ailleurs.
- */
 export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
   const { stats, suitTotal, directorTotal, secretsFound, secretsTotal, parTimeSeconds } = input;
   const lines: RecapLine[] = [];
@@ -195,25 +163,4 @@ export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
   const total = lines.reduce((sum, line) => sum + line.points, 0);
 
   return { lines, total, elapsedSeconds: stats.gameplayElapsed, parTimeSeconds, accuracy };
-}
-
-/**
- * Construit le récap depuis `session` et le pousse dans le store, UNE FOIS —
- * jamais par image (invariant #2). Seul point d'entrée impur du module :
- * `game/session/doors.ts::triggerLevelComplete` (fin de niveau,
- * `includeTimeBonus: true`) et `game/session/feedback.ts::applyPlayerDamage`
- * (mort, `includeTimeBonus: false` — récap PARTIEL, sans bonus de chrono
- * pour une partie non terminée) sont les deux seuls appelants.
- */
-export function publishLevelRecap(session: GameSession, includeTimeBonus: boolean): void {
-  const debug = useGameStore.getState().debug;
-  const recap = buildLevelRecap({
-    stats: session.stats,
-    suitTotal: session.suitManager.suits.length,
-    directorTotal: session.directorManager.directors.length,
-    secretsFound: debug.secretsFound,
-    secretsTotal: debug.secretsTotal,
-    parTimeSeconds: includeTimeBonus ? (session.choice.parTime ?? null) : null,
-  });
-  useGameStore.getState().setRecap(recap);
 }

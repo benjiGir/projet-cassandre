@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import type { InputFrame } from "../../core/inputRecorder";
+import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks } from "./weaponTypes";
+import type { InputFrame } from "../../core/inputTypes";
 import { DeterministicRandom } from "../../core/random";
 import type { GameClock } from "../../core/time";
 import { runGameplaySync } from "../../core/runtime";
@@ -9,123 +10,32 @@ import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../physics/world";
 import { approach } from "./controller";
 import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig";
-
 const TAU = Math.PI * 2;
 
 /** Valeur plafond des horloges du viewmodel : « il y a très longtemps ». */
 const CLOCK_AT_REST = 1e3; // s
 
-/** Horloges lues par le viewmodel, voir `WeaponSystem.viewmodelClocks`. */
-export interface ViewmodelClocks {
-  active: WeaponKind;
-  /** Arme montrée avant le dernier changement. */
-  previous: WeaponKind;
-  sinceSwitch: number;
-  sinceMeleeFire: number;
-  sincePistolFire: number;
-  sinceShotgunFire: number;
-}
 
-/**
- * Matériau de repli pour tout ce qui n'est pas un ennemi. La gym est en
- * boîtes blanches : il n'existe aucun système de tag de
- * matériau par collider et il n'y en aura pas cette phase. Le champ
- * `HitEvent.material` reste un `string` libre pour qu'un futur système
- * puisse le peupler plus finement SANS changer l'API — construire un vrai
- * système de tags maintenant serait de la sur-ingénierie hors scope.
- * Phase 3 introduit la seule distinction qui compte déjà : ENEMY vs le
- * reste (voir `materialForCollider`).
- */
+// see: docs/6-reference/notes-code-gameplay-joueur.md#contrats-des-armes
 const PLACEHOLDER_MATERIAL = "concrete";
 
-/**
- * SFX déclaré dans `core/audio.ts` pour un impact sur un ennemi (chair).
- * EXPORTÉE : `main.ts` en a besoin pour brancher le canal de feedback
- * ENEMY-vs-générique (hitstop/shake renforcés, `IMPACT_VARIANTS`) sur le
- * même critère que `materialForCollider` ci-dessous, sans dupliquer la
- * chaîne `"flesh"` en dur dans deux fichiers.
- */
 export const FLESH_MATERIAL = "flesh";
 
 /** Axe local le long duquel `RAPIER.Capsule` place sa demi-hauteur (voir sa doc) — sert à orienter la capsule de test du pied-de-biche sur la direction de visée dans `fireMelee`. */
 const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
-/** Une arme effectivement déclenchée (jamais poussé sur tentative à sec/cooldown). */
-export interface FireEvent {
-  weapon: "melee" | "pistol" | "shotgun";
-  /** Origine authentique du pas fixe (yeux, non bobée) — pas une position rendue. */
-  muzzlePosition: THREE.Vector3;
-  /** Direction de visée unitaire au moment du tir. */
-  muzzleDirection: THREE.Vector3;
-  /**
-   * DEBUG UNIQUEMENT (gizmos balistiques, `render/ballisticsDebug.ts`) : un
-   * point de fin par plomb du pompe, dans l'ordre des raycasts de
-   * `fireShotgun` — le point d'impact réel s'il y en a un, sinon
-   * `muzzlePosition + direction dispersée * shotgunRange`. Toujours de
-   * longueur `shotgunPelletCount` pour un tir de pompe, `undefined` pour le
-   * pied-de-biche (sa géométrie de test se déduit de `muzzlePosition` +
-   * `muzzleDirection` + `weaponConfig.meleeRange`/`meleeHitRadius`, inutile
-   * de dupliquer ces nombres ici). Zéro rôle dans le gameplay/déterminisme :
-   * uniquement consommé par le rendu de debug dans `main.ts`.
-   */
-  pelletEndpoints?: THREE.Vector3[];
-}
 
-/** Un point d'impact réel. Jusqu'à `shotgunPelletCount` par tir de pompe dans UN pas fixe. */
-export interface HitEvent {
-  point: THREE.Vector3;
-  normal: THREE.Vector3;
-  material: string;
-  weapon: "melee" | "pistol" | "shotgun";
-  /**
-   * Handle Rapier (`RAPIER.Collider.handle`) du collider RÉELLEMENT touché.
-   * Permet de router un dégât vers l'entité propriétaire sans dupliquer la
-   * logique de tir (PRNG seedé, cône de dispersion) hors de ce fichier —
-   * toute duplication casserait le déterminisme du rejeu F9/F10.
-   */
-  colliderHandle: number;
-  /** Distance en mètres entre l'origine du tir et `point`. */
-  distance: number;
-}
 
-// PRNG déterministe pour la dispersion du pompe, obtenu via
-// `DeterministicRandom` (jamais une copie locale de mulberry32) — raison
-// d'être de `forSeed` en fabrique plutôt qu'un flux partagé :
 // see: docs/decisions/0007-rng-deterministe.md
 
 /** Graine fixe et arbitraire — seule contrainte : ne JAMAIS dériver du temps réel ou de `Math.random`. */
 const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
 
-/**
- * Armes du joueur : sélection, cooldowns, munitions du pompe, raycasts/tests
- * de forme, hitstop, et l'état de recul du viewmodel (nombres seulement,
- * aucun mesh/matériau/texture créé ici — c'est le travail de `retro-render`).
- * Architecture munitions (pool unique, pas de magasin) :
- * see: docs/archive/systems-armes.md#architecture-munitions-un-seul-pool
- *
- * DISCIPLINE DE DÉTERMINISME (critique) : `update()` doit recevoir l'origine
- * de tir AUTHENTIQUE du pas fixe courant (`player.position` + `player.eyeOffset`)
- * et la direction de visée depuis `frame.yaw`/`frame.pitch` — JAMAIS des
- * valeurs interpolées pour le rendu (`player.eyePosition(alpha, …)`). Une
- * origine interpolée dépend du taux d'affichage et casserait silencieusement
- * le rejeu déterministe du raycast d'arme.
- */
-/** Arme tenue par le joueur. `"none"` = désarmé (voir `startUnarmed`). */
-export type WeaponKind = "none" | "melee" | "pistol" | "shotgun";
-/** Arme qui TIRE — `"none"` exclu : une arme absente ne produit ni tir ni impact. */
-export type FiringWeapon = Exclude<WeaponKind, "none">;
+// see: docs/archive/systems-armes.md#architecture-munitions-un-seul-pool
+
+
 
 export class WeaponSystem {
-  /**
-   * Arme sélectionnée. Lecture publique pour le débogage (`window.cassandre`,
-   * futur panneau). `"none"` = joueur désarmé (voir `startUnarmed`) : le
-   * bloc de tir de `update()` ne fait alors RIEN sur `frame.fire`, même
-   * discipline que les tentatives à sec (cooldown, munitions à 0).
-   *
-   * Valeur de DÉPART inchangée (`"melee"`) : `gym.ts` (terrain de test Phase
-   * 1-3) construit un `WeaponSystem` sans jamais appeler `startUnarmed()`, et
-   * doit donc démarrer EXACTEMENT comme avant, armé du pied-de-biche.
-   */
   activeWeapon: WeaponKind = "melee";
 
   /** Munitions de pompe restantes. Lecture publique pour le débogage. */
@@ -134,33 +44,10 @@ export class WeaponSystem {
   /** Munitions de pistolet restantes, rechargées par les boîtes du niveau (`use_*` portant `munitions`). */
   pistolAmmo = 0;
 
-  /**
-   * Le joueur possède-t-il le pied-de-biche ? `true` par défaut — encore une
-   * fois pour ne rien casser pour `gym.ts`, qui n'appelle jamais
-   * `startUnarmed()`. Passe à `false` via `startUnarmed()`, revient à `true`
-   * via `pickUpMelee()`. Contrôle uniquement si `frame.switchToMelee` peut
-   * (ré)armer le pied-de-biche et si le tir mêlée peut s'exécuter — voir
-   * `update()`.
-   */
   private hasMelee = true;
 
-  /**
-   * Le joueur possède-t-il le pompe ? `true` par défaut — même raison que
-   * `hasMelee` (ne rien casser pour `gym.ts`/les zones B-E qui démarrent
-   * déjà "armées" sans jamais appeler `startUnarmed()`). Passe à `false`
-   * via `startUnarmed()`, revient à `true` via `pickUpShotgun()`. Comble un
-   * écart documenté (le pompe n'avait jusqu'ici AUCUNE contrainte de
-   * ramassage, toujours utilisable via `frame.switchToShotgun` même joueur
-   * désarmé) — nécessaire pour que le niveau complet ait une vraie
-   * progression (pied-de-biche en Zone A, pompe ramassé en Zone B).
-   */
   private hasShotgun = true;
 
-  /**
-   * Le joueur possède-t-il le pistolet ? `false` PAR DÉFAUT, contrairement aux
-   * deux autres : le pistolet est arrivé après `gym.ts` et les zones A-E, qui
-   * doivent démarrer exactement comme avant.
-   */
   private hasPistol = false;
 
   private readonly physics: PhysicsWorld;
@@ -171,10 +58,6 @@ export class WeaponSystem {
   private pistolCooldownRemaining = 0;
   private shotgunCooldownRemaining = 0;
 
-  // Recul : enveloppe 0..1, même pattern que `bobIntensity` (approach() vers
-  // 0, range=1). La FORME du kick (position + tangage) est celle de la
-  // dernière arme tirée, snapshotée à l'instant du tir : elle ne varie qu'au
-  // moment d'un nouveau tir, jamais entre deux pas fixes.
   private recoilEnvelope = 0;
   private previousRecoilEnvelope = 0;
   private readonly recoilKickPosition = new THREE.Vector3();
@@ -183,11 +66,6 @@ export class WeaponSystem {
   private previousRecoilKickPitch = 0; // radians
   private recoilRecoverTime = 0;
 
-  // Horloges du viewmodel (balayage, pompage, changement d'arme) : avancées
-  // au pas fixe pour que le hitstop fige aussi l'arme, lues par le rendu
-  // seul — AUCUNE ne conditionne un tir (invariant #10). Une valeur finie
-  // plutôt qu'`Infinity` : l'interpolation `prev + (cur - prev) * alpha`
-  // donnerait `NaN`.
   private sinceMeleeFire = CLOCK_AT_REST;
   private previousSinceMeleeFire = CLOCK_AT_REST;
   private sincePistolFire = CLOCK_AT_REST;
@@ -201,9 +79,6 @@ export class WeaponSystem {
   /** Dernière arme vue par `update`, pour détecter un changement d'où qu'il vienne (touche, ramassage, désarmement). */
   private shownWeapon: WeaponKind = "melee";
 
-  // Files d'événements de la frame d'affichage courante, accumulées au fil
-  // des pas fixes (une frame lente peut en exécuter plusieurs) : contrat
-  // complet (qui lit, qui vide, dans quel ordre) —
   // see: docs/archive/systems-armes.md#files-dévénements-de-frame-fireeventshitevents
   private readonly _fireEvents: FireEvent[] = [];
   private readonly _hitEvents: HitEvent[] = [];
@@ -240,14 +115,6 @@ export class WeaponSystem {
     return this._hitEvents;
   }
 
-  /**
-   * Vide `fireEvents`/`hitEvents`. À appeler UNE SEULE FOIS par frame
-   * d'affichage, EN TOUT DERNIER, après que tous les lecteurs ont fini —
-   * même principe que `input.endFrame()`. Aujourd'hui, c'est `updateFx()`
-   * (`src/game/loop/updateFx.ts`) qui tient ce rôle. `WeaponSystem` ne
-   * s'appelle jamais elle-même : tant que personne d'autre ne l'appelle,
-   * les événements s'accumulent sans déborder (juste plus de mémoire retenue).
-   */
   clearFrameEvents() {
     this._fireEvents.length = 0;
     this._hitEvents.length = 0;
@@ -264,20 +131,6 @@ export class WeaponSystem {
     this.previousRecoilKickPitch = this.recoilKickPitch;
   }
 
-  /**
-   * Démarre le joueur désarmé : `hasMelee = false`, `activeWeapon = "none"`.
-   * Level design (Zone A "Parking") : le pied-de-biche est un ramassage au
-   * sol, donc le joueur ne peut pas commencer déjà équipé.
-   *
-   * CONTRAINTE D'APPEL, critique pour le déterminisme : DOIT être appelée de
-   * façon SYNCHRONE par l'appelant, AVANT que `startLoop()` (`main.ts`) ne
-   * commence à faire tourner le pas fixe — jamais depuis un callback
-   * asynchrone de chargement de niveau (ex. résolution de promesse glTF), qui
-   * arriverait après un nombre INDÉTERMINÉ de pas fixes déjà exécutés avec
-   * l'arme par défaut (`"melee"`) active. Appeler cette méthode en retard ne
-   * crashe rien mais désarme le joueur en cours de partie au lieu qu'il
-   * démarre désarmé — un bug de timing silencieux, pas une erreur visible.
-   */
   startUnarmed(): void {
     this.hasMelee = false;
     this.hasPistol = false;
@@ -287,35 +140,17 @@ export class WeaponSystem {
     this.switchedFrom = "none";
   }
 
-  /**
-   * Ramassage du pied-de-biche : `hasMelee = true`, et l'équipe immédiatement
-   * (`activeWeapon = "melee"`) — cohérent avec le comportement par défaut de
-   * `gym.ts` (toujours équipé) et avec l'attente boomer-shooter classique
-   * (ramasser une arme l'équipe). Idempotente : rappeler cette méthode alors
-   * que le pied-de-biche est déjà possédé et actif ne change rien.
-   */
   pickUpMelee(): void {
     this.hasMelee = true;
     this.activeWeapon = "melee";
   }
 
-  /**
-   * Ramassage du pistolet : équipé immédiatement, avec sa dotation de départ
-   * (`pistolStartingAmmo`). Contrairement aux deux autres armes, un second
-   * ramassage ne redonne PAS de munitions — sinon un hot reload du niveau
-   * rechargerait gratuitement. Les recharges passent par `addPistolAmmo`.
-   */
   pickUpPistol(): void {
     if (!this.hasPistol) this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.cfg.pistolStartingAmmo);
     this.hasPistol = true;
     this.activeWeapon = "pistol";
   }
 
-  /**
-   * Boîte de munitions ramassée. Retourne le nombre RÉELLEMENT ajouté : 0 si
-   * le joueur est déjà au plafond (`pistolMaxAmmo`) — l'appelant laisse alors
-   * la boîte au sol, comme une trousse de soin sur un joueur en pleine forme.
-   */
   addPistolAmmo(amount: number): number {
     const before = this.pistolAmmo;
     this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.pistolAmmo + amount);
@@ -328,42 +163,18 @@ export class WeaponSystem {
     this.activeWeapon = "shotgun";
   }
 
-  /**
-   * Ramassage AUTOMATIQUE (marcher sur `use_crowbar`, voir
-   * `interactive.ts::collectWeapons`) : jamais rien à offrir à un joueur qui
-   * a déjà le pied-de-biche — il n'a pas de munitions, contrairement au
-   * pistolet — donc `false`, l'appelant laisse l'objet au sol pour de bon
-   * (`docs/4-technique/armes.md`).
-   */
   tryCollectMelee(): boolean {
     if (this.hasMelee) return false;
     this.pickUpMelee();
     return true;
   }
 
-  /**
-   * Même contrat que `tryCollectMelee`, pour `use_shotgun`. Un pompe déjà
-   * possédé ne redonne rien non plus : le pompe garde une dotation UNIQUE
-   * (`shotgunStartingAmmo`, jamais de plafond ni de mécanisme de recharge —
-   * voir « Architecture munitions » dans `docs/4-technique/armes.md`), donc
-   * inventer un montant à lui donner ici serait une décision d'équilibrage
-   * hors de la portée de ce ramassage automatique, pas une simple
-   * généralisation de la règle du pistolet.
-   */
   tryCollectShotgun(): boolean {
     if (this.hasShotgun) return false;
     this.pickUpShotgun();
     return true;
   }
 
-  /**
-   * Même contrat, pour `use_pistol` — mais SEULE arme des trois qui peut
-   * rendre `true` alors qu'elle était déjà possédée : à la Duke, un
-   * pistolet déjà en poche se comporte alors comme une boîte de munitions
-   * (même dotation que `pickUpPistol()`, via `addPistolAmmo`), `false`
-   * seulement si le joueur est déjà au plafond (`pistolMaxAmmo`) — l'objet
-   * reste alors au sol, comme une boîte de munitions ordinaire.
-   */
   tryCollectPistol(): boolean {
     if (!this.hasPistol) {
       this.pickUpPistol();
@@ -372,24 +183,10 @@ export class WeaponSystem {
     return this.addPistolAmmo(this.cfg.pistolStartingAmmo) > 0;
   }
 
-  /**
-   * Le pistolet était-il déjà possédé ? Lecture publique pour le seul appelant
-   * qui en a besoin : `updateGameplay.ts` doit savoir, AVANT d'appeler
-   * `tryCollectPistol()`, si un ramassage réussi doit afficher « Pistolet
-   * récupéré » ou « +N munitions » — deux messages différents pour la même
-   * valeur de retour (`true`). Sans intérêt pour le pied-de-biche/le pompe,
-   * qui n'ont pas ce second message (voir `tryCollectMelee`/`tryCollectShotgun`).
-   */
   get hasPistolAlready(): boolean {
     return this.hasPistol;
   }
 
-  /**
-   * Pose de recul du viewmodel interpolée pour le rendu, EXACTEMENT sur le
-   * modèle de `PlayerController.viewBob(alpha, out)` (prev/current + lerp).
-   * `retro-render` l'utilise pour positionner son mesh/sprite d'arme — ce ne
-   * sont que des nombres, aucun objet Three.js visuel n'est créé ici.
-   */
   viewmodelPose(alpha: number, outPosition: THREE.Vector3, outEuler: THREE.Euler): void {
     const t = THREE.MathUtils.lerp(this.previousRecoilEnvelope, this.recoilEnvelope, alpha);
     outPosition.set(
@@ -397,10 +194,6 @@ export class WeaponSystem {
       this.recoilKickPosition.y * t,
       this.recoilKickPosition.z * t,
     );
-    // Interpole aussi la FORME du kick (au cas où un nouveau tir a changé
-    // d'arme entre deux pas fixes de la même frame) : cosmétique seulement,
-    // aucune conséquence de gameplay, mais évite un saut visible sur ce cas
-    // marginal.
     const pitch = THREE.MathUtils.lerp(this.previousRecoilKickPitch, this.recoilKickPitch, alpha);
     outEuler.set(pitch * t, 0, 0, "XYZ");
   }
@@ -416,13 +209,6 @@ export class WeaponSystem {
     return out;
   }
 
-  /**
-   * Un pas fixe d'armes. `dt` est le dt de GAMEPLAY (déjà scalé par le
-   * hitstop) — jamais d'horloge murale ici, tout se rejoue à l'identique.
-   *
-   * `eyeOrigin`/`yaw`/`pitch` : voir la note de déterminisme en tête de
-   * classe. Appelé depuis `updateGameplay` de `main.ts`, APRÈS `player.update`.
-   */
   update(dt: number, frame: InputFrame, eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     const cfg = this.cfg;
 
@@ -449,11 +235,6 @@ export class WeaponSystem {
       this.sinceSwitch = 0;
     }
 
-    // Récupération d'abord (comme `landingDip` dans `controller.ts`) : elle
-    // décroît la valeur héritée du pas PRÉCÉDENT. Si ce pas-ci déclenche un
-    // nouveau tir, le kick ci-dessous écrase le résultat et repart de 1 —
-    // le nouveau tir garde donc sa pleine amplitude au moins un pas fixe,
-    // au lieu d'être immédiatement rongé par la même décroissance.
     this.recoilEnvelope = approach(this.recoilEnvelope, 0, this.recoilRecoverTime, dt, 1);
 
     if (frame.fire) {
@@ -504,29 +285,11 @@ export class WeaponSystem {
     this.aimUp.set(0, 1, 0).applyQuaternion(this.aimQuat);
   }
 
-  /**
-   * Matériau perçu d'un collider touché : `"flesh"` si son appartenance
-   * inclut `GROUP.ENEMY`, `PLACEHOLDER_MATERIAL` sinon. `collisionGroups()`
-   * renvoie le masque `membership << 16 | filter` posé par
-   * `setCollisionGroups` (voir les commentaires d'`interactionGroups` dans
-   * `physics/world.ts`) — on ne lit ici QUE les 16 bits de poids fort
-   * (appartenance), jamais le filtre.
-   */
   private materialForCollider(collider: RAPIER.Collider): string {
     const membership = (collider.collisionGroups() >>> 16) & 0xffff;
     return (membership & GROUP.ENEMY) !== 0 ? FLESH_MATERIAL : PLACEHOLDER_MATERIAL;
   }
 
-  /**
-   * Déclenche le hitstop, en distinguant hit ENEMY (`FLESH_MATERIAL`) vs
-   * générique — voir `IMPACT_VARIANTS` dans `weaponConfig.ts` pour le
-   * contexte playtest (« aucun signal renforcé sur un hit ennemi ») et le
-   * FAIT MÉCANIQUE vérifié : `clock.triggerHitstop` n'accumule JAMAIS entre
-   * plusieurs appels du même pas fixe (dernier appel gagne), donc appeler
-   * cette méthode jusqu'à `shotgunPelletCount` fois par tir ne « sur-arme »
-   * rien — au pire les derniers pellets d'un même tir réécrivent la même
-   * durée/échelle.
-   */
   private triggerHitstopFor(material: string) {
     const cfg = this.cfg;
     if (material === FLESH_MATERIAL) {
@@ -543,16 +306,7 @@ export class WeaponSystem {
     this.recoilRecoverTime = kick.recoverTime;
   }
 
-  /**
-   * Pied-de-biche : requête de FORME capsule couvrant tout le segment
-   * `eyeOrigin` → `eyeOrigin + direction * meleeRange`, contre
-   * `COLLISION_GROUPS.PLAYER_SHOT` (interagit avec WORLD + ENEMY, jamais
-   * PLAYER). FIX DE PORTÉE constaté en playtest, pas un choix de feel :
-   * l'ancienne sphère unique ne pouvait géométriquement pas toucher à bout
-   * portant. Dérivation géométrique complète (construction de la capsule,
-   * projection du point d'impact, approximation de la normale) :
-   * see: docs/archive/systems-armes.md#pied-de-biche-portée-en-capsule
-   */
+  // see: docs/archive/systems-armes.md#pied-de-biche-portée-en-capsule
   private fireMelee(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 
@@ -580,11 +334,6 @@ export class WeaponSystem {
     };
     const capsule = new RAPIER.Capsule(halfRange, radius);
 
-    // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`
-    // (`src/physics/raycast.ts`), point d'entrée synchrone isolé — le
-    // service collecte lui-même les colliders touchés dans un tableau
-    // (plus besoin d'un scratch dédié ici, cet appel n'est pas un point
-    // chaud à 60Hz, seulement à chaque coup de pied-de-biche).
     const meleeHits = runGameplaySync(
       RaycastService.use((raycast) =>
         raycast.intersectionsWithShape(
@@ -599,11 +348,6 @@ export class WeaponSystem {
     );
 
     for (const collider of meleeHits) {
-      // Point de l'axe de visée le plus proche de CE collider : projection de
-      // son centre monde sur le segment [eyeOrigin, eyeOrigin+direction*range],
-      // clampée aux deux bouts. Remplace le centre fixe unique de l'ancienne
-      // implémentation par un centre recalculé PAR COLLIDER — nécessaire
-      // maintenant que la requête couvre tout un segment, pas un seul point.
       const colliderPos = collider.translation();
       const alongAxis =
         (colliderPos.x - eyeOrigin.x) * this.aimForward.x +
@@ -647,18 +391,6 @@ export class WeaponSystem {
     }
   }
 
-  /**
-   * Pompe : `shotgunPelletCount` raycasts indépendants, chacun dévié dans un
-   * cône de demi-angle `shotgunSpreadConeDeg` autour de la visée. Échantillon
-   * de disque projeté (rayon ∝ √u₁, azimut = u₂·2π) — approximation d'un
-   * cône uniforme largement suffisante à 5°, tirée du PRNG seedé de ce
-   * fichier (jamais `Math.random`).
-   */
-  /**
-   * Un rayon unique, légèrement dispersé, même PRNG déterministe que le pompe
-   * (invariant #12). `pelletEndpoints` porte son unique bout de trajectoire :
-   * les gizmos balistiques de debug marchent donc sans rien savoir de l'arme.
-   */
   private firePistol(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 
@@ -722,11 +454,6 @@ export class WeaponSystem {
   private fireShotgun(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     this.computeAimBasis(yaw, pitch);
 
-    // DEBUG UNIQUEMENT (voir la doc de `FireEvent.pelletEndpoints`) : la
-    // RÉFÉRENCE au tableau est poussée dans `_fireEvents` immédiatement (même
-    // point d'insertion que le pied-de-biche), son CONTENU est rempli au fil
-    // de la boucle ci-dessous — sûr, car aucun lecteur (`main.ts`) ne
-    // consulte `fireEvents` avant la fin de ce pas fixe.
     const pelletEndpoints: THREE.Vector3[] = [];
     this._fireEvents.push({
       weapon: "shotgun",
@@ -776,10 +503,6 @@ export class WeaponSystem {
         ),
       );
       if (!hit) {
-        // Aucun collider touché : le gizmo balistique de debug dessine quand
-        // même ce rayon jusqu'à sa portée max (voir la doc de
-        // `pelletEndpoints`) — bout de trajectoire = origine + direction
-        // dispersée * portée.
         pelletEndpoints.push(
           new THREE.Vector3(
             ox + this.pelletDirScratch.x * this.cfg.shotgunRange,
@@ -798,10 +521,6 @@ export class WeaponSystem {
       const normal = new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z);
       pelletEndpoints.push(point.clone());
 
-      // `hit.timeOfImpact` EST la distance : `pelletDirScratch` est normalisé
-      // ci-dessus avant le `castRayAndGetNormal`, donc le paramètre du rayon
-      // (`dir`) est un vecteur unitaire — `origin + dir * timeOfImpact` avance
-      // de `timeOfImpact` mètres exactement.
       const material = this.materialForCollider(hit.collider);
       this._hitEvents.push({
         point,

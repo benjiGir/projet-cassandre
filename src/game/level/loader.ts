@@ -3,6 +3,16 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Effect, Exit, Schema, Scope } from "effect";
 
+import { LevelResources } from "./levelResources";
+import type {
+  SpawnPoint,
+  NamedSpawn,
+  TriggerVolume,
+  UseObject,
+  SecretZone,
+  LevelStats,
+  LevelHandle,
+} from "./levelTypes";
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../physics/world";
 import { GameRuntime } from "../../core/runtime";
 import { configureRetroTexture } from "../../render/renderer";
@@ -22,16 +32,14 @@ import {
   type DoorInfo,
   type DoorMovement,
 } from "./doors";
-import { mergeVitreDecor, type VitreCandidate, type VitreInfo } from "./vitres";
+import { mergeVitreDecor, type VitreCandidate } from "./vitres";
 import {
   mergeSanitaireDecor,
   DEFAULT_SANITAIRE_KIND,
   SANITAIRE_KINDS,
   parseSanitaireKind,
   type SanitaireCandidate,
-  type SanitaireInfo,
   type SanitaireKind,
-  type SanitaireRendu,
 } from "./sanitaires";
 import { LOYALTY_CARDS, parseLoyaltyCard, type LoyaltyCard } from "../player/loyaltyCards";
 import { FOOD_HEAL_AMOUNTS, FOOD_ITEMS, parseFoodItem, type FoodItem } from "./food";
@@ -42,233 +50,14 @@ import {
   parseEcranChaine,
   type EcranCandidate,
   type EcranChaine,
-  type EcranInfo,
 } from "./ecrans";
 import type { CamPoint } from "./cameras";
 import { initialiserDouches } from "./douches";
 import { NAME_WIRED_USE_OBJECTS } from "./interactive";
 
-// `DoorInfo`/`VitreInfo`/`SanitaireInfo` sont DÉFINIS dans `./doors`/
-// `./vitres`/`./sanitaires` (comme `PropInfo` dans `./props`) — ce fichier
-// reste le seul point d'import public historique (`devtools/consoleApi.ts`
-// importe `DoorInfo` depuis `./loader`), d'où ce ré-export.
-export type { DoorInfo, DoorMovement } from "./doors";
-export type { VitreInfo } from "./vitres";
-export type { SanitaireInfo, SanitaireKind, SanitaireRendu } from "./sanitaires";
-export type { EcranInfo, EcranChaine } from "./ecrans";
-export type { CamPoint } from "./cameras";
+// see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
 
-/**
- * Pipeline de niveau glTF (Phase 4) — voir le skill `gltf-level-conventions`
- * pour le contrat de nommage complet. Ce fichier est le SEUL endroit qui
- * connaît la correspondance entre un préfixe de nom Blender et son effet en
- * jeu (table complète : reference/conventions-nommage.md).
- *
- * Pièges déjà rencontrés (transforms, renommage `GLTFLoader`, hiérarchie des
- * colliders, invariants #4/#5, cycle de vie Effect, erreurs typées) :
- * see: docs/5-guides/modifier-le-niveau.md
- */
-
-export interface SpawnPoint {
-  /** Position MONDE, pieds du joueur (pas les yeux).
-   * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
-  position: THREE.Vector3;
-  /** Yaw, radians. Convention `main.ts`/`gym.ts` (Euler 'YXZ') : yaw=0 -> avant = -Z. */
-  yaw: number;
-}
-
-export interface NamedSpawn {
-  name: string;
-  /** Position MONDE, pieds (même convention que `SpawnPoint.position`). */
-  position: THREE.Vector3;
-}
-
-export interface TriggerVolume {
-  name: string;
-  object: THREE.Object3D;
-  /** Coin min/max de la box en espace MONDE (rotation ignorée pour ce résumé
-   * — suffisant pour un compteur de debug ou un futur `interactive.ts` qui
-   * testerait une position simple ; la vraie forme physique, elle, est un
-   * cuboid ORIENTÉ posé sur le corps Rapier créé en parallèle). */
-  min: THREE.Vector3;
-  max: THREE.Vector3;
-  extras: Record<string, unknown>;
-}
-
-export interface UseObject {
-  name: string;
-  object: THREE.Object3D;
-  /** Position MONDE. */
-  position: THREE.Vector3;
-  /** Portée d'usage, mètres — constante du contrat (voir
-   * reference/conventions-nommage.md), pas une valeur par objet. */
-  range: number;
-  /** Nom de l'objet ciblé, lu dans `extras.target` (custom property Blender
-   * `target`, string). `null` si absent — un `use_*` sans cible est un
-   * avertissement bruyant (voir plus haut), pas une erreur bloquante : le
-   * niveau continue de charger. */
-  targetName: string | null;
-  /** Carte de fidélité DONNÉE par cet objet (custom property Blender `card`)
-   * — en fait un ramassage, consommé au premier usage. `null` si absent.
-   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
-  grantsCard: LoyaltyCard | null;
-  /** Carte de fidélité EXIGÉE par cet objet (custom property Blender
-   * `requires`) pour agir sur sa cible. `null` = aucune condition.
-   * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
-  requiresCard: LoyaltyCard | null;
-  /** Munitions de pistolet données par cet objet (custom property Blender
-   * `munitions`, nombre > 0) — une boîte, ramassée en marchant dessus comme
-   * une trousse. `null` si absent.
-   * see: docs/archive/reference-conventions-nommage.md#boîtes-de-munitions */
-  ammo: number | null;
-  /** PV rendus par cet objet (custom property Blender `soin`, nombre > 0) —
-   * une trousse de soin, ramassée en marchant dessus et non à la touche E.
-   * `null` si absent.
-   * see: docs/archive/reference-conventions-nommage.md#trousses-de-soin */
-  heals: number | null;
-  /** Aliment ramassé (custom property Blender `aliment`, chantier « Les
-   * coulisses ») — VARIANTE de `soin` : donne le montant de PV par le NOM de
-   * l'aliment (voir `game/level/food.ts::FOOD_HEAL_AMOUNTS`) plutôt qu'un
-   * nombre explicite. `null` si absent. Un `use_*` qui porte `aliment` SANS
-   * `soin` explicite a quand même `heals` renseigné — c'est ce champ qui
-   * calcule le montant, voir `readAmountProperty`/`buildUseObjectEffect`.
-   * see: docs/6-reference/conventions-nommage.md#nourriture */
-  aliment: FoodItem | null;
-  /** Console de vidéosurveillance (chantier « Les coulisses », système 4) —
-   * custom property Blender `cameras`, liste de noms `cam_*` séparés par des
-   * virgules, dans l'ORDRE de défilement. `null` si absente.
-   * see: docs/archive/reference-conventions-nommage.md#préfixe-cam */
-  cameras: readonly string[] | null;
-  extras: Record<string, unknown>;
-}
-
-export interface SecretZone {
-  name: string;
-  object: THREE.Object3D;
-  min: THREE.Vector3;
-  max: THREE.Vector3;
-  extras: Record<string, unknown>;
-}
-
-export interface LevelStats {
-  colliderCount: number;
-  /** Répartition de `colliderCount` par forme physique — voir le skill
-   * `collision-proxy-authoring`. Additif : la somme des trois vaut toujours
-   * `colliderCount`. */
-  colliderKindCounts: {
-    cuboid: number;
-    convexHull: number;
-    trimesh: number;
-  };
-  spawnSuitCount: number;
-  spawnDirectorCount: number;
-  triggerCount: number;
-  doorCount: number;
-  useCount: number;
-  secretCount: number;
-  /** Meshes rendus tels quels, sans préfixe reconnu — le cas SILENCIEUX. Compté AVANT la fusion du décor. */
-  unprefixedMeshCount: number;
-  /** Objets de décor réellement rendus après `mergeStaticDecor` : ordre de grandeur des draw calls du décor. */
-  decorBatchCount: number;
-  /** `light_*` instanciées en `THREE.PointLight` — voir `buildLevelLight`. */
-  lightCount: number;
-  /**
-   * `prop_*` instanciés en corps dynamiques. AJOUTER UN PROP AJOUTE UN LOT DE
-   * DESSIN : un corps qui bouge ne peut pas rejoindre un lot fusionné
-   * (`mergeStaticDecor`), il se dessine seul pour toujours. À lire avec
-   * `decorBatchCount`, sur un budget mesuré à 200.
-   * see: docs/decisions/0030-props-dynamiques.md
-   */
-  propCount: number;
-  /** `vitre_*` rencontrées, cassables ou non. */
-  vitreCount: number;
-  /**
-   * Lots de dessin ajoutés par les vitres APRÈS fusion (`mergeVitreDecor`) :
-   * un par matériau pour tout le niveau, quel que soit `vitreCount`. À lire
-   * avec `decorBatchCount`, sur le même budget de 200.
-   * see: docs/decisions/0031-portes-animees-et-vitres.md
-   */
-  vitreBatchCount: number;
-  /**
-   * Lots de dessin des vantaux (`batchDoorMeshes`) : un par matériau partagé
-   * par au moins deux `door_*`, plus un par vantail seul de son matériau.
-   */
-  doorBatchCount: number;
-  /** `sanitaire_*` rencontrés (cuvettes et urinoirs), cassés ou non. */
-  sanitaireCount: number;
-  /**
-   * Lots de dessin ajoutés par les sanitaires APRÈS fusion
-   * (`mergeSanitaireDecor`) : un par matériau pour tout le niveau, quel que
-   * soit `sanitaireCount` — même contrat que `vitreBatchCount`.
-   * see: docs/decisions/0032-sanitaires-utilisables.md
-   */
-  sanitaireBatchCount: number;
-  /** `ecran_*` rencontrés (chantier « Les coulisses »), cassés ou non. */
-  ecranCount: number;
-  /**
-   * Lots de dessin ajoutés par les écrans APRÈS fusion (`mergeEcranDecor`) :
-   * un par matériau pour tout le niveau, quel que soit `ecranCount` — même
-   * contrat que `vitreBatchCount`/`sanitaireBatchCount`.
-   */
-  ecranBatchCount: number;
-}
-
-export interface LevelHandle {
-  /** Racine ajoutée à `scene` (= `gltf.scene`). */
-  root: THREE.Object3D;
-  gltf: GLTF;
-  /** `null` si absent du fichier — voir l'avertissement bruyant correspondant. */
-  spawnPlayer: SpawnPoint | null;
-  spawnSuits: NamedSpawn[];
-  spawnDirectors: NamedSpawn[];
-  triggers: TriggerVolume[];
-  doors: DoorInfo[];
-  useObjects: UseObject[];
-  secrets: SecretZone[];
-  /** Mobilier physique `prop_*` — l'état de partie (PV, destruction) vit dans
-   * `PropSystem` (`game/level/props.ts`), reconstruit à chaque chargement.
-   * see: docs/archive/reference-conventions-nommage.md#props-physiques */
-  props: PropInfo[];
-  /** Vitrages `vitre_*` — l'état de partie (PV, casse) vit dans `VitreSystem`
-   * (`game/level/vitres.ts`), reconstruit à chaque chargement comme `PropSystem`.
-   * see: docs/archive/reference-conventions-nommage.md#préfixe-vitre */
-  vitres: VitreInfo[];
-  /** Sanitaires `sanitaire_*` (cuvettes, urinoirs) — l'état de partie (cassé,
-   * délai de soulagement) vit dans `SanitaireSystem` (`game/level/sanitaires.ts`)
-   * et `session.sanitaireReliefCooldown`, reconstruits à chaque chargement
-   * comme `VitreSystem`.
-   * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire */
-  sanitaires: SanitaireInfo[];
-  /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
-  sanitaireRendus: SanitaireRendu[];
-  /** Écrans `ecran_*` (chantier « Les coulisses ») — l'état de partie (PV,
-   * frame courante, casse) vit dans `EcranSystem` (`game/level/ecrans.ts`),
-   * reconstruit à chaque chargement comme `VitreSystem`. */
-  ecrans: EcranInfo[];
-  /** `cam_*` du niveau — points de vue fixes cyclés par une console
-   * (`UseObject.cameras`), voir `game/level/cameras.ts::CameraViewSystem`. */
-  cams: CamPoint[];
-  /** Lampes `light_*` instanciées, déjà rattachées à `root`. Exposées pour le
-   * pool de lampes (`render/lightPool.ts`), qui décide lesquelles restent
-   * allumées — leur nombre seul ne suffit pas à ça.
-   * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md */
-  lights: THREE.PointLight[];
-  stats: LevelStats;
-  /**
-   * Cache le rendu et désactive temporairement les corps du niveau, en
-   * conservant l'état individuel de chacun. Retourne une restauration
-   * idempotente, utilisée pendant la préparation transactionnelle d'un hot
-   * reload.
-   */
-  suspend(): () => void;
-  /**
-   * Retire `root` de la scène et libère tous les corps/colliders Rapier et
-   * ressources GPU de ce niveau. Sûr à appeler plusieurs fois — idempotence
-   * GARANTIE par `Scope.close`, pas par un flag maintenu à la main.
-   * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
-   */
-  dispose(): void;
-}
+// see: docs/5-guides/modifier-le-niveau.md
 
 /** Portée d'usage d'un `use_*`, mètres — voir reference/conventions-nommage.md. */
 const USE_RANGE_METERS = 2;
@@ -281,10 +70,6 @@ const MAX_COLLIDER_TRIANGLES = 50_000;
 // "fail immédiatement rattrapé au point de détection" pour les 7 cas.
 // see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
 
-/** `col_*`/`col_hull_*`/`col_mesh_*` sans géométrie valide (position absente)
- * ou avec 0 triangle. `prefixLabel` est le libellé du chemin emprunté
- * (`"col_*"` couvre aussi `col_mesh_*`, un alias du même chemin trimesh),
- * pas forcément le préfixe réel de l'objet. */
 export class MissingColliderGeometryError extends Schema.TaggedError<MissingColliderGeometryError>()(
   "MissingColliderGeometryError",
   {
@@ -328,10 +113,6 @@ export class UntargetedUseObjectWarning extends Schema.TaggedError<UntargetedUse
   { name: Schema.String },
 ) {}
 
-/** `use_*` dont `extras.card`/`extras.requires` ne nomme aucune carte
- * connue — une faute de frappe dans Blender, qui rendrait sinon la porte
- * ouverte à tous ou la carte introuvable, EN SILENCE. Jamais bloquant :
- * l'objet est retourné avec le champ correspondant à `null`. */
 export class UnknownLoyaltyCardWarning extends Schema.TaggedError<UnknownLoyaltyCardWarning>()(
   "UnknownLoyaltyCardWarning",
   { name: Schema.String, property: Schema.String, value: Schema.String },
@@ -345,10 +126,6 @@ export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmou
   { name: Schema.String, value: Schema.String, property: Schema.String },
 ) {}
 
-/** `use_*` dont `extras.aliment` ne nomme aucun aliment connu — une faute de
- * frappe dans Blender, qui rendrait sinon le pickup muet en silence. Jamais
- * bloquant : l'objet est retourné avec `aliment: null` (donc sans le PV
- * dérivé, `heals` retombe sur `soin` s'il existe). */
 export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()(
   "UnknownFoodItemWarning",
   { name: Schema.String, value: Schema.String },
@@ -393,21 +170,11 @@ export class InvalidVitrePvWarning extends Schema.TaggedError<InvalidVitrePvWarn
   { name: Schema.String, value: Schema.String },
 ) {}
 
-/** `sanitaire_*` dont `extras.sorte` n'est pas `"cuvette"`/`"urinoir"` —
- * OBLIGATOIRE, contrairement à `matiere`/`mouvement` : absent OU inconnu
- * avertit bruyamment (jamais un silence). Jamais bloquant : le sanitaire est
- * construit avec `DEFAULT_SANITAIRE_KIND`. `value` vaut `"(absent)"` quand la
- * propriété n'existe pas du tout, pour distinguer les deux cas dans le
- * message sans dupliquer la classe d'erreur. */
 export class UnknownSanitaireKindWarning extends Schema.TaggedError<UnknownSanitaireKindWarning>()(
   "UnknownSanitaireKindWarning",
   { name: Schema.String, value: Schema.String },
 ) {}
 
-/** `sanitaire_*` dont `extras.pv` n'est pas un nombre strictement positif —
- * jamais bloquant : le sanitaire est construit incassable AU TIR DU JOUEUR
- * (même règle que `pv` sur un `vitre_*`/`prop_*` — un tir ENNEMI le casse
- * quand même d'un coup, voir `SanitaireSystem.tryBreakByColliderHandle`). */
 export class InvalidSanitairePvWarning extends Schema.TaggedError<InvalidSanitairePvWarning>()(
   "InvalidSanitairePvWarning",
   { name: Schema.String, value: Schema.String },
@@ -435,10 +202,6 @@ export class DegenerateConvexHullError extends Schema.TaggedError<DegenerateConv
   { name: Schema.String },
 ) {}
 
-/** Échec réseau/parsing lors du chargement d'un `.glb`/`.gltf` par URL — la
- * SEULE des 7 erreurs de ce fichier qui n'a jamais été un "warning" :
- * `loadLevel` a toujours laissé cette erreur remonter à son appelant
- * (`hotReload.ts` la rattrape, pas ce fichier). */
 export class LevelFetchError extends Schema.TaggedError<LevelFetchError>()("LevelFetchError", {
   url: Schema.String,
   cause: Schema.Defect(),
@@ -575,12 +338,12 @@ function formatDegenerateConvexHull(error: DegenerateConvexHullError): string {
   );
 }
 
-// Conversion de matériau — invariant #5.
+// Conversion des matériaux glTF vers le rendu rétro.
 // see: docs/archive/systems-rendu.md#invariant-5-reconversion-depuis-gltfloader
 
-function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLambertMaterial {
+function toLambert(mat: THREE.Material, hasVertexColors: boolean, resources: LevelResources): THREE.MeshLambertMaterial {
   const src = mat as THREE.MeshStandardMaterial;
-  const lambert = new THREE.MeshLambertMaterial({
+  const lambert = resources.material(new THREE.MeshLambertMaterial({
     color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
     map: src.map ?? null,
     transparent: src.transparent,
@@ -588,9 +351,8 @@ function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLam
     side: src.side,
     alphaTest: src.alphaTest,
     vertexColors: hasVertexColors,
-    // volontairement absents : roughnessMap/metalnessMap/normalMap/envMap —
-    // c'est exactement ce que l'invariant #5 demande de jeter.
-  });
+    // Le décor Lambert ignore les cartes PBR ; les effets TSL sont posés ensuite.
+  }));
   lambert.name = mat.name;
   if (lambert.map) {
     // Invariant #4 : `NearestFilter` à l'AGRANDISSEMENT, toujours — c'est lui
@@ -601,23 +363,16 @@ function toLambert(mat: THREE.Material, hasVertexColors: boolean): THREE.MeshLam
   return lambert;
 }
 
-function convertToLambert(mesh: THREE.Mesh): void {
+function convertToLambert(mesh: THREE.Mesh, resources: LevelResources): void {
   const hasVertexColors = mesh.geometry.hasAttribute("color");
   if (Array.isArray(mesh.material)) {
-    mesh.material = mesh.material.map((mat) => toLambert(mat, hasVertexColors));
+    mesh.material = mesh.material.map((mat) => toLambert(mat, hasVertexColors, resources));
   } else {
-    mesh.material = toLambert(mesh.material, hasVertexColors);
+    mesh.material = toLambert(mesh.material, hasVertexColors, resources);
   }
 }
 
-/**
- * `GLTFLoader` réécrit `.name` de chaque nœud importé (pour l'animation) —
- * lire `userData.name` (le nom brut préservé par `GLTFLoader`), jamais
- * `obj.name`, pour tout ce qui touche au contrat de nommage. Exception :
- * `findClipForObject` lit `mesh.name` (mangled) à dessein, car les pistes
- * d'animation sont nommées à partir de ce même nom réécrit.
- * see: docs/archive/pipeline-niveau-blender.md#le-nom-tel-que-tapé-dans-blender
- */
+// see: docs/archive/pipeline-niveau-blender.md#le-nom-tel-que-tapé-dans-blender
 function blenderName(obj: THREE.Object3D): string {
   const raw = (obj.userData as Record<string, unknown> | undefined)?.name;
   return typeof raw === "string" ? raw : obj.name;
@@ -631,20 +386,7 @@ function cleanExtras(obj: THREE.Object3D): Record<string, unknown> {
   return rest;
 }
 
-/**
- * `light_*` — une lampe du niveau, posée dans Blender comme un empty.
- *
- * Pourquoi un empty et non une vraie lampe Blender exportée en
- * `KHR_lights_punctual` : la scène Blender a DEUX éclairages qui n'ont rien à
- * voir. Les area lights servent au bake — grandes, douces, en forme de tube —
- * et l'unité de Blender (le watt) ne se convertit pas en intensité three.js.
- * Un empty porte exactement les paramètres de `THREE.PointLight`, lisibles tels
- * quels, et ne risque jamais d'être confondu avec une source de bake.
- *
- * Extras lus (tous optionnels) : `color` (« #rrggbb »), `intensity`,
- * `distance`, `decay`. Les défauts correspondent à un tube de néon de plafond.
- * see: docs/archive/systems-rendu.md#éclairage-hybride-lampes-temps-réel-ombre-cuite
- */
+// see: docs/archive/systems-rendu.md#éclairage-hybride-lampes-temps-réel-ombre-cuite
 function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
   const extras = cleanExtras(obj);
   const read = (key: string, fallback: number): number => {
@@ -666,8 +408,8 @@ function buildLevelLight(obj: THREE.Object3D, name: string): THREE.PointLight {
 // Géométrie monde — voir le piège des transforms.
 // see: docs/archive/pipeline-niveau-blender.md#extraction-et-le-piège-des-transforms
 
-function worldSpaceGeometry(mesh: THREE.Mesh): THREE.BufferGeometry {
-  const geo = mesh.geometry.clone();
+function worldSpaceGeometry(mesh: THREE.Mesh, resources: LevelResources): THREE.BufferGeometry {
+  const geo = resources.geometry(mesh.geometry.clone());
   geo.applyMatrix4(mesh.matrixWorld);
   return geo;
 }
@@ -678,11 +420,7 @@ function buildSequentialIndex(vertexCount: number): Uint32Array {
   return idx;
 }
 
-/** Un mesh est une "box" si TOUS ses sommets sont sur un coin de sa propre
- * bounding box locale — vérifié en espace LOCAL, pas monde : un cuboid
- * tourné par son parent reste valide (la rotation est portée par le corps
- * Rapier), une déformation non uniforme échoue quel que soit son alignement.
- * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
+// see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders
 function isAxisAlignedBox(geometry: THREE.BufferGeometry, epsilon = 1e-4): boolean {
   const position = geometry.getAttribute("position") as THREE.BufferAttribute | undefined;
   if (!position || position.count === 0) return false;
@@ -702,19 +440,16 @@ function isAxisAlignedBox(geometry: THREE.BufferGeometry, epsilon = 1e-4): boole
   return true;
 }
 
-/** `col_*` : collider trimesh statique, mesh rendu invisible. Version
- * "brute" : échoue avec `MissingColliderGeometryError` plutôt que de
- * logguer elle-même — voir `buildStaticColliderSafe` pour la version
- * rattrapée utilisée par le traverse principal. */
 function buildStaticColliderEffect(
   mesh: THREE.Mesh,
   name: string,
   prefixLabel: "col_*" | "col_hull_*",
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
+  resources: LevelResources,
 ): Effect.Effect<boolean, MissingColliderGeometryError> {
   return Effect.gen(function* () {
-    const worldGeometry = worldSpaceGeometry(mesh);
+    const worldGeometry = worldSpaceGeometry(mesh, resources);
     const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
 
     if (!positionAttr || positionAttr.count === 0) {
@@ -744,11 +479,11 @@ function buildStaticColliderEffect(
     const indices = rawIndices instanceof Uint32Array ? rawIndices : Uint32Array.from(rawIndices as ArrayLike<number>);
 
     const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+    bodies.push(body);
     physics.world.createCollider(
       RAPIER.ColliderDesc.trimesh(vertices, indices).setCollisionGroups(COLLISION_GROUPS.WORLD),
       body,
     );
-    bodies.push(body);
 
     worldGeometry.dispose();
     return true;
@@ -764,8 +499,9 @@ function buildStaticColliderSafe(
   prefixLabel: "col_*" | "col_hull_*",
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
+  resources: LevelResources,
 ): Effect.Effect<boolean> {
-  return buildStaticColliderEffect(mesh, name, prefixLabel, physics, bodies).pipe(
+  return buildStaticColliderEffect(mesh, name, prefixLabel, physics, bodies, resources).pipe(
     Effect.catch((error) =>
       Effect.sync(() => {
         console.error(formatMissingColliderGeometry(error));
@@ -775,11 +511,6 @@ function buildStaticColliderSafe(
   );
 }
 
-/** `col_box_*` : cuboid inconditionnel, confiance à l'artiste (pas de
- * revalidation géométrique). Corps FIXED, groupe `COLLISION_GROUPS.WORLD`
- * (jamais `TRIGGER`/sensor — un `col_box_*` est un mur, pas un volume
- * logique). Centré sur la bounding box locale, comme `buildTriggerEffect`.
- * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
 function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RAPIER.RigidBody[]): void {
   mesh.geometry.computeBoundingBox();
   const bb = mesh.geometry.boundingBox!;
@@ -803,29 +534,25 @@ function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bodies: RA
       .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
       .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
   );
+  bodies.push(body);
   physics.world.createCollider(
     RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
       COLLISION_GROUPS.WORLD,
     ),
     body,
   );
-  bodies.push(body);
+
 }
 
-/** `col_hull_*` : convex hull, sommets en espace MONDE. Si
- * `RAPIER.ColliderDesc.convexHull` retourne `null` (hull dégénéré), repli
- * automatique sur `buildStaticColliderEffect` (trimesh) pour ce même mesh —
- * un `col_hull_*` ne doit jamais rester sans AUCUN collider. Version
- * "brute" : `buildConvexHullColliderSafe` fait le rattrapage complet.
- * see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders */
 function buildConvexHullColliderEffect(
   mesh: THREE.Mesh,
   name: string,
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
+  resources: LevelResources,
 ): Effect.Effect<"convexHull", MissingColliderGeometryError | DegenerateConvexHullError> {
   return Effect.gen(function* () {
-    const worldGeometry = worldSpaceGeometry(mesh);
+    const worldGeometry = worldSpaceGeometry(mesh, resources);
     const positionAttr = worldGeometry.getAttribute("position") as THREE.BufferAttribute | undefined;
 
     if (!positionAttr || positionAttr.count === 0) {
@@ -845,8 +572,9 @@ function buildConvexHullColliderEffect(
     }
 
     const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-    physics.world.createCollider(desc.setCollisionGroups(COLLISION_GROUPS.WORLD), body);
     bodies.push(body);
+    physics.world.createCollider(desc.setCollisionGroups(COLLISION_GROUPS.WORLD), body);
+
     return "convexHull" as const;
   });
 }
@@ -859,8 +587,9 @@ function buildConvexHullColliderSafe(
   name: string,
   physics: PhysicsWorld,
   bodies: RAPIER.RigidBody[],
+  resources: LevelResources,
 ): Effect.Effect<"convexHull" | "trimesh" | null> {
-  return buildConvexHullColliderEffect(mesh, name, physics, bodies).pipe(
+  return buildConvexHullColliderEffect(mesh, name, physics, bodies, resources).pipe(
     Effect.catchTags({
       MissingColliderGeometryError: (error) =>
         Effect.sync(() => {
@@ -872,7 +601,7 @@ function buildConvexHullColliderSafe(
           console.error(formatDegenerateConvexHull(error));
           // Label "col_*" volontaire (pas "col_hull_*") : fidèle au message
           // historique du repli trimesh, jamais paramétré par le préfixe réel.
-          const created = yield* buildStaticColliderSafe(mesh, name, "col_*", physics, bodies);
+          const created = yield* buildStaticColliderSafe(mesh, name, "col_*", physics, bodies, resources);
           return created ? ("trimesh" as const) : null;
         }),
     }),
@@ -930,13 +659,13 @@ function buildTriggerEffect(
         .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
         .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
     );
+    bodies.push(body);
     physics.world.createCollider(
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
         .setSensor(true)
         .setCollisionGroups(COLLISION_GROUPS.TRIGGER),
       body,
     );
-    bodies.push(body);
 
     return {
       name,
@@ -966,10 +695,6 @@ function buildTriggerSafe(
   );
 }
 
-/** Cherche le clip glTF dont une piste cible ce nœud (par nom — voir
- * `PATH_PROPERTIES`/`targetName` de `GLTFLoader.js` : le nom de piste est
- * toujours `<nom du nœud>.<propriété>`). Ne joue rien, se contente d'exposer
- * le clip pour un futur `interactive.ts`. */
 function findClipForObject(clips: THREE.AnimationClip[], object: THREE.Object3D): THREE.AnimationClip | null {
   for (const clip of clips) {
     for (const track of clip.tracks) {
@@ -981,26 +706,6 @@ function findClipForObject(clips: THREE.AnimationClip[], object: THREE.Object3D)
   return null;
 }
 
-/**
- * `door_*` : porte ANIMÉE (`game/level/doors.ts::DoorSystem`, reconstruit à
- * chaque chargement comme `PropSystem`). Corps FIXE, posé à la pose FERMÉE
- * pour toujours — seul le collider est activé/désactivé, seul le MESH bouge.
- * Voir [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md)
- * pour la cause racine (aucune porte ne bougeait à l'écran avant ce jalon) et
- * les choix ci-dessous.
- *
- * Le mesh est rattaché sous `root` (`root.attach`, comme un `prop_*`) : sa
- * pose LOCALE résultante EST la pose "fermée" que `DoorSystem` anime autour —
- * plus besoin de matrice inverse à chaque pas fixe, contrairement à
- * `PropSystem` qui relit un corps dynamique. Contrairement à l'ANCIEN
- * `buildDoor` ([ADR 0012](../../../docs/decisions/0012-porte-collider-non-recentre.md),
- * qui posait le corps sur la translation brute du mesh), le corps est
- * maintenant recentré sur la bounding box locale — comme `buildCuboidCollider`
- * — parce que le vantail n'est plus verrouillé-mais-mobile : un corps FIXE
- * pour de bon peut se permettre d'être exactement juste. Sans effet sur les
- * `.glb` déjà exportés (leurs vantaux ont l'origine déjà recentrée en
- * Blender pour compenser ce même écart, voir l'ADR 0012).
- */
 function buildDoorEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -1040,13 +745,13 @@ function buildDoorEffect(
         .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
         .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
     );
+    bodies.push(body);
     const collider = physics.world.createCollider(
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
         COLLISION_GROUPS.WORLD,
       ),
       body,
     );
-    bodies.push(body);
 
     return {
       name,
@@ -1066,22 +771,6 @@ function buildDoorEffect(
   });
 }
 
-/**
- * `vitre_*` : mesh de verre plat, UN matériau (l'alpha `transparent`/
- * `opacity` du glTF a déjà été recopié par `toLambert`, appelé pour CE mesh
- * comme pour tous les autres avant le routage par préfixe). Collider cuboid
- * FIXE, groupe WORLD, tant que `solide !== false` — une verrière au plafond
- * (`solide: false`) n'a AUCUN collider et est incassable : un collider
- * au-dessus d'un sol serait pris pour le sol par le bake du graphe de
- * navigation, piège déjà connu des plafonds (voir `docs/6-reference/conventions-nommage.md`).
- *
- * Double face + pas d'écriture de profondeur : une teinte unique de vitrage
- * rend l'ordre de mélange indifférent, pas besoin de trier les fragments.
- *
- * Ne construit QUE le candidat — la fusion (`mergeVitreDecor`,
- * voir `LevelStats.vitreBatchCount`) et l'état de partie (PV, casse,
- * `VitreSystem`) vivent ailleurs, même séparation que `prop_*`/`PropSystem`.
- */
 function buildVitreCandidateEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -1132,13 +821,14 @@ function buildVitreCandidateEffect(
           .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
           .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
       );
+      bodies.push(body);
       collider = physics.world.createCollider(
         RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
           COLLISION_GROUPS.WORLD,
         ),
         body,
       );
-      bodies.push(body);
+
     }
 
     return {
@@ -1154,10 +844,6 @@ function buildVitreCandidateEffect(
   });
 }
 
-/** Lit `sorte` d'un `sanitaire_*` : OBLIGATOIRE, contrairement à
- * `matiere`/`mouvement` — absente ou inconnue avertit bruyamment dans LES
- * DEUX CAS (jamais un silence pour une propriété obligatoire), repli sur
- * `DEFAULT_SANITAIRE_KIND`. */
 function readSanitaireKind(name: string, raw: unknown): Effect.Effect<SanitaireKind> {
   return Effect.gen(function* () {
     const sorte = parseSanitaireKind(raw);
@@ -1185,14 +871,7 @@ function readSanitairePv(name: string, raw: unknown): Effect.Effect<number | nul
   });
 }
 
-/**
- * `sanitaire_*` : cuvette ou urinoir, UN mesh UN matériau — jamais de
- * `col_*` jumeau, le loader construit lui-même un collider cuboïde FIXE sur
- * la bbox monde, groupe WORLD (comme un `vitre_*` solide). Ne construit QUE
- * le candidat — la fusion (`mergeSanitaireDecor`) et l'état de partie
- * (`SanitaireSystem`) vivent ailleurs, même séparation que `vitre_*`/`prop_*`.
- * see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire
- */
+// see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire
 function buildSanitaireCandidateEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -1226,20 +905,14 @@ function buildSanitaireCandidateEffect(
         .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
         .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
     );
+    bodies.push(body);
     const collider = physics.world.createCollider(
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
         COLLISION_GROUPS.WORLD,
       ),
       body,
     );
-    bodies.push(body);
 
-    // Bbox MONDE réelle (le kit ne pose ses pièces qu'à des rotations
-    // multiples de 90°, comme tout `col_box_*`/`prop_*`/`vitre_*` — même
-    // hypothèse qu'ailleurs dans ce fichier) : sert au jet d'eau (bas-centre,
-    // vers le haut), aussi l'ancrage du volume de visée du jet une fois cassé
-    // (`SanitaireSystem.resolveAim`) — pas stockée telle quelle, seul
-    // `jetOrigin` survit sur le candidat.
     const worldMin = worldCenter.clone().sub(halfExtents);
     const worldMax = worldCenter.clone().add(halfExtents);
     const jetOrigin = new THREE.Vector3((worldMin.x + worldMax.x) / 2, worldMin.y, (worldMin.z + worldMax.z) / 2);
@@ -1287,14 +960,7 @@ function readEcranPv(name: string, raw: unknown): Effect.Effect<number | null> {
   });
 }
 
-/**
- * `ecran_*` : écran/façade animé, UN mesh UN matériau — le loader lui
- * construit lui-même un collider FIXE sur sa bbox monde, jamais de `col_*`
- * jumeau, même construction que `buildSanitaireCandidateEffect`. Ne
- * construit QUE le candidat — la fusion (`mergeEcranDecor`) et l'état de
- * partie (`EcranSystem`) vivent dans `./ecrans`.
- * see: docs/archive/reference-conventions-nommage.md#préfixe-ecran
- */
+// see: docs/archive/reference-conventions-nommage.md#préfixe-ecran
 function buildEcranCandidateEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -1328,13 +994,13 @@ function buildEcranCandidateEffect(
         .setTranslation(worldCenter.x, worldCenter.y, worldCenter.z)
         .setRotation({ x: worldQuat.x, y: worldQuat.y, z: worldQuat.z, w: worldQuat.w }),
     );
+    bodies.push(body);
     const collider = physics.world.createCollider(
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
         COLLISION_GROUPS.WORLD,
       ),
       body,
     );
-    bodies.push(body);
 
     return {
       name,
@@ -1348,14 +1014,6 @@ function buildEcranCandidateEffect(
   });
 }
 
-/**
- * Masse d'un `prop_*` qui ne déclare pas `masse`, en kg.
- *
- * Rapier déduirait sinon la masse d'une densité par défaut de 1000 kg/m³
- * (celle de l'eau) : une caisse d'un mètre de côté pèserait une tonne et le
- * joueur — 80 kg, `moveConfig.characterMass` — ne la bougerait pas d'un
- * millimètre. 25 kg se pousse en marchant dessus sans partir en glissade.
- */
 const DEFAULT_PROP_MASS_KG = 25;
 
 /** Frottement/rebond d'un prop : il glisse un peu et ne rebondit pas. Un
@@ -1431,12 +1089,6 @@ function readVitrePv(name: string, raw: unknown): Effect.Effect<number | null> {
  * positif — voir `PropInfo.contenu`. */
 const PROP_CONTENT_PATTERN = /^([a-z_]+):(\d+)$/i;
 
-/** Lit `contenu` d'un `prop_*` (chantier « Les coulisses », système 3) :
- * absent -> `null` sans bruit, présent mais mal formé -> `null` AVEC
- * avertissement bruyant (même règle que `matiere`/`masse`/`pv`). Le NOM n'est
- * volontairement pas restreint à une liste connue ici — `contenu` couvre
- * n'importe quel objet lâché à la casse, pas seulement la nourriture (voir
- * `PropSystem.destroy`, qui décide seul quoi faire d'un nom reconnu ou non). */
 function readPropContent(name: string, raw: unknown): Effect.Effect<{ item: string; count: number } | null> {
   return Effect.gen(function* () {
     if (raw === undefined || raw === null || raw === "") return null;
@@ -1452,27 +1104,7 @@ function readPropContent(name: string, raw: unknown): Effect.Effect<{ item: stri
   });
 }
 
-/**
- * `prop_*` : mobilier physique. Corps DYNAMIQUE libre (contrairement à
- * `door_*`, dynamique mais verrouillé), collider cuboid, groupe
- * `COLLISION_GROUPS.PROP`.
- *
- * Deux différences avec tous les autres préfixes, toutes deux nécessaires
- * parce que ce corps-ci est réellement libre :
- *
- * 1. **Le mesh est reparenté sous `root`** (`root.attach`, qui conserve la
- *    pose MONDE). Un prop resté sous un groupe Blender hériterait de la
- *    transformation de ce groupe EN PLUS de celle que la physique lui écrit.
- * 2. **Le corps est posé sur le CENTRE de la boîte, pas sur l'origine du
- *    mesh** — un corps dynamique tourne autour de son centre de masse. Le
- *    décalage entre les deux est conservé dans `PropInfo.centerOffset` et
- *    réappliqué au rendu ; c'est exactement le piège que `buildDoor` laisse
- *    ouvert (ADR 0012), sans conséquence pour un vantail verrouillé.
- *
- * Extras lus (tous optionnels) : `masse` (kg), `pv` (absent = indestructible),
- * `matiere` (son de casse + couleur des débris).
- * see: docs/archive/reference-conventions-nommage.md#props-physiques
- */
+// see: docs/archive/reference-conventions-nommage.md#props-physiques
 function buildPropEffect(
   mesh: THREE.Mesh,
   name: string,
@@ -1517,6 +1149,7 @@ function buildPropEffect(
         // sans CCD, un prop peut traverser un sol de 20 cm en un seul pas fixe.
         .setCcdEnabled(true),
     );
+    bodies.push(body);
     const collider = physics.world.createCollider(
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
         .setMass(masse ?? DEFAULT_PROP_MASS_KG)
@@ -1525,16 +1158,12 @@ function buildPropEffect(
         .setCollisionGroups(COLLISION_GROUPS.PROP),
       body,
     );
-    bodies.push(body);
 
     return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu, extras };
   });
 }
 
-/** `use_*` : objet interactif, portée 2 m. Cible lue dans `extras.target`.
- * Absence de cible = `UntargetedUseObjectWarning`, loggué immédiatement
- * (jamais bloquant) — l'objet est quand même retourné avec
- * `targetName: null`. see: docs/archive/pipeline-niveau-blender.md#objets-interactifs */
+// see: docs/archive/pipeline-niveau-blender.md#objets-interactifs
 /** Lit une propriété de carte (`card`/`requires`) : absente -> `null` sans
  * bruit, présente mais inconnue -> `null` AVEC avertissement bruyant. */
 function readCardProperty(name: string, property: string, raw: unknown): Effect.Effect<LoyaltyCard | null> {
@@ -1590,16 +1219,7 @@ function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Effect<Use
     const explicitHeals = yield* readAmountProperty(name, "soin", extras.soin);
     const ammo = yield* readAmountProperty(name, "munitions", extras.munitions);
     const aliment = yield* readFoodItem(name, extras.aliment);
-    // `aliment` est une VARIANTE de `soin` : un `use_*` qui porte l'un sans
-    // l'autre calcule quand même `heals` par le barème de
-    // `game/level/food.ts`. Un `soin` explicite reste prioritaire (aucun
-    // niveau n'a besoin des deux, mais rien ne l'interdit).
     const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
-    // Console de vidéosurveillance (chantier « Les coulisses », système 4) :
-    // liste ORDONNÉE de `cam_*`, séparés par des virgules — validée par
-    // `validate_level.py` (noms existants, préfixe `cam_`), reprise ici sans
-    // second contrôle : un nom introuvable au chargement est un
-    // avertissement de `CameraViewSystem`/`main.ts`, pas de ce fichier.
     const cameras =
       typeof extras.cameras === "string"
         ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
@@ -1668,41 +1288,26 @@ function validateSpawnPlayerCountEffect(count: number): Effect.Effect<void> {
 
 // Point d'entrée.
 
-/** Résultat brut de la construction, AVANT emballage en `LevelHandle` public
- * (qui ajoute `dispose()`, lié à un `Scope` géré par l'appelant — voir
- * `acquireLevelResourceEffect`/`toLevelHandle`). `bodies` est gardé ici, pas
- * dans `LevelStats`, parce que c'est une donnée de CYCLE DE VIE (nécessaire à
- * la libération), pas une statistique destinée à `main.ts`/`DebugPanel`. */
 interface LevelResource extends Omit<LevelHandle, "dispose" | "suspend"> {
   readonly bodies: readonly RAPIER.RigidBody[];
 }
 
-/**
- * Construit un `LevelResource` à partir d'un résultat `GLTFLoader` déjà
- * parsé. Effect PURE côté entrée/sortie (aucun accès réseau/DOM) —
- * réutilisable depuis `loadLevelEffect` (navigateur) ou un harnais Node
- * headless qui appelle `GLTFLoader.parse` sur des octets lus par `fs`.
- *
- * `root.traverse` (callback synchrone) est collecté dans un tableau AVANT le
- * `Effect.gen` principal, parcouru ensuite par un `for` classique DANS le
- * générateur — un seul style de composition Effect pour toute la fonction.
- */
 function buildLevelResourceEffect(
   gltf: GLTF,
   scene: THREE.Scene,
   physics: PhysicsWorld,
+  resources: LevelResources,
 ): Effect.Effect<LevelResource> {
   return Effect.gen(function* () {
     const root = gltf.scene;
     scene.add(root);
     // Un seul passage sur tout le sous-arbre AVANT toute lecture de matrixWorld.
-    // see: docs/archive/pipeline-niveau-blender.md#extraction-et-le-piège-des-transforms
     root.updateWorldMatrix(true, true);
 
     const nodes: THREE.Object3D[] = [];
     root.traverse((obj) => nodes.push(obj));
 
-    const bodies: RAPIER.RigidBody[] = [];
+    const bodies = resources.bodies;
 
     let spawnPlayer: SpawnPoint | null = null;
     let spawnPlayerCount = 0;
@@ -1788,7 +1393,7 @@ function buildLevelResourceEffect(
       if (!(obj instanceof THREE.Mesh)) continue;
 
       // Invariant #5 (+ #4) : AVANT toute autre chose, pour CHAQUE mesh, préfixé ou non.
-      convertToLambert(obj);
+      convertToLambert(obj, resources);
 
       // Sous-préfixes de `col_*` testés AVANT le `col_` générique ci-dessous :
       // sinon `"col_box_test".startsWith("col_")` (vrai aussi) fait tomber le
@@ -1802,7 +1407,7 @@ function buildLevelResourceEffect(
       }
 
       if (name.startsWith("col_hull_")) {
-        const kind = yield* buildConvexHullColliderSafe(obj, name, physics, bodies);
+        const kind = yield* buildConvexHullColliderSafe(obj, name, physics, bodies, resources);
         if (kind) {
           colliderCount++;
           colliderKindCounts[kind]++;
@@ -1815,7 +1420,7 @@ function buildLevelResourceEffect(
         // Alias explicite du dernier recours (trimesh) — aucune nouvelle
         // logique, juste un branchement nommé plutôt qu'un fallthrough
         // implicite dans le `col_*` générique.
-        const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies);
+        const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies, resources);
         if (created) {
           colliderCount++;
           colliderKindCounts.trimesh++;
@@ -1826,13 +1431,12 @@ function buildLevelResourceEffect(
 
       if (name.startsWith("col_")) {
         // Rétrocompatibilité (Zones A/B) : trimesh, sauf boîte détectée -> cuboid.
-        // see: docs/archive/pipeline-niveau-blender.md#hiérarchie-des-colliders
         if (isAxisAlignedBox(obj.geometry)) {
           buildCuboidCollider(obj, physics, bodies);
           colliderCount++;
           colliderKindCounts.cuboid++;
         } else {
-          const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies);
+          const created = yield* buildStaticColliderSafe(obj, name, "col_*", physics, bodies, resources);
           if (created) {
             colliderCount++;
             colliderKindCounts.trimesh++;
@@ -1898,31 +1502,20 @@ function buildLevelResourceEffect(
     // Après convertToLambert : le filet de douche remplace volontairement
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
     initialiserDouches(root);
+    resources.collect();
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
 
     for (const light of lights) root.add(light);
 
-    const decor = mergeStaticDecor(root, decorCandidates);
-    // Fusion DÉDIÉE des vitres (voir `mergeVitreDecor`) : contrairement au
-    // reste du décor, chaque vitre doit garder sa propre plage de sommets
-    // adressable pour se casser individuellement sans jamais coûter un lot de
-    // dessin de plus (voir `LevelStats.vitreBatchCount`).
-    const vitreMerge = mergeVitreDecor(root, vitreCandidates);
-    // Fusion DÉDIÉE des sanitaires (voir `mergeSanitaireDecor`) : même raison
-    // exacte que les vitres — chaque sanitaire garde sa propre plage de
-    // sommets adressable pour se casser individuellement (voir
-    // `LevelStats.sanitaireBatchCount`).
-    const sanitaireMerge = mergeSanitaireDecor(root, sanitaireCandidates);
-    // Fusion DÉDIÉE des écrans (voir `mergeEcranDecor`) : même raison exacte
-    // que les vitres/sanitaires — chaque écran garde sa propre plage de
-    // sommets adressable pour changer de frame/se casser individuellement
-    // (voir `LevelStats.ecranBatchCount`).
-    const ecranMerge = mergeEcranDecor(root, ecranCandidates);
+    const decor = mergeStaticDecor(root, decorCandidates, resources);
+    const vitreMerge = mergeVitreDecor(root, vitreCandidates, resources);
+    const sanitaireMerge = mergeSanitaireDecor(root, sanitaireCandidates, resources);
+    const ecranMerge = mergeEcranDecor(root, ecranCandidates, resources);
     // Vantaux regroupés par matériau (voir `batchDoorMeshes`) : un vantail
     // animé ne rejoint jamais le décor fusionné, mais vingt vantaux n'ont pas
     // à coûter vingt lots de dessin.
-    const doorBatchCount = batchDoorMeshes(root, doors);
+    const doorBatchCount = batchDoorMeshes(root, doors, resources);
 
     const stats: LevelStats = {
       colliderCount,
@@ -1969,44 +1562,22 @@ function buildLevelResourceEffect(
   });
 }
 
-/** Fonction de RELEASE pour `Effect.acquireRelease` (voir
- * `acquireLevelResourceEffect`) — appelée exactement une fois par `Scope`. */
-function disposeLevelResource(resource: LevelResource, scene: THREE.Scene, physics: PhysicsWorld): void {
-  scene.remove(resource.root);
-  for (const body of resource.bodies) physics.world.removeRigidBody(body); // retire aussi les colliders attachés
-  resource.root.traverse((obj) => {
-    if (!(obj instanceof THREE.Mesh)) return;
-    // Un lot de vantaux porte aussi ses textures de matrices et d'indirection.
-    if (obj instanceof THREE.BatchedMesh) obj.dispose();
-    obj.geometry.dispose();
-    const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-    for (const mat of mats) {
-      const lambert = mat as THREE.MeshLambertMaterial;
-      lambert.map?.dispose();
-      lambert.dispose();
-    }
-  });
-}
-
-/** `buildLevelFromGltfEffect`/`loadLevelEffect` fournissent chacun un
- * `Scope` GÉRÉ MANUELLEMENT (pas `Effect.scoped`, qui le fermerait —donc
- * libérerait le niveau — immédiatement après sa construction) : le niveau
- * doit rester vivant jusqu'à un appel explicite à `dispose()`.
- * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle */
+// Le finalizer existe avant le premier corps ou changement de hiérarchie.
 function acquireLevelResourceEffect(
   gltf: GLTF,
   scene: THREE.Scene,
   physics: PhysicsWorld,
 ): Effect.Effect<LevelResource, never, Scope.Scope> {
-  return Effect.acquireRelease(buildLevelResourceEffect(gltf, scene, physics), (resource) =>
-    Effect.sync(() => disposeLevelResource(resource, scene, physics)),
-  );
+  return Effect.gen(function* () {
+    const resources = yield* Effect.acquireRelease(
+      Effect.sync(() => new LevelResources(gltf.scene)),
+      (owned) => Effect.sync(() => owned.dispose(physics)),
+    );
+    resources.collect();
+    return yield* buildLevelResourceEffect(gltf, scene, physics, resources);
+  });
 }
 
-/** Emballe un `LevelResource` acquis sous `scope` en `LevelHandle` public :
- * `dispose()` ferme CE `scope` précis (créé manuellement par l'appelant, voir
- * `buildLevelFromGltfEffect`/`loadLevelEffect`), ce qui déclenche le
- * finalizer enregistré par `acquireLevelResourceEffect`. */
 function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
   let restoreSuspension: (() => void) | null = null;
   return {
@@ -2049,11 +1620,6 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
   };
 }
 
-/**
- * Version Effect de `buildLevelFromGltf`, exportée UNIQUEMENT pour les
- * tests (`@effect/vitest`) — `main.ts` n'importe jamais ce nom.
- * see: docs/archive/pipeline-niveau-blender.md#cycle-de-vie-du-levelhandle
- */
 export function buildLevelFromGltfEffect(
   gltf: GLTF,
   scene: THREE.Scene,
@@ -2061,19 +1627,14 @@ export function buildLevelFromGltfEffect(
 ): Effect.Effect<LevelHandle> {
   return Effect.gen(function* () {
     const scope = Scope.makeUnsafe();
-    const resource = yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(Scope.provide(scope));
-    return toLevelHandle(resource, scope);
+    return yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(
+      Scope.provide(scope),
+      Effect.map((resource) => toLevelHandle(resource, scope)),
+      Effect.onExit((exit) => Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void),
+    );
   });
 }
 
-/**
- * Construit un `LevelHandle` à partir d'un résultat `GLTFLoader` déjà parsé.
- * Fonction PURE côté entrée/sortie (aucun accès réseau/DOM) — utilisable
- * aussi bien depuis `loadLevel` (navigateur) qu'un harnais Node headless
- * qui appelle `GLTFLoader.parse` sur des octets lus par `fs`. Synchrone, ne
- * suspend jamais (`GameRuntime.runSync` ne peut donc jamais déclencher son
- * garde-fou de suspension ici).
- */
 export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: PhysicsWorld): LevelHandle {
   return GameRuntime.runSync(buildLevelFromGltfEffect(gltf, scene, physics));
 }
@@ -2103,12 +1664,6 @@ export function loadLevelEffect(
   });
 }
 
-/**
- * Charge un `.glb`/`.gltf` par URL et construit son `LevelHandle`. Seule
- * fonction de ce fichier qui touche le réseau — `buildLevelFromGltf`
- * au-dessus reste testable hors navigateur. Rejette avec `LevelFetchError`
- * en cas d'échec réseau/parsing (`hotReload.ts`, seul appelant, la rattrape).
- */
 export async function loadLevel(
   url: string,
   scene: THREE.Scene,

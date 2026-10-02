@@ -11,17 +11,12 @@ export type ScreenTone = "signal" | "alert";
 export type ScreenBackdrop = "opaque" | "dim";
 
 export interface ScreenProps {
-  /** Couleur de tout ce qui est posé dedans, transmise par la cascade CSS. */
   tone?: ScreenTone;
   backdrop?: ScreenBackdrop;
   children: ReactNode;
 }
 
-/**
- * Racine plein écran d'un écran modal : fond, ton, centrage du contenu, et
- * capture de la souris (le calque du HUD, lui, la laisse passer).
- * see: docs/6-reference/react-composition.md#les-primitives-didentité
- */
+// see: docs/6-reference/react-composition.md#les-primitives-didentité
 export function Screen({ tone = "signal", backdrop = "opaque", children }: ScreenProps) {
   return (
     <div className={styles.screen} data-tone={tone} data-backdrop={backdrop}>

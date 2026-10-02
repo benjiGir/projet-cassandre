@@ -6,11 +6,9 @@ export interface VolumeFaderProps {
   /** 0 à 100, la valeur affichée. */
   percent: number;
   onChange: (percent: number) => void;
-  /** Présent : un bouton ▶ fait entendre le canal à son nouveau niveau. */
   onPreview?: () => void;
 }
 
-/** Une tranche de la table de mixage : nom du canal, curseur, écoute. */
 export function VolumeFader({ label, percent, onChange, onPreview }: VolumeFaderProps) {
   return (
     <div className={styles.fader}>

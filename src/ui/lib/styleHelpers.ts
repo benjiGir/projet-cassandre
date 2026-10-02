@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 
-/** Assemble des noms de classe en ignorant les valeurs fausses : `cx(styles.a, isOn && styles.b)`. */
 export function cx(...classes: ReadonlyArray<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }

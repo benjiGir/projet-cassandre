@@ -2,7 +2,7 @@
 title: Cycle de vie
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-02
 ---
 
 # Cycle de vie
@@ -106,7 +106,7 @@ boucle sur une scène vide.
 
 ## Le lien avec la machine de flux d'écran
 
-`gameFlowMachine` (`src/ui/gameFlowMachine.ts`) ne connaît que des noms
+`gameFlowMachine` (`src/app/gameFlowMachine.ts`) ne connaît que des noms
 d'état (`mainMenu`, `loading`, `playing`, `paused`, `dead`,
 `levelComplete`...) — jamais `PhysicsWorld` ni `GameSession`. Le VRAI reset
 vit dans `src/game/session/lifecycle.ts` et `src/app/sessionFlow.ts`,

@@ -1,7 +1,4 @@
-/**
- * Registre de niveaux — remplace le hardcode qui vivait dans `main.ts`.
- * see: docs/2-fonctionnel/le-niveau.md
- */
+// see: docs/2-fonctionnel/le-niveau.md
 
 export interface LevelDef {
   /** Identifiant stable. Sert aussi de valeur pour le raccourci `?level=<id>` et de clé du registre. */
@@ -14,37 +11,15 @@ export interface LevelDef {
   gltfName?: string;
   /** Le joueur démarre désarmé (pied-de-biche au sol, ramassable via use_crowbar) — voir WeaponSystem.startUnarmed()/pickUpMelee(). */
   startUnarmed?: boolean;
-  /**
-   * D'où vient la lumière de ce niveau. Défaut `"temps-reel"`.
-   *
-   * - `"temps-reel"` : ambiante + soleil de la scène, le rig de la Phase 1 —
-   *   c'est ce qu'il faut aux boîtes blanches de la gym, qui n'ont aucune
-   *   couleur cuite, et c'est sous ce rig que les zones A-E ont été éclairées.
-   * - `"bake"` : tout est cuit dans les sommets. Soleil coupé, ambiante à 1,
-   *   le rendu vaut exactement texture × couleur cuite.
-   * - `"hybride"` : le niveau porte ses propres lampes (`light_*`) et sa
-   *   couleur cuite ne sert plus que de masque d'ombre.
-   * see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
-   */
+  // see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
   lighting?: "temps-reel" | "bake" | "hybride";
-  /** Ciel en fond de scène, nom d'un dossier de `public/assets/sky/` — six
-   * faces générées par `tools/textures/generate_ciel.py`. Absent = la couleur
-   * de fond du renderer, ce qu'il faut à un niveau entièrement clos.
-   * see: docs/archive/systems-rendu.md#ciel */
+  // see: docs/archive/systems-rendu.md#ciel
   ciel?: string;
-  /**
-   * Temps de référence, en secondes, pour le bonus de rapidité du récap de
-   * fin de partie (`game/session/score.ts`). Absent = pas de ligne « Rapidité »
-   * dans le récap — la gym et les zones de test n'ont pas vocation à être
-   * chronométrées. `niveau_v2` reprend les « 8-10 minutes » annoncées par
-   * `CLAUDE.md` pour le proto complet.
-   * see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
-   */
+  // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   parTime?: number;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
-// see: docs/2-fonctionnel/le-niveau.md
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
   { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },
@@ -61,10 +36,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
     gltfName: "salle_essai_rayons",
     lighting: "hybride",
   },
-  // Blockout gris du niveau v2 (jalon N8) : la STRUCTURE, sans un seul asset
-  // — c'est la circulation, la lisibilité et la durée qu'on y juge, pas le
-  // décor. Construit par `tools/level_v2/build_blockout.py` depuis le plan de
-  // masse validé. Éclairage temps réel : aucun bake, aucune lampe posée.
+  // see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
   {
     id: "blockout_v2",
     label: "Blockout — Niveau v2",
@@ -72,14 +44,6 @@ export const LEVEL_CHOICES: LevelDef[] = [
     gltfName: "blockout_v2",
     startUnarmed: true,
   },
-  // Niveau v2 habillé (jalon N9), construit par `tools/level_v2/build_niveau.py`
-  // depuis la MÊME structure que le blockout ci-dessus — seuls les matériaux,
-  // les plafonds, les lampes et le contenu des espaces changent. Les dix
-  // espaces sont habillés depuis N9.5.
-  // `hybride` : le niveau porte ses propres `light_*`, pas de soleil. Il n'est
-  // pas encore baké, donc la couleur de sommet ne porte aucune ombre — c'est
-  // l'éclairage temps réel seul. Le parking d'arrivée est un parking de NUIT :
-  // sans soleil et à ciel ouvert, ses mâts sont sa seule lumière.
   {
     id: "niveau_v2",
     label: "Niveau v2 — habillé",

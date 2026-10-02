@@ -4,18 +4,7 @@ import { setShowerAmbienceGain } from "../core/showerAmbience";
 import { setWaterAmbienceGain } from "../core/waterAmbience";
 import { setZoneAmbienceGain } from "../core/zoneAmbience";
 
-/**
- * Réglages audio — écran « Options › Audio »
- * (`ui/screens/options/audio/AudioTab/AudioTab.tsx`, qui ne fait que les
- * présenter). Ce module persiste (`localStorage`) et applique ; il vit hors de
- * `src/ui/` parce qu'il pilote le son, même discipline que
- * `graphicsSettings.ts`.
- *
- * Un canal = un gain multiplié aux volumes de repos déjà réglés dans chaque
- * module de `core/` : 100 % rend le mixage d'origine, jamais plus fort. Le
- * curseur est perceptif — le gain est le carré de la valeur affichée, si
- * bien que 50 % sonne « à moitié » (−12 dB) au lieu de presque aussi fort.
- */
+// see: docs/6-reference/notes-code-gameplay-outils.md#réglages
 
 export interface AudioSettings {
   /** 0 à 1, valeur affichée (pas le gain) — coiffe tous les canaux. */
@@ -104,10 +93,6 @@ function applyBackgroundMute(): void {
 
 let focusListenersInstalled = false;
 
-/**
- * Appelée UNE FOIS en haut de `main()`, avant le chargement des sons : les
- * gains posés ici sont repris par chaque `Howl` à sa création.
- */
 export function initAudioSettingsAtBoot(): AudioSettings {
   current = loadPersisted();
   apply(current);

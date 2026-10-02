@@ -18,7 +18,7 @@ import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
 import { RenderService } from "./render/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
 import { loadCardPickupTextures } from "./render/cardPickups";
-import { createGameFlowActor } from "./ui/gameFlowMachine";
+import { createGameFlowActor } from "./app/gameFlowMachine";
 import { App } from "./ui/App";
 import { initAudioSettingsAtBoot } from "./game/audioSettings";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
@@ -37,40 +37,20 @@ import { maybeRenderDevPreview } from "./ui/dev/devPreview/devPreview";
 import { LoadingScreen } from "./ui/screens/loading/LoadingScreen/LoadingScreen";
 import { beginLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
 
-// Orchestrateur mince depuis le refactor du 2026-09-05 (2229 -> 129 lignes,
-// extraction structurelle pure, aucun comportement observable changé).
-// see: docs/archive/systems-session.md#origine-des-modules-gamesession
+// see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const uiRoot = document.getElementById("ui-root") as HTMLDivElement;
   const root = createRoot(uiRoot);
 
-  // Harnais d'aperçu des écrans (`?uiPreview=<écran>`), DEV UNIQUEMENT —
-  // voir `ui/dev/devPreview/devPreview.tsx`. Doit rester la toute première chose testée :
-  // s'il rend, tout le reste du boot (physique, session, boucle) ne doit
-  // jamais démarrer.
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
   installAudioActivation();
-  // Réglages audio persistés (`game/audioSettings.ts`) : posés AVANT la
-  // création des `Howl`, qui reprennent ces gains dès leur construction.
   initAudioSettingsAtBoot();
   const audioReady = Promise.all([initAudio(), initHeroVoice(), initZoneAmbience(), initWaterAmbience(), initShowerAmbience()]);
 
-  // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et
-  // appliqués (FOV, screenshake) AVANT le menu principal : un joueur qui a
-  // déjà réglé ces deux-là ne doit pas les voir revenir à leur valeur
-  // d'origine le temps d'un aller-retour en jeu. Le filtrage et la
-  // résolution interne, eux, ont besoin de `scene`/`camera`/`renderer` —
-  // appliqués plus bas via `registerRenderTarget`, juste après
-  // `buildGameEngine` (qui relit `current` lui-même, pas de valeur à
-  // transporter jusque-là).
   initGraphicsSettingsAtBoot();
 
-  // Un seul acteur pour toute la durée de vie de l'onglet, créé AVANT le
-  // choix du niveau ci-dessous — jamais recréé par `replay`/`returnToMenu`.
-  // see: docs/decisions/0019-machine-xstate-flux-ecran.md
-  // see: docs/4-technique/interface-react.md#flux-décran
   const flowActor = createGameFlowActor();
   const flow = {
     isPlaying: () => flowActor.getSnapshot().value === "playing",
@@ -93,46 +73,25 @@ async function main() {
     useGameStore.getState().setFlowState(snapshot.value);
   });
 
-  // Choix du niveau (Phase 5), tout en haut de `main()` — voir l'ordre exact
-  // et pourquoi `ENTER_MENU` n'est envoyé qu'ici.
-  // see: docs/archive/systems-session.md#choix-du-niveau-au-boot
   if (!new URLSearchParams(window.location.search).get("level")) {
     flowActor.send({ type: "ENTER_MENU" });
   }
   const choice = await resolveBootChoice(root);
   flowActor.send({ type: "BEGIN_LOAD" });
 
-  // L'écran de chargement prend la place du menu IMMÉDIATEMENT, et le garde
-  // jusqu'à ce que le niveau soit réellement là. Avant ça, le menu restait
-  // affiché, figé, pendant les 29 Mo du niveau v2 — puis le HUD apparaissait
-  // sur une scène vide, le décor surgissant d'un coup quelques secondes plus
-  // tard. see: docs/archive/systems-hud.md#écran-de-chargement
   beginLoading("Démarrage", 0.02);
   root.render(createElement(LoadingScreen));
   await letBrowserPaint();
 
   input.attach(canvas);
 
-  // Pause automatique sur perte du verrouillage du pointeur PENDANT une
-  // partie — Échap le libère toujours au niveau du navigateur, mais ne
-  // livre pas nécessairement son évènement clavier à la page (les deux
-  // moteurs de rendu testés en diffèrent) : le changement de verrouillage
-  // est le signal robuste, celui que `PauseScreen`/l'acteur de flux
-  // écoutent réellement. Écouteur DOM ponctuel, hors du pas fixe ET de la
-  // boucle d'affichage (un changement de flux est un évènement DISCRET, pas
-  // un flux à 60 Hz — voir le skill `react-hud-bridge`) ; `flowActor` est
-  // fermé par référence, `engine` n'a pas besoin d'exister encore.
-  // see: docs/archive/systems-session.md#pause
   document.addEventListener("pointerlockchange", () => {
-    if (document.pointerLockElement === canvas) return; // verrouillage OBTENU, pas perdu
+    if (document.pointerLockElement === canvas) return;
     if (flowActor.getSnapshot().value !== "playing") return;
     input.clearPendingEdges();
     flowActor.send({ type: "PAUSE" });
   });
 
-
-  // Planches de sprites des ennemis et modèles d'armes : chargés ici, à la
-  // frontière asynchrone, jamais depuis la boucle (invariant #11).
   reportLoading("Moteur physique et planches de sprites", 0.08);
   const [, suitSheet, directorSheet, weaponModels, cardPickupTextures] = await Promise.all([
     initPhysics(),
@@ -144,10 +103,6 @@ async function main() {
   reportLoading("Chargement du niveau", 0.3);
   await letBrowserPaint();
 
-  // État PERSISTANT (survit à un reset) : `buildGameEngine` ne construit PAS
-  // `session` (ordre de construction circulaire) — `bootGameSession` la
-  // construit juste après, à partir de ce même `persistentEngine`.
-  // see: docs/archive/systems-session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
   const persistentEngine = buildGameEngine(
     canvas,
     flow,
@@ -156,36 +111,15 @@ async function main() {
     cardPickupTextures,
   );
 
-  // Filtrage des textures réduites + résolution interne : les deux seuls
-  // réglages graphiques qui ont besoin d'un moteur construit (voir la doc de
-  // tête de `game/graphicsSettings.ts`). Enregistré AVANT `bootGameSession` :
-  // le filtrage posé ici devient le mode par défaut de `configureRetroTexture`
-  // pour CHAQUE texture chargée ensuite (premier niveau, `replay()`, hot
-  // reload), sans qu'aucun de ces chemins n'ait besoin d'y penser.
-  // `registerRenderTarget` applique aussi `graphicsSettings` immédiatement, et
-  // reste la cible de tout changement fait EN JEU depuis la pause.
   registerRenderTarget(persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);
 
   const session = bootGameSession(persistentEngine, choice);
   const engine: GameEngine = { ...persistentEngine, session };
 
-  // On ATTEND le premier chargement avant de rendre la main au joueur. Sur le
-  // chemin glTF, `bootGameSession` ne fait que LANCER le chargement : sans
-  // cette attente la boucle démarrait aussitôt et le joueur tombait dans le
-  // vide depuis (0, 2, 0) — position transitoire documentée dans
-  // `lifecycle.ts` — jusqu'à ce que le commit du niveau le repose sur
-  // `spawn_player`.
-  //
-  // Frontière explicite : le flux ne passe à `playing` qu'après un commit de
-  // niveau réussi. Un échec reste sur l'écran de chargement et propose une
-  // relance, sans démarrer la boucle sur une scène vide.
   await audioReady;
   await waitForGameSessionReady(flowActor, session);
   const sessionFlow = createSessionFlow(engine, root, flowActor);
 
-  // `<App/>` monté APRÈS la construction du monde : `onReplay`/
-  // `onReturnToMenu`/`onResume` ferment sur `engine`.
-  // see: docs/archive/systems-hud.md#composition-de-app
   root.render(
     createElement(App, {
       onReplay: () => void sessionFlow.replay(),
@@ -194,35 +128,20 @@ async function main() {
     }),
   );
 
-  // Scratch de la substitution caméra pendant une vue par caméra (voir
-  // `render()` ci-dessous) — hors de la boucle : le pas fixe ne doit rien
-  // allouer, même règle que les scratches de `game/level/props.ts`.
   const cameraViewPrevPos = new THREE.Vector3();
   const cameraViewPrevQuat = new THREE.Quaternion();
 
   startLoop({
     updateDisplayInput: () => updateDisplayInput(engine),
     snapshotPrevious: () => snapshotPrevious(engine),
-    // Décide le mouvement AVANT le step.
-    // see: docs/archive/systems-boucle-de-jeu.md#ordre-des-callbacks
     updateGameplay: (dt) => updateGameplay(engine, dt),
     stepPhysics: (dt) => stepPhysics(engine, dt),
     interpolateVisuals: (alpha) => interpolateVisuals(engine, alpha),
     updateFx: (realDt, stats) => {
       updateFx(engine, realDt, stats);
-      // Vue par caméra (chantier « Les coulisses », système 4) : le
-      // grésillement de l'overlay avance au dt RÉEL, jamais le pas fixe
-      // (voir `CameraViewOverlay.update`) — même contrat que le réticule.
       engine.cameraViewOverlay.update(realDt);
     },
     render() {
-      // Vue par caméra : substitue transitoirement la transform de
-      // `engine.camera` par celle du `cam_*` courant, le temps d'un seul
-      // appel de rendu — jamais un second `WebGLRenderTarget`, la résolution
-      // interne (640×360) reste la même pour les deux (invariant #4). Restauré
-      // aussitôt après : `interpolateVisuals` (pas fixe suivant) continue de
-      // piloter `engine.camera` depuis la visée réelle du joueur, jamais depuis
-      // cette valeur transitoire.
       const cam = engine.session.cameraView?.currentCam ?? null;
       if (cam) {
         cameraViewPrevPos.copy(engine.camera.position);
@@ -232,22 +151,19 @@ async function main() {
         engine.camera.updateMatrixWorld(true);
       }
 
-      // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : seul appel qui touche
-      // vraiment une API externe dans le chemin de rendu — voir
-      // `RenderService` (`render/renderService.ts`).
-      runGameplaySync(RenderService.use((rs) => rs.render(engine.renderer, engine.scene, engine.camera)));
-
-      if (cam) {
-        engine.camera.position.copy(cameraViewPrevPos);
-        engine.camera.quaternion.copy(cameraViewPrevQuat);
+      try {
+        runGameplaySync(RenderService.use((rs) => rs.render(engine.renderer, engine.scene, engine.camera)));
+      } finally {
+        if (cam) {
+          engine.camera.position.copy(cameraViewPrevPos);
+          engine.camera.quaternion.copy(cameraViewPrevQuat);
+          engine.camera.updateMatrixWorld(true);
+        }
       }
       engine.cameraViewOverlay.render(cam !== null, cam?.label ?? null);
     },
   });
 
-  // `window.cassandre` est un outil de dev, pas une API joueur : il donne des
-  // cartes, téléporte, rend les ennemis passifs. Absent du build de production.
-  // see: docs/archive/systems-debug.md#point-dentrée-console-windowcassandre
   if (import.meta.env.DEV) exposeDebugApi(engine);
 }
 

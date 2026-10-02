@@ -1,4 +1,4 @@
-/** Fenêtre bornée de mesures de frame, sans allocation à chaque échantillon. */
+// see: docs/6-reference/notes-code-core.md#rejeu-et-horloge
 export class RollingP95 {
   private readonly samples: Float32Array;
   private readonly sorted: Float32Array;

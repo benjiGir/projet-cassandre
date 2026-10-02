@@ -1,12 +1,9 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
+
 import type { PhysicsWorld } from "../../physics/world";
 
-/**
- * Gym boîte blanche — Phase 1 (Déplacement). N'est pas un décor : c'est un
- * instrument de mesure, chaque zone encadre un seuil du character
- * controller. Layout et valeurs de seuil : see: docs/5-guides/reprendre-le-projet.md
- */
+// see: docs/5-guides/reprendre-le-projet.md
 
 // Constantes générales.
 
@@ -71,12 +68,7 @@ function addBox(
   physics.world.createCollider(RAPIER.ColliderDesc.cuboid(w / 2, h / 2, d / 2), body);
 }
 
-/**
- * Boîte inclinée entre deux points (rampe) : mesh + collider fixe cuboid,
- * orientés pour que l'axe "largeur" reste horizontal (pas de roulis), quelle
- * que soit la direction de la pente (le gouffre a une rampe de récupération
- * qui monte selon X, les rampes de la zone sud montent selon Z).
- */
+// see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
 function addRampBetween(
   scene: THREE.Object3D,
   physics: PhysicsWorld,
@@ -390,15 +382,6 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
 const SPAWN_POSITION = new THREE.Vector3(0, 0, -10);
 const SPAWN_YAW = Math.PI; // face +Z, vers l'entrée du couloir
 
-/** Gym boîte blanche : rampes, escaliers, plateformes, gouffres, couloir
- * long, espace ouvert. Construit à la main, aucune abstraction glTF.
- *
- * `scene` accepte n'importe quel `THREE.Object3D`, pas seulement
- * `THREE.Scene` : `main.ts` y passe un `THREE.Group` dédié à la partie
- * courante, pour pouvoir retirer TOUTE la géométrie en un seul `remove()`
- * au reset — sans ça, un reset sur `?level=gym` dupliquerait indéfiniment
- * les boîtes à chaque partie (ce fichier ne garde aucune référence vers les
- * meshes qu'il crée). */
 export function buildGym(
   scene: THREE.Object3D,
   physics: PhysicsWorld

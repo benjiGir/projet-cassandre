@@ -1,5 +1,5 @@
-import type { ConfigEditor } from "../../lib/useConfigEditor";
-import type { TuningField } from "../../lib/tuningFields";
+import type { ConfigEditor } from "../../lib/tuningTypes";
+import type { TuningField } from "../../lib/tuningTypes";
 import { TuningSlider } from "../TuningSlider/TuningSlider";
 
 export interface FieldSlidersProps<K extends string, T extends Record<K, number>> {
@@ -7,7 +7,6 @@ export interface FieldSlidersProps<K extends string, T extends Record<K, number>
   fields: ReadonlyArray<TuningField<K>>;
 }
 
-/** Un curseur par champ numérique d'une config, branché sur son éditeur. */
 export function FieldSliders<K extends string, T extends Record<K, number>>({ editor, fields }: FieldSlidersProps<K, T>) {
   return (
     <>

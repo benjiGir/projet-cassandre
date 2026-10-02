@@ -10,6 +10,9 @@ import { HeroPortrait } from "../../../src/game/session/heroPortrait";
 function sessionWithHp(playerHp: number): GameSession {
   return {
     playerHp,
+    playerMaxHp: 100,
+    secretsFound: 0,
+    secretsTotal: 0,
     heroPortrait: new HeroPortrait(),
     lastHeroLineAt: -Infinity,
     lastHeroBarkAt: -Infinity,

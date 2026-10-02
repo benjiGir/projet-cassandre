@@ -2,18 +2,13 @@ import { heroVoiceDuration, playHeroVoice } from "../../core/heroVoice";
 import { subtitlesEnabled } from "../audioSettings";
 import { useGameStore } from "../state";
 import { HERO_LINES, heroVoiceKey, type HeroBarkId, type HeroLineDef, type HeroLineId } from "./heroLines";
-import { publishLevelRecap, recordHpLost } from "./score";
+import { publishLevelRecap } from "./recap";
+import { recordHpLost } from "./score";
 import { type GameSession } from "./gameSession";
 import { type GameEngine } from "./gameEngine";
-
 const HUD_MESSAGE_DURATION_MS = 1800;
 
-/**
- * Message HUD transitoire SYSTÈME (canal FACTUEL, sans cooldown,
- * indépendant de toute partie en cours) — voir `triggerHeroLine` ci-dessous
- * pour l'autre canal, celui des répliques.
- * see: docs/archive/systems-session.md#feedback-joueur
- */
+// see: docs/archive/systems-session.md#feedback-joueur
 export function showHudMessage(text: string): void {
   useGameStore.getState().showHudMessage(text);
   globalThis.setTimeout(() => {
@@ -23,12 +18,7 @@ export function showHudMessage(text: string): void {
   }, HUD_MESSAGE_DURATION_MS);
 }
 
-// Cooldown global de 15 s MINIMUM entre deux répliques du héros, quelle
-// que soit la source (règle explicite du skill `audio-sfx-pipeline` — Duke
-// 3D lui-même souffre de l'enchaînement de one-liners). Les répliques
-// `priority` de `heroLines.ts` (cartes, secrets, Directeur…) passent outre.
-// Durée d'affichage MINIMALE, allongée à la durée de la prise enregistrée :
-// le sous-titre ne disparaît jamais avant la fin de la phrase.
+// see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 const HERO_LINE_COOLDOWN_MS = 15000;
 const HERO_LINE_DISPLAY_MS = 4000;
 const HERO_LINE_TAIL_MS = 600;
@@ -39,15 +29,6 @@ let ligneAffichee = 0;
 /** La partie précédente s'est-elle terminée par la mort du héros ? Choisit la réplique d'ouverture. */
 let partiePrecedentePerdue = false;
 
-/**
- * Tente de faire dire une réplique au héros : sous-titre (`state.heroLine`),
- * prise enregistrée et bouche du portrait. TOUTES les
- * répliques du jeu passent par cette fonction. Une réplique non prioritaire
- * respecte le cooldown global, PROPRE À `session`, puis sa probabilité
- * (`session.heroLineRandom`, invariant #12) ; retourne `false` sans effet si
- * elle ne se dit pas.
- * see: docs/archive/systems-session.md#feedback-joueur
- */
 export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   const def: HeroLineDef = HERO_LINES[id];
   if (def.once && session.heroLinesSaid.has(id)) return false;
@@ -75,11 +56,6 @@ export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   return true;
 }
 
-/**
- * Cri court (douleur, réception) : voix seule, sans sous-titre ni cooldown de
- * réplique — jamais par-dessus une réplique qui se dit encore. Décidé au pas
- * fixe sur le seul temps de gameplay, sans tirage.
- */
 export function triggerHeroBark(session: GameSession, id: HeroBarkId): void {
   const now = session.stats.gameplayElapsed * 1000;
   if (now - session.lastHeroLineAt < HERO_LINE_DISPLAY_MS) return;
@@ -130,7 +106,7 @@ export function applyPlayerDamage(engine: GameEngine, session: GameSession, amou
   session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
   recordHpLost(session.stats, hpBefore - session.playerHp);
 
-  const maxHp = useGameStore.getState().debug.playerMaxHp;
+  const maxHp = session.playerMaxHp;
   const lateral = normal ? normal.x * Math.cos(engine.look.yaw) - normal.z * Math.sin(engine.look.yaw) : 0;
   session.heroPortrait.damage(session.playerHp, maxHp, lateral < -.25 ? "left" : lateral > .25 ? "right" : "front");
   if (session.playerHp > 0 && !session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {

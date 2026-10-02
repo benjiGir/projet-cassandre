@@ -6,13 +6,7 @@ import { LiveCam } from "../widgets/LiveCam/LiveCam";
 import { LoyaltyCards } from "../widgets/LoyaltyCards/LoyaltyCards";
 import { ViewerCount } from "../widgets/ViewerCount/ViewerCount";
 
-/**
- * HUD de production : l'overlay de stream du héros, pas un HUD de FPS
- * classique. Ne lit rien du store — il place des widgets, et chacun lit ce
- * qu'il affiche (invariant #2 : seul le widget concerné re-rend).
- * see: docs/archive/systems-hud.md#hud-de-production
- * see: docs/6-reference/react-composition.md#chaque-feuille-lit-ses-propres-données
- */
+// see: docs/archive/systems-hud.md#hud-de-production
 export function Hud() {
   return (
     <>

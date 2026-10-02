@@ -2,7 +2,7 @@
 title: Arborescence du dépôt
 tags: [reference, structure]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-02
 ---
 
 # Arborescence du dépôt
@@ -11,7 +11,7 @@ Vue des dossiers suivis utiles au développement. Les fichiers générés et les
 
 | Dossier | Rôle |
 |---|---|
-| `src/app/` | Démarrage du menu et transitions vers une session. |
+| `src/app/` | Démarrage du menu, acteur de flux, contrats de navigation et transitions vers une session. |
 | `src/core/` | Horloge, boucle, input, audio, rejeu et RNG déterministe. |
 | `src/game/devtools/` | Console et harnais de développement, retirés du build de production. |
 | `src/game/entities/` | Entités, comportements et configurations des ennemis. |

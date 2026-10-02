@@ -15,7 +15,7 @@ import * as THREE from "three";
 import { initPhysics, PhysicsWorld, GROUP } from "../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../src/game/level/loader";
 import { PropSystem } from "../../../src/game/level/props";
-import type { HitEvent } from "../../../src/game/player/weapons";
+import type { HitEvent } from "../../../src/game/player/weaponTypes";
 import { weaponConfig } from "../../../src/game/player/weaponConfig";
 
 await initPhysics();

@@ -10,7 +10,6 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   icon?: ReactNode;
 }
 
-/** Le bouton de l'interface. Sa couleur vient du ton de l'écran qui le contient. */
 export function Button({ variant = "default", size = "default", icon, className, children, ...rest }: ButtonProps) {
   return (
     <button type="button" className={cx(styles.button, styles[variant], styles[size], className)} {...rest}>

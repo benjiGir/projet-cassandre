@@ -1,16 +1,4 @@
-/**
- * Réticule permanent — repère de visée au centre exact de l'écran, ajouté
- * après un retour playtest (« le tir est assez hasardeux ... j'ai
- * l'impression de ne pas toucher à bout portant » — le seul repère visuel
- * avant lui était le viewmodel, décalé bas-droit, trompeur pour estimer où
- * pointe réellement `aimForward`).
- *
- * Découplage de `game/*` (invariant #2, canvas 2D hors React), position
- * garantie géométriquement (pas une valeur tunable — seul le style l'est,
- * `CROSSHAIR_VARIANTS`) :
- * see: docs/archive/systems-rendu.md#découplage-entre-render-et-game
- * see: docs/archive/systems-rendu.md#overlays-canvas-2d-hors-react-réticule-et-hitmarker
- */
+// see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
 import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
 
@@ -36,9 +24,6 @@ export class CrosshairOverlay {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly cfg: CrosshairConfig;
 
-  // Enveloppe de pulsation 0..1 (1 = pic juste après un tir, décroît vers 0),
-  // même mécanique que `recoilEnvelope` dans `weapons.ts` mais purement
-  // cosmétique — décroît au dt RÉEL (jamais le pas fixe), voir `update`.
   private pulseEnvelope = 0;
 
   constructor(container: HTMLElement, cfg: CrosshairConfig) {
@@ -62,25 +47,19 @@ export class CrosshairOverlay {
     this.ctx = ctx;
   }
 
-  /**
-   * À appeler à CHAQUE tir réellement déclenché (`weapons.fireEvents`),
-   * quelle que soit l'arme et indépendamment d'un hit — contrairement à
-   * `HitmarkerOverlay.trigger`, qui ne confirme qu'un hit ennemi. No-op si le
-   * réticule ou sa pulsation est désactivé(e).
-   */
+  // Chaque tir accepté déclenche une pulsation, même sans hit ennemi.
   notifyFire() {
     if (!this.cfg.crosshairEnabled || !this.cfg.crosshairPulseEnabled) return;
     this.pulseEnvelope = 1;
   }
 
-  /** À appeler UNE FOIS PAR FRAME D'AFFICHAGE avec le delta temps réel, jamais `FIXED_DT` — même contrat que `HitmarkerOverlay.update`. */
+  // Delta réel d’affichage, jamais FIXED_DT.
   update(realDt: number) {
     if (this.pulseEnvelope <= 0) return;
     const duration = Math.max(this.cfg.crosshairPulseDuration, 1e-4);
     this.pulseEnvelope = Math.max(0, this.pulseEnvelope - realDt / duration);
   }
 
-  /** Redessine l'overlay. À appeler après `update()`, une fois par frame. No-op (canvas effacé) si le réticule est désactivé. */
   render() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -118,7 +97,7 @@ export class CrosshairOverlay {
     ctx.stroke();
   }
 
-  /** Retire le canvas du DOM. Non utilisé en jeu normal, présent pour un futur écran de menu/nettoyage de test — même contrat que `HitmarkerOverlay.dispose`. */
+  // Retire le canvas du DOM. Non utilisé en jeu normal, présent pour un futur écran de menu/nettoyage de test — même contrat que `HitmarkerOverlay.dispose`.
   dispose() {
     this.canvas.remove();
   }

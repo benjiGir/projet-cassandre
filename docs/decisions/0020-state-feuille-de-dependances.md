@@ -1,15 +1,17 @@
 ---
 title: game/state.ts comme feuille de dépendances
 tags: [adr, architecture, ui]
-status: accepte
-updated: 2026-09-25
+status: remplace
+updated: 2026-10-02
 ---
 
 # ADR 0020 — `game/state.ts` comme feuille de dépendances
 
 ## Statut
 
-Accepté.
+Remplacé par [ADR 0036](0036-contrats-feuilles-et-store-hud.md). Le texte ci-dessous
+conserve la décision de septembre et ses raisons ; les contrats sont désormais
+des feuilles séparées de l’implémentation du store.
 
 ## Contexte
 

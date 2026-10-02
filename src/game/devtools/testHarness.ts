@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { type Recording } from "../../core/inputRecorder";
+import { type Recording } from "../../core/inputTypes";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { PlayerController } from "../player/controller";
 import { FEEL_VARIANTS, fovForRunFactor, moveConfig, type MoveConfig } from "../player/moveConfig";
@@ -14,15 +14,10 @@ import {
   type RecoilVariant,
 } from "../player/weaponConfig";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../entities/suitConfig";
-
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
-/**
- * Simulation hors écran d'une séquence enregistrée : même monde minimal, même
- * controller, aucune dépendance au rendu ni à l'horloge réelle.
- * Base du test de déterminisme et de l'A/B de config.
- */
+// see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
 export function simulateRecording(rec: Recording, cfg: MoveConfig) {
   const world = new PhysicsWorld();
   const floor = world.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.1, 0));
@@ -62,12 +57,6 @@ export function simulateRecording(rec: Recording, cfg: MoveConfig) {
 
 const simBobScratch = new THREE.Vector3();
 
-/**
- * Rejoue deux fois la même séquence : écart max doit rester sous 1e-6,
- * position/vitesse ET grandeurs de vue (bob/FOV/réception) comprises — ces
- * dernières finissent en pixels au même titre que la position.
- * see: docs/archive/systems-debug.md#simulation-hors-écran-et-preuve-de-déterminisme
- */
 export function checkDeterminism(rec: Recording) {
   const a = simulateRecording(rec, moveConfig);
   const b = simulateRecording(rec, moveConfig);
@@ -101,10 +90,7 @@ interface FeelVariantReport {
   landingDipMax: number;
 }
 
-/**
- * Applique une variante de feel de la VUE, à chaud.
- * see: docs/archive/systems-joueur.md#harnais-ab-feel_variants
- */
+// see: docs/archive/systems-joueur.md#harnais-ab-feel_variants
 export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantReport {
   Object.assign(moveConfig, FEEL_VARIANTS[name]);
   const report: FeelVariantReport = {
@@ -125,13 +111,6 @@ interface RecoilVariantReport {
   shotgunRecoil: RecoilVariant["shotgunRecoil"];
 }
 
-/**
- * Applique une variante de recul d'arme, à chaud — même protocole que
- * `applyFeelVariant` : F9 enregistre une séquence de tir, `applyRecoilVariant`
- * change la variante, F10 rejoue EXACTEMENT la même séquence (`InputFrame.fire`
- * est un front enregistré comme un autre), seul le recul diffère à l'écran.
- * Aucun `applyConfig()` nécessaire : le recul n'est lu par Rapier nulle part.
- */
 export function applyRecoilVariant(name: keyof typeof RECOIL_VARIANTS): RecoilVariantReport {
   Object.assign(weaponConfig, RECOIL_VARIANTS[name]);
   const report: RecoilVariantReport = {
@@ -152,10 +131,7 @@ interface ImpactVariantReport {
   enemyShake: string;
 }
 
-/**
- * Applique une variante de feedback d'impact, à chaud.
- * see: docs/archive/systems-armes.md#hitstop-et-shake-murennemi-impact_variants
- */
+// see: docs/archive/systems-armes.md#hitstop-et-shake-murennemi-impact_variants
 export function applyImpactVariant(name: keyof typeof IMPACT_VARIANTS): ImpactVariantReport {
   Object.assign(weaponConfig, IMPACT_VARIANTS[name]);
   const report: ImpactVariantReport = {
@@ -176,12 +152,6 @@ interface HitmarkerVariantReport {
   kill: string;
 }
 
-/**
- * Applique une variante de hitmarker, à chaud — voir `HITMARKER_VARIANTS`
- * dans `weaponConfig.ts`. Le marqueur lit `weaponConfig` en DIRECT (même
- * objet que la config passée à `HitmarkerOverlay`), donc l'effet est visible
- * dès le prochain hit ennemi, sans rien réinstancier.
- */
 export function applyHitmarkerVariant(name: keyof typeof HITMARKER_VARIANTS): HitmarkerVariantReport {
   Object.assign(weaponConfig, HITMARKER_VARIANTS[name]);
   const report: HitmarkerVariantReport = {
@@ -200,12 +170,6 @@ interface CrosshairVariantReport {
   pulse: string;
 }
 
-/**
- * Applique une variante de réticule, à chaud — voir `CROSSHAIR_VARIANTS`
- * dans `weaponConfig.ts`. Le réticule lit `weaponConfig` en DIRECT (même
- * objet que la config passée à `CrosshairOverlay`), donc l'effet est visible
- * dès la prochaine frame, sans rien réinstancier.
- */
 export function applyCrosshairVariant(name: keyof typeof CROSSHAIR_VARIANTS): CrosshairVariantReport {
   Object.assign(weaponConfig, CROSSHAIR_VARIANTS[name]);
   const report: CrosshairVariantReport = {
@@ -226,12 +190,6 @@ interface KnockbackVariantReport {
   knockbackUpBoost: number;
 }
 
-/**
- * Applique une variante de knockback Costard, à chaud — voir
- * `KNOCKBACK_VARIANTS` dans `suitConfig.ts`. `Suit` lit `this.cfg` (référence
- * partagée vers `suitConfig` par défaut), donc l'effet s'applique au PROCHAIN
- * coup encaissé par n'importe quel Costard, sans recréer aucun corps Rapier.
- */
 export function applyKnockbackVariant(name: keyof typeof KNOCKBACK_VARIANTS): KnockbackVariantReport {
   Object.assign(suitConfig, KNOCKBACK_VARIANTS[name]);
   const report: KnockbackVariantReport = {
@@ -269,25 +227,6 @@ export interface RenderBenchmark {
   programmes: number;
 }
 
-/**
- * Banc de mesure du coût de rendu, en dehors de la boucle de jeu.
- *
- * Pourquoi il existe : le budget de 200 000 triangles fixé au jalon N1 n'a
- * jamais été confronté au matériel ; et les FPS ne se mesurent pas dans un
- * navigateur piloté en automatisation, où `document.visibilityState` vaut
- * `hidden` et bride `requestAnimationFrame` à une image par seconde (limite
- * documentée du projet). Ce banc contourne les deux : il appelle
- * `renderer.render` lui-même, en boucle serrée, sans jamais dépendre de
- * `requestAnimationFrame`.
- *
- * `gl.finish()` encadre la mesure pour que le GPU ait réellement terminé —
- * sans lui, on ne chronomètre que l'envoi des commandes côté CPU, ce qui est
- * précisément la partie qui ne coûte rien quand le problème est le nombre de
- * triangles.
- *
- * Ne touche à aucun état de jeu : ne fait qu'afficher la scène telle quelle,
- * depuis la caméra courante. Le pas fixe n'est pas avancé (invariant #1).
- */
 export function benchmarkRender(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
@@ -325,21 +264,6 @@ export interface LightBudgetReport {
   budget: number | null;
 }
 
-/**
- * Garde allumées les `budget` lampes ponctuelles les plus proches de la
- * caméra et éteint les autres (`visible = false`, ce que le renderer WebGL
- * exclut de son état d'éclairage — trois.js n'évalue que les lampes
- * visibles).
- *
- * Pourquoi ça existe : three.js pose TOUTES les lampes en uniformes de
- * fragment. Au-delà de quelques centaines de `PointLight`, le programme
- * dépasse `MAX_FRAGMENT_UNIFORM_VECTORS` et ne compile plus DU TOUT — la
- * géométrie concernée disparaît, en console seulement. C'est la limite
- * annoncée par l'ADR 0024 pour le niveau v2 ; cet outil sert à la mesurer
- * et à essayer le remède avant de l'écrire pour de bon.
- *
- * Outil de mesure, pas un système de jeu : rien ne l'appelle par image.
- */
 export function applyLightBudget(
   scene: THREE.Scene,
   camera: THREE.Camera,

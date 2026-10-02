@@ -2,41 +2,11 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
+import type { LevelResources } from "./levelResources";
 import { damageForWeapon } from "../player/weaponConfig";
-import type { HitEvent } from "../player/weapons";
+import type { HitEvent } from "../player/weaponTypes";
 
-/**
- * Préfixe `ecran_*` — écrans/façades animés du chantier « Les coulisses »
- * (système 2) : un mur d'écrans qui boucle sur une chaîne (`journal`, `pub`,
- * `mire`, `foot`, `cctv`), cassable au tir (`pv`) vers un état CASSÉ
- * (neige/noir qui flashe). L'atlas est `assets_src/textures/prd_chaines.png`,
- * généré par `tools/textures/generate_chaines.py` — `ECRAN_ATLAS` ci-dessous
- * DOIT rester la traduction exacte de `CHAINES` dans ce script (même ordre,
- * mêmes 16 cases).
- *
- * Même séparation en trois temps que `vitre_*`/`sanitaire_*` :
- * - `loader.ts` construit un candidat par mesh `ecran_*` (collider fixe posé
- *   sur sa bbox monde, comme un sanitaire — jamais de `col_*` jumeau) ;
- * - `mergeEcranDecor` fusionne tous les écrans qui partagent le matériau de
- *   l'atlas en UN SEUL lot de dessin pour tout le niveau (contrainte dure du
- *   budget, 200 pire vue) ;
- * - `EcranSystem` fait vivre l'état de partie (PV, frame courante, casse).
- *
- * La boucle d'animation ne bouge JAMAIS la géométrie : elle réécrit l'UV de
- * la plage de sommets de CET écran pour pointer sur une autre case de
- * l'atlas, exactement comme `VitreSystem`/`SanitaireSystem` réécrivent des
- * POSITIONS à la casse. Un lot fusionné reste un lot, quel que soit le nombre
- * d'écrans qui changent de frame — c'est ce qui rend une quarantaine de
- * télévisions animées (atelier SAV, lot 3) tenable dans le budget.
- *
- * Horloge dérivée du PAS FIXE (`update(dtFixed, ...)`, invariant #1) — jamais
- * de `Date.now()`/`requestAnimationFrame` : un écran figé par un hitstop gèle
- * son animation avec le reste du jeu, et le rejeu d'input reste déterministe.
- */
-
-// ---------------------------------------------------------------------------
-// Atlas — miroir exact de tools/textures/generate_chaines.py::CHAINES.
-// ---------------------------------------------------------------------------
+// see: docs/6-reference/notes-code-gameplay-niveau.md#écrans-et-douches
 
 /** Chaînes choisissables par la custom property Blender `chaine`. `"casse"`
  * N'EN FAIT PAS PARTIE : c'est un état interne, jamais posé dans Blender —
@@ -87,6 +57,7 @@ function buildCellIndex(): Record<EcranTrack, number[]> {
 }
 
 /** `chaine -> [index de case dans l'atlas, une par frame]`. */
+// Même ordre que CHAINES dans tools/textures/generate_chaines.py.
 const ECRAN_ATLAS = buildCellIndex();
 
 /** Durée d'affichage d'une frame, secondes de GAMEPLAY. La casse flashe plus
@@ -100,24 +71,11 @@ const FRAME_DURATION: Record<EcranTrack, number> = {
   casse: 0.12,
 };
 
-/** Rectangle UV `[u0, v0]` d'une case, dans l'ordre du `PIL` (origine
- * haut-gauche) — mêmes conventions que `generate_chaines.py`, qui écrit
- * `y = (i // 4) * CELL` du haut vers le bas ET une image `.png` classique
- * (V croissant vers le BAS). `THREE` attend V croissant vers le HAUT pour un
- * UV standard ; le loader ne retourne PAS les textures des atlas existants
- * (`prd_ecrans`/`prd_chaines` partagent le même exportateur Blender que le
- * reste du niveau, dont les faces sont UV-mappées avec la même convention
- * "haut d'image = V=1"), donc `v0` se calcule depuis le HAUT comme `u0`.
- */
 function cellRect(index: number): { u0: number; v0: number } {
   const col = index % 4;
   const row = Math.floor(index / 4);
   return { u0: col * CELL_UV, v0: 1 - (row + 1) * CELL_UV };
 }
-
-// ---------------------------------------------------------------------------
-// Données du loader — un candidat par mesh `ecran_*`, AVANT fusion.
-// ---------------------------------------------------------------------------
 
 export interface EcranCandidate {
   name: string;
@@ -130,10 +88,6 @@ export interface EcranCandidate {
   extras: Record<string, unknown>;
 }
 
-/** Un écran APRÈS fusion — même contrat que `VitreInfo`/`SanitaireInfo` : une
- * plage de sommets adressable dans le lot fusionné, plus l'UV NORMALISÉ
- * (0..1 dans l'empreinte d'origine de CET écran) qui permet de replacer sa
- * frame courante n'importe où dans l'atlas sans jamais retoucher la géométrie. */
 export interface EcranInfo {
   name: string;
   collider: RAPIER.Collider;
@@ -197,13 +151,7 @@ function passthroughEcranInfo(candidate: EcranCandidate): EcranInfo {
   };
 }
 
-/**
- * Fusionne les `ecran_*` qui partagent un matériau (l'atlas `prd_chaines`,
- * en pratique un seul groupe pour tout le niveau) en UN lot de dessin — même
- * technique que `mergeVitreDecor`, sans découpe par cellule (une quarantaine
- * d'écrans pèse quelques centaines de triangles, rien à écarter par distance).
- */
-export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly EcranCandidate[]): EcranMergeResult {
+export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly EcranCandidate[], resources?: LevelResources): EcranMergeResult {
   const groups = new Map<string, EcranCandidate[]>();
   for (const candidate of candidates) {
     const key = materialKey(candidate.mesh.material);
@@ -225,9 +173,12 @@ export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly Ecran
 
     const geometries = group.map((candidate) => {
       toRootSpace.multiplyMatrices(rootInverse, candidate.mesh.matrixWorld);
-      return candidate.mesh.geometry.clone().applyMatrix4(toRootSpace);
+      const geometry = candidate.mesh.geometry.clone();
+      resources?.geometry(geometry);
+      return geometry.applyMatrix4(toRootSpace);
     });
     const merged = mergeGeometries(geometries, false);
+    if (merged) resources?.geometry(merged);
     if (!merged) {
       for (const g of geometries) g.dispose();
       for (const candidate of group) ecrans.push(passthroughEcranInfo(candidate));
@@ -273,10 +224,6 @@ export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly Ecran
   return { ecrans, batchCount };
 }
 
-// ---------------------------------------------------------------------------
-// Système — état mutable d'une partie, reconstruit à chaque chargement.
-// ---------------------------------------------------------------------------
-
 export interface EcranHitEvent {
   name: string;
   point: THREE.Vector3;
@@ -297,11 +244,6 @@ interface EcranState {
   clock: number;
 }
 
-/**
- * Les écrans d'UN niveau chargé. Reconstruit à chaque commit (hot reload
- * compris, comme `VitreSystem`/`SanitaireSystem`) : un écran cassé redevient
- * intact — et repart sur sa PREMIÈRE frame — au rechargement, avec le fichier.
- */
 export class EcranSystem {
   private readonly states: EcranState[] = [];
   private readonly byColliderHandle = new Map<number, EcranState>();
@@ -345,12 +287,6 @@ export class EcranSystem {
     this.hitCursor = 0;
   }
 
-  /**
-   * Pas fixe : route les impacts du pas courant (comme `VitreSystem.update`)
-   * puis avance l'horloge d'animation de CHAQUE écran de `dtFixed`. À
-   * appeler APRÈS `weapons.update` et AVANT `physics.step`, même place que
-   * les autres systèmes de casse.
-   */
   update(dtFixed: number, hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
       const hit = hitEvents[i]!;

@@ -4,7 +4,7 @@ import { FieldSliders } from "../../../controls/FieldSliders/FieldSliders";
 import { SUIT_FEEDBACK_FIELDS } from "../../../lib/tuningFields";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";
 import { TuningGroup } from "../../../layout/TuningGroup/TuningGroup";
-import type { ConfigEditor } from "../../../lib/useConfigEditor";
+import type { ConfigEditor } from "../../../lib/tuningTypes";
 import { VariantButtons } from "../../../controls/VariantButtons/VariantButtons";
 
 const DEFAULT_SUIT_CONFIG: SuitConfig = { ...suitConfig };
@@ -16,7 +16,6 @@ export interface SuitTuningProps {
   suit: ConfigEditor<SuitConfig>;
 }
 
-/** Ce que ressent un Costard touché : recul et flash de dégât. */
 export function SuitTuning({ suit }: SuitTuningProps) {
   function handleReset() {
     Object.assign(suitConfig, DEFAULT_SUIT_CONFIG);

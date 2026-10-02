@@ -1,5 +1,4 @@
-/* Largeur généreuse et petite police : c'est le nombre de lignes qui fait la
-   hauteur de la bulle. see: docs/systems/hud.md#hud-de-production */
+/* see: docs/archive/systems-hud.md#hud-de-production */
 .bubble {
   margin-top: calc(var(--vpx) * 4);
   max-width: calc(var(--vpx) * 220);

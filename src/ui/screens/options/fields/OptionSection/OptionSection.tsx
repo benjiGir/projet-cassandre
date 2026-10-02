@@ -9,7 +9,6 @@ export interface OptionSectionProps {
   children: ReactNode;
 }
 
-/** Un réglage de l'écran d'options : titre, explication, puis le contrôle. */
 export function OptionSection({ title, hint, children }: OptionSectionProps) {
   return (
     <section className={styles.section}>

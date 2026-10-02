@@ -11,13 +11,7 @@ export interface LoadingScreenProps {
   title?: string;
 }
 
-/**
- * Écran de chargement : vraie progression, et un reflet qui glisse sur la
- * barre. Le reflet est une animation CSS de `transform`, jouée par le
- * compositeur : c'est la seule chose qui bouge encore quand la construction
- * des colliders bloque le fil principal.
- * see: docs/archive/systems-hud.md#écran-de-chargement
- */
+// see: docs/archive/systems-hud.md#écran-de-chargement
 export function LoadingScreen({ title = "PROJET_CASSANDRE" }: LoadingScreenProps) {
   const { status, label, percent, quip, message, retry } = useLoadingStatus();
 

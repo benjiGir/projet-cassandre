@@ -3,7 +3,7 @@ import { Howl, Howler } from "howler";
 const LOAD_TIMEOUT_MS = 15000;
 let activationInstalled = false;
 
-/** Garde Web Audio prêt entre deux actions ; la reprise reste liée à un geste utilisateur. */
+// see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 export function installAudioActivation(): void {
   if (activationInstalled) return;
   activationInstalled = true;
@@ -18,7 +18,6 @@ export function installAudioActivation(): void {
   document.addEventListener("keydown", resume, { capture: true });
 }
 
-/** Attend le décodage à la frontière de chargement, sans rendre un fichier absent fatal. */
 export function waitForAudioLoad(howl: Howl): Promise<boolean> {
   if (howl.state() === "loaded") return Promise.resolve(true);
   if (Howler.noAudio) return Promise.resolve(false);
@@ -40,7 +39,6 @@ export function waitForAudioLoad(howl: Howl): Promise<boolean> {
   });
 }
 
-/** Amorce les voix du pool Howler en silence, sans consommer le RNG de présentation. */
 export function warmAudioPool(howl: Howl, sprite: string, voices: number): void {
   if (!Howler.usingWebAudio || howl.state() !== "loaded") return;
   const volume = howl.volume();

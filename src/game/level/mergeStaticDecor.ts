@@ -1,34 +1,11 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
+import type { LevelResources } from "./levelResources";
+
 // see: docs/archive/pipeline-niveau-blender.md#fusion-du-décor-statique
 
-/**
- * Côté d'une cellule de regroupement, mètres.
- *
- * Un lot fusionné est dessiné dès qu'une seule de ses parties entre dans le
- * champ. Regrouper le décor du niveau ENTIER par matériau (ce que faisait
- * l'ADR 0023) donne donc des lots que le tri d'écart n'élimine jamais : le
- * niveau est dessiné en entier à chaque image, dos compris. Découper d'abord
- * en cellules rend le tri d'écart à nouveau capable d'écarter ce qui n'est pas
- * vu, au prix d'un lot de plus par cellule occupée et par matériau.
- *
- * 48 m est l'ordre de grandeur d'une pièce du niveau v2 (de 12 × 48 m pour
- * l'allée centrale à 48 × 36 m pour le parking) : c'est la « fusion par
- * espace » de l'ADR 0026, obtenue sans demander au niveau de déclarer ses
- * espaces — donc valable aussi pour les niveaux déjà exportés.
- *
- * La valeur est le COUDE d'une courbe mesurée, pas un choix d'ordre de
- * grandeur — et **ce coude s'est déplacé quand l'habillage est arrivé**. Sur le
- * blockout gris, 32 m gagnait encore ; sur le niveau habillé, où chaque cellule
- * porte bien plus de matériaux distincts, 32 m coûte 163 lots de dessin au pire
- * point de vue contre 122 à 48 m, pour seulement 3,7 % de triangles en moins.
- * Au-delà (64 m), les lots ne baissent plus et les triangles remontent. Le
- * budget sous tension est celui des LOTS, pas celui des triangles : chiffres et
- * méthode dans
- * [Ce que coûte une image](../../../docs/archive/systems-cout-de-rendu.md#découpe-du-décor-en-cellules).
- * see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
- */
+// see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
 export const DECOR_CELL_SIZE = 48;
 
 export interface DecorMergeResult {
@@ -62,13 +39,7 @@ export function attributeKey(geometry: THREE.BufferGeometry): string {
 
 const centerScratch = new THREE.Vector3();
 
-/**
- * Cellule d'un mesh : celle de son CENTRE en monde, pas de son origine — un sol
- * de 42 × 36 m dont l'origine est dans un coin appartient à la cellule qu'il
- * couvre vraiment. Un objet plus grand qu'une cellule tombe donc entier dans
- * une seule ; c'est voulu, les grandes pièces sont peu nombreuses et les
- * découper coûterait plus cher que ça ne rapporte.
- */
+// see: docs/6-reference/notes-code-gameplay-niveau.md#fusion-et-poses
 function cellKey(mesh: THREE.Mesh): string {
   if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
   const box = mesh.geometry.boundingBox;
@@ -93,13 +64,7 @@ function isMergeable(mesh: THREE.Mesh): mesh is THREE.Mesh<THREE.BufferGeometry,
   );
 }
 
-/**
- * Fusionne les meshes de décor statiques qui partagent un même matériau ET une
- * même cellule de `DECOR_CELL_SIZE` mètres en un seul mesh par groupe, rattaché
- * à `root`. Chaque géométrie garde ses propres sommets, donc ses vertex colors
- * bakées. `root.matrixWorld` et ceux des candidats doivent être à jour.
- */
-export function mergeStaticDecor(root: THREE.Object3D, candidates: readonly THREE.Mesh[]): DecorMergeResult {
+export function mergeStaticDecor(root: THREE.Object3D, candidates: readonly THREE.Mesh[], resources?: LevelResources): DecorMergeResult {
   const groups = new Map<string, THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>[]>();
   for (const mesh of candidates) {
     if (!isMergeable(mesh)) continue;
@@ -118,9 +83,12 @@ export function mergeStaticDecor(root: THREE.Object3D, candidates: readonly THRE
     if (group.length < 2) continue;
     const geometries = group.map((mesh) => {
       toRootSpace.multiplyMatrices(rootInverse, mesh.matrixWorld);
-      return mesh.geometry.clone().applyMatrix4(toRootSpace);
+      const geometry = mesh.geometry.clone();
+      resources?.geometry(geometry);
+      return geometry.applyMatrix4(toRootSpace);
     });
     const merged = mergeGeometries(geometries, false);
+    if (merged) resources?.geometry(merged);
     for (const g of geometries) g.dispose();
     if (!merged) continue;
 

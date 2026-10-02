@@ -7,7 +7,7 @@ import { bootGameSession, teardownGameSession } from "../game/session/lifecycle"
 import type { GameEngine } from "../game/session/gameEngine";
 import type { GameSession } from "../game/session/gameSession";
 import { App } from "../ui/App";
-import type { GameFlowActor } from "../ui/gameFlowMachine";
+import type { GameFlowActor } from "./gameFlowMachine";
 import { resolveBootChoice } from "./bootChoice";
 
 export async function waitForGameSessionReady(actor: GameFlowActor, session: GameSession): Promise<boolean> {
@@ -35,7 +35,25 @@ export interface SessionFlow {
 }
 
 export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlowActor): SessionFlow {
-  async function replay(): Promise<void> {
+  let transitionInFlight: Promise<void> | null = null;
+
+  function runTransition(operation: () => Promise<void>): Promise<void> {
+    if (transitionInFlight) return transitionInFlight;
+    transitionInFlight = operation().finally(() => {
+      transitionInFlight = null;
+    });
+    return transitionInFlight;
+  }
+
+  function replay(): Promise<void> {
+    return runTransition(replaySession);
+  }
+
+  function returnToMenu(): Promise<void> {
+    return runTransition(returnToMenuSession);
+  }
+
+  async function replaySession(): Promise<void> {
     const choice = engine.session.choice;
     actor.send({ type: "REPLAY" });
     beginLoading("Redémarrage de la partie", 0.02);
@@ -45,7 +63,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
     await waitForGameSessionReady(actor, engine.session);
   }
 
-  async function returnToMenu(): Promise<void> {
+  async function returnToMenuSession(): Promise<void> {
     actor.send({ type: "RETURN_TO_MENU" });
     await teardownGameSession(engine, engine.session);
     const url = new URL(window.location.href);

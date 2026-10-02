@@ -2,26 +2,14 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
-import type { HitEvent } from "../player/weapons";
+import type { HitEvent } from "../player/weaponTypes";
 import { damageForWeapon } from "../player/weaponConfig";
 import type { NavGraph } from "../level/pathfinding";
-import type { VitreHitTarget } from "./enemyMachine";
+import type { VitreHitTarget } from "./enemyTypes";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 
-/**
- * Manager léger : possède `Suit[]`, boucle dessus, traduit les sorties de
- * chaque `Suit.update()` en files d'événements accumulées PAR FRAME
- * D'AFFICHAGE, vidées UNE SEULE FOIS par `clearFrameEvents()` — conforme à
- * l'invariant #8. Propriétaire du `KinematicCharacterController` PARTAGÉ
- * (une seule instance pour tous les Costards).
- *
- * `hitCursor` (voir `consumeNewHits`) ne relit jamais un impact déjà vu
- * malgré un `weapons.hitEvents` qui accumule sur PLUSIEURS pas fixes d'une
- * même frame — remis à 0 UNIQUEMENT par `clearFrameEvents()`, jamais inféré.
- * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
- * see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
- */
+// see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
 
 export interface SuitAlertEvent {
   suit: Suit;
@@ -70,6 +58,7 @@ export class SuitManager {
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly colliderToSuit = new Map<number, Suit>();
   private spawnCount = 0;
+  // Remis à zéro uniquement après présentation, pas entre les pas fixes.
   private hitCursor = 0;
 
   private readonly _alertEvents: SuitAlertEvent[] = [];
@@ -109,17 +98,6 @@ export class SuitManager {
     return this._playerHitEvents;
   }
 
-  /**
-   * Vide toutes les files d'événements. À appeler UNE SEULE FOIS par frame
-   * d'affichage, EN TOUT DERNIER dans `updateFx` (même règle que
-   * `weapons.clearFrameEvents()`), après que tous les lecteurs (sprites, fx,
-   * audio, store) ont fini de lire cette frame.
-   *
-   * C'est aussi ici, et SEULEMENT ici, que `hitCursor` retombe à 0 (voir
-   * `consumeNewHits` et l'en-tête du fichier) — jamais inféré par
-   * comparaison de longueur.
-   * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
-   */
   clearFrameEvents() {
     this._alertEvents.length = 0;
     this._telegraphEvents.length = 0;
@@ -130,11 +108,7 @@ export class SuitManager {
     this.hitCursor = 0;
   }
 
-  /**
-   * Fait apparaître un Costard. `feetY` = hauteur des PIEDS (même convention
-   * que `PlayerController.spawn`). `facing` par défaut = +Z, normalisé en
-   * interne par `Suit`.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
   spawnSuit(x: number, feetY: number, z: number, facing = new THREE.Vector3(0, 0, 1)): Suit {
     const seed = (BASE_SUIT_SEED + this.spawnCount * SEED_STRIDE) >>> 0;
     this.spawnCount++;
@@ -149,21 +123,6 @@ export class SuitManager {
     for (const suit of this.suits) suit.snapshotPrevious();
   }
 
-  /**
-   * Un pas fixe. À appeler APRÈS `weapons.update(...)` (pour que
-   * `hitEvents` du pas courant existent déjà) — voir `game/loop/updateGameplay.ts`.
-   *
-   * `playerTargetPosition`/`playerEyePosition` : origines AUTHENTIQUES du pas
-   * fixe courant (jamais interpolées pour le rendu), même discipline que
-   * `WeaponSystem.update`.
-   *
-   * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : graphe de praticabilité
-   * du niveau COURANT (`session.currentNavGraph`), `null` tant qu'aucun bake
-   * n'a encore eu lieu — rebaké pendant la préparation transactionnelle de
-   * `createLevelSession` (voir `game/session/spawning.ts::loadGltfLevel`).
-   * Simplement transmis à chaque `Suit` via `SuitUpdateContext`, ce manager
-   * ne l'interprète jamais lui-même.
-   */
   update(
     dt: number,
     playerTargetPosition: THREE.Vector3,
@@ -199,15 +158,7 @@ export class SuitManager {
     aggregated.clear();
   }
 
-  /**
-   * DEV UNIQUEMENT : tue immédiatement `suit`, en poussant un vrai
-   * `deathEvent` (comme un kill au tir) — sans passer par `weapons.hitEvents`,
-   * donc sans viser. Sert à vérifier le récap de fin de partie
-   * (`game/session/score.ts`) et l'écran de fin de niveau/mort depuis la
-   * console, le verrouillage du pointeur étant hors de portée de
-   * l'automatisation (même précédent que `PropSystem.destroyByName`).
-   * Retourne `false` sans effet si `suit` est déjà mort.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
   debugKill(suit: Suit): boolean {
     if (!suit.isAlive) return false;
     const damage: AggregatedHit = {
@@ -234,10 +185,6 @@ export class SuitManager {
     const result = suit.applyDamage(hit.totalDamage, this.physics, this.scratchKnockback);
 
     if (result.died) {
-      // Retire le mapping IMMÉDIATEMENT : Rapier peut recycler un handle de
-      // collider supprimé pour un futur `createCollider` (un nouveau Costard
-      // spawné via `cassandre.spawnSuit`). Sans ce retrait, un tir touchant
-      // ce nouveau collider router ait par erreur vers CE Costard mort.
       if (handleBeforeDeath !== undefined) this.colliderToSuit.delete(handleBeforeDeath);
       this._deathEvents.push({
         suit,
@@ -263,12 +210,6 @@ export class SuitManager {
     }
   }
 
-  /**
-   * `hitCursor` est remis à 0 exclusivement par `clearFrameEvents()` — jamais
-   * ici. Ne PAS réintroduire de comparaison de longueur pour « deviner » une
-   * nouvelle frame.
-   * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
-   */
   private consumeNewHits(hitEvents: ReadonlyArray<HitEvent>): Map<Suit, AggregatedHit> {
     const aggregated = this.aggregationScratch;
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
@@ -288,13 +229,6 @@ export class SuitManager {
       if (!entry.gibs && hitEvent.weapon === "shotgun" && hitEvent.distance <= this.cfg.gibDistance) {
         entry.gibs = true;
         entry.gibPoint = hitEvent.point.clone();
-        // Approximation de la direction du coup fatal : la normale de
-        // surface pointe globalement VERS le tireur, donc son inverse
-        // approxime la trajectoire du plomb — voir la doc de `HitEvent` dans
-        // `weapons.ts` (la normale du pompe vient de `castRayAndGetNormal`,
-        // une vraie normale de surface, pas une approximation comme pour le
-        // pied-de-biche). `fx.spawnGibs` ne demande qu'une direction DE BASE
-        // pour la dispersion, pas une trajectoire exacte.
         entry.gibDirection = hitEvent.normal.clone().negate();
       }
     }

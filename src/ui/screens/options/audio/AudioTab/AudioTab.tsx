@@ -15,12 +15,7 @@ import { VolumeFader } from "../VolumeFader/VolumeFader";
 import { AUDIO_CHANNELS } from "./audioChannels";
 import styles from "./AudioTab.module.css";
 
-/**
- * Onglet AUDIO : table de mixage par canal, sous-titres et son en
- * arrière-plan. Persisté et appliqué à chaud par `game/audioSettings.ts` ;
- * ce composant ne fait que présenter.
- * see: docs/4-technique/audio-runtime.md#réglages-du-joueur
- */
+// see: docs/4-technique/audio-runtime.md#réglages-du-joueur
 export function AudioTab() {
   const [settings, setSettings] = useState<AudioSettings>(getAudioSettings);
 

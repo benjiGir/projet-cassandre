@@ -1,21 +1,9 @@
-/**
- * Paramètres de l'ennemi « Costard » — source unique de vérité, même
- * convention que `game/player/moveConfig.ts`/`weaponConfig.ts` : objet
- * mutable, tunable à chaud (`cassandre.suitConfig.xxx = …`), aucun nombre de
- * comportement/combat codé en dur ailleurs que dans ce fichier. Valeurs de
- * départ, pas des choix de tuning arrêtés, sauf mention contraire explicite
- * ci-dessous.
- * see: docs/6-reference/valeurs-ennemis.md
- */
+// see: docs/6-reference/valeurs-ennemis.md
 export interface SuitConfig {
   /** Points de vie max, en PV. */
   maxHp: number;
 
-  // Mêmes conventions capsule/KCC que `MoveConfig` (skill
-  // `rapier-character-controller`), dupliquées ici plutôt que réutilisées :
-  // `MoveConfig` porte aussi visée, saut, head bob — sans sens pour un
-  // Costard — et le coupler romprait dès que l'un des deux bouge pour une
-  // raison propre au joueur.
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#déplacement-et-combat
   capsuleRadius: number;
   capsuleHalfHeight: number;
   /** Hauteur des yeux (origine des raycasts de vision/tir), mesurée depuis les pieds, en mètres. */
@@ -28,24 +16,12 @@ export interface SuitConfig {
   snapToGroundDistance: number;
   maxSlopeClimbAngleDeg: number;
   minSlopeSlideAngleDeg: number;
-  /**
-   * Vitesse descendante appliquée en permanence au sol, m/s — MÊME valeur et
-   * MÊME raison que `MoveConfig.groundStickSpeed` (voir sa doc détaillée
-   * dans `moveConfig.ts` : au-delà d'~0.2 combiné à un grand déplacement
-   * horizontal axé-axe, `computeColliderMovement` dégénère). Les ennemis se
-   * déplacent plus lentement que le joueur, donc le risque mesuré côté
-   * joueur est déjà une borne haute ici.
-   */
   groundStickSpeed: number;
   maxFallSpeed: number;
 
   /** Distance de détection du joueur, en mètres. Au-delà, IDLE ne vérifie même pas la ligne de vue. */
   sightRange: number;
-  /**
-   * Temps sans contact visuel avant de retomber en IDLE, en secondes.
-   * Valeur PRESCRITE par le skill `enemy-state-machine` (diagramme de la
-   * machine à états) — ne pas la retuner sans relire le skill.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
   lostContactTimeout: number;
 
   /** Vitesse de poursuite, m/s. Volontairement < vitesse de marche du joueur (9 m/s) : un Costard qui rattrape un joueur immobile mais qu'on peut semer en bougeant. */
@@ -60,12 +36,6 @@ export interface SuitConfig {
 
   /** Temps passé en ALERTE (pose de « je t'ai vu ») avant de basculer en POURSUITE, en secondes. */
   alertDuration: number;
-  /**
-   * Temps d'anticipation de l'attaque (pose TIR tenue) avant que les dégâts
-   * ne partent, en secondes. Règle NON NÉGOCIABLE du skill : >= 0.2 s, sinon
-   * le joueur ne peut physiquement pas réagir. Ne jamais descendre sous ce
-   * seuil, même en tuning.
-   */
   attackTelegraphDuration: number;
   /** Temps minimum entre deux attaques, en secondes (indépendant de l'état courant). */
   attackCooldown: number;
@@ -83,10 +53,7 @@ export interface SuitConfig {
   /** Distance en dessous de laquelle un coup de pompe mortel déclenche des gibs, en mètres — point de tuning ouvert (contrairement aux valeurs de dispersion du pompe, prescrites dans `weaponConfig.ts`). */
   gibDistance: number;
 
-  // Le Costard est un corps KINÉMATIQUE : `RAPIER.RigidBody.applyImpulse`
-  // n'a AUCUN EFFET dessus. Le recul est donc une VÉLOCITÉ pilotée à la
-  // main par `Suit`, décroissante sur `knockbackDecayTime` — voir
-  // `Suit.applyDamage`/`Suit.updateKnockback`.
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
   /** Vitesse horizontale initiale du recul à l'impact, m/s. */
   knockbackSpeed: number;
   /** Temps de retour à zéro du recul DEPUIS cette vitesse, en secondes (rampe linéaire, même idiome que `approach()` dans `controller.ts`). */
@@ -94,12 +61,6 @@ export interface SuitConfig {
   /** Composante verticale initiale du recul (petit « pop » vers le haut), m/s. */
   knockbackUpBoost: number;
 
-  /**
-   * Durée du flash blanc de dégât sur le sprite touché, en secondes. Était
-   * une constante en dur (`FLASH_DURATION`) dans `render/billboard.ts`, non
-   * exposée — violait le mandat « config unique, tunable à chaud » du skill
-   * `game-feel-tuning`. Déplacée ici, valeur de départ inchangée.
-   */
   hitFlashDuration: number;
 
   /** Amplitude du screenshake quand une attaque de Costard touche le joueur, en mètres (via l'API publique existante de `render/fx.ts::triggerShake`). */
@@ -160,14 +121,7 @@ export const suitConfig: SuitConfig = {
   playerHitShakeDuration: 0.1,
 };
 
-/**
- * Variantes de knockback — harnais A/B (`cassandre.applyKnockbackVariant("B")`).
- * `knockbackSpeed`/`knockbackDecayTime`/`knockbackUpBoost` n'avaient jamais
- * été tunés humainement ; candidats identifiés par le retour playtest
- * Phase 3. Protocole F9/F10 : le recorder ne restaure pas l'état des
- * Costards, voir la doc du harnais.
- * see: docs/archive/reference-valeurs-ennemis.md#variantes-de-knockback-costard-harnais-ab
- */
+// see: docs/archive/reference-valeurs-ennemis.md#variantes-de-knockback-costard-harnais-ab
 export interface KnockbackVariant {
   knockbackSpeed: number;
   knockbackDecayTime: number;
@@ -183,10 +137,7 @@ export const KNOCKBACK_VARIANTS: Record<"A" | "B" | "C", KnockbackVariant> = {
   C: { knockbackSpeed: 8, knockbackDecayTime: 0.35, knockbackUpBoost: 3 },
 };
 
-/**
- * Variantes de flash de dégât — harnais A/B (`cassandre.applyFlashVariant("B")`).
- * see: docs/archive/reference-valeurs-ennemis.md#variantes-de-flash-costard-harnais-ab
- */
+// see: docs/archive/reference-valeurs-ennemis.md#variantes-de-flash-costard-harnais-ab
 export interface FlashVariant {
   hitFlashDuration: number;
 }

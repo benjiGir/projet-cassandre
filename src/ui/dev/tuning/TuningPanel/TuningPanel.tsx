@@ -5,18 +5,10 @@ import { HitFeedbackTuning } from "../sections/hitFeedback/HitFeedbackTuning/Hit
 import { MoveTuning } from "../sections/MoveTuning/MoveTuning";
 import styles from "./TuningPanel.module.css";
 
-// Backquote (`/~) : la seule touche du projet que rien d'autre n'utilise.
 // see: docs/archive/reference-controles.md#touches-de-dev
 const TOGGLE_KEY = "Backquote";
 
-/**
- * Curseurs à chaud pour `moveConfig`, `weaponConfig` et `suitConfig` (skill
- * `game-feel-tuning`) : sans eux, régler le feel exige la console pendant
- * qu'on court. Fermé, le panneau est démonté — rien n'intercepte la souris.
- * Ne touche jamais au pas fixe : il mute les configs sur une action humaine,
- * jamais en tâche de fond (invariant #2).
- * see: docs/archive/systems-hud.md#panneau-de-tuning-à-chaud
- */
+// see: docs/archive/systems-hud.md#panneau-de-tuning-à-chaud
 export function TuningPanel() {
   const [open, setOpen] = useState(false);
 

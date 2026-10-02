@@ -4,22 +4,11 @@ import { RollingP95 } from "./rollingP95";
 export const FIXED_DT = 1 / 60;
 const MAX_FRAME = 0.25; // garde-fou anti spiral of death
 
-/** Diagnostic de la dernière frame d'affichage. Lu hors du pas fixe. */
 export interface LoopStats {
-  /** Pas fixes exécutés pendant cette frame (0 possible à haute fréquence d'affichage). */
+  // see: docs/6-reference/notes-code-core.md#rejeu-et-horloge
   steps: number;
-  /** Reste de l'accumulateur après les pas fixes, en secondes. */
   accumulator: number;
-  /** Facteur d'interpolation passé au rendu. */
   alpha: number;
-  /**
-   * Jalon M7 : compteurs de temps par phase pour `DebugPanel`. `gameplayMs`/
-   * `physicsMs` somment tous les pas fixes de la frame ; `renderMs` est
-   * mesuré sur la frame PRÉCÉDENTE (décalage d'une frame, sans conséquence
-   * pour un indicateur de debug déjà lissé).
-   *
-   * see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
-   */
   gameplayMs: number;
   gameplayP95Ms: number;
   physicsMs: number;
@@ -27,14 +16,8 @@ export interface LoopStats {
 }
 
 export interface LoopCallbacks {
-  /** Capture la visée au taux d'affichage avant que le premier pas fixe ne la lise. */
   updateDisplayInput: () => void;
   snapshotPrevious: () => void;
-  /**
-   * Décide du mouvement du pas courant. Appelé AVANT `stepPhysics` : un
-   * character controller kinématique pose sa translation cible ici, et
-   * `world.step()` l'applique dans le même pas fixe (voir plus bas).
-   */
   updateGameplay: (dt: number) => void;
   stepPhysics: (dt: number) => void;
   interpolateVisuals: (alpha: number) => void;
@@ -42,19 +25,9 @@ export interface LoopCallbacks {
   render: () => void;
 }
 
-/**
- * Boucle à pas fixe 1/60 avec accumulateur et interpolation du rendu.
- * L'ORDRE des callbacks (gameplay avant physique, `endFrame` en dernier) est
- * une décision de conception délibérée — ne pas l'inverser sans relire la
- * doc.
- *
- * see: docs/archive/systems-boucle-de-jeu.md#ordre-des-callbacks
- */
 export function startLoop(callbacks: LoopCallbacks) {
   let accumulator = 0;
   let last = performance.now();
-  // Frame précédente : `renderMs` ne peut se mesurer avant sa propre fin.
-  // see: docs/archive/systems-boucle-de-jeu.md#mesure-des-temps-de-frame-loopstats
   let lastRenderMs = 0;
   const gameplayP95 = new RollingP95();
   let gameplayP95Ms = 0;
@@ -96,8 +69,6 @@ export function startLoop(callbacks: LoopCallbacks) {
     callbacks.render();
     lastRenderMs = performance.now() - renderStart;
 
-    // DOIT rester le dernier appel de la frame.
-    // see: docs/archive/systems-boucle-de-jeu.md#ordre-de-la-frame-daffichage
     input.endFrame();
   }
 

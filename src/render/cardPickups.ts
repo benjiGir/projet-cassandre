@@ -12,7 +12,6 @@ const CARD_FLOAT_HEIGHT = 0.22;
 const CARD_BOB_AMPLITUDE = 0.06;
 const UP = new THREE.Vector3(0, 1, 0);
 
-/** Chargement au démarrage : aucun chargement asynchrone à la mort du Directeur. */
 export async function loadCardPickupTextures(): Promise<CardPickupTextures> {
   const textures = await Promise.all(LOYALTY_CARDS.map(async (card) => {
     const texture = await new THREE.TextureLoader().loadAsync(assetUrl(`assets/sprites/cards/${card}.png`));
@@ -34,8 +33,7 @@ export class CardPickupBillboard {
   private readonly worldRotation = new THREE.Quaternion();
 
   constructor(card: LoyaltyCard, position: THREE.Vector3, textures: CardPickupTextures) {
-    // Pixels partagés, texture d'instance : le nettoyage du niveau ne libère
-    // pas la texture du drop du Directeur ou d'un candidat au hot reload.
+    // Cloner isole la libération du niveau et du drop pendant un hot reload.
     const texture = textures[card].clone();
     configureRetroTexture(texture);
     const material = new THREE.MeshLambertMaterial({
@@ -59,7 +57,7 @@ export class CardPickupBillboard {
     this.baseLocalY = this.spriteMesh.position.y;
   }
 
-  /** Flottement et orientation cosmétiques, au taux d'affichage uniquement. */
+  // Flottement et orientation cosmétiques, au taux d'affichage uniquement.
   update(camera: THREE.Camera, realDt: number): void {
     this.clock += realDt;
     this.spriteMesh.position.y = this.baseLocalY + Math.sin(this.clock * 2.1 + this.phase) * CARD_BOB_AMPLITUDE;
@@ -76,7 +74,6 @@ export class CardPickupBillboard {
     }
   }
 
-  /** Les cartes du niveau sont nettoyées par le loader ; le drop est autonome. */
   dispose(): void {
     this.spriteMesh.removeFromParent();
     this.spriteMesh.geometry.dispose();
@@ -93,7 +90,7 @@ export function dressCardPickup(
 ): CardPickupBillboard {
   const bounds = new THREE.Box3().setFromObject(object);
   const center = bounds.getCenter(new THREE.Vector3());
-  // Cacher la matière garde l'objet actif pour l'interaction et l'élagage.
+  // Garder le parent actif pour l’interaction et l’élagage.
   if (object instanceof THREE.Mesh) {
     object.material = new THREE.MeshLambertMaterial({ visible: false });
   }

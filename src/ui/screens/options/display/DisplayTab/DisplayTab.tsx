@@ -23,11 +23,7 @@ const RESOLUTION_CHOICES = RESOLUTION_PRESETS.map((preset) => ({
 
 const ORIGIN = RESOLUTION_PRESETS[0];
 
-/**
- * Onglet AFFICHAGE : quatre réglages graphiques, persistés et appliqués par
- * `game/graphicsSettings.ts`. Ce composant ne fait que les présenter.
- * see: docs/archive/systems-hud.md#options-contrôles-et-affichage
- */
+// see: docs/archive/systems-hud.md#options-contrôles-et-affichage
 export function DisplayTab() {
   const [settings, setSettings] = useState<GraphicsSettings>(getGraphicsSettings);
   const defaults = getFactoryDefaults();

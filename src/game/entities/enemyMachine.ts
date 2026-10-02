@@ -3,39 +3,25 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 import { type Actor, createActor, setup } from "xstate";
 
+import type {
+  EnemyConfig,
+  EnemyState,
+  BreakableHitTarget,
+  EnemyUpdateContext,
+  EnemyMachineContext,
+  CreateEnemyContextParams,
+  EnemyEvent,
+  EnemyDamageOutcome,
+} from "./enemyTypes";
 import { DeterministicRandom } from "../../core/random";
 import { runGameplaySync } from "../../core/runtime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
-import { PathfindingService, type NavGraph } from "../level/pathfinding";
+import { PathfindingService } from "../level/pathfinding";
 import { cheats } from "../devtools/cheats";
-import type { EnemyAnimationInput } from "../../render/enemySprites";
+import type { EnemyAnimationInput } from "../../render/enemySpriteTypes";
 
-/**
- * Machine à états PARTAGÉE entre `Suit` et `Director` — voir
- * docs/decisions/0009-machine-partagee-suit-director.md pour la décision.
- * Tout ce qui est indépendant du gabarit visuel/Rapier exact de l'entité vit
- * ici (table de transition, durées, perception, évitement local, suivi de
- * chemin, jitter de visée, knockback, intégration physique) ; `suit.ts`/
- * `director.ts` ne gardent que le corps/collider Rapier, leur config et
- * leur acteur XState.
- *
- * Plusieurs choix internes non évidents (pourquoi `attackCooldownRemaining`/
- * `timeSinceLastSeen` ne sont pas des `stateTimer`, pourquoi pas de `guard:`
- * pour les transitions pilotées par TICK, comment `state`/`stateTimer`
- * restent réaffectables depuis les tests, la discipline zéro-allocation, et
- * pourquoi `after` — transitions retardées par temps mural — est interdit
- * ici) sont documentés en détail :
- * see: docs/archive/systems-entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
- *
- * Rappel le plus susceptible d'être violé par erreur en éditant ce fichier :
- * toute action MUTE `context` directement (`context.stateTimer = 0`), ne
- * jamais utiliser `assign(...)` (réallouerait `context` à chaque
- * transition) ; aucune durée d'état ne doit passer par `after`/`setTimeout`
- * (choix du code, ex-invariant #13 de CLAUDE.md, retiré le 2026-09-25) —
- * seul `context.stateTimer`, incrémenté par `tickEnemy` avec le `dt` de
- * gameplay, mesure le temps.
- */
+// see: docs/archive/systems-entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
 
 const TAU = Math.PI * 2;
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
@@ -55,60 +41,7 @@ function horizontalDistanceSq(a: THREE.Vector3, b: THREE.Vector3): number {
   return dx * dx + dz * dz;
 }
 
-// Config — sous-ensemble structurel commun à `SuitConfig`/`DirectorConfig`.
 
-/**
- * Champs de config lus par la logique PARTAGÉE ci-dessous. `SuitConfig`/
- * `DirectorConfig` restent des interfaces DISTINCTES (objets de tuning
- * séparés, valeurs différentes par type d'ennemi — voir leur propre
- * fichier) ; elles satisfont toutes deux `EnemyConfig` STRUCTURELLEMENT
- * (mêmes noms de champs, TypeScript ne demande rien de plus), donc
- * `this.cfg` (typé `SuitConfig`/`DirectorConfig` côté wrapper) se passe tel
- * quel aux fonctions partagées sans conversion.
- */
-export interface EnemyConfig {
-  capsuleRadius: number;
-  capsuleHalfHeight: number;
-  eyeHeight: number;
-  characterMass: number;
-  colliderOffset: number;
-  autostepMaxHeight: number;
-  autostepMinWidth: number;
-  autostepIncludeDynamicBodies: boolean;
-  snapToGroundDistance: number;
-  maxSlopeClimbAngleDeg: number;
-  minSlopeSlideAngleDeg: number;
-  groundStickSpeed: number;
-  maxFallSpeed: number;
-
-  sightRange: number;
-  lostContactTimeout: number;
-
-  chaseSpeed: number;
-  turnRateRadPerSec: number;
-
-  avoidanceRayLength: number;
-  avoidanceSideAngleDeg: number;
-
-  alertDuration: number;
-  attackTelegraphDuration: number;
-  attackCooldown: number;
-  attackRange: number;
-  staggerDuration: number;
-  deathFrameDuration: number;
-
-  attackDamage: number;
-  aimJitterDeg: number;
-
-  knockbackSpeed: number;
-  knockbackDecayTime: number;
-  knockbackUpBoost: number;
-}
-
-// États — partagés (identiques entre Suit et Director).
-
-export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
-export type EnemyState = EnemyLiveState | "dead" | "corpse";
 
 /** Pose du sprite pour chaque état : l'attaque se TIENT en joue pendant la télégraphie. */
 const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
@@ -121,11 +54,7 @@ const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
   corpse: "corpse",
 };
 
-/**
- * Traduit l'état courant en entrées d'animation du sprite, écrites dans `out`
- * (zéro allocation par frame). Lecture seule : l'animation ne décide rien.
- * see: docs/archive/systems-rendu.md#animation-des-sprites-dennemis
- */
+// see: docs/archive/systems-rendu.md#animation-des-sprites-dennemis
 export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput): EnemyAnimationInput {
   const snapshot = actor.getSnapshot();
   const ctx = snapshot.context;
@@ -146,134 +75,11 @@ export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput):
   return out;
 }
 
-// Contexte per-tick fourni par l'appelant (SuitManager/DirectorManager) —
-// remplace `SuitUpdateContext`/`DirectorUpdateContext` (ré-exportés en alias
-// de type depuis `suit.ts`/`director.ts` pour ne rien casser côté appelants).
+// see: docs/decisions/0032-sanitaires-utilisables.md
 
-/**
- * Vue minimale d'un système de décor CASSABLE D'UN COUP par un tir ennemi
- * (`game/level/vitres.ts::VitreSystem`, `game/level/sanitaires.ts::SanitaireSystem`)
- * utile à `resolveAttack` — interface STRUCTURELLE plutôt qu'un import
- * direct, pour ne pas alourdir le couplage de ce fichier au-delà de ce qu'il
- * utilise réellement (un seul appel). Les deux systèmes la satisfont sans
- * rien déclarer de spécial — voir `handleEnemyShotMiss` pour comment
- * plusieurs cibles cohabitent sans dupliquer cette logique par système.
- * see: docs/decisions/0032-sanitaires-utilisables.md
- */
-export interface BreakableHitTarget {
-  tryBreakByColliderHandle(colliderHandle: number, point: THREE.Vector3, direction: THREE.Vector3): boolean;
-}
 
-/** Alias historique : `VitreSystem` était le seul type à satisfaire cette
- * interface avant les sanitaires — conservé pour ne pas casser les imports
- * existants (`suitManager.ts`/`directorManager.ts`/leurs tests). */
-export type VitreHitTarget = BreakableHitTarget;
 
-export interface EnemyUpdateContext {
-  physics: PhysicsWorld;
-  /** Contrôleur PARTAGÉ — une seule instance, possédée par `SuitManager`/`DirectorManager`. */
-  kcc: RAPIER.KinematicCharacterController;
-  playerTargetPosition: THREE.Vector3;
-  playerEyePosition: THREE.Vector3;
-  navGraph: NavGraph | null;
-  /**
-   * Vitrages du niveau courant (`session.vitreSystem`), `undefined` si aucun
-   * niveau glTF n'est chargé (la gym n'a pas de `vitre_*`). Un tir ennemi qui
-   * rate le joueur mais rencontre une vitre sur son chemin la CASSE — effet
-   * Duke Nukem voulu, voir `handleEnemyShotMiss`.
-   * see: docs/decisions/0031-portes-animees-et-vitres.md
-   */
-  vitreSystem?: BreakableHitTarget;
-  /**
-   * Sanitaires du niveau courant (`session.sanitaireSystem`), même contrat et
-   * même raison d'être optionnelle que `vitreSystem` ci-dessus — un tir
-   * ennemi qui rate le joueur mais rencontre un sanitaire intact le casse.
-   * see: docs/decisions/0032-sanitaires-utilisables.md
-   */
-  sanitaireSystem?: BreakableHitTarget;
-}
 
-// Contexte XState — TOUT ce qu'une entité porte, hors id/rendu/`revealed`.
-
-export interface EnemyMachineContext {
-  readonly cfg: EnemyConfig;
-  readonly nextRandom: () => number;
-
-  body: RAPIER.RigidBody | null;
-  collider: RAPIER.Collider | null;
-
-  readonly position: THREE.Vector3;
-  readonly previousPosition: THREE.Vector3;
-  readonly forward: THREE.Vector3;
-  readonly previousForward: THREE.Vector3;
-
-  hp: number;
-  stateTimer: number;
-  /** PAS un `stateTimer` : persiste à travers toutes les transitions, remis à zéro par des règles précises. */
-  // see: docs/archive/systems-entites.md#deux-catégories-de-données-dans-le-contexte-minuteurs-détat-et-mémoire-persistante
-  timeSinceLastSeen: number;
-  /** Idem. */
-  attackCooldownRemaining: number;
-  isGrounded: boolean;
-  verticalVelocity: number;
-
-  readonly velocityHorizontal: THREE.Vector3;
-  readonly knockbackVelocity: THREE.Vector3;
-
-  pendingAlert: boolean;
-  pendingTelegraph: boolean;
-  /** Le coup est parti ce pas (touché ou non) : le son du tir, distinct des dégâts. */
-  pendingShot: boolean;
-  pendingAttackDamage: number;
-  readonly pendingPlayerHitPoint: THREE.Vector3;
-  readonly pendingPlayerHitNormal: THREE.Vector3;
-
-  currentPath: ReadonlyArray<THREE.Vector3>;
-  currentWaypointIndex: number;
-  readonly lastPathQueryTarget: THREE.Vector3;
-
-  /** Nombre de frames de l'animation de mort — `DEATH_FRAME_COUNT`/`DIRECTOR_DEATH_FRAME_COUNT`, fourni par le wrapper à la construction plutôt que codé en dur ici. */
-  readonly deathFrameCount: number;
-
-  // --- Horloges d'animation du sprite, avancées au pas fixe et lues par le
-  // rendu seul (`readEnemyAnimation`) : aucune décision ne les consulte.
-  /** Secondes de gameplay depuis l'apparition. */
-  animClock: number;
-  /** Mètres parcourus depuis l'apparition : font défiler la course. */
-  strideDistance: number;
-  /** Secondes depuis le dernier tir réellement parti. */
-  timeSinceShot: number;
-
-  // --- Scratch, zéro allocation en régime établi (identique à l'avant-jalon).
-  readonly scratchRay: RAPIER.Ray;
-  readonly scratchToPlayer: THREE.Vector3;
-  readonly scratchEye: THREE.Vector3;
-  readonly scratchMoveDir: THREE.Vector3;
-  readonly scratchLeftDir: THREE.Vector3;
-  readonly scratchRightDir: THREE.Vector3;
-  readonly scratchAimDir: THREE.Vector3;
-  readonly scratchJitteredDir: THREE.Vector3;
-  readonly scratchAimRight: THREE.Vector3;
-  readonly scratchAimUp: THREE.Vector3;
-  /** Point d'impact d'un tir ennemi qui rate le joueur — voir `handleEnemyShotMiss`. */
-  readonly scratchEnemyShotPoint: THREE.Vector3;
-  readonly desiredScratch: { x: number; y: number; z: number };
-  readonly movementScratch: { x: number; y: number; z: number };
-  readonly nextTranslationScratch: THREE.Vector3;
-}
-
-export interface CreateEnemyContextParams {
-  cfg: EnemyConfig;
-  nextRandom: () => number;
-  body: RAPIER.RigidBody;
-  collider: RAPIER.Collider;
-  /** Centre de la capsule au spawn (PAS les pieds — voir `createEnemyBody`). */
-  centerPosition: THREE.Vector3;
-  /** Orientation initiale, DÉJÀ normalisée (Y=0) — voir le constructeur de `Suit`/`Director`. */
-  forward: THREE.Vector3;
-  hp: number;
-  deathFrameCount: number;
-}
 
 /** Construit le `context` XState d'une entité neuve. Appelé UNE FOIS par le constructeur de `Suit`/`Director`, jamais par pas fixe. */
 export function createEnemyMachineContext(params: CreateEnemyContextParams): EnemyMachineContext {
@@ -337,13 +143,7 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
   };
 }
 
-/**
- * PRNG déterministe — une instance PAR ENTITÉ, jamais partagée, jamais
- * `Math.random()`. Générateur obtenu via `DeterministicRandom`
- * (`core/random.ts`, invariant #12 de `CLAUDE.md`) — plus de copie locale
- * de mulberry32 ici depuis le nettoyage du 2026-09-05 (même source
- * canonique que `weapons.ts`).
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 export function createEnemyPrng(seed: number): () => number {
   return runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)));
 }
@@ -354,13 +154,7 @@ function isPlayerCollider(collider: RAPIER.Collider): boolean {
   return (membership & GROUP.PLAYER) !== 0;
 }
 
-/**
- * Construit le corps kinématique + le collider capsule d'une entité —
- * IDENTIQUE entre `Suit`/`Director` avant ce jalon (seuls les nombres de
- * `cfg` changent). `spawnPosition` = PIEDS (même convention que
- * `PlayerController.spawn`) ; retourne aussi `centerY` (déjà calculé) pour
- * éviter à l'appelant de le recalculer.
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#déplacement-et-combat
 export function createEnemyBody(
   physics: PhysicsWorld,
   cfg: EnemyConfig,
@@ -377,13 +171,6 @@ export function createEnemyBody(
   return { body, collider, centerY };
 }
 
-/**
- * Configure un `KinematicCharacterController` brut pour une entité —
- * IDENTIQUE entre `configureSuitCharacterController`/
- * `configureDirectorCharacterController` avant ce jalon ; ces deux noms
- * restent exportés par `suit.ts`/`director.ts` (appelants inchangés :
- * `SuitManager`/`DirectorManager`), en simples re-exports de celle-ci.
- */
 export function configureEnemyCharacterController(
   controller: RAPIER.KinematicCharacterController,
   cfg: EnemyConfig,
@@ -412,11 +199,6 @@ function computeEyePosition(ctx: EnemyMachineContext, out: THREE.Vector3): THREE
   return out.set(ctx.position.x, feetY + ctx.cfg.eyeHeight, ctx.position.z);
 }
 
-/**
- * Ligne de vue dégagée entre deux points, contre la géométrie du niveau
- * SEULE. `ray` est un scratch fourni par l'appelant (zéro allocation).
- * Retourne `true` si RIEN du monde ne bloque le segment `origin -> target`.
- */
 function hasClearWorldPath(
   physics: PhysicsWorld,
   origin: THREE.Vector3,
@@ -493,13 +275,7 @@ function castAvoidanceRay(ctx: EnemyMachineContext, physics: PhysicsWorld, dir: 
   return hit === null;
 }
 
-/**
- * 3 rayons d'évitement (avant, avant-gauche 30°, avant-droit 30°) contre la
- * géométrie du niveau SEULE — contrat du skill `enemy-state-machine`. ORDRE
- * DE TEST LITTÉRAL préservé (avant -> gauche -> droite), un test de
- * caractérisation le vérifie explicitement. Pas de navmesh : si les trois
- * sont bloqués, l'entité reste sur place ce pas-ci.
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
 function computeAvoidedDirection(
   ctx: EnemyMachineContext,
   physics: PhysicsWorld,
@@ -533,13 +309,6 @@ function turnTowards(ctx: EnemyMachineContext, targetDir: THREE.Vector3, dt: num
   ctx.forward.set(Math.sin(newAngle), 0, Math.cos(newAngle));
 }
 
-/**
- * Direction horizontale (X/Z, Y=0) vers le prochain waypoint du chemin baké
- * courant, écrite dans `out`. Retourne `false` (n'écrit RIEN dans `out`) si
- * aucun pathfinding exploitable n'est disponible ce pas-ci — `runChase`
- * retombe alors sur `computeAvoidedDirection`, INCHANGÉ (filet de sécurité
- * explicite, jalon M4).
- */
 function tryComputeChaseDirectionFromPath(
   ctx: EnemyMachineContext,
   updateCtx: EnemyUpdateContext,
@@ -598,21 +367,7 @@ function applyAimJitter(ctx: EnemyMachineContext, dir: THREE.Vector3, out: THREE
     .normalize();
 }
 
-/**
- * Un rayon d'attaque ennemi qui ne touche PAS le joueur peut quand même avoir
- * touché une vitre ou un sanitaire entre-temps (le jitter de visée dévie
- * légèrement le tir de la ligne de mire exacte, qui elle passait déjà la
- * vérification de ligne de vue) — la casse plutôt que de laisser le rayon
- * s'arrêter dessus sans rien signaler, effet Duke Nukem voulu par le contrat
- * de `vitre_*`/`sanitaire_*`. GÉNÉRALISÉE (jalon sanitaires, ADR 0032) pour
- * accepter PLUSIEURS cibles cassables plutôt que de dupliquer cette fonction
- * une deuxième fois pour `sanitaireSystem` : le premier collider AU HANDLE
- * connu d'une cible de la liste la casse, les suivantes ne sont pas
- * essayées. EXPORTÉE pour un test direct (logique pure, sans machine à
- * états ni PRNG à faire atterrir sur le bon jitter) :
- * see: docs/decisions/0031-portes-animees-et-vitres.md
- * see: docs/decisions/0032-sanitaires-utilisables.md
- */
+// see: docs/decisions/0031-portes-animees-et-vitres.md
 export function handleEnemyShotMiss(
   breakables: ReadonlyArray<BreakableHitTarget | undefined>,
   hitCollider: RAPIER.Collider,
@@ -626,11 +381,6 @@ export function handleEnemyShotMiss(
   }
 }
 
-/**
- * Raycast d'attaque (groupe `ENEMY_SHOT`). Re-vérifie la ligne de vue au
- * moment du tir : le joueur a pu se mettre à couvert pendant la fenêtre de
- * télégraphie — l'attaque rate alors SILENCIEUSEMENT.
- */
 function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext): void {
   if (cheats.notarget) return; // dev : la pose de tir va au bout, le coup ne part pas
   const eye = computeEyePosition(ctx, ctx.scratchEye);
@@ -692,10 +442,6 @@ function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext):
   ctx.pendingPlayerHitNormal.set(hit.normal.x, hit.normal.y, hit.normal.z);
 }
 
-/**
- * Gravité + collage au sol + recul, intégrés et résolus par le
- * `KinematicCharacterController` PARTAGÉ (`updateCtx.kcc`).
- */
 function integratePhysics(ctx: EnemyMachineContext, dt: number, updateCtx: EnemyUpdateContext): void {
   if (!ctx.body || !ctx.collider) return; // garde-fou (dead/corpse retournent avant, voir `tickEnemy`).
 
@@ -735,17 +481,6 @@ function integratePhysics(ctx: EnemyMachineContext, dt: number, updateCtx: Enemy
 // Machine XState — graphe + actions d'entrée.
 // see: docs/archive/systems-entites.md#pourquoi-le-calcul-de-transition-vit-hors-des-gardes-xstate
 
-export type EnemyEvent =
-  | { type: "SAW_PLAYER" }
-  | { type: "ALERT_ELAPSED" }
-  | { type: "TARGET_IN_RANGE" }
-  | { type: "CONTACT_LOST" }
-  | { type: "ATTACK_RESOLVED" }
-  | { type: "STAGGER_ELAPSED" }
-  | { type: "HIT_FATAL"; physics: PhysicsWorld }
-  | { type: "HIT_NONFATAL"; knockbackDirection: THREE.Vector3 }
-  | { type: "DEATH_ANIM_DONE" };
-
 export const enemyMachine = setup({
   types: {} as {
     context: EnemyMachineContext;
@@ -768,13 +503,6 @@ export const enemyMachine = setup({
     armAttackCooldown: ({ context }) => {
       context.attackCooldownRemaining = context.cfg.attackCooldown;
     },
-    /**
-     * `* -> dead`. `event` est TOUJOURS `HIT_FATAL` ici (seule transition qui
-     * la référence) — XState type `event` sur l'union complète `EnemyEvent`
-     * dans chaque action de `setup()`, donc cette vérification est une pure
-     * formalité TypeScript pour affiner le type, pas une branche défensive
-     * qui peut réellement se déclencher.
-     */
     enterDead: ({ context, event }) => {
       if (event.type !== "HIT_FATAL") return;
       context.stateTimer = 0;
@@ -854,11 +582,7 @@ export function createEnemyActor(context: EnemyMachineContext): EnemyActor {
   return createActor(enemyMachine, { input: context }).start();
 }
 
-/**
- * Réservé aux SETTERS publics `Suit.state`/`Director.state` — jamais appelé
- * par le chemin de production (`tickEnemy`/`applyEnemyDamageCore`).
- * see: docs/archive/systems-entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
- */
+// see: docs/archive/systems-entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
 export function forceEnemyState(actor: EnemyActor, next: EnemyState): void {
   const context = actor.getSnapshot().context;
   const resolved = enemyMachine.resolveState({ value: next, context });
@@ -948,16 +672,6 @@ function runStagger(actor: EnemyActor, ctx: EnemyMachineContext, dt: number): vo
   }
 }
 
-/**
- * Un pas fixe. `dt` est le dt de GAMEPLAY (scalé par le hitstop) — jamais
- * d'horloge murale. Remplace le corps entier de `Suit.update`/
- * `Director.update` avant ce jalon (préambule + `switch` + intégration
- * physique) — les deux classes deviennent de fins appels à cette fonction.
- *
- * PRÉCONDITION (inchangée) : l'appelant (`SuitManager`/`DirectorManager`)
- * n'appelle PAS `tickEnemy` le pas fixe où cette entité vient d'encaisser un
- * coup — `applyEnemyDamageCore`/le `send` qui suit gèrent ce pas-là.
- */
 export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateContext): void {
   const snapshot = actor.getSnapshot();
   const ctx = snapshot.context;
@@ -1011,15 +725,6 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
   integratePhysics(ctx, dt, updateCtx);
 }
 
-export type EnemyDamageOutcome = "already-dead" | "fatal" | "nonfatal";
-
-/**
- * Garde `isAlive` + soustraction de `amount` — s'ARRÊTE avant d'envoyer quoi
- * que ce soit à l'acteur : c'est à l'appelant (`Suit.applyDamage`/
- * `Director.applyDamage`) de décider quel évènement envoyer ET, pour
- * `Director`, d'observer `hp` juste après la soustraction (calcul de
- * `revealed`) avant que `enterDead` ne le remette à 0.
- */
 export function applyEnemyDamageCore(actor: EnemyActor, amount: number): EnemyDamageOutcome {
   const snapshot = actor.getSnapshot();
   if (snapshot.value === "dead" || snapshot.value === "corpse") return "already-dead"; // garde-fou, ne devrait jamais arriver.

@@ -19,14 +19,13 @@ let preparation: Promise<void> | null = null;
 let warnedMissing = false;
 
 const targetMix: WaterAmbienceMix = { gain: 0, pan: 0 };
-/** Gain du canal « ambiances » réglé par le joueur (`game/audioSettings.ts`). */
+// see: docs/6-reference/notes-code-core.md#mixage-de-leau
 let channelGain = 1;
 
 export function setShowerAmbienceGain(gain: number): void {
   channelGain = gain;
 }
 
-/** Décode et amorce la boucle en silence pendant le chargement. */
 export function initShowerAmbience(): Promise<void> {
   if (preparation) return preparation;
 
@@ -51,7 +50,6 @@ export function initShowerAmbience(): Promise<void> {
   return preparation;
 }
 
-/** Met à jour la boucle localisée depuis la présentation, jamais depuis le pas fixe. */
 export function updateShowerAmbience(
   listenerPosition: Vec3Like,
   listenerRight: Vec3Like,

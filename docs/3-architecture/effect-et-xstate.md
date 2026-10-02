@@ -2,7 +2,7 @@
 title: Effect et XState
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-02
 ---
 
 # Effect et XState
@@ -156,7 +156,7 @@ Détail : [Boucle et temps](boucle-et-temps.md#hitstop).
 
 ### `gameFlowMachine` — flux d'écran
 
-Graphe d'état **pur** (`src/ui/gameFlowMachine.ts`,
+Graphe d'état **pur** (`src/app/gameFlowMachine.ts`,
 [ADR 0019](../decisions/0019-machine-xstate-flux-ecran.md)) : ne connaît ni
 `PhysicsWorld`, ni `scene`, ni `bootGameSession`. Dix états (`boot`,
 `mainMenu`, `options`, `levelSelect`, `loading`, `loadFailed`, `playing`,

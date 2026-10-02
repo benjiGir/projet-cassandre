@@ -2,7 +2,7 @@
 title: Référence
 tags: [sommaire]
 status: brouillon
-updated: 2026-10-01
+updated: 2026-10-02
 ---
 
 # Référence
@@ -25,3 +25,10 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [React — CSS](react-css.md) — modules, jetons et styles HUD.
 - [React — composition](react-composition.md) — primitives, children et widgets.
 - [Three.js et Rapier](threejs-rapier.md) — unités, KCC, groupes et raycasts.
+
+## Notes de conception conservées depuis le code
+
+- [Core, physique et application](notes-code-core.md).
+- [Gameplay et session](notes-code-gameplay.md), [joueur et armes](notes-code-gameplay-joueur.md), [ennemis](notes-code-gameplay-ennemis.md).
+- [Niveau](notes-code-gameplay-niveau.md) et [outils de développement](notes-code-gameplay-outils.md).
+- [Rendu](notes-code-rendu.md) et [interface](notes-code-interface.md).

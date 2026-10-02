@@ -6,12 +6,10 @@ import styles from "./TuningSection.module.css";
 export interface TuningSectionProps {
   title?: string;
   hint?: string;
-  /** Trait de séparation au-dessus : la section ouvre un nouveau harnais. */
   separated?: boolean;
   children: ReactNode;
 }
 
-/** Un harnais du panneau (déplacement, feedback de hit, cheats de dev). */
 export function TuningSection({ title, hint, separated = false, children }: TuningSectionProps) {
   return (
     <section className={cx(styles.section, separated && styles.separated)}>

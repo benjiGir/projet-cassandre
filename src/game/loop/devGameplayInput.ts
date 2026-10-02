@@ -5,7 +5,6 @@ import type { GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import { showHudMessage } from "../session/feedback";
 import { startPlayback, startRecording } from "../session/recording";
-
 /** Les commandes de dev qui modifient le jeu sont consommées une fois dans le pas fixe. */
 export function handleDevGameplayInput(engine: GameEngine, session: GameSession): void {
   if (input.consumeJustPressed("F9")) {

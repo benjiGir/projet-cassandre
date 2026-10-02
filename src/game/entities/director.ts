@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
-import { type LoyaltyCard } from "../player/loyaltyCards";
 
+import { type LoyaltyCard } from "../player/loyaltyCards";
 import type { PhysicsWorld } from "../../physics/world";
 import { allocateEntityId, type Entity } from "./entity";
 import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
@@ -19,37 +19,22 @@ import {
   snapshotEnemyPrevious,
   tickEnemy,
   type EnemyActor,
-  type EnemyMachineContext,
-  type EnemyState,
-  type EnemyUpdateContext,
 } from "./enemyMachine";
-import type { EnemyAnimationInput } from "../../render/enemySprites";
+import type { EnemyMachineContext, EnemyState, EnemyUpdateContext } from "./enemyTypes";
+import type { EnemyAnimationInput } from "../../render/enemySpriteTypes";
 
-/**
- * L'ennemi « Directeur » — boss unique de fin (Zone E), 2ᵉ type d'ennemi du
- * jeu après `Suit`. Fin wrapper autour de la machine XState partagée
- * (`enemyMachine.ts`) : possède le corps/collider Rapier, son PRNG, l'acteur
- * XState, ET, propre à ce type d'ennemi seulement, `revealed`/`justRevealed`
- * (bascule costume humain -> reptilien) et le badge droppé à la mort.
- * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
- * see: docs/decisions/0009-machine-partagee-suit-director.md
- */
+// see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
 
 /** Frames de l'animation de mort — même choix que `Suit` (6 frames, 0,9 s au `deathFrameDuration` du Directeur). */
 export const DIRECTOR_DEATH_FRAME_COUNT = 6;
 
-/** États de la machine — alias de `EnemyState` (`enemyMachine.ts`), même union littérale que `SuitState`. */
+/** États de la machine — alias de `EnemyState` (`enemyTypes.ts`), même union littérale que `SuitState`. */
 export type DirectorState = EnemyState;
 
-/** Contexte partagé injecté à chaque `Director.update()` — alias de `EnemyUpdateContext` (`enemyMachine.ts`), même graphe partagé (baké sur le gabarit `suitConfig`, voir `level/pathfinding.ts`), même filet de sécurité `computeAvoidedDirection` si `null`/requête échouée. */
+/** Contexte partagé injecté à chaque `Director.update()` — alias de `EnemyUpdateContext` (`enemyTypes.ts`), même graphe partagé (baké sur le gabarit `suitConfig`, voir `level/pathfinding.ts`), même filet de sécurité `computeAvoidedDirection` si `null`/requête échouée. */
 export type DirectorUpdateContext = EnemyUpdateContext;
 
-/**
- * Résultat d'`applyDamage` — contrairement à `Suit` (qui ne renvoie que
- * `{ died }`), le Directeur ajoute `justRevealed` : `true` UNE SEULE FOIS, au
- * pas fixe précis où ses PV passent SOUS `revealHpFraction * maxHp` pour la
- * première fois.
- */
+// see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 export interface DirectorDamageResult {
   died: boolean;
   justRevealed: boolean;
@@ -60,21 +45,8 @@ export class Director implements Entity {
   private readonly actor: EnemyActor;
   private readonly cfg: DirectorConfig;
 
-  /**
-   * `true` dès que les PV sont passés sous le seuil de révélation — jamais
-   * remis à `false` (pas de mécanique de soin dans ce prototype). Pilote
-   * l'apparence (teinte) via ce champ, pas via `state` : orthogonal à la
-   * machine à états partagée (un Directeur révélé continue de traverser
-   * idle/alert/chase/attack/stagger normalement).
-   * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
-   */
   revealed = false;
 
-  /**
-   * @param spawnPosition PIEDS du Directeur au spawn (x, feetY, z).
-   * @param spawnForward Orientation initiale, normalisée en interne (Y ignoré).
-   * @param seed Graine PRNG déterministe de cette instance — jamais dérivée de `Math.random()`/`Date.now()`.
-   */
   constructor(
     physics: PhysicsWorld,
     spawnPosition: THREE.Vector3,
@@ -208,19 +180,6 @@ export class Director implements Entity {
     return interpolateEnemyForward(this.ctx, alpha, out);
   }
 
-  /**
-   * Applique `amount` dégâts. Retourne `{ died, justRevealed }` — voir la doc
-   * de `DirectorDamageResult`. Ne touche à AUCUN système de rendu/audio/state,
-   * même discipline que `Suit.applyDamage`.
-   *
-   * ORDRE À PRÉSERVER : le garde-fou `isAlive`/la soustraction de `hp` sont
-   * délégués à `applyEnemyDamageCore` (cœur PARTAGÉ avec `Suit`) ; le calcul
-   * de `revealed`/`justRevealed` lit `this.hp` JUSTE APRÈS cette
-   * soustraction — donc AVANT que l'action `enterDead` (machine partagée) ne
-   * le remette à 0 en cas de coup fatal. Inverser casse `justRevealed` sur un
-   * coup qui tue et révèle en même temps.
-   * see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
-   */
   applyDamage(amount: number, physics: PhysicsWorld, knockbackDirection: THREE.Vector3): DirectorDamageResult {
     const wasRevealed = this.revealed;
     const outcome = applyEnemyDamageCore(this.actor, amount);
@@ -240,23 +199,12 @@ export class Director implements Entity {
     return { died: false, justRevealed };
   }
 
-  /**
-   * Un pas fixe. `dt` est le dt de GAMEPLAY — jamais d'horloge murale.
-   *
-   * PRÉCONDITION identique à `Suit.update` : l'appelant n'appelle PAS
-   * `update()` le pas fixe où ce Directeur vient d'encaisser un coup —
-   * `applyDamage` gère ce pas-là (stagger/mort/révélation).
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
   update(dt: number, ctx: DirectorUpdateContext) {
     tickEnemy(this.actor, dt, ctx);
   }
 }
 
-/**
- * Applique la configuration `DirectorConfig` à un `KinematicCharacterController`
- * brut — re-export de la fabrique PARTAGÉE (`enemyMachine.ts`), gardé sous ce
- * nom pour `DirectorManager` (inchangé par ce jalon).
- */
 export function configureDirectorCharacterController(
   controller: RAPIER.KinematicCharacterController,
   cfg: DirectorConfig,
@@ -264,12 +212,7 @@ export function configureDirectorCharacterController(
   configureEnemyCharacterController(controller, cfg);
 }
 
-/**
- * Badge droppé par le Directeur à sa mort — pur objet de logique (position +
- * rayon + état ramassé/non ramassé), aucune référence à `THREE.Scene`/
- * `THREE.Object3D`. Pas de contrat `use_*` : ramassage par proximité seule.
- * see: docs/archive/systems-entites.md#carte-lâchée-par-le-directeur
- */
+// see: docs/archive/systems-entites.md#carte-lâchée-par-le-directeur
 export class DroppedCard {
   readonly position: THREE.Vector3;
   /** Carte que ce drop donne au ramassage. Le Directeur lâche la Platine ;
@@ -290,13 +233,6 @@ export class DroppedCard {
     this.age += dt;
   }
 
-  /**
-   * Un pas fixe. Retourne `true` UNE SEULE FOIS, au pas fixe où
-   * `playerPosition` entre dans `pickupRadius` pour la première fois APRÈS
-   * `minAge` secondes écoulées depuis le drop — les appels suivants
-   * renvoient toujours `false` (déjà ramassé, encore hors de portée, ou
-   * encore trop tôt). Zéro allocation.
-   */
   tryCollect(playerPosition: THREE.Vector3, pickupRadius: number, minAge: number): boolean {
     if (this.collected) return false;
     if (this.age < minAge) return false;

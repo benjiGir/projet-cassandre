@@ -13,7 +13,6 @@ export interface TuningSliderProps {
   onCommit?: () => void;
 }
 
-/** Un curseur de tuning : libellé, valeur lisible, et le `<input type="range">`. */
 export function TuningSlider({ label, unit, decimals, min, max, step, value, onChange, onCommit }: TuningSliderProps) {
   return (
     <div className={styles.slider}>

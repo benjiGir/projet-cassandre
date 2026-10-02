@@ -8,7 +8,6 @@ export interface HudLabelProps {
   children: ReactNode;
 }
 
-/** Petit libellé au-dessus d'une valeur du HUD (« PV », « MUNITIONS »). */
 export function HudLabel({ className, children }: HudLabelProps) {
   return <div className={cx(styles.label, className)}>{children}</div>;
 }

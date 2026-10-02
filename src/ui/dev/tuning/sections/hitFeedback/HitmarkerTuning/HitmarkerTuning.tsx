@@ -5,7 +5,7 @@ import { HITMARKER_FIELDS } from "../../../lib/tuningFields";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";
 import { TuningCheckbox } from "../../../controls/TuningCheckbox/TuningCheckbox";
 import { TuningGroup } from "../../../layout/TuningGroup/TuningGroup";
-import type { ConfigEditor } from "../../../lib/useConfigEditor";
+import type { ConfigEditor } from "../../../lib/tuningTypes";
 import { VariantButtons } from "../../../controls/VariantButtons/VariantButtons";
 
 const VARIANT_NAMES = Object.keys(HITMARKER_VARIANTS) as (keyof typeof HITMARKER_VARIANTS)[];
@@ -14,7 +14,6 @@ export interface HitmarkerTuningProps {
   weapon: ConfigEditor<WeaponConfig>;
 }
 
-/** Le marqueur de touche : un canal qui n'existait pas avant le retour de playtest. */
 export function HitmarkerTuning({ weapon }: HitmarkerTuningProps) {
   return (
     <TuningGroup title="Hitmarker (canal absent avant cette intervention)">

@@ -4,7 +4,8 @@ import * as THREE from "three";
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
 import { GameClock } from "../../../src/core/time";
 import { emptyInputFrame } from "../../../src/core/inputRecorder";
-import { WeaponSystem, type ViewmodelClocks } from "../../../src/game/player/weapons";
+import { WeaponSystem } from "../../../src/game/player/weapons";
+import { type ViewmodelClocks } from "../../../src/game/player/weaponTypes";
 
 await initPhysics();
 

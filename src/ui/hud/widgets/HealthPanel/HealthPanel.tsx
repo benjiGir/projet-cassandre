@@ -5,7 +5,6 @@ import { HudLabel } from "../../primitives/HudLabel/HudLabel";
 import { HudValue } from "../../primitives/HudValue/HudValue";
 import styles from "./HealthPanel.module.css";
 
-/** Barre et compte de PV du joueur. */
 export function HealthPanel() {
   const hp = useGameStore((s) => s.debug.playerHp);
   const maxHp = useGameStore((s) => s.debug.playerMaxHp);

@@ -3,10 +3,7 @@ import { useGameStore } from "../../../../game/state";
 import { HeroFace } from "../HeroFace/HeroFace";
 import styles from "./LiveCam.module.css";
 
-/**
- * Webcam du héros : badge hors du visage et portraits publiés à 10 Hz.
- * see: docs/journal/portrait-stream-2026-10.md
- */
+// see: docs/journal/portrait-stream-2026-10.md
 export function LiveCam() {
   const dead = useGameStore((s) => s.flowState === "dead");
   return (

@@ -2,10 +2,10 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
-import type { HitEvent } from "../player/weapons";
+import type { HitEvent } from "../player/weaponTypes";
 import { damageForWeapon } from "../player/weaponConfig";
 import type { NavGraph } from "../level/pathfinding";
-import type { VitreHitTarget } from "./enemyMachine";
+import type { VitreHitTarget } from "./enemyTypes";
 import {
   Director,
   DroppedCard,
@@ -18,21 +18,7 @@ import {
   type DirectorConfig,
 } from "./directorConfig";
 
-/**
- * Manager léger pour le Directeur — même rôle et même contrat que
- * `SuitManager` (même piège de consommation multi-pas-fixe de
- * `weapons.hitEvents`/`hitCursor`, repris ici à l'identique). Différences
- * délibérées : pas de mécanique de gibs à bout portant (un boss qui explose
- * en morceaux casserait la mise en scène de révélation/mort), une file
- * d'événements supplémentaire `revealEvents`, et la carte lâchée
- * à la mort (`DroppedCard`).
- *
- * `Director[]` plutôt qu'un champ `Director | null` unique : un seul boss
- * est attendu en pratique, mais garder la forme tableau (invariant #8) ne
- * coûte rien et évite un type spécial pour « exactement un ennemi ».
- * see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
- * see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
- */
+// see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
 
 export interface DirectorAlertEvent {
   director: Director;
@@ -78,6 +64,7 @@ export class DirectorManager {
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly colliderToDirector = new Map<number, Director>();
   private spawnCount = 0;
+  // Remis à zéro uniquement après présentation, pas entre les pas fixes.
   private hitCursor = 0;
 
   private readonly _alertEvents: DirectorAlertEvent[] = [];
@@ -128,12 +115,7 @@ export class DirectorManager {
     return this._droppedCard;
   }
 
-  /**
-   * Vide toutes les files d'événements. À appeler UNE SEULE FOIS par frame
-   * d'affichage, EN TOUT DERNIER — même contrat exact que
-   * `SuitManager.clearFrameEvents` (voir sa doc pour la justification
-   * détaillée du remise-à-zéro de `hitCursor` ICI et nulle part ailleurs).
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
   clearFrameEvents() {
     this._alertEvents.length = 0;
     this._telegraphEvents.length = 0;
@@ -160,18 +142,7 @@ export class DirectorManager {
     for (const director of this.directors) director.snapshotPrevious();
   }
 
-  /**
-   * Un pas fixe. À appeler APRÈS `weapons.update(...)` — même ordre que
-   * `SuitManager.update`. `hitEvents` est le MÊME tableau lu par
-   * `SuitManager` (deux lecteurs indépendants, chacun avec son propre
-   * `hitCursor` local et sa propre `colliderTo*` map — sûr, même schéma que
-   * les lecteurs multiples de `fireEvents`/`hitEvents` dans
-   * `game/loop/updateFx.ts`).
-   *
-   * `navGraph` (jalon M4, PLAN_EFFECT_XSTATE.md) : voir la doc identique
-   * dans `SuitManager.update` — MÊME graphe (baké sur le gabarit
-   * `suitConfig`, voir `level/pathfinding.ts`), simplement transmis.
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#déplacement-et-combat
   update(
     dt: number,
     playerTargetPosition: THREE.Vector3,
@@ -209,22 +180,11 @@ export class DirectorManager {
     aggregated.clear();
   }
 
-  /**
-   * Vérifie si `playerPosition` vient de ramasser la carte lâchée, si un
-   * Directeur est déjà mort. Appelé une fois par pas fixe depuis
-   * `game/loop/updateGameplay.ts` (même discipline que
-   * `InteractionSystem.update`).
-   */
+  // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
   tryCollectCard(playerPosition: THREE.Vector3): boolean {
     return this._droppedCard?.tryCollect(playerPosition, this.cfg.cardPickupRadius, this.cfg.cardPickupDelay) ?? false;
   }
 
-  /**
-   * DEV UNIQUEMENT : tue immédiatement `director` — même contrat que
-   * `SuitManager.debugKill` (vrai `deathEvent`, carte lâchée comprise, sans
-   * viser). Sert à vérifier le récap de fin de partie sans combattre le
-   * boss. Retourne `false` sans effet si `director` est déjà mort.
-   */
   debugKill(director: Director): boolean {
     if (!director.isAlive) return false;
     const damage: AggregatedHit = { totalDamage: Number.MAX_SAFE_INTEGER, anyPoint: director.position.clone() };
@@ -255,10 +215,6 @@ export class DirectorManager {
         point: hit.anyPoint.clone(),
         direction: this.scratchKnockback.clone(),
       });
-      // Drop de la carte : AUX PIEDS du Directeur au moment de sa mort, pas au
-      // centre de sa capsule (`director.position`, ~1.05m au-dessus du sol).
-      // L'ancrage logique reste à 0.15m du sol ; le billboard ajoute son
-      // flottement indépendamment du rayon de ramassage.
       const feetY = director.position.y - (this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius);
       // Une seule carte suivie à la fois (`_droppedCard`) — cohérent avec un
       // boss unique ; si un futur niveau spawnait plusieurs Directeurs, ce
@@ -285,11 +241,6 @@ export class DirectorManager {
     }
   }
 
-  /**
-   * `hitCursor` est remis à 0 exclusivement par `clearFrameEvents()` — même
-   * discipline que `SuitManager.consumeNewHits` (voir sa doc pour le détail
-   * du bug évité).
-   */
   private consumeNewHits(hitEvents: ReadonlyArray<HitEvent>): Map<Director, AggregatedHit> {
     const aggregated = this.aggregationScratch;
     for (let i = this.hitCursor; i < hitEvents.length; i++) {

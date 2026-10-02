@@ -4,7 +4,6 @@ import styles from "./ChoiceGroup.module.css";
 export interface Choice<T extends string> {
   id: T;
   label: string;
-  /** Présent : le choix s'affiche en carte (libellé + explication) ; absent : en pastille compacte. */
   hint?: string;
 }
 
@@ -16,7 +15,6 @@ export interface ChoiceGroupProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-/** Un choix exclusif parmi quelques options, présenté comme un groupe de boutons radio. */
 export function ChoiceGroup<T extends string>({ label, value, choices, layout = "row", onChange }: ChoiceGroupProps<T>) {
   return (
     <div className={cx(styles.group, styles[layout])} role="radiogroup" aria-label={label}>

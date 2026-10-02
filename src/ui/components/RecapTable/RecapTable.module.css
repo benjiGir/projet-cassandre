@@ -21,7 +21,6 @@
   column-gap: max(calc(var(--vpx) * 6), 10px);
   font-size: max(calc(var(--vpx) * 6), 11px);
   color: var(--text);
-  /* Révélation ligne par ligne, dans l'ordre du barème — voir RecapTable.tsx. */
   animation: reveal-line 320ms ease-out both;
   animation-delay: calc(var(--i) * 90ms);
 }
@@ -54,9 +53,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Le total ferme la révélation (même `--i`, une case après la dernière
-   ligne) et se détache franchement du reste : c'est le seul chiffre que le
-   joueur doit pouvoir lire à un mètre de son écran. */
 .total {
   display: flex;
   align-items: baseline;

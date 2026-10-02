@@ -1,35 +1,6 @@
-import type { MoveConfig } from "../../../../game/player/moveConfig";
-import type { WeaponConfig } from "../../../../game/player/weaponConfig";
-import type { SuitConfig } from "../../../../game/entities/suitConfig";
+import type { TuningField, MoveField, FieldGroup, ImpactKey, HitmarkerKey, CrosshairKey, SuitFeedbackKey } from "./tuningTypes";
 
-/**
- * Les curseurs du panneau de tuning, en DONNÉES : ajouter un réglage, c'est
- * ajouter une ligne ici. Les bornes encadrent la valeur de départ sans la
- * trancher — le panneau expose, il ne décide pas.
- * see: docs/archive/systems-hud.md#panneau-de-tuning-à-chaud
- */
-export interface TuningField<K extends string> {
-  key: K;
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  decimals: number;
-  unit?: string;
-}
-
-/** Toutes les clés de `MoveConfig` sont numériques, sauf une case à cocher. */
-export type MoveKey = Exclude<keyof MoveConfig, "autostepIncludeDynamicBodies">;
-
-export interface MoveField extends TuningField<MoveKey> {
-  /** Lu par Rapier (capsule, KCC) : sans effet tant que `player.applyConfig()` n'a pas été rappelé. Marqué ⚙. */
-  requiresApplyConfig?: boolean;
-}
-
-export interface FieldGroup<F> {
-  title: string;
-  fields: readonly F[];
-}
+// see: docs/archive/systems-hud.md#panneau-de-tuning-à-chaud
 
 export const MOVE_GROUPS: ReadonlyArray<FieldGroup<MoveField>> = [
   {
@@ -48,8 +19,6 @@ export const MOVE_GROUPS: ReadonlyArray<FieldGroup<MoveField>> = [
       { key: "jumpHeight", label: "Hauteur de saut", min: 0, max: 3, step: 0.05, decimals: 2, unit: "m" },
       { key: "coyoteTime", label: "Coyote time", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
       { key: "jumpBufferTime", label: "Jump buffer", min: 0, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
-      // 0,6 laisse trois fois la valeur par défaut sans franchir la falaise de
-      // stabilité mesurée entre 0,5 et 1 m/s.
       // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
       { key: "groundStickSpeed", label: "Collage au sol", min: 0, max: 0.6, step: 0.02, decimals: 2, unit: "m/s" },
       { key: "maxFallSpeed", label: "Vitesse de chute max", min: 10, max: 100, step: 1, decimals: 0, unit: "m/s" },
@@ -112,19 +81,6 @@ export const MOVE_GROUPS: ReadonlyArray<FieldGroup<MoveField>> = [
   },
 ];
 
-/** Sous-ensemble volontaire de `WeaponConfig` : cadence, dégâts et munitions restent hors de ce harnais. */
-export type ImpactKey = Extract<
-  keyof WeaponConfig,
-  | "hitstopDuration"
-  | "hitstopScale"
-  | "enemyHitstopDuration"
-  | "enemyHitstopScale"
-  | "shakeAmplitude"
-  | "shakeDuration"
-  | "enemyShakeAmplitude"
-  | "enemyShakeDuration"
->;
-
 export const IMPACT_FIELDS: ReadonlyArray<TuningField<ImpactKey>> = [
   { key: "hitstopDuration", label: "Hitstop — durée (mur/générique)", min: 0, max: 0.15, step: 0.005, decimals: 3, unit: "s" },
   { key: "hitstopScale", label: "Hitstop — échelle dt (mur/générique)", min: 0, max: 1, step: 0.01, decimals: 2 },
@@ -136,16 +92,6 @@ export const IMPACT_FIELDS: ReadonlyArray<TuningField<ImpactKey>> = [
   { key: "enemyShakeDuration", label: "Shake — durée (ennemi)", min: 0, max: 0.4, step: 0.01, decimals: 2, unit: "s" },
 ];
 
-export type HitmarkerKey = Extract<
-  keyof WeaponConfig,
-  | "hitmarkerDuration"
-  | "hitmarkerSize"
-  | "hitmarkerThickness"
-  | "hitmarkerKillDuration"
-  | "hitmarkerKillSize"
-  | "hitmarkerKillThickness"
->;
-
 export const HITMARKER_FIELDS: ReadonlyArray<TuningField<HitmarkerKey>> = [
   { key: "hitmarkerDuration", label: "Durée (hit)", min: 0.02, max: 0.4, step: 0.01, decimals: 2, unit: "s" },
   { key: "hitmarkerSize", label: "Taille (hit)", min: 2, max: 20, step: 1, decimals: 0, unit: "px" },
@@ -155,16 +101,6 @@ export const HITMARKER_FIELDS: ReadonlyArray<TuningField<HitmarkerKey>> = [
   { key: "hitmarkerKillThickness", label: "Épaisseur (kill)", min: 1, max: 8, step: 1, decimals: 0, unit: "px" },
 ];
 
-export type CrosshairKey = Extract<
-  keyof WeaponConfig,
-  | "crosshairSize"
-  | "crosshairGap"
-  | "crosshairThickness"
-  | "crosshairDotRadius"
-  | "crosshairPulseScale"
-  | "crosshairPulseDuration"
->;
-
 export const CROSSHAIR_FIELDS: ReadonlyArray<TuningField<CrosshairKey>> = [
   { key: "crosshairSize", label: "Taille (croix)", min: 1, max: 16, step: 1, decimals: 0, unit: "px" },
   { key: "crosshairGap", label: "Espace central (croix)", min: 0, max: 8, step: 1, decimals: 0, unit: "px" },
@@ -173,9 +109,6 @@ export const CROSSHAIR_FIELDS: ReadonlyArray<TuningField<CrosshairKey>> = [
   { key: "crosshairPulseScale", label: "Pulsation — échelle au pic", min: 1, max: 2, step: 0.05, decimals: 2 },
   { key: "crosshairPulseDuration", label: "Pulsation — retour à 0", min: 0.02, max: 0.3, step: 0.01, decimals: 2, unit: "s" },
 ];
-
-/** Knockback et flash de dégât du Costard ; le reste de sa machine à états est hors de ce harnais. */
-export type SuitFeedbackKey = Extract<keyof SuitConfig, "knockbackSpeed" | "knockbackDecayTime" | "knockbackUpBoost" | "hitFlashDuration">;
 
 export const SUIT_FEEDBACK_FIELDS: ReadonlyArray<TuningField<SuitFeedbackKey>> = [
   { key: "knockbackSpeed", label: "Knockback — vitesse", min: 0, max: 12, step: 0.5, decimals: 1, unit: "m/s" },

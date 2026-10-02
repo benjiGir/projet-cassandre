@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import { MeshLambertNodeMaterial } from "three/webgpu";
-import { runGameplaySync } from "../../core/runtime";
-import { RenderService } from "../../render/renderService";
 import {
   abs,
   floor,
@@ -17,6 +15,8 @@ import {
   vec3,
 } from "three/tsl";
 
+import { runGameplaySync } from "../../core/runtime";
+import { RenderService } from "../../render/renderService";
 interface AnimationDouche {
   meshes: THREE.Mesh[];
   temps: number;

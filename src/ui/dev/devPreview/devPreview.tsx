@@ -3,7 +3,7 @@ import type { Root } from "react-dom/client";
 import { beginLoading, waitForLoadingRetry } from "../../../core/loadingProgress";
 import { useGameStore } from "../../../game/state";
 import { HeroPortrait } from "../../../game/session/heroPortrait";
-import type { HeroPortraitReaction } from "../../../game/state";
+import type { HeroPortraitReaction } from "../../../game/hudTypes";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
@@ -16,15 +16,7 @@ import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
 import styles from "./devPreview.module.css";
 
-/**
- * Harnais d'aperçu, DEV UNIQUEMENT : monte un écran avec un état factice,
- * sans physique, sans session, sans boucle. Il existe parce que la mort et
- * la fin de niveau sont longues à atteindre en jouant, et que
- * l'automatisation du navigateur n'obtient pas le verrouillage du pointeur.
- * Activé par `?uiPreview=<écran>` depuis `main.ts`, derrière une garde
- * `import.meta.env.DEV` : ce fichier n'entre jamais dans le bundle livré.
- * see: docs/4-technique/interface-react.md
- */
+// see: docs/4-technique/interface-react.md
 
 const PREVIEW_SCREENS = [
   "mainMenu",
@@ -45,7 +37,6 @@ function isPreviewScreen(value: string): value is PreviewScreen {
 
 function noop() {}
 
-/** En jeu, le HUD est un calque transparent sur la scène 3D ; ici, un aplat sombre en tient lieu. */
 function GameBackdrop() {
   return <div className={styles.backdrop} />;
 }

@@ -2,8 +2,7 @@ import { useGameStore } from "../../../../game/state";
 import { cssVars } from "../../../lib/styleHelpers";
 import styles from "./HeroFace.module.css";
 
-/** Affiche l'image résolue par le jeu ; aucune horloge ni décision de réaction ici.
- * see: docs/journal/portrait-stream-2026-10.md */
+// see: docs/journal/portrait-stream-2026-10.md
 export function HeroFace() {
   const frame = useGameStore((s) => s.heroPortrait.frame);
   const sheet = useGameStore((s) => s.heroPortrait.sheet);

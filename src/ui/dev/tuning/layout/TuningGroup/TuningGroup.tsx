@@ -7,7 +7,6 @@ export interface TuningGroupProps {
   children: ReactNode;
 }
 
-/** Un groupe de réglages sous un titre. */
 export function TuningGroup({ title, children }: TuningGroupProps) {
   return (
     <div className={styles.group}>

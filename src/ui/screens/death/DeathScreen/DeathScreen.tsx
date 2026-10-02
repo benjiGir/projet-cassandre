@@ -18,17 +18,7 @@ export interface DeathScreenProps {
   onReturnToMenu: () => void;
 }
 
-/**
- * Écran de mort : le stream est coupé. `onReplay`/`onReturnToMenu` sont de
- * vrais resets en place, jamais un rechargement de page. Le récap est
- * PARTIEL (`game/session/score.ts::publishLevelRecap(session, false)`,
- * appelé par `applyPlayerDamage`) : pas de bonus de rapidité puisque la sortie
- * n'a jamais été franchie — `.partialNote` ci-dessous le dit en toutes
- * lettres, la ligne "Rapidité" n'existe simplement pas dans `recap.lines`
- * plutôt que de l'expliquer par son absence.
- * see: docs/archive/systems-hud.md#écrans-de-mort-et-de-fin-de-niveau
- * see: docs/decisions/0019-machine-xstate-flux-ecran.md
- */
+// see: docs/archive/systems-hud.md#écrans-de-mort-et-de-fin-de-niveau
 export function DeathScreen({ onReplay, onReturnToMenu }: DeathScreenProps) {
   const flowState = useGameStore((s) => s.flowState);
   const views = useGameStore((s) => s.debug.views);

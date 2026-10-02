@@ -10,7 +10,7 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../src/game/level/loader";
 import { mergeEcranDecor, EcranSystem, type EcranCandidate } from "../../../src/game/level/ecrans";
-import type { HitEvent } from "../../../src/game/player/weapons";
+import type { HitEvent } from "../../../src/game/player/weaponTypes";
 import { weaponConfig } from "../../../src/game/player/weaponConfig";
 
 await initPhysics();

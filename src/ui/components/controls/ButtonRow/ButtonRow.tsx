@@ -9,7 +9,6 @@ export interface ButtonRowProps {
   children: ReactNode;
 }
 
-/** Une rangée de boutons centrée. */
 export function ButtonRow({ className, children }: ButtonRowProps) {
   return <div className={cx(styles.row, className)}>{children}</div>;
 }

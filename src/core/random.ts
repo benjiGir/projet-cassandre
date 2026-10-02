@@ -1,8 +1,6 @@
 import { Context, Layer } from "effect";
 
-// Source canonique unique de mulberry32 — ne pas en dupliquer une copie
-// ailleurs (voir l'ADR pour l'historique de la duplication déjà corrigée).
-// see: docs/decisions/0007-rng-deterministe.md
+// see: docs/6-reference/notes-code-core.md#physique-et-services
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return function next() {
@@ -13,16 +11,6 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/**
- * Fabrique de générateurs indépendants, jamais un flux partagé : chaque
- * appel à `forSeed` isole ses appelants les uns des autres (sinon l'ordre
- * d'appel romprait le rejeu d'input déterministe). Le générateur retourné
- * est une fonction synchrone brute, pas un `Effect` — appelée plusieurs
- * fois par pas fixe (jitter de tir), l'envelopper coûterait par appel pour
- * aucun bénéfice ici.
- *
- * see: docs/decisions/0007-rng-deterministe.md
- */
 export class DeterministicRandom extends Context.Service<
   DeterministicRandom,
   {

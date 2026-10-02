@@ -3,7 +3,8 @@ import { Effect } from "effect";
 
 import { playSfx } from "../../core/audio";
 import { input } from "../../core/input";
-import { emptyInputFrame, inputRecorder, type InputFrame } from "../../core/inputRecorder";
+import { emptyInputFrame, inputRecorder } from "../../core/inputRecorder";
+import { type InputFrame } from "../../core/inputTypes";
 import { runGameplaySync } from "../../core/runtime";
 import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
@@ -39,17 +40,11 @@ import { basculerEau, updateDouches } from "../level/douches";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
 import { CardPickupBillboard } from "../../render/cardPickups";
-
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
-// Les répliques du héros (texte, voix, rythme) vivent dans
-// `game/session/heroLines.ts` ; ce fichier ne dit que QUAND l'occasion se
-// présente. Les sanitaires (`use_toilet` historique ET `sanitaire_*` du
-// niveau v2) passent tous les deux par LA MÊME règle de soulagement
-// (`game/session/sanitaires.ts::relieveAtSanitaire`, voir
-// [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)).
+// see: docs/6-reference/notes-code-gameplay.md#boucle-et-présentation
 
 function recordKillFeedback(session: GameSession, count: number, multiplier = 1): void {
   session.heroPortrait.kill(count);
@@ -74,16 +69,10 @@ function recordDirectorKillFeedback(session: GameSession, count: number): void {
 
 /** Vitesse de chute (m/s) au-delà de laquelle une réception arrache un « Ouf ! » — plus qu'un saut sur place. */
 const LANDING_BARK_SPEED = 10;
-// Constante de fin de niveau (Zone E, `door_e_exit`) — voir la doc
-// d'`ExitDoorTracking` dans `session/gameSession.ts`.
-// Marge au-delà du vantail, m — évite un déclenchement au ras de la porte
-// (le joueur doit être VISIBLEMENT sorti, pas juste avoir franchi le plan).
+
 const EXIT_CROSSING_MARGIN = 1.0;
 
-// Acteurs pris en compte par `DoorSystem` (proximité des portes `auto`, refus
-// de refermeture sur une capsule qui chevauche encore le vantail) —
-// RECYCLÉS d'un pas fixe à l'autre plutôt que réalloués, comme `liveFrame`
-// ci-dessus. see: docs/archive/reference-conventions-nommage.md#portes-animées
+// see: docs/archive/reference-conventions-nommage.md#portes-animées
 const doorActorPool: DoorActor[] = [];
 
 function doorActorSlot(index: number): DoorActor {
@@ -126,23 +115,12 @@ function collectDoorActors(session: GameSession): readonly DoorActor[] {
   return doorActorPool;
 }
 
-// Origine de tir AUTHENTIQUE du pas fixe courant (position + eyeOffset, PAS
-// `player.eyePosition(alpha, …)` qui est interpolée pour le rendu) — voir
-// la note de déterminisme dans `WeaponSystem.update`. Scratch réutilisé à
-// chaque pas fixe, zéro allocation en régime établi.
 const weaponEyeOrigin = new THREE.Vector3();
 // Scratch réutilisé par la vérification de franchissement de sortie —
 // zéro allocation en régime établi.
 const exitDoorOffsetScratch = new THREE.Vector3();
 const liveFrame = emptyInputFrame();
 
-/**
- * Capture l'input du pas fixe courant. Le saut est CONSOMMÉ ici, une seule
- * fois. Lit par NOM D'ACTION (`core/input.ts::GameAction`), pas par code
- * brut : la table de bindings est rebindable/persistée dans `InputManager`,
- * `InputFrame` reste inchangé (mêmes champs, même sémantique) quel que soit
- * le binding physique réellement pressé.
- */
 function captureInputFrame(engine: GameEngine): InputFrame {
   liveFrame.forward = input.isActionDown("moveForward");
   liveFrame.back = input.isActionDown("moveBack");
@@ -188,20 +166,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
   runGameplaySync(
     Effect.gen(function* () {
       const gameplayDt = engine.clock.tick(dt);
-      session.heroPortrait.advance(gameplayDt, session.playerHp, useGameStore.getState().debug.playerMaxHp);
+      session.heroPortrait.advance(gameplayDt, session.playerHp, session.playerMaxHp);
 
-      // Récap de fin de partie (`game/session/score.ts`) : temps de GAMEPLAY
-      // écoulé, somme du VRAI `gameplayDt` (hitstop compris), jamais une
-      // horloge murale — même discipline que le délai de soulagement des
-      // sanitaires juste en dessous.
       advanceGameplayTime(session.stats, gameplayDt);
 
-      // Délai de soulagement des sanitaires (`game/session/sanitaires.ts`) :
-      // décrémenté par le VRAI `gameplayDt` (hitstop inclus), jamais un temps
-      // mural. Pas un `stateTimer` XState (`session` n'a
-      // pas de machine à états), mais le même principe que `TICK` dans
-      // `enemyMachine.ts` : une durée de gameplay vit dans un champ mutable,
-      // avancée explicitement au pas fixe, jamais un `setTimeout` réel.
       if (session.sanitaireReliefCooldown > 0) {
         session.sanitaireReliefCooldown = Math.max(0, session.sanitaireReliefCooldown - gameplayDt);
       }
@@ -246,23 +214,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         showHudMessage("Sol manquant — vous êtes remis sur pied");
       });
 
-      // Interaction (`use_*`, touche E) — APRÈS `player.update` (donc
-      // `player.position` déjà avancée ce pas-ci) et AVANT `weapons.update`
-      // pour qu'un ramassage et un tir puissent se produire dans le même pas
-      // fixe (raffinement, pas une exigence). `useObjects` est RELUE ici à
-      // chaque appel, jamais mise en cache : un hot reload remplace tout le
-      // tableau (voir `interactive.ts`/`hotReload.ts`).
       yield* Effect.sync(() => {
         const consomme = engine.interaction.update(
           activeFrame.use,
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           {
-            // `use_exit_door` du niveau actuel : son `.glb` est antérieur à
-            // la convention `requires` (jalon N7) et ne déclare donc aucune
-            // carte. On lui applique la Platine — celle que le Directeur
-            // lâche désormais à la place du badge. À retirer au jalon N10,
-            // quand `hypermarche_complet` cède la place au niveau v2.
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
             onCardPickup: (card) => {
@@ -310,13 +267,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           },
         );
 
-        // Sanitaires `sanitaire_*` (niveau v2) : le même appui, s'il n'a servi
-        // à aucun `use_*` — un lecteur de carte ou un pickup à portée passe
-        // toujours avant, même priorité que les portes manœuvrables ci-dessous.
-        // Exige de VISER l'appareil ("neartag", ADR 0032 section "Portée —
-        // visée") : `session.player.eyeOffset`/`activeFrame.yaw`/`.pitch`,
-        // mêmes origine/direction authentiques du pas fixe courant que
-        // `weaponEyeOrigin` un peu plus bas — jamais une valeur interpolée.
         const consommeSanitaire = !consomme && trySanitaire(
           session,
           activeFrame.use,
@@ -326,18 +276,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           activeFrame.pitch,
         );
 
-        // Portes manœuvrables à la main (`manuelle`) : le même appui, s'il n'a
-        // servi ni à un `use_*` ni à un sanitaire. Sinon, le bouton de la porte
-        // coupe-feu et la porte elle-même réagiraient tous les deux — elle
-        // s'ouvrirait et se refermerait dans le même pas fixe.
         if (activeFrame.use && !consomme && !consommeSanitaire) {
           session.doorSystem?.actionner(session.player.position);
         }
 
-        // Vue par caméra (système 4) : sort au premier mouvement, invariant
-        // #10 — voir `CameraViewSystem.update`. Après le bloc E ci-dessus,
-        // pour qu'une PREMIÈRE activation ce pas-ci (E vient d'être pressé)
-        // ne se retrouve pas évaluée contre le mouvement de CE MÊME pas.
         const enVueCamera = session.cameraView?.active ?? false;
         session.cameraView?.update(activeFrame);
         if (enVueCamera && !session.cameraView?.active) triggerHeroLine(session, "camera_quitte");
@@ -363,12 +305,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         ),
       );
 
-      // Armes au sol (`use_crowbar`/`use_shotgun`/`use_pistol`) : même
-      // ramassage sans touche que les trousses/boîtes ci-dessus, jamais à la
-      // touche E (`interactive.ts::isWeaponPickupName` l'exclut déjà de
-      // `update()`). `WeaponSystem.tryCollectXxx` porte toute la décision
-      // « déjà possédée » (voir sa doc) ; ce bloc ne fait que le HUD/son sur
-      // un ramassage réussi, même pipeline que `heal_pickup`/`ammo_pickup`.
       yield* Effect.sync(() =>
         engine.interaction.collectWeapons(
           session.gltfLevelSession?.current?.useObjects ?? [],
@@ -428,7 +364,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           (amount, useObject) => {
-            const maxHp = useGameStore.getState().debug.playerMaxHp;
+            const maxHp = session.playerMaxHp;
             if (session.playerHp >= maxHp) {
               // Laissée au sol pour plus tard. La réplique est `once` : elle ne
               // se répète pas à chaque pas fixe passé debout sur la trousse.
@@ -455,7 +391,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // `useObjects` (voir `props.ts::PropSystem.collectFoodDrops`).
       yield* Effect.sync(() =>
         session.propSystem?.collectFoodDrops(session.player.position, (amount) => {
-          const maxHp = useGameStore.getState().debug.playerMaxHp;
+          const maxHp = session.playerMaxHp;
           if (session.playerHp >= maxHp) return false;
           const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
           session.playerHp += healed;
@@ -467,24 +403,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         }),
       );
 
-      // Origine de tir du pas fixe COURANT, lue APRÈS `player.update` (donc
-      // déjà avancée ce pas-ci) : centre de capsule + eyeOffset, jamais la
-      // position interpolée pour le rendu. Voir la note de déterminisme dans
-      // `WeaponSystem.update` — une origine interpolée casserait le rejeu
-      // exact du raycast d'arme.
       yield* Effect.sync(() => {
         weaponEyeOrigin.set(
           session.player.position.x,
           session.player.position.y + session.player.eyeOffset,
           session.player.position.z,
         );
-        // Récap : précision (`game/session/score.ts`). Capturé AVANT l'appel
-        // pour comparer par DELTA — `fireEvents`/`hitEvents` s'accumulent sur
-        // toute la frame d'affichage (plusieurs pas fixes possibles) et ne
-        // sont vidés que plus tard, dans `updateFx.ts` ; au plus UN nouveau
-        // `fireEvent` par appel ici (`frame.fire` ne déclenche qu'une seule
-        // arme à la fois), donc pas d'ambiguïté sur QUEL tir a produit quels
-        // impacts.
         const fireCountBefore = session.weapons.fireEvents.length;
         const hitCountBefore = session.weapons.hitEvents.length;
         session.weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, activeFrame.yaw, activeFrame.pitch);
@@ -501,19 +425,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         }
       });
 
-      // APRÈS `weapons.update` : les `hitEvents` du pas courant existent déjà
-      // (voir la doc de `SuitManager.update`). `player.position` sert de
-      // cible de poursuite (XZ), `weaponEyeOrigin` — la même origine
-      // AUTHENTIQUE que celle qui vient de servir aux raycasts d'armes,
-      // jamais une position interpolée — sert de cible de ligne de
-      // vue/visée pour les Costards.
       yield* Effect.sync(() => {
-        // Récap : kills/casse (`game/session/score.ts`). Même technique de
-        // delta qu'au-dessus pour `weapons.update` — chaque `update()`
-        // ci-dessous pousse ses évènements de CE pas fixe dans une file qui
-        // ne sera vidée que plus tard par `updateFx.ts` ; comparer la
-        // longueur avant/après CET appel précis isole exactement ce qu'il
-        // vient de produire, peu importe quand la file sera vidée.
         const suitDeathsBefore = session.suitManager.deathEvents.length;
         const suitPlayerHitsBefore = session.suitManager.playerHitEvents.length;
         const suitAlertsBefore = session.suitManager.alertEvents.length;
@@ -563,13 +475,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "director");
         }
 
-        // Mobilier physique : même file `hitEvents`, lue de la même façon (non
-        // destructivement) que les deux managers ci-dessus. Un tir traverse un
-        // prop détruit et un ennemi mort de la même manière — c'est le collider
-        // désactivé qui le décide, jamais un filtre écrit ici.
-        //
-        // AVANT `physics.step` (voir `core/loop.ts`) : l'impulsion posée ici
-        // est intégrée par le pas qui suit immédiatement, jamais le suivant.
         const propsDestroyedBefore = session.propSystem?.destroyedEvents.length ?? 0;
         session.propSystem?.update(session.weapons.hitEvents);
         const propsDestroyed = session.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
@@ -604,11 +509,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         if ((session.ecranSystem?.destroyedEvents.length ?? 0) > ecransDestroyedBefore) triggerHeroLine(session, "casse_ecran");
         updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
-        // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
-        // #1) — `interpolateVisuals.ts` ne fait qu'interpoler entre deux
-        // poses déjà décidées. `collectDoorActors` lit le joueur et les
-        // ennemis VIVANTS de CE pas-ci (donc après `player.update` /
-        // `suitManager`/`directorManager` un peu plus haut).
         session.doorSystem?.update(gameplayDt, collectDoorActors(session));
       });
 
@@ -616,10 +516,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // ordre et mêmes corps qu'avant ce jalon, regroupés en une seule
       // phase finale (aucun de ces blocs ne dépend d'un Effect en soi).
       yield* Effect.sync(() => {
-        // Carte lâchée par le Directeur : apparition (mesh) à la mort, une
-        // seule fois ; ramassage par proximité SEULE (pas de touche E, voir
-        // la doc de `DroppedCard`) — même discipline de mutation directe en
-        // pas fixe que `interaction.update` ci-dessus pour `use_crowbar`.
         const dropped = session.directorManager.droppedCard;
         if (dropped && !dropped.collected && !session.droppedCardBillboard) {
           session.droppedCardBillboard = new CardPickupBillboard(dropped.card, dropped.position, engine.cardPickupTextures);
@@ -632,12 +528,6 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           if (grantCard(session, carte)) triggerHeroLine(session, `carte_${carte}`);
         }
 
-        // Fin de niveau : franchissement du vantail déverrouillé — voir la
-        // doc de `ExitDoorTracking`. `exitDoorTracking` reste `null` tant
-        // que `door_e_exit` n'a jamais été déverrouillée sur CETTE session
-        // (armé uniquement dans `onExitDoorUse` ci-dessus) : ce bloc ne se
-        // déclenche donc JAMAIS sur un niveau qui n'a pas cette porte
-        // (`gym`, n'importe quelle zone individuelle A-D).
         if (session.exitDoorTracking) {
           exitDoorOffsetScratch.subVectors(session.player.position, session.exitDoorTracking.doorPosition);
           const signedInsideDistance =
@@ -662,9 +552,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             p.z <= secret.max.z;
           if (!inside) continue;
           session.foundSecrets.add(secret.object);
-          useGameStore.getState().incrementSecretsFound();
-          const found = useGameStore.getState().debug.secretsFound;
-          const total = useGameStore.getState().debug.secretsTotal;
+          const found = ++session.secretsFound;
+          const total = session.secretsTotal;
+          useGameStore.getState().setDebug({ secretsFound: found });
           // Info FACTUELLE (n/total, sans cooldown) + réplique de réaction
           // (canal dédié, cooldownée) — même partage que `onToiletUse`.
           showHudMessage(`Secret trouvé ! (${found}/${total})`);

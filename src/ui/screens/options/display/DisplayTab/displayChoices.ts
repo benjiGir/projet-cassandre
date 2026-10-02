@@ -1,12 +1,7 @@
 import type { FiltrageTexture } from "../../../../../render/renderer";
 import type { Choice } from "../../fields/ChoiceGroup/ChoiceGroup";
 
-/**
- * Les trois modes de filtrage, décrits par ce qu'on VOIT et jamais par le nom
- * de la technique : c'est ce menu qui permet enfin de juger l'ADR 0027 en
- * jouant, sans console.
- * see: docs/decisions/0027-filtrage-des-textures-reduites.md
- */
+// see: docs/decisions/0027-filtrage-des-textures-reduites.md
 export const FILTRAGE_CHOICES: ReadonlyArray<Choice<FiltrageTexture>> = [
   {
     id: "nearest",

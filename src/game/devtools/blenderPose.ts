@@ -1,14 +1,7 @@
 import { moveConfig } from "../player/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 
-/**
- * Pont de POSE entre le jeu et Blender, en coordonnées BLENDER — celles qu'on
- * lit dans le `.blend` et dans `tools/blender/cassandre.py` (`C.shot`).
- *
- * glTF est Y-up : Blender (x, y, z) = three (x, −z, y). Le cap suit
- * `render_ingame.py` : 0 = vers +Y Blender, 90 = vers −X — soit exactement le
- * yaw du jeu (yaw 0 = avant −Z three), en degrés.
- */
+// see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
 export interface BlenderPose {
   /** Position au sol, mètres, repère Blender. */
   x: number;
@@ -51,12 +44,6 @@ export function readBlenderPose(engine: GameEngine): BlenderPose {
   };
 }
 
-/**
- * Pose le joueur en (x, y) Blender, pieds à `z`, regard au cap donné (garde le
- * cap courant sinon). Même geste que le spawn d'un premier chargement
- * (`session/spawning.ts`) : entre deux images, jamais pendant un pas fixe.
- * Un enregistrement d'input en cours ne rejouera PAS ce saut — outil de dev.
- */
 export function teleportBlender(engine: GameEngine, x: number, y: number, z: number, cap?: number): BlenderPose {
   const feet = blenderToThree(x, y, z);
   engine.session.player.spawn(feet.x, feet.y, feet.z);

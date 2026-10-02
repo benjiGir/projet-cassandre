@@ -1,9 +1,4 @@
-/*
- * Jetons de l'interface : les seules valeurs partagées entre composants.
- * Un ton d'écran redéfinit le jeu de variables sémantiques ; un composant lit
- * `var(--title)`, `var(--corner)`… et ne connaît jamais le ton.
- * see: docs/reference/react-css.md#les-jetons
- */
+/* see: docs/6-reference/react-css.md#les-jetons */
 
 :root {
   --font-mono: "Courier New", ui-monospace, monospace;
@@ -23,7 +18,6 @@
   --amber: #ffe27a;
 }
 
-/* Ton « signal » : vert phosphore, celui de toute l'interface par défaut. */
 :root,
 [data-tone="signal"] {
   --screen-bg: radial-gradient(ellipse at 50% 40%, #0c130c 0%, #050705 70%, #020302 100%);
@@ -46,7 +40,6 @@
   --flag-border: rgba(140, 255, 150, 0.5);
 }
 
-/* Ton « alert » : l'écran de mort. */
 [data-tone="alert"] {
   --screen-bg: radial-gradient(ellipse at 50% 40%, #180505 0%, #0a0202 70%, #050101 100%);
   --text: #f3c9c9;

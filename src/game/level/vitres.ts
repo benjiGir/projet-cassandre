@@ -2,37 +2,12 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
+import type { LevelResources } from "./levelResources";
 import { damageForWeapon } from "../player/weaponConfig";
-import type { HitEvent } from "../player/weapons";
+import type { HitEvent } from "../player/weaponTypes";
 import type { PropMaterial } from "./props";
 
-/**
- * Préfixe `vitre_*` — vitrage ou panneau mince cassable, voir
- * `docs/archive/reference-conventions-nommage.md#préfixe-vitre` et
- * [ADR 0031](../../../docs/decisions/0031-portes-animees-et-vitres.md).
- *
- * Même séparation que `game/level/props.ts` : `loader.ts` construit les
- * candidats bruts (`VitreCandidate`, un par mesh `vitre_*` rencontré, collider
- * déjà posé), `mergeVitreDecor` les FUSIONNE en UN lot par matériau pour tout
- * le niveau — CONTRAINTE DURE du budget de lots de dessin (200, pire vue déjà
- * à 198) — et `VitreSystem` fait vivre l'état de partie (PV, casse) au-dessus
- * du résultat.
- *
- * Pas de découpe en cellules, contrairement au décor : la découpe sert à
- * écarter du rendu de gros lots hors champ, et le verre de tout le niveau (une
- * quarantaine de vitres, quelques centaines de triangles) ne pèse rien.
- * Découpé par cellules de 48 m, il coûtait jusqu'à six lots dans une même vue
- * (mesuré au spawn du parking, 2026-09-19) ; en un lot, il en coûte un.
- *
- * La casse d'UNE vitre dans un lot fusionné n'écrase QUE sa propre plage de
- * sommets (ramenés sur son centre, `needsUpdate`) : le lot reste un seul mesh,
- * un seul lot de dessin, pour toujours — casser dix vitres ne coûte jamais
- * un dessin de plus.
- */
-
-// ---------------------------------------------------------------------------
-// Données du loader — un candidat par mesh `vitre_*`, AVANT fusion.
-// ---------------------------------------------------------------------------
+// see: docs/6-reference/notes-code-gameplay-niveau.md#objets-cassables-et-interactions
 
 export interface VitreCandidate {
   name: string;
@@ -48,13 +23,6 @@ export interface VitreCandidate {
   extras: Record<string, unknown>;
 }
 
-/**
- * Une vitre APRÈS fusion — ce que `VitreSystem`/`LevelHandle.vitres`
- * manipulent. `batchGeometry`/`vertexStart`/`vertexCount` : la plage de
- * sommets de CETTE vitre dans le lot fusionné (ou sa propre géométrie,
- * inchangée, si elle n'a pas eu besoin d'être fusionnée — un lot d'UNE seule
- * vitre est déjà un lot, `mergeVitreDecor` ne le touche pas).
- */
 export interface VitreInfo {
   name: string;
   collider: RAPIER.Collider | null;
@@ -116,14 +84,7 @@ function passthroughVitreInfo(candidate: VitreCandidate): VitreInfo {
   };
 }
 
-/**
- * Fusionne les `vitre_*` qui partagent un même matériau, pour tout le niveau
- * (voir l'en-tête : pas de cellules). Calculé ici plutôt que par
- * `mergeStaticDecor` parce que le résultat doit garder la plage de sommets de
- * CHAQUE vitre, pour une casse individuelle. `root.matrixWorld` doit être à
- * jour.
- */
-export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly VitreCandidate[]): VitreMergeResult {
+export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly VitreCandidate[], resources?: LevelResources): VitreMergeResult {
   const groups = new Map<string, VitreCandidate[]>();
   const vitres: VitreInfo[] = [];
   for (const candidate of candidates) {
@@ -161,9 +122,12 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
 
     const geometries = group.map((candidate) => {
       toRootSpace.multiplyMatrices(rootInverse, candidate.mesh.matrixWorld);
-      return candidate.mesh.geometry.clone().applyMatrix4(toRootSpace);
+      const geometry = candidate.mesh.geometry.clone();
+      resources?.geometry(geometry);
+      return geometry.applyMatrix4(toRootSpace);
     });
     const merged = mergeGeometries(geometries, false);
+    if (merged) resources?.geometry(merged);
     if (!merged) {
       // Repli défensif (attributs incompatibles entre deux vitrages, ne
       // devrait jamais arriver pour un mesh plat à un seul matériau) : chaque
@@ -211,10 +175,6 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
   return { vitres, batchCount };
 }
 
-// ---------------------------------------------------------------------------
-// Système — état mutable d'une partie, reconstruit à chaque chargement.
-// ---------------------------------------------------------------------------
-
 /** Une vitre touchée par un tir du joueur (cassée ou non ce coup-ci). */
 export interface VitreHitEvent {
   name: string;
@@ -241,11 +201,6 @@ interface VitreState {
 
 const DEFAULT_BREAK_DIRECTION = new THREE.Vector3(0, 1, 0);
 
-/**
- * Les vitres d'UN niveau chargé. Reconstruit à chaque commit (hot reload
- * compris, comme `PropSystem`/`currentNavGraph`/`lightPool`) : les vitres
- * reviennent intactes au rechargement, avec le fichier.
- */
 export class VitreSystem {
   private readonly states: VitreState[] = [];
   private readonly byColliderHandle = new Map<number, VitreState>();
@@ -288,12 +243,6 @@ export class VitreSystem {
     this.hitCursor = 0;
   }
 
-  /**
-   * Tirs du JOUEUR (hitscan, plombs, pied-de-biche) — même chemin de
-   * `HitEvent` que `PropSystem.update`, dégâts par la MÊME table
-   * (`damageForWeapon`). Non destructif : la file appartient à `WeaponSystem` ;
-   * le curseur local empêche sa relecture lors d'un second pas fixe.
-   */
   update(hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
       const hit = hitEvents[i]!;
@@ -313,14 +262,6 @@ export class VitreSystem {
     this.hitCursor = hitEvents.length;
   }
 
-  /**
-   * Tir ENNEMI (`enemyMachine.ts::resolveAttack`) : casse la vitre D'UN COUP,
-   * sans passer par ses PV — effet Duke Nukem voulu par le contrat. Un ennemi
-   * ne "vise" jamais le verre : s'il en rencontre un sur le chemin de son tir
-   * vers le joueur, il le fait exploser plutôt que de l'endommager
-   * progressivement comme le ferait un joueur qui s'acharne dessus.
-   * Retourne `true` si une vitre intacte a bien été cassée.
-   */
   tryBreakByColliderHandle(colliderHandle: number, point: THREE.Vector3, direction: THREE.Vector3): boolean {
     const state = this.byColliderHandle.get(colliderHandle);
     if (!state || state.broken) return false;

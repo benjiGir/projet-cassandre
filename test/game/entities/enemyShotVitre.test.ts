@@ -15,7 +15,8 @@ import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import type RAPIER from "@dimforge/rapier3d-compat";
 
-import { handleEnemyShotMiss, type BreakableHitTarget } from "../../../src/game/entities/enemyMachine";
+import { handleEnemyShotMiss } from "../../../src/game/entities/enemyMachine";
+import type { BreakableHitTarget } from "../../../src/game/entities/enemyTypes";
 
 function fakeCollider(handle: number): RAPIER.Collider {
   return { handle } as unknown as RAPIER.Collider;

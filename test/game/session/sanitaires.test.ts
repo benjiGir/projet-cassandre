@@ -81,6 +81,9 @@ function fakeSanitaireSystem(result: FakeAimedResult | null) {
 function sessionDeTest(overrides: Partial<GameSession> = {}): GameSession {
   return {
     playerHp: 100,
+    playerMaxHp: 100,
+    secretsFound: 0,
+    secretsTotal: 0,
     heroPortrait: new HeroPortrait(),
     stats: createInitialStats(),
     sanitaireReliefCooldown: 0,
@@ -101,7 +104,6 @@ beforeEach(() => {
   // `loyaltyCards.test.ts` — ces tests vérifient l'état AFFICHÉ, pas sa
   // disparition différée.
   vi.stubGlobal("window", { setTimeout: () => 0 });
-  useGameStore.getState().setDebug({ playerMaxHp: 100 });
   useGameStore.getState().setPlayerHp(100);
   useGameStore.getState().showHudMessage(null);
   useGameStore.getState().showHeroLine(null);

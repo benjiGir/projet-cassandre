@@ -6,10 +6,6 @@ export interface NewsTickerProps {
 
 const SEPARATOR = "  ·  ";
 
-/**
- * Bandeau d'info qui défile en bas de l'écran. Le texte est répété deux
- * fois pour que la boucle d'animation ne laisse jamais de trou.
- */
 export function NewsTicker({ items }: NewsTickerProps) {
   const line = items.join(SEPARATOR) + SEPARATOR;
 

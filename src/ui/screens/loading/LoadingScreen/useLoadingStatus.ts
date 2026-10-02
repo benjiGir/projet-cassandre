@@ -14,12 +14,9 @@ export interface LoadingStatus {
   retry: (() => void) | null;
 }
 
-/** Progression réelle du chargement, et une petite phrase qui tourne à côté. */
 export function useLoadingStatus(): LoadingStatus {
   const state = useSyncExternalStore(subscribeLoading, loadingSnapshot, loadingSnapshot);
 
-  // Départ tiré de l'horloge : le projet n'emploie jamais Math.random(), et une
-  // rotation qui commence toujours par la même phrase se remarque au 3e boot.
   const [first] = useState(() => Math.floor(Date.now() / QUIP_MS) % LOADING_QUIPS.length);
   const [tick, setTick] = useState(0);
   useEffect(() => {

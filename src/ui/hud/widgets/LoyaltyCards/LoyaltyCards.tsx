@@ -7,7 +7,6 @@ const CARD_LABELS = {
   platine: "PLATINE",
 } as const;
 
-/** Les cartes de fidélité en poche : les clés du niveau. */
 export function LoyaltyCards() {
   const cards = useGameStore((s) => s.debug.cards);
   if (cards.length === 0) return null;

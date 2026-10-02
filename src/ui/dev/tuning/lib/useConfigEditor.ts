@@ -1,12 +1,6 @@
 import { useReducer } from "react";
 
-export interface ConfigEditor<T extends object> {
-  /** L'objet de config lui-même, lu en direct au rendu. */
-  readonly values: T;
-  set<K extends keyof T>(key: K, value: T[K]): void;
-  /** Redessine après une mutation faite ailleurs : variante, retour aux défauts. */
-  refresh(): void;
-}
+import type { ConfigEditor } from "./tuningTypes";
 
 /**
  * Édite un objet de config MUTABLE, celui que la boucle de jeu lit à chaque

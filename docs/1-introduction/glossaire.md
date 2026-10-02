@@ -2,7 +2,7 @@
 title: Glossaire
 tags: [introduction]
 status: brouillon
-updated: 2026-09-28
+updated: 2026-10-02
 ---
 
 # Glossaire
@@ -59,14 +59,14 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | `enemyMachine` | Machine à états XState partagée par Costard et Directeur (repos, alerte, poursuite, tir, mort…). | `src/game/entities/enemyMachine.ts` |
 | `GameEngine` | État persistant du moteur (monde Rapier, horloge, session courante…), construit une fois au boot. | `src/game/session/gameEngine.ts` |
 | `GameSession` | Ce qui vit le temps d'une partie (niveau chargé, entités, score…), reconstruite à chaque nouvelle partie ; distincte du `GameEngine` persistant. | `src/game/session/gameSession.ts` |
-| `gameFlowMachine` | Machine XState du flux d'écran (menu → jeu → mort/fin de niveau → reset), ne connaît rien du jeu lui-même. | `src/ui/gameFlowMachine.ts` |
+| `gameFlowMachine` | Machine XState du flux d'écran (menu → jeu → mort/fin de niveau → reset), ne connaît rien du jeu lui-même. | `src/app/gameFlowMachine.ts` |
 | `GameFlowPort` | Petite interface (`isPlaying`, `isPhysicsLive`, `playerDied`…) par laquelle le pas fixe interroge le flux d'écran sans dépendre de XState ni de React. | `src/game/session/flowPort.ts` |
 | `GameLayer` / `GameRuntime` | `GameLayer` assemble tous les services Effect du jeu (`Layer.mergeAll(...)`) ; `GameRuntime` (`ManagedRuntime.make(GameLayer)`) est le runtime unique construit une fois pour tout l'onglet. | `src/core/runtime.ts`, [Effect et XState](../3-architecture/effect-et-xstate.md) |
 | Erreur typée (`Schema.TaggedError`) | Classe d'erreur Effect déclarée par site d'échec (ex. `MissingSpawnPlayerError`) ; dans `loader.ts`, la quasi-totalité suit le patron « fail immédiatement rattrapé » — journalisée en console, jamais propagée. | `src/game/level/loader.ts` |
 | Jeton de génération (`levelLoadGeneration`) | Entier incrémenté à chaque appel de `loadGltfLevel`, capturé au moment de l'appel ; un chargement dont la génération a changé à son retour est abandonné sans toucher `GameSession`. | `src/game/session/spawning.ts`, [Cycle de vie](../3-architecture/cycle-de-vie.md) |
 | Layer (Effect) | Recette de construction d'un service Effect (ex. `RaycastService.layer`), assemblée dans `GameLayer` au boot. | `src/physics/raycast.ts` |
 | `LevelDef` | Définition d'un niveau sélectionnable au menu (id, nom, chemin du fichier). | `src/game/level/levels.ts` |
-| `LevelHandle` | Résultat public du chargement d'un niveau glTF (corps physiques, décor, spawns…), consommé par le reste du jeu. | `src/game/level/loader.ts` |
+| `LevelHandle` | Contrat du résultat public du chargement d'un niveau glTF (corps physiques, décor, spawns…), consommé par le reste du jeu. | `src/game/level/levelTypes.ts` |
 | `LevelSession` | Niveau `.glb` COURANT d'une partie : porte le `LevelHandle` affiché, le sondage de hot reload et la logique de remplacement transactionnel (candidat, commit, arrêt). | `src/game/level/hotReload.ts` |
 | `PersistentEngine` | `GameEngine` privé de son champ `session` ; type utilisé pendant la construction, avant que la première `GameSession` existe. | `src/game/session/gameEngine.ts` |
 | Service Effect | Dépendance déclarée via `Context.Service`, injectée par une `Layer` et consommée avec `.use(...)` dans la frontière synchrone. | `src/physics/raycast.ts`, `src/core/random.ts` |
@@ -159,7 +159,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 
 | Terme | Définition | Où le voir |
 |---|---|---|
-| Acteur XState | Instance vivante d'une machine qui reçoit des événements et expose un snapshot de son état courant. | `src/ui/gameFlowMachine.ts`, `src/main.ts` |
+| Acteur XState | Instance vivante d'une machine qui reçoit des événements et expose un snapshot de son état courant. | `src/app/gameFlowMachine.ts`, `src/main.ts` |
 | Barrel | Module de réexport qui rassemble plusieurs fichiers derrière un point d'entrée, souvent nommé `index.ts` ; les conventions React du dépôt l'interdisent. | `docs/6-reference/react-structure.md` |
 | Callback | Fonction transmise par un composant parent pour déléguer une action à une autre couche. | `src/ui/App.tsx` |
 | CSS Modules | Système de styles dont les classes sont propres au composant qui importe le fichier CSS. | `docs/6-reference/react-css.md` |

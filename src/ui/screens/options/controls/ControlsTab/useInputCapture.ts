@@ -19,14 +19,11 @@ export function useInputCapture(active: boolean, handlers: InputCaptureHandlers)
       return;
     }
     // `code` vide : jamais produit par un vrai clavier, mais un évènement
-    // synthétique peut en émettre un, et le rebind vers "" rendrait l'action
-    // injouable sans que rien ne le signale.
     if (e.code) handlers.onCapture(e.code);
   });
 
   const onMouseDown = useEffectEvent((e: MouseEvent) => {
     e.preventDefault();
-    // Clic milieu et boutons latéraux ignorés : pas de code stable pour eux.
     if (e.button === 0) handlers.onCapture("Mouse0");
     else if (e.button === 2) handlers.onCapture("Mouse2");
   });

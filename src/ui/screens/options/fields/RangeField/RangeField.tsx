@@ -6,12 +6,10 @@ export interface RangeFieldProps {
   min: number;
   max: number;
   step: number;
-  /** Texte affiché à droite du curseur (« 75° », « 100 % »). */
   display: string;
   onChange: (value: number) => void;
 }
 
-/** Un curseur et sa valeur lisible. */
 export function RangeField({ label, value, min, max, step, display, onChange }: RangeFieldProps) {
   return (
     <div className={styles.field}>

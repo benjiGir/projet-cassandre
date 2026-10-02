@@ -12,7 +12,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 
-import type { LevelHandle } from "../../../src/game/level/loader";
+import type { LevelHandle } from "../../../src/game/level/levelTypes";
 
 vi.mock("../../../src/game/level/loader", () => ({
   loadLevel: vi.fn(),
