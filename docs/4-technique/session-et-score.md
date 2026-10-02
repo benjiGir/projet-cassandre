@@ -107,7 +107,7 @@ depuis `game/loop/devGameplayInput.ts` (F9/F10, dev seulement).
 | `droppedCardMesh`, `cards` | Carte au sol après la mort du Directeur ; inventaire réel (`Set`, jamais le store). |
 | `unlockedDoors`, `exitDoorTracking`, `foundSecrets` | Portes déjà déverrouillées ; suivi de franchissement de la sortie ; secrets trouvés (`WeakSet`). |
 | `lastSafeGround` | Filet de chute. |
-| `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `viewsRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `sanitaireReliefRandom` | PV, drapeaux d'idempotence, deux flux `DeterministicRandom` DÉDIÉS (vues, réplique — jamais `Math.random()`, invariant #12). |
+| `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `viewsRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `lastHeroBarkAt`, `heroLinesSaid`, `heroLineRandom` | PV, drapeaux d'idempotence, répliques déjà dites, deux flux `DeterministicRandom` DÉDIÉS (vues, tirage des répliques occasionnelles — jamais `Math.random()`, invariant #12). |
 | `stats` | `SessionStats`, ci-dessous. |
 
 **`SessionStats`** : `suitKills`, `directorKills`, `shotsFired`/
@@ -160,11 +160,14 @@ cassé → `drinkFromSanitaire` (+1 PV/appui, illimité). `onToiletUse`
 (compatibilité) appelle directement `relieveAtSanitaire`.
 
 **Feedback joueur** : `showHudMessage` est FACTUEL, sans cooldown
-(1,8 s d'affichage). `triggerHeroLine` est une RÉACTION, cooldown global
-15 s, ducking musical. `grantKillViews` tire dans `session.viewsRandom`
+(1,8 s d'affichage). `triggerHeroLine` est une RÉACTION enregistrée
+(`heroLines.ts`) : cooldown global 15 s sauf pour les répliques
+prioritaires, tirage dans `session.heroLineRandom` pour les occasionnelles,
+ducking musical. `grantKillViews` tire dans `session.viewsRandom`
 (flux dédié), ×4 pour le Directeur — sans lien avec le score du récap.
 `applyPlayerDamage` décrémente `playerHp`, déclenche la réplique « PV bas »
-au premier franchissement de 30 % du max, publie le récap PARTIEL et
+au premier franchissement de 30 % du max (sinon une réplique ou un cri de
+douleur), publie le récap PARTIEL et
 appelle `engine.flow.playerDied()` à la mort (gardé par `deathHandled`).
 `presentPlayerDamage` ne fait que publier au store (invariant #2).
 

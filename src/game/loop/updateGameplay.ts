@@ -8,7 +8,16 @@ import { runGameplaySync } from "../../core/runtime";
 import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
 import { grantCard } from "../session/cards";
-import { applyPlayerDamage, grantKillViews, showHudMessage, triggerHeroLine, VIEWS_DIRECTOR_MULTIPLIER } from "../session/feedback";
+import {
+  applyPlayerDamage,
+  grantKillViews,
+  sayOpeningLine,
+  showHudMessage,
+  triggerHeroBark,
+  triggerHeroLine,
+  VIEWS_DIRECTOR_MULTIPLIER,
+} from "../session/feedback";
+import { DOOR_USE_LINES, FOOD_LINES, PROP_BREAK_LINES, SECRET_LINES } from "../session/heroLines";
 import { relieveAtSanitaire, trySanitaire } from "../session/sanitaires";
 import {
   advanceGameplayTime,
@@ -35,29 +44,36 @@ import { CardPickupBillboard } from "../../render/cardPickups";
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
 
-// Objets interactifs "signature Duke" (micro d'annonces, sanitaires) — le
-// micro reste un simple texte HUD placeholder (pas de vraie VO
-// cette passe). Les sanitaires (`use_toilet` historique ET `sanitaire_*` du
+// Les répliques du héros (texte, voix, rythme) vivent dans
+// `game/session/heroLines.ts` ; ce fichier ne dit que QUAND l'occasion se
+// présente. Les sanitaires (`use_toilet` historique ET `sanitaire_*` du
 // niveau v2) passent tous les deux par LA MÊME règle de soulagement
 // (`game/session/sanitaires.ts::relieveAtSanitaire`, voir
-// [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)) —
-// aucune constante de soin/réplique dédiée ici, elles vivent dans ce module.
-const HERO_LINE_PA_MIC = '"Client de la Zone C : le rayon reptiliens est en rupture de stock."';
-const HERO_LINE_POINTEUSE = "Heures sup' non payées. Et ma carte porte un numéro qui n'existe pas.";
-const HERO_LINE_SAV_BELL = "« On arrive ! » C'est sûrement automatique.";
-const HERO_LINE_SECRET_REACTION = "Je vous l'avais dit : il y a TOUJOURS une pièce cachée.";
-const HERO_LINE_FIRST_KILL = "Premier lézard neutralisé à l'écran. Ils vont encore dire que c'est un montage.";
+// [ADR 0032](../../../docs/decisions/0032-sanitaires-utilisables.md)).
 
 function recordKillFeedback(session: GameSession, count: number, multiplier = 1): void {
   session.heroPortrait.kill(count);
   for (let i = 0; i < count; i++) {
     grantKillViews(session, multiplier);
-    if (session.firstKillTriggered) continue;
+    if (session.firstKillTriggered) {
+      // Le kill vient de l'arme en main : un tir et sa mort tombent dans le même pas fixe.
+      triggerHeroLine(session, session.weapons.activeWeapon === "shotgun" ? "kill_pompe" : "kill_costard");
+      continue;
+    }
     session.firstKillTriggered = true;
-    triggerHeroLine(session, HERO_LINE_FIRST_KILL);
+    triggerHeroLine(session, "premier_kill");
   }
 }
 
+/** Mort du Directeur : vues multipliées, et sa propre réplique plutôt que celle d'un Costard. */
+function recordDirectorKillFeedback(session: GameSession, count: number): void {
+  session.heroPortrait.kill(count);
+  for (let i = 0; i < count; i++) grantKillViews(session, VIEWS_DIRECTOR_MULTIPLIER);
+  if (count > 0) triggerHeroLine(session, "boss_mort");
+}
+
+/** Vitesse de chute (m/s) au-delà de laquelle une réception arrache un « Ouf ! » — plus qu'un saut sur place. */
+const LANDING_BARK_SPEED = 10;
 // Constante de fin de niveau (Zone E, `door_e_exit`) — voir la doc
 // d'`ExitDoorTracking` dans `session/gameSession.ts`.
 // Marge au-delà du vantail, m — évite un déclenchement au ras de la porte
@@ -205,7 +221,13 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         return frame ?? emptyInputFrame();
       });
 
-      yield* Effect.sync(() => session.player.update(gameplayDt, activeFrame));
+      yield* Effect.sync(() => {
+        sayOpeningLine(session);
+        const enLAir = !session.player.isGrounded;
+        const chute = -session.player.velocity.y;
+        session.player.update(gameplayDt, activeFrame);
+        if (enLAir && session.player.isGrounded && chute >= LANDING_BARK_SPEED) triggerHeroBark(session, "effort_reception");
+      });
 
       // Filet de chute (`session/fallRescue.ts`) : le dernier sol RÉELLEMENT
       // touché sert de point de retour.
@@ -244,28 +266,30 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
             onCardPickup: (card) => {
-              grantCard(session, card);
+              if (grantCard(session, card)) triggerHeroLine(session, `carte_${card}`);
             },
             onFrozenStorageUse: (targetName) => {
               if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
               unlockDoor(session, targetName, "Rayon surgelés ouvert");
             },
-            onDoorUse: (targetName, message) => {
+            onDoorUse: (targetName, message, useName) => {
               // Rouvrable : une porte libre peut avoir été REFERMÉE à la main
               // depuis (la coupe-feu), et son bouton doit alors la rouvrir.
               // C'est son état courant qui décide, pas `unlockedDoors`.
               const etat = session.doorSystem?.stateOf(targetName);
               if (etat === "open" || etat === "opening") return;
-              unlockDoor(session, targetName, message ?? "Passage ouvert");
+              if (!unlockDoor(session, targetName, message ?? "Passage ouvert")) return;
+              const ligne = DOOR_USE_LINES[useName];
+              if (ligne) triggerHeroLine(session, ligne);
             },
             onPaMicUse: () => {
-              triggerHeroLine(session, HERO_LINE_PA_MIC);
+              triggerHeroLine(session, "micro_annonces");
             },
             onPunchClockUse: () => {
-              triggerHeroLine(session, HERO_LINE_POINTEUSE);
+              triggerHeroLine(session, "pointeuse");
             },
             onSavBellUse: () => {
-              triggerHeroLine(session, HERO_LINE_SAV_BELL);
+              triggerHeroLine(session, "sonnette_sav");
             },
             onShowerToggleUse: (name) => {
               const root = session.gltfLevelSession?.current?.root;
@@ -274,6 +298,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               if (allumee === null) return;
               const poste = name.slice("use_douche_".length);
               showHudMessage(allumee ? `Douche ${poste} : eau ouverte` : `Douche ${poste} : eau coupée`);
+              triggerHeroLine(session, allumee ? "douche_ouvre" : "douche_ferme");
             },
             onCameraConsoleUse: (cameraNames) => {
               session.cameraView?.activate(cameraNames, activeFrame.yaw, activeFrame.pitch);
@@ -313,7 +338,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // #10 — voir `CameraViewSystem.update`. Après le bloc E ci-dessus,
         // pour qu'une PREMIÈRE activation ce pas-ci (E vient d'être pressé)
         // ne se retrouve pas évaluée contre le mouvement de CE MÊME pas.
+        const enVueCamera = session.cameraView?.active ?? false;
         session.cameraView?.update(activeFrame);
+        if (enVueCamera && !session.cameraView?.active) triggerHeroLine(session, "camera_quitte");
       });
 
       // Boîtes de munitions : même ramassage sans touche que les trousses. Une
@@ -323,12 +350,14 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         engine.interaction.collectAmmo(
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
-          (amount) => {
+          (amount, useObject) => {
             const pris = session.weapons.addPistolAmmo(amount);
             if (pris <= 0) return false;
             showHudMessage(`+${pris} munitions`);
             session.heroPortrait.react("victory", .45);
             playSfx("ammo_pickup");
+            triggerHeroLine(session, useObject.name === "use_munitions_gaine_1" ? "cache_gaine"
+              : amount >= 36 ? "munitions_36" : "munitions_24");
             return true;
           },
         ),
@@ -351,6 +380,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
                 showHudMessage("Pied-de-biche récupéré");
                 session.heroPortrait.react("victory", 1);
                 playSfx("ammo_pickup");
+                triggerHeroLine(session, "arme_pied_biche");
+              } else {
+                triggerHeroLine(session, "arme_double");
               }
               return pris;
             },
@@ -360,6 +392,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
                 showHudMessage("Fusil à pompe récupéré");
                 session.heroPortrait.react("victory", 1);
                 playSfx("ammo_pickup");
+                triggerHeroLine(session, "arme_pompe");
+              } else {
+                triggerHeroLine(session, "arme_double");
               }
               return pris;
             },
@@ -378,6 +413,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
                     : "Pistolet récupéré",
                 );
                 playSfx("ammo_pickup");
+                if (!dejaPossede) triggerHeroLine(session, "arme_pistolet");
               }
               return pris;
             },
@@ -393,7 +429,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.player.position,
           (amount, useObject) => {
             const maxHp = useGameStore.getState().debug.playerMaxHp;
-            if (session.playerHp >= maxHp) return false; // laissée au sol pour plus tard
+            if (session.playerHp >= maxHp) {
+              // Laissée au sol pour plus tard. La réplique est `once` : elle ne
+              // se répète pas à chaque pas fixe passé debout sur la trousse.
+              if (!useObject.aliment) triggerHeroLine(session, "soin_plein");
+              return false;
+            }
             const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
             session.playerHp += healed;
             session.heroPortrait.heal(session.playerHp, maxHp);
@@ -402,6 +443,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             // Un aliment (chantier « Les coulisses ») a son propre son —
             // jamais le carillon de trousse de soin, voir `UseObject.aliment`.
             playSfx(useObject.aliment ? "food_eat" : "heal_pickup");
+            const ligne = useObject.aliment ? FOOD_LINES[useObject.aliment] : undefined;
+            if (ligne) triggerHeroLine(session, ligne);
             return true;
           },
         ),
@@ -473,6 +516,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // vient de produire, peu importe quand la file sera vidée.
         const suitDeathsBefore = session.suitManager.deathEvents.length;
         const suitPlayerHitsBefore = session.suitManager.playerHitEvents.length;
+        const suitAlertsBefore = session.suitManager.alertEvents.length;
+        const suitShotsBefore = session.suitManager.shotEvents.length;
         session.suitManager.update(
           gameplayDt,
           session.player.position,
@@ -485,15 +530,18 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         const suitKills = session.suitManager.deathEvents.length - suitDeathsBefore;
         recordSuitKills(session.stats, suitKills);
         recordKillFeedback(session, suitKills);
+        if (session.suitManager.shotEvents.length > suitShotsBefore) triggerHeroLine(session, "costard_tire");
+        else if (session.suitManager.alertEvents.length > suitAlertsBefore) triggerHeroLine(session, "costard_alerte");
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
           const hit = session.suitManager.playerHitEvents[i]!;
-          applyPlayerDamage(engine, session, hit.amount, hit.normal);
+          applyPlayerDamage(engine, session, hit.amount, hit.normal, "suit");
         }
 
         const directorDeathsBefore = session.directorManager.deathEvents.length;
         const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
         const directorAlertsBefore = session.directorManager.alertEvents.length;
         const directorRevealsBefore = session.directorManager.revealEvents.length;
+        const directorAttacksBefore = session.directorManager.telegraphEvents.length;
         session.directorManager.update(
           gameplayDt,
           session.player.position,
@@ -507,10 +555,12 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         if (session.directorManager.alertEvents.length > directorAlertsBefore
           || session.directorManager.revealEvents.length > directorRevealsBefore) session.heroPortrait.react("discover");
         recordDirectorKills(session.stats, directorKills);
-        recordKillFeedback(session, directorKills, VIEWS_DIRECTOR_MULTIPLIER);
+        recordDirectorKillFeedback(session, directorKills);
+        if (session.directorManager.revealEvents.length > directorRevealsBefore) triggerHeroLine(session, "boss_revelation");
+        else if (session.directorManager.telegraphEvents.length > directorAttacksBefore) triggerHeroLine(session, "boss_attaque");
         for (let i = directorPlayerHitsBefore; i < session.directorManager.playerHitEvents.length; i++) {
           const hit = session.directorManager.playerHitEvents[i]!;
-          applyPlayerDamage(engine, session, hit.amount, hit.normal);
+          applyPlayerDamage(engine, session, hit.amount, hit.normal, "director");
         }
 
         // Mobilier physique : même file `hitEvents`, lue de la même façon (non
@@ -522,13 +572,21 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // est intégrée par le pas qui suit immédiatement, jamais le suivant.
         const propsDestroyedBefore = session.propSystem?.destroyedEvents.length ?? 0;
         session.propSystem?.update(session.weapons.hitEvents);
-        recordPropsDestroyed(session.stats, (session.propSystem?.destroyedEvents.length ?? 0) - propsDestroyedBefore);
+        const propsDestroyed = session.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
+        recordPropsDestroyed(session.stats, propsDestroyed.length);
+        const ligneCasse = propsDestroyed.map((e) => PROP_BREAK_LINES[e.matiere]).find((l) => l !== undefined);
+        if (ligneCasse) triggerHeroLine(session, ligneCasse);
+        if (!session.heroLinesSaid.has("objet_pousse") && session.propSystem?.isPushedNear(session.player.position)) {
+          triggerHeroLine(session, "objet_pousse");
+        }
 
         // Vitrages : même file, mêmes deux raisons (déterminisme du rejeu,
         // pas fixe strict) que le mobilier physique juste au-dessus.
         const vitresDestroyedBefore = session.vitreSystem?.destroyedEvents.length ?? 0;
         session.vitreSystem?.update(session.weapons.hitEvents);
-        recordVitresDestroyed(session.stats, (session.vitreSystem?.destroyedEvents.length ?? 0) - vitresDestroyedBefore);
+        const vitresDestroyed = (session.vitreSystem?.destroyedEvents.length ?? 0) - vitresDestroyedBefore;
+        recordVitresDestroyed(session.stats, vitresDestroyed);
+        if (vitresDestroyed > 0) triggerHeroLine(session, "casse_vitre");
 
         // Sanitaires : même file, même contrat que les vitrages juste au-dessus.
         const sanitairesDestroyedBefore = session.sanitaireSystem?.destroyedEvents.length ?? 0;
@@ -541,7 +599,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // Écrans (`ecran_*`, chantier « Les coulisses ») : même file de
         // impacts, plus l'horloge d'animation propre à `EcranSystem.update`
         // (voir sa doc) — avancée au pas fixe, jamais un dt réel.
+        const ecransDestroyedBefore = session.ecranSystem?.destroyedEvents.length ?? 0;
         session.ecranSystem?.update(gameplayDt, session.weapons.hitEvents);
+        if ((session.ecranSystem?.destroyedEvents.length ?? 0) > ecransDestroyedBefore) triggerHeroLine(session, "casse_ecran");
         updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
         // Portes animées : pose du mesh calculée ICI, au pas fixe (invariant
@@ -568,7 +628,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         if (session.directorManager.tryCollectCard(session.player.position)) {
           session.droppedCardBillboard?.dispose();
           session.droppedCardBillboard = null;
-          grantCard(session, dropped?.card ?? DIRECTOR_DROPPED_CARD);
+          const carte = dropped?.card ?? DIRECTOR_DROPPED_CARD;
+          if (grantCard(session, carte)) triggerHeroLine(session, `carte_${carte}`);
         }
 
         // Fin de niveau : franchissement du vantail déverrouillé — voir la
@@ -609,7 +670,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           showHudMessage(`Secret trouvé ! (${found}/${total})`);
           playSfx("secret_found");
           session.heroPortrait.react("discover");
-          triggerHeroLine(session, HERO_LINE_SECRET_REACTION);
+          triggerHeroLine(session, SECRET_LINES[secret.name] ?? "secret_generique");
         }
       });
     }),

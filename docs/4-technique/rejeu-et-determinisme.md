@@ -126,7 +126,7 @@ Graines et propriétaires, jamais dérivées de `Math.random()`/`Date.now()` :
 | Jitter de visée / déviation d'un Costard | `BASE_SUIT_SEED + index * SEED_STRIDE` (pas impair) | Une instance par ennemi spawné, jamais partagée entre deux Costards |
 | Jitter de visée / déviation du Directeur | `BASE_DIRECTOR_SEED + index * SEED_STRIDE` | Même principe, base distincte — deux types d'ennemis ne partagent jamais une séquence |
 | Gains de « vues » par kill | graine dédiée dans `session.viewsRandom` | Un flux par `GameSession`, avancé au pas fixe (à la mort d'un ennemi) |
-| Réplique de soulagement des sanitaires | `SANITAIRE_RELIEF_LINE_SEED` dans `session.sanitaireReliefRandom` | Un flux par `GameSession`, avancé au pas fixe (appui `E` sur un sanitaire cassé) |
+| Répliques occasionnelles du héros | `HERO_LINE_SEED` dans `session.heroLineRandom` | Un flux par `GameSession`, avancé au pas fixe, seulement quand le cooldown laisse passer une réplique à probabilité (`heroLines.ts`) |
 | FX / audio (cosmétique) | graines dédiées dans `lifecycle.ts` (`bootGameSession`) | Un flux par `GameSession`, réinitialisé au boot ; ne peut avancer aucun flux de simulation |
 
 Tous ces flux, sauf le dernier, sont consommés DANS le pas fixe et entrent
@@ -172,16 +172,13 @@ a pas de pile ni d'historique. `exportRecording`/`importRecording`
 la boucle d'un build livré — un F9/F10 pressé en production ne fait
 strictement rien, par construction plutôt que par convention respectée.
 
-**Toute horloge de session n'est pas au pas fixe.** La plupart des
-minuteries de `game/session/` avancent avec le `gameplayDt` réel (hitstop
-compris) — délai de soulagement des sanitaires, temps de partie du récap. Ce
-n'est pas le cas de `session.lastHeroLineAt` (`game/session/feedback.ts::triggerHeroLine`),
-qui compare `performance.now()` — une horloge murale — plutôt qu'un champ
-décrémenté au pas fixe. Le TIRAGE de la réplique (le flux
-`sanitaireReliefRandom`) reste lui déterministe et hors de cette horloge :
-seul l'AFFICHAGE de la réplique (donc le ducking musical) peut différer
-entre un enregistrement et son rejeu si le temps réel écoulé entre deux
-appuis diffère. Aucune décision de simulation n'en dépend.
+**Les répliques se décident au temps de gameplay.** Le cooldown
+(`session.lastHeroLineAt`) et l'écart entre deux cris se comparent à
+`stats.gameplayElapsed`, et le tirage d'une réplique occasionnelle n'a lieu
+qu'après ce test : à entrées identiques, le rejeu dit les mêmes répliques au
+même pas. Seule la durée d'AFFICHAGE du sous-titre suit la prise
+enregistrée et une minuterie murale ; aucune décision de simulation n'en
+dépend.
 
 ## Tests
 

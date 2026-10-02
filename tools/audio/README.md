@@ -101,6 +101,29 @@ python3 tools/audio/analyze_sfx.py --boucle w/amb_shower.wav \
     --sheet /tmp/boucle.png --contre w/suit_telegraph.wav
 ```
 
+## Répliques parlées (`ia_voix.py`, 2026-10-02)
+
+Texte → voix ElevenLabs, lu directement dans le
+[catalogue de répliques](../../docs/6-reference/repliques-niveau-v2.md) : une
+ligne de tableau = une situation, variantes A/B/C. Le compte est en offre
+gratuite : seulement les voix génériques (pas la bibliothèque française, pas de
+création de voix), un crédit par caractère, petit quota mensuel. Le héros est
+**Callum** (`eleven_v3`, français), choisi à l'écoute.
+
+| Étape | Commande (`ia_voix.py`) |
+|---|---|
+| Coût, sans rien appeler | `generate` (défaut : héros, statuts T+E, variante A) |
+| Générer (reprend là où il s'est arrêté) | `generate --go` ; élargir avec `--statut TERP --variante abc` |
+| Écouter et cocher | `page` → `http://localhost:5173/audition/voix/index.html` |
+| Retenir | `pick heros_depart_a …` (`pick nom=-` pour retirer) |
+| Planche du jeu | `finalize --out /tmp/voix`, puis `build_sprite.py /tmp/voix --out public/assets/audio/voix --nom voix` |
+
+Prises gardées en MP3 tel que livré : `candidats/voix/` jetable, `retenus/voix/`
+versionné. `finalize` recadre les silences et met toutes les prises au même
+niveau de parole. En jeu : `core/heroVoice.ts` (lecture) et
+`game/session/heroLines.ts` (texte et rythme de chaque réplique) — une prise
+retenue sans entrée là-dedans fait échouer `heroLines.test.ts`.
+
 ## Sons générés par un modèle (`ia_sfx.py`, 2026-09-30) — mis de côté
 
 > 2026-10-01 : l'utilisateur a écarté les modèles (« pas de model, j'ai pas

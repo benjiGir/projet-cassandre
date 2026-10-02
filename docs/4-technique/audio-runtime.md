@@ -107,9 +107,16 @@ La douche suit la même préparation dans `showerAmbience.ts`.
 
 ### Répliques
 
-Les répliques restent du texte HUD.
-`triggerHeroLine` déclenche l'atténuation du thème au moment d'une réplique et restaure son niveau après la fenêtre prévue.
-Aucun fichier vocal n'est chargé par le runtime.
+Depuis le 2026-10-02, les répliques sont dites : `core/heroVoice.ts` charge un
+second sprite, `voix.{ogg,m4a,json}` (prises ElevenLabs, voix « Callum »,
+produites par `tools/audio/ia_voix.py`). Une seule lecture à la fois — une
+nouvelle réplique coupe la précédente — et aucune variation de hauteur.
+`triggerHeroLine(session, id)` affiche le sous-titre, joue la prise
+`heros_<id>_a`, fait parler le portrait et baisse le thème le temps de la
+prise (4 s au moins). Le texte, la priorité, la règle « une fois par partie »
+et la probabilité de chaque réplique sont dans `game/session/heroLines.ts` ;
+`triggerHeroBark` joue les cris courts (douleur, réception), sans sous-titre.
+`cassandre.voix.liste()`/`joue(cle)` en console.
 
 ## Pièges
 

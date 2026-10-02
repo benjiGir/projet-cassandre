@@ -167,7 +167,7 @@ describe("InteractionSystem — portes libres (sans carte)", () => {
 
     system.update(true, handle.useObjects, handle.useObjects[0].position.clone(), handlersDeTest({ onDoorUse }));
 
-    expect(onDoorUse).toHaveBeenCalledWith("door_secret_photomaton", "Clic !");
+    expect(onDoorUse).toHaveBeenCalledWith("door_secret_photomaton", "Clic !", "use_photomaton");
   });
 
   it("jamais consommée, et un nom historique garde son propre handler", () => {
@@ -186,7 +186,7 @@ describe("InteractionSystem — portes libres (sans carte)", () => {
     system.update(true, [surgeles], surgeles.position.clone(), handlers);
 
     expect(onDoorUse).toHaveBeenCalledTimes(2);
-    expect(onDoorUse).toHaveBeenCalledWith("door_coupe_feu", null);
+    expect(onDoorUse).toHaveBeenCalledWith("door_coupe_feu", null, "use_coupe_feu");
     expect(onFrozenStorageUse).toHaveBeenCalledWith("door_b_frozen");
   });
 });

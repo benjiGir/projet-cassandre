@@ -21,6 +21,7 @@ import { type LightPool } from "../../render/lightPool";
 import { type WeaponPickupBillboard } from "../../render/pickups";
 import type { CardPickupBillboard } from "../../render/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
+import type { HeroLineId } from "./heroLines";
 import type { HeroPortrait } from "./heroPortrait";
 
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
@@ -150,15 +151,19 @@ export interface GameSession {
   levelCompleteHandled: boolean;
   /** Cooldown global des répliques du héros (15 s) — PROPRE À CETTE PARTIE : une réplique juste avant la mort ne doit pas geler le canal de la partie suivante. */
   lastHeroLineAt: number;
+  /** Dernier cri court (douleur, réception), en ms de gameplay — voir `feedback.ts::triggerHeroBark`. */
+  lastHeroBarkAt: number;
+  /** Répliques déjà dites dans CETTE partie (règle `once` de `heroLines.ts`). */
+  heroLinesSaid: Set<HeroLineId>;
   /**
-   * Générateur RNG DÉDIÉ au choix de la réplique de soulagement des
-   * sanitaires (`game/session/sanitaires.ts`) — invariant #12, jamais
-   * `Math.random()` : la réplique est choisie DANS le pas fixe (un appui sur
-   * E), donc le rejeu d'input en dépend. Construit UNE FOIS par partie
+   * Générateur RNG DÉDIÉ au tirage des répliques occasionnelles
+   * (`HeroLineDef.chance`, `feedback.ts::triggerHeroLine`) — invariant #12,
+   * jamais `Math.random()` : la réplique se décide DANS le pas fixe, donc le
+   * rejeu d'input en dépend. Construit UNE FOIS par partie
    * (`bootGameSession`, via `DeterministicRandom.forSeed`), même pattern que
    * `WeaponSystem.nextRandom`.
    */
-  sanitaireReliefRandom: () => number;
+  heroLineRandom: () => number;
 
   /**
    * Récap de fin de partie (`game/session/score.ts`) — compteurs avancés AU

@@ -181,6 +181,10 @@ const IMPULSE_PER_DAMAGE = 12;
  */
 const PROP_RENDER_DISTANCE_SQ = 36 * 36;
 
+/** Seuils de `isPushedNear` : vitesse horizontale du prop (m/s) et distance de son centre au joueur (m). */
+const PUSH_SPEED_SQ = 0.6 * 0.6;
+const PUSH_DISTANCE_SQ = 1.6 * 1.6;
+
 /** Scratch réutilisés — zéro allocation en régime établi (discipline du pas fixe). */
 const impulseScratch = new THREE.Vector3();
 const worldMatrixScratch = new THREE.Matrix4();
@@ -292,6 +296,25 @@ export class PropSystem {
   }
   get destroyedEvents(): ReadonlyArray<PropDestroyedEvent> {
     return this._destroyedEvents;
+  }
+
+  /**
+   * Un prop intact glisse-t-il à portée de main du joueur ? C'est le seul
+   * signe qu'il le pousse : le contact se règle dans `world.step` (corps
+   * kinématique contre corps dynamique), aucune file ne le signale. Un prop
+   * projeté par un tir glisse aussi, mais rarement collé au joueur.
+   */
+  isPushedNear(playerPosition: THREE.Vector3): boolean {
+    for (const state of this.states) {
+      if (state.destroyed) continue;
+      const v = state.info.body.linvel();
+      if (v.x * v.x + v.z * v.z < PUSH_SPEED_SQ) continue;
+      const t = state.info.body.translation();
+      const dx = t.x - playerPosition.x;
+      const dz = t.z - playerPosition.z;
+      if (dx * dx + dz * dz <= PUSH_DISTANCE_SQ) return true;
+    }
+    return false;
   }
 
   /** Nombre total de `prop_*` du niveau, détruits compris. */

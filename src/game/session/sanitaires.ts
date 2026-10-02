@@ -108,29 +108,10 @@ export const SANITAIRE_RELIEF_COOLDOWN_SECONDS = 220;
 /** PV rendus par une gorgée au jet d'eau d'un sanitaire cassé — illimité, contrairement au soulagement. */
 const SANITAIRE_SIP_HEAL = 1;
 
-/** Graine RNG dédiée au choix de la réplique de soulagement — famille
- * `SHOTGUN_SPREAD_SEED`/`BASE_SUIT_SEED`, jamais dérivée de `Math.random()`/`Date.now()`. */
-export const SANITAIRE_RELIEF_LINE_SEED = 0x50111e77;
-
 /** Message HUD (canal SYSTÈME, sans cooldown) pendant le délai — court, drôle, facultatif au sens du contrat. */
 const HUD_SANITAIRE_ON_COOLDOWN = "Rien ne vient.";
 /** Message HUD à PV pleins — partagé par le soulagement et la gorgée. */
 const HUD_SANITAIRE_FULL_HP = "Vous êtes déjà en pleine forme.";
-
-/** Répliques du héros au soulagement, tirées par `session.sanitaireReliefRandom` (RNG déterministe, invariant #12). */
-const HERO_LINES_RELIEF: readonly string[] = [
-  "Ça va mieux.",
-  "Ah. Voilà qui est fait.",
-  "On se sent tout de suite mieux, hein.",
-  "Ça, c'est du soulagement de qualité.",
-];
-
-function pickReliefHeroLine(session: GameSession): string {
-  const index = Math.floor(session.sanitaireReliefRandom() * HERO_LINES_RELIEF.length);
-  // Clamp défensif : `forSeed` rend `[0, 1)`, mais un futur générateur qui
-  // rendrait exactement 1 ne doit jamais indexer hors tableau.
-  return HERO_LINES_RELIEF[Math.min(index, HERO_LINES_RELIEF.length - 1)]!;
-}
 
 /**
  * Soulagement à un sanitaire INTACT — voir la doc de tête du fichier pour la
@@ -144,6 +125,7 @@ export function relieveAtSanitaire(session: GameSession): void {
 
   if (session.sanitaireReliefCooldown > 0) {
     showHudMessage(HUD_SANITAIRE_ON_COOLDOWN);
+    triggerHeroLine(session, "toilettes_delai");
     return;
   }
 
@@ -160,7 +142,7 @@ export function relieveAtSanitaire(session: GameSession): void {
   useGameStore.getState().setPlayerHp(session.playerHp);
   session.sanitaireReliefCooldown = SANITAIRE_RELIEF_COOLDOWN_SECONDS;
   showHudMessage(`+${healed} PV`);
-  triggerHeroLine(session, pickReliefHeroLine(session));
+  triggerHeroLine(session, "toilettes_soulagement");
 }
 
 /** Gorgée au jet d'eau permanent d'un sanitaire CASSÉ — voir la doc de tête du fichier. */
@@ -178,6 +160,7 @@ function drinkFromSanitaire(session: GameSession): void {
   useGameStore.getState().setPlayerHp(session.playerHp);
   playSfx("water_drink");
   showHudMessage(`+${SANITAIRE_SIP_HEAL} PV`);
+  triggerHeroLine(session, "boire_fuite");
 }
 
 /**

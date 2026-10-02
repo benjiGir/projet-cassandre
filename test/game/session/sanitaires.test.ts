@@ -34,6 +34,7 @@ import {
 } from "../../../src/game/session/sanitaires";
 import { type GameSession } from "../../../src/game/session/gameSession";
 import { useGameStore } from "../../../src/game/state";
+import { HERO_LINES } from "../../../src/game/session/heroLines";
 import { HeroPortrait } from "../../../src/game/session/heroPortrait";
 import { createInitialStats } from "../../../src/game/session/score";
 
@@ -83,8 +84,10 @@ function sessionDeTest(overrides: Partial<GameSession> = {}): GameSession {
     heroPortrait: new HeroPortrait(),
     stats: createInitialStats(),
     sanitaireReliefCooldown: 0,
-    sanitaireReliefRandom: () => 0,
+    heroLineRandom: () => 0,
+    heroLinesSaid: new Set(),
     lastHeroLineAt: -Infinity,
+    lastHeroBarkAt: -Infinity,
     sanitaireSystem: null,
     physics: {} as never, // ignoré par le rayon SCRIPTÉ (RaycastService.test), jamais un vrai monde Rapier ici
     ...overrides,
@@ -139,7 +142,7 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
     expect(session.playerHp).toBe(50); // aucun soin
     expect(session.sanitaireReliefCooldown).toBe(137); // ni consommé ni prolongé
     expect(useGameStore.getState().hudMessage).toBe("Rien ne vient.");
-    expect(useGameStore.getState().heroLine).toBeNull(); // pas de réplique sans soin réel
+    expect(useGameStore.getState().heroLine).toBe(HERO_LINES.toilettes_delai.text);
   });
 
   it("à PV pleins ET hors délai : message dédié, délai NON consommé (écart volontaire à Duke)", () => {
@@ -152,21 +155,10 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
     expect(useGameStore.getState().heroLine).toBeNull();
   });
 
-  it("la réplique choisie dépend du RNG DÉTERMINISTE de la session — jamais Math.random()", () => {
-    const sessionA = sessionDeTest({ playerHp: 10, sanitaireReliefRandom: () => 0 });
-    relieveAtSanitaire(sessionA);
-    const ligneA = useGameStore.getState().heroLine;
+  it("dit la réplique enregistrée du soulagement, mot pour mot", () => {
+    relieveAtSanitaire(sessionDeTest({ playerHp: 10 }));
 
-    useGameStore.getState().showHeroLine(null);
-    useGameStore.getState().setPlayerHp(10);
-
-    const sessionB = sessionDeTest({ playerHp: 10, sanitaireReliefRandom: () => 0.999 });
-    relieveAtSanitaire(sessionB);
-    const ligneB = useGameStore.getState().heroLine;
-
-    expect(ligneA).not.toBeNull();
-    expect(ligneB).not.toBeNull();
-    expect(ligneA).not.toBe(ligneB); // deux graines différentes, deux répliques différentes
+    expect(useGameStore.getState().heroLine).toBe(HERO_LINES.toilettes_soulagement.text);
   });
 });
 

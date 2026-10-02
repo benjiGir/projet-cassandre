@@ -56,7 +56,7 @@ export interface InteractionHandlers {
    * `message` est lu dans `extras.message`, `null` s'il est absent. Le sens
    * unique d'une porte ne se code pas ici : il tient à l'endroit où le `.glb`
    * pose son `use_*`, hors de portée depuis l'autre côté. */
-  onDoorUse(targetName: string, message: string | null): void;
+  onDoorUse(targetName: string, message: string | null, useName: string): void;
   /** `use_*` portant `extras.cameras` (chantier « Les coulisses », système
    * 4) : console de vidéosurveillance. `cameraNames` est la liste ORDONNÉE
    * des `cam_*` à cycler, telle que déclarée dans `extras.cameras`
@@ -324,7 +324,7 @@ export class InteractionSystem {
         // ignore un second appui sur une porte déjà ouverte.
         if (useObject.targetName) {
           const message = typeof useObject.extras.message === "string" ? useObject.extras.message : null;
-          handlers.onDoorUse(useObject.targetName, message);
+          handlers.onDoorUse(useObject.targetName, message, useObject.name);
         }
         // Nom sans handler reconnu et sans cible : aucun effet, aucun warning.
         // Un `use_*` sans cible a déjà son propre avertissement bruyant émis par

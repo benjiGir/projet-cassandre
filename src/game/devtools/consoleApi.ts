@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { inputRecorder, recordingFromJson, recordingToJson, type Recording } from "../../core/inputRecorder";
 import { isMusicEnabled, setMusicEnabled, toggleMusic } from "../../core/music";
 import { listSfx, playSfx, type SfxId } from "../../core/audio";
+import { listHeroVoices, playHeroVoice } from "../../core/heroVoice";
 import { waterAmbienceDebugState } from "../../core/waterAmbience";
 import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
 import {
@@ -207,6 +208,12 @@ export function exposeDebugApi(engine: GameEngine): void {
        * ci-dessus, verrouillage du pointeur hors de portée de
        * l'automatisation). */
       eau: () => waterAmbienceDebugState(),
+    },
+    /** Voix du héros : `liste()` rend chaque prise du sprite `voix` et sa durée,
+     * `joue(cle)` en fait entendre une (`"heros_depart_a"`) sans provoquer la situation. */
+    voix: {
+      liste: () => listHeroVoices(),
+      joue: (cle: string) => playHeroVoice(cle),
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
@@ -473,6 +480,10 @@ declare global {
         liste: () => ReturnType<typeof listSfx>;
         joue: (id: SfxId, volume?: number) => void;
         eau: () => ReturnType<typeof waterAmbienceDebugState>;
+      };
+      voix: {
+        liste: () => ReturnType<typeof listHeroVoices>;
+        joue: (cle: string) => void;
       };
       secrets: () => SecretZone[];
       heals: () => UseObject[];

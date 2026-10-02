@@ -1,0 +1,352 @@
+{
+ "heros_arme_double_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "J'ai déjà ce qu'il faut.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_arme_pied_biche_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ça ouvre les portes. Et les discussions.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_arme_pistolet_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Là, ils vont m'écouter.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_arme_pompe_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ça, c'est pour les gros dossiers.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_boire_fuite_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Je boirai vraiment n'importe quoi.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_boss_attaque_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Même le patron fait le sale boulot.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_boss_mort_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Fin de mandat.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_boss_revelation_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Je le savais. Je le savais !",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_boss_touche_hero_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "T'as de la force pour un bureaucrate.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_cache_gaine_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Ils ravitaillent même les conduits.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_camera_quitte_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Assez regardé. J'y vais.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_carte_argent_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "L'Argent ouvre la réserve. Intéressant.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_carte_or_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "L'Or. Ils aiment vraiment leurs privilèges.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_carte_platine_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "La Platine. Mon billet de sortie.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_casse_bois_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Ça tenait pas à grand-chose.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_casse_ecran_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Fin du programme.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_casse_farine_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Ça, c'est de la poudre blanche.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_casse_vitre_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Je préfère les passages ouverts.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_costard_alerte_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Ils m'ont vu. Tant mieux.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_costard_tire_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Ah. Voilà leur politique d'accueil.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_depart_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ce soir, on vérifie les rumeurs.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_douche_ferme_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Ça suffit. On reprend.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_douche_ouvre_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Cinq secondes pour enlever la poussière.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_douleur_forte_a": {
+  "date": "2026-10-02 12:48",
+  "modele": "eleven_v3",
+  "texte": "Argh !",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_douleur_legere_a": {
+  "date": "2026-10-02 12:48",
+  "modele": "eleven_v3",
+  "texte": "Aïe !",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_effort_reception_a": {
+  "date": "2026-10-02 12:48",
+  "modele": "eleven_v3",
+  "texte": "Ouf !",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_kill_costard_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Ton service est terminé.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_kill_pompe_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Ça remet les idées en place.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_manger_pizza_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Le vigile avait bon goût.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_manger_sandwich_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Je préfère pas lire les ingrédients.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_micro_annonces_a": {
+  "date": "2026-10-02 12:44",
+  "modele": "eleven_v3",
+  "texte": "Chers clients, les reptiliens sont rappelés en caisse.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_mort_hero_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "J'étais pourtant si près.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_munitions_24_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "De quoi poursuivre la conversation.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_munitions_36_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Voilà une réserve sérieuse.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_nouvelle_tentative_a": {
+  "date": "2026-10-02 12:48",
+  "modele": "eleven_v3",
+  "texte": "Cette fois, je connais les pièges.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_objet_pousse_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Pousse-toi de là.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_photomaton_ouvre_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Belle photo. Drôle de fond.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_pointeuse_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Je pointe. Vous payez les heures supplémentaires ?",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_premier_kill_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Un de moins. Une preuve de plus.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_pv_bas_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ça va. Continuez de regarder.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_raccourci_coupe_feu_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Voilà qui évitera le grand tour.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_secret_aeration_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Tout ce détour pour cacher cette pièce.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_secret_generique_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Je savais qu'ils cachaient une pièce.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_secret_photomaton_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Un labo derrière les photos d'identité. Évidemment.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_secret_vigile_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Le vigile s'était fait son petit royaume.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_soin_plein_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ça va. Pour l'instant.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_sonnette_sav_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "J'ai un problème avec votre personnel.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_toilettes_delai_a": {
+  "date": "2026-10-02 12:46",
+  "modele": "eleven_v3",
+  "texte": "Rien. J'ai déjà tout donné.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_toilettes_soulagement_a": {
+  "date": "2026-10-02 12:45",
+  "modele": "eleven_v3",
+  "texte": "Ah. Voilà une bonne décision.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ },
+ "heros_touche_a": {
+  "date": "2026-10-02 12:47",
+  "modele": "eleven_v3",
+  "texte": "Ça, tu vas le payer.",
+  "voice_id": "N2lVS1w4EtoT3dr4eOWO",
+  "voix": "Callum"
+ }
+}

@@ -211,7 +211,9 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--gap", type=float, default=GAP)
     ap.add_argument("--peak", type=float, default=PEAK, help="marge de crete de l'atlas")
+    ap.add_argument("--nom", default="sfx", help="nom de l'atlas : sfx, ou voix pour les repliques")
     args = ap.parse_args()
+    nom = args.nom
 
     paths = sorted(glob.glob(os.path.join(args.folder, "*.wav")))
     sfx = [p for p in paths if not os.path.basename(p).startswith("amb_")]
@@ -236,11 +238,11 @@ def main() -> None:
         cursor += (len(x) + len(gap)) / SR
 
     atlas = np.concatenate(chunks)
-    wav_path = os.path.join(args.out, "sfx.wav")
+    wav_path = os.path.join(args.out, f"{nom}.wav")
     write_wav(wav_path, atlas, SR, peak=args.peak)
 
     manifest = {
-        "src": ["sfx.ogg", "sfx.m4a"],
+        "src": [f"{nom}.ogg", f"{nom}.m4a"],
         "sprite": sprite,
         "pool": POOL,
         "_note": ("Genere par tools/audio/build_sprite.py. "
@@ -248,10 +250,10 @@ def main() -> None:
     }
 
     sizes = {}
-    if vers_ogg(wav_path, os.path.join(args.out, "sfx.ogg"), 4):
-        sizes["sfx.ogg"] = os.path.getsize(os.path.join(args.out, "sfx.ogg")) / 1024
-    if vers_m4a(wav_path, os.path.join(args.out, "sfx.m4a"), 96):
-        sizes["sfx.m4a"] = os.path.getsize(os.path.join(args.out, "sfx.m4a")) / 1024
+    if vers_ogg(wav_path, os.path.join(args.out, f"{nom}.ogg"), 4):
+        sizes[f"{nom}.ogg"] = os.path.getsize(os.path.join(args.out, f"{nom}.ogg")) / 1024
+    if vers_m4a(wav_path, os.path.join(args.out, f"{nom}.m4a"), 96):
+        sizes[f"{nom}.m4a"] = os.path.getsize(os.path.join(args.out, f"{nom}.m4a")) / 1024
     defauts: list[str] = []
     for p in amb:
         n = os.path.splitext(os.path.basename(p))[0]
@@ -261,7 +263,7 @@ def main() -> None:
     if not sizes:
         print("  aucun encodeur (ni ffmpeg, ni oggenc/afconvert) — seul le WAV est produit")
 
-    with open(os.path.join(args.out, "sfx.json"), "w") as f:
+    with open(os.path.join(args.out, f"{nom}.json"), "w") as f:
         json.dump(manifest, f, indent=2)
 
     W = 62
@@ -277,7 +279,7 @@ def main() -> None:
             print(f"  {k:<18} {v:>8.0f} Ko")
         print(f"  TOTAL              {sum(sizes.values()) / 1024:>7.2f} Mo   (budget 8 Mo)")
     print("-" * W)
-    print(f"  -> {args.out}/sfx.json")
+    print(f"  -> {args.out}/{nom}.json")
     print("=" * W + "\n")
 
     boucles = [os.path.splitext(os.path.basename(p))[0] for p in amb

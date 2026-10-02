@@ -27,6 +27,7 @@ public/audition/
 # Atlas intermediaire du sprite audio : seuls les .ogg/.m4a encodes partent
 # dans le jeu, le WAV se regenere par tools/audio/build_sprite.py
 public/assets/audio/sfx/*.wav
+public/assets/audio/voix/*.wav
 
 # Clé d'API des outils hors-jeu (tools/audio/ia_sfx.py) — jamais commitée
 .env.local

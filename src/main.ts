@@ -5,6 +5,7 @@ import * as THREE from "three";
 import "./ui/theme/tokens.css";
 
 import { initAudio } from "./core/audio";
+import { initHeroVoice } from "./core/heroVoice";
 import { installAudioActivation } from "./core/audioPreparation";
 import { input } from "./core/input";
 import { initMusic } from "./core/music";
@@ -50,7 +51,7 @@ async function main() {
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
   installAudioActivation();
-  const audioReady = Promise.all([initAudio(), initWaterAmbience(), initShowerAmbience()]);
+  const audioReady = Promise.all([initAudio(), initHeroVoice(), initWaterAmbience(), initShowerAmbience()]);
 
   // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et
   // appliqués (FOV, screenshake) AVANT le menu principal : un joueur qui a

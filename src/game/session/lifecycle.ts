@@ -5,7 +5,7 @@ import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/random";
 import { setAudioRandom } from "../../core/audio";
 import { runGameplaySync } from "../../core/runtime";
-import { SANITAIRE_RELIEF_LINE_SEED } from "./sanitaires";
+import { HERO_LINE_SEED } from "./heroLines";
 import { createInitialStats } from "./score";
 import { PlayerController } from "../player/controller";
 import { WeaponSystem } from "../player/weapons";
@@ -180,9 +180,9 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     deathHandled: false,
     levelCompleteHandled: false,
     lastHeroLineAt: -Infinity,
-    sanitaireReliefRandom: runGameplaySync(
-      DeterministicRandom.useSync((random) => random.forSeed(SANITAIRE_RELIEF_LINE_SEED)),
-    ),
+    lastHeroBarkAt: -Infinity,
+    heroLinesSaid: new Set(),
+    heroLineRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(HERO_LINE_SEED))),
     stats: createInitialStats(),
   };
 
