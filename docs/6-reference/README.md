@@ -2,7 +2,7 @@
 title: Référence
 tags: [sommaire]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-01
 ---
 
 # Référence
@@ -17,6 +17,7 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Valeurs de déplacement](valeurs-deplacement.md) — mouvement, caméra et capsule du joueur.
 - [Valeurs des armes](valeurs-armes.md) — dégâts, cadences, portées, dispersion et munitions.
 - [Valeurs des ennemis](valeurs-ennemis.md) — différences de paramètres du Costard et du Directeur.
+- [Catalogue de répliques](repliques-niveau-v2.md) — trois choix par situation du niveau, identifiants et consignes d'enregistrement.
 - [Conventions de nommage glTF](conventions-nommage.md) — préfixes et extras de niveau.
 - [Contrôles et bindings](controles.md) — touches joueur, remapping et raccourcis dev.
 - [React — structure et rangement](react-structure.md) — dossiers, frontières et imports.

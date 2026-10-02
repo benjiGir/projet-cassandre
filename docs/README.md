@@ -2,7 +2,7 @@
 title: Documentation PROJET_CASSANDRE
 tags: [index]
 status: stable
-updated: 2026-09-29
+updated: 2026-10-01
 ---
 
 # PROJET_CASSANDRE
@@ -45,6 +45,7 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Console cassandre](6-reference/console-cassandre.md)
 - [Valeurs de déplacement](6-reference/valeurs-deplacement.md)
 - [Valeurs des ennemis](6-reference/valeurs-ennemis.md)
+- [Catalogue de répliques du niveau](6-reference/repliques-niveau-v2.md) — trois alternatives par événement pour préparer les voix.
 - [Conventions de nommage glTF](6-reference/conventions-nommage.md)
 - [Index des ADR](decisions/README.md)
 
