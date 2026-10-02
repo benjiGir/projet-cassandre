@@ -20,6 +20,7 @@ import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
 import { loadCardPickupTextures } from "./render/cardPickups";
 import { createGameFlowActor } from "./ui/gameFlowMachine";
 import { App } from "./ui/App";
+import { initAudioSettingsAtBoot } from "./game/audioSettings";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
 import { useGameStore } from "./game/state";
 import { resolveBootChoice } from "./app/bootChoice";
@@ -51,6 +52,9 @@ async function main() {
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
   installAudioActivation();
+  // Réglages audio persistés (`game/audioSettings.ts`) : posés AVANT la
+  // création des `Howl`, qui reprennent ces gains dès leur construction.
+  initAudioSettingsAtBoot();
   const audioReady = Promise.all([initAudio(), initHeroVoice(), initWaterAmbience(), initShowerAmbience()]);
 
   // Réglages graphiques persistés (`game/graphicsSettings.ts`) — chargés et

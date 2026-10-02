@@ -19,6 +19,12 @@ let preparation: Promise<void> | null = null;
 let warnedMissing = false;
 
 const targetMix: WaterAmbienceMix = { gain: 0, pan: 0 };
+/** Gain du canal « ambiances » réglé par le joueur (`game/audioSettings.ts`). */
+let channelGain = 1;
+
+export function setShowerAmbienceGain(gain: number): void {
+  channelGain = gain;
+}
 
 /** Décode et amorce la boucle en silence pendant le chargement. */
 export function initShowerAmbience(): Promise<void> {
@@ -65,7 +71,7 @@ export function updateShowerAmbience(
   if (!showerHowl || !loaded) return;
 
   if (playbackId !== null) {
-    showerHowl.volume(currentGain > AUDIBLE_GAIN_EPSILON ? currentGain * PEAK_VOLUME : 0, playbackId);
+    showerHowl.volume(currentGain > AUDIBLE_GAIN_EPSILON ? currentGain * PEAK_VOLUME * channelGain : 0, playbackId);
     showerHowl.stereo(currentPan, playbackId);
   }
 }

@@ -118,6 +118,19 @@ et la probabilité de chaque réplique sont dans `game/session/heroLines.ts` ;
 `triggerHeroBark` joue les cris courts (douleur, réception), sans sous-titre.
 `cassandre.voix.liste()`/`joue(cle)` en console.
 
+### Réglages du joueur
+
+Options › Audio (`ui/screens/options/audio/AudioTab/`) présente,
+`game/audioSettings.ts` persiste (`cassandre.audio`) et applique. Cinq canaux
+— général (`Howler.volume`), musique, effets, voix du héros, ambiances (nappe,
+jets d'eau, douches) — chacun un gain multiplié au volume de repos de son
+module de `core/` : 100 % rend le mixage d'origine. Le gain est le carré de
+la valeur affichée (50 % ≈ −12 dB). S'y ajoutent les sous-titres des
+répliques (lus par `triggerHeroLine`) et la coupure du son quand la fenêtre
+perd le focus (`Howler.mute`). Le thème activé/coupé reste le réglage de
+`core/music.ts` (touche M). `initAudioSettingsAtBoot()` passe avant la
+création des `Howl`, qui reprennent les gains à leur construction.
+
 ## Pièges
 
 - Appeler Howler dans le pas fixe mélange une action de présentation à la simulation.

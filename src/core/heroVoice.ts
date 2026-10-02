@@ -27,6 +27,13 @@ let atlas: Howl | null = null;
 let durees = new Map<string, number>();
 let lectureEnCours: number | null = null;
 let chargement: Promise<void> | null = null;
+let gain = 1;
+
+/** Gain du canal « voix » réglé par le joueur (`game/audioSettings.ts`). Effectif tout de suite. */
+export function setHeroVoiceGain(value: number): void {
+  gain = value;
+  atlas?.volume(VOIX_VOLUME * gain);
+}
 
 /** Charge le sprite des voix. Idempotent ; un fichier absent laisse le jeu muet, jamais en panne. */
 export function initHeroVoice(): Promise<void> {
@@ -39,7 +46,7 @@ export function initHeroVoice(): Promise<void> {
         src: manifeste.src.map((f) => `${VOIX_BASE_PATH}/${f}`),
         sprite: manifeste.sprite,
         pool: 2,
-        volume: VOIX_VOLUME,
+        volume: VOIX_VOLUME * gain,
         onloaderror: () => console.warn(`[voix] atlas introuvable (${VOIX_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
       });
       await waitForAudioLoad(atlas);

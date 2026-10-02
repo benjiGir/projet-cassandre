@@ -1,0 +1,15 @@
+.mixer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reset {
+  margin-top: 14px;
+}

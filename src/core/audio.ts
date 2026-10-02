@@ -1,4 +1,4 @@
-import { Howl } from "howler";
+import { Howl, Howler } from "howler";
 
 import { assetUrl } from "./assetPath";
 import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
@@ -92,6 +92,24 @@ const POOL_LECTURES = 12;
 /** Variation de pitch systématique sur tout son répété — ±8 %, cf. skill `audio-sfx-pipeline`. */
 const PITCH_VARIATION = 0.08;
 let audioRandom: () => number = () => 0.5;
+
+/** Gain du canal « effets » réglé par le joueur (`game/audioSettings.ts`), multiplie chaque lecture. */
+let sfxGain = 1;
+
+/** Règle le gain du canal « effets ». Effectif à la prochaine lecture. */
+export function setSfxGain(gain: number): void {
+  sfxGain = gain;
+}
+
+/** Volume général : un seul gain posé sur le contexte Howler, qui coiffe tous les canaux. */
+export function setMasterGain(gain: number): void {
+  Howler.volume(gain);
+}
+
+/** Coupe ou rend tout le son sans toucher aux réglages (fenêtre en arrière-plan). */
+export function setAllMuted(muted: boolean): void {
+  Howler.mute(muted);
+}
 
 /** Flux de présentation indépendant, remis à zéro à chaque nouvelle partie. */
 export function setAudioRandom(random: () => number): void {
@@ -302,7 +320,7 @@ export function playSfx(id: SfxId, volumeScale = 1) {
   if (lecture === undefined) return;
   const p = def.pitch ?? PITCH_VARIATION;
   atlas.rate(1 - p + audioRandom() * p * 2, lecture);
-  atlas.volume(def.volume * volumeScale, lecture);
+  atlas.volume(def.volume * volumeScale * sfxGain, lecture);
 }
 
 /**

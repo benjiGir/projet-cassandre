@@ -1,0 +1,39 @@
+.fader {
+  display: grid;
+  grid-template-columns: 130px 1fr 30px;
+  align-items: center;
+  gap: 12px;
+}
+
+.label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.preview {
+  width: 30px;
+  height: 24px;
+  padding: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--control-bg);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+.preview:hover {
+  color: var(--text-strong);
+  background: var(--control-bg-hover);
+  border-color: var(--control-edge);
+}
+
+.preview:focus-visible {
+  outline: 1px solid var(--control-edge);
+  outline-offset: 2px;
+}
+
+.preview:active {
+  color: var(--phosphor-bright);
+}

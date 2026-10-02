@@ -39,6 +39,13 @@ const WATER_AMBIENCE_BASE_PATH = assetUrl("assets/audio/sfx");
  */
 const PEAK_VOLUME = 0.35;
 
+/** Gain du canal « ambiances » réglé par le joueur (`game/audioSettings.ts`). */
+let channelGain = 1;
+
+export function setWaterAmbienceGain(gain: number): void {
+  channelGain = gain;
+}
+
 /** Constante de temps du lissage du gain — quelques dizaines de ms (contrat de la tâche). */
 const GAIN_SMOOTH_TAU = 0.05;
 /**
@@ -114,7 +121,7 @@ export function initWaterAmbience(): Promise<void> {
  * même limitation que le reste du son de ce projet.
  */
 export function waterAmbienceDebugState(): { charge: boolean; joue: boolean; volume: number; pan: number } {
-  return { charge: loaded, joue: isPlaying, volume: currentGain * PEAK_VOLUME, pan: currentPan };
+  return { charge: loaded, joue: isPlaying, volume: currentGain * PEAK_VOLUME * channelGain, pan: currentPan };
 }
 
 /**
@@ -157,6 +164,6 @@ export function updateWaterAmbience(
 
   const audible = currentGain > AUDIBLE_GAIN_EPSILON;
   isPlaying = audible;
-  waterHowl.volume(audible ? currentGain * PEAK_VOLUME : 0, playbackId);
+  waterHowl.volume(audible ? currentGain * PEAK_VOLUME * channelGain : 0, playbackId);
   waterHowl.stereo(currentPan, playbackId);
 }

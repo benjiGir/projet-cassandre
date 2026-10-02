@@ -73,7 +73,7 @@ Trois règles de rangement en découlent :
 | `lib/` | fonctions TypeScript sans React, utiles à plusieurs domaines | rien |
 | `components/` | primitives visuelles réutilisables : `Screen`, `CornerFrame`, `Button`… | `lib/` seulement |
 | `hud/` | widgets du calque en jeu | `components/`, `lib/`, `game/state` |
-| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/state`, les API publiques de `core/` et de `game/graphicsSettings.ts` |
+| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/state`, les API publiques de `core/`, de `game/graphicsSettings.ts` et de `game/audioSettings.ts` |
 | `dev/` | panneaux et harnais de développement | tout, mais **n'est utilisé que derrière `import.meta.env.DEV`** |
 
 Ce que ce tableau interdit, et pourquoi :
@@ -102,11 +102,13 @@ screens/options/
   controls/          l'onglet CONTRÔLES
     ControlsTab/     ControlsTab.tsx  ControlsTab.module.css  useInputCapture.ts
     KeyBinding/      KeyBinding.tsx   KeyBinding.module.css
-    MusicToggle/     MusicToggle.tsx  MusicToggle.module.css
   display/           l'onglet AFFICHAGE
     DisplayTab/      DisplayTab.tsx   DisplayTab.module.css   displayChoices.ts
+  audio/             l'onglet AUDIO
+    AudioTab/        AudioTab.tsx     AudioTab.module.css     audioChannels.ts
+    VolumeFader/     VolumeFader.tsx  VolumeFader.module.css
   fields/            les briques d'un réglage
-    OptionSection/  OptionHint/  ChoiceGroup/  RangeField/
+    OptionSection/  OptionHint/  ChoiceGroup/  RangeField/  ToggleField/
 ```
 
 Une pièce qui sert à **deux** écrans remonte dans `components/`, dans la famille

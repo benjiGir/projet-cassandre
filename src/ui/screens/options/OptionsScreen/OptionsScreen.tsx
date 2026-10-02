@@ -7,6 +7,7 @@ import { RecIndicator } from "../../../components/text/RecIndicator/RecIndicator
 import { Scanlines } from "../../../components/effects/Scanlines/Scanlines";
 import { Screen, type ScreenBackdrop } from "../../../components/layout/Screen/Screen";
 import { ScreenTitle } from "../../../components/text/ScreenTitle/ScreenTitle";
+import { AudioTab } from "../audio/AudioTab/AudioTab";
 import { ControlsTab } from "../controls/ControlsTab/ControlsTab";
 import { DisplayTab } from "../display/DisplayTab/DisplayTab";
 import { OptionsTabs, type OptionsTab } from "../OptionsTabs/OptionsTabs";
@@ -21,7 +22,7 @@ export interface OptionsScreenProps {
 }
 
 /**
- * Écran « Options » : contrôles et affichage, un seul bouton RETOUR. Monté
+ * Écran « Options » : contrôles, affichage et audio, un seul bouton RETOUR. Monté
  * depuis DEUX endroits, sans rien savoir duquel — `onBack` seul décide de la
  * suite : le menu principal (`app/bootChoice.ts`, retour vers
  * `MainMenu`) et la pause en jeu (`ui/screens/pause/PauseScreen/PauseScreen.tsx`,
@@ -44,7 +45,9 @@ export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
         <OptionsTabs value={tab} onChange={setTab} />
 
         <div id={`options-panel-${tab}`} role="tabpanel" aria-labelledby={`options-tab-${tab}`} tabIndex={0}>
-          {tab === "controles" ? <ControlsTab /> : <DisplayTab />}
+          {tab === "controles" && <ControlsTab />}
+          {tab === "affichage" && <DisplayTab />}
+          {tab === "audio" && <AudioTab />}
         </div>
 
         <ButtonRow className={styles.footer}>

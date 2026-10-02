@@ -4,13 +4,12 @@ import { ACTION_LABELS, ALL_ACTIONS, DEFAULT_BINDINGS, formatKeyCode, input, typ
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { KeyBinding } from "../KeyBinding/KeyBinding";
-import { MusicToggle } from "../MusicToggle/MusicToggle";
 import { OptionSection } from "../../fields/OptionSection/OptionSection";
 import { useInputCapture } from "./useInputCapture";
 import styles from "./ControlsTab.module.css";
 
 /**
- * Onglet CONTRÔLES : musique et remappage des touches. `input` n'est pas
+ * Onglet CONTRÔLES : remappage des touches (la musique est dans l'onglet AUDIO). `input` n'est pas
  * réactif : la copie locale des touches est relue après chaque changement.
  * see: docs/6-reference/controles.md
  */
@@ -38,8 +37,6 @@ export function ControlsTab() {
 
   return (
     <>
-      <MusicToggle />
-
       <OptionSection
         title="CANAUX D'ENTRÉE"
         hint="AZERTY (ZQSD) fonctionne déjà par défaut — ceci remappe au-delà. Échap annule une capture."

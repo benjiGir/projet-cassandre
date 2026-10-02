@@ -51,9 +51,26 @@ function saveMusicEnabled(enabled: boolean): void {
 // toujours audible, seul le thème peut être coupé par le joueur.
 let musicEnabled = loadMusicEnabled();
 
-/** Volume cible du thème compte tenu du réglage joueur — 0 si désactivé. */
+// Gains des canaux « musique » et « ambiances » réglés par le joueur
+// (`game/audioSettings.ts`) — multiplient les volumes de repos ci-dessus.
+let musicGain = 1;
+let ambienceGain = 1;
+
+/** Volume cible du thème compte tenu des réglages joueur — 0 si désactivé. */
 function baseMusicVolume(): number {
-  return musicEnabled ? MUSIC_VOLUME : 0;
+  return musicEnabled ? MUSIC_VOLUME * musicGain : 0;
+}
+
+/** Règle le gain du thème, effectif tout de suite. Une réplique en cours le rebaisse à sa propre remontée. */
+export function setMusicGain(gain: number): void {
+  musicGain = gain;
+  music?.volume(baseMusicVolume());
+}
+
+/** Règle le gain de la nappe d'ambiance, effectif tout de suite. */
+export function setAmbienceHumGain(gain: number): void {
+  ambienceGain = gain;
+  ambience?.volume(AMBIENCE_VOLUME * ambienceGain);
 }
 
 export function isMusicEnabled(): boolean {
@@ -92,7 +109,7 @@ export function initMusic() {
     src: [`${MUSIC_BASE_PATH}/ambience_hum.ogg`, `${MUSIC_BASE_PATH}/ambience_hum.m4a`],
     html5: true,
     loop: true,
-    volume: AMBIENCE_VOLUME,
+    volume: AMBIENCE_VOLUME * ambienceGain,
     onloaderror: () => warnMissingOnce("ambience_hum"),
   });
   music = new Howl({

@@ -2,11 +2,12 @@ import type { KeyboardEvent } from "react";
 
 import styles from "./OptionsTabs.module.css";
 
-export type OptionsTab = "controles" | "affichage";
+export type OptionsTab = "controles" | "affichage" | "audio";
 
 const TABS: ReadonlyArray<{ id: OptionsTab; label: string }> = [
   { id: "controles", label: "CONTRÔLES" },
   { id: "affichage", label: "AFFICHAGE" },
+  { id: "audio", label: "AUDIO" },
 ];
 
 export interface OptionsTabsProps {

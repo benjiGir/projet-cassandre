@@ -1,12 +1,11 @@
 .row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 150px 120px 1fr;
   align-items: center;
-  justify-content: center;
   gap: 12px;
 }
 
 .label {
-  min-width: 130px;
   font-size: 12px;
   letter-spacing: 1px;
 }
@@ -22,8 +21,22 @@
   cursor: pointer;
 }
 
+.toggle:hover {
+  background: var(--control-bg-hover);
+}
+
+.toggle:focus-visible {
+  outline: 1px solid var(--control-edge);
+  outline-offset: 2px;
+}
+
 .toggle[aria-pressed="true"] {
   color: var(--text-strong);
   border-color: var(--control-edge);
   box-shadow: 0 0 10px rgba(90, 255, 140, 0.25) inset;
+}
+
+.hint {
+  margin: 0;
+  text-align: left;
 }

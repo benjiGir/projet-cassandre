@@ -1,5 +1,6 @@
 import { heroVoiceDuration, playHeroVoice } from "../../core/heroVoice";
 import { duckMusicForHeroLine, restoreMusicVolume } from "../../core/music";
+import { subtitlesEnabled } from "../audioSettings";
 import { useGameStore } from "../state";
 import { HERO_LINES, heroVoiceKey, type HeroBarkId, type HeroLineDef, type HeroLineId } from "./heroLines";
 import { publishLevelRecap, recordHpLost } from "./score";
@@ -64,7 +65,8 @@ export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   const displayMs = Math.max(HERO_LINE_DISPLAY_MS, (heroVoiceDuration(voix) ?? 0) * 1000 + HERO_LINE_TAIL_MS);
   playHeroVoice(voix);
   session.heroPortrait.speak(displayMs / 1000);
-  useGameStore.getState().showHeroLine(def.text);
+  // Sous-titres coupés (Options › Audio) : la voix seule, le canal texte reste vide.
+  useGameStore.getState().showHeroLine(subtitlesEnabled() ? def.text : null);
   duckMusicForHeroLine();
   const ligne = ++ligneAffichee;
   globalThis.setTimeout(() => {
