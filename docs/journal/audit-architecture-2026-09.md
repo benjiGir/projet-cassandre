@@ -519,7 +519,7 @@ production ; le checker documentaire strict et ses trois tests de régression
 passent. Le build ne contient ni `audition/` ni `sfx.wav`. En navigateur, le
 menu et les options ont été inspectés sans erreur console ; le passage d'un
 onglet à l'autre au clavier conserve le focus et met à jour `aria-selected`.
-La passe de migration limitée à `src/core/assetPath.ts` fait passer l'audit de
+La passe de migration limitée à `src/core/loading/assetPath.ts` fait passer l'audit de
 `src/core/` de 51,7 % à 51,5 % de lignes de commentaires, sans perdre la
 raison du préfixe d'assets. Les mesures A* et p95 sont instrumentées, mais
 aucune valeur représentative en combat chargé ni verdict de playtest n'est
