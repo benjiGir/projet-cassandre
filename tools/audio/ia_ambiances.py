@@ -329,15 +329,10 @@ def encoder(x: np.ndarray, base: Path, qualite: int = 4) -> None:
 def rectangles(zone: str) -> list[dict]:
     """Espaces de la zone, en repère du JEU (x, y haut, z = −y Blender), sol à plafond, un mètre de marge en hauteur."""
     sys.path.insert(0, str(RACINE / "tools/level_v2"))
+    import espaces_jeu  # noqa: PLC0415
     import plan_de_masse as P  # noqa: PLC0415
     par_id = {s.id: s for s in P.ALL}
-    out = []
-    for esp in ESPACES[zone]:
-        s = par_id[esp]
-        sols = (s.rampe[1], s.rampe[2]) if s.rampe else (s.z, s.z)
-        out.append({"espace": esp, "x": [s.x[0], s.x[1]], "z": [-s.y[1], -s.y[0]],
-                    "y": [min(sols) - 1.0, max(sols) + s.hauteur + 1.0]})
-    return out
+    return [{"espace": esp, **espaces_jeu.boite(par_id[esp])} for esp in ESPACES[zone]]
 
 
 def cmd_finalize(args) -> int:

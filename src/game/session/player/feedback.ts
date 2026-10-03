@@ -18,6 +18,19 @@ export function showHudMessage(text: string): void {
   }, HUD_MESSAGE_DURATION_MS);
 }
 
+const ANNOUNCEMENT_DISPLAY_MS = 4500;
+
+/** Annonce du magasin ou de l'interphone : remplace la précédente, s'efface seule. */
+export function showAnnouncement(speaker: string, text: string): void {
+  const announcement = { speaker, text };
+  useGameStore.getState().showAnnouncement(announcement);
+  globalThis.setTimeout(() => {
+    if (useGameStore.getState().announcement === announcement) {
+      useGameStore.getState().showAnnouncement(null);
+    }
+  }, ANNOUNCEMENT_DISPLAY_MS);
+}
+
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 const HERO_LINE_COOLDOWN_MS = 15000;
 const HERO_LINE_DISPLAY_MS = 4000;
@@ -32,6 +45,8 @@ let partiePrecedentePerdue = false;
 export function triggerHeroLine(session: GameSession, id: HeroLineId): boolean {
   const def: HeroLineDef = HERO_LINES[id];
   if (def.once && session.heroLinesSaid.has(id)) return false;
+  // Sans voix ni sous-titres, il ne resterait qu'un portrait qui remue les lèvres.
+  if (def.textOnly && !subtitlesEnabled()) return false;
   const now = session.stats.gameplayElapsed * 1000;
   if (!def.priority) {
     if (now - session.lastHeroLineAt < HERO_LINE_COOLDOWN_MS) return false;
@@ -77,19 +92,6 @@ export function sayOpeningLine(session: GameSession): void {
 /** Retient l'issue de la partie pour la réplique d'ouverture de la suivante. */
 export function noteRunOutcome(died: boolean): void {
   partiePrecedentePerdue = died;
-}
-
-// Compteur de "vues" (Phase 6, voir `debug.views` dans `game/hud/state.ts`) —
-// gain par kill (le gag du "clip qui buzz" disproportionné), décidé au pas
-// fixe avec un flux dédié : le taux d'affichage n'influence pas l'audience.
-const VIEWS_GAIN_MIN = 40;
-const VIEWS_GAIN_MAX = 200;
-/** "La plus grosse révélation de la chaîne" mérite un pic plus marqué qu'un Costard ordinaire. */
-export const VIEWS_DIRECTOR_MULTIPLIER = 4;
-
-export function grantKillViews(session: GameSession, multiplier = 1): void {
-  const gain = Math.round((VIEWS_GAIN_MIN + session.viewsRandom() * (VIEWS_GAIN_MAX - VIEWS_GAIN_MIN)) * multiplier);
-  useGameStore.getState().incrementViews(gain);
 }
 
 // Seuil de la réplique "PV bas" — fraction de `playerMaxHp`, PREMIER

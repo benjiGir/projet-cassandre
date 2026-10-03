@@ -30,6 +30,18 @@
         "--strictPort"
       ],
       "port": 4180
+    },
+    {
+      "name": "boomer-shooter-dev-5199",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "exec",
+        "vite",
+        "--port",
+        "5199",
+        "--strictPort"
+      ],
+      "port": 5199
     }
   ]
 }

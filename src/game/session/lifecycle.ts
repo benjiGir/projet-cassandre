@@ -8,6 +8,9 @@ import { setAudioRandom } from "../../core/audio/audio";
 import { resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/audio/zoneAmbience";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { HERO_LINE_SEED } from "./presentation/heroLines";
+import { createPlaceLineState } from "./player/placeLines";
+import { createLevelScriptState } from "../level/scripting/levelScript";
+import { createStreamState, STREAM_SEED } from "./stream/streamSim";
 import { createInitialStats } from "./progression/score";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
@@ -125,6 +128,10 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     gltfLevelSession: null,
     levelLoadGeneration: 0,
     currentNavGraph: null,
+    levelSpaces: null,
+    placeLines: new Map(),
+    scriptTriggers: [],
+    levelScript: createLevelScriptState(),
     lightPool: null,
     propSystem: null,
     doorSystem: null,
@@ -149,13 +156,15 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
-    viewsRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0x71e75))),
+    stream: createStreamState(),
+    streamRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(STREAM_SEED))),
     deathHandled: false,
     levelCompleteHandled: false,
     lastHeroLineAt: -Infinity,
     lastHeroBarkAt: -Infinity,
     heroLinesSaid: new Set(),
     heroLineRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(HERO_LINE_SEED))),
+    placeLine: createPlaceLineState(),
     stats: createInitialStats(),
   };
 

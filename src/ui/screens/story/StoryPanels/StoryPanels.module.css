@@ -1,0 +1,99 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.stage {
+  --corner-size: max(calc(var(--vpx) * 9), 16px);
+  width: min(94vw, calc(var(--vpx) * 440));
+  padding: max(calc(var(--vpx) * 3), 5px);
+}
+
+.picture {
+  width: 100%;
+  margin: 0;
+}
+
+.image,
+.placeholder {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  animation: reveal 320ms steps(4) both;
+}
+
+/* Les panneaux sont livrés en 640×360 : agrandis en gros pixels francs, comme le jeu. */
+.image {
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: max(calc(var(--vpx) * 3), 5px);
+  font-size: max(calc(var(--vpx) * 6), 11px);
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(120, 255, 140, 0.07) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.placeholderNumber {
+  font-size: max(calc(var(--vpx) * 54), 72px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--phosphor-faint);
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* Deux lignes réservées : le cadre ne change pas de hauteur d'un panneau à l'autre. */
+  min-height: calc(max(calc(var(--vpx) * 8), 14px) * 1.5 * 2);
+  padding: max(calc(var(--vpx) * 5), 8px) max(calc(var(--vpx) * 8), 12px) max(calc(var(--vpx) * 3), 5px);
+  font-size: max(calc(var(--vpx) * 8), 14px);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--amber);
+}
+
+.line {
+  margin: 0;
+}
+
+.footer {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: min(94vw, calc(var(--vpx) * 440));
+  margin-top: max(calc(var(--vpx) * 6), 10px);
+  font-size: max(calc(var(--vpx) * 5.5), 10px);
+  letter-spacing: 2px;
+}
+
+.progress {
+  color: var(--text-dim);
+}
+
+.hint {
+  text-align: right;
+  color: var(--phosphor-faint);
+}
+
+.action {
+  padding: max(calc(var(--vpx) * 5), 9px) max(calc(var(--vpx) * 9), 14px);
+  font-size: max(calc(var(--vpx) * 6.25), 11px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .placeholder { animation: none; }
+}
+
+@keyframes reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

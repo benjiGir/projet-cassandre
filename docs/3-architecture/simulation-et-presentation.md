@@ -2,7 +2,7 @@
 title: Simulation et présentation
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-03
 ---
 
 # Simulation et présentation
@@ -93,7 +93,7 @@ qui précise l'[ADR 0007](../decisions/0007-rng-deterministe.md). Le nombre
 d'images rendues entre deux pas fixes varie ; un tirage cosmétique (nombre de
 particules, variante de pitch d'un son) partagé avec la simulation rendrait
 les décisions du jeu dépendantes du framerate d'affichage. À l'inverse, le
-score de "vues" par kill (`grantKillViews`) est un tirage qui compte pour la
+direct (audience, dons et chat, `session/stream/streamSim.ts`) est un tirage qui compte pour la
 partie : il vit dans un flux propre à `GameSession`, tiré **au pas fixe**, pas
 dans `FxSystem`. Le rejeu F9/F10 ne restaure que la pose/vitesse du joueur et
 les entrées : il compare le déplacement, pas la reproduction pixel-perfect

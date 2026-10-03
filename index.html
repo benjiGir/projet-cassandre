@@ -40,6 +40,12 @@
       #ui-root {
         pointer-events: none;
       }
+      /* Les overlays canvas (viseur, marqueur de touche, vue caméra) suivent
+         #ui-root dans le DOM et se peignent donc par-dessus : on les masque
+         dès qu'un écran modal (`Screen`, qui porte `data-backdrop`) est monté. */
+      #ui-root:has([data-backdrop]) ~ canvas.game-overlay {
+        visibility: hidden;
+      }
     </style>
   </head>
   <body>

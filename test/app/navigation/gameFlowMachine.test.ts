@@ -7,7 +7,11 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { createGameFlowActor } from "../../../src/app/navigation/gameFlowMachine";
+import {
+  createGameFlowActor,
+  isPhysicsLiveState,
+  isPlayingState,
+} from "../../../src/app/navigation/gameFlowMachine";
 
 describe("gameFlowMachine", () => {
   it("démarre sur boot", () => {
@@ -189,5 +193,59 @@ describe("gameFlowMachine", () => {
     expect(actor.getSnapshot().value).toBe("loading");
     actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
+  });
+
+  it("loading -> intro -> playing : les panneaux d'intro précèdent la partie", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    actor.send({ type: "SHOW_INTRO" });
+    expect(actor.getSnapshot().value).toBe("intro");
+    actor.send({ type: "PLAY" });
+    expect(actor.getSnapshot().value).toBe("playing");
+  });
+
+  it("playing -> outro -> levelComplete : les panneaux de fin précèdent le récapitulatif", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "SHOW_OUTRO" });
+    expect(actor.getSnapshot().value).toBe("outro");
+    actor.send({ type: "LEVEL_COMPLETED" });
+    expect(actor.getSnapshot().value).toBe("levelComplete");
+  });
+
+  it("la mort ne passe jamais par les panneaux de fin", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "DIED" });
+    actor.send({ type: "SHOW_OUTRO" });
+    expect(actor.getSnapshot().value).toBe("dead");
+  });
+
+  it("rejouer après la fin retourne en jeu sans repasser par l'intro", () => {
+    const actor = createGameFlowActor();
+    actor.send({ type: "BEGIN_LOAD" });
+    actor.send({ type: "SHOW_INTRO" });
+    actor.send({ type: "PLAY" });
+    actor.send({ type: "SHOW_OUTRO" });
+    actor.send({ type: "LEVEL_COMPLETED" });
+    actor.send({ type: "REPLAY" });
+    expect(actor.getSnapshot().value).toBe("loading");
+    actor.send({ type: "PLAY" });
+    expect(actor.getSnapshot().value).toBe("playing");
+  });
+
+  it("le pas fixe ne joue que dans playing : intro et outro ne comptent pas dans le chronomètre", () => {
+    expect(isPlayingState("playing")).toBe(true);
+    for (const state of ["intro", "outro", "paused", "loading", "levelComplete"] as const) {
+      expect(isPlayingState(state), state).toBe(false);
+    }
+  });
+
+  it("le monde physique tourne derrière les panneaux de fin, pas derrière ceux d'intro", () => {
+    expect(isPhysicsLiveState("outro")).toBe(true);
+    expect(isPhysicsLiveState("intro")).toBe(false);
+    expect(isPhysicsLiveState("loading")).toBe(false);
   });
 });

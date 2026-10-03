@@ -29,6 +29,53 @@ export interface LevelRecap {
   accuracy: number;
 }
 
+/** Une ligne du chat du direct. */
+export interface ChatMessage {
+  /** Rang d'émission dans la partie : clé stable pour l'affichage. */
+  readonly id: number;
+  readonly pseudo: string;
+  readonly text: string;
+  /** `don` : la ligne annonce un don, `message` : un spectateur écrit. */
+  readonly kind: "message" | "don";
+}
+
+/** Un don qui vient d'arriver, affiché en alerte. */
+export interface DonationAlert {
+  readonly pseudo: string;
+  /** Euros. */
+  readonly amount: number;
+  readonly text: string;
+  /** Le don vient du donateur mystère de l'histoire. */
+  readonly mystery: boolean;
+}
+
+/** Message diffusé dans le magasin : haut-parleurs ou interphone. */
+export interface StoreAnnouncement {
+  readonly speaker: string;
+  readonly text: string;
+}
+
+/** Un panneau illustré d'intro ou de fin. */
+export interface StoryPanel {
+  readonly id: string;
+  /** Chemin sous `public/`, ou `null` tant que l'image n'est pas livrée. */
+  readonly image: string | null;
+  /** Description de l'image pour un lecteur d'écran. */
+  readonly alt: string;
+  /** Légende, une ligne par entrée — posée par le jeu, jamais dessinée dans l'image. */
+  readonly caption: readonly string[];
+}
+
+/** Bilan du direct en fin de partie. Informatif : il ne compte pas dans le score. */
+export interface LiveRecap {
+  readonly peakViewers: number;
+  readonly followers: number;
+  readonly followersGained: number;
+  /** Euros reçus cette partie. */
+  readonly donations: number;
+  readonly donationCount: number;
+}
+
 export interface DebugState {
   fps: number;
   /** Position des yeux du joueur, m. */
@@ -81,4 +128,8 @@ export interface DebugState {
   cards: readonly LoyaltyCard[];
 
   views: number;
+  /** Abonnés de la chaîne, gagnés avec l'audience. */
+  followers: number;
+  /** Dons reçus cette partie, en euros. */
+  wallet: number;
 }

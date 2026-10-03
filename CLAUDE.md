@@ -110,9 +110,9 @@ dans le dépôt.
 |---|---|
 | `col_*` | collider trimesh statique, mesh rendu invisible |
 | `spawn_player` | position/orientation de départ |
-| `spawn_suit_*` | point d'apparition Costard |
+| `spawn_suit_*` | point d'apparition Costard ; avec `groupe`, il n'apparaît qu'au réveil de ce groupe par un scénario |
 | `spawn_director_*` | point d'apparition Directeur (boss unique) |
-| `trig_*` | volume de trigger (box), mesh invisible |
+| `trig_*` | boîte invisible du script de niveau ([ADR 0037](docs/decisions/0037-script-de-niveau.md)) : `evenement` lance un scénario de `game/session/progression/levelEvents.ts`, `replique` en fait une sous-zone à réplique de lieu |
 | `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors/doors.ts`) |
 | `use_*` | objet interactif (portée 2 m) |
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
@@ -130,8 +130,9 @@ format `"nom:nombre"` — ex. `"donut:1"` — ce que le prop lâche à sa casse 
 nom qui résout en aliment connu fait apparaître ce nombre de pickups
 nourriture, walk-over, position tirée du RNG déterministe). Un `prop_*` ne
 porte JAMAIS de `col_*` jumeau — il construit son propre collider — et
-**chaque prop visible est un lot de dessin de plus, définitivement** : un
-objet qui bouge ne rejoint jamais un lot de décor fusionné. Détail dans
+chaque prop visible est un lot de dessin de plus : un
+objet qui bouge ne rejoint jamais un lot de décor fusionné (un coût à connaître,
+plus une limite — ADR 0039). Détail dans
 `docs/archive/reference-conventions-nommage.md#props-physiques`,
 [ADR 0030](docs/decisions/0030-props-dynamiques.md).
 
@@ -191,14 +192,16 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   `python3 tools/blender/api_index.py [module | --grep motif]` liste les
   fonctions sans ouvrir le fichier.
 - **Jeu ↔ Blender** : `cassandre.pose()` dans la console du jeu → `C.shot("joueur")` ;
-  `C.shot` rend en retour la commande `cassandre.tp(x, y, z, cap)`. Le budget de
+  `C.shot` rend en retour la commande `cassandre.tp(x, y, z, cap)`. Le compte de
   lots exact reste `cassandre.renderBench(3).drawCalls` en jeu ; `C.budget`
-  n'est qu'une estimation (−12 % à +5 %).
+  n'est qu'une estimation (−12 % à +5 %). **Il n'y a plus de plafond de lots**
+  ([ADR 0039](docs/decisions/0039-abandon-du-plafond-de-lots.md)) : ces nombres
+  sont des indicateurs, pas une contrainte de décor.
 - Une recette qui manque s'ajoute à `cassandre.py`, pas dans un appel MCP
   jetable.
 - **Mesurer en jeu, vérifier le dépôt** : `pnpm probe` rend en un JSON les draw
   calls de `tools/probe/poses.json` (Chrome headless, ~15 s ; `-- --pose x,y,z,cap`
-  pour un point, `-- --strict` pour un code de sortie) ; `pnpm verify` = typecheck +
+  pour un point) ; `pnpm verify` = typecheck +
   tests, sortie réduite aux échecs (`-- --level`, `-- --docs` en plus).
 
 ## Phase courante
@@ -211,6 +214,16 @@ Les plans de travail du niveau v2 et de la documentation ont été retirés du
 dépôt le 2026-10-02 (commit `4e88907`) ; ils restent lisibles dans
 l'historique (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem
 `PLAN_DOCUMENTATION.md`).
+
+**v1.1 « Le live » en cours** (depuis le 2026-10-03) : l'histoire d'abord.
+Le plan de travail est [`PLAN_SUITE.md`](PLAN_SUITE.md), découpé en lots
+autonomes (A0-A8 pour la v1.1, B1-B8 pour la v1.2) ; son tableau de suivi dit
+où en est chaque lot. La bible d'histoire est
+[`docs/2-fonctionnel/histoire.md`](docs/2-fonctionnel/histoire.md) : héros
+sans nom civil (pseudo = la chaîne, « le Réveil »), enseigne Hyper Varan,
+donateur mystère lié à la plateforme, victoire amère, **pas de second niveau
+dans un magasin**. Les images des panneaux sont générées par l'utilisateur à
+partir de `assets_src/panneaux/PROMPTS.md`.
 
 Les sons sont générés avec ElevenLabs ou synthétisés (`tools/audio/`) ; la
 mention ElevenLabs du `README.md` est une condition de licence, à garder.

@@ -66,14 +66,19 @@ ECART_SOL_MAX = 0.12
 # Le PC est un nœud de passage volontairement limité. Garder les façades
 # attendues ici rend l'audit indépendant de `openings()`, qui omet par
 # construction les jonctions déclarées murées.
+# Implantation du 2026-10-01 (PC sécurité et vestiaires permutés) : le fournil
+# est mitoyen à l'ouest, les vestiaires à l'est, sans ouverture ni l'un ni
+# l'autre — la gaine est le seul passage du fournil au PC.
 PC_SECU_VOISINS_ATTENDUS = {
     frozenset({"pc_secu", "c_bu"}): "S",
-    frozenset({"pc_secu", "vestiaires"}): "O",
+    frozenset({"pc_secu", "fournil"}): "O",
+    frozenset({"pc_secu", "vestiaires"}): "E",
     frozenset({"pc_secu", "gaine"}): "N",
 }
+PC_SECU_MITOYENS_SANS_OUVERTURE = {frozenset({"pc_secu", "fournil"}), frozenset({"pc_secu", "vestiaires"})}
 PC_SECU_LIENS_ATTENDUS = {
     paire: cote for paire, cote in PC_SECU_VOISINS_ATTENDUS.items()
-    if paire != frozenset({"pc_secu", "vestiaires"})
+    if paire not in PC_SECU_MITOYENS_SANS_OUVERTURE
 }
 # L'entrée depuis le couloir et la grille de gaine sont les deux raccords
 # du PC qui doivent rester fermés.
@@ -614,8 +619,12 @@ def hors_sol(cols):
         # Un sol, un mur ou un plafond n'a pas à « poser » sur quoi que ce soit.
         # `urinoir` non plus : un `sanitaire_urinoir*` est mural. Les étagères
         # sont elles aussi volontairement élevées et portées par le rayonnage.
+        # `registre` : la caisse enregistreuse est en porte-à-faux au-dessus de
+        # la place de l'opérateur, que les proxies du comptoir laissent ouverte
+        # (`lib_checkouts.py::lane`).
         if any(mot in o.name for mot in ("sol", "mur", "plafond", "rampe", "quai", "mezzanine",
-                                         "urinoir", "etagere", "linteau", "puits", "comptoir")):
+                                         "urinoir", "etagere", "linteau", "puits", "comptoir",
+                                         "registre")):
             continue
         if maxi.z - mini.z > 3.0:          # pilier, rack, portique : posés autrement
             continue

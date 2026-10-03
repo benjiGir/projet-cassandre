@@ -29,6 +29,10 @@ import { suitConfig } from "../entities/suit/suitConfig";
 import { Director } from "../entities/director/director";
 import { directorConfig } from "../entities/director/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/loading/hotReload";
+import { loadLevelSpaces } from "../level/loading/loadLevelSpaces";
+import { sortLevelSpaces } from "../level/navigation/levelSpaces";
+import { LEVEL_EVENTS } from "./progression/levelEvents";
+import { readLevelScript } from "./progression/levelScriptSetup";
 import { reportLoading, letBrowserPaint } from "../../core/loading/loadingProgress";
 import { PathfindingService } from "../level/navigation/pathfinding";
 import { navGraphStats } from "../level/navigation/navGraph";
@@ -180,6 +184,15 @@ export function loadGltfLevel(
           );
         }
 
+        const script = readLevelScript(
+          handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), LEVEL_EVENTS,
+        );
+        for (const problem of script.problems) console.error(`[level] ${problem}`);
+        const planSpaces = (await loadLevelSpaces(name)) ?? [];
+        const levelSpaces = planSpaces.length + script.placeSpaces.length > 0
+          ? sortLevelSpaces([...planSpaces, ...script.placeSpaces])
+          : null;
+
         const navStats = navGraphStats(navGraph);
         console.info(
           `[pathfinding] graphe baké — ${navStats.walkableCount}/${navStats.cellCount} cellules praticables, ` +
@@ -213,6 +226,9 @@ export function loadGltfLevel(
           // niveau et ses systèmes constituent encore un ensemble cohérent.
           engine.fx.clearWaterJets();
           session.currentNavGraph = navGraph;
+          session.levelSpaces = levelSpaces;
+          session.placeLines = script.placeLines;
+          session.scriptTriggers = script.triggers;
           session.doorSystem = doorSystem;
           session.vitreSystem = vitreSystem;
           session.sanitaireSystem = sanitaireSystem;
@@ -234,7 +250,9 @@ export function loadGltfLevel(
           // `handle.spawnSuits` (Empties `spawn_suit_*`, voir `loader.ts`) :
           // MÊME garde `isFirstLoad` que `spawn_player` juste au-dessus.
           if (info.isFirstLoad) {
+            // Un spawn qui porte un `groupe` attend son réveil par le script de niveau.
             for (const spawn of handle.spawnSuits) {
+              if (spawn.group !== null) continue;
               spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z);
             }
             for (const spawn of handle.spawnDirectors) {

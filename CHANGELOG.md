@@ -4,6 +4,45 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié] — v1.1 « Le live »
+
+Le niveau raconte une histoire. En attente du playtest.
+
+### Ajouté
+
+- Huit panneaux illustrés d'introduction et de fin, qu'on avance ou qu'on
+  passe ; l'introduction se revoit depuis le menu.
+- 37 répliques de première visite des lieux, en texte.
+- Quatre moments scriptés qui ne retirent jamais le contrôle : l'annonce aux
+  caisses, les écrans de l'atelier SAV, le quai, l'interphone du Directeur.
+- Le direct : audience qui monte avec l'action et repart avec l'ennui,
+  abonnés, dons, cagnotte et chat qui commente la partie. Le chat se masque
+  dans Options › Audio.
+- Un donateur mystère, qui revient à cinq étapes de la progression.
+- Bilan du direct et bandeau « vidéo démonétisée » sur l'écran de fin.
+
+### Modifié
+
+- Le magasin a un nom, Hyper Varan, et le niveau un titre, « Inventaire
+  exceptionnel ».
+- Le viseur et les autres overlays ne se dessinent plus par-dessus les écrans
+  de pause, de mort et de fin.
+
+### Corrigé
+
+- 40 tests des ennemis qui échouaient sur une récursion lors de la
+  restauration d'état de debug.
+
+### Technique
+
+- Script de niveau : un `trig_*` lance un scénario nommé ou désigne une
+  sous-zone à réplique (ADR 0037).
+- Simulation du direct dans le pas fixe, avec son propre flux RNG (ADR 0038).
+- Manifeste des espaces du niveau, tiré du plan de masse.
+- Outils : `tools/level_v2/espaces_jeu.py`,
+  `tools/textures/generate_panneaux.py`,
+  `tools/blender/refresh_story_triggers.py`.
+
 ## [1.0.2] — 2026-10-03
 
 Version de maintenance consacrée à la fiabilité des sessions et à

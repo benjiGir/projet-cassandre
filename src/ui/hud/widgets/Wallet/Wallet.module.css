@@ -1,0 +1,18 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.wallet {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: calc(var(--vpx) * 4);
+}
+
+.label {
+  font-size: calc(var(--vpx) * 7);
+}
+
+.amount {
+  color: var(--amber);
+  font-size: calc(var(--vpx) * 10);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}

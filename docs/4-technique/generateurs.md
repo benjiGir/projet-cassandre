@@ -2,7 +2,7 @@
 title: Générateurs d'assets
 tags: [technique]
 status: brouillon
-updated: 2026-10-01
+updated: 2026-10-03
 ---
 
 # Générateurs d'assets
@@ -18,6 +18,7 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/textures/make_textures.py` fabrique les textures de base depuis la palette et leurs spécifications.
 - `tools/textures/make_kenney_atlas.py` prépare les atlas de mobilier alimentaire et automobile.
 - `tools/textures/generate_affiches.py` compose les affiches et leur manifeste.
+- `tools/textures/generate_panneaux.py` réduit les illustrations des panneaux d'histoire en 640×360 et 64 couleurs, et tient la liste des panneaux livrés (`src/game/session/presentation/storyImages.json`).
 - `tools/textures/generate_labels.py` compose l'atlas des étiquettes.
 - `tools/textures/generate_portes.py` compose les textures d'ouvrants.
 - `tools/textures/generate_surgeles.py` génère les visuels du rayon surgelés.

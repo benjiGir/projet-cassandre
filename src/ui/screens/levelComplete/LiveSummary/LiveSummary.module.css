@@ -1,0 +1,43 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: max(calc(var(--vpx) * 3), 6px);
+  width: 100%;
+  max-width: 640px;
+  padding: max(calc(var(--vpx) * 4), 8px) 0;
+  border-top: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.figures {
+  display: flex;
+  justify-content: space-between;
+  gap: max(calc(var(--vpx) * 8), 14px);
+  width: 100%;
+  margin: 0;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: max(calc(var(--vpx) * 6), 11px);
+}
+
+.figure dt {
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+.figure dd {
+  margin: 0;
+  font-weight: bold;
+  color: var(--text-strong);
+}
+
+.withheld {
+  font-weight: normal;
+  color: var(--text-dim);
+}

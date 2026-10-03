@@ -11,6 +11,8 @@ import { LevelCompleteScreen } from "../../screens/levelComplete/LevelCompleteSc
 import { LoadingScreen } from "../../screens/loading/LoadingScreen/LoadingScreen";
 import { MainMenu } from "../../screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../screens/options/OptionsScreen/OptionsScreen";
+import { StoryPanels } from "../../screens/story/StoryPanels/StoryPanels";
+import { levelStory } from "../../../game/session/presentation/storyPanels";
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
@@ -23,6 +25,8 @@ const PREVIEW_SCREENS = [
   "options",
   "death",
   "levelComplete",
+  "storyIntro",
+  "storyOutro",
   "loading",
   "loadFailed",
   "hud",
@@ -65,7 +69,17 @@ function seedHudState() {
     pistolMaxAmmo: 15,
     activeWeapon: "shotgun",
     views: 84210,
+    followers: 2305,
+    wallet: 86,
   });
+  state.setChat([
+    { id: 1, pseudo: "xX_Sceptik_Xx", text: "fake", kind: "message" },
+    { id: 2, pseudo: "JeanMi_du_38", text: "regardez sa nuque au ralenti !! des écailles !!", kind: "message" },
+    { id: 3, pseudo: "caddie_fou", text: "a donné 5 €", kind: "don" },
+    { id: 4, pseudo: "definitivement_humain", text: "ce magasin est très bien noté par ses clients", kind: "message" },
+    { id: 5, pseudo: "pixel_baveux", text: "c'est quel jeu ?", kind: "message" },
+  ]);
+  state.showDonation({ pseudo: "premier_abonne", amount: 50, text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.", mystery: true });
   state.setCards(["argent", "or"]);
   state.showHudMessage("Porte déverrouillée");
   state.showHeroLine("Ils ne veulent pas que vous voyiez ça. Moi je filme.");
@@ -94,9 +108,16 @@ export function maybeRenderDevPreview(root: Root): boolean {
     case "levelComplete":
       useGameStore.setState({ flowState: "levelComplete" });
       useGameStore.getState().setDebug({ views: 612044 });
+      useGameStore.getState().setLiveRecap({ peakViewers: 612044, followers: 15501, followersGained: 15301, donations: 262, donationCount: 19 });
       useGameStore.getState().setSecretsTotal(2);
       useGameStore.getState().incrementSecretsFound();
       root.render(<LevelCompleteScreen onReplay={noop} onReturnToMenu={noop} />);
+      break;
+    case "storyIntro":
+      root.render(<StoryPanels panels={levelStory("niveau_v2")?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />);
+      break;
+    case "storyOutro":
+      root.render(<StoryPanels panels={levelStory("niveau_v2")?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />);
       break;
     case "loading":
       beginLoading("Chargement du niveau", 0.47);

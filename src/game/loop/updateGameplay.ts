@@ -11,15 +11,18 @@ import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/pr
 import { grantCard } from "../session/progression/cards";
 import {
   applyPlayerDamage,
-  grantKillViews,
   sayOpeningLine,
   showHudMessage,
   triggerHeroBark,
   triggerHeroLine,
-  VIEWS_DIRECTOR_MULTIPLIER,
 } from "../session/player/feedback";
+import { streamEvent, updateStreamFeed } from "../session/stream/streamFeed";
 import { DOOR_USE_LINES, FOOD_LINES, PROP_BREAK_LINES, SECRET_LINES } from "../session/presentation/heroLines";
 import { relieveAtSanitaire, trySanitaire } from "../session/player/sanitaires";
+import { updatePlaceLine } from "../session/player/placeLines";
+import { updateLevelScript } from "../level/scripting/levelScript";
+import { LEVEL_EVENTS } from "../session/progression/levelEvents";
+import { runScriptAction } from "../session/progression/levelScriptActions";
 import {
   advanceGameplayTime,
   recordDirectorKills,
@@ -46,10 +49,10 @@ import { CardPickupBillboard } from "../../render/pickups/cardPickups";
 
 // see: docs/6-reference/notes-code-gameplay.md#boucle-et-présentation
 
-function recordKillFeedback(session: GameSession, count: number, multiplier = 1): void {
+function recordKillFeedback(session: GameSession, count: number): void {
   session.heroPortrait.kill(count);
   for (let i = 0; i < count; i++) {
-    grantKillViews(session, multiplier);
+    streamEvent(session, "kill");
     if (session.firstKillTriggered) {
       // Le kill vient de l'arme en main : un tir et sa mort tombent dans le même pas fixe.
       triggerHeroLine(session, session.weapons.activeWeapon === "shotgun" ? "kill_pompe" : "kill_costard");
@@ -63,7 +66,7 @@ function recordKillFeedback(session: GameSession, count: number, multiplier = 1)
 /** Mort du Directeur : vues multipliées, et sa propre réplique plutôt que celle d'un Costard. */
 function recordDirectorKillFeedback(session: GameSession, count: number): void {
   session.heroPortrait.kill(count);
-  for (let i = 0; i < count; i++) grantKillViews(session, VIEWS_DIRECTOR_MULTIPLIER);
+  for (let i = 0; i < count; i++) streamEvent(session, "boss");
   if (count > 0) triggerHeroLine(session, "boss_mort");
 }
 
@@ -223,7 +226,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
             onCardPickup: (card) => {
-              if (grantCard(session, card)) triggerHeroLine(session, `carte_${card}`);
+              if (!grantCard(session, card)) return;
+              triggerHeroLine(session, `carte_${card}`);
+              streamEvent(session, "carte");
             },
             onFrozenStorageUse: (targetName) => {
               if (session.unlockedDoors.has(targetName)) return; // déjà ouverte
@@ -448,6 +453,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           const hit = session.suitManager.playerHitEvents[i]!;
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "suit");
         }
+        if (session.suitManager.playerHitEvents.length > suitPlayerHitsBefore) streamEvent(session, "degats");
 
         const directorDeathsBefore = session.directorManager.deathEvents.length;
         const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
@@ -474,6 +480,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           const hit = session.directorManager.playerHitEvents[i]!;
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "director");
         }
+        if (session.directorManager.playerHitEvents.length > directorPlayerHitsBefore) streamEvent(session, "degats");
 
         const propsDestroyedBefore = session.propSystem?.destroyedEvents.length ?? 0;
         session.propSystem?.update(session.weapons.hitEvents);
@@ -481,6 +488,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         recordPropsDestroyed(session.stats, propsDestroyed.length);
         const ligneCasse = propsDestroyed.map((e) => PROP_BREAK_LINES[e.matiere]).find((l) => l !== undefined);
         if (ligneCasse) triggerHeroLine(session, ligneCasse);
+        let casse = propsDestroyed.length > 0;
         if (!session.heroLinesSaid.has("objet_pousse") && session.propSystem?.isPushedNear(session.player.position)) {
           triggerHeroLine(session, "objet_pousse");
         }
@@ -492,21 +500,26 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         const vitresDestroyed = (session.vitreSystem?.destroyedEvents.length ?? 0) - vitresDestroyedBefore;
         recordVitresDestroyed(session.stats, vitresDestroyed);
         if (vitresDestroyed > 0) triggerHeroLine(session, "casse_vitre");
+        casse ||= vitresDestroyed > 0;
 
         // Sanitaires : même file, même contrat que les vitrages juste au-dessus.
         const sanitairesDestroyedBefore = session.sanitaireSystem?.destroyedEvents.length ?? 0;
         session.sanitaireSystem?.update(session.weapons.hitEvents);
-        recordSanitairesDestroyed(
-          session.stats,
-          (session.sanitaireSystem?.destroyedEvents.length ?? 0) - sanitairesDestroyedBefore,
-        );
+        const sanitairesDestroyed = (session.sanitaireSystem?.destroyedEvents.length ?? 0) - sanitairesDestroyedBefore;
+        recordSanitairesDestroyed(session.stats, sanitairesDestroyed);
+        casse ||= sanitairesDestroyed > 0;
 
         // Écrans (`ecran_*`, chantier « Les coulisses ») : même file de
         // impacts, plus l'horloge d'animation propre à `EcranSystem.update`
         // (voir sa doc) — avancée au pas fixe, jamais un dt réel.
         const ecransDestroyedBefore = session.ecranSystem?.destroyedEvents.length ?? 0;
         session.ecranSystem?.update(gameplayDt, session.weapons.hitEvents);
-        if ((session.ecranSystem?.destroyedEvents.length ?? 0) > ecransDestroyedBefore) triggerHeroLine(session, "casse_ecran");
+        if ((session.ecranSystem?.destroyedEvents.length ?? 0) > ecransDestroyedBefore) {
+          triggerHeroLine(session, "casse_ecran");
+          casse = true;
+        }
+        // Une seule fois par pas fixe : une rafale qui casse trois objets reste un seul évènement.
+        if (casse) streamEvent(session, "casse");
         updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
         session.doorSystem?.update(gameplayDt, collectDoorActors(session));
@@ -525,7 +538,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.droppedCardBillboard?.dispose();
           session.droppedCardBillboard = null;
           const carte = dropped?.card ?? DIRECTOR_DROPPED_CARD;
-          if (grantCard(session, carte)) triggerHeroLine(session, `carte_${carte}`);
+          if (grantCard(session, carte)) {
+            triggerHeroLine(session, `carte_${carte}`);
+            streamEvent(session, "carte");
+          }
         }
 
         if (session.exitDoorTracking) {
@@ -561,7 +577,19 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           playSfx("secret_found");
           session.heroPortrait.react("discover");
           triggerHeroLine(session, SECRET_LINES[secret.name] ?? "secret_generique");
+          streamEvent(session, "secret");
         }
+
+        updateLevelScript(
+          session.levelScript, session.scriptTriggers, LEVEL_EVENTS, gameplayDt, session.player.position,
+          (action) => runScriptAction(engine, session, action),
+        );
+
+        // En dernier : une réplique d'événement (secret, carte, arme, moment
+        // scripté) dite dans ce pas passe avant celle de la pièce.
+        updatePlaceLine(session, gameplayDt);
+
+        updateStreamFeed(session, gameplayDt);
       });
     }),
   );

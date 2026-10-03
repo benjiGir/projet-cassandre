@@ -68,6 +68,7 @@ import {
   type LightBudgetReport,
   type RenderBenchmark,
 } from "./replay/testHarness";
+import { levelSpaceAt } from "../level/navigation/levelSpaces";
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
@@ -187,6 +188,10 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
+    lieu: () => ({
+      espace: engine.session.levelSpaces ? levelSpaceAt(engine.session.levelSpaces, engine.session.player.position) : null,
+      repliques: [...engine.session.heroLinesSaid],
+    }),
     props: {
       liste: () => engine.session.propSystem?.describe() ?? [],
       casser: (nom: string) => engine.session.propSystem?.destroyByName(nom) ?? false,
@@ -404,6 +409,8 @@ declare global {
         joue: (cle: string) => void;
       };
       secrets: () => SecretZone[];
+      /** Espace du plan de masse où se tient le joueur (`null` hors de tout espace ou sans manifeste) et répliques du héros déjà dites cette partie. */
+      lieu: () => { espace: string | null; repliques: string[] };
       heals: () => UseObject[];
       ammo: () => UseObject[];
       /** Mobilier physique (`prop_*`) du niveau courant — voir `game/level/props/props.ts`. */

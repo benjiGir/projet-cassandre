@@ -341,6 +341,14 @@ def repair_backstage(preview: str | None = None) -> dict:
     return result
 
 
+def story_triggers(preview: str | None = None) -> dict:
+    """Pose les `trig_*` du script de niveau (ADR 0037) ; aperçu isolé ou niveau livré."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_story_triggers.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []
@@ -775,7 +783,7 @@ def budget(vue=None, cellule_de: tuple | None = None, sol: float | None = None, 
 
     - sans argument : total et cellules les plus chargées ;
     - `vue` (`"spawn"`, `"joueur"`, `(x, y, cap)`) : lots dans le champ, au FOV
-      et à la portée du jeu — à comparer au budget de 200 ;
+      et à la portée du jeu (un indicateur, sans plafond : ADR 0039) ;
     - `cellule_de=(x, y[, z])` : les matériaux déjà présents dans la cellule de
       48 m de ce point. En réutiliser un coûte 0 lot ; un nouveau en coûte 1.
     Hors estimation : ciel, arme en main, ennemis, pickups. La mesure qui fait

@@ -1,0 +1,57 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--vpx) * 1);
+  width: calc(var(--vpx) * 150);
+  margin: 0 0 calc(var(--vpx) * 5);
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  color: var(--phosphor);
+  font-size: calc(var(--vpx) * 6.5);
+  line-height: 1.25;
+  text-shadow: 1px 1px 1px #000, 0 0 2px #000;
+  opacity: 0.85;
+  animation: arrive 180ms steps(3) both;
+}
+
+/* Le chat s'efface vers le haut : la ligne la plus récente est la plus lisible. */
+.line:nth-last-child(n + 4) { opacity: 0.55; }
+.line:nth-last-child(n + 5) { opacity: 0.35; }
+
+.pseudo {
+  color: var(--phosphor-dim);
+  font-weight: bold;
+}
+
+.pseudo::after {
+  content: " :";
+}
+
+.line[data-kind="don"] {
+  color: var(--amber);
+}
+
+.line[data-kind="don"] .pseudo {
+  color: var(--amber);
+}
+
+.line[data-kind="don"] .pseudo::after {
+  content: "";
+}
+
+.line[data-kind="don"]::before {
+  content: "★ ";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line { animation: none; }
+}
+
+@keyframes arrive {
+  from { transform: translateX(calc(var(--vpx) * -4)); }
+  to { transform: none; }
+}

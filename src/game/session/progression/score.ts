@@ -69,7 +69,7 @@ export function recordHpLost(stats: SessionStats, amount: number): void {
 }
 
 export const SCORE_SUIT_KILL = 100;
-/** Le Directeur — dix fois un Costard, cohérent avec `VIEWS_DIRECTOR_MULTIPLIER` (`session/feedback.ts`, ×4) sans lui être identique : c'est un score de fin de partie, pas un gain de "vues" en direct. */
+/** Le Directeur — dix fois un Costard, sans lien avec le poids du Directeur dans l'audience du direct (`stream/streamSim.ts`) : c'est un score de fin de partie. */
 export const SCORE_DIRECTOR_KILL = 1000;
 
 export const SCORE_SECRET = 500;

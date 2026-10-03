@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Systèmes de niveau
@@ -22,6 +22,9 @@ Les systèmes de niveau font vivre les objets décrits dans le glTF : portes, ob
 - `src/game/level/interactions/ecrans.ts` — animations d'écran et casse.
 - `src/game/level/interactions/cameras.ts` — sélection de caméras fixes et sortie de leur vue.
 - `src/game/level/interactions/food.ts` — catalogue des aliments et de leur valeur de soin.
+- `src/game/level/navigation/levelSpaces.ts` — schéma du manifeste des espaces et recherche de l'espace qui contient un point.
+- `src/game/level/loading/loadLevelSpaces.ts` — charge le manifeste des espaces avec le niveau.
+- `src/game/session/player/placeLines.ts` — réplique de première visite d'un espace.
 - `src/game/session/spawning.ts` — crée une instance de chaque système au commit du niveau.
 - `src/game/loop/updateGameplay.ts`, `stepPhysics.ts`, `interpolateVisuals.ts` et `updateFx.ts` — appels fixes, synchronisation physique, interpolation et retours visuels.
 - `src/render/environment/useObjectCulling.ts` — élague les objets utilisables et les lots de sanitaires éloignés.
@@ -85,6 +88,34 @@ Vitres, sanitaires et écrans sont fusionnés dans des lots dédiés tout en gar
 
 Un `cam_*` est un empty dont la position et l'orientation monde sont figées au chargement. Une console `use_*` portant l'extra `cameras` fait défiler sa liste dans `CameraViewSystem`. Un déplacement ou un changement volontaire de visée quitte la vue au pas suivant ; le joueur n'est jamais immobilisé. `src/render/overlays/cameraView.ts` dessine l'habillage 2D correspondant.
 
+### Espaces du niveau
+
+Un niveau qui déclare `spaces: true` dans `src/game/level/catalog/levels.ts` livre un manifeste `<niveau>.espaces.json` à côté de son `.glb`. `tools/level_v2/espaces_jeu.py` le produit depuis le plan de masse : une boîte par espace, dans le repère du jeu, avec un mètre de marge en hauteur. Le manifeste se charge pendant la préparation du niveau, à la frontière asynchrone ; s'il manque ou ne se décode pas, le niveau reste jouable sans répliques de lieu.
+
+`levelSpaceAt` rend l'identifiant de l'espace qui contient le joueur. Les boîtes sont triées par emprise au sol croissante : quand deux se recouvrent, la plus petite gagne.
+
+`updatePlaceLine` tourne à la fin du pas fixe. Il propose la réplique de l'espace (`PLACE_LINES` dans `src/game/session/presentation/heroLines.ts`) selon quatre règles :
+
+- le joueur a passé 1,5 s de jeu dans l'espace ;
+- aucun ennemi n'est en alerte, en poursuite, en attaque ou sonné — sinon la réplique est abandonnée pour cette visite ;
+- tant que le délai entre répliques la refuse, elle est retentée à chaque pas, jusqu'à la sortie de l'espace ;
+- une fois dite, elle ne revient plus de la partie.
+
+Ces répliques sont en texte seul (`textOnly`) : sans sous-titres, elles ne sont pas dites.
+
+### Script de niveau
+
+Un `trig_*` lance un scénario ou désigne une sous-zone ([ADR 0037](../decisions/0037-script-de-niveau.md)).
+
+- `src/game/level/scripting/levelScript.ts` — le moteur, une fonction pure : déclencheurs franchis une fois par partie, étapes exécutées dans l'ordre après leur délai de gameplay.
+- `src/game/session/progression/levelEvents.ts` — les scénarios, nommés par la propriété `evenement`.
+- `src/game/session/progression/levelScriptSetup.ts` — lit les `trig_*` au chargement et signale les incohérences en console.
+- `src/game/session/progression/levelScriptActions.ts` — exécute une action : réplique, annonce, réveil d'un groupe de `spawn_suit_*`, changement de chaîne d'un groupe d'`ecran_*`.
+
+`updateLevelScript` tourne en fin de pas fixe, juste avant les répliques de lieu : une réplique de scénario passe avant celle de la pièce. Un `trig_*` qui porte `replique` rejoint les espaces du niveau et suit leurs règles.
+
+Les `trig_*` du niveau v2 sont posés par `tools/blender/refresh_story_triggers.py`.
+
 ### Lecture de l'appui E
 
 L'interaction reçoit le front montant de l'appui, pas l'état maintenu de la touche. Un appui donne donc une seule tentative, même si plusieurs pas fixes sont exécutés dans une frame navigateur.
@@ -110,6 +141,8 @@ La proximité est mesurée depuis le centre de la capsule du joueur jusqu'à la 
 - `test/game/level/interactions/cameras.test.ts` — cyclage des caméras et sortie de vue par mouvement.
 - `test/game/level/interactions/pickups.test.ts` — ramassages à la marche et objets qui restent si le joueur ne peut rien prendre.
 - `test/game/level/loading/loader.test.ts` — construction des descripteurs et lecture des extras.
+- `test/game/level/scripting/levelScript.test.ts` et `test/game/session/progression/levelScriptSetup.test.ts` — ordre et délais des scénarios, déclenchement unique, validation des déclencheurs.
+- `test/game/level/navigation/levelSpaces.test.ts` et `test/game/session/player/placeLines.test.ts` — recherche d'espace, manifeste livré et règles des répliques de lieu.
 
 ## Comment vérifier que ça marche
 

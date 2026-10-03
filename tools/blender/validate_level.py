@@ -87,6 +87,23 @@ SANITAIRE_SORTES = ("cuvette", "urinoir")
 # `ECRAN_CHAINES` dans `src/game/level/interactions/ecrans.ts`.
 ECRAN_CHAINES = ("journal", "pub", "mire", "foot", "cctv")
 
+
+def _cles_ts(chemin: str, motif: str) -> tuple[str, ...]:
+    """Clés lues dans une source du jeu : elle fait foi, aucune liste n'est recopiée ici."""
+    import pathlib
+    import re
+    source = pathlib.Path(__file__).resolve().parents[2] / chemin
+    return tuple(re.findall(motif, source.read_text(encoding="utf-8"), flags=re.MULTILINE))
+
+
+# Script de niveau (ADR 0037) : scénarios qu'un `trig_*` peut lancer
+# (`evenement`), répliques qu'il peut faire dire (`replique`) et groupes
+# d'ennemis qu'un scénario réveille (`groupe` sur un `spawn_suit_*`). Un test
+# du jeu (`levelScriptSetup.test.ts`) verrouille la mise en forme lue ici.
+EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[")
+REPLIQUES = _cles_ts("src/game/session/presentation/heroLines.ts", r"^  (\w+): \{ text:")
+GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
+
 errors: list[str] = []
 warnings: list[str] = []
 
@@ -155,6 +172,22 @@ def check_naming(objects, kit_mode: bool = False) -> None:
         if n.startswith("trig_") and o.type == "MESH":
             if len(o.data.vertices) != 8:
                 err(f"{o.name}: trigger non-box ({len(o.data.vertices)} sommets)")
+        if n.startswith("trig_"):
+            evenement = str(o.get("evenement", "")).strip()
+            replique = str(o.get("replique", "")).strip()
+            if not evenement and not replique:
+                err(f"{o.name}: trigger sans 'evenement' ni 'replique' — il ne fait rien")
+            if evenement and evenement not in EVENEMENTS:
+                err(f"{o.name}: 'evenement' = '{evenement}' n'est pas un scénario connu "
+                    f"({', '.join(EVENEMENTS)})")
+            if replique and replique not in REPLIQUES:
+                err(f"{o.name}: 'replique' = '{replique}' n'est pas une réplique du héros "
+                    "(src/game/session/presentation/heroLines.ts)")
+        if n.startswith("spawn_suit_") and str(o.get("groupe", "")).strip():
+            groupe = str(o["groupe"]).strip()
+            if groupe not in GROUPES_REVEILLES:
+                err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
+                    "cet ennemi n'apparaîtrait jamais")
         if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,

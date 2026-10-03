@@ -27,6 +27,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
+| `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
 
 `where` lit le relevé écrit par le dernier `build()` dans

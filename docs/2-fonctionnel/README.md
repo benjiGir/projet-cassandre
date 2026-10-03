@@ -12,6 +12,7 @@ Ce que fait le jeu, vu du joueur. Zéro code.
 À qui ça s'adresse : quiconque veut comprendre une fonctionnalité avant d'aller y toucher.
 
 - [Expérience de jeu](experience-de-jeu.md) — la boucle du joueur : explorer, combattre, trouver les cartes, les secrets, le Directeur, la sortie
+- [Histoire](histoire.md) — le héros, l'arc en cinq temps, le donateur mystère, les moments scriptés et les panneaux (bible de la v1.1, en attente de validation)
 - [Déplacement et contrôles](deplacement-et-controles.md) — comment on se déplace et vise, les touches par défaut
 - [Armes](armes.md) — pied-de-biche, pompe, pistolet, munitions, ramassages
 - [Ennemis](ennemis.md) — Costard et Directeur : comportements observables, télégraphie
