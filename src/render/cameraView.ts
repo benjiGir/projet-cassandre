@@ -1,6 +1,6 @@
 // see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
-import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
+import { createCanvasOverlay } from "./canvasOverlay";
 
 // Hash 2D déterministe, sans état — même formule que le bruit procédural classique (sinus + partie fractionnaire), jamais `Math.random()`.
 function hash2(x: number, y: number, seed: number): number {
@@ -18,16 +18,7 @@ export class CameraViewOverlay {
   private clockSeconds = 0;
 
   constructor(container: HTMLElement) {
-    const canvas = document.createElement("canvas");
-    canvas.id = "camera-view";
-    canvas.className = "game-overlay";
-    canvas.width = INTERNAL_WIDTH;
-    canvas.height = INTERNAL_HEIGHT;
-    canvas.style.pointerEvents = "none";
-    container.appendChild(canvas);
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("[camera-view] impossible d'obtenir un contexte 2D pour l'overlay");
+    const { canvas, ctx } = createCanvasOverlay(container, "camera-view");
     this.canvas = canvas;
     this.ctx = ctx;
   }

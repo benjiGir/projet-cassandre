@@ -2,7 +2,7 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Audio runtime
@@ -100,11 +100,25 @@ espaces), fond les nappes en ~0,7 s, fait respirer leur niveau (0,045 Hz,
 ±12 %) et lâche un événement toutes les 6 à 14 s, panoramique au hasard. Le
 tirage passe par un flux `DeterministicRandom` dédié, posé à chaque partie.
 
+À la construction d'une partie, `resetZoneAmbienceSession` remet la
+respiration à l'instant zéro, la zone à null, les gains à zéro et le premier
+événement à 6 secondes de jeu actif. Le nouveau générateur reprend la seed
+`0xa4b1a7`. Au départ, la zone sous la caméra prime ; hors de toute boîte,
+la zone par défaut remplace la zone de la partie précédente.
+
+La pause, les écrans de fin et le menu figent l'horloge et le délai ; le
+fondu vers le silence continue. La destruction d'une partie arrête aussi
+les sons ponctuels en cours. Les Howl préchargés, les gains utilisateur et
+les boucles des nappes sont conservés entre parties : le curseur de lecture
+audio reste continu. Le calendrier cosmétique dépend du delta d'affichage ;
+ce reset ne garantit pas un rejeu sonore identique à des fréquences différentes.
+
 Le fichier d'une nappe porte 0,5 s de marge de chaque côté et le jeu boucle sur
 la région du milieu (sprite Howler bouclé) : encodée en ogg ou m4a, une boucle
 propre en WAV sortait avec un clic au raccord, l'encodeur abîmant les bords du
 fichier. `finalize` mesure le raccord APRÈS décodage. `cassandre.sfx.ambiance()`
-donne la zone entendue et le volume de chaque nappe.
+donne la zone entendue, le volume de chaque nappe, l'horloge en secondes
+et le délai avant le prochain événement (`horloge`, `prochainEvenementDans`).
 
 ### Jet d'eau positionnel
 

@@ -2,7 +2,7 @@
 title: Effect et XState
 tags: [architecture]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Effect et XState
@@ -42,7 +42,7 @@ voir plus bas.
 ## Carte des services Effect
 
 Mesurée par `grep -rn "extends Context.Service" src/` — quatre services,
-tous assemblés dans `GameLayer` (`src/core/runtime.ts`) :
+tous assemblés dans `GameLayer` (`src/app/gameRuntime.ts`) :
 
 | Service | Fichier | Rôle | Consommé par |
 |---|---|---|---|
@@ -52,9 +52,15 @@ tous assemblés dans `GameLayer` (`src/core/runtime.ts`) :
 | `RenderService` | `src/render/renderService.ts` | Enveloppe Effect de l'appel de rendu Three.js | `main.ts` |
 
 Chacun est fourni par sa propre `Layer`, assemblées par `GameLayer =
-Layer.mergeAll(...)` (`src/core/runtime.ts`) — racine de composition
+Layer.mergeAll(...)` (`src/app/gameRuntime.ts`) — racine de composition
 **unique**, jamais une `Layer` ad hoc ailleurs ; `GameRuntime =
 ManagedRuntime.make(GameLayer)` est construit une fois pour tout l'onglet.
+`src/core/runtime.ts::createGameplayRunner` construit le garde-fou générique
+à partir du runtime reçu. Ce module ne connaît aucun service du jeu.
+`src/app/gameRuntime.ts` compose les quatre services, crée l'unique runtime
+et lie `runGameplaySync` à celui-ci. Les consommateurs importent cette
+instance ; ce module ne charge aucun écran ni module React.
+
 Le chargement de niveau (`src/game/level/loader.ts`) est l'exception
 délibérée : des `Effect.gen` plats, sans `Context.Service` dédié, à la
 frontière asynchrone (ci-dessous) — l'indirection n'y apporterait rien.
@@ -77,7 +83,7 @@ flowchart TD
   UG & SP & IV & UF & LG & LL & HR --> GL["GameLayer"]
 ```
 
-`runGameplaySync` (`src/core/runtime.ts`) exécute un `Effect` via
+`runGameplaySync` (`src/app/gameRuntime.ts`) exécute un `Effect` via
 `GameRuntime.runSync` et est la **seule** porte d'entrée synchrone — jamais
 `GameRuntime.runSync`/`Effect.runSync` directement ailleurs. Seul point de
 passage autorisé pour le pas fixe **et** le rendu/l'interpolation, qui

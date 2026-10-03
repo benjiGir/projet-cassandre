@@ -15,7 +15,7 @@ import {
   vec3,
 } from "three/tsl";
 
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RenderService } from "../../render/renderService";
 interface AnimationDouche {
   meshes: THREE.Mesh[];

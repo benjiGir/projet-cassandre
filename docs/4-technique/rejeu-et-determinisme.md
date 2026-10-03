@@ -2,7 +2,7 @@
 title: Rejeu et déterminisme
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Rejeu et déterminisme
@@ -42,7 +42,8 @@ séparé et documenté dans [Simulation et présentation](../3-architecture/simu
   (`captureInputFrame`).
 - `src/core/random.ts` — `DeterministicRandom` (service Effect), seule
   implémentation de `mulberry32` du dépôt.
-- `src/core/runtime.ts` — `GameLayer`/`GameRuntime`/`runGameplaySync` :
+- `src/core/runtime.ts` — fabrique générique du garde-fou synchrone.
+- `src/app/gameRuntime.ts` — `GameLayer`/`GameRuntime`/`runGameplaySync` :
   fournit `DeterministicRandom` au reste du jeu, protège la frontière
   synchrone (invariant #11, détail [Boucle et temps](../3-architecture/boucle-et-temps.md#la-frontière-synchrone)).
 - `src/game/devtools/testHarness.ts` — `simulateRecording`/`checkDeterminism` :

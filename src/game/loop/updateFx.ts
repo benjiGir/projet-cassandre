@@ -13,7 +13,7 @@ import { input } from "../../core/input";
 import { updateWaterAmbience } from "../../core/waterAmbience";
 import { updateShowerAmbience } from "../../core/showerAmbience";
 import { updateZoneAmbience } from "../../core/zoneAmbience";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { type LoopStats } from "../../core/loop";
 import { FLESH_MATERIAL } from "../player/weapons";
 import { weaponConfig } from "../player/weaponConfig";

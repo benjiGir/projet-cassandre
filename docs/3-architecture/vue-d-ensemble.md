@@ -2,7 +2,7 @@
 title: Vue d'ensemble
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-03
 ---
 
 # Vue d'ensemble
@@ -138,7 +138,7 @@ reconstruit une session sans recharger la page — détail :
 - **React ne touche jamais la boucle** : pas de `setState` par frame, HUD
   abonné au store zustand, throttlé à 10 Hz — [invariant #2](invariants.md).
 - **Frontière synchrone Effect stricte** : pas fixe et rendu/interpolation
-  passent uniquement par `runGameplaySync` (`src/core/runtime.ts`) —
+  passent uniquement par `runGameplaySync` (`src/app/gameRuntime.ts`) —
   [invariant #11](invariants.md).
 - **Le moteur ne lit que `public/assets/`**, jamais `assets_src/` (sources
   Blender, packs CC0 bruts, réservés à l'outillage).

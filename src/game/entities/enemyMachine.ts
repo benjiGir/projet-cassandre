@@ -11,7 +11,7 @@ import type {
   EnemyDamageOutcome,
 } from "./enemyTypes";
 import { DeterministicRandom } from "../../core/random";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { computeEyePosition, hasClearWorldPath } from "./enemyPerception";
 import { computeAvoidedDirection, turnTowards, tryComputeChaseDirectionFromPath } from "./enemyNavigation";
 import { detachEnemyPhysics, updateKnockback, integratePhysics } from "./enemyPhysics";

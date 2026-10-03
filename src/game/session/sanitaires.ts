@@ -2,7 +2,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import { playSfx } from "../../core/audio";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { useGameStore } from "../state";

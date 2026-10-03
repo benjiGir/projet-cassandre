@@ -5,7 +5,7 @@ import { playSfx } from "../../core/audio";
 import { input } from "../../core/input";
 import { emptyInputFrame, inputRecorder } from "../../core/inputRecorder";
 import { type InputFrame } from "../../core/inputTypes";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { useGameStore } from "../state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
 import { grantCard } from "../session/cards";

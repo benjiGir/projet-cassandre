@@ -103,14 +103,35 @@ export function setZoneAmbienceGain(gain: number): void {
   channelGain = gain;
 }
 
-export function setZoneAmbienceRandom(next: () => number): void {
+function clearZoneAmbienceSession(): void {
+  clock = 0;
+  nextEventIn = EVENT_GAP[0];
+  currentZone = null;
+  for (const howl of events.values()) howl.stop();
+  for (const bed of beds.values()) {
+    bed.gain = 0;
+    bed.applied = 0;
+    // Garder la boucle préchargée ; seule son enveloppe appartient à la partie.
+    if (bed.playback !== null) bed.howl.volume(0, bed.playback);
+  }
+}
+
+export function resetZoneAmbienceSession(next: () => number): void {
+  clearZoneAmbienceSession();
   random = next;
+}
+
+export function stopZoneAmbienceSession(): void {
+  clearZoneAmbienceSession();
+  random = () => 0.5;
 }
 
 export function updateZoneAmbience(listener: Vec3Like, dt: number, active: boolean): void {
   if (beds.size === 0) return;
-  clock += dt;
-  currentZone = zoneAt(listener) ?? currentZone ?? defaultZone;
+  if (active) {
+    clock += dt;
+    currentZone = zoneAt(listener) ?? currentZone ?? defaultZone;
+  }
 
   const breath = 1 + BREATH_DEPTH * Math.sin(2 * Math.PI * BREATH_HZ * clock);
   const k = 1 - Math.exp(-dt / ZONE_FADE_TAU);
@@ -137,6 +158,16 @@ export function updateZoneAmbience(listener: Vec3Like, dt: number, active: boole
   howl.stereo((random() * 2 - 1) * EVENT_PAN, id);
 }
 
-export function zoneAmbienceDebugState(): { zone: string | null; nappes: Record<string, number> } {
-  return { zone: currentZone, nappes: Object.fromEntries([...beds].map(([zone, bed]) => [zone, Math.max(bed.applied, 0)])) };
+export function zoneAmbienceDebugState(): {
+  zone: string | null;
+  nappes: Record<string, number>;
+  horloge: number;
+  prochainEvenementDans: number;
+} {
+  return {
+    zone: currentZone,
+    nappes: Object.fromEntries([...beds].map(([zone, bed]) => [zone, Math.max(bed.applied, 0)])),
+    horloge: clock,
+    prochainEvenementDans: nextEventIn,
+  };
 }

@@ -1,6 +1,6 @@
 import type * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups, type PhysicsWorld } from "../../physics/world";
 import type { EnemyMachineContext } from "./enemyTypes";

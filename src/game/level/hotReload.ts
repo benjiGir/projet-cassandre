@@ -4,7 +4,7 @@ import { Effect, Fiber, Schedule, Semaphore } from "effect";
 import type { PhysicsWorld } from "../../physics/world";
 import { loadLevel } from "./loader";
 import { type LevelHandle } from "./levelTypes";
-import { GameRuntime } from "../../core/runtime";
+import { GameRuntime } from "../../app/gameRuntime";
 
 // see: docs/archive/pipeline-niveau-blender.md#hot-reload
 

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP } from "../../physics/world";
 import { cheats } from "../devtools/cheats";

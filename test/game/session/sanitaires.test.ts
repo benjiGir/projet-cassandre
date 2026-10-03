@@ -23,7 +23,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
-import { GameRuntime } from "../../../src/core/runtime";
+import { GameRuntime } from "../../../src/app/gameRuntime";
 import { RaycastService, type RaycastServiceShape } from "../../../src/physics/raycast";
 import { initPhysics } from "../../../src/physics/world";
 import {

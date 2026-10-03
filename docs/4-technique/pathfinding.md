@@ -38,7 +38,7 @@ paramètre.
   seul appelant de `findPath` au pas fixe, dans `runChase`.
 - `src/game/level/doors.ts` — `DoorSystem.autoGroupColliders`, les colliders
   désactivés pendant le bake.
-- `src/core/runtime.ts` — `PathfindingService.layer` assemblée dans
+- `src/app/gameRuntime.ts` — `PathfindingService.layer` assemblée dans
   `GameLayer`.
 - `src/game/loop/updateFx.ts` — lit `astarMetricsSnapshot()` pour le panneau
   de debug.

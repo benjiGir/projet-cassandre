@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
 import { assetUrl } from "../../core/assetPath";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/billboard";

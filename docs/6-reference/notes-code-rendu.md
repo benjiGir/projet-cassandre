@@ -222,6 +222,11 @@ reste au centre géométrique. Sa pulsation répond à chaque tir accepté, mêm
 sans toucher un ennemi. Le hitmarker confirme uniquement dégâts/mort ennemie.
 Les signaux hit et kill possèdent chacun leur fenêtre ; kill se dessine après
 hit pour rester lisible. Leurs enveloppes linéaires utilisent le delta réel.
+`src/render/canvasOverlay.ts` centralise la construction et la conversion
+des couleurs hexadécimales CSS. Il obtient le contexte 2D avant d'attacher le
+canvas : un échec ne laisse aucun élément inutilisable dans le DOM.
+La classe CSS `game-overlay` conserve le cadre 16:9 et l'agrandissement au
+plus proche. Chaque widget garde ses contrats et ses commandes de dessin.
 Les canevas se nettoient avant chaque rendu et se retirent au `dispose`.
 
 Le CCTV s'ajoute après le rendu par la caméra du niveau choisie par l'appelant.

@@ -19,7 +19,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import { initPhysics, PhysicsWorld, COLLISION_GROUPS } from "../../../src/physics/world";
-import { GameLayer } from "../../../src/core/runtime";
+import { GameLayer } from "../../../src/app/gameRuntime";
 import { PathfindingService } from "../../../src/game/level/pathfinding";
 import { PathNotFoundError, type NavGraph } from "../../../src/game/level/pathfindingTypes";
 import { navGraphStats } from "../../../src/game/level/navGraph";

@@ -17,7 +17,7 @@
  * `runGameplaySync(PathfindingService.use(...))` en interne
  * (`hasClearWorldPath`, `castAvoidanceRay`, `resolveAttack`,
  * `tryComputeChaseDirectionFromPath`), TOUJOURS via le `GameRuntime` réel
- * exporté par `core/runtime.ts` (`ManagedRuntime.make(GameLayer)`, construit
+ * exporté par `app/gameRuntime.ts` (`ManagedRuntime.make(GameLayer)`, construit
  * UNE SEULE FOIS à l'import de ce module, jamais recréé — voir sa doc).
  * Comme `suit.ts` est figé pour cette tâche, on ne peut pas lui faire
  * recevoir un Effect déjà `Effect.provide`-é avec une Layer de test : le
@@ -47,7 +47,7 @@ import * as THREE from "three";
 import { Effect } from "effect";
 import { afterEach, assert, beforeEach, describe, it } from "@effect/vitest";
 
-import { GameRuntime } from "../../../src/core/runtime";
+import { GameRuntime } from "../../../src/app/gameRuntime";
 import { RaycastService, type RaycastServiceShape } from "../../../src/physics/raycast";
 import { PathfindingService } from "../../../src/game/level/pathfinding";
 import type { PathfindingServiceShape } from "../../../src/game/level/pathfindingTypes";

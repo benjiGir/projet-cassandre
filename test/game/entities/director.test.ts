@@ -14,7 +14,7 @@
  * Voir la doc de tête de `suit.test.ts` pour l'explication complète de la
  * technique utilisée pour scripter `RaycastService`/`PathfindingService`
  * sans pouvoir toucher `director.ts` (qui ferme sur le `GameRuntime` réel,
- * un singleton construit une seule fois par `core/runtime.ts`) : on
+ * un singleton construit une seule fois par `app/gameRuntime.ts`) : on
  * récupère l'instance UNIQUE de chaque service via
  * `GameRuntime.runSync(XxxService)` (identité garantie par
  * `Context.Service.of`, vérifié dans `node_modules/effect/src/Context.ts`),
@@ -26,7 +26,7 @@ import * as THREE from "three";
 import { Effect } from "effect";
 import { assert, beforeEach, describe, it } from "@effect/vitest";
 
-import { GameRuntime } from "../../../src/core/runtime";
+import { GameRuntime } from "../../../src/app/gameRuntime";
 import { RaycastService, type RaycastServiceShape } from "../../../src/physics/raycast";
 import { PathfindingService } from "../../../src/game/level/pathfinding";
 import type { PathfindingServiceShape } from "../../../src/game/level/pathfindingTypes";

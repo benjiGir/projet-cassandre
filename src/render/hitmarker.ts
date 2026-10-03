@@ -1,6 +1,6 @@
 // see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
-import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
+import { createCanvasOverlay, hexToCss } from "./canvasOverlay";
 
 export interface HitmarkerConfig {
   hitmarkerEnabled: boolean;
@@ -24,10 +24,6 @@ interface ActiveMarker {
   totalDuration: number;
 }
 
-function hexToCss(hex: number): string {
-  return `#${(hex & 0xffffff).toString(16).padStart(6, "0")}`;
-}
-
 export class HitmarkerOverlay {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -40,20 +36,7 @@ export class HitmarkerOverlay {
   constructor(container: HTMLElement, cfg: HitmarkerConfig) {
     this.cfg = cfg;
 
-    const canvas = document.createElement("canvas");
-    canvas.id = "hitmarker";
-    canvas.className = "game-overlay";
-    canvas.width = INTERNAL_WIDTH;
-    canvas.height = INTERNAL_HEIGHT;
-    // Même cadre 16:9 que le jeu (voir `index.html`), sans étirement selon
-    // l'écran ; le hitmarker reste décoratif et au plus proche.
-    canvas.style.pointerEvents = "none";
-    container.appendChild(canvas);
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("[hitmarker] impossible d'obtenir un contexte 2D pour l'overlay");
-    }
+    const { canvas, ctx } = createCanvasOverlay(container, "hitmarker");
     this.canvas = canvas;
     this.ctx = ctx;
   }

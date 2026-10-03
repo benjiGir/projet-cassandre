@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { createEnemyAnimationInput, enemySpriteRow } from "../../render/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/moveConfig";
 import { type GameEngine } from "../session/gameEngine";

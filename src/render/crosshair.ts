@@ -1,6 +1,6 @@
 // see: docs/6-reference/notes-code-rendu.md#overlays-et-diagnostic
 
-import { INTERNAL_HEIGHT, INTERNAL_WIDTH } from "./renderer";
+import { createCanvasOverlay, hexToCss } from "./canvasOverlay";
 
 export interface CrosshairConfig {
   crosshairEnabled: boolean;
@@ -15,10 +15,6 @@ export interface CrosshairConfig {
   crosshairPulseDuration: number;
 }
 
-function hexToCss(hex: number): string {
-  return `#${(hex & 0xffffff).toString(16).padStart(6, "0")}`;
-}
-
 export class CrosshairOverlay {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -29,20 +25,7 @@ export class CrosshairOverlay {
   constructor(container: HTMLElement, cfg: CrosshairConfig) {
     this.cfg = cfg;
 
-    const canvas = document.createElement("canvas");
-    canvas.id = "crosshair";
-    canvas.className = "game-overlay";
-    canvas.width = INTERNAL_WIDTH;
-    canvas.height = INTERNAL_HEIGHT;
-    // Même cadre 16:9 que le jeu (voir `index.html`), sans étirement selon
-    // l'écran ; aucune interception de pointeur, pixels au plus proche.
-    canvas.style.pointerEvents = "none";
-    container.appendChild(canvas);
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("[crosshair] impossible d'obtenir un contexte 2D pour l'overlay");
-    }
+    const { canvas, ctx } = createCanvasOverlay(container, "crosshair");
     this.canvas = canvas;
     this.ctx = ctx;
   }

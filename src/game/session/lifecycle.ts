@@ -5,8 +5,8 @@ import { INITIAL_PLAYER_MAX_HP } from "./playerState";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/random";
 import { setAudioRandom } from "../../core/audio";
-import { setZoneAmbienceRandom } from "../../core/zoneAmbience";
-import { runGameplaySync } from "../../core/runtime";
+import { resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/zoneAmbience";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { HERO_LINE_SEED } from "./heroLines";
 import { createInitialStats } from "./score";
 import { PlayerController } from "../player/controller";
@@ -61,7 +61,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   engine.fx.resetSession();
   engine.fx.setRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xf00d517))));
   setAudioRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa0d105))));
-  setZoneAmbienceRandom(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa4b1a7))));
+  resetZoneAmbienceSession(runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(0xa4b1a7))));
 
   // Remis à ses valeurs de boot AVANT de construire quoi que ce soit :
   // Le HUD est réinitialisé ; la santé canonique appartient à la nouvelle session.
@@ -184,6 +184,7 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   const release = (action: () => void): void => {
     try { action(); } catch (error) { errors.push(error); }
   };
+  release(stopZoneAmbienceSession);
   // Attendre les acquisitions en vol avant de libérer les ressources qu'elles empruntent.
   try { await session.gltfLevelSession?.stop(); } catch (error) { errors.push(error); }
   release(() => session.pickupResources?.dispose());

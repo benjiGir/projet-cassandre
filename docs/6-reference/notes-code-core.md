@@ -2,7 +2,7 @@
 title: Contrats détaillés du noyau et de ses adaptateurs
 tags: [reference, core, audio, input, physique]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Contrats détaillés du noyau et de ses adaptateurs
@@ -24,6 +24,8 @@ sans redéfinir leurs frontières.
 | `src/core/audioCatalog.ts` | Tables de routage et valeurs du mix SFX. |
 | `src/core/audioManifest.ts` | Schémas communs aux manifests SFX/voix et schéma des zones. |
 | `src/core/audio.ts` | Chargement et lecture Howler des SFX. |
+| `src/core/runtime.ts` | Fabrique du garde-fou synchrone, sans services du jeu. |
+| `src/app/gameRuntime.ts` | Composition des services, runtime unique et runner lié. |
 | `src/app/gameFlowTypes.ts` | États et événements du flux d'écran. |
 | `src/app/gameFlowMachine.ts` | Construction de la machine et de son acteur. |
 
@@ -206,6 +208,16 @@ petite surface horizontale prime dans un chevauchement. Hors des boîtes,
 la zone précédente reste sélectionnée. Le fondu interzone a tau = 0,7 s ;
 les fichiers de nappes exposent leur région bouclée en millisecondes.
 
+`resetZoneAmbienceSession` remet l'horloge à zéro, le premier délai à 6 s,
+la zone à null et les enveloppes au silence. Il arrête les sons ponctuels
+et installe un nouveau flux RNG dédié. `stopZoneAmbienceSession` applique
+le même silence à la destruction de la partie. Les gains de réglage et
+les fichiers déjà chargés restent conservés. La lecture des nappes continue
+en silence : sa position audio ne fait pas partie de l'état de session.
+En pause, au menu et pendant le chargement, l'horloge, la zone et le délai
+restent figés ; seules les enveloppes finissent leur fondu vers zéro.
+Ces choix sont de présentation et n'ajoutent aucun tirage au RNG de gameplay.
+
 L'ancien commentaire qui disait « tout est synthétisé » et « les répliques
 restent du texte » décrivait un état antérieur, pas le runtime actuel.
 Le rejet des premières passes CC0 et la comparaison de timbre à 0,976 sont
@@ -267,10 +279,12 @@ retournent un tableau et leur callback continue jusqu'au dernier collider.
 La Layer de test renvoie par défaut null ou tableau vide et accepte des
 overrides par méthode. Toutes les méthodes de requête sont synchrones.
 
-GameLayer compose tous les services ; la Layer de Pathfinding reçoit la
+`src/app/gameRuntime.ts` héberge GameLayer, qui compose tous les services ; la Layer de Pathfinding reçoit la
 Layer canonique de Raycast par injection. GameRuntime est unique pour tout
 l'onglet. Les générateurs forSeed sont indépendants pour que leur ordre
 d'appel n'entrelace pas les consommateurs. Leur next reste une fonction
-synchrone brute dans les boucles de tirs. runGameplaySync doit laisser
+synchrone brute dans les boucles de tirs. Le runner est construit par
+`src/core/runtime.ts::createGameplayRunner`, qui reçoit le runtime sans
+importer ses services. runGameplaySync doit laisser
 remonter toute erreur ; une suspension est signalée explicitement.
 Voir [Effect et XState](../3-architecture/effect-et-xstate.md).

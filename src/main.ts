@@ -12,7 +12,7 @@ import { input } from "./core/input";
 import { initWaterAmbience } from "./core/waterAmbience";
 import { initShowerAmbience } from "./core/showerAmbience";
 import { startLoop } from "./core/loop";
-import { runGameplaySync } from "./core/runtime";
+import { runGameplaySync } from "./app/gameRuntime";
 import { initPhysics } from "./physics/world";
 import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
 import { RenderService } from "./render/renderService";

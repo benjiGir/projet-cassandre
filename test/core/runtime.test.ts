@@ -7,7 +7,7 @@
  */
 import { describe, expect, it, vi } from "vitest";
 import { Effect } from "effect";
-import { runGameplaySync } from "../../src/core/runtime";
+import { runGameplaySync } from "../../src/app/gameRuntime";
 import { DeterministicRandom } from "../../src/core/random";
 
 describe("runGameplaySync (garde-fou M1)", () => {

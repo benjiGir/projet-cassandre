@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import type { PhysicsWorld } from "../../physics/world";
 import { PathfindingService } from "../level/pathfinding";

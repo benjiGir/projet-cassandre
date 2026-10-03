@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { isPhysicsSessionLive, type GameEngine } from "../session/gameEngine";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.

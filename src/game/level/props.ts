@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import { damageForWeapon } from "../player/weaponConfig";
 import type { HitEvent } from "../player/weaponTypes";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { DeterministicRandom } from "../../core/random";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "./food";
 import { HEAL_PICKUP_RADIUS } from "./interactive";

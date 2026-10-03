@@ -2,7 +2,7 @@
 title: Boucle et temps
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-03
 ---
 
 # Boucle et temps
@@ -135,7 +135,7 @@ test isolé mais réelle en jeu — c'est la raison d'être de ce choix
 
 ## La frontière synchrone
 
-`runGameplaySync` (`src/core/runtime.ts`) exécute un `Effect` via
+`runGameplaySync` (`src/app/gameRuntime.ts`) exécute un `Effect` via
 `GameRuntime.runSync` et est le seul point de passage autorisé pour le pas
 fixe (`updateGameplay`, `stepPhysics`) **et** pour le rendu/l'interpolation
 (`interpolateVisuals`, `updateFx`). Tout `Effect.tryPromise`/`Effect.promise`/

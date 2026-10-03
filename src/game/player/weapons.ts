@@ -5,7 +5,7 @@ import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks } from "./weaponT
 import type { InputFrame } from "../../core/inputTypes";
 import { DeterministicRandom } from "../../core/random";
 import type { GameClock } from "../../core/time";
-import { runGameplaySync } from "../../core/runtime";
+import { runGameplaySync } from "../../app/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../physics/world";
 import { approach } from "./controller";

@@ -2,7 +2,7 @@
 title: Invariants
 tags: [architecture]
 status: stable
-updated: 2026-09-28
+updated: 2026-10-03
 ---
 
 # Invariants
@@ -150,7 +150,7 @@ hot-reload restent à la frontière asynchrone.
 - **Pourquoi / casse si violé** : le pas fixe doit produire un résultat dans
   le même tick pour rester rejouable (F9/F10) ; le garde-fou lève un defect
   bruyant plutôt que de laisser passer une suspension en silence.
-- **Code** : `runGameplaySync`, `src/core/runtime.ts`, appelé depuis
+- **Code** : `runGameplaySync`, `src/app/gameRuntime.ts`, appelé depuis
   `stepPhysics.ts`, `interpolateVisuals.ts`, `updateFx.ts`, `updateGameplay.ts`.
   **Test** : `test/core/runtime.test.ts` (suspension = erreur explicite).
   **Décision** : aucun ADR numéroté, skill `effect-xstate-cassandre`,

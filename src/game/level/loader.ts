@@ -13,7 +13,7 @@ import type {
   LevelHandle,
 } from "./levelTypes";
 import type { PhysicsWorld } from "../../physics/world";
-import { GameRuntime } from "../../core/runtime";
+import { GameRuntime } from "../../app/gameRuntime";
 import { mergeStaticDecor } from "./mergeStaticDecor";
 import type { PropInfo } from "./props";
 import type { DoorInfo } from "./doorTypes";
