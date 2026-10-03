@@ -269,5 +269,6 @@ Les setters `state` de Suit et Director arrêtent leur acteur et le remplacent
 avec `resolveState`, `getPersistedSnapshot` puis `createActor({ snapshot })`.
 Le contexte reste partagé par référence, sans passage JSON : vecteurs, RNG
 et corps Rapier conservent leur identité. Aucune action d’entrée n’est rejouée.
+La persistance porte sur l'état seul : le contexte, cyclique à cause de Rapier, est rattaché après coup.
 Cette restauration utilise les API publiques ; les transitions de gameplay
 continuent à envoyer leurs événements au même graphe d’états.

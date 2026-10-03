@@ -227,9 +227,11 @@ export function createEnemyActor(context: EnemyMachineContext): EnemyActor {
 // see: docs/archive/systems-entites.md#réassigner-létat-depuis-les-tests-sans-casser-lencapsulation
 export function forceEnemyState(actor: EnemyActor, next: EnemyState): EnemyActor {
   const context = actor.getSnapshot().context;
-  const resolved = enemyMachine.resolveState({ value: next, context });
-  const snapshot = { ...enemyMachine.getPersistedSnapshot(resolved), context };
-  // En mémoire uniquement : garder les références Rapier, vecteurs et RNG, sans JSON.
+  // La persistance XState copie le contexte en profondeur, sans garde contre
+  // les cycles : le monde Rapier qu'il référence y fait déborder la pile. On
+  // persiste donc l'état seul, puis on rattache le contexte vivant tel quel.
+  const stateOnly = enemyMachine.resolveState({ value: next, context: {} as EnemyMachineContext });
+  const snapshot = { ...enemyMachine.getPersistedSnapshot(stateOnly), context };
   const replacement = createActor(enemyMachine, { input: context, snapshot });
   actor.stop();
   return replacement.start();

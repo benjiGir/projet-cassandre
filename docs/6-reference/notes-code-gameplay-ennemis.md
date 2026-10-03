@@ -70,6 +70,7 @@ Les setters d’état existent pour les harnais. `forceEnemyState` reconstruit u
 snapshot avec `resolveState` et `getPersistedSnapshot`, puis remplace
 l’acteur via `createActor` avec ce snapshot. L’ancien acteur est arrêté.
 Le contexte et ses références sont conservés en mémoire, sans sérialisation JSON.
+L'état est persisté seul, sur un contexte vide, puis le contexte vivant est rattaché : `getPersistedSnapshot` copie le contexte en profondeur sans garde contre les cycles, et le monde Rapier qu'il référence ferait déborder la pile.
 Cette restauration ne joue pas les actions d’entrée et ne constitue pas une transition de jeu.
 Les variantes flash/recul sont lues à chaud dans les configurations partagées.
 
