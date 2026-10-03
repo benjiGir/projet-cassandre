@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import { Button } from "../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../components/controls/ButtonRow/ButtonRow";
 import { CornerFrame } from "../../../components/layout/CornerFrame/CornerFrame";

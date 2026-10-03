@@ -14,7 +14,7 @@ updated: 2026-09-26
 > `DirectorConfig` sont des objets mutables tunables à chaud
 > (`cassandre.suitConfig.xxx = …`, `cassandre.directorConfig.xxx = …`) —
 > source unique de vérité, aucun nombre de comportement/combat codé en dur
-> ailleurs que dans `src/game/entities/suitConfig.ts`/`directorConfig.ts`.
+> ailleurs que dans `src/game/entities/suit/suitConfig.ts`/`directorConfig.ts`.
 
 `SuitConfig` et `DirectorConfig` sont deux interfaces **distinctes**,
 délibérément dupliquées plutôt que partagées ou liées par héritage — voir
@@ -123,7 +123,7 @@ l'autre.
 
 | Paramètre | Costard | Directeur |
 |---|---|---|
-| `attackDamage` | 6 | 10 (un boss doit faire plus mal, mais rester survivable plusieurs coups avec `playerMaxHp` = 100, `game/state.ts`) |
+| `attackDamage` | 6 | 10 (un boss doit faire plus mal, mais rester survivable plusieurs coups avec `playerMaxHp` = 100, `game/hud/state.ts`) |
 | `aimJitterDeg` | 2.5° | 2° (un boss vise légèrement mieux) |
 | `gibDistance` | 3 m | — (le Directeur n'a pas de mécanique de gibs : un boss qui explose en morceaux casserait la mise en scène de révélation/mort) |
 
@@ -186,7 +186,7 @@ chaque comparaison, respawner via `cassandre.spawnSuit(...)` si besoin.
 |---|---|---|
 | `hitFlashDuration` | 0.25 s | 0.25 s |
 
-Était une constante en dur (`FLASH_DURATION`) dans `render/billboard.ts`,
+Était une constante en dur (`FLASH_DURATION`) dans `render/sprites/billboard.ts`,
 non exposée — violait le mandat « config unique, tunable à chaud » du skill
 `game-feel-tuning`. Déplacée dans `SuitConfig`, valeur de départ inchangée :
 ce déplacement ne devait rien changer au feedback perçu tant qu'un humain
@@ -210,7 +210,7 @@ Usage console : `cassandre.applyFlashVariant("B")`.
 | `playerHitShakeAmplitude` | 0.08 m | 0.1 m (un coup de boss doit se sentir plus lourd) |
 | `playerHitShakeDuration` | 0.1 s | 0.12 s |
 
-Utilise l'API publique déjà existante de `render/fx.ts` (`triggerShake`),
+Utilise l'API publique déjà existante de `render/fx/fx.ts` (`triggerShake`),
 aucune modification de ce fichier nécessaire pour ce feedback.
 
 ## Révélation (Directeur uniquement)

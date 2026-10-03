@@ -13,10 +13,10 @@ Fait : garantit que le pas fixe produit toujours la même suite d'états à
 entrées égales — condition posée par [Boucle et temps](../3-architecture/boucle-et-temps.md)
 (invariant #1) et par l'invariant #12 (RNG déterministe) de
 [Invariants](../3-architecture/invariants.md). Porte deux outils construits
-sur cette garantie : `core/inputRecorder.ts` (enregistrer/rejouer une
-séquence d'`InputFrame`, harnais F9/F10) et `core/random.ts::DeterministicRandom`
+sur cette garantie : `core/input/inputRecorder.ts` (enregistrer/rejouer une
+séquence d'`InputFrame`, harnais F9/F10) et `core/effect/random.ts::DeterministicRandom`
 (seule source de nombres aléatoires du gameplay). Porte aussi la preuve hors
-écran (`game/devtools/testHarness.ts::checkDeterminism`) qui rejoue deux fois
+écran (`game/devtools/replay/testHarness.ts::checkDeterminism`) qui rejoue deux fois
 la même séquence et compare.
 
 Ne fait pas : ne restaure aucun état du monde (ennemis, PV, portes, flux
@@ -30,9 +30,9 @@ séparé et documenté dans [Simulation et présentation](../3-architecture/simu
 
 ## Fichiers
 
-- `src/core/inputRecorder.ts` — `InputRecorder` (enregistrement, rejeu),
+- `src/core/input/inputRecorder.ts` — `InputRecorder` (enregistrement, rejeu),
   `InputFrame`/`Recording`/`RecordingStart`, `recordingToJson`/`recordingFromJson`.
-- `src/game/session/recording.ts` — `startRecording`/`startPlayback` :
+- `src/game/devtools/replay/recording.ts` — `startRecording`/`startPlayback` :
   wrappers qui ajoutent l'état joueur (position/vitesse/yaw/pitch) à
   `inputRecorder`, rien de plus.
 - `src/game/loop/devGameplayInput.ts` — détection des touches F8/F9/F10 au
@@ -40,13 +40,13 @@ séparé et documenté dans [Simulation et présentation](../3-architecture/simu
 - `src/game/loop/updateGameplay.ts` — point où `activeFrame` vient soit du
   rejeu (`inputRecorder.nextFrame()`), soit de la capture live
   (`captureInputFrame`).
-- `src/core/random.ts` — `DeterministicRandom` (service Effect), seule
+- `src/core/effect/random.ts` — `DeterministicRandom` (service Effect), seule
   implémentation de `mulberry32` du dépôt.
-- `src/core/runtime.ts` — fabrique générique du garde-fou synchrone.
-- `src/app/gameRuntime.ts` — `GameLayer`/`GameRuntime`/`runGameplaySync` :
+- `src/core/effect/runtime.ts` — fabrique générique du garde-fou synchrone.
+- `src/app/runtime/gameRuntime.ts` — `GameLayer`/`GameRuntime`/`runGameplaySync` :
   fournit `DeterministicRandom` au reste du jeu, protège la frontière
   synchrone (invariant #11, détail [Boucle et temps](../3-architecture/boucle-et-temps.md#la-frontière-synchrone)).
-- `src/game/devtools/testHarness.ts` — `simulateRecording`/`checkDeterminism` :
+- `src/game/devtools/replay/testHarness.ts` — `simulateRecording`/`checkDeterminism` :
   rejoue une séquence dans un monde Rapier minimal, hors rendu.
 - `src/game/devtools/consoleApi.ts` — expose `recorder`, `lastRecording`,
   `playRecording`, `export/importRecording`, `simulateRecording`,
@@ -114,7 +114,7 @@ machine qui rejoue), `start` (`RecordingStart` : position/vitesse/yaw/pitch),
 `frames`. Sérialisable (`recordingToJson`/`recordingFromJson`), donc
 transportable hors du process qui l'a produit.
 
-**`DeterministicRandom.forSeed(seed)`** (`core/random.ts`) fabrique un
+**`DeterministicRandom.forSeed(seed)`** (`core/effect/random.ts`) fabrique un
 générateur `mulberry32` INDÉPENDANT à chaque appel — jamais un flux partagé
 entre appelants, sinon l'ordre d'appel romprait le rejeu. Consommé via
 `runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)))`
@@ -183,12 +183,12 @@ dépend.
 
 ## Tests
 
-- `test/core/random.test.ts` — séquences de référence de `DeterministicRandom`
+- `test/core/effect/random.test.ts` — séquences de référence de `DeterministicRandom`
   pour les graines réelles du jeu (pompe/pistolet, deux premiers spawns
   Costard et Directeur), calculées indépendamment du code de production ;
   prouve aussi que deux générateurs `forSeed` distincts ne s'entrelacent
   jamais.
-- `test/game/updateDisplayInput.test.ts` — bascule sur `inputRecorder.isPlaying()`
+- `test/game/loop/updateDisplayInput.test.ts` — bascule sur `inputRecorder.isPlaying()`
   mocké, côté capture d'input au taux d'affichage.
 - Aucun test vitest dédié à `InputRecorder` lui-même, ni à
   `testHarness.ts::simulateRecording`/`checkDeterminism` : ce sont des

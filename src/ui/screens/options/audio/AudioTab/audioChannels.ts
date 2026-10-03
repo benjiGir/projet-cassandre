@@ -1,6 +1,6 @@
-import { playSfx } from "../../../../../core/audio";
-import { playHeroVoice } from "../../../../../core/heroVoice";
-import type { AudioChannel } from "../../../../../game/audioSettings";
+import { playSfx } from "../../../../../core/audio/audio";
+import { playHeroVoice } from "../../../../../core/audio/heroVoice";
+import type { AudioChannel } from "../../../../../game/settings/audioSettings";
 
 export interface AudioChannelRow {
   id: AudioChannel;

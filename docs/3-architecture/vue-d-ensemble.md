@@ -86,7 +86,7 @@ livrable est un fichier dans `public/assets/`.
 
 Synthétise et empaquette les sons du jeu hors ligne, de façon déterministe
 (même graine, même octet). Ne tourne jamais au runtime : son seul livrable est
-l'audio sprite chargé par `src/core/audio.ts`.
+l'audio sprite chargé par `src/core/audio/audio.ts`.
 
 - Dossiers : `tools/audio` (`synth.py`, `recipes.py`, `render_sfx.py`,
   `analyze_sfx.py`, `build_sprite.py`, `audition.py`).
@@ -124,12 +124,12 @@ affichage), [Flux de données](flux-de-donnees.md) (input → HUD).
 
 ## Point d'entrée
 
-`src/main.ts` orchestre le boot : choix du niveau (`src/app/bootChoice.ts`),
+`src/main.ts` orchestre le boot : choix du niveau (`src/app/navigation/bootChoice.ts`),
 chargement des atlas et du niveau, construction du moteur persistant
 (`buildGameEngine`, `src/game/session/gameEngine.ts`), démarrage d'une
 première session (`bootGameSession`, `src/game/session/lifecycle.ts`), montage
-de `<App/>` et démarrage de la boucle (`startLoop`, `src/core/loop.ts`).
-« Rejouer »/« Retour au menu » passent par `src/app/sessionFlow.ts`, qui
+de `<App/>` et démarrage de la boucle (`startLoop`, `src/core/loop/loop.ts`).
+« Rejouer »/« Retour au menu » passent par `src/app/navigation/sessionFlow.ts`, qui
 reconstruit une session sans recharger la page — détail :
 [Cycle de vie](cycle-de-vie.md).
 
@@ -138,7 +138,7 @@ reconstruit une session sans recharger la page — détail :
 - **React ne touche jamais la boucle** : pas de `setState` par frame, HUD
   abonné au store zustand, throttlé à 10 Hz — [invariant #2](invariants.md).
 - **Frontière synchrone Effect stricte** : pas fixe et rendu/interpolation
-  passent uniquement par `runGameplaySync` (`src/app/gameRuntime.ts`) —
+  passent uniquement par `runGameplaySync` (`src/app/runtime/gameRuntime.ts`) —
   [invariant #11](invariants.md).
 - **Le moteur ne lit que `public/assets/`**, jamais `assets_src/` (sources
   Blender, packs CC0 bruts, réservés à l'outillage).

@@ -1,9 +1,9 @@
 import type { Root } from "react-dom/client";
 
-import { beginLoading, waitForLoadingRetry } from "../../../core/loadingProgress";
-import { useGameStore } from "../../../game/state";
-import { HeroPortrait } from "../../../game/session/heroPortrait";
-import type { HeroPortraitReaction } from "../../../game/hudTypes";
+import { beginLoading, waitForLoadingRetry } from "../../../core/loading/loadingProgress";
+import { useGameStore } from "../../../game/hud/state";
+import { HeroPortrait } from "../../../game/session/presentation/heroPortrait";
+import type { HeroPortraitReaction } from "../../../game/hud/hudTypes";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";

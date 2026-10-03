@@ -24,8 +24,8 @@ d'états qui décide quel composant React est monté.
 
 ## Le cycle de vie d'une partie, du boot au reset
 
-Construit par lecture directe de `main.ts`, `app/bootChoice.ts`,
-`app/sessionFlow.ts`, `game/session/gameEngine.ts` et `lifecycle.ts` :
+Construit par lecture directe de `main.ts`, `app/navigation/bootChoice.ts`,
+`app/navigation/sessionFlow.ts`, `game/session/gameEngine.ts` et `lifecycle.ts` :
 
 ```mermaid
 flowchart TD
@@ -72,7 +72,7 @@ systèmes de rendu cosmétiques
 (`fx`/`viewmodel`/`crosshair`/`hitmarker`/`ballisticsDebug`/
 `wireframeToggle`), les atlas et géométries partagés entre TOUTES les
 parties (`suitAtlas`/`directorAtlas`/`badgeGeometry`/`badgeMaterial` — voir
-« LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`), la visée
+« LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/sprites/billboard.ts`), la visée
 (`look`/`lookDelta`, mutés en place et jamais recréés en objet neuf —
 `interpolateVisuals.ts` ferme dessus par référence), `interaction`
 (`InteractionSystem`, instance unique pour tout l'onglet), et enfin
@@ -193,7 +193,7 @@ cours ne doit pas se réinitialiser au hot reload, seulement à un « Rejouer »
 ## Construire une partie
 
 `bootGameSession(engine, choice)` (`lifecycle.ts`) construit une partie
-complète : remet `game/state.ts` à ses valeurs de boot, construit
+complète : remet `game/hud/state.ts` à ses valeurs de boot, construit
 `PhysicsWorld` puis `player`/`weapons`/`suitManager`/`directorManager` à
 partir de lui, la géométrie du niveau (gym ou session glTF, mutuellement
 exclusives), et tout l'état de suivi par partie. Appelée une fois au tout
@@ -202,7 +202,7 @@ réemploi est ce qui rend le reset possible.
 
 `GameClock.reset()` et `FxSystem.resetSession()` sont appelés avant toute
 construction : aucun hitstop, shake, flash, decal, particule ou jet d’eau ne
-traverse une frontière de partie. `resetGameStore()` (`game/state.ts`)
+traverse une frontière de partie. `resetGameStore()` (`game/hud/state.ts`)
 reconstruit ensuite `debug` en un TOUT NOUVEL objet à chaque
 appel (jamais `INITIAL_DEBUG` partagé par référence) — `setDebug`/
 `setPlayerHp`/etc. ne mutent jamais leur cible en place, mais repartir
@@ -245,7 +245,7 @@ Cet ordre EN DERNIER n'est pas arbitraire : libérer le monde Rapier libère
 TOUS ses corps/colliders/`KinematicCharacterController` d'un coup — l'API
 elle-même documente qu'il n'y a pas besoin d'appeler leurs `.free()`
 individuellement (vérifié dans les types Rapier, même usage déjà en place
-dans `game/devtools/testHarness.ts::simulateRecording`). Aucun nettoyage
+dans `game/devtools/replay/testHarness.ts::simulateRecording`). Aucun nettoyage
 Rapier séparé n'est donc nécessaire pour `player`/`suitManager`/
 `directorManager`/`weapons`, qui deviennent simplement inatteignables et
 sont ramassés par le GC JS normal.
@@ -371,7 +371,7 @@ dans le store zustand : le store en est un **miroir** pour le HUD, recopié
 ponctuellement par `syncCardsToStore` au ramassage, jamais par image
 (invariant #2).
 
-`game/session/cards.ts` tient les trois seules opérations : `hasCard`,
+`game/session/progression/cards.ts` tient les trois seules opérations : `hasCard`,
 `grantCard` (qui refuse un doublon sans bruit — un hot reload remet les
 `use_*` en place, le cas arrive) et `syncCardsToStore`. Quelle carte se
 trouve où, et quelle porte exige laquelle, n'est écrit nulle part dans le
@@ -385,7 +385,7 @@ Comme le badge avant elles, les cartes survivent à un hot reload : c'est un
 
 Depuis [ADR 0031](../decisions/0031-portes-animees-et-vitres.md), le
 mouvement d'un vantail vit entièrement dans `session.doorSystem`
-(`DoorSystem`, `game/level/doors.ts`) — reconstruit à chaque commit de niveau
+(`DoorSystem`, `game/level/doors/doors.ts`) — reconstruit à chaque commit de niveau
 (hot reload compris), au même titre que `propSystem`/`currentNavGraph`/
 `lightPool` (voir [Spawn et chargement de niveau](#spawn-et-chargement-de-niveau)).
 `session/doors.ts` n'est plus qu'un fin habillage par-dessus : feedback
@@ -457,8 +457,8 @@ peuvent arriver dans le MÊME pas fixe. Le premier passage à zéro envoie
 
 ## Récapitulatif de fin de partie
 
-`game/session/score.ts` construit le récap affiché par `DeathScreen`/
-`LevelCompleteScreen` (`ui/components/RecapTable/RecapTable.tsx`) : kills,
+`game/session/progression/score.ts` construit le récap affiché par `DeathScreen`/
+`LevelCompleteScreen` (`ui/components/layout/RecapTable/RecapTable.tsx`) : kills,
 secrets, précision, vandalisme, bonus de rapidité — traduits en points par
 un barème à constantes nommées (`SCORE_SUIT_KILL`, `SCORE_DIRECTOR_KILL`,
 `SCORE_SECRET`, `SCORE_ALL_SECRETS_BONUS`, `SCORE_ACCURACY_MAX_POINTS`,
@@ -489,16 +489,16 @@ délibérée :
 
 `publishLevelRecap(session, includeTimeBonus)` est le seul point d'entrée
 IMPUR (il écrit dans `useGameStore`) : appelé par
-`game/session/doors.ts::triggerLevelComplete` (fin de niveau,
+`game/session/progression/doors.ts::triggerLevelComplete` (fin de niveau,
 `includeTimeBonus: true`) et par
-`game/session/feedback.ts::applyPlayerDamage` (mort, `includeTimeBonus:
+`game/session/player/feedback.ts::applyPlayerDamage` (mort, `includeTimeBonus:
 false` — récap PARTIEL, sans bonus de chrono pour une partie qui ne s'est
 pas terminée par la sortie). `LevelRecap`/`RecapLine` sont DÉFINIS dans
-`game/state.ts`, pas dans `score.ts` (même principe que `GameFlowState`,
+`game/hud/state.ts`, pas dans `score.ts` (même principe que `GameFlowState`,
 voir [HUD et interface — Flux d'écran](./systems-hud.md#flux-décran)) : ADR 0020,
-`game/state.ts` reste une feuille de dépendances.
+`game/hud/state.ts` reste une feuille de dépendances.
 
-`LevelDef.parTime` (`game/level/levels.ts`, secondes) fixe le temps de
+`LevelDef.parTime` (`game/level/catalog/levels.ts`, secondes) fixe le temps de
 référence du bonus de rapidité ; son absence (gym, zones de test) retire
 simplement la ligne "Rapidité" du récap plutôt que d'afficher un temps
 arbitraire.
@@ -537,7 +537,7 @@ dupliquer le câblage — léger écart assumé à « un écran ne connaît pas 
 autre écran » ([composition](./reference-react-composition.md)), justifié
 parce qu'il s'agit d'une composition, pas d'un couplage de navigation
 (`OptionsScreen` reste utilisable seul, ne sait rien de la pause).
-"Reprendre" appelle `app/sessionFlow.ts::resume()` : vide
+"Reprendre" appelle `app/navigation/sessionFlow.ts::resume()` : vide
 les fronts en attente, redemande le verrouillage du pointeur (le clic sur
 le bouton EST le geste utilisateur exigé par l'API navigateur) puis envoie
 `RESUME`. "Quitter vers le menu" réutilise `returnToMenu(engine)` tel
@@ -546,7 +546,7 @@ supplémentaire à `exitPointerLock()` n'est nécessaire.
 
 **Les quatre réglages d'affichage s'appliquent à chaud, y compris en
 pause** — voir [HUD et interface — Options](./systems-hud.md#options-contrôles-et-affichage)
-pour le mécanisme (`game/graphicsSettings.ts::registerRenderTarget`). Le
+pour le mécanisme (`game/settings/graphicsSettings.ts::registerRenderTarget`). Le
 rebinding et la musique étaient déjà immédiats avant cette tâche.
 
 ## Harnais F9 et F10

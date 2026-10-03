@@ -4,27 +4,27 @@ import * as THREE from "three";
 
 import "./ui/theme/tokens.css";
 
-import { initAudio } from "./core/audio";
-import { initHeroVoice } from "./core/heroVoice";
-import { initZoneAmbience } from "./core/zoneAmbience";
-import { installAudioActivation } from "./core/audioPreparation";
-import { input } from "./core/input";
-import { initWaterAmbience } from "./core/waterAmbience";
-import { initShowerAmbience } from "./core/showerAmbience";
-import { startLoop } from "./core/loop";
-import { runGameplaySync } from "./app/gameRuntime";
+import { initAudio } from "./core/audio/audio";
+import { initHeroVoice } from "./core/audio/heroVoice";
+import { initZoneAmbience } from "./core/audio/zoneAmbience";
+import { installAudioActivation } from "./core/audio/audioPreparation";
+import { input } from "./core/input/input";
+import { initWaterAmbience } from "./core/audio/waterAmbience";
+import { initShowerAmbience } from "./core/audio/showerAmbience";
+import { startLoop } from "./core/loop/loop";
+import { runGameplaySync } from "./app/runtime/gameRuntime";
 import { initPhysics } from "./physics/world";
-import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
-import { RenderService } from "./render/renderService";
-import { loadWeaponModelsOrPlaceholder } from "./render/weaponModels";
-import { loadCardPickupTextures } from "./render/cardPickups";
-import { createGameFlowActor } from "./app/gameFlowMachine";
-import { App } from "./ui/App";
-import { initAudioSettingsAtBoot } from "./game/audioSettings";
-import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
-import { useGameStore } from "./game/state";
-import { resolveBootChoice } from "./app/bootChoice";
-import { bootGameSessionWithRetry, createSessionFlow, waitForGameSessionReady } from "./app/sessionFlow";
+import { loadEnemySpriteSheetOrPlaceholder } from "./render/sprites/enemySprites";
+import { RenderService } from "./render/pipeline/renderService";
+import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel/weaponModels";
+import { loadCardPickupTextures } from "./render/pickups/cardPickups";
+import { createGameFlowActor } from "./app/navigation/gameFlowMachine";
+import { App } from "./ui/App/App";
+import { initAudioSettingsAtBoot } from "./game/settings/audioSettings";
+import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/settings/graphicsSettings";
+import { useGameStore } from "./game/hud/state";
+import { resolveBootChoice } from "./app/navigation/bootChoice";
+import { bootGameSessionWithRetry, createSessionFlow, waitForGameSessionReady } from "./app/navigation/sessionFlow";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
@@ -34,7 +34,7 @@ import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
 import { maybeRenderDevPreview } from "./ui/dev/devPreview/devPreview";
 import { LoadingScreen } from "./ui/screens/loading/LoadingScreen/LoadingScreen";
-import { beginLoading, letBrowserPaint, reportLoading } from "./core/loadingProgress";
+import { beginLoading, letBrowserPaint, reportLoading } from "./core/loading/loadingProgress";
 
 // see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
 async function main() {

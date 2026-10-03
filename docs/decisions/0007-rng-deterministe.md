@@ -23,14 +23,14 @@ voir [ADR 0033](0033-rng-presentation-et-portee-du-rejeu.md).
 
 Avant le nettoyage du 2026-09-05 (jalon M9, `docs/journal/plan-effect-xstate-2026-09.md` §11),
 l'algorithme mulberry32 existait en trois copies indépendantes :
-`src/core/random.ts`, `game/player/weapons.ts` (dispersion du pompe) et
-`game/entities/enemyMachine.ts::createEnemyPrng`. Une copie dupliquée peut
+`src/core/effect/random.ts`, `game/player/weapons/weapons.ts` (dispersion du pompe) et
+`game/entities/shared/enemyMachine.ts::createEnemyPrng`. Une copie dupliquée peut
 diverger silencieusement d'un refactor à l'autre — le risque n'était pas
 théorique : le jalon M6 avait déjà promis l'unification sans la livrer.
 
 ## Décision
 
-Un seul générateur canonique, mulberry32, vit dans `src/core/random.ts`. Il
+Un seul générateur canonique, mulberry32, vit dans `src/core/effect/random.ts`. Il
 est exposé par le service Effect `DeterministicRandom`
 (`forSeed(seed): () => number`), fourni via `DeterministicRandom.layer`
 dans `GameLayer`. Tout code qui a besoin d'aléatoire déterministe obtient

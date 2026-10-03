@@ -158,7 +158,7 @@ def blanchir_meshes_sans_col() -> int:
     return n
 
 
-# Doit valoir `LIGHT_POOL_BUDGET` (`src/render/lightPool.ts`). Sans ce
+# Doit valoir `LIGHT_POOL_BUDGET` (`src/render/environment/lightPool.ts`). Sans ce
 # plafond, une capture allume TOUTES les lampes du niveau et promet une
 # luminosité que le jeu ne tiendra pas — un niveau v2 complet en porte plus de
 # cent, le jeu n'en allume jamais plus de 48.

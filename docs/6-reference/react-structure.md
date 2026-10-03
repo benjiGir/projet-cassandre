@@ -2,7 +2,7 @@
 title: React — structure et rangement de src/ui
 tags: [reference, react, ui]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # React — structure et rangement de src/ui
@@ -19,14 +19,13 @@ Règles sœurs : [bonnes pratiques React 19.2](react-bonnes-pratiques.md),
 
 ```text
 src/ui/
-  App.tsx                 racine de l'overlay
-  gameFlowMachine.ts      flux des écrans
+  App/                    racine de l'overlay : App.tsx
   theme/                  jetons CSS
   lib/                    helpers communs sans React
   components/             primitives visuelles réutilisables
     controls/             Button, ButtonRow
     effects/              Scanlines, TvStatic, Vignette
-    layout/               Screen, CornerFrame
+    layout/               Screen, CornerFrame, RecapTable
     text/                 RecIndicator, ScreenTitle, StatusFlag
   hud/                    HUD et widgets
     Hud/                  composition des widgets
@@ -39,6 +38,9 @@ src/ui/
   dev/                    outils et réglage de développement
     tuning/                panneau, variantes, sections et contrôles
 ```
+
+La machine de flux et les transitions vivent dans `src/app/navigation/`,
+la composition du runtime dans `src/app/runtime/`.
 
 Les composants ont chacun leur dossier. La carte exhaustive de rangement et les règles d'import suivent.
 ## Trois sortes de dossiers
@@ -72,8 +74,8 @@ Trois règles de rangement en découlent :
 | `theme/` | les jetons CSS | rien |
 | `lib/` | fonctions TypeScript sans React, utiles à plusieurs domaines | rien |
 | `components/` | primitives visuelles réutilisables : `Screen`, `CornerFrame`, `Button`… | `lib/` seulement |
-| `hud/` | widgets du calque en jeu | `components/`, `lib/`, `game/state` |
-| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/state`, les API publiques de `core/`, de `game/graphicsSettings.ts` et de `game/audioSettings.ts` |
+| `hud/` | widgets du calque en jeu | `components/`, `lib/`, `game/hud/state` |
+| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/hud/state`, les API publiques de `core/`, de `game/settings/graphicsSettings.ts` et de `game/settings/audioSettings.ts` |
 | `dev/` | panneaux et harnais de développement | tout, mais **n'est utilisé que derrière `import.meta.env.DEV`** |
 
 Ce que ce tableau interdit, et pourquoi :
@@ -163,11 +165,11 @@ navigateur.
 ## Ce qui ne vit pas dans src/ui
 
 - **La persistance d'un réglage et son application au moteur** :
-  `game/graphicsSettings.ts`, à côté des autres systèmes qu'il pilote. L'écran
+  `game/settings/graphicsSettings.ts`, à côté des autres systèmes qu'il pilote. L'écran
   d'options l'appelle, il ne l'héberge pas.
-- **L'état de jeu** : `game/state.ts` (zustand). L'interface le lit, la boucle
+- **L'état de jeu** : `game/hud/state.ts` (zustand). L'interface le lit, la boucle
   l'écrit — voir [bonnes pratiques](react-bonnes-pratiques.md#le-contexte-qui-change-tout).
-- **Le choix de l'écran de démarrage** : `app/bootChoice.ts`, qui monte
+- **Le choix de l'écran de démarrage** : `app/navigation/bootChoice.ts`, qui monte
   `MainMenu`, `OptionsScreen` et `LevelMenu` avant que la partie existe.
 
 ## Tests

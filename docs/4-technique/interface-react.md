@@ -16,14 +16,14 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 ## Fichiers
 
 - `src/main.ts` construit l'acteur du flux d'écran, projette ses changements dans le store et monte l'interface.
-- `src/ui/App.tsx` compose les écrans en jeu et choisit les panneaux de développement.
-- `src/app/gameFlowMachine.ts` définit les états et transitions de la session ; `gameFlowTypes.ts` porte son contrat.
-- `src/game/state.ts` contient le store Zustand ; `src/game/hudTypes.ts` porte les contrats exposés à React.
+- `src/ui/App/App.tsx` compose les écrans en jeu et choisit les panneaux de développement.
+- `src/app/navigation/gameFlowMachine.ts` définit les états et transitions de la session ; `gameFlowTypes.ts` porte son contrat.
+- `src/game/hud/state.ts` contient le store Zustand ; `src/game/hud/hudTypes.ts` porte les contrats exposés à React.
 - `src/ui/hud/Hud/Hud.tsx` compose les widgets du HUD sans s'abonner lui-même au store.
 - `src/ui/hud/widgets/` regroupe les widgets qui lisent leurs propres données.
 - `src/ui/screens/` contient les écrans de pause, mort, chargement et fin de niveau.
 - `src/ui/dev/` contient les panneaux de debug et de réglage réservés au développement.
-- `src/app/bootChoice.ts` gère le choix avant le montage de l'arbre React `App`.
+- `src/app/navigation/bootChoice.ts` gère le choix avant le montage de l'arbre React `App`.
 - [Structure React](../6-reference/react-structure.md) fixe l'organisation des composants et dossiers.
 - [Bonnes pratiques React](../6-reference/react-bonnes-pratiques.md) précise les conventions du dépôt.
 - [CSS](../6-reference/react-css.md) fixe les règles de styles.
@@ -55,7 +55,7 @@ flowchart LR
 `createGameFlowActor` crée un acteur XState au démarrage.
 `src/main.ts` s'abonne à ses snapshots et appelle `setFlowState`.
 L'acteur vit pendant l'onglet ; relancer une partie ne le recrée pas.
-`GameFlowState` est une union de chaînes dans `src/app/gameFlowTypes.ts`.
+`GameFlowState` est une union de chaînes dans `src/app/navigation/gameFlowTypes.ts`.
 Le store expose l'état au rendu ; il n'est pas la source des transitions.
 
 `App` rend l'écran de chargement pour `loading` ou `loadFailed`.
@@ -76,7 +76,7 @@ Les callbacks `onReplay`, `onReturnToMenu` et `onResume` délèguent à la couch
 
 ### Portrait du héros
 
-`src/game/session/heroPortrait.ts` choisit le palier de santé, l'expression et
+`src/game/session/presentation/heroPortrait.ts` choisit le palier de santé, l'expression et
 la case d'atlas au pas fixe. Les appels viennent des tirs, impacts, morts
 d'ennemis, découvertes, ramassages, soins et répliques acceptées.
 La mort et la douleur prennent la priorité sur les autres réactions.
@@ -131,7 +131,7 @@ Les composants d'options ne possèdent donc pas la cible Three.js ni les clés d
 
 ## Tests
 
-- `test/ui/gameFlowMachine.test.ts` vérifie les transitions de la machine de flux.
+- `test/app/navigation/gameFlowMachine.test.ts` vérifie les transitions de la machine de flux.
 - `test/ui/lib/format.test.ts` vérifie les fonctions pures de formatage partagées.
 - `test/ui/hud/lib/hudFormat.test.ts` couvre le formatage du HUD.
 - `test/ui/screens.test.ts` couvre les écrans et leur rendu.

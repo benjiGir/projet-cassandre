@@ -7,7 +7,7 @@ updated: 2026-09-26
 
 # Valeurs de déplacement
 
-Valeurs initiales définies par `src/game/player/moveConfig.ts`. Unité SI. L'objet `moveConfig` est modifiable à chaud pour les essais.
+Valeurs initiales définies par `src/game/player/movement/moveConfig.ts`. Unité SI. L'objet `moveConfig` est modifiable à chaud pour les essais.
 
 ## Mouvement et saut
 

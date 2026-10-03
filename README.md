@@ -25,10 +25,11 @@ pnpm test      # tests (vitest)
 ## Structure
 
 ```
-src/core/     boucle à pas fixe, input, audio, RNG déterministe
-src/render/   rendu rétro (résolution interne, sprites, effets)
+src/app/      navigation et composition du runtime
+src/core/     audio, effect, input, loading, loop
+src/render/   pipeline, sprites, pickups, viewmodel, overlays, environment, fx, debug
 src/physics/  monde Rapier
-src/game/     joueur, ennemis, niveau, session
+src/game/     joueur, ennemis, niveau, session, boucle, HUD et réglages
 src/ui/       overlay React (HUD, menus)
 
 tools/blender/   scripts headless (kit modulaire, niveaux, export)

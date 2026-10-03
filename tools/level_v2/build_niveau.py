@@ -34,7 +34,7 @@ occasion de le contredire. Ce qui change, et rien d'autre :
 le but. Le niveau reste jouable de bout en bout à chaque lot, et ce qui est
 gris est ce qui reste à faire. `HABILLAGE` est le registre qui décide.
 
-Les lampes ne sont pas comptées : `LightPool` (`src/render/lightPool.ts`) n'en
+Les lampes ne sont pas comptées : `LightPool` (`src/render/environment/lightPool.ts`) n'en
 allume que 48 à la fois, les plus proches du joueur. Poser plus de lampes que
 le budget est le régime NORMAL de ce niveau, pas un dépassement.
 

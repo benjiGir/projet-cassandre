@@ -13,7 +13,7 @@ Un niveau part d'un fichier Blender et finit en géométrie jouable : colliders
 Rapier, points de spawn, portes, objets à ramasser. Entre les deux, une
 chaîne d'étapes séparées (chacune un script headless indépendant) construit,
 éclaire, vérifie et exporte la scène, puis un chargeur côté jeu la relit et
-la traduit en monde physique + scène Three.js. `src/game/level/loader.ts` est
+la traduit en monde physique + scène Three.js. `src/game/level/loading/loader.ts` est
 le SEUL endroit qui connaît la correspondance entre un préfixe de nom Blender
 et son effet en jeu — voir [Conventions de nommage](./reference-conventions-nommage.md)
 pour la table complète des préfixes et custom properties. Ce document couvre
@@ -36,7 +36,7 @@ flowchart LR
     BAKE --> VALIDATE["validate_level.py\n(contrat de nommage, grille)"]
     VALIDATE --> EXPORT["export_level.py\n(-> .glb)"]
     EXPORT --> GLB[("public/assets/levels/*.glb")]
-    GLB --> LOADER["game/level/loader.ts\n(parse par préfixe)"]
+    GLB --> LOADER["game/level/loading/loader.ts\n(parse par préfixe)"]
     LOADER --> WORLD["Monde Rapier + scène Three.js"]
     LOADER -. "sondage HTTP HEAD, dev only" .-> HOT["hotReload.ts"]
     HOT -.-> LOADER
@@ -157,13 +157,13 @@ bloquant pour le reste du niveau). Sensor Rapier, groupe `TRIGGER`.
 
 `secret_*` subit le même traitement géométrique côté extraction (bounding
 box monde) mais SANS aucune exigence de forme box : un secret peut être une
-zone irrégulière, sa détection appartient à `game/level/interactive.ts`/
+zone irrégulière, sa détection appartient à `game/level/interactions/interactive.ts`/
 `main.ts`, pas au loader.
 
 ## Portes
 
 Corps **FIXE**, posé une fois pour toutes à la pose FERMÉE : seul le MESH
-s'anime (`game/level/doors.ts::DoorSystem`), et seul le collider s'active ou
+s'anime (`game/level/doors/doors.ts::DoorSystem`), et seul le collider s'active ou
 se désactive. Une porte n'existe donc, pour Rapier, qu'ouverte ou fermée —
 jamais « à moitié », jamais capable de coincer le joueur en cours de
 mouvement. Le mouvement (`battant`, `coulisse`, `monte`, `descend`), la
@@ -206,7 +206,7 @@ déterminisme identique à `WeaponSystem`/`SuitManager` — `update()` doit êtr
 appelé UNE FOIS PAR PAS FIXE, jamais au taux d'affichage. La détection de
 proximité dépend de `player.position` (avancée par `player.update` ce
 pas-ci) et le déclenchement dépend du front `use` consommé une seule fois
-par `InputFrame.use` (`core/inputRecorder.ts`) : les rejouer au taux
+par `InputFrame.use` (`core/input/inputRecorder.ts`) : les rejouer au taux
 d'affichage romprait le rejeu déterministe F9/F10, exactement comme pour les
 armes.
 
@@ -265,7 +265,7 @@ skill `effect-xstate-cassandre`.
 ## Fusion du décor statique
 
 À la fin de la construction du niveau, `mergeStaticDecor`
-(`game/level/mergeStaticDecor.ts`) regroupe les meshes de décor sans
+(`game/level/loading/mergeStaticDecor.ts`) regroupe les meshes de décor sans
 préfixe par **contenu de matériau** (texture, couleurs, vertex colors,
 transparence), par jeu d'attributs de géométrie et par **cellule spatiale de
 48 m**, puis fusionne chaque groupe en un seul mesh rattaché à `root`. Mesuré
@@ -502,7 +502,7 @@ Une rangée de `kit_gondola_*`/`kit_rack_4m` **bloque réellement** la ligne de
 vue ennemie : un `spawn_suit_*` posé derrière reste `idle`. Mesuré au jalon
 N5 sur les `.glb` réellement exportés ([ADR
 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md),
-`test/game/entities/lineOfSight.test.ts`), après une période de défiance
+`test/game/entities/shared/lineOfSight.test.ts`), après une période de défiance
 fondée sur un symptôme dont la cause était ailleurs ([ADR
 0022](../decisions/0022-occlusion-rangees-non-bloquante.md) : le premier
 rayon partait avant le premier pas de physique).

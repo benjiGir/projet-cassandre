@@ -3,7 +3,7 @@
     ./.venv-refs/bin/python3 tools/textures/generate_ciel.py
 
 Écrit `public/assets/sky/nuit/{px,nx,py,ny,pz,nz}.png`, lus tels quels par
-`src/render/ciel.ts` (convention de face OpenGL, celle de `CubeTextureLoader`).
+`src/render/environment/ciel.ts` (convention de face OpenGL, celle de `CubeTextureLoader`).
 
 Chaque pixel est calculé depuis SA direction dans le monde, pas depuis sa place
 dans la face : le dégradé, l'horizon et les silhouettes se raccordent donc d'une

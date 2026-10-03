@@ -45,7 +45,7 @@ de code de gameplay n'a été écrite pour cet ADR.**
 
 ## Preuve
 
-`test/game/entities/lineOfSight.test.ts` — 12 cas, sans aucun raycast
+`test/game/entities/shared/lineOfSight.test.ts` — 12 cas, sans aucun raycast
 scripté : vrai `RaycastService`, vrai monde Rapier, vrai `Suit`, et pour les
 cas décisifs les **`.glb` réellement exportés**, relus par
 `GLTFLoader.parse`, aux positions de spawn d'origine. Les cas sur niveau réel

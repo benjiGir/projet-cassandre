@@ -14,7 +14,7 @@ un fusil à pompe — et ce document explique comment leurs tirs sont résolus, 
 ils doivent l'être de façon déterministe, et comment le feedback de hit
 (hitstop, secousse, réticule, marqueur de touche) a été construit couche
 par couche à partir de retours de playtest concrets plutôt que d'un plan
-arrêté d'avance. `WeaponSystem` (`src/game/player/weapons.ts`) gère la
+arrêté d'avance. `WeaponSystem` (`src/game/player/weapons/weapons.ts`) gère la
 sélection d'arme, les cooldowns, les munitions du pompe, les raycasts/tests
 de forme, le hitstop et l'état de recul du viewmodel — uniquement des
 nombres, aucun mesh/matériau/texture (le rendu du viewmodel est le travail
@@ -89,7 +89,7 @@ ramassent **en marchant dessus**, comme les trousses de soin et les boîtes
 de munitions — plus de touche E (voir
 [Conventions de nommage](./reference-conventions-nommage.md#armes-au-sol)
 pour le contrat `use_*` complet). `InteractionSystem.collectWeapons`
-(`game/level/interactive.ts`) fait la géométrie (même
+(`game/level/interactions/interactive.ts`) fait la géométrie (même
 `HEAL_PICKUP_RADIUS`, 1,2 m — même boîte au sol que les autres ramassages,
 aucune raison de lui donner un rayon différent) ; `WeaponSystem` porte
 seule la décision « déjà possédée », via trois méthodes symétriques de
@@ -195,7 +195,7 @@ plusieurs tirs) et ne se vident jamais toutes seules à la lecture :
 `retro-render` (spawns visuels, sfx) lit le même contenu que le HUD de
 debug dans la même frame. Seul `clearFrameEvents()` les vide, et un seul
 appelant doit le faire, **en tout dernier** — même principe que
-`input.endFrame()` dans `core/loop.ts`.
+`input.endFrame()` dans `core/loop/loop.ts`.
 
 Aujourd'hui, cet appelant unique est `updateFx()`
 (`src/game/loop/updateFx.ts`) : il lit `fireEvents`/`hitEvents` pour
@@ -248,7 +248,7 @@ F10 si le Costard visé est déjà mort/en stagger d'un essai précédent.
 Canal de feedback absent du jeu jusqu'à son ajout en Phase 3 (angle mort
 identifié en playtest) : confirmation de hit indépendante de la lisibilité
 du sprite touché, utile à 640×360 où un flash émissif sur un petit sprite
-peut se noyer en plein combat (`render/hitmarker.ts`, overlay canvas 2D
+peut se noyer en plein combat (`render/overlays/hitmarker.ts`, overlay canvas 2D
 temps réel, hors React — invariant #2). Désactivé par défaut
 (`hitmarkerEnabled = false`) : c'est un système entièrement nouveau, pas le
 retuning d'un système existant — le livrer actif changerait le feedback

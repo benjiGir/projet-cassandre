@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import styles from "./HeroLine.module.css";
 
 // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline

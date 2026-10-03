@@ -1,5 +1,5 @@
-import { CROSSHAIR_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weaponConfig";
-import { applyCrosshairVariant } from "../../../../../../game/devtools/testHarness";
+import { CROSSHAIR_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weapons/weaponConfig";
+import { applyCrosshairVariant } from "../../../../../../game/devtools/replay/testHarness";
 import { FieldSliders } from "../../../controls/FieldSliders/FieldSliders";
 import { CROSSHAIR_FIELDS } from "../../../lib/tuningFields";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";

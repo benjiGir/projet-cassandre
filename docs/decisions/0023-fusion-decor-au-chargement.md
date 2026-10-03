@@ -42,7 +42,7 @@ Deux contraintes existantes pèsent sur la solution :
 
 ## Décision
 
-Au chargement (`game/level/mergeStaticDecor.ts`, appelé en fin de
+Au chargement (`game/level/loading/mergeStaticDecor.ts`, appelé en fin de
 `buildLevelResourceEffect`), les meshes de décor statiques sont regroupés
 par contenu de matériau et par jeu d'attributs, puis **fusionnés** en un
 mesh par groupe (`BufferGeometryUtils.mergeGeometries`). Chaque objet garde

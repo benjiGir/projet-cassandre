@@ -14,7 +14,7 @@ Troisième passe en direct dans Blender (2026-09-19), EN ATTENTE DU VERDICT
 >   (2026-08-23), AUCUNE porte n'avait jamais bougé à l'écran. Le jeu faisait
 >   glisser le CORPS Rapier — invisible — et coupait son collider ; rien ne
 >   recopiait cette pose sur le mesh. Seuls les `prop_*` le faisaient. Corrigé
->   par `game/level/doors.ts::DoorSystem` ([ADR 0031](../decisions/0031-portes-animees-et-vitres.md)) :
+>   par `game/level/doors/doors.ts::DoorSystem` ([ADR 0031](../decisions/0031-portes-animees-et-vitres.md)) :
 >   corps FIXE à la pose fermée, collider actif seulement fermé, mesh animé au
 >   pas fixe. Quatre mouvements en extras (`battant`, `coulisse`, `monte`,
 >   `descend`), groupes de vantaux, et portes `auto` qui s'ouvrent devant qui

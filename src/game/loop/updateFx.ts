@@ -8,24 +8,24 @@ import {
   playPropBreakSfx,
   playSfx,
   playWeaponFireSfx,
-} from "../../core/audio";
-import { input } from "../../core/input";
-import { updateWaterAmbience } from "../../core/waterAmbience";
-import { updateShowerAmbience } from "../../core/showerAmbience";
-import { updateZoneAmbience } from "../../core/zoneAmbience";
-import { runGameplaySync } from "../../app/gameRuntime";
-import { type LoopStats } from "../../core/loop";
-import { FLESH_MATERIAL } from "../player/weapons";
-import { weaponConfig } from "../player/weaponConfig";
-import { suitConfig } from "../entities/suitConfig";
-import { directorConfig } from "../entities/directorConfig";
-import { useGameStore } from "../state";
-import { presentPlayerDamage } from "../session/feedback";
+} from "../../core/audio/audio";
+import { input } from "../../core/input/input";
+import { updateWaterAmbience } from "../../core/audio/waterAmbience";
+import { updateShowerAmbience } from "../../core/audio/showerAmbience";
+import { updateZoneAmbience } from "../../core/audio/zoneAmbience";
+import { runGameplaySync } from "../../app/runtime/gameRuntime";
+import { type LoopStats } from "../../core/loop/loop";
+import { FLESH_MATERIAL } from "../player/weapons/weapons";
+import { weaponConfig } from "../player/weapons/weaponConfig";
+import { suitConfig } from "../entities/suit/suitConfig";
+import { directorConfig } from "../entities/director/directorConfig";
+import { useGameStore } from "../hud/state";
+import { presentPlayerDamage } from "../session/player/feedback";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
-import type { LevelHandle } from "../level/levelTypes";
-import { astarMetricsSnapshot } from "../level/navSearch";
-import { collectActiveShowerOrigins } from "../level/douches";
+import type { LevelHandle } from "../level/loading/levelTypes";
+import { astarMetricsSnapshot } from "../level/navigation/navSearch";
+import { collectActiveShowerOrigins } from "../level/sanitaires/douches";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
@@ -346,7 +346,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             console.info(`[debug] wireframe ${enabled ? "activé" : "désactivé"}`);
           }
           // KeyB (ballistics) : gizmos balistiques de debug, actifs par défaut
-          // en dev (voir la doc de tête de `render/ballisticsDebug.ts`) — même pattern
+          // en dev (voir la doc de tête de `render/debug/ballisticsDebug.ts`) — même pattern
           // de bascule ponctuelle que KeyV ci-dessus.
           if (input.wasJustPressed("KeyB")) {
             const enabled = engine.ballisticsDebug.toggle();
@@ -365,7 +365,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             entityCount: (session.ballBody ? 1 : 0) + session.suitManager.suits.length,
             steps: stats.steps,
             // Jalon M7 (PLAN_EFFECT_XSTATE.md, §9) : voir la doc de
-            // `LoopStats` (`core/loop.ts`) pour la définition exacte.
+            // `LoopStats` (`core/loop/loop.ts`) pour la définition exacte.
             gameplayMs: stats.gameplayMs,
             gameplayP95Ms: stats.gameplayP95Ms,
             astarQueries: astar.queries,

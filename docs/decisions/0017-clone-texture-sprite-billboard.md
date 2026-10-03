@@ -13,7 +13,7 @@ Accepté.
 
 ## Contexte
 
-`BillboardSprite` (`src/render/billboard.ts`) sélectionne sa case d'atlas
+`BillboardSprite` (`src/render/sprites/billboard.ts`) sélectionne sa case d'atlas
 (direction × frame) en mutant `material.map.offset`/`.repeat`. Si plusieurs
 instances partagent le même objet `THREE.Texture` (un seul atlas chargé pour
 ~20 Costards), muter `.offset` sur l'une désynchronise TOUTES les autres :

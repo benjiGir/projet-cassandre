@@ -20,7 +20,7 @@ Ce qui a changé : le rayon de ligne de vue ne traversait pas la rangée à
 cause d'un défaut d'occlusion, mais parce qu'il partait **avant le premier
 pas de physique**, dans un monde Rapier dont la broad-phase était encore
 vide. Corrigé le 2026-09-11 (`refreshSceneQueries()`), mesuré le 2026-09-12
-(`test/game/entities/lineOfSight.test.ts`).
+(`test/game/entities/shared/lineOfSight.test.ts`).
 
 ## Contexte
 

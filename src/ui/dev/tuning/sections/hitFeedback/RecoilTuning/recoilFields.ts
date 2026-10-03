@@ -1,4 +1,4 @@
-import type { RecoilKick } from "../../../../../../game/player/weaponConfig";
+import type { RecoilKick } from "../../../../../../game/player/weapons/weaponConfig";
 import type { TuningField } from "../../../lib/tuningTypes";
 
 export const RECOIL_FIELDS: readonly TuningField<keyof RecoilKick>[] = [

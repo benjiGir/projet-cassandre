@@ -15,26 +15,26 @@ sans redéfinir leurs frontières.
 
 | Fichier | Responsabilité |
 |---|---|
-| `src/core/inputTypes.ts` | Actions, frames et formats d'enregistrement, sans runtime. |
-| `src/core/inputBindings.ts` | Bindings par défaut, ordre, libellés et formatage. |
-| `src/core/inputPersistence.ts` | Lecture et écriture du stockage de bindings. |
-| `src/core/input.ts` | Capture DOM, verrouillage et consommation des entrées. |
-| `src/core/recordingSchema.ts` | Validation du format importé, hors simulation. |
-| `src/core/audioTypes.ts` | Contrats de sons et événements sonores. |
-| `src/core/audioCatalog.ts` | Tables de routage et valeurs du mix SFX. |
-| `src/core/audioManifest.ts` | Schémas communs aux manifests SFX/voix et schéma des zones. |
-| `src/core/audio.ts` | Chargement et lecture Howler des SFX. |
-| `src/core/runtime.ts` | Fabrique du garde-fou synchrone, sans services du jeu. |
-| `src/app/gameRuntime.ts` | Composition des services, runtime unique et runner lié. |
-| `src/app/gameFlowTypes.ts` | États et événements du flux d'écran. |
-| `src/app/gameFlowMachine.ts` | Construction de la machine et de son acteur. |
+| `src/core/input/inputTypes.ts` | Actions, frames et formats d'enregistrement, sans runtime. |
+| `src/core/input/inputBindings.ts` | Bindings par défaut, ordre, libellés et formatage. |
+| `src/core/input/inputPersistence.ts` | Lecture et écriture du stockage de bindings. |
+| `src/core/input/input.ts` | Capture DOM, verrouillage et consommation des entrées. |
+| `src/core/input/recordingSchema.ts` | Validation du format importé, hors simulation. |
+| `src/core/audio/audioTypes.ts` | Contrats de sons et événements sonores. |
+| `src/core/audio/audioCatalog.ts` | Tables de routage et valeurs du mix SFX. |
+| `src/core/audio/audioManifest.ts` | Schémas communs aux manifests SFX/voix et schéma des zones. |
+| `src/core/audio/audio.ts` | Chargement et lecture Howler des SFX. |
+| `src/core/effect/runtime.ts` | Fabrique du garde-fou synchrone, sans services du jeu. |
+| `src/app/runtime/gameRuntime.ts` | Composition des services, runtime unique et runner lié. |
+| `src/app/navigation/gameFlowTypes.ts` | États et événements du flux d'écran. |
+| `src/app/navigation/gameFlowMachine.ts` | Construction de la machine et de son acteur. |
 
 Les modules de contrat ne réexportent pas leurs voisins. Les consommateurs
 importent chaque responsabilité à son emplacement.
 
 ## Entrées
 
-`src/core/input.ts` conserve deux ensembles de fronts montants. Celui du pas
+`src/core/input/input.ts` conserve deux ensembles de fronts montants. Celui du pas
 fixe est consommé une seule fois par action et survit aux images sans pas
 fixe. Celui de l'affichage est lu sans consommation et vidé à chaque image.
 Consommer le premier ne masque pas le second. `endFrame` doit donc rester
@@ -104,7 +104,7 @@ rattrapage après un blocage.
 
 ## Chargement et orchestration
 
-`src/core/loadingProgress.ts` utilise un canal indépendant du store HUD :
+`src/core/loading/loadingProgress.ts` utilise un canal indépendant du store HUD :
 il existe avant la session, n'est pas remis à zéro avec le HUD et n'est pas
 limité à 10 Hz. La progression représente le chargement entier ; l'appelant
 connaît la part de chaque étape. `beginLoading` ouvre une séquence ; après
@@ -117,7 +117,7 @@ Les constructions synchrones de colliders et de navigation peuvent bloquer
 le fil principal ; sans ce relais la nouvelle étape ne serait visible
 qu'après le travail, donnant l'impression d'un chargement figé.
 
-`src/app/bootChoice.ts` ne pilote pas l'acteur de flux. Le menu principal
+`src/app/navigation/bootChoice.ts` ne pilote pas l'acteur de flux. Le menu principal
 lance niveau_v2 ; le choix des zones et blockouts est un outil de développement.
 Une URL level enregistrée utilise sa définition ; une URL inconnue reste
 une fixture glTF brute. Cette URL court-circuite le menu aussi en production.
@@ -279,12 +279,12 @@ retournent un tableau et leur callback continue jusqu'au dernier collider.
 La Layer de test renvoie par défaut null ou tableau vide et accepte des
 overrides par méthode. Toutes les méthodes de requête sont synchrones.
 
-`src/app/gameRuntime.ts` héberge GameLayer, qui compose tous les services ; la Layer de Pathfinding reçoit la
+`src/app/runtime/gameRuntime.ts` héberge GameLayer, qui compose tous les services ; la Layer de Pathfinding reçoit la
 Layer canonique de Raycast par injection. GameRuntime est unique pour tout
 l'onglet. Les générateurs forSeed sont indépendants pour que leur ordre
 d'appel n'entrelace pas les consommateurs. Leur next reste une fonction
 synchrone brute dans les boucles de tirs. Le runner est construit par
-`src/core/runtime.ts::createGameplayRunner`, qui reçoit le runtime sans
+`src/core/effect/runtime.ts::createGameplayRunner`, qui reçoit le runtime sans
 importer ses services. runGameplaySync doit laisser
 remonter toute erreur ; une suspension est signalée explicitement.
 Voir [Effect et XState](../3-architecture/effect-et-xstate.md).

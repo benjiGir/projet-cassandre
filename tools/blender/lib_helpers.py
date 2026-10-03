@@ -565,7 +565,7 @@ def kit_bounds(obj: bpy.types.Object) -> tuple[float, float, float]:
 
 
 # Matières de props — doit rester identique à `PROP_MATERIALS` dans
-# src/game/level/props.ts, et à `PROP_MATIERES` dans validate_level.py. Les
+# src/game/level/props/props.ts, et à `PROP_MATIERES` dans validate_level.py. Les
 # trois dernières datent du chantier « Les coulisses » (2026-09-26,
 # fournil/chambre froide/atelier SAV).
 PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique")
@@ -649,7 +649,7 @@ def area_light(name: str, location, size: float, energy: float, coll: bpy.types.
 
 
 # Doit rester identique à `ECRAN_CHAINES` dans `validate_level.py` et
-# `src/game/level/ecrans.ts` — `"casse"` en est absent exprès, voir ces deux
+# `src/game/level/interactions/ecrans.ts` — `"casse"` en est absent exprès, voir ces deux
 # fichiers : c'est un état interne, jamais posé dans Blender.
 ECRAN_CHAINES = ("journal", "pub", "mire", "foot", "cctv")
 

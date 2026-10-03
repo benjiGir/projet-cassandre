@@ -1,4 +1,4 @@
-import { moveConfig } from "../player/moveConfig";
+import { moveConfig } from "../player/movement/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 
 // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais

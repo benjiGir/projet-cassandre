@@ -1,5 +1,5 @@
 import { CornerFrame } from "../../../components/layout/CornerFrame/CornerFrame";
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import { HeroFace } from "../HeroFace/HeroFace";
 import styles from "./LiveCam.module.css";
 

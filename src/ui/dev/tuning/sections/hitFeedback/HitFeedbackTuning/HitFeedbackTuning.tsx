@@ -1,5 +1,5 @@
-import { suitConfig } from "../../../../../../game/entities/suitConfig";
-import { weaponConfig } from "../../../../../../game/player/weaponConfig";
+import { suitConfig } from "../../../../../../game/entities/suit/suitConfig";
+import { weaponConfig } from "../../../../../../game/player/weapons/weaponConfig";
 import { CrosshairTuning } from "../CrosshairTuning/CrosshairTuning";
 import { HitmarkerTuning } from "../HitmarkerTuning/HitmarkerTuning";
 import { ImpactTuning } from "../ImpactTuning/ImpactTuning";

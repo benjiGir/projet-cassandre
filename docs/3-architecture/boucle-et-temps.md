@@ -38,7 +38,7 @@ flowchart TD
 
 ## L'image : accumulateur, clamp, alpha
 
-`startLoop` (`src/core/loop.ts`) mesure `frameTime` entre deux
+`startLoop` (`src/core/loop/loop.ts`) mesure `frameTime` entre deux
 `requestAnimationFrame`, le clampe à `MAX_FRAME` (0,25 s) puis l'ajoute à un
 `accumulator`. Une boucle `while (accumulator >= FIXED_DT)` exécute autant de
 pas fixes que l'accumulateur le permet, chacun de durée `FIXED_DT = 1/60`, et
@@ -54,13 +54,13 @@ anomalie, `LoopStats` l'expose tel quel au panneau de debug.
 
 ## L'ordre exact d'une image, lu dans le code
 
-Séquence de `frame()` dans `src/core/loop.ts` :
+Séquence de `frame()` dans `src/core/loop/loop.ts` :
 
 | Étape | Fichier | Taux | Ce qu'elle a le droit de modifier |
 |---|---|---|---|
-| `input.beginFrame()` | `src/core/input.ts` | affichage | État interne de l'input (une fois par image) |
+| `input.beginFrame()` | `src/core/input/input.ts` | affichage | État interne de l'input (une fois par image) |
 | `updateDisplayInput` | `src/game/loop/updateDisplayInput.ts` | affichage | `engine.look.{yaw,pitch}`, `engine.lookDelta` — lit la souris avant tout pas fixe |
-| *(boucle : 0..N fois)* `input.beginFixedStep()` | `src/core/input.ts` | pas fixe | État interne de l'input (une fois par pas fixe) |
+| *(boucle : 0..N fois)* `input.beginFixedStep()` | `src/core/input/input.ts` | pas fixe | État interne de l'input (une fois par pas fixe) |
 | `snapshotPrevious` | `src/game/loop/stepPhysics.ts` | pas fixe | Copie la pose courante en pose « précédente » (joueur, armes, ennemis, props, portes, balle de test) — matière première de l'interpolation |
 | `updateGameplay` | `src/game/loop/updateGameplay.ts` | pas fixe | Tout l'état de jeu : joueur, armes, ennemis, portes, objets interactifs, score, secrets, sortie de niveau |
 | `stepPhysics` | `src/game/loop/stepPhysics.ts` | pas fixe | Avance le monde Rapier (`session.physics.step(dt)`), relit les props après coup |
@@ -68,10 +68,10 @@ Séquence de `frame()` dans `src/core/loop.ts` :
 | `interpolateVisuals` | `src/game/loop/interpolateVisuals.ts` | affichage | Caméra (position, FOV, bob), poses affichées des ennemis/props/portes, viewmodel — jamais l'état de jeu lui-même |
 | `updateFx` | `src/game/loop/updateFx.ts` | affichage | Effets visuels/sonores déclenchés par les évènements du pas fixe, pool de lampes, store zustand (throttlé 10 Hz), rendu du réticule/hitmarker |
 | `render` | `src/render/*` (appelé depuis `main.ts`) | affichage | Dessine la scène Three.js |
-| `input.endFrame()` | `src/core/input.ts` | affichage | Doit rester le dernier appel de l'image |
+| `input.endFrame()` | `src/core/input/input.ts` | affichage | Doit rester le dernier appel de l'image |
 
 `updateGameplay` lit l'input du pas fixe via `captureInputFrame` (nommé par
-action, `core/input.ts::GameAction`, pas par touche physique) ou par
+action, `core/input/input.ts::GameAction`, pas par touche physique) ou par
 `inputRecorder.nextFrame()` en rejeu — jamais les deux à la fois. En dev
 seulement (`import.meta.env.DEV`), `handleDevGameplayInput`
 (`src/game/loop/devGameplayInput.ts`) consomme F8-F10 (notarget, rejeu
@@ -93,7 +93,7 @@ contenu est ignoré.
 ## Hitstop
 
 Le hitstop ralentit le gameplay à l'impact sans jamais arrêter le pas fixe
-lui-même. `GameClock.tick(fixedDt)` (`src/core/time.ts`) renvoie `fixedDt`
+lui-même. `GameClock.tick(fixedDt)` (`src/core/loop/time.ts`) renvoie `fixedDt`
 inchangé la plupart du temps, ou `fixedDt * hitstopScale` (0,05 par défaut)
 tant que `hitstopRemaining > 0`, décrémenté à chaque appel. Ce résultat,
 `gameplayDt`, est ce que `updateGameplay` propage à tout ce qui doit
@@ -101,7 +101,7 @@ ralentir : `advanceGameplayTime`, le délai de soulagement des sanitaires, et
 `suitManager.update`/`directorManager.update`.
 
 Les ennemis reçoivent ce `gameplayDt` (jamais un delta d'affichage brut) via
-`tickEnemy(actor, dt, ctx)` (`src/game/entities/enemyMachine.ts`, appelé
+`tickEnemy(actor, dt, ctx)` (`src/game/entities/shared/enemyMachine.ts`, appelé
 depuis `Suit.update`/`Director.update`), qui l'ajoute directement à
 `ctx.stateTimer`/`ctx.attackCooldownRemaining`/`ctx.animClock`. Aucune
 transition XState `after` n'existe dans cette machine : une durée d'état vit
@@ -135,7 +135,7 @@ test isolé mais réelle en jeu — c'est la raison d'être de ce choix
 
 ## La frontière synchrone
 
-`runGameplaySync` (`src/app/gameRuntime.ts`) exécute un `Effect` via
+`runGameplaySync` (`src/app/runtime/gameRuntime.ts`) exécute un `Effect` via
 `GameRuntime.runSync` et est le seul point de passage autorisé pour le pas
 fixe (`updateGameplay`, `stepPhysics`) **et** pour le rendu/l'interpolation
 (`interpolateVisuals`, `updateFx`). Tout `Effect.tryPromise`/`Effect.promise`/
@@ -143,8 +143,8 @@ fixe (`updateGameplay`, `stepPhysics`) **et** pour le rendu/l'interpolation
 `runSync`, qui lève un `Cause.AsyncFiberError` — intercepté juste assez pour
 logger un message explicite en console avant de relancer l'erreur, jamais
 pour l'avaler. Le chargement de niveau et le hot-reload restent hors de cette
-frontière, sur `GameRuntime.runPromise`/`runFork` (`game/level/loader.ts`,
-`game/level/hotReload.ts`) : ils ne sont jamais appelés depuis
+frontière, sur `GameRuntime.runPromise`/`runFork` (`game/level/loading/loader.ts`,
+`game/level/loading/hotReload.ts`) : ils ne sont jamais appelés depuis
 `updateGameplay`. Détail : [invariant #11](invariants.md).
 
 ## Pièges

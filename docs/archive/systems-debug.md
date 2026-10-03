@@ -35,7 +35,7 @@ sur `pnpm dev`, pas sur la page déployée.
 
 ## Champs de DebugState
 
-`DebugState` (`game/state.ts`) est la source commune à `DebugPanel` (tout le
+`DebugState` (`game/hud/state.ts`) est la source commune à `DebugPanel` (tout le
 panneau, `state.debug` en entier) et au HUD de production `ui/hud/`
 (chaque widget sélectionne ses propres champs) — voir [HUD et interface — HUD de
 production](./systems-hud.md#hud-de-production). Deux disciplines d'écriture, jamais
@@ -92,7 +92,7 @@ valeur, un tir à sec ne se distinguait pas d'un bug.
 
 `activeWeapon` recopie l'union de `WeaponSystem.activeWeapon` À LA MAIN
 plutôt que de l'importer — voir [ADR 0020](../decisions/0020-state-feuille-de-dependances.md)
-pour la raison (`game/state.ts` n'importe jamais un autre module de
+pour la raison (`game/hud/state.ts` n'importe jamais un autre module de
 `src/game/*`).
 
 ### Secrets et vues
@@ -109,7 +109,7 @@ HUD de production](./systems-hud.md#hud-de-production) pour la blague) démarre 
 même caveat que `playerHp`, une valeur ARBITRAIRE (quelques spectateurs en
 direct, cohérente avec « 200 abonnés » plutôt qu'un flatteur zéro), pas un
 choix de tuning arrêté. Incrémenté PONCTUELLEMENT par `grantKillViews()`
-(`game/session/feedback.ts`), appelée une fois par kill (Costard ou
+(`game/session/player/feedback.ts`), appelée une fois par kill (Costard ou
 Directeur confondus, gain aléatoire — le gag du « clip qui buzz ») depuis
 les boucles `deathEvents` de `game/loop/updateFx.ts`, jamais depuis
 `updateGameplay`.
@@ -232,7 +232,7 @@ position/vitesse laisserait passer exactement ce genre de régression.
 ## Harnais A/B — protocole général
 
 Les 7 `applyXVariant` de `testHarness.ts` partagent le même protocole de
-comparaison, au pas fixe près, via `core/inputRecorder.ts` (F9 enregistre,
+comparaison, au pas fixe près, via `core/input/inputRecorder.ts` (F9 enregistre,
 F10 rejoue — `InputFrame.fire` est un front enregistré comme n'importe quel
 autre) : enregistrer une séquence, changer de variante, rejouer EXACTEMENT
 la même séquence. Aucun ne rappelle `player.applyConfig()` : ces champs ne

@@ -36,7 +36,7 @@ Deuxième passe en direct dans Blender (2026-09-18, soir), EN ATTENTE DU
 >   déplacement au journal ; onze l'étaient. L'audit a un contrôle « spawns
 >   encombrés ».
 > - **Skybox de nuit** : `LevelDef.ciel`, cubemap en `scene.background`
->   (`render/ciel.ts`, `tools/textures/generate_ciel.py`, docs/archive/systems-rendu.md#ciel).
+>   (`render/environment/ciel.ts`, `tools/textures/generate_ciel.py`, docs/archive/systems-rendu.md#ciel).
 > - Lampadaires : deux encadrent l'entrée, tête vers elle, les autres dans les
 >   files de places. Armoires et fauteuils de bureau n'ont plus de rayures de
 >   chantier (bandes de bordure projetées au hasard).

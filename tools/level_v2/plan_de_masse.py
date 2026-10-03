@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 GRID = 0.25
 
 # Valeurs lues dans le code du jeu, pas réécrites à la main ici sans source.
-ATTACK_RANGE_SUIT = 16.0   # src/game/entities/suitConfig.ts
+ATTACK_RANGE_SUIT = 16.0   # src/game/entities/suit/suitConfig.ts
 SIGHT_RANGE = 22.0         # suitConfig.ts / directorConfig.ts
 EYE_HEIGHT = 1.6           # moveConfig.ts, suitConfig.ts
 JUMP_HEIGHT = 1.1          # moveConfig.ts

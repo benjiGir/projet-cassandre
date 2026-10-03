@@ -40,7 +40,7 @@ Chantier Effect-TS/XState (M0-M9) — Livré (2026-09-04).** Détail jalon
 > Les deux routent maintenant vers `DeterministicRandom.forSeed` (via
 > `runGameplaySync(DeterministicRandom.useSync(...))`, même pattern que les
 > appels `RaycastService.use(...)` déjà en place) ; `mulberry32` n'existe
-> plus qu'à un seul endroit, `src/core/random.ts`. Aucune régression de
+> plus qu'à un seul endroit, `src/core/effect/random.ts`. Aucune régression de
 > déterminisme (même algorithme, mêmes graines) : `pnpm build`/`pnpm test`
 > verts (116/116) avant et après, y compris les tests à valeurs de
 > référence de `random.test.ts`/`suit.test.ts`/`director.test.ts` qui

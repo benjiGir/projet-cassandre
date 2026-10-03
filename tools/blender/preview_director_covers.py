@@ -83,8 +83,8 @@ views("candidat")
 isolated = C.shot("di_essai_archives_ouest", mode="silhouette", taille=(640, 640),
                   isoler="di_essai_archives_ouest", nom="direction_archives_silhouette")
 shutil.copy2(isolated["png"], OUT/"archives_silhouette.png")
-player_eye = config_height(ROOT/"src/game/player/moveConfig.ts")
-boss_eye = config_height(ROOT/"src/game/entities/directorConfig.ts")
+player_eye = config_height(ROOT/"src/game/player/movement/moveConfig.ts")
+boss_eye = config_height(ROOT/"src/game/entities/director/directorConfig.ts")
 report = {
     "candidate": str(CANDIDATE.relative_to(ROOT)),
     "source_hashes": hashes,

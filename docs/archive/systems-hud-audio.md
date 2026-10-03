@@ -13,7 +13,7 @@ Le jeu a deux besoins sonores très différents, traités par deux modules
 séparés. Le premier : des bruits courts et ponctuels (tir, impact, alerte
 d'un Costard, porte qui se déverrouille) qui doivent pouvoir se superposer
 sans se marcher dessus ni sonner comme une mitraillette de samples
-identiques — c'est le rôle de `core/audio.ts`. Le second : une ambiance de
+identiques — c'est le rôle de `core/audio/audio.ts`. Le second : une ambiance de
 fond et un thème musical, en boucle sur toute une session, qui doivent
 parfois baisser brièvement pour laisser la place à une réplique du héros —
 c'est le rôle de `core/music.ts`, volontairement séparé du premier parce
@@ -25,7 +25,7 @@ audio sprite ; la musique, elle, reste un placeholder.
 
 ## Effets sonores ponctuels
 
-Wrapper minimal autour de Howler (`src/core/audio.ts`) pour les SFX
+Wrapper minimal autour de Howler (`src/core/audio/audio.ts`) pour les SFX
 ponctuels du jeu : tir, impact, feedback de l'ennemi Costard (alerte,
 télégraphie, dégât, mort), porte à badge, secret trouvé.
 
@@ -34,7 +34,7 @@ ici — `core/music.ts` est un module séparé depuis la Phase 6 (« Habillage �
 parce que le pooling par `Howl` et la variation de pitch ±8 % n'ont aucun
 sens pour une piste en boucle streamée (voir plus bas). Les répliques du
 héros restent, elles, du texte HUD (invariant #9, pas de vraie VO cette
-phase) — câblées dans `game/session/feedback.ts`, ni ici ni dans `music.ts`.
+phase) — câblées dans `game/session/player/feedback.ts`, ni ici ni dans `music.ts`.
 
 Ce module ne touche jamais le pas fixe (invariant #2) : il n'est consommé
 que depuis `updateFx` (`game/loop/updateFx.ts`), sur des
@@ -379,15 +379,15 @@ Le contexte audio reste suspendu tant qu'aucune interaction utilisateur n'a
 eu lieu. Howler gère ça lui-même via `Howler.autoUnlock` (`true` par
 défaut), qui écoute les premiers `click`/`touchend`/`keydown` du
 `document` — exactement l'événement `click` sur le canvas qui déclenche
-déjà `requestPointerLock` dans `core/input.ts`. Aucun code de déblocage
+déjà `requestPointerLock` dans `core/input/input.ts`. Aucun code de déblocage
 supplémentaire n'est nécessaire.
 
 ## Boucle d'eau positionnelle
 
-Troisième module séparé de `core/audio.ts`/`core/music.ts`, pour une raison
+Troisième module séparé de `core/audio/audio.ts`/`core/music.ts`, pour une raison
 différente des deux : un sanitaire cassé (`sanitaire_*`, [ADR
 0032](../decisions/0032-sanitaires-utilisables.md)) laisse un jet d'eau
-PERMANENT (`game/level/sanitaires.ts::SanitaireSystem`, `engine.fx.addWaterJet`
+PERMANENT (`game/level/sanitaires/sanitaires.ts::SanitaireSystem`, `engine.fx.addWaterJet`
 côté rendu) qui doit sonner comme une source ponctuelle dans l'espace — son
 volume et son panoramique changent en continu avec la position et
 l'orientation du joueur, ce qu'aucun des deux autres modules ne fait (les SFX
@@ -395,13 +395,13 @@ ponctuels sonnent une fois puis se taisent, la musique/l'ambiance ne bougent
 jamais avec la caméra).
 
 Le calcul est scindé en deux fichiers, pour une raison de testabilité qui
-mérite d'être dite : `core/waterAmbienceMix.ts` ne connaît ni `Howl` ni
+mérite d'être dite : `core/audio/waterAmbienceMix.ts` ne connaît ni `Howl` ni
 `AudioContext`, seulement des nombres (`Vec3Like`) — c'est lui qui a une
-suite de tests (`test/core/waterAmbienceMix.test.ts`), à la manière de
-`core/random.ts`. `core/waterAmbience.ts` le branche sur UN `Howl` unique en
+suite de tests (`test/core/audio/waterAmbienceMix.test.ts`), à la manière de
+`core/effect/random.ts`. `core/audio/waterAmbience.ts` le branche sur UN `Howl` unique en
 boucle (`html5: false` — une boucle HTML5 a un trou au raccord, et surtout
 `stereo()` n'a d'effet qu'en Web Audio) et n'est pas testé pour la même
-raison que `core/audio.ts`/`core/music.ts` : aucun navigateur dans la suite
+raison que `core/audio/audio.ts`/`core/music.ts` : aucun navigateur dans la suite
 `vitest`.
 
 Appelé depuis `updateFx` (`game/loop/updateFx.ts`), au taux d'AFFICHAGE,
@@ -426,7 +426,7 @@ screenshake ou le pool de lampes juste à côté dans le même fichier :
   contribue le plus de gain) projetée sur l'axe X local de la caméra — lu
   directement depuis `camera.quaternion` (invariant #3, même lecture brute
   qu'`interpolateVisuals.ts`), jamais depuis `matrixWorld` : à ce point de la
-  frame, seul `renderer.render()` plus loin dans `core/loop.ts` la remet à
+  frame, seul `renderer.render()` plus loin dans `core/loop/loop.ts` la remet à
   jour. ±0,55 dit de quel côté est le jet sans jamais l'envoyer plein pot
   dans une seule oreille.
 - **Lissage** : chaque frame, le gain et le pan CIBLES (calculés ci-dessus)
@@ -489,7 +489,7 @@ Deux pistes, deux rôles (`src/core/music.ts`) :
   fluorescent, ronronnement de groupe froid), jamais duckée, jamais coupée
   en jeu — c'est le bruit de la salle, pas un événement.
 - `music` : thème en boucle, DUCKÉ (-6 dB) à chaque réplique du héros
-  déclenchée (`triggerHeroLine`, `game/session/feedback.ts`), remonté sur
+  déclenchée (`triggerHeroLine`, `game/session/player/feedback.ts`), remonté sur
   400 ms après.
   Symbolique tant qu'il n'y a pas de vraie VO (répliques encore en texte
   HUD, invariant #9), mais c'est le comportement audio demandé par le plan —
@@ -512,8 +512,8 @@ libre de droits dès qu'un humain peut en choisir un.
 volontairement deux fonctions séparées plutôt qu'un minuteur interne à ce
 module : la durée pendant laquelle la musique doit rester ducquée dépend de
 la durée d'affichage de la réplique, une donnée que seul l'appelant
-(`triggerHeroLine`, `game/session/feedback.ts`) connaît — même séparation
-des responsabilités que `showHudMessage`/`hudMessage` dans `game/state.ts`
+(`triggerHeroLine`, `game/session/player/feedback.ts`) connaît — même séparation
+des responsabilités que `showHudMessage`/`hudMessage` dans `game/hud/state.ts`
 (l'auto-effacement est géré côté appelant, pas ici). `feedback.ts` appelle
 `duckMusicForHeroLine()` au déclenchement, puis planifie
 `restoreMusicVolume()` via son propre minuteur, au même endroit que celui

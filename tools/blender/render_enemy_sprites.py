@@ -11,9 +11,9 @@ est un rendu 3D réduit, pas un dessin. Écrit dans `public/assets/sprites/` :
 
     <personnage>.png        atlas 8 colonnes × N lignes, une peau
     <personnage>_<peau>.png peaux supplémentaires, même disposition
-    <personnage>.json       manifeste lu par `src/render/enemySprites.ts`
+    <personnage>.json       manifeste lu par `src/render/sprites/enemySprites.ts`
 
-Convention de direction, la même que `src/render/billboard.ts` : la colonne 0
+Convention de direction, la même que `src/render/sprites/billboard.ts` : la colonne 0
 montre l'ennemi DE FACE, la colonne 2 le montre de son flanc DROIT (il regarde
 vers la droite de l'écran), la colonne 4 de dos.
 

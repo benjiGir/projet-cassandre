@@ -310,7 +310,7 @@ effleurement de coin, pas une occlusion robuste. Position NON modifiée ici
 (décision de layout, hors périmètre de cette tâche).
 
 **Répondu au jalon N5 (2026-09-12)** par un repro headless sur le `.glb`
-exporté (`test/game/entities/lineOfSight.test.ts`, [ADR
+exporté (`test/game/entities/shared/lineOfSight.test.ts`, [ADR
 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md)) :
 depuis le `spawn_player`, le rayon s'arrête bel et bien — au coin exact
 (4, −4), c'est-à-dire par l'effleurement décrit ci-dessus. Occlusion réelle,
@@ -779,7 +779,7 @@ caisses, spawns d'origine) et les 5 fichiers individuels
 EXACTEMENT ce qu'ils étaient — seule la position dans un espace monde
 partagé, l'ouverture d'une brèche de connexion, le renommage des noms en
 collision, et l'ajout du pickup `use_shotgun` (dans la copie combinée
-SEULEMENT) ont été ajoutés. `src/game/level/levels.ts`, l'entrée de menu, et
+SEULEMENT) ont été ajoutés. `src/game/level/catalog/levels.ts`, l'entrée de menu, et
 la vérification en jeu restent à faire par l'humain (voir CLAUDE.md).
 
 ## Secrets — Zone B (surgelés) et Zone C (toit de gondole) (2026-08-24)
@@ -1014,7 +1014,7 @@ jet d'eau part du bas-centre de cette bbox : pour un urinoir mural, la bbox
 posée est donc celle de la cuvette SEULE (sans la descente d'eau ni la
 séparation, qui restent du décor).
 
-`PV` choisi contre `src/game/player/weaponConfig.ts::damageForWeapon` : 50,
+`PV` choisi contre `src/game/player/weapons/weaponConfig.ts::damageForWeapon` : 50,
 entre un coup de pied-de-biche (`meleeDamage` = 40, ne casse pas seul) et un
 tir de pompe à bout portant (9 plombs × `shotgunDamagePerPellet` = 54, casse
 en un coup). Deux coups de pied-de-biche cassent (2 × 40 = 80 ≥ 50).

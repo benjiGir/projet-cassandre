@@ -258,7 +258,7 @@ ESPACES: dict[str, tuple[str, ...]] = {
 ZONE_PAR_DEFAUT = "magasin"
 
 # Niveau des fichiers livrés (RMS de la nappe, dBFS) ; le volume de lecture est
-# dans `core/zoneAmbience.ts`. Les bureaux sont voulus presque silencieux.
+# dans `core/audio/zoneAmbience.ts`. Les bureaux sont voulus presque silencieux.
 NAPPE_RMS_DB = -20.0
 DECALAGE_DB = {"bureaux": -4.0}
 EVENEMENT_SOUS_NAPPE_DB = -8.0

@@ -424,12 +424,12 @@ différent pour chaque boîte identique.
 - `public/assets/levels/niveau_v2.glb` : noms et propriétés des objets présents.
 - `tools/level_v2/plan_de_masse.py` : pièces, passages, progression et secrets.
 - `src/game/loop/updateGameplay.ts` : interactions, ramassages, combats et secrets.
-- `src/game/session/feedback.ts` : réactions existantes et PV bas.
-- `src/game/session/sanitaires.ts` : soulagement, délai et gorgée.
-- `src/game/session/cards.ts` et `src/game/session/doors.ts` : cartes et accès.
-- `src/game/player/weapons.ts` : armes, tirs et munitions.
-- `src/game/level/food.ts` et `src/game/level/props.ts` : nourriture et mobilier cassable.
-- `src/game/level/ecrans.ts` et `src/game/level/cameras.ts` : écrans et caméras.
+- `src/game/session/player/feedback.ts` : réactions existantes et PV bas.
+- `src/game/session/player/sanitaires.ts` : soulagement, délai et gorgée.
+- `src/game/session/progression/cards.ts` et `src/game/session/progression/doors.ts` : cartes et accès.
+- `src/game/player/weapons/weapons.ts` : armes, tirs et munitions.
+- `src/game/level/interactions/food.ts` et `src/game/level/props/props.ts` : nourriture et mobilier cassable.
+- `src/game/level/interactions/ecrans.ts` et `src/game/level/interactions/cameras.ts` : écrans et caméras.
 - [Plan des coulisses](../assets/plan-coulisses.md) et
   [board des coulisses](../assets/board-coulisses.md) : interactions futures.
 

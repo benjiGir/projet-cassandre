@@ -1,6 +1,6 @@
-import type { MoveConfig } from "../../../../game/player/moveConfig";
-import type { WeaponConfig } from "../../../../game/player/weaponConfig";
-import type { SuitConfig } from "../../../../game/entities/suitConfig";
+import type { MoveConfig } from "../../../../game/player/movement/moveConfig";
+import type { WeaponConfig } from "../../../../game/player/weapons/weaponConfig";
+import type { SuitConfig } from "../../../../game/entities/suit/suitConfig";
 
 // see: docs/6-reference/notes-code-interface.md#outils-de-développement
 export interface ConfigEditor<T extends object> {

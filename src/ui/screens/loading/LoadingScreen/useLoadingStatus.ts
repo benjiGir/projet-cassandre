@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-import { loadingSnapshot, subscribeLoading } from "../../../../core/loadingProgress";
+import { loadingSnapshot, subscribeLoading } from "../../../../core/loading/loadingProgress";
 import { LOADING_QUIPS } from "./loadingQuips";
 
 const QUIP_MS = 2400;

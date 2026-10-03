@@ -1,14 +1,14 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { playSfx } from "../../core/audio";
-import { input } from "../../core/input";
-import { emptyInputFrame, inputRecorder } from "../../core/inputRecorder";
-import { type InputFrame } from "../../core/inputTypes";
-import { runGameplaySync } from "../../app/gameRuntime";
-import { useGameStore } from "../state";
-import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/doors";
-import { grantCard } from "../session/cards";
+import { playSfx } from "../../core/audio/audio";
+import { input } from "../../core/input/input";
+import { emptyInputFrame, inputRecorder } from "../../core/input/inputRecorder";
+import { type InputFrame } from "../../core/input/inputTypes";
+import { runGameplaySync } from "../../app/runtime/gameRuntime";
+import { useGameStore } from "../hud/state";
+import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/progression/doors";
+import { grantCard } from "../session/progression/cards";
 import {
   applyPlayerDamage,
   grantKillViews,
@@ -17,9 +17,9 @@ import {
   triggerHeroBark,
   triggerHeroLine,
   VIEWS_DIRECTOR_MULTIPLIER,
-} from "../session/feedback";
-import { DOOR_USE_LINES, FOOD_LINES, PROP_BREAK_LINES, SECRET_LINES } from "../session/heroLines";
-import { relieveAtSanitaire, trySanitaire } from "../session/sanitaires";
+} from "../session/player/feedback";
+import { DOOR_USE_LINES, FOOD_LINES, PROP_BREAK_LINES, SECRET_LINES } from "../session/presentation/heroLines";
+import { relieveAtSanitaire, trySanitaire } from "../session/player/sanitaires";
 import {
   advanceGameplayTime,
   recordDirectorKills,
@@ -28,18 +28,18 @@ import {
   recordShot,
   recordSuitKills,
   recordVitresDestroyed,
-} from "../session/score";
+} from "../session/progression/score";
 import { type GameEngine } from "../session/gameEngine";
-import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/directorConfig";
-import { suitConfig } from "../entities/suitConfig";
-import { moveConfig } from "../player/moveConfig";
-import { recordSafeGround, shouldRescue } from "../session/fallRescue";
-import { FLESH_MATERIAL } from "../player/weapons";
-import type { DoorActor } from "../level/doorTypes";
-import { basculerEau, updateDouches } from "../level/douches";
+import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/director/directorConfig";
+import { suitConfig } from "../entities/suit/suitConfig";
+import { moveConfig } from "../player/movement/moveConfig";
+import { recordSafeGround, shouldRescue } from "../session/player/fallRescue";
+import { FLESH_MATERIAL } from "../player/weapons/weapons";
+import type { DoorActor } from "../level/doors/doorTypes";
+import { basculerEau, updateDouches } from "../level/sanitaires/douches";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
-import { CardPickupBillboard } from "../../render/cardPickups";
+import { CardPickupBillboard } from "../../render/pickups/cardPickups";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
@@ -157,7 +157,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
 
   // Lecture DIRECTE de l'acteur de flux, jamais un aller-retour par zustand
   // (`state.flowState` n'existe que pour React, voir sa doc dans
-  // `game/state.ts`) — l'acteur est déjà synchrone et disponible ici.
+  // `game/hud/state.ts`) — l'acteur est déjà synchrone et disponible ici.
   if (!engine.flow.isPlaying()) return;
 
   // Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) : le corps du pas fixe devient un
@@ -262,7 +262,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             },
             // `use_toilet` (niveau `hypermarche_complet`, historique) : TOUJOURS
             // une cuvette intacte, jamais de variante cassée — même règle que
-            // `sanitaire_*`, voir `game/session/sanitaires.ts::relieveAtSanitaire`.
+            // `sanitaire_*`, voir `game/session/player/sanitaires.ts::relieveAtSanitaire`.
             onToiletUse: () => relieveAtSanitaire(session),
           },
         );

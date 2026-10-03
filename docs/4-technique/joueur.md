@@ -25,16 +25,16 @@ arme (D28).
 
 ## Fichiers
 
-- `src/game/player/controller.ts` — `PlayerController` : fabrique et pilote
+- `src/game/player/movement/controller.ts` — `PlayerController` : fabrique et pilote
   le KCC, intègre vitesse/gravité/saut, calcule les grandeurs de vue.
-- `src/game/player/moveConfig.ts` — `MoveConfig`, `moveConfig` (source unique
+- `src/game/player/movement/moveConfig.ts` — `MoveConfig`, `moveConfig` (source unique
   de vérité du déplacement), `FEEL_VARIANTS`, fonctions dérivées.
 - `src/game/player/loyaltyCards.ts` — `LOYALTY_CARDS`, `parseLoyaltyCard` ;
-  inventaire réel dans `src/game/session/cards.ts` (`grantCard`,
+  inventaire réel dans `src/game/session/progression/cards.ts` (`grantCard`,
   `syncCardsToStore`).
-- `src/game/session/feedback.ts` — `applyPlayerDamage` (PV et mort, pas
+- `src/game/session/player/feedback.ts` — `applyPlayerDamage` (PV et mort, pas
   fixe), `presentPlayerDamage` (publication au store, taux d'affichage).
-- `src/game/session/fallRescue.ts` — `recordSafeGround`, `shouldRescue`,
+- `src/game/session/player/fallRescue.ts` — `recordSafeGround`, `shouldRescue`,
   `RESCUE_FALL_DEPTH` : le filet de chute.
 - `src/game/loop/updateGameplay.ts` — appelle `session.player.update`, lit
   `weaponEyeOrigin` après coup, applique le filet de chute.
@@ -191,16 +191,16 @@ observable en automatisation navigateur avec l'onglet masqué — voir
 
 ## Tests
 
-- `test/game/session/fallRescue.test.ts` — `recordSafeGround`/`shouldRescue`,
+- `test/game/session/player/fallRescue.test.ts` — `recordSafeGround`/`shouldRescue`,
   y compris le piège du joueur téléporté qui se déclare au sol dans le vide.
-- `test/game/session/feedback.test.ts` — `applyPlayerDamage` : PV décrémentés
+- `test/game/session/player/feedback.test.ts` — `applyPlayerDamage` : PV décrémentés
   immédiatement, mort au même pas logique quel que soit le nombre de groupes
   de dégâts encaissés dans le même pas.
 - `test/game/player/loyaltyCards.test.ts` — `parseLoyaltyCard` et la
-  non-divergence entre `LOYALTY_CARDS` et l'union de `game/state.ts`.
-- `test/game/session/sanitaires.test.ts` — le chemin de soin (`playerHp`
+  non-divergence entre `LOYALTY_CARDS` et l'union de `game/hud/state.ts`.
+- `test/game/session/player/sanitaires.test.ts` — le chemin de soin (`playerHp`
   plafonné au max).
-- `test/game/updateDisplayInput.test.ts` — ordre de capture de la rotation
+- `test/game/loop/updateDisplayInput.test.ts` — ordre de capture de la rotation
   caméra, hors pas fixe (invariant #3).
 - `test/game/integration/gameSessionReset.test.ts` — le joueur survit à un
   reset complet de session sans état résiduel.

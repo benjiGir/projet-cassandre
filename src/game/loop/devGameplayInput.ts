@@ -1,10 +1,10 @@
-import { input } from "../../core/input";
-import { inputRecorder } from "../../core/inputRecorder";
+import { input } from "../../core/input/input";
+import { inputRecorder } from "../../core/input/inputRecorder";
 import { toggleNotarget } from "../devtools/cheats";
 import type { GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
-import { showHudMessage } from "../session/feedback";
-import { startPlayback, startRecording } from "../session/recording";
+import { showHudMessage } from "../session/player/feedback";
+import { startPlayback, startRecording } from "../devtools/replay/recording";
 /** Les commandes de dev qui modifient le jeu sont consommées une fois dans le pas fixe. */
 export function handleDevGameplayInput(engine: GameEngine, session: GameSession): void {
   if (input.consumeJustPressed("F9")) {

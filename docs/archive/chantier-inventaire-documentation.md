@@ -34,7 +34,7 @@ Nature : `fonctionnel` · `technique` · `architecture` · `guide` · `reference
 | Section | Nature | Destination | Note |
 |---|---|---|---|
 | Bandeau « brouillon, destination de migration » | perime | — | Boilerplate de migration jamais rempli ; à supprimer, pas à migrer. |
-| Chemins des assets au déploiement | technique | `6-reference/arborescence.md` | Comportement de `assetUrl`/`BASE_URL` toujours vrai (vérifié contre `src/core/assetPath.ts`, cité aussi dans l'audit `etat-des-lieux-code-architecture.md`). Renvoi secondaire utile depuis `4-technique/chargement-de-niveau.md`. |
+| Chemins des assets au déploiement | technique | `6-reference/arborescence.md` | Comportement de `assetUrl`/`BASE_URL` toujours vrai (vérifié contre `src/core/loading/assetPath.ts`, cité aussi dans l'audit `etat-des-lieux-code-architecture.md`). Renvoi secondaire utile depuis `4-technique/chargement-de-niveau.md`. |
 
 ## docs/pipeline/textures.md
 
@@ -221,7 +221,7 @@ Nature : `fonctionnel` · `technique` · `architecture` · `guide` · `reference
 | Ordre de la frame d'affichage | architecture | `3-architecture/boucle-et-temps.md` | — |
 | Ce que la boucle garantit à chaque frame | architecture | `3-architecture/boucle-et-temps.md` | — |
 | Fin de partie pendant le pas fixe | technique | `3-architecture/simulation-et-presentation.md` | Lié au P0 « dégâts/mort hors pas fixe » de l'audit — vérifier que ce texte reflète le fix (étape 1, marquée « Terminée » dans `etat-des-lieux-code-architecture.md`). |
-| Filet de chute | technique | `4-technique/chargement-de-niveau.md` | `game/session/fallRescue.ts`. |
+| Filet de chute | technique | `4-technique/chargement-de-niveau.md` | `game/session/player/fallRescue.ts`. |
 | Mesure des temps de frame (LoopStats) | technique | `4-technique/budget-de-rendu.md` | — |
 | Entrée synchronisée au pas fixe | technique | `3-architecture/boucle-et-temps.md` | — |
 | Enregistrement et rejeu d'input | technique | `4-technique/rejeu-et-determinisme.md` | — |
@@ -289,7 +289,7 @@ Nature : `fonctionnel` · `technique` · `architecture` · `guide` · `reference
 | Choix du niveau au boot | fonctionnel | `2-fonctionnel/le-niveau.md` | — |
 | Spawn et chargement de niveau | technique | `4-technique/chargement-de-niveau.md` | — |
 | Cartes de fidélité | fonctionnel | `2-fonctionnel/objets-interactifs.md` | — |
-| Portes et fin de niveau | fonctionnel + technique | `2-fonctionnel/objets-interactifs.md` / `4-technique/systemes-de-niveau.md` | `door_e_exit`/`door_exit` — vérifié à jour contre `src/game/session/doors.ts` (pas d'écart, le code gère bien les deux noms). |
+| Portes et fin de niveau | fonctionnel + technique | `2-fonctionnel/objets-interactifs.md` / `4-technique/systemes-de-niveau.md` | `door_e_exit`/`door_exit` — vérifié à jour contre `src/game/session/progression/doors.ts` (pas d'écart, le code gère bien les deux noms). |
 | Feedback joueur | fonctionnel | `2-fonctionnel/interface.md` | — |
 | Récapitulatif de fin de partie | fonctionnel | `2-fonctionnel/secrets-et-score.md` | — |
 | Pause | fonctionnel | `2-fonctionnel/interface.md` | — |

@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { FEEL_VARIANTS, moveConfig } from "../../../../../game/player/moveConfig";
+import { FEEL_VARIANTS, moveConfig } from "../../../../../game/player/movement/moveConfig";
 import { createMovementTuning } from "../../../../../game/devtools/movementTuning";
-import { applyFeelVariant } from "../../../../../game/devtools/testHarness";
+import { applyFeelVariant } from "../../../../../game/devtools/replay/testHarness";
 import { MOVE_GROUPS } from "../../lib/tuningFields";
 import type { MoveField } from "../../lib/tuningTypes";
 import { TuningActions } from "../../layout/TuningActions/TuningActions";

@@ -22,10 +22,10 @@ en dessous.
 Un niveau (l'hypermarché, dix espaces reliés en hub à la Duke 3D), trois
 armes côté joueur — pied-de-biche (`meleeDamage`), pistolet et pompe, plus
 l'état désarmé de départ (`WeaponKind` dans
-`src/game/player/weapons.ts`) — et deux types d'ennemi : le Costard (`Suit`,
+`src/game/player/weapons/weapons.ts`) — et deux types d'ennemi : le Costard (`Suit`,
 ennemi de base) et le Directeur (`Director`, boss unique en fin de niveau).
 Durée visée : 8 à 10 minutes de jeu, chronométrée dans le récap de fin de
-partie sur le niveau complet (`parTime: 600` dans `src/game/level/levels.ts`).
+partie sur le niveau complet (`parTime: 600` dans `src/game/level/catalog/levels.ts`).
 
 ## La stack
 

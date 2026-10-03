@@ -58,7 +58,7 @@ Armes du joueur — vrais modèles (2026-09-13), EN ATTENTE DU VERDICT DE
 > sens unique reçoit désormais un PARAPET côté bas), et la porte de sortie qui
 > donnait sur rien — la fin de niveau n'était armée que pour l'ancienne porte
 > `door_e_exit` (`estPorteDeSortie`, plus un palier derrière la sortie).
-> Un **filet de chute** (`game/session/fallRescue.ts`) remet le joueur sur le
+> Un **filet de chute** (`game/session/player/fallRescue.ts`) remet le joueur sur le
 > dernier sol touché au-delà de 12 m de chute, et écrit les coordonnées du trou
 > en console : un trou coûte désormais trois secondes, plus une partie.
 > État de l'audit après cette passe : **0 trou, 0 bord ouvert, 0
@@ -124,7 +124,7 @@ Armes du joueur — vrais modèles (2026-09-13), EN ATTENTE DU VERDICT DE
 > (les 200 000 triangles posés a priori à N1 étaient trop prudents d'un ordre
 > de grandeur ; ce sont les LAMPES qui font mur, et le shader ne compile plus
 > du tout au-delà de ~255 sans lever la moindre exception — d'où le pool de
-> `src/render/lightPool.ts`). `cassandre.lightBudget()` rapporte l'état du
+> `src/render/environment/lightPool.ts`). `cassandre.lightBudget()` rapporte l'état du
 > pool ; une lampe éteinte par lui apparaît en `visible: false` dans
 > `cassandre.lighting()` — c'est le premier réflexe quand un espace paraît trop
 > sombre. Bake en `--type diffuse` (lumière seule) dès qu'il y a des textures ;

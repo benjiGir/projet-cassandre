@@ -21,7 +21,7 @@ Règles sœurs : [structure](./reference-react-structure.md), [CSS](./reference-
 
 React n'est ici qu'un **calque posé sur une boucle de jeu**. La boucle tourne à
 pas fixe, en TypeScript pur, et ne connaît pas React ; elle écrit dans le store
-zustand (`game/state.ts`), et l'interface le lit (invariant #2).
+zustand (`game/hud/state.ts`), et l'interface le lit (invariant #2).
 
 ```
 boucle de jeu ──écrit──▶ store zustand ──lu par──▶ composants React
@@ -46,7 +46,7 @@ React et React DOM **19.2.8**.
 | API | Statut | Pourquoi |
 |---|---|---|
 | `useEffectEvent` (19.2) | **à utiliser** | un gestionnaire lancé par un effet lit l'état courant sans réabonner l'effet |
-| `useSyncExternalStore` | à utiliser | pour une source externe qui n'est pas zustand (`core/loadingProgress.ts`) |
+| `useSyncExternalStore` | à utiliser | pour une source externe qui n'est pas zustand (`core/loading/loadingProgress.ts`) |
 | `ref` comme prop | à utiliser | `forwardRef` est inutile depuis React 19 |
 | `<Context value>` | si un contexte devient nécessaire | `<Context.Provider>` est l'ancienne forme |
 | React Compiler | **absent** | pas de mémoïsation automatique : voir plus bas |

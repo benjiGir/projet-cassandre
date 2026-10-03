@@ -49,7 +49,7 @@ simulation, store Zustand, composants et styles CSS.
 9. N'ajoutez pas d'état React pour une valeur connue du store ou une
    interaction CSS comme le survol.
 10. Pour un widget de HUD, faites sélectionner au composant les seules
-    valeurs qu'il affiche depuis `src/game/state.ts`.
+    valeurs qu'il affiche depuis `src/game/hud/state.ts`.
 11. Le sélecteur Zustand doit retourner une primitive stable ou une
     valeur mémorisée par la même règle que le store ; ne construisez pas
     un objet neuf dans le sélecteur.
@@ -58,8 +58,8 @@ simulation, store Zustand, composants et styles CSS.
 13. Pour un nouvel état de l'application, modifiez d'abord le store ou
     le pont de flux, pas le JSX qui tente de lire le moteur.
 14. Si vous ajoutez un écran modal, raccordez-le au flux via les
-    composants racines de `src/ui/App.tsx` et
-    `src/app/gameFlowMachine.ts` selon son rôle.
+    composants racines de `src/ui/App/App.tsx` et
+    `src/app/navigation/gameFlowMachine.ts` selon son rôle.
 15. Un écran ne décide pas du cycle de session. Les actions du moteur
     arrivent par des callbacks fournis par la couche appelante.
 16. Gardez le réglage dans le module moteur concerné ; `src/ui/` ne

@@ -22,7 +22,7 @@ l'écran. Entre les deux, une interpolation lisse le mouvement affiché sans
 jamais toucher à l'état simulé lui-même.
 
 Ce document décrit l'ordre exact dans lequel ces deux horloges s'exécutent à
-chaque frame (`src/core/loop.ts`) et les invariants qu'il tient. Cet ordre a
+chaque frame (`src/core/loop/loop.ts`) et les invariants qu'il tient. Cet ordre a
 été choisi avec soin (latence d'input, cohérence du hitstop, invariant #1 —
 « aucune logique de gameplay hors du pas fixe ») ; une inversion accidentelle
 est le bug le plus facile à introduire par erreur dans ce fichier — voir
@@ -32,7 +32,7 @@ ses alternatives, ce document-ci ne couvre que le fonctionnement.
 ## Vue d'ensemble : ordre d'exécution d'une frame
 
 Le diagramme ci-dessous est construit par lecture directe de
-`src/core/loop.ts` et des callbacks qu'il orchestre
+`src/core/loop/loop.ts` et des callbacks qu'il orchestre
 (`game/loop/updateGameplay.ts`, `stepPhysics.ts`, `interpolateVisuals.ts`,
 `updateFx.ts`), pas de la prose qui suivait dans une version antérieure de ce
 document.
@@ -161,7 +161,7 @@ mémorise donc, juste après `player.update`, le dernier sol **réellement**
 touché (`session.lastSafeGround`), et y remet le joueur au-delà de 12 m de
 chute — plus que le plus grand décrochement voulu du niveau v2 (6 m, entre la
 réserve et le parking souterrain). Logique et seuil :
-`game/session/fallRescue.ts`.
+`game/session/player/fallRescue.ts`.
 
 « Réellement » n'est pas un détail : un joueur qu'on vient de téléporter
 (chargement de niveau, rejeu d'input, console de debug) se déclare *au sol* le
@@ -210,7 +210,7 @@ Un seul `Set` ne peut pas satisfaire les deux : la rétention (nécessaire au
 pas fixe) ferait rejouer l'appui sur plusieurs frames d'affichage, et le
 nettoyage par frame (nécessaire à l'affichage) avalerait les appuis tombés
 dans les frames sans pas fixe. D'où deux sets dans `InputManager`
-(`src/core/input.ts`), alimentés par le même `keydown`, vidés selon deux
+(`src/core/input/input.ts`), alimentés par le même `keydown`, vidés selon deux
 règles distinctes :
 
 | Set | Vidé quand | Lu par |
@@ -233,7 +233,7 @@ niveau, voir [Contrôles et bindings](./reference-controles.md).
 
 ## Enregistrement et rejeu d'input
 
-`core/inputRecorder.ts` enregistre/rejoue l'input pas fixe par pas fixe, pour
+`core/input/inputRecorder.ts` enregistre/rejoue l'input pas fixe par pas fixe, pour
 le harnais A/B de `feel-tuner` (rejouer la même course sur deux configs de
 déplacement différentes). Ce n'est pas une preuve de déterminisme global :
 l'état complet du niveau, des ennemis, armes et RNG n'est pas restauré
@@ -248,7 +248,7 @@ résultat différent à 60 Hz et à 144 Hz.
 ## Frontière Effect synchrone du pas fixe
 
 Le pas fixe ET le rendu/l'interpolation passent exclusivement par
-`runGameplaySync` (`src/core/runtime.ts`, `GameRuntime.runSync`) — voir
+`runGameplaySync` (`src/core/effect/runtime.ts`, `GameRuntime.runSync`) — voir
 invariant #11 de `CLAUDE.md` et le skill `effect-xstate-cassandre` pour le
 détail complet. Résumé mécanique : tout `Effect` exécuté dans cet arbre doit
 être purement synchrone (zéro
@@ -266,7 +266,7 @@ service à état et romprait le déterminisme.
 
 ## Hitstop
 
-`GameClock.tick(fixedDt)` (`src/core/time.ts`) renvoie un dt gameplay
+`GameClock.tick(fixedDt)` (`src/core/loop/time.ts`) renvoie un dt gameplay
 potentiellement réduit (`fixedDt * hitstopScale`) pendant
 `hitstopRemaining` secondes après `triggerHitstop`. Seul le dt gameplay est
 affecté — la physique et le pas fixe lui-même continuent à `FIXED_DT` plein
@@ -274,7 +274,7 @@ affecté — la physique et le pas fixe lui-même continuent à `FIXED_DT` plein
 pour la durée retenue (3 frames / 50 ms).
 
 Ce `dt` scalé est aussi celui envoyé aux machines XState d'ennemis via
-l'évènement `TICK` (`game/entities/enemyMachine.ts`) — sans lui, le hitstop
+l'évènement `TICK` (`game/entities/shared/enemyMachine.ts`) — sans lui, le hitstop
 ne ralentirait pas les ennemis (invariant #13).
 
 Retour à la [carte de la documentation](../README.md).

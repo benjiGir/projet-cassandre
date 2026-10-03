@@ -61,7 +61,7 @@ parade : poser `camera.position`/`camera.lookAt` directement avant chaque
 Le coût GPU réel demande en plus un chronomètre GPU : `gl.finish()` seul ne
 mesure que l'envoi des commandes côté CPU — précisément la partie qui ne
 coûte rien quand le problème est ailleurs. Procédure complète dans
-`benchmarkRender` (`src/game/devtools/testHarness.ts`).
+`benchmarkRender` (`src/game/devtools/replay/testHarness.ts`).
 
 ## Les triangles ne coûtent presque rien
 
@@ -134,7 +134,7 @@ décor du niveau ENTIER par matériau. Un lot est dessiné dès qu'une seule de
 ses parties entre dans le champ : un lot qui couvre la carte n'est donc
 jamais écarté, et le niveau se dessine en entier à chaque image, dos compris.
 Découper d'abord par cellules de `DECOR_CELL_SIZE` mètres
-(`game/level/mergeStaticDecor.ts`) rend le tri d'écart à nouveau utile.
+(`game/level/loading/mergeStaticDecor.ts`) rend le tri d'écart à nouveau utile.
 
 Mesuré sur le blockout du niveau v2, caméra posée à la main (voir le piège
 ci-dessus), en lots de dessin / triangles réellement dessinés :
@@ -201,7 +201,7 @@ a son remède, et les trois sont le même : regrouper ou élaguer.
 | `door_*` (vantaux animés) | 13 lots au bout du hub, 20 vantaux | `BatchedMesh` par matériau (`batchDoorMeshes`) | 6 pour tout le niveau |
 | `vitre_*` (vitrages) | 6 lots au spawn du parking | un lot par matériau, sans découpe en cellules | 1 pour tout le niveau |
 | `sanitaire_*` (cuvettes/urinoirs) | 1 lot, mais visible depuis le parking extérieur à 80 m (77 poses sur 240 du parking le dessinaient) | un lot par matériau comme `vitre_*` ([ADR 0032](../decisions/0032-sanitaires-utilisables.md)), PLUS l'élagage à 48 m des `use_*` | 1 dans la salle des toilettes, 0 ailleurs |
-| `use_*` (ramassages, lecteurs) | 21 lots depuis les caisses, dont une trousse à 150 m | élagage à 48 m (`render/useObjectCulling.ts`) | 3 à 5 |
+| `use_*` (ramassages, lecteurs) | 21 lots depuis les caisses, dont une trousse à 150 m | élagage à 48 m (`render/environment/useObjectCulling.ts`) | 3 à 5 |
 
 **Pourquoi trois réglages différents.** Un vantail ne peut pas être élagué :
 il est grand, on le regarde de loin, et le voir apparaître à trente mètres se

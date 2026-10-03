@@ -45,28 +45,36 @@ flowchart TD
 
 | Dossier | Responsabilité | Modules représentatifs |
 |---|---|---|
-| `src/app/` | Composition Effect, démarrage, acteur de flux et transitions de session. | `gameRuntime.ts`, `bootChoice.ts`, `sessionFlow.ts`, `gameFlowMachine.ts`. |
-| `src/core/` | Boucle, horloge, input, audio, rejeu, RNG et garde-fou Effect générique. | `loop.ts`, `runtime.ts`, `random.ts`, `audio.ts`, `zoneAmbience.ts`. |
+| `src/app/navigation/` | Choix initial, acteur de flux et transitions de session. | `bootChoice.ts`, `sessionFlow.ts`, `gameFlowMachine.ts`, `gameFlowTypes.ts`. |
+| `src/app/runtime/` | Composition Effect du jeu et runtime unique. | `gameRuntime.ts`. |
+| `src/core/` | Infrastructure sans règles de jeu. | `audio/`, `input/`, `loop/`, `loading/`, `effect/`. |
 | `src/physics/` | Monde Rapier, controller et requêtes physiques. | `world.ts`, `raycast.ts`. |
-| `src/render/` | Rendu, billboards, overlays et ressources de présentation. | `renderer.ts`, `canvasOverlay.ts`, `viewmodel.ts`, `pickupResources.ts`, `fx/`. |
-| `src/game/entities/` | État, perception, navigation et combat des ennemis. | `enemyMachine.ts`, `enemyCombat.ts`, `enemyNavigation.ts`, `suit.ts`, `director.ts`. |
-| `src/game/level/` | Import du niveau, colliders, interactions et graphe de navigation. | `loader.ts`, `levelObjects.ts`, `doors.ts`, `navBake.ts`, `navSearch.ts`. |
+| `src/render/` | Ressources et opérations de présentation. | `pipeline/`, `sprites/`, `pickups/`, `viewmodel/`, `overlays/`, `environment/`, `fx/`, `debug/`. |
+| `src/game/entities/` | Comportements communs et types d'ennemis. | `shared/`, `suit/`, `director/`. |
+| `src/game/level/` | Import du niveau, navigation et systèmes du décor. | `loading/`, `navigation/`, `doors/`, `interactions/`, `props/`, `sanitaires/`, `catalog/`. |
 | `src/game/loop/` | Orchestration de simulation et présentation. | `updateGameplay.ts`, `stepPhysics.ts`, `updateFx.ts`, `interpolateVisuals.ts`. |
-| `src/game/player/` | Déplacement, armes et contrats du joueur. | `controller.ts`, `weapons.ts`, `weaponTypes.ts`, `loyaltyCards.ts`. |
-| `src/game/session/` | Construction, données canoniques, spawns, progression et destruction d'une partie. | `gameSession.ts`, `lifecycle.ts`, `spawning.ts`, `score.ts`. |
-| `src/game/devtools/` | Console, cheats et harnais de développement. | `consoleApi.ts`, `testHarness.ts`, `movementTuning.ts`. |
-| `src/game/` | Store HUD et commandes partagées qui pilotent les réglages moteur. | `state.ts`, `hudTypes.ts`, `graphicsSettings.ts`, `audioSettings.ts`. |
-| `src/ui/` | Écrans React, contrôles, widgets HUD et panneau de tuning. | `App.tsx`, `screens/`, `components/`, `hud/widgets/`, `dev/`. |
+| `src/game/player/` | Déplacement, armes et inventaire du joueur. | `movement/`, `weapons/`, `loyaltyCards.ts`. |
+| `src/game/session/` | Construction et données de partie, règles du joueur, présentation et progression. | `lifecycle.ts`, `gameSession.ts`, `gameEngine.ts`, `player/`, `presentation/`, `progression/`. |
+| `src/game/devtools/` | Console, cheats et harnais de développement. | `consoleApi.ts`, `movementTuning.ts`, `replay/`. |
+| `src/game/hud/` | Store et contrats du miroir HUD. | `state.ts`, `hudTypes.ts`. |
+| `src/game/settings/` | Réglages persistants et commandes moteur. | `graphicsSettings.ts`, `audioSettings.ts`. |
+| `src/ui/` | Écrans React, contrôles, widgets HUD et panneau de tuning. | `App/`, `screens/`, `components/`, `hud/widgets/`, `dev/`. |
+
+Le détail des dossiers et de leur contenu figure dans
+[l'arborescence du dépôt](../6-reference/arborescence.md#code-du-jeu).
+Implémentation, contrats et configuration restent regroupés dans chaque
+responsabilité ; les tests reprennent les mêmes domaines. Le rangement ne
+crée ni nouveau service ni couche de réexport.
 
 ### Composition et frontière Effect
 
-`src/app/gameRuntime.ts` est la racine de composition des quatre services.
+`src/app/runtime/gameRuntime.ts` est la racine de composition des quatre services.
 Il crée un seul `GameRuntime` par onglet. Sa dépendance vers la navigation
 vise le service et ses algorithmes ; ces modules n'importent pas le runtime
-en retour. `src/core/runtime.ts` reçoit un runtime pour construire le runner
+en retour. `src/core/effect/runtime.ts` reçoit un runtime pour construire le runner
 synchrone : il n'importe ni `game/`, ni `render/`, ni `physics/`, ni `app/`.
 
-Les consommateurs de `runGameplaySync` importent `app/gameRuntime`.
+Les consommateurs de `runGameplaySync` importent `app/runtime/gameRuntime`.
 Cette dépendance explicite reste limitée à ce module de composition :
 il ne dépend ni des écrans React ni de `sessionFlow`. Les appels de la
 simulation et du rendu gardent ainsi la même instance et le même garde-fou.
@@ -81,29 +89,29 @@ Les types partagés vivent dans des modules feuilles par domaine :
 appartiennent à `GameSession`.
 
 Le moteur, le noyau, la physique et le rendu n'importent aucun fichier de
-`ui/`. `app/bootChoice`, `app/sessionFlow` et `main` montent les écrans.
+`ui/`. `app/navigation/bootChoice`, `app/navigation/sessionFlow` et `main` montent les écrans.
 Chaque widget HUD lit ses propres données du store et n'entre pas dans la
 boucle. Les réglages persistants et les commandes moteur vivent sous `game/`.
 
 ### Dépendances à connaître
 
-- `physics/world.ts` lit `game/player/moveConfig.ts` pour les valeurs par défaut du controller.
-- Le bake de navigation lit `game/entities/suitConfig.ts` pour les dimensions et capacités de l'agent.
+- `physics/world.ts` lit `game/player/movement/moveConfig.ts` pour les valeurs par défaut du controller.
+- Le bake de navigation lit `game/entities/suit/suitConfig.ts` pour les dimensions et capacités de l'agent.
 - Les ressources de ramassage lisent les catalogues de nourriture et de cartes du jeu ; le viewmodel utilise les contrats d'armes par imports de type.
-- `core/audio.ts` lit `DoorMovement` depuis `game/level/doorTypes.ts` par un import de type, sans charger le système de portes.
+- `core/audio/audio.ts` lit `DoorMovement` depuis `game/level/doors/doorTypes.ts` par un import de type, sans charger le système de portes.
 
 Ces liens sont explicites. Ils ne justifient pas d'importer une implémentation
 pour atteindre un type dont le propriétaire est déjà un module feuille.
 
 ### Où ranger un nouveau fichier
 
-1. Infrastructure indépendante des règles du jeu : `src/core/`.
-2. Construction de `GameLayer` et de son runtime : `src/app/gameRuntime.ts`.
+1. Infrastructure indépendante des règles du jeu : le domaine concerné sous `src/core/`.
+2. Construction de `GameLayer` et de son runtime : `src/app/runtime/gameRuntime.ts`.
 3. Monde physique ou requêtes Rapier : `src/physics/`.
 4. Rendu et ressources de présentation : `src/render/`.
 5. Règles du jeu : sous-dossier de `src/game/` correspondant au rôle.
 6. Affichage React : famille de `src/ui/`, un dossier par composant.
-7. Choix initial et transitions entre écrans et parties : `src/app/`.
+7. Choix initial et transitions entre écrans et parties : `src/app/navigation/`.
 
 ## Invariants concernés
 

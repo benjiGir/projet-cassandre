@@ -75,7 +75,7 @@ Une fonction `(g, **réglages) -> signal SEC` dans le bon `sons_*.py`, décorée
 par `@recette(nom, catégorie, variantes=, oreille=, lieu=, distance=,
 réglage=(défaut, min, max, unité, aide)...)`. Le hasard passe TOUJOURS par
 `g` (déterminisme). Ajouter son intensité cible dans `catalogue.NIVEAUX` et,
-si c'est un nouveau nom, sa ligne dans `SFX_TABLE` (`src/core/audio.ts`).
+si c'est un nouveau nom, sa ligne dans `SFX_TABLE` (`src/core/audio/audio.ts`).
 
 ## Chaîne complète
 
@@ -87,7 +87,7 @@ si c'est un nouveau nom, sa ligne dans `SFX_TABLE` (`src/core/audio.ts`).
 ```
 
 Le sprite va sous `public/assets/` comme tout le reste des assets du jeu, et
-c'est `src/core/audio.ts` qui le lit via son manifeste `sfx.json`.
+c'est `src/core/audio/audio.ts` qui le lit via son manifeste `sfx.json`.
 
 Sélectif, variantes, masquage :
 
@@ -130,8 +130,8 @@ création de voix), un crédit par caractère, petit quota mensuel. Le héros es
 
 Prises gardées en MP3 tel que livré : `candidats/voix/` jetable, `retenus/voix/`
 versionné. `finalize` recadre les silences et met toutes les prises au même
-niveau de parole. En jeu : `core/heroVoice.ts` (lecture) et
-`game/session/heroLines.ts` (texte et rythme de chaque réplique) — une prise
+niveau de parole. En jeu : `core/audio/heroVoice.ts` (lecture) et
+`game/session/presentation/heroLines.ts` (texte et rythme de chaque réplique) — une prise
 retenue sans entrée là-dedans fait échouer `heroLines.test.ts`.
 
 ## Sons générés par un modèle (`ia_sfx.py`, 2026-09-30) — mis de côté

@@ -12,20 +12,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
-import { buildLevelFromGltf } from "../../../src/game/level/loader";
+import { buildLevelFromGltf } from "../../../src/game/level/loading/loader";
 import {
   LOYALTY_CARDS,
   LOYALTY_CARD_LABELS,
   parseLoyaltyCard,
   type LoyaltyCard,
 } from "../../../src/game/player/loyaltyCards";
-import { InteractionSystem, type InteractionHandlers } from "../../../src/game/level/interactive";
-import { DoorSystem } from "../../../src/game/level/doors";
-import { grantCard, hasCard, syncCardsToStore } from "../../../src/game/session/cards";
-import { tryOpenCardDoor } from "../../../src/game/session/doors";
+import { InteractionSystem, type InteractionHandlers } from "../../../src/game/level/interactions/interactive";
+import { DoorSystem } from "../../../src/game/level/doors/doors";
+import { grantCard, hasCard, syncCardsToStore } from "../../../src/game/session/progression/cards";
+import { tryOpenCardDoor } from "../../../src/game/session/progression/doors";
 import { type GameSession } from "../../../src/game/session/gameSession";
-import { HeroPortrait } from "../../../src/game/session/heroPortrait";
-import { useGameStore } from "../../../src/game/state";
+import { HeroPortrait } from "../../../src/game/session/presentation/heroPortrait";
+import { useGameStore } from "../../../src/game/hud/state";
 
 await initPhysics();
 
@@ -52,7 +52,7 @@ describe("parseLoyaltyCard — lecture d'une propriété Blender", () => {
   });
 
   it("l'union redéclarée dans state.ts ne diverge pas de LOYALTY_CARDS", () => {
-    // `game/state.ts` est une feuille de dépendances (ADR 0020) : il redéclare
+    // `game/hud/state.ts` est une feuille de dépendances (ADR 0020) : il redéclare
     // l'union au lieu de l'importer. Ce test est le garde-fou de cette copie —
     // il ne compile plus si l'une des deux bouge sans l'autre.
     const depuisLeStore: readonly ("argent" | "or" | "platine")[] = LOYALTY_CARDS;
@@ -258,7 +258,7 @@ function sessionDeTest(): GameSession {
   return { cards: new Set<LoyaltyCard>(), heroPortrait: new HeroPortrait() } as unknown as GameSession;
 }
 
-describe("Inventaire de cartes (game/session/cards.ts)", () => {
+describe("Inventaire de cartes (game/session/progression/cards.ts)", () => {
   beforeEach(() => {
     // `showHudMessage` programme l'effacement du message avec
     // `window.setTimeout` (voir `session/feedback.ts`) : il n'y a pas de

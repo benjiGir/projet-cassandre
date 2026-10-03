@@ -42,7 +42,7 @@ Contraintes déjà en place, héritées des ADR précédents :
 
 ## Décision
 
-### Portes : `DoorSystem` (`game/level/doors.ts`)
+### Portes : `DoorSystem` (`game/level/doors/doors.ts`)
 
 Le corps Rapier d'un `door_*` reste **FIXE, à la pose FERMÉE, pour
 toujours**. Seul le **collider** s'active/se désactive (activé seulement
@@ -86,7 +86,7 @@ soit `referme`.
 navigation (puis les réactive) : sans ça, un bureau derrière une porte
 automatique fermée au chargement ne recevrait jamais d'arête.
 
-### Vitres : `vitre_*` (`game/level/vitres.ts`)
+### Vitres : `vitre_*` (`game/level/interactions/vitres.ts`)
 
 Collider cuboid FIXE, groupe `WORLD` — bloque déplacement, tirs et ligne de
 vue tant que la vitre est intacte, exactement comme un mur. `solide: false`
@@ -175,7 +175,7 @@ progressif : un raté qui frôle une vitre la fait logiquement voler en
 - **Le déterminisme est préservé** : la pose des portes est un calcul pur
   (progression 0..1 × géométrie), pas un tirage. Les débris de vitre cassée
   et la bouffée de givre, eux, utilisent `Math.random()` — cosmétiques,
-  vivent dans `render/fx.ts`, hors du pas fixe, même statut que les gibs/
+  vivent dans `render/fx/fx.ts`, hors du pas fixe, même statut que les gibs/
   débris de prop ([ADR 0018](0018-physique-jouet-debris-cosmetiques.md)).
 - **`docs/6-reference/conventions-nommage.md`** documente l'API complète des
   extras (`mouvement`, `charniere`, `angle`, `sens`, `course`, `duree`,
@@ -219,7 +219,7 @@ main à chaque point de vue) :
    le niveau entier.
 3. **Les `use_*` n'avaient aucun élagage** : vingt-et-un ramassages dessinés
    ensemble depuis les caisses, dont une trousse à 150 m large de deux pixels.
-   `render/useObjectCulling.ts` les élague à 48 m — plus loin que les 36 m des
+   `render/environment/useObjectCulling.ts` les élague à 48 m — plus loin que les 36 m des
    props, parce qu'une trousse est un signal de jeu et pas du décor.
 
 Pire vue mesurée après ces trois corrections : **188 lots sur un budget de

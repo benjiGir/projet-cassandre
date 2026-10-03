@@ -51,7 +51,7 @@ mesure, sous le mur d'une machine minimale, et environ 1,5 ms d'éclairage.
 C'est le remède annoncé par l'[ADR 0024](0024-eclairage-hybride.md) pour le
 jalon N9, désormais chiffré.
 
-**Livré** : `LightPool` (`src/render/lightPool.ts`), construit à chaque
+**Livré** : `LightPool` (`src/render/environment/lightPool.ts`), construit à chaque
 chargement de niveau et réévalué dans `updateFx` — au taux d'affichage et non
 au pas fixe, puisque c'est la position de la CAMÉRA qui décide et qu'elle est
 lue à l'affichage (invariant #3). Deux détails qui comptent :
@@ -81,7 +81,7 @@ jamais rien.
 
 **Livré**, mais pas comme annoncé. « Par espace » supposait que le niveau
 déclare ses espaces ; c'est **par cellule de 48 m** (`DECOR_CELL_SIZE`,
-`game/level/mergeStaticDecor.ts`), ce qui donne le même résultat à l'échelle
+`game/level/loading/mergeStaticDecor.ts`), ce qui donne le même résultat à l'échelle
 d'une pièce du niveau v2 sans inventer de convention glTF — et vaut donc aussi
 pour les niveaux déjà exportés, `hypermarche_complet` compris. Un mesh est
 rangé d'après le CENTRE de sa boîte, pas son origine : un sol de 42 × 36 m dont

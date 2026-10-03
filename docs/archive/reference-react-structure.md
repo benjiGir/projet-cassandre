@@ -79,8 +79,8 @@ Trois règles de rangement en découlent :
 | `theme/` | les jetons CSS | rien |
 | `lib/` | fonctions TypeScript sans React, utiles à plusieurs domaines | rien |
 | `components/` | primitives visuelles réutilisables : `Screen`, `CornerFrame`, `Button`… | `lib/` seulement |
-| `hud/` | widgets du calque en jeu | `components/`, `lib/`, `game/state` |
-| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/state`, les API publiques de `core/` et de `game/graphicsSettings.ts` |
+| `hud/` | widgets du calque en jeu | `components/`, `lib/`, `game/hud/state` |
+| `screens/<écran>/` | un écran modal et ce qui n'appartient qu'à lui | `components/`, `lib/`, `game/hud/state`, les API publiques de `core/` et de `game/settings/graphicsSettings.ts` |
 | `dev/` | panneaux et harnais de développement | tout, mais **n'est utilisé que derrière `import.meta.env.DEV`** |
 
 Ce que ce tableau interdit, et pourquoi :
@@ -168,11 +168,11 @@ navigateur.
 ## Ce qui ne vit pas dans src/ui
 
 - **La persistance d'un réglage et son application au moteur** :
-  `game/graphicsSettings.ts`, à côté des autres systèmes qu'il pilote. L'écran
+  `game/settings/graphicsSettings.ts`, à côté des autres systèmes qu'il pilote. L'écran
   d'options l'appelle, il ne l'héberge pas.
-- **L'état de jeu** : `game/state.ts` (zustand). L'interface le lit, la boucle
+- **L'état de jeu** : `game/hud/state.ts` (zustand). L'interface le lit, la boucle
   l'écrit — voir [bonnes pratiques](./reference-react-bonnes-pratiques.md#le-contexte-qui-change-tout).
-- **Le choix de l'écran de démarrage** : `app/bootChoice.ts`, qui monte
+- **Le choix de l'écran de démarrage** : `app/navigation/bootChoice.ts`, qui monte
   `MainMenu`, `OptionsScreen` et `LevelMenu` avant que la partie existe.
 
 ## Tests

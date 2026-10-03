@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import { cssVars } from "../../../lib/styleHelpers";
 import { healthLevel } from "../../lib/hudFormat";
 import { HudLabel } from "../../primitives/HudLabel/HudLabel";

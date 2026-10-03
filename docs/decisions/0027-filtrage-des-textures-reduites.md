@@ -45,7 +45,7 @@ pixel franc quand on colle une texture de près. La réduction, elle, ne porte
 aucune intention artistique — elle ne portait que du crénelage.
 
 Trois modes existent dans le code (`FiltrageTexture`,
-`src/render/renderer.ts`), commutables en jeu pour comparer sur la même vue :
+`src/render/pipeline/renderer.ts`), commutables en jeu pour comparer sur la même vue :
 
 | Mode | Réduction | Ce qu'on voit |
 |---|---|---|

@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import { formatViews } from "../../../lib/format";
 import { HudLabel } from "../../primitives/HudLabel/HudLabel";
 import { HudValue } from "../../primitives/HudValue/HudValue";

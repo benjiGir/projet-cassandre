@@ -2,29 +2,29 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
-import type { LevelSession } from "../level/hotReload";
-import type { LevelDef } from "../level/levels";
-import type { NavGraph } from "../level/pathfindingTypes";
-import type { PropSystem } from "../level/props";
-import type { DoorSystem } from "../level/doors";
-import type { VitreSystem } from "../level/vitres";
-import type { SanitaireSystem } from "../level/sanitaires";
-import type { EcranSystem } from "../level/ecrans";
-import type { CameraViewSystem } from "../level/cameras";
-import { type SessionStats } from "./score";
-import { type BillboardSprite } from "../../render/billboard";
-import { type DirectorManager } from "../entities/directorManager";
-import { type SuitManager } from "../entities/suitManager";
-import { type PlayerController } from "../player/controller";
-import { type WeaponSystem } from "../player/weapons";
-import { type LightPool } from "../../render/lightPool";
-import type { WeaponPickupBillboard } from "../../render/pickups";
-import type { PickupResources } from "../../render/pickupResources";
-import type { CardPickupBillboard } from "../../render/cardPickups";
+import type { LevelSession } from "../level/loading/hotReload";
+import type { LevelDef } from "../level/catalog/levels";
+import type { NavGraph } from "../level/navigation/pathfindingTypes";
+import type { PropSystem } from "../level/props/props";
+import type { DoorSystem } from "../level/doors/doors";
+import type { VitreSystem } from "../level/interactions/vitres";
+import type { SanitaireSystem } from "../level/sanitaires/sanitaires";
+import type { EcranSystem } from "../level/interactions/ecrans";
+import type { CameraViewSystem } from "../level/interactions/cameras";
+import { type SessionStats } from "./progression/score";
+import { type BillboardSprite } from "../../render/sprites/billboard";
+import { type DirectorManager } from "../entities/director/directorManager";
+import { type SuitManager } from "../entities/suit/suitManager";
+import { type PlayerController } from "../player/movement/controller";
+import { type WeaponSystem } from "../player/weapons/weapons";
+import { type LightPool } from "../../render/environment/lightPool";
+import type { WeaponPickupBillboard } from "../../render/pickups/pickups";
+import type { PickupResources } from "../../render/pickups/pickupResources";
+import type { CardPickupBillboard } from "../../render/pickups/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
-import type { HeroLineId } from "./heroLines";
-import type { HeroPortrait } from "./heroPortrait";
-/** Suivi de franchissement de `door_e_exit` — voir `game/session/doors.ts::setupExitDoorTracking`. */
+import type { HeroLineId } from "./presentation/heroLines";
+import type { HeroPortrait } from "./presentation/heroPortrait";
+/** Suivi de franchissement de `door_e_exit` — voir `game/session/progression/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
   doorPosition: THREE.Vector3;
@@ -109,7 +109,7 @@ export interface GameSession {
   // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
   lastSafeGround: THREE.Vector3;
 
-  /** PV courants du joueur, suivis localement — `setPlayerHp` prend une valeur absolue (voir `game/state.ts`), `game/session`/`game/loop` sont les seuls endroits qui connaissent le dégât infligé. */
+  /** PV courants du joueur, suivis localement — `setPlayerHp` prend une valeur absolue (voir `game/hud/state.ts`), `game/session`/`game/loop` sont les seuls endroits qui connaissent le dégât infligé. */
   playerHp: number;
   playerMaxHp: number;
   heroPortrait: HeroPortrait;
@@ -117,9 +117,9 @@ export interface GameSession {
   lowHpLineTriggered: boolean;
   /** Flux déterministe des gains de vues, indépendant des FX et des armes. */
   viewsRandom: () => number;
-  /** Idempotence de `game/session/feedback.ts::applyPlayerDamage` — voir sa doc. */
+  /** Idempotence de `game/session/player/feedback.ts::applyPlayerDamage` — voir sa doc. */
   deathHandled: boolean;
-  /** Idempotence de `game/session/doors.ts::triggerLevelComplete` — voir sa doc. */
+  /** Idempotence de `game/session/progression/doors.ts::triggerLevelComplete` — voir sa doc. */
   levelCompleteHandled: boolean;
   /** Cooldown global des répliques du héros (15 s) — PROPRE À CETTE PARTIE : une réplique juste avant la mort ne doit pas geler le canal de la partie suivante. */
   lastHeroLineAt: number;

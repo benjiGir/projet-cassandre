@@ -13,7 +13,7 @@ Accepté. Remplace [ADR 0020](0020-state-feuille-de-dependances.md).
 
 ## Contexte
 
-Le store `game/state.ts` regroupait l’état Zustand, les types de présentation,
+Le store `game/hud/state.ts` regroupait l’état Zustand, les types de présentation,
 les types de flux et la pose initiale du portrait. Un contrôleur pur de
 portrait devait importer ce fichier pour sa constante initiale, donc charger
 Zustand. Le chargeur de niveau et le système d’armes portaient aussi des types
@@ -26,10 +26,10 @@ manuelle des unions de cartes et d’armes.
 ## Décision
 
 Les contrats partagés vivent dans des modules feuilles sans logique de moteur :
-`app/gameFlowTypes.ts`, `game/hudTypes.ts`, `game/level/levelTypes.ts`,
-`game/player/weaponTypes.ts` et `core/inputTypes.ts`. Le store consomme ces
+`app/navigation/gameFlowTypes.ts`, `game/hud/hudTypes.ts`, `game/level/loading/levelTypes.ts`,
+`game/player/weapons/weaponTypes.ts` et `core/input/inputTypes.ts`. Le store consomme ces
 contrats, sans importer leurs implémentations. Les valeurs initiales du
-portrait vivent dans `game/session/portraitState.ts`, sans Zustand.
+portrait vivent dans `game/session/presentation/portraitState.ts`, sans Zustand.
 
 La machine de navigation appartient à `app/`. Les interfaces de composants
 privées et les petits types locaux restent près du code qui les utilise.

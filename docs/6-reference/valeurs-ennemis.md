@@ -7,7 +7,7 @@ updated: 2026-09-26
 
 # Valeurs des ennemis
 
-Valeurs initiales de `src/game/entities/suitConfig.ts` et `src/game/entities/directorConfig.ts`. Le système utilise une seule machine d'états partagée. Les différences de paramètres distinguent le Costard du Directeur.
+Valeurs initiales de `src/game/entities/suit/suitConfig.ts` et `src/game/entities/director/directorConfig.ts`. Le système utilise une seule machine d'états partagée. Les différences de paramètres distinguent le Costard du Directeur.
 
 ## Locomotion et perception
 

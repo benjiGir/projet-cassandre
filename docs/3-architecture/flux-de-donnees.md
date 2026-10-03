@@ -12,7 +12,7 @@ updated: 2026-09-25
 Faire vivre deux mondes qui ne doivent jamais se toucher directement : la
 simulation (pas fixe, source de vérité dans `GameSession`) et l'interface
 React (`src/ui/`). Le pont entre les deux est le store zustand
-(`src/game/state.ts`), une **feuille de dépendances**
+(`src/game/hud/state.ts`), une **feuille de dépendances**
 ([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) — tout le
 reste du jeu peut l'importer, lui n'importe rien du jeu. Dans le sens
 inverse (un bouton React qui doit agir sur le moteur), le pont est un petit
@@ -27,11 +27,11 @@ Le chemin dans les deux sens, du geste physique à l'écran et retour.
 
 ```mermaid
 flowchart TD
-  KM["Clavier / souris"] --> IM["InputManager (core/input.ts)"]
+  KM["Clavier / souris"] --> IM["InputManager (core/input/input.ts)"]
   IM --> CIF["captureInputFrame (pas fixe)"]
   CIF --> UG["updateGameplay"]
   UG --> GS["GameSession (source de vérité)"]
-  GS -- "throttlé 10 Hz / ponctuel" --> STORE["Store zustand (game/state.ts)"]
+  GS -- "throttlé 10 Hz / ponctuel" --> STORE["Store zustand (game/hud/state.ts)"]
   STORE --> HUD["Widgets HUD React"]
   BTN["Bouton React (options, pause, rebind)"] --> PORT["GameFlowPort / graphicsSettings / input.rebind"]
   PORT --> GS
@@ -42,7 +42,7 @@ flowchart TD
 
 ## De la touche au pas fixe
 
-`InputManager` (`src/core/input.ts`) capture au niveau DOM (`keydown`/
+`InputManager` (`src/core/input/input.ts`) capture au niveau DOM (`keydown`/
 `keyup`/`mousemove`/boutons souris) et maintient deux vues d'un même appui :
 un Set de fronts en attente d'un pas fixe (`consumeActionJustPressed`,
 lecture destructive, un appui = une action) et un Set de fronts de la frame
@@ -57,7 +57,7 @@ du pas fixe : `updateDisplayInput`
 (`src/game/loop/updateDisplayInput.ts`) lit `input.consumeMouseDelta()` au
 taux d'affichage et écrit `engine.look` directement — l'invariant #3 veut
 que la visée ne subisse aucune latence d'interpolation.
-`src/core/inputRecorder.ts` s'intercale entre les deux : en enregistrement il
+`src/core/input/inputRecorder.ts` s'intercale entre les deux : en enregistrement il
 copie chaque `InputFrame` réellement consommé, en lecture il le remplace —
 `updateDisplayInput` se tait alors, pour ne pas ajouter un mouvement de
 souris à une séquence rejouée.
@@ -88,15 +88,15 @@ concerne pas :
 | Champ du store | Écrit par | Fréquence | Lu par |
 |---|---|---|---|
 | `debug.fps`, `debug.position`, `debug.gameplayMs`… | `updateFx.ts` (`setDebug`) | 10 Hz max | `DebugPanel` (dev), `FpsCounter` (prod, `debug.fps` seul) |
-| `debug.playerHp`/`playerMaxHp` | `game/session/feedback.ts::applyPlayerDamage` (`setPlayerHp`) | ponctuel, au dégât | `HealthPanel` |
+| `debug.playerHp`/`playerMaxHp` | `game/session/player/feedback.ts::applyPlayerDamage` (`setPlayerHp`) | ponctuel, au dégât | `HealthPanel` |
 | `debug.shotgunAmmo`/`pistolAmmo`/`activeWeapon` | `updateFx.ts` (`setDebug`, dans le même lot 10 Hz) | 10 Hz max | `AmmoPanel` |
 | `debug.secretsFound`/`secretsTotal` | `game/session/*.ts` (`incrementSecretsFound`/`setSecretsTotal`) | ponctuel | `DebugPanel` (aucun widget de prod dédié) |
-| `debug.cards` | `game/session/cards.ts::grantCard` (`setCards`) | ponctuel, au ramassage | `LoyaltyCards` |
-| `debug.views` | `game/session/feedback.ts::grantKillViews` (`incrementViews`) | ponctuel, au kill | `ViewerCount` |
-| `hudMessage` | `game/session/feedback.ts::showHudMessage`, `game/session/doors.ts`/`cards.ts`/`sanitaires.ts` | ponctuel | `HudMessage` |
-| `heroLine` | `game/session/feedback.ts::triggerHeroLine` | ponctuel, cooldown 15 s côté appelant | `HeroLine` |
+| `debug.cards` | `game/session/progression/cards.ts::grantCard` (`setCards`) | ponctuel, au ramassage | `LoyaltyCards` |
+| `debug.views` | `game/session/player/feedback.ts::grantKillViews` (`incrementViews`) | ponctuel, au kill | `ViewerCount` |
+| `hudMessage` | `game/session/player/feedback.ts::showHudMessage`, `game/session/progression/doors.ts`/`cards.ts`/`sanitaires.ts` | ponctuel | `HudMessage` |
+| `heroLine` | `game/session/player/feedback.ts::triggerHeroLine` | ponctuel, cooldown 15 s côté appelant | `HeroLine` |
 | `flowState` | `main.ts` (`flowActor.subscribe`) | à chaque transition d'écran | `PauseScreen`, `DeathScreen`, `LevelCompleteScreen`, `Hud` |
-| `recap` | `game/session/score.ts::publishLevelRecap` (`setRecap`) | ponctuel, mort ou fin de niveau | `RecapTable` |
+| `recap` | `game/session/progression/score.ts::publishLevelRecap` (`setRecap`) | ponctuel, mort ou fin de niveau | `RecapTable` |
 
 Mesuré par `grep -rn "useGameStore(" src/ui` (un sélecteur par ligne
 ci-dessus) et `grep -rn "\.setDebug\|setPlayerHp\|incrementSecretsFound\|setCards\|incrementViews\|showHudMessage\|showHeroLine\|setFlowState\|setRecap" src/game`.
@@ -108,7 +108,7 @@ Un bouton React n'écrit jamais dans `GameSession` ni dans `moveConfig`/
 
 - **Le flux d'écran** (Rejouer, Retour au menu, Reprendre) : le composant
   reçoit un callback en prop (`onReplay`, `onReturnToMenu`, `onResume`),
-  construit par `src/app/sessionFlow.ts::createSessionFlow` et fermé sur
+  construit par `src/app/navigation/sessionFlow.ts::createSessionFlow` et fermé sur
   `flowActor`/`engine` — un clic envoie un évènement XState
   (`actor.send({ type: "REPLAY" })`…), jamais un accès direct à `GameSession`.
   Côté pas fixe, le sens inverse (mort, fin de niveau, pause perdue) passe
@@ -116,7 +116,7 @@ Un bouton React n'écrit jamais dans `GameSession` ni dans `moveConfig`/
   que `updateGameplay` interroge sans savoir que XState existe.
 - **Les réglages graphiques** (Options › Affichage : filtrage, résolution,
   FOV, screenshake) : `DisplayTab` appelle `setGraphicsSettings(partial)`
-  (`src/game/graphicsSettings.ts`), qui persiste puis applique — FOV et
+  (`src/game/settings/graphicsSettings.ts`), qui persiste puis applique — FOV et
   screenshake en mutant `moveConfig`/`weaponConfig` (lus en continu par le
   jeu, effet immédiat), filtrage et résolution via
   `applyRenderSettings(scene, camera, renderer)` SI `registerRenderTarget` a
@@ -138,9 +138,9 @@ fonctions déjà exportées de ces trois modules.
 
 | Clé `localStorage` | Fichier | Contenu | Lu | Écrit |
 |---|---|---|---|---|
-| `cassandre.keybinds` | `src/core/input.ts` | Bindings action → code (`Record<GameAction, string>`) | Au chargement du module (initialiseur de champ de `InputManager`, avant `attach()`) | À chaque `rebind()`/`resetBindings()` |
-| `cassandre.graphics` | `src/game/graphicsSettings.ts` | `{ filtrage, resolution, fovBase, shakeIntensity }` | `initGraphicsSettingsAtBoot()`, tout en haut de `main()` | À chaque `setGraphicsSettings(partial)` |
-| `cassandre.audio` | `src/game/audioSettings.ts` | `{ general, effets, voix, ambiances, sousTitres, muetEnArrierePlan }` | `initAudioSettingsAtBoot()`, en haut de `main()`, avant la création des sons | À chaque `setAudioSettings(partial)` |
+| `cassandre.keybinds` | `src/core/input/input.ts` | Bindings action → code (`Record<GameAction, string>`) | Au chargement du module (initialiseur de champ de `InputManager`, avant `attach()`) | À chaque `rebind()`/`resetBindings()` |
+| `cassandre.graphics` | `src/game/settings/graphicsSettings.ts` | `{ filtrage, resolution, fovBase, shakeIntensity }` | `initGraphicsSettingsAtBoot()`, tout en haut de `main()` | À chaque `setGraphicsSettings(partial)` |
+| `cassandre.audio` | `src/game/settings/audioSettings.ts` | `{ general, effets, voix, ambiances, sousTitres, muetEnArrierePlan }` | `initAudioSettingsAtBoot()`, en haut de `main()`, avant la création des sons | À chaque `setAudioSettings(partial)` |
 
 Les quatre modules partagent la même discipline : jamais de `throw`, un
 `localStorage` absent (mode privé strict), corrompu ou indisponible
@@ -177,4 +177,4 @@ dégrade silencieusement vers les valeurs par défaut, qui restent la table
 
 - [ADR 0003 — React en overlay DOM, jamais dans la boucle](../decisions/0003-react-hors-boucle.md)
 - [ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page](../decisions/0019-machine-xstate-flux-ecran.md)
-- [ADR 0020 — `game/state.ts` comme feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md)
+- [ADR 0020 — `game/hud/state.ts` comme feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md)

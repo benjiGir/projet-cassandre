@@ -2,37 +2,37 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
-import { assetUrl } from "../../core/assetPath";
-import { runGameplaySync } from "../../app/gameRuntime";
+import { assetUrl } from "../../core/loading/assetPath";
+import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
-import { BillboardSprite } from "../../render/billboard";
-import { enemySpriteQuad } from "../../render/enemySprites";
+import { BillboardSprite } from "../../render/sprites/billboard";
+import { enemySpriteQuad } from "../../render/sprites/enemySprites";
 import {
   dressAmmoPickup,
   dressFoodPickup,
   dressHealPickup,
   dressWeaponPickup,
   type WeaponPickupBillboard,
-} from "../../render/pickups";
-import { dressCardPickup, type CardPickupBillboard } from "../../render/cardPickups";
-import { LightPool } from "../../render/lightPool";
-import { PropSystem } from "../level/props";
-import { DoorSystem } from "../level/doors";
-import { VitreSystem } from "../level/vitres";
-import { SanitaireSystem } from "../level/sanitaires";
-import { EcranSystem } from "../level/ecrans";
-import { CameraViewSystem } from "../level/cameras";
-import { warmShaderDouches } from "../level/doucheShader";
-import { Suit } from "../entities/suit";
-import { suitConfig } from "../entities/suitConfig";
-import { Director } from "../entities/director";
-import { directorConfig } from "../entities/directorConfig";
-import { createLevelSession, type LevelSession } from "../level/hotReload";
-import { reportLoading, letBrowserPaint } from "../../core/loadingProgress";
-import { PathfindingService } from "../level/pathfinding";
-import { navGraphStats } from "../level/navGraph";
-import { useGameStore } from "../state";
+} from "../../render/pickups/pickups";
+import { dressCardPickup, type CardPickupBillboard } from "../../render/pickups/cardPickups";
+import { LightPool } from "../../render/environment/lightPool";
+import { PropSystem } from "../level/props/props";
+import { DoorSystem } from "../level/doors/doors";
+import { VitreSystem } from "../level/interactions/vitres";
+import { SanitaireSystem } from "../level/sanitaires/sanitaires";
+import { EcranSystem } from "../level/interactions/ecrans";
+import { CameraViewSystem } from "../level/interactions/cameras";
+import { warmShaderDouches } from "../level/sanitaires/doucheShader";
+import { Suit } from "../entities/suit/suit";
+import { suitConfig } from "../entities/suit/suitConfig";
+import { Director } from "../entities/director/director";
+import { directorConfig } from "../entities/director/directorConfig";
+import { createLevelSession, type LevelSession } from "../level/loading/hotReload";
+import { reportLoading, letBrowserPaint } from "../../core/loading/loadingProgress";
+import { PathfindingService } from "../level/navigation/pathfinding";
+import { navGraphStats } from "../level/navigation/navGraph";
+import { useGameStore } from "../hud/state";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 

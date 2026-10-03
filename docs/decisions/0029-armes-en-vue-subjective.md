@@ -57,7 +57,7 @@ des horloges avancées au pas fixe et lues par le rendu seul.
 - Si l'arme gêne la visée, c'est le placement (`PRISE_*`, `AXE_*` du script
   Blender) qu'il faut revoir, pas l'échelle en TypeScript.
 - Si le balayage paraît mou ou illisible en jouant, ce sont les amplitudes
-  (`SWING_*`, `render/viewmodel.ts`) et `VIEWMODEL_TIMING.strike` qui se
+  (`SWING_*`, `render/viewmodel/viewmodel.ts`) et `VIEWMODEL_TIMING.strike` qui se
   règlent — pas un retour à un sprite.
 
 ## Révision du 2026-09-25 — refonte du modèle du pistolet

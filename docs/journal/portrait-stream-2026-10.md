@@ -52,7 +52,7 @@ sans la modifier et affiche ses cases avec un filtrage pixelisé.
 
 ### Intégration
 
-`src/game/session/heroPortrait.ts` résout la santé et les expressions au pas
+`src/game/session/presentation/heroPortrait.ts` résout la santé et les expressions au pas
 fixe. `src/game/loop/updateFx.ts` publie l'image résolue dans le store à
 10 Hz maximum. `HeroFace` lit uniquement cet état ; aucune horloge React.
 La mort reste prioritaire, suivie de la douleur. Un nouveau coup relance le

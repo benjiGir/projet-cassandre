@@ -1,7 +1,7 @@
 import {
   RECOIL_INTERPOLATION_VARIANTS,
   type WeaponConfig,
-} from "../../../../../../game/player/weaponConfig";
+} from "../../../../../../game/player/weapons/weaponConfig";
 import { TuningCheckbox } from "../../../controls/TuningCheckbox/TuningCheckbox";
 import { TuningSlider } from "../../../controls/TuningSlider/TuningSlider";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";

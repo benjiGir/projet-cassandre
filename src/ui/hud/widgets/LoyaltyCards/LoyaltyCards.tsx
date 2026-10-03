@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import styles from "./LoyaltyCards.module.css";
 
 const CARD_LABELS = {

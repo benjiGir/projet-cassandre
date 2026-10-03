@@ -44,8 +44,8 @@ entre deux frames est clampé à 0,25 s avant l'accumulateur.
 - **Pourquoi / casse si violé** : sinon deux machines jouent deux parties
   différentes et le framerate change la physique elle-même ; sans clamp, un
   onglet revenu au premier plan rattrape des minutes d'un coup (« spirale »).
-- **Code** : `FIXED_DT`/`MAX_FRAME`, `src/core/loop.ts` (`startLoop`). **Test** :
-  `test/core/loop.test.ts` (clamp à quinze pas fixes = 0,25 s). **Décision** :
+- **Code** : `FIXED_DT`/`MAX_FRAME`, `src/core/loop/loop.ts` (`startLoop`). **Test** :
+  `test/core/loop/loop.test.ts` (clamp à quinze pas fixes = 0,25 s). **Décision** :
   [ADR 0002](../decisions/0002-fixed-timestep.md).
 
 ### #2 — React ne touche jamais la boucle
@@ -56,7 +56,7 @@ débit throttlé de 10 Hz maximum.
 - **Pourquoi / casse si violé** : React replanifie son arbre à chaque mise à
   jour ; à 60 Hz en concurrence avec le rendu, ça ferait chuter le framerate
   du jeu pour un gain d'affichage invisible.
-- **Code** : `src/game/state.ts` (écriture throttlée) ; lu par `src/ui/hud/`.
+- **Code** : `src/game/hud/state.ts` (écriture throttlée) ; lu par `src/ui/hud/`.
   **Test** : aucun ne mesure la fréquence d'écriture ni l'absence de
   `setState` par frame. **Décision** : [ADR 0003](../decisions/0003-react-hors-boucle.md).
 
@@ -135,9 +135,9 @@ n'empêche une action du joueur.
 
 - **Pourquoi / casse si violé** : un boomer shooter fait l'inverse du
   réalisme moderne — la réactivité prime, sinon le contrôle se ressent mou.
-- **Code** : `src/game/player/weapons.ts` (invariant cité en commentaire) ;
+- **Code** : `src/game/player/weapons/weapons.ts` (invariant cité en commentaire) ;
   `updateGameplay.ts` (`isDead` stoppe le pas fixe sans geler d'animation).
-  **Test** : `test/render/viewmodel.test.ts` (« tirer pendant le changement
+  **Test** : `test/render/viewmodel/viewmodel.test.ts` (« tirer pendant le changement
   d'arme remet l'arme en place aussitôt, invariant #10 »). **Décision** :
   aucun ADR, `CLAUDE.md` (#10).
 
@@ -150,9 +150,9 @@ hot-reload restent à la frontière asynchrone.
 - **Pourquoi / casse si violé** : le pas fixe doit produire un résultat dans
   le même tick pour rester rejouable (F9/F10) ; le garde-fou lève un defect
   bruyant plutôt que de laisser passer une suspension en silence.
-- **Code** : `runGameplaySync`, `src/app/gameRuntime.ts`, appelé depuis
+- **Code** : `runGameplaySync`, `src/app/runtime/gameRuntime.ts`, appelé depuis
   `stepPhysics.ts`, `interpolateVisuals.ts`, `updateFx.ts`, `updateGameplay.ts`.
-  **Test** : `test/core/runtime.test.ts` (suspension = erreur explicite).
+  **Test** : `test/app/runtime/gameRuntime.test.ts` (suspension = erreur explicite).
   **Décision** : aucun ADR numéroté, skill `effect-xstate-cassandre`,
   `CLAUDE.md` (#11).
 
@@ -164,7 +164,7 @@ Jamais `Math.random()`, jamais le service `Random` d'Effect. Seule source :
 - **Pourquoi / casse si violé** : le rejeu d'input (F9/F10) doit reproduire
   une partie à l'identique ; un seul appel non graine fait diverger deux
   exécutions en silence, sans erreur visible.
-- **Code** : `src/core/random.ts`, consommé via
+- **Code** : `src/core/effect/random.ts`, consommé via
   `runGameplaySync(DeterministicRandom.useSync(...))` dans `enemyMachine.ts`,
   `weapons.ts`, `pathfinding.ts`, `lifecycle.ts`, `gameSession.ts`. **Test** :
   `random.test.ts` (valeurs de référence indépendantes) ; `suit.test.ts`/

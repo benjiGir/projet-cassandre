@@ -9,7 +9,7 @@ updated: 2026-09-26
 
 # Le niveau — hypermarché
 
-Registre `src/game/level/levels.ts` : remplace le hardcode
+Registre `src/game/level/catalog/levels.ts` : remplace le hardcode
 `levelParam === "zone_a_parking"` qui vivait dans `main.ts` (dette
 documentée dans `CLAUDE.md`, Phase 5 Zone A). Forme volontairement minimale
 (pas d'abstraction avant que la douleur soit réelle) — pas de spawn points

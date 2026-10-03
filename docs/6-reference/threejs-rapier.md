@@ -17,7 +17,7 @@ Le monde utilise les unités SI : mètres, secondes et kilogrammes. `initPhysics
 
 Le joueur et les ennemis utilisent `KinematicCharacterController` de Rapier. Il calcule une translation corrigée ; le code du jeu applique la gravité et alimente le résultat au corps/collider. La fabrique partagée règle l'axe vertical, l'offset, l'autostep, le snap-to-ground, les pentes, les impulsions aux corps dynamiques et la masse du personnage.
 
-Les paramètres canoniques du joueur sont dans `src/game/player/moveConfig.ts`. Le contrôleur d'ennemi reçoit les configurations de `src/game/entities/suitConfig.ts` et `src/game/entities/directorConfig.ts`. Ne créez pas une capsule-vs-monde maison.
+Les paramètres canoniques du joueur sont dans `src/game/player/movement/moveConfig.ts`. Le contrôleur d'ennemi reçoit les configurations de `src/game/entities/suit/suitConfig.ts` et `src/game/entities/director/directorConfig.ts`. Ne créez pas une capsule-vs-monde maison.
 
 ## Groupes de collision
 
@@ -48,4 +48,4 @@ Le renderer dessine à une résolution interne de 640×360 puis agrandit l'image
 
 Évitez d'appliquer une mise à jour visuelle à un mesh séparément de son système de jeu. Les portes et props synchronisent notamment leur pose depuis leurs systèmes au moment prévu dans la boucle.
 
-Sources : `src/physics/world.ts`, `src/physics/raycast.ts`, `src/game/level/loader.ts`, `src/render/renderer.ts`. Pour les contrats d'import, voir [Conventions de nommage](conventions-nommage.md).
+Sources : `src/physics/world.ts`, `src/physics/raycast.ts`, `src/game/level/loading/loader.ts`, `src/render/pipeline/renderer.ts`. Pour les contrats d'import, voir [Conventions de nommage](conventions-nommage.md).

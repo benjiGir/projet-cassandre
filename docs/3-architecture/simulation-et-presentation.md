@@ -60,19 +60,19 @@ pas fixes dans la même image traiterait deux fois le même coup.
 
 | Fait | Producteur (pas fixe) | Consommateur (affichage) | Purge |
 |---|---|---|---|
-| Tir déclenché | `WeaponSystem.fireEvents` (`src/game/player/weapons.ts`) | `updateFx` : muzzle flash, douille, son, pulsation du réticule, gizmos de debug | `weapons.clearFrameEvents()` |
+| Tir déclenché | `WeaponSystem.fireEvents` (`src/game/player/weapons/weapons.ts`) | `updateFx` : muzzle flash, douille, son, pulsation du réticule, gizmos de debug | `weapons.clearFrameEvents()` |
 | Impact | `WeaponSystem.hitEvents` | `updateFx` : decal (si surface fixe), particules, shake, son, hitmarker | `weapons.clearFrameEvents()` |
 | Impact (relu par le gameplay) | `WeaponSystem.hitEvents` | `SuitManager`/`DirectorManager`/`PropSystem`/`VitreSystem`/`SanitaireSystem`, chacun au pas fixe suivant, avec son `hitCursor` propre | Même `weapons.clearFrameEvents()`, en aval de ces lecteurs |
-| Casse d'un prop | `PropSystem.destroyedEvents` (`src/game/level/props.ts`) | `updateFx` : débris colorés par matière, shake, son | `propSystem.clearFrameEvents()` |
-| Casse d'une vitre | `VitreSystem.destroyedEvents` (`src/game/level/vitres.ts`) | `updateFx` : débris de verre, givre éventuel, son | `vitreSystem.clearFrameEvents()` |
-| Casse d'un sanitaire | `SanitaireSystem.destroyedEvents` (`src/game/level/sanitaires.ts`) | `updateFx` : gerbe de faïence, jet d'eau permanent, son | `sanitaireSystem.clearFrameEvents()` |
-| Ouverture de porte | `DoorSystem.movementEvents` (`src/game/level/doors.ts`) | `updateFx` : son de mouvement | `doorSystem.clearFrameEvents()` |
+| Casse d'un prop | `PropSystem.destroyedEvents` (`src/game/level/props/props.ts`) | `updateFx` : débris colorés par matière, shake, son | `propSystem.clearFrameEvents()` |
+| Casse d'une vitre | `VitreSystem.destroyedEvents` (`src/game/level/interactions/vitres.ts`) | `updateFx` : débris de verre, givre éventuel, son | `vitreSystem.clearFrameEvents()` |
+| Casse d'un sanitaire | `SanitaireSystem.destroyedEvents` (`src/game/level/sanitaires/sanitaires.ts`) | `updateFx` : gerbe de faïence, jet d'eau permanent, son | `sanitaireSystem.clearFrameEvents()` |
+| Ouverture de porte | `DoorSystem.movementEvents` (`src/game/level/doors/doors.ts`) | `updateFx` : son de mouvement | `doorSystem.clearFrameEvents()` |
 | Alerte / télégraphie / dégât / mort ennemi | `SuitManager`/`DirectorManager` (`src/game/entities/`) | `updateFx` : son, flash du sprite, gibs, hitmarker | `clearFrameEvents()` de chaque manager |
 | Coup encaissé par le joueur | `SuitManager.playerHitEvents`/`DirectorManager.playerHitEvents` | `updateFx` : particules, shake ; `presentPlayerDamage` republie `session.playerHp` vers le store | Même `clearFrameEvents()` que la ligne au-dessus |
 
 Un second canal, plus direct, sert le texte du HUD : les messages système
 (`showHudMessage`) et les répliques du héros (`triggerHeroLine`,
-`src/game/session/feedback.ts`) sont écrits dans le store zustand **depuis le
+`src/game/session/player/feedback.ts`) sont écrits dans le store zustand **depuis le
 pas fixe lui-même** (`updateGameplay.ts`, `session/doors.ts`,
 `session/cards.ts`, `session/sanitaires.ts`), sans passer par une file
 consommée à l'affichage. Ce n'est pas une exception à la règle : ces écritures
@@ -109,7 +109,7 @@ entre les deux. Mécanisme complet, `alpha` compris :
 
 ## Le HUD
 
-Le store zustand (`src/game/state.ts`) est écrit depuis deux points : le
+Le store zustand (`src/game/hud/state.ts`) est écrit depuis deux points : le
 throttle explicite à 10 Hz du panneau de debug dans `updateFx` (invariant #2),
 et les écritures ponctuelles de texte décrites plus haut. Les composants React
 du HUD s'y abonnent en lecture, jamais l'inverse. Détail du contrat

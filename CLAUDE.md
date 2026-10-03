@@ -53,17 +53,17 @@ explication**, pas contournée.
 10. **Aucune animation ne bloque le joueur.** Pas de rechargement immobilisant.
 11. **Frontière Effect synchrone stricte.** Le pas fixe ET le rendu/
     l'interpolation passent exclusivement par `runGameplaySync`
-    (`src/core/runtime.ts`, `Runtime.runSync` sur `GameRuntime`) : zéro
+    (`src/core/effect/runtime.ts`, `Runtime.runSync` sur `GameRuntime`) : zéro
     `Effect.tryPromise`/`Effect.promise`/`Effect.async`/`Effect.sleep` dans
     ces arbres — sinon `runSync` lève un defect (le garde-fou le rend
     bruyant en console plutôt que silencieux). Le chargement de niveau et le
     hot-reload restent à la frontière asynchrone (`GameRuntime.runPromise`/
-    `runFork`, `game/level/loader.ts`/`hotReload.ts`), jamais appelés depuis
+    `runFork`, `game/level/loading/loader.ts`/`hotReload.ts`), jamais appelés depuis
     `updateGameplay`.
 12. **RNG déterministe uniquement.** Jamais `Math.random()`, jamais le
     service `Random` par défaut d'Effect. Service canonique :
-    `DeterministicRandom` (`src/core/random.ts`), qui enveloppe mulberry32.
-    Contrainte dure : le rejeu d'input (F9/F10, `core/inputRecorder.ts`)
+    `DeterministicRandom` (`src/core/effect/random.ts`), qui enveloppe mulberry32.
+    Contrainte dure : le rejeu d'input (F9/F10, `core/input/inputRecorder.ts`)
     dépend de cette continuité.
 13. *(Retiré le 2026-09-25 — « XState sans temps mural ».)*
 
@@ -113,14 +113,14 @@ dans le dépôt.
 | `spawn_suit_*` | point d'apparition Costard |
 | `spawn_director_*` | point d'apparition Directeur (boss unique) |
 | `trig_*` | volume de trigger (box), mesh invisible |
-| `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors.ts`) |
+| `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors/doors.ts`) |
 | `use_*` | objet interactif (portée 2 m) |
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
 | `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |
-| `vitre_*` | vitrage : collider cuboid tant que `solide !== false`, cassable si `pv` (`VitreSystem`, `game/level/vitres.ts`) |
-| `sanitaire_*` | cuvette/urinoir façon Duke 3D : `sorte` (`cuvette`/`urinoir`) OBLIGATOIRE, cassable si `pv`, UN mesh UN matériau, pas de `col_*` jumeau (`SanitaireSystem`, `game/level/sanitaires.ts`, [ADR 0032](docs/decisions/0032-sanitaires-utilisables.md)) |
-| `ecran_*` | écran/façade animé qui boucle sur une `chaine` (`journal`/`pub`/`mire`/`foot`/`cctv`), cassable si `pv` (neige/noir), UN mesh UN matériau, atlas `prd_chaines.png` (`EcranSystem`, `game/level/ecrans.ts`) |
-| `cam_*` | empty, point de vue fixe d'une console `use_*` (extra `cameras`, liste ordonnée séparée par des virgules) — `CameraViewSystem`, `game/level/cameras.ts` |
+| `vitre_*` | vitrage : collider cuboid tant que `solide !== false`, cassable si `pv` (`VitreSystem`, `game/level/interactions/vitres.ts`) |
+| `sanitaire_*` | cuvette/urinoir façon Duke 3D : `sorte` (`cuvette`/`urinoir`) OBLIGATOIRE, cassable si `pv`, UN mesh UN matériau, pas de `col_*` jumeau (`SanitaireSystem`, `game/level/sanitaires/sanitaires.ts`, [ADR 0032](docs/decisions/0032-sanitaires-utilisables.md)) |
+| `ecran_*` | écran/façade animé qui boucle sur une `chaine` (`journal`/`pub`/`mire`/`foot`/`cctv`), cassable si `pv` (neige/noir), UN mesh UN matériau, atlas `prd_chaines.png` (`EcranSystem`, `game/level/interactions/ecrans.ts`) |
+| `cam_*` | empty, point de vue fixe d'une console `use_*` (extra `cameras`, liste ordonnée séparée par des virgules) — `CameraViewSystem`, `game/level/interactions/cameras.ts` |
 
 Custom properties Blender lues sur un `prop_*` : `masse` (kg, défaut 25), `pv`
 (ABSENT = indestructible, seulement poussable), `matiere` (`bois`/`carton`/
@@ -143,7 +143,7 @@ photomaton du secret 1, la porte coupe-feu ; le sens unique d'une porte tient à
 la place de son `use_*`, hors de portée depuis l'autre côté), `soin` (PV d'une
 trousse), `munitions` (recharge de pistolet) et `aliment` (chantier « Les
 coulisses », VARIANTE de `soin` — `donut`/`sandwich`/`jambon`/`poulet`/`pizza`,
-PV 5/10/15/25/25, voir `game/level/food.ts`) —
+PV 5/10/15/25/25, voir `game/level/interactions/food.ts`) —
 ces derniers se ramassent en marchant dessus, sans touche E. Une valeur inconnue est une ERREUR de `validate_level.py` et un
 avertissement bruyant du loader, jamais un silence. La Platine n'a pas de
 `use_*` : le Directeur la lâche à sa mort. Détail complet dans
@@ -152,10 +152,11 @@ avertissement bruyant du loader, jamais un silence. La Platine n'a pas de
 ## Structure
 
 ```
-src/core/     loop input time audio
-src/render/   renderer billboard fx
+src/app/      navigation runtime
+src/core/     audio effect input loading loop
+src/render/   pipeline environment sprites pickups viewmodel overlays fx debug
 src/physics/  world
-src/game/     player entities level state
+src/game/     player entities level session loop hud settings devtools
 src/ui/       React overlay
 
 tools/blender/        scripts headless (kit, niveaux, bake, validation, export)

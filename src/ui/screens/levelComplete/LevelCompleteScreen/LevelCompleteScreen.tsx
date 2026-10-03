@@ -1,8 +1,8 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import { Button } from "../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../components/controls/ButtonRow/ButtonRow";
 import { CornerFrame } from "../../../components/layout/CornerFrame/CornerFrame";
-import { RecapTable } from "../../../components/RecapTable/RecapTable";
+import { RecapTable } from "../../../components/layout/RecapTable/RecapTable";
 import { Scanlines } from "../../../components/effects/Scanlines/Scanlines";
 import { Screen } from "../../../components/layout/Screen/Screen";
 import { ScreenTitle } from "../../../components/text/ScreenTitle/ScreenTitle";

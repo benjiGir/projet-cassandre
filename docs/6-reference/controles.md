@@ -7,7 +7,7 @@ updated: 2026-09-26
 
 # Contrôles et bindings
 
-Les actions de gameplay sont définies dans `src/core/input.ts`. Les touches de débogage sont séparées et ne peuvent pas être remappées depuis cette API.
+Les actions de gameplay sont définies dans `src/core/input/input.ts`. Les touches de débogage sont séparées et ne peuvent pas être remappées depuis cette API.
 
 ## Contrôles joueur par défaut
 
@@ -48,4 +48,4 @@ Ces entrées ne sont pas des actions de gameplay. Elles sont disponibles uniquem
 
 F9/F10 enregistrent les entrées du joueur, pas la totalité de l'état du monde. Un enregistrement ne fige pas les décisions des ennemis, l'état des objets ou les variations d'environnement.
 
-Source du tableau : `src/core/input.ts` et `src/game/loop/devGameplayInput.ts`. Pour le contrat de capture et de rejeu, voir [Rejeu et déterminisme](../4-technique/rejeu-et-determinisme.md).
+Source du tableau : `src/core/input/input.ts` et `src/game/loop/devGameplayInput.ts`. Pour le contrat de capture et de rejeu, voir [Rejeu et déterminisme](../4-technique/rejeu-et-determinisme.md).

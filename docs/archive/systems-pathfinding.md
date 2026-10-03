@@ -16,7 +16,7 @@ rayons d'évitement local (`computeAvoidedDirection`, voir [Entités et IA —
 Navigation](./systems-entites.md#navigation)) qui dévient la direction de poursuite
 au coup par coup, sans jamais planifier un détour. Ça suffit pour contourner
 un pilier, pas pour traverser l'escalier de la Zone D. `PathfindingService`
-(`src/game/level/pathfinding.ts`) comble ce trou : un vrai graphe de
+(`src/game/level/navigation/pathfinding.ts`) comble ce trou : un vrai graphe de
 praticabilité, baké une fois au chargement du niveau, puis interrogé par un
 A* déterministe à chaque fois qu'un ennemi a besoin d'un chemin. Les deux
 mécanismes coexistent plutôt que le second ne remplace le premier : la
@@ -92,7 +92,7 @@ Graphe de praticabilité 2.5D, baké au chargement du niveau, en quatre
 La requête elle-même est un A* déterministe : tas binaire array-based,
 tie-break stable PAR INDEX DE GRILLE croissant, jamais par ordre
 d'itération d'une `Map`/`Set` — condition dure du déterminisme de rejeu
-d'input (`core/inputRecorder.ts`).
+d'input (`core/input/inputRecorder.ts`).
 
 ## Dimensionné sur le Costard, jamais sur le Directeur
 

@@ -318,7 +318,7 @@ Ne se lit pas à 11 px/cm (section 4), ou jamais dans le champ :
 L'avant-bras en ajoute ~170. Toujours **un seul lot de dessin**, arme et bras
 fusionnés, un matériau à couleurs de sommets. Une culasse séparée qui recule
 à chaque tir serait un beau geste (même montage que le fût du pompe, un lot
-de plus), mais elle suppose du code dans `render/viewmodel.ts` : c'est une
+de plus), mais elle suppose du code dans `render/viewmodel/viewmodel.ts` : c'est une
 option, pas une exigence de ce modèle. Référence de budget : le « PS1 style
 handgun » de Sketchfab tient en 473 triangles avec un pontet ajouré.
 
@@ -356,7 +356,7 @@ sRGB mesurées : 3 fois dans l'allée centrale, 6 au parking).
 
 Les armes n'ont ni UV ni texture (`export_materials="NONE"`, un
 `MeshLambertMaterial` à couleurs de sommets partagé dans
-`render/viewmodel.ts`). Tout détail « de texture » se fait donc en
+`render/viewmodel/viewmodel.ts`). Tout détail « de texture » se fait donc en
 **découpant une face et en peignant ses morceaux**, sans relief : aucun
 chevauchement, donc aucun z-fighting.
 
@@ -372,7 +372,7 @@ chevauchement, donc aucun z-fighting.
 Une texture de 64 px serait la vraie manière du Build : à 11 px/cm, 64
 texels sur 18 cm donnent ~3 px par texel, la même densité apparente que les
 murs du niveau. Elle demande des UV sur l'arme ET les bras, et un matériau
-propre au pistolet dans `render/viewmodel.ts` (filtrage de l'ADR 0027).
+propre au pistolet dans `render/viewmodel/viewmodel.ts` (filtrage de l'ADR 0027).
 C'est une décision de rendu, **hors du périmètre de ce modèle**.
 
 ### Repli : un Glock

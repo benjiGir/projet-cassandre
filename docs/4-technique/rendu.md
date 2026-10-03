@@ -13,16 +13,16 @@ Le rendu transforme la scène Three.js en image, puis la présente dans le canev
 
 ## Fichiers
 
-- `src/render/renderer.ts` — crée le renderer WebGL, configure les textures et expose la résolution interne.
-- `src/render/renderService.ts` — enveloppe l'appel WebGL derrière un service Effect synchrone.
+- `src/render/pipeline/renderer.ts` — crée le renderer WebGL, configure les textures et expose la résolution interne.
+- `src/render/pipeline/renderService.ts` — enveloppe l'appel WebGL derrière un service Effect synchrone.
 - `src/main.ts` — appelle le rendu après l'interpolation et les mises à jour de présentation.
-- `src/core/loop.ts` — cadence les pas fixes, l'interpolation et l'image affichée.
+- `src/core/loop/loop.ts` — cadence les pas fixes, l'interpolation et l'image affichée.
 - `src/game/loop/interpolateVisuals.ts` — place les objets interpolables et lit la visée de la caméra.
 - `src/game/loop/updateFx.ts` — met à jour les éléments visuels transitoires au taux d'affichage.
 - `src/game/session/gameEngine.ts` — crée la scène, la caméra, le renderer et les overlays.
-- `src/game/graphicsSettings.ts` — persiste et applique les réglages de rendu.
-- `src/render/debugView.ts` — bascule la géométrie en mode wireframe.
-- `src/render/cameraView.ts`, `crosshair.ts` et `hitmarker.ts` — canevas 2D spécialisés hors React.
+- `src/game/settings/graphicsSettings.ts` — persiste et applique les réglages de rendu.
+- `src/render/debug/debugView.ts` — bascule la géométrie en mode wireframe.
+- `src/render/overlays/cameraView.ts`, `crosshair.ts` et `hitmarker.ts` — canevas 2D spécialisés hors React.
 - `index.html` — dimensionne l'image 16:9 et demande un agrandissement à pixels nets.
 
 ## Où ça s'insère dans la boucle
@@ -71,7 +71,7 @@ Le renderer WebGL installe `WebGLNodesHandler` pour accepter des matériaux TSL 
 
 ### Préparation des douches
 
-`src/game/level/doucheShader.ts::warmShaderDouches` rend les jets avant le
+`src/game/level/sanitaires/doucheShader.ts::warmShaderDouches` rend les jets avant le
 commit du niveau, sous l'écran de chargement. Le pool de lampes est déjà
 configuré. Les jets deviennent temporairement visibles et ne sont pas
 éliminés par le frustum ; leur état initial éteint est restauré ensuite.
@@ -136,9 +136,9 @@ Le renderer fixe le pixel ratio à 1 et désactive l'antialiasing. La netteté p
 
 ## Tests
 
-- `test/render/renderService.test.ts` — service de rendu substituable et absence d'appel WebGL par sa couche de test.
-- `test/game/level/loader.test.ts` — reconversion des matériaux du glTF et conservation des propriétés nécessaires au rendu.
-- `test/render/billboard.test.ts` et `test/render/viewmodel.test.ts` — contrats de matériaux et de géométrie des objets 3D affichés.
+- `test/render/pipeline/renderService.test.ts` — service de rendu substituable et absence d'appel WebGL par sa couche de test.
+- `test/game/level/loading/loader.test.ts` — reconversion des matériaux du glTF et conservation des propriétés nécessaires au rendu.
+- `test/render/sprites/billboard.test.ts` et `test/render/viewmodel/viewmodel.test.ts` — contrats de matériaux et de géométrie des objets 3D affichés.
 
 ## Comment vérifier que ça marche
 
@@ -150,7 +150,7 @@ Couverture ciblée : `pnpm test -- renderService loader billboard viewmodel`.
 
 ## Registre des textures configurables
 
-`src/render/textureRegistry.ts` suit les textures configurées jusqu’à leur
+`src/render/pipeline/textureRegistry.ts` suit les textures configurées jusqu’à leur
 libération. Le réglage global parcourt tous les canaux texture des matériaux
 classiques et les uniformes ShaderMaterial. Pour du TSL, le propriétaire
 enregistre les TextureNodes concernés avec `registerMaterialTextureInputs` ;

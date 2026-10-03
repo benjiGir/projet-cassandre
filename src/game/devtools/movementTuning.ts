@@ -1,4 +1,4 @@
-import { moveConfig, type MoveConfig } from "../player/moveConfig";
+import { moveConfig, type MoveConfig } from "../player/movement/moveConfig";
 
 // Capturé avant l’application des préférences persistées.
 const DEFAULT_MOVE_CONFIG: MoveConfig = { ...moveConfig };

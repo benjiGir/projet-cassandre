@@ -1,9 +1,9 @@
 import * as THREE from "three";
 import { Effect } from "effect";
 
-import { runGameplaySync } from "../../app/gameRuntime";
-import { createEnemyAnimationInput, enemySpriteRow } from "../../render/enemySprites";
-import { fovForRunFactor, moveConfig } from "../player/moveConfig";
+import { runGameplaySync } from "../../app/runtime/gameRuntime";
+import { createEnemyAnimationInput, enemySpriteRow } from "../../render/sprites/enemySprites";
+import { fovForRunFactor, moveConfig } from "../player/movement/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -70,7 +70,7 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         session.propSystem?.interpolate(alpha, engine.camera.position);
         session.doorSystem?.interpolate(alpha);
         // Objets interactifs : élagués par distance comme les props, pour la
-        // même raison (voir `render/useObjectCulling.ts`).
+        // même raison (voir `render/environment/useObjectCulling.ts`).
         engine.useObjectCulling.update(
           session.gltfLevelSession?.current?.useObjects ?? [],
           engine.camera.position,

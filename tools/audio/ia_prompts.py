@@ -21,7 +21,7 @@ lisibles et un peu outranciers. Depuis le 2026-10-01, le rendu visé est celui
 d'un FPS MODERNE (référence Ion Fury / DOOM 2016) : percutant, compressé.
 Leçons de jeu (2026-10-01) : les sons ennemis sont joués SANS spatialisation,
 donc secs et proches ; les portes durent ce que dure leur animation (battant
-0,5 s, coulissante 0,45 s, rideau 1,4 s, `game/level/doors.ts`).
+0,5 s, coulissante 0,45 s, rideau 1,4 s, `game/level/doors/doors.ts`).
 """
 
 from __future__ import annotations

@@ -1,27 +1,27 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { INITIAL_PLAYER_MAX_HP } from "./playerState";
+import { INITIAL_PLAYER_MAX_HP } from "./player/playerState";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
-import { DeterministicRandom } from "../../core/random";
-import { setAudioRandom } from "../../core/audio";
-import { resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/zoneAmbience";
-import { runGameplaySync } from "../../app/gameRuntime";
-import { HERO_LINE_SEED } from "./heroLines";
-import { createInitialStats } from "./score";
-import { PlayerController } from "../player/controller";
-import { WeaponSystem } from "../player/weapons";
-import { buildGym } from "../level/gym";
-import { SuitManager } from "../entities/suitManager";
-import { DirectorManager } from "../entities/directorManager";
-import { useGameStore } from "../state";
-import { type LevelDef } from "../level/levels";
-import { chargerCiel } from "../../render/ciel";
+import { DeterministicRandom } from "../../core/effect/random";
+import { setAudioRandom } from "../../core/audio/audio";
+import { resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/audio/zoneAmbience";
+import { runGameplaySync } from "../../app/runtime/gameRuntime";
+import { HERO_LINE_SEED } from "./presentation/heroLines";
+import { createInitialStats } from "./progression/score";
+import { PlayerController } from "../player/movement/controller";
+import { WeaponSystem } from "../player/weapons/weapons";
+import { buildGym } from "../level/catalog/gym";
+import { SuitManager } from "../entities/suit/suitManager";
+import { DirectorManager } from "../entities/director/directorManager";
+import { useGameStore } from "../hud/state";
+import { type LevelDef } from "../level/catalog/levels";
+import { chargerCiel } from "../../render/environment/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
-import { HeroPortrait } from "./heroPortrait";
-import { loadPickupResources, type PickupResources } from "../../render/pickupResources";
+import { HeroPortrait } from "./presentation/heroPortrait";
+import { loadPickupResources, type PickupResources } from "../../render/pickups/pickupResources";
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
@@ -159,7 +159,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     stats: createInitialStats(),
   };
 
-  // Loadout de départ : `LevelDef.startUnarmed` (registre `game/level/levels.ts`).
+  // Loadout de départ : `LevelDef.startUnarmed` (registre `game/level/catalog/levels.ts`).
   if (choice.startUnarmed) {
     weapons.startUnarmed();
   }

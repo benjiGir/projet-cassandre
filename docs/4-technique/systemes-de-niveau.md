@@ -13,18 +13,18 @@ Les systèmes de niveau font vivre les objets décrits dans le glTF : portes, ob
 
 ## Fichiers
 
-- `src/game/level/loader.ts` — fabrique les descripteurs depuis les préfixes glTF et leurs extras.
-- `src/game/level/doors.ts` — état et mouvement des portes.
-- `src/game/level/interactive.ts` — proximité, touche E, ramassages à la marche et dispatch des interactions.
-- `src/game/level/props.ts` — objets dynamiques, dégâts et contenu lâché.
-- `src/game/level/vitres.ts` — points de vie, casse et lots de vitrages.
-- `src/game/level/sanitaires.ts` — sanitaires intacts/cassés et jet d'eau.
-- `src/game/level/ecrans.ts` — animations d'écran et casse.
-- `src/game/level/cameras.ts` — sélection de caméras fixes et sortie de leur vue.
-- `src/game/level/food.ts` — catalogue des aliments et de leur valeur de soin.
+- `src/game/level/loading/loader.ts` — fabrique les descripteurs depuis les préfixes glTF et leurs extras.
+- `src/game/level/doors/doors.ts` — état et mouvement des portes.
+- `src/game/level/interactions/interactive.ts` — proximité, touche E, ramassages à la marche et dispatch des interactions.
+- `src/game/level/props/props.ts` — objets dynamiques, dégâts et contenu lâché.
+- `src/game/level/interactions/vitres.ts` — points de vie, casse et lots de vitrages.
+- `src/game/level/sanitaires/sanitaires.ts` — sanitaires intacts/cassés et jet d'eau.
+- `src/game/level/interactions/ecrans.ts` — animations d'écran et casse.
+- `src/game/level/interactions/cameras.ts` — sélection de caméras fixes et sortie de leur vue.
+- `src/game/level/interactions/food.ts` — catalogue des aliments et de leur valeur de soin.
 - `src/game/session/spawning.ts` — crée une instance de chaque système au commit du niveau.
 - `src/game/loop/updateGameplay.ts`, `stepPhysics.ts`, `interpolateVisuals.ts` et `updateFx.ts` — appels fixes, synchronisation physique, interpolation et retours visuels.
-- `src/render/useObjectCulling.ts` — élague les objets utilisables et les lots de sanitaires éloignés.
+- `src/render/environment/useObjectCulling.ts` — élague les objets utilisables et les lots de sanitaires éloignés.
 - `docs/6-reference/conventions-nommage.md` — préfixes, extras et conventions Blender.
 
 ## Où ça s'insère dans la boucle
@@ -83,7 +83,7 @@ Vitres, sanitaires et écrans sont fusionnés dans des lots dédiés tout en gar
 
 ### Vue par caméra
 
-Un `cam_*` est un empty dont la position et l'orientation monde sont figées au chargement. Une console `use_*` portant l'extra `cameras` fait défiler sa liste dans `CameraViewSystem`. Un déplacement ou un changement volontaire de visée quitte la vue au pas suivant ; le joueur n'est jamais immobilisé. `src/render/cameraView.ts` dessine l'habillage 2D correspondant.
+Un `cam_*` est un empty dont la position et l'orientation monde sont figées au chargement. Une console `use_*` portant l'extra `cameras` fait défiler sa liste dans `CameraViewSystem`. Un déplacement ou un changement volontaire de visée quitte la vue au pas suivant ; le joueur n'est jamais immobilisé. `src/render/overlays/cameraView.ts` dessine l'habillage 2D correspondant.
 
 ### Lecture de l'appui E
 
@@ -103,13 +103,13 @@ La proximité est mesurée depuis le centre de la capsule du joueur jusqu'à la 
 
 ## Tests
 
-- `test/game/level/doors.test.ts` — mouvements, groupes, collisions, ouvertures automatiques/manuelles et lots de vantaux.
-- `test/game/level/props.test.ts` — poussée, dégâts, destruction, interpolation et contenu déterministe.
-- `test/game/level/vitres.test.ts` et `test/game/level/sanitaires.test.ts` — colliders, casse, événements et visée du jet.
-- `test/game/level/ecrans.test.ts` — chaînes, animation, UV et casse.
-- `test/game/level/cameras.test.ts` — cyclage des caméras et sortie de vue par mouvement.
-- `test/game/level/pickups.test.ts` — ramassages à la marche et objets qui restent si le joueur ne peut rien prendre.
-- `test/game/level/loader.test.ts` — construction des descripteurs et lecture des extras.
+- `test/game/level/doors/doors.test.ts` — mouvements, groupes, collisions, ouvertures automatiques/manuelles et lots de vantaux.
+- `test/game/level/props/props.test.ts` — poussée, dégâts, destruction, interpolation et contenu déterministe.
+- `test/game/level/interactions/vitres.test.ts` et `test/game/level/sanitaires/sanitaires.test.ts` — colliders, casse, événements et visée du jet.
+- `test/game/level/interactions/ecrans.test.ts` — chaînes, animation, UV et casse.
+- `test/game/level/interactions/cameras.test.ts` — cyclage des caméras et sortie de vue par mouvement.
+- `test/game/level/interactions/pickups.test.ts` — ramassages à la marche et objets qui restent si le joueur ne peut rien prendre.
+- `test/game/level/loading/loader.test.ts` — construction des descripteurs et lecture des extras.
 
 ## Comment vérifier que ça marche
 

@@ -199,7 +199,7 @@ def rangee_blanc(longueur: float = 4.0, seed: int = 0) -> str:
     #
     # Plancher à 1,05 m : un lave-linge fait pile 1,00 m, soit exactement la
     # marche maximale du graphe de navigation (`MAX_STEP_HEIGHT`,
-    # `game/level/pathfinding.ts`). Son dessus deviendrait une cellule reliée
+    # `game/level/navigation/pathfinding.ts`). Son dessus deviendrait une cellule reliée
     # au sol, qu'un Costard (marche de 0,35 m) ne sait pas gravir — il se
     # collerait à la rangée. Cinq centimètres invisibles l'en excluent.
     H.col_box(f"{name[4:]}_estrade", (0, 0, 0, longueur, 0.90, 0.15), coll)

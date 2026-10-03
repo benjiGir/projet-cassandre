@@ -105,7 +105,7 @@ et `loader.ts` un **avertissement bruyant** au chargement, la propriété étant
 alors ignorée.
 
 La carte **Platine** n'a pas de `use_*` : le Directeur la lâche à sa mort
-(`DIRECTOR_DROPPED_CARD`, `game/entities/directorConfig.ts`), ramassée par
+(`DIRECTOR_DROPPED_CARD`, `game/entities/director/directorConfig.ts`), ramassée par
 simple proximité. Côté jeu, l'inventaire vit dans `session.cards` et se
 consulte en console avec `cassandre.cards()` / `cassandre.giveCard("or")`.
 
@@ -114,12 +114,12 @@ consulte en console avec `cassandre.cards()` / `cassandre.giveCard("or")`.
 Un `use_*` avec `soin = 25` (des PV, un nombre strictement positif), sans
 `target`. Contrairement aux autres `use_*`, **il se ramasse en marchant
 dessus**, pas à la touche E : à moins de 1,2 m du centre du joueur
-(`HEAL_PICKUP_RADIUS`, `game/level/interactive.ts`). Un joueur qui a déjà tous
+(`HEAL_PICKUP_RADIUS`, `game/level/interactions/interactive.ts`). Un joueur qui a déjà tous
 ses PV la laisse au sol, pour plus tard.
 
 La boîte du `.glb` ne sert qu'à situer l'objet : le jeu la remplace par une
 trousse blanche à croix verte de pharmacie, posée sur le sol réellement sous
-elle (`render/pickups.ts`). La croix rouge est un emblème protégé, d'où la
+elle (`render/pickups/pickups.ts`). La croix rouge est un emblème protégé, d'où la
 verte.
 
 Mêmes garde-fous que les cartes : **erreur** de `validate_level.py`,
@@ -138,7 +138,7 @@ d'une trousse contre le décor après construction, pas seulement contre le plan
 Chantier « Les coulisses » (2026-09-26). Un `use_*` avec `aliment` (`donut`
 5 PV, `sandwich` 10, `jambon` 15, `poulet`/`pizza` 25), VARIANTE de `soin` :
 même ramassage marche-dessus, même rayon, mais le montant de PV est dérivé du
-NOM plutôt qu'écrit en dur (`game/level/food.ts::FOOD_HEAL_AMOUNTS`). Un
+NOM plutôt qu'écrit en dur (`game/level/interactions/food.ts::FOOD_HEAL_AMOUNTS`). Un
 `soin` explicite sur le même objet prime. Valeur inconnue : erreur de
 `validate_level.py`, avertissement bruyant du loader — `aliment`/`heals`
 restent nuls. Un `prop_*` cassé peut aussi lâcher de la nourriture, voir
@@ -149,7 +149,7 @@ restent nuls. Un `prop_*` cassé peut aussi lâcher de la nourriture, voir
 Un `use_*` avec `munitions = 24`, sans `target`. Mêmes règles que les
 trousses de soin ci-dessus : ramassage **en marchant dessus** dans un rayon de
 `HEAL_PICKUP_RADIUS`, boîte du `.glb` remplacée par le vrai modèle
-(`render/pickups.ts`), erreur de `validate_level.py` et avertissement bruyant
+(`render/pickups/pickups.ts`), erreur de `validate_level.py` et avertissement bruyant
 du loader sur une valeur qui n'est pas un nombre strictement positif.
 
 Elles ne rechargent que le **pistolet** : le pompe garde sa dotation unique
@@ -237,7 +237,7 @@ Format mal formé : avertissement bruyant, prop laissé sans contenu.
 
 Un `door_*` reste un corps Rapier **FIXE, à la pose FERMÉE, pour toujours** —
 seul le collider s'active/se désactive (actif SEULEMENT quand le vantail est
-complètement fermé), seul le mesh bouge (`game/level/doors.ts::DoorSystem`,
+complètement fermé), seul le mesh bouge (`game/level/doors/doors.ts::DoorSystem`,
 reconstruit à chaque chargement comme un `PropSystem`). Aucune capsule de
 personnage ne peut donc rester coincée dans un vantail en mouvement : du
 point de vue de la physique, une porte est ouverte ou fermée, jamais « à
@@ -303,7 +303,7 @@ carte/`use_*` reste TOUJOURS ouverte une fois débloquée (`permanent`), quel
 que soit `referme` — seules les portes `auto` peuvent se refermer toutes
 seules.
 
-Trois sons, un par MOUVEMENT (`core/audio.ts`), joués UNE FOIS au début
+Trois sons, un par MOUVEMENT (`core/audio/audio.ts`), joués UNE FOIS au début
 d'une ouverture depuis l'état fermé : `door_swing` (battant), `door_slide`
 (coulisse et descend), `door_shutter` (monte, rideau métallique). Les sons
 `door_locked`/`door_unlock` de la porte à carte restent séparés — ils
@@ -376,7 +376,7 @@ comportement par défaut raisonnable sans savoir de quel appareil il s'agit —
 la cuvette est le repli choisi (la plus fréquente au plan de masse), jamais
 un silence.
 
-**Deux gestes, une seule règle de soin** (`game/session/sanitaires.ts`,
+**Deux gestes, une seule règle de soin** (`game/session/player/sanitaires.ts`,
 partagée avec le `use_toilet` historique du niveau `hypermarche_complet`) :
 
 | Ce qu'on fait | Effet |
@@ -412,7 +412,7 @@ de visée courante, filtré WORLD :
   plus proche sur le même rayon.
 
 `SanitaireSystem.resolveAim` fait l'interprétation géométrique,
-`game/session/sanitaires.ts::trySanitaire` lance le rayon. Détail complet :
+`game/session/player/sanitaires.ts::trySanitaire` lance le rayon. Détail complet :
 [ADR 0032](../decisions/0032-sanitaires-utilisables.md), section
 « Portée — visée ».
 
@@ -441,7 +441,7 @@ matériau — atlas partagé `assets_src/textures/prd_chaines.png`
 plage de sommets de CET écran dans le lot fusionné (jamais la géométrie), donc
 un mur de dizaines de télévisions reste un seul lot de dessin. Cassable si
 `pv` : bascule sur l'état interne "casse" (neige/noir qui flashe), jamais
-posable dans Blender. `EcranSystem` (`game/level/ecrans.ts`).
+posable dans Blender. `EcranSystem` (`game/level/interactions/ecrans.ts`).
 
 ### Préfixe cam
 
@@ -450,8 +450,8 @@ mesh. Une console `use_*` porte `cameras`, la liste ORDONNÉE des `cam_*`
 qu'elle cycle ; `E` fait défiler, TOUT MOUVEMENT (déplacement, saut, ou une
 visée qui dépasse un petit seuil) sort de la vue, invariant #10 — le joueur
 reste libre de bouger, la vue n'est qu'une redirection temporaire du rendu.
-`CameraViewSystem` (`game/level/cameras.ts`), overlay bruit/scanlines/
-étiquette dans `render/cameraView.ts`.
+`CameraViewSystem` (`game/level/interactions/cameras.ts`), overlay bruit/scanlines/
+étiquette dans `render/overlays/cameraView.ts`.
 
 ## Constantes de construction
 

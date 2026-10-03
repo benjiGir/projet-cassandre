@@ -15,13 +15,13 @@ valeurs retenues.
 
 ## Contrat `configureRetroTexture`
 
-`render/renderer.ts::configureRetroTexture` applique le look rétro
+`render/pipeline/renderer.ts::configureRetroTexture` applique le look rétro
 (invariant #4) à une texture : `NearestFilter` en mag/min, pas de mipmaps,
 `SRGBColorSpace`. Toute texture chargée ou générée à l'exécution doit passer
 par cette fonction — c'est la seule source de vérité pour ce réglage côté
 `render/`.
 
-`game/level/loader.ts` applique le même triplet `NearestFilter`/pas de
+`game/level/loading/loader.ts` applique le même triplet `NearestFilter`/pas de
 mipmaps directement (sans appeler `configureRetroTexture`), pour les
 textures qui arrivent déjà chargées par `GLTFLoader` — voir [Rendu —
 Invariant #5](./systems-rendu.md#invariant-5-reconversion-depuis-gltfloader).
@@ -30,7 +30,7 @@ partagée : à surveiller si l'une des deux dérive de l'autre.
 
 ## Atlas placeholder de billboard
 
-`render/billboard.ts::createPlaceholderAtlas` génère par canvas un atlas
+`render/sprites/billboard.ts::createPlaceholderAtlas` génère par canvas un atlas
 `columns × rows` (8×10, voir [Rendu — Sprites billboard 8
 directions](./systems-rendu.md#sprites-billboard-8-directions)). Il a tenu
 lieu de sprite d'ennemi jusqu'aux atlas pré-rendus

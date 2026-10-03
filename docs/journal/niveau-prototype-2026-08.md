@@ -10,7 +10,7 @@ updated: 2026-09-26
 Phase 5 — Le niveau (l'hypermarché). Livrée. Détail zone par zone
 > ci-dessous, conservé pour référence.
 > **Écran de choix de niveau** au boot (`src/ui/LevelMenu.tsx` + registre
-> `src/game/level/levels.ts`) : "Gym (test)" / "Zone A — Parking", chemins
+> `src/game/level/catalog/levels.ts`) : "Gym (test)" / "Zone A — Parking", chemins
 > MUTUELLEMENT EXCLUSIFS (plus de coexistence additive gym+niveau par
 > défaut — ça produisait du z-fighting réel, constaté). `?level=<id
 > enregistré>` saute le menu ; `?level=<nom>` non enregistré retombe sur
@@ -27,7 +27,7 @@ Phase 5 — Le niveau (l'hypermarché). Livrée. Détail zone par zone
 > de-biche au sol (`use_crowbar`) : le joueur démarre désarmé dans cette
 > zone uniquement (`WeaponSystem.startUnarmed()` / `pickUpMelee()`,
 > `activeWeapon: "none"|"melee"|"shotgun"`), ramassé via
-> `src/game/level/interactive.ts` (touche `E`, dispatch par nom d'objet
+> `src/game/level/interactions/interactive.ts` (touche `E`, dispatch par nom d'objet
 > Blender — le contrat `use_*`/`extras.target` est pensé pour un
 > interrupteur-vers-porte, pas pour un pickup autoportant, décision
 > documentée dans le fichier). `gym.ts` démarre toujours armé, zéro
@@ -155,7 +155,7 @@ Phase 5 — Le niveau (l'hypermarché). Livrée. Détail zone par zone
 > rapidement mais jamais avant ce temps d'alerte — comportement voulu, pas
 > le bug d'embuscade des Zones C/D.
 >
-> **Directeur (2026-08-22)** : entité codée (`src/game/entities/director.ts`
+> **Directeur (2026-08-22)** : entité codée (`src/game/entities/director/director.ts`
 > + `directorConfig.ts` + `directorManager.ts`, miroir de `Suit`), câblée
 > dans `main.ts` (rendu billboard, dégâts via `weapons.hitEvents` partagé,
 > sfx `enemy_*` réutilisés, badge droppé à la mort avec mesh placeholder).

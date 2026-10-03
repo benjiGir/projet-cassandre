@@ -9,6 +9,78 @@ updated: 2026-10-03
 
 Vue des dossiers suivis utiles au développement. Les fichiers générés et les caches ne sont pas une source de vérité.
 
+## Code du jeu
+
+```text
+src/
+  main.ts
+  app/
+    navigation/            menu, flux XState et transitions de partie
+    runtime/               composition des services Effect
+  core/
+    audio/                 SFX, voix, préparation et ambiances
+    effect/                RNG et garde-fou synchrone
+    input/                 capture, bindings, persistance et rejeu
+    loading/               chemins d'assets et progression de chargement
+    loop/                  pas fixe, horloge et statistiques de boucle
+  game/
+    hud/                   store et contrats du HUD
+    settings/              réglages audio et graphiques du moteur
+    devtools/
+      replay/              enregistrement, rejeu et harnais déterministe
+    entities/
+      shared/              machine, perception, navigation et combat communs
+      suit/                Costard, configuration et manager
+      director/            Directeur, configuration et manager
+    level/
+      catalog/             registre des niveaux et gym
+      loading/             import glTF, extraction et ressources
+      navigation/          graphe, bake et recherche de chemin
+      doors/               état, géométrie, configuration et lots des portes
+      interactions/        objets utilisables, écrans, vitres, caméras et nourriture
+      props/               mobilier physique et configuration
+      sanitaires/          sanitaires, douches et shader d'eau
+    loop/                  étapes de simulation et de présentation
+    player/
+      movement/            controller et configuration du déplacement
+      weapons/             système, configuration et contrats des armes
+      loyaltyCards.ts      contrat et règles d'inventaire des cartes
+    session/
+      player/              santé, dégâts, secours de chute et actions sanitaires
+      presentation/        répliques et portrait du héros
+      progression/         cartes, portes, score et récapitulatif
+      lifecycle.ts         construction et destruction d'une partie
+      gameEngine.ts        moteur persistant
+      gameSession.ts       données canoniques de la partie
+      flowPort.ts          capacités de flux reçues de l'application
+      spawning.ts          préparation du niveau et apparitions
+  physics/                 monde Rapier et raycasts
+  render/
+    pipeline/              renderer, service Effect et registre de textures
+    environment/           ciel, éclairage et visibilité des objets
+    sprites/               billboards et atlas des ennemis
+    pickups/               billboards, configuration et ressources des ramassages
+    viewmodel/             modèles et animation des armes en vue subjective
+    overlays/              réticule, hitmarker et effet CCTV
+    fx/                    façade et pools des effets
+    debug/                 diagnostic du rendu et des tirs
+  ui/
+    App/                   racine de l'overlay React
+    components/            primitives rangées par rôle
+    hud/                   widgets, overlays et primitives du HUD
+    screens/               écrans rangés par fonction
+    dev/                   aperçus et panneaux de tuning
+    lib/                   fonctions d'interface partagées
+    theme/                 jetons CSS
+```
+
+Les tests existants suivent les mêmes domaines dans `test/`. Les scénarios
+qui croisent plusieurs systèmes restent dans `test/game/integration/`.
+Le test du runtime composé et celui du flux d'écran vivent désormais dans
+`test/app/`.
+
+## Dossiers du dépôt
+
 | Dossier | Rôle |
 |---|---|
 | `src/app/` | Composition des services Effect, démarrage du menu, acteur de flux et transitions vers une session. |
@@ -51,6 +123,12 @@ Vue des dossiers suivis utiles au développement. Les fichiers générés et les
 | `.agents/skills/` | Copie des skills disponibles dans l'environnement de travail. |
 
 ## Règle de placement
+
+Un dossier regroupe une responsabilité. Son implémentation, ses contrats et
+ses paramètres restent voisins : pas de répertoire global `types/`,
+`interfaces/` ou `utils/`. Un fichier neuf rejoint le domaine qui le possède.
+Les imports visent le fichier qui définit l'export ; aucun `index.ts` barrel.
+Les modules centraux de session peuvent rester à la racine de leur domaine.
 
 Le code runtime vit dans `src/`. Les sources d'assets restent dans `assets_src/` ; le jeu ne lit que `public/assets/`. Les scripts de contenu vivent dans `tools/`. La documentation active vit dans les six dossiers numérotés.
 

@@ -15,17 +15,17 @@ Le loader transforme un fichier glTF exporté en un niveau utilisable : rendu Th
 
 ## Fichiers
 
-- `src/game/level/loader.ts` — acquisition Scope, classement des nœuds et résultat `LevelHandle`.
-- `src/game/level/levelDiagnostics.ts` — erreurs, avertissements et messages.
-- `src/game/level/levelExtras.ts` — noms Blender et lecture des propriétés.
-- `src/game/level/levelColliders.ts` — géométrie monde et fabriques Rapier.
-- `src/game/level/levelObjects.ts` — spawns et objets spécialisés.
-- `src/game/level/levelPresentation.ts` — conversion des matériaux et lumières.
-- `src/game/level/levelResources.ts` — propriétaire de la racine, des corps et des ressources GPU.
-- `src/game/level/hotReload.ts` — ouvre la `LevelSession`, sérialise les remplacements et garde l'ancien niveau en cas d'échec.
-- `src/game/level/mergeStaticDecor.ts` — fusionne le décor statique en lots de dessin spatiaux.
-- `src/game/level/doors.ts`, `props.ts`, `vitres.ts`, `sanitaires.ts` et `ecrans.ts` — regroupent les géométries spéciales et exposent leurs contrats au loader.
-- `src/game/level/levels.ts` — registre des niveaux, du fichier glTF, du mode d'éclairage et du ciel.
+- `src/game/level/loading/loader.ts` — acquisition Scope, classement des nœuds et résultat `LevelHandle`.
+- `src/game/level/loading/levelDiagnostics.ts` — erreurs, avertissements et messages.
+- `src/game/level/loading/levelExtras.ts` — noms Blender et lecture des propriétés.
+- `src/game/level/loading/levelColliders.ts` — géométrie monde et fabriques Rapier.
+- `src/game/level/loading/levelObjects.ts` — spawns et objets spécialisés.
+- `src/game/level/loading/levelPresentation.ts` — conversion des matériaux et lumières.
+- `src/game/level/loading/levelResources.ts` — propriétaire de la racine, des corps et des ressources GPU.
+- `src/game/level/loading/hotReload.ts` — ouvre la `LevelSession`, sérialise les remplacements et garde l'ancien niveau en cas d'échec.
+- `src/game/level/loading/mergeStaticDecor.ts` — fusionne le décor statique en lots de dessin spatiaux.
+- `src/game/level/doors/doors.ts`, `props.ts`, `vitres.ts`, `sanitaires.ts` et `ecrans.ts` — regroupent les géométries spéciales et exposent leurs contrats au loader.
+- `src/game/level/catalog/levels.ts` — registre des niveaux, du fichier glTF, du mode d'éclairage et du ciel.
 - `src/game/session/spawning.ts` — prépare les systèmes dérivés et le graphe de navigation avant le commit.
 - `src/physics/world.ts` — monde Rapier et groupes de collision.
 - `docs/6-reference/conventions-nommage.md` — contrat auteur des préfixes et extras.
@@ -49,7 +49,7 @@ flowchart TD
   J --> K["libération de l'ancien niveau"]
 ~~~
 
-`src/game/level/loader.ts::loadLevel` appelle `GLTFLoader.loadAsync` via `GameRuntime.runPromise`. La progression ne remonte que si la réponse fournit un `Content-Length` exploitable. `buildLevelFromGltf` reçoit un glTF déjà parsé et reste synchrone ; il sert aussi aux tests sans réseau.
+`src/game/level/loading/loader.ts::loadLevel` appelle `GLTFLoader.loadAsync` via `GameRuntime.runPromise`. La progression ne remonte que si la réponse fournit un `Content-Length` exploitable. `buildLevelFromGltf` reçoit un glTF déjà parsé et reste synchrone ; il sert aussi aux tests sans réseau.
 
 `src/game/session/spawning.ts::loadGltfLevel` installe une fonction `prepare`.
 Elle construit les systèmes du niveau, cuit le graphe de navigation et
@@ -122,10 +122,10 @@ Les requêtes de remplacement concurrentes sont sérialisées et coalescées. Un
 
 ## Tests
 
-- `test/game/level/loader.test.ts` — préfixes, extras, formes de colliders, erreurs rattrapées et statistiques produites.
-- `test/game/level/hotReload.test.ts` — commit, échec, annulation, coalescence et conservation de l'ancien handle.
-- `test/game/level/mergeStaticDecor.test.ts` — clé de matériau, attributs, cellules et meshes exclus de la fusion.
-- `test/game/level/pathfinding.test.ts` — cuisson du graphe à partir du monde physique préparé.
+- `test/game/level/loading/loader.test.ts` — préfixes, extras, formes de colliders, erreurs rattrapées et statistiques produites.
+- `test/game/level/loading/hotReload.test.ts` — commit, échec, annulation, coalescence et conservation de l'ancien handle.
+- `test/game/level/loading/mergeStaticDecor.test.ts` — clé de matériau, attributs, cellules et meshes exclus de la fusion.
+- `test/game/level/navigation/pathfinding.test.ts` — cuisson du graphe à partir du monde physique préparé.
 
 ## Comment vérifier que ça marche
 

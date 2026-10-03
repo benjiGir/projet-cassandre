@@ -7,7 +7,7 @@ import {
   resetGraphicsSettings,
   setGraphicsSettings,
   type GraphicsSettings,
-} from "../../../../../game/graphicsSettings";
+} from "../../../../../game/settings/graphicsSettings";
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { ChoiceGroup } from "../../fields/ChoiceGroup/ChoiceGroup";

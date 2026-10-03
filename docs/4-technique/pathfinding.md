@@ -25,20 +25,20 @@ paramètre.
 
 ## Fichiers
 
-- `src/game/level/pathfinding.ts` — service Effect et composition avec Raycast injecté.
-- `src/game/level/pathfindingTypes.ts` — graphe, erreur et contrats du service.
-- `src/game/level/navGraph.ts` — grille, voisins et cellule praticable la plus proche.
-- `src/game/level/navBake.ts` — échantillonnage Rapier au chargement.
-- `src/game/level/navSearch.ts` — tas, A* déterministe et compteurs de diagnostic.
+- `src/game/level/navigation/pathfinding.ts` — service Effect et composition avec Raycast injecté.
+- `src/game/level/navigation/pathfindingTypes.ts` — graphe, erreur et contrats du service.
+- `src/game/level/navigation/navGraph.ts` — grille, voisins et cellule praticable la plus proche.
+- `src/game/level/navigation/navBake.ts` — échantillonnage Rapier au chargement.
+- `src/game/level/navigation/navSearch.ts` — tas, A* déterministe et compteurs de diagnostic.
 - `src/game/session/spawning.ts` — `loadGltfLevel` : désactive les colliders
   des groupes de portes `auto` puis appelle `refreshSceneQueries()` et
   `PathfindingService.use((pf) => pf.bake(...))` au chargement ;
   `debugFindPath` (wrapper console).
-- `src/game/entities/enemyNavigation.ts` — `tryComputeChaseDirectionFromPath` :
+- `src/game/entities/shared/enemyNavigation.ts` — `tryComputeChaseDirectionFromPath` :
   seul appelant de `findPath` au pas fixe, dans `runChase`.
-- `src/game/level/doors.ts` — `DoorSystem.autoGroupColliders`, les colliders
+- `src/game/level/doors/doors.ts` — `DoorSystem.autoGroupColliders`, les colliders
   désactivés pendant le bake.
-- `src/app/gameRuntime.ts` — `PathfindingService.layer` assemblée dans
+- `src/app/runtime/gameRuntime.ts` — `PathfindingService.layer` assemblée dans
   `GameLayer`.
 - `src/game/loop/updateFx.ts` — lit `astarMetricsSnapshot()` pour le panneau
   de debug.
@@ -195,11 +195,11 @@ un oubli à corriger ici, un contrat de nommage glTF
 
 ## Tests
 
-- `test/game/level/pathfinding.test.ts` — bake contre un vrai monde Rapier
+- `test/game/level/navigation/pathfinding.test.ts` — bake contre un vrai monde Rapier
   (sol plat, pente à 45°, rebord de 0,8 m, mezzanine, diagonale coupée),
   `PathfindingService.test()` scriptée sans Rapier,
   `PhysicsWorld.refreshSceneQueries` (colliders neufs visibles au bake).
-- `test/game/entities/suit.test.ts` / `director.test.ts` — sections
+- `test/game/entities/suit/suit.test.ts` / `director.test.ts` — sections
   « poursuite (chase) : pathfinding puis repli sur l'évitement local » :
   chemin scripté suivi jusqu'au bout, repli sur rayon direct dégagé quand
   `findPath` échoue (comportement par défaut de `PathfindingService.test()`).

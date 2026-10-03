@@ -41,7 +41,7 @@ Les custom properties Blender décident du comportement : `masse` (kg), `pv`
 couleur des débris). Tout se règle dans le `.blend`, rien dans le code.
 
 L'état de partie (PV courants, destruction, poses interpolées) vit dans
-`PropSystem` (`game/level/props.ts`), reconstruit à chaque chargement au même
+`PropSystem` (`game/level/props/props.ts`), reconstruit à chaque chargement au même
 titre que le graphe de navigation et le pool de lampes.
 
 ### Pourquoi un groupe `PROP` et pas `WORLD`
@@ -95,7 +95,7 @@ transformation de ce groupe **en plus** de celle que la physique lui écrit.
   ci-dessous, la première formulation de cette ligne était fausse.
 - **Le déterminisme est préservé** : impulsions et dégâts dérivent des
   `HitEvent` du pas fixe, jamais d'un tirage. Les débris, eux, utilisent
-  `Math.random()` — ils sont cosmétiques et vivent dans `render/fx.ts`, hors du
+  `Math.random()` — ils sont cosmétiques et vivent dans `render/fx/fx.ts`, hors du
   pas fixe, comme les gibs.
 - **`validate_level.py` et `audit_niveau.py` connaissent le préfixe.** L'audit a
   immédiatement trouvé un carton encastré dans le collider d'un caddie posé au

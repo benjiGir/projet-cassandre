@@ -7,7 +7,7 @@ updated: 2026-09-26
 
 # Valeurs des armes
 
-Valeurs initiales de `src/game/player/weaponConfig.ts`. Ce sont les valeurs
+Valeurs initiales de `src/game/player/weapons/weaponConfig.ts`. Ce sont les valeurs
 configurées du prototype, pas un équilibrage final issu d'un playtest.
 
 ## Dégâts et attaque

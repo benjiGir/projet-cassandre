@@ -96,8 +96,8 @@ Une validation documentaire ne certifie pas les pages contre l'expérience en je
 
 ## Tests
 
-- `test/core/loop.test.ts` couvre la boucle à pas fixe.
-- `test/core/random.test.ts` couvre le générateur pseudo-aléatoire déterministe.
+- `test/core/loop/loop.test.ts` couvre la boucle à pas fixe.
+- `test/core/effect/random.test.ts` couvre le générateur pseudo-aléatoire déterministe.
 - `test/game/`, `test/physics/` et `test/render/` couvrent leurs domaines respectifs.
 - `test/ui/` couvre le flux d'écran, le formatage et les écrans.
 - `tools/docs/test_check_docs_links.py` couvre les règles du vérificateur documentaire.

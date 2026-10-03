@@ -325,7 +325,7 @@ def sas_vitre(o, groupe: str, dedans: int, props, col_coll) -> int:
 
 
 # Portes sans carte ouvertes par un `use_*` qui porte `target` et un `message`
-# (le jeu les reconnaît à ça, `game/level/interactive.ts`). Le SENS UNIQUE de
+# (le jeu les reconnaît à ça, `game/level/interactions/interactive.ts`). Le SENS UNIQUE de
 # la porte coupe-feu tient à la place de son bouton : à plus de 2 m (portée
 # d'usage) de tout point du côté rayons. Une fois ouverte, elle le reste — le
 # raccourci à la Doom, mérité.

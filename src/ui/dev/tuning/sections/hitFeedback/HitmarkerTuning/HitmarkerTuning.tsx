@@ -1,5 +1,5 @@
-import { HITMARKER_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weaponConfig";
-import { applyHitmarkerVariant } from "../../../../../../game/devtools/testHarness";
+import { HITMARKER_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weapons/weaponConfig";
+import { applyHitmarkerVariant } from "../../../../../../game/devtools/replay/testHarness";
 import { FieldSliders } from "../../../controls/FieldSliders/FieldSliders";
 import { HITMARKER_FIELDS } from "../../../lib/tuningFields";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";

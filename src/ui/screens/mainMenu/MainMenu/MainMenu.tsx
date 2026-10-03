@@ -13,7 +13,7 @@ import styles from "./MainMenu.module.css";
 export interface MainMenuProps {
   onPlay: () => void;
   onOptions: () => void;
-  /** Emplacement pour les outils d'auteur, rempli seulement en dev (`app/bootChoice.ts`). */
+  /** Emplacement pour les outils d'auteur, rempli seulement en dev (`app/navigation/bootChoice.ts`). */
   devTools?: ReactNode;
 }
 

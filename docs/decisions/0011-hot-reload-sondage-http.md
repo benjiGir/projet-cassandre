@@ -22,7 +22,7 @@ jamais pour un fichier qui n'est référencé par aucun `import`).
 
 ## Décision
 
-`createLevelSession` (`src/game/level/hotReload.ts`) sonde `url` par
+`createLevelSession` (`src/game/level/loading/hotReload.ts`) sonde `url` par
 `fetch(url, { method: "HEAD" })` à intervalle court (400 ms par défaut), en
 comparant `ETag`/`Last-Modified`/`Content-Length` d'un appel à l'autre. Le
 serveur de fichiers statiques de Vite (`sirv`) pose ces en-têtes à partir du

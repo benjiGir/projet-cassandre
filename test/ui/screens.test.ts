@@ -3,9 +3,9 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { beginLoading, finishLoading, reportLoading, waitForLoadingRetry } from "../../src/core/loadingProgress";
-import { input } from "../../src/core/input";
-import { useGameStore } from "../../src/game/state";
+import { beginLoading, finishLoading, reportLoading, waitForLoadingRetry } from "../../src/core/loading/loadingProgress";
+import { input } from "../../src/core/input/input";
+import { useGameStore } from "../../src/game/hud/state";
 import { MainMenu } from "../../src/ui/screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../src/ui/screens/options/OptionsScreen/OptionsScreen";
 import { LoadingScreen } from "../../src/ui/screens/loading/LoadingScreen/LoadingScreen";

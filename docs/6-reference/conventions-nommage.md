@@ -62,7 +62,7 @@ effet.
 
 Ajouter une nouvelle catégorie de carte exige de mettre à jour ensemble
 `src/game/player/loyaltyCards.ts` (liste, type et libellé),
-`src/game/level/loader.ts` (lecture de `card` et `requires`),
+`src/game/level/loading/loader.ts` (lecture de `card` et `requires`),
 `tools/blender/validate_level.py` (valeurs acceptées), les types et règles de
 session concernés, leurs tests et cette référence. Le validateur ne peut pas
 détecter une faute de frappe dans un extra qu'il ne connaît pas.

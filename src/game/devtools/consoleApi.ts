@@ -1,13 +1,13 @@
 import * as THREE from "three";
 
-import type { SfxId } from "../../core/audioTypes";
-import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/inputRecorder";
-import { type Recording } from "../../core/inputTypes";
-import { listSfx, playSfx } from "../../core/audio";
-import { listHeroVoices, playHeroVoice } from "../../core/heroVoice";
-import { zoneAmbienceDebugState } from "../../core/zoneAmbience";
-import { waterAmbienceDebugState } from "../../core/waterAmbience";
-import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/moveConfig";
+import type { SfxId } from "../../core/audio/audioTypes";
+import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/input/inputRecorder";
+import { type Recording } from "../../core/input/inputTypes";
+import { listSfx, playSfx } from "../../core/audio/audio";
+import { listHeroVoices, playHeroVoice } from "../../core/audio/heroVoice";
+import { zoneAmbienceDebugState } from "../../core/audio/zoneAmbience";
+import { waterAmbienceDebugState } from "../../core/audio/waterAmbience";
+import { FEEL_VARIANTS, moveConfig, type MoveConfig } from "../player/movement/moveConfig";
 import {
   CROSSHAIR_VARIANTS,
   HITMARKER_VARIANTS,
@@ -16,23 +16,23 @@ import {
   RECOIL_INTERPOLATION_VARIANTS,
   weaponConfig,
   type WeaponConfig,
-} from "../player/weaponConfig";
-import { PlayerController } from "../player/controller";
-import { WeaponSystem } from "../player/weapons";
-import { Suit } from "../entities/suit";
-import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suitConfig";
-import { Director } from "../entities/director";
-import { DirectorManager } from "../entities/directorManager";
-import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
-import type { DoorInfo } from "../level/doorTypes";
-import { type LevelStats, type SecretZone, type UseObject } from "../level/levelTypes";
-import type { PropSystem } from "../level/props";
-import type { DoorSystem } from "../level/doors";
-import type { VitreSystem } from "../level/vitres";
-import type { SanitaireSystem } from "../level/sanitaires";
-import { navGraphStats } from "../level/navGraph";
-import type { NavGraph } from "../level/pathfindingTypes";
-import { type LightPoolStats } from "../../render/lightPool";
+} from "../player/weapons/weaponConfig";
+import { PlayerController } from "../player/movement/controller";
+import { WeaponSystem } from "../player/weapons/weapons";
+import { Suit } from "../entities/suit/suit";
+import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suit/suitConfig";
+import { Director } from "../entities/director/director";
+import { DirectorManager } from "../entities/director/directorManager";
+import { directorConfig, type DirectorConfig } from "../entities/director/directorConfig";
+import type { DoorInfo } from "../level/doors/doorTypes";
+import { type LevelStats, type SecretZone, type UseObject } from "../level/loading/levelTypes";
+import type { PropSystem } from "../level/props/props";
+import type { DoorSystem } from "../level/doors/doors";
+import type { VitreSystem } from "../level/interactions/vitres";
+import type { SanitaireSystem } from "../level/sanitaires/sanitaires";
+import { navGraphStats } from "../level/navigation/navGraph";
+import type { NavGraph } from "../level/navigation/pathfindingTypes";
+import { type LightPoolStats } from "../../render/environment/lightPool";
 import {
   anisotropieDisponible,
   appliquerFiltrage,
@@ -40,17 +40,17 @@ import {
   INTERNAL_HEIGHT,
   INTERNAL_WIDTH,
   type FiltrageTexture,
-} from "../../render/renderer";
+} from "../../render/pipeline/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
-import { grantCard } from "../session/cards";
-import { triggerLevelComplete } from "../session/doors";
-import { applyPlayerDamage, presentPlayerDamage } from "../session/feedback";
-import { type SessionStats } from "../session/score";
-import { useGameStore } from "../state";
-import { type LevelRecap } from "../hudTypes";
+import { grantCard } from "../session/progression/cards";
+import { triggerLevelComplete } from "../session/progression/doors";
+import { applyPlayerDamage, presentPlayerDamage } from "../session/player/feedback";
+import { type SessionStats } from "../session/progression/score";
+import { useGameStore } from "../hud/state";
+import { type LevelRecap } from "../hud/hudTypes";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
-import { startPlayback } from "../session/recording";
+import { startPlayback } from "./replay/recording";
 import { type GameEngine } from "../session/gameEngine";
 import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
 import {
@@ -67,7 +67,7 @@ import {
   simulateRecording,
   type LightBudgetReport,
   type RenderBenchmark,
-} from "./testHarness";
+} from "./replay/testHarness";
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
@@ -155,7 +155,7 @@ export function exposeDebugApi(engine: GameEngine): void {
       /** La touche E sur la porte manœuvrable la plus proche (`manuelle`), depuis la position du joueur — le verrouillage du pointeur met la vraie touche hors de portée de l'automatisation. */
       actionner: () => engine.session.doorSystem?.actionner(engine.session.player.position) ?? null,
     },
-    /** Vitrages du niveau courant (`game/level/vitres.ts::VitreSystem`) :
+    /** Vitrages du niveau courant (`game/level/interactions/vitres.ts::VitreSystem`) :
      * `liste()` rend l'état de chaque vitre (PV, cassée, givre), `casser(nom)`
      * en détruit une sans tirer dessus — même précédent que `props`. */
     vitres: {
@@ -176,7 +176,7 @@ export function exposeDebugApi(engine: GameEngine): void {
       liste: () => listSfx(),
       joue: (id: SfxId, volume = 1) => playSfx(id, volume),
       eau: () => waterAmbienceDebugState(),
-      /** Ambiance de zone (`core/zoneAmbience.ts`) : la zone entendue et le volume appliqué à chaque nappe. */
+      /** Ambiance de zone (`core/audio/zoneAmbience.ts`) : la zone entendue et le volume appliqué à chaque nappe. */
       ambiance: () => zoneAmbienceDebugState(),
     },
     /** Voix du héros : `liste()` rend chaque prise du sprite `voix` et sa durée,
@@ -374,18 +374,18 @@ declare global {
       cards: () => LoyaltyCard[];
       giveCard: (card: LoyaltyCard) => void;
       doors: () => DoorInfo[];
-      /** Portes ANIMÉES du niveau courant — voir `game/level/doors.ts::DoorSystem`. */
+      /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {
         liste: () => ReturnType<DoorSystem["describe"]>;
         ouvrir: (nom: string) => boolean;
         actionner: () => ReturnType<DoorSystem["actionner"]>;
       };
-      /** Vitrages du niveau courant — voir `game/level/vitres.ts::VitreSystem`. */
+      /** Vitrages du niveau courant — voir `game/level/interactions/vitres.ts::VitreSystem`. */
       vitres: {
         liste: () => ReturnType<VitreSystem["describe"]>;
         casser: (nom: string) => boolean;
       };
-      /** Sanitaires du niveau courant — voir `game/level/sanitaires.ts::SanitaireSystem`. */
+      /** Sanitaires du niveau courant — voir `game/level/sanitaires/sanitaires.ts::SanitaireSystem`. */
       sanitaires: {
         liste: () => ReturnType<SanitaireSystem["describe"]>;
         casser: (nom: string) => boolean;
@@ -406,14 +406,14 @@ declare global {
       secrets: () => SecretZone[];
       heals: () => UseObject[];
       ammo: () => UseObject[];
-      /** Mobilier physique (`prop_*`) du niveau courant — voir `game/level/props.ts`. */
+      /** Mobilier physique (`prop_*`) du niveau courant — voir `game/level/props/props.ts`. */
       props: {
         liste: () => ReturnType<PropSystem["describe"]>;
         casser: (nom: string) => boolean;
       };
       /** Dev : rend les ennemis aveugles au joueur (voir `devtools/cheats.ts`). */
       notarget: (on?: boolean) => boolean;
-      /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/pathfinding.ts`. */
+      /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/navigation/pathfinding.ts`. */
       pathfinding: {
         graph: () => NavGraph | null;
         stats: () => ReturnType<typeof navGraphStats> | null;
@@ -424,7 +424,7 @@ declare global {
       filtrage: (mode?: FiltrageTexture) => { mode: FiltrageTexture; textures: number; anisotropieMax: number };
       resolution: (width?: number, height?: number) => { width: number; height: number };
       lightBudget: (n?: number | null) => LightBudgetReport | LightPoolStats;
-      /** Récap de fin de partie (`game/session/score.ts`) — voir sa doc d'implémentation pour le détail de chaque champ. */
+      /** Récap de fin de partie (`game/session/progression/score.ts`) — voir sa doc d'implémentation pour le détail de chaque champ. */
       recap: {
         stats: () => SessionStats;
         recap: () => LevelRecap | null;

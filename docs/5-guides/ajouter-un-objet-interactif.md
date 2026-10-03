@@ -22,11 +22,11 @@ runtime.
   conventions glTF](../6-reference/conventions-nommage.md).
 - Identifiez la donnée exportée : préfixe glTF, extras, bbox, collision
   et point de placement.
-- Repérez le lecteur de ces données dans `src/game/level/loader.ts`.
+- Repérez le lecteur de ces données dans `src/game/level/loading/loader.ts`.
 - Pour un nouveau préfixe, vérifiez si un système déjà existant peut
   héberger sa logique.
 - Un préfixe neuf doit être enregistré dans le dispatch par nom de
-  `src/game/level/loader.ts` ; le validateur ne devine pas le comportement
+  `src/game/level/loading/loader.ts` ; le validateur ne devine pas le comportement
   runtime d'un préfixe qu'il ne connaît pas.
 
 ## Étapes
@@ -38,7 +38,7 @@ runtime.
    `tools/blender/validate_level.py`. Refusez les noms incomplets et les
    extras dont les valeurs ne sont pas valides.
 3. Étendez le type d'objet ou de données lu par
-   `src/game/level/loader.ts`. Gardez la conversion glTF → runtime à cet
+   `src/game/level/loading/loader.ts`. Gardez la conversion glTF → runtime à cet
    endroit.
    Ajoutez aussi une branche `startsWith(...)` dans le dispatch des noms,
    avant le traitement générique qui pourrait capturer ce préfixe. Ajoutez

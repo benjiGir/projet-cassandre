@@ -333,9 +333,9 @@ au candidat `renders/_cassandre/direction_covers.blend`. La recette
 les [mesures de l’essai](../assets/agencement-etape-6-2026-09-30/mesures.json).
 
 L’examen du gameplay révèle une limite à la recommandation initiale : aucune
-action d’accroupissement n’existe dans `src/core/input.ts`, les yeux du joueur
+action d’accroupissement n’existe dans `src/core/input/input.ts`, les yeux du joueur
 sont à 1,60 m et ceux du Directeur à 1,80 m. `resolveAttack` dans
-`src/game/entities/enemyMachine.ts` vérifie la visibilité puis vise entre ces
+`src/game/entities/shared/enemyMachine.ts` vérifie la visibilité puis vise entre ces
 deux points. Sur le même sol, ce segment passe au moins 40 cm au-dessus des
 meubles. Ils ne coupent donc pas le tir nominal ; la dispersion peut modifier
 certains impacts, sans en faire une protection fiable. Les deux meubles

@@ -67,7 +67,7 @@ Les fichiers JSON adjacents décrivent les cellules ou repères quand le runtime
 Les manifestes associent les directions, animations et rectangles de texture lus par le moteur.
 `build_weapons.py` écrit le modèle glTF des armes dans `public/assets/weapons/armes.glb`.
 `render_weapon_pickups.py` écrit l'atlas des armes au sol et son manifeste sous `public/assets/sprites/`.
-`generate_card_pickups.py` écrit les trois PNG RGBA de 128×80 pixels sous `public/assets/sprites/cards/`. Il réutilise la police pixel de `generate_labels.py` ; ses sorties sont directement consommées par `src/render/cardPickups.ts`.
+`generate_card_pickups.py` écrit les trois PNG RGBA de 128×80 pixels sous `public/assets/sprites/cards/`. Il réutilise la police pixel de `generate_labels.py` ; ses sorties sont directement consommées par `src/render/pickups/cardPickups.ts`.
 Les modèles et textures d'ennemis passent par un rendu Blender, pas par le pipeline de texture 2D.
 
 ### Déterminisme et provenance
@@ -102,7 +102,7 @@ La génération et l'export du niveau sont décrits dans [Outillage Blender](out
 ## Tests
 
 - Les scripts de validation Blender et l'audit de niveau sont décrits dans [Outillage Blender](outillage-blender.md).
-- Les manifestes produits par les générateurs sont consommés par `src/render/enemySprites.ts` et les lecteurs d'assets correspondants.
+- Les manifestes produits par les générateurs sont consommés par `src/render/sprites/enemySprites.ts` et les lecteurs d'assets correspondants.
 - `tools/audio/analyze_sfx.py` et `tools/audio/build_sprite.py` vérifient les sorties audio.
 - Il n'existe pas de commande unique qui régénère et valide toutes les familles d'assets.
 
@@ -113,7 +113,7 @@ Comparer les images et manifestes générés avec leurs spécifications puis rec
 Après une modification de texture de niveau, reconstruire et exporter le fichier glTF, puis le charger dans le jeu.
 Après un changement d'atlas ennemi, vérifier les huit directions et les rectangles dans le manifeste.
 Après la régénération d'un atlas qui équipe le niveau, reconstruire le fichier Blender ou le niveau concerné avant d'inspecter le runtime.
-Comparer le résultat d'un manifeste au lecteur réellement utilisé par `src/render/enemySprites.ts` ou par le système d'armes.
+Comparer le résultat d'un manifeste au lecteur réellement utilisé par `src/render/sprites/enemySprites.ts` ou par le système d'armes.
 Pour les recettes et commandes audio, suivre [Studio audio](studio-audio.md).
 Conserver côte à côte le PNG et le manifeste générés pour repérer un décalage de rectangles ou d'identifiants.
 Pour les textures utilisées par Blender, confirmer que le fichier exporté reflète la nouvelle image et non une sortie précédente.

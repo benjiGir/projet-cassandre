@@ -15,15 +15,15 @@ Ils sont séparés des commandes de jeu et absents du build de production.
 ## Fichiers
 
 - `src/game/devtools/consoleApi.ts` construit `window.cassandre` et ses espaces de commande.
-- `src/game/devtools/testHarness.ts` contient les comparaisons déterministes, variantes A/B et mesures ponctuelles.
+- `src/game/devtools/replay/testHarness.ts` contient les comparaisons déterministes, variantes A/B et mesures ponctuelles.
 - `src/game/devtools/cheats.ts` expose les aides de développement comme `notarget`.
 - `src/game/loop/devGameplayInput.ts` traite F8, F9 et F10 en mode développement.
 - `src/game/loop/updateFx.ts` traite les bascules visuelles et met à jour les mesures affichées.
-- `src/game/state.ts` définit l'état de debug publié au store.
+- `src/game/hud/state.ts` définit l'état de debug publié au store.
 - `src/ui/dev/DebugPanel/DebugPanel.tsx` affiche les métriques du moteur.
 - `src/ui/dev/tuning/TuningPanel/TuningPanel.tsx` expose les paramètres de tuning.
-- `src/core/inputRecorder.ts` définit le format des séquences d'input.
-- `src/game/session/recording.ts` restaure une séquence dans la session pour son rejeu.
+- `src/core/input/inputRecorder.ts` définit le format des séquences d'input.
+- `src/game/devtools/replay/recording.ts` restaure une séquence dans la session pour son rejeu.
 - [Page de debug historique](./debug.md) conserve des explications détaillées du système.
 
 ## Où ça s'insère dans la boucle
@@ -102,16 +102,16 @@ Ces raccourcis sont réservés au développement.
 
 ## Tests
 
-- `test/core/loop.test.ts` couvre les pas fixes employés pendant le rejeu.
-- `test/core/random.test.ts` vérifie le RNG des simulations.
+- `test/core/loop/loop.test.ts` couvre les pas fixes employés pendant le rejeu.
+- `test/core/effect/random.test.ts` vérifie le RNG des simulations.
 - `test/game/` contient les tests des systèmes observés par les outils.
-- `test/render/lightPool.test.ts` vérifie les calculs du budget de lampes.
+- `test/render/environment/lightPool.test.ts` vérifie les calculs du budget de lampes.
 - L'API `window.cassandre` n'a pas de suite d'intégration dédiée.
 - Le module d'enregistrement d'input n'a pas de test unitaire dédié dans `test/`.
 
 ## Comment vérifier que ça marche
 
-Lancer `pnpm test -- test/core/loop.test.ts`.
+Lancer `pnpm test -- test/core/loop/loop.test.ts`.
 En mode développement, ouvrir la console navigateur et vérifier `window.cassandre`.
 Utiliser `window.cassandre.pathfinding.stats()` ou `window.cassandre.sfx.liste()` pour inspecter les états exposés.
 En jeu, enregistrer une petite séquence avec F9, puis la rejouer avec F10.

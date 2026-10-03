@@ -51,7 +51,7 @@ n'a **pas** de sens à partager :
   `Director`, pas une région d'état parallèle de `enemyMachine`.
 
 Discipline conservée à l'identique de l'avant-jalon : `suit.ts`/`director.ts`
-n'importent rien de `render/`, `core/audio.ts` ni `game/state.ts` (pureté du
+n'importent rien de `render/`, `core/audio/audio.ts` ni `game/hud/state.ts` (pureté du
 cœur de simulation) ; tout tourne au pas fixe avec le `dt` de gameplay reçu
 en paramètre, jamais d'horloge murale ; le `KinematicCharacterController` est
 une seule instance partagée par tous les Costards (respectivement tous les

@@ -6,7 +6,7 @@ import {
   setAudioSettings,
   type AudioChannel,
   type AudioSettings,
-} from "../../../../../game/audioSettings";
+} from "../../../../../game/settings/audioSettings";
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { OptionSection } from "../../fields/OptionSection/OptionSection";

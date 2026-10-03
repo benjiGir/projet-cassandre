@@ -684,7 +684,7 @@ def _regler_rendu(scene, mode: str, taille, cam):
 
 # --- Budget de lots de dessin ---------------------------------------------------
 
-DECOR_CELL_SIZE = 48.0          # `src/game/level/mergeStaticDecor.ts`
+DECOR_CELL_SIZE = 48.0          # `src/game/level/loading/mergeStaticDecor.ts`
 DRAW_CALL_BUDGET = 200
 GAME_FAR = 130.0                # `session/gameEngine.ts`, PerspectiveCamera
 DEMI_FOV_V = math.radians(75.0 / 2)
@@ -695,7 +695,7 @@ NON_RENDUS = ("col_", "trig_", "secret_", "spawn_", "cam_", "light_")
 # `vitreBatchCount`, `ecranBatchCount`, `sanitaireBatchCount`), comme les portes.
 FUSIONS_DEDIEES = ("vitre_", "sanitaire_", "ecran_", "door_")
 # Un lot chacun, mais éteints au-delà d'une portée (mètres, depuis l'œil) :
-# `props.ts` PROP_RENDER_DISTANCE_SQ, `render/useObjectCulling.ts`.
+# `props.ts` PROP_RENDER_DISTANCE_SQ, `render/environment/useObjectCulling.ts`.
 SOLOS = {"prop_": 36.0, "use_": 48.0, "fx_douche_": None}
 
 

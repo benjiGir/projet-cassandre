@@ -48,7 +48,7 @@ flowchart TD
 | `PickupResources` (atlas et modèles partagés des ramassages) | `loadPickupResources`, attendu par `bootGameSession` | après `LevelSession.stop()` dans `teardownGameSession` | Partie ; survit au hot reload |
 | `GameSession` (monde Rapier, joueur, armes, managers d'ennemis, systèmes de niveau, score) | `bootGameSession` (`src/game/session/lifecycle.ts`) | `teardownGameSession` | Partie |
 | `LevelSession` (niveau `.glb` courant, sondage de hot reload) | `createLevelSession`, appelée par `loadGltfLevel` à chaque `bootGameSession` sur le chemin glTF | `.stop()`, appelée par `teardownGameSession` et par tout remplacement explicite (console, `?level=`) | Partie (recréée à chaque partie, pas seulement rechargée) |
-| `LevelHandle` (géométrie, colliders, spawns d'un `.glb` précis) | `loadLevel` (`src/game/level/loader.ts`), à l'intérieur d'une `LevelSession` | `.dispose()`, appelé par la `LevelSession` à son remplacement ou à son arrêt | Niveau chargé (survit à un hot reload raté, remplacé par le suivant à un hot reload réussi) |
+| `LevelHandle` (géométrie, colliders, spawns d'un `.glb` précis) | `loadLevel` (`src/game/level/loading/loader.ts`), à l'intérieur d'une `LevelSession` | `.dispose()`, appelé par la `LevelSession` à son remplacement ou à son arrêt | Niveau chargé (survit à un hot reload raté, remplacé par le suivant à un hot reload réussi) |
 | `NavGraph`, `LightPool`, `PropSystem`, `DoorSystem`, `VitreSystem`, `SanitaireSystem`, billboards d'armes au sol | Fonction `prepare` de `loadGltfLevel`, à chaque commit de niveau (premier chargement ET hot reload) | Remplacés au commit suivant ; le dernier jeu meurt avec la `GameSession` | Commit de niveau (plus court qu'une partie si le hot reload recharge plusieurs fois) |
 | `cards`, `unlockedDoors`, `foundSecrets`, `playerHp`, `stats` (score) | `bootGameSession`, dans l'objet `GameSession` | `teardownGameSession` (implicitement, avec le reste de `GameSession`) | Partie — un hot reload les laisse intacts (voir plus bas) |
 | Pose interpolée (joueur, ennemis, props, portes, viewmodel) | `snapshotPrevious` / `interpolateVisuals` (`src/game/loop/`) | Écrasée au pas fixe suivant | Image |
@@ -57,8 +57,8 @@ flowchart TD
 
 Le chargement des ressources de session et du `.glb` traverse la [frontière asynchrone](boucle-et-temps.md#la-frontière-synchrone)
 plutôt que le pas fixe : `loadGltfLevel` (`src/game/session/spawning.ts`)
-et `createLevelSession`/`loadLevel` (`src/game/level/hotReload.ts`,
-`src/game/level/loader.ts`) tournent sur `GameRuntime.runPromise`/`runFork`,
+et `createLevelSession`/`loadLevel` (`src/game/level/loading/hotReload.ts`,
+`src/game/level/loading/loader.ts`) tournent sur `GameRuntime.runPromise`/`runFork`,
 jamais sur `runGameplaySync`. Deux évènements peuvent redemander un
 chargement pendant qu'un autre est encore en vol : un hot reload déclenché
 par le sondage HTTP, et un « Rejouer »/« Retour au menu » qui détruit la
@@ -94,21 +94,21 @@ qui attend elle-même tout chargement en vol avant de disposer le handle
 courant — le candidat en cours de téléchargement, s'il finit après, se
 retrouve avec une génération périmée et se jette lui-même à l'arrivée. Le
 nouveau `bootGameSession` ne démarre qu'une fois ce `teardown` résolu
-(`src/app/sessionFlow.ts::replay`/`returnToMenu`, tous deux `async`).
+(`src/app/navigation/sessionFlow.ts::replay`/`returnToMenu`, tous deux `async`).
 
 **Un échec de chargement** (`.glb` introuvable, export à moitié écrit)
 retourne `{ status: "failed" }` sans jamais toucher `currentHandle` : la
 session garde le niveau précédent affiché — ou l'écran de chargement, au
-tout premier boot — et `waitForGameSessionReady` (`src/app/sessionFlow.ts`)
+tout premier boot — et `waitForGameSessionReady` (`src/app/navigation/sessionFlow.ts`)
 boucle sur une nouvelle tentative après un délai, sans jamais démarrer la
 boucle sur une scène vide.
 
 ## Le lien avec la machine de flux d'écran
 
-`gameFlowMachine` (`src/app/gameFlowMachine.ts`) ne connaît que des noms
+`gameFlowMachine` (`src/app/navigation/gameFlowMachine.ts`) ne connaît que des noms
 d'état (`mainMenu`, `loading`, `playing`, `paused`, `dead`,
 `levelComplete`...) — jamais `PhysicsWorld` ni `GameSession`. Le VRAI reset
-vit dans `src/game/session/lifecycle.ts` et `src/app/sessionFlow.ts`,
+vit dans `src/game/session/lifecycle.ts` et `src/app/navigation/sessionFlow.ts`,
 déclenché par les mêmes boutons qui envoient un évènement à l'acteur :
 `replay()`/`returnToMenu()` envoient `REPLAY`/`RETURN_TO_MENU` **avant**
 `teardownGameSession`, puis `BEGIN_LOAD`, puis attendent
@@ -123,7 +123,7 @@ joueur : `2-fonctionnel/interface.md` (page pas encore écrite, D24).
 
 ## Hot reload
 
-Actif uniquement sous `import.meta.env.DEV` (`src/game/level/hotReload.ts`) :
+Actif uniquement sous `import.meta.env.DEV` (`src/game/level/loading/hotReload.ts`) :
 la branche de sondage HTTP `HEAD` disparaît du bundle de production au
 lieu d'y dormir. Un hot reload appelle le même chemin `prepare`/commit
 qu'un premier chargement, mais avec `isFirstLoad: false` : `loadGltfLevel`
@@ -203,6 +203,6 @@ déverrouillées, pool de lampes.
 Les textures atlas et canvas sont téléversées par `warmTextures(renderer)`
 pendant le chargement. Les fonctions d’habillage ne font aucun téléchargement.
 Une erreur de préparation retourne vers l’écran de retry via
-`app/sessionFlow.ts::bootGameSessionWithRetry`. Cette attente ne passe jamais
+`app/navigation/sessionFlow.ts::bootGameSessionWithRetry`. Cette attente ne passe jamais
 par la boucle fixe. L’horloge cosmétique des armes au sol appartient à la
 session et repart de zéro à chaque nouvelle partie.

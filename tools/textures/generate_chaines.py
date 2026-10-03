@@ -8,7 +8,7 @@ Six « chaînes », chacune une poignée de frames qui bouclent : le journal
 (avec le gag reptilien, rare), une pub de marque inventée, la mire, le foot,
 une fausse image de vidéosurveillance, et l'état CASSÉ (neige/noir). Le jeu
 choisit la chaîne par l'extra Blender `chaine` d'un `ecran_*`
-(`game/level/ecrans.ts`) et fait défiler ses frames sur une horloge dérivée
+(`game/level/interactions/ecrans.ts`) et fait défiler ses frames sur une horloge dérivée
 du pas fixe — jamais de l'horloge murale (invariant #1).
 
 Réutilise les dessins déjà éprouvés de `generate_ecrans.py` (mire, barres_h,

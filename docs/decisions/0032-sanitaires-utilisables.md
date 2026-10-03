@@ -41,7 +41,7 @@ Contraintes déjà en place, héritées de l'ADR 0031 (portes/vitres) :
 
 ### Un préfixe `sanitaire_*`, calqué sur `vitre_*`
 
-`game/level/sanitaires.ts` reprend l'architecture de `game/level/vitres.ts`
+`game/level/sanitaires/sanitaires.ts` reprend l'architecture de `game/level/interactions/vitres.ts`
 telle quelle : `loader.ts` construit un `SanitaireCandidate` par mesh
 (collider cuboid FIXE déjà posé, groupe WORLD), `mergeSanitaireDecor` les
 fusionne en **un lot de dessin par matériau pour TOUT le niveau** (pas de
@@ -69,7 +69,7 @@ Trois différences avec `vitre_*` :
 
 ### Deux gestes, une seule règle
 
-`game/session/sanitaires.ts` porte la règle Duke, en une seule fonction par
+`game/session/player/sanitaires.ts` porte la règle Duke, en une seule fonction par
 geste, appelée depuis DEUX points d'entrée :
 
 - `relieveAtSanitaire(session)` : soulagement à un sanitaire INTACT — +10 %
@@ -109,9 +109,9 @@ distance).
 
 Remplacé par un "neartag" façon Duke 3D : un rayon Rapier part de l'œil du
 joueur (même origine que les armes, `weaponEyeOrigin` —
-`game/player/weapons.ts`) dans la direction de visée courante
+`game/player/weapons/weapons.ts`) dans la direction de visée courante
 (`frame.yaw`/`frame.pitch`), filtré WORLD (murs, cloisons de cabine, colliders
-de `sanitaire_*`). `SanitaireSystem.resolveAim` (`game/level/sanitaires.ts`)
+de `sanitaire_*`). `SanitaireSystem.resolveAim` (`game/level/sanitaires/sanitaires.ts`)
 interprète le résultat :
 
 - **Sanitaire INTACT** : doit être le PREMIER collider touché par le rayon,
@@ -134,7 +134,7 @@ interprète le résultat :
   sinon une cloison ou un mur est entre le joueur et le jet, refusé.
 
 Le rayon lui-même (`RaycastService.use(...)`, `session.physics`) est lancé
-par `game/session/sanitaires.ts::trySanitaire` — seul endroit du jeu qui
+par `game/session/player/sanitaires.ts::trySanitaire` — seul endroit du jeu qui
 connaît `RaycastService`/`PhysicsWorld` côté sanitaires, même séparation que
 `vitre_*`/`prop_*`. `SanitaireSystem.resolveAim` ne fait QUE l'interprétation
 géométrique du résultat qu'on lui passe, il ne connaît pas Rapier.

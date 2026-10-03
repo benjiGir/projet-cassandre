@@ -1,4 +1,4 @@
-import type { FiltrageTexture } from "../../../../../render/renderer";
+import type { FiltrageTexture } from "../../../../../render/pipeline/renderer";
 import type { Choice } from "../../fields/ChoiceGroup/ChoiceGroup";
 
 // see: docs/decisions/0027-filtrage-des-textures-reduites.md

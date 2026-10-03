@@ -8,11 +8,11 @@ updated: 2026-09-26
 # Prototype — pipeline de niveau — 2026-08
 
 Phase 4 — Pipeline de niveau (glTF, conventions de nommage, hot reload).
-> Codée et fonctionnelle : `src/game/level/loader.ts` (contrat complet
+> Codée et fonctionnelle : `src/game/level/loading/loader.ts` (contrat complet
 > `col_*`/`spawn_player`/`spawn_suit_*`/`trig_*`/`door_*`/`use_*`/`secret_*`,
 > transforms monde appliqués avant Rapier, reconversion forcée en
 > `MeshLambertMaterial`/`NearestFilter` — sinon `GLTFLoader` viole l'invariant
-> #5 silencieusement), `src/game/level/hotReload.ts` (sondage HTTP HEAD
+> #5 silencieusement), `src/game/level/loading/hotReload.ts` (sondage HTTP HEAD
 > ETag/Last-Modified, 400ms, préserve la position du joueur au reload).
 > Câblage additif dans `main.ts` : `gym.ts` reste le niveau par défaut au
 > boot, le pipeline glTF s'active via `?level=<nom>` ou

@@ -9,13 +9,13 @@ updated: 2026-09-26
 
 # Contrôles et bindings
 
-Contrat du moteur d'input rebindable (`src/core/input.ts`). Pour la
+Contrat du moteur d'input rebindable (`src/core/input/input.ts`). Pour la
 synchronisation des fronts avec le pas fixe, voir
 [boucle de jeu](./systems-boucle-de-jeu.md#entrée-synchronisée-au-pas-fixe).
 
 ## Actions de gameplay et bindings par défaut
 
-Une action par élément d'`InputFrame` (`core/inputRecorder.ts`) qui provient
+Une action par élément d'`InputFrame` (`core/input/inputRecorder.ts`) qui provient
 d'une touche ou d'un bouton — `yaw`/`pitch`/`dx`/`dy` restent hors de cette
 table, ce ne sont pas des bindings discrets.
 

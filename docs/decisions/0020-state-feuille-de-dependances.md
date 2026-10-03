@@ -1,11 +1,11 @@
 ---
-title: game/state.ts comme feuille de dépendances
+title: game/hud/state.ts comme feuille de dépendances
 tags: [adr, architecture, ui]
 status: remplace
 updated: 2026-10-02
 ---
 
-# ADR 0020 — `game/state.ts` comme feuille de dépendances
+# ADR 0020 — `game/hud/state.ts` comme feuille de dépendances
 
 ## Statut
 
@@ -15,7 +15,7 @@ des feuilles séparées de l’implémentation du store.
 
 ## Contexte
 
-`game/state.ts` est le store zustand qui pont la boucle à pas fixe vers React
+`game/hud/state.ts` est le store zustand qui pont la boucle à pas fixe vers React
 (voir [ADR 0003](0003-react-hors-boucle.md)) : tout `src/ui/*` importe
 `useGameStore` depuis ce fichier (`DeathScreen.tsx`, `Hud.tsx`,
 `HeroLine.tsx`, `HudMessage.tsx`, `DebugPanel.tsx`, `LevelCompleteScreen.tsx`).
@@ -25,14 +25,14 @@ module de `src/game/*` (`entities/`, `level/`, `loop/`, `player/`,
 
 Deux champs de `DebugState`/`GameFlowState` recoupent pourtant du vocabulaire
 possédé ailleurs : `activeWeapon: "none" | "melee" | "shotgun"` recopie
-l'union de `WeaponSystem.activeWeapon` (`game/player/weapons.ts`), et
+l'union de `WeaponSystem.activeWeapon` (`game/player/weapons/weapons.ts`), et
 `GameFlowState` (10 états, dont `loading`, `loadFailed` et `paused`) est la
 table de clés d'état de
 `ui/gameFlowMachine.ts`.
 
 ## Décision
 
-`game/state.ts` n'importe jamais un autre module de `src/game/*`. Quand un
+`game/hud/state.ts` n'importe jamais un autre module de `src/game/*`. Quand un
 type doit être partagé avec le reste du jeu, deux tactiques selon le sens du
 partage :
 
@@ -41,15 +41,15 @@ partage :
   le réutilise tel quel pour ses clés d'état ; TypeScript vérifie la
   correspondance structurelle sans qu'aucun des deux fichiers n'ait besoin de
   dupliquer la liste des états.
-- **Le type est possédé par un module de gameplay** (`game/player/weapons.ts`
+- **Le type est possédé par un module de gameplay** (`game/player/weapons/weapons.ts`
   pour `activeWeapon`) : l'union est RECOPIÉE À LA MAIN plutôt qu'importée.
 
 ## Alternatives écartées
 
 | Option | Pourquoi non |
 |---|---|
-| Importer `ActiveWeapon` depuis `player/weapons.ts` | couple le store à `game/player` — une feuille de dépendances ne le reste pas si chaque type partagé futur emprunte le même chemin, jusqu'à faire de `game/state.ts` un nœud central du graphe |
-| Définir `GameFlowState` dans `ui/gameFlowMachine.ts` et l'importer dans `game/state.ts` | inverse un sens déjà établi (`DeathScreen.tsx`/`Hud.tsx` importent déjà `useGameStore` DEPUIS `game/state.ts`) sans raison technique — le type se retrouverait du mauvais côté d'une frontière existante |
+| Importer `ActiveWeapon` depuis `player/weapons.ts` | couple le store à `game/player` — une feuille de dépendances ne le reste pas si chaque type partagé futur emprunte le même chemin, jusqu'à faire de `game/hud/state.ts` un nœud central du graphe |
+| Définir `GameFlowState` dans `ui/gameFlowMachine.ts` et l'importer dans `game/hud/state.ts` | inverse un sens déjà établi (`DeathScreen.tsx`/`Hud.tsx` importent déjà `useGameStore` DEPUIS `game/hud/state.ts`) sans raison technique — le type se retrouverait du mauvais côté d'une frontière existante |
 
 ## Conséquences
 
@@ -57,7 +57,7 @@ partage :
   synchronisées À LA MAIN. TypeScript ne vérifie la correspondance qu'aux
   points d'assignation réels (ex. `setDebug({ activeWeapon: weapons.activeWeapon })`),
   jamais que les deux déclarations de type restent identiques dans l'absolu.
-- `game/state.ts` reste importable depuis n'importe quel module de
+- `game/hud/state.ts` reste importable depuis n'importe quel module de
   `src/game/*` sans jamais créer de cycle, puisqu'il n'importe rien en retour
   de ce côté du graphe.
 
@@ -65,6 +65,6 @@ partage :
 
 Si la duplication de `activeWeapon` dérive un jour en vrai bug (une valeur
 acceptée par `weapons.ts` mais rejetée — ou l'inverse — par l'union de
-`game/state.ts`), le coût de la synchronisation manuelle aura dépassé celui
+`game/hud/state.ts`), le coût de la synchronisation manuelle aura dépassé celui
 du couplage qu'elle évite, et importer directement le type deviendra la
 meilleure option.

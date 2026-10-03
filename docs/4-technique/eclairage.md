@@ -13,16 +13,16 @@ L'éclairage combine le rig global, les couleurs de sommet exportées avec le ni
 
 ## Fichiers
 
-- `src/game/level/levels.ts` — déclare le mode d'éclairage et le ciel de chaque niveau.
+- `src/game/level/catalog/levels.ts` — déclare le mode d'éclairage et le ciel de chaque niveau.
 - `src/game/session/lifecycle.ts` — applique le rig global et le fond au début de la partie.
-- `src/game/level/loader.ts` — reconvertit les matériaux glTF, conserve `COLOR_0` et construit les `light_*`.
-- `src/render/lightPool.ts` — limite les lampes actives selon la position de caméra.
-- `src/render/ciel.ts` — charge et met en cache les cubemaps.
-- `src/render/renderer.ts` — règle le filtrage et l'espace couleur des textures.
+- `src/game/level/loading/loader.ts` — reconvertit les matériaux glTF, conserve `COLOR_0` et construit les `light_*`.
+- `src/render/environment/lightPool.ts` — limite les lampes actives selon la position de caméra.
+- `src/render/environment/ciel.ts` — charge et met en cache les cubemaps.
+- `src/render/pipeline/renderer.ts` — règle le filtrage et l'espace couleur des textures.
 - `tools/blender/bake_vertex_lighting.py` — cuit l'éclairage en couleurs de sommets côté Blender.
 - `tools/textures/generate_ciel.py` — génère les six images d'une cubemap.
 - `src/game/devtools/consoleApi.ts` — expose l'inspection de lumière et le budget des lampes.
-- `test/render/lightPool.test.ts` et `test/game/level/loader.test.ts` — couvrent la sélection des lampes et l'import.
+- `test/render/environment/lightPool.test.ts` et `test/game/level/loading/loader.test.ts` — couvrent la sélection des lampes et l'import.
 
 ## Où ça s'insère dans la boucle
 
@@ -110,8 +110,8 @@ Le rang se base sur la distance au bord de la portée de chaque lampe. Il ne cal
 
 ## Tests
 
-- `test/render/lightPool.test.ts` — score par portée, limite active, réévaluation et budget `null`.
-- `test/game/level/loader.test.ts` — import des lampes et conservation des vertex colors du glTF.
+- `test/render/environment/lightPool.test.ts` — score par portée, limite active, réévaluation et budget `null`.
+- `test/game/level/loading/loader.test.ts` — import des lampes et conservation des vertex colors du glTF.
 
 ## Comment vérifier que ça marche
 

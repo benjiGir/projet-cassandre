@@ -1,5 +1,5 @@
-import { weaponConfig, IMPACT_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weaponConfig";
-import { applyImpactVariant } from "../../../../../../game/devtools/testHarness";
+import { weaponConfig, IMPACT_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weapons/weaponConfig";
+import { applyImpactVariant } from "../../../../../../game/devtools/replay/testHarness";
 import { FieldSliders } from "../../../controls/FieldSliders/FieldSliders";
 import { IMPACT_FIELDS } from "../../../lib/tuningFields";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";

@@ -120,7 +120,7 @@ est symétrisée par construction dans le code pour ne jamais s'y exposer.
 > effectivement appliqués à un vrai collider quelque part dans le jeu.
 > `DEBRIS` reste déclaré mais non utilisé — les douilles éjectées et les
 > gibs utilisent une physique factice gérée en temps d'affichage plutôt que
-> de vrais `RigidBody` Rapier (voir `src/render/fx.ts::spawnShellCasing`),
+> de vrais `RigidBody` Rapier (voir `src/render/fx/fx.ts::spawnShellCasing`),
 > décision documentée directement dans ce fichier. `PROP` s'y est ajouté le
 > 2026-09-17 avec les props dynamiques (voir ci-dessous).
 
@@ -188,7 +188,7 @@ nulle (rien n'est simulé, le `timestep` est restauré), appelé par
 `game/session/spawning.ts` avant le bake. Le chargement de niveau crée déjà
 des corps hors du pas fixe ; ce pas nul ne fait avancer aucun temps de jeu,
 l'invariant #1 n'est pas entamé. Test de non-régression :
-`test/game/level/pathfinding.test.ts`. **Tout futur code qui interroge le
+`test/game/level/navigation/pathfinding.test.ts`. **Tout futur code qui interroge le
 monde juste après avoir créé des colliders doit passer par cette méthode.**
 
 Ce même piège expliquait l'[ADR

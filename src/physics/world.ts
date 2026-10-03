@@ -1,6 +1,6 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { moveConfig, type MoveConfig } from "../game/player/moveConfig";
+import { moveConfig, type MoveConfig } from "../game/player/movement/moveConfig";
 
 let initialized = false;
 

@@ -13,18 +13,18 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 
 ## Fichiers
 
-- `src/render/billboard.ts` — quad orienté vers la caméra, sélection de direction et flash de dégâts.
-- `src/render/enemySprites.ts` — charge les atlas et manifestes, puis associe les états visibles aux lignes de l'atlas.
-- `src/render/weaponModels.ts` — chargement glTF, validation des extras et modèles de secours.
-- `src/render/viewmodelTypes.ts` — contrats des modèles, horloges et poses.
-- `src/render/viewmodelAnimation.ts` — calcul pur des séquences à partir des horloges.
-- `src/render/viewmodel.ts` — hiérarchie caméra et application des poses.
-- `src/render/pickupResources.ts` — atlas et modèles partagés, détenus par la session.
-- `src/render/pickups.ts` — rend les armes au sol sous forme de billboards.
-- `src/render/cardPickups.ts` — rend les trois cartes de fidélité et le drop du Directeur.
+- `src/render/sprites/billboard.ts` — quad orienté vers la caméra, sélection de direction et flash de dégâts.
+- `src/render/sprites/enemySprites.ts` — charge les atlas et manifestes, puis associe les états visibles aux lignes de l'atlas.
+- `src/render/viewmodel/weaponModels.ts` — chargement glTF, validation des extras et modèles de secours.
+- `src/render/viewmodel/viewmodelTypes.ts` — contrats des modèles, horloges et poses.
+- `src/render/viewmodel/viewmodelAnimation.ts` — calcul pur des séquences à partir des horloges.
+- `src/render/viewmodel/viewmodel.ts` — hiérarchie caméra et application des poses.
+- `src/render/pickups/pickupResources.ts` — atlas et modèles partagés, détenus par la session.
+- `src/render/pickups/pickups.ts` — rend les armes au sol sous forme de billboards.
+- `src/render/pickups/cardPickups.ts` — rend les trois cartes de fidélité et le drop du Directeur.
 - `src/game/loop/interpolateVisuals.ts` — transmet les positions et orientations interpolées des acteurs.
 - `src/game/loop/updateFx.ts` — fait décroître les flashes au temps réel.
-- `src/game/player/weapons.ts` — détient les horloges de tir et de changement d'arme consommées par le viewmodel.
+- `src/game/player/weapons/weapons.ts` — détient les horloges de tir et de changement d'arme consommées par le viewmodel.
 - `tools/blender/render_enemy_sprites.py` — produit les planches et manifestes ennemis.
 - `tools/blender/build_weapons.py` — produit le glTF des modèles subjectifs et des armes au sol.
 - `public/assets/sprites/` et `public/assets/weapons/armes.glb` — ressources effectivement chargées.
@@ -80,11 +80,11 @@ Les géométries utilisent un matériau Lambert à vertex colors. Si le fichier 
 
 Le viewmodel interpole les clocks de chaque arme. Le changement fait descendre l'ancienne arme puis remonter la nouvelle ; le pied-de-biche balaie après l'appui ; le pompe recule puis pompe après le tir. Tirer avec la nouvelle arme peut la remettre en place immédiatement. Aucun de ces gestes ne retarde la possibilité de tirer, conformément à l'invariant [#10](../3-architecture/invariants.md).
 
-Les armes au sol ne sont pas le viewmodel. `src/render/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation. `bootGameSession` attend l’atlas et préchauffe les textures avant la construction de la partie. Les modèles partagés vivent dans `session.pickupResources`, à travers les hot reloads ; ils sont libérés après l’arrêt du niveau.
+Les armes au sol ne sont pas le viewmodel. `src/render/pickups/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation. `bootGameSession` attend l’atlas et préchauffe les textures avant la construction de la partie. Les modèles partagés vivent dans `session.pickupResources`, à travers les hot reloads ; ils sont libérés après l’arrêt du niveau.
 
 ### Cartes de fidélité
 
-`src/render/cardPickups.ts` remplace les cubes `use_*` portant `card` par des cartes rectangulaires à coins arrondis. Les sprites RGBA de 128×80 pixels portent une puce, le nom du rang et une, deux ou trois étoiles. Argent est gris bleuté, Or doré et Platine turquoise clair. Les trois images sont générées par `tools/textures/generate_card_pickups.py` dans `public/assets/sprites/cards/`.
+`src/render/pickups/cardPickups.ts` remplace les cubes `use_*` portant `card` par des cartes rectangulaires à coins arrondis. Les sprites RGBA de 128×80 pixels portent une puce, le nom du rang et une, deux ou trois étoiles. Argent est gris bleuté, Or doré et Platine turquoise clair. Les trois images sont générées par `tools/textures/generate_card_pickups.py` dans `public/assets/sprites/cards/`.
 
 Les textures sont préchargées dans `main.ts` à la frontière asynchrone. Chaque billboard possède sa géométrie, son matériau et une texture clonée dont les pixels sont partagés. Le nettoyage du niveau libère les instances du niveau ; `CardPickupBillboard.dispose` libère le drop autonome à son ramassage ou à la fin de partie.
 
@@ -121,10 +121,10 @@ Le secours en boîtes garde le rendu disponible si le glTF des armes ou ses extr
 
 ## Tests
 
-- `test/render/billboard.test.ts` — normales, inclinaison d'éclairage et géométrie du billboard.
-- `test/render/enemySprites.test.ts` — sélection des lignes d'animation et alignement du quad sur les pieds.
-- `test/render/viewmodel.test.ts` — pose au repos, changement, swing, recul et pompe sans blocage du tir.
-- `test/game/player/weaponClocks.test.ts` — horloges interpolées consommées par le viewmodel.
+- `test/render/sprites/billboard.test.ts` — normales, inclinaison d'éclairage et géométrie du billboard.
+- `test/render/sprites/enemySprites.test.ts` — sélection des lignes d'animation et alignement du quad sur les pieds.
+- `test/render/viewmodel/viewmodel.test.ts` — pose au repos, changement, swing, recul et pompe sans blocage du tir.
+- `test/game/player/weapons/weaponClocks.test.ts` — horloges interpolées consommées par le viewmodel.
 
 ## Comment vérifier que ça marche
 

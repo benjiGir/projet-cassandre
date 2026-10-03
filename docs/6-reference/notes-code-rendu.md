@@ -12,7 +12,7 @@ Cette page conserve les contrats et détails retirés des commentaires de
 
 ## Frontiere Effect et temps
 
-`src/render/renderService.ts` enveloppe seulement l'appel WebGL dans
+`src/render/pipeline/renderService.ts` enveloppe seulement l'appel WebGL dans
 `Effect.sync`. Le renderer, la scène et la caméra sont des paramètres : ils
 existent après la construction de `GameLayer`. La couche de substitution
 `RenderService.test` ne dessine rien par défaut.
@@ -29,7 +29,7 @@ ni collision ni décision de gameplay. La rotation de visée reste directe.
 
 ## Billboard ennemi
 
-`src/render/billboard.ts` emploie un quad vertical orienté seulement en yaw :
+`src/render/sprites/billboard.ts` emploie un quad vertical orienté seulement en yaw :
 un `THREE.Sprite` inclinerait aussi le personnage avec le regard vertical.
 L'atlas possède exactement huit colonnes. La direction zéro montre la face ;
 les directions avancent par secteurs de 45 degrés calculés avec `atan2` du
@@ -65,7 +65,7 @@ et une étiquette `col.row` pour distinguer directions et frames.
 
 ## Planches et chargement ennemi
 
-`src/render/enemySprites.ts` sépare la ligne d'animation de la colonne choisie
+`src/render/sprites/enemySprites.ts` sépare la ligne d'animation de la colonne choisie
 par le billboard. Les poses et durées viennent d'un `EnemyAnimationInput`
 traduit par l'appelant ; ce module ne lit pas la machine de l'ennemi.
 
@@ -89,7 +89,7 @@ signalée en console et le jeu reste jouable.
 
 ## Ramassages
 
-`src/render/pickups.ts` habille les repères glTF de soin, munitions, nourriture
+`src/render/pickups/pickups.ts` habille les repères glTF de soin, munitions, nourriture
 et armes. Le repère caché reste le parent du rendu : consommation et élagage
 retirent aussi ses enfants. Le modèle se place sur `groundY`, ou sur le bas
 de la boîte si aucune surface n'a été trouvée.
@@ -121,7 +121,7 @@ La direction du billboard utilise la position mondiale du mesh enfant ;
 soustraire sa position locale à la caméra donnerait un cap erroné.
 La phase de flottement dérive de la position, sans consommer le RNG du gameplay.
 
-`src/render/cardPickups.ts` précharge les trois textures au démarrage : aucun
+`src/render/pickups/cardPickups.ts` précharge les trois textures au démarrage : aucun
 chargement ne commence à la mort du Directeur. Les pixels sont partagés mais
 chaque carte clone la texture, pour isoler sa libération et le hot reload.
 La pose transforme aussi la rotation mondiale en rotation locale du parent.
@@ -130,7 +130,7 @@ libère séparément. Les cartes flottent et pulsent au temps réel.
 
 ## Viewmodel
 
-`src/render/weaponModels.ts` charge les modèles Blender exprimés dans le repère
+`src/render/viewmodel/weaponModels.ts` charge les modèles Blender exprimés dans le repère
 caméra ; le cadrage se règle dans Blender. Le poing définit les pivots et
 l'extra `bout_canon` l'origine de l'éclair de tir. Le fût se déplace dans la
 direction opposée à `axe_glissiere`. Les sommets portent les couleurs et le
@@ -160,7 +160,7 @@ après chaque mesh. `update` suit la pose finale de caméra dans l'interpolation
 
 ## Effets et allocation
 
-`src/render/fx.ts` reçoit des primitives Three.js et des valeurs de présentation.
+`src/render/fx/fx.ts` reçoit des primitives Three.js et des valeurs de présentation.
 Il n'importe pas les systèmes de gameplay. Les matières sont traduites en
 chaînes ou couleurs par l'appelant. Son RNG cosmétique seedé est injecté à
 chaque partie et reste distinct de la dispersion du fusil.
@@ -222,7 +222,7 @@ reste au centre géométrique. Sa pulsation répond à chaque tir accepté, mêm
 sans toucher un ennemi. Le hitmarker confirme uniquement dégâts/mort ennemie.
 Les signaux hit et kill possèdent chacun leur fenêtre ; kill se dessine après
 hit pour rester lisible. Leurs enveloppes linéaires utilisent le delta réel.
-`src/render/canvasOverlay.ts` centralise la construction et la conversion
+`src/render/overlays/canvasOverlay.ts` centralise la construction et la conversion
 des couleurs hexadécimales CSS. Il obtient le contexte 2D avant d'attacher le
 canvas : un échec ne laisse aucun élément inutilisable dans le DOM.
 La classe CSS `game-overlay` conserve le cadre 16:9 et l'agrandissement au

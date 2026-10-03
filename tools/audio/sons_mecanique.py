@@ -101,7 +101,7 @@ def cartouche_au_sol(g, hauteur):
 
 # ============================================================ PORTES
 
-# Les durees viennent du JEU (`game/level/doors.ts::MOVEMENT_DEFAULT_DUREE` :
+# Les durees viennent du JEU (`game/level/doors/doors.ts::MOVEMENT_DEFAULT_DUREE` :
 # battant 0,5 s, coulisse 0,45 s, descend 0,6 s, monte 1,4 s ; aucune porte du
 # niveau ne les surcharge). Un son qui dure deux a trois fois l'animation —
 # 1,2 s pour un battant ouvert en 0,5 s — s'entend « lent et pas naturel »

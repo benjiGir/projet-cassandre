@@ -10,7 +10,7 @@ export default defineConfig({
   // à la racine d'un domaine que sous un sous-chemin (page de PROJET GitHub
   // Pages, https://<user>.github.io/<repo>/) sans connaître le nom du repo
   // à l'avance. Les assets de `public/` (audio, niveaux .glb) doivent passer
-  // par `core/assetPath.ts::assetUrl` pour respecter ce même base au runtime.
+  // par `core/loading/assetPath.ts::assetUrl` pour respecter ce même base au runtime.
   base: "./",
   plugins: [
     react(),

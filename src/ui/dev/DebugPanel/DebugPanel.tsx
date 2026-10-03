@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../game/state";
+import { useGameStore } from "../../../game/hud/state";
 import { cx } from "../../lib/styleHelpers";
 import styles from "./DebugPanel.module.css";
 

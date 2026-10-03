@@ -30,10 +30,10 @@ axes caméra (droite, haut) une fois le roulis appliqué.
     public/assets/sprites/weapon_pickups.json   manifeste (rect pixel + aspect)
 
 Le manifeste sert de RÉFÉRENCE pour resynchroniser les constantes de
-`render/pickups.ts` (UV figés, aspect par arme) : l'atlas n'est chargé qu'en
+`render/pickups/pickups.ts` (UV figés, aspect par arme) : l'atlas n'est chargé qu'en
 image au runtime (le jeu ne fait pas de fetch JSON supplémentaire au
 chargement d'un niveau, pour rester synchrone — voir la doc de tête de
-`render/pickups.ts`), donc CE fichier JSON n'est pas lu par le jeu, seulement
+`render/pickups/pickups.ts`), donc CE fichier JSON n'est pas lu par le jeu, seulement
 par un humain/agent qui régénère l'atlas et recopie les nombres.
 
 Code retour : 0 = atlas + manifeste écrits, 1 = échec.

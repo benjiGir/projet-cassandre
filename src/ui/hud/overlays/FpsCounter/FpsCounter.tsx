@@ -1,4 +1,4 @@
-import { useGameStore } from "../../../../game/state";
+import { useGameStore } from "../../../../game/hud/state";
 import styles from "./FpsCounter.module.css";
 
 // see: docs/archive/systems-hud.md#composition-de-app

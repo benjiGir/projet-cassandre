@@ -43,7 +43,7 @@ Les coulisses (2026-09-26), EN ATTENTE DU VERDICT DE PLAYTEST.** Les
 >    (`build_weapons.py`, 360 triangles, culasse inox claire, prise et
 >    `bout_canon` recalés, pompe et pied-de-biche identiques à l'octet). Vu en
 >    jeu : lisible dans l'allée éclairée ET au parking de nuit.
-> 6. **Écran de fin avec récap** : `game/session/score.ts` (comptage au pas
+> 6. **Écran de fin avec récap** : `game/session/progression/score.ts` (comptage au pas
 >    fixe, barème nommé : Costard 100, Directeur 1 000, secret 500 + 1 000 si
 >    tous, précision ≤ 1 000, 10 pts/s sous `parTime`, vandalisme), récap
 >    partiel à la mort, `RecapTable` révélé ligne par ligne.

@@ -33,8 +33,8 @@ d'avoir formulé ses réponses.
 | Comment savoir si un son est réellement chargé ? | `present` pouvait être interprété comme un état de lecture, alors qu'il reflète la clé du manifeste. | Les pages audio disent ce que le champ mesure et ajoutent les vérifications Réseau, console et écoute. |
 | Où modifier l'affichage d'un élément HUD ? | La page React indiquait clairement le widget, sa souscription au store et le rythme des mises à jour. | Aucune correction nécessaire. |
 
-Le code confirme les dégâts dans `src/game/player/weaponConfig.ts` et les
-neuf rayons dans `src/game/player/weapons.ts`. La liste des cartes vient de
+Le code confirme les dégâts dans `src/game/player/weapons/weaponConfig.ts` et les
+neuf rayons dans `src/game/player/weapons/weapons.ts`. La liste des cartes vient de
 `src/game/player/loyaltyCards.ts`, est relue par le loader et doit rester
 alignée avec `tools/blender/validate_level.py`. `listSfx()` calcule bien
 `present` depuis les seules clés du manifeste.

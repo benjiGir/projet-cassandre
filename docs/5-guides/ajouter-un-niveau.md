@@ -48,11 +48,11 @@ sa définition, son éclairage et les validations de contenu.
 9. Exportez le GLB sous `public/assets/levels/<fichier>.glb` avec le
    script d'export du dépôt.
 10. Ajoutez une entrée à `LEVEL_CHOICES` dans
-    `src/game/level/levels.ts`. Choisissez `kind: "gltf"`, `gltfName` et
+    `src/game/level/catalog/levels.ts`. Choisissez `kind: "gltf"`, `gltfName` et
     les options de départ adaptées.
 11. Si le niveau utilise une skybox, définissez `ciel` avec le nom du
     dossier correspondant dans `public/assets/sky/`.
-12. Vérifiez la sélection depuis `src/app/bootChoice.ts` et le menu de
+12. Vérifiez la sélection depuis `src/app/navigation/bootChoice.ts` et le menu de
     développement `src/ui/dev/LevelMenu/`.
 13. Pour un niveau de test construit en TypeScript, créez le builder
     dans `src/game/level/` et branchez son cas `kind: "gym"`.

@@ -13,16 +13,16 @@ Cette page explique comment le runtime contrôle le coût de dessin d'un niveau 
 
 ## Fichiers
 
-- `src/game/level/mergeStaticDecor.ts` — clé de regroupement et fusion du décor statique.
-- `src/game/level/loader.ts` — construit les lots et expose les compteurs `LevelStats`.
-- `src/game/level/doors.ts` — regroupe les vantaux compatibles en `BatchedMesh`.
-- `src/game/level/vitres.ts`, `sanitaires.ts` et `ecrans.ts` — fusion dédiée des surfaces cassables ou animées.
-- `src/game/level/props.ts` — conserve le rendu mobile indépendant et l'élague à distance.
-- `src/render/useObjectCulling.ts` — distance de rendu des objets utilisables et des lots de sanitaires.
-- `src/render/lightPool.ts` — borne le nombre de lampes ponctuelles actives.
-- `src/game/devtools/consoleApi.ts` et `src/game/devtools/testHarness.ts` — commandes de diagnostic et banc `renderBench`.
+- `src/game/level/loading/mergeStaticDecor.ts` — clé de regroupement et fusion du décor statique.
+- `src/game/level/loading/loader.ts` — construit les lots et expose les compteurs `LevelStats`.
+- `src/game/level/doors/doors.ts` — regroupe les vantaux compatibles en `BatchedMesh`.
+- `src/game/level/interactions/vitres.ts`, `sanitaires.ts` et `ecrans.ts` — fusion dédiée des surfaces cassables ou animées.
+- `src/game/level/props/props.ts` — conserve le rendu mobile indépendant et l'élague à distance.
+- `src/render/environment/useObjectCulling.ts` — distance de rendu des objets utilisables et des lots de sanitaires.
+- `src/render/environment/lightPool.ts` — borne le nombre de lampes ponctuelles actives.
+- `src/game/devtools/consoleApi.ts` et `src/game/devtools/replay/testHarness.ts` — commandes de diagnostic et banc `renderBench`.
 - `tools/level_v2/plan_de_masse.py` et `tools/blender/validate_level.py` — cible de lots planifiée et contrôles de contenu.
-- `test/game/level/mergeStaticDecor.test.ts` — règles de fusion géométrique.
+- `test/game/level/loading/mergeStaticDecor.test.ts` — règles de fusion géométrique.
 - [Mesures historiques](./budget-de-rendu.md) — protocole et relevés antérieurs à l'archive de phase I.
 
 ## Où ça s'insère dans la boucle
@@ -105,10 +105,10 @@ Le nombre de programmes compilés aide à repérer un excès de variantes de mat
 
 ## Tests
 
-- `test/game/level/mergeStaticDecor.test.ts` — regroupement par matériau, attributs et cellule ; exclusions et géométries transformées.
-- `test/game/level/loader.test.ts` — compteurs exposés et lots ajoutés par le loader.
-- `test/game/level/doors.test.ts`, `vitres.test.ts`, `sanitaires.test.ts` et `ecrans.test.ts` — lots dédiés aux objets qui gardent un état adressable.
-- `test/render/lightPool.test.ts` — budget de lampes, qui est un coût séparé du comptage des lots.
+- `test/game/level/loading/mergeStaticDecor.test.ts` — regroupement par matériau, attributs et cellule ; exclusions et géométries transformées.
+- `test/game/level/loading/loader.test.ts` — compteurs exposés et lots ajoutés par le loader.
+- `test/game/level/doors/doors.test.ts`, `vitres.test.ts`, `sanitaires.test.ts` et `ecrans.test.ts` — lots dédiés aux objets qui gardent un état adressable.
+- `test/render/environment/lightPool.test.ts` — budget de lampes, qui est un coût séparé du comptage des lots.
 
 ## Comment vérifier que ça marche
 

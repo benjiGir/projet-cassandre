@@ -116,14 +116,14 @@ stateDiagram-v2
     levelComplete --> mainMenu: RETURN_TO_MENU
 ```
 
-Ce diagramme est la table de transition testée (`test/ui/gameFlowMachine.test.ts`)
+Ce diagramme est la table de transition testée (`test/app/navigation/gameFlowMachine.test.ts`)
 lue directement dans `ui/gameFlowMachine.ts`. Le câblage réel dans `main.ts`
 est volontairement plus grossier qu'elle : les événements de chargement
 `BEGIN_LOAD`/`LOAD_FAILED`/`RETRY_LOAD` encadrent désormais `PLAY`, en plus de
 `ENTER_MENU`, `DIED`, `LEVEL_COMPLETED`, `REPLAY`, `RETURN_TO_MENU`, `PAUSE` et
 `RESUME` (`main.ts`,
-`game/session/lifecycle.ts`, `game/session/doors.ts`,
-`game/session/feedback.ts`) — vérifié par grep sur `src/`. Les états
+`game/session/lifecycle.ts`, `game/session/progression/doors.ts`,
+`game/session/player/feedback.ts`) — vérifié par grep sur `src/`. Les états
 `options` et `levelSelect` existent dans le graphe et sont couverts par les
 tests, mais ne sont **jamais atteints par l'acteur réel** :
 `OPEN_OPTIONS`/`CHOOSE_ZONE` ne sont envoyés nulle part côté application
@@ -144,19 +144,19 @@ boot](./systems-session.md#choix-du-niveau-au-boot)) : `boot` est l'état initia
 machine, et `setFlowState` doit le refléter dans le store dès que possible,
 pas seulement une fois la partie commencée.
 
-`GameFlowState` (le type des 10 états) est DÉFINI dans `game/state.ts`, pas
+`GameFlowState` (le type des 10 états) est DÉFINI dans `game/hud/state.ts`, pas
 dans `ui/gameFlowMachine.ts` puis importé : garder le sens de dépendance
 déjà établi par ce fichier (les écrans et les widgets du HUD importent déjà
-`useGameStore` DEPUIS `game/state.ts`, jamais l'inverse) plutôt que d'en
+`useGameStore` DEPUIS `game/hud/state.ts`, jamais l'inverse) plutôt que d'en
 ouvrir un second. `ui/gameFlowMachine.ts` réutilise ce type tel quel pour
 ses clés d'état ; TypeScript vérifie la correspondance structurelle sans
 qu'aucun des deux fichiers n'ait besoin de dupliquer la liste des 8 états.
 `LevelRecap`/`RecapLine` (voir [Récapitulatif de fin de
 partie](./systems-session.md#récapitulatif-de-fin-de-partie)) suivent le même
-principe : définis dans `game/state.ts`, réimportés par
-`game/session/score.ts`, jamais l'inverse.
+principe : définis dans `game/hud/state.ts`, réimportés par
+`game/session/progression/score.ts`, jamais l'inverse.
 Voir [ADR 0020](../decisions/0020-state-feuille-de-dependances.md) pour la
-règle générale (`game/state.ts` n'importe jamais un autre module de
+règle générale (`game/hud/state.ts` n'importe jamais un autre module de
 `src/game/*`).
 
 ## HUD de production
@@ -209,7 +209,7 @@ RÉPLIQUE, `state.heroLine`) sont volontairement séparés : l'un est une
 INFORMATION factuelle (porte, badge, secret n/total), sans cooldown ;
 l'autre est une RÉACTION de personnage, avec un cooldown global de 15 s.
 Le déclenchement, le cooldown et l'auto-effacement des deux vivent côté
-appelant (`showHudMessage`/`triggerHeroLine`, `game/session/feedback.ts`)
+appelant (`showHudMessage`/`triggerHeroLine`, `game/session/player/feedback.ts`)
 — voir [Session de partie — Feedback joueur](./systems-session.md#feedback-joueur)
 pour le mécanisme complet, et [HUD et audio — Ducking pendant les
 répliques](./systems-hud-audio.md#ducking-pendant-les-répliques) pour le ducking
@@ -261,7 +261,7 @@ qu’aucun candidat n’a été committé.
 
 **La progression est réelle**, pas une animation : `GLTFLoader` remonte les
 octets par son `onProgress`, que `LevelSessionOptions.onProgress` fait
-traverser jusqu'à `core/loadingProgress.ts`. Le `.glb` occupe la bande
+traverser jusqu'à `core/loading/loadingProgress.ts`. Le `.glb` occupe la bande
 0,30-0,85 ; le reste (physique, planches de sprites, construction du décor,
 cuisson du graphe de navigation) se partage ce qui l'encadre. Les bornes sont
 chez les appelants, parce que seul l'appelant sait ce qui vient après lui. Si
@@ -305,12 +305,12 @@ vandalisme, bonus de rapidité (fin de niveau seulement — un récap de mort
 est PARTIEL, sans ce bonus). `RecapTable` ne connaît AUCUNE règle de
 barème, elle affiche `state.recap` (`LevelRecap`, `null` tant qu'aucune
 partie ne s'est terminée) tel que construit par
-`game/session/score.ts::buildLevelRecap` — voir [Session de partie —
+`game/session/progression/score.ts::buildLevelRecap` — voir [Session de partie —
 Récapitulatif de fin de partie](./systems-session.md#récapitulatif-de-fin-de-partie).
 
 ## Rebinding
 
-`screens/options/controls/ControlsTab/ControlsTab.tsx` consomme l'API de rebinding de `core/input.ts`
+`screens/options/controls/ControlsTab/ControlsTab.tsx` consomme l'API de rebinding de `core/input/input.ts`
 (`getAllBindings`/`rebind`/`resetBindings`/`formatKeyCode`) sans la
 modifier. Accessible uniquement depuis le menu principal (« Options »),
 donc toujours AVANT `input.attach(canvas)` — un import direct du module
@@ -319,7 +319,7 @@ donc toujours AVANT `input.attach(canvas)` — un import direct du module
 `window` temporaires captent la touche suivante (`useInputCapture.ts`, qui
 les pose le temps d'une capture et lit l'état courant par `useEffectEvent`).
 Voir [Contrôles et bindings](./reference-controles.md) pour le contrat
-complet de `core/input.ts`.
+complet de `core/input/input.ts`.
 
 `input.getAllBindings()` n'est PAS réactif (pas du zustand) : l'état local
 `bindings` du composant est une copie, resynchronisée explicitement après
@@ -344,7 +344,7 @@ naviguer depuis le menu principal. Chaque réglage est une `OptionSection`
 choisis explicitement (pas un panneau générique) :
 
 1. **Filtrage des textures lointaines** (`nearest`/`mipmap`/`aniso`,
-   `render/renderer.ts::appliquerFiltrage`) — le plus important des quatre.
+   `render/pipeline/renderer.ts::appliquerFiltrage`) — le plus important des quatre.
    C'est l'amendement de l'invariant #4 proposé par [ADR
    0027](../decisions/0027-filtrage-des-textures-reduites.md), en attente de
    la validation de l'utilisateur depuis le 13 septembre parce que trancher
@@ -352,7 +352,7 @@ choisis explicitement (pas un panneau générique) :
    il donne juste un accès humain à un réglage qui existe déjà. Les
    libellés décrivent l'effet à l'œil (« net même en rasant »), jamais le
    nom de la technique (mipmap, anisotropie).
-2. **Résolution interne** (`render/renderer.ts::setResolutionInterne`,
+2. **Résolution interne** (`render/pipeline/renderer.ts::setResolutionInterne`,
    présentée depuis 640×360 comme l'ORIGINE du jeu, jamais comme une valeur
    basse à corriger — invariant #4).
 3. **Champ de vision** — la valeur de BASE seule (`moveConfig.fovBase`) ;
@@ -363,7 +363,7 @@ choisis explicitement (pas un panneau générique) :
    `weaponConfig.enemyShakeAmplitude` (impact générique et impact ennemi
    confirmé) depuis leurs valeurs d'origine, jamais de façon cumulative.
 
-Logique non visuelle isolée dans `game/graphicsSettings.ts`, hors de `src/ui/` parce qu'elle pilote le moteur : persistance
+Logique non visuelle isolée dans `game/settings/graphicsSettings.ts`, hors de `src/ui/` parce qu'elle pilote le moteur : persistance
 `localStorage` (`cassandre.graphics`, même convention que
 `cassandre.keybinds`/`cassandre.musicEnabled`), et deux fonctions
 d'application. Le FOV et le screenshake sont de simples champs mutables lus
@@ -399,14 +399,14 @@ mutation — exception assumée à la règle générale, réservée à `dev/`. U
 remet toute la config d'arme, et les groupes Hitmarker et Réticule doivent se
 redessiner avec lui (vérifié).
 
-Pointer lock : le jeu tourne verrouillé (`core/input.ts`), incompatible
+Pointer lock : le jeu tourne verrouillé (`core/input/input.ts`), incompatible
 avec les évènements pointeur d'un slider. Le panneau reste démonté (donc
 sans interception de clic) tant qu'il n'est pas ouvert par la touche dédiée
 `` ` `` (Backquote, sans conflit avec ZQSD/WASD, sprint, saut, ou les
 touches de debug — voir [Contrôles et bindings](./reference-controles.md)
 pour la liste complète). L'ouverture appelle `document.exitPointerLock()` ;
 la fermeture ne fait rien de plus côté pointer lock, le canvas reprend la
-main au premier clic (`core/input.ts`), dupliquer cette responsabilité ici
+main au premier clic (`core/input/input.ts`), dupliquer cette responsabilité ici
 casserait la source unique de vérité du pointer lock.
 
 Les harnais A/B eux-mêmes (recul, impact, hitmarker, réticule, knockback,

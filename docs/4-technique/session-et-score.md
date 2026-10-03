@@ -32,21 +32,21 @@ lui-même (`recording.ts` positionne le joueur puis délègue à
 
 - `src/game/session/gameSession.ts` — l'interface `GameSession` : champ →
   rôle documenté ci-dessous.
-- `src/game/session/score.ts` — `SessionStats`, les `record*`, le barème
+- `src/game/session/progression/score.ts` — `SessionStats`, les `record*`, le barème
   nommé (`SCORE_*`), `buildLevelRecap`/`publishLevelRecap`.
-- `src/game/session/feedback.ts` — `showHudMessage` (canal système),
+- `src/game/session/player/feedback.ts` — `showHudMessage` (canal système),
   `triggerHeroLine` (canal réplique, cooldown 15 s), `grantKillViews` (gag
   des vues), `applyPlayerDamage`/`presentPlayerDamage` (PV et mort).
-- `src/game/session/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
+- `src/game/session/progression/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
   inventaire des cartes de fidélité.
-- `src/game/session/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
+- `src/game/session/progression/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
   `estPorteDeSortie`, `setupExitDoorTracking`/`triggerLevelComplete`.
-- `src/game/session/sanitaires.ts` — `trySanitaire` (visée + dispatch),
+- `src/game/session/player/sanitaires.ts` — `trySanitaire` (visée + dispatch),
   `relieveAtSanitaire`/`drinkFromSanitaire` : la règle Duke 3D.
-- `src/game/session/recording.ts` — `startRecording`/`startPlayback` : pose
+- `src/game/devtools/replay/recording.ts` — `startRecording`/`startPlayback` : pose
   le joueur au point de départ enregistré avant de déléguer à
   `inputRecorder` (F9/F10).
-- `src/game/session/fallRescue.ts` — `recordSafeGround`/`shouldRescue`,
+- `src/game/session/player/fallRescue.ts` — `recordSafeGround`/`shouldRescue`,
   `RESCUE_FALL_DEPTH` (détail du calcul : [Joueur](joueur.md#pièges)).
 - `src/game/session/spawning.ts` — `spawnSuitAt`/`spawnDirectorAt` (couvert
   par [Ennemis et IA](ennemis-et-ia.md)) et `loadGltfLevel` : construit
@@ -124,7 +124,7 @@ place.
 shotsFired`), `SCORE_VANDALISM_PROP` = 10, `_VITRE` = 25, `_SANITAIRE` = 50.
 Constantes nommées comme point de départ, pas un tuning arrêté.
 
-**`parTime`** : champ optionnel de `LevelDef` (`src/game/level/levels.ts`),
+**`parTime`** : champ optionnel de `LevelDef` (`src/game/level/catalog/levels.ts`),
 absent sur la gym et les zones de test. La ligne « Rapidité » n'apparaît
 que si non nul ; au-delà, « Temps de référence dépassé », 0 point.
 
@@ -192,15 +192,15 @@ code est facile, voir le glossaire.
 
 ## Tests
 
-- `test/game/session/score.test.ts` — partie PURE de `score.ts` avec de
+- `test/game/session/progression/score.test.ts` — partie PURE de `score.ts` avec de
   simples objets, sans DOM/Three.js/Rapier ; `publishLevelRecap` non testé
   directement.
-- `test/game/session/feedback.test.ts` — `applyPlayerDamage` (PV, mort au
+- `test/game/session/player/feedback.test.ts` — `applyPlayerDamage` (PV, mort au
   même pas logique, idempotence), `grantKillViews`, `presentPlayerDamage`.
-- `test/game/session/sanitaires.test.ts` — orchestration avec un rayon
+- `test/game/session/player/sanitaires.test.ts` — orchestration avec un rayon
   Rapier scripté (`RaycastService.test(...)`) ; la géométrie du « neartag »
-  est couverte par `test/game/level/sanitaires.test.ts`.
-- `test/game/session/fallRescue.test.ts` — y compris le piège du joueur
+  est couverte par `test/game/level/sanitaires/sanitaires.test.ts`.
+- `test/game/session/player/fallRescue.test.ts` — y compris le piège du joueur
   téléporté qui se déclare au sol dans le vide.
 - `test/game/session/lifecycle.test.ts` — `bootGameSession`/
   `teardownGameSession`, hors périmètre de cette page.

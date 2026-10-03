@@ -19,7 +19,7 @@ Ne fait pas : n'applique aucun dégât — `WeaponSystem` produit des `hitEvents
 en lecture seule, c'est `SuitManager`/`DirectorManager`/`PropSystem`/
 `VitreSystem`/`SanitaireSystem` qui les lisent au pas fixe suivant et
 décident d'une mort, d'une casse ou de rien ([Simulation et présentation](../3-architecture/simulation-et-presentation.md)).
-Ne fait pas la géométrie du ramassage au sol : `InteractionSystem` (`game/level/interactive.ts`)
+Ne fait pas la géométrie du ramassage au sol : `InteractionSystem` (`game/level/interactions/interactive.ts`)
 détecte la proximité, `WeaponSystem` décide seulement de l'effet. Ne dessine
 rien : viewmodel, muzzle flash, decals et sons sont posés par `updateFx`/
 `render/`, détaillés dans [Sprites et viewmodel](sprites-et-viewmodel.md)
@@ -27,22 +27,22 @@ rien : viewmodel, muzzle flash, decals et sons sont posés par `updateFx`/
 
 ## Fichiers
 
-- `src/game/player/weapons.ts` — `WeaponSystem` : sélection, munitions,
+- `src/game/player/weapons/weapons.ts` — `WeaponSystem` : sélection, munitions,
   cooldowns, raycasts/formes, hitstop, recul.
-- `src/game/player/weaponConfig.ts` — `WeaponConfig` (source unique de
+- `src/game/player/weapons/weaponConfig.ts` — `WeaponConfig` (source unique de
   vérité des nombres), `damageForWeapon`, les quatre tables de variantes
   A/B/C (`RECOIL_VARIANTS`, `IMPACT_VARIANTS`, `HITMARKER_VARIANTS`,
   `CROSSHAIR_VARIANTS`).
-- `src/game/level/interactive.ts` — `InteractionSystem.collectWeapons` : la
+- `src/game/level/interactions/interactive.ts` — `InteractionSystem.collectWeapons` : la
   géométrie du ramassage au sol des trois armes, en marchant dessus (commit
   `6b768f1`, voir Pièges).
 - `src/game/loop/updateGameplay.ts` — appelle `collectWeapons` puis
   `weapons.update`, dans cet ordre, après `player.update`.
 - `src/game/loop/updateFx.ts` — seul lecteur de `fireEvents`/`hitEvents` côté
   présentation ; seul appelant de `weapons.clearFrameEvents()`.
-- `src/render/fx.ts` — `MUZZLE_FLASH_PRESETS`, muzzle flash et douille éjectée.
-- `src/render/hitmarker.ts`, `src/render/crosshair.ts`,
-  `src/render/ballisticsDebug.ts` — canaux de confirmation de hit, réticule,
+- `src/render/fx/fx.ts` — `MUZZLE_FLASH_PRESETS`, muzzle flash et douille éjectée.
+- `src/render/overlays/hitmarker.ts`, `src/render/overlays/crosshair.ts`,
+  `src/render/debug/ballisticsDebug.ts` — canaux de confirmation de hit, réticule,
   gizmos de debug (touche `B`).
 
 ## Où ça s'insère dans la boucle
@@ -168,7 +168,7 @@ a mené à un flash déclenché pour CHAQUE arme sans distinction, avec l'œil d
 joueur comme origine pour la mêlée : un quad blanc à 15 cm de la caméra
 couvre l'essentiel du champ à 640×360. Corrigé en retirant tout muzzle flash
 pour la mêlée — le pied-de-biche n'a pas de canon — et le typage l'empêche
-de revenir en silence : `MUZZLE_FLASH_PRESETS` (`render/fx.ts`) est un
+de revenir en silence : `MUZZLE_FLASH_PRESETS` (`render/fx/fx.ts`) est un
 `Record<"pistol" | "shotgun", …>`, `"melee"` n'y a pas d'entrée possible.
 
 **L'origine de tir ne vient jamais d'une position interpolée.**
@@ -193,18 +193,18 @@ Costard ne « sur-arme » donc pas 9× plus fort qu'un plomb seul.
 
 ## Tests
 
-- `test/game/player/weaponClocks.test.ts` — horloges du viewmodel, aucune ne
+- `test/game/player/weapons/weaponClocks.test.ts` — horloges du viewmodel, aucune ne
   bloque un tir ou un changement (invariant #10).
-- `test/game/player/weaponPickups.test.ts` — `tryCollectMelee`/
+- `test/game/player/weapons/weaponPickups.test.ts` — `tryCollectMelee`/
   `tryCollectShotgun`/`tryCollectPistol` : la décision « déjà possédée »,
   symétrie et exception du pistolet.
-- `test/game/player/pistol.test.ts` — possession, dotation, cadence, plafond
+- `test/game/player/weapons/pistol.test.ts` — possession, dotation, cadence, plafond
   de munitions (mécanique du tir, pas la balistique — monde physique vide).
-- `test/game/level/pickups.test.ts` — traversée complète loader → `UseObject`
+- `test/game/level/interactions/pickups.test.ts` — traversée complète loader → `UseObject`
   → `InteractionSystem.collectHeals`/`collectAmmo`/`collectWeapons`.
 - `test/game/integration/gameplayStep.test.ts`, `gameSessionReset.test.ts` —
   la place de `WeaponSystem` dans un pas fixe réel et sa survie à un reset.
-- `test/render/viewmodel.test.ts` — tirer pendant le changement d'arme remet
+- `test/render/viewmodel/viewmodel.test.ts` — tirer pendant le changement d'arme remet
   l'arme en place aussitôt (invariant #10).
 
 Aucun test dédié ne couvre `fireMelee`/`firePistol`/`fireShotgun` contre un
@@ -221,7 +221,7 @@ balistique elle-même.
 - `cassandre.applyRecoilVariant`/`applyImpactVariant`/`applyHitmarkerVariant`/
   `applyCrosshairVariant("A"|"B"|"C"` ou nom de variante`)` : bascule chaque
   harnais indépendamment.
-- Touche `B` (`src/render/ballisticsDebug.ts`) : gizmos des rayons/capsule
+- Touche `B` (`src/render/debug/ballisticsDebug.ts`) : gizmos des rayons/capsule
   réellement testés par le dernier tir — confirme la portée du pied-de-biche
   et le cône du pompe visuellement.
 

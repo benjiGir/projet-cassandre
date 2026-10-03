@@ -14,14 +14,14 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 
 ## Fichiers
 
-- `src/core/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
-- `src/core/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
-- `src/core/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
-- `src/core/showerAmbience.ts` gère la boucle localisée des douches.
-- `src/core/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
-- `src/core/assetPath.ts` construit les chemins d'assets servis par le jeu.
+- `src/core/audio/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
+- `src/core/audio/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
+- `src/core/audio/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
+- `src/core/audio/showerAmbience.ts` gère la boucle localisée des douches.
+- `src/core/audio/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
+- `src/core/loading/assetPath.ts` construit les chemins d'assets servis par le jeu.
 - `src/game/loop/updateFx.ts` consomme les faits de présentation et met à jour les ambiances.
-- `src/game/session/feedback.ts` publie les répliques.
+- `src/game/session/player/feedback.ts` publie les répliques.
 - `public/assets/audio/sfx/sfx.json` donne les offsets et durées du sprite.
 - `public/assets/audio/sfx/sfx.ogg` et `public/assets/audio/sfx/sfx.m4a` sont ses encodages.
 
@@ -90,7 +90,7 @@ réplique du héros ne baisse aucun autre canal.
 
 ### Ambiances de zone
 
-`core/zoneAmbience.ts` lit `assets/audio/ambiances/ambiances.json`, écrit par
+`core/audio/zoneAmbience.ts` lit `assets/audio/ambiances/ambiances.json`, écrit par
 `tools/audio/ia_ambiances.py finalize` : pour chaque zone, sa nappe, ses
 événements et les espaces du plan de masse qu'elle couvre (boîtes en repère du
 jeu, la plus petite l'emporte). Chaque nappe est amorcée en silence au
@@ -134,21 +134,21 @@ La douche suit la même préparation dans `showerAmbience.ts`.
 
 ### Répliques
 
-Depuis le 2026-10-02, les répliques sont dites : `core/heroVoice.ts` charge un
+Depuis le 2026-10-02, les répliques sont dites : `core/audio/heroVoice.ts` charge un
 second sprite, `voix.{ogg,m4a,json}` (prises ElevenLabs, voix « Callum »,
 produites par `tools/audio/ia_voix.py`). Une seule lecture à la fois — une
 nouvelle réplique coupe la précédente — et aucune variation de hauteur.
 `triggerHeroLine(session, id)` affiche le sous-titre, joue la prise
 `heros_<id>_a`, fait parler le portrait et baisse le thème le temps de la
 prise (4 s au moins). Le texte, la priorité, la règle « une fois par partie »
-et la probabilité de chaque réplique sont dans `game/session/heroLines.ts` ;
+et la probabilité de chaque réplique sont dans `game/session/presentation/heroLines.ts` ;
 `triggerHeroBark` joue les cris courts (douleur, réception), sans sous-titre.
 `cassandre.voix.liste()`/`joue(cle)` en console.
 
 ### Réglages du joueur
 
 Options › Audio (`ui/screens/options/audio/AudioTab/`) présente,
-`game/audioSettings.ts` persiste (`cassandre.audio`) et applique. Quatre canaux
+`game/settings/audioSettings.ts` persiste (`cassandre.audio`) et applique. Quatre canaux
 — général (`Howler.volume`), effets, voix du héros, ambiances (nappe,
 jets d'eau, douches) — chacun un gain multiplié au volume de repos de son
 module de `core/` : 100 % rend le mixage d'origine. Le gain est le carré de
@@ -170,13 +170,13 @@ création des `Howl`, qui reprennent les gains à leur construction.
 
 ## Tests
 
-- `test/core/waterAmbienceMix.test.ts` vérifie le calcul pur du gain, de la distance et du panoramique.
+- `test/core/audio/waterAmbienceMix.test.ts` vérifie le calcul pur du gain, de la distance et du panoramique.
 - Le module Howler `audio.ts` n'a pas de suite de tests d'intégration dédiée.
 - L'analyse du studio et le contrôle des boucles sont décrits dans [Studio audio](studio-audio.md).
 
 ## Comment vérifier que ça marche
 
-Lancer `pnpm test -- test/core/waterAmbienceMix.test.ts`.
+Lancer `pnpm test -- test/core/audio/waterAmbienceMix.test.ts`.
 Dans le navigateur de développement, utiliser `window.cassandre.sfx.liste()` pour comparer les identifiants du jeu aux clés du manifeste ; `present` ne confirme pas le décodage du son.
 Contrôler les réponses Réseau pour `sfx.json` et le format audio choisi, puis déclencher `window.cassandre.sfx.joue("shotgun_fire")` et écouter le résultat.
 Casser un sanitaire, puis observer `window.cassandre.sfx.eau()` pour vérifier l'état de la boucle.

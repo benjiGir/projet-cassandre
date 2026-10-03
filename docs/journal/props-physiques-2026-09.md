@@ -12,7 +12,7 @@ Props physiques — livrés (2026-09-17), corrigés après playtest
 > corps dynamique Rapier libre, poussable par le joueur et les ennemis (les deux
 > character controllers appliquaient déjà des impulsions aux corps dynamiques),
 > cassable au tir si le `.glb` lui donne des `pv`. Runtime :
-> `game/level/props.ts` (`PropSystem`, reconstruit à chaque chargement comme le
+> `game/level/props/props.ts` (`PropSystem`, reconstruit à chaque chargement comme le
 > graphe de navigation et le pool de lampes), branché aux quatre moments de la
 > boucle (`snapshotPrevious` / `update(hitEvents)` avant `physics.step` /
 > `syncFromPhysics` après / `interpolate` au taux d'affichage, APRÈS le bloc

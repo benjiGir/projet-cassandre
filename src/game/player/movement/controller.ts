@@ -1,0 +1,374 @@
+import * as THREE from "three";
+import RAPIER from "@dimforge/rapier3d-compat";
+
+import type { InputFrame } from "../../../core/input/inputTypes";
+import { COLLISION_GROUPS, configureCharacterController, type PhysicsWorld } from "../../../physics/world";
+import {
+  bobIntensityTarget,
+  eyeOffsetFromCenter,
+  fovRunFactorTarget,
+  groundAcceleration,
+  groundDeceleration,
+  jumpVelocity,
+  landingDipFor,
+  moveConfig,
+  wallNormalYThreshold,
+  type MoveConfig,
+} from "./moveConfig";
+const TAU = Math.PI * 2;
+
+// see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
+export function approach(
+  current: number,
+  target: number,
+  responseTime: number,
+  dt: number,
+  range: number,
+): number {
+  if (responseTime <= 0 || range <= 0) return target;
+  const diff = target - current;
+  const step = (range / responseTime) * dt;
+  if (Math.abs(diff) <= step) return target;
+  return current + Math.sign(diff) * step;
+}
+
+// see: docs/archive/systems-joueur.md#résolution-du-pas-fixe
+export class PlayerController {
+  readonly body: RAPIER.RigidBody;
+  readonly collider: RAPIER.Collider;
+  readonly kcc: RAPIER.KinematicCharacterController;
+
+  /** Position du CENTRE de la capsule après le pas fixe courant. */
+  readonly position = new THREE.Vector3();
+  /** Position du centre de la capsule au pas fixe précédent (interpolation du rendu). */
+  readonly previousPosition = new THREE.Vector3();
+  /** Vitesse intégrée, m/s. Sa composante horizontale est reclippée par les collisions. */
+  readonly velocity = new THREE.Vector3();
+  /** Normale du sol sous les pieds (0,1,0 si non au sol). */
+  readonly groundNormal = new THREE.Vector3(0, 1, 0);
+
+  isGrounded = false;
+  /** Collisions du dernier `computeColliderMovement`. Diagnostic imposé par le skill. */
+  numCollisions = 0;
+
+  // see: docs/6-reference/notes-code-gameplay-joueur.md#déplacement-et-vue
+  distanceTravelled = 0;
+
+  // État de VUE (head bob, FOV, réception) — les trois règles qui le
+  // gouvernent (pas fixe, échantillons prev/current, jamais angulaire) :
+  // see: docs/archive/systems-joueur.md#vue-head-bob-fov-dynamique-réception-de-saut
+
+  /** `distanceTravelled` au pas fixe précédent. Interpolation de la phase du bob. */
+  previousDistanceTravelled = 0;
+  /** Enveloppe d'amplitude du bob, 0..1, lissée au pas fixe. */
+  bobIntensity = 0;
+  previousBobIntensity = 0;
+  /** Facteur de course lissé, 0..1. Pilote l'élargissement du FOV. */
+  runFactor = 0;
+  previousRunFactor = 0;
+  /** Enfoncement de la vue après une réception, en mètres (positif = vers le bas). */
+  landingDip = 0;
+  previousLandingDip = 0;
+  /** Vitesse verticale de la dernière réception, m/s. Diagnostic. */
+  lastLandingSpeed = 0;
+
+  private readonly physics: PhysicsWorld;
+  private readonly cfg: MoveConfig;
+
+  private timeSinceGrounded = Number.POSITIVE_INFINITY;
+  private jumpBufferTimer = 0;
+  /** Empêche un second saut tant que le sol n'a pas été retouché. */
+  private jumpLatched = false;
+
+  private readonly desired = { x: 0, y: 0, z: 0 };
+  private readonly movement = { x: 0, y: 0, z: 0 };
+  private readonly nextTranslation = { x: 0, y: 0, z: 0 };
+  private readonly collisionScratch = new RAPIER.CharacterCollision();
+
+  constructor(physics: PhysicsWorld, cfg: MoveConfig = moveConfig) {
+    this.physics = physics;
+    this.cfg = cfg;
+
+    this.body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
+    this.collider = physics.world.createCollider(
+      RAPIER.ColliderDesc.capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius).setCollisionGroups(
+        COLLISION_GROUPS.PLAYER,
+      ),
+      this.body,
+    );
+    this.kcc = physics.createCharacterController(cfg);
+  }
+
+  applyConfig() {
+    const cfg = this.cfg;
+    this.collider.setShape(new RAPIER.Capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius));
+    this.collider.setCollisionGroups(COLLISION_GROUPS.PLAYER);
+    configureCharacterController(this.kcc, cfg);
+  }
+
+  /** Décalage vertical entre le centre de la capsule et les yeux, en mètres. */
+  get eyeOffset(): number {
+    return eyeOffsetFromCenter(this.cfg);
+  }
+
+  /** Vitesse horizontale, m/s. */
+  get horizontalSpeed(): number {
+    return Math.hypot(this.velocity.x, this.velocity.z);
+  }
+
+  /** Place le joueur, PIEDS à la hauteur `feetY`, et remet son mouvement à zéro. */
+  spawn(x: number, feetY: number, z: number) {
+    const centerY = feetY + this.cfg.capsuleHalfHeight + this.cfg.capsuleRadius;
+    this.body.setNextKinematicTranslation({ x, y: centerY, z });
+    this.body.setTranslation({ x, y: centerY, z }, true);
+    this.position.set(x, centerY, z);
+    this.previousPosition.copy(this.position);
+    this.velocity.set(0, 0, 0);
+    this.groundNormal.set(0, 1, 0);
+    this.isGrounded = false;
+    this.numCollisions = 0;
+    this.timeSinceGrounded = Number.POSITIVE_INFINITY;
+    this.jumpBufferTimer = 0;
+    this.jumpLatched = false;
+    this.distanceTravelled = 0;
+    this.previousDistanceTravelled = 0;
+    this.bobIntensity = 0;
+    this.previousBobIntensity = 0;
+    this.runFactor = 0;
+    this.previousRunFactor = 0;
+    this.landingDip = 0;
+    this.previousLandingDip = 0;
+    this.lastLandingSpeed = 0;
+  }
+
+  /** À appeler avant `update`, dans `snapshotPrevious` de la boucle. */
+  snapshotPrevious() {
+    this.previousPosition.copy(this.position);
+    this.previousDistanceTravelled = this.distanceTravelled;
+    this.previousBobIntensity = this.bobIntensity;
+    this.previousRunFactor = this.runFactor;
+    this.previousLandingDip = this.landingDip;
+  }
+
+  eyePosition(alpha: number, out: THREE.Vector3): THREE.Vector3 {
+    out.lerpVectors(this.previousPosition, this.position, alpha);
+    out.y += this.eyeOffset;
+    return out;
+  }
+
+  viewBob(alpha: number, out: THREE.Vector3): THREE.Vector3 {
+    const cfg = this.cfg;
+    const intensity = THREE.MathUtils.lerp(this.previousBobIntensity, this.bobIntensity, alpha);
+    const dip = THREE.MathUtils.lerp(this.previousLandingDip, this.landingDip, alpha);
+    if (intensity <= 0 && dip <= 0) return out.set(0, 0, 0);
+
+    let cycle = 0;
+    if (intensity > 0 && cfg.bobDistancePerCycle > 0) {
+      const distance = THREE.MathUtils.lerp(
+        this.previousDistanceTravelled,
+        this.distanceTravelled,
+        alpha,
+      );
+      cycle = (distance / cfg.bobDistancePerCycle) * TAU;
+    }
+
+    // Un cycle = deux appuis de pied : le balancement latéral fait un
+    // aller-retour, la vue monte et redescend deux fois.
+    out.x = Math.sin(cycle) * cfg.bobLateralAmplitude * intensity;
+    out.y = Math.sin(cycle * 2) * cfg.bobVerticalAmplitude * intensity - dip;
+    out.z = 0;
+    return out;
+  }
+
+  /** Facteur de course interpolé pour le rendu, 0..1. Pilote le FOV. */
+  runFactorAt(alpha: number): number {
+    return THREE.MathUtils.lerp(this.previousRunFactor, this.runFactor, alpha);
+  }
+
+  update(dt: number, frame: InputFrame) {
+    const cfg = this.cfg;
+    const gravityY = this.physics.gravityY;
+
+    const sin = Math.sin(frame.yaw);
+    const cos = Math.cos(frame.yaw);
+    let wishX = 0;
+    let wishZ = 0;
+    if (frame.forward) {
+      wishX -= sin;
+      wishZ -= cos;
+    }
+    if (frame.back) {
+      wishX += sin;
+      wishZ += cos;
+    }
+    if (frame.right) {
+      wishX += cos;
+      wishZ -= sin;
+    }
+    if (frame.left) {
+      wishX -= cos;
+      wishZ += sin;
+    }
+    const wishLength = Math.hypot(wishX, wishZ);
+    if (wishLength > 0) {
+      wishX /= wishLength;
+      wishZ /= wishLength;
+    }
+
+    const targetSpeed = frame.sprint ? cfg.runSpeed : cfg.walkSpeed;
+
+    if (wishLength > 0) {
+      // Accélération linéaire vers la vitesse cible, bornée par le budget du pas.
+      const accel = groundAcceleration(cfg, targetSpeed) * (this.isGrounded ? 1 : cfg.airControl);
+      let dvx = wishX * targetSpeed - this.velocity.x;
+      let dvz = wishZ * targetSpeed - this.velocity.z;
+      const dvLength = Math.hypot(dvx, dvz);
+      const budget = accel * dt;
+      if (dvLength > budget) {
+        const scale = budget / dvLength;
+        dvx *= scale;
+        dvz *= scale;
+      }
+      this.velocity.x += dvx;
+      this.velocity.z += dvz;
+    } else if (this.isGrounded) {
+      // Friction linéaire : arrêt complet en `timeToStop` depuis `runSpeed`.
+      // Pas de friction en l'air, le momentum se conserve.
+      const speed = Math.hypot(this.velocity.x, this.velocity.z);
+      const drop = groundDeceleration(cfg) * dt;
+      if (speed <= drop || speed === 0) {
+        this.velocity.x = 0;
+        this.velocity.z = 0;
+      } else {
+        const scale = (speed - drop) / speed;
+        this.velocity.x *= scale;
+        this.velocity.z *= scale;
+      }
+    }
+
+    this.timeSinceGrounded = this.isGrounded ? 0 : this.timeSinceGrounded + dt;
+
+    this.velocity.y += gravityY * dt;
+    if (this.isGrounded && this.velocity.y < 0) {
+      // see: docs/archive/systems-joueur.md#une-vitesse-de-collage-au-sol-volontairement-faible-groundstickspeed
+      this.velocity.y = -cfg.groundStickSpeed;
+    }
+
+    this.jumpBufferTimer = frame.jump
+      ? cfg.jumpBufferTime
+      : Math.max(0, this.jumpBufferTimer - dt);
+    const wantsJump = frame.jump || this.jumpBufferTimer > 0;
+    const canJump = this.isGrounded || this.timeSinceGrounded <= cfg.coyoteTime;
+    if (wantsJump && canJump && !this.jumpLatched) {
+      this.velocity.y = jumpVelocity(cfg, gravityY);
+      this.jumpLatched = true;
+      this.jumpBufferTimer = 0;
+      this.isGrounded = false;
+    }
+
+    if (this.velocity.y < -cfg.maxFallSpeed) this.velocity.y = -cfg.maxFallSpeed;
+
+    // Le snap-to-ground recollerait au sol un saut naissant (7.4 m/s × 1/60 =
+    // 0.12 m, très en dessous des 0.4 m de snap). On le suspend tant qu'on monte.
+    if (this.velocity.y > 0) this.kcc.disableSnapToGround();
+    else this.kcc.enableSnapToGround(cfg.snapToGroundDistance);
+
+    this.desired.x = this.velocity.x * dt;
+    this.desired.y = this.velocity.y * dt;
+    this.desired.z = this.velocity.z * dt;
+
+    this.kcc.computeColliderMovement(
+      this.collider,
+      this.desired,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+      COLLISION_GROUPS.PLAYER,
+      (other) => other.handle !== this.collider.handle,
+    );
+    this.kcc.computedMovement(this.movement);
+    this.numCollisions = this.kcc.numComputedCollisions();
+    const grounded = this.kcc.computedGrounded();
+
+    this.groundNormal.set(0, 1, 0);
+    let bestUp = -Infinity;
+    let hitWall = false;
+    const wallThreshold = wallNormalYThreshold(cfg);
+    for (let i = 0; i < this.numCollisions; i++) {
+      const collision = this.kcc.computedCollision(i, this.collisionScratch);
+      if (!collision) continue;
+      if (grounded && collision.normal1.y > bestUp) {
+        bestUp = collision.normal1.y;
+        this.groundNormal.set(collision.normal1.x, collision.normal1.y, collision.normal1.z);
+      }
+      if (Math.abs(collision.normal1.y) < wallThreshold) hitWall = true;
+    }
+
+    // Vitesse verticale : plafond puis atterrissage.
+    if (this.velocity.y > 0 && this.movement.y < this.desired.y - 1e-6) {
+      this.velocity.y = 0; // tête dans le plafond
+    }
+    let impactSpeed = 0;
+    if (grounded && this.velocity.y < 0) {
+      if (!this.isGrounded) impactSpeed = -this.velocity.y;
+      this.velocity.y = 0; // atterrissage
+    }
+
+    if (hitWall && dt > 0) {
+      this.velocity.x = this.movement.x / dt;
+      this.velocity.z = this.movement.z / dt;
+    }
+
+    if (grounded) {
+      this.jumpLatched = false;
+      this.timeSinceGrounded = 0;
+    }
+    this.isGrounded = grounded;
+
+    const current = this.body.translation();
+    this.nextTranslation.x = current.x + this.movement.x;
+    this.nextTranslation.y = current.y + this.movement.y;
+    this.nextTranslation.z = current.z + this.movement.z;
+    // Consommé par le `world.step()` du MÊME pas fixe (ordre de `core/loop/loop.ts`).
+    // Le corps kinématique en dérive sa vitesse, ce qui permet de pousser les
+    // corps dynamiques proprement.
+    this.body.setNextKinematicTranslation(this.nextTranslation);
+
+    this.position.set(this.nextTranslation.x, this.nextTranslation.y, this.nextTranslation.z);
+    this.distanceTravelled += Math.hypot(this.movement.x, this.movement.z);
+
+    this.updateViewState(dt, impactSpeed);
+  }
+
+  private updateViewState(dt: number, impactSpeed: number) {
+    const cfg = this.cfg;
+    const speed = this.horizontalSpeed;
+
+    // Enveloppes normalisées : amplitude totale 1.
+    this.bobIntensity = approach(
+      this.bobIntensity,
+      bobIntensityTarget(cfg, speed, this.isGrounded),
+      cfg.bobResponseTime,
+      dt,
+      1,
+    );
+
+    this.runFactor = approach(
+      this.runFactor,
+      fovRunFactorTarget(cfg, speed),
+      cfg.fovResponseTime,
+      dt,
+      1,
+    );
+
+    this.landingDip = approach(
+      this.landingDip,
+      0,
+      cfg.landingDipRecoverTime,
+      dt,
+      cfg.landingDipMax,
+    );
+    if (impactSpeed > 0) {
+      this.lastLandingSpeed = impactSpeed;
+      this.landingDip = Math.max(this.landingDip, landingDipFor(cfg, impactSpeed));
+    }
+  }
+}

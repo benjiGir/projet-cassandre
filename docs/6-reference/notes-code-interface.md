@@ -13,7 +13,7 @@ Connaissances déplacées depuis les commentaires de `src/ui/`. Les conventions 
 
 ## Écrans et navigation
 
-`App` compose l’interface en jeu ; `app/bootChoice.ts` monte les menus qui
+`App` compose l’interface en jeu ; `app/navigation/bootChoice.ts` monte les menus qui
 précèdent la partie. Les actions de reprise, de rejeu et de retour au menu
 arrivent par callbacks : l’écran ne décide pas comment reconstruire une
 session. Le graphe XState de navigation n’a besoin ni du DOM, ni de Three,

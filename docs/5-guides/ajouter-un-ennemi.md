@@ -36,9 +36,9 @@ simulation ou le contrat des collisions existants.
 3. Gardez les nombres de comportement dans cette configuration, pas
    dispersés dans les branches de l'IA.
 4. Implémentez une classe qui satisfait `Entity` dans
-   `src/game/entities/entity.ts`.
+   `src/game/entities/shared/entity.ts`.
 5. Réutilisez les fonctions communes de
-   `src/game/entities/enemyMachine.ts` pour corps, collider, acteur,
+   `src/game/entities/shared/enemyMachine.ts` pour corps, collider, acteur,
    RNG, machine et interpolation.
 6. Gardez la machine partagée aussi générique que les états
    véritablement communs. Les propriétés de boss restent dans la classe
@@ -61,7 +61,7 @@ simulation ou le contrat des collisions existants.
     la machine d'états.
 14. Ajoutez une animation sprite ou un atlas et raccordez ses états de
     rendu dans le système qui les affiche.
-15. Ajoutez un point de spawn reconnu dans `src/game/level/loader.ts` et
+15. Ajoutez un point de spawn reconnu dans `src/game/level/loading/loader.ts` et
     dans le contrat de nommage glTF.
 16. Mettez à jour `tools/blender/validate_level.py` si le nouveau nom ou
     les nouvelles propriétés demandent une validation.

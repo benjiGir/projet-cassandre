@@ -41,7 +41,7 @@ l'écoute.
    rendre le même signal.
 5. Si le son est une boucle dense, construisez-la périodiquement et
    déclarez-la dans la liste des boucles exactes.
-6. Ajoutez l'identifiant de jeu à `SFX_TABLE` dans `src/core/audio.ts`
+6. Ajoutez l'identifiant de jeu à `SFX_TABLE` dans `src/core/audio/audio.ts`
    et vérifiez la correspondance au manifeste.
 7. Si la recette est nouvelle, mettez à jour les tests concernés sous
    `test/core/` ou `tools/audio/`.

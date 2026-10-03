@@ -1,22 +1,22 @@
 import * as THREE from "three";
 
-import { GameClock } from "../../core/time";
-import { type Recording } from "../../core/inputTypes";
-import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/renderer";
-import { FxSystem } from "../../render/fx";
-import { UseObjectCulling } from "../../render/useObjectCulling";
-import { Viewmodel } from "../../render/viewmodel";
-import type { WeaponModels } from "../../render/viewmodelTypes";
-import type { CardPickupTextures } from "../../render/cardPickups";
-import { createWireframeToggle } from "../../render/debugView";
-import { HitmarkerOverlay } from "../../render/hitmarker";
-import { CrosshairOverlay } from "../../render/crosshair";
-import { CameraViewOverlay } from "../../render/cameraView";
-import { BallisticsDebugOverlay } from "../../render/ballisticsDebug";
-import { type EnemySpriteSheet } from "../../render/enemySpriteTypes";
-import { weaponConfig } from "../player/weaponConfig";
-import { moveConfig } from "../player/moveConfig";
-import { InteractionSystem } from "../level/interactive";
+import { GameClock } from "../../core/loop/time";
+import { type Recording } from "../../core/input/inputTypes";
+import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/pipeline/renderer";
+import { FxSystem } from "../../render/fx/fx";
+import { UseObjectCulling } from "../../render/environment/useObjectCulling";
+import { Viewmodel } from "../../render/viewmodel/viewmodel";
+import type { WeaponModels } from "../../render/viewmodel/viewmodelTypes";
+import type { CardPickupTextures } from "../../render/pickups/cardPickups";
+import { createWireframeToggle } from "../../render/debug/debugView";
+import { HitmarkerOverlay } from "../../render/overlays/hitmarker";
+import { CrosshairOverlay } from "../../render/overlays/crosshair";
+import { CameraViewOverlay } from "../../render/overlays/cameraView";
+import { BallisticsDebugOverlay } from "../../render/debug/ballisticsDebug";
+import { type EnemySpriteSheet } from "../../render/sprites/enemySpriteTypes";
+import { weaponConfig } from "../player/weapons/weaponConfig";
+import { moveConfig } from "../player/movement/moveConfig";
+import { InteractionSystem } from "../level/interactions/interactive";
 import type { GameFlowPort } from "./flowPort";
 import type { GameSession } from "./gameSession";
 
@@ -30,10 +30,10 @@ export interface GameEngine {
 
   /** Horloge persistante dont l'état transitoire est remis à zéro à chaque boot. */
   clock: GameClock;
-  /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx.ts`. */
+  /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx/fx.ts`. */
   fx: FxSystem;
   viewmodel: Viewmodel;
-  /** Élagage par distance des `use_*` — PERSISTANT, comme `fx`/`viewmodel` : il ne retient que des références faibles (voir `render/useObjectCulling.ts`). */
+  /** Élagage par distance des `use_*` — PERSISTANT, comme `fx`/`viewmodel` : il ne retient que des références faibles (voir `render/environment/useObjectCulling.ts`). */
   useObjectCulling: UseObjectCulling;
   /** Géométries des armes, partagées par le viewmodel et les ramassages posés dans les niveaux. */
   weaponModels: WeaponModels;
@@ -41,14 +41,14 @@ export interface GameEngine {
   hitmarker: HitmarkerOverlay;
   ballisticsDebug: BallisticsDebugOverlay;
   /** Bruit/scanlines/étiquette pendant une vue par caméra (chantier « Les
-   * coulisses », système 4) — voir `render/cameraView.ts`. */
+   * coulisses », système 4) — voir `render/overlays/cameraView.ts`. */
   cameraViewOverlay: CameraViewOverlay;
 
   /** Éclairage temps réel de la scène, réglé PAR NIVEAU (`LevelDef.lighting`) — voir `lifecycle.ts::applyLightRig`. */
   ambientLight: THREE.AmbientLight;
   sunLight: THREE.DirectionalLight;
 
-  /** Planches de sprites, chargées une fois au démarrage et partagées par tous les ennemis de toutes les parties — chaque `BillboardSprite` clone l'atlas (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/billboard.ts`). */
+  /** Planches de sprites, chargées une fois au démarrage et partagées par tous les ennemis de toutes les parties — chaque `BillboardSprite` clone l'atlas (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/sprites/billboard.ts`). */
   suitSheet: EnemySpriteSheet;
   directorSheet: EnemySpriteSheet;
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
@@ -67,13 +67,13 @@ export interface GameEngine {
 
   /** Debug visuel rétro : wireframe togglable à chaud (KeyV, voir `loop/updateFx.ts`) — PERSISTANT, re-traverse `scene` à chaque appel. */
   wireframeToggle: ReturnType<typeof createWireframeToggle>;
-  /** Interaction (`use_*`, touche E) — UNE SEULE instance pour toute la durée de l'onglet, voir `game/level/interactive.ts`. */
+  /** Interaction (`use_*`, touche E) — UNE SEULE instance pour toute la durée de l'onglet, voir `game/level/interactions/interactive.ts`. */
   interaction: InteractionSystem;
 
   /** Session de partie COURANTE — remplace la variable mutable `currentSession` de `main()`. Réassigné par `lifecycle.ts::bootGameSession`/`replay`/`returnToMenu`, jamais par les fonctions qui construisent une NOUVELLE session (elles reçoivent cette nouvelle session en paramètre explicite tant qu'elle n'est pas encore devenue "la" session courante — voir la doc de `spawning.ts::spawnSuitAt`). */
   session: GameSession;
 
-  /** Dernier enregistrement F9/F10 (`core/inputRecorder.ts`), pour rejeu (F10) et pour `window.cassandre.lastRecording`/`playRecording`. */
+  /** Dernier enregistrement F9/F10 (`core/input/inputRecorder.ts`), pour rejeu (F10) et pour `window.cassandre.lastRecording`/`playRecording`. */
   lastRecording: Recording | null;
   /** FPS lissé, publié au `DebugPanel` (voir `loop/updateFx.ts`). */
   fpsSmoothed: number;
@@ -120,7 +120,7 @@ export function buildGameEngine(
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
   // Overlay de la vue par caméra (chantier « Les coulisses », système 4) :
   // même conteneur/canvas 2D que le réticule/hitmarker ci-dessus, voir
-  // `render/cameraView.ts`.
+  // `render/overlays/cameraView.ts`.
   const cameraViewOverlay = new CameraViewOverlay(document.getElementById("app") as HTMLDivElement);
 
   const ballPrevPos = new THREE.Vector3();

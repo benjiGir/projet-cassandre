@@ -1,6 +1,6 @@
-import { input } from "../../core/input";
-import { inputRecorder } from "../../core/inputRecorder";
-import { moveConfig } from "../player/moveConfig";
+import { input } from "../../core/input/input";
+import { inputRecorder } from "../../core/input/inputRecorder";
+import { moveConfig } from "../player/movement/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
 type DisplayInputEngine = Pick<GameEngine, "look" | "lookDelta">;
 

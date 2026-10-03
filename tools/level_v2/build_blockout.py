@@ -532,7 +532,7 @@ PORTES = {
 # modélisé. Déclarée à la main pour cette raison.
 OUVERTURE_SORTIE = plan.Opening("direction", "_dehors", "y", 166.0, (-38.0, -36.0), 4.0, 4.0)
 # Petit palier DERRIÈRE la sortie, à l'altitude de l'étage. La partie se termine
-# au franchissement (`estPorteDeSortie`, `game/session/doors.ts`), mais il
+# au franchissement (`estPorteDeSortie`, `game/session/progression/doors.ts`), mais il
 # s'écoule un pas fixe entre le franchissement et l'écran de fin : sans sol, ce
 # pas-là est une chute.
 PALIER_SORTIE = ((-40.0, 166.0), (6.0, 3.0))
@@ -667,7 +667,7 @@ REGLES_REPERES = [
 
 
 # Mot du libellé du plan → nom d'aliment connu du runtime (`FOOD_ITEMS` dans
-# `src/game/level/food.ts`). « baguettes » n'a pas de nom dédié côté jeu : le
+# `src/game/level/interactions/food.ts`). « baguettes » n'a pas de nom dédié côté jeu : le
 # libellé du plan lui donne +5, la même valeur que « donut », donc c'est
 # celui-là qui est posé — aucun écart de PV avec ce qu'annonce le plan.
 ALIMENTS_PAR_MOT = {
@@ -741,7 +741,7 @@ def poser_reperes(materiaux, geo_coll, col_coll, logic_coll,
                     raise SystemExit(f"[blockout] ramassage sans quantité dans son libellé : {label!r} ({space.id})")
                 compteurs[genre] = compteurs.get(genre, 0) + 1
                 # Repère seulement : le jeu remplace la boîte par le vrai modèle,
-                # posé sur le sol réellement sous elle (`render/pickups.ts`).
+                # posé sur le sol réellement sous elle (`render/pickups/pickups.ts`).
                 boite_centree(f"use_{genre}_{space.id}_{compteurs[genre]}", (rx, ry, z + 0.25), (0.5, 0.5, 0.5),
                               "repere", materiaux, logic_coll, extras={genre: int(quantite.group(1))})
                 comptes["use"] += 1

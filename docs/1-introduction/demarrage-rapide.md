@@ -52,11 +52,11 @@ pnpm check:docs
 ## Premier lancement
 
 En développement, l'écran de démarrage n'est pas encore le menu principal :
-`src/app/bootChoice.ts::resolveBootChoice` affiche d'abord le **menu
+`src/app/navigation/bootChoice.ts::resolveBootChoice` affiche d'abord le **menu
 principal** (`src/ui/screens/mainMenu/MainMenu`), sauf si l'URL porte déjà
 `?level=`. Le bouton « Jouer » lance directement `niveau_v2` (« Niveau v2 —
 habillé »), désigné comme LE niveau du jeu dans le registre
-`src/game/level/levels.ts`. Un lien « Options » ouvre `OptionsScreen`.
+`src/game/level/catalog/levels.ts`. Un lien « Options » ouvre `OptionsScreen`.
 
 En développement uniquement, le menu principal propose aussi un accès au
 **choix de zone** (`src/ui/dev/LevelMenu/LevelMenu.tsx`, outil d'auteur qui
@@ -71,7 +71,7 @@ sur un chargement glTF brut du même nom, sans passer par le registre.
 
 ## Contrôles par défaut
 
-Défauts de `src/core/input.ts` (`DEFAULT_BINDINGS`, rebindables en jeu et
+Défauts de `src/core/input/input.ts` (`DEFAULT_BINDINGS`, rebindables en jeu et
 persistés en `localStorage`) : ZQSD n'apparaît nulle part dans le code, ce
 sont les touches physiques `KeyW`/`KeyA`/`KeyS`/`KeyD` qui sont liées, donc
 déjà correctes en clavier AZERTY sans configuration.

@@ -74,7 +74,7 @@ def _collider_epaissi(nom: str, b, z_sol: float, col_coll) -> None:
 
 # PV d'un `sanitaire_*` cassable (2026-09-24, contrat runtime partagé avec le
 # loader/`SanitaireSystem`, écrit en parallèle). Choisi contre
-# `src/game/player/weaponConfig.ts::damageForWeapon` : un coup de pied-de-biche
+# `src/game/player/weapons/weaponConfig.ts::damageForWeapon` : un coup de pied-de-biche
 # (`meleeDamage` = 40) ne casse PAS la faïence d'un coup, il en faut deux
 # (2 × 40 = 80) ; un coup de pompe à bout portant, où les neuf plombs du cône de
 # 5° convergent tous sur une cible aussi proche (9 × `shotgunDamagePerPellet` =

@@ -37,7 +37,7 @@ knockback...) ne sont **pas** ici : voir [Valeurs des ennemis](./reference-valeu
 Un ennemi vivant traverse cinq états (`idle`, `alert`, `chase`, `attack`,
 `stagger`), puis deux états terminaux de mort (`dead`, l'animation, puis
 `corpse`, le cadavre figé). Le diagramme ci-dessous est construit par lecture
-directe de la table de transition XState (`src/game/entities/enemyMachine.ts`),
+directe de la table de transition XState (`src/game/entities/shared/enemyMachine.ts`),
 pas de la documentation existante — chaque flèche correspond à un événement
 réellement envoyé par le code.
 
@@ -99,7 +99,7 @@ skill `enemy-state-machine`).
 
 ## Le contrat minimal partagé par toute entité (Entity)
 
-`src/game/entities/entity.ts` définit ce que doit fournir n'importe quelle
+`src/game/entities/shared/entity.ts` définit ce que doit fournir n'importe quelle
 entité de jeu pour exister dans le monde : un identifiant stable (`id`), et
 une position au pas courant plus une position au pas précédent
 (`previousPosition`, nécessaire à l'interpolation de rendu). C'est
@@ -122,8 +122,8 @@ et délèguent tout le reste. Trois disciplines sont tenues à l'identique pour
 les deux classes :
 
 - **Pureté du cœur de simulation** : ni `suit.ts` ni `director.ts`
-  n'importent quoi que ce soit de `render/`, `core/audio.ts` ou
-  `game/state.ts`. `update()` ne fait qu'avancer la machine à états et la
+  n'importent quoi que ce soit de `render/`, `core/audio/audio.ts` ou
+  `game/hud/state.ts`. `update()` ne fait qu'avancer la machine à états et la
   physique ; les managers (voir plus bas) lisent les champs `pending*` en
   sortie et traduisent en événements — jamais l'inverse.
 - **Déterminisme** : tout tourne au pas fixe avec le `dt` de gameplay reçu en
@@ -221,7 +221,7 @@ déclarative qu'il n'est pas.
 remplace l’acteur via les snapshots publics ; voir
 [Compatibilité de debug](../6-reference/notes-code-gameplay-ennemis.md#compatibilité-de-debug).
 
-Le filet de sécurité de caractérisation (`test/game/entities/suit.test.ts`/
+Le filet de sécurité de caractérisation (`test/game/entities/suit/suit.test.ts`/
 `director.test.ts`, écrit contre le code pré-refactor) affecte directement
 `suit.state = "chase"` / `suit.stateTimer = 1.23` comme mise en place de
 test — ce qu'un champ public mutable permettait avant le jalon M5. Un acteur
@@ -283,7 +283,7 @@ TypeScript, pas une branche défensive qui peut réellement se déclencher.
 ## Navigation
 
 Un vrai pathfinding 2.5D existe (`PathfindingService`,
-`src/game/level/pathfinding.ts`, jalon M4) : un graphe de praticabilité baké
+`src/game/level/navigation/pathfinding.ts`, jalon M4) : un graphe de praticabilité baké
 par niveau sur le gabarit du Costard (`suitConfig`, pas `directorConfig` —
 un seul graphe partagé par les deux types). L'évitement local à 3 rayons
 (avant, avant-gauche 30°, avant-droit 30°) décrit par le skill
@@ -303,7 +303,7 @@ consciemment, pas un acquis automatique du nouveau système.
 l'ennemi et ceux du joueur, contre la géométrie du niveau seule. Ce que le
 level design peut en attendre, mesuré au jalon N5 sur les `.glb` exportés
 ([ADR 0025](../decisions/0025-occlusion-lignes-de-vue-cause-racine.md),
-`test/game/entities/lineOfSight.test.ts`) :
+`test/game/entities/shared/lineOfSight.test.ts`) :
 
 - une rangée de gondoles ou de racks **couvre réellement** — un ennemi posé
   derrière reste `idle` ;
@@ -375,7 +375,7 @@ l'inventaire commun aux trois cartes — voir
 [Conventions de nommage](./reference-conventions-nommage.md#cartes-de-fidélité).
 
 Il n'utilise **pas** le contrat `use_*`/`UseObject`
-(`game/level/interactive.ts`) : ce contrat est pensé pour des objets
+(`game/level/interactions/interactive.ts`) : ce contrat est pensé pour des objets
 pré-autorisés dans Blender (touche E, portée 2 m), pas pour un pickup généré
 à runtime par la mort d'une entité. Le ramassage se fait par proximité
 seule, via `tryCollect(playerPosition, pickupRadius, minAge)` — voir

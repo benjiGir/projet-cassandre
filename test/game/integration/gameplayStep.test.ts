@@ -15,10 +15,10 @@ import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
-import { GameClock } from "../../../src/core/time";
-import { emptyInputFrame } from "../../../src/core/inputRecorder";
-import { WeaponSystem } from "../../../src/game/player/weapons";
-import { SuitManager } from "../../../src/game/entities/suitManager";
+import { GameClock } from "../../../src/core/loop/time";
+import { emptyInputFrame } from "../../../src/core/input/inputRecorder";
+import { WeaponSystem } from "../../../src/game/player/weapons/weapons";
+import { SuitManager } from "../../../src/game/entities/suit/suitManager";
 
 await initPhysics();
 

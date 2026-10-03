@@ -84,7 +84,7 @@ SANITAIRE_SORTES = ("cuvette", "urinoir")
 # Chaînes d'un `ecran_*` (chantier « Les coulisses », système 2) — doit rester
 # identique aux clés de `tools/textures/generate_chaines.py::CHAINES` (moins
 # "casse", état interne atteint par la casse, jamais choisi à la pose) et à
-# `ECRAN_CHAINES` dans `src/game/level/ecrans.ts`.
+# `ECRAN_CHAINES` dans `src/game/level/interactions/ecrans.ts`.
 ECRAN_CHAINES = ("journal", "pub", "mire", "foot", "cctv")
 
 errors: list[str] = []

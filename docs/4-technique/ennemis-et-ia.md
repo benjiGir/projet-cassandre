@@ -29,19 +29,19 @@ en entrée (D28).
 
 ## Fichiers
 
-- `src/game/entities/entity.ts` — contrat minimal `Entity` partagé par toute
+- `src/game/entities/shared/entity.ts` — contrat minimal `Entity` partagé par toute
   entité de jeu ; squelettique par choix (invariant #8, pas d'ECS avant 12
   types d'ennemis).
-- `src/game/entities/enemyMachine.ts` — transitions, décisions par état et `tickEnemy`.
-- `src/game/entities/enemyTypes.ts` — configuration et contrats de contexte/événements.
-- `src/game/entities/enemyPerception.ts` — yeux, lignes de vue et filtres monde.
-- `src/game/entities/enemyNavigation.ts` — poursuite, évitement et orientation.
-- `src/game/entities/enemyPhysics.ts` — capsule, KCC, intégration et knockback.
-- `src/game/entities/enemyCombat.ts` — visée, jitter et résolution du tir.
-- `src/game/entities/suit.ts` / `suitConfig.ts` / `suitManager.ts` — le
+- `src/game/entities/shared/enemyMachine.ts` — transitions, décisions par état et `tickEnemy`.
+- `src/game/entities/shared/enemyTypes.ts` — configuration et contrats de contexte/événements.
+- `src/game/entities/shared/enemyPerception.ts` — yeux, lignes de vue et filtres monde.
+- `src/game/entities/shared/enemyNavigation.ts` — poursuite, évitement et orientation.
+- `src/game/entities/shared/enemyPhysics.ts` — capsule, KCC, intégration et knockback.
+- `src/game/entities/shared/enemyCombat.ts` — visée, jitter et résolution du tir.
+- `src/game/entities/suit/suit.ts` / `suitConfig.ts` / `suitManager.ts` — le
   Costard : fin wrapper Rapier + config + PRNG + acteur ; `SuitManager`
   pilote `Suit[]`, un seul KCC partagé, les files d'évènements par frame.
-- `src/game/entities/director.ts` / `directorConfig.ts` / `directorManager.ts`
+- `src/game/entities/director/director.ts` / `directorConfig.ts` / `directorManager.ts`
   — le Directeur : même schéma, plus la révélation (`revealed`), la carte
   Platine lâchée à la mort (`DroppedCard`) et son délai de ramassage.
 - `src/game/session/spawning.ts` — `spawnSuitAt`/`spawnDirectorAt`, appelées
@@ -52,9 +52,9 @@ en entrée (D28).
   `directorManager.tryCollectCard`.
 - `src/game/loop/updateFx.ts` — lit les files d'évènements et déclenche
   sprite/son/fx ; vide les files en tout dernier (`clearFrameEvents()`).
-- `src/render/fx.ts` — `spawnGibs`, infrastructure partagée avec les débris
+- `src/render/fx/fx.ts` — `spawnGibs`, infrastructure partagée avec les débris
   de `prop_*`.
-- `src/core/random.ts` — `DeterministicRandom`, seule source du PRNG par
+- `src/core/effect/random.ts` — `DeterministicRandom`, seule source du PRNG par
   entité (invariant #12).
 
 ## Où ça s'insère dans la boucle
@@ -228,16 +228,16 @@ serait recompté ou un nouveau raté
 
 ## Tests
 
-- `test/game/entities/suit.test.ts` — machine à états, dégâts, knockback,
+- `test/game/entities/suit/suit.test.ts` — machine à états, dégâts, knockback,
   gibs, RNG par entité, intégration physique.
-- `test/game/entities/director.test.ts` — mêmes garanties + révélation,
+- `test/game/entities/director/director.test.ts` — mêmes garanties + révélation,
   `justRevealed`, `DroppedCard`/`tryCollectCard`.
-- `test/game/entities/lineOfSight.test.ts` — occlusion de ligne de vue
+- `test/game/entities/shared/lineOfSight.test.ts` — occlusion de ligne de vue
   (pièces du kit isolées et vrai niveau exporté), section dédiée à
   `refreshSceneQueries`.
-- `test/game/entities/enemyShotVitre.test.ts` — `handleEnemyShotMiss` (tir
+- `test/game/entities/shared/enemyShotVitre.test.ts` — `handleEnemyShotMiss` (tir
   ennemi qui casse une vitre/un sanitaire plutôt que de rater silencieusement).
-- `test/render/enemySprites.test.ts` — sélection d'angle du billboard,
+- `test/render/sprites/enemySprites.test.ts` — sélection d'angle du billboard,
   `readEnemyAnimation`.
 
 `Suit.state`/`Director.state` (setters) réassignent l'état via

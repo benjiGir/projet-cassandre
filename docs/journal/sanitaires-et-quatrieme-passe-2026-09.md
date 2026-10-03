@@ -41,7 +41,7 @@ Toilettes façon Duke 3D (2026-09-24), EN ATTENTE DU VERDICT DE PLAYTEST.**
 > **Boucle d'eau positionnelle ajoutée le même jour** : `amb_water_jet`
 > (placeholder de synthèse, 10,24 s, bouclée par construction et vérifiée
 > après décodage `.ogg`/`.m4a`), un `Howl` en Web Audio
-> (`core/waterAmbience.ts`, calcul pur dans `waterAmbienceMix.ts`) piloté
+> (`core/audio/waterAmbience.ts`, calcul pur dans `waterAmbienceMix.ts`) piloté
 > depuis `updateFx` : plein volume (0,35) à ≤ 1,5 m, silence à 11 m, pan
 > ±0,55, coupé hors de l'état `playing`. Vérifié en jeu par
 > `cassandre.sfx.eau()` : 0,35 près du jet, 0,18 à 6 m, arrêtée à 15 m.

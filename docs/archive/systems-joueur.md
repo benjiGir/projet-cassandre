@@ -21,7 +21,7 @@ dynamique, réception de saut) est un habillage purement cosmétique posé
 par-dessus, qui ne doit jamais contaminer la direction de visée réelle —
 c'est la règle qui structure toute cette seconde moitié du document. Aucun
 nombre de gameplay ne vit dans le code du contrôleur lui-même
-(`src/game/player/controller.ts`) : tout vient de `moveConfig.ts`, source
+(`src/game/player/movement/controller.ts`) : tout vient de `moveConfig.ts`, source
 unique de vérité — voir [Valeurs de déplacement](./reference-valeurs-deplacement.md).
 
 ## Résolution du pas fixe
@@ -35,7 +35,7 @@ unique de vérité — voir [Valeurs de déplacement](./reference-valeurs-deplac
   glissements.
 - La translation cible est posée via `setNextKinematicTranslation` et
   appliquée par le `world.step()` **du même pas fixe** (voir l'ordre des
-  callbacks dans `core/loop.ts`) — le corps kinématique en dérive sa
+  callbacks dans `core/loop/loop.ts`) — le corps kinématique en dérive sa
   vitesse, ce qui permet de pousser proprement les corps dynamiques.
 
 ## Deux garde-fous contre la dégénérescence de Rapier
@@ -151,7 +151,7 @@ dimensions dans la comparaison.
 aucun de ces champs n'est lu par Rapier, ils sont relus à chaque pas fixe
 et à chaque frame d'affichage.
 
-Protocole de comparaison (`game/devtools/testHarness.ts::applyFeelVariant`),
+Protocole de comparaison (`game/devtools/replay/testHarness.ts::applyFeelVariant`),
 trois étapes : F9, courir et sauter ~15 s dans le couloir nord du hub, F9
 pour arrêter ; `cassandre.applyFeelVariant("A")` puis F10 — recommencer
 avec « B », « C » ; la course rejouée est identique au pas fixe près, seule

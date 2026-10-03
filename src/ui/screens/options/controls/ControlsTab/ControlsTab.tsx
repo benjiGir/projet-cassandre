@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { input } from "../../../../../core/input";
-import { ACTION_LABELS, ALL_ACTIONS, DEFAULT_BINDINGS, formatKeyCode } from "../../../../../core/inputBindings";
-import type { GameAction } from "../../../../../core/inputTypes";
+import { input } from "../../../../../core/input/input";
+import { ACTION_LABELS, ALL_ACTIONS, DEFAULT_BINDINGS, formatKeyCode } from "../../../../../core/input/inputBindings";
+import type { GameAction } from "../../../../../core/input/inputTypes";
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { KeyBinding } from "../KeyBinding/KeyBinding";

@@ -46,7 +46,7 @@ reste conservé et renvoie à son successeur.
 | [0009](0009-machine-partagee-suit-director.md) | Une machine XState partagée pour le Costard et le Directeur | accepté |
 | [0014](0014-gameengine-persistentengine-separes.md) | Séparer le moteur persistant de la session de jeu | accepté |
 | [0019](0019-machine-xstate-flux-ecran.md) | Machine de flux d'écran plutôt qu'un rechargement de page | accepté |
-| [0020](0020-state-feuille-de-dependances.md) | Garder `game/state.ts` comme feuille de dépendances | remplacé par 0036 |
+| [0020](0020-state-feuille-de-dependances.md) | Garder `game/hud/state.ts` comme feuille de dépendances | remplacé par 0036 |
 | [0036](0036-contrats-feuilles-et-store-hud.md) | Séparer les contrats feuilles du store HUD et des implémentations | accepté |
 
 ## Niveau, chargement et objets

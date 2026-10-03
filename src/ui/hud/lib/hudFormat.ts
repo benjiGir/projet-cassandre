@@ -1,4 +1,4 @@
-import type { DebugState } from "../../../game/hudTypes";
+import type { DebugState } from "../../../game/hud/hudTypes";
 
 type AmmoFields = Pick<DebugState, "activeWeapon" | "shotgunAmmo" | "shotgunMaxAmmo" | "pistolAmmo" | "pistolMaxAmmo">;
 

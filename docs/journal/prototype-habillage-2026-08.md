@@ -12,7 +12,7 @@ Phase 6 — Habillage, livrée (2026-08-24). Décomposée et routée par l'agent
 > `docs/journal/plan-prototype-2026-08.md`, section "Phase 6", pour les 6 livrables du
 > plan (HUD stream, répliques du héros, musique/nappe, écran de mort, écran
 > de fin de niveau, menu principal + rebinding AZERTY).
-> **Rebinding réel** (`src/core/input.ts`, `GameAction`/`DEFAULT_BINDINGS`,
+> **Rebinding réel** (`src/core/input/input.ts`, `GameAction`/`DEFAULT_BINDINGS`,
 > persistance `localStorage`) : constat au passage, le moteur d'input lisait
 > déjà `KeyboardEvent.code` (position physique, indépendant du layout) —
 > ZQSD fonctionnait donc déjà nativement en AZERTY avant cette tâche, sans

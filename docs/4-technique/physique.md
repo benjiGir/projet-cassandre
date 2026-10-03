@@ -17,8 +17,8 @@ Décide qui a le droit de toucher qui (les groupes de collision) et fournit le
 côté pour se déplacer contre le décor (invariant #6).
 
 Ne fait pas : ne décide d'aucune règle de gameplay (dégâts, IA, ouverture de
-porte) — ça reste aux systèmes appelants (`src/game/player/weapons.ts`,
-`src/game/entities/enemyMachine.ts`, `src/game/level/doors.ts`…). Ne dessine
+porte) — ça reste aux systèmes appelants (`src/game/player/weapons/weapons.ts`,
+`src/game/entities/shared/enemyMachine.ts`, `src/game/level/doors/doors.ts`…). Ne dessine
 rien (le rendu du décor, des sprites ou des debris cosmétiques vit dans
 `src/render/`, voir [ADR 0018](../decisions/0018-physique-jouet-debris-cosmetiques.md)
 pour les debris qui n'utilisent délibérément aucun `RigidBody`).
@@ -30,14 +30,14 @@ pour les debris qui n'utilisent délibérément aucun `RigidBody`).
   (réglages KCC partagés par la fabrique du joueur).
 - `src/physics/raycast.ts` — `RaycastService` : service Effect qui enveloppe
   les quatre requêtes physiques réellement utilisées par le jeu.
-- `src/game/player/controller.ts` — fabrique et pilotage du KCC du joueur
+- `src/game/player/movement/controller.ts` — fabrique et pilotage du KCC du joueur
   (détail complet : `joueur.md`).
-- `src/game/entities/enemyMachine.ts` — `configureEnemyCharacterController`,
+- `src/game/entities/shared/enemyMachine.ts` — `configureEnemyCharacterController`,
   les rayons de ligne de vue et d'évitement local des ennemis.
-- `src/game/level/loader.ts` — construit tous les colliders du niveau au
+- `src/game/level/loading/loader.ts` — construit tous les colliders du niveau au
   chargement (`col_*`, `col_box_*`, `col_hull_*`, `prop_*`, `door_*`, `vitre_*`,
   `sanitaire_*`, `trig_*`).
-- `src/game/level/pathfinding.ts` — bake du graphe de navigation, seul
+- `src/game/level/navigation/pathfinding.ts` — bake du graphe de navigation, seul
   consommateur de `castShape`.
 - `src/game/session/spawning.ts` — appelle `refreshSceneQueries()` avant le
   bake du graphe de navigation, au chargement d'un niveau.
@@ -103,7 +103,7 @@ filtre de `PROP`, donc **un prop n'arrête pas une balle ennemie**
 
 `DEBRIS` reste déclaré mais aucun collider ne le porte : douilles éjectées et
 gibs de mise à mort utilisent une physique factice en temps d'affichage
-(`src/render/fx.ts`), jamais de vrai `RigidBody` — sinon ils bloqueraient des
+(`src/render/fx/fx.ts`), jamais de vrai `RigidBody` — sinon ils bloqueraient des
 tirs pour zéro gameplay ([ADR 0018](../decisions/0018-physique-jouet-debris-cosmetiques.md)).
 
 ### Types de colliders produits par le loader
@@ -193,19 +193,19 @@ prête, et ne tombe sur trimesh qu'en dernier recours
 
 - `test/physics/raycast.test.ts` — `RaycastService` contre un vrai monde
   Rapier, et sa Layer scriptée (`RaycastService.test`).
-- `test/game/level/pathfinding.test.ts` — bake du graphe de navigation,
+- `test/game/level/navigation/pathfinding.test.ts` — bake du graphe de navigation,
   Layer scriptée, et une section dédiée à `PhysicsWorld.refreshSceneQueries`
   (colliders neufs visibles au bake).
-- `test/game/entities/lineOfSight.test.ts` — occlusion de la ligne de vue
+- `test/game/entities/shared/lineOfSight.test.ts` — occlusion de la ligne de vue
   ennemie (pièces du kit isolées et vrai niveau exporté), et une section
   dédiée à `refreshSceneQueries` pour le rayon de ligne de vue.
-- `test/game/level/props.test.ts` — chargement d'un `prop_*`, tir/poussée/
+- `test/game/level/props/props.test.ts` — chargement d'un `prop_*`, tir/poussée/
   destruction, interpolation du rendu.
-- `test/game/level/doors.test.ts` — géométrie et progression d'un `door_*`,
+- `test/game/level/doors/doors.test.ts` — géométrie et progression d'un `door_*`,
   collider actif seulement fermé, portes manœuvrables à la main et auto.
-- `test/game/level/vitres.test.ts`, `test/game/session/sanitaires.test.ts` —
+- `test/game/level/interactions/vitres.test.ts`, `test/game/session/player/sanitaires.test.ts` —
   colliders et rayon de visée des vitres et sanitaires.
-- `test/game/level/loader.test.ts` — les sept cas de dégradation du loader
+- `test/game/level/loading/loader.test.ts` — les sept cas de dégradation du loader
   (géométrie manquante, hull dégénéré, etc.).
 
 ## Comment vérifier que ça marche
@@ -214,8 +214,8 @@ prête, et ne tombe sur trimesh qu'en dernier recours
   couverture ci-dessus.
 - Console `cassandre.doors()` : inspecte les `DoorInfo` réels (position,
   `halfExtents`, groupe) du niveau chargé.
-- Touche `V` (`src/render/debugView.ts`) : bascule le wireframe pour voir la
+- Touche `V` (`src/render/debug/debugView.ts`) : bascule le wireframe pour voir la
   géométrie de rendu par-dessus les colliders.
-- Touche `B` (`src/render/ballisticsDebug.ts`) : affiche les gizmos des
+- Touche `B` (`src/render/debug/ballisticsDebug.ts`) : affiche les gizmos des
   rayons de tir réellement lancés, utile pour confirmer qu'un `PLAYER_SHOT`
   s'arrête bien où le groupe de collision le prévoit.

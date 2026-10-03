@@ -13,7 +13,7 @@ Accepté.
 
 ## Contexte
 
-`FxSystem` (`src/render/fx.ts`) doit animer trois catégories de débris
+`FxSystem` (`src/render/fx/fx.ts`) doit animer trois catégories de débris
 purement cosmétiques et de courte durée de vie : particules d'impact
 (< 0.4 s), douilles éjectées (1.6 s, avec un rebond), et gibs de mise à mort
 à bout portant (0.9 s). Aucun n'a d'effet de gameplay — `render/` ne touche
@@ -43,7 +43,7 @@ diffèrent.
 ## Conséquences
 
 `SHELL_GROUND_Y = 0` est une approximation qui suppose un sol plat, au
-niveau du hub/couloir de `game/level/gym.ts`. Dans une zone avec relief
+niveau du hub/couloir de `game/level/catalog/gym.ts`. Dans une zone avec relief
 (rampes, marches, mezzanine), une douille peut visuellement traverser une
 marche avant de disparaître — acceptable pour un débris à durée de vie
 courte (1.6 s) dans une gym en boîtes blanches, pas nécessairement pour un

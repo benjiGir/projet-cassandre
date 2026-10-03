@@ -46,7 +46,7 @@ Deux réglages se cachent derrière « ça pixelise », et ils n'ont rien à voi
 - le **filtrage de réduction** décide de ce qui arrive quand une texture de
   128 px ne couvre plus que trois pixels à l'écran.
 
-`configureRetroTexture` (`render/renderer.ts`) tient les deux bouts :
+`configureRetroTexture` (`render/pipeline/renderer.ts`) tient les deux bouts :
 `magFilter` reste `NearestFilter` **toujours** — c'est lui qui fait le gros
 pixel franc quand on colle une texture de près —, et la réduction suit le mode
 courant (`FiltrageTexture`) :
@@ -97,7 +97,7 @@ propres néons. Une face tournée à l'opposé du soleil perd 60 % de sa
 luminosité cuite ; une face orientée vers lui déborde. La modulation la plus
 visible du niveau ne vient alors pas du bake mais d'un soleil hérité.
 
-`LevelDef.lighting` (registre `game/level/levels.ts`) choisit le régime, et
+`LevelDef.lighting` (registre `game/level/catalog/levels.ts`) choisit le régime, et
 `lifecycle.ts::applyLightRig` l'applique à chaque construction de partie :
 
 | mode | ambiante | soleil | ce que le `.glb` doit fournir |
@@ -153,7 +153,7 @@ conforme au minimum de la spécification WebGL 2, il peut tomber vers la
 cinquantaine. À la densité de la salle d'essai, le niveau v2 en demanderait
 environ 1 140.
 
-`LightPool` (`src/render/lightPool.ts`) n'en laisse donc que **48** allumées,
+`LightPool` (`src/render/environment/lightPool.ts`) n'en laisse donc que **48** allumées,
 les plus proches du joueur, et éteint le reste. Il est construit à chaque
 chargement de niveau (`session.lightPool`) et réévalué dans `updateFx`, au taux
 d'affichage — c'est la caméra qui décide, et elle est lue à l'affichage
@@ -189,7 +189,7 @@ n'en a pas — la gym, un reset.
 C'est une **cubemap**, pas un mesh : three.js dessine le fond avec son propre
 shader, en un seul appel, derrière tout le reste. L'invariant #5 (Lambert
 seulement) porte sur les matériaux du monde, qu'aucun ciel ne touche. Filtrée
-au plus proche dans les deux sens et sans mipmaps (`render/ciel.ts`) : un ciel
+au plus proche dans les deux sens et sans mipmaps (`render/environment/ciel.ts`) : un ciel
 n'est jamais vu en fuyante, il n'a pas le défaut de réduction que
 l'[ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md) corrige sur
 les sols.
@@ -253,7 +253,7 @@ trembler le sprite au ralenti dès que le framerate d'affichage dépasse 60 Hz.
 
 Voir le skill `billboard-sprites-8dir` pour les maths de sélection de
 direction et le contrat général du système. Ce qui suit couvre ce qui est
-spécifique à `src/render/billboard.ts`.
+spécifique à `src/render/sprites/billboard.ts`.
 
 **Convention de direction** : `direction = 0` correspond à l'ennemi vu DE
 FACE (le joueur regarde `forward` droit dans les yeux). Un décalage de
@@ -292,7 +292,7 @@ format et son rôle.
 
 ## Animation des sprites d'ennemis
 
-`BillboardSprite` choisit la COLONNE (la direction) ; `render/enemySprites.ts`
+`BillboardSprite` choisit la COLONNE (la direction) ; `render/sprites/enemySprites.ts`
 choisit la LIGNE (la frame). Les atlas sont des rendus 3D réduits en pixels
 ([ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md)), produits par
 `tools/blender/render_enemy_sprites.py` avec un manifeste JSON qui nomme les
@@ -370,7 +370,7 @@ larges que nature. Détail et mesures dans l'[ADR 0028](../decisions/0028-sprite
 
 ## Effets visuels de tir (FxSystem)
 
-`src/render/fx.ts` est purement cosmétique : screenshake, muzzle flash,
+`src/render/fx/fx.ts` est purement cosmétique : screenshake, muzzle flash,
 decals + particules d'impact, douilles éjectées, gibs de mise à mort à bout
 portant. Tourne entièrement en temps réel (`update(realDt)`, voir
 ci-dessus). Aucun `Math.random()` seedé ici — tout ce module est hors du
@@ -422,7 +422,7 @@ l'endroit et pour l'arme qu'il ne fallait pas.
 **Correctif** : le pied-de-biche N'A PAS DE CANON, il n'a donc plus de muzzle
 flash DU TOUT — `game/loop/updateFx.ts` n'appelle `spawnMuzzleFlash` que pour
 `event.weapon !== "melee"`, et `MUZZLE_FLASH_PRESETS`
-(`render/fx.ts`) n'accepte plus que `"pistol" | "shotgun"` (garde vérifiée à
+(`render/fx/fx.ts`) n'accepte plus que `"pistol" | "shotgun"` (garde vérifiée à
 la compilation, pas seulement à l'exécution — passer `"melee"` à
 `spawnMuzzleFlash` est désormais une erreur de type). Le retour du coup passe
 par ce qui existait déjà et reste inchangé : impact (particules), son,
@@ -479,7 +479,7 @@ n'existe pour le décor statique (`weapons.ts::PLACEHOLDER_MATERIAL` reste
 système de tags par collider serait une sur-ingénierie hors scope de ce
 correctif, voir le commentaire de tête de `PLACEHOLDER_MATERIAL`). `fx.ts`
 duplique la chaîne `"flesh"` sous `FLESH_SURFACE` plutôt que d'importer
-`FLESH_MATERIAL` de `game/player/weapons.ts` — même discipline de
+`FLESH_MATERIAL` de `game/player/weapons/weapons.ts` — même discipline de
 découplage que le type `"melee" | "pistol" | "shotgun"` déjà en dur dans ce
 fichier (voir « Découplage entre render et game » plus haut).
 
@@ -735,7 +735,7 @@ dupliquer toutes les lampes sur une couche dédiée.
 
 `use_crowbar`, `use_pistol` et `use_shotgun` gardent leur boîte `.glb` (portée
 d'interaction, contrat du loader) mais la rendent invisible ; `dressWeaponPickup`
-(`render/pickups.ts`) y accroche un **billboard**, posé sur la surface
+(`render/pickups/pickups.ts`) y accroche un **billboard**, posé sur la surface
 **réellement** sous elle, trouvée par un rayon au chargement — les boîtes
 `use_*` du niveau v2 flottent à 25 cm du sol.
 
@@ -778,7 +778,7 @@ comme un trou noir dans le bitume de nuit, et le pouls d'émissive
 (0,18-0,6) était invisible au parking. Trois défauts, une seule cause
 commune : personne n'avait regardé le résultat avant de le livrer.
 
-**Ce que `dressWeaponPickup` pose désormais** (`render/pickups.ts`,
+**Ce que `dressWeaponPickup` pose désormais** (`render/pickups/pickups.ts`,
 `WeaponPickupBillboard`) : une icône plane DRESSÉE (yaw-only, toujours face
 caméra), **PRÉ-RENDUE depuis le vrai modèle** `world_*`
 (`tools/blender/render_weapon_pickups.py`, régénérable) — la même arme que
@@ -847,7 +847,7 @@ et hors invariant #12 — purement cosmétique, aucun RNG).
 version pré-rendue actuelle : 1 sprite par pickup, un seul matériau partagé
 pour les trois — 3 lots, identique au compte d'origine (le disque d'ombre,
 qui aurait ajouté 3 lots, a été retiré). Élagage par distance déjà acquis :
-le sprite est enfant de la boîte `use_*`, `render/useObjectCulling.ts`
+le sprite est enfant de la boîte `use_*`, `render/environment/useObjectCulling.ts`
 éteint le parent au-delà de 48 m et l'enfant avec lui — rien à câbler en
 plus.
 

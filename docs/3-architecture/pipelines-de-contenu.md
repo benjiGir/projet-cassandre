@@ -33,10 +33,10 @@ flowchart LR
   Tex["tools/textures"] --> Atlas["textures embarquées aux .glb"]
   CC0["assets_src/cc0_raw"] --> Audio["tools/audio"]
   Audio --> Sfx["audio/sfx/sfx.*"]
-  GLB --> Loader["src/game/level/loader.ts"]
-  Sprites --> EnemySprites["src/render/enemySprites.ts"]
-  Weapons --> Viewmodel["src/render/viewmodel.ts, pickups.ts"]
-  Sfx --> AudioTs["src/core/audio.ts"]
+  GLB --> Loader["src/game/level/loading/loader.ts"]
+  Sprites --> EnemySprites["src/render/sprites/enemySprites.ts"]
+  Weapons --> Viewmodel["src/render/viewmodel/viewmodel.ts, pickups.ts"]
+  Sfx --> AudioTs["src/core/audio/audio.ts"]
   Licences["assets_src/LICENCES_ASSETS.md"] -.contrôle.-> Blender
   Licences -.contrôle.-> Tex
 ```
@@ -60,9 +60,9 @@ servi en runtime) et `assets_src/library/` (bibliothèque d'assets v2).
 
 **Sortie** : `public/assets/levels/*.glb` (`niveau_v2.glb` est le niveau
 courant, les autres restent pour test ciblé — registre dans
-`src/game/level/levels.ts`).
+`src/game/level/catalog/levels.ts`).
 
-**Consommateur** : `src/game/level/loader.ts` (colliders, portes, vitres,
+**Consommateur** : `src/game/level/loading/loader.ts` (colliders, portes, vitres,
 sanitaires, props, cartes de fidélité — fusion du décor par
 `mergeStaticDecor.ts`).
 
@@ -105,7 +105,7 @@ dans les `.blend`/`.glb` du niveau au bake/export, sauf la skybox
 
 **Consommateur** : chargées comme toute texture du `.glb` par `loader.ts`
 (`configureRetroTexture` force `NearestFilter`), la skybox par
-`src/render/ciel.ts`. **Contrôle** : `validate_level.py` plafonne la taille
+`src/render/environment/ciel.ts`. **Contrôle** : `validate_level.py` plafonne la taille
 des textures et vérifie la présence des vertex colors.
 
 ## 3. Sprites ennemis
@@ -118,7 +118,7 @@ des textures et vérifie la présence des vertex colors.
 `public/assets/sprites/directeur.png`/`.json` (+
 `public/assets/sprites/directeur_revele.png`, peau de la révélation).
 
-**Consommateur** : `src/render/enemySprites.ts` lit le manifeste JSON
+**Consommateur** : `src/render/sprites/enemySprites.ts` lit le manifeste JSON
 (lignes d'atlas par animation, `pixelsPerMeter`), `BillboardSprite` choisit
 la colonne (direction).
 
@@ -137,8 +137,8 @@ Long Sleeves » CC0 — [ADR 0029](../decisions/0029-armes-en-vue-subjective.md)
 **Sortie** : `public/assets/weapons/armes.glb`,
 `public/assets/sprites/weapon_pickups.png`/`.json`.
 
-**Consommateur** : `src/render/viewmodel.ts` (meshes `vm_*`, animés autour
-de leur pivot) et `src/render/pickups.ts` (objets au sol : soin, munitions,
+**Consommateur** : `src/render/viewmodel/viewmodel.ts` (meshes `vm_*`, animés autour
+de leur pivot) et `src/render/pickups/pickups.ts` (objets au sol : soin, munitions,
 armes).
 
 **Régénérer / contrôler** : `tools/blender/README.md` (`build_weapons.py`,
@@ -160,7 +160,7 @@ WAV), `analyze_sfx.py` (mesures : timbre, crête, masquage, boucle),
 **Sortie** : `public/assets/audio/sfx/sfx.ogg`/`.m4a`/`.json` (sprite
 unique) et quatre ambiances bouclées (`amb_*.{ogg,m4a}`).
 
-**Consommateur** : `src/core/audio.ts`. Deux vocabulaires séparés exprès :
+**Consommateur** : `src/core/audio/audio.ts`. Deux vocabulaires séparés exprès :
 `SFX_TABLE` associe un identifiant du JEU (`melee_fire`, `enemy_telegraph`…)
 à un nom de RECETTE (`crowbar_swing`, `suit_telegraph`…) — seul endroit à
 toucher pour renommer l'un sans l'autre.

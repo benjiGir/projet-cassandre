@@ -10,14 +10,14 @@ updated: 2026-09-26
 # Plan du prototype
 
 > **Partiellement migré.** Ce document ne couvre pour l'instant que la
-> Phase 1 (gym), migrée depuis `src/game/level/gym.ts`. Le reste de
+> Phase 1 (gym), migrée depuis `src/game/level/catalog/gym.ts`. Le reste de
 > `PLAN_PROTO_BOOMER_SHOOTER.md` (phases, critères, rollback complets)
 > attend une passe de migration dédiée — voir le skill
 > `comment-migration-protocol`.
 
 ## Phase 1 — Gym, instrument de mesure
 
-`src/game/level/gym.ts` n'est pas un décor : c'est un instrument de mesure.
+`src/game/level/catalog/gym.ts` n'est pas un décor : c'est un instrument de mesure.
 Chaque zone encadre un seuil du character controller pour qu'un
 franchissement raté soit lisible à l'œil, sans HUD ni chiffres. Toute la
 géométrie est construite à la main (pas de loader glTF — la Phase 4

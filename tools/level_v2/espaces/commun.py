@@ -139,7 +139,7 @@ def poser(asset: str, x_min: float, y_min: float, z: float, face: str, props, co
 
 def vraie_fenetre(nom: str, espace: str, bornes, props) -> None:
     """Perce une VRAIE fenêtre dans un mur de coque : on voit la ville au loin
-    (le ciel de `render/ciel.ts`), plus un aplat bleu nuit.
+    (le ciel de `render/environment/ciel.ts`), plus un aplat bleu nuit.
 
     Seul le RENDU du mur est percé : son collider reste plein, donc la vitre
     n'a pas besoin du sien (`solide: false`) et reste incassable — casser une

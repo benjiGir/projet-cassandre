@@ -23,7 +23,7 @@ développement, il vaut `/` ; sur une page de projet GitHub Pages, il peut
 valoir `/<repo>/`. Un chemin codé en dur qui commence par `/` pointerait vers
 la racine du domaine et perdrait ce sous-chemin.
 
-`src/core/assetPath.ts::assetUrl` préfixe donc le chemin avec
+`src/core/loading/assetPath.ts::assetUrl` préfixe donc le chemin avec
 `import.meta.env.BASE_URL` et retire son éventuel `/` initial. Vite garantit
 que `BASE_URL` est déjà encadré par les séparateurs nécessaires ; les appels
 ne doivent pas reconstruire ce préfixe eux-mêmes.
