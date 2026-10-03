@@ -6,9 +6,7 @@ import { allocateEntityId, type Entity } from "./entity";
 import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
 import {
   applyEnemyDamageCore,
-  configureEnemyCharacterController,
   createEnemyActor,
-  createEnemyBody,
   createEnemyMachineContext,
   createEnemyPrng,
   forceEnemyState,
@@ -19,6 +17,7 @@ import {
   tickEnemy,
   type EnemyActor,
 } from "./enemyMachine";
+import { createEnemyBody, configureEnemyCharacterController } from "./enemyPhysics";
 import type { EnemyMachineContext, EnemyState, EnemyUpdateContext } from "./enemyTypes";
 import type { EnemyAnimationInput } from "../../render/enemySpriteTypes";
 
@@ -35,7 +34,7 @@ export type SuitUpdateContext = EnemyUpdateContext;
 
 export class Suit implements Entity {
   readonly id: number;
-  private readonly actor: EnemyActor;
+  private actor: EnemyActor;
 
   constructor(
     physics: PhysicsWorld,
@@ -98,7 +97,7 @@ export class Suit implements Entity {
     return this.actor.getSnapshot().value as SuitState;
   }
   set state(next: SuitState) {
-    forceEnemyState(this.actor, next);
+    this.actor = forceEnemyState(this.actor, next);
   }
 
   get hp(): number {

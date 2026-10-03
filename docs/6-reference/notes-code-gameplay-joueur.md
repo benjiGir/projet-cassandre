@@ -2,7 +2,7 @@
 title: Contrats du joueur et des armes
 tags: [gameplay, joueur, armes, code]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Contrats du joueur et des armes
@@ -76,3 +76,13 @@ dans la configuration et convertis au moment du kick. Le hitstop s’exprime en
 secondes dérivées de `FIXED_DT`, les dimensions du réticule en pixels internes.
 Les nombres et options détaillés restent dans [les valeurs de déplacement](valeurs-deplacement.md)
 et [les valeurs d’armes](valeurs-armes.md).
+
+## Comparaison du recul positionnel
+
+`recoilPositionInterpolated` interpole le kick précédent/courant avant
+l’application de l’enveloppe, comme le pitch. Le mode `STABLE` active cette
+correction ; `HISTORIQUE` prend le kick courant immédiatement. Les amplitudes
+restent identiques. Le panneau de tuning expose les deux modes et les cinq
+paramètres de chaque arme. Enregistrer 15 secondes avec F9, arrêter avec F9
+puis rejouer avec F10 dans chaque mode permet une comparaison sur les mêmes
+entrées. Le ressenti n’a pas été validé par cet audit.

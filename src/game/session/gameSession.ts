@@ -4,7 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 import type { LevelSession } from "../level/hotReload";
 import type { LevelDef } from "../level/levels";
-import type { NavGraph } from "../level/pathfinding";
+import type { NavGraph } from "../level/pathfindingTypes";
 import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
@@ -18,7 +18,8 @@ import { type SuitManager } from "../entities/suitManager";
 import { type PlayerController } from "../player/controller";
 import { type WeaponSystem } from "../player/weapons";
 import { type LightPool } from "../../render/lightPool";
-import { type WeaponPickupBillboard } from "../../render/pickups";
+import type { WeaponPickupBillboard } from "../../render/pickups";
+import type { PickupResources } from "../../render/pickupResources";
 import type { CardPickupBillboard } from "../../render/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 import type { HeroLineId } from "./heroLines";
@@ -85,6 +86,8 @@ export interface GameSession {
    * comme `ecranSystem`. */
   cameraView: CameraViewSystem | null;
   // see: docs/archive/systems-rendu.md#armes-au-sol-2026-09-25
+  /** Ressources partagées des ramassages, détenues jusqu’à l’arrêt de cette session. */
+  pickupResources: PickupResources | null;
   weaponPickupBillboards: WeaponPickupBillboard[];
   /** Cartes du niveau, reconstruites au chargement et animées à l'affichage. */
   cardPickupBillboards: CardPickupBillboard[];

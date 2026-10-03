@@ -4,6 +4,7 @@ import { CrosshairTuning } from "../CrosshairTuning/CrosshairTuning";
 import { HitmarkerTuning } from "../HitmarkerTuning/HitmarkerTuning";
 import { ImpactTuning } from "../ImpactTuning/ImpactTuning";
 import { SuitTuning } from "../SuitTuning/SuitTuning";
+import { RecoilTuning } from "../RecoilTuning/RecoilTuning";
 import { TuningSection } from "../../../layout/TuningSection/TuningSection";
 import { useConfigEditor } from "../../../lib/useConfigEditor";
 
@@ -18,6 +19,7 @@ export function HitFeedbackTuning() {
       hint={'Retour playtest : "le feedback est mauvais sur un hit". Harnais A/B — aucune valeur ici n\'est un choix tranché.'}
     >
       <ImpactTuning weapon={weapon} />
+      <RecoilTuning weapon={weapon} />
       <HitmarkerTuning weapon={weapon} />
       <CrosshairTuning weapon={weapon} />
       <SuitTuning suit={suit} />

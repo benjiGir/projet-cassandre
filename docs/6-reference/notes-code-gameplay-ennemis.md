@@ -2,7 +2,7 @@
 title: Contrats des ennemis et de leurs machines
 tags: [gameplay, ennemis, xstate, code]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Contrats des ennemis et de leurs machines
@@ -67,7 +67,15 @@ qu’elle ait été vue. Le ramassage est par proximité, sans touche E.
 ## Compatibilité de debug
 
 Les setters d’état existent pour les harnais. `forceEnemyState` reconstruit un
-snapshot avec `resolveState` puis remplace un champ privé de l’acteur : cette
-exception reste confinée au debug et fait l’objet d’une recommandation d’audit.
-Elle ne joue pas les actions d’entrée et ne constitue pas une transition de jeu.
+snapshot avec `resolveState` et `getPersistedSnapshot`, puis remplace
+l’acteur via `createActor` avec ce snapshot. L’ancien acteur est arrêté.
+Le contexte et ses références sont conservés en mémoire, sans sérialisation JSON.
+Cette restauration ne joue pas les actions d’entrée et ne constitue pas une transition de jeu.
 Les variantes flash/recul sont lues à chaud dans les configurations partagées.
+
+## Modules de responsabilité
+
+`enemyMachine.ts` garde le graphe et les décisions par état. `enemyPerception`
+porte les rayons de visibilité, `enemyNavigation` les chemins et l’évitement,
+`enemyPhysics` le KCC et le knockback, `enemyCombat` la résolution du tir.
+L’ordre d’appel et les scratches restent ceux de l’orchestrateur.

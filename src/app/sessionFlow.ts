@@ -4,11 +4,29 @@ import type { Root } from "react-dom/client";
 import { input } from "../core/input";
 import { beginLoading, finishLoading, letBrowserPaint, waitForLoadingRetry } from "../core/loadingProgress";
 import { bootGameSession, teardownGameSession } from "../game/session/lifecycle";
-import type { GameEngine } from "../game/session/gameEngine";
+import type { GameEngine, PersistentEngine } from "../game/session/gameEngine";
 import type { GameSession } from "../game/session/gameSession";
+import type { LevelDef } from "../game/level/levels";
 import { App } from "../ui/App";
 import type { GameFlowActor } from "./gameFlowMachine";
 import { resolveBootChoice } from "./bootChoice";
+
+export async function bootGameSessionWithRetry(
+  engine: PersistentEngine,
+  choice: LevelDef,
+  actor: GameFlowActor,
+): Promise<GameSession> {
+  while (true) {
+    try {
+      return await bootGameSession(engine, choice);
+    } catch (error) {
+      actor.send({ type: "LOAD_FAILED" });
+      await waitForLoadingRetry(error);
+      actor.send({ type: "RETRY_LOAD" });
+      beginLoading("Préparation des ramassages", 0.3);
+    }
+  }
+}
 
 export async function waitForGameSessionReady(actor: GameFlowActor, session: GameSession): Promise<boolean> {
   const levelSession = session.gltfLevelSession;
@@ -59,7 +77,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
     beginLoading("Redémarrage de la partie", 0.02);
     await letBrowserPaint();
     await teardownGameSession(engine, engine.session);
-    engine.session = bootGameSession(engine, choice);
+    engine.session = await bootGameSessionWithRetry(engine, choice, actor);
     await waitForGameSessionReady(actor, engine.session);
   }
 
@@ -78,7 +96,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
       onResume: resume,
     }));
     await letBrowserPaint();
-    engine.session = bootGameSession(engine, choice);
+    engine.session = await bootGameSessionWithRetry(engine, choice, actor);
     await waitForGameSessionReady(actor, engine.session);
   }
 

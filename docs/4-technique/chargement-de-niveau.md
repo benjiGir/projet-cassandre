@@ -2,7 +2,7 @@
 title: Chargement de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Chargement de niveau
@@ -15,7 +15,13 @@ Le loader transforme un fichier glTF exporté en un niveau utilisable : rendu Th
 
 ## Fichiers
 
-- `src/game/level/loader.ts` — parse le glTF, classe les nœuds par préfixe, construit les colliders et produit le `LevelHandle`.
+- `src/game/level/loader.ts` — acquisition Scope, classement des nœuds et résultat `LevelHandle`.
+- `src/game/level/levelDiagnostics.ts` — erreurs, avertissements et messages.
+- `src/game/level/levelExtras.ts` — noms Blender et lecture des propriétés.
+- `src/game/level/levelColliders.ts` — géométrie monde et fabriques Rapier.
+- `src/game/level/levelObjects.ts` — spawns et objets spécialisés.
+- `src/game/level/levelPresentation.ts` — conversion des matériaux et lumières.
+- `src/game/level/levelResources.ts` — propriétaire de la racine, des corps et des ressources GPU.
 - `src/game/level/hotReload.ts` — ouvre la `LevelSession`, sérialise les remplacements et garde l'ancien niveau en cas d'échec.
 - `src/game/level/mergeStaticDecor.ts` — fusionne le décor statique en lots de dessin spatiaux.
 - `src/game/level/doors.ts`, `props.ts`, `vitres.ts`, `sanitaires.ts` et `ecrans.ts` — regroupent les géométries spéciales et exposent leurs contrats au loader.
@@ -61,7 +67,7 @@ Dans une frame, `updateGameplay` relit `LevelSession.current` pour les objets qu
 
 Le loader ajoute d'abord la racine du glTF à la scène et actualise toute la hiérarchie `matrixWorld`. Il parcourt ensuite les nœuds et lit le nom Blender conservé par `GLTFLoader` dans `userData.name`. Un nœud est classé une seule fois : le préfixe est testé avant le cas générique.
 
-Chaque mesh est reconverti en `MeshLambertMaterial` avant son routage. Le loader conserve la couleur, la texture diffuse, la transparence et l'attribut de couleur de sommet ; les autres propriétés de matériau PBR ne font pas partie du rendu du jeu. Ce passage protège les invariants [#4 et #5](../3-architecture/invariants.md).
+Chaque mesh est reconverti en `MeshLambertMaterial` avant son routage. Le loader conserve la couleur, la texture diffuse, la transparence et l'attribut de couleur de sommet ; les autres propriétés de matériau PBR ne font pas partie du rendu du jeu. Les effets ciblés peuvent ensuite remplacer ce matériau par du TSL. Le filtrage conserve l’[invariant #4](../3-architecture/invariants.md).
 
 | Nœud glTF | Résultat du loader |
 |---|---|
@@ -93,7 +99,7 @@ Les propriétés manquantes ont souvent un sens : `pv` absent rend un objet inde
 
 Le décor statique fusionne uniquement si le matériau, les attributs de géométrie et la cellule de 48 m correspondent. Les vitres, sanitaires, écrans et vantaux ont chacun un regroupement dédié pour garder leurs plages de sommets ou leurs poses adressables. Les détails de coût sont dans [Budget de rendu](budget-de-rendu.md).
 
-`LevelHandle.suspend()` masque la racine et désactive temporairement ses corps en mémorisant leur état exact. `dispose()` retire la racine, les corps Rapier et les ressources GPU. La fermeture du `Scope` garantit qu'une libération répétée reste sûre.
+`LevelHandle.suspend()` masque la racine et désactive temporairement ses corps en mémorisant leur état exact. `dispose()` retire la racine, les corps Rapier et les ressources GPU du niveau. Les ressources marquées `pickupResourcesOwned` sont empruntées à la session et sont libérées par son propriétaire après l’arrêt du niveau. La fermeture du `Scope` garantit qu'une libération répétée reste sûre.
 
 Au rechargement, `LevelSession` charge un candidat avant de suspendre l'ancien niveau. Si `prepare` ou le chargement échoue, le candidat est libéré et l'ancien est restauré. Si tout réussit, le commit remplace ensemble le handle et les systèmes ; l'ancien est libéré ensuite. Les demandes concurrentes sont coalescées et protégées par un sémaphore.
 

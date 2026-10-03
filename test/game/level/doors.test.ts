@@ -10,9 +10,10 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { initPhysics, PhysicsWorld } from "../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../src/game/level/loader";
+import { DoorSystem } from "../../../src/game/level/doors";
+import { DEFAULT_DOOR_MOVEMENT, parseDoorConfig, parseDoorMovement } from "../../../src/game/level/doorConfig";
+import type { DoorActor } from "../../../src/game/level/doorTypes";
 import {
-  DEFAULT_DOOR_MOVEMENT,
-  DoorSystem,
   advanceDoorProgress,
   composeBattantPose,
   composeCoulissePose,
@@ -21,11 +22,8 @@ import {
   hingePivotInRootSpace,
   isActorBlockingClosedDoor,
   isActorInAutoRange,
-  parseDoorConfig,
-  parseDoorMovement,
   resolveAutoOpenSign,
-  type DoorActor,
-} from "../../../src/game/level/doors";
+} from "../../../src/game/level/doorGeometry";
 
 await initPhysics();
 

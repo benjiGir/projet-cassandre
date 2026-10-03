@@ -35,7 +35,7 @@ import { suitConfig } from "../entities/suitConfig";
 import { moveConfig } from "../player/moveConfig";
 import { recordSafeGround, shouldRescue } from "../session/fallRescue";
 import { FLESH_MATERIAL } from "../player/weapons";
-import { type DoorActor } from "../level/doors";
+import type { DoorActor } from "../level/doorTypes";
 import { basculerEau, updateDouches } from "../level/douches";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";

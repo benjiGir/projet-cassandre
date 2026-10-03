@@ -39,6 +39,7 @@ export interface WeaponConfig {
   pistolRecoil: RecoilKick;
   /** Kick de recul du pompe au tir. Même mécanique que `meleeRecoil`. */
   shotgunRecoil: RecoilKick;
+  recoilPositionInterpolated: boolean;
 
   // see: docs/archive/systems-armes.md#matériau-perçu-et-hitstop-murennemi
   hitstopDuration: number;
@@ -139,6 +140,7 @@ export const weaponConfig: WeaponConfig = {
   meleeRecoil: { kickX: 0, kickY: -0.035, kickZ: 0.05, kickPitchDeg: 5, recoverTime: 0.18 },
   pistolRecoil: { kickX: 0, kickY: 0.012, kickZ: 0.05, kickPitchDeg: 3, recoverTime: 0.12 },
   shotgunRecoil: { kickX: 0, kickY: 0.025, kickZ: 0.14, kickPitchDeg: 7, recoverTime: 0.22 },
+  recoilPositionInterpolated: true,
 
   hitstopDuration: DEFAULT_HITSTOP_FRAMES * FIXED_DT,
   hitstopScale: 0.05,
@@ -196,6 +198,11 @@ export interface RecoilVariant {
   pistolRecoil: RecoilKick;
   shotgunRecoil: RecoilKick;
 }
+
+export const RECOIL_INTERPOLATION_VARIANTS = {
+  STABLE: { recoilPositionInterpolated: true },
+  HISTORIQUE: { recoilPositionInterpolated: false },
+} as const;
 
 export const RECOIL_VARIANTS: Record<"A" | "B" | "C", RecoilVariant> = {
   /** A — DISCIPLINÉ : kick court, récupération rapide. Risque : peut se sentir mou. */

@@ -7,9 +7,7 @@ import { allocateEntityId, type Entity } from "./entity";
 import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
 import {
   applyEnemyDamageCore,
-  configureEnemyCharacterController,
   createEnemyActor,
-  createEnemyBody,
   createEnemyMachineContext,
   createEnemyPrng,
   forceEnemyState,
@@ -20,6 +18,7 @@ import {
   tickEnemy,
   type EnemyActor,
 } from "./enemyMachine";
+import { createEnemyBody, configureEnemyCharacterController } from "./enemyPhysics";
 import type { EnemyMachineContext, EnemyState, EnemyUpdateContext } from "./enemyTypes";
 import type { EnemyAnimationInput } from "../../render/enemySpriteTypes";
 
@@ -42,7 +41,7 @@ export interface DirectorDamageResult {
 
 export class Director implements Entity {
   readonly id: number;
-  private readonly actor: EnemyActor;
+  private actor: EnemyActor;
   private readonly cfg: DirectorConfig;
 
   revealed = false;
@@ -108,7 +107,7 @@ export class Director implements Entity {
     return this.actor.getSnapshot().value as DirectorState;
   }
   set state(next: DirectorState) {
-    forceEnemyState(this.actor, next);
+    this.actor = forceEnemyState(this.actor, next);
   }
 
   get hp(): number {

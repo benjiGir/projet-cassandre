@@ -189,11 +189,12 @@ export class WeaponSystem {
 
   viewmodelPose(alpha: number, outPosition: THREE.Vector3, outEuler: THREE.Euler): void {
     const t = THREE.MathUtils.lerp(this.previousRecoilEnvelope, this.recoilEnvelope, alpha);
-    outPosition.set(
-      this.recoilKickPosition.x * t,
-      this.recoilKickPosition.y * t,
-      this.recoilKickPosition.z * t,
-    );
+    if (this.cfg.recoilPositionInterpolated) {
+      outPosition.lerpVectors(this.previousRecoilKickPosition, this.recoilKickPosition, alpha);
+    } else {
+      outPosition.copy(this.recoilKickPosition);
+    }
+    outPosition.multiplyScalar(t);
     const pitch = THREE.MathUtils.lerp(this.previousRecoilKickPitch, this.recoilKickPitch, alpha);
     outEuler.set(pitch * t, 0, 0, "XYZ");
   }

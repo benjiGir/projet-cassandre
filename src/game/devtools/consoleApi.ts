@@ -13,6 +13,7 @@ import {
   HITMARKER_VARIANTS,
   IMPACT_VARIANTS,
   RECOIL_VARIANTS,
+  RECOIL_INTERPOLATION_VARIANTS,
   weaponConfig,
   type WeaponConfig,
 } from "../player/weaponConfig";
@@ -23,13 +24,14 @@ import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from 
 import { Director } from "../entities/director";
 import { DirectorManager } from "../entities/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/directorConfig";
-import { type DoorInfo } from "../level/doors";
+import type { DoorInfo } from "../level/doorTypes";
 import { type LevelStats, type SecretZone, type UseObject } from "../level/levelTypes";
 import type { PropSystem } from "../level/props";
 import type { DoorSystem } from "../level/doors";
 import type { VitreSystem } from "../level/vitres";
 import type { SanitaireSystem } from "../level/sanitaires";
-import { navGraphStats, type NavGraph } from "../level/pathfinding";
+import { navGraphStats } from "../level/navGraph";
+import type { NavGraph } from "../level/pathfindingTypes";
 import { type LightPoolStats } from "../../render/lightPool";
 import {
   anisotropieDisponible,
@@ -96,6 +98,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     weaponConfig,
     recoilVariants: RECOIL_VARIANTS,
+    recoilInterpolationVariants: RECOIL_INTERPOLATION_VARIANTS,
     applyRecoilVariant,
 
     impactVariants: IMPACT_VARIANTS,
@@ -324,6 +327,7 @@ declare global {
       weapons: WeaponSystem;
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
+      recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;
       applyRecoilVariant: (name: keyof typeof RECOIL_VARIANTS) => ReturnType<typeof applyRecoilVariant>;
 
       impactVariants: typeof IMPACT_VARIANTS;

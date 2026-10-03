@@ -1,5 +1,5 @@
 /**
- * `handleEnemyShotMiss` (`enemyMachine.ts`) — effet Duke Nukem voulu par le
+ * `handleEnemyShotMiss` (`enemyCombat.ts`) — effet Duke Nukem voulu par le
  * contrat de `vitre_*`/`sanitaire_*` (ADR 0031/0032) : un rayon d'attaque
  * ennemi qui rate le joueur mais touche une cible cassable au passage la
  * casse.
@@ -15,7 +15,7 @@ import { describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
 import type RAPIER from "@dimforge/rapier3d-compat";
 
-import { handleEnemyShotMiss } from "../../../src/game/entities/enemyMachine";
+import { handleEnemyShotMiss } from "../../../src/game/entities/enemyCombat";
 import type { BreakableHitTarget } from "../../../src/game/entities/enemyTypes";
 
 function fakeCollider(handle: number): RAPIER.Collider {

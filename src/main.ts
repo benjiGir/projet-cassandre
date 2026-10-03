@@ -16,7 +16,7 @@ import { runGameplaySync } from "./core/runtime";
 import { initPhysics } from "./physics/world";
 import { loadEnemySpriteSheetOrPlaceholder } from "./render/enemySprites";
 import { RenderService } from "./render/renderService";
-import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel";
+import { loadWeaponModelsOrPlaceholder } from "./render/weaponModels";
 import { loadCardPickupTextures } from "./render/cardPickups";
 import { createGameFlowActor } from "./app/gameFlowMachine";
 import { App } from "./ui/App";
@@ -24,9 +24,8 @@ import { initAudioSettingsAtBoot } from "./game/audioSettings";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/graphicsSettings";
 import { useGameStore } from "./game/state";
 import { resolveBootChoice } from "./app/bootChoice";
-import { createSessionFlow, waitForGameSessionReady } from "./app/sessionFlow";
+import { bootGameSessionWithRetry, createSessionFlow, waitForGameSessionReady } from "./app/sessionFlow";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
-import { bootGameSession } from "./game/session/lifecycle";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
 import { updateDisplayInput } from "./game/loop/updateDisplayInput";
@@ -113,7 +112,7 @@ async function main() {
 
   registerRenderTarget(persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);
 
-  const session = bootGameSession(persistentEngine, choice);
+  const session = await bootGameSessionWithRetry(persistentEngine, choice, flowActor);
   const engine: GameEngine = { ...persistentEngine, session };
 
   await audioReady;

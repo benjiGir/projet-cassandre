@@ -21,6 +21,7 @@ import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./heroPortrait";
+import { loadPickupResources, type PickupResources } from "../../render/pickupResources";
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
@@ -39,7 +40,20 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   engine.scene.background = choice.ciel ? chargerCiel(choice.ciel) : null;
 }
 
-export function bootGameSession(engine: PersistentEngine, choice: LevelDef): GameSession {
+export async function bootGameSession(engine: PersistentEngine, choice: LevelDef): Promise<GameSession> {
+  const pickupResources = await loadPickupResources();
+  try {
+    pickupResources.warmTextures(engine.renderer);
+    return buildGameSession(engine, choice, pickupResources);
+  } catch (error) {
+    try { pickupResources.dispose(); } catch (releaseError) {
+      throw new AggregateError([error, releaseError], "Construction de la session interrompue");
+    }
+    throw error;
+  }
+}
+
+function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupResources: PickupResources): GameSession {
   // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
   // de recréer leurs pools, mais leur état transitoire appartient à UNE
   // partie. Le reset précède toute construction de la nouvelle session.
@@ -118,6 +132,7 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
     sanitaireSystem: null,
     ecranSystem: null,
     cameraView: null,
+    pickupResources,
     weaponPickupBillboards: [],
     cardPickupBillboards: [],
     sanitaireReliefCooldown: 0,
@@ -165,27 +180,35 @@ export function bootGameSession(engine: PersistentEngine, choice: LevelDef): Gam
 // see: docs/archive/systems-session.md#démolir-une-partie
 export async function teardownGameSession(engine: PersistentEngine, session: GameSession): Promise<void> {
   session.levelLoadGeneration += 1;
-  await session.gltfLevelSession?.stop();
+  const errors: unknown[] = [];
+  const release = (action: () => void): void => {
+    try { action(); } catch (error) { errors.push(error); }
+  };
+  // Attendre les acquisitions en vol avant de libérer les ressources qu'elles empruntent.
+  try { await session.gltfLevelSession?.stop(); } catch (error) { errors.push(error); }
+  release(() => session.pickupResources?.dispose());
+  session.pickupResources = null;
 
   if (session.gymRoot) {
     session.gymRoot.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
-      obj.geometry.dispose();
+      release(() => obj.geometry.dispose());
       const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
-      for (const material of materials) material.dispose();
+      for (const material of materials) release(() => material.dispose());
     });
-    engine.scene.remove(session.gymRoot);
+    release(() => engine.scene.remove(session.gymRoot!));
   }
 
-  for (const sprite of session.suitSprites.values()) sprite.dispose();
+  for (const sprite of session.suitSprites.values()) release(() => sprite.dispose());
   session.suitSprites.clear();
-  for (const sprite of session.directorSprites.values()) sprite.dispose();
+  for (const sprite of session.directorSprites.values()) release(() => sprite.dispose());
   session.directorSprites.clear();
 
-  session.droppedCardBillboard?.dispose();
+  release(() => session.droppedCardBillboard?.dispose());
   session.droppedCardBillboard = null;
 
-  engine.fx.resetSession();
+  release(() => engine.fx.resetSession());
 
-  session.physics.world.free();
+  release(() => session.physics.world.free());
+  if (errors.length > 0) throw new AggregateError(errors, "Libération incomplète de la session");
 }

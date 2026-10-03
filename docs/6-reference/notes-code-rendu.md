@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Contrats locaux du rendu
@@ -108,9 +108,9 @@ avec l'atlas 159 × 72 px. Les carrés de 0,8/0,8/1,1 m privilégient la lecture
 à distance, sans reproduire l'échelle réelle des trois armes.
 Le V est inversé comme pour les billboards ennemis.
 
-L'atlas d'armes se charge une fois en arrière-plan. Son filtrage doit être
-configuré dans `onLoad` : `configureRetroTexture` demande un upload, incorrect
-avant l'arrivée de l'image. Le quad peut être transparent jusque-là.
+L’atlas d’armes est attendu par `loadPickupResources` avant la création de
+la session. Son filtrage est configuré après l’arrivée de l’image, puis
+`warmTextures` prépare son upload pendant le chargement.
 Le matériau et les géométries d'armes sont partagés. Une seule horloge avance
 par frame avant les updates individuels ; l'avancer par pickup multiplierait
 la vitesse. Le pouls d'émissif partagé varie entre 0,55 et 1,3, le flottement
@@ -130,7 +130,7 @@ libère séparément. Les cartes flottent et pulsent au temps réel.
 
 ## Viewmodel
 
-`src/render/viewmodel.ts` charge les modèles Blender exprimés dans le repère
+`src/render/weaponModels.ts` charge les modèles Blender exprimés dans le repère
 caméra ; le cadrage se règle dans Blender. Le poing définit les pivots et
 l'extra `bout_canon` l'origine de l'éclair de tir. Le fût se déplace dans la
 direction opposée à `axe_glissiere`. Les sommets portent les couleurs et le
@@ -262,8 +262,9 @@ L'update suit la caméra au taux d'affichage.
 `renderer.ts` conserve le voisin le plus proche à l'agrandissement. Les modes
 nearest/mipmap/aniso changent seulement la réduction ; aniso est le défaut.
 La limite d'anisotropie provient du renderer construit au démarrage.
-`appliquerFiltrage` déduplique les textures par identité ; il ne visite
-actuellement que la propriété `map` des matériaux, ce qui limite sa portée.
+`appliquerFiltrage` déduplique les textures par identité et visite
+les textures enregistrées et tous les canaux classiques, uniformes shader
+et entrées TSL explicitement enregistrées.
 Changer la résolution interne met à jour le ratio caméra ; les overlays
 conservent leur taille d'origine.
 
@@ -271,3 +272,20 @@ conservent leur taille d'origine.
 `tools/textures/generate_ciel.py`. Elle se dessine derrière la scène sans mesh,
 visible uniquement là où aucune géométrie ne masque le fond. Son filtrage
 reste nearest dans les deux sens, sans mipmaps : elle n'est pas vue en fuyante.
+
+## Ressources explicites et sous-systèmes
+
+`pickupResources.ts` possède atlas, modèles alimentaires, géométries et
+matériaux des ramassages pour une session. `pickups.ts` les emprunte pour
+poser les objets ; sa construction ne lance aucun chargement. `LevelResources`
+ignore ces ressources empruntées pendant le nettoyage d’un niveau.
+
+`FxSystem` garde l’interface appelante et délègue aux pools `CameraShake`,
+`MuzzleFlashes`, `ImpactDecals`, `ToyDebris` et `WaterJets`. Son ordre d’update reste shake,
+flashes, débris, eau. Le RNG cosmétique est partagé dans le même ordre.
+
+Le registre de textures collecte les canaux classiques et uniformes shader.
+Les TextureNodes TSL à texture utilisent `registerMaterialTextureInputs` avec
+leurs entrées mutables. Render targets, depth textures et cube textures restent
+hors de ce réglage. Le changement de filtrage conserve l’espace couleur des
+canaux de données ; l’agrandissement reste nearest.

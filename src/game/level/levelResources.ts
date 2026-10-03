@@ -64,7 +64,8 @@ export class LevelResources {
   }
 
   private track(resource: GpuResource): void {
-    if (this.gpu.has(resource) || this.disposed.has(resource)) return;
+    // Les ramassages empruntent les ressources de session à travers plusieurs hot reloads.
+    if (resource.userData.pickupResourcesOwned === true || this.gpu.has(resource) || this.disposed.has(resource)) return;
     this.gpu.add(resource);
     const onDispose = (): void => {
       this.disposed.add(resource);

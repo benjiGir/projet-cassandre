@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-10-01
+updated: 2026-10-03
 ---
 
 # Sprites et viewmodel
@@ -15,7 +15,11 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 
 - `src/render/billboard.ts` — quad orienté vers la caméra, sélection de direction et flash de dégâts.
 - `src/render/enemySprites.ts` — charge les atlas et manifestes, puis associe les états visibles aux lignes de l'atlas.
-- `src/render/viewmodel.ts` — charge les modèles d'armes, construit leur hiérarchie caméra et anime leurs poses.
+- `src/render/weaponModels.ts` — chargement glTF, validation des extras et modèles de secours.
+- `src/render/viewmodelTypes.ts` — contrats des modèles, horloges et poses.
+- `src/render/viewmodelAnimation.ts` — calcul pur des séquences à partir des horloges.
+- `src/render/viewmodel.ts` — hiérarchie caméra et application des poses.
+- `src/render/pickupResources.ts` — atlas et modèles partagés, détenus par la session.
 - `src/render/pickups.ts` — rend les armes au sol sous forme de billboards.
 - `src/render/cardPickups.ts` — rend les trois cartes de fidélité et le drop du Directeur.
 - `src/game/loop/interpolateVisuals.ts` — transmet les positions et orientations interpolées des acteurs.
@@ -76,7 +80,7 @@ Les géométries utilisent un matériau Lambert à vertex colors. Si le fichier 
 
 Le viewmodel interpole les clocks de chaque arme. Le changement fait descendre l'ancienne arme puis remonter la nouvelle ; le pied-de-biche balaie après l'appui ; le pompe recule puis pompe après le tir. Tirer avec la nouvelle arme peut la remettre en place immédiatement. Aucun de ces gestes ne retarde la possibilité de tirer, conformément à l'invariant [#10](../3-architecture/invariants.md).
 
-Les armes au sol ne sont pas le viewmodel. `src/render/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation.
+Les armes au sol ne sont pas le viewmodel. `src/render/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation. `bootGameSession` attend l’atlas et préchauffe les textures avant la construction de la partie. Les modèles partagés vivent dans `session.pickupResources`, à travers les hot reloads ; ils sont libérés après l’arrêt du niveau.
 
 ### Cartes de fidélité
 

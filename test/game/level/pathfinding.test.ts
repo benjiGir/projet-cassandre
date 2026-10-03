@@ -20,7 +20,10 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import { initPhysics, PhysicsWorld, COLLISION_GROUPS } from "../../../src/physics/world";
 import { GameLayer } from "../../../src/core/runtime";
-import { astarMetricsSnapshot, navGraphStats, PathNotFoundError, PathfindingService, type NavGraph } from "../../../src/game/level/pathfinding";
+import { PathfindingService } from "../../../src/game/level/pathfinding";
+import { PathNotFoundError, type NavGraph } from "../../../src/game/level/pathfindingTypes";
+import { navGraphStats } from "../../../src/game/level/navGraph";
+import { astarMetricsSnapshot } from "../../../src/game/level/navSearch";
 
 await initPhysics();
 

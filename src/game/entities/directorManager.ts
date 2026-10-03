@@ -4,7 +4,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { PhysicsWorld } from "../../physics/world";
 import type { HitEvent } from "../player/weaponTypes";
 import { damageForWeapon } from "../player/weaponConfig";
-import type { NavGraph } from "../level/pathfinding";
+import type { NavGraph } from "../level/pathfindingTypes";
 import type { VitreHitTarget } from "./enemyTypes";
 import {
   Director,

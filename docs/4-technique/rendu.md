@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Rendu
@@ -147,3 +147,13 @@ Lancez le jeu à la résolution d'origine et vérifiez que les arêtes du décor
 Comparez ensuite le préréglage d'affichage courant avec 640×360 et vérifiez le rapport de la caméra, les bandes éventuelles et l'alignement des overlays. La console permet aussi `cassandre.resolution(960, 540)` puis `cassandre.resolution()` pour revenir à l'origine.
 
 Couverture ciblée : `pnpm test -- renderService loader billboard viewmodel`.
+
+## Registre des textures configurables
+
+`src/render/textureRegistry.ts` suit les textures configurées jusqu’à leur
+libération. Le réglage global parcourt tous les canaux texture des matériaux
+classiques et les uniformes ShaderMaterial. Pour du TSL, le propriétaire
+enregistre les TextureNodes concernés avec `registerMaterialTextureInputs` ;
+la valeur est relue au changement de mode, même si elle a été remplacée.
+Les render targets, textures de profondeur et cubemaps du ciel gardent leur
+contrat propre. L’espace couleur des canaux de données est préservé.

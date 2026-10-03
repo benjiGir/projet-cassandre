@@ -2,7 +2,7 @@ import type * as THREE from "three";
 import type RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../physics/world";
-import type { NavGraph } from "../level/pathfinding";
+import type { NavGraph } from "../level/pathfindingTypes";
 
 // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 

@@ -2,7 +2,7 @@
 title: Ennemis et IA
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Ennemis et IA
@@ -15,8 +15,7 @@ télégraphie et résolution d'une attaque hitscan, recul, mort — via une seul
 machine XState **partagée** entre les deux types
 ([ADR 0009](../decisions/0009-machine-partagee-suit-director.md)). Intègre
 aussi leur propre corps Rapier (`KinematicCharacterController`, invariant
-#6) : c'est ce fichier, pas `physics/`, qui construit et pilote le
-personnage ennemi. Fournit le spawn depuis les Empties `spawn_suit_*`/
+#6) : le module de physique des ennemis construit et pilote leur capsule. Fournit le spawn depuis les Empties `spawn_suit_*`/
 `spawn_director_*` du niveau.
 
 Ne fait pas : ne construit pas le graphe de navigation ni ne décide de son
@@ -33,9 +32,12 @@ en entrée (D28).
 - `src/game/entities/entity.ts` — contrat minimal `Entity` partagé par toute
   entité de jeu ; squelettique par choix (invariant #8, pas d'ECS avant 12
   types d'ennemis).
-- `src/game/entities/enemyMachine.ts` — la machine partagée : contexte,
-  table de transition, perception, évitement, suivi de chemin, résolution
-  d'attaque, intégration physique, `tickEnemy`. Fichier central de cette page.
+- `src/game/entities/enemyMachine.ts` — transitions, décisions par état et `tickEnemy`.
+- `src/game/entities/enemyTypes.ts` — configuration et contrats de contexte/événements.
+- `src/game/entities/enemyPerception.ts` — yeux, lignes de vue et filtres monde.
+- `src/game/entities/enemyNavigation.ts` — poursuite, évitement et orientation.
+- `src/game/entities/enemyPhysics.ts` — capsule, KCC, intégration et knockback.
+- `src/game/entities/enemyCombat.ts` — visée, jitter et résolution du tir.
 - `src/game/entities/suit.ts` / `suitConfig.ts` / `suitManager.ts` — le
   Costard : fin wrapper Rapier + config + PRNG + acteur ; `SuitManager`
   pilote `Suit[]`, un seul KCC partagé, les files d'évènements par frame.
@@ -260,3 +262,12 @@ câbler un manager dans `GameSession`, brancher ses évènements dans
 `updateFx.ts`, fournir un atlas 8 directions
 ([ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md)), puis mesurer
 le budget (20 ennemis actifs à 60 fps, skill `enemy-state-machine`).
+
+## Restauration de debug
+
+Les setters `state` de Suit et Director arrêtent leur acteur et le remplacent
+avec `resolveState`, `getPersistedSnapshot` puis `createActor({ snapshot })`.
+Le contexte reste partagé par référence, sans passage JSON : vecteurs, RNG
+et corps Rapier conservent leur identité. Aucune action d’entrée n’est rejouée.
+Cette restauration utilise les API publiques ; les transitions de gameplay
+continuent à envoyer leurs événements au même graphe d’états.

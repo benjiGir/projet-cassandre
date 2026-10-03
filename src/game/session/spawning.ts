@@ -30,7 +30,8 @@ import { Director } from "../entities/director";
 import { directorConfig } from "../entities/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/hotReload";
 import { reportLoading, letBrowserPaint } from "../../core/loadingProgress";
-import { PathfindingService, navGraphStats } from "../level/pathfinding";
+import { PathfindingService } from "../level/pathfinding";
+import { navGraphStats } from "../level/navGraph";
 import { useGameStore } from "../state";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
@@ -143,6 +144,8 @@ export function loadGltfLevel(
         const propSystem = new PropSystem(handle.props, handle.root);
 
         // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
+        const pickupResources = session.pickupResources;
+        if (!pickupResources) throw new Error("Ressources des ramassages absentes pendant le chargement");
         const weaponPickupBillboards: WeaponPickupBillboard[] = [];
         const cardPickupBillboards: CardPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
@@ -155,12 +158,12 @@ export function loadGltfLevel(
           }
           if (useObject.heals !== null) {
             const ground = groundBelow(session, useObject.position);
-            if (useObject.aliment) dressFoodPickup(useObject.object, ground, useObject.aliment);
-            else dressHealPickup(useObject.object, ground);
+            if (useObject.aliment) dressFoodPickup(useObject.object, ground, useObject.aliment, pickupResources);
+            else dressHealPickup(useObject.object, ground, pickupResources);
             continue;
           }
           if (useObject.ammo !== null) {
-            dressAmmoPickup(useObject.object, groundBelow(session, useObject.position));
+            dressAmmoPickup(useObject.object, groundBelow(session, useObject.position), pickupResources);
             continue;
           }
           const weapon =
@@ -173,7 +176,7 @@ export function loadGltfLevel(
                   : null;
           if (!weapon) continue;
           weaponPickupBillboards.push(
-            dressWeaponPickup(useObject.object, weapon, groundBelow(session, useObject.position)),
+            dressWeaponPickup(useObject.object, weapon, groundBelow(session, useObject.position), pickupResources),
           );
         }
 

@@ -2,7 +2,7 @@
 title: Pathfinding
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Pathfinding
@@ -25,15 +25,16 @@ paramètre.
 
 ## Fichiers
 
-- `src/game/level/pathfinding.ts` — le service complet : constantes de bake,
-  `NavGraph`, `bakeNavGraphEffect`, l'A* (`MinHeap`, `astar`), la recherche de
-  cellule la plus proche (`nearestWalkableCellIndex`), `PathfindingService`
-  (layer réelle et `PathfindingService.test`).
+- `src/game/level/pathfinding.ts` — service Effect et composition avec Raycast injecté.
+- `src/game/level/pathfindingTypes.ts` — graphe, erreur et contrats du service.
+- `src/game/level/navGraph.ts` — grille, voisins et cellule praticable la plus proche.
+- `src/game/level/navBake.ts` — échantillonnage Rapier au chargement.
+- `src/game/level/navSearch.ts` — tas, A* déterministe et compteurs de diagnostic.
 - `src/game/session/spawning.ts` — `loadGltfLevel` : désactive les colliders
   des groupes de portes `auto` puis appelle `refreshSceneQueries()` et
   `PathfindingService.use((pf) => pf.bake(...))` au chargement ;
   `debugFindPath` (wrapper console).
-- `src/game/entities/enemyMachine.ts` — `tryComputeChaseDirectionFromPath` :
+- `src/game/entities/enemyNavigation.ts` — `tryComputeChaseDirectionFromPath` :
   seul appelant de `findPath` au pas fixe, dans `runChase`.
 - `src/game/level/doors.ts` — `DoorSystem.autoGroupColliders`, les colliders
   désactivés pendant le bake.
@@ -71,7 +72,7 @@ exposé à l'appelant.
 
 ## Données et contrats
 
-**`NavGraph`** (`pathfinding.ts`) : tableaux typés indexés par
+**`NavGraph`** (`pathfindingTypes.ts`) : tableaux typés indexés par
 `iz * cols + ix`, jamais une `Map`/`Set` (déterminisme d'itération, accès
 O(1)). `groundY` (hauteur de sol monde, `NaN` si non praticable),
 `walkable` (0/1), `neighborMask` (masque 8 bits par cellule, un bit par
@@ -133,7 +134,7 @@ premier élément du chemin retourné n'est **jamais** la position de départ :
 c'est le prochain waypoint.
 
 **Fréquence de recalcul et cache de chemin.** `tryComputeChaseDirectionFromPath`
-(`enemyMachine.ts`) ne relance `findPath` que si le chemin courant est épuisé
+(`enemyNavigation.ts`) ne relance `findPath` que si le chemin courant est épuisé
 (`currentWaypointIndex >= currentPath.length`) ou si la cible a bougé de plus
 de `PATH_REQUERY_DISTANCE` (1,5 m) depuis la dernière requête
 (`lastPathQueryTarget`) — pas à chaque pas fixe. Le chemin est gardé dans le

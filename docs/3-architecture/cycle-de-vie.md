@@ -2,7 +2,7 @@
 title: Cycle de vie
 tags: [architecture]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Cycle de vie
@@ -11,8 +11,7 @@ updated: 2026-10-02
 
 Séparer ce qui se construit **une seule fois pour tout l'onglet**
 (`PersistentEngine`) de ce qui se reconstruit **à chaque partie**
-(`GameSession`), et border le seul point vraiment asynchrone du jeu — le
-chargement d'un niveau — pour qu'une partie abandonnée en cours de
+(`GameSession`), et border la préparation asynchrone des ressources et du niveau — pour qu'une partie abandonnée en cours de
 chargement (rejouer, retour au menu, changement de niveau depuis la
 console) ne puisse jamais écrire dans la partie qui l'a remplacée. C'est ce
 découpage qui rend « Rejouer »/« Retour au menu » instantanés et sans fuite,
@@ -25,7 +24,7 @@ Du tout premier boot à un reset, et la place du hot reload à côté.
 ```mermaid
 flowchart TD
   Main["main() : boot de l'onglet"] --> Engine["buildGameEngine -> PersistentEngine, une fois"]
-  Engine --> Boot1["bootGameSession(choix) -> GameSession"]
+  Engine --> Boot1["await bootGameSession(choix) -> GameSession"]
   Boot1 --> Load["Chargement asynchrone du niveau"]
   Load --> Commit["Commit : affectations regroupées"]
   Commit --> Playing["flux : playing"]
@@ -46,6 +45,7 @@ flowchart TD
 |---|---|---|---|
 | `PersistentEngine` (scène, caméra, renderer, horloge, `FxSystem`, viewmodel, atlas d'ennemis, `InteractionSystem`) | `buildGameEngine` (`src/game/session/gameEngine.ts`), une fois dans `main()` | Jamais explicitement — meurt avec l'onglet | Onglet |
 | `GameFlowActor` (`gameFlowMachine`) | `createGameFlowActor` (`src/main.ts`), une fois | Jamais — un seul acteur pour tout l'onglet | Onglet |
+| `PickupResources` (atlas et modèles partagés des ramassages) | `loadPickupResources`, attendu par `bootGameSession` | après `LevelSession.stop()` dans `teardownGameSession` | Partie ; survit au hot reload |
 | `GameSession` (monde Rapier, joueur, armes, managers d'ennemis, systèmes de niveau, score) | `bootGameSession` (`src/game/session/lifecycle.ts`) | `teardownGameSession` | Partie |
 | `LevelSession` (niveau `.glb` courant, sondage de hot reload) | `createLevelSession`, appelée par `loadGltfLevel` à chaque `bootGameSession` sur le chemin glTF | `.stop()`, appelée par `teardownGameSession` et par tout remplacement explicite (console, `?level=`) | Partie (recréée à chaque partie, pas seulement rechargée) |
 | `LevelHandle` (géométrie, colliders, spawns d'un `.glb` précis) | `loadLevel` (`src/game/level/loader.ts`), à l'intérieur d'une `LevelSession` | `.dispose()`, appelé par la `LevelSession` à son remplacement ou à son arrêt | Niveau chargé (survit à un hot reload raté, remplacé par le suivant à un hot reload réussi) |
@@ -55,8 +55,7 @@ flowchart TD
 
 ## Le chargement de niveau
 
-Le chargement d'un `.glb` est le seul endroit du jeu qui traverse
-sciemment la [frontière asynchrone](boucle-et-temps.md#la-frontière-synchrone)
+Le chargement des ressources de session et du `.glb` traverse la [frontière asynchrone](boucle-et-temps.md#la-frontière-synchrone)
 plutôt que le pas fixe : `loadGltfLevel` (`src/game/session/spawning.ts`)
 et `createLevelSession`/`loadLevel` (`src/game/level/hotReload.ts`,
 `src/game/level/loader.ts`) tournent sur `GameRuntime.runPromise`/`runFork`,
@@ -197,3 +196,13 @@ déverrouillées, pool de lampes.
 - [ADR 0013 — Deux gardes distinctes, état de flux vs existence du monde physique](../decisions/0013-garde-flux-vs-monde-physique.md)
 - [ADR 0014 — GameEngine et PersistentEngine séparés](../decisions/0014-gameengine-persistentengine-separes.md)
 - [ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page](../decisions/0019-machine-xstate-flux-ecran.md)
+
+## Préparation des ramassages
+
+`bootGameSession` attend l’atlas avant de construire le monde et les systèmes.
+Les textures atlas et canvas sont téléversées par `warmTextures(renderer)`
+pendant le chargement. Les fonctions d’habillage ne font aucun téléchargement.
+Une erreur de préparation retourne vers l’écran de retry via
+`app/sessionFlow.ts::bootGameSessionWithRetry`. Cette attente ne passe jamais
+par la boucle fixe. L’horloge cosmétique des armes au sol appartient à la
+session et repart de zéro à chaque nouvelle partie.

@@ -217,6 +217,10 @@ déclarative qu'il n'est pas.
 
 ### Réassigner l'état depuis les tests sans casser l'encapsulation
 
+**État historique jusqu’au 2 octobre 2026.** Depuis le 3 octobre, le debug
+remplace l’acteur via les snapshots publics ; voir
+[Compatibilité de debug](../6-reference/notes-code-gameplay-ennemis.md#compatibilité-de-debug).
+
 Le filet de sécurité de caractérisation (`test/game/entities/suit.test.ts`/
 `director.test.ts`, écrit contre le code pré-refactor) affecte directement
 `suit.state = "chase"` / `suit.stateTimer = 1.23` comme mise en place de

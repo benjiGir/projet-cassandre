@@ -9,7 +9,7 @@ import type { DoorSfxEvent, EnemySfxEvent, SfxId } from "./audioTypes";
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "./assetPath";
 import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
-import type { DoorMovement } from "../game/level/doors";
+import type { DoorMovement } from "../game/level/doorTypes";
 
 // Présentation : les lectures Howler restent hors du pas fixe.
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio

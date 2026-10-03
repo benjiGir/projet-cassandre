@@ -49,11 +49,9 @@ import { afterEach, assert, beforeEach, describe, it } from "@effect/vitest";
 
 import { GameRuntime } from "../../../src/core/runtime";
 import { RaycastService, type RaycastServiceShape } from "../../../src/physics/raycast";
-import {
-  PathfindingService,
-  type PathfindingServiceShape,
-  EMPTY_NAV_GRAPH,
-} from "../../../src/game/level/pathfinding";
+import { PathfindingService } from "../../../src/game/level/pathfinding";
+import type { PathfindingServiceShape } from "../../../src/game/level/pathfindingTypes";
+import { EMPTY_NAV_GRAPH } from "../../../src/game/level/navGraph";
 import { GROUP, initPhysics, PhysicsWorld } from "../../../src/physics/world";
 import {
   Suit,

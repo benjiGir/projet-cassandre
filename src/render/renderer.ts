@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { WebGLNodesHandler } from "three/addons/tsl/WebGLNodesHandler.js";
 
+import { collectRetroTextures, registerRetroTexture } from "./textureRegistry";
+
 export const INTERNAL_WIDTH = 640;
 export const INTERNAL_HEIGHT = 360;
 
@@ -29,10 +31,9 @@ export function createRenderer(canvas: HTMLCanvasElement): THREE.WebGLRenderer {
   return renderer;
 }
 
-export function configureRetroTexture(texture: THREE.Texture, mode: FiltrageTexture = filtrage) {
+function configureTextureFiltering(texture: THREE.Texture, mode: FiltrageTexture): void {
   // Nearest à l’agrandissement porte le gros pixel dans tous les modes.
   texture.magFilter = THREE.NearestFilter;
-  texture.colorSpace = THREE.SRGBColorSpace;
   if (mode === "nearest") {
     texture.minFilter = THREE.NearestFilter;
     texture.generateMipmaps = false;
@@ -43,20 +44,21 @@ export function configureRetroTexture(texture: THREE.Texture, mode: FiltrageText
     texture.anisotropy = mode === "aniso" ? anisotropieMax : 1;
   }
   texture.needsUpdate = true;
+  registerRetroTexture(texture);
+}
+
+export function configureRetroTexture(texture: THREE.Texture, mode: FiltrageTexture = filtrage): void {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  configureTextureFiltering(texture, mode);
 }
 
 export function appliquerFiltrage(scene: THREE.Object3D, mode: FiltrageTexture): number {
   filtrage = mode;
-  const vues = new Set<THREE.Texture>();
-  scene.traverse((obj) => {
-    const mesh = obj as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    for (const mat of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
-      const map = (mat as THREE.MeshLambertMaterial).map;
-      if (map) vues.add(map);
-    }
-  });
-  for (const texture of vues) configureRetroTexture(texture, mode);
+  const vues = collectRetroTextures(scene);
+  for (const texture of vues) {
+    // Un canal normal/alpha n'est pas une couleur sRGB : conserver son encodage.
+    configureTextureFiltering(texture, mode);
+  }
   return vues.size;
 }
 

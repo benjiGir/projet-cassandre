@@ -127,7 +127,7 @@ function stateAfterOneStep(...args: Parameters<typeof rig>): string {
 
 /**
  * Point où le rayon de ligne de vue s'arrête, ou `null` s'il passe. Rejoue
- * exactement la requête de `enemyMachine.ts::hasClearWorldPath` (mêmes
+ * exactement la requête de `enemyPerception.ts::hasClearWorldPath` (mêmes
  * groupes, même marge de 5 cm, même exclusion des sensors) : sert à vérifier
  * QUI occulte, pas seulement QUE ça occulte — une fixture qui passerait grâce
  * à un pilier oublié serait un piège pour la suite.

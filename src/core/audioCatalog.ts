@@ -1,4 +1,4 @@
-import type { DoorMovement } from "../game/level/doors";
+import type { DoorMovement } from "../game/level/doorTypes";
 import type { DoorSfxEvent, EnemySfxEvent, SfxDef, SfxId } from "./audioTypes";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio

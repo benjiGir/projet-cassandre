@@ -20,12 +20,11 @@ import { weaponConfig } from "../player/weaponConfig";
 import { suitConfig } from "../entities/suitConfig";
 import { directorConfig } from "../entities/directorConfig";
 import { useGameStore } from "../state";
-import { advanceWeaponPickupClock } from "../../render/pickups";
 import { presentPlayerDamage } from "../session/feedback";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import type { LevelHandle } from "../level/levelTypes";
-import { astarMetricsSnapshot } from "../level/pathfinding";
+import { astarMetricsSnapshot } from "../level/navSearch";
 import { collectActiveShowerOrigins } from "../level/douches";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -84,7 +83,7 @@ type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
   "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
   "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons" |
-  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait"
+  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait" | "pickupResources"
 >>;
 type FxEngine = Omit<Pick<GameEngine,
   "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
@@ -159,7 +158,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // au pas fixe (même séparation que `fx.update(realDt)` juste au-dessus).
         for (const sprite of session.suitSprites.values()) sprite.updateFlash(realDt);
 
-        advanceWeaponPickupClock(realDt);
+        session.pickupResources?.advanceWeaponClock(realDt);
         for (const billboard of session.weaponPickupBillboards) billboard.update(engine.camera);
         for (const billboard of session.cardPickupBillboards) billboard.update(engine.camera, realDt);
         session.droppedCardBillboard?.update(engine.camera, realDt);
