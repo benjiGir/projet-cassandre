@@ -2,14 +2,14 @@
 title: Budget de rendu
 tags: [technique]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Budget de rendu
 
 ## Responsabilité
 
-Cette page explique comment le runtime contrôle le coût de dessin d'un niveau et comment le mesurer depuis une vue réelle. Le budget est une cible de contenu et un outil d'analyse ; le loader ne promet pas une limite globale de temps GPU.
+Cette page explique comment le runtime contrôle le coût de dessin d'un niveau et comment le mesurer depuis une vue réelle. Les lots de dessin n'ont plus de plafond ([ADR 0039](../decisions/0039-abandon-du-plafond-de-lots.md)) : leur nombre est un indicateur à lire, pas une limite à tenir. Le loader ne promet pas une limite globale de temps GPU.
 
 ## Fichiers
 
@@ -68,7 +68,7 @@ Un `use_*` doit pouvoir être masqué quand il est ramassé. `UseObjectCulling` 
 
 ### Cible et limites des contrôles
 
-Le budget visé du niveau v2 est 200 lots dans une vue chargée, tel qu'exposé dans le plan de masse. `LevelStats` expose les nombres pertinents à comparer au jeu. Ce seuil est une cible d'auteur et ne constitue pas un garde-fou global d'exécution.
+Le niveau v2 n'a plus de plafond de lots. Il en dessine entre 70 et 255 selon la vue, pour 2 à 3 ms de rendu sur la machine de développement. `LevelStats` et `pnpm probe` exposent ces nombres ; ils servent à comprendre une vue, pas à valider un décor.
 
 `tools/blender/validate_level.py` compte automatiquement les triangles et signale le dépassement de son budget triangulaire. Son contrôle des matériaux avertit au-delà de 24 matériaux ; il ne mesure pas le nombre réel de draw calls après fusion. Le diagnostic de lots s'appuie donc sur la vue du niveau chargé, pas seulement sur le rapport Blender.
 
@@ -100,7 +100,7 @@ Le nombre de programmes compilés aide à repérer un excès de variantes de mat
 - Un nouvel attribut glTF ou une liste de matériaux différente empêche la fusion, même si la texture paraît identique à l'écran.
 - Une vitre ou un écran fusionné sur toute la carte peut coûter un grand volume de géométrie lorsqu'une seule partie entre dans le champ. Vérifiez la baisse des draw calls avec la hausse des triangles.
 - Un mesh animé, physique ou consommable ne doit pas être fusionné avec le décor fixe. Il doit garder son identité, sa pose ou sa visibilité propre.
-- Un budget de 200 n'est pas validé par le nombre de matériaux Blender ni par le nombre total de triangles. Il faut inspecter le niveau chargé dans les vues pertinentes.
+- Le nombre de lots ne se déduit ni du nombre de matériaux Blender ni du total de triangles. Il faut inspecter le niveau chargé dans les vues pertinentes.
 - Mesurer uniquement la résolution, une frame invisible ou une caméra déplacée hors boucle donne des chiffres qui ne représentent pas le point de vue joué.
 
 ## Tests
@@ -112,10 +112,10 @@ Le nombre de programmes compilés aide à repérer un excès de variantes de mat
 
 ## Comment vérifier que ça marche
 
-Chargez le niveau v2 et inspectez `cassandre.level.stats()`. Déplacez-vous vers plusieurs pièces ouvertes, couloirs et vues sur le parking ; lancez `cassandre.renderBench(120)` à chaque position. Le plus haut nombre de draw calls visibles est le point à examiner contre la cible de 200 lots.
+Chargez le niveau v2 et inspectez `cassandre.level.stats()`. Déplacez-vous vers plusieurs pièces ouvertes, couloirs et vues sur le parking ; lancez `cassandre.renderBench(120)` à chaque position. Le plus haut nombre de draw calls visibles désigne la vue la plus chargée ; c'est son temps de rendu qui compte, pas le nombre lui-même.
 
 Comparez ce nombre au nombre de triangles visibles, puis réduisez temporairement `cassandre.lightBudget(8)` pour isoler le coût des lampes. Remettez ensuite le budget normal ou demandez explicitement `cassandre.lightBudget(null)` pour tout rallumer.
 
-Pour le contenu source, lancez `python tools/blender/validate_level.py --strict` afin de vérifier le budget de triangles et les contrats exportés. Cette validation complète la mesure en jeu ; elle ne certifie pas à elle seule le budget de lots par caméra.
+Pour le contenu source, lancez `python tools/blender/validate_level.py --strict` afin de vérifier le budget de triangles et les contrats exportés. Cette validation complète la mesure en jeu ; elle ne dit rien du nombre de lots par caméra.
 
 Couverture ciblée : `pnpm test -- mergeStaticDecor loader doors vitres sanitaires ecrans lightPool`.

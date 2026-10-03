@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { applyPlayerDamage, grantKillViews, presentPlayerDamage } from "../../../../src/game/session/player/feedback";
+import { applyPlayerDamage, presentPlayerDamage } from "../../../../src/game/session/player/feedback";
 import { createInitialStats } from "../../../../src/game/session/progression/score";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { type GameEngine } from "../../../../src/game/session/gameEngine";
 import { type GameSession } from "../../../../src/game/session/gameSession";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
+import { createStreamState } from "../../../../src/game/session/stream/streamSim";
 
 function sessionWithHp(playerHp: number): GameSession {
   return {
@@ -21,6 +22,7 @@ function sessionWithHp(playerHp: number): GameSession {
     deathHandled: false,
     lowHpLineTriggered: false,
     stats: createInitialStats(),
+    stream: createStreamState(),
     suitManager: { suits: [] },
     directorManager: { directors: [] },
     choice: {},
@@ -75,14 +77,6 @@ describe("applyPlayerDamage — résolution dans le pas fixe", () => {
 
     expect(session.stats.hpLost).toBe(5);
     expect(send).toHaveBeenCalledTimes(1);
-  });
-
-  it("le gain de vues suit le RNG de session, indépendamment du rendu", () => {
-    const session = { viewsRandom: vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(1) } as unknown as GameSession;
-    grantKillViews(session);
-    grantKillViews(session);
-    expect(useGameStore.getState().debug.views).toBe(252);
-    expect(session.viewsRandom).toHaveBeenCalledTimes(2);
   });
 
   it("la publication des PV ne modifie aucun drapeau de partie", () => {

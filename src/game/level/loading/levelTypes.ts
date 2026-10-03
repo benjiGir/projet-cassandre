@@ -21,6 +21,8 @@ export interface NamedSpawn {
   name: string;
   /** Position MONDE, pieds (même convention que `SpawnPoint.position`). */
   position: THREE.Vector3;
+  /** Custom property Blender `groupe` : l'ennemi n'apparaît qu'au réveil de ce groupe par le script de niveau. `null` = présent dès le chargement. */
+  group: string | null;
 }
 
 export interface TriggerVolume {

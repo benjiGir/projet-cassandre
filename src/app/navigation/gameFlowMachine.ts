@@ -37,6 +37,7 @@ export const gameFlowMachine = setup({
     },
     loading: {
       on: {
+        SHOW_INTRO: "intro",
         PLAY: "playing",
         LOAD_FAILED: "loadFailed",
         RETURN_TO_MENU: "mainMenu",
@@ -48,11 +49,23 @@ export const gameFlowMachine = setup({
         RETURN_TO_MENU: "mainMenu",
       },
     },
+    // see: docs/4-technique/interface-react.md#panneaux-dhistoire
+    intro: {
+      on: {
+        PLAY: "playing",
+      },
+    },
     playing: {
       on: {
         DIED: "dead",
+        SHOW_OUTRO: "outro",
         LEVEL_COMPLETED: "levelComplete",
         PAUSE: "paused",
+      },
+    },
+    outro: {
+      on: {
+        LEVEL_COMPLETED: "levelComplete",
       },
     },
     // see: docs/archive/systems-session.md#pause
@@ -78,6 +91,16 @@ export const gameFlowMachine = setup({
 } satisfies { id: string; initial: GameFlowState; states: Record<GameFlowState, unknown> });
 
 export type GameFlowActor = Actor<typeof gameFlowMachine>;
+
+/** Le pas fixe n'exécute son contenu que dans cet état : les panneaux d'histoire ne comptent pas dans le chronomètre. */
+export function isPlayingState(state: GameFlowState): boolean {
+  return state === "playing";
+}
+
+/** Le monde physique existe et continue de tourner derrière l'écran affiché. */
+export function isPhysicsLiveState(state: GameFlowState): boolean {
+  return state === "playing" || state === "paused" || state === "dead" || state === "outro" || state === "levelComplete";
+}
 
 export function createGameFlowActor(): GameFlowActor {
   return createActor(gameFlowMachine).start();

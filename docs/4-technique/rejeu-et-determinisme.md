@@ -126,7 +126,7 @@ Graines et propriétaires, jamais dérivées de `Math.random()`/`Date.now()` :
 | Dispersion du pompe et du pistolet | `SHOTGUN_SPREAD_SEED` | Un seul flux, partagé par les deux armes, construit une fois à la création de `WeaponSystem` |
 | Jitter de visée / déviation d'un Costard | `BASE_SUIT_SEED + index * SEED_STRIDE` (pas impair) | Une instance par ennemi spawné, jamais partagée entre deux Costards |
 | Jitter de visée / déviation du Directeur | `BASE_DIRECTOR_SEED + index * SEED_STRIDE` | Même principe, base distincte — deux types d'ennemis ne partagent jamais une séquence |
-| Gains de « vues » par kill | graine dédiée dans `session.viewsRandom` | Un flux par `GameSession`, avancé au pas fixe (à la mort d'un ennemi) |
+| Le direct : audience, dons et chat | graine dédiée dans `session.streamRandom` | Un flux par `GameSession`, avancé au pas fixe (à chaque évènement notable et à chaque message du chat) |
 | Répliques occasionnelles du héros | `HERO_LINE_SEED` dans `session.heroLineRandom` | Un flux par `GameSession`, avancé au pas fixe, seulement quand le cooldown laisse passer une réplique à probabilité (`heroLines.ts`) |
 | FX / audio (cosmétique) | graines dédiées dans `lifecycle.ts` (`bootGameSession`) | Un flux par `GameSession`, réinitialisé au boot ; ne peut avancer aucun flux de simulation |
 

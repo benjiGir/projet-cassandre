@@ -2,7 +2,7 @@
 title: Glossaire
 tags: [introduction]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Glossaire
@@ -16,17 +16,25 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 
 | Terme | Définition | Où le voir |
 |---|---|---|
+| Annonce | Message des haut-parleurs du magasin ou de l'interphone de la direction, affiché en haut de l'écran par un scénario. | `src/game/session/progression/levelEvents.ts` |
+| Cagnotte | Total des dons reçus pendant la partie. Rien ne s'achète encore avec. | `src/game/session/stream/streamSim.ts` |
 | Carte de fidélité (argent / or / platine) | Objet-clé façon Duke 3D : `argent` et `or` se ramassent via un `use_*` (propriété `card`), `platine` est lâchée par le Directeur à sa mort. Une porte peut exiger une carte (`requires`) pour être actionnée. | `src/game/player/loyaltyCards.ts`, `src/game/session/progression/cards.ts` |
-| Compteur de « vues » | Gag du HUD façon stream : gain de points disproportionné par ennemi neutralisé (×4 pour le Directeur), sans aucun lien avec le score du récapitulatif. | `src/game/session/player/feedback.ts`, `src/game/hud/state.ts` |
+| Direct (le) | La simulation du stream : spectateurs qui montent avec l'action et partent avec l'ennui, abonnés, dons et chat. La cagnotte des dons est sans lien avec le score du récapitulatif. | `src/game/session/stream/streamSim.ts`, `docs/decisions/0038-simulation-du-direct.md` |
 | Costard (Suit) | L'ennemi de base : humain en costume noir, cravate rouge, jusqu'à sa mort. Partage sa machine à états avec le Directeur. | `src/game/entities/suit/suit.ts`, `src/game/entities/shared/enemyMachine.ts` |
 | Directeur (Director) | Boss unique du niveau. Costume beige, révélation reptilienne à la mort, lâche la carte Platine. | `src/game/entities/director/director.ts`, `src/game/entities/director/directorConfig.ts` |
+| Donateur mystère | Spectateur dont les dons et les messages trop précis guident le héros ; il travaille pour la plateforme de diffusion, qui veut de l'audience et garde les revenus. Prévu pour la v1.1, pas encore en jeu. | `docs/2-fonctionnel/histoire.md` |
 | Espace | Une zone nommée du niveau (rayons, réserve, bureaux…), reliée aux autres par le hub. | `docs/6-reference/conventions-nommage.md` |
 | Gibs | Explosion de morceaux jouets qui remplace l'animation de mort normale d'un Costard tué au pompe à bout portant (distance ≤ `gibDistance`) ; purement cosmétique, la simulation le garde `dead`/`corpse` normalement. | `src/render/fx/fx.ts::spawnGibs`, `src/game/entities/suit/suitManager.ts` |
 | Hub | Zone centrale à la Duke 3D d'où partent les espaces du niveau, débloqués par les cartes de fidélité. | CLAUDE.md (section « Chantier Niveau v2 ») |
 | Hypermarché | Le décor du prototype : un hypermarché des années 90, univers satirique. | `docs/1-introduction/le-projet.md` |
+| Hyper Varan | Le nom de l'enseigne, « le sang-froid des prix bas ». Le niveau s'appelle « Inventaire exceptionnel ». | `docs/2-fonctionnel/histoire.md` |
 | Knockback | Recul appliqué à un ennemi qui encaisse un coup non fatal ; converti en vélocité interne (les deux ennemis sont kinématiques, un impulse Rapier n'aurait aucun effet), décroissante sur `knockbackDecayTime`. | `src/game/entities/shared/enemyMachine.ts` |
+| Sous-zone | Partie d'un espace délimitée par un `trig_*` portant `replique` : le héros la commente à sa première visite. | `src/game/session/progression/levelScriptSetup.ts` |
 | Télégraphie (d'attaque) | Anticipation visuelle et sonore obligatoire avant les dégâts d'une attaque ennemie (pose de tir tenue au moins `attackTelegraphDuration`, ≥ 0,2 s) — condition de lisibilité du combat, pas une mécanique optionnelle. | `src/game/entities/shared/enemyMachine.ts`, skill `enemy-state-machine` |
+| Moment scripté | Séquence courte lancée par un `trig_*`, qui ne retire jamais le contrôle : annonce, écrans, réplique. Son déroulé est un scénario. | `docs/decisions/0037-script-de-niveau.md` |
+| Panneau d'histoire | Illustration légendée de l'introduction ou de la fin, affichée hors de la partie. | `src/game/session/presentation/storyPanels.ts` |
 | Récapitulatif de fin de partie | Liste des sources de points révélée ligne par ligne à l'écran, suivie du total ; partiel à la mort (sans bonus de rapidité), complet à la vraie sortie du niveau. | `src/game/session/progression/score.ts` |
+| Réveil du peuple (« le Réveil ») | La chaîne du héros, qui lui sert aussi de pseudo : il n'a pas de nom civil. Le chat l'appelle « le Réveil ». | `src/ui/hud/widgets/LiveCam/LiveCam.tsx`, `docs/2-fonctionnel/histoire.md` |
 | Révélation reptilienne | Bascule cosmétique du Directeur à sa mort : costume humain remplacé par une peau `revele` verte à crête, posée par `setAtlas`. Purement visuelle, pas un changement de comportement. | `src/game/entities/director/directorConfig.ts` |
 | Sanitaire (`sanitaire_*`) | Cuvette ou urinoir façon Duke 3D : utilisable en visant (soin ou eau selon l'état), cassable si `pv`. | `src/game/level/sanitaires/sanitaires.ts` |
 | Secret | Zone comptée dans le compteur de secrets, comptabilisée au score une fois trouvée (test AABB générique). | `src/game/session/progression/score.ts` |

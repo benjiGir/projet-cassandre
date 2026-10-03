@@ -3,7 +3,6 @@
  *
  *   pnpm probe                          # les poses de tools/probe/poses.json
  *   pnpm probe -- --pose 0,60,0,180     # une pose : x,y,z,cap (repère Blender)
- *   pnpm probe -- --strict              # code 1 si une pose dépasse le budget
  *   pnpm probe -- --url http://localhost:5173   # réutilise un serveur de dev
  *
  * Lance le jeu, démarre une partie, puis pour chaque pose : `cassandre.tp`,
@@ -12,7 +11,7 @@
  *
  * `drawCalls` : tout ce que le jeu dessine ; `niveau` : sans les sprites
  * d'ennemis (49 quads, un lot chacun) — la part que la construction du niveau
- * commande. Le budget est de 200 (`validate_level.py`, ADR 0023).
+ * commande. Ce sont des indicateurs : aucun plafond ne s'y applique (ADR 0039).
  *
  * Utilise le Chrome installé (`channel: "chrome"`) : rien à télécharger.
  */
@@ -25,13 +24,11 @@ import { createServer } from "vite";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
 const RACINE = resolve(ICI, "../..");
-const BUDGET = 200;
 
 function lireArgs(argv) {
-  const args = { poses: [], strict: false, url: null };
+  const args = { poses: [], url: null };
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--strict") args.strict = true;
-    else if (argv[i] === "--url") args.url = argv[++i];
+    if (argv[i] === "--url") args.url = argv[++i];
     else if (argv[i] === "--pose") {
       const [x, y, z, cap] = argv[++i].split(",").map(Number);
       args.poses.push([`${x},${y},${z},${cap}`, [x, y, z, cap]]);
@@ -89,10 +86,8 @@ try {
     return sortie;
   }, args.poses);
 
-  for (const m of mesures) m.depasse = m.drawCalls > BUDGET;
   const pire = mesures.reduce((a, b) => (b.drawCalls > a.drawCalls ? b : a));
-  console.log(JSON.stringify({ budget: BUDGET, pire: pire.pose, mesures, erreurs }));
-  process.exitCode = args.strict && mesures.some((m) => m.depasse) ? 1 : 0;
+  console.log(JSON.stringify({ pire: pire.pose, mesures, erreurs }));
 } finally {
   await navigateur.close();
   await serveur?.close();

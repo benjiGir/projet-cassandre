@@ -2,7 +2,7 @@
 title: Visibilité par espace et pool de lampes, plutôt que streaming ou WebGPU
 tags: [adr, rendu, performance, niveau-v2]
 status: accepte
-updated: 2026-09-28
+updated: 2026-10-03
 ---
 
 # ADR 0026 — Visibilité par espace et pool de lampes
@@ -136,7 +136,7 @@ générale vers WebGPU reste inchangée.
 | | N1 (posé a priori) | Révisé (mesuré) |
 |---|---|---|
 | Triangles par image | 200 000 | **1 500 000** |
-| Lots de dessin | 200 | 200 (inchangé) |
+| Lots de dessin | 200 | 200 (inchangé) — plafond abandonné le 2026-10-03, [ADR 0039](0039-abandon-du-plafond-de-lots.md) |
 | Lampes allumées | non spécifié | **48** |
 
 Le budget de triangles reste bien en-dessous de ce que la machine de mesure

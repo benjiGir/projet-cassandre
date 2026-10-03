@@ -2,7 +2,7 @@
 title: Conventions de nommage glTF
 tags: [reference, pipeline]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Conventions de nommage glTF
@@ -17,9 +17,9 @@ Le loader interprète les noms et les propriétés glTF comme un contrat de game
 | `col_hull_*` | Collider convexe ; mesh invisible. |
 | `col_mesh_*` | Trimesh statique ; usage rare à justifier. |
 | `spawn_player` | Point de départ du joueur ; un seul par niveau. |
-| `spawn_suit_*` | Point d'apparition d'un Costard. |
+| `spawn_suit_*` | Point d'apparition d'un Costard ; avec `groupe`, il attend son réveil par le script de niveau. |
 | `spawn_director_*` | Point d'apparition du Directeur. |
-| `trig_*` | Volume de trigger. |
+| `trig_*` | Boîte du script de niveau : lance un scénario (`evenement`) ou désigne une sous-zone à réplique (`replique`). |
 | `use_*` | Objet actionnable à portée de 2 m, ou ramassage spécialisé selon ses extras/nom. |
 | `light_*` | Empty converti en `THREE.PointLight`, activée selon le pool du niveau. |
 | `secret_*` | Zone de présence comptée comme secret. |
@@ -46,6 +46,9 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `cameras` | `use_*` | Noms de `cam_*` séparés par des virgules, dans l'ordre de défilement. |
 | `color`, `intensity`, `distance`, `decay` | `light_*` | Couleur hexadécimale et paramètres de portée/intensité de la lampe. |
 | `secret_id` | `secret_*` | Identifiant stable du secret. |
+| `evenement` | `trig_*` | Nom d'un scénario de `src/game/session/progression/levelEvents.ts`, lancé une fois par partie à l'entrée du joueur. |
+| `replique` | `trig_*` | Identifiant d'une réplique du héros, dite à la première visite de la sous-zone. |
+| `groupe` | `spawn_suit_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. |
 | `masse`, `pv`, `matiere`, `contenu` | `prop_*` | Masse en kg (défaut 25), PV optionnels, matière de casse et contenu lâché. |
 | `mouvement`, `groupe`, `auto`, `manuelle`, `charniere`, `sens` | `door_*` | Mouvement et configuration du vantail, de l'ouverture auto et de l'action manuelle. |
 | `angle`, `course`, `duree`, `portee`, `delai`, `referme` | `door_*` | Géométrie et temporisation de l'ouverture ou de la refermeture. |

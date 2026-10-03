@@ -37,6 +37,7 @@ import { useGameStore } from "../../../../src/game/hud/state";
 import { HERO_LINES } from "../../../../src/game/session/presentation/heroLines";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
 import { createInitialStats } from "../../../../src/game/session/progression/score";
+import { createStreamState } from "../../../../src/game/session/stream/streamSim";
 
 await initPhysics();
 
@@ -88,6 +89,8 @@ function sessionDeTest(overrides: Partial<GameSession> = {}): GameSession {
     stats: createInitialStats(),
     sanitaireReliefCooldown: 0,
     heroLineRandom: () => 0,
+    stream: createStreamState(),
+    streamRandom: () => 0.99,
     heroLinesSaid: new Set(),
     lastHeroLineAt: -Infinity,
     lastHeroBarkAt: -Infinity,

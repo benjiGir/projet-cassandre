@@ -1,5 +1,6 @@
 import { useGameStore } from "../../hud/state";
 import type { GameSession } from "../gameSession";
+import { streamRecap } from "../stream/streamSim";
 import { buildLevelRecap } from "./score";
 // Publié à la mort ou à la fin, jamais par image.
 export function publishLevelRecap(session: GameSession, includeTimeBonus: boolean): void {
@@ -12,4 +13,5 @@ export function publishLevelRecap(session: GameSession, includeTimeBonus: boolea
     parTimeSeconds: includeTimeBonus ? (session.choice.parTime ?? null) : null,
   });
   useGameStore.getState().setRecap(recap);
+  useGameStore.getState().setLiveRecap(streamRecap(session.stream));
 }

@@ -1,65 +1,69 @@
 ---
 title: Le niveau
 tags: [fonctionnel]
-status: stable
-updated: 2026-09-25
+status: brouillon
+updated: 2026-10-03
 ---
 
 # Le niveau
 
 ## Ce que vit le joueur
 
-L'hypermarché est un décor unique, sans coupure de chargement : un magasin
-d'années 90 poussé jusqu'à la caricature, néons, marques inventées et
-signalétique promotionnelle sur chaque rayon. La nuit tombée dehors contraste
-avec l'intérieur, chaud et éclairé aux tubes fluorescents ; l'électroménager
-tranche à son tour avec la lumière froide de ses écrans, et le parking
-souterrain est le seul endroit vraiment sombre du niveau.
+L'hypermarché Hyper Varan est un décor unique, sans coupure de chargement :
+un magasin d'années 90 poussé jusqu'à la caricature, néons, marques inventées
+et signalétique promotionnelle sur chaque rayon. La nuit dehors contraste avec
+l'intérieur, chaud et éclairé aux tubes fluorescents ; le parking souterrain
+est le seul endroit vraiment sombre du niveau. Le niveau s'appelle
+« Inventaire exceptionnel ».
 
-La structure reprend le hub à la Duke Nukem 3D : une zone centrale distribue
-plusieurs espaces, et deux d'entre eux gardent une carte de fidélité qui
-ouvre la suite. Le trajet obligé est linéaire à l'entrée (parking, galerie,
-caisses), s'ouvre en un vrai choix au hub (rayons ou électroménager, dans
-l'ordre voulu), se referme sur un second verrou (réserve puis étage des
-bureaux), et termine sur une confrontation immédiate suivie de la sortie. Un
-détour facultatif (la cafétéria et ses toilettes) et trois secrets récompensent
-qui s'écarte du chemin. Au total, le magasin couvre plusieurs dizaines de
-milliers de mètres carrés praticables — largement de quoi remplir les
-8 à 10 minutes visées pour une traversée complète.
+La structure reprend le hub à la Duke Nukem 3D. Le trajet est linéaire à
+l'entrée (parking, galerie, caisses), s'ouvre au hub (rayons ou
+électroménager, dans l'ordre voulu), puis passe derrière le magasin : la
+réserve, les locaux du personnel, un aller-retour au parking souterrain, et
+l'étage des bureaux. Il se termine sur le Directeur et la sortie. Une
+traversée complète vise 8 à 10 minutes.
 
 Vue de dessus des espaces et de leurs liaisons :
 
 ![Plan de masse du niveau](../assets/niveau-v2-plan-de-masse.svg)
 
-### Les espaces
+### La surface de vente
 
 | Espace | Ce qu'on y trouve | Comment on y entre |
 |---|---|---|
-| Parking extérieur | Le spawn, de nuit, à ciel ouvert. Le pied-de-biche sur un capot de voiture. Deux employés au loin, hors de portée : un premier contact visuel qui n'engage rien | Point de départ de la partie |
-| Galerie marchande | Un long transit sous verrière, seule lumière naturelle du niveau : kiosques, devantures baissées, machine à pinces et photomaton | Depuis le parking, par des portes automatiques |
-| Cafétéria (optionnelle) | Un comptoir de self, des tables, et au fond une salle de toilettes avec cabines, lavabos et urinoirs | Un passage secondaire depuis la galerie, jamais sur le chemin obligé |
-| Caisses | Une ligne de caisses à franchir par leurs trouées : le premier vrai combat, et le pistolet, posé sur un tapis | Depuis la galerie |
-| Hub (allée centrale) | Le carrefour du niveau : deux employés y patrouillent, bien visibles. Un micro d'annonces au centre | Depuis les caisses |
-| Rayons | Des allées de gondoles thématiques, deux allées transversales où se posent les embuscades, un rayon surgelés. La carte Argent, derrière le comptoir du rayon frais, et le fusil à pompe | Depuis le hub, à l'ouest |
-| Électroménager | Un mur d'écrans, des rangées de gros électroménager, une cabine de démonstration. La carte Or, en hauteur dans la cabine | Depuis le hub, à l'est |
-| Réserve et quai | Le plus gros combat du niveau, avec une vraie verticalité : une mezzanine, des racks qui font un vrai couvert. Une rampe descend au parking souterrain | Depuis le hub, une fois la carte Argent en poche |
-| Parking souterrain | Pénombre entre des piliers réguliers : la seule zone où se cacher derrière un pilier suffit vraiment | Depuis la réserve, par la rampe de quai |
-| Étage des bureaux | Un couloir de nuit et quatre bureaux (sécurité, comptabilité, ressources humaines, salle de pause), avant le bureau du Directeur | Depuis le parking souterrain, par un escalier de service, une fois la carte Or en poche |
-| Bureau du Directeur | La confrontation finale, immédiate dès l'entrée, puis l'issue de secours qui termine le niveau | Au bout de l'étage des bureaux |
+| Parking extérieur | Le départ, de nuit. Le pied-de-biche sur un capot. Deux employés au loin, hors de portée | Point de départ |
+| Galerie marchande | Un transit sous verrière : kiosques, devantures baissées, machine à pinces, photomaton | Par les portes automatiques |
+| Cafétéria et toilettes | Facultatives : un self, des tables, et des sanitaires utilisables façon Duke 3D | Un passage depuis la galerie |
+| Caisses | Six travées à franchir : le premier vrai combat, et le pistolet | Depuis la galerie |
+| Hub (allée centrale) | Le carrefour du niveau, et le micro d'annonces | Depuis les caisses |
+| Rayons | Des gondoles, un rayon frais, un rayon surgelés. La carte Argent et le fusil à pompe | Depuis le hub, à l'ouest |
+| Électroménager | Un mur d'écrans et des rangées d'appareils : exploration et butin | Depuis le hub, à l'est |
 
-Un raccourci relie directement le parking souterrain aux rayons par une porte
-coupe-feu : elle ne s'ouvre que du côté du personnel, donc utilisable une
-seule fois qu'on l'a atteinte par le chemin normal, mais elle évite ensuite de
-tout retraverser. Les trois cachettes de secrets (voir plus bas) sont de
-petits espaces à part, chacun accessible depuis l'un des lieux ci-dessus.
+### Les coulisses
+
+| Espace | Ce qu'on y trouve | Comment on y entre |
+|---|---|---|
+| Réserve et quai | Le plus gros combat : des racks qui font couvert, et un quai surélevé à l'ouest, avec son camion | Depuis le hub, par le sas, avec la carte Argent |
+| Atelier SAV | Un guichet, des établis et un mur de quarante téléviseurs en réparation | Entre la réserve et le couloir du personnel |
+| Couloir du personnel | Il distribue le PC sécurité, les vestiaires, le fournil et l'escalier des bureaux | Depuis la réserve, de plain-pied |
+| PC sécurité | Une console qui fait défiler six caméras du magasin | Depuis le couloir, ou par la gaine du fournil |
+| Vestiaires | Des casiers, une pointeuse, des douches | Depuis le couloir du personnel |
+| Fournil | Un four, une rôtissoire, une chambre de pousse qui déborde ; une gaine de ventilation mène au PC sécurité | Depuis le couloir du personnel |
+| Parking souterrain | La pénombre entre les piliers. La carte Or, près de la voiture de direction | Par un escalier depuis le couloir du personnel |
+| Couloir de service et compacteur | Un local de répit, ses balles de carton, et la planque du vigile | Depuis le couloir du personnel ou la réserve |
+| Labo boucherie et chambre froide | Un labo blanc vif, vu depuis les rayons par une vitre, et une chambre froide à carcasses | Par le couloir coupe-feu |
+| Étage des bureaux | Un couloir et quatre bureaux : sécurité, comptabilité, ressources humaines, salle de pause | Par l'escalier, avec la carte Or |
+| Bureau du Directeur | La confrontation finale, puis l'issue de secours | Au bout de l'étage |
+
+Un raccourci relie le couloir coupe-feu aux rayons : la porte ne s'ouvre que
+du côté du personnel, puis évite de retraverser le magasin.
 
 ### La progression
 
-Deux cartes de fidélité, Argent et Or, se trouvent chacune dans un espace
-ouvert au hub sans condition (rayons et électroménager) ; chacune ouvre à son
-tour une porte qui mène plus loin dans le niveau. Une troisième carte,
-Platine, n'est jamais ramassée dans le décor : le Directeur la lâche à sa
-mort, et elle ouvre la sortie.
+La carte Argent est dans les rayons et ouvre la réserve. La carte Or est au
+parking souterrain et ouvre l'escalier des bureaux : il faut descendre la
+chercher, puis remonter. La carte Platine n'est jamais dans le décor : le
+Directeur la lâche à sa mort, et elle ouvre la sortie.
 
 ```mermaid
 flowchart TD
@@ -68,28 +72,45 @@ flowchart TD
   B --> D[Caisses]
   D --> E[Hub]
   E <--> F[Rayons - carte Argent]
-  E <--> G[Electromenager - carte Or]
+  E <--> G[Electromenager]
   E -->|carte Argent| H[Reserve et quai]
-  H --> I[Parking souterrain]
-  I -->|carte Or| J[Etage des bureaux]
-  J --> K[Bureau du Directeur]
-  K -->|carte Platine| L([Sortie])
+  H --> I[Couloir du personnel]
+  I <--> J[Parking souterrain - carte Or]
+  I -->|carte Or| K[Etage des bureaux]
+  K --> L[Bureau du Directeur]
+  L -->|carte Platine| M([Sortie])
   I -.raccourci a sens unique.-> F
 ```
 
+### Les moments scriptés
+
+Quatre moments jalonnent le parcours, sans jamais retirer le contrôle :
+
+| Où | Ce qui se passe |
+|---|---|
+| Entrée des caisses | Les haut-parleurs attendent « un client non identifié » en caisse centrale |
+| Atelier SAV | Les quarante téléviseurs passent ensemble sur la vidéosurveillance |
+| Quai | Le héros s'interroge sur ce que le camion livre après la fermeture |
+| Couloir des bureaux | Le Directeur s'adresse au héros par l'interphone, avant le combat |
+
+Le héros commente aussi sa première visite de la plupart des lieux. Le sens de
+ces moments est dans [Histoire](histoire.md).
+
 ### Les secrets
 
-Trois secrets récompensent l'exploration, chacun avec un indice plutôt qu'un
+Quatre secrets récompensent l'exploration, chacun avec un indice plutôt qu'un
 emplacement marqué :
 
-- Un labo caché derrière un pan de mur de la galerie marchande, effacé en se
-  servant du photomaton voisin.
-- Un campement sur le toit des rangées de gondoles des rayons, atteint en
-  grimpant depuis une caisse au sol.
+- Un labo caché derrière un pan de mur de la galerie, effacé en se servant du
+  photomaton voisin.
+- Un campement sur le toit des gondoles des rayons, atteint en grimpant depuis
+  une caisse au sol.
 - Une couvée dans un local technique de la cafétéria, atteinte par une bouche
   d'aération au-dessus d'un distributeur.
+- La planque du vigile, au bout du local compacteur : une télé, une pizza et
+  son butin.
 
-Détail du décompte et du barème de score : `2-fonctionnel/secrets-et-score.md`.
+Détail du décompte et du barème de score : [Secrets et score](secrets-et-score.md).
 
 ### Les niveaux de test
 
@@ -115,8 +136,11 @@ lui qui porte le décor, l'éclairage et le contenu final des espaces.
 
 ## Règles
 
-- Un espace du hub (rayons, électroménager) se visite dans l'ordre de son
-  choix : rien n'impose de prendre la carte Argent avant l'Or, ni l'inverse.
+- Les rayons et l'électroménager se visitent dans l'ordre de son choix ; seul
+  le passage par les rayons est nécessaire, pour la carte Argent.
+- La carte Or oblige à descendre au parking souterrain puis à remonter : le
+  parking n'est pas un détour facultatif.
+- Un moment scripté ne se produit qu'une fois par partie.
 - Une porte à carte reste fermée tant que la carte requise n'est pas en
   poche ; une fois ouverte avec la bonne carte, elle le reste pour toute la
   partie.
@@ -138,19 +162,14 @@ lots de dessin et conventions de préfixe d'objet sont dans
 
 ## État
 
-- Validé en playtest : la structure du niveau (circulation, durée,
-  lisibilité des espaces) a été jouée et validée en volumes gris, avant tout
-  habillage.
-- En attente de verdict : l'habillage complet des espaces (décor, éclairage,
-  contenu), l'étage des bureaux et la confrontation finale, les toilettes et
-  leur mécanique façon Duke 3D, les portes animées et les vitres cassables,
-  et les trois secrets sur le niveau habillé.
-- Connu et pas encore traité : l'éclairage n'est pas encore cuit (aucune
-  ombre portée, seules les lampes en temps réel éclairent le niveau) ; des
-  packs de décor attendent une licence confirmée avant de pouvoir être
-  utilisés ; les caddies ne se poussent pas encore, le rayon surgelés ne se
-  brise pas en verre et les écrans de surveillance n'affichent rien de
-  dynamique.
+- Validé en playtest : la structure d'origine du niveau, jouée en volumes
+  gris avant tout habillage, et la nouvelle implantation des coulisses,
+  approuvée sur plan le 2026-10-01.
+- En attente de verdict : l'habillage complet, les coulisses jouées de bout en
+  bout, les quatre secrets, les quatre moments scriptés et les répliques de
+  lieu.
+- Connu et pas encore traité : le camion du quai est fermé, sa cargaison reste
+  à poser ; l'enseigne du parking affiche « HYPER » sans « Varan ».
 
 ## Pour aller plus loin
 

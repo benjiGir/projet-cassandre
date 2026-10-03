@@ -2,7 +2,7 @@
 title: Interface
 tags: [fonctionnel]
 status: stable
-updated: 2026-10-01
+updated: 2026-10-03
 ---
 
 # Interface
@@ -91,11 +91,14 @@ la coupure, et un récapitulatif **partiel** — sans bonus de rapidité, un
 message le rappelle. Deux actions : « ▶ RECONNECTER » et « ◀ RETOUR AU
 MENU ».
 
-Franchir la sortie déverrouillée affiche « TRANSMISSION ACHEVÉE » puis
-« ÉCHAPPÉ DE L'HYPERMARCHÉ » (« Le monde n'est pas prêt à entendre la
-vérité. Mais toi, tu es dehors. »), les spectateurs, le temps comparé au
-temps de référence, et un récapitulatif **complet**, bonus de rapidité
-compris. Deux actions : « ▶ REJOUER » et « ◀ RETOUR AU MENU ».
+Franchir la sortie déverrouillée passe par les quatre panneaux de fin, puis
+affiche « TRANSMISSION ACHEVÉE » et « ÉCHAPPÉ D'HYPER VARAN » (« Vidéo
+retirée, chaîne suspendue. Mais les images existent, et toi, tu es
+dehors. »). Sous un bandeau rouge « VIDÉO DÉMONÉTISÉE », le bilan du direct :
+le pic d'audience, les abonnés gagnés et les dons reçus, « retenus par la
+plateforme ». Ce bilan est informatif et ne compte pas dans le score. Suivent
+le temps comparé au temps de référence et un récapitulatif **complet**, bonus
+de rapidité compris. Deux actions : « ▶ REJOUER » et « ◀ RETOUR AU MENU ».
 
 Dans les deux cas, le récapitulatif se révèle ligne par ligne, boutons
 utilisables pendant toute la révélation. Barème complet :
@@ -115,13 +118,22 @@ réactions ordinaires. Au repos, il cligne des yeux et regarde sur le côté.
 « SIGNAL PERDU ». La bouche accompagne actuellement la durée d'affichage
 des répliques ; les prises de voix restent à intégrer.
 
-Sous la webcam, un compteur de « spectateurs en direct »
-grimpe d'un montant disproportionné à chaque ennemi neutralisé, bien plus
-pour le Directeur qu'un Costard — un gag sans lien avec le score, remis à
-zéro chaque partie ; encore sous lui, les répliques du héros, sous
-l'étiquette « RÉVEIL_DU_PEUPLE dit : », avec un délai minimum entre deux.
+Sous la webcam, le nombre d'abonnés et un compteur de « spectateurs en
+direct ». L'audience monte avec ce que vous faites — un kill, une série, un
+secret, de la casse, le Directeur plus que tout — et repart quand il ne se
+passe rien, sans jamais retomber sous une part de son pic. Dessous, la
+cagnotte des dons reçus, puis les répliques du héros, sous l'étiquette
+« RÉVEIL_DU_PEUPLE dit : », avec un délai minimum entre deux.
 
-En bas à gauche : les cartes de fidélité en poche (si au moins une est
+En haut au centre passent les annonces du magasin et de l'interphone.
+
+En bas à gauche, au-dessus des cartes : le chat du direct, cinq lignes qui
+commentent vos actions, et l'alerte du dernier don avec le mot du donateur.
+Le chat ne dit jamais rien d'indispensable et se masque dans Options › Audio,
+section Diffusion. Un donateur revient à chaque étape de l'histoire, dans une
+teinte à part : voir [Histoire](histoire.md).
+
+Puis : les cartes de fidélité en poche (si au moins une est
 détenue), puis les PV en barre et en chiffres, colorés selon la vie
 restante. En bas à droite : les munitions de l'arme en main — un compte de
 cartouches pour pistolet et pompe, ou « PIED-DE-BICHE »/« À MAINS NUES ».
@@ -163,8 +175,8 @@ soumettant un formulaire.
   récapitulatif de fin de niveau réelle le peut.
 - Rejouer ou revenir au menu, depuis n'importe quel écran de fin, repart
   d'une partie entièrement neuve.
-- Le compteur de « spectateurs » du HUD est un gag d'affichage sans lien
-  avec le score.
+- Les spectateurs, les abonnés et la cagnotte du HUD sont sans lien avec le
+  score. Ils repartent de zéro à chaque partie.
 
 ## Valeurs
 

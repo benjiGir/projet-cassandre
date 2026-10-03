@@ -143,6 +143,30 @@ describe("EcranSystem — boucle d'animation et casse", () => {
     expect(ecrans.hitEvents).toHaveLength(0);
   });
 
+  it("setChaine bascule les écrans intacts du préfixe, pas les autres ni les cassés", () => {
+    const pv = weaponConfig.pistolDamage;
+    const { handle } = build([
+      ecranMesh("ecran_sav_0", new THREE.Vector3(0, 1, 0), { chaine: "mire" }),
+      ecranMesh("ecran_sav_1", new THREE.Vector3(2, 1, 0), { chaine: "pub", pv }),
+      ecranMesh("ecran_ps_0", new THREE.Vector3(4, 1, 0), { chaine: "mire" }),
+    ]);
+    const ecrans = new EcranSystem(handle.ecrans);
+    const casse = handle.ecrans.find((e) => e.name === "ecran_sav_1")!;
+    ecrans.update(0, [hitFrom(casse.collider.handle, new THREE.Vector3(2, 1, 0))]);
+
+    const uvDe = (name: string) => {
+      const info = handle.ecrans.find((e) => e.name === name)!;
+      const uv = info.batchGeometry.getAttribute("uv") as THREE.BufferAttribute;
+      return [uv.getX(info.vertexStart), uv.getY(info.vertexStart)];
+    };
+    const avant = { sav0: uvDe("ecran_sav_0"), sav1: uvDe("ecran_sav_1"), ps0: uvDe("ecran_ps_0") };
+
+    expect(ecrans.setChaine("ecran_sav_", "cctv")).toBe(1);
+    expect(uvDe("ecran_sav_0")).not.toEqual(avant.sav0);
+    expect(uvDe("ecran_sav_1")).toEqual(avant.sav1);
+    expect(uvDe("ecran_ps_0")).toEqual(avant.ps0);
+  });
+
   it("ne relit pas le même impact lors d'un second pas fixe de la même frame", () => {
     const pv = weaponConfig.pistolDamage * 3;
     const { handle } = build([ecranMesh("ecran_tv", new THREE.Vector3(0, 1, 0), { pv })]);

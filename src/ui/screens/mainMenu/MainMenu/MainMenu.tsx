@@ -13,6 +13,8 @@ import styles from "./MainMenu.module.css";
 export interface MainMenuProps {
   onPlay: () => void;
   onOptions: () => void;
+  /** Revoir les panneaux d'intro — absent tant qu'ils n'ont pas été vus une première fois. */
+  onReplayIntro?: () => void;
   /** Emplacement pour les outils d'auteur, rempli seulement en dev (`app/navigation/bootChoice.ts`). */
   devTools?: ReactNode;
 }
@@ -25,7 +27,7 @@ const TICKER_ITEMS = [
 ];
 
 // see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
-export function MainMenu({ onPlay, onOptions, devTools }: MainMenuProps) {
+export function MainMenu({ onPlay, onOptions, onReplayIntro, devTools }: MainMenuProps) {
   const [quitRefused, setQuitRefused] = useState(false);
 
   // `window.close()` ne ferme qu'un onglet ouvert par script, et échoue sans
@@ -56,6 +58,11 @@ export function MainMenu({ onPlay, onOptions, devTools }: MainMenuProps) {
             <Button size="large" variant="primary" icon="▶" onClick={onPlay}>
               REJOINDRE LE DIRECT
             </Button>
+            {onReplayIntro !== undefined && (
+              <Button size="large" icon="▶" onClick={onReplayIntro}>
+                REVOIR L'INTRODUCTION
+              </Button>
+            )}
             <Button size="large" icon="▶" onClick={onOptions}>
               PARAMÈTRES DU SIGNAL
             </Button>

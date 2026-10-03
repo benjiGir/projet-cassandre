@@ -5,6 +5,7 @@ import type { PhysicsWorld } from "../../physics/world";
 import type { LevelSession } from "../level/loading/hotReload";
 import type { LevelDef } from "../level/catalog/levels";
 import type { NavGraph } from "../level/navigation/pathfindingTypes";
+import type { LevelSpaceData } from "../level/navigation/levelSpaces";
 import type { PropSystem } from "../level/props/props";
 import type { DoorSystem } from "../level/doors/doors";
 import type { VitreSystem } from "../level/interactions/vitres";
@@ -23,7 +24,10 @@ import type { PickupResources } from "../../render/pickups/pickupResources";
 import type { CardPickupBillboard } from "../../render/pickups/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
 import type { HeroLineId } from "./presentation/heroLines";
+import type { LevelScriptState, ScriptTrigger } from "../level/scripting/levelScript";
+import type { StreamState } from "./stream/streamSim";
 import type { HeroPortrait } from "./presentation/heroPortrait";
+import type { PlaceLineState } from "./player/placeLines";
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/progression/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
@@ -63,6 +67,14 @@ export interface GameSession {
   levelLoadGeneration: number;
   /** Graphe de praticabilité (Jalon M4) du niveau COURANT — rebaké à chaque préparation validée, voir `game/session/spawning.ts::loadGltfLevel`. */
   currentNavGraph: NavGraph | null;
+  /** Espaces du niveau COURANT (plan de masse et sous-zones `trig_*`), triés pour `levelSpaceAt` — `null` si le niveau n'en a aucun. */
+  levelSpaces: readonly LevelSpaceData[] | null;
+  /** Réplique de première visite par espace du niveau COURANT. */
+  placeLines: ReadonlyMap<string, HeroLineId>;
+  /** `trig_*` du niveau COURANT qui lancent un scénario. */
+  scriptTriggers: readonly ScriptTrigger[];
+  /** Déclencheurs franchis et scénarios en cours de CETTE partie — voir `level/scripting/levelScript.ts`. */
+  levelScript: LevelScriptState;
   /** Pool de lampes du niveau COURANT (`null` tant qu'aucun niveau glTF n'est chargé, et sur le chemin "gym" qui n'a pas de `light_*`) — reconstruit à chaque commit, comme `currentNavGraph`. */
   lightPool: LightPool | null;
   // see: docs/archive/systems-physique.md#props-dynamiques
@@ -115,8 +127,10 @@ export interface GameSession {
   heroPortrait: HeroPortrait;
   firstKillTriggered: boolean;
   lowHpLineTriggered: boolean;
-  /** Flux déterministe des gains de vues, indépendant des FX et des armes. */
-  viewsRandom: () => number;
+  /** Le direct : audience, abonnés, dons et chat de CETTE partie — voir `stream/streamSim.ts`. */
+  stream: StreamState;
+  /** Flux déterministe du direct, indépendant des FX, des armes et des ennemis. */
+  streamRandom: () => number;
   /** Idempotence de `game/session/player/feedback.ts::applyPlayerDamage` — voir sa doc. */
   deathHandled: boolean;
   /** Idempotence de `game/session/progression/doors.ts::triggerLevelComplete` — voir sa doc. */
@@ -128,6 +142,8 @@ export interface GameSession {
   /** Répliques déjà dites dans CETTE partie (règle `once` de `heroLines.ts`). */
   heroLinesSaid: Set<HeroLineId>;
   heroLineRandom: () => number;
+  /** Suivi de la réplique de lieu en attente — voir `player/placeLines.ts`. */
+  placeLine: PlaceLineState;
 
   // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   stats: SessionStats;

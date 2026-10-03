@@ -2,7 +2,7 @@
 title: Session et score
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-03
 ---
 
 # Session et score
@@ -35,8 +35,8 @@ lui-même (`recording.ts` positionne le joueur puis délègue à
 - `src/game/session/progression/score.ts` — `SessionStats`, les `record*`, le barème
   nommé (`SCORE_*`), `buildLevelRecap`/`publishLevelRecap`.
 - `src/game/session/player/feedback.ts` — `showHudMessage` (canal système),
-  `triggerHeroLine` (canal réplique, cooldown 15 s), `grantKillViews` (gag
-  des vues), `applyPlayerDamage`/`presentPlayerDamage` (PV et mort).
+  `triggerHeroLine` (canal réplique, cooldown 15 s), `showAnnouncement`
+  (canal annonce), `applyPlayerDamage`/`presentPlayerDamage` (PV et mort).
 - `src/game/session/progression/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
   inventaire des cartes de fidélité.
 - `src/game/session/progression/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
@@ -75,7 +75,7 @@ Dans `updateGameplay` (`Effect.gen`, un seul `runGameplaySync` englobant) :
    `weapons.update(...)` : `recordShot` compare `hitEvents` avant/après pour
    savoir si CE tir a touché `FLESH_MATERIAL`.
 7. `suitManager`/`directorManager.update` (delta sur `deathEvents` →
-   `recordSuitKills`/`recordDirectorKills` + `grantKillViews`/réplique
+   `recordSuitKills`/`recordDirectorKills` + `streamEvent`/réplique
    « premier kill » ; delta sur `playerHitEvents` → `applyPlayerDamage`),
    puis `propSystem`/`vitreSystem`/`sanitaireSystem.update(hitEvents)` (même
    technique de delta → `record*Destroyed`), puis `doorSystem.update(...)`
@@ -107,7 +107,7 @@ depuis `game/loop/devGameplayInput.ts` (F9/F10, dev seulement).
 | `droppedCardMesh`, `cards` | Carte au sol après la mort du Directeur ; inventaire réel (`Set`, jamais le store). |
 | `unlockedDoors`, `exitDoorTracking`, `foundSecrets` | Portes déjà déverrouillées ; suivi de franchissement de la sortie ; secrets trouvés (`WeakSet`). |
 | `lastSafeGround` | Filet de chute. |
-| `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `viewsRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `lastHeroBarkAt`, `heroLinesSaid`, `heroLineRandom` | PV, drapeaux d'idempotence, répliques déjà dites, deux flux `DeterministicRandom` DÉDIÉS (vues, tirage des répliques occasionnelles — jamais `Math.random()`, invariant #12). |
+| `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `stream`, `streamRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `lastHeroBarkAt`, `heroLinesSaid`, `heroLineRandom` | PV, drapeaux d'idempotence, répliques déjà dites, deux flux `DeterministicRandom` DÉDIÉS (vues, tirage des répliques occasionnelles — jamais `Math.random()`, invariant #12). |
 | `stats` | `SessionStats`, ci-dessous. |
 
 **`SessionStats`** : `suitKills`, `directorKills`, `shotsFired`/
@@ -163,8 +163,8 @@ cassé → `drinkFromSanitaire` (+1 PV/appui, illimité). `onToiletUse`
 (1,8 s d'affichage). `triggerHeroLine` est une RÉACTION enregistrée
 (`heroLines.ts`) : cooldown global 15 s sauf pour les répliques
 prioritaires, tirage dans `session.heroLineRandom` pour les occasionnelles.
-`grantKillViews` tire dans `session.viewsRandom`
-(flux dédié), ×4 pour le Directeur — sans lien avec le score du récap.
+Le direct (`session/stream/`, [ADR 0038](../decisions/0038-simulation-du-direct.md)) tire dans `session.streamRandom`
+(flux dédié) : audience, dons et chat — sans lien avec le score du récap.
 `applyPlayerDamage` décrémente `playerHp`, déclenche la réplique « PV bas »
 au premier franchissement de 30 % du max (sinon une réplique ou un cri de
 douleur), publie le récap PARTIEL et
@@ -196,7 +196,8 @@ code est facile, voir le glossaire.
   simples objets, sans DOM/Three.js/Rapier ; `publishLevelRecap` non testé
   directement.
 - `test/game/session/player/feedback.test.ts` — `applyPlayerDamage` (PV, mort au
-  même pas logique, idempotence), `grantKillViews`, `presentPlayerDamage`.
+  même pas logique, idempotence), `presentPlayerDamage`.
+- `test/game/session/stream/streamSim.test.ts` et `streamTexts.test.ts` — déterminisme du direct, série de kills, ennui, délai entre dons, rythme du chat, et tenue des textes.
 - `test/game/session/player/sanitaires.test.ts` — orchestration avec un rayon
   Rapier scripté (`RaycastService.test(...)`) ; la géométrie du « neartag »
   est couverte par `test/game/level/sanitaires/sanitaires.test.ts`.

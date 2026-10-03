@@ -5,9 +5,11 @@ export type GameFlowState =
   | "levelSelect"
   | "loading"
   | "loadFailed"
+  | "intro"
   | "playing"
   | "paused"
   | "dead"
+  | "outro"
   | "levelComplete";
 
 export type GameFlowEvent =
@@ -18,8 +20,10 @@ export type GameFlowEvent =
   | { type: "BEGIN_LOAD" }
   | { type: "LOAD_FAILED" }
   | { type: "RETRY_LOAD" }
+  | { type: "SHOW_INTRO" }
   | { type: "PLAY" }
   | { type: "DIED" }
+  | { type: "SHOW_OUTRO" }
   | { type: "LEVEL_COMPLETED" }
   | { type: "REPLAY" }
   | { type: "RETURN_TO_MENU" }

@@ -3,7 +3,16 @@ import { create } from "zustand";
 import type { LoyaltyCard } from "../player/loyaltyCards";
 import { INITIAL_PLAYER_MAX_HP } from "../session/player/playerState";
 import type { GameFlowState } from "../../app/navigation/gameFlowTypes";
-import type { HeroPortraitView, DebugState, LevelRecap } from "./hudTypes";
+import type {
+  ChatMessage,
+  DebugState,
+  DonationAlert,
+  HeroPortraitView,
+  LevelRecap,
+  LiveRecap,
+  StoreAnnouncement,
+  StoryPanel,
+} from "./hudTypes";
 import { INITIAL_HERO_PORTRAIT } from "../session/presentation/portraitState";
 
 // see: docs/decisions/0036-contrats-feuilles-et-store-hud.md
@@ -27,8 +36,13 @@ interface GameState {
   setSecretsTotal: (total: number) => void;
   /** Recopie l'inventaire de cartes — appelé PONCTUELLEMENT au ramassage, jamais par image (voir `game/session/progression/cards.ts`). */
   setCards: (cards: readonly LoyaltyCard[]) => void;
-  /** Incrémente `debug.views` de `amount`, décidé par l'appelant — voir `game/session/player/feedback.ts::grantKillViews`. */
-  incrementViews: (amount: number) => void;
+  /** Derniers messages du chat du direct, du plus ancien au plus récent — écrits à chaque message, jamais par image. */
+  // see: docs/decisions/0038-simulation-du-direct.md
+  chat: readonly ChatMessage[];
+  setChat: (chat: readonly ChatMessage[]) => void;
+  /** Don en cours d'affichage. */
+  donation: DonationAlert | null;
+  showDonation: (donation: DonationAlert | null) => void;
 
   /** Canal SYSTÈME, sans cooldown — distinct de `heroLine` ci-dessous. */
   // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline
@@ -39,6 +53,11 @@ interface GameState {
   heroLine: string | null;
   showHeroLine: (text: string | null) => void;
 
+  /** Canal ANNONCE — haut-parleurs du magasin et interphone, posé par le script de niveau. */
+  // see: docs/decisions/0037-script-de-niveau.md
+  announcement: StoreAnnouncement | null;
+  showAnnouncement: (announcement: StoreAnnouncement | null) => void;
+
   /** État courant du flux d'écran — permet aux composants React de réagir à un changement d'écran. */
   // see: docs/decisions/0019-machine-xstate-flux-ecran.md
   flowState: GameFlowState;
@@ -46,6 +65,14 @@ interface GameState {
 
   recap: LevelRecap | null;
   setRecap: (recap: LevelRecap | null) => void;
+  /** Bilan du direct, publié avec le récapitulatif. */
+  liveRecap: LiveRecap | null;
+  setLiveRecap: (live: LiveRecap | null) => void;
+
+  /** Panneaux de la séquence en cours (états `intro` et `outro`), posés par la couche de session. */
+  // see: docs/4-technique/interface-react.md#panneaux-dhistoire
+  story: readonly StoryPanel[] | null;
+  setStory: (panels: readonly StoryPanel[] | null) => void;
 
   /** Remet `debug` à ses valeurs de boot et efface les messages transitoires — ne touche jamais `flowState`. */
   // see: docs/archive/systems-session.md#construire-une-partie
@@ -87,6 +114,8 @@ const INITIAL_DEBUG: DebugState = {
   secretsTotal: 0,
   cards: [],
   views: 12,
+  followers: 200,
+  wallet: 0,
 };
 
 export const useGameStore = create<GameState>((set) => ({
@@ -105,7 +134,11 @@ export const useGameStore = create<GameState>((set) => ({
     set((state) => ({ debug: { ...state.debug, secretsFound: state.debug.secretsFound + 1 } })),
   setSecretsTotal: (total) => set((state) => ({ debug: { ...state.debug, secretsTotal: total } })),
   setCards: (cards) => set((state) => ({ debug: { ...state.debug, cards } })),
-  incrementViews: (amount) => set((state) => ({ debug: { ...state.debug, views: state.debug.views + amount } })),
+
+  chat: [],
+  setChat: (chat) => set({ chat }),
+  donation: null,
+  showDonation: (donation) => set({ donation }),
 
   hudMessage: null,
   showHudMessage: (text) => set({ hudMessage: text }),
@@ -113,12 +146,21 @@ export const useGameStore = create<GameState>((set) => ({
   heroLine: null,
   showHeroLine: (text) => set({ heroLine: text }),
 
+  announcement: null,
+  showAnnouncement: (announcement) => set({ announcement }),
+
   flowState: "boot",
   setFlowState: (state) => set({ flowState: state }),
 
   recap: null,
   setRecap: (recap) => set({ recap }),
+  liveRecap: null,
+  setLiveRecap: (live) => set({ liveRecap: live }),
+
+  story: null,
+  setStory: (panels) => set({ story: panels }),
 
   resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
-    hudMessage: null, heroLine: null, recap: null }),
+    hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, recap: null, liveRecap: null,
+    story: null }),
 }));

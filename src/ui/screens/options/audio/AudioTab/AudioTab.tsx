@@ -58,6 +58,14 @@ export function AudioTab() {
             onToggle={() => update({ sousTitres: !settings.sousTitres })}
           />
           <ToggleField
+            label="Chat du direct"
+            pressed={settings.chatDuDirect}
+            onText="AFFICHÉ"
+            offText="MASQUÉ"
+            hint="messages des spectateurs, en bas à gauche"
+            onToggle={() => update({ chatDuDirect: !settings.chatDuDirect })}
+          />
+          <ToggleField
             label="Fenêtre inactive"
             pressed={settings.muetEnArrierePlan}
             onText="SON COUPÉ"

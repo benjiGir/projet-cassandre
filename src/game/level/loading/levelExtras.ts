@@ -48,6 +48,12 @@ export function cleanExtras(obj: THREE.Object3D): Record<string, unknown> {
   return rest;
 }
 
+/** Lit `groupe` d'un `spawn_suit_*` : une chaîne non vide, sinon `null` (ennemi présent dès le chargement). */
+export function readSpawnGroup(obj: THREE.Object3D): string | null {
+  const raw = (obj.userData as Record<string, unknown>).groupe;
+  return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
+}
+
 /** Format attendu de `contenu` : `"nom:nombre"`, nombre entier strictement
  * positif — voir `PropInfo.contenu`. */
 const PROP_CONTENT_PATTERN = /^([a-z_]+):(\d+)$/i;

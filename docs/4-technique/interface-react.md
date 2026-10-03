@@ -2,7 +2,7 @@
 title: Interface React
 tags: [technique]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Interface React
@@ -59,8 +59,33 @@ L'acteur vit pendant l'onglet ; relancer une partie ne le recrée pas.
 Le store expose l'état au rendu ; il n'est pas la source des transitions.
 
 `App` rend l'écran de chargement pour `loading` ou `loadFailed`.
-Sinon, il compose le HUD, les superpositions et les écrans de pause, mort et fin.
+Sinon, il compose le HUD, les superpositions et les écrans de pause, mort, histoire et fin.
 L'écran de menu initial est résolu avant le montage de `App`.
+
+### Panneaux d'histoire
+
+Deux états encadrent la partie : `intro` entre `loading` et `playing`, `outro` entre `playing` et `levelComplete`.
+Un niveau y passe s'il a une histoire dans `src/game/session/presentation/storyPanels.ts`. La mort ne passe jamais par `outro`.
+
+Le diagramme montre les deux détours ; les autres transitions sont inchangées.
+
+```mermaid
+stateDiagram-v2
+  loading --> intro: SHOW_INTRO
+  loading --> playing: PLAY
+  intro --> playing: PLAY
+  playing --> outro: SHOW_OUTRO
+  playing --> levelComplete: LEVEL_COMPLETED
+  outro --> levelComplete: LEVEL_COMPLETED
+```
+
+- **Qui décide.** `waitForGameSessionReady` (`src/app/navigation/sessionFlow.ts`) envoie `SHOW_INTRO` quand la partie vient du menu et que l'intro n'a pas encore été vue sur ce navigateur (`src/game/settings/storySettings.ts`). « Rejouer » et le raccourci `?level=` entrent directement en jeu. Le rappel `levelCompleted` de `src/main.ts` envoie `SHOW_OUTRO` si le niveau a des panneaux de fin.
+- **Le temps de jeu ne tourne pas.** `isPlayingState` ne vaut que pour `playing` : le pas fixe ignore son contenu pendant les panneaux, et le chronomètre du récapitulatif n'avance pas. Le monde physique reste vivant derrière `outro`, pas derrière `intro`.
+- **Les données passent par le store.** La couche de session pose les panneaux dans `story`, puis `StoryScreen` les affiche quand `flowState` vaut sa séquence. `StoryPanels` est la visionneuse : elle ne lit pas le store, ce qui permet au menu principal de rejouer l'intro sans partie.
+- **Avancer et passer.** Espace, Entrée ou → avancent ; Échap et le bouton « Passer » terminent la séquence. Une touche maintenue n'avance qu'une fois.
+- **Images.** `tools/textures/generate_panneaux.py` réduit chaque image brute de `assets_src/panneaux/raw/` en 640×360 et 64 couleurs, puis inscrit le panneau dans `src/game/session/presentation/storyImages.json`. Un panneau absent de cette liste garde `image: null` et affiche un aplat numéroté ; un panneau livré s'agrandit en pixels francs. Les prompts sont dans `assets_src/panneaux/PROMPTS.md`.
+
+Les overlays canvas (viseur, marqueur de touche, vue caméra) suivent `#ui-root` dans le DOM et se peignent par-dessus lui. `index.html` les masque dès qu'un `Screen` est monté.
 
 ### Store et abonnements
 
@@ -70,9 +95,9 @@ Un composant qui a besoin d'une valeur s'abonne avec un sélecteur ciblé.
 Les changements continus restent au plus à 10 Hz.
 Les changements ponctuels sont envoyés quand la valeur change.
 
-`resetGameStore` réinitialise les mesures, messages et récapitulatif.
+`resetGameStore` réinitialise les mesures, messages, récapitulatif et panneaux d'histoire.
 Il ne remplace pas l'acteur de flux et ne modifie pas son état.
-Les callbacks `onReplay`, `onReturnToMenu` et `onResume` délèguent à la couche de session.
+Les callbacks `onReplay`, `onReturnToMenu`, `onResume`, `onIntroDone` et `onOutroDone` délèguent à la couche de session.
 
 ### Portrait du héros
 

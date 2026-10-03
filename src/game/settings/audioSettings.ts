@@ -18,6 +18,8 @@ export interface AudioSettings {
   sousTitres: boolean;
   /** Couper tout le son quand la fenêtre n'a plus le focus. */
   muetEnArrierePlan: boolean;
+  /** Afficher le chat du direct dans le HUD. */
+  chatDuDirect: boolean;
 }
 
 export type AudioChannel = "general" | "effets" | "voix" | "ambiances";
@@ -31,6 +33,7 @@ const FACTORY_DEFAULTS: AudioSettings = {
   ambiances: 1,
   sousTitres: true,
   muetEnArrierePlan: false,
+  chatDuDirect: true,
 };
 
 const CHANNELS: readonly AudioChannel[] = ["general", "effets", "voix", "ambiances"];
@@ -50,6 +53,7 @@ function loadPersisted(): AudioSettings {
     for (const channel of CHANNELS) settings[channel] = clamp01(parsed[channel], FACTORY_DEFAULTS[channel]);
     if (typeof parsed.sousTitres === "boolean") settings.sousTitres = parsed.sousTitres;
     if (typeof parsed.muetEnArrierePlan === "boolean") settings.muetEnArrierePlan = parsed.muetEnArrierePlan;
+    if (typeof parsed.chatDuDirect === "boolean") settings.chatDuDirect = parsed.chatDuDirect;
     return settings;
   } catch {
     return { ...FACTORY_DEFAULTS };
@@ -123,6 +127,11 @@ export function setAudioSettings(partial: Partial<AudioSettings>): AudioSettings
 
 export function resetAudioSettings(): AudioSettings {
   return setAudioSettings(FACTORY_DEFAULTS);
+}
+
+/** Le chat du direct est-il affiché ? Lu par `session/stream/streamFeed.ts` à chaque message. */
+export function chatEnabled(): boolean {
+  return current.chatDuDirect;
 }
 
 /** Les sous-titres des répliques sont-ils affichés ? Lu par `session/feedback.ts::triggerHeroLine`. */

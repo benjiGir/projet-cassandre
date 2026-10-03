@@ -2,7 +2,7 @@
 title: Flux de données
 tags: [architecture]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-03
 ---
 
 # Flux de données
@@ -72,7 +72,7 @@ miroir écrit à deux rythmes distincts, jamais lu par le pas fixe :
   un seul `setDebug(partial)`.
 - **Ponctuel**, à l'évènement, jamais par frame : `setPlayerHp` (dégât),
   `incrementSecretsFound` (secret trouvé), `setCards` (ramassage),
-  `incrementViews` (kill), `showHudMessage`/`showHeroLine` (message
+  `setChat`/`showDonation` (message du chat, don), `showHudMessage`/`showHeroLine` (message
   système/réplique), `setRecap` (fin de partie) — tous appelés depuis
   `game/session/*.ts` ou `updateFx`, jamais depuis `updateGameplay`
   directement pour du texte ([Simulation et
@@ -92,14 +92,15 @@ concerne pas :
 | `debug.shotgunAmmo`/`pistolAmmo`/`activeWeapon` | `updateFx.ts` (`setDebug`, dans le même lot 10 Hz) | 10 Hz max | `AmmoPanel` |
 | `debug.secretsFound`/`secretsTotal` | `game/session/*.ts` (`incrementSecretsFound`/`setSecretsTotal`) | ponctuel | `DebugPanel` (aucun widget de prod dédié) |
 | `debug.cards` | `game/session/progression/cards.ts::grantCard` (`setCards`) | ponctuel, au ramassage | `LoyaltyCards` |
-| `debug.views` | `game/session/player/feedback.ts::grantKillViews` (`incrementViews`) | ponctuel, au kill | `ViewerCount` |
+| `debug.views`, `debug.followers`, `debug.wallet` | `game/session/stream/streamFeed.ts` (`setDebug`) | ponctuel, à l'évènement ; une fois par seconde au plus quand l'audience retombe | `ViewerCount`, `LiveCam`, `Wallet` |
+| `chat`, `donation` | `game/session/stream/streamFeed.ts` | à chaque message (toutes les 2 à 4 s) et à chaque don | `StreamChat`, `DonationAlert` |
 | `hudMessage` | `game/session/player/feedback.ts::showHudMessage`, `game/session/progression/doors.ts`/`cards.ts`/`sanitaires.ts` | ponctuel | `HudMessage` |
 | `heroLine` | `game/session/player/feedback.ts::triggerHeroLine` | ponctuel, cooldown 15 s côté appelant | `HeroLine` |
 | `flowState` | `main.ts` (`flowActor.subscribe`) | à chaque transition d'écran | `PauseScreen`, `DeathScreen`, `LevelCompleteScreen`, `Hud` |
 | `recap` | `game/session/progression/score.ts::publishLevelRecap` (`setRecap`) | ponctuel, mort ou fin de niveau | `RecapTable` |
 
 Mesuré par `grep -rn "useGameStore(" src/ui` (un sélecteur par ligne
-ci-dessus) et `grep -rn "\.setDebug\|setPlayerHp\|incrementSecretsFound\|setCards\|incrementViews\|showHudMessage\|showHeroLine\|setFlowState\|setRecap" src/game`.
+ci-dessus) et `grep -rn "\.setDebug\|setPlayerHp\|incrementSecretsFound\|setCards\|setChat\|showDonation\|showHudMessage\|showHeroLine\|setFlowState\|setRecap" src/game`.
 
 ## Sens UI → moteur
 

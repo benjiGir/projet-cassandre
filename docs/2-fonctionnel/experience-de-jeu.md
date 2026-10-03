@@ -1,8 +1,8 @@
 ---
 title: Expérience de jeu
 tags: [fonctionnel]
-status: stable
-updated: 2026-09-25
+status: brouillon
+updated: 2026-10-03
 ---
 
 # Expérience de jeu
@@ -11,7 +11,10 @@ updated: 2026-09-25
 
 Le signal s'ouvre sur un menu principal habillé comme une diffusion piratée :
 un bandeau défilant annonce un canal non autorisé, un nombre d'abonnés
-dérisoire. « Jouer » lance directement le niveau, sans cinématique.
+dérisoire. La première fois, « Jouer » passe par quatre panneaux d'introduction,
+qu'on avance ou qu'on passe ; ensuite il lance directement le niveau, et le
+menu propose de les revoir. Quatre autres panneaux précèdent le récapitulatif
+de fin — voir [Histoire](histoire.md).
 
 Vous apparaissez sur le parking extérieur de l'hypermarché, de nuit,
 désarmé. Un pied-de-biche traîne sur le capot d'une voiture à quelques pas :
@@ -28,39 +31,42 @@ visibles — ce carrefour doit rester lisible, pas être une embuscade.
 
 Les rayons et l'électroménager s'explorent dans l'ordre de votre choix.
 Les rayons donnent le fusil à pompe et la première carte de fidélité, la
-carte Argent, planquée derrière le comptoir du rayon frais — combat en
-allées, embuscades aux croisements. L'électroménager donne la carte Or,
-dans une cabine de démonstration devant un téléviseur, au milieu d'un mur
-d'écrans et d'appareils en rangées. La carte Argent ouvre la porte du hub qui
-mène à la réserve : un grand espace vertical, mezzanine comprise, qui donne
-aussi accès à un parking souterrain tendu, éclairé aux piliers. C'est depuis
-la réserve qu'un escalier de service, verrouillé par la carte Or, monte à
-l'étage des bureaux.
+carte Argent — combat en allées, embuscades aux croisements.
+L'électroménager offre du butin devant son mur d'écrans. La carte Argent ouvre
+le sas du hub qui mène à la réserve : un grand espace vertical, avec son quai
+surélevé et son camion.
+
+De la réserve, vous passez de plain-pied dans les locaux du personnel :
+atelier SAV, PC sécurité, vestiaires, fournil. L'escalier des bureaux y est
+verrouillé par la carte Or, qui vous attend au parking souterrain, près de la
+voiture de direction. Il faut descendre la chercher entre les piliers, puis
+remonter.
 
 L'étage aligne quatre bureaux (sécurité, comptabilité, ressources humaines,
-salle de pause) avant de refermer sur le bureau du Directeur. Là vous
-attend le combat final : le Directeur, escorté d'un garde du corps, engage
-sans détour — pas d'approche furtive à gâcher, la confrontation doit être
-immédiate. À sa mort, sa peau se déchire pour révéler le reptilien en
-dessous, et il lâche la carte Platine : la clé de l'issue de secours qui
-termine le niveau. La franchir bascule sur l'écran de fin, avec son
+salle de pause) avant de refermer sur le bureau du Directeur. Dans le
+couloir, il vous parle par l'interphone. Puis le combat final : le Directeur,
+escorté, engage sans détour. À sa mort, sa peau se déchire pour révéler le
+reptilien en dessous, et il lâche la carte Platine : la clé de l'issue de
+secours qui termine le niveau. La franchir ouvre les panneaux de fin, puis le
 récapitulatif.
 
 Deux détours sont facultatifs. La cafétéria, près de l'entrée, propose des
 toilettes façon Duke 3D — s'y soulager sur une cuvette ou un urinoir intacts
 rend un peu de vie, avec un long délai avant de recommencer ; un sanitaire
 cassé au tir laisse couler une eau qu'on peut boire à volonté, par petites
-gorgées. Trois secrets sont disséminés dans le niveau : un labo caché
+gorgées. Quatre secrets sont disséminés dans le niveau : un labo caché
 derrière un pan de mur qu'un photomaton efface, un campement sur le toit
-des gondoles des rayons, et une couvée dans un local technique atteint par
-une bouche d'aération. Chacun récompense l'exploration.
+des gondoles des rayons, une couvée dans un local technique atteint par
+une bouche d'aération, et la planque du vigile au fond du local compacteur.
+Chacun récompense l'exploration.
 
 Mourir coupe le signal : un écran « STREAM COUPÉ » affiche un récapitulatif
 partiel et propose de reconnecter (rejouer depuis le début) ou de revenir au
 menu — un vrai redémarrage de partie, pas un rechargement de page. Tout du
 long, le jeu commente sa propre fiction : un HUD façon overlay de stream
-(webcam factice, compteur de « vues », mention « EN DIRECT »), des répliques
-ponctuelles du héros, et des marques de supermarché inventées peuplent les
+(webcam, spectateurs, abonnés, cagnotte, mention « EN DIRECT »), un chat qui
+réagit à ce que vous faites, des dons de spectateurs, les répliques du héros
+et les annonces du magasin, et des marques de supermarché inventées dans les
 rayons — le ton et le détail de cette satire sont décrits dans
 `2-fonctionnel/interface.md` et `2-fonctionnel/son.md`.
 
@@ -69,19 +75,19 @@ mort :
 
 ```mermaid
 flowchart TD
-  A[Parking extérieur - spawn désarmé] --> B[Galerie puis caisses - premier pistolet]
+  A[Parking extérieur - départ désarmé] --> B[Galerie puis caisses - pistolet]
   B --> C[Hub]
-  C --> D[Rayons - Carte Argent, pompe]
-  C --> E[Électroménager - Carte Or]
+  C --> D[Rayons - carte Argent, pompe]
+  C --> E[Électroménager]
   D --> F{Porte Argent}
-  E --> F
-  F --> G[Réserve puis souterrain]
-  G --> H{Porte Or}
+  F --> G[Réserve puis locaux du personnel]
+  G --> P[Parking souterrain - carte Or]
+  P --> H{Porte Or}
   H --> I[Étage des bureaux]
   I --> J[Bureau du Directeur]
   J --> K[Carte Platine à sa mort]
   K --> L{Porte de sortie}
-  L --> M[Écran de fin et récapitulatif]
+  L --> M[Panneaux de fin et récapitulatif]
   C -.mort.-> N[Écran de mort]
   J -.mort.-> N
   N -.rejouer.-> A
@@ -96,10 +102,8 @@ flowchart TD
 - Une porte à carte refuse de s'ouvrir tant que la carte requise n'est pas
   en poche, avec un message et un son d'échec ; elle reste réessayable.
   Une fois ouverte avec la bonne carte, elle le reste pour toute la partie.
-- Les cartes Argent et Or se trouvent chacune dans un espace accessible
-  sans carte (rayons et électroménager depuis le hub) ; elles déverrouillent
-  ensuite des espaces plus loin dans le niveau (réserve puis étage des
-  bureaux).
+- La carte Argent se trouve dans les rayons et ouvre la réserve ; la carte Or
+  se trouve au parking souterrain et ouvre l'étage des bureaux.
 - Un secret compte pour le score une fois trouvé, même sans y ramasser sa
   récompense.
 - Un sanitaire intact rend de la vie en l'utilisant, avec un long délai

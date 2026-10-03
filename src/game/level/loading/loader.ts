@@ -24,7 +24,7 @@ import { mergeEcranDecor, type EcranCandidate } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import { initialiserDouches } from "../sanitaires/douches";
 import { LevelFetchError, validateSpawnPlayerCountEffect } from "./levelDiagnostics";
-import { blenderName } from "./levelExtras";
+import { blenderName, readSpawnGroup } from "./levelExtras";
 import {
   isAxisAlignedBox,
   buildStaticColliderSafe,
@@ -119,7 +119,7 @@ function buildLevelResourceEffect(
       if (name.startsWith("spawn_suit_")) {
         const position = new THREE.Vector3();
         obj.getWorldPosition(position);
-        spawnSuits.push({ name, position });
+        spawnSuits.push({ name, position, group: readSpawnGroup(obj) });
         continue;
       }
       if (name.startsWith("light_")) {
@@ -131,7 +131,7 @@ function buildLevelResourceEffect(
       if (name.startsWith("spawn_director_")) {
         const position = new THREE.Vector3();
         obj.getWorldPosition(position);
-        spawnDirectors.push({ name, position });
+        spawnDirectors.push({ name, position, group: null });
         continue;
       }
       if (name.startsWith("cam_")) {

@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Journal
@@ -13,6 +13,14 @@ guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
 
+- [Le live](le-live-2026-10.md) — histoire, panneaux, moments scriptés et direct de la v1.1.
+
+- [Corrections P3 de src](audit-src-p3-2026-10.md) — composition Effect, état des ambiances et overlays canvas.
+
+- [Corrections P2 de src](audit-src-p2-2026-10.md) — séparation des systèmes, restauration XState et ressources de rendu.
+
+- [Audit complet de src](audit-src-2026-10.md) — commentaires, frontières Effect et séparation des contrats.
+- [Audit du rendu](audit-src-render-2026-10.md) — constats détaillés sur les matériaux, manifestes et ressources.
 - [Premières utilisations audio et douche](premieres-utilisations-audio-douche-2026-10.md) — préparation au chargement et relevés de compilation GPU et de lecture audio.
 - [Portrait du stream](portrait-stream-2026-10.md) — planche du héros avec cinq états de santé, six expressions et aperçu interactif.
 - [Alternative pour les coulisses](alternative-coulisses-2026-10.md) — liaison directe depuis la réserve, carte Or au parking et plan SVG proposé.

@@ -315,6 +315,23 @@ export class EcranSystem {
     }
   }
 
+  /**
+   * Passe sur `chaine` les écrans intacts dont le nom commence par `prefix`
+   * et rend leur nombre. Appelé par le script de niveau, au pas fixe.
+   */
+  setChaine(prefix: string, chaine: EcranChaine): number {
+    let changed = 0;
+    for (const state of this.states) {
+      if (state.broken || !state.info.name.startsWith(prefix)) continue;
+      state.track = chaine;
+      state.frameIndex = 0;
+      state.clock = 0;
+      applyFrame(state);
+      changed++;
+    }
+    return changed;
+  }
+
   private breakScreen(state: EcranState, point: THREE.Vector3): void {
     state.broken = true;
     state.hp = 0;

@@ -2,7 +2,7 @@
 title: Catalogue de répliques du niveau v2
 tags: [audio, voix, dialogues, niveau]
 status: brouillon
-updated: 2026-10-01
+updated: 2026-10-03
 ---
 
 # Catalogue de répliques du niveau v2
@@ -73,48 +73,53 @@ Une réplique d'exploration devenue hors contexte pendant un combat est abandonn
 Première arrivée dans le lieu, après un court temps d'observation. Les petits
 passages n'ont pas besoin de parler si la réplique de la pièce vient de jouer.
 
+Depuis le 2026-10-03, les lieux en statut T sont branchés en texte seul, dans
+leur version A, sans prise de voix. Six sous-zones (surgelés, quai et les
+quatre bureaux de l'étage) le sont par un `trig_*`. Restent en statut R la
+mezzanine, confondue avec le quai, et la remontée du souterrain.
+
 | Identifiant | Statut | Situation | A | B | C |
 |---|---|---|---|---|---|
 | depart | E | Début de la partie, dehors et désarmé | Ce soir, on vérifie les rumeurs. | Un magasin fermé. Une enquête ouverte. | Deux cents abonnés. Une très mauvaise idée. |
-| parking | R | Première exploration du parking extérieur | Ils ont laissé les voitures. Où sont les clients ? | Parking gratuit. Sortie probablement payante. | Je filme les plaques, au cas où. |
-| portes_auto | R | Passage des portes automatiques vers la galerie | Au moins, les portes sont accueillantes. | Entrez librement. Ressortez si vous pouvez. | Bon. Le magasin vient de m'inviter. |
-| galerie | R | Découverte de la galerie marchande | Tout est fermé. Sauf les ennuis. | Galerie marchande, ambiance fin du monde. | Les rideaux sont baissés. Pas ma caméra. |
-| passage_cafe | R | Détour vers la cafétéria | Un détour avant le carnage. | Le menu du soir sent l'embuscade. | Une enquête, ça creuse. |
-| cafeteria | R | Première visite de la cafétéria | Je vais éviter le plat du jour. | Self-service. Service après-vie non compris. | Même les chaises ont l'air abandonnées. |
-| toilettes | R | Entrée dans les toilettes | Enfin une pièce où je comprends le complot. | Les sanitaires. Le vrai siège du pouvoir. | Je coupe pas la caméra. Juste le cadrage. |
-| entree_magasin | R | Passage de la galerie aux caisses | Derrière les caisses, ça devient sérieux. | Les promotions commencent à tirer. | On entre dans le vif du sujet. |
-| caisses | R | Découverte de la ligne de caisses | Je crois que les caissiers sont armés. | Passage en caisse. Passage à tabac. | Voilà pourquoi il n'y a plus de clients. |
-| hub | R | Arrivée dans l'allée centrale | Tous les rayons. Aucun choix rassurant. | À gauche les courses, à droite les preuves. | Je vais commencer par ce qui clignote. |
-| entree_rayons | R | Passage dans la tête d'allée ouest | Voyons ce qu'ils ont en stock. | Rayon frais. Accueil très froid. | Ça sent l'embuscade entre les gondoles. |
-| rayons | R | Première exploration des gondoles | Ils rangent même leurs pièges par catégorie. | Les employés mordent plus que les prix. | Restez avec moi. Ces allées cachent quelque chose. |
-| surgeles | R | Découverte de la zone des surgelés | Certains secrets se conservent au froid. | Chaîne du froid, chaîne du complot. | Je préfère les lézards loin de mon dîner. |
-| entree_electro | R | Passage dans la tête d'allée est | Ça clignote beaucoup trop pour être innocent. | Électroménager. Gros appareils, petites garanties. | Je vais regarder leurs programmes. |
-| electro | R | Découverte du mur d'écrans | Ils diffusent tous le même mensonge. | Une seule chaîne. Beaucoup de cerveaux disponibles. | Cette fois, la télé regarde les clients. |
-| sas_reserve | R | Arrivée au sas de la carte Argent | Voilà ce qu'ils cachent derrière la fidélité. | Accès réservé aux clients bien dressés. | Une carte pour voir l'envers du décor. |
-| reserve | R | Première arrivée dans la réserve | Le vrai magasin commence derrière le magasin. | Ils ont du stock pour toute une invasion. | Regardez la taille de cette réserve. |
+| parking | T | Première exploration du parking extérieur | Ils ont laissé les voitures. Où sont les clients ? | Parking gratuit. Sortie probablement payante. | Je filme les plaques, au cas où. |
+| portes_auto | T | Passage des portes automatiques vers la galerie | Au moins, les portes sont accueillantes. | Entrez librement. Ressortez si vous pouvez. | Bon. Le magasin vient de m'inviter. |
+| galerie | T | Découverte de la galerie marchande | Tout est fermé. Sauf les ennuis. | Galerie marchande, ambiance fin du monde. | Les rideaux sont baissés. Pas ma caméra. |
+| passage_cafe | T | Détour vers la cafétéria | Un détour avant le carnage. | Le menu du soir sent l'embuscade. | Une enquête, ça creuse. |
+| cafeteria | T | Première visite de la cafétéria | Je vais éviter le plat du jour. | Self-service. Service après-vie non compris. | Même les chaises ont l'air abandonnées. |
+| toilettes | T | Entrée dans les toilettes | Enfin une pièce où je comprends le complot. | Les sanitaires. Le vrai siège du pouvoir. | Je coupe pas la caméra. Juste le cadrage. |
+| entree_magasin | T | Passage de la galerie aux caisses | Derrière les caisses, ça devient sérieux. | Les promotions commencent à tirer. | On entre dans le vif du sujet. |
+| caisses | T | Découverte de la ligne de caisses | Je crois que les caissiers sont armés. | Passage en caisse. Passage à tabac. | Voilà pourquoi il n'y a plus de clients. |
+| hub | T | Arrivée dans l'allée centrale | Tous les rayons. Aucun choix rassurant. | À gauche les courses, à droite les preuves. | Je vais commencer par ce qui clignote. |
+| entree_rayons | T | Passage dans la tête d'allée ouest | Voyons ce qu'ils ont en stock. | Rayon frais. Accueil très froid. | Ça sent l'embuscade entre les gondoles. |
+| rayons | T | Première exploration des gondoles | Ils rangent même leurs pièges par catégorie. | Les employés mordent plus que les prix. | Restez avec moi. Ces allées cachent quelque chose. |
+| surgeles | T | Découverte de la zone des surgelés | Certains secrets se conservent au froid. | Chaîne du froid, chaîne du complot. | Je préfère les lézards loin de mon dîner. |
+| entree_electro | T | Passage dans la tête d'allée est | Ça clignote beaucoup trop pour être innocent. | Électroménager. Gros appareils, petites garanties. | Je vais regarder leurs programmes. |
+| electro | T | Découverte du mur d'écrans | Ils diffusent tous le même mensonge. | Une seule chaîne. Beaucoup de cerveaux disponibles. | Cette fois, la télé regarde les clients. |
+| sas_reserve | T | Arrivée au sas de la carte Argent | Voilà ce qu'ils cachent derrière la fidélité. | Accès réservé aux clients bien dressés. | Une carte pour voir l'envers du décor. |
+| reserve | T | Première arrivée dans la réserve | Le vrai magasin commence derrière le magasin. | Ils ont du stock pour toute une invasion. | Regardez la taille de cette réserve. |
 | mezzanine | R | Accès à la mezzanine de la réserve | Je préfère voir venir les ennuis. | Vue premium, sans supplément. | D'ici, leurs cachettes deviennent moins discrètes. |
-| quai | R | Découverte du quai et du camion à hayon | Qu'est-ce qu'ils livrent après la fermeture ? | Livraison express de mauvaises nouvelles. | Ce chargement mérite une vidéo entière. |
-| rampe_quai | R | Descente vers le parking souterrain | Plus on descend, moins ça sent les courses. | Le sous-sol n'est pas dans le catalogue. | Si le signal coupe, continuez d'enregistrer. |
-| souterrain | R | Première arrivée au parking souterrain | Trop de piliers. Pas assez de lumière. | Stationnement longue durée. Très longue durée. | Je vais longer les murs. Vous filmez devant. |
+| quai | T | Découverte du quai et du camion à hayon | Qu'est-ce qu'ils livrent après la fermeture ? | Livraison express de mauvaises nouvelles. | Ce chargement mérite une vidéo entière. |
+| rampe_quai | T | Descente vers le parking souterrain | Plus on descend, moins ça sent les courses. | Le sous-sol n'est pas dans le catalogue. | Si le signal coupe, continuez d'enregistrer. |
+| souterrain | T | Première arrivée au parking souterrain | Trop de piliers. Pas assez de lumière. | Stationnement longue durée. Très longue durée. | Je vais longer les murs. Vous filmez devant. |
 | rampe_sortie | R | Remontée du souterrain vers le personnel | Un peu de hauteur ne fera pas de mal. | Sortie du parking. Entrée dans les problèmes. | On remonte. L'enquête aussi. |
-| couloir_personnel | R | Première visite du couloir du personnel | Accès interdit. Donc accès intéressant. | Le personnel a droit à ses propres pièges. | Voilà la partie qu'on ne montre jamais aux clients. |
-| couloir_service | R | Arrivée dans le couloir de service | Les coulisses sont plus grandes que la scène. | Ici, même les néons travaillent de nuit. | J'entends quelque chose derrière ces portes. |
-| couloir_coupe_feu | R | Arrivée dans le couloir coupe-feu | Long couloir. Mauvaise perspective. | Le SAV est au fond des ennuis. | Je compte les portes. Pas les pas. |
-| vestiaires | R | Entrée dans les vestiaires | Voilà où ils rangent leur peau de rechange. | Uniforme obligatoire. Humanité facultative. | Les casiers racontent plus que les employés. |
-| fournil | R | Entrée dans le fournil | Pour une fois, ça sent presque bon. | Ils font lever la pâte et les soupçons. | Je surveille le four. Et ce qu'il contient. |
-| gaine | R | Première entrée dans la gaine VMC | La visite guidée passe par les conduits. | Climatisation incluse. Dignité en option. | Voilà le genre de passage que je cherchais. |
-| pc_securite | R | Entrée dans le PC sécurité des coulisses | Ils surveillent tout. Sauf leurs propres portes. | La sécurité protège surtout les secrets. | On va voir leurs images pour changer. |
-| boucherie | R | Entrée dans le labo boucherie et marée | Je vais pas demander l'origine de la viande. | Traçabilité douteuse. Découpe impeccable. | Tout ce blanc ne rend rien plus propre. |
-| chambre_froide | R | Entrée dans la chambre froide | Même leurs secrets ont froid. | Conservation longue durée. Espérance de vie courte. | Gardez la porte ouverte, juste au cas où. |
-| sav | R | Entrée dans l'atelier SAV | Voilà où les appareils viennent mourir. | Service après-vente. Avant-enterrement. | Ils réparent les télés qui diffusent leurs mensonges. |
-| compacteur | R | Entrée dans le local compacteur | Ils font disparaître les cartons. Et le reste ? | Tri sélectif. Témoins compris. | Cette presse a une sale réputation. |
-| escalier | R | Montée vers les bureaux après le verrou Or | Les décisions viennent toujours d'en haut. | Un étage de plus dans la hiérarchie. | On va parler à la direction. |
-| bureaux | R | Arrivée dans l'étage des bureaux | Le complot a aussi ses horaires de bureau. | Moquette épaisse. Dossiers encore plus épais. | Le patron doit être au bout. |
-| bureau_securite | R | Visite du bureau sécurité à l'étage | Un autre écran pour éviter de regarder dehors. | La surveillance a son bureau particulier. | Ils aiment vraiment me regarder travailler. |
-| comptabilite | R | Visite des deux postes de comptabilité | Les comptes doivent être aussi faux que leurs visages. | Ils amortissent sûrement les victimes. | Je filmerais bien le bilan. |
-| ressources_humaines | R | Visite du bureau RH | Ressources humaines. J'ai comme un doute. | Recrutement ouvert aux sang-froid. | Je vais vérifier leur définition d'humain. |
-| salle_pause | R | Entrée dans la salle de pause de l'étage | Même les monstres prennent leur pause. | Pause obligatoire. Café suspect. | Personne ? Je prends trente secondes. |
-| direction | R | Entrée dans le bureau du Directeur, avant sa réaction de boss | Beau bureau. Sale affaire. | Le responsable des réclamations est enfin là. | Toute l'enquête mène à ce fauteuil. |
+| couloir_personnel | T | Première visite du couloir du personnel | Accès interdit. Donc accès intéressant. | Le personnel a droit à ses propres pièges. | Voilà la partie qu'on ne montre jamais aux clients. |
+| couloir_service | T | Arrivée dans le couloir de service | Les coulisses sont plus grandes que la scène. | Ici, même les néons travaillent de nuit. | J'entends quelque chose derrière ces portes. |
+| couloir_coupe_feu | T | Arrivée dans le couloir coupe-feu | Long couloir. Mauvaise perspective. | Le SAV est au fond des ennuis. | Je compte les portes. Pas les pas. |
+| vestiaires | T | Entrée dans les vestiaires | Voilà où ils rangent leur peau de rechange. | Uniforme obligatoire. Humanité facultative. | Les casiers racontent plus que les employés. |
+| fournil | T | Entrée dans le fournil | Pour une fois, ça sent presque bon. | Ils font lever la pâte et les soupçons. | Je surveille le four. Et ce qu'il contient. |
+| gaine | T | Première entrée dans la gaine VMC | La visite guidée passe par les conduits. | Climatisation incluse. Dignité en option. | Voilà le genre de passage que je cherchais. |
+| pc_securite | T | Entrée dans le PC sécurité des coulisses | Ils surveillent tout. Sauf leurs propres portes. | La sécurité protège surtout les secrets. | On va voir leurs images pour changer. |
+| boucherie | T | Entrée dans le labo boucherie et marée | Je vais pas demander l'origine de la viande. | Traçabilité douteuse. Découpe impeccable. | Tout ce blanc ne rend rien plus propre. |
+| chambre_froide | T | Entrée dans la chambre froide | Même leurs secrets ont froid. | Conservation longue durée. Espérance de vie courte. | Gardez la porte ouverte, juste au cas où. |
+| sav | T | Entrée dans l'atelier SAV | Voilà où les appareils viennent mourir. | Service après-vente. Avant-enterrement. | Ils réparent les télés qui diffusent leurs mensonges. |
+| compacteur | T | Entrée dans le local compacteur | Ils font disparaître les cartons. Et le reste ? | Tri sélectif. Témoins compris. | Cette presse a une sale réputation. |
+| escalier | T | Montée vers les bureaux après le verrou Or | Les décisions viennent toujours d'en haut. | Un étage de plus dans la hiérarchie. | On va parler à la direction. |
+| bureaux | T | Arrivée dans l'étage des bureaux | Le complot a aussi ses horaires de bureau. | Moquette épaisse. Dossiers encore plus épais. | Le patron doit être au bout. |
+| bureau_securite | T | Visite du bureau sécurité à l'étage | Un autre écran pour éviter de regarder dehors. | La surveillance a son bureau particulier. | Ils aiment vraiment me regarder travailler. |
+| comptabilite | T | Visite des deux postes de comptabilité | Les comptes doivent être aussi faux que leurs visages. | Ils amortissent sûrement les victimes. | Je filmerais bien le bilan. |
+| ressources_humaines | T | Visite du bureau RH | Ressources humaines. J'ai comme un doute. | Recrutement ouvert aux sang-froid. | Je vais vérifier leur définition d'humain. |
+| salle_pause | T | Entrée dans la salle de pause de l'étage | Même les monstres prennent leur pause. | Pause obligatoire. Café suspect. | Personne ? Je prends trente secondes. |
+| direction | T | Entrée dans le bureau du Directeur, avant sa réaction de boss | Beau bureau. Sale affaire. | Le responsable des réclamations est enfin là. | Toute l'enquête mène à ce fauteuil. |
 
 ## 2. Armes, munitions, soins et nourriture — voix du héros
 
@@ -291,7 +296,7 @@ avant que le héros ait pu commenter la peau ou les écailles en détail.
 
 | Identifiant | Statut | Situation | A | B | C |
 |---|---|---|---|---|---|
-| boss_rencontre | E | Le Directeur engage la confrontation | J'aimerais parler au responsable. Ah, parfait. | Votre magasin pose quelques problèmes de sécurité. | Souriez, patron. Vous êtes en direct. |
+| boss_rencontre | T | Le Directeur engage la confrontation | J'aimerais parler au responsable. Ah, parfait. | Votre magasin pose quelques problèmes de sécurité. | Souriez, patron. Vous êtes en direct. |
 | boss_attaque | E | Première attaque du Directeur | Même le patron fait le sale boulot. | Votre réponse manque de professionnalisme. | Il a vraiment pas aimé la caméra. |
 | boss_revelation | E | Transformation du Directeur en reptilien | Je le savais. Je le savais ! | Voilà la vraie direction du magasin. | Gros plan sur les écailles. Maintenant ! |
 | boss_revele_combat | E | Reprise du combat après sa révélation | Maintenant, au moins, on se parle franchement. | Plus besoin de costume pour diriger. | Tu peux plus te cacher derrière ton sourire. |

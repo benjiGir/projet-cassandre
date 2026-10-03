@@ -8,6 +8,7 @@ import { GROUP, interactionGroups } from "../../../physics/world";
 import { useGameStore } from "../../hud/state";
 import { showHudMessage, triggerHeroLine } from "./feedback";
 import { type GameSession } from "../gameSession";
+import { streamEvent } from "../stream/streamFeed";
 
 // see: docs/6-reference/notes-code-gameplay.md#progression-et-fin
 
@@ -58,6 +59,7 @@ export function relieveAtSanitaire(session: GameSession): void {
   session.sanitaireReliefCooldown = SANITAIRE_RELIEF_COOLDOWN_SECONDS;
   showHudMessage(`+${healed} PV`);
   triggerHeroLine(session, "toilettes_soulagement");
+  streamEvent(session, "toilettes");
 }
 
 /** Gorgée au jet d'eau permanent d'un sanitaire CASSÉ — voir la doc de tête du fichier. */

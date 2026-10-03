@@ -11,6 +11,9 @@ import { OptionsScreen } from "../../src/ui/screens/options/OptionsScreen/Option
 import { LoadingScreen } from "../../src/ui/screens/loading/LoadingScreen/LoadingScreen";
 import { DeathScreen } from "../../src/ui/screens/death/DeathScreen/DeathScreen";
 import { LevelCompleteScreen } from "../../src/ui/screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
+import { StoryPanels } from "../../src/ui/screens/story/StoryPanels/StoryPanels";
+import { StoryScreen } from "../../src/ui/screens/story/StoryScreen/StoryScreen";
+import type { StoryPanel } from "../../src/game/hud/hudTypes";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -107,8 +110,55 @@ describe("écrans React — comportements DOM", () => {
     expect(onReturnToMenu).toHaveBeenCalledOnce();
 
     act(() => useGameStore.getState().setFlowState("levelComplete"));
+    act(() => useGameStore.getState().setLiveRecap({ peakViewers: 4200, followers: 305, followersGained: 105, donations: 86, donationCount: 7 }));
     render(createElement(LevelCompleteScreen, { onReplay, onReturnToMenu }));
+    expect(host.textContent).toContain("VIDÉO DÉMONÉTISÉE");
+    expect(host.textContent).toContain("86 € retenus par la plateforme");
+    expect(host.textContent).toContain("305 (+105)");
     click("REJOUER");
     expect(onReplay).toHaveBeenCalledTimes(2);
+  });
+
+  const panneaux: StoryPanel[] = [
+    { id: "a", image: null, alt: "Premier", caption: ["Première légende."] },
+    { id: "b", image: null, alt: "Deuxième", caption: ["Deuxième légende."] },
+  ];
+
+  it("les panneaux avancent un par un, puis rendent la main au dernier", () => {
+    const onDone = vi.fn();
+    render(createElement(StoryPanels, { panels: panneaux, doneLabel: "LANCER LE DIRECT", onDone }));
+    expect(host.textContent).toContain("Première légende.");
+    expect(host.textContent).toContain("PLAN 1 / 2");
+    click("SUITE");
+    expect(host.textContent).toContain("Deuxième légende.");
+    expect(onDone).not.toHaveBeenCalled();
+    click("LANCER LE DIRECT");
+    expect(onDone).toHaveBeenCalledOnce();
+  });
+
+  it("les panneaux se passent au bouton et au clavier, sans double avance sur une touche maintenue", () => {
+    const onDone = vi.fn();
+    render(createElement(StoryPanels, { panels: panneaux, doneLabel: "LANCER LE DIRECT", onDone }));
+    click("PASSER");
+    expect(onDone).toHaveBeenCalledOnce();
+
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space", repeat: true })));
+    expect(host.textContent).toContain("Première légende.");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { code: "Space" })));
+    expect(host.textContent).toContain("Deuxième légende.");
+    act(() => window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape" })));
+    expect(onDone).toHaveBeenCalledTimes(2);
+  });
+
+  it("l'écran d'histoire ne s'affiche que dans son état de flux, avec les panneaux posés dans le store", () => {
+    const onDone = vi.fn();
+    act(() => useGameStore.getState().setStory(panneaux));
+    act(() => useGameStore.getState().setFlowState("playing"));
+    render(createElement(StoryScreen, { sequence: "intro", doneLabel: "LANCER LE DIRECT", onDone }));
+    expect(host.textContent).toBe("");
+    act(() => useGameStore.getState().setFlowState("intro"));
+    expect(host.textContent).toContain("Première légende.");
+    act(() => useGameStore.getState().setFlowState("outro"));
+    expect(host.textContent).toBe("");
   });
 });

@@ -18,13 +18,19 @@ import { loadEnemySpriteSheetOrPlaceholder } from "./render/sprites/enemySprites
 import { RenderService } from "./render/pipeline/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel/weaponModels";
 import { loadCardPickupTextures } from "./render/pickups/cardPickups";
-import { createGameFlowActor } from "./app/navigation/gameFlowMachine";
+import { createGameFlowActor, isPhysicsLiveState, isPlayingState } from "./app/navigation/gameFlowMachine";
 import { App } from "./ui/App/App";
 import { initAudioSettingsAtBoot } from "./game/settings/audioSettings";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/settings/graphicsSettings";
 import { useGameStore } from "./game/hud/state";
 import { resolveBootChoice } from "./app/navigation/bootChoice";
-import { bootGameSessionWithRetry, createSessionFlow, waitForGameSessionReady } from "./app/navigation/sessionFlow";
+import {
+  bootGameSessionWithRetry,
+  createSessionFlow,
+  introPending,
+  waitForGameSessionReady,
+} from "./app/navigation/sessionFlow";
+import { levelStory } from "./game/session/presentation/storyPanels";
 import { buildGameEngine, type GameEngine } from "./game/session/gameEngine";
 import { snapshotPrevious, stepPhysics } from "./game/loop/stepPhysics";
 import { updateGameplay } from "./game/loop/updateGameplay";
@@ -51,18 +57,24 @@ async function main() {
   initGraphicsSettingsAtBoot();
 
   const flowActor = createGameFlowActor();
+  // Niveau de la partie en cours, connu une fois le moteur construit.
+  let currentLevelId: () => string | null = () => null;
   const flow = {
-    isPlaying: () => flowActor.getSnapshot().value === "playing",
-    isPhysicsLive: () => {
-      const value = flowActor.getSnapshot().value;
-      return value === "playing" || value === "paused" || value === "dead" || value === "levelComplete";
-    },
+    isPlaying: () => isPlayingState(flowActor.getSnapshot().value),
+    isPhysicsLive: () => isPhysicsLiveState(flowActor.getSnapshot().value),
     playerDied: () => {
       flowActor.send({ type: "DIED" });
       void document.exitPointerLock();
     },
     levelCompleted: () => {
-      flowActor.send({ type: "LEVEL_COMPLETED" });
+      const levelId = currentLevelId();
+      const outro = levelId === null ? undefined : levelStory(levelId)?.outro;
+      if (outro) {
+        useGameStore.getState().setStory(outro);
+        flowActor.send({ type: "SHOW_OUTRO" });
+      } else {
+        flowActor.send({ type: "LEVEL_COMPLETED" });
+      }
       void document.exitPointerLock();
     },
     pause: () => flowActor.send({ type: "PAUSE" }),
@@ -72,9 +84,9 @@ async function main() {
     useGameStore.getState().setFlowState(snapshot.value);
   });
 
-  if (!new URLSearchParams(window.location.search).get("level")) {
-    flowActor.send({ type: "ENTER_MENU" });
-  }
+  // `?level=` est le raccourci des outils et des mesures : il entre en jeu sans intro.
+  const fromMenu = !new URLSearchParams(window.location.search).get("level");
+  if (fromMenu) flowActor.send({ type: "ENTER_MENU" });
   const choice = await resolveBootChoice(root);
   flowActor.send({ type: "BEGIN_LOAD" });
 
@@ -114,18 +126,13 @@ async function main() {
 
   const session = await bootGameSessionWithRetry(persistentEngine, choice, flowActor);
   const engine: GameEngine = { ...persistentEngine, session };
+  currentLevelId = () => engine.session.choice.id;
 
   await audioReady;
-  await waitForGameSessionReady(flowActor, session);
+  await waitForGameSessionReady(flowActor, session, fromMenu && introPending(choice));
   const sessionFlow = createSessionFlow(engine, root, flowActor);
 
-  root.render(
-    createElement(App, {
-      onReplay: () => void sessionFlow.replay(),
-      onReturnToMenu: () => void sessionFlow.returnToMenu(),
-      onResume: sessionFlow.resume,
-    }),
-  );
+  root.render(createElement(App, sessionFlow.appProps()));
 
   const cameraViewPrevPos = new THREE.Vector3();
   const cameraViewPrevQuat = new THREE.Quaternion();

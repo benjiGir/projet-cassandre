@@ -17,6 +17,8 @@ export interface LevelDef {
   ciel?: string;
   // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   parTime?: number;
+  /** Le niveau livre `<gltfName>.espaces.json` (`tools/level_v2/espaces_jeu.py`) : il porte les répliques de lieu. */
+  spaces?: boolean;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
@@ -56,6 +58,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
     // 10 minutes — le haut de la fourchette « 8-10 minutes » du proto
     // (CLAUDE.md), pour laisser une vraie marge de bonus à qui explore.
     parTime: 600,
+    spaces: true,
   },
   // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
   {

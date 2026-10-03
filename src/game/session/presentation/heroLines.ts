@@ -12,6 +12,8 @@ export interface HeroLineDef {
   readonly once?: boolean;
   /** Probabilité de la dire quand le délai le permet. Défaut 1. */
   readonly chance?: number;
+  /** Pas encore de prise de voix : la réplique n'existe qu'en sous-titre. */
+  readonly textOnly?: boolean;
 }
 
 export const HERO_LINES = {
@@ -19,6 +21,56 @@ export const HERO_LINES = {
   depart: { text: "Ce soir, on vérifie les rumeurs.", priority: true, once: true },
   nouvelle_tentative: { text: "Cette fois, je connais les pièges.", priority: true, once: true },
   mort_hero: { text: "J'étais pourtant si près.", priority: true, once: true },
+
+  // Lieux — première visite, voir `PLACE_LINES`
+  parking: { text: "Ils ont laissé les voitures. Où sont les clients ?", once: true, textOnly: true },
+  portes_auto: { text: "Au moins, les portes sont accueillantes.", once: true, textOnly: true },
+  galerie: { text: "Tout est fermé. Sauf les ennuis.", once: true, textOnly: true },
+  passage_cafe: { text: "Un détour avant le carnage.", once: true, textOnly: true },
+  cafeteria: { text: "Je vais éviter le plat du jour.", once: true, textOnly: true },
+  toilettes: { text: "Enfin une pièce où je comprends le complot.", once: true, textOnly: true },
+  entree_magasin: { text: "Derrière les caisses, ça devient sérieux.", once: true, textOnly: true },
+  caisses: { text: "Je crois que les caissiers sont armés.", once: true, textOnly: true },
+  hub: { text: "Tous les rayons. Aucun choix rassurant.", once: true, textOnly: true },
+  entree_rayons: { text: "Voyons ce qu'ils ont en stock.", once: true, textOnly: true },
+  rayons: { text: "Ils rangent même leurs pièges par catégorie.", once: true, textOnly: true },
+  entree_electro: { text: "Ça clignote beaucoup trop pour être innocent.", once: true, textOnly: true },
+  electro: { text: "Ils diffusent tous le même mensonge.", once: true, textOnly: true },
+  sas_reserve: { text: "Voilà ce qu'ils cachent derrière la fidélité.", once: true, textOnly: true },
+  reserve: { text: "Le vrai magasin commence derrière le magasin.", once: true, textOnly: true },
+  rampe_quai: { text: "Plus on descend, moins ça sent les courses.", once: true, textOnly: true },
+  souterrain: { text: "Trop de piliers. Pas assez de lumière.", once: true, textOnly: true },
+  couloir_personnel: { text: "Accès interdit. Donc accès intéressant.", once: true, textOnly: true },
+  couloir_service: { text: "Les coulisses sont plus grandes que la scène.", once: true, textOnly: true },
+  couloir_coupe_feu: { text: "Long couloir. Mauvaise perspective.", once: true, textOnly: true },
+  vestiaires: { text: "Voilà où ils rangent leur peau de rechange.", once: true, textOnly: true },
+  fournil: { text: "Pour une fois, ça sent presque bon.", once: true, textOnly: true },
+  gaine: { text: "La visite guidée passe par les conduits.", once: true, textOnly: true },
+  pc_securite: { text: "Ils surveillent tout. Sauf leurs propres portes.", once: true, textOnly: true },
+  boucherie: { text: "Je vais pas demander l'origine de la viande.", once: true, textOnly: true },
+  chambre_froide: { text: "Même leurs secrets ont froid.", once: true, textOnly: true },
+  sav: { text: "Voilà où les appareils viennent mourir.", once: true, textOnly: true },
+  compacteur: { text: "Ils font disparaître les cartons. Et le reste ?", once: true, textOnly: true },
+  escalier: { text: "Les décisions viennent toujours d'en haut.", once: true, textOnly: true },
+  bureaux: { text: "Le complot a aussi ses horaires de bureau.", once: true, textOnly: true },
+  direction: { text: "Beau bureau. Sale affaire.", once: true, textOnly: true },
+
+  // Sous-zones — posées par un `trig_*` portant `replique`
+  surgeles: { text: "Certains secrets se conservent au froid.", once: true, textOnly: true },
+  mezzanine: { text: "Je préfère voir venir les ennuis.", once: true, textOnly: true },
+  bureau_securite: { text: "Un autre écran pour éviter de regarder dehors.", once: true, textOnly: true },
+  comptabilite: { text: "Les comptes doivent être aussi faux que leurs visages.", once: true, textOnly: true },
+  ressources_humaines: { text: "Ressources humaines. J'ai comme un doute.", once: true, textOnly: true },
+  salle_pause: { text: "Même les monstres prennent leur pause.", once: true, textOnly: true },
+
+  // Moments scriptés — voir `progression/levelEvents.ts`
+  quai: { text: "Qu'est-ce qu'ils livrent après la fermeture ?", priority: true, once: true, textOnly: true },
+  ecrans_filment: { text: "Cette fois, la télé regarde les clients.", priority: true, once: true, textOnly: true },
+  boss_rencontre: { text: "Souriez, patron. Vous êtes en direct.", priority: true, once: true, textOnly: true },
+
+  // Le direct — voir `stream/streamFeed.ts`
+  don_premier: { text: "Un don ! La vérité n'a pas de prix, mais merci.", once: true, textOnly: true },
+  don_gros: { text: "Autant ? Quelqu'un prend enfin ça au sérieux.", priority: true, once: true, textOnly: true },
 
   // Armes, munitions, soins, nourriture
   arme_pied_biche: { text: "Ça ouvre les portes. Et les discussions.", priority: true, once: true },
@@ -99,6 +151,44 @@ export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {
   secret_1_photomaton: "secret_photomaton",
   secret_3_aeration: "secret_aeration",
   secret_4_planque: "secret_vigile",
+};
+
+/**
+ * Réplique de première visite par espace du plan de masse (`<niveau>.espaces.json`).
+ * Les espaces absents ne disent rien : les secrets ont leur propre réplique.
+ */
+export const PLACE_LINES: Readonly<Record<string, HeroLineId>> = {
+  parking_ext: "parking",
+  c_pk_ga: "portes_auto",
+  galerie: "galerie",
+  c_ga_cf: "passage_cafe",
+  cafeteria: "cafeteria",
+  toilettes: "toilettes",
+  c_ga_cs: "entree_magasin",
+  caisses: "caisses",
+  hub: "hub",
+  c_hb_ry: "entree_rayons",
+  rayons: "rayons",
+  c_hb_el: "entree_electro",
+  electro: "electro",
+  c_hb_rs: "sas_reserve",
+  reserve: "reserve",
+  c_so_bu: "rampe_quai",
+  souterrain: "souterrain",
+  c_bu: "couloir_personnel",
+  c_short_ramp: "couloir_service",
+  c_short_w: "couloir_coupe_feu",
+  vestiaires: "vestiaires",
+  fournil: "fournil",
+  gaine: "gaine",
+  pc_secu: "pc_securite",
+  labo: "boucherie",
+  chambre_froide: "chambre_froide",
+  sav: "sav",
+  compacteur: "compacteur",
+  c_escalier: "escalier",
+  bureaux: "bureaux",
+  direction: "direction",
 };
 
 /** Réplique d'ouverture par `use_*` de porte libre. */

@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-03
 ---
 
 # Architecture Decision Records
@@ -25,6 +25,7 @@ reste conservé et renvoie à son successeur.
 | [0028](0028-sprites-ennemis-pre-rendus.md) | Sprites d'ennemis pré-rendus depuis un modèle CC0 | accepté |
 | [0034](0034-resolution-interne-configurable.md) | Résolution interne configurable, 640×360 proposé comme défaut | proposé |
 | [0035](0035-materiaux-tsl-cibles.md) | Matériaux TSL ciblés via l'adaptateur WebGL | accepté |
+| [0039](0039-abandon-du-plafond-de-lots.md) | Abandon du plafond de lots de dessin | accepté |
 
 ## Simulation, mouvement et combat
 
@@ -38,6 +39,7 @@ reste conservé et renvoie à son successeur.
 | [0016](0016-garde-fous-degenerescence-kcc.md) | Deux garde-fous contre la dégénérescence du contrôleur Rapier | accepté |
 | [0018](0018-physique-jouet-debris-cosmetiques.md) | Débris cosmétiques pilotés par une physique jouet | accepté |
 | [0033](0033-rng-presentation-et-portee-du-rejeu.md) | RNG de présentation séparé et limites explicites du rejeu | accepté |
+| [0038](0038-simulation-du-direct.md) | Simulation du direct : audience, dons et chat dans le pas fixe | accepté |
 
 ## Entités et cycle de vie
 
@@ -66,3 +68,4 @@ reste conservé et renvoie à son successeur.
 | [0030](0030-props-dynamiques.md) | Props dynamiques dans un groupe de collision distinct | accepté |
 | [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres cassables avec colliders pilotés | accepté |
 | [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables, soignants et cassables | accepté |
+| [0037](0037-script-de-niveau.md) | Script de niveau par volumes déclencheurs et scénarios nommés | accepté |

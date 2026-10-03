@@ -2,10 +2,13 @@ import { createElement } from "react";
 import type { createRoot } from "react-dom/client";
 
 import { LEVEL_CHOICES, type LevelDef } from "../../game/level/catalog/levels";
+import { levelStory } from "../../game/session/presentation/storyPanels";
+import { hasSeenIntro } from "../../game/settings/storySettings";
 import { LevelMenu } from "../../ui/dev/LevelMenu/LevelMenu";
 import { ZoneChooserLink } from "../../ui/dev/ZoneChooserLink/ZoneChooserLink";
 import { MainMenu } from "../../ui/screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../ui/screens/options/OptionsScreen/OptionsScreen";
+import { StoryPanels } from "../../ui/screens/story/StoryPanels/StoryPanels";
 
 // see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
 
@@ -46,9 +49,15 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
 
   return new Promise((resolve) => {
     function showMainMenu() {
+      const intro = hasSeenIntro(MAIN_LEVEL.id) ? levelStory(MAIN_LEVEL.id)?.intro : undefined;
       root.render(
         createElement(MainMenu, {
           onPlay: () => resolve(MAIN_LEVEL),
+          onReplayIntro: intro
+            ? () => {
+                root.render(createElement(StoryPanels, { panels: intro, doneLabel: "RETOUR AU MENU", onDone: showMainMenu }));
+              }
+            : undefined,
           onOptions: () => {
             root.render(createElement(OptionsScreen, { onBack: showMainMenu }));
           },
