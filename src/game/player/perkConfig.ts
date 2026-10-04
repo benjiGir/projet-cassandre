@@ -1,3 +1,5 @@
+import type { Perk, PerkOffer } from "./perks";
+
 // Ce que chaque perk change. Ces valeurs sont le barème : à l'achat elles sont
 // recopiées sur les objets de la partie (`session/progression/perks.ts`), si
 // bien qu'une nouvelle partie repart sans perk. Valeurs de départ, que le lot
@@ -30,6 +32,17 @@ export const perkConfig: PerkConfig = {
   percheMeleeDamageScale: 1.5,
   aimantPickupRadius: 3,
 };
+
+/**
+ * Prix imposés par une variante d'équilibrage à l'essai (`devtools/economy/economyVariants.ts`).
+ * Vide en temps normal : le prix d'une borne est celui que porte le niveau (`prix`).
+ */
+export const perkPrices: Partial<Record<Perk, number>> = {};
+
+/** Prix d'une offre : celui de la variante à l'essai s'il y en a une, sinon celui du niveau. */
+export function offerPrice(offer: PerkOffer): number {
+  return perkPrices[offer.perk] ?? offer.price;
+}
 
 export type BoissonVariant = Pick<PerkConfig, "boissonSpeedScale" | "boissonDuration">;
 

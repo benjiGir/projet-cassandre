@@ -28,19 +28,25 @@ SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
 
 # (nom, perk, prix en euros, centre de la face ARRIÈRE (x, y, z), côté vers
-# lequel la borne regarde). Prix croissants le long du parcours ; ce sont des
-# valeurs de départ, que le lot B7 règle. Cotes relevées sur le niveau du
-# 2026-10-03.
+# lequel la borne regarde). Six bornes, une par perk, toutes sur le chemin
+# obligé, à prix croissants. Les prix sont ceux de la variante B du lot B7
+# (`src/game/devtools/economy/economyVariants.ts`, relevé par `pnpm economy`) :
+# un test du jeu vérifie qu'ils restent identiques. Cotes relevées sur le
+# niveau du 2026-10-03, et du 2026-10-04 pour les caisses et l'allée centrale.
 BORNES = (
     # Galerie : debout sur le comptoir du kiosque « Desimlock », au coin de
     # l'allée centrale, face à l'entrée.
-    ("use_borne_galerie", "perche", 5, (4.62, 6.16, 1.31), "-y"),
+    ("use_borne_galerie", "perche", 10, (4.62, 6.16, 1.31), "-y"),
+    # Caisses : debout sur le tapis de la caisse 4 (express), tournée vers sa file — là où se prend le pistolet.
+    ("use_borne_caisses", "vpn", 20, (5.30, 33.0, 1.14), "-x"),
+    # Allée centrale : au mur du fond, à gauche du sas qui mène à la porte Argent.
+    ("use_borne_hub", "aimant", 25, (-2.25, 91.75, 1.35), "-y"),
     # Réserve : sur le montant sud du premier rack à droite en entrant par le sas Argent.
-    ("use_borne_reserve", "premium", 20, (4.22, 100.0, 1.35), "-y"),
+    ("use_borne_reserve", "premium", 35, (4.22, 100.0, 1.35), "-y"),
     # Couloir du personnel : sur le monnayeur du distributeur de café.
-    ("use_borne_personnel", "boisson", 50, (18.16, 132.98, 1.20), "+y"),
+    ("use_borne_personnel", "boisson", 55, (18.16, 132.98, 1.20), "+y"),
     # Bureaux, salle de pause : sur le monnayeur du distributeur de chips.
-    ("use_borne_bureaux", "gilet", 100, (7.02, 159.66, 5.20), "-x"),
+    ("use_borne_bureaux", "gilet", 85, (7.02, 159.66, 5.20), "-x"),
 )
 
 # Le terminal, dans son repère : `u` le long de la façade, `d` vers le joueur

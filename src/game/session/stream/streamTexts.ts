@@ -256,10 +256,14 @@ export const MYSTERY_DONOR = "premier_abonne";
 
 export type MysteryBeat = "depart" | "carte_argent" | "quai" | "carte_or" | "escalier";
 
-export const MYSTERY_DONATIONS: Readonly<Record<MysteryBeat, { readonly amount: number; readonly text: string }>> = {
-  depart: { amount: 1, text: "Les portes sont ouvertes ce soir. Entre." },
-  carte_argent: { amount: 5, text: "La porte au fond de l'allée centrale. Ça fera de belles images." },
-  quai: { amount: 20, text: "Filme ce camion de plus près. Sa cargaison vaut le détour." },
-  carte_or: { amount: 50, text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut." },
-  escalier: { amount: 100, text: "Dernier bureau, au fond. Tu vas battre ton record d'audience." },
+/** Dans l'ordre de l'histoire. */
+export const MYSTERY_BEATS: readonly MysteryBeat[] = ["depart", "carte_argent", "quai", "carte_or", "escalier"];
+
+/** Ce qu'il écrit à chaque étape. Les montants sont de l'équilibrage : `streamConfig.mystery`. */
+export const MYSTERY_TEXTS: Readonly<Record<MysteryBeat, string>> = {
+  depart: "Les portes sont ouvertes ce soir. Entre.",
+  carte_argent: "La porte au fond de l'allée centrale. Ça fera de belles images.",
+  quai: "Filme ce camion de plus près. Sa cargaison vaut le détour.",
+  carte_or: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.",
+  escalier: "Dernier bureau, au fond. Tu vas battre ton record d'audience.",
 };

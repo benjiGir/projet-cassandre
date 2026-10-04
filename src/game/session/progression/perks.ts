@@ -1,5 +1,5 @@
 import { playSfx } from "../../../core/audio/audio";
-import { perkConfig } from "../../player/perkConfig";
+import { offerPrice, perkConfig } from "../../player/perkConfig";
 import { PERK_INFO, type Perk, type PerkOffer } from "../../player/perks";
 import { useGameStore } from "../../hud/state";
 import type { UseObject } from "../../level/loading/levelTypes";
@@ -18,7 +18,7 @@ export type PerkPurchase = "achete" | "solde_insuffisant" | "epuisee";
 export function buyPerk(session: Pick<GameSession, "perks" | "stream">, offer: PerkOffer): PerkPurchase {
   // Une borne ne vend son perk qu'une fois par partie.
   if (session.perks.has(offer.perk)) return "epuisee";
-  if (!spend(session.stream, offer.price)) return "solde_insuffisant";
+  if (!spend(session.stream, offerPrice(offer))) return "solde_insuffisant";
   session.perks.add(offer.perk);
   return "achete";
 }
@@ -84,18 +84,19 @@ export function updateKillRush(
 /** Appui sur la touche d'usage devant une borne. Rien ne fige le joueur (invariant #10). */
 export function usePerkKiosk(session: GameSession, offer: PerkOffer): PerkPurchase {
   const solde = session.stream.wallet;
+  const prix = offerPrice(offer);
   const resultat = buyPerk(session, offer);
   switch (resultat) {
     case "achete":
       applyPerk(session, offer.perk);
       publishCounters(session.stream);
-      showHudMessage(`${PERK_INFO[offer.perk].label} : −${offer.price} €`);
+      showHudMessage(`${PERK_INFO[offer.perk].label} : −${prix} €`);
       session.heroPortrait.react("victory", 1);
       playSfx("ammo_pickup");
       triggerHeroLine(session, `pub_${offer.perk}`);
       break;
     case "solde_insuffisant":
-      showHudMessage(`Solde insuffisant : il manque ${offer.price - solde} €`);
+      showHudMessage(`Solde insuffisant : il manque ${prix - solde} €`);
       triggerHeroLine(session, "borne_solde");
       break;
     case "epuisee":
@@ -121,7 +122,8 @@ export function publishPerkOffer(session: Pick<GameSession, "perks">, nearest: U
   }
   const { label, effect } = PERK_INFO[offer.perk];
   const sold = session.perks.has(offer.perk);
-  if (affichee && affichee.key === key && affichee.label === label && affichee.price === offer.price
+  const price = offerPrice(offer);
+  if (affichee && affichee.key === key && affichee.label === label && affichee.price === price
     && affichee.sold === sold) return;
-  store.setPerkOffer({ key, label, effect, price: offer.price, sold });
+  store.setPerkOffer({ key, label, effect, price, sold });
 }

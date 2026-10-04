@@ -2,7 +2,7 @@ import type { ChatMessage, DonationAlert, LiveRecap } from "../../hud/hudTypes";
 import {
   CHAT_LINES,
   DONATION_LINES,
-  MYSTERY_DONATIONS,
+  MYSTERY_TEXTS,
   MYSTERY_DONOR,
   PSEUDOS,
   type ChatTopic,
@@ -18,16 +18,19 @@ export type StreamEventKind = "kill" | "boss" | "secret" | "casse" | "degats" | 
 /** Graine du flux RNG du direct : spectateurs, dons et chat, jamais les armes ni les ennemis. */
 export const STREAM_SEED = 0x71e75;
 
+// Un barème, donc réglable : `devtools/economy/economyVariants.ts` y pose ses variantes.
 interface EventRule {
   /** Multiplicateur du gain de spectateurs. */
-  readonly audience: number;
+  audience: number;
   /** Probabilité qu'un spectateur donne. */
-  readonly donation: number;
+  donation: number;
   /** Montants possibles, en euros. */
-  readonly amounts: readonly number[];
+  amounts: readonly number[];
 }
 
-// Valeurs de départ, à régler en playtest (lot B7 de PLAN_SUITE.md).
+// Les probabilités de don et les montants du donateur mystère sont ceux de la
+// variante B du lot B7 (`devtools/economy/economyVariants.ts`), relevés par
+// `pnpm economy`. Le reste (audience, chat) attend encore un playtest.
 export const streamConfig = {
   startViewers: 12,
   startFollowers: 200,
@@ -56,16 +59,18 @@ export const streamConfig = {
   /** Un bond d'audience de cette taille fait arriver les touristes. */
   touristJump: 400,
   rules: {
-    kill: { audience: 1, donation: 0.12, amounts: [1, 2, 2, 5] },
-    serie: { audience: 2, donation: 0.5, amounts: [5, 5, 10] },
+    kill: { audience: 1, donation: 0.168, amounts: [1, 2, 2, 5] },
+    serie: { audience: 2, donation: 0.7, amounts: [5, 5, 10] },
     boss: { audience: 4, donation: 1, amounts: [20, 50] },
-    secret: { audience: 1.5, donation: 0.6, amounts: [5, 10] },
-    casse: { audience: 0.25, donation: 0.05, amounts: [1, 2] },
-    degats: { audience: 0.3, donation: 0.04, amounts: [1] },
-    toilettes: { audience: 0.5, donation: 0.5, amounts: [1, 2] },
-    carte: { audience: 1.5, donation: 0.4, amounts: [5, 10] },
+    secret: { audience: 1.5, donation: 0.84, amounts: [5, 10] },
+    casse: { audience: 0.25, donation: 0.07, amounts: [1, 2] },
+    degats: { audience: 0.3, donation: 0.056, amounts: [1] },
+    toilettes: { audience: 0.5, donation: 0.7, amounts: [1, 2] },
+    carte: { audience: 1.5, donation: 0.56, amounts: [5, 10] },
     moment: { audience: 1, donation: 0, amounts: [] },
-  } satisfies Record<StreamEventKind | "serie", EventRule>,
+  } satisfies Record<StreamEventKind | "serie", EventRule> as Record<StreamEventKind | "serie", EventRule>,
+  /** Dons du donateur mystère, en euros : ils grossissent au fil de l'histoire, et ne dépendent ni du hasard ni de la difficulté. */
+  mystery: { depart: 10, carte_argent: 10, quai: 15, carte_or: 20, escalier: 45 } as Record<MysteryBeat, number>,
 };
 
 export interface StreamState {
@@ -91,6 +96,20 @@ export interface StreamState {
   mysteryDone: Set<MysteryBeat>;
   /** Multiplicateur de la probabilité de don des spectateurs, posé par la difficulté de la partie. */
   generosity: number;
+  /** Temps de jeu du dernier pas ou du dernier évènement : il date les lignes du journal. */
+  clock: number;
+  /** Journal du portefeuille de CETTE partie : chaque don et chaque achat, pour le relevé (`cassandre.economie.journal()`). */
+  ledger: LedgerEntry[];
+}
+
+export interface LedgerEntry {
+  /** Secondes de jeu. */
+  readonly at: number;
+  /** Euros : positif pour un don, négatif pour un achat. */
+  readonly amount: number;
+  readonly source: "don" | "mystere" | "achat";
+  /** Solde après l'opération. */
+  readonly wallet: number;
 }
 
 export function createStreamState(generosity = 1): StreamState {
@@ -112,6 +131,8 @@ export function createStreamState(generosity = 1): StreamState {
     chatSerial: 0,
     mysteryDone: new Set(),
     generosity,
+    clock: 0,
+    ledger: [],
   };
 }
 
@@ -130,6 +151,7 @@ function donate(state: StreamState, now: number, alert: DonationAlert): Donation
   state.donated += alert.amount;
   state.donationCount++;
   state.lastDonationAt = now;
+  state.ledger.push({ at: now, amount: alert.amount, source: alert.mystery ? "mystere" : "don", wallet: state.wallet });
   pushChat(state, { pseudo: alert.pseudo, text: `a donné ${alert.amount} €`, kind: "don" });
   return alert;
 }
@@ -148,6 +170,7 @@ export function notifyStream(
   now: number,
   random: () => number,
 ): DonationAlert | null {
+  state.clock = now;
   let effective: StreamEventKind | "serie" = kind;
   if (kind === "kill") {
     state.killTimes = state.killTimes.filter((t) => now - t <= streamConfig.streakWindow);
@@ -184,6 +207,7 @@ export function notifyStream(
 export function spend(state: StreamState, amount: number): boolean {
   if (amount > state.wallet) return false;
   state.wallet -= amount;
+  state.ledger.push({ at: state.clock, amount: -amount, source: "achat", wallet: state.wallet });
   return true;
 }
 
@@ -202,8 +226,12 @@ export function streamRecap(state: StreamState): LiveRecap {
 export function mysteryDonation(state: StreamState, beat: MysteryBeat, now: number): DonationAlert | null {
   if (state.mysteryDone.has(beat)) return null;
   state.mysteryDone.add(beat);
-  const { amount, text } = MYSTERY_DONATIONS[beat];
-  return donate(state, now, { pseudo: MYSTERY_DONOR, amount, text, mystery: true });
+  return donate(state, now, {
+    pseudo: MYSTERY_DONOR,
+    amount: streamConfig.mystery[beat],
+    text: MYSTERY_TEXTS[beat],
+    mystery: true,
+  });
 }
 
 /**
@@ -211,6 +239,7 @@ export function mysteryDonation(state: StreamState, beat: MysteryBeat, now: numb
  * son rythme. Rend `true` si le chat a un nouveau message.
  */
 export function updateStream(state: StreamState, dt: number, now: number, random: () => number): boolean {
+  state.clock = now;
   if (now - state.lastEventAt > streamConfig.idleGrace) {
     const floor = Math.max(streamConfig.startViewers, state.peakViewers * streamConfig.floorOfPeak);
     state.viewers = Math.max(floor, state.viewers * (1 - streamConfig.idleLossPerSecond * dt));

@@ -15,6 +15,7 @@
     "build": "tsc --noEmit && vite build",
     "check": "pnpm typecheck && pnpm test && vite build",
     "probe": "node tools/probe/probe.mjs",
+    "economy": "node tools/economy/releve.mjs",
     "verify": "node tools/verify.mjs",
     "check:docs": "python3 tools/docs/check_docs_links.py docs --src src --strict --allow-empty-drafts",
     "check:docs:test": "python3 -m unittest discover -s tools/docs -p 'test_*.py'",

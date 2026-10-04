@@ -5,6 +5,12 @@ import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/in
 import { type Recording } from "../../core/input/inputTypes";
 import { listSfx, playSfx } from "../../core/audio/audio";
 import { goreConfig } from "../../render/fx/gore";
+import { ECONOMY_VARIANTS, applyEconomyVariant, type EconomyVariantId } from "./economy/economyVariants";
+import { summarize, type PriceList, type ProfileId, type ProfileSummary } from "./economy/economySim";
+import { offerPrice } from "../player/perkConfig";
+import { PERKS } from "../player/perks";
+import type { LedgerEntry } from "../session/stream/streamSim";
+import type { GameSession } from "../session/gameSession";
 import { listHeroVoices, playHeroVoice } from "../../core/audio/heroVoice";
 import { zoneAmbienceDebugState } from "../../core/audio/zoneAmbience";
 import { waterAmbienceDebugState } from "../../core/audio/waterAmbience";
@@ -131,6 +137,13 @@ export function exposeDebugApi(engine: GameEngine): void {
     killSuit: () => {
       const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
       return suit ? engine.session.suitManager.debugKill(suit) : false;
+    },
+    economie: {
+      variantes: ECONOMY_VARIANTS,
+      appliquer: (nom) => applyEconomyVariant(nom),
+      journal: () => engine.session.stream.ledger,
+      releve: (profil = "normal", graines = 200) =>
+        summarize(profil, engine.session.difficulty, currentPrices(engine.session), graines),
     },
     gore: {
       config: goreConfig,
@@ -304,6 +317,17 @@ export function exposeDebugApi(engine: GameEngine): void {
   };
 }
 
+/** Prix des six perks tels que la partie les pratique : ceux des bornes du niveau, variante à l'essai comprise. Un perk sans borne est hors de prix. */
+function currentPrices(session: GameSession): PriceList {
+  const offers = (session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) => (u.sells ? [u.sells] : []));
+  return Object.fromEntries(
+    PERKS.map((perk) => {
+      const offer = offers.find((o) => o.perk === perk);
+      return [perk, offer ? offerPrice(offer) : Infinity];
+    }),
+  ) as PriceList;
+}
+
 // see: docs/archive/systems-rendu.md#éclairage-de-scène-selon-le-niveau
 function inspectLighting(engine: GameEngine) {
   const lights: { name: string; type: string; intensity: number; color: string; visible: boolean }[] = [];
@@ -414,6 +438,13 @@ declare global {
       /** Scène et caméra du moteur, pour inspecter le rendu depuis la console. */
       scene: THREE.Scene;
       camera: THREE.PerspectiveCamera;
+      /** Économie du direct (lot B7) : `appliquer("A")` met une variante à l'essai (dons et prix des bornes), `journal()` rend chaque don et chaque achat de la partie en cours, `releve(profil)` simule 200 parties types avec les réglages en place — voir `pnpm economy`. */
+      economie: {
+        variantes: typeof ECONOMY_VARIANTS;
+        appliquer: (nom: EconomyVariantId) => ReturnType<typeof applyEconomyVariant>;
+        journal: () => readonly LedgerEntry[];
+        releve: (profil?: ProfileId, graines?: number) => ProfileSummary;
+      };
       gore: {
         config: typeof goreConfig;
         stats: () => { splats: number; restingChunks: number; flyingChunks: number };

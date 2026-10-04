@@ -10,7 +10,7 @@ import {
   updateStream,
   type StreamEventKind,
 } from "../../../../src/game/session/stream/streamSim";
-import { MYSTERY_DONATIONS, MYSTERY_DONOR } from "../../../../src/game/session/stream/streamTexts";
+import { MYSTERY_DONOR, MYSTERY_TEXTS } from "../../../../src/game/session/stream/streamTexts";
 
 /** Petit générateur déterministe, local au test. */
 function rng(seed: number): () => number {
@@ -122,7 +122,7 @@ describe("simulation du direct", () => {
   it("une dépense débite le solde sans toucher au total des dons du bilan", () => {
     const state = createStreamState();
     mysteryDonation(state, "carte_or", 0);
-    const recu = MYSTERY_DONATIONS.carte_or.amount;
+    const recu = streamConfig.mystery.carte_or;
 
     expect(spend(state, recu + 1)).toBe(false);
     expect(state.wallet).toBe(recu);
@@ -136,8 +136,24 @@ describe("simulation du direct", () => {
     const state = createStreamState();
     notifyStream(state, "secret", 1, () => 0);
     const don = mysteryDonation(state, "carte_or", 1.1);
-    expect(don).toEqual({ pseudo: MYSTERY_DONOR, mystery: true, ...MYSTERY_DONATIONS.carte_or });
+    expect(don).toEqual({ pseudo: MYSTERY_DONOR, mystery: true, amount: streamConfig.mystery.carte_or, text: MYSTERY_TEXTS.carte_or });
     expect(mysteryDonation(state, "carte_or", 50)).toBeNull();
     expect(state.chat.at(-1)).toMatchObject({ pseudo: MYSTERY_DONOR, kind: "don" });
+  });
+
+  it("le journal du portefeuille retient chaque don et chaque achat, datés et avec le solde", () => {
+    const state = createStreamState();
+    mysteryDonation(state, "carte_or", 30);
+    notifyStream(state, "boss", 42, () => 0);
+    updateStream(state, DT, 50, rng(1));
+    spend(state, 15);
+    expect(spend(state, 10_000)).toBe(false);
+
+    const recu = streamConfig.mystery.carte_or;
+    expect(state.ledger).toEqual([
+      { at: 30, amount: recu, source: "mystere", wallet: recu },
+      { at: 42, amount: 20, source: "don", wallet: recu + 20 },
+      { at: 50, amount: -15, source: "achat", wallet: recu + 5 },
+    ]);
   });
 });

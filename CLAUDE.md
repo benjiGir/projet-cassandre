@@ -203,6 +203,10 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   calls de `tools/probe/poses.json` (Chrome headless, ~15 s ; `-- --pose x,y,z,cap`
   pour un point) ; `pnpm verify` = typecheck +
   tests, sortie réduite aux échecs (`-- --level`, `-- --docs` en plus).
+- **Économie du direct** : `pnpm economy` relève le portefeuille sur trois
+  parties types simulées (`-- --toutes` pour les variantes A/B/C et les trois
+  difficultés) ; en jeu, `cassandre.economie.appliquer("A")` met une variante
+  à l'essai et `cassandre.economie.journal()` rend les dons et achats réels.
 
 ## Phase courante
 
