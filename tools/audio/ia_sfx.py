@@ -253,9 +253,12 @@ def cmd_page(args) -> int:
     retenus = _lire_json(RETENUS / "retenus.json")
     lignes = []
     for nom in noms:
-        fn = RECIPES[nom][0]
-        write_wav(str(PAGE / f"{nom}_actuel.wav"), fn(seed=0), SR)
-        boutons = [f'<button class="son actuel" data-src="{nom}_actuel.wav">synthèse actuelle</button>']
+        boutons = []
+        # Un son né d'un prompt n'a pas de recette : rien à lui comparer.
+        if nom in RECIPES:
+            fn = RECIPES[nom][0]
+            write_wav(str(PAGE / f"{nom}_actuel.wav"), fn(seed=0), SR)
+            boutons.append(f'<button class="son actuel" data-src="{nom}_actuel.wav">synthèse actuelle</button>')
         for p in prises(nom):
             n = p.stem
             shutil.copy(p, PAGE / f"{nom}_{n}.wav")

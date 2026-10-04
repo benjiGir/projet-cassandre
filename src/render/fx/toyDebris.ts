@@ -22,18 +22,6 @@ const SHELL_FRICTION = 0.6;
 const SHELL_GROUND_Y = 0;
 
 
-const GIB_LIFETIME = 0.9; // s, plus long que PARTICLE_LIFETIME (chunks plus gros, chute plus lisible)
-const GIBS_PER_KILL = 8;
-const GIB_SIZE = 0.08; // m, cube de base — voir le scale non uniforme dans spawnGibs pour casser la silhouette
-const GIB_SPEED_MIN = 3; // m/s
-const GIB_SPEED_MAX = 7; // m/s
-
-const GIB_SPREAD = 0.9;
-const GIB_COLOR = 0x3a120f; // rouge/brun sombre, nettement plus sombre que PARTICLE_MATERIAL
-
-const GIB_GEOMETRY = new THREE.BoxGeometry(GIB_SIZE, GIB_SIZE, GIB_SIZE);
-const GIB_MATERIAL = new THREE.MeshLambertMaterial({ color: GIB_COLOR });
-
 const DEBRIS_LIFETIME = 1.4; // s
 const DEBRIS_SIZE = 0.06; // m
 const DEBRIS_SPEED_MIN = 2;
@@ -108,7 +96,6 @@ const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
 export class ToyDebris {
   private readonly particles: ToyParticle[] = [];
   private readonly casings: ToyParticle[] = [];
-  private readonly gibs: ToyParticle[] = [];
   private readonly debris: ToyParticle[] = [];
   private readonly frost: ToyParticle[] = [];
   private readonly ceramic: ToyParticle[] = [];
@@ -164,17 +151,6 @@ export class ToyDebris {
 
     const velocity = new THREE.Vector3(rightX * SHELL_EJECT_SPEED, SHELL_EJECT_UP_SPEED, rightZ * SHELL_EJECT_SPEED);
     this.casings.push({ mesh, velocity, life: SHELL_LIFETIME, bounce: true, gravityScale: 1 });
-  }
-
-  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3) {
-    this.spawnChunks(this.gibs, point, direction, GIB_GEOMETRY, GIB_MATERIAL, {
-      count: GIBS_PER_KILL,
-      lifetime: GIB_LIFETIME,
-      spread: GIB_SPREAD,
-      speedMin: GIB_SPEED_MIN,
-      speedMax: GIB_SPEED_MAX,
-      gravityScale: 1,
-    });
   }
 
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number) {
@@ -286,7 +262,6 @@ export class ToyDebris {
   update(realDt: number): void {
     this.updateToyPhysics(this.particles, realDt);
     this.updateToyPhysics(this.casings, realDt);
-    this.updateToyPhysics(this.gibs, realDt);
     this.updateToyPhysics(this.debris, realDt);
     this.updateToyPhysics(this.frost, realDt);
     this.updateToyPhysics(this.ceramic, realDt);
@@ -297,7 +272,6 @@ export class ToyDebris {
   reset(): void {
     this.clearToyParticles(this.particles);
     this.clearToyParticles(this.casings);
-    this.clearToyParticles(this.gibs);
     this.clearToyParticles(this.debris);
     this.clearToyParticles(this.frost);
     this.clearToyParticles(this.ceramic);

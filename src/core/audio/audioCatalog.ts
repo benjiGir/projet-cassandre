@@ -17,6 +17,7 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   enemy_shot: { sprite: "suit_shot", volume: 0.85, pitch: 0.03 },
   enemy_hurt: { sprite: "enemy_hurt", volume: 0.7 },
   enemy_death: { sprite: "suit_death", volume: 0.9 },
+  enemy_gib: { sprite: "gib_splat", volume: 1.0, pitch: 0.1 },
   door_locked: { sprite: "door_locked", volume: 0.8 },
   door_unlock: { sprite: "door_unlock", volume: 0.9 },
   door_swing: { sprite: "door_open", volume: 0.85 },

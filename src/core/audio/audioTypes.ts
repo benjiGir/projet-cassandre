@@ -10,6 +10,7 @@ export type SfxId =
   | "enemy_shot"
   | "enemy_hurt"
   | "enemy_death"
+  | "enemy_gib"
   | "door_locked"
   | "door_unlock"
   | "door_swing"

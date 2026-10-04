@@ -29,6 +29,7 @@ import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./presentation/heroPortrait";
+import { createStaticSurfaceProbe } from "./presentation/surfaceProbe";
 import { loadPickupResources, type PickupResources } from "../../render/pickups/pickupResources";
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -179,6 +180,8 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     placeLine: createPlaceLineState(),
     stats: createInitialStats(),
   };
+
+  engine.fx.setSurfaceProbe(createStaticSurfaceProbe(session));
 
   // Loadout de départ : `LevelDef.startUnarmed` (registre `game/level/catalog/levels.ts`).
   if (choice.startUnarmed) {

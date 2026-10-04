@@ -63,6 +63,14 @@
   "influence": 0.55,
   "prompt": "Someone taking a big crunchy bite of food and chewing twice, heard from very close, first person, dry, no music, no voice-over"
  },
+ "gib_splat": {
+  "candidat": "03",
+  "date": "2026-10-04 14:03",
+  "duree": 1.4,
+  "format": "pcm_44100",
+  "influence": 0.5,
+  "prompt": "A body bursting apart at point-blank range in a modern first-person shooter video game: one heavy wet squelching splat, gore and meat chunks slapping onto a hard floor, juicy, gooey, punchy and exaggerated, single event, dry, no music, no voice-over"
+ },
  "impact_concrete": {
   "candidat": "02",
   "date": "2026-10-02 09:34",

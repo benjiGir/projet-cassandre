@@ -75,7 +75,7 @@ REGISTRE: dict[str, Recette] = {}
 # le pompe), et le tir du Costard, nouveau, reste sous sa telegraphie.
 NIVEAUX = {
     "pistol_fire": -12.0, "shotgun": -9.0, "explosion": -7.5, "crowbar_metal": -22.9, "impact_metal": -22.9,
-    "impact_concrete": -20.6, "impact_flesh": -20.4, "crowbar_flesh": -12.6,
+    "impact_concrete": -20.6, "impact_flesh": -20.4, "crowbar_flesh": -12.6, "gib_splat": -11.0,
     "impact_glass": -18.0, "prop_break_wood": -23.6, "ceramic_break": -16.1,
     "crowbar_swing": -15.4, "shotgun_pump": -26.4, "shell_drop": -19.3,
     "door_open": -11.9, "door_shutter": -14.4, "door_slide": -13.5, "cart_roll": -15.9,

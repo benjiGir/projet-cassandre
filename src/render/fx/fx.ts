@@ -6,6 +6,7 @@ import { ImpactDecals } from "./impactDecals";
 import { ToyDebris } from "./toyDebris";
 import { WaterJets } from "./waterJets";
 import { Explosions } from "./explosions";
+import { Gore, type SurfaceProbe } from "./gore";
 
 // see: docs/6-reference/notes-code-rendu.md#effets-et-allocation
 export class FxSystem {
@@ -16,6 +17,7 @@ export class FxSystem {
   private readonly debris: ToyDebris;
   private readonly water: WaterJets;
   private readonly explosions: Explosions;
+  private readonly gore: Gore;
 
   constructor(scene: THREE.Scene) {
     // Une seule lecture du flux cosmétique, partagée dans le même ordre d'appels.
@@ -26,6 +28,7 @@ export class FxSystem {
     this.debris = new ToyDebris(scene, nextRandom);
     this.water = new WaterJets(scene, nextRandom);
     this.explosions = new Explosions(scene, nextRandom);
+    this.gore = new Gore(scene, nextRandom);
   }
 
   setRandom(random: () => number): void { this.random = random; }
@@ -37,7 +40,13 @@ export class FxSystem {
     this.debris.reset();
     this.water.clearWaterJets();
     this.explosions.reset();
+    this.gore.reset();
+    // La sonde appartient à la partie qui vient de finir : son monde physique va être libéré.
+    this.gore.setSurfaceProbe(null);
   }
+
+  /** Donne au gore de quoi trouver le décor de CETTE partie — voir `SurfaceProbe`. */
+  setSurfaceProbe(probe: SurfaceProbe | null): void { this.gore.setSurfaceProbe(probe); }
 
   triggerShake(amplitude: number, duration: number): void { this.shake.triggerShake(amplitude, duration); }
   currentShakeOffset(out: THREE.Vector3): THREE.Vector3 { return this.shake.currentShakeOffset(out); }
@@ -51,7 +60,18 @@ export class FxSystem {
     this.debris.spawnImpactParticles(point, normal, weapon, material);
   }
   spawnShellCasing(position: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnShellCasing(position, direction); }
-  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnGibs(point, direction); }
+  /** Un ennemi explose : flaque, giclées et morceaux qui retombent — voir `gore.ts`. */
+  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3): void { this.gore.spawnGibs(point, direction); }
+  /** Giclée sur le décor derrière un ennemi touché. */
+  spawnBloodSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun"): void {
+    this.gore.spawnSpray(point, direction, weapon);
+  }
+  /** Flaque qui s'étale sous un ennemi mort sur place. */
+  spawnBloodPool(center: THREE.Vector3): void { this.gore.spawnPool(center); }
+  /** Taches et morceaux en place, pour les outils et les tests. */
+  get goreStats(): { splats: number; restingChunks: number; flyingChunks: number } {
+    return { splats: this.gore.splatCount, restingChunks: this.gore.restingChunkCount, flyingChunks: this.gore.flyingChunkCount };
+  }
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number): void {
     this.debris.spawnDebris(point, direction, color, count);
   }
@@ -75,5 +95,6 @@ export class FxSystem {
     this.debris.update(realDt);
     this.water.update(realDt);
     this.explosions.update(realDt);
+    this.gore.update(realDt);
   }
 }

@@ -21,9 +21,9 @@ import { suitConfig } from "../entities/suit/suitConfig";
 import { directorConfig } from "../entities/director/directorConfig";
 import { useGameStore } from "../hud/state";
 import { presentPlayerDamage } from "../session/player/feedback";
+import { isMovableOrBreakableHandle } from "../session/presentation/surfaceProbe";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
-import type { LevelHandle } from "../level/loading/levelTypes";
 import { astarMetricsSnapshot } from "../level/navigation/navSearch";
 import { collectActiveShowerOrigins } from "../level/sanitaires/douches";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
@@ -55,28 +55,10 @@ const EXPLOSION_SHAKE_DURATION = 0.4;
 const EXPLOSION_SHAKE_RANGE = 25;
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
-let movableHandlesLevel: LevelHandle | null | undefined;
-let movableHandles: ReadonlySet<number> = new Set();
-
-function isMovableOrBreakableHandle(session: FxSession, colliderHandle: number): boolean {
-  const handle = session.gltfLevelSession?.current ?? null;
-  if (handle !== movableHandlesLevel) {
-    movableHandlesLevel = handle;
-    const set = new Set<number>();
-    if (handle) {
-      for (const door of handle.doors) set.add(door.collider.handle);
-      for (const vitre of handle.vitres) if (vitre.collider) set.add(vitre.collider.handle);
-      for (const sanitaire of handle.sanitaires) set.add(sanitaire.collider.handle);
-      for (const prop of handle.props) set.add(prop.collider.handle);
-    }
-    movableHandles = set;
-  }
-  return movableHandles.has(colliderHandle);
-}
-
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
+const sprayDirectionScratch = new THREE.Vector3();
 
 const waterListenerRightScratch = new THREE.Vector3();
 const waterJetOriginScratch: THREE.Vector3[] = [];
@@ -149,6 +131,11 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
           }
           engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, hit.material);
+          if (isEnemyHit) {
+            // Le sang part dans l'axe du coup, sur ce qu'il y a derrière l'ennemi.
+            sprayDirectionScratch.subVectors(hit.point, engine.camera.position).normalize();
+            engine.fx.spawnBloodSpray(hit.point, sprayDirectionScratch, hit.weapon);
+          }
           engine.fx.triggerShake(
             isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
             isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
@@ -198,6 +185,9 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             // normale (le Costard reste en état "dead"/"corpse" côté simulation
             // pour la persistance du cadavre — seul le RENDU change ici).
             engine.fx.spawnGibs(event.point, event.direction);
+            playSfx("enemy_gib");
+          } else {
+            engine.fx.spawnBloodPool(event.suit.position);
           }
           engine.hitmarker.trigger("kill");
           playEnemySfx("death", event.suit.kind);
@@ -241,7 +231,8 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           engine.fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
         }
         for (const event of session.directorManager.deathEvents) {
-          void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
+          // Pas de gibs pour le Directeur (voir la doc de `DirectorManager`) : il laisse une flaque.
+          engine.fx.spawnBloodPool(event.director.position);
           engine.hitmarker.trigger("kill");
           playEnemySfx("death");
           // Le multiplicateur de vues du Directeur est déjà appliqué au pas fixe.

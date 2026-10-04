@@ -4,6 +4,7 @@ import type { SfxId } from "../../core/audio/audioTypes";
 import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/input/inputRecorder";
 import { type Recording } from "../../core/input/inputTypes";
 import { listSfx, playSfx } from "../../core/audio/audio";
+import { goreConfig } from "../../render/fx/gore";
 import { listHeroVoices, playHeroVoice } from "../../core/audio/heroVoice";
 import { zoneAmbienceDebugState } from "../../core/audio/zoneAmbience";
 import { waterAmbienceDebugState } from "../../core/audio/waterAmbience";
@@ -129,6 +130,24 @@ export function exposeDebugApi(engine: GameEngine): void {
     killSuit: () => {
       const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
       return suit ? engine.session.suitManager.debugKill(suit) : false;
+    },
+    gore: {
+      config: goreConfig,
+      stats: () => engine.fx.goreStats,
+      exploser: () => {
+        const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
+        if (!suit) return false;
+        // Un souffle parti d'entre le joueur et lui, qui n'atteint que lui : la vraie mort à gibs, dans l'axe du regard.
+        const center = suit.position.clone().lerp(engine.session.player.position, 0.2);
+        engine.session.suitManager.applyBlast(center, () => Number.MAX_SAFE_INTEGER, (point) => point === suit.position, Infinity);
+        return true;
+      },
+    },
+    get scene() {
+      return engine.scene;
+    },
+    get camera() {
+      return engine.camera;
     },
     get directors() {
       return engine.session.directorManager.directors;
@@ -388,6 +407,15 @@ declare global {
       suitAliveCount: () => number;
       /** DEV : tue le premier Costard vivant (vrai `deathEvent`, compté par le récap) — `false` si aucun n'est vivant. */
       killSuit: () => boolean;
+      /** Gore (`render/fx/gore.ts`) : `config` se règle en direct, `stats()` compte taches et morceaux en place, `exploser()` fait éclater le premier Costard vivant comme un coup de pompe à bout portant. */
+      /** Scène et caméra du moteur, pour inspecter le rendu depuis la console. */
+      scene: THREE.Scene;
+      camera: THREE.PerspectiveCamera;
+      gore: {
+        config: typeof goreConfig;
+        stats: () => { splats: number; restingChunks: number; flyingChunks: number };
+        exploser: () => boolean;
+      };
       /** Mêmes rôles que `suits`/`suitConfig`/`spawnSuit`, pour le Directeur (boss Zone E) — voir `director.ts`/`directorManager.ts`. Jalon M8 : `directors`/`directorManager` sont des accesseurs LIVE (getters). */
       directors: Director[];
       /** Référence directe au manager complet (badge, files d'événements) — même précédent que `weapons` ci-dessus, utile pour du débogage console. Getter LIVE (Jalon M8). */
