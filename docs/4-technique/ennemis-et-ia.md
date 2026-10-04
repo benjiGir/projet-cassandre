@@ -1,22 +1,22 @@
 ---
 title: Ennemis et IA
 tags: [technique]
-status: stable
-updated: 2026-10-03
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Ennemis et IA
 
 ## Responsabilité
 
-Fait : porte le comportement de combat de Costard et Directeur — perception
+Fait : porte le comportement de combat du Costard, du Rampant, du Vigile et du Directeur — perception
 (ligne de vue, portée), poursuite (pathfinding 2.5D + évitement local),
-télégraphie et résolution d'une attaque hitscan, recul, mort — via une seule
-machine XState **partagée** entre les deux types
+télégraphie et résolution d'une attaque (tir ou coup au contact), recul, mort — via une seule
+machine XState **partagée** entre tous les types
 ([ADR 0009](../decisions/0009-machine-partagee-suit-director.md)). Intègre
 aussi leur propre corps Rapier (`KinematicCharacterController`, invariant
 #6) : le module de physique des ennemis construit et pilote leur capsule. Fournit le spawn depuis les Empties `spawn_suit_*`/
-`spawn_director_*` du niveau.
+`spawn_rampant_*`/`spawn_vigile_*`/`spawn_director_*` du niveau.
 
 Ne fait pas : ne construit pas le graphe de navigation ni ne décide de son
 `MAX_STEP_HEIGHT` ([Pathfinding](pathfinding.md)) — se contente de
@@ -41,6 +41,11 @@ en entrée (D28).
 - `src/game/entities/suit/suit.ts` / `suitConfig.ts` / `suitManager.ts` — le
   Costard : fin wrapper Rapier + config + PRNG + acteur ; `SuitManager`
   pilote `Suit[]`, un seul KCC partagé, les files d'évènements par frame.
+- `src/game/entities/rampant/rampantConfig.ts` et
+  `src/game/entities/vigile/vigileConfig.ts` — deux autres espèces du même
+  gestionnaire : une configuration chacune, aucun code propre.
+- `src/game/entities/shared/enemyTuning.ts` — PV et dégâts d'une partie,
+  posés par sa difficulté sur une copie de chaque configuration.
 - `src/game/entities/director/director.ts` / `directorConfig.ts` / `directorManager.ts`
   — le Directeur : même schéma, plus la révélation (`revealed`), la carte
   Platine lâchée à la mort (`DroppedCard`) et son délai de ramassage.
@@ -82,6 +87,35 @@ bake le graphe de navigation avant de spawner le premier Costard/Directeur
 (voir Pièges).
 
 ## Données et contrats
+
+### Espèces
+
+Le Costard, le Rampant et le Vigile passent par le même `SuitManager` et la
+même classe `Suit`. Ce qui les distingue est un champ, `kind`, et une
+configuration : un `switch`, pas une hiérarchie (invariant #8). Le Directeur
+garde son gestionnaire, pour sa révélation et sa carte.
+
+| Espèce | Configuration | Ce que la configuration ajoute |
+|---|---|---|
+| Costard | `suitConfig` | rien : c'est la base |
+| Rampant | `rampantConfig` | `melee` — il frappe au contact au lieu de tirer |
+| Vigile | `vigileConfig` | `melee`, et `shield` — un arc avant qui arrête les tirs |
+
+`melee` remplace le tir par un bond puis un coup, qui ne porte que sous
+`reach`. `shield` est lu par le gestionnaire quand il range les impacts du
+pas : un impact dont la normale tombe dans l'arc avant du porteur est mis de
+côté (`blockedHits`) au lieu de blesser. Seule la direction vue de dessus
+compte. Le rendu traite ces impacts comme du métal. `applyBlast` ne consulte
+pas le bouclier.
+
+Le préfixe du point d'apparition donne l'espèce ; la planche de sprites est
+choisie par `suitSheetFor` (`src/game/session/spawning.ts`), la voix par
+`ENEMY_SFX` (`src/core/audio/audioCatalog.ts`).
+
+La difficulté de la partie multiplie les PV et les dégâts de chaque espèce
+sur une copie de sa configuration (`tuneEnemyConfig`). Un réglage neutre rend
+la configuration elle-même, pour que le panneau de réglage continue d'agir
+dessus ([ADR 0042](../decisions/0042-difficulte.md)).
 
 **`EnemyMachineContext`** (`enemyMachine.ts`) porte tout ce qu'une entité vit,
 hors id/rendu. Deux catégories de champs à distinguer à la lecture :
@@ -230,6 +264,11 @@ serait recompté ou un nouveau raté
 
 - `test/game/entities/suit/suit.test.ts` — machine à états, dégâts, knockback,
   gibs, RNG par entité, intégration physique.
+- `test/game/entities/rampant/rampant.test.ts` et
+  `test/game/entities/vigile/vigile.test.ts` — configuration par espèce,
+  préfixes d'apparition, arc du bouclier, tir dans le dos, souffle.
+- `test/game/session/progression/difficulty.test.ts` — multiplicateurs de PV
+  et de dégâts par espèce, configurations globales intactes.
 - `test/game/entities/director/director.test.ts` — mêmes garanties + révélation,
   `justRevealed`, `DroppedCard`/`tryCollectCard`.
 - `test/game/entities/shared/lineOfSight.test.ts` — occlusion de ligne de vue

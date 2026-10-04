@@ -4,6 +4,53 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié] — v1.2 « Les sponsors »
+
+L'argent du direct sert à quelque chose, et le combat varie. En attente du
+playtest.
+
+### Ajouté
+
+- Six bornes de sponsors, de la galerie aux bureaux : chacune vend un perk
+  contre la cagnotte du direct, à la touche d'usage, sans menu.
+- Six perks : pied-de-biche plus violent, ennemis qui repèrent de moins loin,
+  ramassage de plus loin, plus de munitions, pointe de vitesse après un kill,
+  plus de points de vie.
+- Bonbonnes de gaz : elles explosent à la casse, blessent ce qui est en vue et
+  amorcent leurs voisines.
+- Deux ennemis : le Rampant, rapide et fragile, qui griffe en meute ; le
+  Vigile, lent et protégé de face par un bouclier.
+- Trois difficultés — Client, Habitué, Lanceur d'alerte — choisies avant le
+  chargement, et des records tenus par difficulté.
+- Trois rencontres : une arène qui se verrouille dans la réserve, une meute de
+  Rampants au parking souterrain, un Vigile devant l'escalier des bureaux.
+- Du sang qui reste : flaque sous un mort, giclée derrière un ennemi touché,
+  taches aux murs et morceaux qui retombent quand un ennemi éclate, avec un
+  son dédié.
+
+### Modifié
+
+- Le donateur mystère donne moins (100 € au lieu de 176 €) et dès le départ ;
+  les spectateurs donnent plus souvent.
+- Le parking souterrain compte deux Costards au lieu de six : des Rampants les
+  remplacent.
+- Le passage nord de la réserve a un rideau métallique, relevé hors combat.
+- Le récapitulatif rappelle la difficulté jouée et l'état du record.
+
+### Technique
+
+- Bornes et perks posés sur la partie, jamais sur une configuration globale
+  (ADR 0040) ; explosifs comme matière de prop, souffle dans le pas fixe
+  (ADR 0041) ; difficulté lue à la construction de la partie (ADR 0042).
+- Script de niveau : une étape peut attendre la chute d'un groupe, avec un
+  terme, et un scénario peut verrouiller des portes (révision de l'ADR 0037).
+- Portes : état « née ouverte » et verrou du script.
+- Gore en deux lots de dessin, posé sur le seul décor statique.
+- `pnpm economy` : relevé du portefeuille sur trois parties types simulées,
+  et trois variantes d'équilibrage essayables en jeu.
+- Outils : `tools/blender/refresh_perk_kiosks.py`, `refresh_gas_props.py`,
+  `refresh_encounters.py`, `tools/economy/releve.mjs`.
+
 ## [Non publié] — v1.1 « Le live »
 
 Le niveau raconte une histoire. En attente du playtest.

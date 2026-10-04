@@ -2,7 +2,7 @@
 title: Glossaire
 tags: [introduction]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Glossaire
@@ -17,14 +17,19 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Terme | Définition | Où le voir |
 |---|---|---|
 | Annonce | Message des haut-parleurs du magasin ou de l'interphone de la direction, affiché en haut de l'écran par un scénario. | `src/game/session/progression/levelEvents.ts` |
-| Cagnotte | Total des dons reçus pendant la partie. Rien ne s'achète encore avec. | `src/game/session/stream/streamSim.ts` |
+| Arène | Rencontre qui ferme les issues d'une salle le temps de deux vagues d'ennemis, puis les rouvre. Celle du niveau est dans la réserve. | `src/game/session/progression/levelEvents.ts`, `docs/decisions/0037-script-de-niveau.md` |
+| Bonbonne (de gaz) | Prop de matière `gaz` : poussable, et qui explose à sa casse en amorçant ses voisines. | `src/game/level/props/propConfig.ts`, `docs/decisions/0041-explosifs.md` |
+| Borne | Terminal de sponsor posé dans le niveau : un `use_*` qui vend un seul perk, une fois par partie, contre la cagnotte. | `src/game/session/progression/perks.ts`, `docs/decisions/0040-bornes-et-perks.md` |
+| Cagnotte | Solde des dons reçus pendant la partie, dépensable aux bornes. | `src/game/session/stream/streamSim.ts` |
 | Carte de fidélité (argent / or / platine) | Objet-clé façon Duke 3D : `argent` et `or` se ramassent via un `use_*` (propriété `card`), `platine` est lâchée par le Directeur à sa mort. Une porte peut exiger une carte (`requires`) pour être actionnée. | `src/game/player/loyaltyCards.ts`, `src/game/session/progression/cards.ts` |
 | Direct (le) | La simulation du stream : spectateurs qui montent avec l'action et partent avec l'ennui, abonnés, dons et chat. La cagnotte des dons est sans lien avec le score du récapitulatif. | `src/game/session/stream/streamSim.ts`, `docs/decisions/0038-simulation-du-direct.md` |
 | Costard (Suit) | L'ennemi de base : humain en costume noir, cravate rouge, jusqu'à sa mort. Partage sa machine à états avec le Directeur. | `src/game/entities/suit/suit.ts`, `src/game/entities/shared/enemyMachine.ts` |
 | Directeur (Director) | Boss unique du niveau. Costume beige, révélation reptilienne à la mort, lâche la carte Platine. | `src/game/entities/director/director.ts`, `src/game/entities/director/directorConfig.ts` |
-| Donateur mystère | Spectateur dont les dons et les messages trop précis guident le héros ; il travaille pour la plateforme de diffusion, qui veut de l'audience et garde les revenus. Prévu pour la v1.1, pas encore en jeu. | `docs/2-fonctionnel/histoire.md` |
+| Difficulté (profil) | Client, Habitué ou Lanceur d'alerte : choisie au lancement, elle règle la vie et les dégâts des ennemis, la taille des renforts et la générosité des dons. | `src/game/session/progression/difficulty.ts`, `docs/2-fonctionnel/difficulte.md` |
+| Donateur mystère | Spectateur dont les dons et les messages trop précis guident le héros ; il travaille pour la plateforme de diffusion, qui veut de l'audience et garde les revenus. Il donne à cinq étapes de l'histoire, sans tirage. | `docs/2-fonctionnel/histoire.md`, `src/game/session/stream/streamSim.ts` |
 | Espace | Une zone nommée du niveau (rayons, réserve, bureaux…), reliée aux autres par le hub. | `docs/6-reference/conventions-nommage.md` |
-| Gibs | Explosion de morceaux jouets qui remplace l'animation de mort normale d'un Costard tué au pompe à bout portant (distance ≤ `gibDistance`) ; purement cosmétique, la simulation le garde `dead`/`corpse` normalement. | `src/render/fx/fx.ts::spawnGibs`, `src/game/entities/suit/suitManager.ts` |
+| Gibs | Ce qui remplace l'animation de mort d'un ennemi tué au pompe à bout portant ou pris au cœur d'une explosion (distance ≤ `gibDistance`) : flaque, traînées, taches aux murs et morceaux qui retombent. Purement cosmétique, la simulation le garde `dead`/`corpse`. | `src/render/fx/gore.ts`, `src/game/entities/suit/suitManager.ts` |
+| Groupe (d'ennemis) | Points d'apparition qui portent le même `groupe` : leurs ennemis n'apparaissent qu'au réveil du groupe par un scénario, en nombre réglé par la difficulté. | `src/game/session/progression/levelScriptActions.ts` |
 | Hub | Zone centrale à la Duke 3D d'où partent les espaces du niveau, débloqués par les cartes de fidélité. | CLAUDE.md (section « Chantier Niveau v2 ») |
 | Hypermarché | Le décor du prototype : un hypermarché des années 90, univers satirique. | `docs/1-introduction/le-projet.md` |
 | Hyper Varan | Le nom de l'enseigne, « le sang-froid des prix bas ». Le niveau s'appelle « Inventaire exceptionnel ». | `docs/2-fonctionnel/histoire.md` |
@@ -32,11 +37,17 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Sous-zone | Partie d'un espace délimitée par un `trig_*` portant `replique` : le héros la commente à sa première visite. | `src/game/session/progression/levelScriptSetup.ts` |
 | Télégraphie (d'attaque) | Anticipation visuelle et sonore obligatoire avant les dégâts d'une attaque ennemie (pose de tir tenue au moins `attackTelegraphDuration`, ≥ 0,2 s) — condition de lisibilité du combat, pas une mécanique optionnelle. | `src/game/entities/shared/enemyMachine.ts`, skill `enemy-state-machine` |
 | Moment scripté | Séquence courte lancée par un `trig_*`, qui ne retire jamais le contrôle : annonce, écrans, réplique. Son déroulé est un scénario. | `docs/decisions/0037-script-de-niveau.md` |
+| Perk | Produit de sponsor acheté à une borne : il modifie une valeur de la partie en cours, et disparaît avec elle. Six existent. | `src/game/player/perks.ts`, `src/game/player/perkConfig.ts` |
+| Rampant | Reptilien sans costume : rapide, fragile, au corps-à-corps, en meute. Sa silhouette basse oblige à viser bas. | `src/game/entities/rampant/rampantConfig.ts` |
+| Record | Meilleur score et meilleur temps d'un niveau terminé, tenus par difficulté et gardés sur le navigateur. | `src/game/settings/records.ts` |
+| Rencontre | Endroit du parcours où le script de niveau fait surgir des ennemis à l'arrivée du joueur. | `tools/blender/refresh_encounters.py` |
 | Panneau d'histoire | Illustration légendée de l'introduction ou de la fin, affichée hors de la partie. | `src/game/session/presentation/storyPanels.ts` |
 | Récapitulatif de fin de partie | Liste des sources de points révélée ligne par ligne à l'écran, suivie du total ; partiel à la mort (sans bonus de rapidité), complet à la vraie sortie du niveau. | `src/game/session/progression/score.ts` |
 | Réveil du peuple (« le Réveil ») | La chaîne du héros, qui lui sert aussi de pseudo : il n'a pas de nom civil. Le chat l'appelle « le Réveil ». | `src/ui/hud/widgets/LiveCam/LiveCam.tsx`, `docs/2-fonctionnel/histoire.md` |
 | Révélation reptilienne | Bascule cosmétique du Directeur à sa mort : costume humain remplacé par une peau `revele` verte à crête, posée par `setAtlas`. Purement visuelle, pas un changement de comportement. | `src/game/entities/director/directorConfig.ts` |
 | Sanitaire (`sanitaire_*`) | Cuvette ou urinoir façon Duke 3D : utilisable en visant (soin ou eau selon l'état), cassable si `pv`. | `src/game/level/sanitaires/sanitaires.ts` |
+| Variante d'économie | Réglage complet des dons et des prix (A, B ou C), essayable en jeu et mesuré par `pnpm economy`. La B est celle du jeu. | `src/game/devtools/economy/economyVariants.ts` |
+| Vigile | Agent de sécurité lourd et lent, protégé de face par un bouclier : on le contourne, ou on le fait sauter. | `src/game/entities/vigile/vigileConfig.ts` |
 | Secret | Zone comptée dans le compteur de secrets, comptabilisée au score une fois trouvée (test AABB générique). | `src/game/session/progression/score.ts` |
 
 ## Boucle et temps
@@ -136,7 +147,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Kit modulaire | Ensemble de pièces paramétriques réutilisées pour construire le niveau (murs, sols, gondoles…). | `docs/6-reference/conventions-nommage.md` |
 | `_KIT` / `_LIB` | Collections Blender portant les patrons d'assets (kit modulaire, bibliothèque), jamais exportées telles quelles dans le niveau. | `docs/6-reference/conventions-nommage.md` |
 | Plan de masse | Vue de dessus du niveau reliant les espaces entre eux, régénérée à chaque changement de structure. | CLAUDE.md (« Chantier Niveau v2 ») |
-| Préfixes de nommage (`col_*`, `spawn_*`, `trig_*`, `door_*`, `use_*`, `secret_*`, `prop_*`, `vitre_*`, `sanitaire_*`, `ecran_*`, `light_*`, `cam_*`) | Convention de nommage d'objet Blender qui pilote l'import : chaque préfixe déclenche un traitement précis au chargement (collider, spawn, trigger, porte animée, interactif, secret, prop physique, vitrage, sanitaire, écran, lumière ou caméra). | `src/game/level/loading/loader.ts`, `docs/6-reference/conventions-nommage.md` |
+| Préfixes de nommage (`col_*`, `spawn_*` — dont `spawn_rampant_*` et `spawn_vigile_*` —, `trig_*`, `door_*`, `use_*`, `secret_*`, `prop_*`, `vitre_*`, `sanitaire_*`, `ecran_*`, `light_*`, `cam_*`) | Convention de nommage d'objet Blender qui pilote l'import : chaque préfixe déclenche un traitement précis au chargement (collider, spawn, trigger, porte animée, interactif, secret, prop physique, vitrage, sanitaire, écran, lumière ou caméra). | `src/game/level/loading/loader.ts`, `docs/6-reference/conventions-nommage.md` |
 
 ## Audio
 

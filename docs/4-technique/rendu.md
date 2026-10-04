@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Rendu
@@ -21,6 +21,8 @@ Le rendu transforme la scène Three.js en image, puis la présente dans le canev
 - `src/game/loop/updateFx.ts` — met à jour les éléments visuels transitoires au taux d'affichage.
 - `src/game/session/gameEngine.ts` — crée la scène, la caméra, le renderer et les overlays.
 - `src/game/settings/graphicsSettings.ts` — persiste et applique les réglages de rendu.
+- `src/render/fx/gore.ts` — taches de sang persistantes et morceaux d'un ennemi qui éclate.
+- `src/game/session/presentation/surfaceProbe.ts` — sonde du décor statique, fournie au gore par le jeu.
 - `src/render/debug/debugView.ts` — bascule la géométrie en mode wireframe.
 - `src/render/overlays/cameraView.ts`, `crosshair.ts` et `hitmarker.ts` — canevas 2D spécialisés hors React.
 - `index.html` — dimensionne l'image 16:9 et demande un agrandissement à pixels nets.
@@ -102,6 +104,39 @@ Chaque racine de niveau possède son matériau, partagé par ses jets. La
 libération de l'ancien niveau ne détruit donc pas le programme déjà préparé
 pour le nouveau.
 
+### Gore
+
+`src/render/fx/gore.ts` dessine ce qu'un ennemi laisse sur le décor : une
+flaque qui s'étale sous un mort, une giclée derrière un ennemi touché, et pour
+un ennemi qui éclate une flaque, des traînées au sol, des taches à coulures
+aux murs et des morceaux qui retombent. Tout est cosmétique : temps
+d'affichage, flux de présentation, aucun effet sur la simulation.
+
+Le coût est fixe : **deux lots de dessin**, quelle que soit la quantité de
+sang. Les taches sont les quads d'une seule géométrie, écrits dans une réserve
+tournante de 192 ; les morceaux sont un `InstancedMesh` de 48. Les plus
+anciens sont repris quand la réserve est pleine.
+
+Le rendu ne connaît pas Rapier. Le jeu lui fournit une sonde
+(`createStaticSurfaceProbe`) qui rend le premier décor **statique** sur un
+rayon. Une porte, une vitre, un sanitaire ou un prop ne reçoivent jamais de
+tache : elle resterait suspendue en l'air une fois l'objet ouvert ou cassé.
+La sonde appartient à la partie ; `resetSession` la retire avant que le monde
+physique ne soit libéré.
+
+Trois règles de pose :
+
+- une tache vérifie que son pourtour repose sur la même surface ; sinon elle
+  se réduit de moitié, ou ne se pose pas ;
+- au sol elle prend n'importe quelle orientation, ou s'allonge dans l'axe du
+  coup ; au mur elle reste droite, coulures vers le bas ;
+- le mesh des taches se dessine après le décor opaque (`renderOrder`), sans
+  écrire la profondeur : deux taches superposées se recouvrent dans l'ordre
+  de pose au lieu de scintiller.
+
+L'atlas des taches est dessiné par le code, sans tirage : huit formes fixes en
+gros pixels. Les réglages sont dans `goreConfig`.
+
 ### Frontières des couches
 
 `src/render/` dépend de Three.js et reçoit des valeurs simples. Il ne lit pas directement les machines ennemies ni les contrôleurs joueur. `game/loop/` traduit l'état du jeu en poses et événements visuels ; l'architecture complète est décrite dans [Simulation et présentation](../3-architecture/simulation-et-presentation.md).
@@ -142,6 +177,8 @@ Le renderer fixe le pixel ratio à 1 et désactive l'antialiasing. La netteté p
 - Tout appel au service de rendu reste synchrone. Une ressource qui exige une promesse se charge avant d'entrer dans la frame.
 
 ## Tests
+
+- `test/render/fx/gore.test.ts` — taches au sol et au mur, morceaux qui se posent, réserve tournante, arêtes, remise à zéro. `test/game/session/presentation/surfaceProbe.test.ts` — la sonde ignore mobilier, portes, vitres et sanitaires.
 
 - `test/render/pipeline/renderService.test.ts` — service de rendu substituable et absence d'appel WebGL par sa couche de test.
 - `test/game/level/loading/loader.test.ts` — reconversion des matériaux du glTF et conservation des propriétés nécessaires au rendu.

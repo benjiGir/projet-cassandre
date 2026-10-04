@@ -1,8 +1,8 @@
 ---
 title: Interface
 tags: [fonctionnel]
-status: stable
-updated: 2026-10-03
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Interface
@@ -21,7 +21,9 @@ stateDiagram-v2
   [*] --> MenuPrincipal
   MenuPrincipal --> ParamètresDuSignal
   ParamètresDuSignal --> MenuPrincipal
-  MenuPrincipal --> Chargement
+  MenuPrincipal --> ChoixDuProfil
+  ChoixDuProfil --> MenuPrincipal
+  ChoixDuProfil --> Chargement
   Chargement --> Jeu
   Chargement --> ÉchecDeChargement
   ÉchecDeChargement --> Chargement
@@ -47,9 +49,18 @@ bandeau « SIGNAL INTERCEPTÉ », une légende de caméra
 (« CAM_04 · RÉVEIL_DU_PEUPLE »), le titre « PROJET_CASSANDRE » sous
 l'accroche « RÉVEIL_DU_PEUPLE — la vérité, en direct », et un bandeau
 défilant sans lien avec la partie (« SIGNAL NON AUTORISÉ », « 200
-ABONNÉS »…). Trois actions : « REJOINDRE LE DIRECT » lance directement le
-niveau, « PARAMÈTRES DU SIGNAL » ouvre les options, « COUPER LA DIFFUSION »
+ABONNÉS »…). Trois actions : « REJOINDRE LE DIRECT » mène au choix du
+profil, « PARAMÈTRES DU SIGNAL » ouvre les options, « COUPER LA DIFFUSION »
 tente de fermer l'onglet et l'explique en toutes lettres quand ça échoue.
+
+### Choix du profil
+
+Sous le titre « QUI ENTRE DANS LE MAGASIN ? », trois cartes côte à côte :
+Client, Habitué, Lanceur d'alerte. Chacune porte une phrase d'ambiance, quatre
+lignes qui disent ce que le profil change, et le record du joueur dans ce
+profil. Un clic choisit et lance le chargement. Le dernier profil joué est
+marqué d'une flèche et reçoit le focus. « ◀ RETOUR » ramène au menu. Le
+détail est dans [Difficulté](difficulte.md).
 
 ### Paramètres du signal (options)
 
@@ -100,9 +111,10 @@ plateforme ». Ce bilan est informatif et ne compte pas dans le score. Suivent
 le temps comparé au temps de référence et un récapitulatif **complet**, bonus
 de rapidité compris. Deux actions : « ▶ REJOUER » et « ◀ RETOUR AU MENU ».
 
-Dans les deux cas, le récapitulatif se révèle ligne par ligne, boutons
-utilisables pendant toute la révélation. Barème complet :
-[Secrets et score](secrets-et-score.md).
+Dans les deux cas, le récapitulatif rappelle le profil joué et se révèle ligne
+par ligne, boutons utilisables pendant toute la révélation. Sous le total
+d'un niveau terminé, une ligne dit « NOUVEAU RECORD » ou rappelle le record à
+battre. Barème complet : [Secrets et score](secrets-et-score.md).
 
 ### Le HUD « stream »
 
@@ -126,6 +138,10 @@ cagnotte des dons reçus, puis les répliques du héros, sous l'étiquette
 « RÉVEIL_DU_PEUPLE dit : », avec un délai minimum entre deux.
 
 En haut au centre passent les annonces du magasin et de l'interphone.
+
+Près d'une borne, une invite s'affiche au centre de l'image, sous le réticule : la touche
+d'usage, le produit, ce qu'il change et son prix, ou la mention qu'elle est
+épuisée. Elle disparaît dès qu'on s'éloigne. Voir [Sponsors](sponsors.md).
 
 En bas à gauche, au-dessus des cartes : le chat du direct, cinq lignes qui
 commentent vos actions, et l'alerte du dernier don avec le mot du donateur.
@@ -186,7 +202,9 @@ Aucune valeur numérique propre à cette page : barème de score dans [Secrets e
 
 - Validé en playtest : la direction « salle de contrôle » du HUD et sa
   disposition en coins d'écran.
-- En attente de verdict : la pause sur perte de verrouillage du pointeur,
+- En attente de verdict : l'écran de choix du profil, l'invite des bornes et
+  la ligne de record du récapitulatif (octobre 2026).
+- En attente de verdict aussi : la pause sur perte de verrouillage du pointeur,
   les réglages d'affichage appliqués à chaud en pause, et le récapitulatif
   révélé ligne par ligne — ajoutés à la passe du 2026-09-25, jamais
   déclenchés par une vraie touche en conditions réelles.

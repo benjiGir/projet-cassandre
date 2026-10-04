@@ -2,7 +2,7 @@
 title: Commandes
 tags: [reference, commandes]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-04
 ---
 
 # Commandes
@@ -20,6 +20,9 @@ Les commandes du projet viennent de `package.json`. PNPM utilise la version verr
 | `pnpm check` | Typecheck, tests Vitest, contrôle documentaire strict et build de production. |
 | `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. Aussi exécuté par `pnpm check` et la CI. |
 | `pnpm check:docs:test` | Exécute les tests Python du vérificateur documentaire. |
+| `pnpm verify` | Typecheck et tests, sortie réduite aux échecs ; `-- --level` ajoute le contrat et l'audit du niveau (Blender headless), `-- --docs` le contrôle documentaire. |
+| `pnpm probe` | Mesure les lots de dessin en jeu aux poses de `tools/probe/poses.json`. |
+| `pnpm economy` | Relève le portefeuille sur trois parties types simulées ; `-- --variante A`, `-- --difficulte client`, `-- --toutes`. |
 
 ## Audio
 
@@ -52,13 +55,15 @@ Pour un script Blender, la forme est `blender -b FICHIER -P SCRIPT -- OPTIONS`. 
 | `tools/blender/export_level.py` | `--out FICHIER`. |
 | `tools/blender/render_preview.py` | `--out DIR`, `--res-x N`, `--res-y N`, `--spawn NOM`. |
 | `tools/blender/render_ingame.py` | `--out DIR`, `--eye M`, `--res-x N`, `--res-y N`, répétition de `--view X,Y,CAP`. |
-| `tools/blender/render_enemy_sprites.py` | `--personnage`, `--anims`, `--directions`, `--out DIR`. |
+| `tools/blender/render_enemy_sprites.py` | `--personnage` (`costard`, `directeur`, `rampant`, `vigile`), `--anims`, `--directions`, `--out DIR`. |
 | `tools/blender/build_weapons.py` | `--out FICHIER`, `--renders DIR`, `--debug`. |
 | `tools/blender/render_weapon_pickups.py` | `--out PNG`. |
 | `tools/level_v2/build_blockout.py` | `--out FICHIER`. |
 | `tools/level_v2/build_niveau.py` | `--out FICHIER`. |
 | `tools/level_v2/audit_niveau.py` | `--pas M`, `--csv FICHIER`. |
 | `tools/level_v2/plan_de_masse.py` | `--ascii`, `--svg FICHIER`. |
+
+Les ajouts locaux au niveau v2 passent par les recettes rejouables de `tools/blender/cassandre_cli.py`, lancées sur `assets_src/blender/niveau_v2.blend` : `story_triggers` (déclencheurs de l'histoire), `perk_kiosks` (les six bornes), `gas_props` (bonbonnes de gaz), `encounters` (rencontres : rideau de la réserve, groupes d'ennemis, déclencheurs). Chacune retire ce qu'elle pose avant de le reposer, sauvegarde et exporte ; `preview=FICHIER` produit un essai isolé. Sur ce poste, `blender` n'est pas dans le `PATH` : l'exécutable est `/Applications/Blender.app/Contents/MacOS/Blender`.
 
 `--save` réécrit le fichier Blender d'entrée pour la bibliothèque et le bake ; préférez `--out` pour conserver la source. Les valeurs par défaut sont documentées près des commandes dans `tools/blender/README.md`, `tools/level_v2/build_blockout.py` et `tools/level_v2/build_niveau.py`. L'audit accepte aussi une ouverture de fichier en cours dans Blender. Ne traitez pas l'absence de sortie d'un bake sans `--save` ou `--out` comme un résultat exporté.
 

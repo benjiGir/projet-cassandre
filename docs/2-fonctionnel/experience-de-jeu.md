@@ -2,7 +2,7 @@
 title: Expérience de jeu
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Expérience de jeu
@@ -11,9 +11,10 @@ updated: 2026-10-03
 
 Le signal s'ouvre sur un menu principal habillé comme une diffusion piratée :
 un bandeau défilant annonce un canal non autorisé, un nombre d'abonnés
-dérisoire. La première fois, « Jouer » passe par quatre panneaux d'introduction,
-qu'on avance ou qu'on passe ; ensuite il lance directement le niveau, et le
-menu propose de les revoir. Quatre autres panneaux précèdent le récapitulatif
+dérisoire. « Rejoindre le direct » demande d'abord un profil de difficulté
+(Client, Habitué ou Lanceur d'alerte). La première fois, quatre panneaux
+d'introduction suivent, qu'on avance ou qu'on passe ; ensuite le niveau se
+lance directement, et le menu propose de les revoir. Quatre autres panneaux précèdent le récapitulatif
 de fin — voir [Histoire](histoire.md).
 
 Vous apparaissez sur le parking extérieur de l'hypermarché, de nuit,
@@ -34,13 +35,21 @@ Les rayons donnent le fusil à pompe et la première carte de fidélité, la
 carte Argent — combat en allées, embuscades aux croisements.
 L'électroménager offre du butin devant son mur d'écrans. La carte Argent ouvre
 le sas du hub qui mène à la réserve : un grand espace vertical, avec son quai
-surélevé et son camion.
+surélevé et son camion. C'est là que le magasin se referme sur vous : les
+issues tombent, deux vagues arrivent, et il faut tenir pour qu'elles se
+rouvrent.
+
+Tout au long du parcours, les dons du direct remplissent une cagnotte, et six
+bornes de sponsors proposent de la dépenser : un pied-de-biche plus violent,
+des ennemis qui vous voient de moins loin, plus de vie. Elle ne paie pas tout :
+il faut choisir.
 
 De la réserve, vous passez de plain-pied dans les locaux du personnel :
 atelier SAV, PC sécurité, vestiaires, fournil. L'escalier des bureaux y est
 verrouillé par la carte Or, qui vous attend au parking souterrain, près de la
-voiture de direction. Il faut descendre la chercher entre les piliers, puis
-remonter.
+voiture de direction. Il faut descendre la chercher entre les piliers, où des
+Rampants vous tombent dessus, puis remonter. Au retour, un Vigile à bouclier
+garde l'escalier.
 
 L'étage aligne quatre bureaux (sécurité, comptabilité, ressources humaines,
 salle de pause) avant de refermer sur le bureau du Directeur. Dans le
@@ -128,7 +137,9 @@ niveau (dont les cartes de fidélité) : `6-reference/conventions-nommage.md`.
   1 »), et le combat contre plusieurs Costards jugé fun malgré des sprites
   provisoires. La structure du niveau v2 (circulation, durée, lisibilité,
   sans aucun habillage) a été jouée et validée avant l'habillage.
-- En attente de verdict : l'habillage complet du niveau v2 (décor, éclairage,
+- En attente de verdict : toute la v1.2 — profils de difficulté, sponsors,
+  explosifs, Rampant, Vigile et les trois rencontres.
+- En attente de verdict aussi : l'habillage complet du niveau v2 (décor, éclairage,
   contenu des dix espaces), les sprites d'ennemis pré-rendus, les modèles
   d'armes en vue subjective, les sanitaires façon Duke 3D, l'écran de fin
   avec récapitulatif, et le menu Pause/Options en cours de partie.

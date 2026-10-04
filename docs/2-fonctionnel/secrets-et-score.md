@@ -1,8 +1,8 @@
 ---
 title: Secrets et score
 tags: [fonctionnel]
-status: stable
-updated: 2026-10-03
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Secrets et score
@@ -36,7 +36,7 @@ récapitulatif s'affiche à côté des boutons de l'écran, jamais à leur place
 
 | Source | Points | Condition |
 |---|---|---|
-| Costard éliminé | 100 chacun | Par Costard neutralisé |
+| Costard, Rampant ou Vigile éliminé | 100 chacun | Par ennemi neutralisé ; le récapitulatif les range sous la même ligne « Costards éliminés » |
 | Directeur éliminé | 1 000 | À sa mort |
 | Secret trouvé | 500 chacun | Par secret découvert |
 | Bonus « tous les secrets » | 1 000 | Si les quatre secrets du niveau sont trouvés |
@@ -51,11 +51,26 @@ le décor est un à-côté, pas une stratégie de score. La récompense de rapid
 ne s'applique jamais à un récapitulatif partiel : mourir en cours de route ne
 peut jamais rapporter de bonus de vitesse.
 
-Une partie complète, sur le niveau actuel : les 49 Costards et le Directeur
-éliminés (4 900 + 1 000), les quatre secrets trouvés avec le bonus (3 000),
-une précision de 60 % (600 points), quelques meubles et une vitre cassés en
-chemin (140 points), et une sortie deux minutes avant le temps de référence
-(1 200 points) — un peu plus de 10 800 points au total.
+Une partie complète en « Habitué », sur le niveau actuel : une cinquantaine
+d'ennemis et le Directeur éliminés (environ 5 000 + 1 000), les quatre
+secrets trouvés avec le bonus (3 000), une précision de 60 % (600 points),
+quelques meubles et une vitre cassés en chemin (140 points), et une sortie
+deux minutes avant le temps de référence (1 200 points) — un peu moins de
+11 000 points au total. Le nombre d'ennemis dépend du profil choisi : les
+rencontres en amènent plus ou moins.
+
+### Les records
+
+Le récapitulatif rappelle le profil joué, par exemple « Difficulté :
+Habitué ». Quand le niveau est terminé, il dit aussi où en est le record de
+score dans ce profil : « NOUVEAU RECORD » si la partie vient de le battre ou
+d'en poser un premier, sinon le record à battre.
+
+Chaque profil a son propre record. Deux choses sont retenues : le meilleur
+score et le meilleur temps, qui ne viennent pas forcément de la même partie.
+L'écran de choix du profil les rappelle sur chaque carte.
+
+Une mort n'inscrit rien : son récapitulatif est partiel.
 
 ### Le direct n'est pas le score
 
@@ -77,6 +92,10 @@ score : l'écran de fin les présente dans un bilan séparé, sous le bandeau
   neutraliser un ennemi, quelle que soit la quantité cassée.
 - L'audience, les abonnés et les dons du direct sont indépendants du score :
   ils ne rapportent aucun point.
+- Un record ne s'inscrit que sur un niveau terminé, dans le profil joué. Un
+  score fait en « Client » ne touche pas le record d'un « Lanceur d'alerte ».
+- Les records sont gardés sur ce navigateur ; ils ne suivent pas le joueur
+  ailleurs.
 
 ## Valeurs
 
@@ -92,10 +111,11 @@ dans le récapitulatif : cette page ne fixe aucune autre valeur numérique.
   fin de partie (partiel à la mort, complet à la vraie sortie) et les quatre
   secrets du niveau actuel dans leur habillage définitif — ajoutés lors de
   la passe de playtest du 2026-09-25, aucun n'a encore reçu de verdict humain
-  en conditions réelles.
+  en conditions réelles. Les records par profil datent du 4 octobre 2026.
 
 ## Pour aller plus loin
 
+- [Difficulté](difficulte.md) — les trois profils et ce qu'ils règlent.
 - [Interface](interface.md) — le HUD façon stream, l'audience et les dons,
   les écrans de mort et de fin de niveau.
 - Détail technique du calcul et de la construction du récapitulatif :

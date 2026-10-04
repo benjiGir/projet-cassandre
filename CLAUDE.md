@@ -124,8 +124,8 @@ dans le dépôt.
 
 Custom properties Blender lues sur un `prop_*` : `masse` (kg, défaut 25), `pv`
 (ABSENT = indestructible, seulement poussable), `matiere` (`bois`/`carton`/
-`verre`/`metal`/`farine`/`eau`/`electronique`, décide du son de casse et de la
-couleur des débris) et `contenu` (chantier « Les coulisses », 2026-09-26,
+`verre`/`metal`/`farine`/`eau`/`electronique`/`gaz`, décide du son de casse et de la
+couleur des débris ; `gaz` fait exploser le prop à sa casse, [ADR 0041](docs/decisions/0041-explosifs.md)) et `contenu` (chantier « Les coulisses », 2026-09-26,
 format `"nom:nombre"` — ex. `"donut:1"` — ce que le prop lâche à sa casse ; un
 nom qui résout en aliment connu fait apparaître ce nombre de pickups
 nourriture, walk-over, position tirée du RNG déterministe). Un `prop_*` ne
@@ -142,7 +142,9 @@ Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
 `target`), `message` (texte d'une porte LIBRE — `target` sans `requires` : le
 photomaton du secret 1, la porte coupe-feu ; le sens unique d'une porte tient à
 la place de son `use_*`, hors de portée depuis l'autre côté), `soin` (PV d'une
-trousse), `munitions` (recharge de pistolet) et `aliment` (chantier « Les
+trousse), `munitions` (recharge de pistolet), `perk` et `prix` (une BORNE de
+sponsor : le perk vendu et son prix en euros, les deux requis,
+[ADR 0040](docs/decisions/0040-bornes-et-perks.md)) et `aliment` (chantier « Les
 coulisses », VARIANTE de `soin` — `donut`/`sandwich`/`jambon`/`poulet`/`pizza`,
 PV 5/10/15/25/25, voir `game/level/interactions/food.ts`) —
 ces derniers se ramassent en marchant dessus, sans touche E. Une valeur inconnue est une ERREUR de `validate_level.py` et un
@@ -219,7 +221,13 @@ dépôt le 2026-10-02 (commit `4e88907`) ; ils restent lisibles dans
 l'historique (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem
 `PLAN_DOCUMENTATION.md`).
 
-**v1.1 « Le live » en cours** (depuis le 2026-10-03) : l'histoire d'abord.
+**v1.2 « Les sponsors » : tous les lots livrés le 2026-10-04, en attente du
+playtest de l'utilisateur** — bornes et perks, explosifs, Rampant et Vigile,
+trois difficultés, trois rencontres, économie équilibrée par relevé simulé
+(variante B en place, choix A/B/C ouvert). Compte rendu daté :
+[`docs/journal/les-sponsors-2026-10.md`](docs/journal/les-sponsors-2026-10.md).
+
+**v1.1 « Le live »** (depuis le 2026-10-03) : l'histoire d'abord.
 Le plan de travail est [`PLAN_SUITE.md`](PLAN_SUITE.md), découpé en lots
 autonomes (A0-A8 pour la v1.1, B1-B8 pour la v1.2) ; son tableau de suivi dit
 où en est chaque lot. La bible d'histoire est

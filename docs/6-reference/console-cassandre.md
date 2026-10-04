@@ -2,7 +2,7 @@
 title: Console cassandre
 tags: [reference, debug]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-04
 ---
 
 # Console cassandre
@@ -39,6 +39,7 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 |---|---|
 | `cassandre.suits` / `cassandre.suitConfig` | Liste des Costards et réglages. |
 | `cassandre.spawnSuit(x, y, z)` | Ajoute un Costard à la session. |
+| `cassandre.spawnRampant(x, y, z)` / `cassandre.spawnVigile(x, y, z)` | Ajoute un Rampant ou un Vigile ; `cassandre.suits` les liste avec les Costards, `kind` les distingue. |
 | `cassandre.suitCount()` / `cassandre.suitAliveCount()` / `cassandre.killSuit()` | Compte les Costards créés, les vivants ou tue le premier vivant. |
 | `cassandre.directors` / `cassandre.directorManager` / `cassandre.directorConfig` | Directeurs et gestionnaire courant. |
 | `cassandre.spawnDirector(x, y, z)` | Ajoute un Directeur à la session. |
@@ -53,7 +54,9 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 
 | Expression | Effet |
 |---|---|
-| `cassandre.doorSystem.liste()` / `cassandre.doorSystem.ouvrir(nom)` / `cassandre.doorSystem.actionner()` | Inspecte, ouvre par nom ou actionne la porte manuelle la plus proche. |
+| `cassandre.doorSystem.liste()` / `cassandre.doorSystem.ouvrir(nom)` / `cassandre.doorSystem.actionner()` | Inspecte (état et verrou du script), ouvre par nom ou actionne la porte manuelle la plus proche. |
+| `cassandre.bornes.liste()` / `cassandre.bornes.crediter(euros)` / `cassandre.bornes.acheter(nom)` | Liste les bornes et leur prix, remplit la cagnotte, joue la touche d'usage sur une borne. |
+| `cassandre.bornes.donner(perk)` / `cassandre.bornes.perks()` / `cassandre.bornes.pointe()` | Pose un perk sans borne ni argent, liste ceux de la partie, lance la pointe de vitesse de la boisson. |
 | `cassandre.vitres.liste()` / `cassandre.vitres.casser(nom)` | Inspecte ou casse un vitrage. |
 | `cassandre.sanitaires.liste()` / `cassandre.sanitaires.casser(nom)` / `cassandre.sanitaires.jets()` | Inspecte les sanitaires, en casse un et liste les jets d'eau. |
 | `cassandre.sanitaires.delai()` / `cassandre.sanitaires.forcerDelai(secondes)` | Lit ou change le délai global de soulagement. |
@@ -72,6 +75,11 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | `cassandre.renderBench(frames?)` | Mesure le coût de rendu hors de la boucle, 120 images par défaut. |
 | `cassandre.filtrage(mode)` | Change le filtrage des textures réduites ; `mode` accepte `aniso`, `mipmap` ou `nearest`. |
 | `cassandre.resolution(width?, height?)` | Change la résolution interne ; sans argument, revient à 640×360. |
+| `cassandre.gore.config` / `cassandre.gore.stats()` / `cassandre.gore.exploser()` | Règle le gore en direct, compte taches et morceaux en place, fait éclater le premier Costard vivant. |
+| `cassandre.economie.appliquer(nom)` | Met une variante d'équilibrage à l'essai : `A`, `B` ou `C`. |
+| `cassandre.economie.journal()` / `cassandre.economie.releve(profil?, graines?)` | Dons et achats de la partie en cours ; relevé simulé avec les réglages en place (`presse`, `normal`, `completiste`). |
+| `cassandre.scene` / `cassandre.camera` | Scène et caméra du moteur, pour inspecter le rendu. |
+| `cassandre.pose()` / `cassandre.tp(x, y, z, cap)` | Rend la pose du joueur en coordonnées Blender, ou l'y téléporte. |
 | `cassandre.recap.stats()` / `cassandre.recap.recap()` | Compteurs de session et dernier récapitulatif. |
 | `cassandre.recap.completeLevel()` / `cassandre.recap.killPlayer()` | Exécute un vrai chemin de fin de partie pour vérifier l'écran et le récap. |
 | `cassandre.pause()` / `cassandre.resume()` | Envoie une transition de pause ou reprise au flux de session. |

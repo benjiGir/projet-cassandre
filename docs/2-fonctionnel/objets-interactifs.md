@@ -1,8 +1,8 @@
 ---
 title: Objets interactifs
 tags: [fonctionnel]
-status: stable
-updated: 2026-10-01
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Objets interactifs
@@ -85,6 +85,27 @@ Une limite à connaître : un meuble physique, même massif, n'arrête jamais un
 tir ennemi. Il peut vous cacher à la vue, mais une balle le traverse comme
 si de rien n'était.
 
+### Les bonbonnes de gaz
+
+Une bonbonne rouge à bandeau jaune se pousse comme un carton, et explose
+quand elle casse. Le souffle blesse tout ce qui est proche et en vue : les
+ennemis, et vous aussi, à moitié prix. Un ennemi pris au cœur de l'explosion
+éclate. Le mobilier voisin est projeté.
+
+Une bonbonne atteinte par le souffle d'une autre saute à son tour, une
+fraction de seconde plus tard : deux ou trois bonbonnes voisines font une
+réaction en chaîne qu'on a le temps de voir, pas de fuir.
+
+Un mur arrête le souffle. Le bouclier d'un Vigile, non.
+
+Quinze bonbonnes sont posées là où l'on se bat, des caisses aux bureaux, et
+une seizième près du Vigile.
+
+### Les bornes de sponsors
+
+Une borne vend un produit contre la cagnotte du direct, à la touche d'usage.
+Elle a sa page : [Sponsors](sponsors.md).
+
 ### Les vitres
 
 Certaines parois vitrées se brisent au tir — cloisons de bureau, panneaux du
@@ -122,6 +143,8 @@ d'un coup à chaque gorgée qu'un vrai soulagement.
 | Boîte de munitions | Marcher dessus | Recharge si besoin | Non |
 | Arme au sol | Marcher dessus | Ramassée ou recharge le pistolet | Non |
 | Meuble physique | Pousser, tirer | Se déplace, s'effondre, se brise selon la matière | Selon le meuble |
+| Bonbonne de gaz | Pousser, tirer | Explose à la casse, amorce ses voisines | Oui |
+| Borne de sponsor | `E`, à portée | Vend un produit si la cagnotte suffit, sinon message | Non |
 | Vitre cassable | Tirer | Explose, givre si surgelés | Oui |
 | Vitre incassable | — | Ne réagit à rien | Non |
 | Sanitaire intact | Viser, `E` | Soulagement (+PV), délai avant le prochain | Oui (au tir) |
@@ -138,6 +161,10 @@ d'un coup à chaque gorgée qu'un vrai soulagement.
 - Une porte ne se referme jamais sur un joueur ou un ennemi resté dans son
   passage : elle rouvre plutôt que de continuer à se fermer.
 - Un meuble physique protège du regard, jamais des balles ennemies.
+- Une explosion ne touche que ce qui a une ligne dégagée vers elle, et blesse
+  moins à mesure qu'on s'en éloigne.
+- Une porte tenue fermée par une arène ne répond ni à la main ni à une carte,
+  le temps du combat.
 - Un ennemi qui tire à travers une vitre sur son chemin la brise toujours
   d'un coup, quelle que soit sa résistance au tir d'un joueur.
 - Se soulager à un sanitaire exige de le regarder vraiment, pas seulement de
@@ -156,7 +183,9 @@ du délai des sanitaires, points de vie des meubles et des vitres, portées) :
 - Validé en playtest : rien de spécifique à cette page n'a encore reçu de
   verdict humain — l'attention du dernier tour de jeu a porté sur le combat
   et le niveau, pas sur ces objets pris isolément.
-- En attente de verdict : les portes animées, les vitres cassables, le
+- En attente de verdict : les bonbonnes de gaz (3 octobre 2026) et les bornes
+  de sponsors.
+- En attente de verdict aussi : les portes animées, les vitres cassables, le
   mobilier physique poussable et cassable, et les sanitaires façon Duke 3D
   (soulagement, casse, gorgée d'eau) — les cinq passes qui les ont ajoutés
   attendent toutes une vraie partie jouée jusqu'au bout.
@@ -170,3 +199,4 @@ du délai des sanitaires, points de vie des meubles et des vitres, portées) :
 - [ADR 0030 — Props dynamiques](../decisions/0030-props-dynamiques.md)
 - [ADR 0031 — Portes animées et vitres](../decisions/0031-portes-animees-et-vitres.md)
 - [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md)
+- [ADR 0041 — Explosifs](../decisions/0041-explosifs.md)
