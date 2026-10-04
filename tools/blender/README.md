@@ -18,6 +18,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
 | `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
+| `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
 | `run(script, *args, keep=…)` | n'importe quel script du dépôt, `sys.exit` absorbé |
 | `reload()` | oublie les modules de `tools/` après une modification d'un `lib_*.py` |

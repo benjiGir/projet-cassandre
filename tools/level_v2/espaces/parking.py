@@ -12,6 +12,7 @@ import lib_reserve as R           # noqa: E402
 import lib_rayons as L            # noqa: E402
 
 from espaces.commun import lampe
+from enseigne import poser as poser_enseigne
 
 # --- Habillage : le parking extérieur -----------------------------------------
 #
@@ -116,6 +117,8 @@ def habiller_parking(space, gris, props, col_coll, logic) -> dict:
         L.place(L.poubelle(), (px, py, z), 0, props, col_coll, f"pk_pou{i}")
     L.place(F.enseigne_murale("bienvenue"), (-3.0, y1 - 0.3, z + 3.4), 180,
             props, props, "pk_bienvenue")
+
+    poser_enseigne(props, logic)
 
     return {"voitures": voitures, "places": places, "lampadaires": len(PK_LAMPADAIRES),
             "lampes": lampes}

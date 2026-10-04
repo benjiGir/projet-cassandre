@@ -373,6 +373,14 @@ def encounters(preview: str | None = None) -> dict:
     return result
 
 
+def store_sign(preview: str | None = None) -> dict:
+    """Enseigne lumineuse Hyper Varan sur la façade ; pose locale rejouable."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_store_sign.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []

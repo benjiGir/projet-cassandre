@@ -94,15 +94,25 @@ def hex_rgba(h: str) -> tuple[float, float, float, float]:
 # des détails — d'où une veste gris ardoise plutôt que noire (un noir se
 # confond avec toute ombre du niveau), un plastron blanc franc, un visage assez
 # clair pour que les lunettes s'y découpent, et des membres épaissis.
+TEINTES_HUMAINES = {
+    "humain": "#c79468",
+    "clair": "#f2c9ab",
+    "mate": "#bc805a",
+    "fonce": "#875438",
+}
+
+
+def variantes_humaines(uniforme: dict) -> dict:
+    return {nom: {**uniforme, "Skin": teinte} for nom, teinte in TEINTES_HUMAINES.items()}
+
+
 PERSONNAGES = {
     "costard": {
         "hauteur": 1.80,
         "ppm": 96,
         "lunettes": True,
         "cravate": "#c8202c",
-        "peaux": {
-            "humain": {"Shirt": "#44475a", "Pants": "#383a4a", "TieTexture": "#f4f4f0", "Skin": "#c79468"},
-        },
+        "peaux": variantes_humaines({"Shirt": "#44475a", "Pants": "#383a4a", "TieTexture": "#f4f4f0"}),
     },
     "directeur": {
         # Capsule du Directeur : 2,1 m (voir `DIRECTOR_SPRITE_HEIGHT`).
@@ -124,11 +134,8 @@ PERSONNAGES = {
         "hauteur": 1.95,
         "ppm": 88,
         "vigile": True,
-        "peaux": {
-            # Bleu d'uniforme assez clair pour ne pas fondre dans l'ombre, pantalon plus sombre.
-            "humain": {"Shirt": "#3f5796", "Pants": "#2b3558", "TieTexture": "#3f5796", "Skin": "#c79468",
-                       "Hair": "#2a2420"},
-        },
+        "peaux": variantes_humaines({"Shirt": "#3f5796", "Pants": "#2b3558", "TieTexture": "#3f5796",
+                                     "Hair": "#2a2420"}),
     },
     "rampant": {
         "source": SOURCE_SANS_COSTUME,

@@ -4,12 +4,18 @@ import { assetUrl } from "../../core/loading/assetPath";
 import { BILLBOARD_COLUMNS, createPlaceholderAtlas } from "./billboard";
 import { configureRetroTexture } from "../pipeline/renderer";
 import { decodeSpriteManifest } from "./enemySpriteManifest";
+import { HUMAN_SKIN_VARIANTS } from "./enemySkinConfig";
 import type { EnemyAnimationInput, EnemySpriteSheet, SpriteAnimation } from "./enemySpriteTypes";
 
 // see: docs/6-reference/notes-code-rendu.md#planches-et-chargement-ennemi
 
 export function createEnemyAnimationInput(): EnemyAnimationInput {
   return { pose: "idle", poseTime: 0, poseDuration: 0, clock: 0, stride: 0, timeSinceShot: Number.POSITIVE_INFINITY };
+}
+
+export function enemyHumanAtlas(sheet: EnemySpriteSheet, appearanceIndex: number): THREE.Texture {
+  const skin = HUMAN_SKIN_VARIANTS[appearanceIndex % HUMAN_SKIN_VARIANTS.length]!;
+  return sheet.atlases[skin] ?? sheet.atlases.humain;
 }
 
 const DEFAULT_FIRE_DURATION = 0.12; // s

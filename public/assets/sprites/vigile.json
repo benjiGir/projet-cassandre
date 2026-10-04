@@ -8,7 +8,10 @@
   "pixelsPerMeter": 88,
   "feetFromBottom": 4,
   "atlases": {
-    "humain": "vigile.png"
+    "humain": "vigile.png",
+    "clair": "vigile_clair.png",
+    "mate": "vigile_mate.png",
+    "fonce": "vigile_fonce.png"
   },
   "animations": {
     "idle": {

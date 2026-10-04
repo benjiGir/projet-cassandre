@@ -7,7 +7,8 @@ import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/sprites/billboard";
-import { enemySpriteQuad } from "../../render/sprites/enemySprites";
+import { enemyHumanAtlas, enemySpriteQuad } from "../../render/sprites/enemySprites";
+import { HUMAN_SPRITE_MINIMUM_LIGHT } from "../../render/sprites/enemySkinConfig";
 import {
   dressAmmoPickup,
   dressFoodPickup,
@@ -76,9 +77,11 @@ export function spawnSuitAt(
   // posent sur son bas, offset du KCC compris.
   const sheet = suitSheetFor(engine, kind);
   const cfg = suit.cfg;
-  const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
+  const atlas = kind === "rampant" ? sheet.atlases.humain : enemyHumanAtlas(sheet, suit.appearanceIndex);
+  const sprite = new BillboardSprite(engine.scene, atlas, {
     rows: sheet.rows,
     normalTilt: ENEMY_SPRITE_NORMAL_TILT,
+    minimumLight: kind === "rampant" ? 0 : HUMAN_SPRITE_MINIMUM_LIGHT,
     ...enemySpriteQuad(sheet, cfg.capsuleHalfHeight + cfg.capsuleRadius + cfg.colliderOffset),
   });
   session.suitSprites.set(suit.id, sprite);

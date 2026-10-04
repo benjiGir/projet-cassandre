@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Contrats locaux du rendu
@@ -26,6 +26,25 @@ Les animations des ennemis et des armes utilisent des horloges de gameplay
 interpolées, ralenties par le hitstop. Les flashes, marqueurs, flottements,
 débris et parasites CCTV avancent au delta réel d'affichage. Ils ne produisent
 ni collision ni décision de gameplay. La rotation de visée reste directe.
+
+## Enseigne Hyper Varan
+
+`tools/level_v2/enseigne.py` pose le caisson, le varan en anneau, dix lettres
+en relief et une lampe rouge au-dessus de l'entrée du parking extérieur.
+La même recette sert au build et à `cassandre.store_sign()` pour une retouche
+locale du niveau livré.
+
+Les meshes `fx_enseigne_hyper_varan_*` restent hors de la fusion du décor.
+`src/render/environment/storeSign.ts` prépare leurs matériaux Lambert avant
+le premier rendu ; chaque lettre garde sa propre intensité émissive.
+`storeSignConfig.ts` définit les séquences : six lettres stables, trois
+défectueuses et une éteinte, avec le logo toujours allumé.
+
+L'horloge appartient à la racine du niveau dans une `WeakMap`. Elle avance
+avec le delta de gameplay au pas fixe, s'arrête en pause et se recrée au
+rechargement du niveau. Les rafales utilisent des séquences fixes sans RNG,
+minuteur mural, texture chargée en cours de partie ni changement de shader.
+Les ressources GPU restent possédées par `LevelResources`.
 
 ## Billboard ennemi
 
@@ -86,6 +105,24 @@ Les réponses de textures sont toutes attendues ; si l’une échoue, celles
 déjà réussies sont libérées avant le repli.
 Son repli numéroté comporte dix lignes, dont quatre pour la mort ; l'erreur est
 signalée en console et le jeu reste jouable.
+
+Les Costards et les Vigiles possèdent quatre carnations (`clair`, `humain`,
+`mate`, `fonce`), rendues avec les mêmes poses et uniformes par
+`tools/blender/render_enemy_sprites.py`. Visage et mains changent ensemble.
+`SuitManager` attribue un `appearanceIndex` par ordre d'apparition dans chaque
+espèce ; `enemyHumanAtlas` choisit l'atlas une seule fois au spawn, dans l'ordre
+de `enemySkinConfig.ts`. Ce compteur ne consomme aucun tirage du RNG de combat,
+et la carnation reste identique jusque sur le cadavre. Les anciennes planches
+sans variantes retombent sur `humain`. Le Rampant et la transformation du
+Directeur gardent leurs atlas spécifiques.
+
+Les sprites humains ordinaires disposent aussi d'un plancher d'éclairage
+Lambert de 0,32 (`HUMAN_SPRITE_MINIMUM_LIGHT`). `BillboardSprite` borne le
+diffus indirect par la couleur de l'atlas multipliée par ce plancher : les
+carnations restent distinctes dans le parking sombre, les lampes continuent
+de les éclairer et le flash de dégâts conserve son émissif séparé. Le
+paramètre est nul par défaut pour les autres billboards ; les uniformes
+partagent la même variante de shader.
 
 ## Ramassages
 

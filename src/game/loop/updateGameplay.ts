@@ -50,6 +50,7 @@ import { applyBlast } from "../session/player/explosions";
 import { FLESH_MATERIAL } from "../player/weapons/weapons";
 import type { DoorActor } from "../level/doors/doorTypes";
 import { basculerEau, updateDouches } from "../level/sanitaires/douches";
+import { updateStoreSign } from "../../render/environment/storeSign";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
 import { CardPickupBillboard } from "../../render/pickups/cardPickups";
@@ -555,6 +556,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // Une seule fois par pas fixe : une rafale qui casse trois objets reste un seul évènement.
         if (casse) streamEvent(session, "casse");
         updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
+        updateStoreSign(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
         session.doorSystem?.update(gameplayDt, collectDoorActors(session));
       });

@@ -37,6 +37,7 @@ export class Suit implements Entity {
   /** Espèce : décide de la planche de sprites, des sons et des répliques — jamais du code de la machine. */
   readonly kind: SuitKind;
   readonly cfg: SuitConfig;
+  readonly appearanceIndex: number;
   private actor: EnemyActor;
 
   constructor(
@@ -46,10 +47,12 @@ export class Suit implements Entity {
     seed: number,
     cfg: SuitConfig = defaultSuitConfig,
     kind: SuitKind = "costard",
+    appearanceIndex = 0,
   ) {
     this.id = allocateEntityId();
     this.kind = kind;
     this.cfg = cfg;
+    this.appearanceIndex = appearanceIndex;
 
     const { body, collider, centerY } = createEnemyBody(physics, cfg, spawnPosition);
 

@@ -64,6 +64,7 @@ export class SuitManager {
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly colliderToSuit = new Map<number, Suit>();
   private spawnCount = 0;
+  private readonly appearanceCounts: Record<SuitKind, number> = { costard: 0, rampant: 0, vigile: 0 };
   // Remis à zéro uniquement après présentation, pas entre les pas fixes.
   private hitCursor = 0;
 
@@ -144,7 +145,8 @@ export class SuitManager {
   spawnSuit(x: number, feetY: number, z: number, facing = new THREE.Vector3(0, 0, 1), kind: SuitKind = "costard"): Suit {
     const seed = (BASE_SUIT_SEED + this.spawnCount * SEED_STRIDE) >>> 0;
     this.spawnCount++;
-    const suit = new Suit(this.physics, new THREE.Vector3(x, feetY, z), facing, seed, this.configFor(kind), kind);
+    const appearanceIndex = this.appearanceCounts[kind]++;
+    const suit = new Suit(this.physics, new THREE.Vector3(x, feetY, z), facing, seed, this.configFor(kind), kind, appearanceIndex);
     this.suits.push(suit);
     if (suit.collider) this.colliderToSuit.set(suit.collider.handle, suit);
     return suit;
