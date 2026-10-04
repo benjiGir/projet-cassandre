@@ -1044,6 +1044,7 @@ import sons_armes  # noqa: E402,F401
 import sons_impacts  # noqa: E402,F401
 import sons_mecanique  # noqa: E402,F401
 import sons_costard  # noqa: E402,F401
+import sons_rampant  # noqa: E402,F401
 import sons_ramassages  # noqa: E402,F401
 
 ANCIENNES = dict(RECIPES)

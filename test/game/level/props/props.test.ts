@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { initPhysics, PhysicsWorld, GROUP } from "../../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../../src/game/level/loading/loader";
 import { PropSystem } from "../../../../src/game/level/props/props";
+import { blastDamageAt, explosionConfig } from "../../../../src/game/level/props/propConfig";
 import type { HitEvent } from "../../../../src/game/player/weapons/weaponTypes";
 import { weaponConfig } from "../../../../src/game/player/weapons/weaponConfig";
 
@@ -404,5 +405,126 @@ describe("PropSystem — nourriture lâchée à la casse (`contenu`)", () => {
     const b = positions();
     expect(a).toHaveLength(3);
     expect(a.map((p) => p.toArray())).toEqual(b.map((p) => p.toArray()));
+  });
+});
+
+describe("PropSystem — explosifs (`matiere: gaz`, lot B3)", () => {
+  const bonbonne = (name: string, x: number) =>
+    propMesh(name, new THREE.Vector3(0.4, 0.8, 0.4), new THREE.Vector3(x, 0, 0), { matiere: "gaz", pv: 20, masse: 20 });
+  const caisse = (name: string, x: number) =>
+    propMesh(name, new THREE.Vector3(0.8, 0.8, 0.8), new THREE.Vector3(x, 0, 0), { masse: 25 });
+
+  /** Trois bonbonnes en ligne, espacées de 3 m (< rayon de 5 m), et une caisse à 2 m de la première. */
+  function scene() {
+    const { handle, physics } = build([
+      bonbonne("prop_gaz_a", 0),
+      bonbonne("prop_gaz_b", 3),
+      bonbonne("prop_gaz_c", 6),
+      caisse("prop_caisse", -2),
+    ]);
+    return { handle, physics, props: new PropSystem(handle.props, handle.root) };
+  }
+
+  /** Déroule la réaction en notant à quel pas fixe chaque bonbonne saute. */
+  function derouler(pas: number) {
+    const { handle, physics, props } = scene();
+    const journal: [number, string][] = [];
+    props.destroyByName("prop_gaz_a");
+    let lus = 0;
+    for (let i = 0; i <= pas; i++) {
+      if (i > 0) {
+        props.update([]);
+        physics.step(1 / 60);
+      }
+      for (; lus < props.explosionEvents.length; lus++) journal.push([i, props.explosionEvents[lus]!.name]);
+    }
+    const poses = handle.props.map((p) => {
+      const t = p.body.translation();
+      return [p.name, t.x, t.y, t.z];
+    });
+    return { journal, poses, props };
+  }
+
+  it("une bonbonne cassée explose : un évènement, centré sur elle", () => {
+    const { props } = scene();
+
+    props.destroyByName("prop_gaz_a");
+
+    expect(props.explosionEvents.map((e) => e.name)).toEqual(["prop_gaz_a"]);
+    expect(props.explosionEvents[0]!.point.x).toBeCloseTo(0.2, 5);
+    expect(props.destroyedEvents.map((e) => e.matiere)).toEqual(["gaz"]);
+  });
+
+  it("un prop d'une autre matière casse sans exploser", () => {
+    const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(), { pv: 10 })]);
+    const props = new PropSystem(handle.props, handle.root);
+
+    props.destroyByName("prop_caisse");
+
+    expect(props.explosionEvents).toEqual([]);
+  });
+
+  it("le souffle pousse les props voisins, en s'éloignant du centre et vers le haut", () => {
+    const { handle, physics, props } = scene();
+    const voisine = handle.props.find((p) => p.name === "prop_caisse")!;
+
+    props.destroyByName("prop_gaz_a");
+    physics.step(1 / 60);
+
+    const v = voisine.body.linvel();
+    expect(v.x).toBeLessThan(-1); // la caisse est à −X de la bonbonne
+    expect(v.y).toBeGreaterThan(0);
+  });
+
+  it("réaction en chaîne : chaque bonbonne atteinte saute `chainDelaySteps` pas fixes après le souffle", () => {
+    const { journal, props } = derouler(3 * explosionConfig.chainDelaySteps);
+
+    // `c` est hors de portée de `a` (6 m) : c'est `b` qui l'amorce.
+    expect(journal).toEqual([
+      [0, "prop_gaz_a"],
+      [explosionConfig.chainDelaySteps, "prop_gaz_b"],
+      [2 * explosionConfig.chainDelaySteps, "prop_gaz_c"],
+    ]);
+    expect(props.aliveCount).toBe(1); // la caisse, indestructible, a seulement volé
+  });
+
+  it("même état de départ, même résultat : ordre, pas fixes et poses finales identiques", () => {
+    const a = derouler(60);
+    const b = derouler(60);
+
+    expect(a.journal).toEqual(b.journal);
+    expect(a.poses).toEqual(b.poses);
+  });
+
+  it("une bonbonne amorcée puis achevée par un tir n'explose qu'une fois", () => {
+    const { handle, props } = scene();
+    const b = handle.props.find((p) => p.name === "prop_gaz_b")!;
+
+    props.destroyByName("prop_gaz_a");
+    props.update([{ ...hitFrom(b.collider.handle, new THREE.Vector3(3.2, 0.4, 0.2)), weapon: "melee" }]);
+    for (let i = 0; i < 2 * explosionConfig.chainDelaySteps; i++) props.update([]);
+
+    expect(props.explosionEvents.filter((e) => e.name === "prop_gaz_b")).toHaveLength(1);
+  });
+
+  it("chaque explosion n'est remise qu'une fois à l'appelant, même née hors du pas fixe", () => {
+    const { props } = scene();
+
+    props.destroyByName("prop_gaz_a"); // console de dev : hors de `update`
+    props.clearFrameEvents(); // une image passe sans pas fixe : l'affichage a déjà vidé ses évènements
+    props.update([]);
+
+    expect(props.takeNewExplosions().map((e) => e.name)).toEqual(["prop_gaz_a"]);
+    expect(props.takeNewExplosions()).toEqual([]);
+
+    for (let i = 0; i < explosionConfig.chainDelaySteps; i++) props.update([]);
+    expect(props.takeNewExplosions().map((e) => e.name)).toEqual(["prop_gaz_b"]);
+  });
+
+  it("les dégâts du souffle décroissent jusqu'à zéro au bord du rayon", () => {
+    expect(blastDamageAt(0)).toBe(explosionConfig.damage);
+    expect(blastDamageAt(explosionConfig.radius / 2)).toBeCloseTo(explosionConfig.damage / 2, 5);
+    expect(blastDamageAt(explosionConfig.radius)).toBe(0);
+    expect(blastDamageAt(explosionConfig.radius + 10)).toBe(0);
   });
 });

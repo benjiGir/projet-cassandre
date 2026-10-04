@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Journal
@@ -12,6 +12,8 @@ conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
+
+- [Les sponsors](les-sponsors-2026-10.md) — perks, explosifs, Rampant, Vigile, difficulté, rencontres et économie de la v1.2.
 
 - [Le live](le-live-2026-10.md) — histoire, panneaux, moments scriptés et direct de la v1.1.
 

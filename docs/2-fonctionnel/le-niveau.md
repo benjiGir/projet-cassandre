@@ -2,7 +2,7 @@
 title: Le niveau
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Le niveau
@@ -96,6 +96,28 @@ Quatre moments jalonnent le parcours, sans jamais retirer le contrôle :
 Le héros commente aussi sa première visite de la plupart des lieux. Le sens de
 ces moments est dans [Histoire](histoire.md).
 
+### Les rencontres
+
+Trois endroits du parcours ne se traversent pas comme les autres : le niveau y
+fait surgir des ennemis au moment où vous arrivez.
+
+| Où | Ce qui se passe |
+|---|---|
+| Réserve | En franchissant le milieu de la salle, les quatre issues se ferment et une annonce déclare la réserve « fermée pour inventaire exceptionnel ». Une première vague de Costards arrive, puis une seconde avec des Rampants dans votre dos. Tout se rouvre quand la seconde est tombée. |
+| Parking souterrain | Au pied de l'escalier, deux Rampants arrivent du fond. La meute entière surgit quand vous atteignez la carte Or. |
+| Couloir du personnel | Pendant que vous êtes au parking, l'interphone envoie la sécurité à l'escalier des bureaux. Au retour, un Vigile garde la porte Or, une bonbonne de gaz à portée. |
+
+Le passage nord de la réserve a un rideau métallique, relevé en temps normal :
+c'est lui qui tombe au début de l'arène.
+
+Le nombre d'ennemis de chaque vague dépend du profil choisi — voir
+[Difficulté](difficulte.md).
+
+### Les bornes
+
+Six bornes de sponsors jalonnent le chemin obligé, de la galerie aux bureaux.
+Leur liste et ce qu'elles vendent sont dans [Sponsors](sponsors.md).
+
 ### Les secrets
 
 Quatre secrets récompensent l'exploration, chacun avec un indice plutôt qu'un
@@ -140,7 +162,11 @@ lui qui porte le décor, l'éclairage et le contenu final des espaces.
   le passage par les rayons est nécessaire, pour la carte Argent.
 - La carte Or oblige à descendre au parking souterrain puis à remonter : le
   parking n'est pas un détour facultatif.
-- Un moment scripté ne se produit qu'une fois par partie.
+- Un moment scripté ne se produit qu'une fois par partie, une rencontre aussi.
+- Une arène ne garde jamais le joueur enfermé : si une vague n'est pas tombée
+  au bout d'un peu plus d'une minute, la suite s'enchaîne quand même.
+- Pendant l'arène, aucune carte n'ouvre les issues de la réserve : la porte
+  répond qu'elle est verrouillée par la sécurité du magasin.
 - Une porte à carte reste fermée tant que la carte requise n'est pas en
   poche ; une fois ouverte avec la bonne carte, elle le reste pour toute la
   partie.
@@ -168,6 +194,10 @@ lots de dessin et conventions de préfixe d'objet sont dans
 - En attente de verdict : l'habillage complet, les coulisses jouées de bout en
   bout, les quatre secrets, les quatre moments scriptés et les répliques de
   lieu.
+- En attente de verdict aussi : les trois rencontres et les six bornes
+  (4 octobre 2026). La durée d'une partie avec ces rencontres n'a pas été
+  mesurée. Les ennemis d'une vague apparaissent d'un coup à leur place ;
+  dans la réserve, certains peuvent être dans le champ de vision.
 - Connu et pas encore traité : le camion du quai est fermé, sa cargaison reste
   à poser ; l'enseigne du parking affiche « HYPER » sans « Varan ».
 

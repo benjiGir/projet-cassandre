@@ -23,8 +23,18 @@ Track sur le bras droit par-dessus l'animation), l'éclair de tir (peint en
 pixels sur l'image réduite, toujours franc), et la peau reptilienne du
 Directeur.
 
+Le Rampant (lot B4 de PLAN_SUITE.md) part du « Man in Long Sleeves », même
+squelette : peau verte, museau, crête, queue et griffes construits ici, et un
+buste penché vers l'avant par-dessus chaque animation — la silhouette basse
+qui oblige à viser bas.
+
+Le Vigile (lot B6) repart du « Man in Suit » : uniforme bleu, casquette, bande
+jaune, matraque dans la main droite, et un bouclier anti-émeute tenu devant
+lui — accroché au buste et non au bras, pour qu'il reste face à l'adversaire
+quelle que soit l'animation. De dos, il ne cache rien : c'est ce qui se lit.
+
 Options :
-    --personnage NOM    costard | directeur (défaut : costard)
+    --personnage NOM    costard | directeur | rampant | vigile (défaut : costard)
     --out DIR           dossier de sortie (défaut : public/assets/sprites)
     --anims a,b         ne rend que ces animations (itération rapide) ; écrit
                         alors `<personnage>_apercu.png` au lieu de l'atlas
@@ -46,6 +56,8 @@ from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Matrix, Vector
 
 SOURCE = "assets_src/cc0_raw/quaternius_man_in_suit/man_in_suit.glb"
+# Même squelette, mêmes animations, sans veste : la base du Rampant.
+SOURCE_SANS_COSTUME = "assets_src/cc0_raw/quaternius_man_long_sleeves/man_long_sleeves.glb"
 
 COLUMNS = 8
 # Une case couvre 2,5 × 2 m au gabarit du Costard (96 px/m) : un corps
@@ -82,15 +94,25 @@ def hex_rgba(h: str) -> tuple[float, float, float, float]:
 # des détails — d'où une veste gris ardoise plutôt que noire (un noir se
 # confond avec toute ombre du niveau), un plastron blanc franc, un visage assez
 # clair pour que les lunettes s'y découpent, et des membres épaissis.
+TEINTES_HUMAINES = {
+    "humain": "#c79468",
+    "clair": "#f2c9ab",
+    "mate": "#bc805a",
+    "fonce": "#875438",
+}
+
+
+def variantes_humaines(uniforme: dict) -> dict:
+    return {nom: {**uniforme, "Skin": teinte} for nom, teinte in TEINTES_HUMAINES.items()}
+
+
 PERSONNAGES = {
     "costard": {
         "hauteur": 1.80,
         "ppm": 96,
         "lunettes": True,
         "cravate": "#c8202c",
-        "peaux": {
-            "humain": {"Shirt": "#44475a", "Pants": "#383a4a", "TieTexture": "#f4f4f0", "Skin": "#c79468"},
-        },
+        "peaux": variantes_humaines({"Shirt": "#44475a", "Pants": "#383a4a", "TieTexture": "#f4f4f0"}),
     },
     "directeur": {
         # Capsule du Directeur : 2,1 m (voir `DIRECTOR_SPRITE_HEIGHT`).
@@ -107,6 +129,26 @@ PERSONNAGES = {
             },
         },
     },
+    "vigile": {
+        # Capsule de 2 m (`vigileConfig.ts`) : une tête de plus qu'un Costard.
+        "hauteur": 1.95,
+        "ppm": 88,
+        "vigile": True,
+        "peaux": variantes_humaines({"Shirt": "#3f5796", "Pants": "#2b3558", "TieTexture": "#3f5796",
+                                     "Hair": "#2a2420"}),
+    },
+    "rampant": {
+        "source": SOURCE_SANS_COSTUME,
+        # Debout il mesurerait 1,55 m ; penché, sa tête passe à ~1,2 m (capsule de `rampantConfig.ts`).
+        "hauteur": 1.55,
+        "ppm": 96,
+        "reptile": True,
+        "peaux": {
+            # Ventre clair, dos sombre : deux valeurs qui se lisent encore à 30 px de haut.
+            "humain": {"Shirt": "#7fae3c", "Pants": "#3f7a2c", "Skin": "#58a03a", "Hair": "#2f6420",
+                       "Eyes": "#f2c230", "_crete": True},
+        },
+    },
 }
 
 # Silhouette : épaisseur ajoutée le long des normales avant tout rendu, et tête
@@ -119,12 +161,42 @@ ECHELLE_TETE = 1.22
 
 # Lignes de l'atlas, dans l'ordre. `visee` : influence des contraintes du bras
 # droit par frame (0 = animation d'origine, 1 = bras tendu vers l'avant).
+# `penche` : inclinaison du buste vers l'avant par frame, en degrés (Rampant).
 ANIMATIONS = [
     {"nom": "idle", "action": "Man_Idle", "frames": [0, 50], "fps": 1.5},
     {"nom": "alert", "action": "Man_Idle", "frames": [0, 0], "visee": [0.4, 0.75]},
     {"nom": "chase", "action": "Man_Run", "frames": [0, 3.5, 7, 10.5, 14, 17.5], "metersPerCycle": 2.8},
     {"nom": "aim", "action": "Man_Idle", "frames": [0], "visee": [1.0]},
     {"nom": "fire", "action": "Man_Idle", "frames": [0], "visee": [1.0], "recul": True, "eclair": True, "duration": 0.12},
+    {"nom": "stagger", "action": "Man_Death", "frames": [4, 8]},
+    {"nom": "death", "action": "Man_Death", "frames": [12, 20, 26, 29, 32, 50], "recentrer": True},
+]
+
+
+# Le Rampant garde les noms de lignes du contrat (`enemySprites.ts`) : `aim`
+# est l'élan avant le coup de griffe, `fire` le coup lui-même.
+ANIMATIONS_RAMPANT = [
+    {"nom": "idle", "action": "Man_Idle", "frames": [0, 50], "fps": 2.0, "penche": [66, 70]},
+    # Il se redresse et écarte les bras : « je t'ai vu ».
+    {"nom": "alert", "action": "Man_Jump", "frames": [4, 10], "penche": [35, 8]},
+    {"nom": "chase", "action": "Man_Run", "frames": [0, 3.5, 7, 10.5, 14, 17.5], "metersPerCycle": 2.4,
+     "penche": [62] * 6},
+    {"nom": "aim", "action": "Man_SwordSlash", "frames": [5], "penche": [28]},
+    {"nom": "fire", "action": "Man_SwordSlash", "frames": [12], "penche": [62], "duration": 0.18},
+    {"nom": "stagger", "action": "Man_Death", "frames": [4, 8], "penche": [20, 10]},
+    {"nom": "death", "action": "Man_Death", "frames": [12, 20, 26, 29, 32, 50], "recentrer": True,
+     "queue_a_plat": True},
+]
+
+
+# Le Vigile marche, il ne court pas. `aim` est la matraque levée, `fire` le
+# coup abattu — mêmes noms de lignes que le contrat (`enemySprites.ts`).
+ANIMATIONS_VIGILE = [
+    {"nom": "idle", "action": "Man_Idle", "frames": [0, 50], "fps": 1.5},
+    {"nom": "alert", "action": "Man_Punch", "frames": [3, 8]},
+    {"nom": "chase", "action": "Man_Walk", "frames": [0, 4.2, 8.3, 12.5, 16.7, 20.8], "metersPerCycle": 1.7},
+    {"nom": "aim", "action": "Man_SwordSlash", "frames": [6]},
+    {"nom": "fire", "action": "Man_SwordSlash", "frames": [13], "duration": 0.2},
     {"nom": "stagger", "action": "Man_Death", "frames": [4, 8]},
     {"nom": "death", "action": "Man_Death", "frames": [12, 20, 26, 29, 32, 50], "recentrer": True},
 ]
@@ -141,9 +213,9 @@ def arg_value(args, flag, default):
 # --- Scène -----------------------------------------------------------------
 
 
-def importer_modele():
+def importer_modele(source: str = SOURCE):
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    bpy.ops.import_scene.gltf(filepath=SOURCE)
+    bpy.ops.import_scene.gltf(filepath=source)
     scene = bpy.context.scene
     arm = next(o for o in scene.objects if o.type == "ARMATURE")
     # Le .glb traîne une `Icosphere` hors du rig : seul le mesh skinné compte.
@@ -194,6 +266,36 @@ def poser(scene, arm, action: str, frame: float):
         pb.scale = (1, 1, 1)
     arm.animation_data.action = bpy.data.actions["HumanArmature|" + action]
     scene.frame_set(int(math.floor(frame)), subframe=frame - math.floor(frame))
+
+
+def pencher(arm, degres: float):
+    """Incline le buste vers l'avant, APRÈS la pose de l'animation : l'abdomen
+    bascule autour de sa base, et la tête se redresse d'autant pour continuer
+    de regarder devant. Les jambes et le bassin ne bougent pas — c'est ce qui
+    donne la silhouette d'un animal qui court ventre à terre plutôt qu'un
+    homme qui tombe. La valeur tient jusqu'au prochain `frame_set`."""
+    if abs(degres) < 1e-3:
+        return
+    vers_monde = arm.matrix_world
+    vers_arm = vers_monde.inverted()
+
+    def tourner(os_nom: str, angle: float):
+        pb = arm.pose.bones[os_nom]
+        pivot = vers_monde @ pb.head
+        # Le modèle regarde vers -Y : une rotation positive autour de X amène le haut vers l'avant.
+        rotation = Matrix.Translation(pivot) @ Matrix.Rotation(math.radians(angle), 4, "X") @ Matrix.Translation(-pivot)
+        pb.matrix = vers_arm @ rotation @ vers_monde @ pb.matrix
+        bpy.context.view_layer.update()
+
+    tourner("Abdomen", degres)
+    tourner("Neck", -degres * 0.75)
+    # Les bras partent vers l'avant, griffes devant le museau.
+    for cote in ("L", "R"):
+        tourner(f"UpperArm.{cote}", degres * 0.35)
+    # Le rendu réévalue l'animation : un os que l'action anime (l'abdomen de
+    # `Man_Run`, pas celui de `Man_Idle`) y perdrait son inclinaison. Sans
+    # action, la pose écrite ici est celle qui est rendue ; `poser` la remet.
+    arm.animation_data.action = None
 
 
 def bbox_monde(mesh) -> tuple[Vector, Vector]:
@@ -414,6 +516,122 @@ def construire_crete(scene, arm, k: float):
         accrocher(ob, arm, "Head", Matrix.Translation(Vector((o.x, o.y + dy * k, haut.z - 0.03 * k))))
 
 
+def construire_museau(scene, arm, mesh, k: float):
+    """Un museau qui avance sous les yeux : de profil, c'est lui qui dit « lézard »."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    base_crane = (arm.matrix_world @ arm.pose.bones["Head"].head).z
+    yeux = [p for p in points_materiau(mesh, "Eyes") if p.z > base_crane]
+    centre = sum(yeux, Vector()) / len(yeux)
+    avant = min(p.y for p in yeux)
+    museau = boite("museau", Vector((0.15, 0.20, 0.10)) * k, "#6aa83c")
+    machoire = boite("machoire", Vector((0.13, 0.17, 0.035)) * k, "#d8d0a0")
+    machoire.location = Vector((0, -0.01, -0.06)) * k
+    bpy.context.view_layer.update()
+    machoire.data.transform(Matrix.Translation(machoire.location))
+    machoire.location = (0, 0, 0)
+    tete = fusionner("museau", [museau, machoire])
+    accrocher(tete, arm, "Head", Matrix.Translation(Vector((centre.x, avant - 0.06 * k, centre.z - 0.07 * k))))
+
+
+def construire_queue(scene, arm, k: float):
+    """Queue en trois tronçons qui s'affinent, accrochée au bassin : elle reste
+    à l'horizontale quand le buste plonge, et fait contrepoids à l'œil."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    o, *_ = repere_os(arm, "Hips")
+    # Un seul tronc de pyramide, de la base (large) à la pointe : des tronçons
+    # empilés se lisaient comme un escalier.
+    base, pointe, longueur, chute = 0.09 * k, 0.02 * k, 1.05 * k, 0.16 * k
+    y0 = 0.06 * k
+    verts = [(-base, y0, -base), (base, y0, -base), (base, y0, base), (-base, y0, base),
+             (-pointe, y0 + longueur, -chute - pointe), (pointe, y0 + longueur, -chute - pointe),
+             (pointe, y0 + longueur, -chute + pointe), (-pointe, y0 + longueur, -chute + pointe)]
+    faces = [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)]
+    me = bpy.data.meshes.new("queue")
+    me.from_pydata(verts, [], faces)
+    mat = bpy.data.materials.new("queue")
+    mat.diffuse_color = hex_rgba("#3f7a2c")
+    me.materials.append(mat)
+    queue = bpy.data.objects.new("queue", me)
+    scene.collection.objects.link(queue)
+    accrocher(queue, arm, "Hips", Matrix.Translation(o))
+
+
+def construire_griffes(scene, arm, k: float):
+    """Trois griffes claires au bout de chaque main, le long de la paume."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    for cote in ("L", "R"):
+        o, x, y, z = repere_os(arm, f"Palm.{cote}")
+        doigts = []
+        for dz in (-0.035, 0.0, 0.035):
+            g = boite(f"griffe_{cote}", Vector((0.022, 0.13, 0.022)) * k, "#e8e0b0")
+            g.data.transform(Matrix.Translation(Vector((0, 0.065 * k, dz * k))))
+            doigts.append(g)
+        main = fusionner(f"griffes_{cote}", doigts)
+        accrocher(main, arm, f"Palm.{cote}", matrice(o + y * (0.10 * k), x, y, z))
+
+
+def construire_bouclier(scene, arm, k: float):
+    """Bouclier anti-émeute : une plaque claire cerclée de sombre, barrée de
+    jaune, plus haute que large. Accroché au BUSTE, décalé vers la gauche du
+    porteur : il reste devant lui pendant la marche comme pendant le coup."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    torse = arm.matrix_world @ arm.pose.bones["Torso"].head
+    largeur, hauteur = 0.66 * k, 1.20 * k
+    plaque = boite("bouclier", Vector((largeur, 0.03 * k, hauteur)), "#a9bfd0")
+    pieces = [plaque]
+    bord = 0.045 * k
+    for nom, taille, pos in (
+        ("bord_h", Vector((largeur, 0.045 * k, bord)), Vector((0, 0, hauteur / 2 - bord / 2))),
+        ("bord_b", Vector((largeur, 0.045 * k, bord)), Vector((0, 0, -hauteur / 2 + bord / 2))),
+        ("bord_g", Vector((bord, 0.045 * k, hauteur)), Vector((-largeur / 2 + bord / 2, 0, 0))),
+        ("bord_d", Vector((bord, 0.045 * k, hauteur)), Vector((largeur / 2 - bord / 2, 0, 0))),
+    ):
+        piece = boite(nom, taille, "#232836")
+        piece.data.transform(Matrix.Translation(pos))
+        pieces.append(piece)
+    bande = boite("bande_bouclier", Vector((largeur - 2 * bord, 0.05 * k, 0.16 * k)), "#e8cf24")
+    bande.data.transform(Matrix.Translation(Vector((0, 0, 0.12 * k))))
+    pieces.append(bande)
+    bouclier = fusionner("bouclier", pieces)
+    # Devant le corps (le modèle regarde vers -Y), du genou au menton, côté gauche du porteur (+X).
+    centre = Vector((0.16 * k, torse.y - 0.42 * k, torse.z - 0.28 * k))
+    accrocher(bouclier, arm, "Torso", Matrix.Translation(centre))
+
+
+def construire_matraque(scene, arm, k: float):
+    """Matraque noire dans la main droite, plus longue que nature : 40 px à 5 m."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    o, x, y, z = repere_os(arm, "Palm.R")
+    matraque = boite("matraque", Vector((0.05, 0.70, 0.05)) * k, "#16161c")
+    matraque.data.transform(Matrix.Translation(Vector((0, 0.27 * k, 0))))
+    accrocher(matraque, arm, "Palm.R", matrice(o + y * (0.08 * k), x, y, z))
+
+
+def construire_casquette(scene, arm, mesh, k: float):
+    """Casquette plate à visière, et la bande jaune de l'uniforme en travers du buste."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    tete, *_ = repere_os(arm, "Head")
+    _, haut = bbox_monde(mesh)
+    calotte = boite("casquette", Vector((0.27, 0.29, 0.09)) * k, "#1f2a4c")
+    visiere = boite("visiere", Vector((0.25, 0.13, 0.025)) * k, "#141a30")
+    visiere.data.transform(Matrix.Translation(Vector((0, -0.19, -0.03)) * k))
+    casquette = fusionner("casquette", [calotte, visiere])
+    accrocher(casquette, arm, "Head", Matrix.Translation(Vector((tete.x, tete.y - 0.01 * k, haut.z - 0.035 * k))))
+
+    torse = arm.matrix_world @ arm.pose.bones["Torso"].head
+    dos = surface_avant(scene, 0.0, torse.z + 0.12 * k, k)
+    if dos is not None:
+        # Une ceinture jaune qui fait le tour du buste : elle se lit de dos, là où il n'y a pas de bouclier.
+        bande = boite("bande_uniforme", Vector((0.50, 0.36, 0.09)) * k, "#e8cf24")
+        accrocher(bande, arm, "Torso", Matrix.Translation(Vector((0, torse.y, torse.z + 0.12 * k))))
+
+
 def appliquer_peau(mesh, peau: dict):
     originales = PEAU_ORIGINALE
     for mat in mesh.data.materials:
@@ -563,7 +781,10 @@ def main() -> int:
     os.makedirs(out, exist_ok=True)
     tmp = os.path.join(bpy.app.tempdir or "/tmp", f"sprite_{nom}.png")
 
-    scene, arm, mesh, racine = importer_modele()
+    scene, arm, mesh, racine = importer_modele(perso.get("source", SOURCE))
+    reptile = perso.get("reptile", False)
+    vigile = perso.get("vigile", False)
+    animations = ANIMATIONS_RAMPANT if reptile else ANIMATIONS_VIGILE if vigile else ANIMATIONS
     for mat in mesh.data.materials:
         PEAU_ORIGINALE[mat.name] = tuple(mat.diffuse_color)
     poser(scene, arm, "Man_Idle", 0)
@@ -573,11 +794,21 @@ def main() -> int:
 
     cible, contraintes = installer_visee(scene, arm, k)
     cible_repos = cible.location.copy()
-    construire_pistolet(scene, arm, k, contraintes)
-    bout = bpy.data.objects["bout_canon"]
-    construire_cravate(scene, arm, k, perso["cravate"])
-    if perso["lunettes"]:
-        construire_lunettes(scene, arm, mesh, k)
+    bout = None
+    if reptile:
+        construire_museau(scene, arm, mesh, k)
+        construire_queue(scene, arm, k)
+        construire_griffes(scene, arm, k)
+    elif vigile:
+        construire_casquette(scene, arm, mesh, k)
+        construire_matraque(scene, arm, k)
+        construire_bouclier(scene, arm, k)
+    else:
+        construire_pistolet(scene, arm, k, contraintes)
+        bout = bpy.data.objects["bout_canon"]
+        construire_cravate(scene, arm, k, perso["cravate"])
+        if perso["lunettes"]:
+            construire_lunettes(scene, arm, mesh, k)
     # Toutes les pièces s'accrochent AVANT le premier rendu, rig au repos :
     # accrochée après, une pièce hérite de la dernière pose rendue (le corps
     # allongé de la mort) et flotte à côté du crâne.
@@ -585,7 +816,7 @@ def main() -> int:
         construire_crete(scene, arm, k)
     cam = configurer_rendu(scene, k, ppm)
 
-    anims = [a for a in ANIMATIONS if not filtre_anims or a["nom"] in filtre_anims.split(",")]
+    anims = [a for a in animations if not filtre_anims or a["nom"] in filtre_anims.split(",")]
     dirs = [int(d) for d in filtre_dirs.split(",")] if filtre_dirs else list(range(COLUMNS))
     lignes = sum(len(a["frames"]) for a in anims)
 
@@ -630,6 +861,14 @@ def main() -> int:
                         poser(scene, arm, a["action"], frame)
                     racine.location = (0, -(milieu - reference_y), 0)
                 bpy.context.view_layer.update()
+                pencher(arm, a.get("penche", [0.0] * len(a["frames"]))[i])
+                if a.get("queue_a_plat"):
+                    # Le bassin d'un corps qui tombe dresse la queue à la verticale :
+                    # on la recouche, pointée vers l'arrière, au ras du sol.
+                    queue = bpy.data.objects["queue"]
+                    bassin = arm.matrix_world @ arm.pose.bones["Hips"].head
+                    queue.matrix_world = Matrix.Translation(Vector((bassin.x, bassin.y, max(bassin.z, 0.2 * k))))
+                    bpy.context.view_layer.update()
                 for col, d in enumerate(dirs):
                     placer_camera(cam, d, k, ppm)
                     bpy.context.view_layer.update()
@@ -661,7 +900,7 @@ def main() -> int:
 
     manifeste = {
         "personnage": nom,
-        "source": SOURCE,
+        "source": perso.get("source", SOURCE),
         "cellWidth": CELL_W,
         "cellHeight": CELL_H,
         "columns": COLUMNS,

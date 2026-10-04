@@ -382,8 +382,18 @@ Noms : `annonce_<identifiant>_a.wav`, `_b.wav`, `_c.wav`. Le héros garde sa
 propre voix lorsqu'il parle dans le micro : `micro_annonces` reste une ligne
 du héros, avec un éventuel effet de haut-parleur ajouté plus tard.
 
+Les lignes de statut T sont les annonces que le script de niveau joue déjà
+(`storeAnnouncements.ts`) : une seule version, d'où les colonnes B et C vides.
+Leur voix est « Matilda », choisie à l'écoute le 2026-10-04 ; l'effet de
+haut-parleur est posé par `ia_voix.py finalize`, pas à l'enregistrement.
+
 | Identifiant | Statut | Situation | A | B | C |
 |---|---|---|---|---|---|
+| caisses | T | Arrivée aux caisses, première annonce (`annonce_caisses`) | Un client non identifié est attendu en caisse centrale. | — | — |
+| securite | T | Arrivée aux caisses, seconde annonce, juste avant le premier combat | Merci de ne pas gêner les opérations de sécurité. | — | — |
+| inventaire | T | Les portes de la réserve se verrouillent (`arene_reserve`) | La réserve est fermée pour inventaire exceptionnel. | — | — |
+| renfort | T | Première vague de l'arène tombée, la seconde arrive | Renfort demandé en réserve. Le personnel non essentiel est prié de mordre. | — | — |
+| inventaire_fin | T | Arène vidée, les portes se rouvrent | L'inventaire est terminé. Hyper Varan vous remercie de votre patience. | — | — |
 | fermeture | P | Future annonce ambiante de fermeture | Chers clients, notre magasin est fermé. | Merci de rejoindre la sortie dans le calme. | Toute présence après fermeture est regrettable. |
 | incident | P | Future annonce après déclenchement d'un combat | Un incident mineur est en cours de traitement. | Notre personnel assure votre tranquillité. | Merci de ne pas gêner les opérations de sécurité. |
 | fidelite | P | Future annonce liée aux cartes | Votre fidélité vous ouvre de nouvelles portes. | Découvrez les privilèges de notre programme Or. | L'accès Platine est réservé à notre direction. |

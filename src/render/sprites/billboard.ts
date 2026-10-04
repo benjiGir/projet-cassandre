@@ -28,6 +28,7 @@ export interface BillboardSpriteOptions {
   color?: number;
   // Incline les normales sans déplacer le quad pour capter les plafonniers.
   normalTilt?: number;
+  minimumLight?: number;
 }
 
 const DEFAULT_ROWS = 1;
@@ -85,6 +86,18 @@ export class BillboardSprite {
       transparent: false, // contrat du skill : écrit dans le depth buffer, pas de tri de profondeur entre sprites qui se chevauchent
       depthWrite: true,
     });
+
+    const minimumLight = THREE.MathUtils.clamp(options.minimumLight ?? 0, 0, 1);
+    if (minimumLight > 0) {
+      material.onBeforeCompile = (shader) => {
+        shader.uniforms.billboardMinimumLight = { value: minimumLight };
+        shader.fragmentShader = `uniform float billboardMinimumLight;\n${shader.fragmentShader}`.replace(
+          "#include <lights_fragment_end>",
+          "#include <lights_fragment_end>\nreflectedLight.indirectDiffuse = max(reflectedLight.indirectDiffuse, diffuseColor.rgb * billboardMinimumLight);",
+        );
+      };
+      material.customProgramCacheKey = () => "billboard-minimum-light";
+    }
 
     this.mesh = new THREE.Mesh(geometry, material);
     this.scene.add(this.mesh);

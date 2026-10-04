@@ -94,10 +94,12 @@ export interface LevelRecapInput {
   secretsTotal: number;
   /** `null` = pas de bonus de chrono dans ce récap — soit le niveau n'a pas de `parTime` (gym, zones de test), soit la partie s'est terminée par une mort (récap partiel, voir `publishLevelRecap`). */
   parTimeSeconds: number | null;
+  /** Nom de la difficulté jouée, prêt à afficher. */
+  difficulty: string;
 }
 
 export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
-  const { stats, suitTotal, directorTotal, secretsFound, secretsTotal, parTimeSeconds } = input;
+  const { stats, suitTotal, directorTotal, secretsFound, secretsTotal, parTimeSeconds, difficulty } = input;
   const lines: RecapLine[] = [];
 
   lines.push({
@@ -162,5 +164,5 @@ export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
 
   const total = lines.reduce((sum, line) => sum + line.points, 0);
 
-  return { lines, total, elapsedSeconds: stats.gameplayElapsed, parTimeSeconds, accuracy };
+  return { lines, total, elapsedSeconds: stats.gameplayElapsed, parTimeSeconds, accuracy, difficulty, record: null };
 }

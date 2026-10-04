@@ -118,7 +118,8 @@ Texte → voix ElevenLabs, lu directement dans le
 ligne de tableau = une situation, variantes A/B/C. Le compte est en offre
 gratuite : seulement les voix génériques (pas la bibliothèque française, pas de
 création de voix), un crédit par caractère, petit quota mensuel. Le héros est
-**Callum** (`eleven_v3`, français), choisi à l'écoute.
+**Callum** (`eleven_v3`, français), choisi à l'écoute ; les annonces du magasin
+sont **Matilda**, choisie le 2026-10-04 sur un `casting` de cinq voix.
 
 | Étape | Commande (`ia_voix.py`) |
 |---|---|
@@ -126,13 +127,17 @@ création de voix), un crédit par caractère, petit quota mensuel. Le héros es
 | Générer (reprend là où il s'est arrêté) | `generate --go` ; élargir avec `--statut TERP --variante abc` |
 | Écouter et cocher | `page` → `http://localhost:5173/audition/voix/index.html` |
 | Retenir | `pick heros_depart_a …` (`pick nom=-` pour retirer) |
+| Distribuer un rôle | `casting --role annonce --voix sarah,alice,lily` (`--go`) → `http://localhost:5173/audition/casting/index.html`, chaque prise brute et en haut-parleur |
 | Planche du jeu | `finalize --out /tmp/voix`, puis `build_sprite.py /tmp/voix --out public/assets/audio/voix --nom voix` |
 
 Prises gardées en MP3 tel que livré : `candidats/voix/` jetable, `retenus/voix/`
 versionné. `finalize` recadre les silences et met toutes les prises au même
-niveau de parole. En jeu : `core/audio/heroVoice.ts` (lecture) et
+niveau de parole ; une prise `annonce_*` y passe en plus par la sonorisation du
+magasin (`haut_parleur` : bande étroite, saturation, salle) et sort 3 dB sous
+le héros. En jeu : `core/audio/heroVoice.ts` (lecture) et
 `game/session/presentation/heroLines.ts` (texte et rythme de chaque réplique) — une prise
-retenue sans entrée là-dedans fait échouer `heroLines.test.ts`.
+retenue sans entrée là-dedans fait échouer `heroLines.test.ts` (`storeAnnouncements.ts` et son test pour les
+annonces).
 
 ## Sons générés par un modèle (`ia_sfx.py`, 2026-09-30) — mis de côté
 

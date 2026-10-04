@@ -10,6 +10,11 @@ import { type GameEngine } from "../gameEngine";
 
 // see: docs/archive/systems-session.md#portes-et-fin-de-niveau
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
+  if (session.doorSystem?.isLocked(targetName)) {
+    showHudMessage("Verrouillée par la sécurité du magasin");
+    playDoorSfx("locked");
+    return false;
+  }
   const opened = session.doorSystem?.open(targetName, session.player.position) ?? false;
   if (!opened) {
     console.error(`[main] use_* référence une porte introuvable ("${targetName}").`);

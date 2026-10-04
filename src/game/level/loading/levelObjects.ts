@@ -32,6 +32,7 @@ import {
   readCardProperty,
   readAmountProperty,
   readFoodItem,
+  readPerkOffer,
 } from "./levelExtras";
 
 /** `spawn_player` (Empty) : position + yaw. Voir la doc de `SpawnPoint` pour
@@ -394,15 +395,17 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       typeof extras.cameras === "string"
         ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
         : null;
+    const sells = yield* readPerkOffer(name, extras.perk, extras.prix);
 
-    // Une carte, une trousse, un aliment, une console ou un objet câblé par
-    // nom se suffit à lui-même : pas de cible, donc pas d'avertissement.
+    // Une carte, une trousse, un aliment, une console, une borne ou un objet
+    // câblé par nom se suffit à lui-même : pas de cible, donc pas d'avertissement.
     if (
       !targetName &&
       !grantsCard &&
       heals === null &&
       ammo === null &&
       !cameras &&
+      !sells &&
       !NAME_WIRED_USE_OBJECTS.has(name)
     ) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
@@ -410,7 +413,7 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, aliment, cameras, extras };
+    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, aliment, cameras, sells, extras };
   });
 }
 

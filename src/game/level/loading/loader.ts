@@ -23,6 +23,8 @@ import { mergeSanitaireDecor, type SanitaireCandidate } from "../sanitaires/sani
 import { mergeEcranDecor, type EcranCandidate } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import { initialiserDouches } from "../sanitaires/douches";
+import { initializeStoreSign } from "../../../render/environment/storeSign";
+import { STORE_SIGN_PREFIX } from "../../../render/environment/storeSignConfig";
 import { LevelFetchError, validateSpawnPlayerCountEffect } from "./levelDiagnostics";
 import { blenderName, readSpawnGroup } from "./levelExtras";
 import {
@@ -120,6 +122,19 @@ function buildLevelResourceEffect(
         const position = new THREE.Vector3();
         obj.getWorldPosition(position);
         spawnSuits.push({ name, position, group: readSpawnGroup(obj) });
+        continue;
+      }
+      // Rampant : même liste et mêmes règles (`groupe`) qu'un Costard, une autre espèce.
+      if (name.startsWith("spawn_rampant_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnSuits.push({ name, position, group: readSpawnGroup(obj), kind: "rampant" });
+        continue;
+      }
+      if (name.startsWith("spawn_vigile_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnSuits.push({ name, position, group: readSpawnGroup(obj), kind: "vigile" });
         continue;
       }
       if (name.startsWith("light_")) {
@@ -245,6 +260,10 @@ function buildLevelResourceEffect(
         continue; // reste adressable pour l'animation et l'interrupteur d'eau
       }
 
+      if (name.startsWith(STORE_SIGN_PREFIX)) {
+        continue; // Chaque lettre garde son matériau pour varier indépendamment.
+      }
+
       if (name.startsWith("secret_")) {
         secrets.push(buildSecretZone(obj, name));
         obj.visible = false; // volume logique, comme trig_*
@@ -260,6 +279,7 @@ function buildLevelResourceEffect(
     // Après convertToLambert : le filet de douche remplace volontairement
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
     initialiserDouches(root);
+    initializeStoreSign(root);
     resources.collect();
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);

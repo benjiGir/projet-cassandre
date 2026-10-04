@@ -5,7 +5,7 @@ import { RaycastService } from "../../../physics/raycast";
 import { COLLISION_GROUPS, GROUP } from "../../../physics/world";
 import { cheats } from "../../devtools/cheats";
 import { computeEyePosition, hasClearWorldPath } from "./enemyPerception";
-import type { BreakableHitTarget, EnemyMachineContext, EnemyUpdateContext } from "./enemyTypes";
+import type { BreakableHitTarget, EnemyMachineContext, EnemyMeleeConfig, EnemyUpdateContext } from "./enemyTypes";
 
 // see: docs/6-reference/notes-code-gameplay-ennemis.md#dégâts-et-événements
 // see: docs/decisions/0031-portes-animees-et-vitres.md
@@ -45,6 +45,30 @@ export function handleEnemyShotMiss(
   for (const target of breakables) {
     if (target?.tryBreakByColliderHandle(hitCollider.handle, point, direction)) return;
   }
+}
+
+/**
+ * Coup de griffe à la fin de l'élan : il porte si le joueur est encore à
+ * portée et en vue — reculer d'un pas pendant l'élan suffit à l'esquiver.
+ * Aucun rayon de tir : rien n'est cassé derrière, et pas de visée à fausser.
+ */
+export function resolveMeleeAttack(
+  ctx: EnemyMachineContext,
+  updateCtx: EnemyUpdateContext,
+  melee: EnemyMeleeConfig,
+  distance: number,
+): void {
+  if (cheats.notarget) return; // dev : le geste va au bout, le coup ne porte pas
+  ctx.timeSinceShot = 0; // le coup part, touché ou non : c'est lui que le sprite montre.
+  ctx.pendingShot = true;
+  if (distance > melee.reach) return;
+  const eye = computeEyePosition(ctx, ctx.scratchEye);
+  if (!hasClearWorldPath(updateCtx.physics, eye, updateCtx.playerEyePosition, ctx.scratchRay)) return;
+
+  ctx.pendingAttackDamage = ctx.cfg.attackDamage;
+  ctx.pendingPlayerHitPoint.copy(updateCtx.playerTargetPosition);
+  // Normale vers l'attaquant, comme celle d'un impact de tir.
+  ctx.pendingPlayerHitNormal.copy(ctx.scratchToPlayer).negate();
 }
 
 export function resolveAttack(ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext): void {

@@ -2,7 +2,7 @@
 title: Script de niveau par volumes déclencheurs et scénarios nommés
 tags: [adr, niveau, gameplay, histoire]
 status: accepte
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # ADR 0037 — Script de niveau par volumes déclencheurs et scénarios nommés
@@ -76,6 +76,22 @@ Les annonces ont leur propre canal d'affichage dans le store
 Le validateur dépend de la mise en forme de deux fichiers TypeScript. Un test
 (`test/game/session/progression/levelScriptSetup.test.ts`) échoue si elle
 change.
+
+## Révision du 2026-10-04 : arènes
+
+Les rencontres de la v1.2 ont demandé deux choses que la liste d'étapes ne
+savait pas faire. Elles restent des étapes, sans branche ni boucle.
+
+- **Attendre un groupe.** Une étape peut porter `apres` : son délai ne court
+  qu'une fois tous les ennemis réveillés du groupe tombés. Une attente a
+  toujours un terme (`auPlusTard`) : passé ce temps, le script continue, pour
+  qu'un ennemi coincé hors d'atteinte n'enferme jamais le joueur.
+- **Tenir des portes.** `verrouiller` ferme des `door_*` et les garde fermées,
+  quoi qu'on fasse devant ; `deverrouiller` rend chacune à son état d'avant.
+  Une porte peut naître ouverte (`ouverte: true`) : c'est le rideau d'une
+  arène, qui ne tombe qu'au début du combat.
+
+Un test vérifie qu'un scénario rend toujours les portes qu'il a prises.
 
 ## Comment on saurait qu'on a eu tort
 

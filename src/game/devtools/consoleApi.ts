@@ -4,6 +4,11 @@ import type { SfxId } from "../../core/audio/audioTypes";
 import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/input/inputRecorder";
 import { type Recording } from "../../core/input/inputTypes";
 import { listSfx, playSfx } from "../../core/audio/audio";
+import { goreConfig } from "../../render/fx/goreConfig";
+import { ECONOMY_VARIANTS, applyEconomyVariant, pricesInPlay, type EconomyVariantId } from "./economy/economyVariants";
+import type { ProfileId } from "./economy/economyProfiles";
+import { summarize, type ProfileSummary } from "./economy/economySim";
+import type { LedgerEntry } from "../session/stream/streamSim";
 import { listHeroVoices, playHeroVoice } from "../../core/audio/heroVoice";
 import { zoneAmbienceDebugState } from "../../core/audio/zoneAmbience";
 import { waterAmbienceDebugState } from "../../core/audio/waterAmbience";
@@ -43,6 +48,8 @@ import {
 } from "../../render/pipeline/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/progression/cards";
+import { grantPerk, startKillRush, usePerkKiosk, type PerkPurchase } from "../session/progression/perks";
+import { publishCounters } from "../session/stream/streamFeed";
 import { triggerLevelComplete } from "../session/progression/doors";
 import { applyPlayerDamage, presentPlayerDamage } from "../session/player/feedback";
 import { type SessionStats } from "../session/progression/score";
@@ -50,6 +57,8 @@ import { useGameStore } from "../hud/state";
 import { type LevelRecap } from "../hud/hudTypes";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
+import type { Perk } from "../player/perks";
+import { BOISSON_VARIANTS, perkConfig, type PerkConfig } from "../player/perkConfig";
 import { startPlayback } from "./replay/recording";
 import { type GameEngine } from "../session/gameEngine";
 import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
@@ -59,6 +68,7 @@ import {
   applyFlashVariant,
   applyHitmarkerVariant,
   applyImpactVariant,
+  applyBoissonVariant,
   applyKnockbackVariant,
   applyLightBudget,
   applyRecoilVariant,
@@ -117,12 +127,44 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     suitConfig,
     spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
+    spawnRampant: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "rampant"),
+    spawnVigile: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "vigile"),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
     killSuit: () => {
       const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
       return suit ? engine.session.suitManager.debugKill(suit) : false;
+    },
+    economie: {
+      variantes: ECONOMY_VARIANTS,
+      appliquer: (nom) => applyEconomyVariant(nom),
+      journal: () => engine.session.stream.ledger,
+      releve: (profil = "normal", graines = 200) =>
+        summarize(
+          profil,
+          engine.session.difficulty,
+          pricesInPlay((engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) => (u.sells ? [u.sells] : []))),
+          graines,
+        ),
+    },
+    gore: {
+      config: goreConfig,
+      stats: () => engine.fx.goreStats,
+      exploser: () => {
+        const suit = engine.session.suitManager.suits.find((s) => s.isAlive);
+        if (!suit) return false;
+        // Un souffle parti d'entre le joueur et lui, qui n'atteint que lui : la vraie mort à gibs, dans l'axe du regard.
+        const center = suit.position.clone().lerp(engine.session.player.position, 0.2);
+        engine.session.suitManager.applyBlast(center, () => Number.MAX_SAFE_INTEGER, (point) => point === suit.position, Infinity);
+        return true;
+      },
+    },
+    get scene() {
+      return engine.scene;
+    },
+    get camera() {
+      return engine.camera;
     },
     get directors() {
       return engine.session.directorManager.directors;
@@ -147,6 +189,30 @@ export function exposeDebugApi(engine: GameEngine): void {
     giveCard: (card) => {
       grantCard(engine.session, card);
     },
+    bornes: {
+      liste: () =>
+        (engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) =>
+          u.sells ? [{ nom: u.name, ...u.sells, achete: engine.session.perks.has(u.sells.perk) }] : [],
+        ),
+      crediter: (euros) => {
+        engine.session.stream.wallet += euros;
+        publishCounters(engine.session.stream);
+        return engine.session.stream.wallet;
+      },
+      acheter: (nom) => {
+        const borne = engine.session.gltfLevelSession?.current?.useObjects.find((u) => u.name === nom);
+        return borne?.sells ? usePerkKiosk(engine.session, borne.sells) : null;
+      },
+      donner: (perk) => grantPerk(engine.session, perk),
+      perks: () => [...engine.session.perks],
+      pointe: () => {
+        startKillRush(engine.session);
+        return engine.session.killRushRemaining;
+      },
+    },
+    perkConfig,
+    boissonVariants: BOISSON_VARIANTS,
+    applyBoissonVariant,
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
     // see: docs/decisions/0031-portes-animees-et-vitres.md
@@ -350,12 +416,32 @@ declare global {
       suitConfig: SuitConfig;
       /** Fait apparaître un Costard supplémentaire à la volée (pieds à `y`), DANS LA SESSION COURANTE. Critère de rollback du plan : pousser jusqu'à 10-20 sans interface graphique dédiée. */
       spawnSuit: (x: number, y: number, z: number) => Suit;
+      /** Même chose pour un Rampant (lot B4) : `suits` les liste avec les Costards, `kind` les distingue. */
+      spawnRampant: (x: number, y: number, z: number) => Suit;
+      /** Même chose pour un Vigile (lot B6) : lourd, lent, bouclier de face. */
+      spawnVigile: (x: number, y: number, z: number) => Suit;
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */
       suitAliveCount: () => number;
       /** DEV : tue le premier Costard vivant (vrai `deathEvent`, compté par le récap) — `false` si aucun n'est vivant. */
       killSuit: () => boolean;
+      /** Gore (`render/fx/gore.ts`) : `config` se règle en direct, `stats()` compte taches et morceaux en place, `exploser()` fait éclater le premier Costard vivant comme un coup de pompe à bout portant. */
+      /** Scène et caméra du moteur, pour inspecter le rendu depuis la console. */
+      scene: THREE.Scene;
+      camera: THREE.PerspectiveCamera;
+      /** Économie du direct (lot B7) : `appliquer("A")` met une variante à l'essai (dons et prix des bornes), `journal()` rend chaque don et chaque achat de la partie en cours, `releve(profil)` simule 200 parties types avec les réglages en place — voir `pnpm economy`. */
+      economie: {
+        variantes: typeof ECONOMY_VARIANTS;
+        appliquer: (nom: EconomyVariantId) => ReturnType<typeof applyEconomyVariant>;
+        journal: () => readonly LedgerEntry[];
+        releve: (profil?: ProfileId, graines?: number) => ProfileSummary;
+      };
+      gore: {
+        config: typeof goreConfig;
+        stats: () => { splats: number; restingChunks: number; flyingChunks: number };
+        exploser: () => boolean;
+      };
       /** Mêmes rôles que `suits`/`suitConfig`/`spawnSuit`, pour le Directeur (boss Zone E) — voir `director.ts`/`directorManager.ts`. Jalon M8 : `directors`/`directorManager` sont des accesseurs LIVE (getters). */
       directors: Director[];
       /** Référence directe au manager complet (badge, files d'événements) — même précédent que `weapons` ci-dessus, utile pour du débogage console. Getter LIVE (Jalon M8). */
@@ -378,6 +464,19 @@ declare global {
       /** Porte à badge (Zone E, `use_exit_door`/`door_e_exit`) : lecture/forçage de la possession du badge, pour tester sans tuer le Directeur en console. Opère sur la SESSION COURANTE. */
       cards: () => LoyaltyCard[];
       giveCard: (card: LoyaltyCard) => void;
+      /** Bornes de perks du niveau courant : `liste()` rend l'offre de chacune, `crediter(euros)` remplit le portefeuille sans passer par un don, `acheter(nom)` joue la touche d'usage sur une borne — le verrouillage du pointeur met la vraie touche hors de portée de l'automatisation. `donner(perk)` pose un perk sans borne ni argent, `perks()` rend ceux de la partie, `pointe()` lance la pointe de vitesse de la boisson comme le ferait un kill (`killSuit()` tue hors du pas fixe et n'en compte pas un) et rend sa durée. */
+      bornes: {
+        liste: () => { nom: string; perk: Perk; price: number; achete: boolean }[];
+        crediter: (euros: number) => number;
+        acheter: (nom: string) => PerkPurchase | null;
+        donner: (perk: Perk) => boolean;
+        perks: () => Perk[];
+        pointe: () => number;
+      };
+      /** Barème des perks, et harnais A/B de la pointe de vitesse de la boisson (même protocole que `feelVariants`). */
+      perkConfig: PerkConfig;
+      boissonVariants: typeof BOISSON_VARIANTS;
+      applyBoissonVariant: (name: keyof typeof BOISSON_VARIANTS) => ReturnType<typeof applyBoissonVariant>;
       doors: () => DoorInfo[];
       /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {

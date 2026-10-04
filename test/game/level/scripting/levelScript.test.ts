@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createLevelScriptState,
+  isGroupDown,
   updateLevelScript,
   type Scenario,
   type ScriptAction,
@@ -72,5 +73,67 @@ describe("updateLevelScript", () => {
     updateLevelScript(state, [{ ...declencheur, event: "inconnu" }], scenarios, DT, dedans, (a) => actions.push(a.kind));
     expect(actions).toEqual([]);
     expect(state.fired.has("trig_essai")).toBe(true);
+  });
+});
+describe("updateLevelScript — attendre qu'un groupe soit tombé", () => {
+  const vagues: Record<string, Scenario> = {
+    essai: [
+      { delay: 0, action: { kind: "reveiller", groupe: "vague_1" } },
+      { delay: 0.5, apres: { groupe: "vague_1", auPlusTard: 10 }, action: { kind: "reveiller", groupe: "vague_2" } },
+      { delay: 0, apres: { groupe: "vague_2", auPlusTard: 10 }, action: { kind: "deverrouiller", portes: ["door_a"] } },
+    ],
+  };
+
+  /** Un scénario à deux vagues ; `reveiller` range un ennemi vivant dans l'état, comme le fait le jeu. */
+  function arene() {
+    const state = createLevelScriptState();
+    const ennemis: Record<string, { isAlive: boolean }> = {};
+    const actions: string[] = [];
+    const avancer = (secondes: number) => {
+      for (let t = 0; t < secondes; t += DT) {
+        updateLevelScript(state, [declencheur], vagues, DT, dedans, (action) => {
+          actions.push(action.kind === "reveiller" ? action.groupe : action.kind);
+          if (action.kind === "reveiller") {
+            ennemis[action.groupe] = { isAlive: true };
+            state.woken.set(action.groupe, [ennemis[action.groupe]!]);
+          }
+        });
+      }
+    };
+    return { state, ennemis, actions, avancer };
+  }
+
+  it("la vague suivante n'arrive qu'après la chute de la précédente, puis son délai", () => {
+    const { ennemis, actions, avancer } = arene();
+    avancer(5);
+    expect(actions).toEqual(["vague_1"]);
+
+    ennemis.vague_1!.isAlive = false;
+    avancer(0.3);
+    expect(actions).toEqual(["vague_1"]);
+    avancer(0.3);
+    expect(actions).toEqual(["vague_1", "vague_2"]);
+
+    ennemis.vague_2!.isAlive = false;
+    avancer(0.1);
+    expect(actions).toEqual(["vague_1", "vague_2", "deverrouiller"]);
+  });
+
+  it("un ennemi qui ne meurt jamais n'enferme pas le joueur : l'attente expire", () => {
+    const { actions, avancer, state } = arene();
+    avancer(9);
+    expect(actions).toEqual(["vague_1"]);
+    avancer(2);
+    expect(actions).toEqual(["vague_1", "vague_2"]);
+    avancer(11);
+    expect(actions).toEqual(["vague_1", "vague_2", "deverrouiller"]);
+    expect(state.running).toEqual([]);
+  });
+
+  it("un groupe jamais réveillé n'attend personne", () => {
+    const state = createLevelScriptState();
+    expect(isGroupDown(state, "personne")).toBe(true);
+    state.woken.set("meute", [{ isAlive: false }, { isAlive: true }]);
+    expect(isGroupDown(state, "meute")).toBe(false);
   });
 });

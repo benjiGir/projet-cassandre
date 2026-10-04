@@ -1,4 +1,39 @@
 {
+ "annonce_caisses_a": {
+  "date": "2026-10-04 16:45",
+  "modele": "eleven_v3",
+  "texte": "Un client non identifié est attendu en caisse centrale.",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voix": "Matilda"
+ },
+ "annonce_inventaire_a": {
+  "date": "2026-10-04 16:45",
+  "modele": "eleven_v3",
+  "texte": "La réserve est fermée pour inventaire exceptionnel.",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voix": "Matilda"
+ },
+ "annonce_inventaire_fin_a": {
+  "date": "2026-10-04 16:45",
+  "modele": "eleven_v3",
+  "texte": "L'inventaire est terminé. Hyper Varan vous remercie de votre patience.",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voix": "Matilda"
+ },
+ "annonce_renfort_a": {
+  "date": "2026-10-04 16:45",
+  "modele": "eleven_v3",
+  "texte": "Renfort demandé en réserve. Le personnel non essentiel est prié de mordre.",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voix": "Matilda"
+ },
+ "annonce_securite_a": {
+  "date": "2026-10-04 16:45",
+  "modele": "eleven_v3",
+  "texte": "Merci de ne pas gêner les opérations de sécurité.",
+  "voice_id": "XrExE9yKIg1WjnnlVkGX",
+  "voix": "Matilda"
+ },
  "heros_arme_double_a": {
   "date": "2026-10-02 12:45",
   "modele": "eleven_v3",

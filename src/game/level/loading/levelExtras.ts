@@ -7,10 +7,12 @@ import { DEFAULT_SANITAIRE_KIND, parseSanitaireKind, type SanitaireKind } from "
 import { DEFAULT_ECRAN_CHAINE, parseEcranChaine, type EcranChaine } from "../interactions/ecrans";
 import { parseLoyaltyCard, type LoyaltyCard } from "../../player/loyaltyCards";
 import { parseFoodItem, type FoodItem } from "../interactions/food";
+import { parsePerk, type PerkOffer } from "../../player/perks";
 import {
   UnknownLoyaltyCardWarning,
   InvalidHealAmountWarning,
   UnknownFoodItemWarning,
+  InvalidPerkOfferWarning,
   UnknownPropMaterialWarning,
   InvalidPropNumberWarning,
   InvalidPropContentWarning,
@@ -23,6 +25,7 @@ import {
   formatUnknownLoyaltyCard,
   formatInvalidHealAmount,
   formatUnknownFoodItem,
+  formatInvalidPerkOffer,
   formatUnknownPropMaterial,
   formatInvalidPropNumber,
   formatInvalidPropContent,
@@ -214,6 +217,24 @@ export function readAmountProperty(name: string, property: string, raw: unknown)
     yield* Effect.fail(new InvalidHealAmountWarning({ name, value: String(raw), property })).pipe(
       Effect.catch((error) => Effect.sync(() => console.error(formatInvalidHealAmount(error)))),
     );
+    return null;
+  });
+}
+
+/** Lit la paire `perk`/`prix` d'une borne : les deux absentes -> `null` sans
+ * bruit ; perk inconnu, prix invalide ou paire incomplète -> `null` AVEC
+ * avertissement bruyant. Une borne mal décrite ne vend rien : jamais de perk
+ * gratuit par faute de frappe. */
+export function readPerkOffer(name: string, rawPerk: unknown, rawPrix: unknown): Effect.Effect<PerkOffer | null> {
+  return Effect.gen(function* () {
+    const absent = (raw: unknown) => raw === undefined || raw === null || raw === "";
+    if (absent(rawPerk) && absent(rawPrix)) return null;
+    const perk = parsePerk(rawPerk);
+    const price = typeof rawPrix === "number" ? rawPrix : Number(absent(rawPrix) ? NaN : rawPrix);
+    if (perk && Number.isFinite(price) && price > 0) return { perk, price };
+    yield* Effect.fail(
+      new InvalidPerkOfferWarning({ name, perk: String(rawPerk ?? ""), prix: String(rawPrix ?? "") }),
+    ).pipe(Effect.catch((error) => Effect.sync(() => console.error(formatInvalidPerkOffer(error)))));
     return null;
   });
 }

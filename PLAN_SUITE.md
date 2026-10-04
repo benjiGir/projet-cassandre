@@ -138,14 +138,14 @@ v1.2, **B3**, **B4** et **B5** sont indépendants les uns des autres.
 | A6 | Fin amère | `shell`, `ui-forge` | S | **livré le 2026-10-03** |
 | A7 | Documentation et gate v1.1 | `doc-keeper`, `qa-evidence` | S | **documentation livrée le 2026-10-03** ; contrôles automatiques verts (`pnpm verify -- --level --docs`) ; reste la partie complète de l'utilisateur |
 | A8 | Voix (facultatif) | `sound-forge` | S | après playtest |
-| B1 | Portefeuille et bornes | `level-pipeline`, `level-forge`, `shell` | M | à faire |
-| B2 | Perks | `feel-tuner`, `entity-designer` | M | à faire |
-| B3 | Explosifs | `level-pipeline`, `retro-render`, `sound-forge` | L | à faire |
-| B4 | Nouveaux ennemis | `entity-designer`, `retro-render`, `sound-forge` | L | à faire |
-| B5 | Difficulté | `shell`, `entity-designer` | S | à faire |
-| B6 | Rencontres | `level-forge`, `entity-designer` | M | à faire |
-| B7 | Équilibrage de l'économie | `feel-tuner` | M | à faire |
-| B8 | Documentation et gate v1.2 | `doc-keeper`, `qa-evidence` | S | à faire |
+| B1 | Portefeuille et bornes | `level-pipeline`, `level-forge`, `shell` | M | **livré le 2026-10-03** : quatre bornes (galerie 5 €, réserve 20 €, personnel 50 €, bureaux 100 €) ; les perks n'ont pas encore d'effet (B2), prix à régler (B7), documentation de référence due au lot B8 |
+| B2 | Perks | `feel-tuner`, `entity-designer` | M | **livré le 2026-10-03** : les six effets, une marque et une lecture de pub par perk ; variante de la boisson (A, B ou C) à trancher par l'utilisateur ; VPN et aimant n'ont pas encore de borne |
+| B3 | Explosifs | `level-pipeline`, `retro-render`, `sound-forge` | L | **livré le 2026-10-03** : matière `gaz`, souffle, réaction en chaîne, quinze bonbonnes posées des caisses aux bureaux ; son d'explosion synthétisé, à écouter ; rayon et dégâts à régler (B7) |
+| B4 | Nouveaux ennemis | `entity-designer`, `retro-render`, `sound-forge` | L | **Rampant livré le 2026-10-03, Vigile livré le 2026-10-04** (décision de l'utilisateur : le Rampant est tenu pour validé) ; le Vigile emprunte la voix du Costard en attendant la sienne ; les deux se jouent dans la salle d'essai (`?level=gym`) |
+| B5 | Difficulté | `shell`, `entity-designer` | S | **livré le 2026-10-04** : écran de choix entre le menu et le chargement, mémorisé ; PV et dégâts des ennemis, part des groupes réveillés, probabilité de don ; records par niveau et par difficulté, affichés au choix et dans le récap. Pour B6 : un groupe se pose à sa taille « Lanceur d'alerte », les difficultés plus basses gardent les premiers spawns par ordre de nom (75 % et 50 %). Multiplicateurs à régler (B7), documentation de référence due au lot B8 |
+| B6 | Rencontres | `level-forge`, `entity-designer` | M | **livré le 2026-10-04** : arène verrouillée de la réserve (deux vagues, rideau `door_reserve_nord` ajouté au passage nord, décision de l'utilisateur), meute de Rampants au parking souterrain (quatre Costards retirés), Vigile devant la porte Or ; `pnpm verify -- --level` vert ; **durée de partie non mesurée** : elle demande une partie jouée |
+| B7 | Équilibrage de l'économie | `feel-tuner` | M | **proposé le 2026-10-04, à trancher par l'utilisateur** : relevé par simulation (`pnpm economy`, trois parties types × 200 tirages), trois variantes A/B/C (`cassandre.economie.appliquer`), la B est en place ; six bornes au lieu de quatre (VPN aux caisses, aimant au fond de l'allée centrale) ; reste un relevé sur de vraies parties (`cassandre.economie.journal()`), et les réglages de combat qui demandent un playtest (multiplicateurs de difficulté, Rampant, Vigile, explosifs) |
+| B8 | Documentation et gate v1.2 | `doc-keeper`, `qa-evidence` | S | **documentation livrée le 2026-10-04** : ADR 0040 à 0042, révision de l'ADR 0037, pages fonctionnelles, techniques et de référence, journal, `CHANGELOG.md` ; contrôles automatiques verts (`pnpm verify -- --level --docs`, `pnpm build`) ; reste la partie complète de l'utilisateur |
 
 Tailles : S = une séance, M = deux ou trois, L = davantage, avec une boucle de
 playtest.

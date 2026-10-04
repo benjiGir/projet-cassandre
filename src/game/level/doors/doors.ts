@@ -69,9 +69,25 @@ export class DoorSystem {
         target: 0,
         permanent: false,
         idleTimer: 0,
+        locked: false,
+        reopenOnUnlock: false,
       };
       this.groups.push(group);
       for (const member of members) this.groupByDoorName.set(member.info.name, group);
+      if (members.some((m) => m.config.ouverte)) this.startOpen(group);
+    }
+  }
+
+  /** `ouverte` : le groupe naît en bout de course, collider coupé — avant le bake de navigation, qui doit voir le passage. */
+  private startOpen(group: DoorGroup): void {
+    group.progress = 1;
+    group.target = 1;
+    group.permanent = true;
+    for (const member of group.members) {
+      member.info.collider.setEnabled(false);
+      this.composeMemberPose(member, 1);
+      member.prevPosition.copy(member.currPosition);
+      member.prevQuaternion.copy(member.currQuaternion);
     }
   }
 
@@ -101,9 +117,41 @@ export class DoorSystem {
     return runtimeState(group);
   }
 
-  open(name: string, openerPosition: THREE.Vector3, opts: { silent?: boolean } = {}): boolean {
+  /**
+   * Verrou du script de niveau : le groupe se ferme et le reste, quoi qu'on
+   * fasse devant. Rend `false` si le nom est inconnu.
+   */
+  lock(name: string): boolean {
     const group = this.groupByDoorName.get(name);
     if (!group) return false;
+    if (group.locked) return true;
+    group.locked = true;
+    group.reopenOnUnlock = group.target === 1;
+    if (group.target === 1) this.beginClosing(group);
+    return true;
+  }
+
+  /** Lève le verrou : un groupe qui était ouvert se rouvre, les autres retrouvent leur fonctionnement. */
+  unlock(name: string, openerPosition: THREE.Vector3): boolean {
+    const group = this.groupByDoorName.get(name);
+    if (!group) return false;
+    if (!group.locked) return true;
+    group.locked = false;
+    if (group.reopenOnUnlock) {
+      group.permanent = true;
+      this.beginOpening(group, openerPosition, false);
+    }
+    return true;
+  }
+
+  isLocked(name: string): boolean {
+    return this.groupByDoorName.get(name)?.locked ?? false;
+  }
+
+  /** Rend `false` si le nom est inconnu, ou si le script tient la porte verrouillée. */
+  open(name: string, openerPosition: THREE.Vector3, opts: { silent?: boolean } = {}): boolean {
+    const group = this.groupByDoorName.get(name);
+    if (!group || group.locked) return false;
     group.permanent = true;
     this.beginOpening(group, openerPosition, opts.silent ?? false);
     return true;
@@ -114,7 +162,7 @@ export class DoorSystem {
     let cible: DoorGroup | null = null;
     let meilleure = Infinity;
     for (const group of this.groups) {
-      if (group.manuelle === "non") continue;
+      if (group.manuelle === "non" || group.locked) continue;
       for (const member of group.members) {
         const t = member.info.body.translation();
         const dx = position.x - t.x;
@@ -172,6 +220,8 @@ export class DoorSystem {
 
   update(dt: number, actors: readonly DoorActor[]): void {
     for (const group of this.groups) {
+      // Verrouillé mais rouvert parce que quelqu'un était dans le passage : il retente à chaque pas.
+      if (group.locked && group.target === 1) group.target = 0;
       this.updateAutoTrigger(group, actors, dt);
       this.advanceGroup(group, dt, actors);
       for (const member of group.members) this.composeMemberPose(member, group.progress);
@@ -179,7 +229,7 @@ export class DoorSystem {
   }
 
   private updateAutoTrigger(group: DoorGroup, actors: readonly DoorActor[], dt: number): void {
-    if (!group.auto || group.permanent) return;
+    if (!group.auto || group.permanent || group.locked) return;
 
     let opener: THREE.Vector3 | null = null;
     for (const actor of actors) {
@@ -303,12 +353,12 @@ export class DoorSystem {
   private readonly movedBatches = new Set<THREE.BatchedMesh>();
 
   /** Résumé lisible pour la console de dev (`cassandre.doors2()`/tests). */
-  describe(): Array<{ name: string; movement: DoorMovement; state: DoorRuntimeState; groupe: string }> {
-    const out: Array<{ name: string; movement: DoorMovement; state: DoorRuntimeState; groupe: string }> = [];
+  describe(): Array<{ name: string; movement: DoorMovement; state: DoorRuntimeState; groupe: string; locked: boolean }> {
+    const out: ReturnType<DoorSystem["describe"]> = [];
     for (const group of this.groups) {
       const state = runtimeState(group);
       for (const member of group.members) {
-        out.push({ name: member.info.name, movement: member.info.movement, state, groupe: group.key });
+        out.push({ name: member.info.name, movement: member.info.movement, state, groupe: group.key, locked: group.locked });
       }
     }
     return out;

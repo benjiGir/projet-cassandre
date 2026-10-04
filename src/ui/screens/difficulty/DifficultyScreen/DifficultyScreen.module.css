@@ -1,0 +1,25 @@
+.panel {
+  --corner-size: 22px;
+  align-items: stretch;
+  gap: 20px;
+  max-width: 94vw;
+  padding: 40px 46px 28px;
+}
+
+.title {
+  font-size: 22px;
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-border);
+}

@@ -10,6 +10,7 @@ export type SfxId =
   | "enemy_shot"
   | "enemy_hurt"
   | "enemy_death"
+  | "enemy_gib"
   | "door_locked"
   | "door_unlock"
   | "door_swing"
@@ -24,7 +25,12 @@ export type SfxId =
   | "sanitaire_use"
   | "sanitaire_break"
   | "water_drink"
-  | "food_eat";
+  | "food_eat"
+  | "explosion"
+  | "rampant_alert"
+  | "rampant_telegraph"
+  | "rampant_attack"
+  | "rampant_death";
 
 export interface SfxDef {
   sprite: string;
@@ -33,4 +39,7 @@ export interface SfxDef {
 }
 
 export type EnemySfxEvent = "alert" | "telegraph" | "shot" | "hurt" | "death";
+
+/** Qui pousse le son : chaque espèce d'ennemi a sa voix. */
+export type EnemyVoice = "costard" | "rampant" | "vigile";
 export type DoorSfxEvent = "locked" | "unlock";

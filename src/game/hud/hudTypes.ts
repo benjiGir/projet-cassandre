@@ -1,5 +1,6 @@
 import type { WeaponKind } from "../player/weapons/weaponTypes";
 import type { LoyaltyCard } from "../player/loyaltyCards";
+import type { Difficulty } from "../session/progression/difficulty";
 
 // see: docs/decisions/0036-contrats-feuilles-et-store-hud.md
 
@@ -21,12 +22,23 @@ export interface RecapLine {
   points: number;
 }
 
+/** Où en est le record de score du niveau, dans la difficulté jouée. */
+export interface RecapRecord {
+  readonly best: number;
+  /** Cette partie vient de le battre, ou d'en poser un premier. */
+  readonly isNew: boolean;
+}
+
 export interface LevelRecap {
   lines: RecapLine[];
   total: number;
   elapsedSeconds: number;
   parTimeSeconds: number | null;
   accuracy: number;
+  /** Nom de la difficulté jouée, prêt à afficher. */
+  difficulty: string;
+  /** `null` sur un récap partiel : une mort ne pose pas de record. */
+  record: RecapRecord | null;
 }
 
 /** Une ligne du chat du direct. */
@@ -47,6 +59,35 @@ export interface DonationAlert {
   readonly text: string;
   /** Le don vient du donateur mystère de l'histoire. */
   readonly mystery: boolean;
+}
+
+/** Ce que vend la borne à portée du joueur, pour l'invite d'interaction. */
+export interface PerkOfferView {
+  /** Touche d'usage, telle que le joueur l'a réglée. */
+  readonly key: string;
+  readonly label: string;
+  /** Ce que le perk change, en quelques mots. */
+  readonly effect: string;
+  /** Euros. */
+  readonly price: number;
+  /** Déjà acheté dans cette partie : la borne est épuisée. */
+  readonly sold: boolean;
+}
+
+/** Une ligne de ce qu'une difficulté change, dite en clair. */
+export interface DifficultyEffectView {
+  readonly label: string;
+  readonly value: string;
+}
+
+/** Une difficulté telle que l'écran de choix la montre. */
+export interface DifficultyOptionView {
+  readonly id: Difficulty;
+  readonly label: string;
+  readonly pitch: string;
+  readonly effects: readonly DifficultyEffectView[];
+  /** Record du niveau dans cette difficulté, `null` tant qu'il n'a pas été terminé. */
+  readonly record: { readonly score: number; readonly seconds: number } | null;
 }
 
 /** Message diffusé dans le magasin : haut-parleurs ou interphone. */

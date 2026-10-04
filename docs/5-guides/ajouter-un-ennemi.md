@@ -2,7 +2,7 @@
 title: Ajouter un ennemi
 tags: [guide, recette]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-04
 ---
 
 # Ajouter un ennemi
@@ -99,8 +99,35 @@ simulation ou le contrat des collisions existants.
 - Un spawn visuellement libre peut toucher un collider ou un prop.
   Faites vérifier le point de départ dans le niveau.
 
+## Le chemin court : une espèce de plus
+
+Un ennemi qui se comporte comme un Costard, à des valeurs près, n'a besoin ni
+d'une classe ni d'un gestionnaire. Le Rampant et le Vigile sont faits ainsi.
+
+1. `src/game/entities/suit/suitConfig.ts` — ajoutez le nom à `SuitKind`.
+2. Un fichier de configuration qui part de `suitConfig` et ne redéfinit que
+   ce qui change (`src/game/entities/vigile/vigileConfig.ts`). Deux options
+   existent : `melee` pour frapper au contact, `shield` pour un bouclier de face
+   (`src/game/entities/shared/enemyShield.ts`).
+3. `src/game/entities/suit/suitManager.ts` — un `case` dans `configFor`.
+4. `src/game/session/spawning.ts` — un `case` dans `suitSheetFor`, et la
+   planche chargée dans `src/main.ts`.
+5. `src/core/audio/audioCatalog.ts` — une voix dans `ENEMY_SFX`.
+6. `src/game/level/loading/loader.ts` et `tools/blender/validate_level.py` —
+   le préfixe d'apparition.
+7. `src/game/session/presentation/heroLines.ts` — une réplique d'alerte et
+   une d'attaque dans `ALERT_LINES` et `ATTACK_LINES`.
+8. `tools/blender/render_enemy_sprites.py` — un personnage et ses animations.
+
+Le compilateur signale chaque `switch` oublié. Posez ensuite une rencontre
+d'essai dans la salle de test (`src/game/session/lifecycle.ts`) avant de
+placer l'ennemi dans le niveau.
+
 ## Exemple réel
 
 Commit `df6a30c`, « Directeur (boss Zone E) : entité + câblage main.ts »
 ajoute l'entité, sa configuration et son manager. Le commit `5819f7c`
 partage ensuite la machine d'ennemi entre le Costard et le Directeur.
+
+Le commit `d0bc7a7` ajoute le Vigile par le chemin court : une
+configuration, le bouclier dans le gestionnaire, et ses sprites.

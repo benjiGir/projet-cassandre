@@ -15,7 +15,7 @@ import { runGameplaySync } from "../../../app/runtime/gameRuntime";
 import { computeEyePosition, hasClearWorldPath } from "./enemyPerception";
 import { computeAvoidedDirection, turnTowards, tryComputeChaseDirectionFromPath } from "./enemyNavigation";
 import { detachEnemyPhysics, updateKnockback, integratePhysics } from "./enemyPhysics";
-import { resolveAttack } from "./enemyCombat";
+import { resolveAttack, resolveMeleeAttack } from "./enemyCombat";
 import { cheats } from "../../devtools/cheats";
 import type { EnemyAnimationInput } from "../../../render/sprites/enemySpriteTypes";
 
@@ -243,7 +243,7 @@ export function forceEnemyState(actor: EnemyActor, next: EnemyState): EnemyActor
 
 function runIdle(actor: EnemyActor, ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext, distance: number): void {
   if (cheats.notarget) return; // dev : jamais de repérage, donc jamais d'alerte
-  if (distance > ctx.cfg.sightRange) return;
+  if (distance > ctx.cfg.sightRange * (updateCtx.sightRangeScale ?? 1)) return;
   const eye = computeEyePosition(ctx, ctx.scratchEye);
   if (!hasClearWorldPath(updateCtx.physics, eye, updateCtx.playerEyePosition, ctx.scratchRay)) return;
 
@@ -304,12 +304,25 @@ function runChase(
   turnTowards(ctx, ctx.scratchToPlayer.lengthSq() > 1e-8 ? ctx.scratchToPlayer : avoided, dt);
 }
 
-function runAttack(actor: EnemyActor, ctx: EnemyMachineContext, updateCtx: EnemyUpdateContext, dt: number): void {
+function runAttack(
+  actor: EnemyActor,
+  ctx: EnemyMachineContext,
+  updateCtx: EnemyUpdateContext,
+  dt: number,
+  distance: number,
+): void {
   turnTowards(ctx, ctx.scratchToPlayer, dt);
   ctx.stateTimer += dt;
+  // Corps-à-corps : l'élan est un bond vers le joueur, qui s'arrête au contact
+  // pour ne pas le traverser. Un tireur, lui, tient la pose sur place.
+  const melee = ctx.cfg.melee;
+  if (melee && distance > melee.reach * 0.5) {
+    ctx.velocityHorizontal.copy(ctx.scratchToPlayer).multiplyScalar(melee.lungeSpeed);
+  }
   if (ctx.stateTimer < ctx.cfg.attackTelegraphDuration) return; // pose TIR tenue = la télégraphie visuelle exigée par le skill.
 
-  resolveAttack(ctx, updateCtx);
+  if (melee) resolveMeleeAttack(ctx, updateCtx, melee, distance);
+  else resolveAttack(ctx, updateCtx);
   actor.send({ type: "ATTACK_RESOLVED" });
 }
 
@@ -363,7 +376,7 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
       runChase(actor, ctx, updateCtx, dt, distance);
       break;
     case "attack":
-      runAttack(actor, ctx, updateCtx, dt);
+      runAttack(actor, ctx, updateCtx, dt, distance);
       break;
     case "stagger":
       runStagger(actor, ctx, dt);

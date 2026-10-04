@@ -30,7 +30,7 @@ import numpy as np
 
 from catalogue import recette
 from physique import (SR, choc, db, eclats_qui_tombent, friedlander, gaz, melange,
-                      micro_sature, modes_barre, modes_denses, n_ech, place, unite)
+                      micro_sature, modes_barre, modes_coque, modes_denses, n_ech, place, unite)
 from synth import highpass, lowpass
 
 
@@ -233,3 +233,57 @@ def fusil_a_pompe(g, charge, coup_db, coup_hz, serrage, canon_db, pompe_db, pomp
         place(out, unite(pompe(g, ecart=0.11, frottement_db=-16.0, butee=1.1)),
               pompe_t * g.uniform(0.97, 1.03), db(pompe_db))
     return out
+
+
+@recette("explosion", "weapon", variantes=3, lieu="reserve", distance=6.0, piece_db=4.0,
+         charge=(150.0, 30.0, 400.0, "x 9 mm", "energie liberee : regle la duree du souffle, donc sa gravite"),
+         coup_db=(2.0, -30.0, 6.0, "dB", "le coup dans la poitrine"),
+         coup_hz=(36.0, 25.0, 70.0, "Hz", "hauteur du coup"),
+         feu_db=(-5.0, -30.0, 3.0, "dB", "la boule de feu : le grondement qui suit le souffle"),
+         feu_s=(1.1, 0.4, 2.0, "s", "duree du grondement"),
+         tole_db=(-14.0, -40.0, -3.0, "dB", "la bonbonne d'acier qui se dechire"),
+         debris_db=(-24.0, -60.0, -6.0, "dB", "les morceaux de tole qui retombent ; -60 = sans"),
+         serrage=(0.8, 0.0, 1.0, "", "compression parallele : fort de bout en bout"),
+         saturation=(0.8, 0.0, 1.0, "", "micro qui sature"))
+def explosion(g, charge, coup_db, coup_hz, feu_db, feu_s, tole_db, debris_db, serrage, saturation):
+    """
+    Bonbonne de gaz qui saute, entendue a quelques metres dans la reserve.
+
+    Meme physique qu'un coup de feu, a une autre echelle : la duree du souffle
+    croit comme la racine cubique de l'energie (Hopkinson), donc une charge
+    cent fois plus grosse donne un souffle cinq fois plus long et un spectre
+    cinq fois plus grave — le « boum » au lieu du « pan ». S'y ajoutent ce
+    qu'un tir n'a pas : le gaz qui continue de bruler (un grondement d'une
+    seconde, grave, qui s'eteint lentement), l'enveloppe d'acier qui se
+    dechire, et ses morceaux qui retombent.
+    """
+    k = charge ** (1 / 3)
+    duree = 0.5 + feu_s + 0.6
+    t0 = 0.002
+    souffle = _souffle(g, charge, (300 / k, 1600 / k), n=6, grave=0.9, part_resonance=0.8)
+    # Le feu : jet turbulent tres grave et lent, plus un roulement sous 120 Hz
+    # dont l'amplitude tremble — une flamme n'est jamais reguliere.
+    n = n_ech(feu_s)
+    t = np.arange(n) / SR
+    feu = _jet(g, feu_s, centre=380, decroissance=3.2 / feu_s)
+    roulement = lowpass(g.standard_normal(n), 110, order=3)
+    tremble = 1 + 0.5 * lowpass(g.standard_normal(n), 14, order=2) / 0.05
+    roulement = roulement * np.clip(tremble, 0.2, 2.5) * np.exp(-3.0 * t / feu_s) * (1 - np.exp(-t / 0.004))
+    # La bonbonne : une coque de tole d'acier (~35 cm), dechiree plus que frappee.
+    tole = choc(modes_coque(310 * g.uniform(0.9, 1.1), "tole", g, n=12), "tole", g, duree=0.7,
+                vitesse=1.4, contact_ms=0.25, part_eclat=0.6)
+    couches = [
+        (souffle, t0, 0),
+        (_front(g, 1.0), t0, -4),
+        (_coup(g, coup_hz, 0.32, depart=2.6), t0, coup_db),
+        (feu, t0 + 0.004, feu_db),
+        (roulement, t0 + 0.004, feu_db - 1),
+        (tole, t0 + 0.001, tole_db),
+    ]
+    if debris_db > -59:
+        chute = eclats_qui_tombent(8, 2.2, g, "tole", 700, 5200, rebonds=2, restitution=0.25,
+                                   dispersion=0.35, duree=1.3)
+        couches.append((chute, t0 + 0.2, debris_db))
+    sat = micro_sature(melange(duree, *couches), saturation)
+    sat = _serre(sat, plafond=0.35 - 0.2 * serrage, part=1.2 * serrage) if serrage > 0 else sat
+    return highpass(sat, 24, order=2)

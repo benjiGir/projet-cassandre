@@ -6,13 +6,16 @@ import { HeroPortrait } from "../../../game/session/presentation/heroPortrait";
 import type { HeroPortraitReaction } from "../../../game/hud/hudTypes";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
+import { PerkOffer } from "../../hud/overlays/PerkOffer/PerkOffer";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
+import { DifficultyScreen } from "../../screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { LevelCompleteScreen } from "../../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
 import { LoadingScreen } from "../../screens/loading/LoadingScreen/LoadingScreen";
 import { MainMenu } from "../../screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../screens/options/OptionsScreen/OptionsScreen";
 import { StoryPanels } from "../../screens/story/StoryPanels/StoryPanels";
 import { levelStory } from "../../../game/session/presentation/storyPanels";
+import { difficultyOptions } from "../../../game/session/presentation/difficultyOptions";
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
@@ -23,6 +26,7 @@ import styles from "./devPreview.module.css";
 const PREVIEW_SCREENS = [
   "mainMenu",
   "options",
+  "difficulty",
   "death",
   "levelComplete",
   "storyIntro",
@@ -81,6 +85,7 @@ function seedHudState() {
   ]);
   state.showDonation({ pseudo: "premier_abonne", amount: 50, text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.", mystery: true });
   state.setCards(["argent", "or"]);
+  state.setPerkOffer({ key: "E", label: "Gilet Alu-Tactique", effect: "PV maximum augmentés", price: 100, sold: false });
   state.showHudMessage("Porte déverrouillée");
   state.showHeroLine("Ils ne veulent pas que vous voyiez ça. Moi je filme.");
 }
@@ -99,6 +104,18 @@ export function maybeRenderDevPreview(root: Root): boolean {
       break;
     case "options":
       root.render(<OptionsScreen onBack={noop} />);
+      break;
+    case "difficulty":
+      root.render(
+        <DifficultyScreen
+          options={difficultyOptions("niveau_v2").map((option) =>
+            option.id === "habitue" ? { ...option, record: { score: 12400, seconds: 572 } } : option,
+          )}
+          selected="habitue"
+          onChoose={noop}
+          onBack={noop}
+        />,
+      );
       break;
     case "death":
       useGameStore.setState({ flowState: "dead" });
@@ -134,6 +151,7 @@ export function maybeRenderDevPreview(root: Root): boolean {
         <>
           <GameBackdrop />
           <Hud />
+          <PerkOffer />
           <HudMessage />
         </>,
       );

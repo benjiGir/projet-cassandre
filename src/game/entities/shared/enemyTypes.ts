@@ -43,6 +43,21 @@ export interface EnemyConfig {
   knockbackSpeed: number;
   knockbackDecayTime: number;
   knockbackUpBoost: number;
+
+  /** Attaque au corps-à-corps ; absent = tir à distance (Costard, Directeur). */
+  melee?: EnemyMeleeConfig;
+}
+
+export interface EnemyMeleeConfig {
+  /** Distance horizontale, en mètres, sous laquelle le coup porte à la fin de l'élan. */
+  reach: number;
+  /** Vitesse du bond vers le joueur pendant l'élan, m/s. */
+  lungeSpeed: number;
+}
+
+export interface EnemyShieldConfig {
+  /** Demi-ouverture de l'arc protégé, en degrés, de part et d'autre de l'avant du porteur. */
+  halfArcDeg: number;
 }
 
 export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
@@ -62,6 +77,8 @@ export interface EnemyUpdateContext {
   playerTargetPosition: THREE.Vector3;
   playerEyePosition: THREE.Vector3;
   navGraph: NavGraph | null;
+  /** Part de `sightRange` à laquelle un ennemi AU REPOS repère le joueur ; absent = 1. */
+  sightRangeScale?: number;
   // see: docs/decisions/0031-portes-animees-et-vitres.md
   vitreSystem?: BreakableHitTarget;
   // see: docs/decisions/0032-sanitaires-utilisables.md

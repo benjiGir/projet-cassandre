@@ -90,5 +90,6 @@ export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, 
     delai,
     groupe,
     portee,
+    ouverte: extras.ouverte === true,
   };
 }

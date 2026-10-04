@@ -64,6 +64,11 @@ PROMPTS: dict[str, tuple[str, float, float]] = {
     "impact_flesh": (
         f"A bullet hitting a body in a modern first-person shooter video game, short wet meaty impact, single hit, {SEC}",
         0.5, 0.5),
+    "gib_splat": (
+        # Le « sproutch » d'un ennemi qui eclate (pompe a bout portant,
+        # explosif) : joue une fois, par-dessus le tir et le cri de mort.
+        f"A body bursting apart at point-blank range in a modern first-person shooter video game: one heavy wet squelching splat, gore and meat chunks slapping onto a hard floor, juicy, gooey, punchy and exaggerated, single event, {SEC}",
+        1.4, 0.5),
     "impact_glass": (
         f"A glass display case shattering in a video game, bright crash then shards falling and tinkling on the floor, {SEC}",
         1.4, 0.5),

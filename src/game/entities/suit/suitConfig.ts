@@ -1,3 +1,11 @@
+import type { EnemyMeleeConfig, EnemyShieldConfig } from "../shared/enemyTypes";
+
+/**
+ * Espèces d'ennemis qui partagent le gestionnaire et la machine d'état du
+ * Costard : un `switch` sur ce champ, pas une hiérarchie (invariant #8).
+ */
+export type SuitKind = "costard" | "rampant" | "vigile";
+
 // see: docs/6-reference/valeurs-ennemis.md
 export interface SuitConfig {
   /** Points de vie max, en PV. */
@@ -67,6 +75,11 @@ export interface SuitConfig {
   playerHitShakeAmplitude: number;
   /** Durée de ce screenshake, en secondes. */
   playerHitShakeDuration: number;
+
+  /** Attaque au corps-à-corps (Rampant, Vigile) ; absent = tir à distance. */
+  melee?: EnemyMeleeConfig;
+  /** Bouclier tenu devant soi (Vigile) : un tir qui l'atteint de face ne fait rien. Un souffle passe outre. */
+  shield?: EnemyShieldConfig;
 }
 
 export const suitConfig: SuitConfig = {

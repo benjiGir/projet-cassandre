@@ -653,3 +653,92 @@ describe("DoorSystem — hot reload", () => {
     expect(handle.doors[0]!.collider.isEnabled()).toBe(false);
   });
 });
+describe("DoorSystem — verrou du script de niveau", () => {
+  const DEVANT = new THREE.Vector3(0, 1, 2);
+  function rideau(extras: Record<string, unknown> = {}) {
+    return doorMesh("door_rideau", new THREE.Vector3(4, 3, 0.2), new THREE.Vector3(0, 1.5, 0), {
+      mouvement: "monte",
+      duree: 0.2,
+      ...extras,
+    });
+  }
+  const settle = (doors: DoorSystem, actors: DoorActor[] = NO_ACTORS) => {
+    for (let i = 0; i < 30; i++) doors.update(DT, actors);
+  };
+
+  it("`ouverte` : la porte naît ouverte, collider coupé, et le reste", () => {
+    const { handle } = build([rideau({ ouverte: true })]);
+    const doors = new DoorSystem(handle.doors);
+
+    expect(doors.stateOf("door_rideau")).toBe("open");
+    expect(handle.doors[0]!.collider.isEnabled()).toBe(false);
+    settle(doors);
+    doors.interpolate(1);
+    expect(doors.stateOf("door_rideau")).toBe("open");
+    // Le mesh est en haut de sa course dès la première image, pas à sa pose fermée.
+    expect(handle.doors[0]!.object.position.y).toBeCloseTo(1.5 + 3, 5);
+  });
+
+  it("verrouiller ferme une porte ouverte et la tient fermée ; déverrouiller la rouvre", () => {
+    const { handle } = build([rideau({ ouverte: true })]);
+    const doors = new DoorSystem(handle.doors);
+
+    expect(doors.lock("door_rideau")).toBe(true);
+    settle(doors);
+    expect(doors.stateOf("door_rideau")).toBe("closed");
+    expect(doors.isLocked("door_rideau")).toBe(true);
+    expect(handle.doors[0]!.collider.isEnabled()).toBe(true);
+    expect(doors.open("door_rideau", DEVANT)).toBe(false);
+    settle(doors);
+    expect(doors.stateOf("door_rideau")).toBe("closed");
+
+    expect(doors.unlock("door_rideau", DEVANT)).toBe(true);
+    settle(doors);
+    expect(doors.stateOf("door_rideau")).toBe("open");
+    expect(doors.isLocked("door_rideau")).toBe(false);
+  });
+
+  it("une porte auto verrouillée ignore qui s'approche, puis reprend son service sans se rouvrir d'elle-même", () => {
+    const pres: DoorActor = { position: new THREE.Vector3(1, 1, 0.8), radius: 0.3, halfHeight: 0.9, joueur: true };
+    const { handle } = build([rideau({ mouvement: "coulisse", auto: true, portee: 2.5, delai: 0.2 })]);
+    const doors = new DoorSystem(handle.doors);
+
+    doors.lock("door_rideau");
+    settle(doors, [pres]);
+    expect(doors.stateOf("door_rideau")).toBe("closed");
+
+    doors.unlock("door_rideau", DEVANT);
+    expect(doors.stateOf("door_rideau")).toBe("closed");
+    settle(doors, [pres]);
+    expect(doors.stateOf("door_rideau")).toBe("open");
+  });
+
+  it("la main ne manœuvre pas une porte verrouillée", () => {
+    const { handle } = build([rideau({ manuelle: true })]);
+    const doors = new DoorSystem(handle.doors);
+    const aPortee = new THREE.Vector3(0, 1.5, 1);
+    doors.lock("door_rideau");
+    expect(doors.actionner(aPortee)).toBeNull();
+    doors.unlock("door_rideau", DEVANT);
+    expect(doors.actionner(aPortee)).toEqual({ name: "door_rideau", action: "ouverte" });
+  });
+
+  it("se referme dès que le passage est libre si quelqu'un s'y trouvait au verrouillage", () => {
+    const dedans: DoorActor = { position: new THREE.Vector3(0, 1.5, 0), radius: 0.4, halfHeight: 0.9, joueur: false };
+    const { handle } = build([rideau({ ouverte: true })]);
+    const doors = new DoorSystem(handle.doors);
+
+    doors.lock("door_rideau");
+    settle(doors, [dedans]);
+    expect(doors.stateOf("door_rideau")).not.toBe("closed");
+    settle(doors);
+    expect(doors.stateOf("door_rideau")).toBe("closed");
+  });
+
+  it("un nom inconnu ne verrouille rien", () => {
+    const doors = new DoorSystem(build([rideau()]).handle.doors);
+    expect(doors.lock("door_absente")).toBe(false);
+    expect(doors.unlock("door_absente", DEVANT)).toBe(false);
+    expect(doors.isLocked("door_absente")).toBe(false);
+  });
+});

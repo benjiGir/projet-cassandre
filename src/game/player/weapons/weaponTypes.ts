@@ -22,6 +22,8 @@ export interface HitEvent {
   colliderHandle: number;
   /** Distance en mètres entre l'origine du tir et `point`. */
   distance: number;
+  /** Multiplicateur de dégâts porté par le coup (perk de la partie) ; absent = 1. */
+  damageScale?: number;
 }
 
 /** Horloges de présentation avancées au pas fixe ; aucune ne conditionne un tir. */

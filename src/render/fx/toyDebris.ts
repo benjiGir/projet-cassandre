@@ -22,18 +22,6 @@ const SHELL_FRICTION = 0.6;
 const SHELL_GROUND_Y = 0;
 
 
-const GIB_LIFETIME = 0.9; // s, plus long que PARTICLE_LIFETIME (chunks plus gros, chute plus lisible)
-const GIBS_PER_KILL = 8;
-const GIB_SIZE = 0.08; // m, cube de base — voir le scale non uniforme dans spawnGibs pour casser la silhouette
-const GIB_SPEED_MIN = 3; // m/s
-const GIB_SPEED_MAX = 7; // m/s
-
-const GIB_SPREAD = 0.9;
-const GIB_COLOR = 0x3a120f; // rouge/brun sombre, nettement plus sombre que PARTICLE_MATERIAL
-
-const GIB_GEOMETRY = new THREE.BoxGeometry(GIB_SIZE, GIB_SIZE, GIB_SIZE);
-const GIB_MATERIAL = new THREE.MeshLambertMaterial({ color: GIB_COLOR });
-
 const DEBRIS_LIFETIME = 1.4; // s
 const DEBRIS_SIZE = 0.06; // m
 const DEBRIS_SPEED_MIN = 2;
@@ -51,6 +39,18 @@ const FROST_GRAVITY_SCALE = 0.12;
 const FROST_COLOR = 0xdcf2fb; // blanc légèrement bleuté
 const FROST_GEOMETRY = new THREE.BoxGeometry(FROST_SIZE, FROST_SIZE, FROST_SIZE);
 const FROST_MATERIAL = new THREE.MeshLambertMaterial({ color: FROST_COLOR });
+
+// Explosion : des éclats incandescents qui fusent en tous sens — la boule de
+// feu et sa fumée sont dans `explosions.ts`.
+const EMBER_LIFETIME = 1.1; // s
+const EMBER_COUNT = 22;
+const EMBER_SIZE = 0.09; // m
+const EMBER_SPEED_MIN = 5; // m/s
+const EMBER_SPEED_MAX = 13; // m/s
+const EMBER_SPREAD = 2.2; // presque une sphère : un souffle n'a pas de direction
+const EMBER_GEOMETRY = new THREE.BoxGeometry(EMBER_SIZE, EMBER_SIZE, EMBER_SIZE);
+// Lambert émissif, pas Basic : le programme des autres débris, déjà compilé.
+const EMBER_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xf2891d });
 
 // see: docs/6-reference/notes-code-rendu.md#fontaines-permanentes
 
@@ -96,11 +96,11 @@ const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
 export class ToyDebris {
   private readonly particles: ToyParticle[] = [];
   private readonly casings: ToyParticle[] = [];
-  private readonly gibs: ToyParticle[] = [];
   private readonly debris: ToyParticle[] = [];
   private readonly frost: ToyParticle[] = [];
   private readonly ceramic: ToyParticle[] = [];
   private readonly waterBurst: ToyParticle[] = [];
+  private readonly embers: ToyParticle[] = [];
 
   // Réutiliser le matériau par couleur pour éviter une allocation GPU à chaque casse.
   private readonly debrisMaterials = new Map<number, THREE.MeshLambertMaterial>();
@@ -153,17 +153,6 @@ export class ToyDebris {
     this.casings.push({ mesh, velocity, life: SHELL_LIFETIME, bounce: true, gravityScale: 1 });
   }
 
-  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3) {
-    this.spawnChunks(this.gibs, point, direction, GIB_GEOMETRY, GIB_MATERIAL, {
-      count: GIBS_PER_KILL,
-      lifetime: GIB_LIFETIME,
-      spread: GIB_SPREAD,
-      speedMin: GIB_SPEED_MIN,
-      speedMax: GIB_SPEED_MAX,
-      gravityScale: 1,
-    });
-  }
-
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number) {
     let material = this.debrisMaterials.get(color);
     if (!material) {
@@ -176,6 +165,17 @@ export class ToyDebris {
       spread: DEBRIS_SPREAD,
       speedMin: DEBRIS_SPEED_MIN,
       speedMax: DEBRIS_SPEED_MAX,
+      gravityScale: 1,
+    });
+  }
+
+  spawnExplosionBurst(point: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, UP_DIRECTION, EMBER_GEOMETRY, EMBER_MATERIAL, {
+      count: EMBER_COUNT,
+      lifetime: EMBER_LIFETIME,
+      spread: EMBER_SPREAD,
+      speedMin: EMBER_SPEED_MIN,
+      speedMax: EMBER_SPEED_MAX,
       gravityScale: 1,
     });
   }
@@ -215,7 +215,7 @@ export class ToyDebris {
     point: THREE.Vector3,
     direction: THREE.Vector3,
     geometry: THREE.BufferGeometry,
-    material: THREE.MeshLambertMaterial,
+    material: THREE.Material,
     opts: { count: number; lifetime: number; spread: number; speedMin: number; speedMax: number; gravityScale: number },
   ) {
     for (let i = 0; i < opts.count; i++) {
@@ -262,20 +262,20 @@ export class ToyDebris {
   update(realDt: number): void {
     this.updateToyPhysics(this.particles, realDt);
     this.updateToyPhysics(this.casings, realDt);
-    this.updateToyPhysics(this.gibs, realDt);
     this.updateToyPhysics(this.debris, realDt);
     this.updateToyPhysics(this.frost, realDt);
     this.updateToyPhysics(this.ceramic, realDt);
     this.updateToyPhysics(this.waterBurst, realDt);
+    this.updateToyPhysics(this.embers, realDt);
   }
 
   reset(): void {
     this.clearToyParticles(this.particles);
     this.clearToyParticles(this.casings);
-    this.clearToyParticles(this.gibs);
     this.clearToyParticles(this.debris);
     this.clearToyParticles(this.frost);
     this.clearToyParticles(this.ceramic);
     this.clearToyParticles(this.waterBurst);
+    this.clearToyParticles(this.embers);
   }
 }

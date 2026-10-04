@@ -70,7 +70,8 @@ LOYALTY_CARDS = ("argent", "or", "platine")
 # Matières de props — doit rester identique à `PROP_MATERIALS` dans
 # src/game/level/props.ts. Les trois dernières datent du chantier
 # « Les coulisses » (2026-09-26, fournil/chambre froide/atelier SAV).
-PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique")
+# `gaz` (lot B3) : un prop explosif, dont la casse est un souffle.
+PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique", "gaz")
 
 # Aliments ramassables (`use_*` portant `aliment`) — doit rester identique à
 # `FOOD_ITEMS` dans src/game/level/food.ts.
@@ -103,6 +104,10 @@ def _cles_ts(chemin: str, motif: str) -> tuple[str, ...]:
 EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[")
 REPLIQUES = _cles_ts("src/game/session/presentation/heroLines.ts", r"^  (\w+): \{ text:")
 GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
+
+# Perks vendus par les bornes (`use_*` portant `perk` et `prix`) : les clés de
+# `PERK_INFO`. Un test du jeu (`bornes.test.ts`) verrouille la mise en forme lue ici.
+PERKS = _cles_ts("src/game/player/perks.ts", r'^  (\w+): \{ label: "')
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -167,6 +172,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
     elif len(spawns) > 1:
         err(f"{len(spawns)} spawn_player — il en faut exactement un")
 
+    perks_vendus: dict[str, str] = {}
     for o in objects:
         n = base_name(o.name)
         if n.startswith("trig_") and o.type == "MESH":
@@ -183,12 +189,13 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if replique and replique not in REPLIQUES:
                 err(f"{o.name}: 'replique' = '{replique}' n'est pas une réplique du héros "
                     "(src/game/session/presentation/heroLines.ts)")
-        if n.startswith("spawn_suit_") and str(o.get("groupe", "")).strip():
+        # `spawn_rampant_*` (lot B4), `spawn_vigile_*` (lot B6) : même liste, mêmes règles qu'un Costard.
+        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_")) and str(o.get("groupe", "")).strip():
             groupe = str(o["groupe"]).strip()
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
                     "cet ennemi n'apparaîtrait jamais")
-        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -197,7 +204,8 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             # Exception "card" : une carte de fidélité à ramasser se suffit à
             # elle-même, il n'y a rien à cibler (jalon N7, même règle que
             # `loader.ts::buildUseObjectEffect`). Idem pour "soin", une trousse,
-            # et "aliment", sa variante (chantier « Les coulisses »).
+            # et "aliment", sa variante (chantier « Les coulisses »), et pour
+            # "perk", une borne (lot B1).
             # `use_pointeuse`, `use_sav_sonnette` et les commandes de douche
             # sont traités par leur nom côté runtime, sans cible porte.
             warn(f"{o.name}: interactif sans custom property 'target'")
@@ -206,6 +214,25 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if valeur not in ALIMENTS:
                 err(f"{o.name}: 'aliment' = '{o['aliment']}' n'est pas un aliment connu "
                     f"({', '.join(ALIMENTS)})")
+        # Bornes (lot B1) : `perk` et `prix` vont ensemble. Le jeu refuse de
+        # vendre une borne mal décrite ; ici c'est une ERREUR, tant que le
+        # .blend se corrige encore. Deux bornes pour le même perk : la seconde
+        # serait épuisée dès le premier achat.
+        if n.startswith("use_") and ("perk" in o.keys() or "prix" in o.keys()):
+            perk = str(o.get("perk", "")).strip().lower()
+            if perk not in PERKS:
+                err(f"{o.name}: 'perk' = '{o.get('perk', '')}' n'est pas un perk connu "
+                    f"({', '.join(PERKS)})")
+            elif perk in perks_vendus:
+                err(f"{o.name}: le perk '{perk}' est déjà vendu par {perks_vendus[perk]}")
+            else:
+                perks_vendus[perk] = o.name
+            try:
+                prix = float(o.get("prix", 0))
+            except (TypeError, ValueError):
+                prix = 0.0
+            if not prix > 0:
+                err(f"{o.name}: 'prix' = '{o.get('prix', '')}' n'est pas un prix en euros > 0")
         # Cartes de fidélité (jalon N7) : une valeur mal tapée rendrait la
         # porte ouverte à tous, ou la carte introuvable. Côté jeu c'est un
         # avertissement bruyant ; ici c'est une ERREUR, parce qu'on peut
@@ -259,6 +286,9 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                         valeur = 0.0
                     if not valeur > 0:
                         err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre > 0")
+            # `ouverte` (lot B6) : une chaîne "true" serait lue comme fausse par le jeu, sans rien dire.
+            if "ouverte" in o.keys() and not isinstance(o["ouverte"], bool):
+                err(f"{o.name}: 'ouverte' = '{o['ouverte']}' doit être un booléen")
             if o.type == "MESH" and len(o.data.materials) > 1:
                 err(f"{o.name}: {len(o.data.materials)} matériaux — un vantail n'en a qu'UN "
                     "(deux primitives glTF, et le loader ne voit plus une porte)")
@@ -286,7 +316,9 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             # `col_box_*`. Une forme qui n'est pas une boîte ne sera pas
             # refusée par le loader — elle sera silencieusement approximée par
             # sa boîte englobante, ce qui se voit en jeu et pas dans le .blend.
-            if len(o.data.vertices) != 8:
+            # Exception : une bonbonne (`gaz`) est un fût, et sa boîte
+            # englobante est le collider qu'on lui veut.
+            if len(o.data.vertices) != 8 and str(o.get("matiere", "")).strip().lower() != "gaz":
                 warn(f"{o.name}: prop non-box ({len(o.data.vertices)} sommets) — "
                      "le collider sera sa boîte englobante")
             if "matiere" in o.keys():

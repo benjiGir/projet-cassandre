@@ -1,3 +1,5 @@
+import type { SuitKind } from "../../entities/suit/suitConfig";
+
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 
 /** Graine du tirage des répliques occasionnelles (`GameSession.heroLineRandom`) — famille
@@ -66,11 +68,24 @@ export const HERO_LINES = {
   // Moments scriptés — voir `progression/levelEvents.ts`
   quai: { text: "Qu'est-ce qu'ils livrent après la fermeture ?", priority: true, once: true, textOnly: true },
   ecrans_filment: { text: "Cette fois, la télé regarde les clients.", priority: true, once: true, textOnly: true },
+  arene_piege: { text: "Ah. L'inventaire, c'est moi.", priority: true, once: true, textOnly: true },
+  arene_fin: { text: "Stock à zéro. On peut rouvrir.", priority: true, once: true, textOnly: true },
+  souterrain_bruit: { text: "Ça gratte, là-dessous. Ce ne sont pas des caddies.", priority: true, once: true, textOnly: true },
+  souterrain_meute: { text: "Évidemment qu'il y en avait d'autres.", priority: true, once: true, textOnly: true },
   boss_rencontre: { text: "Souriez, patron. Vous êtes en direct.", priority: true, once: true, textOnly: true },
 
   // Le direct — voir `stream/streamFeed.ts`
   don_premier: { text: "Un don ! La vérité n'a pas de prix, mais merci.", once: true, textOnly: true },
   don_gros: { text: "Autant ? Quelqu'un prend enfin ça au sérieux.", priority: true, once: true, textOnly: true },
+
+  // Bornes — voir `progression/perks.ts`. Une lecture de pub par perk acheté.
+  borne_solde: { text: "Pas assez. Le chat, c'est le moment de donner.", textOnly: true },
+  pub_boisson: { text: "Ce direct est propulsé par Zone 51 Energy. Ça réveille.", priority: true, once: true, textOnly: true },
+  pub_vpn: { text: "Avec VPN Faraday, même eux ne savent plus où je suis.", priority: true, once: true, textOnly: true },
+  pub_gilet: { text: "Gilet Alu-Tactique : arrête les balles et les ondes.", priority: true, once: true, textOnly: true },
+  pub_premium: { text: "Vérité+ : plus de munitions, moins de censure.", priority: true, once: true, textOnly: true },
+  pub_perche: { text: "Perche Titane : pour filmer la vérité. Et la défendre.", priority: true, once: true, textOnly: true },
+  pub_aimant: { text: "Magnétips : l'argent vient à vous. Comme les ennuis.", priority: true, once: true, textOnly: true },
 
   // Armes, munitions, soins, nourriture
   arme_pied_biche: { text: "Ça ouvre les portes. Et les discussions.", priority: true, once: true },
@@ -105,6 +120,11 @@ export const HERO_LINES = {
   // Combat
   costard_alerte: { text: "Ils m'ont vu. Tant mieux.", chance: 0.4 },
   costard_tire: { text: "Ah. Voilà leur politique d'accueil.", once: true },
+  rampant_alerte: { text: "Celui-là a oublié son costume.", priority: true, once: true, textOnly: true },
+  rampant_griffe: { text: "Ils mordent, maintenant ?", once: true, textOnly: true },
+  vigile_alerte: { text: "La sécurité. Enfin quelqu'un qui prend ça au sérieux.", priority: true, once: true, textOnly: true },
+  vigile_coup: { text: "C'est ça, votre service client ?", once: true, textOnly: true },
+  vigile_bouclier: { text: "De face, ça ne passe pas. Par-derrière, alors.", priority: true, once: true, textOnly: true },
   premier_kill: { text: "Un de moins. Une preuve de plus.", once: true },
   kill_costard: { text: "Ton service est terminé.", chance: 0.35 },
   kill_pompe: { text: "Ça remet les idées en place.", chance: 0.5 },
@@ -115,6 +135,7 @@ export const HERO_LINES = {
   // Casse
   casse_bois: { text: "Ça tenait pas à grand-chose.", chance: 0.5 },
   casse_farine: { text: "Ça, c'est de la poudre blanche.", chance: 0.5 },
+  casse_gaz: { text: "Ça, le chat va le clipper.", priority: true, once: true, textOnly: true },
   casse_vitre: { text: "Je préfère les passages ouverts.", chance: 0.5 },
   casse_ecran: { text: "Fin du programme.", chance: 0.5 },
 
@@ -147,6 +168,20 @@ export function heroVoiceKey(id: HeroLineId | HeroBarkId): string {
 }
 
 /** La réplique propre à un volume `secret_*`, ou la réplique commune. */
+/** Réplique à la première alerte d'un ennemi, selon son espèce. */
+export const ALERT_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
+  costard: "costard_alerte",
+  rampant: "rampant_alerte",
+  vigile: "vigile_alerte",
+};
+
+/** Réplique à la première attaque d'un ennemi, selon son espèce. */
+export const ATTACK_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
+  costard: "costard_tire",
+  rampant: "rampant_griffe",
+  vigile: "vigile_coup",
+};
+
 export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {
   secret_1_photomaton: "secret_photomaton",
   secret_3_aeration: "secret_aeration",
@@ -201,6 +236,7 @@ export const DOOR_USE_LINES: Readonly<Record<string, HeroLineId>> = {
 export const PROP_BREAK_LINES: Readonly<Record<string, HeroLineId>> = {
   bois: "casse_bois",
   farine: "casse_farine",
+  gaz: "casse_gaz",
 };
 
 /** Réplique de nourriture par aliment (les aliments absents ne disent rien). */

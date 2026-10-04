@@ -12,18 +12,24 @@ import { createPlaceLineState } from "./player/placeLines";
 import { createLevelScriptState } from "../level/scripting/levelScript";
 import { createStreamState, STREAM_SEED } from "./stream/streamSim";
 import { createInitialStats } from "./progression/score";
+import { difficultyConfig } from "./progression/difficulty";
+import { getDifficulty } from "../settings/difficultySettings";
+import { suitConfig } from "../entities/suit/suitConfig";
+import { directorConfig } from "../entities/director/directorConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
 import { buildGym } from "../level/catalog/gym";
 import { SuitManager } from "../entities/suit/suitManager";
 import { DirectorManager } from "../entities/director/directorManager";
 import { useGameStore } from "../hud/state";
+import { HEAL_PICKUP_RADIUS } from "../level/interactions/interactive";
 import { type LevelDef } from "../level/catalog/levels";
 import { chargerCiel } from "../../render/environment/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./presentation/heroPortrait";
+import { createStaticSurfaceProbe } from "./presentation/surfaceProbe";
 import { loadPickupResources, type PickupResources } from "../../render/pickups/pickupResources";
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
@@ -110,11 +116,15 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   }
 
   const weapons = new WeaponSystem(physics, engine.clock);
-  const suitManager = new SuitManager(physics);
-  const directorManager = new DirectorManager(physics);
+  const difficulty = getDifficulty();
+  const rules = difficultyConfig[difficulty];
+  const enemyTuning = { hp: rules.enemyHp, damage: rules.enemyDamage };
+  const suitManager = new SuitManager(physics, suitConfig, enemyTuning);
+  const directorManager = new DirectorManager(physics, directorConfig, enemyTuning);
 
   const session: GameSession = {
     choice,
+    difficulty,
     physics,
     player,
     weapons,
@@ -145,6 +155,9 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     sanitaireReliefCooldown: 0,
     droppedCardBillboard: null,
     cards: new Set(),
+    perks: new Set(),
+    pickupRadius: HEAL_PICKUP_RADIUS,
+    killRushRemaining: 0,
     unlockedDoors: new Set(),
     exitDoorTracking: null,
     foundSecrets: new WeakSet(),
@@ -156,7 +169,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
-    stream: createStreamState(),
+    stream: createStreamState(rules.donations),
     streamRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(STREAM_SEED))),
     deathHandled: false,
     levelCompleteHandled: false,
@@ -167,6 +180,8 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     placeLine: createPlaceLineState(),
     stats: createInitialStats(),
   };
+
+  engine.fx.setSurfaceProbe(createStaticSurfaceProbe(session));
 
   // Loadout de départ : `LevelDef.startUnarmed` (registre `game/level/catalog/levels.ts`).
   if (choice.startUnarmed) {
@@ -179,6 +194,13 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     spawnSuitAt(engine, session, -9, SPAWN_FEET_GUARD, 5);
     spawnSuitAt(engine, session, 9, SPAWN_FEET_GUARD, 5);
     spawnSuitAt(engine, session, 0, SPAWN_FEET_GUARD, 13);
+    // Rencontre d'essai du Rampant (lot B4) : une meute de quatre, au fond de
+    // la salle, à juger ici avant toute pose dans le niveau.
+    for (const [x, z] of [[-6, 17], [-2, 19], [2, 19], [6, 17]] as const) {
+      spawnSuitAt(engine, session, x, SPAWN_FEET_GUARD, z, "rampant");
+    }
+    // Rencontre d'essai du Vigile (lot B6) : seul, à l'écart, avec la place de lui tourner autour.
+    spawnSuitAt(engine, session, -14, SPAWN_FEET_GUARD, -6, "vigile");
   } else if (choice.gltfName) {
     loadGltfLevel(engine, session, choice.gltfName);
   }

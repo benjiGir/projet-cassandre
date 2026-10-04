@@ -2,7 +2,7 @@
 title: Conventions de nommage glTF
 tags: [reference, pipeline]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Conventions de nommage glTF
@@ -18,6 +18,8 @@ Le loader interprète les noms et les propriétés glTF comme un contrat de game
 | `col_mesh_*` | Trimesh statique ; usage rare à justifier. |
 | `spawn_player` | Point de départ du joueur ; un seul par niveau. |
 | `spawn_suit_*` | Point d'apparition d'un Costard ; avec `groupe`, il attend son réveil par le script de niveau. |
+| `spawn_rampant_*` | Point d'apparition d'un Rampant ; mêmes règles qu'un Costard. |
+| `spawn_vigile_*` | Point d'apparition d'un Vigile ; mêmes règles qu'un Costard. |
 | `spawn_director_*` | Point d'apparition du Directeur. |
 | `trig_*` | Boîte du script de niveau : lance un scénario (`evenement`) ou désigne une sous-zone à réplique (`replique`). |
 | `use_*` | Objet actionnable à portée de 2 m, ou ramassage spécialisé selon ses extras/nom. |
@@ -44,14 +46,16 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `aliment` | `use_*` | Type de nourriture ; le runtime en déduit le soin. |
 | `munitions` | `use_*` | Quantité de munitions de pistolet donnée. |
 | `cameras` | `use_*` | Noms de `cam_*` séparés par des virgules, dans l'ordre de défilement. |
+| `perk`, `prix` | `use_*` | Une borne : le perk vendu (`boisson`, `vpn`, `gilet`, `premium`, `perche`, `aimant`) et son prix en euros, strictement positif. Les deux sont requis. |
 | `color`, `intensity`, `distance`, `decay` | `light_*` | Couleur hexadécimale et paramètres de portée/intensité de la lampe. |
 | `secret_id` | `secret_*` | Identifiant stable du secret. |
 | `evenement` | `trig_*` | Nom d'un scénario de `src/game/session/progression/levelEvents.ts`, lancé une fois par partie à l'entrée du joueur. |
 | `replique` | `trig_*` | Identifiant d'une réplique du héros, dite à la première visite de la sous-zone. |
-| `groupe` | `spawn_suit_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. |
+| `groupe` | `spawn_suit_*`, `spawn_rampant_*`, `spawn_vigile_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. Un groupe se pose à sa taille la plus dure : les difficultés plus basses n'en réveillent que les premiers par ordre de nom. |
 | `masse`, `pv`, `matiere`, `contenu` | `prop_*` | Masse en kg (défaut 25), PV optionnels, matière de casse et contenu lâché. |
 | `mouvement`, `groupe`, `auto`, `manuelle`, `charniere`, `sens` | `door_*` | Mouvement et configuration du vantail, de l'ouverture auto et de l'action manuelle. |
 | `angle`, `course`, `duree`, `portee`, `delai`, `referme` | `door_*` | Géométrie et temporisation de l'ouverture ou de la refermeture. |
+| `ouverte` | `door_*` | Booléen. La porte naît ouverte et le reste tant que le script de niveau ne la verrouille pas : le rideau d'une arène. |
 | `pv`, `solide`, `givre` | `vitre_*` | Vie, présence d'un collider et effet de givre à la casse. |
 | `sorte`, `pv` | `sanitaire_*` | `sorte` est obligatoire : `cuvette` ou `urinoir`. PV facultatifs. |
 | `chaine`, `pv` | `ecran_*` | Boucle visuelle obligatoire à la validation et PV optionnels. |
@@ -88,6 +92,9 @@ valeur mal formée peut donc retomber sur ce défaut.
 | Munitions | `use_*` + `munitions` strictement positif ; ramassage au contact. |
 | Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun` ; ramassage au contact. |
 | Console vidéo | Un `use_*` avec `cameras` référençant des noms `cam_*` existants. |
+| Borne de sponsor | Un `use_*` avec `perk` et `prix`. Elle n'est jamais consommée ; une borne mal décrite ne vend rien et le loader le signale. |
+| Bonbonne explosive | Un `prop_*` avec `matiere: gaz` et des `pv`. |
+| Arène | Un `trig_*` dont le scénario verrouille des `door_*`, réveille des groupes, puis déverrouille. |
 
 Un objet peut porter un `use_*` sans cible lorsqu'il possède un comportement dédié. Un usage manuel standard choisit l'objet visible le plus proche dans la portée.
 
@@ -112,7 +119,8 @@ Les mouvements de porte reconnus sont `battant`, `coulisse`, `monte` et `descend
 
 Les extras de porte sont `mouvement`, `charniere` (`min`/`max`), `sens`
 (`auto`/`+`/`-`), `auto` (`true`/`ennemis`), `manuelle` (`true`/`fermer`),
-`angle`, `course`, `duree`, `portee`, `delai`, `referme` et `groupe`.
+`angle`, `course`, `duree`, `portee`, `delai`, `referme`, `groupe` et
+`ouverte`.
 `mouvement` choisit l'un des quatre types ci-dessus. Les autres valeurs
 manquantes utilisent les défauts du runtime ; le validateur peut bloquer une
 valeur incorrecte avant export.
@@ -129,8 +137,26 @@ loader, qui retombe sur `mire` ; le validateur de niveau exige une valeur
 connue. La casse est un état interne, pas une valeur à exporter.
 
 Les matières de `prop_*` sont `bois`, `carton`, `verre`, `metal`, `farine`,
-`eau` et `electronique`. Elles règlent le son et la couleur des débris ; la
-masse contrôle la physique.
+`eau`, `electronique` et `gaz`. Elles règlent le son et la couleur des
+débris ; la masse contrôle la physique. `gaz` fait en plus exploser le prop à
+sa casse : voir [ADR 0041](../decisions/0041-explosifs.md).
+
+## Script de niveau
+
+Les scénarios qu'un `trig_*` peut lancer sont les clés de `LEVEL_EVENTS`
+(`src/game/session/progression/levelEvents.ts`). Le validateur les lit dans
+ce fichier, avec les groupes que les scénarios réveillent et les perks
+connus : aucune liste n'est recopiée. Il refuse un `evenement` inconnu, un
+`groupe` qu'aucun scénario ne réveille, un `perk` inconnu et un `ouverte` qui
+n'est pas un booléen. Au chargement, le jeu signale en plus une porte citée
+par un scénario et absente du niveau.
+
+| Scénario | Lancé par | Effet |
+|---|---|---|
+| `annonce_caisses`, `ecrans_sav`, `livraison_quai`, `interphone_direction` | les déclencheurs de l'histoire | annonces, écrans, répliques |
+| `arene_reserve` | `trig_arene_reserve` | verrouille les quatre issues de la réserve, réveille `arene_1` puis `arene_2`, déverrouille |
+| `souterrain_descente` | `trig_souterrain_descente` | réveille `souterrain_eclaireurs` |
+| `souterrain_carte` | `trig_souterrain_carte` | réveille `souterrain_meute`, puis `escalier` |
 
 Un `light_*` est un Empty. Ses extras facultatifs sont `color`,
 `intensity`, `distance` et `decay`. Le loader utilise `#ffffff`, 8, 12 et 2
@@ -142,4 +168,4 @@ les lampes allumées.
 
 Les unités sont en mètres. La grille fine vaut 0,25 m, la grille standard 1 m, le module de kit 2 m et la densité de texture cible 64 px/m. Le jeu utilise une portée d'usage générale de 2 m ; les sanitaires ont un contrat de visée plus court.
 
-Voir [Chargement de niveau](../4-technique/chargement-de-niveau.md), [Systèmes de niveau](../4-technique/systemes-de-niveau.md), [ADR 0030 — Props dynamiques](../decisions/0030-props-dynamiques.md) et [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md).
+Voir [Chargement de niveau](../4-technique/chargement-de-niveau.md), [Systèmes de niveau](../4-technique/systemes-de-niveau.md), [ADR 0030 — Props dynamiques](../decisions/0030-props-dynamiques.md), [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md), [ADR 0037 — Script de niveau](../decisions/0037-script-de-niveau.md) et [ADR 0040 — Bornes et perks](../decisions/0040-bornes-et-perks.md).

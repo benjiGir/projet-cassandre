@@ -1,16 +1,21 @@
 ---
 title: Ennemis
 tags: [fonctionnel]
-status: stable
-updated: 2026-09-25
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Ennemis
 
 ## Ce que vit le joueur
 
-Deux types d'ennemis peuplent l'hypermarché : le Costard, l'employé de base,
-et le Directeur, patron unique du niveau, affronté à la toute fin.
+Quatre types d'ennemis peuplent l'hypermarché. Le Costard est l'employé de
+base : il tire de loin. Le Rampant est un reptilien sans costume, qui court
+vous griffer en meute. Le Vigile avance derrière un bouclier. Le Directeur,
+patron unique du niveau, s'affronte à la toute fin.
+
+Chacun demande une réponse différente : se mettre à couvert, reculer en
+visant bas, ou passer dans le dos.
 
 ### Le Costard
 
@@ -41,6 +46,43 @@ Tué à l'arme de corps-à-corps ou au pistolet, il s'écroule en plusieurs pose
 successives (à genoux, une supplication, une chute) avant de rester à plat au
 sol, un corps parmi le décor. Tué au fusil à pompe à bout portant, il
 n'a pas cette agonie : le coup l'envoie en pièces sur place.
+
+### Le Rampant
+
+Un reptilien qui a quitté son costume : peau verte, museau, crête et queue. Il
+court ventre à terre, le buste penché, si bien que sa tête passe sous votre
+ceinture. Un tir à hauteur d'homme lui passe au-dessus : il faut viser bas.
+
+Il ne tire pas. Il vous repère de plus loin qu'un Costard, se redresse un
+instant en écartant les bras, puis fonce. Il va plus vite que votre marche :
+on ne le sème qu'en courant, jamais en reculant. Arrivé au contact, il prend
+un bref élan, puis frappe. Ce temps d'élan suffit pour faire un pas en
+arrière et le faire frapper dans le vide.
+
+Il est fragile : deux balles de pistolet ou un coup de pied-de-biche. Il n'est
+dangereux qu'à plusieurs. Une meute de quatre sur un joueur immobile vide la
+vie en quelques secondes ; un joueur qui bouge les prend un par un.
+
+Il a sa propre voix : il siffle là où le Costard interpelle.
+
+### Le Vigile
+
+Un agent de sécurité en uniforme bleu, casquette et bande jaune, matraque
+dans une main, bouclier anti-émeute tenu devant lui. Il est plus grand qu'un
+Costard, bien plus résistant, et lent.
+
+Son bouclier arrête tout ce qui l'atteint de face ou de trois quarts : vos
+balles y claquent comme sur du métal, sans une goutte de sang. Tirer plus
+haut n'y change rien. Deux réponses existent. La première est de le
+contourner : il tourne lentement, et un joueur qui lui court autour à courte
+distance passe dans son dos. La seconde est une explosion : un souffle ignore
+le bouclier.
+
+Il frappe à la matraque. Il lève le bras bien avant d'abattre le coup : un
+pas en arrière suffit pour l'esquiver, mais le coup fait très mal s'il porte.
+
+De dos, on voit l'homme et non le bouclier : c'est le signe qu'on peut tirer.
+La première fois qu'un tir est arrêté, le héros dit quoi faire.
 
 ### Le Directeur
 
@@ -74,8 +116,18 @@ prime.
   ennemi.
 - Encaisser un coup vous fait toujours reculer un peu avant que l'ennemi ne
   reprenne la poursuite, jamais l'inverse.
-- Un ennemi tué au fusil à pompe assez près se déchiquette au lieu de
-  s'écrouler normalement ; le Directeur ne se déchiquette jamais.
+- Un ennemi tué au fusil à pompe assez près, ou pris au cœur d'une explosion,
+  se déchiquette au lieu de s'écrouler ; le Directeur ne se déchiquette jamais.
+- Un ennemi qui meurt marque le décor : une flaque s'étale sous un corps
+  tombé, et un ennemi déchiqueté laisse du sang au sol et sur les murs
+  derrière lui, avec ses morceaux. Ces traces restent jusqu'à la fin de la
+  partie.
+- Le bouclier du Vigile protège son avant, jamais son dos ; un souffle
+  d'explosion passe outre.
+- Un Rampant ou un Vigile ne touche qu'au contact, après un temps d'élan
+  visible.
+- La difficulté choisie change les points de vie et les dégâts de tous les
+  ennemis, pas leur comportement — voir [Difficulté](difficulte.md).
 - Plusieurs ennemis groupés se bousculent entre eux plutôt que de se
   traverser, mais un tir ennemi ne touche jamais un autre ennemi : pas de
   dégâts entre eux.
@@ -94,15 +146,16 @@ prime.
 
 Comparaison qualitative :
 
-| | Costard | Directeur |
-|---|---|---|
-| Robustesse | De base | Bien plus résistant (plusieurs fois la vie d'un Costard) |
-| Vitesse de poursuite | Normale | Un peu plus lente |
-| Dégâts par tir touché | Modérés | Plus élevés |
-| Portée d'attaque | Longue | Un peu plus courte |
-| Révélation | Aucune | Peau reptilienne sous la moitié de sa vie |
-| Mort au pompe à bout portant | Se déchiquette | Ne se déchiquette jamais |
-| Butin à la mort | Aucun | Carte Platine |
+| | Costard | Rampant | Vigile | Directeur |
+|---|---|---|---|---|
+| Robustesse | De base | Fragile | Près de trois fois un Costard | Six fois un Costard |
+| Vitesse | Plus lent que votre marche | Plus rapide que votre marche | Le plus lent | Un peu plus lent qu'un Costard |
+| Attaque | Tir, de loin | Griffe, au contact | Matraque, au contact | Tir, de loin |
+| Dégâts | Modérés | Modérés, mais en meute | Très élevés | Élevés |
+| Protection | Aucune | Aucune | Bouclier de face | Aucune |
+| Ce qui le contre | Le couvert | Viser bas, bouger | Le contourner, ou un explosif | Le couvert |
+| Mort au pompe à bout portant | Se déchiquette | Se déchiquette | Se déchiquette | Jamais |
+| Butin à la mort | Aucun | Aucun | Aucun | Carte Platine |
 
 Détail chiffré (points de vie, portées, délais, dégâts) :
 `6-reference/valeurs-ennemis.md`.
@@ -115,7 +168,12 @@ Détail chiffré (points de vie, portées, délais, dégâts) :
   par tir du Costard ont depuis été revus à la baisse après une vraie
   partie sur le niveau complet, où l'affrontement à plusieurs vidait la vie
   du joueur trop vite.
-- En attente de verdict : les sprites animés actuels des deux ennemis
+- En attente de verdict : le Rampant et le Vigile, jamais joués par
+  l'utilisateur (livrés les 3 et 4 octobre 2026 ; tous deux s'essaient dans
+  la salle de test) ; les traces de sang et le son d'un ennemi qui éclate
+  (4 octobre) ; le Vigile n'a pas encore de voix à lui et emprunte celle du
+  Costard.
+- En attente de verdict aussi : les sprites animés du Costard et du Directeur
   (2026-09-13), la poursuite à travers portes et escaliers sur le niveau
   habillé (le vrai calcul de chemin ne fonctionne de façon fiable que
   depuis le 2026-09-11, trop récent pour avoir été éprouvé sur l'ensemble
@@ -131,3 +189,5 @@ Détail chiffré (points de vie, portées, délais, dégâts) :
 - Les sprites animés et leurs planches d'angles : `4-technique/sprites-et-viewmodel.md`.
 - Toutes les valeurs numériques de combat : `6-reference/valeurs-ennemis.md`.
 - Ce que les armes du joueur infligent à un ennemi : [Armes](armes.md).
+- Où ces ennemis vous attendent : [Le niveau](le-niveau.md#les-rencontres).
+- Les trois niveaux de difficulté : [Difficulté](difficulte.md).

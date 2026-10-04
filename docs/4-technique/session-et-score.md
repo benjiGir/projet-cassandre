@@ -1,8 +1,8 @@
 ---
 title: Session et score
 tags: [technique]
-status: stable
-updated: 2026-10-03
+status: brouillon
+updated: 2026-10-04
 ---
 
 # Session et score
@@ -37,6 +37,21 @@ lui-même (`recording.ts` positionne le joueur puis délègue à
 - `src/game/session/player/feedback.ts` — `showHudMessage` (canal système),
   `triggerHeroLine` (canal réplique, cooldown 15 s), `showAnnouncement`
   (canal annonce), `applyPlayerDamage`/`presentPlayerDamage` (PV et mort).
+- `src/game/session/progression/difficulty.ts` — les trois difficultés et ce
+  que chacune règle ; `src/game/settings/difficultySettings.ts` garde le choix.
+- `src/game/settings/records.ts` — meilleur score et meilleur temps, par
+  niveau et par difficulté.
+- `src/game/session/progression/recap.ts` — publie le récapitulatif et
+  inscrit un niveau terminé aux records.
+- `src/game/session/progression/perks.ts` — achat à une borne, effet d'un perk.
+- `src/game/session/stream/streamSim.ts` — simulation du direct, barème des
+  dons (`streamConfig`) et journal du portefeuille.
+- `src/game/devtools/economy/` — relevé simulé du portefeuille :
+  `economyProfiles.ts` (parcours et profils de joueur), `economySim.ts` (le
+  relevé), `economyVariants.ts` (variantes d'équilibrage) ;
+  `tools/economy/releve.mjs` l'exécute hors du jeu.
+- `src/game/session/presentation/difficultyOptions.ts` — ce que l'écran de
+  choix montre de chaque difficulté.
 - `src/game/session/progression/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
   inventaire des cartes de fidélité.
 - `src/game/session/progression/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
@@ -97,6 +112,9 @@ depuis `game/loop/devGameplayInput.ts` (F9/F10, dev seulement).
 | Champ | Rôle |
 |---|---|
 | `choice` | `LevelDef` de boot — pour que « Rejouer » reconstruise le même choix. |
+| `difficulty` | Difficulté de la partie, lue une fois à sa construction. |
+| `perks`, `pickupRadius`, `killRushRemaining` | Perks achetés et les valeurs de partie qu'ils modifient. |
+| `levelScript` | Déclencheurs franchis, scénarios en cours et ennemis réveillés par groupe. |
 | `physics`, `player`, `weapons` | Monde Rapier, contrôleur joueur, armes — pages dédiées. |
 | `suitManager`/`suitSprites`, `directorManager`/`directorSprites` | Ennemis et leur sprite — [Ennemis et IA](ennemis-et-ia.md). |
 | `gymRoot`/`ballMesh`/`ballBody` | Géométrie de la gym (chemin `"gym"`). |
@@ -171,7 +189,73 @@ douleur), publie le récap PARTIEL et
 appelle `engine.flow.playerDied()` à la mort (gardé par `deathHandled`).
 `presentPlayerDamage` ne fait que publier au store (invariant #2).
 
+### Difficulté
+
+`buildGameSession` lit la difficulté mémorisée et la range dans la partie
+([ADR 0042](../decisions/0042-difficulte.md)). Elle sert à trois endroits, tous
+à la construction ou dans le pas fixe :
+
+- les gestionnaires d'ennemis reçoivent un réglage de PV et de dégâts, posé
+  sur une copie de chaque configuration ;
+- la simulation du direct reçoit un multiplicateur de probabilité de don ;
+- le script de niveau ne réveille qu'une part d'un groupe (`wokenSpawns`, dans
+  `difficulty.ts`).
+
+Changer le réglage mémorisé en cours de partie n'a aucun effet sur elle.
+
+### Records
+
+`publishLevelRecap(session, completed)` construit le récapitulatif avec le nom
+de la difficulté. Si le niveau est terminé, il inscrit la partie
+(`submitRun`) et pose sur le récapitulatif l'état du record de score. Une
+mort publie un récapitulatif sans record.
+
+Un record est rangé sous la clé `niveau/difficulté`. Le score et le temps
+progressent chacun de leur côté. Le tout est gardé dans le `localStorage` du
+navigateur ; s'il manque ou ne se décode pas, le carnet repart vide.
+
+### Économie du direct
+
+La cagnotte est un état de la simulation du direct
+([ADR 0038](../decisions/0038-simulation-du-direct.md)). Elle a trois entrées
+et une sortie, que ce diagramme résume.
+
+```mermaid
+flowchart LR
+  A[Actions du joueur] -->|chance de don| C[Cagnotte]
+  M[Donateur mystere, cinq etapes] --> C
+  D[Difficulte] -.multiplie la chance.-> A
+  C -->|prix| B[Borne]
+  B --> P[Perk pose sur la partie]
+```
+
+Le barème est dans `streamConfig` : une probabilité et des montants par sorte
+d'évènement, et un montant par étape du donateur mystère. Chaque don et
+chaque achat s'ajoutent au journal de la partie (`StreamState.ledger`), daté
+en secondes de jeu, avec le solde.
+
+Trois réglages complets existent, les variantes A, B et C
+(`src/game/devtools/economy/economyVariants.ts`). La B est celle du jeu : ses
+dons sont les valeurs de `streamConfig`, ses prix ceux que la recette pose
+dans le niveau. Un test vérifie que les trois restent d'accord. Une variante
+à l'essai impose ses prix par-dessus ceux du niveau (`perkPrices`).
+
+Le relevé (`economySim.ts`) rejoue une partie type à travers la vraie
+simulation : une suite d'étapes du niveau, un profil de joueur, une graine.
+Il rend le solde devant chaque borne et le nombre de perks achetés. Les
+profils sont des hypothèses, pas des mesures : le journal d'une vraie partie
+fait foi.
+
 ## Pièges
+
+- Le don du Directeur arrive après la dernière borne : il compte pour le
+  bilan, pas pour les achats. Le relevé distingue le total reçu de ce qui est
+  utile.
+- Le relevé ne sait rien du niveau réel : son parcours est une table écrite à
+  la main dans `economySim.ts`. Ajouter une borne ou une rencontre demande de
+  la mettre à jour.
+- Un enregistrement d'input ne porte pas la difficulté ; rejoué dans une
+  autre, il diverge.
 
 **L'ordre de priorité d'un appui sur `E` est signifiant.** `use_*` avant
 sanitaire avant porte manœuvrable : sans cet ordre, le bouton d'une porte
@@ -198,6 +282,14 @@ code est facile, voir le glossaire.
 - `test/game/session/player/feedback.test.ts` — `applyPlayerDamage` (PV, mort au
   même pas logique, idempotence), `presentPlayerDamage`.
 - `test/game/session/stream/streamSim.test.ts` et `streamTexts.test.ts` — déterminisme du direct, série de kills, ennui, délai entre dons, rythme du chat, et tenue des textes.
+- `test/game/session/progression/difficulty.test.ts`, `recap.test.ts`,
+  `test/game/settings/records.test.ts` et `difficultySettings.test.ts` —
+  règles des trois difficultés, taille des groupes, records par difficulté,
+  récapitulatif publié. `test/game/session/presentation/difficultyOptions.test.ts`
+  — ce que l'écran de choix en montre.
+- `test/game/devtools/economy/economySim.test.ts` et
+  `economyVariants.test.ts` — relevé déterministe, cible de la variante B,
+  accord entre `streamConfig`, la variante et les prix du niveau.
 - `test/game/session/player/sanitaires.test.ts` — orchestration avec un rayon
   Rapier scripté (`RaycastService.test(...)`) ; la géométrie du « neartag »
   est couverte par `test/game/level/sanitaires/sanitaires.test.ts`.
@@ -218,6 +310,10 @@ vérifiés en jeu via la console, pas par une suite permanente.
   publié ; `.completeLevel()`/`.killPlayer()` déclenchent le vrai chemin de
   fin de partie sans jouer jusqu'au bout.
 - `cassandre.cards()`/`.giveCard(carte)` — inventaire et ramassage forcé.
+- `cassandre.bornes.liste()` — les bornes du niveau et leur prix ;
+  `cassandre.economie.journal()` — les dons et achats de la partie ;
+  `cassandre.economie.releve()` — le relevé simulé avec les réglages en place.
+- `pnpm economy` — le même relevé hors du jeu, pour les trois variantes.
 - `cassandre.doors()`, `cassandre.doorSystem.liste()`/`.ouvrir(nom)`/
   `.actionner()` — état et pilotage direct des vantaux.
 - `cassandre.sanitaires.liste()`/`.casser(nom)`/`.jets()`/`.delai()`/
@@ -230,4 +326,7 @@ vérifiés en jeu via la console, pas par une suite permanente.
 - [ADR 0031 — Portes animées et vitres](../decisions/0031-portes-animees-et-vitres.md) — le contrat `DoorSystem` que `doors.ts` pilote.
 - [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md) — la règle complète et ses écarts volontaires à Duke 3D.
 - [ADR 0033 — RNG de présentation et portée du rejeu F9/F10](../decisions/0033-rng-presentation-et-portee-du-rejeu.md) — les flux dédiés (vues, réplique de soulagement).
+- [ADR 0038 — Simulation du direct](../decisions/0038-simulation-du-direct.md) — la cagnotte comme état de partie.
+- [ADR 0040 — Bornes et perks](../decisions/0040-bornes-et-perks.md) — l'achat en partie.
+- [ADR 0042 — Difficulté](../decisions/0042-difficulte.md) — un réglage posé sur la partie, des records séparés.
 - [ADR 0013 — Deux gardes distinctes](../decisions/0013-garde-flux-vs-monde-physique.md) — la garde `engine.flow.isPlaying()` testée avant tout ce que cette page décrit.

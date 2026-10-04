@@ -33,6 +33,7 @@ export function readLevelScript(
   spawns: readonly NamedSpawn[],
   ecranNames: readonly string[],
   scenarios: Readonly<Record<string, Scenario>>,
+  doorNames: readonly string[] = [],
 ): LevelScriptSetup {
   const setup: LevelScriptSetup = {
     triggers: [],
@@ -73,7 +74,7 @@ export function readLevelScript(
 
   const groups = new Set(spawns.flatMap((spawn) => (spawn.group === null ? [] : [spawn.group])));
   const woken = new Set<string>();
-  for (const [event, steps] of Object.entries(scenarios)) {
+  for (const [event, steps] of Object.entries(scenarios) as [string, Scenario][]) {
     for (const { action } of steps) {
       if (action.kind === "reveiller") {
         woken.add(action.groupe);
@@ -83,6 +84,18 @@ export function readLevelScript(
       }
       if (action.kind === "chaine" && !ecranNames.some((name) => name.startsWith(action.ecrans))) {
         setup.problems.push(`Scénario "${event}" : aucun ecran_* ne commence par "${action.ecrans}".`);
+      }
+      if (action.kind === "verrouiller" || action.kind === "deverrouiller") {
+        for (const porte of action.portes) {
+          if (!doorNames.includes(porte)) {
+            setup.problems.push(`Scénario "${event}" : la porte "${porte}" n'existe pas dans le niveau.`);
+          }
+        }
+      }
+    }
+    for (const step of steps) {
+      if (step.apres && !groups.has(step.apres.groupe)) {
+        setup.problems.push(`Scénario "${event}" : attend le groupe "${step.apres.groupe}", qu'aucun spawn ne porte.`);
       }
     }
   }

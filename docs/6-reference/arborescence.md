@@ -93,7 +93,7 @@ Le test du runtime composé et celui du flux d'écran vivent désormais dans
 | `src/game/session/` | Création, reset, progression et fin d'une session. |
 | `src/physics/` | Monde Rapier et raycasts. |
 | `src/render/` | Renderer rétro, sprites, ressources de ramassage, éclairage et armes en vue subjective. |
-| `src/render/fx/` | Pools de shake, flashes/decals, débris et jets d’eau. |
+| `src/render/fx/` | Pools de shake, flashes/decals, débris, jets d’eau, explosions et gore. |
 | `src/ui/` | Overlay React, écrans, HUD et panneau de réglage en développement. |
 | `test/core/` | Tests de la boucle, de l'input, du temps et de l'audio. |
 | `test/game/` | Tests du joueur, des ennemis, du niveau et des sessions. |

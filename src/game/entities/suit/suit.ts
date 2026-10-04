@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import { allocateEntityId, type Entity } from "../shared/entity";
-import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
+import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from "./suitConfig";
 import {
   applyEnemyDamageCore,
   createEnemyActor,
@@ -34,6 +34,10 @@ export type SuitUpdateContext = EnemyUpdateContext;
 
 export class Suit implements Entity {
   readonly id: number;
+  /** Espèce : décide de la planche de sprites, des sons et des répliques — jamais du code de la machine. */
+  readonly kind: SuitKind;
+  readonly cfg: SuitConfig;
+  readonly appearanceIndex: number;
   private actor: EnemyActor;
 
   constructor(
@@ -42,8 +46,13 @@ export class Suit implements Entity {
     spawnForward: THREE.Vector3,
     seed: number,
     cfg: SuitConfig = defaultSuitConfig,
+    kind: SuitKind = "costard",
+    appearanceIndex = 0,
   ) {
     this.id = allocateEntityId();
+    this.kind = kind;
+    this.cfg = cfg;
+    this.appearanceIndex = appearanceIndex;
 
     const { body, collider, centerY } = createEnemyBody(physics, cfg, spawnPosition);
 

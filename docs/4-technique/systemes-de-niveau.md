@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Systèmes de niveau
@@ -22,6 +22,9 @@ Les systèmes de niveau font vivre les objets décrits dans le glTF : portes, ob
 - `src/game/level/interactions/ecrans.ts` — animations d'écran et casse.
 - `src/game/level/interactions/cameras.ts` — sélection de caméras fixes et sortie de leur vue.
 - `src/game/level/interactions/food.ts` — catalogue des aliments et de leur valeur de soin.
+- `src/game/level/props/propConfig.ts` — matières, et barème du souffle d'un prop `gaz` (`explosionConfig`).
+- `src/game/session/player/explosions.ts` — le souffle sur le joueur et les ennemis.
+- `src/game/session/progression/perks.ts` — achat à une borne et pose de l'effet du perk.
 - `src/game/level/navigation/levelSpaces.ts` — schéma du manifeste des espaces et recherche de l'espace qui contient un point.
 - `src/game/level/loading/loadLevelSpaces.ts` — charge le manifeste des espaces avec le niveau.
 - `src/game/session/player/placeLines.ts` — réplique de première visite d'un espace.
@@ -70,11 +73,15 @@ Chaque `door_*` possède un corps Rapier fixe à la pose fermée. `DoorSystem` d
 
 Les quatre mouvements déclarés par `mouvement` sont `battant`, `coulisse`, `monte` et `descend`. Les extras optionnels règlent le sens, la course, la durée, le groupe et l'ouverture automatique. `auto: true` ouvre devant joueur et ennemis ; `auto: "ennemis"` laisse le joueur manœuvrer à la main tout en laissant les ennemis traverser le graphe. `manuelle: true` permet les deux sens à E ; `manuelle: "fermer"` ne permet que la fermeture.
 
+Deux états servent au script de niveau. `ouverte: true` fait naître le groupe en bout de course, collider coupé : le bake du graphe de navigation, qui suit la construction du système, voit donc le passage. `lock(nom)` ferme le groupe et le tient fermé : ni la portée automatique, ni la main, ni une carte ne l'ouvre, et `open` rend `false`. Si quelqu'un se trouve dans le passage, le groupe retente sa fermeture à chaque pas. `unlock(nom)` lève le verrou ; un groupe qui était ouvert au moment du verrou se rouvre, les autres retrouvent leur fonctionnement.
+
 Les portes d'un même `groupe` s'ouvrent ensemble. `batchDoorMeshes` regroupe les vantaux par matériau quand plusieurs partagent le même. Les géométries conservent un index par porte pour synchroniser leur pose animée avec le lot rendu.
 
 ### Props et cibles cassables
 
 Un `prop_*` porte un corps dynamique et un collider dans le groupe `PROP`. Les extras `masse`, `pv`, `matiere` et `contenu` configurent son comportement. Sans `pv`, il est poussable mais indestructible. La destruction désactive le corps/collider et masque le mesh ; `updateFx` joue les débris et le son correspondant. `contenu` peut faire apparaître des aliments, dont les positions sont tirées par un flux déterministe.
+
+Un prop de matière `gaz` explose à sa casse ([ADR 0041](../decisions/0041-explosifs.md)). Le souffle se résout en deux endroits, dans le même pas fixe. `PropSystem` pousse les props à portée et amorce les autres bonbonnes : chacune reçoit une mèche comptée en pas fixes (`chainDelaySteps`), puis explose à son tour. La boucle récupère ensuite les souffles du pas et appelle `applyBlast` (`src/game/session/player/explosions.ts`), qui retire des PV au joueur et aux ennemis en vue du centre. Les dégâts décroissent linéairement jusqu'au rayon ; un ennemi plus près que `gibDistance` éclate.
 
 Une `vitre_*` solide utilise un collider cuboid fixe, double face et sans écriture de profondeur. `solide: false` supprime le collider ; c'est le cas des vitrages de plafond qui ne doivent pas gêner la navigation. `pv` rend la vitre cassable par les tirs du joueur ; les tirs ennemis peuvent casser les cibles reconnues par collider handle. `givre: true` ajoute un effet de givre à la casse.
 
@@ -83,6 +90,14 @@ Un `sanitaire_*` doit porter `sorte: "cuvette"` ou `sorte: "urinoir"`. Son colli
 Un `ecran_*` déclare `chaine` (`journal`, `pub`, `mire`, `foot` ou `cctv`) et éventuellement `pv`. Il possède son propre collider cuboid fixe. `EcranSystem` avance son animation avec le dt du pas fixe et réécrit les UV de sa plage de sommets ; à la casse il passe à la cellule de sprite prévue pour cet état.
 
 Vitres, sanitaires et écrans sont fusionnés dans des lots dédiés tout en gardant les plages de sommets propres à chaque instance. La casse ou le changement d'image ne demande donc pas un mesh de rendu séparé par objet.
+
+### Bornes
+
+Un `use_*` qui porte `perk` et `prix` est une borne ([ADR 0040](../decisions/0040-bornes-et-perks.md)). Le loader en fait une offre (`UseObject.sells`) ; une borne mal décrite ne vend rien et le dit en console. La borne n'est jamais consommée : c'est la session qui sait si le perk est déjà acheté.
+
+`usePerkKiosk` débite la cagnotte, range le perk dans la partie et pose son effet sur les objets de la session : le joueur, les armes, le gestionnaire des ennemis. `publishPerkOffer` tient l'invite du HUD à jour à chaque pas fixe et n'écrit dans le store que sur un changement.
+
+Le prix d'une offre est celui du niveau, sauf quand une variante d'équilibrage est à l'essai : `offerPrice` rend alors le sien (voir [Session et score](session-et-score.md#économie-du-direct)).
 
 ### Vue par caméra
 
@@ -107,14 +122,33 @@ Ces répliques sont en texte seul (`textOnly`) : sans sous-titres, elles ne sont
 
 Un `trig_*` lance un scénario ou désigne une sous-zone ([ADR 0037](../decisions/0037-script-de-niveau.md)).
 
-- `src/game/level/scripting/levelScript.ts` — le moteur, une fonction pure : déclencheurs franchis une fois par partie, étapes exécutées dans l'ordre après leur délai de gameplay.
+- `src/game/level/scripting/levelScript.ts` — le moteur, une fonction pure : déclencheurs franchis une fois par partie, étapes exécutées dans l'ordre après leur délai de gameplay. Une étape `apres` attend d'abord qu'un groupe réveillé soit tombé, avec un terme (`auPlusTard`).
 - `src/game/session/progression/levelEvents.ts` — les scénarios, nommés par la propriété `evenement`.
 - `src/game/session/progression/levelScriptSetup.ts` — lit les `trig_*` au chargement et signale les incohérences en console.
-- `src/game/session/progression/levelScriptActions.ts` — exécute une action : réplique, annonce, réveil d'un groupe de `spawn_suit_*`, changement de chaîne d'un groupe d'`ecran_*`.
+- `src/game/session/progression/levelScriptActions.ts` — exécute une action : réplique, annonce, réveil d'un groupe de points d'apparition, changement de chaîne d'un groupe d'`ecran_*`, verrou et levée de verrou de portes.
 
 `updateLevelScript` tourne en fin de pas fixe, juste avant les répliques de lieu : une réplique de scénario passe avant celle de la pièce. Un `trig_*` qui porte `replique` rejoint les espaces du niveau et suit leurs règles.
 
-Les `trig_*` du niveau v2 sont posés par `tools/blender/refresh_story_triggers.py`.
+Le déroulé d'une arène, tel que le joue le scénario `arene_reserve` :
+
+```mermaid
+sequenceDiagram
+  participant J as Joueur
+  participant S as Script
+  participant P as Portes
+  participant E as Ennemis
+  J->>S: franchit trig_arene_reserve
+  S->>P: verrouiller les quatre issues
+  S->>E: reveiller arene_1
+  Note over S,E: attend que arene_1 soit tombe, 75 s au plus
+  S->>E: reveiller arene_2
+  Note over S,E: attend que arene_2 soit tombe, 75 s au plus
+  S->>P: deverrouiller
+```
+
+Le réveil d'un groupe ne fait apparaître qu'une part de ses points, selon la difficulté de la partie : les premiers par ordre de nom, comparés par code de caractère pour donner le même ordre sur toutes les machines. Le script garde une référence aux ennemis réveillés, par groupe ; un groupe est tombé quand tous sont morts. Un groupe jamais réveillé n'attend personne.
+
+Les `trig_*` de l'histoire sont posés par `tools/blender/refresh_story_triggers.py`, ceux des rencontres par `tools/blender/refresh_encounters.py`, avec leurs points d'apparition et le rideau de la réserve.
 
 ### Lecture de l'appui E
 
@@ -134,14 +168,16 @@ La proximité est mesurée depuis le centre de la capsule du joueur jusqu'à la 
 
 ## Tests
 
-- `test/game/level/doors/doors.test.ts` — mouvements, groupes, collisions, ouvertures automatiques/manuelles et lots de vantaux.
+- `test/game/level/doors/doors.test.ts` — mouvements, groupes, collisions, ouvertures automatiques/manuelles, lots de vantaux, porte née ouverte et verrou du script.
 - `test/game/level/props/props.test.ts` — poussée, dégâts, destruction, interpolation et contenu déterministe.
 - `test/game/level/interactions/vitres.test.ts` et `test/game/level/sanitaires/sanitaires.test.ts` — colliders, casse, événements et visée du jet.
 - `test/game/level/interactions/ecrans.test.ts` — chaînes, animation, UV et casse.
 - `test/game/level/interactions/cameras.test.ts` — cyclage des caméras et sortie de vue par mouvement.
 - `test/game/level/interactions/pickups.test.ts` — ramassages à la marche et objets qui restent si le joueur ne peut rien prendre.
 - `test/game/level/loading/loader.test.ts` — construction des descripteurs et lecture des extras.
-- `test/game/level/scripting/levelScript.test.ts` et `test/game/session/progression/levelScriptSetup.test.ts` — ordre et délais des scénarios, déclenchement unique, validation des déclencheurs.
+- `test/game/level/scripting/levelScript.test.ts` et `test/game/session/progression/levelScriptSetup.test.ts` — ordre et délais des scénarios, déclenchement unique, attente d'un groupe et son terme, validation des déclencheurs, des portes citées et des groupes attendus.
+- `test/game/level/interactions/bornes.test.ts` et `test/game/session/progression/perks.test.ts` — convention des bornes, achat, borne épuisée, effet de chaque perk.
+- `test/game/session/player/explosions.test.ts` — souffle, ligne de vue, réaction en chaîne identique d'un rejeu à l'autre.
 - `test/game/level/navigation/levelSpaces.test.ts` et `test/game/session/player/placeLines.test.ts` — recherche d'espace, manifeste livré et règles des répliques de lieu.
 
 ## Comment vérifier que ça marche
@@ -150,4 +186,6 @@ Dans une partie, utilisez `cassandre.level.stats()` pour confirmer les nombres d
 
 Pour vérifier une interaction, placez deux objets `use_*` à portée et confirmez que seul le plus proche reçoit E. Pour une casse, comparez l'état et les événements avant/après l'impact ; vérifiez aussi le rendu, les débris et le son dans la frame suivante.
 
-Couverture ciblée : `pnpm test -- doors props vitres sanitaires ecrans cameras pickups loader`.
+Pour une rencontre, téléportez-vous dans son déclencheur avec `cassandre.tp(x, y, z, cap)` (coordonnées Blender), puis suivez `cassandre.doorSystem.liste()` (champ `locked`) et `cassandre.suits`. `cassandre.killSuit()` fait tomber une vague sans tirer.
+
+Couverture ciblée : `pnpm test -- doors props vitres sanitaires ecrans cameras pickups loader levelScript bornes perks explosions`.

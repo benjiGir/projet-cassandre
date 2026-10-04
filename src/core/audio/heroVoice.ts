@@ -52,6 +52,12 @@ export function playHeroVoice(cle: string): void {
   lectureEnCours = atlas.play(cle) ?? null;
 }
 
+/** Les haut-parleurs ne sont pas la bouche du héros : une annonce ne coupe ni sa réplique ni la queue de l'annonce d'avant. */
+export function playAnnouncementVoice(cle: string): void {
+  if (!atlas || atlas.state() !== "loaded" || !durees.has(cle)) return;
+  atlas.play(cle);
+}
+
 export function listHeroVoices(): { cle: string; duree: number }[] {
   return [...durees].map(([cle, duree]) => ({ cle, duree }));
 }

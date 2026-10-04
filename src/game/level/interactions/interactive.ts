@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import type { UseObject } from "../loading/levelTypes";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
+import type { PerkOffer } from "../../player/perks";
 
 // see: docs/archive/pipeline-niveau-blender.md#objets-interactifs
 
@@ -33,6 +34,10 @@ export interface InteractionHandlers {
   onCardDoorUse(targetName: string, required: LoyaltyCard): void;
   onDoorUse(targetName: string, message: string | null, useName: string): void;
   onCameraConsoleUse(cameraNames: readonly string[]): void;
+  /** Borne (`use_*` portant `perk` et `prix`) : tentative d'achat. Jamais
+   * consommée — un refus doit rester réessayable, et c'est l'appelant qui
+   * sait si le perk est déjà acheté. */
+  onPerkKioskUse(offer: PerkOffer): void;
 }
 
 export interface WeaponPickupHandlers {
@@ -47,6 +52,7 @@ export interface WeaponPickupHandlers {
   onPistolPickup(): boolean;
 }
 
+/** Rayon des ramassages pris en marchant dessus, en mètres — celui d'une partie sans perk. */
 export const HEAL_PICKUP_RADIUS = 1.2;
 
 export class InteractionSystem {
@@ -55,10 +61,15 @@ export class InteractionSystem {
    * see: docs/archive/pipeline-niveau-blender.md#objets-interactifs */
   private readonly consumed = new WeakSet<THREE.Object3D>();
 
-  private nearestName: string | null = null;
+  private nearest: UseObject | null = null;
 
   get nearestInRangeName(): string | null {
-    return this.nearestName;
+    return this.nearest?.name ?? null;
+  }
+
+  /** L'objet que viserait un appui sur la touche d'usage, relevé au dernier `update`. */
+  get nearestInRange(): UseObject | null {
+    return this.nearest;
   }
 
   update(
@@ -89,7 +100,7 @@ export class InteractionSystem {
       }
     }
 
-    this.nearestName = nearest?.name ?? null;
+    this.nearest = nearest;
 
     if (!usePressed || !nearest) return false;
 
@@ -101,8 +112,9 @@ export class InteractionSystem {
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     tryHeal: (amount: number, useObject: UseObject) => boolean,
+    radius = HEAL_PICKUP_RADIUS,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius);
   }
 
   /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions`). */
@@ -110,8 +122,9 @@ export class InteractionSystem {
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     tryTake: (amount: number, useObject: UseObject) => boolean,
+    radius = HEAL_PICKUP_RADIUS,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake, radius);
   }
 
   private collectWalkOver(
@@ -119,8 +132,9 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     quantite: (useObject: UseObject) => number | null,
     prendre: (amount: number, useObject: UseObject) => boolean,
+    radius: number,
   ): void {
-    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+    const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       const amount = quantite(useObject);
       if (amount === null || this.consumed.has(useObject.object)) continue;
@@ -135,8 +149,9 @@ export class InteractionSystem {
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     handlers: WeaponPickupHandlers,
+    radius = HEAL_PICKUP_RADIUS,
   ): void {
-    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+    const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
       const handler = weaponPickupHandlerFor(useObject.name, handlers);
@@ -164,6 +179,11 @@ export class InteractionSystem {
       handlers.onCardPickup(useObject.grantsCard, useObject.name);
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
+      return;
+    }
+
+    if (useObject.sells) {
+      handlers.onPerkKioskUse(useObject.sells);
       return;
     }
 

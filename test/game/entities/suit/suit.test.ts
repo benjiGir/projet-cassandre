@@ -61,6 +61,7 @@ import {
   type SuitUpdateContext,
 } from "../../../../src/game/entities/suit/suit";
 import { suitConfig, type SuitConfig } from "../../../../src/game/entities/suit/suitConfig";
+import { rampantConfig } from "../../../../src/game/entities/rampant/rampantConfig";
 import { setNotarget } from "../../../../src/game/devtools/cheats";
 
 await initPhysics();
@@ -212,6 +213,22 @@ describe("Suit — table de transition (jalon M5, caractérisation)", () => {
 
     assert.strictEqual(suit.state, "idle");
     assert.isFalse(suit.pendingAlert);
+  });
+
+  it("idle reste idle : sous `sightRangeScale` (perk VPN), la même distance ne suffit plus", () => {
+    const { suit, ctx } = createRig();
+    ctx.playerTargetPosition.set(0, 0, 15); // < sightRange (22), mais > 22 × 0,6
+    ctx.playerEyePosition.set(0, suitConfig.eyeHeight, 15);
+    ctx.sightRangeScale = 0.6;
+    scriptRaycast(); // LOS dégagée.
+
+    suit.update(DT, ctx);
+    assert.strictEqual(suit.state, "idle");
+
+    ctx.playerTargetPosition.set(0, 0, 12); // < 22 × 0,6 : repéré.
+    ctx.playerEyePosition.set(0, suitConfig.eyeHeight, 12);
+    suit.update(DT, ctx);
+    assert.strictEqual(suit.state, "alert");
   });
 
   it("idle reste idle : distance < sightRange mais ligne de vue bloquée", () => {
@@ -711,5 +728,111 @@ describe("Suit sous notarget — la bascule de dev qui rend les ennemis passifs"
     suit.update(DT, ctx);
 
     assert.strictEqual(suit.pendingAttackDamage, 0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rampant (lot B4) : la MÊME machine, une attaque au corps-à-corps
+// ---------------------------------------------------------------------------
+
+describe("Rampant — corps-à-corps dans la machine partagée", () => {
+  const melee = rampantConfig.melee!;
+
+  /** Rampant en plein élan, joueur à `distance` mètres devant lui. */
+  function enElan(distance: number, stateTimer = 0) {
+    const rig = createRig(rampantConfig);
+    rig.ctx.playerTargetPosition.set(0, 0, distance);
+    rig.ctx.playerEyePosition.set(0, 1.6, distance);
+    rig.suit.state = "attack";
+    rig.suit.stateTimer = stateTimer;
+    return rig;
+  }
+
+  it("chase -> attack : il prend son élan à `attackRange`, pas à la portée de tir d'un Costard", () => {
+    const { suit, ctx } = createRig(rampantConfig);
+    suit.state = "chase";
+    ctx.playerTargetPosition.set(0, 0, rampantConfig.attackRange + 1.5);
+    ctx.playerEyePosition.set(0, 1.6, rampantConfig.attackRange + 1.5);
+    scriptRaycast();
+
+    suit.update(DT, ctx);
+    assert.strictEqual(suit.state, "chase", "à 4 m, un Costard tirerait déjà ; lui court encore");
+
+    ctx.playerTargetPosition.set(suit.position.x, 0, suit.position.z + rampantConfig.attackRange - 0.2);
+    suit.update(DT, ctx);
+    assert.strictEqual(suit.state, "attack");
+    assert.isTrue(suit.pendingTelegraph, "le signal de l'élan part avant les dégâts");
+  });
+
+  it("pendant l'élan, il bondit vers le joueur — un Costard, lui, tient la pose sur place", () => {
+    const rampant = enElan(2.4);
+    scriptRaycast();
+    rampant.suit.update(DT, rampant.ctx);
+    assert.closeTo(rampant.suit.velocityHorizontal.z, melee.lungeSpeed, 1e-6);
+    assert.strictEqual(rampant.suit.pendingAttackDamage, 0, "aucun dégât avant la fin de l'élan");
+
+    const costard = createRig();
+    costard.ctx.playerTargetPosition.set(0, 0, 2.4);
+    costard.suit.state = "attack";
+    costard.suit.update(DT, costard.ctx);
+    assert.strictEqual(costard.suit.velocityHorizontal.lengthSq(), 0);
+  });
+
+  it("au contact, le bond s'arrête : il ne traverse pas le joueur", () => {
+    const { suit, ctx } = enElan(melee.reach * 0.4);
+    scriptRaycast();
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.velocityHorizontal.lengthSq(), 0);
+  });
+
+  it("fin de l'élan, joueur à portée et en vue : le coup de griffe porte", () => {
+    const { suit, ctx } = enElan(melee.reach - 0.3, rampantConfig.attackTelegraphDuration);
+    scriptRaycast(); // LOS dégagée.
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.state, "chase");
+    assert.isTrue(suit.pendingShot);
+    assert.strictEqual(suit.pendingAttackDamage, rampantConfig.attackDamage);
+    assert.closeTo(suit.pendingPlayerHitPoint.z, melee.reach - 0.3, 1e-6);
+    assert.isBelow(suit.pendingPlayerHitNormal.z, 0, "la normale regarde vers l'attaquant");
+  });
+
+  it("reculer d'un pas pendant l'élan esquive : le geste part, le coup ne porte pas", () => {
+    const { suit, ctx } = enElan(melee.reach + 0.6, rampantConfig.attackTelegraphDuration);
+    scriptRaycast();
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.state, "chase");
+    assert.isTrue(suit.pendingShot, "le geste se voit et s'entend même dans le vide");
+    assert.strictEqual(suit.pendingAttackDamage, 0);
+  });
+
+  it("un obstacle entre lui et le joueur arrête le coup", () => {
+    const { suit, ctx } = enElan(melee.reach - 0.3, rampantConfig.attackTelegraphDuration);
+    scriptRaycast({ castRay: () => Effect.succeed(BLOCKED_HIT) });
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.pendingAttackDamage, 0);
+  });
+
+  it("le cooldown d'attaque est armé après le coup, comme pour un tir", () => {
+    const { suit, ctx } = enElan(melee.reach - 0.3, rampantConfig.attackTelegraphDuration);
+    scriptRaycast();
+    suit.update(DT, ctx);
+
+    suit.update(DT, ctx);
+
+    assert.strictEqual(suit.state, "chase", "pas de second coup tant que le cooldown court");
+  });
+
+  it("fragile et bas : deux balles de pistolet, une capsule sous la ceinture", () => {
+    assert.isAtMost(rampantConfig.maxHp, 24);
+    assert.isBelow(2 * (rampantConfig.capsuleHalfHeight + rampantConfig.capsuleRadius), 1.3);
+    assert.isAbove(rampantConfig.chaseSpeed, suitConfig.chaseSpeed * 2);
   });
 });

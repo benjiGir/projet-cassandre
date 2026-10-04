@@ -18,6 +18,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
 | `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
+| `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
 | `run(script, *args, keep=…)` | n'importe quel script du dépôt, `sys.exit` absorbé |
 | `reload()` | oublie les modules de `tools/` après une modification d'un `lib_*.py` |
@@ -28,6 +29,9 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
 | `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
+| `perk_kiosks(preview=…)` | pose les six bornes de perks (`use_borne_*` portant `perk` et `prix`), une par perk, sur du mobilier en place ; les prix sont ceux de la variante B du lot B7 (`pnpm economy`) ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
+| `gas_props(preview=…)` | pose les quinze bonbonnes de gaz explosives (`prop_gaz_*`, matière `gaz`) près des points d'apparition du chemin obligé ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
+| `encounters(preview=…)` | pose les rencontres du lot B6 : rideau `door_reserve_nord` (ouvert au chargement), spawns à `groupe` de l'arène, de la meute du parking et du Vigile, et leurs trois `trig_*` ; retire quatre Costards du parking ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
 
 `where` lit le relevé écrit par le dernier `build()` dans

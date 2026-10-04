@@ -14,6 +14,7 @@ export function RecapTable({ recap, className }: RecapTableProps) {
 
   return (
     <div className={cx(styles.table, className)}>
+      <p className={styles.difficulty}>{`Difficulté : ${recap.difficulty}`}</p>
       <ul className={styles.lines}>
         {recap.lines.map((line, index) => (
           <li key={line.label} className={styles.line} style={cssVars({ "--i": index })}>
@@ -27,6 +28,11 @@ export function RecapTable({ recap, className }: RecapTableProps) {
         <span className={styles.totalLabel}>Score total</span>
         <span className={styles.totalPoints}>{formatPoints(recap.total)}</span>
       </div>
+      {recap.record && (
+        <p className={styles.record} data-new={recap.record.isNew}>
+          {recap.record.isNew ? "NOUVEAU RECORD" : `Record : ${formatPoints(recap.record.best)}`}
+        </p>
+      )}
     </div>
   );
 }

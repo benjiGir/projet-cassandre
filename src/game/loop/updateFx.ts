@@ -21,9 +21,9 @@ import { suitConfig } from "../entities/suit/suitConfig";
 import { directorConfig } from "../entities/director/directorConfig";
 import { useGameStore } from "../hud/state";
 import { presentPlayerDamage } from "../session/player/feedback";
+import { isMovableOrBreakableHandle } from "../level/loading/movableColliders";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
-import type { LevelHandle } from "../level/loading/levelTypes";
 import { astarMetricsSnapshot } from "../level/navigation/navSearch";
 import { collectActiveShowerOrigins } from "../level/sanitaires/douches";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
@@ -44,31 +44,23 @@ const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   farine: { color: 0xe8e0c8, count: 16 },
   eau: { color: 0x6fb8ff, count: 14 },
   electronique: { color: 0x2f2f38, count: 10 },
+  // Tôle rouge de la bonbonne ; le feu et la fumée viennent de `spawnExplosion`.
+  gaz: { color: 0xb02931, count: 12 },
 };
+
+/** Secousse d'une explosion : nettement plus forte et plus longue que celle d'un tir. */
+const EXPLOSION_SHAKE_AMPLITUDE = 0.45;
+const EXPLOSION_SHAKE_DURATION = 0.4;
+/** Au-delà, l'explosion ne secoue plus la caméra — elle reste entendue. */
+const EXPLOSION_SHAKE_RANGE = 25;
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
-
-let movableHandlesLevel: LevelHandle | null | undefined;
-let movableHandles: ReadonlySet<number> = new Set();
-
-function isMovableOrBreakableHandle(session: FxSession, colliderHandle: number): boolean {
-  const handle = session.gltfLevelSession?.current ?? null;
-  if (handle !== movableHandlesLevel) {
-    movableHandlesLevel = handle;
-    const set = new Set<number>();
-    if (handle) {
-      for (const door of handle.doors) set.add(door.collider.handle);
-      for (const vitre of handle.vitres) if (vitre.collider) set.add(vitre.collider.handle);
-      for (const sanitaire of handle.sanitaires) set.add(sanitaire.collider.handle);
-      for (const prop of handle.props) set.add(prop.collider.handle);
-    }
-    movableHandles = set;
-  }
-  return movableHandles.has(colliderHandle);
-}
 
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
+const sprayDirectionScratch = new THREE.Vector3();
+/** Matière d'un tir arrêté par un bouclier : le son et les éclats d'un impact de métal. */
+const SHIELD_MATERIAL = "metal";
 
 const waterListenerRightScratch = new THREE.Vector3();
 const waterJetOriginScratch: THREE.Vector3[] = [];
@@ -136,11 +128,20 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           }
         }
         for (const hit of session.weapons.hitEvents) {
-          const isEnemyHit = hit.material === FLESH_MATERIAL;
-          if (!isEnemyHit && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
+          // Arrêté par un bouclier : ni sang ni marqueur, un impact de métal sur l'ennemi.
+          const blocked = session.suitManager.blockedHits.has(hit);
+          const material = blocked ? SHIELD_MATERIAL : hit.material;
+          const onEnemy = hit.material === FLESH_MATERIAL;
+          const isEnemyHit = onEnemy && !blocked;
+          if (!onEnemy && !isMovableOrBreakableHandle(session.gltfLevelSession, hit.colliderHandle)) {
             engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
           }
-          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, hit.material);
+          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, material);
+          if (isEnemyHit) {
+            // Le sang part dans l'axe du coup, sur ce qu'il y a derrière l'ennemi.
+            sprayDirectionScratch.subVectors(hit.point, engine.camera.position).normalize();
+            engine.fx.spawnBloodSpray(hit.point, sprayDirectionScratch, hit.weapon);
+          }
           engine.fx.triggerShake(
             isEnemyHit ? weaponConfig.enemyShakeAmplitude : weaponConfig.shakeAmplitude,
             isEnemyHit ? weaponConfig.enemyShakeDuration : weaponConfig.shakeDuration,
@@ -148,7 +149,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           // Hitmarker : uniquement sur un hit ENEMY confirmé — un hit mur n'a
           // pas vocation à alimenter ce canal (voir doc de `hitmarker.ts`).
           if (isEnemyHit) engine.hitmarker.trigger("hit");
-          playImpactSfx(hit.material);
+          playImpactSfx(material);
         }
         session.weapons.clearFrameEvents();
       });
@@ -166,24 +167,23 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
         // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs
         // d'abord, `suitManager.clearFrameEvents()` en tout dernier.
+        // Chaque espèce a sa voix (`Suit.kind`) : le Rampant siffle là où le Costard interpelle.
         for (const event of session.suitManager.alertEvents) {
-          void event; // pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
-          playEnemySfx("alert");
+          // Pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
+          playEnemySfx("alert", event.suit.kind);
         }
         for (const event of session.suitManager.telegraphEvents) {
-          void event;
           // Règle non négociable du skill : le son de télégraphie part AVANT
-          // les dégâts (`suitConfig.attackTelegraphDuration` >= 0.2 s sépare ce
-          // point de la résolution de l'attaque dans `Suit.runAttack`).
-          playEnemySfx("telegraph");
+          // les dégâts (`attackTelegraphDuration` >= 0.2 s sépare ce point de
+          // la résolution de l'attaque dans `runAttack`).
+          playEnemySfx("telegraph", event.suit.kind);
         }
         for (const event of session.suitManager.shotEvents) {
-          void event;
-          playEnemySfx("shot");
+          playEnemySfx("shot", event.suit.kind);
         }
         for (const event of session.suitManager.hurtEvents) {
-          session.suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
-          playEnemySfx("hurt");
+          session.suitSprites.get(event.suit.id)?.setFlash(1, event.suit.cfg.hitFlashDuration);
+          playEnemySfx("hurt", event.suit.kind);
         }
         for (const event of session.suitManager.deathEvents) {
           if (event.gibs) {
@@ -191,9 +191,12 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             // normale (le Costard reste en état "dead"/"corpse" côté simulation
             // pour la persistance du cadavre — seul le RENDU change ici).
             engine.fx.spawnGibs(event.point, event.direction);
+            playSfx("enemy_gib");
+          } else {
+            engine.fx.spawnBloodPool(event.suit.position);
           }
           engine.hitmarker.trigger("kill");
-          playEnemySfx("death");
+          playEnemySfx("death", event.suit.kind);
           // Les vues et le premier kill sont déjà décidés dans le pas fixe.
         }
         for (const event of session.suitManager.playerHitEvents) {
@@ -234,7 +237,8 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           engine.fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
         }
         for (const event of session.directorManager.deathEvents) {
-          void event; // pas de gibs pour le Directeur (voir la doc de `DirectorManager`).
+          // Pas de gibs pour le Directeur (voir la doc de `DirectorManager`) : il laisse une flaque.
+          engine.fx.spawnBloodPool(event.director.position);
           engine.hitmarker.trigger("kill");
           playEnemySfx("death");
           // Le multiplicateur de vues du Directeur est déjà appliqué au pas fixe.
@@ -258,6 +262,12 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
             engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
             playPropBreakSfx(event.matiere);
+          }
+          for (const event of props.explosionEvents) {
+            engine.fx.spawnExplosion(event.point);
+            const proximite = 1 - session.player.position.distanceTo(event.point) / EXPLOSION_SHAKE_RANGE;
+            if (proximite > 0) engine.fx.triggerShake(EXPLOSION_SHAKE_AMPLITUDE * proximite, EXPLOSION_SHAKE_DURATION);
+            playSfx("explosion", Math.max(0.35, proximite));
           }
           props.clearFrameEvents();
         }
@@ -389,7 +399,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             shotgunAmmo: session.weapons.shotgunAmmo,
             shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
             pistolAmmo: session.weapons.pistolAmmo,
-            pistolMaxAmmo: weaponConfig.pistolMaxAmmo,
+            pistolMaxAmmo: session.weapons.pistolMaxAmmo,
             // HUD de prod (Phase 6, `ui/hud/widgets/AmmoPanel/AmmoPanel.tsx`) : quel libellé afficher pour
             // "munitions" dépend de l'arme active, pas seulement du compte de
             // cartouches. Même throttle 10 Hz que le reste de ce bloc.

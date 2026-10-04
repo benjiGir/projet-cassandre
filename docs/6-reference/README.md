@@ -16,7 +16,8 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Arborescence](arborescence.md) — rôle des dossiers suivis.
 - [Valeurs de déplacement](valeurs-deplacement.md) — mouvement, caméra et capsule du joueur.
 - [Valeurs des armes](valeurs-armes.md) — dégâts, cadences, portées, dispersion et munitions.
-- [Valeurs des ennemis](valeurs-ennemis.md) — différences de paramètres du Costard et du Directeur.
+- [Valeurs des ennemis](valeurs-ennemis.md) — paramètres du Costard, du Rampant, du Vigile et du Directeur, multiplicateurs de difficulté, explosion.
+- [Valeurs de l'économie](valeurs-economie.md) — prix des bornes, effet des perks, dons, donateur mystère et relevé simulé.
 - [Catalogue de répliques](repliques-niveau-v2.md) — trois choix par situation du niveau, identifiants et consignes d'enregistrement.
 - [Conventions de nommage glTF](conventions-nommage.md) — préfixes et extras de niveau.
 - [Contrôles et bindings](controles.md) — touches joueur, remapping et raccourcis dev.

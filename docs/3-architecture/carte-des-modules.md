@@ -50,14 +50,14 @@ flowchart TD
 | `src/core/` | Infrastructure sans règles de jeu. | `audio/`, `input/`, `loop/`, `loading/`, `effect/`. |
 | `src/physics/` | Monde Rapier, controller et requêtes physiques. | `world.ts`, `raycast.ts`. |
 | `src/render/` | Ressources et opérations de présentation. | `pipeline/`, `sprites/`, `pickups/`, `viewmodel/`, `overlays/`, `environment/`, `fx/`, `debug/`. |
-| `src/game/entities/` | Comportements communs et types d'ennemis. | `shared/`, `suit/`, `director/`. |
-| `src/game/level/` | Import du niveau, navigation et systèmes du décor. | `loading/`, `navigation/`, `doors/`, `interactions/`, `props/`, `sanitaires/`, `catalog/`. |
+| `src/game/entities/` | Comportements communs et types d'ennemis. | `shared/`, `suit/`, `rampant/`, `vigile/`, `director/`. |
+| `src/game/level/` | Import du niveau, navigation, script et systèmes du décor. | `loading/`, `navigation/`, `scripting/`, `doors/`, `interactions/`, `props/`, `sanitaires/`, `catalog/`. |
 | `src/game/loop/` | Orchestration de simulation et présentation. | `updateGameplay.ts`, `stepPhysics.ts`, `updateFx.ts`, `interpolateVisuals.ts`. |
 | `src/game/player/` | Déplacement, armes et inventaire du joueur. | `movement/`, `weapons/`, `loyaltyCards.ts`. |
-| `src/game/session/` | Construction et données de partie, règles du joueur, présentation et progression. | `lifecycle.ts`, `gameSession.ts`, `gameEngine.ts`, `player/`, `presentation/`, `progression/`. |
-| `src/game/devtools/` | Console, cheats et harnais de développement. | `consoleApi.ts`, `movementTuning.ts`, `replay/`. |
+| `src/game/session/` | Construction et données de partie, règles du joueur, présentation, progression et direct. | `lifecycle.ts`, `gameSession.ts`, `gameEngine.ts`, `player/`, `presentation/`, `progression/`, `stream/`. |
+| `src/game/devtools/` | Console, cheats et harnais de développement. | `consoleApi.ts`, `movementTuning.ts`, `replay/`, `economy/`. |
 | `src/game/hud/` | Store et contrats du miroir HUD. | `state.ts`, `hudTypes.ts`. |
-| `src/game/settings/` | Réglages persistants et commandes moteur. | `graphicsSettings.ts`, `audioSettings.ts`. |
+| `src/game/settings/` | Réglages persistants, records et commandes moteur. | `graphicsSettings.ts`, `audioSettings.ts`, `difficultySettings.ts`, `records.ts`. |
 | `src/ui/` | Écrans React, contrôles, widgets HUD et panneau de tuning. | `App/`, `screens/`, `components/`, `hud/widgets/`, `dev/`. |
 
 Le détail des dossiers et de leur contenu figure dans

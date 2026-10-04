@@ -5,7 +5,7 @@ import {
   ENEMY_SFX, MATERIAL_IMPACT_SFX, PITCH_VARIATION, POOL_LECTURES, PROP_BREAK_SFX,
   SFX_TABLE, WEAPON_FIRE_SFX,
 } from "./audioCatalog";
-import type { DoorSfxEvent, EnemySfxEvent, SfxId } from "./audioTypes";
+import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxId } from "./audioTypes";
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "../loading/assetPath";
 import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
@@ -114,8 +114,8 @@ export function playPropBreakSfx(matiere: string) {
   playSfx(PROP_BREAK_SFX[matiere] ?? DEFAULT_PROP_BREAK_SFX);
 }
 
-export function playEnemySfx(event: EnemySfxEvent) {
-  playSfx(ENEMY_SFX[event]);
+export function playEnemySfx(event: EnemySfxEvent, voice: EnemyVoice = "costard") {
+  playSfx(ENEMY_SFX[voice][event]);
 }
 
 export function playDoorSfx(event: DoorSfxEvent) {

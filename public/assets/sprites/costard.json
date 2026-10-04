@@ -8,7 +8,10 @@
   "pixelsPerMeter": 96,
   "feetFromBottom": 4,
   "atlases": {
-    "humain": "costard.png"
+    "humain": "costard.png",
+    "clair": "costard_clair.png",
+    "mate": "costard_mate.png",
+    "fonce": "costard_fonce.png"
   },
   "animations": {
     "idle": {

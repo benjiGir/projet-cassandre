@@ -4,12 +4,14 @@ import {
   createStreamState,
   mysteryDonation,
   notifyStream,
+  spend,
   streamConfig,
   streamRecap,
   updateStream,
   type StreamEventKind,
 } from "../../../../src/game/session/stream/streamSim";
-import { MYSTERY_DONATIONS, MYSTERY_DONOR } from "../../../../src/game/session/stream/streamTexts";
+import { MYSTERY_DONOR, MYSTERY_TEXTS } from "../../../../src/game/session/stream/streamTexts";
+import { difficultyConfig } from "../../../../src/game/session/progression/difficulty";
 
 /** Petit générateur déterministe, local au test. */
 function rng(seed: number): () => number {
@@ -118,12 +120,62 @@ describe("simulation du direct", () => {
     expect(bilan.donationCount).toBe(5);
   });
 
+  it("une dépense débite le solde sans toucher au total des dons du bilan", () => {
+    const state = createStreamState();
+    mysteryDonation(state, "carte_or", 0);
+    const recu = streamConfig.mystery.carte_or;
+
+    expect(spend(state, recu + 1)).toBe(false);
+    expect(state.wallet).toBe(recu);
+
+    expect(spend(state, 20)).toBe(true);
+    expect(state.wallet).toBe(recu - 20);
+    expect(streamRecap(state).donations).toBe(recu);
+  });
+
   it("le donateur mystère donne une fois par étape, quel que soit le délai entre dons", () => {
     const state = createStreamState();
     notifyStream(state, "secret", 1, () => 0);
     const don = mysteryDonation(state, "carte_or", 1.1);
-    expect(don).toEqual({ pseudo: MYSTERY_DONOR, mystery: true, ...MYSTERY_DONATIONS.carte_or });
+    expect(don).toEqual({ pseudo: MYSTERY_DONOR, mystery: true, amount: streamConfig.mystery.carte_or, text: MYSTERY_TEXTS.carte_or });
     expect(mysteryDonation(state, "carte_or", 50)).toBeNull();
     expect(state.chat.at(-1)).toMatchObject({ pseudo: MYSTERY_DONOR, kind: "don" });
+  });
+
+  it("le journal du portefeuille retient chaque don et chaque achat, datés et avec le solde", () => {
+    const state = createStreamState();
+    mysteryDonation(state, "carte_or", 30);
+    notifyStream(state, "boss", 42, () => 0);
+    updateStream(state, DT, 50, rng(1));
+    spend(state, 15);
+    expect(spend(state, 10_000)).toBe(false);
+
+    const recu = streamConfig.mystery.carte_or;
+    expect(state.ledger).toEqual([
+      { at: 30, amount: recu, source: "mystere", wallet: recu },
+      { at: 42, amount: 20, source: "don", wallet: recu + 20 },
+      { at: 50, amount: -15, source: "achat", wallet: recu + 5 },
+    ]);
+  });
+});
+
+describe("générosité des dons", () => {
+  function donsRecus(generosity: number): number {
+    const state = createStreamState(generosity);
+    const random = rng(7);
+    // Un kill isolé toutes les 10 s : jamais de série, jamais dans le délai entre deux dons.
+    for (let i = 0; i < 400; i++) notifyStream(state, "kill", i * 10, random);
+    return state.donationCount;
+  }
+
+  it("un chat plus généreux donne plus souvent, un chat plus dur moins souvent", () => {
+    const normal = donsRecus(difficultyConfig.habitue.donations);
+    expect(donsRecus(difficultyConfig.client.donations)).toBeGreaterThan(normal);
+    expect(donsRecus(difficultyConfig.lanceur.donations)).toBeLessThan(normal);
+    expect(donsRecus(0)).toBe(0);
+  });
+
+  it("sans réglage, le direct garde sa générosité d'origine", () => {
+    expect(createStreamState().generosity).toBe(1);
   });
 });

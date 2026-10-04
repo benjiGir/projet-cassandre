@@ -23,11 +23,13 @@ import type { WeaponPickupBillboard } from "../../render/pickups/pickups";
 import type { PickupResources } from "../../render/pickups/pickupResources";
 import type { CardPickupBillboard } from "../../render/pickups/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
+import type { Perk } from "../player/perks";
 import type { HeroLineId } from "./presentation/heroLines";
 import type { LevelScriptState, ScriptTrigger } from "../level/scripting/levelScript";
 import type { StreamState } from "./stream/streamSim";
 import type { HeroPortrait } from "./presentation/heroPortrait";
 import type { PlaceLineState } from "./player/placeLines";
+import type { Difficulty } from "./progression/difficulty";
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/progression/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
@@ -43,6 +45,8 @@ export interface ExitDoorTracking {
 export interface GameSession {
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */
   choice: LevelDef;
+  /** Difficulté de CETTE partie, lue une fois à sa construction — voir `progression/difficulty.ts`. */
+  difficulty: Difficulty;
 
   physics: PhysicsWorld;
   player: PlayerController;
@@ -110,6 +114,12 @@ export interface GameSession {
   droppedCardBillboard: CardPickupBillboard | null;
   // see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
   cards: Set<LoyaltyCard>;
+  /** Perks achetés aux bornes dans CETTE partie — voir `progression/perks.ts`. */
+  perks: Set<Perk>;
+  /** Rayon des ramassages pris en marchant dessus, en mètres — agrandi par un perk. */
+  pickupRadius: number;
+  /** Secondes de jeu restantes à la pointe de vitesse d'après-kill (perk boisson). */
+  killRushRemaining: number;
 
   unlockedDoors: Set<string>;
   exitDoorTracking: ExitDoorTracking | null;

@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
-import { damageForWeapon } from "../../player/weapons/weaponConfig";
+import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { NavGraph } from "../../level/navigation/pathfindingTypes";
 import type { VitreHitTarget } from "../shared/enemyTypes";
 import {
@@ -17,6 +17,7 @@ import {
   directorConfig as defaultDirectorConfig,
   type DirectorConfig,
 } from "./directorConfig";
+import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
 
@@ -82,9 +83,10 @@ export class DirectorManager {
   private readonly scratchKnockback = new THREE.Vector3();
   private readonly aggregationScratch = new Map<Director, AggregatedHit>();
 
-  constructor(physics: PhysicsWorld, cfg: DirectorConfig = defaultDirectorConfig) {
+  /** `tuning` : PV et dégâts de CETTE partie, posés par sa difficulté. */
+  constructor(physics: PhysicsWorld, cfg: DirectorConfig = defaultDirectorConfig, tuning: EnemyTuning = NEUTRAL_ENEMY_TUNING) {
     this.physics = physics;
-    this.cfg = cfg;
+    this.cfg = tuneEnemyConfig(cfg, tuning);
     this.kcc = physics.world.createCharacterController(cfg.colliderOffset);
     configureDirectorCharacterController(this.kcc, cfg);
   }
@@ -192,6 +194,20 @@ export class DirectorManager {
     return true;
   }
 
+  /** Souffle d'une explosion — même contrat que `SuitManager.applyBlast`, sans démembrement. */
+  applyBlast(
+    center: THREE.Vector3,
+    damageAt: (distance: number) => number,
+    reaches: (point: THREE.Vector3) => boolean,
+  ): void {
+    for (const director of this.directors) {
+      if (!director.isAlive) continue;
+      const damage = damageAt(director.position.distanceTo(center));
+      if (damage <= 0 || !reaches(director.position)) continue;
+      this.applyAggregatedHit(director, { totalDamage: damage, anyPoint: director.position.clone() }, center);
+    }
+  }
+
   private applyAggregatedHit(director: Director, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {
     this.scratchKnockback.subVectors(director.position, playerTargetPosition);
     this.scratchKnockback.y = 0;
@@ -254,7 +270,7 @@ export class DirectorManager {
         aggregated.set(director, entry);
       }
 
-      const damage = damageForWeapon(hitEvent.weapon);
+      const damage = damageForHit(hitEvent);
       entry.totalDamage += damage;
     }
     this.hitCursor = hitEvents.length;

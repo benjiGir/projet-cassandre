@@ -195,7 +195,9 @@ les métadonnées espace des boîtes. Ces validations tournent pendant le
 chargement, jamais dans le pas fixe ni à chaque mise à jour du mix.
 
 Les voix utilisent un sprite distinct, une seule lecture à la fois et aucune
-variation de hauteur pour conserver le personnage. Les choix de réplique
+variation de hauteur pour conserver le personnage. Les annonces du magasin
+partagent ce sprite (`annonce_*`) mais pas cette bouche : elles se jouent
+par-dessus le héros, sans rien couper. Les choix de réplique
 appartiennent au gameplay ; le module Howler ne connaît que la clé de prise.
 Le gain voix s'applique immédiatement, la durée vient du manifeste.
 

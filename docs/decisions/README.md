@@ -2,7 +2,7 @@
 title: Décisions techniques
 tags: [adr, index]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-04
 ---
 
 # Architecture Decision Records
@@ -69,3 +69,6 @@ reste conservé et renvoie à son successeur.
 | [0031](0031-portes-animees-et-vitres.md) | Portes animées et vitres cassables avec colliders pilotés | accepté |
 | [0032](0032-sanitaires-utilisables.md) | Sanitaires utilisables, soignants et cassables | accepté |
 | [0037](0037-script-de-niveau.md) | Script de niveau par volumes déclencheurs et scénarios nommés | accepté |
+| [0040](0040-bornes-et-perks.md) | Bornes et perks : achat en partie, effets posés sur la session | accepté |
+| [0041](0041-explosifs.md) | Explosifs : une matière de prop, un souffle dans le pas fixe | accepté |
+| [0042](0042-difficulte.md) | Difficulté : trois niveaux posés sur la partie, records séparés | accepté |

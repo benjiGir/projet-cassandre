@@ -72,6 +72,9 @@ export class PlayerController {
   /** Vitesse verticale de la dernière réception, m/s. Diagnostic. */
   lastLandingSpeed = 0;
 
+  /** Multiplicateur de la vitesse cible, propre à CETTE partie : 1 hors effet d'un perk. */
+  speedScale = 1;
+
   private readonly physics: PhysicsWorld;
   private readonly cfg: MoveConfig;
 
@@ -215,7 +218,7 @@ export class PlayerController {
       wishZ /= wishLength;
     }
 
-    const targetSpeed = frame.sprint ? cfg.runSpeed : cfg.walkSpeed;
+    const targetSpeed = (frame.sprint ? cfg.runSpeed : cfg.walkSpeed) * this.speedScale;
 
     if (wishLength > 0) {
       // Accélération linéaire vers la vitesse cible, bornée par le budget du pas.
