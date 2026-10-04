@@ -1,4 +1,4 @@
-import { heroVoiceDuration, playHeroVoice } from "../../../core/audio/heroVoice";
+import { heroVoiceDuration, playAnnouncementVoice, playHeroVoice } from "../../../core/audio/heroVoice";
 import { subtitlesEnabled } from "../../settings/audioSettings";
 import { useGameStore } from "../../hud/state";
 import { HERO_LINES, heroVoiceKey, type HeroBarkId, type HeroLineDef, type HeroLineId } from "../presentation/heroLines";
@@ -20,15 +20,17 @@ export function showHudMessage(text: string): void {
 
 const ANNOUNCEMENT_DISPLAY_MS = 4500;
 
-/** Annonce du magasin ou de l'interphone : remplace la précédente, s'efface seule. */
-export function showAnnouncement(speaker: string, text: string): void {
+/** Annonce du magasin ou de l'interphone : remplace la précédente, s'efface seule. `voix` : la prise à jouer, si l'annonce est enregistrée. */
+export function showAnnouncement(speaker: string, text: string, voix?: string): void {
   const announcement = { speaker, text };
   useGameStore.getState().showAnnouncement(announcement);
+  if (voix) playAnnouncementVoice(voix);
+  const displayMs = Math.max(ANNOUNCEMENT_DISPLAY_MS, (voix ? (heroVoiceDuration(voix) ?? 0) : 0) * 1000);
   globalThis.setTimeout(() => {
     if (useGameStore.getState().announcement === announcement) {
       useGameStore.getState().showAnnouncement(null);
     }
-  }, ANNOUNCEMENT_DISPLAY_MS);
+  }, displayMs);
 }
 
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap

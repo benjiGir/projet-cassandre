@@ -38,6 +38,6 @@ describe("répliques enregistrées du héros", () => {
 
   it("chaque prise retenue a sa place dans le jeu", () => {
     const branchees = new Set(textes.map(([id]) => heroVoiceKey(id as keyof typeof HERO_LINES)));
-    expect(Object.keys(retenus).filter((cle) => !branchees.has(cle))).toEqual([]);
+    expect(Object.keys(retenus).filter((cle) => cle.startsWith("heros_") && !branchees.has(cle))).toEqual([]);
   });
 });

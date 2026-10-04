@@ -4,204 +4,224 @@
     "voix.m4a"
   ],
   "sprite": {
-    "heros_arme_double_a": [
+    "annonce_caisses_a": [
       0.0,
+      3870.8
+    ],
+    "annonce_inventaire_a": [
+      3990.8,
+      3533.2
+    ],
+    "annonce_inventaire_fin_a": [
+      7644.0,
+      4671.9
+    ],
+    "annonce_renfort_a": [
+      12435.9,
+      5522.4
+    ],
+    "annonce_securite_a": [
+      18078.3,
+      3416.4
+    ],
+    "heros_arme_double_a": [
+      21614.7,
       1385.9
     ],
     "heros_arme_pied_biche_a": [
-      1505.9,
+      23120.7,
       3101.9
     ],
     "heros_arme_pistolet_a": [
-      4727.9,
+      26342.6,
       1650.5
     ],
     "heros_arme_pompe_a": [
-      6498.4,
+      28113.2,
       1988.5
     ],
     "heros_boire_fuite_a": [
-      8607.0,
+      30221.7,
       2269.3
     ],
     "heros_boss_attaque_a": [
-      10996.3,
+      32611.0,
       2105.2
     ],
     "heros_boss_mort_a": [
-      13221.5,
+      34836.2,
       1149.4
     ],
     "heros_boss_revelation_a": [
-      14490.9,
+      36105.6,
       2149.3
     ],
     "heros_boss_touche_hero_a": [
-      16760.2,
+      38374.9,
       1821.9
     ],
     "heros_cache_gaine_a": [
-      18702.1,
+      40316.8,
       2062.0
     ],
     "heros_camera_quitte_a": [
-      20884.1,
+      42498.9,
       1823.6
     ],
     "heros_carte_argent_a": [
-      22827.7,
+      44442.5,
       3928.8
     ],
     "heros_carte_or_a": [
-      26876.5,
+      48491.3,
       3449.7
     ],
     "heros_carte_platine_a": [
-      30446.2,
+      52061.0,
       2923.9
     ],
     "heros_casse_bois_a": [
-      33490.2,
+      55104.9,
       1675.7
     ],
     "heros_casse_ecran_a": [
-      35285.9,
+      56900.6,
       1043.0
     ],
     "heros_casse_farine_a": [
-      36448.9,
+      58063.6,
       2087.9
     ],
     "heros_casse_vitre_a": [
-      38656.8,
+      60271.5,
       2101.7
     ],
     "heros_costard_alerte_a": [
-      40878.5,
+      62493.2,
       2251.9
     ],
     "heros_costard_tire_a": [
-      43250.4,
+      64865.2,
       3008.0
     ],
     "heros_depart_a": [
-      46378.5,
+      67993.2,
       2584.4
     ],
     "heros_douche_ferme_a": [
-      49082.8,
+      70697.6,
       1675.2
     ],
     "heros_douche_ouvre_a": [
-      50878.0,
+      72492.8,
       2575.2
     ],
     "heros_douleur_forte_a": [
-      53573.2,
+      75188.0,
       854.0
     ],
     "heros_douleur_legere_a": [
-      54547.3,
+      76162.0,
       462.1
     ],
     "heros_effort_reception_a": [
-      55129.3,
+      76744.1,
       624.2
     ],
     "heros_kill_costard_a": [
-      55873.6,
+      77488.3,
       1682.6
     ],
     "heros_kill_pompe_a": [
-      57676.2,
+      79290.9,
       1880.4
     ],
     "heros_manger_pizza_a": [
-      59676.6,
+      81291.3,
       1847.9
     ],
     "heros_manger_sandwich_a": [
-      61644.5,
+      83259.2,
       1989.2
     ],
     "heros_micro_annonces_a": [
-      63753.6,
+      85368.4,
       3468.8
     ],
     "heros_mort_hero_a": [
-      67342.4,
+      88957.1,
       1507.6
     ],
     "heros_munitions_24_a": [
-      68970.0,
+      90584.7,
       1866.0
     ],
     "heros_munitions_36_a": [
-      70956.0,
+      92570.7,
       2586.1
     ],
     "heros_nouvelle_tentative_a": [
-      73662.1,
+      95276.8,
       2178.7
     ],
     "heros_objet_pousse_a": [
-      75960.8,
+      97575.5,
       870.9
     ],
     "heros_photomaton_ouvre_a": [
-      76951.7,
+      98566.4,
       2526.8
     ],
     "heros_pointeuse_a": [
-      79598.4,
+      101213.2,
       3673.7
     ],
     "heros_premier_kill_a": [
-      83392.2,
+      105006.9,
       2570.2
     ],
     "heros_pv_bas_a": [
-      86082.4,
+      107697.1,
       2029.0
     ],
     "heros_raccourci_coupe_feu_a": [
-      88231.4,
+      109846.1,
       2147.4
     ],
     "heros_secret_aeration_a": [
-      90498.8,
+      112113.5,
       2446.2
     ],
     "heros_secret_generique_a": [
-      93065.0,
+      114679.8,
       1982.9
     ],
     "heros_secret_photomaton_a": [
-      95167.9,
+      116782.6,
       3122.3
     ],
     "heros_secret_vigile_a": [
-      98410.2,
+      120024.9,
       2833.9
     ],
     "heros_soin_plein_a": [
-      101364.1,
+      122978.8,
       1507.4
     ],
     "heros_sonnette_sav_a": [
-      102991.4,
+      124606.2,
       2192.4
     ],
     "heros_toilettes_delai_a": [
-      105303.9,
+      126918.6,
       2067.1
     ],
     "heros_toilettes_soulagement_a": [
-      107491.0,
+      129105.7,
       2416.5
     ],
     "heros_touche_a": [
-      110027.4,
+      131642.2,
       1603.9
     ]
   },

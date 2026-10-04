@@ -14,7 +14,7 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
       if (Object.hasOwn(HERO_LINES, action.id)) triggerHeroLine(session, action.id as HeroLineId);
       return;
     case "annonce":
-      showAnnouncement(action.speaker, action.text);
+      showAnnouncement(action.speaker, action.text, action.voix);
       streamEvent(session, "moment");
       return;
     case "reveiller": {

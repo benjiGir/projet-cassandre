@@ -9,6 +9,9 @@ Répliques parlées générées par ElevenLabs (texte → voix) — PROJET_CASSA
     ./.venv-refs/bin/python3 tools/audio/ia_voix.py page
     # 4. Garder des prises (copiées dans assets_src/audio_ia/retenus/voix/, versionnées)
     ./.venv-refs/bin/python3 tools/audio/ia_voix.py pick heros_depart_a heros_hub_a
+    # (Distribuer un rôle : mêmes phrases par plusieurs voix, brutes et en haut-parleur)
+    ./.venv-refs/bin/python3 tools/audio/ia_voix.py casting --role annonce --voix sarah,alice,lily --go
+    #                                     http://localhost:5173/audition/casting/index.html
     # 5. Planche audio du jeu (public/assets/audio/voix/voix.{ogg,m4a,json})
     ./.venv-refs/bin/python3 tools/audio/ia_voix.py finalize --out /tmp/voix
     ./.venv-refs/bin/python3 tools/audio/build_sprite.py /tmp/voix --out public/assets/audio/voix --nom voix
@@ -47,19 +50,49 @@ import numpy as np
 ICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(ICI))
 
+import espace  # noqa: E402
 from ia_sfx import URL, Indisponible, _erreur, _mp3, cle_api, licence_confirmee  # noqa: E402
-from synth import SR, write_wav  # noqa: E402
+from synth import SR, bandpass, saturate, write_wav  # noqa: E402
 
 RACINE = ICI.parents[1]
 CATALOGUE = RACINE / "docs/6-reference/repliques-niveau-v2.md"
 CANDIDATS = RACINE / "assets_src/audio_ia/candidats/voix"
 RETENUS = RACINE / "assets_src/audio_ia/retenus/voix"
 PAGE = RACINE / "public/audition/voix"
+CASTING = RACINE / "assets_src/audio_ia/candidats/voix_casting"
+PAGE_CASTING = RACINE / "public/audition/casting"
 
 MODELE = "eleven_v3"
 FORMAT = "mp3_44100_128"
 # Rôle -> (voice_id, nom). Un rôle absent n'est pas encore distribué.
-VOIX = {"heros": ("N2lVS1w4EtoT3dr4eOWO", "Callum")}
+VOIX = {"heros": ("N2lVS1w4EtoT3dr4eOWO", "Callum"), "annonce": ("XrExE9yKIg1WjnnlVkGX", "Matilda")}
+# Voix génériques du compte (`GET /v1/voices`, relevé du 2026-10-04) : les seules
+# que l'offre gratuite laisse appeler. Nom court -> (voice_id, portrait du service).
+GENERIQUES = {
+    "sarah": ("EXAVITQu4vr4xnSDxMaL", "mûre, rassurante"),
+    "laura": ("FGY2WhTYpPnrIDTdsKH5", "enthousiaste, décalée"),
+    "alice": ("Xb7hH8MSUJpSbSDYk0k2", "claire, pédagogue"),
+    "matilda": ("XrExE9yKIg1WjnnlVkGX", "professionnelle, enjouée"),
+    "jessica": ("cgSgspJ2msm6clMCkdW9", "joueuse, lumineuse"),
+    "bella": ("hpp4J3VqNfWAUOO0d1Us", "professionnelle, chaleureuse"),
+    "lily": ("pFZP5JQG7iQjIQuC4Bku", "veloutée, comédienne"),
+    "river": ("SAz9YHcvj6GT2YYXdXww", "neutre, posée"),
+    "roger": ("CwhRBWXzGAHq8TQ4Fs17", "décontracté, grave"),
+    "george": ("JBFqnCBsd6RMkjVDRZzb", "chaleureux, conteur"),
+    "eric": ("cjVigY5qzO86Huf0OWal", "lisse, digne de confiance"),
+    "brian": ("nPczCjzI2devNBz1zQrb", "grave, réconfortant"),
+    "daniel": ("onwK4e9ZLuTAKqWW03F9", "présentateur posé"),
+    "adam": ("pNInz6obpgDQGcFmaJgB", "dominant, ferme"),
+    "bill": ("pqHfZKP75CvOlQylNhV4", "âgé, sage"),
+}
+# Phrases d'essai d'un casting : de vraies répliques du jeu (`levelEvents.ts`),
+# une neutre et une qui porte la chute, pour juger le sourire ET la menace.
+ESSAIS = {
+    "annonce": {
+        "caisses": "Un client non identifié est attendu en caisse centrale.",
+        "renfort": "Renfort demandé en réserve. Le personnel non essentiel est prié de mordre.",
+    },
+}
 PRIORITE = "TERP"
 ROLES_SECONDAIRES = {"### Costard": "costard", "### Directeur": "directeur", "### Annonces": "annonce"}
 
@@ -93,6 +126,8 @@ def lire_catalogue() -> list[Replique]:
             continue
         ident, statut, situation, *textes = cellules
         for variante, texte in zip("abc", textes):
+            if texte == "—":               # une annonce déjà en jeu n'a qu'une version
+                continue
             out.append(Replique(role, ident, statut, section, situation, texte, variante))
     return out
 
@@ -218,11 +253,63 @@ def cmd_pick(args) -> int:
     return 0
 
 
+def haut_parleur(x: np.ndarray) -> np.ndarray:
+    """Une prise sèche entendue par la sonorisation du magasin : pavillon étroit, ampli poussé, salle."""
+    y = bandpass(x, 420, 3600)
+    y = saturate(y / (float(np.abs(y).max()) or 1.0), 2.2)
+    return espace.dans(y, "magasin", distance=14.0, sec=0.55)
+
+
+def cmd_casting(args) -> int:
+    if args.role not in ESSAIS:
+        raise SystemExit(f"pas de phrases d'essai pour « {args.role} » — voir ESSAIS")
+    voix = args.voix.split(",")
+    inconnues = [v for v in voix if v not in GENERIQUES]
+    if inconnues:
+        raise SystemExit(f"voix inconnue(s) : {', '.join(inconnues)} — voir GENERIQUES")
+    essais = ESSAIS[args.role]
+    prises = [(v, ident, CASTING / f"{args.role}_casting_{v}_{ident}.mp3") for v in voix for ident in essais]
+    a_faire = [p for p in prises if not p[2].exists()]
+    credits = sum(len(essais[ident]) for _, ident, _ in a_faire)
+    print(f"{len(prises)} prise(s), {len(prises) - len(a_faire)} déjà faite(s), {len(a_faire)} à faire ≈ {credits} crédits")
+    if a_faire and not args.go:
+        print("Simulation : rien n'a été appelé. Ajouter --go pour générer (dépense des crédits du compte).")
+        return 0
+    if a_faire:
+        cle = cle_api()
+        CASTING.mkdir(parents=True, exist_ok=True)
+        for i, (v, ident, dest) in enumerate(a_faire, 1):
+            dest.write_bytes(generer_une(cle, GENERIQUES[v][0], essais[ident]))
+            print(f"  [{i}/{len(a_faire)}] {dest.name}")
+    if PAGE_CASTING.exists():
+        shutil.rmtree(PAGE_CASTING)
+    PAGE_CASTING.mkdir(parents=True)
+    blocs = []
+    for v in voix:
+        blocs.append(f"<h2>{v.capitalize()} <small>{html.escape(GENERIQUES[v][1])}</small></h2>")
+        for ident, texte in essais.items():
+            src = CASTING / f"{args.role}_casting_{v}_{ident}.mp3"
+            shutil.copy(src, PAGE_CASTING / src.name)
+            sono = PAGE_CASTING / f"{src.stem}_sono.wav"
+            write_wav(str(sono), haut_parleur(couper_voix(_mp3(src.read_bytes()))), SR, peak=0.7)
+            blocs.append(
+                f'<div class="l"><button data-src="{src.name}">▶ brute</button>'
+                f'<button data-src="{sono.name}">▶ haut-parleur</button>'
+                f'<span class="t">« {html.escape(texte)} »</span></div>')
+    (PAGE_CASTING / "index.html").write_text(
+        _HTML_CASTING.replace("@@ROLE@@", args.role).replace("@@LIGNES@@", "\n".join(blocs)))
+    print("http://localhost:5173/audition/casting/index.html  (serveur de dev : pnpm dev)")
+    return 0
+
+
 # Niveau commun des répliques : même RMS de parole pour toutes, pour qu'aucune
 # ne sorte plus fort qu'une autre. `build_sprite.py` règle ensuite la crête de
 # l'atlas entier sans toucher aux écarts entre prises.
 RMS_PAROLE = 0.1
 CRETE_MAX = 0.95
+# Une annonce sort 3 dB sous le héros : en bande étroite et saturée, elle
+# paraît plus forte que lui à RMS égal, et il doit pouvoir parler par-dessus.
+RMS_ANNONCE = 0.07
 
 
 def couper_voix(x: np.ndarray) -> np.ndarray:
@@ -248,6 +335,16 @@ def rms_parole(x: np.ndarray) -> float:
     return float(np.sqrt(np.mean(parle ** 2))) if len(parle) else float(rms.max())
 
 
+def sonoriser(x: np.ndarray) -> np.ndarray:
+    """Une annonce telle que le jeu la joue : dans la sono, queue de salle coupée à -46 dB et fondue."""
+    y = haut_parleur(x)
+    actifs = np.flatnonzero(np.abs(y) > float(np.abs(y).max()) * 0.005)
+    y = y[: int(actifs[-1]) + 1]
+    n = min(int(0.150 * SR), len(y))
+    y[-n:] *= np.linspace(1.0, 0.0, n)
+    return y * RMS_ANNONCE / (rms_parole(y) or 1.0)
+
+
 def cmd_finalize(args) -> int:
     licence_confirmee()
     retenus = _lire_json(RETENUS / "retenus.json")
@@ -258,6 +355,8 @@ def cmd_finalize(args) -> int:
     for nom in sorted(retenus):
         y = couper_voix(_mp3((RETENUS / f"{nom}.mp3").read_bytes()))
         y *= RMS_PAROLE / (rms_parole(y) or 1.0)
+        if nom.startswith("annonce_"):
+            y = sonoriser(y)
         crete = float(np.abs(y).max())
         if crete > CRETE_MAX:          # un cri court : la crête passe avant le niveau moyen
             y *= CRETE_MAX / crete
@@ -296,6 +395,27 @@ document.getElementById('copier').onclick=()=>navigator.clipboard.writeText(docu
 </script></html>"""
 
 
+_HTML_CASTING = """<!doctype html><html lang="fr"><meta charset="utf-8"><title>Casting — @@ROLE@@</title>
+<style>
+body{font:15px system-ui;background:#14161a;color:#e6e6e6;max-width:980px;margin:2rem auto;padding:0 1rem}
+h2{font-size:1rem;color:#9fb3d9;border-top:1px solid #333;padding-top:.8rem}small{color:#7d8594;font-weight:400}
+.l{display:flex;gap:.7rem;align-items:baseline;padding:.25rem 0}
+button{background:#2a3140;color:#e6e6e6;border:1px solid #455;border-radius:6px;padding:.3rem .7rem;cursor:pointer;white-space:nowrap}
+button.joue{background:#2f6f4f}.t{flex:1}
+</style>
+<h1>Casting — @@ROLE@@</h1>
+<p>Les mêmes phrases par chaque voix. « Haut-parleur » = la prise passée par la sonorisation du magasin,
+telle qu'on l'entendrait en jeu.</p>
+@@LIGNES@@
+<script>
+let courant=null;
+document.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  if(courant){courant.pause();document.querySelectorAll('.joue').forEach(x=>x.classList.remove('joue'));}
+  courant=new Audio(b.dataset.src); b.classList.add('joue'); courant.onended=()=>b.classList.remove('joue'); courant.play();
+});
+</script></html>"""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[1], formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -307,13 +427,18 @@ def main() -> int:
         p.add_argument("--only", help="identifiants séparés par des virgules")
         if nom == "generate":
             p.add_argument("--go", action="store_true", help="appeler vraiment le service (dépense des crédits)")
+    c = sub.add_parser("casting", help="mêmes phrases par plusieurs voix, pour distribuer un rôle")
+    c.add_argument("--role", default="annonce", help="rôle à distribuer (voir ESSAIS)")
+    c.add_argument("--voix", required=True, help="noms courts séparés par des virgules (voir GENERIQUES)")
+    c.add_argument("--go", action="store_true", help="appeler vraiment le service (dépense des crédits)")
     f = sub.add_parser("finalize", help="écrit les prises retenues, recadrées et au même niveau, en WAV")
     f.add_argument("--out", default="/tmp/voix")
     k = sub.add_parser("pick", help="retenir des prises : heros_depart_a … (nom=- pour retirer)")
     k.add_argument("noms", nargs="+")
     args = ap.parse_args()
     try:
-        return {"generate": cmd_generate, "page": cmd_page, "pick": cmd_pick, "finalize": cmd_finalize}[args.cmd](args)
+        return {"generate": cmd_generate, "page": cmd_page, "pick": cmd_pick, "finalize": cmd_finalize,
+                "casting": cmd_casting}[args.cmd](args)
     except Indisponible as e:
         print(f"ERREUR : {e}", file=sys.stderr)
         return 2

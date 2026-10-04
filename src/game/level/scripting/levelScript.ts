@@ -5,8 +5,8 @@ import type { EcranChaine } from "../interactions/ecrans";
 export type ScriptAction =
   /** Réplique du héros, par son identifiant (`heroLines.ts`). */
   | { readonly kind: "replique"; readonly id: string }
-  /** Annonce des haut-parleurs ou de l'interphone, sur son propre canal texte. */
-  | { readonly kind: "annonce"; readonly speaker: string; readonly text: string }
+  /** Annonce des haut-parleurs ou de l'interphone, sur son propre canal texte ; `voix` est la clé de sa prise, si elle en a une. */
+  | { readonly kind: "annonce"; readonly speaker: string; readonly text: string; readonly voix?: string }
   /** Fait apparaître les ennemis dont le point d'apparition porte ce `groupe`. */
   | { readonly kind: "reveiller"; readonly groupe: string }
   /** Passe sur `chaine` les `ecran_*` dont le nom commence par `ecrans`. */

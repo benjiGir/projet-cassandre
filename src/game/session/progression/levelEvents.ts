@@ -1,5 +1,6 @@
 import type { Scenario, ScriptAction } from "../../level/scripting/levelScript";
 import type { HeroLineId } from "../presentation/heroLines";
+import { STORE_ANNOUNCEMENTS, announcementVoiceKey, type StoreAnnouncementId } from "../presentation/storeAnnouncements";
 
 // see: docs/2-fonctionnel/histoire.md#les-quatre-moments-en-jeu
 
@@ -14,6 +15,10 @@ function annonce(speaker: string, text: string): ScriptAction {
   return { kind: "annonce", speaker, text };
 }
 
+function annonceMagasin(id: StoreAnnouncementId): ScriptAction {
+  return { kind: "annonce", speaker: MAGASIN, text: STORE_ANNOUNCEMENTS[id], voix: announcementVoiceKey(id) };
+}
+
 /** Les quatre issues de la réserve, fermées le temps de l'arène. */
 const ARENE_RESERVE = ["door_argent", "door_reserve_nord", "door_compacteur_reserve", "door_sav_reserve"];
 /** Garde-fou d'une vague : au-delà, le script continue même si un ennemi vit encore. */
@@ -26,8 +31,8 @@ const VAGUE_AU_PLUS_TARD = 75;
  */
 export const LEVEL_EVENTS = {
   annonce_caisses: [
-    { delay: 0, action: annonce(MAGASIN, "Un client non identifié est attendu en caisse centrale.") },
-    { delay: 4.5, action: annonce(MAGASIN, "Merci de ne pas gêner les opérations de sécurité.") },
+    { delay: 0, action: annonceMagasin("caisses") },
+    { delay: 4.5, action: annonceMagasin("securite") },
   ],
   ecrans_sav: [
     { delay: 0.8, action: { kind: "chaine", ecrans: "ecran_sav_", chaine: "cctv" } },
@@ -43,13 +48,13 @@ export const LEVEL_EVENTS = {
   // s'écrit en toutes lettres : `validate_level.py` lit les groupes dans ce fichier.
   arene_reserve: [
     { delay: 0, action: { kind: "verrouiller", portes: ARENE_RESERVE } },
-    { delay: 0.4, action: annonce(MAGASIN, "La réserve est fermée pour inventaire exceptionnel.") },
+    { delay: 0.4, action: annonceMagasin("inventaire") },
     { delay: 1.6, action: { kind: "reveiller", groupe: "arene_1" } },
     { delay: 1.2, action: replique("arene_piege") },
     {
       delay: 1.5,
       apres: { groupe: "arene_1", auPlusTard: VAGUE_AU_PLUS_TARD },
-      action: annonce(MAGASIN, "Renfort demandé en réserve. Le personnel non essentiel est prié de mordre."),
+      action: annonceMagasin("renfort"),
     },
     { delay: 1, action: { kind: "reveiller", groupe: "arene_2" } },
     {
@@ -57,7 +62,7 @@ export const LEVEL_EVENTS = {
       apres: { groupe: "arene_2", auPlusTard: VAGUE_AU_PLUS_TARD },
       action: { kind: "deverrouiller", portes: ARENE_RESERVE },
     },
-    { delay: 0.5, action: annonce(MAGASIN, "L'inventaire est terminé. Hyper Varan vous remercie de votre patience.") },
+    { delay: 0.5, action: annonceMagasin("inventaire_fin") },
     { delay: 1.5, action: replique("arene_fin") },
   ],
   souterrain_descente: [
