@@ -29,6 +29,8 @@ export interface ParsedDoorConfig {
   delai: number;
   groupe: string | null;
   portee: number;
+  /** La porte est ouverte au chargement, et le reste tant que rien ne la ferme (un rideau d'arène). */
+  ouverte: boolean;
 }
 
 export interface DoorInfo {
@@ -127,4 +129,8 @@ export interface DoorGroup {
   permanent: boolean;
   /** Secondes depuis que plus personne n'est à portée (portes `auto` à refermeture). */
   idleTimer: number;
+  /** Tenu fermé par le script de niveau : ni portée, ni main, ni carte ne l'ouvre. */
+  locked: boolean;
+  /** Le groupe était ouvert quand le verrou est tombé : il se rouvre à sa levée. */
+  reopenOnUnlock: boolean;
 }

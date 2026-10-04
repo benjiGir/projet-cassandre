@@ -28,8 +28,13 @@ squelette : peau verte, museau, crête, queue et griffes construits ici, et un
 buste penché vers l'avant par-dessus chaque animation — la silhouette basse
 qui oblige à viser bas.
 
+Le Vigile (lot B6) repart du « Man in Suit » : uniforme bleu, casquette, bande
+jaune, matraque dans la main droite, et un bouclier anti-émeute tenu devant
+lui — accroché au buste et non au bras, pour qu'il reste face à l'adversaire
+quelle que soit l'animation. De dos, il ne cache rien : c'est ce qui se lit.
+
 Options :
-    --personnage NOM    costard | directeur | rampant (défaut : costard)
+    --personnage NOM    costard | directeur | rampant | vigile (défaut : costard)
     --out DIR           dossier de sortie (défaut : public/assets/sprites)
     --anims a,b         ne rend que ces animations (itération rapide) ; écrit
                         alors `<personnage>_apercu.png` au lieu de l'atlas
@@ -114,6 +119,17 @@ PERSONNAGES = {
             },
         },
     },
+    "vigile": {
+        # Capsule de 2 m (`vigileConfig.ts`) : une tête de plus qu'un Costard.
+        "hauteur": 1.95,
+        "ppm": 88,
+        "vigile": True,
+        "peaux": {
+            # Bleu d'uniforme assez clair pour ne pas fondre dans l'ombre, pantalon plus sombre.
+            "humain": {"Shirt": "#3f5796", "Pants": "#2b3558", "TieTexture": "#3f5796", "Skin": "#c79468",
+                       "Hair": "#2a2420"},
+        },
+    },
     "rampant": {
         "source": SOURCE_SANS_COSTUME,
         # Debout il mesurerait 1,55 m ; penché, sa tête passe à ~1,2 m (capsule de `rampantConfig.ts`).
@@ -163,6 +179,19 @@ ANIMATIONS_RAMPANT = [
     {"nom": "stagger", "action": "Man_Death", "frames": [4, 8], "penche": [20, 10]},
     {"nom": "death", "action": "Man_Death", "frames": [12, 20, 26, 29, 32, 50], "recentrer": True,
      "queue_a_plat": True},
+]
+
+
+# Le Vigile marche, il ne court pas. `aim` est la matraque levée, `fire` le
+# coup abattu — mêmes noms de lignes que le contrat (`enemySprites.ts`).
+ANIMATIONS_VIGILE = [
+    {"nom": "idle", "action": "Man_Idle", "frames": [0, 50], "fps": 1.5},
+    {"nom": "alert", "action": "Man_Punch", "frames": [3, 8]},
+    {"nom": "chase", "action": "Man_Walk", "frames": [0, 4.2, 8.3, 12.5, 16.7, 20.8], "metersPerCycle": 1.7},
+    {"nom": "aim", "action": "Man_SwordSlash", "frames": [6]},
+    {"nom": "fire", "action": "Man_SwordSlash", "frames": [13], "duration": 0.2},
+    {"nom": "stagger", "action": "Man_Death", "frames": [4, 8]},
+    {"nom": "death", "action": "Man_Death", "frames": [12, 20, 26, 29, 32, 50], "recentrer": True},
 ]
 
 
@@ -537,6 +566,65 @@ def construire_griffes(scene, arm, k: float):
         accrocher(main, arm, f"Palm.{cote}", matrice(o + y * (0.10 * k), x, y, z))
 
 
+def construire_bouclier(scene, arm, k: float):
+    """Bouclier anti-émeute : une plaque claire cerclée de sombre, barrée de
+    jaune, plus haute que large. Accroché au BUSTE, décalé vers la gauche du
+    porteur : il reste devant lui pendant la marche comme pendant le coup."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    torse = arm.matrix_world @ arm.pose.bones["Torso"].head
+    largeur, hauteur = 0.66 * k, 1.20 * k
+    plaque = boite("bouclier", Vector((largeur, 0.03 * k, hauteur)), "#a9bfd0")
+    pieces = [plaque]
+    bord = 0.045 * k
+    for nom, taille, pos in (
+        ("bord_h", Vector((largeur, 0.045 * k, bord)), Vector((0, 0, hauteur / 2 - bord / 2))),
+        ("bord_b", Vector((largeur, 0.045 * k, bord)), Vector((0, 0, -hauteur / 2 + bord / 2))),
+        ("bord_g", Vector((bord, 0.045 * k, hauteur)), Vector((-largeur / 2 + bord / 2, 0, 0))),
+        ("bord_d", Vector((bord, 0.045 * k, hauteur)), Vector((largeur / 2 - bord / 2, 0, 0))),
+    ):
+        piece = boite(nom, taille, "#232836")
+        piece.data.transform(Matrix.Translation(pos))
+        pieces.append(piece)
+    bande = boite("bande_bouclier", Vector((largeur - 2 * bord, 0.05 * k, 0.16 * k)), "#e8cf24")
+    bande.data.transform(Matrix.Translation(Vector((0, 0, 0.12 * k))))
+    pieces.append(bande)
+    bouclier = fusionner("bouclier", pieces)
+    # Devant le corps (le modèle regarde vers -Y), du genou au menton, côté gauche du porteur (+X).
+    centre = Vector((0.16 * k, torse.y - 0.42 * k, torse.z - 0.28 * k))
+    accrocher(bouclier, arm, "Torso", Matrix.Translation(centre))
+
+
+def construire_matraque(scene, arm, k: float):
+    """Matraque noire dans la main droite, plus longue que nature : 40 px à 5 m."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    o, x, y, z = repere_os(arm, "Palm.R")
+    matraque = boite("matraque", Vector((0.05, 0.70, 0.05)) * k, "#16161c")
+    matraque.data.transform(Matrix.Translation(Vector((0, 0.27 * k, 0))))
+    accrocher(matraque, arm, "Palm.R", matrice(o + y * (0.08 * k), x, y, z))
+
+
+def construire_casquette(scene, arm, mesh, k: float):
+    """Casquette plate à visière, et la bande jaune de l'uniforme en travers du buste."""
+    poser(scene, arm, "Man_Idle", 0)
+    bpy.context.view_layer.update()
+    tete, *_ = repere_os(arm, "Head")
+    _, haut = bbox_monde(mesh)
+    calotte = boite("casquette", Vector((0.27, 0.29, 0.09)) * k, "#1f2a4c")
+    visiere = boite("visiere", Vector((0.25, 0.13, 0.025)) * k, "#141a30")
+    visiere.data.transform(Matrix.Translation(Vector((0, -0.19, -0.03)) * k))
+    casquette = fusionner("casquette", [calotte, visiere])
+    accrocher(casquette, arm, "Head", Matrix.Translation(Vector((tete.x, tete.y - 0.01 * k, haut.z - 0.035 * k))))
+
+    torse = arm.matrix_world @ arm.pose.bones["Torso"].head
+    dos = surface_avant(scene, 0.0, torse.z + 0.12 * k, k)
+    if dos is not None:
+        # Une ceinture jaune qui fait le tour du buste : elle se lit de dos, là où il n'y a pas de bouclier.
+        bande = boite("bande_uniforme", Vector((0.50, 0.36, 0.09)) * k, "#e8cf24")
+        accrocher(bande, arm, "Torso", Matrix.Translation(Vector((0, torse.y, torse.z + 0.12 * k))))
+
+
 def appliquer_peau(mesh, peau: dict):
     originales = PEAU_ORIGINALE
     for mat in mesh.data.materials:
@@ -688,7 +776,8 @@ def main() -> int:
 
     scene, arm, mesh, racine = importer_modele(perso.get("source", SOURCE))
     reptile = perso.get("reptile", False)
-    animations = ANIMATIONS_RAMPANT if reptile else ANIMATIONS
+    vigile = perso.get("vigile", False)
+    animations = ANIMATIONS_RAMPANT if reptile else ANIMATIONS_VIGILE if vigile else ANIMATIONS
     for mat in mesh.data.materials:
         PEAU_ORIGINALE[mat.name] = tuple(mat.diffuse_color)
     poser(scene, arm, "Man_Idle", 0)
@@ -703,6 +792,10 @@ def main() -> int:
         construire_museau(scene, arm, mesh, k)
         construire_queue(scene, arm, k)
         construire_griffes(scene, arm, k)
+    elif vigile:
+        construire_casquette(scene, arm, mesh, k)
+        construire_matraque(scene, arm, k)
+        construire_bouclier(scene, arm, k)
     else:
         construire_pistolet(scene, arm, k, contraintes)
         bout = bpy.data.objects["bout_canon"]

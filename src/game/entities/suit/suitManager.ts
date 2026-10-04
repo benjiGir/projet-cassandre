@@ -9,6 +9,7 @@ import type { VitreHitTarget } from "../shared/enemyTypes";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
 import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from "./suitConfig";
 import { rampantConfig } from "../rampant/rampantConfig";
+import { vigileConfig } from "../vigile/vigileConfig";
 import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
@@ -52,12 +53,27 @@ interface AggregatedHit {
 const BASE_SUIT_SEED = 0x5eed_c057;
 const SEED_STRIDE = 0x9e3779b1;
 
+/**
+ * Le bouclier couvre l'avant du porteur : un impact dont la normale (le côté
+ * du corps touché) tombe dans l'arc est arrêté. Vu de dessus seulement — on
+ * ne passe pas par-dessus un bouclier en visant la tête.
+ */
+function isShielded(suit: Suit, hit: HitEvent): boolean {
+  const shield = suit.cfg.shield;
+  if (!shield) return false;
+  const length = Math.hypot(hit.normal.x, hit.normal.z);
+  if (length < 1e-6) return false;
+  const facing = (hit.normal.x * suit.forward.x + hit.normal.z * suit.forward.z) / length;
+  return facing >= Math.cos((shield.halfArcDeg * Math.PI) / 180);
+}
+
 export class SuitManager {
   readonly suits: Suit[] = [];
 
   private readonly physics: PhysicsWorld;
   private readonly cfg: SuitConfig;
   private readonly rampantCfg: SuitConfig;
+  private readonly vigileCfg: SuitConfig;
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly colliderToSuit = new Map<number, Suit>();
   private spawnCount = 0;
@@ -70,6 +86,7 @@ export class SuitManager {
   private readonly _hurtEvents: SuitHurtEvent[] = [];
   private readonly _deathEvents: SuitDeathEvent[] = [];
   private readonly _playerHitEvents: SuitPlayerHitEvent[] = [];
+  private readonly _blockedHits = new Set<HitEvent>();
 
   // Scratch, zéro allocation en régime établi.
   private readonly scratchKnockback = new THREE.Vector3();
@@ -83,6 +100,7 @@ export class SuitManager {
     this.physics = physics;
     this.cfg = tuneEnemyConfig(cfg, tuning);
     this.rampantCfg = tuneEnemyConfig(rampantConfig, tuning);
+    this.vigileCfg = tuneEnemyConfig(vigileConfig, tuning);
     this.kcc = physics.world.createCharacterController(cfg.colliderOffset);
     configureSuitCharacterController(this.kcc, cfg);
   }
@@ -105,6 +123,10 @@ export class SuitManager {
   get playerHitEvents(): ReadonlyArray<SuitPlayerHitEvent> {
     return this._playerHitEvents;
   }
+  /** Tirs du joueur arrêtés par un bouclier : aucun dégât, et le rendu les traite en impact de métal. */
+  get blockedHits(): ReadonlySet<HitEvent> {
+    return this._blockedHits;
+  }
 
   clearFrameEvents() {
     this._alertEvents.length = 0;
@@ -113,6 +135,7 @@ export class SuitManager {
     this._hurtEvents.length = 0;
     this._deathEvents.length = 0;
     this._playerHitEvents.length = 0;
+    this._blockedHits.clear();
     this.hitCursor = 0;
   }
 
@@ -124,6 +147,8 @@ export class SuitManager {
         return this.cfg;
       case "rampant":
         return this.rampantCfg;
+      case "vigile":
+        return this.vigileCfg;
       default:
         return kind satisfies never;
     }
@@ -171,8 +196,8 @@ export class SuitManager {
         continue; // pas de tick de machine à états ce pas-ci : `applyDamage` a déjà positionné l'état (stagger/mort).
       }
 
-      // Le perk VPN brouille les Costards, pas l'odorat d'un Rampant.
-      ctx.sightRangeScale = suit.kind === "costard" ? this.sightRangeScale : 1;
+      // Le perk VPN brouille les Costards et les Vigiles, pas l'odorat d'un Rampant.
+      ctx.sightRangeScale = suit.kind === "rampant" ? 1 : this.sightRangeScale;
       suit.update(dt, ctx);
       this.drainSuitPendingEvents(suit);
     }
@@ -272,6 +297,10 @@ export class SuitManager {
       const hitEvent = hitEvents[i]!;
       const suit = this.colliderToSuit.get(hitEvent.colliderHandle);
       if (!suit || !suit.isAlive) continue;
+      if (isShielded(suit, hitEvent)) {
+        this._blockedHits.add(hitEvent);
+        continue;
+      }
 
       let entry = aggregated.get(suit);
       if (!entry) {

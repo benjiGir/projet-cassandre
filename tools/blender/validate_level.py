@@ -189,8 +189,8 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if replique and replique not in REPLIQUES:
                 err(f"{o.name}: 'replique' = '{replique}' n'est pas une réplique du héros "
                     "(src/game/session/presentation/heroLines.ts)")
-        # `spawn_rampant_*` (lot B4) : même liste, mêmes règles qu'un Costard.
-        if n.startswith(("spawn_suit_", "spawn_rampant_")) and str(o.get("groupe", "")).strip():
+        # `spawn_rampant_*` (lot B4), `spawn_vigile_*` (lot B6) : même liste, mêmes règles qu'un Costard.
+        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_")) and str(o.get("groupe", "")).strip():
             groupe = str(o["groupe"]).strip()
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
@@ -286,6 +286,9 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                         valeur = 0.0
                     if not valeur > 0:
                         err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas un nombre > 0")
+            # `ouverte` (lot B6) : une chaîne "true" serait lue comme fausse par le jeu, sans rien dire.
+            if "ouverte" in o.keys() and not isinstance(o["ouverte"], bool):
+                err(f"{o.name}: 'ouverte' = '{o['ouverte']}' doit être un booléen")
             if o.type == "MESH" and len(o.data.materials) > 1:
                 err(f"{o.name}: {len(o.data.materials)} matériaux — un vantail n'en a qu'UN "
                     "(deux primitives glTF, et le loader ne voit plus une porte)")

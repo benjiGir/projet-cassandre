@@ -50,6 +50,8 @@ BONBONNES = (
     ("prop_gaz_souterrain_1", 43.5, 101.5, -6.0),
     ("prop_gaz_souterrain_2", 55.5, 105.5, -6.0),
     ("prop_gaz_souterrain_3", 64.5, 111.5, -6.0),
+    # Couloir du personnel : à portée de souffle du Vigile qui garde la porte Or (lot B6).
+    ("prop_gaz_escalier_1", 1.5, 138.5, 0.0),
     # Bureaux : dans le couloir, près de bu2.
     ("prop_gaz_bureaux_1", -31.5, 149.0, 4.0),
     # Électroménager (détour) : près de el1.

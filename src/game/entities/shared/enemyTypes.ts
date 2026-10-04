@@ -55,6 +55,11 @@ export interface EnemyMeleeConfig {
   lungeSpeed: number;
 }
 
+export interface EnemyShieldConfig {
+  /** Demi-ouverture de l'arc protégé, en degrés, de part et d'autre de l'avant du porteur. */
+  halfArcDeg: number;
+}
+
 export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
 
 export type EnemyState = EnemyLiveState | "dead" | "corpse";

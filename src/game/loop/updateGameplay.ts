@@ -19,7 +19,14 @@ import {
   triggerHeroLine,
 } from "../session/player/feedback";
 import { streamEvent, updateStreamFeed } from "../session/stream/streamFeed";
-import { DOOR_USE_LINES, FOOD_LINES, PROP_BREAK_LINES, SECRET_LINES } from "../session/presentation/heroLines";
+import {
+  ALERT_LINES,
+  ATTACK_LINES,
+  DOOR_USE_LINES,
+  FOOD_LINES,
+  PROP_BREAK_LINES,
+  SECRET_LINES,
+} from "../session/presentation/heroLines";
 import { relieveAtSanitaire, trySanitaire } from "../session/player/sanitaires";
 import { updatePlaceLine } from "../session/player/placeLines";
 import { updateLevelScript } from "../level/scripting/levelScript";
@@ -462,8 +469,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // La réplique suit l'espèce du premier ennemi qui vient d'agir.
         const tireur = session.suitManager.shotEvents[suitShotsBefore]?.suit;
         const guetteur = session.suitManager.alertEvents[suitAlertsBefore]?.suit;
-        if (tireur) triggerHeroLine(session, tireur.kind === "rampant" ? "rampant_griffe" : "costard_tire");
-        else if (guetteur) triggerHeroLine(session, guetteur.kind === "rampant" ? "rampant_alerte" : "costard_alerte");
+        if (tireur) triggerHeroLine(session, ATTACK_LINES[tireur.kind]);
+        else if (guetteur) triggerHeroLine(session, ALERT_LINES[guetteur.kind]);
+        // Premier tir arrêté par un bouclier : le héros dit quoi en faire.
+        if (session.suitManager.blockedHits.size > 0) triggerHeroLine(session, "vigile_bouclier");
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
           const hit = session.suitManager.playerHitEvents[i]!;
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "suit");

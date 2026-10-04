@@ -124,6 +124,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     suitConfig,
     spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
     spawnRampant: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "rampant"),
+    spawnVigile: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "vigile"),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
@@ -401,6 +402,8 @@ declare global {
       spawnSuit: (x: number, y: number, z: number) => Suit;
       /** Même chose pour un Rampant (lot B4) : `suits` les liste avec les Costards, `kind` les distingue. */
       spawnRampant: (x: number, y: number, z: number) => Suit;
+      /** Même chose pour un Vigile (lot B6) : lourd, lent, bouclier de face. */
+      spawnVigile: (x: number, y: number, z: number) => Suit;
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */

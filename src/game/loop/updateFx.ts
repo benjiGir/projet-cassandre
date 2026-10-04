@@ -59,6 +59,8 @@ const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
 const sprayDirectionScratch = new THREE.Vector3();
+/** Matière d'un tir arrêté par un bouclier : le son et les éclats d'un impact de métal. */
+const SHIELD_MATERIAL = "metal";
 
 const waterListenerRightScratch = new THREE.Vector3();
 const waterJetOriginScratch: THREE.Vector3[] = [];
@@ -126,11 +128,15 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           }
         }
         for (const hit of session.weapons.hitEvents) {
-          const isEnemyHit = hit.material === FLESH_MATERIAL;
-          if (!isEnemyHit && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
+          // Arrêté par un bouclier : ni sang ni marqueur, un impact de métal sur l'ennemi.
+          const blocked = session.suitManager.blockedHits.has(hit);
+          const material = blocked ? SHIELD_MATERIAL : hit.material;
+          const onEnemy = hit.material === FLESH_MATERIAL;
+          const isEnemyHit = onEnemy && !blocked;
+          if (!onEnemy && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
             engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
           }
-          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, hit.material);
+          engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, material);
           if (isEnemyHit) {
             // Le sang part dans l'axe du coup, sur ce qu'il y a derrière l'ennemi.
             sprayDirectionScratch.subVectors(hit.point, engine.camera.position).normalize();
@@ -143,7 +149,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           // Hitmarker : uniquement sur un hit ENEMY confirmé — un hit mur n'a
           // pas vocation à alimenter ce canal (voir doc de `hitmarker.ts`).
           if (isEnemyHit) engine.hitmarker.trigger("hit");
-          playImpactSfx(hit.material);
+          playImpactSfx(material);
         }
         session.weapons.clearFrameEvents();
       });

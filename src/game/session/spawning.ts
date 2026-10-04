@@ -46,12 +46,14 @@ const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
 // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
 /** Planche de sprites d'une espèce — le seul endroit qui associe les deux. */
-export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet">, kind: SuitKind) {
+export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet">, kind: SuitKind) {
   switch (kind) {
     case "costard":
       return engine.suitSheet;
     case "rampant":
       return engine.rampantSheet;
+    case "vigile":
+      return engine.vigileSheet;
     default:
       return kind satisfies never;
   }
@@ -232,6 +234,7 @@ export function loadGltfLevel(
 
         const script = readLevelScript(
           handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), LEVEL_EVENTS,
+          handle.doors.map((door) => door.name),
         );
         for (const problem of script.problems) console.error(`[level] ${problem}`);
         const planSpaces = (await loadLevelSpaces(name)) ?? [];

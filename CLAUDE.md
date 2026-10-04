@@ -1,7 +1,7 @@
 # PROJET_CASSANDRE — contexte projet
 
 Boomer shooter rétro façon Duke Nukem 3D / Ion Fury, en Three.js vanilla.
-Prototype : 1 niveau, 3 armes (pied-de-biche, pistolet, pompe), 1 type d'ennemi, 8-10 minutes de jeu.
+Prototype : 1 niveau, 3 armes (pied-de-biche, pistolet, pompe), 8-10 minutes de jeu. Ennemis : Costard, Rampant, Vigile, et le Directeur.
 
 ## Stack
 
@@ -110,10 +110,10 @@ dans le dépôt.
 |---|---|
 | `col_*` | collider trimesh statique, mesh rendu invisible |
 | `spawn_player` | position/orientation de départ |
-| `spawn_suit_*` | point d'apparition Costard ; avec `groupe`, il n'apparaît qu'au réveil de ce groupe par un scénario |
+| `spawn_suit_*` | point d'apparition Costard ; avec `groupe`, il n'apparaît qu'au réveil de ce groupe par un scénario. Mêmes règles pour `spawn_rampant_*` (Rampant) et `spawn_vigile_*` (Vigile) |
 | `spawn_director_*` | point d'apparition Directeur (boss unique) |
 | `trig_*` | boîte invisible du script de niveau ([ADR 0037](docs/decisions/0037-script-de-niveau.md)) : `evenement` lance un scénario de `game/session/progression/levelEvents.ts`, `replique` en fait une sous-zone à réplique de lieu |
-| `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors/doors.ts`) |
+| `door_*` | porte ANIMÉE : corps FIXE à la pose fermée, collider actif seulement fermé, mesh piloté par `DoorSystem` (`game/level/doors/doors.ts`) ; `ouverte: true` la fait naître ouverte (rideau d'arène, que le script de niveau verrouille) |
 | `use_*` | objet interactif (portée 2 m) |
 | `secret_*` | zone comptabilisée dans le compteur de secrets |
 | `prop_*` | mobilier physique : corps dynamique libre, poussable et cassable |

@@ -84,6 +84,14 @@ export const ENEMY_SFX: Record<EnemyVoice, Record<EnemySfxEvent, SfxId>> = {
     hurt: "enemy_hurt",
     death: "rampant_death",
   },
+  // Pas encore de voix propre : celle du Costard, et le coup de matraque du Rampant.
+  vigile: {
+    alert: "enemy_alert",
+    telegraph: "enemy_telegraph",
+    shot: "rampant_attack",
+    hurt: "enemy_hurt",
+    death: "enemy_death",
+  },
 };
 
 export const DOOR_SFX: Record<DoorSfxEvent, SfxId> = {

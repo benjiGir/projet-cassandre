@@ -41,13 +41,21 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
         action.groupe,
         difficultyConfig[session.difficulty].groupShare,
       );
+      const woken = session.levelScript.woken.get(action.groupe) ?? [];
       for (const spawn of group) {
-        spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind);
+        woken.push(spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind));
       }
+      session.levelScript.woken.set(action.groupe, woken);
       return;
     }
     case "chaine":
       session.ecranSystem?.setChaine(action.ecrans, action.chaine);
+      return;
+    case "verrouiller":
+      for (const porte of action.portes) session.doorSystem?.lock(porte);
+      return;
+    case "deverrouiller":
+      for (const porte of action.portes) session.doorSystem?.unlock(porte, session.player.position);
       return;
     default:
       return action satisfies never;

@@ -60,7 +60,46 @@ describe("readLevelScript", () => {
   });
 });
 
+describe("readLevelScript — arènes", () => {
+  const arene: Record<string, Scenario> = {
+    arene: [
+      { delay: 0, action: { kind: "verrouiller", portes: ["door_nord", "door_sud"] } },
+      { delay: 0, action: { kind: "reveiller", groupe: "vague" } },
+      { delay: 0, apres: { groupe: "vague", auPlusTard: 30 }, action: { kind: "deverrouiller", portes: ["door_nord", "door_sud"] } },
+    ],
+  };
+
+  it("accepte une arène dont les portes et le groupe existent", () => {
+    const setup = readLevelScript([], [spawn("spawn_suit_a", "vague")], [], arene, ["door_nord", "door_sud"]);
+    expect(setup.problems).toEqual([]);
+  });
+
+  it("signale une porte absente du niveau et une attente sur un groupe sans spawn", () => {
+    const fautive: Record<string, Scenario> = {
+      arene: [...arene.arene!, { delay: 0, apres: { groupe: "fantome", auPlusTard: 30 }, action: { kind: "replique", id: "quai" } }],
+    };
+    const setup = readLevelScript([], [spawn("spawn_suit_a", "vague")], [], fautive, ["door_nord"]);
+    const texte = setup.problems.join("\n");
+    expect(texte).toContain("door_sud");
+    expect(texte).not.toContain("door_nord");
+    expect(texte).toContain("fantome");
+  });
+});
+
 describe("scénarios du niveau", () => {
+  it("une arène rend toujours les portes qu'elle a prises, et chaque attente a son garde-fou", () => {
+    for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
+      const prises = steps.flatMap(({ action }) => (action.kind === "verrouiller" ? action.portes : []));
+      const rendues = steps.flatMap(({ action }) => (action.kind === "deverrouiller" ? action.portes : []));
+      expect([...rendues].sort(), event).toEqual([...prises].sort());
+      for (const { apres } of steps) {
+        if (!apres) continue;
+        expect(apres.auPlusTard, event).toBeGreaterThan(0);
+        expect(apres.auPlusTard, event).toBeLessThanOrEqual(120);
+      }
+    }
+  });
+
   it("chaque réplique citée existe et ne dépend pas d'un tirage", () => {
     for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
       for (const { action, delay } of steps) {

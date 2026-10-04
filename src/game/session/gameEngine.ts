@@ -52,6 +52,7 @@ export interface GameEngine {
   suitSheet: EnemySpriteSheet;
   directorSheet: EnemySpriteSheet;
   rampantSheet: EnemySpriteSheet;
+  vigileSheet: EnemySpriteSheet;
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
   cardPickupTextures: CardPickupTextures;
 
@@ -93,7 +94,7 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
   flow: GameFlowPort,
-  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet },
+  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet; vigile: EnemySpriteSheet },
   weaponModels: WeaponModels,
   cardPickupTextures: CardPickupTextures,
 ): PersistentEngine {
@@ -156,6 +157,7 @@ export function buildGameEngine(
     suitSheet: sheets.suit,
     directorSheet: sheets.director,
     rampantSheet: sheets.rampant,
+    vigileSheet: sheets.vigile,
     cardPickupTextures,
     ballPrevPos,
     ballPrevQuat,

@@ -199,6 +199,8 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     for (const [x, z] of [[-6, 17], [-2, 19], [2, 19], [6, 17]] as const) {
       spawnSuitAt(engine, session, x, SPAWN_FEET_GUARD, z, "rampant");
     }
+    // Rencontre d'essai du Vigile (lot B6) : seul, à l'écart, avec la place de lui tourner autour.
+    spawnSuitAt(engine, session, -14, SPAWN_FEET_GUARD, -6, "vigile");
   } else if (choice.gltfName) {
     loadGltfLevel(engine, session, choice.gltfName);
   }

@@ -1,3 +1,5 @@
+import type { SuitKind } from "../../entities/suit/suitConfig";
+
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 
 /** Graine du tirage des répliques occasionnelles (`GameSession.heroLineRandom`) — famille
@@ -66,6 +68,10 @@ export const HERO_LINES = {
   // Moments scriptés — voir `progression/levelEvents.ts`
   quai: { text: "Qu'est-ce qu'ils livrent après la fermeture ?", priority: true, once: true, textOnly: true },
   ecrans_filment: { text: "Cette fois, la télé regarde les clients.", priority: true, once: true, textOnly: true },
+  arene_piege: { text: "Ah. L'inventaire, c'est moi.", priority: true, once: true, textOnly: true },
+  arene_fin: { text: "Stock à zéro. On peut rouvrir.", priority: true, once: true, textOnly: true },
+  souterrain_bruit: { text: "Ça gratte, là-dessous. Ce ne sont pas des caddies.", priority: true, once: true, textOnly: true },
+  souterrain_meute: { text: "Évidemment qu'il y en avait d'autres.", priority: true, once: true, textOnly: true },
   boss_rencontre: { text: "Souriez, patron. Vous êtes en direct.", priority: true, once: true, textOnly: true },
 
   // Le direct — voir `stream/streamFeed.ts`
@@ -116,6 +122,9 @@ export const HERO_LINES = {
   costard_tire: { text: "Ah. Voilà leur politique d'accueil.", once: true },
   rampant_alerte: { text: "Celui-là a oublié son costume.", priority: true, once: true, textOnly: true },
   rampant_griffe: { text: "Ils mordent, maintenant ?", once: true, textOnly: true },
+  vigile_alerte: { text: "La sécurité. Enfin quelqu'un qui prend ça au sérieux.", priority: true, once: true, textOnly: true },
+  vigile_coup: { text: "C'est ça, votre service client ?", once: true, textOnly: true },
+  vigile_bouclier: { text: "De face, ça ne passe pas. Par-derrière, alors.", priority: true, once: true, textOnly: true },
   premier_kill: { text: "Un de moins. Une preuve de plus.", once: true },
   kill_costard: { text: "Ton service est terminé.", chance: 0.35 },
   kill_pompe: { text: "Ça remet les idées en place.", chance: 0.5 },
@@ -159,6 +168,20 @@ export function heroVoiceKey(id: HeroLineId | HeroBarkId): string {
 }
 
 /** La réplique propre à un volume `secret_*`, ou la réplique commune. */
+/** Réplique à la première alerte d'un ennemi, selon son espèce. */
+export const ALERT_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
+  costard: "costard_alerte",
+  rampant: "rampant_alerte",
+  vigile: "vigile_alerte",
+};
+
+/** Réplique à la première attaque d'un ennemi, selon son espèce. */
+export const ATTACK_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
+  costard: "costard_tire",
+  rampant: "rampant_griffe",
+  vigile: "vigile_coup",
+};
+
 export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {
   secret_1_photomaton: "secret_photomaton",
   secret_3_aeration: "secret_aeration",
