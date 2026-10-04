@@ -29,6 +29,7 @@ import type { LevelScriptState, ScriptTrigger } from "../level/scripting/levelSc
 import type { StreamState } from "./stream/streamSim";
 import type { HeroPortrait } from "./presentation/heroPortrait";
 import type { PlaceLineState } from "./player/placeLines";
+import type { Difficulty } from "./progression/difficulty";
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/progression/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
@@ -44,6 +45,8 @@ export interface ExitDoorTracking {
 export interface GameSession {
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */
   choice: LevelDef;
+  /** Difficulté de CETTE partie, lue une fois à sa construction — voir `progression/difficulty.ts`. */
+  difficulty: Difficulty;
 
   physics: PhysicsWorld;
   player: PlayerController;

@@ -142,7 +142,7 @@ v1.2, **B3**, **B4** et **B5** sont indépendants les uns des autres.
 | B2 | Perks | `feel-tuner`, `entity-designer` | M | **livré le 2026-10-03** : les six effets, une marque et une lecture de pub par perk ; variante de la boisson (A, B ou C) à trancher par l'utilisateur ; VPN et aimant n'ont pas encore de borne |
 | B3 | Explosifs | `level-pipeline`, `retro-render`, `sound-forge` | L | **livré le 2026-10-03** : matière `gaz`, souffle, réaction en chaîne, quinze bonbonnes posées des caisses aux bureaux ; son d'explosion synthétisé, à écouter ; rayon et dégâts à régler (B7) |
 | B4 | Nouveaux ennemis | `entity-designer`, `retro-render`, `sound-forge` | L | **Rampant livré le 2026-10-03**, à jouer dans la salle d'essai (`?level=gym`) ; le Vigile attend ce verdict, comme le veut l'ordre du lot |
-| B5 | Difficulté | `shell`, `entity-designer` | S | à faire |
+| B5 | Difficulté | `shell`, `entity-designer` | S | **livré le 2026-10-04** : écran de choix entre le menu et le chargement, mémorisé ; PV et dégâts des ennemis, part des groupes réveillés, probabilité de don ; records par niveau et par difficulté, affichés au choix et dans le récap. Pour B6 : un groupe se pose à sa taille « Lanceur d'alerte », les difficultés plus basses gardent les premiers spawns par ordre de nom (75 % et 50 %). Multiplicateurs à régler (B7), documentation de référence due au lot B8 |
 | B6 | Rencontres | `level-forge`, `entity-designer` | M | à faire |
 | B7 | Équilibrage de l'économie | `feel-tuner` | M | à faire |
 | B8 | Documentation et gate v1.2 | `doc-keeper`, `qa-evidence` | S | à faire |

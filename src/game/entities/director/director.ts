@@ -42,7 +42,7 @@ export interface DirectorDamageResult {
 export class Director implements Entity {
   readonly id: number;
   private actor: EnemyActor;
-  private readonly cfg: DirectorConfig;
+  readonly cfg: DirectorConfig;
 
   revealed = false;
 

@@ -12,6 +12,10 @@ import { createPlaceLineState } from "./player/placeLines";
 import { createLevelScriptState } from "../level/scripting/levelScript";
 import { createStreamState, STREAM_SEED } from "./stream/streamSim";
 import { createInitialStats } from "./progression/score";
+import { difficultyConfig } from "./progression/difficulty";
+import { getDifficulty } from "../settings/difficultySettings";
+import { suitConfig } from "../entities/suit/suitConfig";
+import { directorConfig } from "../entities/director/directorConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
 import { buildGym } from "../level/catalog/gym";
@@ -111,11 +115,15 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   }
 
   const weapons = new WeaponSystem(physics, engine.clock);
-  const suitManager = new SuitManager(physics);
-  const directorManager = new DirectorManager(physics);
+  const difficulty = getDifficulty();
+  const rules = difficultyConfig[difficulty];
+  const enemyTuning = { hp: rules.enemyHp, damage: rules.enemyDamage };
+  const suitManager = new SuitManager(physics, suitConfig, enemyTuning);
+  const directorManager = new DirectorManager(physics, directorConfig, enemyTuning);
 
   const session: GameSession = {
     choice,
+    difficulty,
     physics,
     player,
     weapons,
@@ -160,7 +168,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
-    stream: createStreamState(),
+    stream: createStreamState(rules.donations),
     streamRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(STREAM_SEED))),
     deathHandled: false,
     levelCompleteHandled: false,

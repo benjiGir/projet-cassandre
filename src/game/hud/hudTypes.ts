@@ -21,12 +21,23 @@ export interface RecapLine {
   points: number;
 }
 
+/** Où en est le record de score du niveau, dans la difficulté jouée. */
+export interface RecapRecord {
+  readonly best: number;
+  /** Cette partie vient de le battre, ou d'en poser un premier. */
+  readonly isNew: boolean;
+}
+
 export interface LevelRecap {
   lines: RecapLine[];
   total: number;
   elapsedSeconds: number;
   parTimeSeconds: number | null;
   accuracy: number;
+  /** Nom de la difficulté jouée, prêt à afficher. */
+  difficulty: string;
+  /** `null` sur un récap partiel : une mort ne pose pas de record. */
+  record: RecapRecord | null;
 }
 
 /** Une ligne du chat du direct. */

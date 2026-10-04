@@ -39,6 +39,7 @@ function baseInput(overrides: Partial<LevelRecapInput> = {}): LevelRecapInput {
     secretsFound: 0,
     secretsTotal: 0,
     parTimeSeconds: null,
+    difficulty: "Habitué",
     ...overrides,
   };
 }
@@ -234,5 +235,11 @@ describe("buildLevelRecap — total et champs de tête", () => {
     const recap = buildLevelRecap(baseInput({ stats, parTimeSeconds: 600 }));
     expect(recap.elapsedSeconds).toBe(42);
     expect(recap.parTimeSeconds).toBe(600);
+  });
+
+  it("porte la difficulté jouée, et aucun record tant que la partie n'est pas inscrite", () => {
+    const recap = buildLevelRecap(baseInput({ difficulty: "Lanceur d'alerte" }));
+    expect(recap.difficulty).toBe("Lanceur d'alerte");
+    expect(recap.record).toBeNull();
   });
 });

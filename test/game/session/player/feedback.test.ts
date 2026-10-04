@@ -26,6 +26,7 @@ function sessionWithHp(playerHp: number): GameSession {
     suitManager: { suits: [] },
     directorManager: { directors: [] },
     choice: {},
+    difficulty: "habitue",
   } as unknown as GameSession;
 }
 

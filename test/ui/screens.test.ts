@@ -14,6 +14,10 @@ import { LevelCompleteScreen } from "../../src/ui/screens/levelComplete/LevelCom
 import { StoryPanels } from "../../src/ui/screens/story/StoryPanels/StoryPanels";
 import { StoryScreen } from "../../src/ui/screens/story/StoryScreen/StoryScreen";
 import type { StoryPanel } from "../../src/game/hud/hudTypes";
+import { DifficultyScreen } from "../../src/ui/screens/difficulty/DifficultyScreen/DifficultyScreen";
+import { RecapTable } from "../../src/ui/components/layout/RecapTable/RecapTable";
+import { difficultyOptions } from "../../src/app/navigation/bootChoice";
+import { resetRecords, submitRun } from "../../src/game/settings/records";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -160,5 +164,36 @@ describe("écrans React — comportements DOM", () => {
     expect(host.textContent).toContain("Première légende.");
     act(() => useGameStore.getState().setFlowState("outro"));
     expect(host.textContent).toBe("");
+  });
+
+  it("l'écran de difficulté propose les trois niveaux, marque le dernier choisi et lance au clic", () => {
+    submitRun("niveau_v2", "habitue", 12400, 572);
+    const onChoose = vi.fn();
+    const onBack = vi.fn();
+    render(createElement(DifficultyScreen, { options: difficultyOptions("niveau_v2"), selected: "habitue", onChoose, onBack }));
+    resetRecords();
+
+    const choix = [...host.querySelectorAll("button[aria-current]")];
+    expect(choix.map((node) => node.getAttribute("aria-current"))).toEqual(["false", "true", "false"]);
+    expect(buttonWith("Habitué").textContent).toContain("Record : 12\u202f400 · 9:32");
+    expect(buttonWith("Client").textContent).toContain("Aucun record");
+
+    click("Lanceur d'alerte");
+    expect(onChoose).toHaveBeenCalledExactlyOnceWith("lanceur");
+    click("RETOUR");
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it("le récapitulatif affiche la difficulté, et le record seulement quand la partie en pose ou en rappelle un", () => {
+    const recap = { lines: [], total: 900, elapsedSeconds: 60, parTimeSeconds: null, accuracy: 0, difficulty: "Client", record: null };
+    render(createElement(RecapTable, { recap }));
+    expect(host.textContent).toContain("Difficulté : Client");
+    expect(host.textContent).not.toContain("ecord");
+
+    render(createElement(RecapTable, { recap: { ...recap, record: { best: 900, isNew: true } } }));
+    expect(host.textContent).toContain("NOUVEAU RECORD");
+
+    render(createElement(RecapTable, { recap: { ...recap, record: { best: 4200, isNew: false } } }));
+    expect(host.textContent).toContain("Record : 4\u202f200");
   });
 });

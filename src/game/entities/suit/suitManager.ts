@@ -9,6 +9,7 @@ import type { VitreHitTarget } from "../shared/enemyTypes";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
 import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from "./suitConfig";
 import { rampantConfig } from "../rampant/rampantConfig";
+import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
 
@@ -56,6 +57,7 @@ export class SuitManager {
 
   private readonly physics: PhysicsWorld;
   private readonly cfg: SuitConfig;
+  private readonly rampantCfg: SuitConfig;
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly colliderToSuit = new Map<number, Suit>();
   private spawnCount = 0;
@@ -76,9 +78,11 @@ export class SuitManager {
   /** Part de `sightRange` à laquelle un Costard au repos repère le joueur dans CETTE partie : 1 hors effet d'un perk. */
   sightRangeScale = 1;
 
-  constructor(physics: PhysicsWorld, cfg: SuitConfig = defaultSuitConfig) {
+  /** `tuning` : PV et dégâts de CETTE partie, posés par sa difficulté sur toutes les espèces. */
+  constructor(physics: PhysicsWorld, cfg: SuitConfig = defaultSuitConfig, tuning: EnemyTuning = NEUTRAL_ENEMY_TUNING) {
     this.physics = physics;
-    this.cfg = cfg;
+    this.cfg = tuneEnemyConfig(cfg, tuning);
+    this.rampantCfg = tuneEnemyConfig(rampantConfig, tuning);
     this.kcc = physics.world.createCharacterController(cfg.colliderOffset);
     configureSuitCharacterController(this.kcc, cfg);
   }
@@ -119,7 +123,7 @@ export class SuitManager {
       case "costard":
         return this.cfg;
       case "rampant":
-        return rampantConfig;
+        return this.rampantCfg;
       default:
         return kind satisfies never;
     }

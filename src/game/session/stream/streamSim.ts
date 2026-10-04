@@ -89,9 +89,11 @@ export interface StreamState {
   chat: ChatMessage[];
   chatSerial: number;
   mysteryDone: Set<MysteryBeat>;
+  /** Multiplicateur de la probabilité de don des spectateurs, posé par la difficulté de la partie. */
+  generosity: number;
 }
 
-export function createStreamState(): StreamState {
+export function createStreamState(generosity = 1): StreamState {
   return {
     viewers: streamConfig.startViewers,
     peakViewers: streamConfig.startViewers,
@@ -109,6 +111,7 @@ export function createStreamState(): StreamState {
     chat: [],
     chatSerial: 0,
     mysteryDone: new Set(),
+    generosity,
   };
 }
 
@@ -166,7 +169,7 @@ export function notifyStream(
   state.lastTopic = effective;
 
   if (rule.amounts.length === 0 || now - state.lastDonationAt < streamConfig.donationCooldown) return null;
-  if (random() >= rule.donation) return null;
+  if (random() >= rule.donation * state.generosity) return null;
   const topic = donationTopic(effective);
   const lines = random() < 0.5 ? DONATION_LINES[topic] : DONATION_LINES.generique;
   return donate(state, now, {

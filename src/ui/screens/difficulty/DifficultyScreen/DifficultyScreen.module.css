@@ -1,0 +1,106 @@
+.panel {
+  --corner-size: 22px;
+  align-items: stretch;
+  gap: 20px;
+  max-width: 94vw;
+  padding: 40px 46px 28px;
+}
+
+.title {
+  font-size: 22px;
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 232px;
+  padding: 18px 18px 14px;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  cursor: pointer;
+  transition: background 120ms linear, box-shadow 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .option { transition: none; }
+}
+
+.option:hover,
+.option:focus-visible {
+  background: var(--control-bg-hover);
+  box-shadow: 0 0 18px var(--glow) inset, 0 0 14px var(--glow);
+  outline: none;
+}
+
+.option[aria-current="true"] {
+  border-color: var(--control-edge);
+}
+
+.label {
+  font-size: 16px;
+  /* Fixe : la marque du dernier choix ne décale pas le texte de sa carte. */
+  line-height: 20px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--title);
+  text-shadow: 0 0 10px var(--title-glow);
+}
+
+.option[aria-current="true"] .label::after {
+  content: " ◀";
+  color: var(--amber);
+  text-shadow: none;
+}
+
+.pitch {
+  /* Trois lignes : les tableaux d'effets des trois cartes restent alignés. */
+  min-height: 4.8em;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.effects {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.effect {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+}
+
+.effectValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.record {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--phosphor-faint);
+}
+
+.footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-border);
+}

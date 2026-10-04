@@ -17,6 +17,7 @@ import {
   directorConfig as defaultDirectorConfig,
   type DirectorConfig,
 } from "./directorConfig";
+import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
 
@@ -82,9 +83,10 @@ export class DirectorManager {
   private readonly scratchKnockback = new THREE.Vector3();
   private readonly aggregationScratch = new Map<Director, AggregatedHit>();
 
-  constructor(physics: PhysicsWorld, cfg: DirectorConfig = defaultDirectorConfig) {
+  /** `tuning` : PV et dégâts de CETTE partie, posés par sa difficulté. */
+  constructor(physics: PhysicsWorld, cfg: DirectorConfig = defaultDirectorConfig, tuning: EnemyTuning = NEUTRAL_ENEMY_TUNING) {
     this.physics = physics;
-    this.cfg = cfg;
+    this.cfg = tuneEnemyConfig(cfg, tuning);
     this.kcc = physics.world.createCharacterController(cfg.colliderOffset);
     configureDirectorCharacterController(this.kcc, cfg);
   }

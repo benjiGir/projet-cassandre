@@ -8,12 +8,14 @@ import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { PerkOffer } from "../../hud/overlays/PerkOffer/PerkOffer";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
+import { DifficultyScreen } from "../../screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { LevelCompleteScreen } from "../../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
 import { LoadingScreen } from "../../screens/loading/LoadingScreen/LoadingScreen";
 import { MainMenu } from "../../screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../screens/options/OptionsScreen/OptionsScreen";
 import { StoryPanels } from "../../screens/story/StoryPanels/StoryPanels";
 import { levelStory } from "../../../game/session/presentation/storyPanels";
+import { DIFFICULTIES, DIFFICULTY_INFO, difficultyConfig, difficultyEffects } from "../../../game/session/progression/difficulty";
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
@@ -24,6 +26,7 @@ import styles from "./devPreview.module.css";
 const PREVIEW_SCREENS = [
   "mainMenu",
   "options",
+  "difficulty",
   "death",
   "levelComplete",
   "storyIntro",
@@ -101,6 +104,21 @@ export function maybeRenderDevPreview(root: Root): boolean {
       break;
     case "options":
       root.render(<OptionsScreen onBack={noop} />);
+      break;
+    case "difficulty":
+      root.render(
+        <DifficultyScreen
+          options={DIFFICULTIES.map((id) => ({
+            id,
+            ...DIFFICULTY_INFO[id],
+            effects: difficultyEffects(difficultyConfig[id]),
+            record: id === "habitue" ? { score: 12400, seconds: 572 } : null,
+          }))}
+          selected="habitue"
+          onChoose={noop}
+          onBack={noop}
+        />,
+      );
       break;
     case "death":
       useGameStore.setState({ flowState: "dead" });

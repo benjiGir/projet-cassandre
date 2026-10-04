@@ -5,6 +5,14 @@
   width: 100%;
 }
 
+.difficulty {
+  margin: 0;
+  font-size: max(calc(var(--vpx) * 5.5), 10px);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
 .lines {
   display: flex;
   flex-direction: column;
@@ -74,6 +82,19 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.record {
+  margin: 0;
+  font-size: max(calc(var(--vpx) * 5.5), 10px);
+  letter-spacing: 1px;
+  text-align: right;
+  color: var(--text-dim);
+}
+
+.record[data-new="true"] {
+  font-weight: 700;
+  color: var(--amber);
 }
 
 .totalLabel {
