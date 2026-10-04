@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { damageForWeapon } from "../../player/weapons/weaponConfig";
+import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 import { runGameplaySync } from "../../../app/runtime/gameRuntime";
 import { DeterministicRandom } from "../../../core/effect/random";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "../interactions/food";
 import { HEAL_PICKUP_RADIUS } from "../interactions/interactive";
+import { explosionConfig } from "./propConfig";
 
 // see: docs/decisions/0030-props-dynamiques.md
 
@@ -19,6 +20,8 @@ export const PROP_MATERIALS = [
   "farine",
   "eau",
   "electronique",
+  // Explosif : sa casse est un souffle, voir `PropSystem.explode`.
+  "gaz",
 ] as const;
 export type PropMaterial = (typeof PROP_MATERIALS)[number];
 
@@ -66,12 +69,21 @@ export interface PropDestroyedEvent {
   matiere: PropMaterial;
 }
 
+/** Un prop `gaz` vient d'exploser. Poussé UNE SEULE FOIS par prop. */
+export interface PropExplosionEvent {
+  name: string;
+  /** Centre du souffle (MONDE) : le centre du prop au moment où il saute. */
+  point: THREE.Vector3;
+}
+
 /** État par prop, reconstruit à chaque chargement de niveau. */
 interface PropState {
   info: PropInfo;
   /** `Infinity` pour un prop indestructible — évite un `null` à tester à chaque coup. */
   hp: number;
   destroyed: boolean;
+  /** Pas fixes avant qu'un prop `gaz` atteint par un souffle n'explose à son tour ; 0 = pas amorcé. */
+  fuse: number;
   /** Pose du pas fixe précédent et du pas courant — lues par `interpolate`. */
   prevPos: THREE.Vector3;
   prevQuat: THREE.Quaternion;
@@ -136,8 +148,11 @@ export class PropSystem {
 
   private readonly _hitEvents: PropHitEvent[] = [];
   private readonly _destroyedEvents: PropDestroyedEvent[] = [];
+  private readonly _explosionEvents: PropExplosionEvent[] = [];
+  private readonly dueScratch: PropState[] = [];
   private readonly foodDrops: FoodDropState[] = [];
   private hitCursor = 0;
+  private readonly pendingBlasts: PropExplosionEvent[] = [];
 
   /** Flux déterministe dédié aux drops de nourriture — voir `FOOD_DROP_SEED`. */
   private readonly nextFoodRandom = runGameplaySync(
@@ -158,6 +173,7 @@ export class PropSystem {
         info,
         hp: info.maxHp ?? Infinity,
         destroyed: false,
+        fuse: 0,
         prevPos: position.clone(),
         prevQuat: quaternion.clone(),
         currPos: position,
@@ -183,6 +199,20 @@ export class PropSystem {
   }
   get destroyedEvents(): ReadonlyArray<PropDestroyedEvent> {
     return this._destroyedEvents;
+  }
+  get explosionEvents(): ReadonlyArray<PropExplosionEvent> {
+    return this._explosionEvents;
+  }
+
+  /**
+   * Les explosions dont le souffle n'a pas encore été appliqué aux vivants,
+   * une seule fois chacune. Une file à part de `explosionEvents`, que l'affichage
+   * vide à chaque image : une explosion née hors du pas fixe (console de dev),
+   * ou pendant une image sans pas fixe, est soufflée au pas suivant au lieu
+   * d'être oubliée.
+   */
+  takeNewExplosions(): ReadonlyArray<PropExplosionEvent> {
+    return this.pendingBlasts.splice(0);
   }
 
   isPushedNear(playerPosition: THREE.Vector3): boolean {
@@ -212,18 +242,21 @@ export class PropSystem {
   clearFrameEvents(): void {
     this._hitEvents.length = 0;
     this._destroyedEvents.length = 0;
+    this._explosionEvents.length = 0;
     this.hitCursor = 0;
   }
 
+  /** Un pas fixe : les mèches de la réaction en chaîne d'abord, puis les impacts du joueur. */
   update(hitEvents: ReadonlyArray<HitEvent>): void {
+    this.burnFuses();
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
       const hit = hitEvents[i]!;
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.destroyed) continue;
 
-      // `damageForWeapon` : la MÊME table que celle qui blesse un Costard
+      // `damageForHit` : la MÊME table que celle qui blesse un Costard
       // (`SuitManager.aggregateHits`), jamais un barème parallèle pour les props.
-      const damage = damageForWeapon(hit.weapon);
+      const damage = damageForHit(hit);
 
       // `normal` pointe VERS le tireur (convention `castRayAndGetNormal`) :
       // l'impulsion pousse dans l'autre sens, donc vers l'intérieur du prop.
@@ -270,11 +303,62 @@ export class PropSystem {
       matiere: state.info.matiere,
     });
 
+    if (state.info.matiere === "gaz") this.explode(state);
+
     // Contenu (chantier « Les coulisses », système 3) : seuls les noms qui
     // résolvent en `FoodItem` produisent un pickup — voir `PropInfo.contenu`.
     if (state.info.contenu) {
       const item = parseFoodItem(state.info.contenu.item);
       if (item) this.spawnFoodDrops(point, item, state.info.contenu.count);
+    }
+  }
+
+  /**
+   * Le souffle d'un prop `gaz`, côté props : il pousse ses voisins et amorce
+   * les autres bonbonnes à sa portée. Les dégâts au joueur et aux ennemis sont
+   * appliqués par l'appelant, à partir de `explosionEvents`.
+   */
+  private explode(source: PropState): void {
+    const t = source.info.body.translation();
+    const center = new THREE.Vector3(t.x, t.y, t.z);
+    const event = { name: source.info.name, point: center };
+    this._explosionEvents.push(event);
+    this.pendingBlasts.push(event);
+
+    for (const state of this.states) {
+      if (state.destroyed) continue;
+      const p = state.info.body.translation();
+      impulseScratch.set(p.x - center.x, p.y - center.y, p.z - center.z);
+      const distance = impulseScratch.length();
+      if (distance >= explosionConfig.radius) continue;
+
+      // Un prop exactement au centre n'a pas de direction : il part vers le haut.
+      if (distance > 1e-4) impulseScratch.multiplyScalar(1 / distance);
+      else impulseScratch.set(0, 0, 0);
+      impulseScratch.y += explosionConfig.impulseLift;
+      impulseScratch.multiplyScalar(explosionConfig.impulse * (1 - distance / explosionConfig.radius));
+      state.info.body.applyImpulse({ x: impulseScratch.x, y: impulseScratch.y, z: impulseScratch.z }, true);
+
+      // Réaction en chaîne : une mèche déjà allumée n'est pas rallongée.
+      if (state.info.matiere === "gaz" && state.fuse === 0) state.fuse = explosionConfig.chainDelaySteps;
+    }
+  }
+
+  /** Décompte, en pas fixes, des bonbonnes amorcées par un souffle. Ordre du niveau : déterministe. */
+  private burnFuses(): void {
+    // Deux temps : une bonbonne amorcée PENDANT ce pas ne doit pas voir sa
+    // mèche entamée dans le même pas, sinon son délai dépendrait de sa place
+    // dans la liste.
+    this.dueScratch.length = 0;
+    for (const state of this.states) {
+      if (state.destroyed || state.fuse === 0) continue;
+      state.fuse -= 1;
+      if (state.fuse === 0) this.dueScratch.push(state);
+    }
+    for (const state of this.dueScratch) {
+      if (state.destroyed) continue;
+      const t = state.info.body.translation();
+      this.destroy(state, new THREE.Vector3(t.x, t.y, t.z), new THREE.Vector3(0, 1, 0));
     }
   }
 
@@ -299,8 +383,12 @@ export class PropSystem {
     }
   }
 
-  collectFoodDrops(playerPosition: THREE.Vector3, tryHeal: (amount: number, item: FoodItem) => boolean): void {
-    const radiusSq = HEAL_PICKUP_RADIUS * HEAL_PICKUP_RADIUS;
+  collectFoodDrops(
+    playerPosition: THREE.Vector3,
+    tryHeal: (amount: number, item: FoodItem) => boolean,
+    radius = HEAL_PICKUP_RADIUS,
+  ): void {
+    const radiusSq = radius * radius;
     for (const drop of this.foodDrops) {
       if (drop.collected) continue;
       if (playerPosition.distanceToSquared(drop.position) > radiusSq) continue;

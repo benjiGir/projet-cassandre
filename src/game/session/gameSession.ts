@@ -23,6 +23,7 @@ import type { WeaponPickupBillboard } from "../../render/pickups/pickups";
 import type { PickupResources } from "../../render/pickups/pickupResources";
 import type { CardPickupBillboard } from "../../render/pickups/cardPickups";
 import { type LoyaltyCard } from "../player/loyaltyCards";
+import type { Perk } from "../player/perks";
 import type { HeroLineId } from "./presentation/heroLines";
 import type { LevelScriptState, ScriptTrigger } from "../level/scripting/levelScript";
 import type { StreamState } from "./stream/streamSim";
@@ -110,6 +111,12 @@ export interface GameSession {
   droppedCardBillboard: CardPickupBillboard | null;
   // see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité
   cards: Set<LoyaltyCard>;
+  /** Perks achetés aux bornes dans CETTE partie — voir `progression/perks.ts`. */
+  perks: Set<Perk>;
+  /** Rayon des ramassages pris en marchant dessus, en mètres — agrandi par un perk. */
+  pickupRadius: number;
+  /** Secondes de jeu restantes à la pointe de vitesse d'après-kill (perk boisson). */
+  killRushRemaining: number;
 
   unlockedDoors: Set<string>;
   exitDoorTracking: ExitDoorTracking | null;

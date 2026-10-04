@@ -43,6 +43,8 @@ import {
 } from "../../render/pipeline/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/progression/cards";
+import { grantPerk, startKillRush, usePerkKiosk, type PerkPurchase } from "../session/progression/perks";
+import { publishCounters } from "../session/stream/streamFeed";
 import { triggerLevelComplete } from "../session/progression/doors";
 import { applyPlayerDamage, presentPlayerDamage } from "../session/player/feedback";
 import { type SessionStats } from "../session/progression/score";
@@ -50,6 +52,8 @@ import { useGameStore } from "../hud/state";
 import { type LevelRecap } from "../hud/hudTypes";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
+import type { Perk } from "../player/perks";
+import { BOISSON_VARIANTS, perkConfig, type PerkConfig } from "../player/perkConfig";
 import { startPlayback } from "./replay/recording";
 import { type GameEngine } from "../session/gameEngine";
 import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
@@ -59,6 +63,7 @@ import {
   applyFlashVariant,
   applyHitmarkerVariant,
   applyImpactVariant,
+  applyBoissonVariant,
   applyKnockbackVariant,
   applyLightBudget,
   applyRecoilVariant,
@@ -117,6 +122,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     suitConfig,
     spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
+    spawnRampant: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "rampant"),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
@@ -147,6 +153,30 @@ export function exposeDebugApi(engine: GameEngine): void {
     giveCard: (card) => {
       grantCard(engine.session, card);
     },
+    bornes: {
+      liste: () =>
+        (engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) =>
+          u.sells ? [{ nom: u.name, ...u.sells, achete: engine.session.perks.has(u.sells.perk) }] : [],
+        ),
+      crediter: (euros) => {
+        engine.session.stream.wallet += euros;
+        publishCounters(engine.session.stream);
+        return engine.session.stream.wallet;
+      },
+      acheter: (nom) => {
+        const borne = engine.session.gltfLevelSession?.current?.useObjects.find((u) => u.name === nom);
+        return borne?.sells ? usePerkKiosk(engine.session, borne.sells) : null;
+      },
+      donner: (perk) => grantPerk(engine.session, perk),
+      perks: () => [...engine.session.perks],
+      pointe: () => {
+        startKillRush(engine.session);
+        return engine.session.killRushRemaining;
+      },
+    },
+    perkConfig,
+    boissonVariants: BOISSON_VARIANTS,
+    applyBoissonVariant,
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
     // see: docs/decisions/0031-portes-animees-et-vitres.md
@@ -350,6 +380,8 @@ declare global {
       suitConfig: SuitConfig;
       /** Fait apparaître un Costard supplémentaire à la volée (pieds à `y`), DANS LA SESSION COURANTE. Critère de rollback du plan : pousser jusqu'à 10-20 sans interface graphique dédiée. */
       spawnSuit: (x: number, y: number, z: number) => Suit;
+      /** Même chose pour un Rampant (lot B4) : `suits` les liste avec les Costards, `kind` les distingue. */
+      spawnRampant: (x: number, y: number, z: number) => Suit;
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */
@@ -378,6 +410,19 @@ declare global {
       /** Porte à badge (Zone E, `use_exit_door`/`door_e_exit`) : lecture/forçage de la possession du badge, pour tester sans tuer le Directeur en console. Opère sur la SESSION COURANTE. */
       cards: () => LoyaltyCard[];
       giveCard: (card: LoyaltyCard) => void;
+      /** Bornes de perks du niveau courant : `liste()` rend l'offre de chacune, `crediter(euros)` remplit le portefeuille sans passer par un don, `acheter(nom)` joue la touche d'usage sur une borne — le verrouillage du pointeur met la vraie touche hors de portée de l'automatisation. `donner(perk)` pose un perk sans borne ni argent, `perks()` rend ceux de la partie, `pointe()` lance la pointe de vitesse de la boisson comme le ferait un kill (`killSuit()` tue hors du pas fixe et n'en compte pas un) et rend sa durée. */
+      bornes: {
+        liste: () => { nom: string; perk: Perk; price: number; achete: boolean }[];
+        crediter: (euros: number) => number;
+        acheter: (nom: string) => PerkPurchase | null;
+        donner: (perk: Perk) => boolean;
+        perks: () => Perk[];
+        pointe: () => number;
+      };
+      /** Barème des perks, et harnais A/B de la pointe de vitesse de la boisson (même protocole que `feelVariants`). */
+      perkConfig: PerkConfig;
+      boissonVariants: typeof BOISSON_VARIANTS;
+      applyBoissonVariant: (name: keyof typeof BOISSON_VARIANTS) => ReturnType<typeof applyBoissonVariant>;
       doors: () => DoorInfo[];
       /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {

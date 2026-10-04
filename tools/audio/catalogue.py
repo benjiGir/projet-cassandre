@@ -74,13 +74,14 @@ REGISTRE: dict[str, Recette] = {}
 # DOOM 2016) : les deux armes du joueur montent (le pistolet etait 10 dB sous
 # le pompe), et le tir du Costard, nouveau, reste sous sa telegraphie.
 NIVEAUX = {
-    "pistol_fire": -12.0, "shotgun": -9.0, "crowbar_metal": -22.9, "impact_metal": -22.9,
+    "pistol_fire": -12.0, "shotgun": -9.0, "explosion": -7.5, "crowbar_metal": -22.9, "impact_metal": -22.9,
     "impact_concrete": -20.6, "impact_flesh": -20.4, "crowbar_flesh": -12.6,
     "impact_glass": -18.0, "prop_break_wood": -23.6, "ceramic_break": -16.1,
     "crowbar_swing": -15.4, "shotgun_pump": -26.4, "shell_drop": -19.3,
     "door_open": -11.9, "door_shutter": -14.4, "door_slide": -13.5, "cart_roll": -15.9,
     "suit_alert": -11.0, "enemy_hurt": -16.1, "suit_death": -8.9, "suit_telegraph": -7.6,
-    "suit_shot": -18.0, "pickup_ammo": -13.8, "pickup_health": -10.6, "food_eat": -14.0,
+    "suit_shot": -18.0, "rampant_alert": -12.0, "rampant_telegraph": -13.0, "rampant_attack": -17.0,
+    "rampant_death": -11.0, "pickup_ammo": -13.8, "pickup_health": -10.6, "food_eat": -14.0,
     "door_locked": -9.9, "door_unlock": -12.0,
     # Synthese abstraite (`recipes.py`) : niveau de leur recette, pour que
     # leurs prises generees sortent au meme niveau (`ia_sfx finalize`).

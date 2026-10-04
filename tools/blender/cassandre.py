@@ -349,6 +349,22 @@ def story_triggers(preview: str | None = None) -> dict:
     return result
 
 
+def perk_kiosks(preview: str | None = None) -> dict:
+    """Pose les bornes de perks (`use_*` portant `perk` et `prix`) ; aperçu isolé ou niveau livré."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_perk_kiosks.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def gas_props(preview: str | None = None) -> dict:
+    """Pose les bonbonnes de gaz explosives (`prop_*` de matière `gaz`) ; aperçu isolé ou niveau livré."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_gas_props.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
     args = ["--strict"] if strict else []

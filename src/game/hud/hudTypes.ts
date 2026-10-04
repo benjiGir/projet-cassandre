@@ -49,6 +49,19 @@ export interface DonationAlert {
   readonly mystery: boolean;
 }
 
+/** Ce que vend la borne à portée du joueur, pour l'invite d'interaction. */
+export interface PerkOfferView {
+  /** Touche d'usage, telle que le joueur l'a réglée. */
+  readonly key: string;
+  readonly label: string;
+  /** Ce que le perk change, en quelques mots. */
+  readonly effect: string;
+  /** Euros. */
+  readonly price: number;
+  /** Déjà acheté dans cette partie : la borne est épuisée. */
+  readonly sold: boolean;
+}
+
 /** Message diffusé dans le magasin : haut-parleurs ou interphone. */
 export interface StoreAnnouncement {
   readonly speaker: string;

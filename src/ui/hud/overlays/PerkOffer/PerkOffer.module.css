@@ -1,0 +1,50 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.offer {
+  position: absolute;
+  top: 61%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--vpx) * 6);
+  padding: calc(var(--vpx) * 3) calc(var(--vpx) * 8);
+  color: var(--text-strong);
+  font-family: var(--font-mono);
+  font-size: calc(var(--vpx) * 10);
+  white-space: nowrap;
+  text-shadow: 1px 1px 2px #000;
+  background: rgba(8, 12, 18, 0.7);
+  border: calc(var(--vpx) * 1) solid var(--panel-border);
+  pointer-events: none;
+  user-select: none;
+}
+
+.key {
+  padding: 0 calc(var(--vpx) * 3);
+  color: #000;
+  font-weight: bold;
+  text-shadow: none;
+  background: var(--amber);
+}
+
+.effect {
+  color: var(--text-dim);
+  font-size: calc(var(--vpx) * 8);
+}
+
+.price {
+  color: var(--amber);
+  font-weight: bold;
+}
+
+.offer[data-status="short"] .price {
+  color: var(--alert);
+}
+
+.offer[data-status="sold"] {
+  color: var(--text-dim);
+}
+
+.offer[data-status="sold"] .price {
+  color: var(--text-dim);
+}

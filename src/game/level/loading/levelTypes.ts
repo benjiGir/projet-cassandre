@@ -9,6 +9,8 @@ import type { EcranInfo } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import type { FoodItem } from "../interactions/food";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
+import type { PerkOffer } from "../../player/perks";
+import type { SuitKind } from "../../entities/suit/suitConfig";
 export interface SpawnPoint {
   /** Position MONDE, pieds du joueur (pas les yeux).
    * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
@@ -23,6 +25,8 @@ export interface NamedSpawn {
   position: THREE.Vector3;
   /** Custom property Blender `groupe` : l'ennemi n'apparaît qu'au réveil de ce groupe par le script de niveau. `null` = présent dès le chargement. */
   group: string | null;
+  /** Espèce posée par le préfixe : `spawn_suit_*` un Costard (défaut), `spawn_rampant_*` un Rampant. */
+  kind?: SuitKind;
 }
 
 export interface TriggerVolume {
@@ -59,6 +63,9 @@ export interface UseObject {
   aliment: FoodItem | null;
   // see: docs/archive/reference-conventions-nommage.md#préfixe-cam
   cameras: readonly string[] | null;
+  /** Borne : le perk vendu et son prix en euros (custom properties Blender
+   * `perk` et `prix`, les deux ou rien). `null` si l'objet ne vend rien. */
+  sells: PerkOffer | null;
   extras: Record<string, unknown>;
 }
 

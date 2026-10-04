@@ -4,6 +4,7 @@ import { FpsCounter } from "../hud/overlays/FpsCounter/FpsCounter";
 import { Hud } from "../hud/Hud/Hud";
 import { Announcement } from "../hud/overlays/Announcement/Announcement";
 import { HudMessage } from "../hud/overlays/HudMessage/HudMessage";
+import { PerkOffer } from "../hud/overlays/PerkOffer/PerkOffer";
 import { DeathScreen } from "../screens/death/DeathScreen/DeathScreen";
 import { LevelCompleteScreen } from "../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
 import { PauseScreen } from "../screens/pause/PauseScreen/PauseScreen";
@@ -29,6 +30,7 @@ export function App({ onReplay, onReturnToMenu, onResume, onIntroDone, onOutroDo
       {import.meta.env.DEV ? <DebugPanel /> : <FpsCounter />}
       {import.meta.env.DEV && <TuningPanel />}
       <Hud />
+      <PerkOffer />
       <HudMessage />
       <Announcement />
       <PauseScreen onResume={onResume} onReturnToMenu={onReturnToMenu} />

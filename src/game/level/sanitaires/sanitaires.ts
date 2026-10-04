@@ -3,7 +3,7 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
-import { damageForWeapon } from "../../player/weapons/weaponConfig";
+import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 
 // see: docs/6-reference/notes-code-gameplay-niveau.md#objets-cassables-et-interactions
@@ -339,7 +339,7 @@ export class SanitaireSystem {
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
-      const damage = damageForWeapon(hit.weapon);
+      const damage = damageForHit(hit);
       state.hp -= damage;
       const fatal = state.hp <= 0;
       this._hitEvents.push({ name: state.info.name, point: hit.point.clone(), kind: state.info.kind, fatal });

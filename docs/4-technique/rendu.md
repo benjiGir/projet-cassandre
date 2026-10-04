@@ -91,6 +91,13 @@ prochain paint. Au hot reload, l'ancienne racine est temporairement détachée
 pour que ses lampes ne participent pas au shader du candidat : l'adaptateur
 parcourt aussi les lampes invisibles. Elle est remise en place avant le
 commit ou son éventuelle annulation.
+La boule de feu des explosions (`src/render/fx/explosions.ts`) est le second
+matériau TSL du jeu. `spawning.ts::warmExplosionShader` la prépare juste après
+les douches, par la même recette : une boule placée devant la caméra, deux
+rendus réels, puis un rendu qui efface l'image. Son matériau est unique et
+partagé par tout le pool ; l'âge et la graine de chaque boule sont lus sur son
+mesh au moment du dessin.
+
 Chaque racine de niveau possède son matériau, partagé par ses jets. La
 libération de l'ancien niveau ne détruit donc pas le programme déjà préparé
 pour le nouveau.

@@ -19,7 +19,7 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
     case "reveiller":
       for (const spawn of session.gltfLevelSession?.current?.spawnSuits ?? []) {
         if (spawn.group !== action.groupe) continue;
-        spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z);
+        spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind);
       }
       return;
     case "chaine":

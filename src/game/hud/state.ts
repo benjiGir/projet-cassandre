@@ -10,6 +10,7 @@ import type {
   HeroPortraitView,
   LevelRecap,
   LiveRecap,
+  PerkOfferView,
   StoreAnnouncement,
   StoryPanel,
 } from "./hudTypes";
@@ -43,6 +44,10 @@ interface GameState {
   /** Don en cours d'affichage. */
   donation: DonationAlert | null;
   showDonation: (donation: DonationAlert | null) => void;
+
+  /** Offre de la borne à portée, `null` hors de portée — écrite quand elle change, jamais par image. */
+  perkOffer: PerkOfferView | null;
+  setPerkOffer: (offer: PerkOfferView | null) => void;
 
   /** Canal SYSTÈME, sans cooldown — distinct de `heroLine` ci-dessous. */
   // see: docs/archive/systems-hud.md#deux-canaux-de-message-hudmessage-et-heroline
@@ -140,6 +145,9 @@ export const useGameStore = create<GameState>((set) => ({
   donation: null,
   showDonation: (donation) => set({ donation }),
 
+  perkOffer: null,
+  setPerkOffer: (offer) => set({ perkOffer: offer }),
+
   hudMessage: null,
   showHudMessage: (text) => set({ hudMessage: text }),
 
@@ -161,6 +169,6 @@ export const useGameStore = create<GameState>((set) => ({
   setStory: (panels) => set({ story: panels }),
 
   resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
-    hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, recap: null, liveRecap: null,
-    story: null }),
+    hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, perkOffer: null, recap: null,
+    liveRecap: null, story: null }),
 }));

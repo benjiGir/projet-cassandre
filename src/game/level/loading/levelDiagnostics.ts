@@ -4,6 +4,7 @@ import { DOOR_MOVEMENTS } from "../doors/doorTypes";
 import { DEFAULT_DOOR_MOVEMENT } from "../doors/doorConfig";
 import { DEFAULT_PROP_MASS_KG } from "../props/propConfig";
 import { LOYALTY_CARDS } from "../../player/loyaltyCards";
+import { PERKS } from "../../player/perks";
 import { FOOD_ITEMS } from "../interactions/food";
 import { SANITAIRE_KINDS, DEFAULT_SANITAIRE_KIND } from "../sanitaires/sanitaires";
 import { ECRAN_CHAINES, DEFAULT_ECRAN_CHAINE } from "../interactions/ecrans";
@@ -75,6 +76,14 @@ export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmou
 export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()(
   "UnknownFoodItemWarning",
   { name: Schema.String, value: Schema.String },
+) {}
+
+/** `use_*` dont la paire `perk`/`prix` ne fait pas une borne : perk inconnu,
+ * prix qui n'est pas un nombre strictement positif, ou l'un sans l'autre.
+ * Jamais bloquant : l'objet est retourné avec `sells: null`, il ne vend rien. */
+export class InvalidPerkOfferWarning extends Schema.TaggedError<InvalidPerkOfferWarning>()(
+  "InvalidPerkOfferWarning",
+  { name: Schema.String, perk: Schema.String, prix: Schema.String },
 ) {}
 
 /** `prop_*` dont `extras.matiere` n'est pas une matière connue — jamais
@@ -204,6 +213,13 @@ export function formatUnknownFoodItem(error: UnknownFoodItemWarning): string {
   return (
     `[level] "${error.name}" (use_*) : propriété "aliment" = "${error.value}", ` +
     `qui n'est pas un aliment connu (${FOOD_ITEMS.join(", ")}) — propriété ignorée.`
+  );
+}
+
+export function formatInvalidPerkOffer(error: InvalidPerkOfferWarning): string {
+  return (
+    `[level] "${error.name}" (use_*) : borne "perk" = "${error.perk}", "prix" = "${error.prix}" — ` +
+    `il faut un perk connu (${PERKS.join(", ")}) ET un prix strictement positif. La borne ne vend rien.`
   );
 }
 

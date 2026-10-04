@@ -3,12 +3,14 @@ import { Effect } from "effect";
 
 import { playSfx } from "../../core/audio/audio";
 import { input } from "../../core/input/input";
+import { formatKeyCode } from "../../core/input/inputBindings";
 import { emptyInputFrame, inputRecorder } from "../../core/input/inputRecorder";
 import { type InputFrame } from "../../core/input/inputTypes";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { useGameStore } from "../hud/state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/progression/doors";
 import { grantCard } from "../session/progression/cards";
+import { publishPerkOffer, startKillRush, updateKillRush, usePerkKiosk } from "../session/progression/perks";
 import {
   applyPlayerDamage,
   sayOpeningLine,
@@ -37,6 +39,7 @@ import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/director/dire
 import { suitConfig } from "../entities/suit/suitConfig";
 import { moveConfig } from "../player/movement/moveConfig";
 import { recordSafeGround, shouldRescue } from "../session/player/fallRescue";
+import { applyBlast } from "../session/player/explosions";
 import { FLESH_MATERIAL } from "../player/weapons/weapons";
 import type { DoorActor } from "../level/doors/doorTypes";
 import { basculerEau, updateDouches } from "../level/sanitaires/douches";
@@ -51,6 +54,7 @@ import { CardPickupBillboard } from "../../render/pickups/cardPickups";
 
 function recordKillFeedback(session: GameSession, count: number): void {
   session.heroPortrait.kill(count);
+  if (count > 0) startKillRush(session);
   for (let i = 0; i < count; i++) {
     streamEvent(session, "kill");
     if (session.firstKillTriggered) {
@@ -196,6 +200,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         sayOpeningLine(session);
         const enLAir = !session.player.isGrounded;
         const chute = -session.player.velocity.y;
+        updateKillRush(session, gameplayDt);
         session.player.update(gameplayDt, activeFrame);
         if (enLAir && session.player.isGrounded && chute >= LANDING_BARK_SPEED) triggerHeroBark(session, "effort_reception");
       });
@@ -265,12 +270,16 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             onCameraConsoleUse: (cameraNames) => {
               session.cameraView?.activate(cameraNames, activeFrame.yaw, activeFrame.pitch);
             },
+            onPerkKioskUse: (offer) => {
+              usePerkKiosk(session, offer);
+            },
             // `use_toilet` (niveau `hypermarche_complet`, historique) : TOUJOURS
             // une cuvette intacte, jamais de variante cassée — même règle que
             // `sanitaire_*`, voir `game/session/player/sanitaires.ts::relieveAtSanitaire`.
             onToiletUse: () => relieveAtSanitaire(session),
           },
         );
+        publishPerkOffer(session, engine.interaction.nearestInRange, formatKeyCode(input.getBinding("use")));
 
         const consommeSanitaire = !consomme && trySanitaire(
           session,
@@ -307,6 +316,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               : amount >= 36 ? "munitions_36" : "munitions_24");
             return true;
           },
+          session.pickupRadius,
         ),
       );
 
@@ -359,6 +369,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               return pris;
             },
           },
+          session.pickupRadius,
         ),
       );
 
@@ -388,6 +399,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             if (ligne) triggerHeroLine(session, ligne);
             return true;
           },
+          session.pickupRadius,
         ),
       );
 
@@ -405,7 +417,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           showHudMessage(`+${healed} PV`);
           playSfx("food_eat");
           return true;
-        }),
+        }, session.pickupRadius),
       );
 
       yield* Effect.sync(() => {
@@ -447,8 +459,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         const suitKills = session.suitManager.deathEvents.length - suitDeathsBefore;
         recordSuitKills(session.stats, suitKills);
         recordKillFeedback(session, suitKills);
-        if (session.suitManager.shotEvents.length > suitShotsBefore) triggerHeroLine(session, "costard_tire");
-        else if (session.suitManager.alertEvents.length > suitAlertsBefore) triggerHeroLine(session, "costard_alerte");
+        // La réplique suit l'espèce du premier ennemi qui vient d'agir.
+        const tireur = session.suitManager.shotEvents[suitShotsBefore]?.suit;
+        const guetteur = session.suitManager.alertEvents[suitAlertsBefore]?.suit;
+        if (tireur) triggerHeroLine(session, tireur.kind === "rampant" ? "rampant_griffe" : "costard_tire");
+        else if (guetteur) triggerHeroLine(session, guetteur.kind === "rampant" ? "rampant_alerte" : "costard_alerte");
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
           const hit = session.suitManager.playerHitEvents[i]!;
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "suit");
@@ -486,6 +501,16 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         session.propSystem?.update(session.weapons.hitEvents);
         const propsDestroyed = session.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
         recordPropsDestroyed(session.stats, propsDestroyed.length);
+        // Explosifs (`matiere: gaz`) : les props se sont déjà poussés et
+        // amorcés entre eux, reste le souffle sur le joueur et les ennemis.
+        for (const explosion of session.propSystem?.takeNewExplosions() ?? []) {
+          const souffle = applyBlast(engine, session, explosion.point);
+          recordSuitKills(session.stats, souffle.suitKills);
+          recordKillFeedback(session, souffle.suitKills);
+          recordDirectorKills(session.stats, souffle.directorKills);
+          recordDirectorKillFeedback(session, souffle.directorKills);
+          if (souffle.playerDamage > 0) streamEvent(session, "degats");
+        }
         const ligneCasse = propsDestroyed.map((e) => PROP_BREAK_LINES[e.matiere]).find((l) => l !== undefined);
         if (ligneCasse) triggerHeroLine(session, ligneCasse);
         let casse = propsDestroyed.length > 0;

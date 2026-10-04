@@ -44,6 +44,11 @@ export class WeaponSystem {
   /** Munitions de pistolet restantes, rechargées par les boîtes du niveau (`use_*` portant `munitions`). */
   pistolAmmo = 0;
 
+  /** Ajouté au plafond de `cfg.pistolMaxAmmo` dans CETTE partie : 0 hors effet d'un perk. */
+  pistolMaxAmmoBonus = 0;
+  /** Multiplicateur des dégâts du pied-de-biche dans CETTE partie : 1 hors effet d'un perk. */
+  meleeDamageScale = 1;
+
   private hasMelee = true;
 
   private hasShotgun = true;
@@ -145,15 +150,20 @@ export class WeaponSystem {
     this.activeWeapon = "melee";
   }
 
+  /** Plafond de munitions du pistolet dans CETTE partie. */
+  get pistolMaxAmmo(): number {
+    return this.cfg.pistolMaxAmmo + this.pistolMaxAmmoBonus;
+  }
+
   pickUpPistol(): void {
-    if (!this.hasPistol) this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.cfg.pistolStartingAmmo);
+    if (!this.hasPistol) this.pistolAmmo = Math.min(this.pistolMaxAmmo, this.cfg.pistolStartingAmmo);
     this.hasPistol = true;
     this.activeWeapon = "pistol";
   }
 
   addPistolAmmo(amount: number): number {
     const before = this.pistolAmmo;
-    this.pistolAmmo = Math.min(this.cfg.pistolMaxAmmo, this.pistolAmmo + amount);
+    this.pistolAmmo = Math.min(this.pistolMaxAmmo, this.pistolAmmo + amount);
     return this.pistolAmmo - before;
   }
 
@@ -387,6 +397,7 @@ export class WeaponSystem {
         weapon: "melee",
         colliderHandle: collider.handle,
         distance: eyeOrigin.distanceTo(point),
+        damageScale: this.meleeDamageScale,
       });
       this.triggerHitstopFor(material);
     }

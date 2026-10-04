@@ -28,6 +28,8 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
 | `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
+| `perk_kiosks(preview=…)` | pose les quatre bornes de perks (`use_borne_*` portant `perk` et `prix`) sur du mobilier en place ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
+| `gas_props(preview=…)` | pose les quinze bonbonnes de gaz explosives (`prop_gaz_*`, matière `gaz`) près des points d'apparition du chemin obligé ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
 
 `where` lit le relevé écrit par le dernier `build()` dans

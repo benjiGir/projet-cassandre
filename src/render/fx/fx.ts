@@ -5,6 +5,7 @@ import { MuzzleFlashes } from "./muzzleFlashes";
 import { ImpactDecals } from "./impactDecals";
 import { ToyDebris } from "./toyDebris";
 import { WaterJets } from "./waterJets";
+import { Explosions } from "./explosions";
 
 // see: docs/6-reference/notes-code-rendu.md#effets-et-allocation
 export class FxSystem {
@@ -14,6 +15,7 @@ export class FxSystem {
   private readonly decals: ImpactDecals;
   private readonly debris: ToyDebris;
   private readonly water: WaterJets;
+  private readonly explosions: Explosions;
 
   constructor(scene: THREE.Scene) {
     // Une seule lecture du flux cosmétique, partagée dans le même ordre d'appels.
@@ -23,6 +25,7 @@ export class FxSystem {
     this.decals = new ImpactDecals(scene);
     this.debris = new ToyDebris(scene, nextRandom);
     this.water = new WaterJets(scene, nextRandom);
+    this.explosions = new Explosions(scene, nextRandom);
   }
 
   setRandom(random: () => number): void { this.random = random; }
@@ -33,6 +36,7 @@ export class FxSystem {
     this.decals.reset();
     this.debris.reset();
     this.water.clearWaterJets();
+    this.explosions.reset();
   }
 
   triggerShake(amplitude: number, duration: number): void { this.shake.triggerShake(amplitude, duration); }
@@ -53,6 +57,15 @@ export class FxSystem {
   }
   spawnFrostBurst(point: THREE.Vector3): void { this.debris.spawnFrostBurst(point); }
   spawnCeramicBurst(point: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnCeramicBurst(point, direction); }
+  /** Compile le shader de l'explosion sous l'écran de chargement — voir `Explosions.warm`. */
+  warmExplosions(camera: THREE.Camera, render: () => void): Promise<void> {
+    return this.explosions.warm(camera, render);
+  }
+  /** Boule de feu et éclats incandescents d'un prop `gaz` qui saute. */
+  spawnExplosion(point: THREE.Vector3): void {
+    this.explosions.spawn(point);
+    this.debris.spawnExplosionBurst(point);
+  }
   addWaterJet(origin: THREE.Vector3): void { this.water.addWaterJet(origin); }
   clearWaterJets(): void { this.water.clearWaterJets(); }
 
@@ -61,5 +74,6 @@ export class FxSystem {
     this.flashes.update();
     this.debris.update(realDt);
     this.water.update(realDt);
+    this.explosions.update(realDt);
   }
 }

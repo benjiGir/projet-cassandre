@@ -24,8 +24,9 @@ import { SanitaireSystem } from "../level/sanitaires/sanitaires";
 import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
 import { warmShaderDouches } from "../level/sanitaires/doucheShader";
+import { RenderService } from "../../render/pipeline/renderService";
 import { Suit } from "../entities/suit/suit";
-import { suitConfig } from "../entities/suit/suitConfig";
+import type { SuitKind } from "../entities/suit/suitConfig";
 import { Director } from "../entities/director/director";
 import { directorConfig } from "../entities/director/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/loading/hotReload";
@@ -44,19 +45,39 @@ import { type PersistentEngine } from "./gameEngine";
 const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
 // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
-export function spawnSuitAt(engine: PersistentEngine, session: GameSession, x: number, feetY: number, z: number): Suit {
+/** Planche de sprites d'une espèce — le seul endroit qui associe les deux. */
+export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet">, kind: SuitKind) {
+  switch (kind) {
+    case "costard":
+      return engine.suitSheet;
+    case "rampant":
+      return engine.rampantSheet;
+    default:
+      return kind satisfies never;
+  }
+}
+
+export function spawnSuitAt(
+  engine: PersistentEngine,
+  session: GameSession,
+  x: number,
+  feetY: number,
+  z: number,
+  kind: SuitKind = "costard",
+): Suit {
   const facing = new THREE.Vector3(session.player.position.x - x, 0, session.player.position.z - z);
   if (facing.lengthSq() < 1e-6) facing.set(0, 0, 1);
   facing.normalize();
 
-  const suit = session.suitManager.spawnSuit(x, feetY, z, facing);
+  const suit = session.suitManager.spawnSuit(x, feetY, z, facing, kind);
   // Le rendu interpole le CENTRE de la capsule : les pieds de l'atlas se
   // posent sur son bas, offset du KCC compris.
-  const sheet = engine.suitSheet;
+  const sheet = suitSheetFor(engine, kind);
+  const cfg = suit.cfg;
   const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
     rows: sheet.rows,
     normalTilt: ENEMY_SPRITE_NORMAL_TILT,
-    ...enemySpriteQuad(sheet, suitConfig.capsuleHalfHeight + suitConfig.capsuleRadius + suitConfig.colliderOffset),
+    ...enemySpriteQuad(sheet, cfg.capsuleHalfHeight + cfg.capsuleRadius + cfg.colliderOffset),
   });
   session.suitSprites.set(suit.id, sprite);
   return suit;
@@ -99,6 +120,31 @@ function groundBelow(session: GameSession, point: THREE.Vector3): number | null 
     ),
   );
   return hit ? point.y - hit.timeOfImpact : null;
+}
+
+/**
+ * Compile le shader TSL de l'explosion sous l'écran de chargement, dans les
+ * mêmes conditions que celui des douches : framebuffer écran, et ancienne
+ * racine détachée au hot reload pour que ses lampes n'entrent pas dans la
+ * variante compilée.
+ * see: docs/4-technique/rendu.md#préparation-des-douches
+ */
+async function warmExplosionShader(engine: PersistentEngine, previousRoot?: THREE.Object3D): Promise<void> {
+  const previousTarget = engine.renderer.getRenderTarget();
+  const previousParent = previousRoot?.parent;
+  const render = () => {
+    engine.renderer.setRenderTarget(null);
+    runGameplaySync(RenderService.use((rs) => rs.render(engine.renderer, engine.scene, engine.camera)));
+  };
+  try {
+    previousRoot?.removeFromParent();
+    await engine.fx.warmExplosions(engine.camera, render);
+  } finally {
+    if (previousRoot && previousParent) previousParent.add(previousRoot);
+    // Efface l'image de préparation avant le prochain paint.
+    render();
+    engine.renderer.setRenderTarget(previousTarget);
+  }
 }
 
 export function loadGltfLevel(
@@ -219,6 +265,7 @@ export function loadGltfLevel(
         await warmShaderDouches(
           engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
         );
+        await warmExplosionShader(engine, session.gltfLevelSession?.current?.root);
 
         return () => {
           // Toutes les affectations de session restent dans ce commit : tant
@@ -253,7 +300,7 @@ export function loadGltfLevel(
             // Un spawn qui porte un `groupe` attend son réveil par le script de niveau.
             for (const spawn of handle.spawnSuits) {
               if (spawn.group !== null) continue;
-              spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z);
+              spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind);
             }
             for (const spawn of handle.spawnDirectors) {
               spawnDirectorAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z);

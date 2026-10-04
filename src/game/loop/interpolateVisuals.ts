@@ -5,6 +5,7 @@ import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { createEnemyAnimationInput, enemySpriteRow } from "../../render/sprites/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/movement/moveConfig";
 import { type GameEngine } from "../session/gameEngine";
+import { suitSheetFor } from "../session/spawning";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
 // see: docs/archive/systems-boucle-de-jeu.md#origine-des-modules
@@ -90,7 +91,7 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
           if (!sprite) continue;
           const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
           const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
-          const row = enemySpriteRow(engine.suitSheet, suit.animation(enemyAnimationScratch));
+          const row = enemySpriteRow(suitSheetFor(engine, suit.kind), suit.animation(enemyAnimationScratch));
           sprite.updatePose(engine.camera, pos, fwd, row);
         }
 

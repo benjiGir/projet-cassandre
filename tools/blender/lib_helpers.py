@@ -568,7 +568,7 @@ def kit_bounds(obj: bpy.types.Object) -> tuple[float, float, float]:
 # src/game/level/props/props.ts, et à `PROP_MATIERES` dans validate_level.py. Les
 # trois dernières datent du chantier « Les coulisses » (2026-09-26,
 # fournil/chambre froide/atelier SAV).
-PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique")
+PROP_MATIERES = ("bois", "carton", "verre", "metal", "farine", "eau", "electronique", "gaz")
 
 
 def prop(name: str, bounds, texture: str, coll: bpy.types.Collection,

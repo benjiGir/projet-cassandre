@@ -4,6 +4,7 @@ import {
   createStreamState,
   mysteryDonation,
   notifyStream,
+  spend,
   streamConfig,
   streamRecap,
   updateStream,
@@ -116,6 +117,19 @@ describe("simulation du direct", () => {
     expect(bilan.followersGained).toBe(state.followers - streamConfig.startFollowers);
     expect(bilan.donations).toBe(state.wallet);
     expect(bilan.donationCount).toBe(5);
+  });
+
+  it("une dépense débite le solde sans toucher au total des dons du bilan", () => {
+    const state = createStreamState();
+    mysteryDonation(state, "carte_or", 0);
+    const recu = MYSTERY_DONATIONS.carte_or.amount;
+
+    expect(spend(state, recu + 1)).toBe(false);
+    expect(state.wallet).toBe(recu);
+
+    expect(spend(state, 20)).toBe(true);
+    expect(state.wallet).toBe(recu - 20);
+    expect(streamRecap(state).donations).toBe(recu);
   });
 
   it("le donateur mystère donne une fois par étape, quel que soit le délai entre dons", () => {

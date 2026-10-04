@@ -25,7 +25,8 @@ const MYSTERY_BEATS: readonly { readonly beat: MysteryBeat; readonly reached: (s
   { beat: "escalier", reached: (session) => session.placeLine.space === "c_escalier" },
 ];
 
-function publishCounters(stream: StreamState): void {
+/** Recopie audience, abonnés et solde dans le store — seulement s'ils ont changé. */
+export function publishCounters(stream: StreamState): void {
   const store = useGameStore.getState();
   const views = Math.round(stream.viewers);
   const { debug } = store;

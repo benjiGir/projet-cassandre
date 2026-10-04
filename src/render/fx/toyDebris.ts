@@ -52,6 +52,18 @@ const FROST_COLOR = 0xdcf2fb; // blanc légèrement bleuté
 const FROST_GEOMETRY = new THREE.BoxGeometry(FROST_SIZE, FROST_SIZE, FROST_SIZE);
 const FROST_MATERIAL = new THREE.MeshLambertMaterial({ color: FROST_COLOR });
 
+// Explosion : des éclats incandescents qui fusent en tous sens — la boule de
+// feu et sa fumée sont dans `explosions.ts`.
+const EMBER_LIFETIME = 1.1; // s
+const EMBER_COUNT = 22;
+const EMBER_SIZE = 0.09; // m
+const EMBER_SPEED_MIN = 5; // m/s
+const EMBER_SPEED_MAX = 13; // m/s
+const EMBER_SPREAD = 2.2; // presque une sphère : un souffle n'a pas de direction
+const EMBER_GEOMETRY = new THREE.BoxGeometry(EMBER_SIZE, EMBER_SIZE, EMBER_SIZE);
+// Lambert émissif, pas Basic : le programme des autres débris, déjà compilé.
+const EMBER_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xf2891d });
+
 // see: docs/6-reference/notes-code-rendu.md#fontaines-permanentes
 
 const CERAMIC_LIFETIME = 1.1; // s
@@ -101,6 +113,7 @@ export class ToyDebris {
   private readonly frost: ToyParticle[] = [];
   private readonly ceramic: ToyParticle[] = [];
   private readonly waterBurst: ToyParticle[] = [];
+  private readonly embers: ToyParticle[] = [];
 
   // Réutiliser le matériau par couleur pour éviter une allocation GPU à chaque casse.
   private readonly debrisMaterials = new Map<number, THREE.MeshLambertMaterial>();
@@ -180,6 +193,17 @@ export class ToyDebris {
     });
   }
 
+  spawnExplosionBurst(point: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, UP_DIRECTION, EMBER_GEOMETRY, EMBER_MATERIAL, {
+      count: EMBER_COUNT,
+      lifetime: EMBER_LIFETIME,
+      spread: EMBER_SPREAD,
+      speedMin: EMBER_SPEED_MIN,
+      speedMax: EMBER_SPEED_MAX,
+      gravityScale: 1,
+    });
+  }
+
   spawnFrostBurst(point: THREE.Vector3) {
     this.spawnChunks(this.frost, point, UP_DIRECTION, FROST_GEOMETRY, FROST_MATERIAL, {
       count: FROST_COUNT,
@@ -215,7 +239,7 @@ export class ToyDebris {
     point: THREE.Vector3,
     direction: THREE.Vector3,
     geometry: THREE.BufferGeometry,
-    material: THREE.MeshLambertMaterial,
+    material: THREE.Material,
     opts: { count: number; lifetime: number; spread: number; speedMin: number; speedMax: number; gravityScale: number },
   ) {
     for (let i = 0; i < opts.count; i++) {
@@ -267,6 +291,7 @@ export class ToyDebris {
     this.updateToyPhysics(this.frost, realDt);
     this.updateToyPhysics(this.ceramic, realDt);
     this.updateToyPhysics(this.waterBurst, realDt);
+    this.updateToyPhysics(this.embers, realDt);
   }
 
   reset(): void {
@@ -277,5 +302,6 @@ export class ToyDebris {
     this.clearToyParticles(this.frost);
     this.clearToyParticles(this.ceramic);
     this.clearToyParticles(this.waterBurst);
+    this.clearToyParticles(this.embers);
   }
 }

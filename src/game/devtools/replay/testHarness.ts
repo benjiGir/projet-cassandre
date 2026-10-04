@@ -1,3 +1,4 @@
+import { BOISSON_VARIANTS, perkConfig, type BoissonVariant } from "../../player/perkConfig";
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
@@ -101,6 +102,14 @@ export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantR
     landingDipMax: moveConfig.landingDipMax,
   };
   console.info(`[feel] variante ${name} appliquée`, report);
+  return report;
+}
+
+/** Pointe de vitesse du perk boisson : même protocole que `applyFeelVariant`. */
+export function applyBoissonVariant(name: keyof typeof BOISSON_VARIANTS): BoissonVariant & { variant: string } {
+  Object.assign(perkConfig, BOISSON_VARIANTS[name]);
+  const report = { variant: name, boissonSpeedScale: perkConfig.boissonSpeedScale, boissonDuration: perkConfig.boissonDuration };
+  console.info(`[feel] variante de boisson ${name} appliquée`, report);
   return report;
 }
 

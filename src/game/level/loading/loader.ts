@@ -122,6 +122,13 @@ function buildLevelResourceEffect(
         spawnSuits.push({ name, position, group: readSpawnGroup(obj) });
         continue;
       }
+      // Rampant : même liste et mêmes règles (`groupe`) qu'un Costard, une autre espèce.
+      if (name.startsWith("spawn_rampant_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnSuits.push({ name, position, group: readSpawnGroup(obj), kind: "rampant" });
+        continue;
+      }
       if (name.startsWith("light_")) {
         // Attachée à `root` et non à la scène : elle disparaît avec le niveau,
         // comme tout le reste du `.glb`.

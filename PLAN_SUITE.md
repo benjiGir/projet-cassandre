@@ -138,10 +138,10 @@ v1.2, **B3**, **B4** et **B5** sont indépendants les uns des autres.
 | A6 | Fin amère | `shell`, `ui-forge` | S | **livré le 2026-10-03** |
 | A7 | Documentation et gate v1.1 | `doc-keeper`, `qa-evidence` | S | **documentation livrée le 2026-10-03** ; contrôles automatiques verts (`pnpm verify -- --level --docs`) ; reste la partie complète de l'utilisateur |
 | A8 | Voix (facultatif) | `sound-forge` | S | après playtest |
-| B1 | Portefeuille et bornes | `level-pipeline`, `level-forge`, `shell` | M | à faire |
-| B2 | Perks | `feel-tuner`, `entity-designer` | M | à faire |
-| B3 | Explosifs | `level-pipeline`, `retro-render`, `sound-forge` | L | à faire |
-| B4 | Nouveaux ennemis | `entity-designer`, `retro-render`, `sound-forge` | L | à faire |
+| B1 | Portefeuille et bornes | `level-pipeline`, `level-forge`, `shell` | M | **livré le 2026-10-03** : quatre bornes (galerie 5 €, réserve 20 €, personnel 50 €, bureaux 100 €) ; les perks n'ont pas encore d'effet (B2), prix à régler (B7), documentation de référence due au lot B8 |
+| B2 | Perks | `feel-tuner`, `entity-designer` | M | **livré le 2026-10-03** : les six effets, une marque et une lecture de pub par perk ; variante de la boisson (A, B ou C) à trancher par l'utilisateur ; VPN et aimant n'ont pas encore de borne |
+| B3 | Explosifs | `level-pipeline`, `retro-render`, `sound-forge` | L | **livré le 2026-10-03** : matière `gaz`, souffle, réaction en chaîne, quinze bonbonnes posées des caisses aux bureaux ; son d'explosion synthétisé, à écouter ; rayon et dégâts à régler (B7) |
+| B4 | Nouveaux ennemis | `entity-designer`, `retro-render`, `sound-forge` | L | **Rampant livré le 2026-10-03**, à jouer dans la salle d'essai (`?level=gym`) ; le Vigile attend ce verdict, comme le veut l'ordre du lot |
 | B5 | Difficulté | `shell`, `entity-designer` | S | à faire |
 | B6 | Rencontres | `level-forge`, `entity-designer` | M | à faire |
 | B7 | Équilibrage de l'économie | `feel-tuner` | M | à faire |

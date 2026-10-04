@@ -44,7 +44,15 @@ const PROP_DEBRIS: Record<string, { color: number; count: number }> = {
   farine: { color: 0xe8e0c8, count: 16 },
   eau: { color: 0x6fb8ff, count: 14 },
   electronique: { color: 0x2f2f38, count: 10 },
+  // Tôle rouge de la bonbonne ; le feu et la fumée viennent de `spawnExplosion`.
+  gaz: { color: 0xb02931, count: 12 },
 };
+
+/** Secousse d'une explosion : nettement plus forte et plus longue que celle d'un tir. */
+const EXPLOSION_SHAKE_AMPLITUDE = 0.45;
+const EXPLOSION_SHAKE_DURATION = 0.4;
+/** Au-delà, l'explosion ne secoue plus la caméra — elle reste entendue. */
+const EXPLOSION_SHAKE_RANGE = 25;
 const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 
 let movableHandlesLevel: LevelHandle | null | undefined;
@@ -166,24 +174,23 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
         // Lecture NON DESTRUCTIVE des files de `suitManager`, même contrat que
         // `weapons.fireEvents`/`hitEvents` ci-dessus : tous les lecteurs
         // d'abord, `suitManager.clearFrameEvents()` en tout dernier.
+        // Chaque espèce a sa voix (`Suit.kind`) : le Rampant siffle là où le Costard interpelle.
         for (const event of session.suitManager.alertEvents) {
-          void event; // pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
-          playEnemySfx("alert");
+          // Pas de sprite dédié à l'alerte : la pose ALERTE (ligne d'atlas) suffit, le son est le seul canal supplémentaire ici.
+          playEnemySfx("alert", event.suit.kind);
         }
         for (const event of session.suitManager.telegraphEvents) {
-          void event;
           // Règle non négociable du skill : le son de télégraphie part AVANT
-          // les dégâts (`suitConfig.attackTelegraphDuration` >= 0.2 s sépare ce
-          // point de la résolution de l'attaque dans `Suit.runAttack`).
-          playEnemySfx("telegraph");
+          // les dégâts (`attackTelegraphDuration` >= 0.2 s sépare ce point de
+          // la résolution de l'attaque dans `runAttack`).
+          playEnemySfx("telegraph", event.suit.kind);
         }
         for (const event of session.suitManager.shotEvents) {
-          void event;
-          playEnemySfx("shot");
+          playEnemySfx("shot", event.suit.kind);
         }
         for (const event of session.suitManager.hurtEvents) {
-          session.suitSprites.get(event.suit.id)?.setFlash(1, suitConfig.hitFlashDuration);
-          playEnemySfx("hurt");
+          session.suitSprites.get(event.suit.id)?.setFlash(1, event.suit.cfg.hitFlashDuration);
+          playEnemySfx("hurt", event.suit.kind);
         }
         for (const event of session.suitManager.deathEvents) {
           if (event.gibs) {
@@ -193,7 +200,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             engine.fx.spawnGibs(event.point, event.direction);
           }
           engine.hitmarker.trigger("kill");
-          playEnemySfx("death");
+          playEnemySfx("death", event.suit.kind);
           // Les vues et le premier kill sont déjà décidés dans le pas fixe.
         }
         for (const event of session.suitManager.playerHitEvents) {
@@ -258,6 +265,12 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
             engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
             playPropBreakSfx(event.matiere);
+          }
+          for (const event of props.explosionEvents) {
+            engine.fx.spawnExplosion(event.point);
+            const proximite = 1 - session.player.position.distanceTo(event.point) / EXPLOSION_SHAKE_RANGE;
+            if (proximite > 0) engine.fx.triggerShake(EXPLOSION_SHAKE_AMPLITUDE * proximite, EXPLOSION_SHAKE_DURATION);
+            playSfx("explosion", Math.max(0.35, proximite));
           }
           props.clearFrameEvents();
         }
@@ -389,7 +402,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
             shotgunAmmo: session.weapons.shotgunAmmo,
             shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
             pistolAmmo: session.weapons.pistolAmmo,
-            pistolMaxAmmo: weaponConfig.pistolMaxAmmo,
+            pistolMaxAmmo: session.weapons.pistolMaxAmmo,
             // HUD de prod (Phase 6, `ui/hud/widgets/AmmoPanel/AmmoPanel.tsx`) : quel libellé afficher pour
             // "munitions" dépend de l'arme active, pas seulement du compte de
             // cartouches. Même throttle 10 Hz que le reste de ce bloc.

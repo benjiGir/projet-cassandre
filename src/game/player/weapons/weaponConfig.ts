@@ -188,6 +188,11 @@ export function damageForWeapon(weapon: "melee" | "pistol" | "shotgun"): number 
   return weaponConfig.meleeDamage;
 }
 
+/** Dégâts d'un impact : la table ci-dessus, et le multiplicateur que le coup porte. */
+export function damageForHit(hit: { weapon: "melee" | "pistol" | "shotgun"; damageScale?: number }): number {
+  return damageForWeapon(hit.weapon) * (hit.damageScale ?? 1);
+}
+
 // Variantes de recul — harnais A/B, même mécanique que `FEEL_VARIANTS` dans
 // `moveConfig.ts`. Axe, usage console et protocole F9/F10 :
 // see: docs/archive/systems-armes.md#recul-du-viewmodel-recoil_variants

@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useState } from "react";
 import { DevCheats } from "../sections/DevCheats/DevCheats";
 import { HitFeedbackTuning } from "../sections/hitFeedback/HitFeedbackTuning/HitFeedbackTuning";
 import { MoveTuning } from "../sections/MoveTuning/MoveTuning";
+import { PerkTuning } from "../sections/PerkTuning/PerkTuning";
 import styles from "./TuningPanel.module.css";
 
 // see: docs/archive/reference-controles.md#touches-de-dev
@@ -33,6 +34,7 @@ export function TuningPanel() {
     <aside className={styles.panel} aria-label="Panneau de tuning">
       <MoveTuning />
       <HitFeedbackTuning />
+      <PerkTuning />
       <DevCheats />
       <p className={styles.footnote}>
         F9/F10 : le recorder ne restaure QUE l'état du joueur, pas les PV/positions des Costards — voir la doc de

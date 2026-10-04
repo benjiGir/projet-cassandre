@@ -18,6 +18,7 @@ import { buildGym } from "../level/catalog/gym";
 import { SuitManager } from "../entities/suit/suitManager";
 import { DirectorManager } from "../entities/director/directorManager";
 import { useGameStore } from "../hud/state";
+import { HEAL_PICKUP_RADIUS } from "../level/interactions/interactive";
 import { type LevelDef } from "../level/catalog/levels";
 import { chargerCiel } from "../../render/environment/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
@@ -145,6 +146,9 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     sanitaireReliefCooldown: 0,
     droppedCardBillboard: null,
     cards: new Set(),
+    perks: new Set(),
+    pickupRadius: HEAL_PICKUP_RADIUS,
+    killRushRemaining: 0,
     unlockedDoors: new Set(),
     exitDoorTracking: null,
     foundSecrets: new WeakSet(),
@@ -179,6 +183,11 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     spawnSuitAt(engine, session, -9, SPAWN_FEET_GUARD, 5);
     spawnSuitAt(engine, session, 9, SPAWN_FEET_GUARD, 5);
     spawnSuitAt(engine, session, 0, SPAWN_FEET_GUARD, 13);
+    // Rencontre d'essai du Rampant (lot B4) : une meute de quatre, au fond de
+    // la salle, à juger ici avant toute pose dans le niveau.
+    for (const [x, z] of [[-6, 17], [-2, 19], [2, 19], [6, 17]] as const) {
+      spawnSuitAt(engine, session, x, SPAWN_FEET_GUARD, z, "rampant");
+    }
   } else if (choice.gltfName) {
     loadGltfLevel(engine, session, choice.gltfName);
   }

@@ -1,5 +1,5 @@
 import type { DoorMovement } from "../../game/level/doors/doorTypes";
-import type { DoorSfxEvent, EnemySfxEvent, SfxDef, SfxId } from "./audioTypes";
+import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxDef, SfxId } from "./audioTypes";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 export const POOL_LECTURES = 12;
@@ -32,6 +32,11 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   sanitaire_break: { sprite: "ceramic_break", volume: 0.9 },
   water_drink: { sprite: "water_gulp", volume: 0.7 },
   food_eat: { sprite: "food_eat", volume: 0.65 },
+  explosion: { sprite: "explosion", volume: 1.0, pitch: 0.04 },
+  rampant_alert: { sprite: "rampant_alert", volume: 0.85, pitch: 0.1 },
+  rampant_telegraph: { sprite: "rampant_telegraph", volume: 0.9, pitch: 0.06 },
+  rampant_attack: { sprite: "rampant_attack", volume: 0.8, pitch: 0.06 },
+  rampant_death: { sprite: "rampant_death", volume: 0.85, pitch: 0.1 },
 };
 
 export const WEAPON_FIRE_SFX: Record<"melee" | "pistol" | "shotgun", SfxId> = {
@@ -56,16 +61,28 @@ export const PROP_BREAK_SFX: Record<string, SfxId> = {
   farine: "prop_break_wood", // sac de papier qui éclate : même famille sèche que le bois/carton
   eau: "water_drink", // seul timbre liquide du catalogue (le vivier de la chambre froide)
   electronique: "impact_metal",
+  // La bonbonne qui cède : la tôle. Le souffle a son propre son, joué par l'explosion.
+  gaz: "impact_metal",
 };
 
 export const DEFAULT_PROP_BREAK_SFX: SfxId = "prop_break_wood";
 
-export const ENEMY_SFX: Record<EnemySfxEvent, SfxId> = {
-  alert: "enemy_alert",
-  telegraph: "enemy_telegraph",
-  shot: "enemy_shot",
-  hurt: "enemy_hurt",
-  death: "enemy_death",
+export const ENEMY_SFX: Record<EnemyVoice, Record<EnemySfxEvent, SfxId>> = {
+  costard: {
+    alert: "enemy_alert",
+    telegraph: "enemy_telegraph",
+    shot: "enemy_shot",
+    hurt: "enemy_hurt",
+    death: "enemy_death",
+  },
+  rampant: {
+    alert: "rampant_alert",
+    telegraph: "rampant_telegraph",
+    shot: "rampant_attack",
+    // Pas de cri de douleur propre : il meurt en deux balles.
+    hurt: "enemy_hurt",
+    death: "rampant_death",
+  },
 };
 
 export const DOOR_SFX: Record<DoorSfxEvent, SfxId> = {

@@ -3,11 +3,12 @@ import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
-import { damageForWeapon } from "../../player/weapons/weaponConfig";
+import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { NavGraph } from "../../level/navigation/pathfindingTypes";
 import type { VitreHitTarget } from "../shared/enemyTypes";
 import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "./suit";
-import { suitConfig as defaultSuitConfig, type SuitConfig } from "./suitConfig";
+import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from "./suitConfig";
+import { rampantConfig } from "../rampant/rampantConfig";
 
 // see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
 
@@ -72,6 +73,9 @@ export class SuitManager {
   private readonly scratchKnockback = new THREE.Vector3();
   private readonly aggregationScratch = new Map<Suit, AggregatedHit>();
 
+  /** Part de `sightRange` à laquelle un Costard au repos repère le joueur dans CETTE partie : 1 hors effet d'un perk. */
+  sightRangeScale = 1;
+
   constructor(physics: PhysicsWorld, cfg: SuitConfig = defaultSuitConfig) {
     this.physics = physics;
     this.cfg = cfg;
@@ -109,10 +113,22 @@ export class SuitManager {
   }
 
   // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
-  spawnSuit(x: number, feetY: number, z: number, facing = new THREE.Vector3(0, 0, 1)): Suit {
+  /** Configuration d'une espèce : celle du gestionnaire pour le Costard, la sienne pour les autres. */
+  configFor(kind: SuitKind): SuitConfig {
+    switch (kind) {
+      case "costard":
+        return this.cfg;
+      case "rampant":
+        return rampantConfig;
+      default:
+        return kind satisfies never;
+    }
+  }
+
+  spawnSuit(x: number, feetY: number, z: number, facing = new THREE.Vector3(0, 0, 1), kind: SuitKind = "costard"): Suit {
     const seed = (BASE_SUIT_SEED + this.spawnCount * SEED_STRIDE) >>> 0;
     this.spawnCount++;
-    const suit = new Suit(this.physics, new THREE.Vector3(x, feetY, z), facing, seed, this.cfg);
+    const suit = new Suit(this.physics, new THREE.Vector3(x, feetY, z), facing, seed, this.configFor(kind), kind);
     this.suits.push(suit);
     if (suit.collider) this.colliderToSuit.set(suit.collider.handle, suit);
     return suit;
@@ -151,6 +167,8 @@ export class SuitManager {
         continue; // pas de tick de machine à états ce pas-ci : `applyDamage` a déjà positionné l'état (stagger/mort).
       }
 
+      // Le perk VPN brouille les Costards, pas l'odorat d'un Rampant.
+      ctx.sightRangeScale = suit.kind === "costard" ? this.sightRangeScale : 1;
       suit.update(dt, ctx);
       this.drainSuitPendingEvents(suit);
     }
@@ -170,6 +188,40 @@ export class SuitManager {
     };
     this.applyAggregatedHit(suit, damage, suit.position);
     return true;
+  }
+
+  /**
+   * Souffle d'une explosion : dégâts selon la distance au centre, recul depuis
+   * lui. `reaches` dit si le souffle atteint un point (ligne dégagée). Les
+   * morts rejoignent `deathEvents`, comme celles d'un tir.
+   */
+  applyBlast(
+    center: THREE.Vector3,
+    damageAt: (distance: number) => number,
+    reaches: (point: THREE.Vector3) => boolean,
+    gibDistance: number,
+  ): void {
+    for (const suit of this.suits) {
+      if (!suit.isAlive) continue;
+      const distance = suit.position.distanceTo(center);
+      const damage = damageAt(distance);
+      if (damage <= 0 || !reaches(suit.position)) continue;
+      const gibs = distance <= gibDistance;
+      const away = suit.position.clone().sub(center);
+      if (away.lengthSq() > 1e-8) away.normalize();
+      else away.set(0, 1, 0);
+      this.applyAggregatedHit(
+        suit,
+        {
+          totalDamage: damage,
+          gibs,
+          gibPoint: gibs ? suit.position.clone() : null,
+          gibDirection: gibs ? away : null,
+          anyPoint: suit.position.clone(),
+        },
+        center,
+      );
+    }
   }
 
   private applyAggregatedHit(suit: Suit, hit: AggregatedHit, playerTargetPosition: THREE.Vector3) {
@@ -223,10 +275,10 @@ export class SuitManager {
         aggregated.set(suit, entry);
       }
 
-      const damage = damageForWeapon(hitEvent.weapon);
+      const damage = damageForHit(hitEvent);
       entry.totalDamage += damage;
 
-      if (!entry.gibs && hitEvent.weapon === "shotgun" && hitEvent.distance <= this.cfg.gibDistance) {
+      if (!entry.gibs && hitEvent.weapon === "shotgun" && hitEvent.distance <= suit.cfg.gibDistance) {
         entry.gibs = true;
         entry.gibPoint = hitEvent.point.clone();
         entry.gibDirection = hitEvent.normal.clone().negate();

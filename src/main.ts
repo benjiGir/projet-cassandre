@@ -104,10 +104,11 @@ async function main() {
   });
 
   reportLoading("Moteur physique et planches de sprites", 0.08);
-  const [, suitSheet, directorSheet, weaponModels, cardPickupTextures] = await Promise.all([
+  const [, suitSheet, directorSheet, rampantSheet, weaponModels, cardPickupTextures] = await Promise.all([
     initPhysics(),
     loadEnemySpriteSheetOrPlaceholder("costard"),
     loadEnemySpriteSheetOrPlaceholder("directeur"),
+    loadEnemySpriteSheetOrPlaceholder("rampant"),
     loadWeaponModelsOrPlaceholder(),
     loadCardPickupTextures(),
   ]);
@@ -117,7 +118,7 @@ async function main() {
   const persistentEngine = buildGameEngine(
     canvas,
     flow,
-    { suit: suitSheet, director: directorSheet },
+    { suit: suitSheet, director: directorSheet, rampant: rampantSheet },
     weaponModels,
     cardPickupTextures,
   );

@@ -72,7 +72,10 @@ export interface StreamState {
   viewers: number;
   peakViewers: number;
   followers: number;
+  /** Solde dépensable aux bornes, en euros. */
   wallet: number;
+  /** Total des dons reçus, achats non déduits : c'est lui que rend le bilan. */
+  donated: number;
   donationCount: number;
   /** Spectateurs gagnés depuis le début : c'est eux qui font les abonnés. */
   gained: number;
@@ -94,6 +97,7 @@ export function createStreamState(): StreamState {
     peakViewers: streamConfig.startViewers,
     followers: streamConfig.startFollowers,
     wallet: 0,
+    donated: 0,
     donationCount: 0,
     gained: 0,
     lastEventAt: 0,
@@ -120,6 +124,7 @@ function pushChat(state: StreamState, message: Omit<ChatMessage, "id">): ChatMes
 
 function donate(state: StreamState, now: number, alert: DonationAlert): DonationAlert {
   state.wallet += alert.amount;
+  state.donated += alert.amount;
   state.donationCount++;
   state.lastDonationAt = now;
   pushChat(state, { pseudo: alert.pseudo, text: `a donné ${alert.amount} €`, kind: "don" });
@@ -172,13 +177,20 @@ export function notifyStream(
   });
 }
 
+/** Débite le portefeuille si le solde suffit ; sinon rend `false` sans rien toucher. */
+export function spend(state: StreamState, amount: number): boolean {
+  if (amount > state.wallet) return false;
+  state.wallet -= amount;
+  return true;
+}
+
 /** Bilan du direct, pour l'écran de fin. */
 export function streamRecap(state: StreamState): LiveRecap {
   return {
     peakViewers: Math.round(state.peakViewers),
     followers: state.followers,
     followersGained: state.followers - streamConfig.startFollowers,
-    donations: state.wallet,
+    donations: state.donated,
     donationCount: state.donationCount,
   };
 }

@@ -51,6 +51,7 @@ export interface GameEngine {
   /** Planches de sprites, chargées une fois au démarrage et partagées par tous les ennemis de toutes les parties — chaque `BillboardSprite` clone l'atlas (voir « LE PIÈGE DU PARTAGE DE TEXTURE » dans `render/sprites/billboard.ts`). */
   suitSheet: EnemySpriteSheet;
   directorSheet: EnemySpriteSheet;
+  rampantSheet: EnemySpriteSheet;
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
   cardPickupTextures: CardPickupTextures;
 
@@ -92,7 +93,7 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
   flow: GameFlowPort,
-  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet },
+  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet },
   weaponModels: WeaponModels,
   cardPickupTextures: CardPickupTextures,
 ): PersistentEngine {
@@ -154,6 +155,7 @@ export function buildGameEngine(
     sunLight: sun,
     suitSheet: sheets.suit,
     directorSheet: sheets.director,
+    rampantSheet: sheets.rampant,
     cardPickupTextures,
     ballPrevPos,
     ballPrevQuat,

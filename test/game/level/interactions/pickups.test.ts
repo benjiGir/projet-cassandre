@@ -244,6 +244,7 @@ describe("InteractionSystem.collectWeapons — armes au sol ramassées en marcha
       onCardPickup: () => {},
       onCardDoorUse: () => {},
       onCameraConsoleUse: () => {},
+      onPerkKioskUse: () => {},
     });
 
     expect(system.nearestInRangeName).toBeNull();
