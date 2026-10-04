@@ -6,7 +6,8 @@ import { ImpactDecals } from "./impactDecals";
 import { ToyDebris } from "./toyDebris";
 import { WaterJets } from "./waterJets";
 import { Explosions } from "./explosions";
-import { Gore, type SurfaceProbe } from "./gore";
+import { Gore } from "./gore";
+import type { SurfaceProbe } from "./goreConfig";
 
 // see: docs/6-reference/notes-code-rendu.md#effets-et-allocation
 export class FxSystem {

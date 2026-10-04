@@ -1,25 +1,27 @@
 /**
- * Équilibrage de l'économie (lot B7) : le relevé du portefeuille sur des
- * parties types, la cible du plan — deux ou trois perks pour une partie
- * normale, jamais les six —, et l'accord entre ce que le jeu embarque
- * (`streamConfig`), la variante B et les prix posés dans le niveau.
+ * Variantes d'équilibrage de l'économie (lot B7) : la cible du plan — deux ou
+ * trois perks pour une partie normale, jamais les six —, et l'accord entre ce
+ * que le jeu embarque (`streamConfig`), la variante B et les prix posés dans
+ * le niveau.
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { PARCOURS, PROFILES, simulateRun, summarize, type ProfileId } from "../../../src/game/devtools/economy/economySim";
+import { PROFILES, type ProfileId } from "../../../../src/game/devtools/economy/economyProfiles";
+import { simulateRun, summarize } from "../../../../src/game/devtools/economy/economySim";
 import {
   ECONOMY_DEFAULT,
   ECONOMY_VARIANTS,
   applyDonations,
   applyEconomyVariant,
+  pricesInPlay,
   type EconomyVariantId,
-} from "../../../src/game/devtools/economy/economyVariants";
-import { offerPrice, perkPrices } from "../../../src/game/player/perkConfig";
-import { PERKS, type Perk } from "../../../src/game/player/perks";
-import { DIFFICULTIES } from "../../../src/game/session/progression/difficulty";
-import { streamConfig } from "../../../src/game/session/stream/streamSim";
+} from "../../../../src/game/devtools/economy/economyVariants";
+import { offerPrice, perkPrices } from "../../../../src/game/player/perkConfig";
+import { PERKS, type Perk } from "../../../../src/game/player/perks";
+import { DIFFICULTIES } from "../../../../src/game/session/progression/difficulty";
+import { streamConfig } from "../../../../src/game/session/stream/streamSim";
 
 const EMBARQUE = JSON.stringify({ rules: streamConfig.rules, mystery: streamConfig.mystery });
 const B = ECONOMY_VARIANTS.B;
@@ -28,27 +30,6 @@ afterEach(() => {
   applyDonations(ECONOMY_VARIANTS[ECONOMY_DEFAULT]);
   for (const perk of PERKS) delete perkPrices[perk];
   vi.restoreAllMocks();
-});
-
-describe("relevé du portefeuille", () => {
-  it("même graine, même relevé", () => {
-    const a = simulateRun(PROFILES.normal, "habitue", B.prices, 7);
-    const b = simulateRun(PROFILES.normal, "habitue", B.prices, 7);
-    expect(a).toEqual(b);
-    expect(a.kiosks.length).toBeGreaterThan(0);
-  });
-
-  it("passe devant les six bornes, une par perk, et retrouve celle du couloir au retour du parking", () => {
-    const bornes = PARCOURS.flatMap((stop) => (stop.kiosk && !stop.detour ? [stop.kiosk] : []));
-    expect([...new Set(bornes)].sort()).toEqual([...PERKS].sort());
-    expect(bornes.filter((perk) => perk === "boisson")).toHaveLength(2);
-  });
-
-  it("ne compte comme utile que ce qui tombe avant la dernière borne : le don du Directeur arrive trop tard", () => {
-    const run = simulateRun(PROFILES.normal, "habitue", B.prices, 3);
-    expect(run.spendable).toBeLessThan(run.donated);
-    expect(run.best).toBeGreaterThanOrEqual(run.bought.length);
-  });
 });
 
 describe("variante B — celle du jeu", () => {
@@ -149,5 +130,12 @@ describe("prix d'une borne", () => {
     expect(offerPrice(offre)).toBe(ECONOMY_VARIANTS.A.prices.gilet);
     expect(Object.keys(perkPrices).sort()).toEqual([...PERKS].sort());
     expect(streamConfig.mystery.escalier).toBe(ECONOMY_VARIANTS.A.mystery.escalier);
+  });
+
+  it("les prix pratiqués sont ceux des bornes du niveau ; un perk sans borne est hors de prix", () => {
+    const prix = pricesInPlay([offre, { perk: "perche", price: 10 }]);
+    expect(prix.gilet).toBe(85);
+    expect(prix.perche).toBe(10);
+    expect(prix.vpn).toBe(Infinity);
   });
 });

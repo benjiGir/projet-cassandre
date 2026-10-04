@@ -1,5 +1,6 @@
 import type { WeaponKind } from "../player/weapons/weaponTypes";
 import type { LoyaltyCard } from "../player/loyaltyCards";
+import type { Difficulty } from "../session/progression/difficulty";
 
 // see: docs/decisions/0036-contrats-feuilles-et-store-hud.md
 
@@ -71,6 +72,22 @@ export interface PerkOfferView {
   readonly price: number;
   /** Déjà acheté dans cette partie : la borne est épuisée. */
   readonly sold: boolean;
+}
+
+/** Une ligne de ce qu'une difficulté change, dite en clair. */
+export interface DifficultyEffectView {
+  readonly label: string;
+  readonly value: string;
+}
+
+/** Une difficulté telle que l'écran de choix la montre. */
+export interface DifficultyOptionView {
+  readonly id: Difficulty;
+  readonly label: string;
+  readonly pitch: string;
+  readonly effects: readonly DifficultyEffectView[];
+  /** Record du niveau dans cette difficulté, `null` tant qu'il n'a pas été terminé. */
+  readonly record: { readonly score: number; readonly seconds: number } | null;
 }
 
 /** Message diffusé dans le magasin : haut-parleurs ou interphone. */

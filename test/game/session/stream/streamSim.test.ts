@@ -11,6 +11,7 @@ import {
   type StreamEventKind,
 } from "../../../../src/game/session/stream/streamSim";
 import { MYSTERY_DONOR, MYSTERY_TEXTS } from "../../../../src/game/session/stream/streamTexts";
+import { difficultyConfig } from "../../../../src/game/session/progression/difficulty";
 
 /** Petit générateur déterministe, local au test. */
 function rng(seed: number): () => number {
@@ -155,5 +156,26 @@ describe("simulation du direct", () => {
       { at: 42, amount: 20, source: "don", wallet: recu + 20 },
       { at: 50, amount: -15, source: "achat", wallet: recu + 5 },
     ]);
+  });
+});
+
+describe("générosité des dons", () => {
+  function donsRecus(generosity: number): number {
+    const state = createStreamState(generosity);
+    const random = rng(7);
+    // Un kill isolé toutes les 10 s : jamais de série, jamais dans le délai entre deux dons.
+    for (let i = 0; i < 400; i++) notifyStream(state, "kill", i * 10, random);
+    return state.donationCount;
+  }
+
+  it("un chat plus généreux donne plus souvent, un chat plus dur moins souvent", () => {
+    const normal = donsRecus(difficultyConfig.habitue.donations);
+    expect(donsRecus(difficultyConfig.client.donations)).toBeGreaterThan(normal);
+    expect(donsRecus(difficultyConfig.lanceur.donations)).toBeLessThan(normal);
+    expect(donsRecus(0)).toBe(0);
+  });
+
+  it("sans réglage, le direct garde sa générosité d'origine", () => {
+    expect(createStreamState().generosity).toBe(1);
   });
 });

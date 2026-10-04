@@ -21,8 +21,8 @@ Le rendu transforme la scène Three.js en image, puis la présente dans le canev
 - `src/game/loop/updateFx.ts` — met à jour les éléments visuels transitoires au taux d'affichage.
 - `src/game/session/gameEngine.ts` — crée la scène, la caméra, le renderer et les overlays.
 - `src/game/settings/graphicsSettings.ts` — persiste et applique les réglages de rendu.
-- `src/render/fx/gore.ts` — taches de sang persistantes et morceaux d'un ennemi qui éclate.
-- `src/game/session/presentation/surfaceProbe.ts` — sonde du décor statique, fournie au gore par le jeu.
+- `src/render/fx/gore.ts` — façade du gore : ce qu'un ennemi laisse sur le décor. `goreConfig.ts` porte ses réglages et le contrat de la sonde, `goreSplats.ts` et `goreAtlas.ts` les taches, `goreChunks.ts` les morceaux.
+- `src/game/session/presentation/surfaceProbe.ts` — sonde du décor statique, fournie au gore par le jeu ; `src/game/level/loading/movableColliders.ts` dit ce qui, dans le niveau, bouge ou se casse.
 - `src/render/debug/debugView.ts` — bascule la géométrie en mode wireframe.
 - `src/render/overlays/cameraView.ts`, `crosshair.ts` et `hitmarker.ts` — canevas 2D spécialisés hors React.
 - `index.html` — dimensionne l'image 16:9 et demande un agrandissement à pixels nets.
@@ -135,7 +135,8 @@ Trois règles de pose :
   de pose au lieu de scintiller.
 
 L'atlas des taches est dessiné par le code, sans tirage : huit formes fixes en
-gros pixels. Les réglages sont dans `goreConfig`.
+gros pixels (`goreAtlas.ts`). Les réglages sont dans `goreConfig`
+(`goreConfig.ts`).
 
 ### Frontières des couches
 
@@ -178,7 +179,7 @@ Le renderer fixe le pixel ratio à 1 et désactive l'antialiasing. La netteté p
 
 ## Tests
 
-- `test/render/fx/gore.test.ts` — taches au sol et au mur, morceaux qui se posent, réserve tournante, arêtes, remise à zéro. `test/game/session/presentation/surfaceProbe.test.ts` — la sonde ignore mobilier, portes, vitres et sanitaires.
+- `test/render/fx/gore.test.ts` — taches au sol et au mur, morceaux qui se posent, réserve tournante, arêtes, remise à zéro. `test/render/fx/goreAtlas.test.ts` — atlas sans tirage, bords transparents. `test/game/session/presentation/surfaceProbe.test.ts` et `test/game/level/loading/movableColliders.test.ts` — la sonde ignore mobilier, portes, vitres et sanitaires.
 
 - `test/render/pipeline/renderService.test.ts` — service de rendu substituable et absence d'appel WebGL par sa couche de test.
 - `test/game/level/loading/loader.test.ts` — reconversion des matériaux du glTF et conservation des propriétés nécessaires au rendu.

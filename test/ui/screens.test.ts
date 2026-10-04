@@ -16,7 +16,7 @@ import { StoryScreen } from "../../src/ui/screens/story/StoryScreen/StoryScreen"
 import type { StoryPanel } from "../../src/game/hud/hudTypes";
 import { DifficultyScreen } from "../../src/ui/screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { RecapTable } from "../../src/ui/components/layout/RecapTable/RecapTable";
-import { difficultyOptions } from "../../src/app/navigation/bootChoice";
+import { difficultyOptions } from "../../src/game/session/presentation/difficultyOptions";
 import { resetRecords, submitRun } from "../../src/game/settings/records";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });

@@ -15,7 +15,7 @@ import { MainMenu } from "../../screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../screens/options/OptionsScreen/OptionsScreen";
 import { StoryPanels } from "../../screens/story/StoryPanels/StoryPanels";
 import { levelStory } from "../../../game/session/presentation/storyPanels";
-import { DIFFICULTIES, DIFFICULTY_INFO, difficultyConfig, difficultyEffects } from "../../../game/session/progression/difficulty";
+import { difficultyOptions } from "../../../game/session/presentation/difficultyOptions";
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
@@ -108,12 +108,9 @@ export function maybeRenderDevPreview(root: Root): boolean {
     case "difficulty":
       root.render(
         <DifficultyScreen
-          options={DIFFICULTIES.map((id) => ({
-            id,
-            ...DIFFICULTY_INFO[id],
-            effects: difficultyEffects(difficultyConfig[id]),
-            record: id === "habitue" ? { score: 12400, seconds: 572 } : null,
-          }))}
+          options={difficultyOptions("niveau_v2").map((option) =>
+            option.id === "habitue" ? { ...option, record: { score: 12400, seconds: 572 } } : option,
+          )}
           selected="habitue"
           onChoose={noop}
           onBack={noop}

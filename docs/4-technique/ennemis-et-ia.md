@@ -46,6 +46,8 @@ en entrée (D28).
   gestionnaire : une configuration chacune, aucun code propre.
 - `src/game/entities/shared/enemyTuning.ts` — PV et dégâts d'une partie,
   posés par sa difficulté sur une copie de chaque configuration.
+- `src/game/entities/shared/enemyShield.ts` — l'arc d'un bouclier : un impact
+  y est-il arrêté.
 - `src/game/entities/director/director.ts` / `directorConfig.ts` / `directorManager.ts`
   — le Directeur : même schéma, plus la révélation (`revealed`), la carte
   Platine lâchée à la mort (`DroppedCard`) et son délai de ramassage.
@@ -103,8 +105,8 @@ garde son gestionnaire, pour sa révélation et sa carte.
 
 `melee` remplace le tir par un bond puis un coup, qui ne porte que sous
 `reach`. `shield` est lu par le gestionnaire quand il range les impacts du
-pas : un impact dont la normale tombe dans l'arc avant du porteur est mis de
-côté (`blockedHits`) au lieu de blesser. Seule la direction vue de dessus
+pas : un impact dont la normale tombe dans l'arc avant du porteur
+(`isShieldedHit`) est mis de côté (`blockedHits`) au lieu de blesser. Seule la direction vue de dessus
 compte. Le rendu traite ces impacts comme du métal. `applyBlast` ne consulte
 pas le bouclier.
 
@@ -267,8 +269,9 @@ serait recompté ou un nouveau raté
 - `test/game/entities/rampant/rampant.test.ts` et
   `test/game/entities/vigile/vigile.test.ts` — configuration par espèce,
   préfixes d'apparition, arc du bouclier, tir dans le dos, souffle.
-- `test/game/session/progression/difficulty.test.ts` — multiplicateurs de PV
-  et de dégâts par espèce, configurations globales intactes.
+- `test/game/entities/shared/enemyTuning.test.ts` et `enemyShield.test.ts` —
+  multiplicateurs de PV et de dégâts par espèce, configurations globales
+  intactes ; arc du bouclier.
 - `test/game/entities/director/director.test.ts` — mêmes garanties + révélation,
   `justRevealed`, `DroppedCard`/`tryCollectCard`.
 - `test/game/entities/shared/lineOfSight.test.ts` — occlusion de ligne de vue

@@ -5,7 +5,8 @@
 import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 
-import { Gore, goreConfig, type SurfaceHit, type SurfaceProbe } from "../../../src/render/fx/gore";
+import { Gore } from "../../../src/render/fx/gore";
+import { goreConfig, type SurfaceHit, type SurfaceProbe } from "../../../src/render/fx/goreConfig";
 
 /** Petit générateur déterministe, local au test. */
 function rng(seed: number): () => number {

@@ -107,7 +107,8 @@ d'une classe ni d'un gestionnaire. Le Rampant et le Vigile sont faits ainsi.
 1. `src/game/entities/suit/suitConfig.ts` — ajoutez le nom à `SuitKind`.
 2. Un fichier de configuration qui part de `suitConfig` et ne redéfinit que
    ce qui change (`src/game/entities/vigile/vigileConfig.ts`). Deux options
-   existent : `melee` pour frapper au contact, `shield` pour un bouclier de face.
+   existent : `melee` pour frapper au contact, `shield` pour un bouclier de face
+   (`src/game/entities/shared/enemyShield.ts`).
 3. `src/game/entities/suit/suitManager.ts` — un `case` dans `configFor`.
 4. `src/game/session/spawning.ts` — un `case` dans `suitSheetFor`, et la
    planche chargée dans `src/main.ts`.

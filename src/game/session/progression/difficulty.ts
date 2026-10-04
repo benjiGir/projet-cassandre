@@ -45,23 +45,19 @@ export function wokenGroupSize(total: number, share: number): number {
   return Math.max(1, Math.min(total, Math.round(total * share)));
 }
 
-export interface DifficultyEffect {
-  readonly label: string;
-  readonly value: string;
-}
-
-function relative(scale: number): string {
-  const percent = Math.round((scale - 1) * 100);
-  if (percent === 0) return "normal";
-  return percent > 0 ? `+${percent} %` : `−${-percent} %`;
-}
-
-/** Ce qu'une difficulté change, en clair, pour l'écran de choix. */
-export function difficultyEffects(rules: DifficultyRules): DifficultyEffect[] {
-  return [
-    { label: "PV des ennemis", value: relative(rules.enemyHp) },
-    { label: "Dégâts reçus", value: relative(rules.enemyDamage) },
-    { label: "Renforts", value: `${Math.round(rules.groupShare * 100)} %` },
-    { label: "Dons du chat", value: relative(rules.donations) },
-  ];
+/**
+ * Les spawns d'un groupe qui apparaissent à son réveil : les premiers par
+ * ordre de nom, pour que le niveau décide de ceux qui restent en difficulté
+ * basse (`spawn_suit_arene_1` avant `spawn_suit_arene_2`). Comparaison par
+ * code de caractère, sans locale : le même ordre sur toutes les machines.
+ */
+export function wokenSpawns<T extends { readonly name: string; readonly group: string | null }>(
+  spawns: readonly T[],
+  groupe: string,
+  share: number,
+): T[] {
+  const group = spawns
+    .filter((spawn) => spawn.group === groupe)
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  return group.slice(0, wokenGroupSize(group.length, share));
 }

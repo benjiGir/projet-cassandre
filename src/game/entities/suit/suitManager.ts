@@ -10,6 +10,7 @@ import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "
 import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from "./suitConfig";
 import { rampantConfig } from "../rampant/rampantConfig";
 import { vigileConfig } from "../vigile/vigileConfig";
+import { isShieldedHit } from "../shared/enemyShield";
 import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
@@ -52,20 +53,6 @@ interface AggregatedHit {
 /** Graine de base + pas IMPAIR, même famille que `SHOTGUN_SPREAD_SEED` (`weapons.ts`) — jamais dérivées de `Math.random()`/`Date.now()`. */
 const BASE_SUIT_SEED = 0x5eed_c057;
 const SEED_STRIDE = 0x9e3779b1;
-
-/**
- * Le bouclier couvre l'avant du porteur : un impact dont la normale (le côté
- * du corps touché) tombe dans l'arc est arrêté. Vu de dessus seulement — on
- * ne passe pas par-dessus un bouclier en visant la tête.
- */
-function isShielded(suit: Suit, hit: HitEvent): boolean {
-  const shield = suit.cfg.shield;
-  if (!shield) return false;
-  const length = Math.hypot(hit.normal.x, hit.normal.z);
-  if (length < 1e-6) return false;
-  const facing = (hit.normal.x * suit.forward.x + hit.normal.z * suit.forward.z) / length;
-  return facing >= Math.cos((shield.halfArcDeg * Math.PI) / 180);
-}
 
 export class SuitManager {
   readonly suits: Suit[] = [];
@@ -297,7 +284,7 @@ export class SuitManager {
       const hitEvent = hitEvents[i]!;
       const suit = this.colliderToSuit.get(hitEvent.colliderHandle);
       if (!suit || !suit.isAlive) continue;
-      if (isShielded(suit, hitEvent)) {
+      if (isShieldedHit(suit.cfg.shield, suit.forward, hitEvent.normal)) {
         this._blockedHits.add(hitEvent);
         continue;
       }

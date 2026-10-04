@@ -29,10 +29,10 @@ import tempfile
 
 import bmesh
 import bpy
-from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/blender"))
+sys.path.insert(0, str(ROOT / "tools/level_v2"))
 import cassandre as C
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
@@ -91,28 +91,8 @@ RIDEAU_CENTRE = (8.0, 131.875)
 RIDEAU_HAUTEUR = 3.24
 RIDEAU_COURSE = 3.2
 
+# Rayon de capsule par espèce (`suitConfig.ts`, `rampantConfig.ts`, `vigileConfig.ts`).
 CAPSULES = {"spawn_suit_": 0.4, "spawn_rampant_": 0.35, "spawn_vigile_": 0.5}
-MARGE = 0.15
-HAUTEUR_LIBRE = 1.9
-MARCHE = 0.35
-
-
-def _boite_monde(obj):
-    pts = [obj.matrix_world @ Vector(v) for v in obj.bound_box]
-    return [min(p[i] for p in pts) for i in range(3)], [max(p[i] for p in pts) for i in range(3)]
-
-
-def _gene(x: float, y: float, sol: float, rayon: float):
-    """Premier collider ou prop qui rencontre une capsule posée en (x, y, sol), ou None."""
-    for obj in bpy.context.view_layer.objects:
-        if obj.type != "MESH" or not obj.name.startswith(("col_", "prop_")):
-            continue
-        mini, maxi = _boite_monde(obj)
-        if maxi[2] <= sol + MARCHE or mini[2] >= sol + HAUTEUR_LIBRE:
-            continue
-        if mini[0] - rayon < x < maxi[0] + rayon and mini[1] - rayon < y < maxi[1] + rayon:
-            return obj.name
-    return None
 
 
 def retirer() -> None:
@@ -126,12 +106,15 @@ def retirer() -> None:
 def poser_spawns(logic) -> list[str]:
     for nom, groupe in GROUPES_EXISTANTS.items():
         bpy.data.objects[nom]["groupe"] = groupe
+    # Même règle de place libre que le recalage des spawns du niveau : une seule définition.
+    from espaces import spawns as recalage
+    solides = recalage._solides()
     encombres = []
     for nom, groupe, x, y, z in SPAWNS:
-        rayon = next(r for prefixe, r in CAPSULES.items() if nom.startswith(prefixe)) + MARGE
-        gene = _gene(x, y, z, rayon)
-        if gene:
-            encombres.append(f"{nom} ({x}, {y}) rencontre {gene}")
+        rayon = next(r for prefixe, r in CAPSULES.items() if nom.startswith(prefixe)) + recalage.SPAWN_MARGE
+        gene = recalage._gene(solides, x, y, z, rayon)
+        if gene is not None:
+            encombres.append(f"{nom} ({x}, {y}) rencontre {gene.name}")
         obj = bpy.data.objects.new(nom, None)
         obj.empty_display_type = "PLAIN_AXES"
         obj.location = (x, y, z)

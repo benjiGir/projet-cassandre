@@ -3,13 +3,12 @@ import type { createRoot } from "react-dom/client";
 
 import { LEVEL_CHOICES, type LevelDef } from "../../game/level/catalog/levels";
 import { levelStory } from "../../game/session/presentation/storyPanels";
-import { DIFFICULTIES, DIFFICULTY_INFO, difficultyConfig, difficultyEffects } from "../../game/session/progression/difficulty";
+import { difficultyOptions } from "../../game/session/presentation/difficultyOptions";
 import { getDifficulty, setDifficulty } from "../../game/settings/difficultySettings";
-import { recordFor } from "../../game/settings/records";
 import { hasSeenIntro } from "../../game/settings/storySettings";
 import { LevelMenu } from "../../ui/dev/LevelMenu/LevelMenu";
 import { ZoneChooserLink } from "../../ui/dev/ZoneChooserLink/ZoneChooserLink";
-import { DifficultyScreen, type DifficultyOption } from "../../ui/screens/difficulty/DifficultyScreen/DifficultyScreen";
+import { DifficultyScreen } from "../../ui/screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { MainMenu } from "../../ui/screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../ui/screens/options/OptionsScreen/OptionsScreen";
 import { StoryPanels } from "../../ui/screens/story/StoryPanels/StoryPanels";
@@ -17,16 +16,6 @@ import { StoryPanels } from "../../ui/screens/story/StoryPanels/StoryPanels";
 // see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
 
 const MAIN_LEVEL = LEVEL_CHOICES.find((entry) => entry.id === "niveau_v2") ?? LEVEL_CHOICES[0];
-
-/** Les trois difficultés telles que l'écran de choix les montre, avec le record de `levelId` dans chacune. */
-export function difficultyOptions(levelId: string): DifficultyOption[] {
-  return DIFFICULTIES.map((id) => ({
-    id,
-    ...DIFFICULTY_INFO[id],
-    effects: difficultyEffects(difficultyConfig[id]),
-    record: recordFor(levelId, id),
-  }));
-}
 
 function chooseZone(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
   return new Promise((resolve) => {

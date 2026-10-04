@@ -46,8 +46,12 @@ lui-même (`recording.ts` positionne le joueur puis délègue à
 - `src/game/session/progression/perks.ts` — achat à une borne, effet d'un perk.
 - `src/game/session/stream/streamSim.ts` — simulation du direct, barème des
   dons (`streamConfig`) et journal du portefeuille.
-- `src/game/devtools/economy/` — relevé simulé du portefeuille et variantes
-  d'équilibrage ; `tools/economy/releve.mjs` l'exécute hors du jeu.
+- `src/game/devtools/economy/` — relevé simulé du portefeuille :
+  `economyProfiles.ts` (parcours et profils de joueur), `economySim.ts` (le
+  relevé), `economyVariants.ts` (variantes d'équilibrage) ;
+  `tools/economy/releve.mjs` l'exécute hors du jeu.
+- `src/game/session/presentation/difficultyOptions.ts` — ce que l'écran de
+  choix montre de chaque difficulté.
 - `src/game/session/progression/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
   inventaire des cartes de fidélité.
 - `src/game/session/progression/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
@@ -194,7 +198,8 @@ appelle `engine.flow.playerDied()` à la mort (gardé par `deathHandled`).
 - les gestionnaires d'ennemis reçoivent un réglage de PV et de dégâts, posé
   sur une copie de chaque configuration ;
 - la simulation du direct reçoit un multiplicateur de probabilité de don ;
-- le script de niveau ne réveille qu'une part d'un groupe (`wokenSpawns`).
+- le script de niveau ne réveille qu'une part d'un groupe (`wokenSpawns`, dans
+  `difficulty.ts`).
 
 Changer le réglage mémorisé en cours de partie n'a aucun effet sur elle.
 
@@ -279,10 +284,12 @@ code est facile, voir le glossaire.
 - `test/game/session/stream/streamSim.test.ts` et `streamTexts.test.ts` — déterminisme du direct, série de kills, ennui, délai entre dons, rythme du chat, et tenue des textes.
 - `test/game/session/progression/difficulty.test.ts`, `recap.test.ts`,
   `test/game/settings/records.test.ts` et `difficultySettings.test.ts` —
-  multiplicateurs, taille des groupes, générosité des dons, records par
-  difficulté, récapitulatif publié.
-- `test/game/devtools/economy.test.ts` — relevé déterministe, cible de la
-  variante B, accord entre `streamConfig`, la variante et les prix du niveau.
+  règles des trois difficultés, taille des groupes, records par difficulté,
+  récapitulatif publié. `test/game/session/presentation/difficultyOptions.test.ts`
+  — ce que l'écran de choix en montre.
+- `test/game/devtools/economy/economySim.test.ts` et
+  `economyVariants.test.ts` — relevé déterministe, cible de la variante B,
+  accord entre `streamConfig`, la variante et les prix du niveau.
 - `test/game/session/player/sanitaires.test.ts` — orchestration avec un rayon
   Rapier scripté (`RaycastService.test(...)`) ; la géométrie du « neartag »
   est couverte par `test/game/level/sanitaires/sanitaires.test.ts`.

@@ -21,7 +21,7 @@ import { suitConfig } from "../entities/suit/suitConfig";
 import { directorConfig } from "../entities/director/directorConfig";
 import { useGameStore } from "../hud/state";
 import { presentPlayerDamage } from "../session/player/feedback";
-import { isMovableOrBreakableHandle } from "../session/presentation/surfaceProbe";
+import { isMovableOrBreakableHandle } from "../level/loading/movableColliders";
 import { type GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import { astarMetricsSnapshot } from "../level/navigation/navSearch";
@@ -133,7 +133,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           const material = blocked ? SHIELD_MATERIAL : hit.material;
           const onEnemy = hit.material === FLESH_MATERIAL;
           const isEnemyHit = onEnemy && !blocked;
-          if (!onEnemy && !isMovableOrBreakableHandle(session, hit.colliderHandle)) {
+          if (!onEnemy && !isMovableOrBreakableHandle(session.gltfLevelSession, hit.colliderHandle)) {
             engine.fx.spawnImpactDecal(hit.point, hit.normal, hit.material);
           }
           engine.fx.spawnImpactParticles(hit.point, hit.normal, hit.weapon, material);

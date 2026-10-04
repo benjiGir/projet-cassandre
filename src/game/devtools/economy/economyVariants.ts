@@ -1,5 +1,5 @@
-import { perkPrices } from "../../player/perkConfig";
-import type { Perk } from "../../player/perks";
+import { offerPrice, perkPrices } from "../../player/perkConfig";
+import { PERKS, type Perk, type PerkOffer } from "../../player/perks";
 import { streamConfig, type StreamEventKind } from "../../session/stream/streamSim";
 import type { MysteryBeat } from "../../session/stream/streamTexts";
 
@@ -82,4 +82,14 @@ export function applyEconomyVariant(name: EconomyVariantId): EconomyVariant & { 
   Object.assign(perkPrices, variant.prices);
   console.info(`[économie] variante ${name} (${variant.label}) appliquée`);
   return { variant: name, ...variant };
+}
+
+/** Prix des six perks tels que la partie les pratique : ceux des bornes du niveau, variante à l'essai comprise. Un perk sans borne est hors de prix. */
+export function pricesInPlay(offers: readonly PerkOffer[]): Record<Perk, number> {
+  return Object.fromEntries(
+    PERKS.map((perk) => {
+      const offer = offers.find((candidate) => candidate.perk === perk);
+      return [perk, offer ? offerPrice(offer) : Infinity];
+    }),
+  ) as Record<Perk, number>;
 }

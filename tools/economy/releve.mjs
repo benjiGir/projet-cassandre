@@ -17,6 +17,7 @@ const toutes = args.includes("--toutes");
 const server = await createServer({ server: { middlewareMode: true }, appType: "custom", logLevel: "error" });
 try {
   const sim = await server.ssrLoadModule("/src/game/devtools/economy/economySim.ts");
+  const { PROFILES } = await server.ssrLoadModule("/src/game/devtools/economy/economyProfiles.ts");
   const eco = await server.ssrLoadModule("/src/game/devtools/economy/economyVariants.ts");
   const noms = toutes ? ["avant", ...Object.keys(eco.ECONOMY_VARIANTS)] : [option("--variante") ?? eco.ECONOMY_DEFAULT];
   const difficultes = toutes ? ["client", "habitue", "lanceur"] : [option("--difficulte") ?? "habitue"];
@@ -34,15 +35,15 @@ try {
       console.log(`\n-- ${difficulte} --`);
       console.log("profil        durée   dons  (mystère)  utiles   achetés min/méd/max   au mieux min/méd/max");
       const lignes = [];
-      for (const profil of Object.keys(sim.PROFILES)) {
+      for (const profil of Object.keys(PROFILES)) {
         const r = sim.summarize(profil, difficulte, variante.prices, graines);
         lignes.push(r);
         console.log(
-          `${sim.PROFILES[profil].label.padEnd(12)} ${String(r.minutes).padStart(5)}'  ${String(r.donated).padStart(4)} €  (${String(r.mystery).padStart(3)} €)   ${String(r.spendable).padStart(4)} €        ${r.bought.join(" / ")}                 ${r.best.join(" / ")}`,
+          `${PROFILES[profil].label.padEnd(12)} ${String(r.minutes).padStart(5)}'  ${String(r.donated).padStart(4)} €  (${String(r.mystery).padStart(3)} €)   ${String(r.spendable).padStart(4)} €        ${r.bought.join(" / ")}                 ${r.best.join(" / ")}`,
         );
       }
       for (const r of lignes) {
-        console.log(`   ${sim.PROFILES[r.profile].label} — solde médian devant chaque borne :`);
+        console.log(`   ${PROFILES[r.profile].label} — solde médian devant chaque borne :`);
         console.log("     " + r.wallets.map((w) => `${w.stop} ${w.wallet} €/${w.price} €`).join("  ·  "));
         console.log("     achat : " + Object.entries(r.perks).map(([p, part]) => `${p} ${Math.round(part * 100)} %`).join("  "));
       }
