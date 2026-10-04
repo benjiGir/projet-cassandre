@@ -4,7 +4,7 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
-## [Non publié] — v1.2 « Les sponsors »
+## [1.2.0] — 2026-10-04 — « Les sponsors »
 
 L'argent du direct sert à quelque chose, et le combat varie. En attente du
 playtest.
@@ -27,6 +27,13 @@ playtest.
 - Du sang qui reste : flaque sous un mort, giclée derrière un ennemi touché,
   taches aux murs et morceaux qui retombent quand un ennemi éclate, avec un
   son dédié.
+- Les annonces du magasin sont parlées : une voix souriante sort des
+  haut-parleurs aux caisses et pendant l'arène de la réserve, par-dessus le
+  héros.
+- L'enseigne Hyper Varan au-dessus de l'entrée du parking, avec ses lettres
+  défectueuses qui clignotent.
+- Quatre carnations pour les Costards et les Vigiles, qui restent lisibles
+  dans le parking sombre.
 
 ### Modifié
 
@@ -51,7 +58,7 @@ playtest.
 - Outils : `tools/blender/refresh_perk_kiosks.py`, `refresh_gas_props.py`,
   `refresh_encounters.py`, `tools/economy/releve.mjs`.
 
-## [Non publié] — v1.1 « Le live »
+## [1.1.0] — 2026-10-03 — « Le live »
 
 Le niveau raconte une histoire. En attente du playtest.
 
@@ -174,6 +181,8 @@ licence MIT.
 - Déploiement continu sur GitHub Pages ; le build embarque
   `THIRD_PARTY_LICENSES.txt`, les licences des dépendances incluses.
 
+[1.2.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.2.0
+[1.1.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.1.0
 [1.0.2]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.2
 [1.0.1]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.1
 [1.0.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.0
