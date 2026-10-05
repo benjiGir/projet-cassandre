@@ -7,6 +7,8 @@ import { ToyDebris } from "./toyDebris";
 import { WaterJets } from "./waterJets";
 import { Explosions } from "./explosions";
 import { Gore } from "./gore";
+import { EnemyAppearances } from "./enemyAppearances";
+import type { BillboardSprite } from "../sprites/billboard";
 import type { SurfaceProbe } from "./goreConfig";
 
 // see: docs/6-reference/notes-code-rendu.md#effets-et-allocation
@@ -19,8 +21,9 @@ export class FxSystem {
   private readonly water: WaterJets;
   private readonly explosions: Explosions;
   private readonly gore: Gore;
+  private readonly appearances: EnemyAppearances;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, enemyAtlases: readonly THREE.Texture[] = []) {
     // Une seule lecture du flux cosmétique, partagée dans le même ordre d'appels.
     const nextRandom = () => this.random();
     this.shake = new CameraShake(nextRandom);
@@ -30,6 +33,7 @@ export class FxSystem {
     this.water = new WaterJets(scene, nextRandom);
     this.explosions = new Explosions(scene, nextRandom);
     this.gore = new Gore(scene, nextRandom);
+    this.appearances = new EnemyAppearances(scene, enemyAtlases);
   }
 
   setRandom(random: () => number): void { this.random = random; }
@@ -42,6 +46,7 @@ export class FxSystem {
     this.water.clearWaterJets();
     this.explosions.reset();
     this.gore.reset();
+    this.appearances.reset();
     // La sonde appartient à la partie qui vient de finir : son monde physique va être libéré.
     this.gore.setSurfaceProbe(null);
   }
@@ -88,6 +93,13 @@ export class FxSystem {
   }
   warmMuzzleFlashes(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.flashes.warm(camera, render);
+  }
+  spawnEnemyAppearance(sprite: BillboardSprite, feetY: number): void { this.appearances.spawn(sprite, feetY); }
+  followEnemyAppearance(sprite: BillboardSprite, progress: number, alive: boolean): void {
+    this.appearances.follow(sprite, progress, alive);
+  }
+  warmEnemyAppearances(camera: THREE.Camera, render: () => void): Promise<void> {
+    return this.appearances.warm(camera, render);
   }
   /** Boule de feu et éclats incandescents d'un prop `gaz` qui saute. */
   spawnExplosion(point: THREE.Vector3): void {

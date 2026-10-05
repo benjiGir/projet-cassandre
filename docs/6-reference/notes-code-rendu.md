@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Contrats locaux du rendu
@@ -389,3 +389,40 @@ le masque n'écrivent rien.
 l'écran de chargement du niveau, avec la racine précédente détachée au
 hot reload. La frontière asynchrone reste dans `spawning.ts`.
 Référence API : [MeshBasicNodeMaterial](https://threejs.org/docs/pages/MeshBasicNodeMaterial.html).
+
+## Matérialisation des embuscades
+
+Seule l'action `reveiller` de `levelScriptActions.ts` appelle `spawnSuitAt`
+avec `materialize: true`. Le Directeur et les ennemis présents au chargement
+gardent leur apparition habituelle. La durée canonique est
+`ENEMY_MATERIALIZATION_DURATION`, 42 pas à 60 Hz, dans
+`src/game/entities/shared/enemySpawnConfig.ts`.
+
+`SuitManager` avance le délai de chaque ennemi avant de traiter les dégâts.
+Un ennemi vivant en cours d'apparition ne reçoit aucun tick d'IA ; il garde
+son collider et peut être blessé ou tué. Une mort continue immédiatement son
+animation normale. Pause et hitstop arrêtent ou ralentissent ce délai comme
+le reste de la simulation. Le rendu ne décide jamais quand l'IA démarre.
+
+`EnemyAppearances` prête un `MeshBasicNodeMaterial` au quad existant :
+cellules de quatre texels environ, fragments turquoise, puis révélation du
+sprite de bas en haut par une bande claire. Le masque conserve l'alpha de
+l'atlas et écrit la profondeur, sans fondu transparent. La banque d'atlas
+est fournie par `gameEngine.ts` ; un indice par mesh choisit le sampler dans
+le shader partagé. Les UV reprennent l'offset et le repeat du billboard.
+Le partage évite de multiplier les groupes d'uniformes WebGL. Aucun atlas
+supplémentaire, aucun tirage RNG et aucune horloge murale ne sont ajoutés.
+
+Un quad horizontal porte deux anneaux et des segments tournants procéduraux.
+Son masque écrit la profondeur, sinon un sol opaque dessiné après lui le
+recouvrirait. Il ajoute un lot temporaire, sans lampe. `interpolateVisuals` suit le sprite,
+lit `Suit.appearanceProgress` et retire l'anneau à la fin ou à la mort.
+Le matériau Lambert original reste possédé par `BillboardSprite.material` ;
+ses flashes de dégâts et sa teinte continuent d'y être écrits. Le matériau
+TSL appartient au système persistant, jamais au billboard.
+
+`warmFxShaders` dessine le matériau et l'anneau deux fois sous le chargement,
+sur le framebuffer écran. Le premier groupe d'embuscade réutilise ces
+programmes. `resetSession` restaure tous les matériaux et retire les anneaux.
+Les outils `spawnSuit`, `spawnRampant` et `spawnVigile` acceptent un quatrième
+argument `true` pour regarder cette arrivée isolément.

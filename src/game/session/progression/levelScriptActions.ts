@@ -25,7 +25,7 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
       );
       const woken = session.levelScript.woken.get(action.groupe) ?? [];
       for (const spawn of group) {
-        woken.push(spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind));
+        woken.push(spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind, true));
       }
       session.levelScript.woken.set(action.groupe, woken);
       return;

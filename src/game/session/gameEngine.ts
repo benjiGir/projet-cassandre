@@ -115,7 +115,9 @@ export function buildGameEngine(
   // L'objet reste vivant à travers un reset ; `bootGameSession` remet son
   // temps écoulé et tout hitstop actif à zéro.
   const clock = new GameClock();
-  const fx = new FxSystem(scene);
+  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile]
+    .flatMap((sheet) => Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined));
+  const fx = new FxSystem(scene, enemyAtlases);
   const viewmodel = new Viewmodel(camera, weaponModels);
   const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);

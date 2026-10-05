@@ -1,0 +1,1 @@
+export const ENEMY_MATERIALIZATION_DURATION = 42 / 60;

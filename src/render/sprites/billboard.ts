@@ -40,7 +40,8 @@ const DEFAULT_ALPHA_TEST = 0.5;
 const DEFAULT_COLOR = 0xffffff;
 
 export class BillboardSprite {
-  readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshLambertMaterial>;
+  readonly mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.Material>;
+  readonly material: THREE.MeshLambertMaterial;
 
   private readonly scene: THREE.Scene;
   // Les offsets UV sont propres à chaque instance ; ne pas partager la texture.
@@ -89,6 +90,7 @@ export class BillboardSprite {
     });
 
     applyMinimumLight(material, options.minimumLight ?? 0);
+    this.material = material;
 
     this.mesh = new THREE.Mesh(geometry, material);
     this.scene.add(this.mesh);
@@ -139,11 +141,11 @@ export class BillboardSprite {
     next.offset.copy(this.texture.offset);
     this.texture.dispose();
     this.texture = next;
-    this.mesh.material.map = next;
+    this.material.map = next;
   }
 
   setTint(color: number): void {
-    this.mesh.material.color.set(color);
+    this.material.color.set(color);
   }
 
   // Déclenche au dégât ; décroissance cosmétique en temps réel, sans sommation.
@@ -160,14 +162,14 @@ export class BillboardSprite {
     this.flashIntensity *= Math.exp(-this.flashDecayRate * realDt);
     if (this.flashIntensity < FLASH_EPSILON) this.flashIntensity = 0;
 
-    this.mesh.material.emissive.setScalar(this.flashIntensity);
+    this.material.emissive.setScalar(this.flashIntensity);
   }
 
   // Libère les ressources de cette instance, jamais celles de l’atlas partagé.
   dispose(): void {
     this.scene.remove(this.mesh);
     this.mesh.geometry.dispose();
-    this.mesh.material.dispose();
+    this.material.dispose();
     this.texture.dispose();
   }
 }

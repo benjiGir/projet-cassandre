@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Rendu
@@ -93,8 +93,8 @@ prochain paint. Au hot reload, l'ancienne racine est temporairement détachée
 pour que ses lampes ne participent pas au shader du candidat : l'adaptateur
 parcourt aussi les lampes invisibles. Elle est remise en place avant le
 commit ou son éventuelle annulation.
-La boule de feu des explosions (`src/render/fx/explosions.ts`) est le second
-matériau TSL du jeu. `spawning.ts::warmExplosionShader` la prépare juste après
+La boule de feu des explosions (`src/render/fx/explosions.ts`) utilise aussi
+un matériau TSL. `spawning.ts::warmFxShaders` la prépare juste après
 les douches, par la même recette : une boule placée devant la caméra, deux
 rendus réels, puis un rendu qui efface l'image. Son matériau est unique et
 partagé par tout le pool ; l'âge et la graine de chaque boule sont lus sur son
@@ -213,3 +213,17 @@ Le flash suit le bout du canon affiché et son orientation pendant le recul.
 Les deux lampes du pool restent présentes à intensité nulle au repos.
 Les dimensions, durées et limites sont consignées dans
 [Éclairs de tir TSL](../6-reference/notes-code-rendu.md#éclairs-de-tir-tsl).
+
+### Apparition des renforts
+
+Les groupes réveillés par une embuscade se matérialisent pendant 0,7 s :
+silhouette turquoise en pixels, balayage montant et anneau au sol.
+`enemyAppearances.ts` prête un matériau TSL partagé aux billboards, puis
+restaure leur matériau Lambert. Toutes les espèces et variantes de peau
+restent issues de leurs atlas habituels. Les ennemis restent touchables,
+mais leur IA attend la fin de l'apparition avant de commencer.
+
+Le temps vient du pas fixe de `SuitManager`, le rendu lit sa progression
+dans `interpolateVisuals`. Les ennemis présents au chargement n'ont pas
+cet effet. Les shaders sont préparés par `warmFxShaders` sous le chargement.
+Contrat : [Matérialisation des embuscades](../6-reference/notes-code-rendu.md#matérialisation-des-embuscades).

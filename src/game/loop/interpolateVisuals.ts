@@ -93,6 +93,7 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
           const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
           const row = enemySpriteRow(suitSheetFor(engine, suit.kind), suit.animation(enemyAnimationScratch));
           sprite.updatePose(engine.camera, pos, fwd, row);
+          engine.fx.followEnemyAppearance(sprite, suit.appearanceProgress, suit.isAlive);
         }
 
         // Même chose pour le Directeur (au plus un, mais `directors` reste un
