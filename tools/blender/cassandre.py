@@ -331,6 +331,14 @@ def rework_accesses(preview: str | None = None) -> dict:
     return result
 
 
+def weapon_kick(preview: str | None = None) -> dict:
+    """Chaussure et bas de pantalon du coup de pied, ajoutés aux armes existantes."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_weapon_kick.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def rework_vending(preview: str | None = None) -> dict:
     """Huit distributeurs de soda, snacks et café ; conserve colliders et contenu."""
     args = ("--preview", str(Path(preview).resolve())) if preview else ()

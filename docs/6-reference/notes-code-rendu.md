@@ -221,6 +221,16 @@ descente : aucune animation ne bloque une action. Les durées sont centralisées
 dans `VIEWMODEL_TIMING`. Le pistolet utilise seulement le recul commun.
 Le pied-de-biche pivote au coude, sinon l'avant-bras barre l'image.
 
+`vm_kick` ajoute une bottine de travail en cuir, son bout bombé, ses lacets
+croisés, sa semelle crantée et un bas de pantalon au même
+fichier d'armes. `weapons/kick.py` partage le constructeur entre le build complet
+et `cassandre.weapon_kick()`, une retouche locale des armes existantes.
+La géométrie décrit l'extension maximale ; `kickAnimation.ts` calcule une
+enveloppe depuis l'horloge interpolée de gameplay et `kickConfig`.
+Le pied entre depuis le bas droit, avance, marque le contact puis se retire.
+Il est invisible au repos et dès qu'une arme est équipée. La pose du pied
+ne pilote aucun dégât : le contact Rapier appartient au pas fixe.
+
 La profondeur des armes est comprimée dans [0, 0,05] pour éviter que le canon
 entre dans un mur proche, sans perdre l'occlusion entre main et arme.
 `WebGLState` ne pilote pas `depthRange` ; le callback de fin rétablit [0, 1]

@@ -1,3 +1,4 @@
+import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import * as THREE from "three";
 import { WATER_GEOMETRY, WATER_MATERIAL } from "./waterResources";
 
@@ -113,7 +114,7 @@ export class ToyDebris {
     list.length = 0;
   }
 
-  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun", material: string) {
+  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: FiringWeapon, material: string) {
     const count = weapon === "shotgun" ? PARTICLES_PER_HIT_SHOTGUN : PARTICLES_PER_HIT_MELEE;
     const particleMaterial = material === FLESH_SURFACE ? BLOOD_MATERIAL : PARTICLE_MATERIAL;
 

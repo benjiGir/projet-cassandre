@@ -8,6 +8,7 @@ du « Man in Long Sleeves » CC0 de Quaternius (voir
 `assets_src/LICENCES_ASSETS.md`), et exporte `public/assets/weapons/armes.glb` :
 
     vm_crowbar        pied-de-biche + avant-bras droit
+    vm_kick           chaussure et bas de pantalon à l'extension du coup
     vm_pistol         pistolet + avant-bras droit
     vm_shotgun        pompe (carcasse, canon) + avant-bras droit
       vm_shotgun_pump   fût mobile + avant-bras gauche (glisse au pompage)
@@ -49,6 +50,7 @@ from weapons.geometry import srgb_lineaire, nouveau_mesh, teindre, pave, tube, b
 from weapons.pistol import construire_pistolet
 from weapons.shotgun import construire_pompe
 from weapons.hands import construire_main
+from weapons.kick import construire_coup_de_pied
 
 SOURCE = "assets_src/cc0_raw/quaternius_man_long_sleeves/man_long_sleeves.glb"
 # Gabarit des BRAS, pas du héros : à 1,80 m, un bras de 56 cm ne peut pas tenir
@@ -573,8 +575,10 @@ def main() -> int:
         if o.type in {"ARMATURE", "EMPTY"} or o is mesh:
             bpy.data.objects.remove(o)
     world_crowbar, world_pistol, world_shotgun = armes_au_sol()
+    vm_kick = construire_coup_de_pied()
 
     vues = {
+        "coup_de_pied": {"vm_kick"},
         "pied_de_biche": {"vm_crowbar"},
         "pistolet": {"vm_pistol"},
         "pompe": {"vm_shotgun", "vm_shotgun_pump"},
@@ -582,7 +586,7 @@ def main() -> int:
     rendre_vues(scene, vues, renders)
     if "--debug" in args:
         rendre_debug(scene, vues, renders)
-    exporter(out, [vm_crowbar, vm_pistol, vm_shotgun, vm_pump,
+    exporter(out, [vm_kick, vm_crowbar, vm_pistol, vm_shotgun, vm_pump,
                    world_crowbar, world_pistol, world_shotgun])
     if "--blend" in args:
         sauver_source(scene, arg_value(args, "--blend", "assets_src/blender/armes.blend"))

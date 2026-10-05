@@ -10,6 +10,7 @@ import { RaycastService } from "../../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../../physics/world";
 import { approach } from "../movement/controller";
 import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig";
+import { kickConfig } from "./kickConfig";
 const TAU = Math.PI * 2;
 
 /** Valeur plafond des horloges du viewmodel : « il y a très longtemps ». */
@@ -60,6 +61,8 @@ export class WeaponSystem {
   private readonly cfg: WeaponConfig;
 
   private meleeCooldownRemaining = 0;
+  private kickCooldownRemaining = 0;
+  private kickImpactRemaining: number | null = null;
   private pistolCooldownRemaining = 0;
   private shotgunCooldownRemaining = 0;
 
@@ -72,6 +75,8 @@ export class WeaponSystem {
   private recoilRecoverTime = 0;
 
   private sinceMeleeFire = CLOCK_AT_REST;
+  private sinceKickFire = CLOCK_AT_REST;
+  private previousSinceKickFire = CLOCK_AT_REST;
   private previousSinceMeleeFire = CLOCK_AT_REST;
   private sincePistolFire = CLOCK_AT_REST;
   private previousSincePistolFire = CLOCK_AT_REST;
@@ -127,6 +132,7 @@ export class WeaponSystem {
 
   /** À appeler avant `update`, au même endroit que `player.snapshotPrevious()`. */
   snapshotPrevious() {
+    this.previousSinceKickFire = this.sinceKickFire;
     this.previousSinceMeleeFire = this.sinceMeleeFire;
     this.previousSincePistolFire = this.sincePistolFire;
     this.previousSinceShotgunFire = this.sinceShotgunFire;
@@ -143,6 +149,9 @@ export class WeaponSystem {
     this.activeWeapon = "none";
     this.shownWeapon = "none";
     this.switchedFrom = "none";
+    this.kickImpactRemaining = null;
+    this.kickCooldownRemaining = 0;
+    this.sinceKickFire = this.previousSinceKickFire = CLOCK_AT_REST;
   }
 
   pickUpMelee(): void {
@@ -214,6 +223,7 @@ export class WeaponSystem {
     out.active = this.activeWeapon;
     out.previous = this.switchedFrom;
     out.sinceSwitch = THREE.MathUtils.lerp(this.previousSinceSwitch, this.sinceSwitch, alpha);
+    out.sinceKickFire = THREE.MathUtils.lerp(this.previousSinceKickFire, this.sinceKickFire, alpha);
     out.sinceMeleeFire = THREE.MathUtils.lerp(this.previousSinceMeleeFire, this.sinceMeleeFire, alpha);
     out.sincePistolFire = THREE.MathUtils.lerp(this.previousSincePistolFire, this.sincePistolFire, alpha);
     out.sinceShotgunFire = THREE.MathUtils.lerp(this.previousSinceShotgunFire, this.sinceShotgunFire, alpha);
@@ -224,18 +234,20 @@ export class WeaponSystem {
     const cfg = this.cfg;
 
     this.sinceMeleeFire = Math.min(CLOCK_AT_REST, this.sinceMeleeFire + dt);
+    this.sinceKickFire = Math.min(CLOCK_AT_REST, this.sinceKickFire + dt);
     this.sincePistolFire = Math.min(CLOCK_AT_REST, this.sincePistolFire + dt);
     this.sinceShotgunFire = Math.min(CLOCK_AT_REST, this.sinceShotgunFire + dt);
     this.sinceSwitch = Math.min(CLOCK_AT_REST, this.sinceSwitch + dt);
 
     this.meleeCooldownRemaining = Math.max(0, this.meleeCooldownRemaining - dt);
+    this.kickCooldownRemaining = Math.max(0, this.kickCooldownRemaining - dt);
     this.pistolCooldownRemaining = Math.max(0, this.pistolCooldownRemaining - dt);
     this.shotgunCooldownRemaining = Math.max(0, this.shotgunCooldownRemaining - dt);
 
     // Le joueur ne peut pas se rééquiper d'une arme qu'il n'a pas ramassée en
     // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
     // pied-de-biche pendant que le joueur est censé être désarmé.
-    if (frame.switchToMelee && this.hasMelee) this.activeWeapon = "melee";
+    if (frame.switchToMelee) this.activeWeapon = this.hasMelee ? "melee" : "none";
     if (frame.switchToPistol && this.hasPistol) this.activeWeapon = "pistol";
     if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
     // Un ramassage (`pickUp*`, appelé par l'interaction APRÈS ce pas) est vu
@@ -248,11 +260,28 @@ export class WeaponSystem {
 
     this.recoilEnvelope = approach(this.recoilEnvelope, 0, this.recoilRecoverTime, dt, 1);
 
+    if (this.kickImpactRemaining !== null) {
+      if (this.activeWeapon !== "none") {
+        this.kickImpactRemaining = null;
+      } else {
+        this.kickImpactRemaining -= dt;
+        if (this.kickImpactRemaining <= 1e-8) {
+          this.kickImpactRemaining = null;
+          this.hitKick(eyeOrigin, yaw, pitch);
+        }
+      }
+    }
+
     if (frame.fire) {
-      // Garde défensive explicite sur `hasMelee` : en théorie le garde du
-      // switch ci-dessus empêche déjà `activeWeapon` de valoir `"melee"`
-      // sans `hasMelee`, mais explicite vaut mieux qu'implicite ici.
-      if (this.activeWeapon === "melee" && this.hasMelee) {
+      if (this.activeWeapon === "none") {
+        if (this.kickCooldownRemaining <= 0) {
+          this.computeAimBasis(yaw, pitch);
+          this._fireEvents.push({ weapon: "kick", muzzlePosition: eyeOrigin.clone(), muzzleDirection: this.aimForward.clone() });
+          this.sinceKickFire = this.previousSinceKickFire = 0;
+          this.kickImpactRemaining = kickConfig.strike;
+          this.kickCooldownRemaining = kickConfig.cooldown;
+        }
+      } else if (this.activeWeapon === "melee" && this.hasMelee) {
         if (this.meleeCooldownRemaining <= 0) {
           this.fireMelee(eyeOrigin, yaw, pitch);
           this.sinceMeleeFire = 0;
@@ -281,9 +310,6 @@ export class WeaponSystem {
         // Sinon : cooldown non écoulé OU munitions à 0 — clic à sec, RAF.
         // (Un futur son de clic à sec est un stretch, cf. `weaponConfig.ts`.)
       }
-      // Sinon (`activeWeapon === "none"`, joueur désarmé) : ne fait RIEN —
-      // même discipline que les tentatives à sec ci-dessus. Pas de crash,
-      // pas d'animation.
     }
   }
 
@@ -315,6 +341,28 @@ export class WeaponSystem {
     this.recoilKickPosition.set(kick.kickX, kick.kickY, kick.kickZ);
     this.recoilKickPitch = THREE.MathUtils.degToRad(kick.kickPitchDeg);
     this.recoilRecoverTime = kick.recoverTime;
+  }
+
+  private hitKick(eyeOrigin: THREE.Vector3, yaw: number, pitch: number): void {
+    this.computeAimBasis(yaw, pitch);
+    const hit = runGameplaySync(RaycastService.use((raycast) => raycast.castShape(
+      this.physics, eyeOrigin, { x: 0, y: 0, z: 0, w: 1 }, this.aimForward,
+      new RAPIER.Ball(kickConfig.hitRadius), 0, Math.max(0, kickConfig.range - kickConfig.hitRadius), true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, COLLISION_GROUPS.PLAYER_SHOT,
+    )));
+    if (!hit) return;
+    const center = this.meleeCenterScratch.copy(eyeOrigin).addScaledVector(this.aimForward, hit.time_of_impact);
+    const projection = this.physics.world.projectPoint(center, false, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+      COLLISION_GROUPS.PLAYER_SHOT, undefined, undefined, (collider) => collider.handle === hit.collider.handle);
+    if (!projection) return;
+    const point = new THREE.Vector3(projection.point.x, projection.point.y, projection.point.z);
+    const normal = new THREE.Vector3().subVectors(center, point);
+    if (normal.lengthSq() < 1e-8) normal.copy(this.aimForward).negate();
+    else normal.normalize();
+    const material = this.materialForCollider(hit.collider);
+    this._hitEvents.push({ point, normal, material, weapon: "kick", colliderHandle: hit.collider.handle,
+      distance: eyeOrigin.distanceTo(point) });
+    this.triggerHitstopFor(material);
   }
 
   // see: docs/archive/systems-armes.md#pied-de-biche-portée-en-capsule

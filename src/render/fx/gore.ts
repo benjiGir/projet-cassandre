@@ -1,3 +1,4 @@
+import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import * as THREE from "three";
 
 import { GoreChunks } from "./goreChunks";
@@ -70,7 +71,7 @@ export class Gore {
   }
 
   /** Un ennemi touché saigne sur ce qu'il y a derrière lui : le mur d'abord, à défaut le sol. */
-  spawnSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun"): void {
+  spawnSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: FiringWeapon): void {
     if (this.random() >= goreConfig.hitSprayChance[weapon]) return;
     const size = this.between(goreConfig.hitSpraySize);
     if (this.splatAlong(point, direction, goreConfig.hitSprayRange, size, 0)) return;

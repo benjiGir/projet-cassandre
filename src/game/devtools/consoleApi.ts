@@ -24,6 +24,7 @@ import {
 } from "../player/weapons/weaponConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
+import { kickConfig, KICK_VARIANTS } from "../player/weapons/kickConfig";
 import { Suit } from "../entities/suit/suit";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suit/suitConfig";
 import { Director } from "../entities/director/director";
@@ -108,6 +109,8 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.weapons;
     },
     weaponConfig,
+    kickConfig,
+    kickVariants: KICK_VARIANTS,
     recoilVariants: RECOIL_VARIANTS,
     recoilInterpolationVariants: RECOIL_INTERPOLATION_VARIANTS,
     applyRecoilVariant,
@@ -398,6 +401,8 @@ declare global {
       feelVariants: typeof FEEL_VARIANTS;
       applyFeelVariant: (name: keyof typeof FEEL_VARIANTS) => ReturnType<typeof applyFeelVariant>;
       weapons: WeaponSystem;
+      kickConfig: typeof kickConfig;
+      kickVariants: typeof KICK_VARIANTS;
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;

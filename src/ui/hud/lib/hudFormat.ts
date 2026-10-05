@@ -11,7 +11,7 @@ export function ammoLabel(ammo: AmmoFields): string {
     case "melee":
       return "PIED-DE-BICHE";
     case "none":
-      return "À MAINS NUES";
+      return "COUP DE PIED";
     default:
       return ammo.activeWeapon satisfies never;
   }

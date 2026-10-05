@@ -1,3 +1,4 @@
+import { kickConfig } from "../player/weapons/kickConfig";
 import * as THREE from "three";
 import { Effect } from "effect";
 
@@ -104,7 +105,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
 
       yield* Effect.sync(() => {
         for (const event of session.weapons.fireEvents) {
-          if (event.weapon !== "melee") {
+          if (event.weapon === "pistol" || event.weapon === "shotgun") {
             engine.fx.spawnMuzzleFlash(
               engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon),
               engine.viewmodel.muzzleWorldDirection(muzzleDirectionScratch, event.weapon),
@@ -118,14 +119,14 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           // Réticule : pulsation à CHAQUE tir déclenché (indépendant d'un hit,
           // voir `CrosshairOverlay.notifyFire`), no-op si désactivée en config.
           engine.crosshair.notifyFire();
-          if (event.weapon !== "melee" && event.pelletEndpoints) {
+          if ((event.weapon === "pistol" || event.weapon === "shotgun") && event.pelletEndpoints) {
             engine.ballisticsDebug.recordShotgunFire(event.muzzlePosition, event.pelletEndpoints);
-          } else if (event.weapon === "melee") {
+          } else if (event.weapon === "melee" || event.weapon === "kick") {
             engine.ballisticsDebug.recordMeleeFire(
               event.muzzlePosition,
               event.muzzleDirection,
-              weaponConfig.meleeRange,
-              weaponConfig.meleeHitRadius,
+              event.weapon === "kick" ? kickConfig.range : weaponConfig.meleeRange,
+              event.weapon === "kick" ? kickConfig.hitRadius : weaponConfig.meleeHitRadius,
             );
           }
         }

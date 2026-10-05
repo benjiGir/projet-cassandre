@@ -1,3 +1,4 @@
+import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import { Howl, Howler } from "howler";
 
 import {
@@ -102,7 +103,7 @@ export function listSfx(): { id: SfxId; recette: string; present: boolean }[] {
   }));
 }
 
-export function playWeaponFireSfx(weapon: "melee" | "pistol" | "shotgun") {
+export function playWeaponFireSfx(weapon: FiringWeapon) {
   playSfx(WEAPON_FIRE_SFX[weapon]);
 }
 

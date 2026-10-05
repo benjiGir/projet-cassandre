@@ -2,7 +2,7 @@
 title: Contrats du joueur et des armes
 tags: [gameplay, joueur, armes, code]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-05
 ---
 
 # Contrats du joueur et des armes
@@ -51,6 +51,31 @@ Le bit d’appartenance `ENEMY` détermine le matériau `flesh` ; le masque de f
 ne doit pas être testé à sa place. Les murs utilisent actuellement `concrete`.
 Le hitstop est posé à la source, une seule fois par impact ; le rendu applique
 shake, particules et son sans recalculer les dégâts.
+
+## Coup de pied
+
+L'état d'équipement `none` signifie sans arme ramassée ; le clic de tir y
+déclenche l'attaque `kick`. Elle ne consomme aucune munition et ne bénéficie
+pas du perk réservé au pied-de-biche. `kickConfig.ts` centralise les valeurs
+de départ : portée 1,45 m, rayon de contact 0,24 m, dégâts 20, intervalle
+0,55 s, extension 0,10 s, maintien 0,05 s et retour 0,24 s.
+
+Le déclenchement publie un `FireEvent`. Le contact est différé jusqu'à la fin
+de l'extension, au pas fixe, puis une sphère Rapier balaie la visée courante
+et s'arrête au premier obstacle. Son rayon est retiré de la distance balayée
+pour respecter la portée totale. Un changement d'arme annule le contact en
+attente ; le joueur continue à bouger et à sauter pendant le coup.
+
+Le `HitEvent` reprend dégâts, casse, impulsion des props, sang, son et hitstop
+existants. Le coup de pied n'a ni flash de canon ni douille.
+`ViewmodelClocks.sinceKickFire` est toujours publié par `WeaponSystem` ; il reste
+optionnel pour les sources de présentation anciennes, qui valent au repos.
+
+Le panneau `KickTuning` et `cassandre.kickConfig` exposent les réglages à chaud.
+`KICK_VARIANTS` propose Vif, Franc (départ) et Lourd, avec portée et dégâts
+identiques. F9/F10 permet de comparer les variantes sur la même séquence
+enregistrée avant le premier ramassage d'arme. Le choix du rythme reste à
+playtester.
 
 ## Géométrie des attaques
 

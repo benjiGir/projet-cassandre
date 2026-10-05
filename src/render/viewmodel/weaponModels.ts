@@ -63,6 +63,8 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
     const pump = node("vm_shotgun_pump");
 
     const models: WeaponModels = {
+      kick: node("vm_kick").geometry,
+      kickPivot: vec3(extra("vm_kick", "prise"), "vm_kick.prise"),
       crowbar: crowbar.geometry,
       pistol: pistol.geometry,
       shotgun: shotgun.geometry,
@@ -79,7 +81,7 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       pumpAxis: vec3(extra("vm_shotgun_pump", "axe_glissiere"), "vm_shotgun_pump.axe_glissiere").normalize(),
       material,
     };
-    for (const geometry of [models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
+    for (const geometry of [models.kick, models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
       geometries.delete(geometry);
     }
     return models;
@@ -103,6 +105,8 @@ function coloredBox(size: [number, number, number], center: [number, number, num
 
 export function placeholderWeaponModels(): WeaponModels {
   return {
+    kick: coloredBox([0.20, 0.28, 0.15], [0.12, -0.30, -0.72], 0x38342e),
+    kickPivot: new THREE.Vector3(0.12, -0.45, -0.62),
     crowbar: coloredBox([0.06, 0.06, 0.7], [0.32, -0.28, -0.55], 0x8a5a34),
     pistol: coloredBox([0.06, 0.1, 0.26], [0.26, -0.26, -0.45], 0x3a3d44),
     shotgun: coloredBox([0.09, 0.12, 0.85], [0.3, -0.3, -0.65], 0x555a60),

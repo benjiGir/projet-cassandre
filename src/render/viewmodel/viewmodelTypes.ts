@@ -7,6 +7,8 @@ export interface ViewmodelSource {
 }
 
 export interface WeaponModels {
+  kick: THREE.BufferGeometry;
+  kickPivot: THREE.Vector3;
   crowbar: THREE.BufferGeometry;
   pistol: THREE.BufferGeometry;
   shotgun: THREE.BufferGeometry;

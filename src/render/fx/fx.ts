@@ -1,3 +1,4 @@
+import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import type * as THREE from "three";
 
 import { CameraShake } from "./cameraShake";
@@ -66,14 +67,14 @@ export class FxSystem {
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string): void {
     this.decals.spawnImpactDecal(point, normal, material);
   }
-  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun", material: string): void {
+  spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: FiringWeapon, material: string): void {
     this.debris.spawnImpactParticles(point, normal, weapon, material);
   }
   spawnShellCasing(position: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnShellCasing(position, direction); }
   /** Un ennemi explose : flaque, giclées et morceaux qui retombent — voir `gore.ts`. */
   spawnGibs(point: THREE.Vector3, direction: THREE.Vector3): void { this.gore.spawnGibs(point, direction); }
   /** Giclée sur le décor derrière un ennemi touché. */
-  spawnBloodSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: "melee" | "pistol" | "shotgun"): void {
+  spawnBloodSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: FiringWeapon): void {
     this.gore.spawnSpray(point, direction, weapon);
   }
   /** Flaque qui s'étale sous un ennemi mort sur place. */

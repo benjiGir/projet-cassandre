@@ -1,3 +1,4 @@
+import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import type { DoorMovement } from "../../game/level/doors/doorTypes";
 import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxDef, SfxId } from "./audioTypes";
 
@@ -40,7 +41,8 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   rampant_death: { sprite: "rampant_death", volume: 0.85, pitch: 0.1 },
 };
 
-export const WEAPON_FIRE_SFX: Record<"melee" | "pistol" | "shotgun", SfxId> = {
+export const WEAPON_FIRE_SFX: Record<FiringWeapon, SfxId> = {
+  kick: "melee_fire",
   pistol: "pistol_fire",
   melee: "melee_fire",
   shotgun: "shotgun_fire",

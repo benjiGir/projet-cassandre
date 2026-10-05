@@ -28,6 +28,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
 | `rework_accesses(preview=…)` | remplace les cinq commandes de porte par des lecteurs marqués ou des poussoirs verts ; abaisse le local secret de la cafétéria au sol et le cache derrière un distributeur coulissant ; sauvegarde, exporte et rend les aperçus ; rejouable |
 | `rework_vending(preview=…)` | reprend les huit autres distributeurs avec trois façades (soda, snacks, café), des produits visibles et des commandes en relief ; conserve les emplacements, colliders, bornes de sponsor et contenus des trois machines cassables ; sauvegarde, exporte et rend une planche ; rejouable |
+| `weapon_kick(preview=…)` | depuis `armes.blend`, ajoute une chaussure et un bas de pantalon à la vue subjective, rend l'extension et exporte les armes ; conserve les modèles d'armes existants ; rejouable |
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
 | `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
@@ -93,7 +94,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
 | `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
-| `build_weapons.py` | trois armes et mains originales en vue subjective, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
+| `build_weapons.py` | trois armes et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)

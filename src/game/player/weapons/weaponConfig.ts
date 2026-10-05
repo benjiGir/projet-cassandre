@@ -1,4 +1,6 @@
 import { FIXED_DT } from "../../../core/loop/loop";
+import { kickConfig } from "./kickConfig";
+import type { FiringWeapon } from "./weaponTypes";
 
 // see: docs/6-reference/notes-code-gameplay-joueur.md#tuning
 export interface WeaponConfig {
@@ -182,14 +184,15 @@ export const weaponConfig: WeaponConfig = {
   crosshairPulseDuration: 0.08,
 };
 
-export function damageForWeapon(weapon: "melee" | "pistol" | "shotgun"): number {
+export function damageForWeapon(weapon: FiringWeapon): number {
+  if (weapon === "kick") return kickConfig.damage;
   if (weapon === "shotgun") return weaponConfig.shotgunDamagePerPellet;
   if (weapon === "pistol") return weaponConfig.pistolDamage;
   return weaponConfig.meleeDamage;
 }
 
 /** Dégâts d'un impact : la table ci-dessus, et le multiplicateur que le coup porte. */
-export function damageForHit(hit: { weapon: "melee" | "pistol" | "shotgun"; damageScale?: number }): number {
+export function damageForHit(hit: { weapon: FiringWeapon; damageScale?: number }): number {
   return damageForWeapon(hit.weapon) * (hit.damageScale ?? 1);
 }
 
