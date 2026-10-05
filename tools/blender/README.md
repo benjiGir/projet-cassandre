@@ -27,6 +27,7 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `orient_office_screens(preview=…)` | tourne écran et clavier vers le fauteuil des postes de bureau ; correction locale avec sauvegarde, ou candidat séparé si `preview` est fourni |
 | `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
 | `rework_accesses(preview=…)` | remplace les cinq commandes de porte par des lecteurs marqués ou des poussoirs verts ; abaisse le local secret de la cafétéria au sol et le cache derrière un distributeur coulissant ; sauvegarde, exporte et rend les aperçus ; rejouable |
+| `rework_vending(preview=…)` | reprend les huit autres distributeurs avec trois façades (soda, snacks, café), des produits visibles et des commandes en relief ; conserve les emplacements, colliders, bornes de sponsor et contenus des trois machines cassables ; sauvegarde, exporte et rend une planche ; rejouable |
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
 | `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |

@@ -65,6 +65,19 @@ mais son distributeur coulisse de 1,8 m en 1,1 s et dévoile un passage de
 1,5 × 2,25 m. Le local et sa trousse sont au sol ; son volume secret ne dépasse
 pas dans la cafétéria. L'ancienne grille, son escalade et son cadre disparaissent.
 
+## Distributeurs
+
+`src/render/environment/vendingMachines.ts` reprend la carte d'émission glTF
+des trois matériaux `mat_prd_distributeur_*` de soda, snacks et café. L'intensité
+de 0,55 rend les marques, produits et prix lisibles sans éclairer leur caisson.
+La carte de 128 × 128 pixels est produite avec la façade par
+`tools/textures/generate_vending.py` et embarquée dans le niveau exporté.
+
+La conversion Lambert configure son filtrage rétro avant le premier rendu.
+Elle conserve la propriété des textures et matériaux dans `LevelResources`,
+sans chargement en cours de partie ni travail par image. Le distributeur du
+secret utilise une façade distincte et ne reçoit pas cette émission.
+
 ## Billboard ennemi
 
 `src/render/sprites/billboard.ts` emploie un quad vertical orienté seulement en yaw :

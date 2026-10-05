@@ -9,6 +9,7 @@ from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v
 
 import lib_helpers as H           # noqa: E402
 import lib_bureaux as B           # noqa: E402
+import lib_distributeurs as D     # noqa: E402
 import lib_rayons as L            # noqa: E402
 import lib_public_compositions as P# noqa: E402
 import plan_de_masse as plan      # noqa: E402
@@ -59,9 +60,8 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
     # Chantier « Les coulisses » (2026-09-26) : un distributeur CASSABLE, à
     # l'écart des tables et du comptoir (mêmes matière/contenu que ceux du
     # couloir du personnel, `habiller_c_short_ramp`/`_w`).
-    H.prop("ca_distributeur", (35.0, 12.0, z, 35.9, 12.75, z + 1.9),
-          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
-          contenu="canette:3")
+    D.prop("ca_distributeur", (35.0, 12.0, z, 35.9, 12.75, z + 1.9),
+           "soda_5g_cola", props, contenu="canette:3")
 
     L.place(B.fontaine_eau(), (x0 + 0.6, 2.0, z), 0, props, col_coll, "ca_fontaine")
     for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.4, y1 - 1.4))):

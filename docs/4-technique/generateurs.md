@@ -2,7 +2,7 @@
 title: Générateurs d'assets
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-05
 ---
 
 # Générateurs d'assets
@@ -20,6 +20,7 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/textures/generate_affiches.py` compose les affiches et leur manifeste.
 - `tools/textures/generate_panneaux.py` réduit les illustrations des panneaux d'histoire en 640×360 et 64 couleurs, et tient la liste des panneaux livrés (`src/game/session/presentation/storyImages.json`).
 - `tools/textures/generate_labels.py` compose l'atlas des étiquettes.
+- `tools/textures/generate_vending.py` dessine les façades des distributeurs de soda, snacks et café.
 - `tools/textures/generate_portes.py` compose les textures d'ouvrants.
 - `tools/textures/generate_surgeles.py` génère les visuels du rayon surgelés.
 - `tools/textures/generate_ciel.py` génère les six faces du ciel de nuit.
@@ -61,6 +62,12 @@ Les entrées brutes AmbientCG et Kenney résident sous `assets_src/cc0_raw/`, ig
 Les visuels de ciel sont écrits sous `public/assets/sky/nuit/`.
 Les générateurs consomment leurs paramètres et sources ; ils ne mettent pas à jour les fichiers de scène Blender seuls.
 Les fichiers JSON adjacents décrivent les cellules ou repères quand le runtime ou le constructeur en a besoin.
+
+### Distributeurs
+
+`lib_distributeurs.py` partage les modèles entre le mobilier statique de `lib_bureaux.py` et les trois machines cassables. Chaque machine est un mesh à un matériau, avec un atlas de 128×128 pixels, des produits visibles, des boutons et une trappe en relief. Le café possède une buse et un gobelet. Une carte d'émission de même taille éclaire uniquement les marques, les vitrines et les prix, reprise par `src/render/environment/vendingMachines.ts` à la conversion Lambert. Le distributeur coulissant du secret conserve sa façade dédiée.
+
+La recette Cassandre `rework_vending(preview=…)` remplace localement huit machines dans le niveau existant. Les cinq machines statiques gardent leurs colliders ; les trois `prop_*` gardent leur boîte englobante, leurs propriétés et leur contenu. Leur relief est volontairement approximé par cette boîte pour la physique, ce que signale le validateur. Les deux bornes de sponsor restent utilisables et sont abaissées de 15 cm pour dégager les marques. Les autres couleurs d'éclairage cuites restent intactes.
 
 ### Sprites et armes
 

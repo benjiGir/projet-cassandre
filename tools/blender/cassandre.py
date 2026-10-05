@@ -331,6 +331,14 @@ def rework_accesses(preview: str | None = None) -> dict:
     return result
 
 
+def rework_vending(preview: str | None = None) -> dict:
+    """Huit distributeurs de soda, snacks et café ; conserve colliders et contenu."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_vending.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def rework_backstage(preview: str | None = None, inspect: bool = False) -> dict:
     """Réserve, locaux du personnel et quête de la carte Or au parking."""
     args = ["--inspect"] if inspect else []
