@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
+import lib_door_controls as DC
 import lib_helpers as H           # noqa: E402
 import build_blockout as bo       # noqa: E402
 
@@ -154,19 +155,9 @@ def habiller_chambre_froide(space, gris, props, col_coll, logic) -> dict:
         ((-44.31, 106.18, z + 2.24, -44.25, 107.82, z + 2.34), "aplat:#d5d7d8"),
         ((-44.27, 106.28, z + 0.04, -44.24, 107.72, z + 0.09), "aplat:#444a54"),
     ], "palette", props, subdiv=1e9)
-    use = H.box("use_chambre_froide_secours", (-44.60, 107.70, z + 0.91,
-                                                 -44.40, 108.30, z + 1.59),
-                "palette", props, uv="aplat:#d8231f", subdiv=1e9)
-    _centrer_origine(use)
-    use["target"] = "door_chambre_froide_couloir"
-    use["message"] = "Déverrouillage intérieur de la porte frigorifique."
-    H.box("cf_bouton_secours", (-44.62, 108.03, z + 1.25,
-                                 -44.53, 108.20, z + 1.43),
-          "palette", props, uv="aplat:#d8231f", subdiv=1e9)
-    H.boxes("cf_bouton_legende", [
-        ((-44.55, 108.24, z + 1.43, -44.52, 108.35, z + 1.49), "aplat:#f2efe6"),
-        ((-44.55, 108.24, z + 1.32, -44.52, 108.35, z + 1.36), "aplat:#f2efe6"),
-    ], "palette", props, subdiv=1e9)
+    DC.control("use_chambre_froide_secours", (-44.5, 108.0, z + 1.25), "-x", props,
+               target="door_chambre_froide_couloir",
+               message="Déverrouillage intérieur de la porte frigorifique.")
 
     H.box("cf_reglette", (-54.1, 106.4, z + 3.70, -50.3, 106.6, z + 3.78),
           "metal_bac_acier", props, subdiv=1e9)

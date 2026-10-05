@@ -2,7 +2,7 @@
 title: Le niveau
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Le niveau
@@ -127,8 +127,9 @@ emplacement marqué :
   photomaton voisin.
 - Un campement sur le toit des gondoles des rayons, atteint en grimpant depuis
   une caisse au sol.
-- Une couvée dans un local technique de la cafétéria, atteinte par une bouche
-  d'aération au-dessus d'un distributeur.
+- Une couvée dans un local technique de la cafétéria, cachée derrière
+  son distributeur coulissant. Le retour de monnaie actionne le passage ; des
+  traces au sol donnent un indice.
 - La planque du vigile, au bout du local compacteur : une télé, une pizza et
   son butin.
 

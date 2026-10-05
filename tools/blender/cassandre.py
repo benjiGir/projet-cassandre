@@ -323,6 +323,14 @@ def rework_checkouts(preview: str | None = None, inspect: bool = False) -> dict:
     return result
 
 
+def rework_accesses(preview: str | None = None) -> dict:
+    """Commandes lisibles et local technique caché par un distributeur coulissant."""
+    args = ("--preview", str(Path(preview).resolve())) if preview else ()
+    result = run("tools/blender/refresh_door_controls.py", *args, tail=8)
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def rework_backstage(preview: str | None = None, inspect: bool = False) -> dict:
     """Réserve, locaux du personnel et quête de la carte Or au parking."""
     args = ["--inspect"] if inspect else []

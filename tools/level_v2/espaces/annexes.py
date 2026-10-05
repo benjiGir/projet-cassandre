@@ -63,7 +63,7 @@ def habiller_labo(space, gris, props, col_coll, logic) -> dict:
 
 # --- Habillage : le local VMC (secret 3) --------------------------------------
 #
-# Derrière la bouche d'aération de la cafétéria. De la chaleur, un ronronnement,
+# Derrière le distributeur coulissant de la cafétéria. De la chaleur, un ronronnement,
 # et ce que le Directeur cache au chaud : une couvée.
 
 def habiller_vmc(space, gris, props, col_coll, logic) -> dict:
@@ -87,13 +87,12 @@ def habiller_vmc(space, gris, props, col_coll, logic) -> dict:
                        z + 0.12, z + 0.5, "#65814b", props)
         oeufs += 1
 
-    # Cadre de la bouche vue du local, et la grille dévissée posée à côté.
-    a, b = plan.PASSAGES[frozenset({"cafeteria", "secret3"})][1] - 1.0, \
-        plan.PASSAGES[frozenset({"cafeteria", "secret3"})][1] + 1.0
-    H.boxes("vmc_cadre", [((a - 0.08, y0 + t, z, a, y0 + t + 0.06, z + 2.0), "world"),
-                          ((b, y0 + t, z, b + 0.08, y0 + t + 0.06, z + 2.0), "world")],
+    largeur, milieu = plan.PASSAGES[frozenset({"cafeteria", "secret3"})]
+    a, b = milieu - largeur / 2, milieu + largeur / 2
+    H.boxes("vmc_cadre", [((a - .06, y0 + t, z, a, y0 + t + .06, z + 2.25), "world"),
+                          ((b, y0 + t, z, b + .06, y0 + t + .06, z + 2.25), "world"),
+                          ((a, y0 + t, z + 2.25, b, y0 + t + .06, z + 2.31), "world")],
             "metal_bac_acier", props)
-    H.box("vmc_grille", (39.0, 20.4, z, 40.4, 20.5, z + 0.9), "metal_bac_acier", props)
 
     # Une chaleur orangée : c'est elle qu'on aperçoit depuis la cafétéria.
     lampe(logic, "light_vmc_couvee", (39.2, 22.2, z + 1.2), color="#ff8a3a", intensity=4.0, distance=6.0)

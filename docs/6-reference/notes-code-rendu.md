@@ -46,6 +46,25 @@ rechargement du niveau. Les rafales utilisent des séquences fixes sans RNG,
 minuteur mural, texture chargée en cours de partie ni changement de shader.
 Les ressources GPU restent possédées par `LevelResources`.
 
+## Commandes des portes
+
+`tools/blender/lib_door_controls.py` construit cinq panneaux muraux : trois
+lecteurs avec leur carte requise et deux poussoirs verts. Les libellés,
+pictogrammes et couleurs partagent `assets_src/textures/prd_commandes.png`,
+un atlas 128 × 128 produit par `tools/textures/generate_door_controls.py`.
+
+`src/render/environment/doorControls.ts` ajoute une émission de 0,6 au seul
+matériau `mat_prd_commandes`, à la conversion du niveau. Sa carte émissive
+réutilise la texture diffuse. Les panneaux restent lisibles dans la pénombre,
+sans lampe ajoutée, animation ni allocation par image. Leurs textures et
+matériaux restent possédés par `LevelResources`.
+
+La retouche locale `cassandre.rework_accesses()` partage les constructeurs du
+build complet. Le secret de la cafétéria conserve ses identifiants de gameplay,
+mais son distributeur coulisse de 1,8 m en 1,1 s et dévoile un passage de
+1,5 × 2,25 m. Le local et sa trousse sont au sol ; son volume secret ne dépasse
+pas dans la cafétéria. L'ancienne grille, son escalade et son cadre disparaissent.
+
 ## Billboard ennemi
 
 `src/render/sprites/billboard.ts` emploie un quad vertical orienté seulement en yaw :

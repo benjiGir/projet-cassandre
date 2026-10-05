@@ -2,7 +2,7 @@
 title: Secrets et score
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Secrets et score
@@ -14,7 +14,7 @@ updated: 2026-10-04
 Quatre secrets récompensent qui s'écarte du chemin obligé, chacun trahi par un
 indice plutôt que par un marqueur sur une carte : un pan de mur qui s'efface
 près d'un photomaton, une caisse qui permet de grimper sur le toit d'un
-rayon, une bouche d'aération au-dessus d'un distributeur, une planque au fond
+rayon, un distributeur coulissant qui masque un local technique, une planque au fond
 du local compacteur. Aucun n'est un
 simple couloir de plus : chacun débouche sur une petite pièce construite pour
 raconter quelque chose qu'on ne voit nulle part ailleurs dans le magasin,
