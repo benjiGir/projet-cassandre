@@ -215,6 +215,8 @@ export function exposeDebugApi(engine: GameEngine): void {
     applyBoissonVariant,
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
+    enemySprites: () =>
+      [...engine.session.suitSprites.values(), ...engine.session.directorSprites.values()].map((sprite) => sprite.mesh),
     // see: docs/decisions/0031-portes-animees-et-vitres.md
     doorSystem: {
       liste: () => engine.session.doorSystem?.describe() ?? [],
@@ -478,6 +480,8 @@ declare global {
       boissonVariants: typeof BOISSON_VARIANTS;
       applyBoissonVariant: (name: keyof typeof BOISSON_VARIANTS) => ReturnType<typeof applyBoissonVariant>;
       doors: () => DoorInfo[];
+      /** Quads des ennemis présents, toutes espèces : `pnpm probe` les masque pour compter le niveau seul. */
+      enemySprites: () => THREE.Object3D[];
       /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {
         liste: () => ReturnType<DoorSystem["describe"]>;

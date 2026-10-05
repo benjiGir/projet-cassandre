@@ -48,6 +48,7 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | `cassandre.level.stats()` | Compteurs du niveau chargé, ou `null`. |
 | `cassandre.cards()` / `cassandre.giveCard(card)` | Lit ou force une carte : `argent`, `or` ou `platine`. |
 | `cassandre.doors()` / `cassandre.secrets()` | Objets du niveau issus du glTF. |
+| `cassandre.enemySprites()` | Quads des ennemis présents, toutes espèces ; `pnpm probe` les masque pour mesurer le niveau seul. |
 | `cassandre.pathfinding.stats()` / `cassandre.pathfinding.findPath(from, to)` | Statistiques du graphe et recherche de chemin. |
 
 ## Objets interactifs et audio
