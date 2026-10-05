@@ -38,6 +38,7 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Ajouter une arme](5-guides/ajouter-une-arme.md) — recette pas à pas.
 - [Chargement de niveau](4-technique/chargement-de-niveau.md) — loader, extras et hot reload.
 - [Board des voitures](assets/board-voitures.md) et [board des motos](assets/board-motos.md) — références des véhicules proposés.
+- [Board des armes et mains](assets/board-armes-mains.md) — références, proportions et composition de la vue subjective.
 
 ### Je cherche une valeur, une commande ou une convention
 

@@ -54,6 +54,10 @@ export class FxSystem {
   spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
     this.flashes.spawnMuzzleFlash(position, direction, weapon);
   }
+  followMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
+    this.flashes.followMuzzle(position, direction, weapon);
+  }
+  advanceMuzzleFlashes(dt: number): void { this.flashes.advance(dt); }
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string): void {
     this.decals.spawnImpactDecal(point, normal, material);
   }
@@ -82,6 +86,9 @@ export class FxSystem {
   warmExplosions(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.explosions.warm(camera, render);
   }
+  warmMuzzleFlashes(camera: THREE.Camera, render: () => void): Promise<void> {
+    return this.flashes.warm(camera, render);
+  }
   /** Boule de feu et éclats incandescents d'un prop `gaz` qui saute. */
   spawnExplosion(point: THREE.Vector3): void {
     this.explosions.spawn(point);
@@ -92,7 +99,6 @@ export class FxSystem {
 
   update(realDt: number): void {
     this.shake.update(realDt);
-    this.flashes.update();
     this.debris.update(realDt);
     this.water.update(realDt);
     this.explosions.update(realDt);

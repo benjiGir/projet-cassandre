@@ -18,6 +18,7 @@ export interface WeaponModels {
   pistolPivot: THREE.Vector3;
   shotgunPivot: THREE.Vector3;
   pistolMuzzle: THREE.Vector3;
+  pistolAxis: THREE.Vector3;
   shotgunMuzzle: THREE.Vector3;
   pumpAxis: THREE.Vector3;
   // Un seul matériau pour tout : couleurs portées par les sommets.

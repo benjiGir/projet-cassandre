@@ -91,7 +91,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
 | `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
-| `build_weapons.py` | pied-de-biche et pompe en vue subjective, tenus par les bras du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
+| `build_weapons.py` | trois armes et mains originales en vue subjective, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
@@ -357,3 +357,28 @@ noms exacts, décisions — est dans
 [docs/archive/blender-statut-par-jalon.md](../../docs/archive/blender-statut-par-jalon.md).
 À ouvrir pour comprendre POURQUOI un script est fait comme il est, pas pour
 savoir comment s'en servir.
+
+
+### Armes et mains — refonte 2026-10-04
+
+La [planche de références](../../docs/assets/board-armes-mains.md) documente
+la culasse inox ouverte, le pompe à crosse bois et les doigts séparés.
+`build_weapons.py` garde assemblage, IK, cadrage et export ;
+`weapons/config.py`, `geometry.py`, `pistol.py`, `shotgun.py`, `hands.py`
+séparent les couleurs, volumes et prises. Les manches CC0 sont extraites
+sans leur ancienne peau ; les mains originales rejoignent les poignets.
+
+```bash
+blender -b --factory-startup -P tools/blender/build_weapons.py -- --debug --blend assets_src/blender/armes.blend
+blender -b --factory-startup -P tools/blender/render_weapon_pickups.py
+```
+
+La source Blender contient `VUE_SUBJECTIVE` et `RAMASSAGES`. Le pistolet
+est visible à l'ouverture ; afficher les autres meshes via l'Outliner,
+et la caméra `oeil` pour le cadrage du jeu. Pour le pompe, afficher aussi
+`vm_shotgun_pump`. Les gestes restent pilotés dans le jeu.
+
+Après régénération, recopier les dimensions et rectangles du manifeste
+`weapon_pickups.json` dans `src/render/pickups/pickupConfig.ts`.
+La refonte de septembre décrite plus haut reste un état historique :
+les budgets actuels sont consignés dans la révision de l'ADR 0029.

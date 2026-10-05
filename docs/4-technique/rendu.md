@@ -202,3 +202,14 @@ enregistre les TextureNodes concernés avec `registerMaterialTextureInputs` ;
 la valeur est relue au changement de mode, même si elle a été remplacée.
 Les render targets, textures de profondeur et cubemaps du ciel gardent leur
 contrat propre. L’espace couleur des canaux de données est préservé.
+
+
+### Éclairs de tir
+
+Le pistolet et le pompe utilisent un matériau TSL procédural préchauffé
+sous l'écran de chargement, avec les explosions. La couleur passe par un
+cœur blanc, du jaune et de l'orange ; le contour se rétracte au pas fixe.
+Le flash suit le bout du canon affiché et son orientation pendant le recul.
+Les deux lampes du pool restent présentes à intensité nulle au repos.
+Les dimensions, durées et limites sont consignées dans
+[Éclairs de tir TSL](../6-reference/notes-code-rendu.md#éclairs-de-tir-tsl).

@@ -181,6 +181,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
   runGameplaySync(
     Effect.gen(function* () {
       const gameplayDt = engine.clock.tick(dt);
+      engine.fx.advanceMuzzleFlashes(gameplayDt);
       session.heroPortrait.advance(gameplayDt, session.playerHp, session.playerMaxHp);
 
       advanceGameplayTime(session.stats, gameplayDt);

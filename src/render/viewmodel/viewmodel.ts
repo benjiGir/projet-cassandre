@@ -3,16 +3,9 @@ import type { ViewmodelClocks } from "../../game/player/weapons/weaponTypes";
 
 import type { ViewmodelSource, WeaponModels, ViewmodelAnimation } from "./viewmodelTypes";
 import { viewmodelAnimationAt } from "./viewmodelAnimation";
+import { drawOverWorld } from "./viewmodelDepth";
 
 // see: docs/6-reference/notes-code-rendu.md#viewmodel
-
-const VIEWMODEL_DEPTH_RANGE = 0.05;
-
-function drawOverWorld(mesh: THREE.Mesh): THREE.Mesh {
-  mesh.onBeforeRender = (renderer) => renderer.getContext().depthRange(0, VIEWMODEL_DEPTH_RANGE);
-  mesh.onAfterRender = (renderer) => renderer.getContext().depthRange(0, 1);
-  return mesh;
-}
 
 // Amplitudes du geste, repère caméra (mètres, radians).
 const SWING_ROLL = 0.45;
@@ -103,6 +96,12 @@ export class Viewmodel {
     const mesh = group.children[0]!;
     mesh.updateWorldMatrix(true, false);
     return mesh.localToWorld(out.copy(weapon === "pistol" ? this.models.pistolMuzzle : this.models.shotgunMuzzle));
+  }
+
+  muzzleWorldDirection(out: THREE.Vector3, weapon: "pistol" | "shotgun"): THREE.Vector3 {
+    const mesh = (weapon === "pistol" ? this.pistol : this.shotgun).children[0]!;
+    mesh.updateWorldMatrix(true, false);
+    return out.copy(weapon === "pistol" ? this.models.pistolAxis : this.models.pumpAxis).transformDirection(mesh.matrixWorld);
   }
 }
 

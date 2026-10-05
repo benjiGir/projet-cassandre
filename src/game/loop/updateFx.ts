@@ -58,6 +58,8 @@ const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
 const muzzleScratch = new THREE.Vector3();
+const muzzleDirectionScratch = new THREE.Vector3();
+const FLASH_WEAPONS = ["pistol", "shotgun"] as const;
 const sprayDirectionScratch = new THREE.Vector3();
 /** Matière d'un tir arrêté par un bouclier : le son et les éclats d'un impact de métal. */
 const SHIELD_MATERIAL = "metal";
@@ -105,7 +107,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           if (event.weapon !== "melee") {
             engine.fx.spawnMuzzleFlash(
               engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon),
-              event.muzzleDirection,
+              engine.viewmodel.muzzleWorldDirection(muzzleDirectionScratch, event.weapon),
               event.weapon,
             );
           }
@@ -126,6 +128,13 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
               weaponConfig.meleeHitRadius,
             );
           }
+        }
+        for (const weapon of FLASH_WEAPONS) {
+          engine.fx.followMuzzleFlash(
+            engine.viewmodel.muzzleWorldPosition(muzzleScratch, weapon),
+            engine.viewmodel.muzzleWorldDirection(muzzleDirectionScratch, weapon),
+            weapon,
+          );
         }
         for (const hit of session.weapons.hitEvents) {
           // Arrêté par un bouclier : ni sang ni marqueur, un impact de métal sur l'ennemi.

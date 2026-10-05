@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { configureRetroTexture } from "../pipeline/renderer";
+import { applyMinimumLight } from "../materials/minimumLight";
 
 // see: docs/6-reference/notes-code-rendu.md#billboard-ennemi
 
@@ -87,17 +88,7 @@ export class BillboardSprite {
       depthWrite: true,
     });
 
-    const minimumLight = THREE.MathUtils.clamp(options.minimumLight ?? 0, 0, 1);
-    if (minimumLight > 0) {
-      material.onBeforeCompile = (shader) => {
-        shader.uniforms.billboardMinimumLight = { value: minimumLight };
-        shader.fragmentShader = `uniform float billboardMinimumLight;\n${shader.fragmentShader}`.replace(
-          "#include <lights_fragment_end>",
-          "#include <lights_fragment_end>\nreflectedLight.indirectDiffuse = max(reflectedLight.indirectDiffuse, diffuseColor.rgb * billboardMinimumLight);",
-        );
-      };
-      material.customProgramCacheKey = () => "billboard-minimum-light";
-    }
+    applyMinimumLight(material, options.minimumLight ?? 0);
 
     this.mesh = new THREE.Mesh(geometry, material);
     this.scene.add(this.mesh);
