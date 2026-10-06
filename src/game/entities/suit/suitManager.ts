@@ -179,6 +179,7 @@ export class SuitManager {
     };
 
     for (const suit of this.suits) {
+      suit.advanceAppearance(dt);
       const hit = aggregated.get(suit);
       if (hit) {
         this.applyAggregatedHit(suit, hit, playerTargetPosition);

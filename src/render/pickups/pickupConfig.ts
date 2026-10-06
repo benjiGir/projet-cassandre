@@ -2,11 +2,11 @@ import type { PickupWeaponKind } from "./pickupTypes";
 
 // Resynchroniser les rectangles avec weapon_pickups.json après génération de l’atlas.
 export const WEAPON_ICON_ATLAS_URL = "assets/sprites/weapon_pickups.png";
-export const WEAPON_ICON_ATLAS_SIZE = { width: 159, height: 72 };
+export const WEAPON_ICON_ATLAS_SIZE = { width: 184, height: 94 };
 export const WEAPON_ICON_RECTS: Record<PickupWeaponKind, { x: number; y: number; width: number; height: number }> = {
   melee: { x: 0, y: 0, width: 56, height: 56 },
-  pistol: { x: 58, y: 0, width: 27, height: 27 },
-  shotgun: { x: 87, y: 0, width: 72, height: 72 },
+  pistol: { x: 58, y: 0, width: 30, height: 30 },
+  shotgun: { x: 90, y: 0, width: 94, height: 94 },
 };
 
 export const WEAPON_SPRITE_SIZE: Record<PickupWeaponKind, number> = {

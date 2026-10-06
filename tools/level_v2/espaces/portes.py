@@ -11,6 +11,7 @@ from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v
 
 import lib_helpers as H           # noqa: E402
 import lib_rayons as L            # noqa: E402
+import lib_door_controls as DC    # noqa: E402
 import plan_de_masse as plan      # noqa: E402
 import build_blockout as bo       # noqa: E402
 
@@ -137,6 +138,7 @@ HAUTEUR_VANTAIL = {
     frozenset({"bureaux", "direction"}): 2.25,
     frozenset({"c_short_w", "rayons"}): 2.25,
     frozenset({"galerie", "secret1"}): bo.HAUTEUR_PORTE,
+    frozenset({"cafeteria", "secret3"}): 2.25,
     frozenset({"cafeteria", "toilettes"}): 2.0,
     frozenset({"c_bu", "pc_secu"}): 2.1,
     frozenset({"c_bu", "vestiaires"}): 2.1,
@@ -269,14 +271,11 @@ def _use_de_carte(o, nom_porte: str, carte: str, logic) -> None:
     Un `use_*` reste VISIBLE en jeu : au blockout, c'était un cube de 60 cm
     flottant à un mètre du mur. La portée d'usage (2 m) se mesure jusqu'à son
     origine, pas jusqu'à sa surface : sa taille ne change rien au gameplay."""
-    # Centré SUR la face du mur (il en dépasse de 4 cm) : son origine reste sur
-    # la grille de 0,25 m, comme celle de tout objet hors vantail.
+    # L’origine reste sur la face du mur ; le boîtier dépasse vers le joueur.
     face = -bo.EPAISSEUR_MUR
     centre = _monde(o, o.span[1] + 0.5, face, o.z + 1.25, o.span[1] + 0.5, face, o.z + 1.25)[:3]
-    taille = (0.2, 0.08, 0.3) if o.axe == "y" else (0.08, 0.2, 0.3)
-    bo.boite_centree(f"use_{nom_porte}", centre, taille, "repere",
-                     {"repere": H.textured_material("metal_bac_acier")}, logic,
-                     extras={"target": nom_porte, "requires": carte})
+    DC.control(f"use_{nom_porte}", centre, "-y" if o.axe == "y" else "-x", logic,
+               card=carte, target=nom_porte)
 
 
 # Le sas d'entrée : deux façades vitrées, chacune avec deux vantaux coulissants
@@ -342,23 +341,10 @@ PORTES_LIBRES = {
         # côté rayons : hors de la portée d'usage (2 m) depuis la surface de vente.
         use_centre=(-43.75, 86.5, 1.25), use_taille=(0.1, 0.5, 0.5),
         message="Porte coupe-feu ouverte : raccourci vers les rayons"),
-    # La bouche d'aération du secret 3 : un « trou béant » avant cette passe
-    # (2026-09-24, retour de playtest) — la baie n'était fermée par RIEN, le
-    # local et sa lumière orange se voyaient depuis toute la cafétéria.
-    # `metal_tole_perforee` (déjà le rideau `door_argent`) donne le grillage
-    # sans ouvrir un nouveau matériau de vantail : toujours 7 lots de portes
-    # pour tout le niveau, pas 8.
     frozenset({"cafeteria", "secret3"}): dict(
-        porte="door_secret_vmc", use="use_grille_vmc", texture="metal_tole_perforee",
-        # Près du haut de la grille (z = 3,75, sur la grille 0,25 m) : à au
-        # moins 2,85 m de tout point du SOL de la cafétéria (`playerPosition`
-        # est le centre de capsule, ~0,9 m au-dessus des pieds — la seule
-        # composante VERTICALE dépasse déjà la portée de 2 m, quel que soit
-        # l'endroit où l'on se tient), à moins de 1,3 m de qui se tient sur le
-        # distributeur voisin (1,9 m de haut).
-        use_centre=(36.0, 19.75, 3.75), use_taille=(0.3, 0.08, 0.3),
-        message="La grille cède sans un bruit : il y a toujours une bouche "
-                "d'aération quelque part."),
+        porte="door_secret_vmc", use="use_grille_vmc", texture="prd_distributeur_secret",
+        use_centre=(37.0, 19.0, 1.25), use_taille=(0.2, 0.08, 0.1),
+        message="Le distributeur glisse : un local technique est caché derrière."),
 }
 
 
@@ -377,17 +363,8 @@ def _porte_libre(o, spec, props, logic) -> None:
                          {"repere": H.textured_material(spec["texture"])}, props,
                          extras={"mouvement": "descend"})
     elif spec["porte"] == "door_secret_vmc":
-        # Un seul vantail, charnière côté ouest (`bout="min"`) : la baie fait
-        # 2 m de large sur 2 m de haut, DÉCOLLÉE du sol (le mur reste plein en
-        # dessous, la grille commence à `o.z + 2.0`, comme `ca_bouche_cadre`/
-        # `vmc_cadre` construits à la main dans `habiller_cafeteria`/
-        # `habiller_vmc`). `sens` reste "auto" — pas de `_sens_vers` forcé :
-        # la porte s'ouvre en s'éloignant de qui appuie sur E (`resolveAutoOpenSign`),
-        # donc loin du joueur perché sur le distributeur, vers le local.
-        e = EP_VANTAIL / 2
-        vantail(spec["porte"], _monde(o, a + 0.02, -e, o.z + 2.0, b - 0.02, e, o.z + 4.0),
-                spec["texture"], "world", props,
-                dict(mouvement="battant", charniere=_charniere(o, "min"), sens="auto"))
+        DC.secret_vending(props, logic)
+        return
     else:
         # La porte coupe-feu : double, rouge, barres anti-panique côté personnel
         # — le côté d'où elle s'ouvre (`plan.PORTES_SENS_UNIQUE`).
@@ -401,9 +378,13 @@ def _porte_libre(o, spec, props, logic) -> None:
         porte_double(o, (spec["porte"], f"{spec['porte']}_b"), HAUTEUR_VANTAIL[frozenset({o.a, o.b})],
                      spec["texture"], "world", props, {"groupe": "coupe_feu", "manuelle": "fermer"},
                      quincaillerie="barre", face_barre=cote_personnel)
-    bo.boite_centree(spec["use"], spec["use_centre"], spec["use_taille"], "repere",
-                     {"repere": H.textured_material(spec["texture"])}, logic,
-                     extras={"target": spec["porte"], "message": spec["message"]})
+    if spec["porte"] == "door_coupe_feu":
+        DC.control(spec["use"], spec["use_centre"], "+x", logic,
+                   target=spec["porte"], message=spec["message"])
+    else:
+        bo.boite_centree(spec["use"], spec["use_centre"], spec["use_taille"], "repere",
+                         {"repere": H.textured_material(spec["texture"])}, logic,
+                         extras={"target": spec["porte"], "message": spec["message"]})
     if spec.get("secours"):
         # Bloc de secours vert au-dessus de la porte, côté personnel : le même
         # que côté rayons, pour qu'on lise la porte des deux côtés.

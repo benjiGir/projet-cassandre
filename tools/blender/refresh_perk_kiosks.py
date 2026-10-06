@@ -44,9 +44,9 @@ BORNES = (
     # Réserve : sur le montant sud du premier rack à droite en entrant par le sas Argent.
     ("use_borne_reserve", "premium", 35, (4.22, 100.0, 1.35), "-y"),
     # Couloir du personnel : sur le monnayeur du distributeur de café.
-    ("use_borne_personnel", "boisson", 55, (18.16, 132.98, 1.20), "+y"),
+    ("use_borne_personnel", "boisson", 55, (18.16, 132.98, 1.05), "+y"),
     # Bureaux, salle de pause : sur le monnayeur du distributeur de chips.
-    ("use_borne_bureaux", "gilet", 85, (7.02, 159.66, 5.20), "-x"),
+    ("use_borne_bureaux", "gilet", 85, (7.02, 159.66, 5.05), "-x"),
 )
 
 # Le terminal, dans son repère : `u` le long de la façade, `d` vers le joueur

@@ -5,6 +5,7 @@ import { HitmarkerTuning } from "../HitmarkerTuning/HitmarkerTuning";
 import { ImpactTuning } from "../ImpactTuning/ImpactTuning";
 import { SuitTuning } from "../SuitTuning/SuitTuning";
 import { RecoilTuning } from "../RecoilTuning/RecoilTuning";
+import { KickTuning } from "../KickTuning/KickTuning";
 import { TuningSection } from "../../../layout/TuningSection/TuningSection";
 import { useConfigEditor } from "../../../lib/useConfigEditor";
 
@@ -20,6 +21,7 @@ export function HitFeedbackTuning() {
     >
       <ImpactTuning weapon={weapon} />
       <RecoilTuning weapon={weapon} />
+      <KickTuning />
       <HitmarkerTuning weapon={weapon} />
       <CrosshairTuning weapon={weapon} />
       <SuitTuning suit={suit} />

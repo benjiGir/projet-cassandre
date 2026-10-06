@@ -9,6 +9,7 @@ from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v
 
 import lib_helpers as H           # noqa: E402
 import lib_bureaux as B           # noqa: E402
+import lib_distributeurs as D     # noqa: E402
 import lib_rayons as L            # noqa: E402
 import lib_public_compositions as P# noqa: E402
 import plan_de_masse as plan      # noqa: E402
@@ -56,32 +57,11 @@ def habiller_cafeteria(space, gris, props, col_coll, logic) -> dict:
 
     placer_distributeurs_cafeteria(space, props, col_coll)
 
-    # Accès au secret 3 : la bouche d'aération du mur nord (`plan.PASSAGES`), au-
-    # dessus d'un distributeur de 1,90 m, devant lequel traîne une caisse d'un
-    # mètre. Deux sauts de 1,00 et 0,90 m, sous les 1,10 m du saut. L'ancienne
-    # chaîne passait par un frigo de 2,20 m — 1,20 m à sauter depuis la caisse :
-    # personne ne pouvait monter, et personne ne le savait, puisque le « secret »
-    # se déclenchait au sol.
-    ventx = plan.PASSAGES[frozenset({"cafeteria", "secret3"})][1] - 1.0
-    L.place(B.distributeur("soda_5g_cola"), (ventx + 0.05, y1 - bo.EPAISSEUR_MUR - 0.75, z), 0,
-            props, col_coll, "ca_dist_vmc")
-    sx, sy = ventx, y1 - bo.EPAISSEUR_MUR - 1.75
-    H.box("caisse_acces_secret3", (sx, sy, z, sx + 1.0, sy + 1.0, z + 1.0), "carton", props)
-    H.col_box("caisse_acces_secret3", (sx, sy, z, sx + 1.0, sy + 1.0, z + 1.0), col_coll)
-    # Le cadre de la bouche, côté cafétéria : un trou dans un mur se lit comme un
-    # défaut, un trou encadré comme une bouche.
-    # Il mord d'un centimètre sur la baie : à fleur, ses faces intérieures
-    # doublaient les bouts du mur.
-    H.boxes("ca_bouche_cadre", [((ventx - 0.08, y1 - 0.3, z + 2.0, ventx + 0.01, y1 - 0.24, z + 4.0), "world"),
-                                ((ventx + 1.99, y1 - 0.3, z + 2.0, ventx + 2.08, y1 - 0.24, z + 4.0), "world")],
-            "metal_bac_acier", props)
-
     # Chantier « Les coulisses » (2026-09-26) : un distributeur CASSABLE, à
     # l'écart des tables et du comptoir (mêmes matière/contenu que ceux du
     # couloir du personnel, `habiller_c_short_ramp`/`_w`).
-    H.prop("ca_distributeur", (35.0, 12.0, z, 35.9, 12.75, z + 1.9),
-          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
-          contenu="canette:3")
+    D.prop("ca_distributeur", (35.0, 12.0, z, 35.9, 12.75, z + 1.9),
+           "soda_5g_cola", props, contenu="canette:3")
 
     L.place(B.fontaine_eau(), (x0 + 0.6, 2.0, z), 0, props, col_coll, "ca_fontaine")
     for i, (px, py) in enumerate(((x0 + 0.8, y1 - 1.5), (x1 - 1.4, y1 - 1.4))):

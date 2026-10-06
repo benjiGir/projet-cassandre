@@ -2,7 +2,7 @@
 title: Console cassandre
 tags: [reference, debug]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Console cassandre
@@ -38,8 +38,8 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | Expression | Effet |
 |---|---|
 | `cassandre.suits` / `cassandre.suitConfig` | Liste des Costards et réglages. |
-| `cassandre.spawnSuit(x, y, z)` | Ajoute un Costard à la session. |
-| `cassandre.spawnRampant(x, y, z)` / `cassandre.spawnVigile(x, y, z)` | Ajoute un Rampant ou un Vigile ; `cassandre.suits` les liste avec les Costards, `kind` les distingue. |
+| `cassandre.spawnSuit(x, y, z, materialize = false)` | Ajoute un Costard à la session ; `true` joue sa matérialisation d'embuscade. |
+| `cassandre.spawnRampant(x, y, z, materialize = false)` / `cassandre.spawnVigile(x, y, z, materialize = false)` | Ajoute un Rampant ou un Vigile ; `true` joue sa matérialisation. `cassandre.suits` les liste avec les Costards, `kind` les distingue. |
 | `cassandre.suitCount()` / `cassandre.suitAliveCount()` / `cassandre.killSuit()` | Compte les Costards créés, les vivants ou tue le premier vivant. |
 | `cassandre.directors` / `cassandre.directorManager` / `cassandre.directorConfig` | Directeurs et gestionnaire courant. |
 | `cassandre.spawnDirector(x, y, z)` | Ajoute un Directeur à la session. |
@@ -48,6 +48,7 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | `cassandre.level.stats()` | Compteurs du niveau chargé, ou `null`. |
 | `cassandre.cards()` / `cassandre.giveCard(card)` | Lit ou force une carte : `argent`, `or` ou `platine`. |
 | `cassandre.doors()` / `cassandre.secrets()` | Objets du niveau issus du glTF. |
+| `cassandre.enemySprites()` | Quads des ennemis présents, toutes espèces ; `pnpm probe` les masque pour mesurer le niveau seul. |
 | `cassandre.pathfinding.stats()` / `cassandre.pathfinding.findPath(from, to)` | Statistiques du graphe et recherche de chemin. |
 
 ## Objets interactifs et audio

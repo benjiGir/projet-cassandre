@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-05
 ---
 
 # Contrats locaux du rendu
@@ -23,7 +23,7 @@ Aucun chargement de texture ne doit commencer dans un pas fixe. Les fonctions
 `load*` de ce dossier se lancent à la frontière de démarrage du moteur.
 
 Les animations des ennemis et des armes utilisent des horloges de gameplay
-interpolées, ralenties par le hitstop. Les flashes, marqueurs, flottements,
+interpolées, ralenties par le hitstop. Les marqueurs, flottements,
 débris et parasites CCTV avancent au delta réel d'affichage. Ils ne produisent
 ni collision ni décision de gameplay. La rotation de visée reste directe.
 
@@ -45,6 +45,38 @@ avec le delta de gameplay au pas fixe, s'arrête en pause et se recrée au
 rechargement du niveau. Les rafales utilisent des séquences fixes sans RNG,
 minuteur mural, texture chargée en cours de partie ni changement de shader.
 Les ressources GPU restent possédées par `LevelResources`.
+
+## Commandes des portes
+
+`tools/blender/lib_door_controls.py` construit cinq panneaux muraux : trois
+lecteurs avec leur carte requise et deux poussoirs verts. Les libellés,
+pictogrammes et couleurs partagent `assets_src/textures/prd_commandes.png`,
+un atlas 128 × 128 produit par `tools/textures/generate_door_controls.py`.
+
+`src/render/environment/doorControls.ts` ajoute une émission de 0,6 au seul
+matériau `mat_prd_commandes`, à la conversion du niveau. Sa carte émissive
+réutilise la texture diffuse. Les panneaux restent lisibles dans la pénombre,
+sans lampe ajoutée, animation ni allocation par image. Leurs textures et
+matériaux restent possédés par `LevelResources`.
+
+La retouche locale `cassandre.rework_accesses()` partage les constructeurs du
+build complet. Le secret de la cafétéria conserve ses identifiants de gameplay,
+mais son distributeur coulisse de 1,8 m en 1,1 s et dévoile un passage de
+1,5 × 2,25 m. Le local et sa trousse sont au sol ; son volume secret ne dépasse
+pas dans la cafétéria. L'ancienne grille, son escalade et son cadre disparaissent.
+
+## Distributeurs
+
+`src/render/environment/vendingMachines.ts` reprend la carte d'émission glTF
+des trois matériaux `mat_prd_distributeur_*` de soda, snacks et café. L'intensité
+de 0,55 rend les marques, produits et prix lisibles sans éclairer leur caisson.
+La carte de 128 × 128 pixels est produite avec la façade par
+`tools/textures/generate_vending.py` et embarquée dans le niveau exporté.
+
+La conversion Lambert configure son filtrage rétro avant le premier rendu.
+Elle conserve la propriété des textures et matériaux dans `LevelResources`,
+sans chargement en cours de partie ni travail par image. Le distributeur du
+secret utilise une façade distincte et ne reçoit pas cette émission.
 
 ## Billboard ennemi
 
@@ -141,7 +173,7 @@ Leurs silhouettes distinctes priment sur les détails à 640×360.
 Les icônes d'armes sont pré-rendues depuis les modèles `world_*` par
 `tools/blender/render_weapon_pickups.py`. Le rectangle UV et les dimensions
 copiés de `public/assets/sprites/weapon_pickups.json` doivent rester alignés
-avec l'atlas 159 × 72 px. Les carrés de 0,8/0,8/1,1 m privilégient la lecture
+avec l'atlas 184 × 94 px. Les carrés de 0,8/0,8/1,1 m privilégient la lecture
 à distance, sans reproduire l'échelle réelle des trois armes.
 Le V est inversé comme pour les billboards ennemis.
 
@@ -189,6 +221,16 @@ descente : aucune animation ne bloque une action. Les durées sont centralisées
 dans `VIEWMODEL_TIMING`. Le pistolet utilise seulement le recul commun.
 Le pied-de-biche pivote au coude, sinon l'avant-bras barre l'image.
 
+`vm_kick` ajoute une bottine de travail en cuir, son bout bombé, ses lacets
+croisés, sa semelle crantée et un bas de pantalon au même
+fichier d'armes. `weapons/kick.py` partage le constructeur entre le build complet
+et `cassandre.weapon_kick()`, une retouche locale des armes existantes.
+La géométrie décrit l'extension maximale ; `kickAnimation.ts` calcule une
+enveloppe depuis l'horloge interpolée de gameplay et `kickConfig`.
+Le pied entre depuis le bas droit, avance, marque le contact puis se retire.
+Il est invisible au repos et dès qu'une arme est équipée. La pose du pied
+ne pilote aucun dégât : le contact Rapier appartient au pas fixe.
+
 La profondeur des armes est comprimée dans [0, 0,05] pour éviter que le canon
 entre dans un mur proche, sans perdre l'occlusion entre main et arme.
 `WebGLState` ne pilote pas `depthRange` ; le callback de fin rétablit [0, 1]
@@ -205,9 +247,10 @@ chaque partie et reste distinct de la dispersion du fusil.
 Le shake retient le maximum entre l'amplitude déjà amortie et la nouvelle,
 sans addition. La décroissance atteint 5 % à la fin demandée. L'offset se tire
 dans le volume d'une sphère ; la racine cubique évite une concentration au
-centre. Les flashes durent deux frames d'affichage et utilisent deux slots.
-Leur origine est le canon affiché et leur normale regarde à l'opposé du tir.
-Le pied-de-biche n'en reçoit aucun.
+centre. Les éclairs de tir utilisent deux slots, une géométrie de six
+triangles et un matériau TSL partagés. Leur origine et leur axe suivent le
+canon affiché ; le pied-de-biche n'en reçoit aucun. Leur âge avance au pas
+fixe, comme décrit dans [Éclairs de tir TSL](#éclairs-de-tir-tsl).
 
 Les 24 decals sont des quads statiques décalés de 0,01 m contre le z-fighting.
 L'appelant doit exclure ennemis, props, portes, vitres et sanitaires : leurs
@@ -324,10 +367,104 @@ ignore ces ressources empruntées pendant le nettoyage d’un niveau.
 
 `FxSystem` garde l’interface appelante et délègue aux pools `CameraShake`,
 `MuzzleFlashes`, `ImpactDecals`, `ToyDebris` et `WaterJets`. Son ordre d’update reste shake,
-flashes, débris, eau. Le RNG cosmétique est partagé dans le même ordre.
+débris, eau. Les éclairs de tir avancent séparément au pas fixe. Le RNG
+cosmétique est partagé dans le même ordre.
 
 Le registre de textures collecte les canaux classiques et uniformes shader.
 Les TextureNodes TSL à texture utilisent `registerMaterialTextureInputs` avec
 leurs entrées mutables. Render targets, depth textures et cube textures restent
 hors de ce réglage. Le changement de filtrage conserve l’espace couleur des
 canaux de données ; l’agrandissement reste nearest.
+
+
+## Modèles des armes et mains
+
+`tools/blender/build_weapons.py` assemble les volumes de `weapons/`,
+les manches CC0 posées par IK et les mains à phalanges séparées.
+Les mains droites sont fusionnées avec l'arme ; la main gauche avec le fût
+mobile du pompe. Les meshes exportés restent dans le repère de l'œil,
+avec `prise`, `bout_canon`, `axe_glissiere` calculés depuis la construction.
+La source éditable est `assets_src/blender/armes.blend`.
+
+`weaponModels.ts` conserve un seul matériau Lambert à couleurs de sommets.
+`materials/minimumLight.ts` pose un minimum de lumière indirecte à 0,32
+pour les armes ; cette fonction est aussi utilisée par les billboards
+avec leur valeur existante. La correction est appliquée après le calcul
+Lambert, avant fog et colorimétrie ; elle garde les couleurs, les lampes
+et les éclairs de tir. Aucun lot ni lampe supplémentaire.
+
+Voir la [planche de références](../assets/board-armes-mains.md) et la
+[révision de l'ADR 0029](../decisions/0029-armes-en-vue-subjective.md).
+
+
+## Éclairs de tir TSL
+
+`muzzleFlashMaterial.ts` construit un `MeshBasicNodeMaterial` procédural :
+cœur blanc, jaune et orange en paliers, pointes irrégulières et deux langues
+longitudinales. `muzzleFlashGeometry.ts` fusionne une face de bouche et deux
+plans croisés en six triangles. Le masque alpha coupe franchement le fond ;
+il n'utilise ni texture, ni bloom, ni transparence douce. Un éclair ajoute
+un lot de dessin. La géométrie et le matériau sont partagés par les deux slots.
+
+`muzzleFlashConfig.ts` distingue pistolet (18 cm de largeur, 22 cm de longueur,
+3/60 s) et pompe (40 cm, 40 cm, 5/60 s). Ce sont des dimensions visuelles.
+Les lampes restent à intensité nulle au repos, présentes dans la scène, pour
+éviter une recompilation des matériaux éclairés à chaque tir. La lumière
+amortit son intensité au carré pendant l'éclair.
+
+`updateGameplay` avance l'âge avec `gameplayDt`, via
+`FxSystem.advanceMuzzleFlashes`, à la frontière synchrone habituelle.
+`updateFx` reçoit les événements de tir et suit le canon à chaque affichage,
+avec `Viewmodel.muzzleWorldPosition` et `muzzleWorldDirection`. Le pistolet
+exporte `axe_canon` ; le pompe réutilise `axe_glissiere`, parallèle au canon.
+La pose visuelle ne change ni la dispersion ni les raycasts de tir.
+
+La graine et la rotation viennent d'un compteur de tirs remis à zéro par
+session. Elles ne consomment aucun tirage du RNG cosmétique existant.
+Le shader reçoit uniquement les valeurs du mesh, sans node TSL `time`.
+Les éclairs partagent la compression de profondeur des armes, dessinent
+après elles, et écrivent la profondeur sur les fragments conservés. Cela
+empêche les vitres du décor de recouvrir l'éclair ; les pixels rejetés par
+le masque n'écrivent rien.
+
+`warmFxShaders` prépare le matériau avec deux rendus et une microtask sous
+l'écran de chargement du niveau, avec la racine précédente détachée au
+hot reload. La frontière asynchrone reste dans `spawning.ts`.
+Référence API : [MeshBasicNodeMaterial](https://threejs.org/docs/pages/MeshBasicNodeMaterial.html).
+
+## Matérialisation des embuscades
+
+Seule l'action `reveiller` de `levelScriptActions.ts` appelle `spawnSuitAt`
+avec `materialize: true`. Le Directeur et les ennemis présents au chargement
+gardent leur apparition habituelle. La durée canonique est
+`ENEMY_MATERIALIZATION_DURATION`, 42 pas à 60 Hz, dans
+`src/game/entities/shared/enemySpawnConfig.ts`.
+
+`SuitManager` avance le délai de chaque ennemi avant de traiter les dégâts.
+Un ennemi vivant en cours d'apparition ne reçoit aucun tick d'IA ; il garde
+son collider et peut être blessé ou tué. Une mort continue immédiatement son
+animation normale. Pause et hitstop arrêtent ou ralentissent ce délai comme
+le reste de la simulation. Le rendu ne décide jamais quand l'IA démarre.
+
+`EnemyAppearances` prête un `MeshBasicNodeMaterial` au quad existant :
+cellules de quatre texels environ, fragments turquoise, puis révélation du
+sprite de bas en haut par une bande claire. Le masque conserve l'alpha de
+l'atlas et écrit la profondeur, sans fondu transparent. La banque d'atlas
+est fournie par `gameEngine.ts` ; un indice par mesh choisit le sampler dans
+le shader partagé. Les UV reprennent l'offset et le repeat du billboard.
+Le partage évite de multiplier les groupes d'uniformes WebGL. Aucun atlas
+supplémentaire, aucun tirage RNG et aucune horloge murale ne sont ajoutés.
+
+Un quad horizontal porte deux anneaux et des segments tournants procéduraux.
+Son masque écrit la profondeur, sinon un sol opaque dessiné après lui le
+recouvrirait. Il ajoute un lot temporaire, sans lampe. `interpolateVisuals` suit le sprite,
+lit `Suit.appearanceProgress` et retire l'anneau à la fin ou à la mort.
+Le matériau Lambert original reste possédé par `BillboardSprite.material` ;
+ses flashes de dégâts et sa teinte continuent d'y être écrits. Le matériau
+TSL appartient au système persistant, jamais au billboard.
+
+`warmFxShaders` dessine le matériau et l'anneau deux fois sous le chargement,
+sur le framebuffer écran. Le premier groupe d'embuscade réutilise ces
+programmes. `resetSession` restaure tous les matériaux et retire les anneaux.
+Les outils `spawnSuit`, `spawnRampant` et `spawnVigile` acceptent un quatrième
+argument `true` pour regarder cette arrivée isolément.

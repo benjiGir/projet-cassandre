@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import type { LevelResources } from "./levelResources";
 import { configureRetroTexture } from "../../../render/pipeline/renderer";
+import { illuminateDoorControlPanel } from "../../../render/environment/doorControls";
+import { illuminateVendingMachine } from "../../../render/environment/vendingMachines";
 import { cleanExtras } from "./levelExtras";
 
 // Conversion des matériaux glTF vers le rendu rétro.
@@ -19,6 +21,9 @@ function toLambert(mat: THREE.Material, hasVertexColors: boolean, resources: Lev
     // Le décor Lambert ignore les cartes PBR ; les effets TSL sont posés ensuite.
   }));
   lambert.name = mat.name;
+  illuminateDoorControlPanel(lambert);
+  illuminateVendingMachine(lambert, src);
+  if (lambert.emissiveMap) configureRetroTexture(lambert.emissiveMap);
   if (lambert.map) {
     // Invariant #4 : `NearestFilter` à l'AGRANDISSEMENT, toujours — c'est lui
     // qui fait le gros pixel franc. La réduction (les surfaces vues de loin)

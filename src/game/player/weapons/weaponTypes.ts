@@ -1,7 +1,7 @@
 import type * as THREE from "three";
 export type WeaponKind = "none" | "melee" | "pistol" | "shotgun";
 
-export type FiringWeapon = Exclude<WeaponKind, "none">;
+export type FiringWeapon = Exclude<WeaponKind, "none"> | "kick";
 
 /** Un déclenchement réel, jamais une tentative à sec ou pendant le cooldown. */
 export interface FireEvent {
@@ -32,6 +32,7 @@ export interface ViewmodelClocks {
   /** Arme montrée avant le dernier changement. */
   previous: WeaponKind;
   sinceSwitch: number;
+  sinceKickFire?: number;
   sinceMeleeFire: number;
   sincePistolFire: number;
   sinceShotgunFire: number;

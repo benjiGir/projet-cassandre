@@ -6,10 +6,8 @@ Cinquième et dernier module d'habillage, après `lib_rayons` (surface de vente)
 (arrière du magasin). Celui-ci meuble les deux espaces « habités » du niveau :
 celui où l'on mange et celui où l'on travaille.
 
-Aucun atlas neuf non plus. Les écrans de bureau viennent de `prd_ecrans`
-(l'atlas de l'électroménager — un moniteur et un téléviseur sont la même dalle
-à cette résolution), les façades de distributeurs de `prd_etiquettes`, et tout
-le reste est du bois, du stratifié et du métal peint déjà disponibles.
+Les écrans de bureau viennent de `prd_ecrans`. Les distributeurs utilisent
+trois façades originales, partagées avec les machines cassables du niveau.
 
 Les deux pièces ont en commun d'être MEUBLÉES et non achalandées : pas de
 marchandise, des objets qu'on utilise. C'est ce qui doit se sentir en y
@@ -25,11 +23,11 @@ import random
 from mathutils import Matrix, Vector
 
 import lib_helpers as H
+import lib_distributeurs as D
 from lib_rayons import asset_coll
 from lib_electro import ECRANS
 
-# Étiquettes de produits réutilisées en façade de distributeur.
-FACADES_DISTRIBUTEUR = ("soda_5g_cola", "chips_illumi", "cafe_reveille")
+FACADES_DISTRIBUTEUR = D.FACADES
 
 
 # --- Mobilier tiré du Kenney Furniture Kit ------------------------------------
@@ -313,24 +311,13 @@ def table_cafeteria(seed: int = 0) -> str:
 
 
 def distributeur(facade: str) -> str:
-    """Distributeur automatique : caisson, vitrine éclairée, monnayeur.
-
-    Deux dans la cafétéria, et ce sont les seuls objets lumineux d'une pièce
-    par ailleurs éteinte quand ses néons meurent.
-    """
+    """Machine à produits visibles, commandes en relief et trappe de retrait."""
     name = f"mob_distributeur_{facade}"
     coll, done = asset_coll(name)
     if done:
         return name
-    lo, pr, ht = 0.90, 0.75, 1.90
-    H.box(f"{name}_caisson", (0, 0.06, 0, lo, pr, ht), "metal_peint_rouge", coll, subdiv=0.8)
-    H.box(f"{name}_vitrine", (0.06, 0.02, 0.55, lo - 0.26, 0.06, ht - 0.16),
-          "prd_etiquettes", coll, uv=f"label:{facade}", front="-y")
-    H.box(f"{name}_monnayeur", (lo - 0.22, 0.02, 0.75, lo - 0.06, 0.06, 1.35),
-          "metal_bac_acier", coll)
-    H.box(f"{name}_trappe", (0.10, 0.02, 0.12, lo - 0.30, 0.06, 0.40),
-          "trim_hypermarche", coll, uv="trim:joint_caoutchouc")
-    H.col_box(name[4:], (0, 0, 0, lo, pr, ht), coll)
+    D.machine(name, facade, coll)
+    H.col_box(name[4:], (0, 0, 0, .90, .75, 1.90), coll)
     return name
 
 

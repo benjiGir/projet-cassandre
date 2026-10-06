@@ -4,6 +4,54 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [1.3.0] — 2026-10-06
+
+Le combat gagne en lisibilité et les objets du magasin sont retravaillés.
+
+### Ajouté
+
+- Coup de pied au clic gauche dès le départ, tant qu'aucune arme n'est
+  équipée : bottine de travail animée, 20 dégâts et 1,45 m de portée, sans
+  bloquer les déplacements. Il touche les ennemis et les objets cassables,
+  et pousse le mobilier physique.
+- Apparition progressive des ennemis dans les embuscades : silhouette qui se
+  matérialise en 0,7 s, avec un effet TSL.
+- Flashes de tir procéduraux en TSL, distincts pour le pistolet et le pompe,
+  avec éclairage au départ du coup.
+
+### Modifié
+
+- Modèles originaux du pistolet, du fusil à pompe et des mains en vue
+  subjective ; prises et poignets du pistolet et du pied-de-biche ajustés.
+- Apparence des armes ramassables mise à jour pour suivre les nouveaux
+  modèles.
+- Commandes d'ouverture des portes refaites, avec lecteurs de cartes,
+  boutons et indications lumineuses plus lisibles.
+- Secret de la cafétéria repensé : un distributeur coulissant dissimule un
+  local technique à la place de l'immense porte.
+- Huit distributeurs de soda, de chips et de café retravaillés dans le
+  niveau, avec façades illustrées et éclairage ; les meubles cassables
+  conservent leur contenu.
+
+### Corrigé
+
+- Armes en vue subjective qui disparaissaient au contact du décor : leur
+  profondeur est adaptée pour rester visibles.
+- `pnpm probe` ne reste plus bloqué sur le choix de difficulté et identifie
+  les sprites de tous les types d'ennemis dans ses relevés.
+
+### Technique
+
+- Génération Blender des armes séparée en modules pour les mains, le
+  pistolet, le pompe et le coup de pied ; recettes locales Cassandre pour
+  les commandes de portes, les distributeurs et la chaussure.
+- Effets d'apparition et de tir préparés au chargement et réinitialisés
+  entre les sessions.
+- Impact du coup de pied calculé dans le pas fixe à l'extension du pied ;
+  animation interpolée depuis la même horloge.
+- Réglages du coup de pied dans le panneau de tuning, avec variantes
+  « Vif », « Franc » et « Lourd ».
+
 ## [1.2.0] — 2026-10-04 — « Les sponsors »
 
 L'argent du direct sert à quelque chose, et le combat varie. En attente du
@@ -181,6 +229,7 @@ licence MIT.
 - Déploiement continu sur GitHub Pages ; le build embarque
   `THIRD_PARTY_LICENSES.txt`, les licences des dépendances incluses.
 
+[1.3.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.3.0
 [1.2.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.2.0
 [1.1.0]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.1.0
 [1.0.2]: https://github.com/benjiGir/projet-cassandre/releases/tag/v1.0.2

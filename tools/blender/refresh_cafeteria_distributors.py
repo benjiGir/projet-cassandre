@@ -30,8 +30,8 @@ print(f"BACKUP={backup}")
 pattern = re.compile(r"_ca_dist[0-2](?:\.\d+)?$")
 old = [obj for obj in bpy.context.scene.objects
        if obj.type == "MESH" and pattern.search(obj.name)]
-if len(old) != 15:
-    raise RuntimeError(f"Attendu 15 meshes pour les trois distributeurs : {len(old)}")
+if len(old) not in (6, 15):
+    raise RuntimeError(f"Attendu trois machines et leurs colliders (6 ou 15 meshes) : {len(old)}")
 for obj in old:
     mesh = obj.data
     bpy.data.objects.remove(obj, do_unlink=True)

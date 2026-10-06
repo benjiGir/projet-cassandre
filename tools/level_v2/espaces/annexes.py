@@ -8,6 +8,7 @@ from __future__ import annotations
 from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v2 sur sys.path
 
 import lib_helpers as H           # noqa: E402
+import lib_distributeurs as D     # noqa: E402
 import lib_reserve as R           # noqa: E402
 import lib_rayons as L            # noqa: E402
 import lib_compacteur as C        # noqa: E402
@@ -63,7 +64,7 @@ def habiller_labo(space, gris, props, col_coll, logic) -> dict:
 
 # --- Habillage : le local VMC (secret 3) --------------------------------------
 #
-# Derrière la bouche d'aération de la cafétéria. De la chaleur, un ronronnement,
+# Derrière le distributeur coulissant de la cafétéria. De la chaleur, un ronronnement,
 # et ce que le Directeur cache au chaud : une couvée.
 
 def habiller_vmc(space, gris, props, col_coll, logic) -> dict:
@@ -87,13 +88,12 @@ def habiller_vmc(space, gris, props, col_coll, logic) -> dict:
                        z + 0.12, z + 0.5, "#65814b", props)
         oeufs += 1
 
-    # Cadre de la bouche vue du local, et la grille dévissée posée à côté.
-    a, b = plan.PASSAGES[frozenset({"cafeteria", "secret3"})][1] - 1.0, \
-        plan.PASSAGES[frozenset({"cafeteria", "secret3"})][1] + 1.0
-    H.boxes("vmc_cadre", [((a - 0.08, y0 + t, z, a, y0 + t + 0.06, z + 2.0), "world"),
-                          ((b, y0 + t, z, b + 0.08, y0 + t + 0.06, z + 2.0), "world")],
+    largeur, milieu = plan.PASSAGES[frozenset({"cafeteria", "secret3"})]
+    a, b = milieu - largeur / 2, milieu + largeur / 2
+    H.boxes("vmc_cadre", [((a - .06, y0 + t, z, a, y0 + t + .06, z + 2.25), "world"),
+                          ((b, y0 + t, z, b + .06, y0 + t + .06, z + 2.25), "world"),
+                          ((a, y0 + t, z + 2.25, b, y0 + t + .06, z + 2.31), "world")],
             "metal_bac_acier", props)
-    H.box("vmc_grille", (39.0, 20.4, z, 40.4, 20.5, z + 0.9), "metal_bac_acier", props)
 
     # Une chaleur orangée : c'est elle qu'on aperçoit depuis la cafétéria.
     lampe(logic, "light_vmc_couvee", (39.2, 22.2, z + 1.2), color="#ff8a3a", intensity=4.0, distance=6.0)
@@ -119,9 +119,8 @@ def habiller_c_short_ramp(space, gris, props, col_coll, logic) -> dict:
     H.prop("csr_palette", (x0 + 26.0, cy - 0.5, z, x0 + 27.2, cy + 0.5, z + 0.15),
           "bois_palette", props, masse=20, matiere="bois")
 
-    H.prop("csr_distributeur", (x1 - 4.0, y0 + 1.0, z, x1 - 3.1, y0 + 1.75, z + 1.9),
-          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
-          contenu="donut:2")
+    D.prop("csr_distributeur", (x1 - 4.0, y0 + 1.0, z, x1 - 3.1, y0 + 1.75, z + 1.9),
+           "chips_illumi", props, front="+y", contenu="donut:2")
 
     # Fuite : une flaque au sol, un seau posé dessous — visuel seulement, sans
     # goutte-à-goutte sonore (hors scope Blender de ce lot).
@@ -147,9 +146,8 @@ def habiller_c_short_w(space, gris, props, col_coll, logic) -> dict:
     H.prop("csw_palette", (cx - 0.6, y0 + 20.0, z, cx + 0.6, y0 + 21.2, z + 0.15),
           "bois_palette", props, masse=20, matiere="bois")
 
-    H.prop("csw_distributeur", (x1 - 1.75, y1 - 4.0, z, x1 - 1.0, y1 - 3.1, z + 1.9),
-          "metal_peint_rouge", props, masse=70, pv=30, matiere="electronique",
-          contenu="canette:3")
+    D.prop("csw_distributeur", (x1 - 1.75, y1 - 4.0, z, x1 - 1.0, y1 - 3.1, z + 1.9),
+           "soda_5g_cola", props, front="-x", contenu="canette:3")
 
     H.box("csw_flaque", (cx - 1.0, y0 + 29.3, z + 0.005, cx + 1.0, y0 + 30.7, z + 0.006),
           "palette", props, uv="aplat:#111014")

@@ -24,6 +24,7 @@ import {
 } from "../player/weapons/weaponConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
+import { kickConfig, KICK_VARIANTS } from "../player/weapons/kickConfig";
 import { Suit } from "../entities/suit/suit";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suit/suitConfig";
 import { Director } from "../entities/director/director";
@@ -108,6 +109,8 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.weapons;
     },
     weaponConfig,
+    kickConfig,
+    kickVariants: KICK_VARIANTS,
     recoilVariants: RECOIL_VARIANTS,
     recoilInterpolationVariants: RECOIL_INTERPOLATION_VARIANTS,
     applyRecoilVariant,
@@ -126,9 +129,9 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.suitManager.suits;
     },
     suitConfig,
-    spawnSuit: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z),
-    spawnRampant: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "rampant"),
-    spawnVigile: (x, y, z) => spawnSuitAt(engine, engine.session, x, y, z, "vigile"),
+    spawnSuit: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "costard", materialize),
+    spawnRampant: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "rampant", materialize),
+    spawnVigile: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "vigile", materialize),
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
@@ -215,6 +218,8 @@ export function exposeDebugApi(engine: GameEngine): void {
     applyBoissonVariant,
     /** `door_*` du niveau glTF actuellement chargé — pour inspecter/piloter une porte depuis la console (même précédent que `directors`/`suits`). */
     doors: () => engine.session.gltfLevelSession?.current?.doors ?? [],
+    enemySprites: () =>
+      [...engine.session.suitSprites.values(), ...engine.session.directorSprites.values()].map((sprite) => sprite.mesh),
     // see: docs/decisions/0031-portes-animees-et-vitres.md
     doorSystem: {
       liste: () => engine.session.doorSystem?.describe() ?? [],
@@ -396,6 +401,8 @@ declare global {
       feelVariants: typeof FEEL_VARIANTS;
       applyFeelVariant: (name: keyof typeof FEEL_VARIANTS) => ReturnType<typeof applyFeelVariant>;
       weapons: WeaponSystem;
+      kickConfig: typeof kickConfig;
+      kickVariants: typeof KICK_VARIANTS;
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;
@@ -415,11 +422,11 @@ declare global {
       suits: Suit[];
       suitConfig: SuitConfig;
       /** Fait apparaître un Costard supplémentaire à la volée (pieds à `y`), DANS LA SESSION COURANTE. Critère de rollback du plan : pousser jusqu'à 10-20 sans interface graphique dédiée. */
-      spawnSuit: (x: number, y: number, z: number) => Suit;
+      spawnSuit: (x: number, y: number, z: number, materialize?: boolean) => Suit;
       /** Même chose pour un Rampant (lot B4) : `suits` les liste avec les Costards, `kind` les distingue. */
-      spawnRampant: (x: number, y: number, z: number) => Suit;
+      spawnRampant: (x: number, y: number, z: number, materialize?: boolean) => Suit;
       /** Même chose pour un Vigile (lot B6) : lourd, lent, bouclier de face. */
-      spawnVigile: (x: number, y: number, z: number) => Suit;
+      spawnVigile: (x: number, y: number, z: number, materialize?: boolean) => Suit;
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */
@@ -478,6 +485,8 @@ declare global {
       boissonVariants: typeof BOISSON_VARIANTS;
       applyBoissonVariant: (name: keyof typeof BOISSON_VARIANTS) => ReturnType<typeof applyBoissonVariant>;
       doors: () => DoorInfo[];
+      /** Quads des ennemis présents, toutes espèces : `pnpm probe` les masque pour compter le niveau seul. */
+      enemySprites: () => THREE.Object3D[];
       /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {
         liste: () => ReturnType<DoorSystem["describe"]>;

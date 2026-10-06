@@ -26,6 +26,9 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `direction_covers()` | essai isolé de deux meubles bas dans le bureau du Directeur, vues avant/après et comparaison aux hauteurs de tir ; source et export livrés conservés |
 | `orient_office_screens(preview=…)` | tourne écran et clavier vers le fauteuil des postes de bureau ; correction locale avec sauvegarde, ou candidat séparé si `preview` est fourni |
 | `rework_checkouts(preview=…, inspect=False)` | remplace les anciens comptoirs par six travées numérotées ; déplace les éléments qui gênent les files, sauvegarde et exporte ; `preview` produit un candidat isolé et `inspect=True` décrit les objets existants |
+| `rework_accesses(preview=…)` | remplace les cinq commandes de porte par des lecteurs marqués ou des poussoirs verts ; abaisse le local secret de la cafétéria au sol et le cache derrière un distributeur coulissant ; sauvegarde, exporte et rend les aperçus ; rejouable |
+| `rework_vending(preview=…)` | reprend les huit autres distributeurs avec trois façades (soda, snacks, café), des produits visibles et des commandes en relief ; conserve les emplacements, colliders, bornes de sponsor et contenus des trois machines cassables ; sauvegarde, exporte et rend une planche ; rejouable |
+| `weapon_kick(preview=…)` | depuis `armes.blend`, ajoute une chaussure et un bas de pantalon à la vue subjective, rend l'extension et exporte les armes ; conserve les modèles d'armes existants ; rejouable |
 
 | `rework_backstage(preview=…, inspect=False)` | migration locale vers réserve → personnel → parking / carte Or → bureaux ; candidat Blender et GLB isolés avec `preview`, sauvegarde et export sinon ; refuse une seconde migration de la même source |
 | `story_triggers(preview=…)` | pose les neuf `trig_*` du script de niveau (ADR 0037) dans la collection LOGIC ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
@@ -91,7 +94,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
 | `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
-| `build_weapons.py` | pied-de-biche et pompe en vue subjective, tenus par les bras du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
+| `build_weapons.py` | trois armes et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
@@ -357,3 +360,28 @@ noms exacts, décisions — est dans
 [docs/archive/blender-statut-par-jalon.md](../../docs/archive/blender-statut-par-jalon.md).
 À ouvrir pour comprendre POURQUOI un script est fait comme il est, pas pour
 savoir comment s'en servir.
+
+
+### Armes et mains — refonte 2026-10-04
+
+La [planche de références](../../docs/assets/board-armes-mains.md) documente
+la culasse inox ouverte, le pompe à crosse bois et les doigts séparés.
+`build_weapons.py` garde assemblage, IK, cadrage et export ;
+`weapons/config.py`, `geometry.py`, `pistol.py`, `shotgun.py`, `hands.py`
+séparent les couleurs, volumes et prises. Les manches CC0 sont extraites
+sans leur ancienne peau ; les mains originales rejoignent les poignets.
+
+```bash
+blender -b --factory-startup -P tools/blender/build_weapons.py -- --debug --blend assets_src/blender/armes.blend
+blender -b --factory-startup -P tools/blender/render_weapon_pickups.py
+```
+
+La source Blender contient `VUE_SUBJECTIVE` et `RAMASSAGES`. Le pistolet
+est visible à l'ouverture ; afficher les autres meshes via l'Outliner,
+et la caméra `oeil` pour le cadrage du jeu. Pour le pompe, afficher aussi
+`vm_shotgun_pump`. Les gestes restent pilotés dans le jeu.
+
+Après régénération, recopier les dimensions et rectangles du manifeste
+`weapon_pickups.json` dans `src/render/pickups/pickupConfig.ts`.
+La refonte de septembre décrite plus haut reste un état historique :
+les budgets actuels sont consignés dans la révision de l'ADR 0029.

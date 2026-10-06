@@ -151,14 +151,14 @@ SPACES: list[Space] = [
     Space(
         id="cafeteria", nom="Cafétéria",
         x=(34, 56), y=(0, 20), z=0, hauteur=4.0, densite="moyenne",
-        role="Optionnelle : soin, toilettes (Duke : +10 PV) derrière la porte est, secret 3 (bouche d'aération)",
+        role="Optionnelle : soin, toilettes (Duke : +10 PV) derrière la porte est, secret 3 (distributeur coulissant)",
         duree="0:30", arrivee=(35, 7),
         ennemis="2 Costards attablés — réveil à l'entrée",
         spawns=[("suit_ca1", 54, 5, None), ("suit_ca2", 52, 16, None)],
         notes=[
             "Comptoir de self : un des trois objets sans équivalent CC0, monté en volumes simples.",
-            "Secret 3 : une caisse (1,0 m) puis un distributeur (1,9 m) mènent à la bouche "
-            "d'aération du mur nord, et au local VMC derrière.",
+            "Secret 3 : le retour de monnaie du distributeur du mur nord fait coulisser "
+            "son caisson. Un local technique et une couvée se cachent derrière.",
         ],
         reperes=[
             # Récompense du détour : la seule trousse double avant les bureaux.
@@ -364,8 +364,8 @@ SPACES: list[Space] = [
     ),
     Space(
         id="secret3", nom="Local VMC (secret 3)",
-        x=(35, 41), y=(20, 24), z=2.0, hauteur=2.5, densite="faible", grimpable=True,
-        role="Secret 3 : derrière la bouche d'aération de la cafétéria",
+        x=(35, 41), y=(20, 24), z=0.0, hauteur=2.5, densite="faible", grimpable=True,
+        role="Secret 3 : local technique caché derrière le distributeur de la cafétéria",
         reperes=[
             ("secret 3 — aération", 38.5, 22, "secret"),
             ("trousse de soin +50", 40, 21, "soin"),
@@ -827,7 +827,7 @@ PASSAGES: dict[frozenset[str], tuple[float, float]] = {
     # ouvert sur 12 m, un sas vide avant le rideau de la carte Argent.
     frozenset({"hub", "c_hb_rs"}): (2.0, 0.0),
     frozenset({"galerie", "secret1"}): (1.5, 8.25),       # le pan de mur qui s'efface
-    frozenset({"cafeteria", "secret3"}): (2.0, 36.5),     # la bouche d'aération
+    frozenset({"cafeteria", "secret3"}): (1.5, 36.5),     # distributeur coulissant
     frozenset({"cafeteria", "toilettes"}): (1.0, 11.0),   # la porte des WC, à 1 m comme celles des bureaux
     # Dans l'axe de l'allée entre les rangées 0 et 1 : centrée sur x = −40, la
     # porte donnait sur le bout d'une gondole à deux mètres.

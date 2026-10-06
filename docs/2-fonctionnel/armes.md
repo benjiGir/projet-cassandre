@@ -2,15 +2,16 @@
 title: Armes
 tags: [fonctionnel]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-05
 ---
 
 # Armes
 
 ## Ce que vit le joueur
 
-Selon le niveau, vous démarrez déjà équipé ou totalement désarmé. Sur le
-niveau complet, vous n'avez rien en poche au départ : le pied-de-biche traîne
+Selon le niveau, vous démarrez déjà équipé ou sans arme. Sans arme, le clic
+gauche donne un coup de pied. Sur le niveau complet, vous n'avez rien en poche
+au départ : le pied-de-biche traîne
 au sol tout près, et vous le ramassez simplement en marchant dessus, sans
 rien à confirmer. Le pistolet et le fusil à pompe s'obtiennent plus loin de
 la même façon — en marchant sur eux, jamais à la touche `E`, qui reste
@@ -32,6 +33,17 @@ aucun rechargement à proprement parler : chaque arme a sa réserve, qui se vide
 au tir. Une fois à sec, appuyer sur le bouton de tir ne fait rien — pas de
 geste qui vous bloque, pas de son de clic qui casse le rythme, juste un coup
 qui ne part pas.
+
+### Le coup de pied
+
+Disponible dès le départ, sans ramassage ni munition. La chaussure entre dans
+le champ pendant la frappe puis se retire. Le coup touche le premier obstacle
+devant vous à courte portée : un ennemi, un meuble cassable ou le décor.
+Il fait moins de dégâts et porte moins loin que le pied-de-biche. Vous pouvez
+continuer à marcher, courir et sauter pendant le geste.
+
+Ramasser une arme l'équipe normalement. Tant que vous n'avez pas le
+pied-de-biche, la touche de mêlée permet de revenir au coup de pied.
 
 ### Le pied-de-biche
 
@@ -77,8 +89,8 @@ Le détail de ce qui casse, avec quoi et ce qui en sort, est décrit dans
 
 ## Règles
 
-- Le niveau décide si vous démarrez armé ou non ; sur un départ désarmé, le
-  pied-de-biche est le premier ramassage du jeu.
+- Le niveau décide si vous démarrez armé ou non ; sans arme, le clic gauche
+  donne un coup de pied. Le pied-de-biche reste le premier ramassage du jeu.
 - Une arme posée au sol se ramasse en marchant dessus, jamais à la touche
   `E`.
 - Ramasser une arme déjà en poche ne fait rien pour le pied-de-biche et le

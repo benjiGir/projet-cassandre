@@ -12,7 +12,7 @@ describe("ammoLabel", () => {
 
   it("nomme l'arme quand elle n'a pas de munitions", () => {
     expect(ammoLabel({ ...AMMO, activeWeapon: "melee" })).toBe("PIED-DE-BICHE");
-    expect(ammoLabel({ ...AMMO, activeWeapon: "none" })).toBe("À MAINS NUES");
+    expect(ammoLabel({ ...AMMO, activeWeapon: "none" })).toBe("COUP DE PIED");
   });
 });
 

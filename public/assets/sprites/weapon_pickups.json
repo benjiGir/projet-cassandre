@@ -1,6 +1,6 @@
 {
-  "atlasWidth": 159,
-  "atlasHeight": 72,
+  "atlasWidth": 184,
+  "atlasHeight": 94,
   "icons": {
     "melee": {
       "x": 0,
@@ -12,15 +12,15 @@
     "pistol": {
       "x": 58,
       "y": 0,
-      "width": 27,
-      "height": 27,
+      "width": 30,
+      "height": 30,
       "aspect": 1.0
     },
     "shotgun": {
-      "x": 87,
+      "x": 90,
       "y": 0,
-      "width": 72,
-      "height": 72,
+      "width": 94,
+      "height": 94,
       "aspect": 1.0
     }
   }

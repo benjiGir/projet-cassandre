@@ -2,7 +2,7 @@
 title: Armes en vue subjective — modèles 3D tenus par des bras CC0
 tags: [adr, rendu, armes, assets]
 status: accepte
-updated: 2026-09-13
+updated: 2026-10-04
 ---
 
 # ADR 0029 — Armes en vue subjective : modèles 3D tenus par des bras CC0
@@ -91,3 +91,39 @@ l'éclairage de la vue subjective écrase toute palette (même un blanc pur
 n'y dépasse pas `#38`-`#61` à l'écran, mesuré par approximation d'exposition
 faute d'outil de capture en jeu pour cet agent) — un sujet de rendu
 (`retro-render`), pas de modèle. **En attente du verdict de playtest.**
+
+
+## Révision du 2026-10-04 — pistolet, pompe et mains
+
+La [planche de références](../assets/board-armes-mains.md) retient les vues
+Beretta 92FS Inox, Mossberg 590 Retrograde et les constructions anatomiques
+de Proko. Les modèles restent originaux, en couleurs de sommets : culasse
+ouverte et poignée sculptée, crosse complète en bois, fût rainuré et
+bouches de canon creuses.
+
+Les manches et les positions des poignets viennent encore du rig CC0.
+Les mains sont désormais construites dans `tools/blender/weapons/hands.py`,
+avec quatre doigts séparés, un pouce opposé et des prises adaptées à chaque
+arme. La main gauche appartient au mesh du fût mobile. L'alternative
+« mains par code » écartée en septembre est donc révisée : des volumes à
+phalanges séparées remplacent les quatre doigts regroupés du modèle source.
+Le pied-de-biche conserve sa forme et reçoit lui aussi la nouvelle main.
+
+Le plafond historique de 500 triangles du pistolet est relevé pour cette
+refonte : le modèle au sol compte 1 252 triangles, la pompe 1 852. En vue
+subjective, mains et manches comprises, le pistolet compte 1 727 triangles
+et le pompe 2 836, répartis sur ses deux meshes. Les lots de dessin restent
+un pour le pistolet et deux pour le pompe.
+
+Une capture dans le parking montre que les lampes seules assombrissent
+fortement la peau et l'inox. Le matériau des armes applique désormais un
+plancher de lumière indirecte de 0,32, multiplié par leurs couleurs :
+`src/render/materials/minimumLight.ts`, également utilisé par les billboards
+qui possédaient déjà cette correction. Les lampes et les éclairs de tir
+continuent à éclairer les armes. Le niveau conserve son propre éclairage.
+
+Le générateur fournit une source éditable `assets_src/blender/armes.blend`
+via `--blend`. L'atlas des ramassages est régénéré depuis les mêmes modèles ;
+ses rectangles sont resynchronisés dans `pickupConfig.ts`. Les extras glTF
+et les gestes existants conservent leur contrat, sans animation squelettique
+ni modification des cadences, dégâts ou déplacements.

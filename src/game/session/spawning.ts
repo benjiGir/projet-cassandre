@@ -67,6 +67,7 @@ export function spawnSuitAt(
   feetY: number,
   z: number,
   kind: SuitKind = "costard",
+  materialize = false,
 ): Suit {
   const facing = new THREE.Vector3(session.player.position.x - x, 0, session.player.position.z - z);
   if (facing.lengthSq() < 1e-6) facing.set(0, 0, 1);
@@ -85,6 +86,11 @@ export function spawnSuitAt(
     ...enemySpriteQuad(sheet, cfg.capsuleHalfHeight + cfg.capsuleRadius + cfg.colliderOffset),
   });
   session.suitSprites.set(suit.id, sprite);
+  if (materialize) {
+    suit.beginAppearance();
+    sprite.updatePose(engine.camera, suit.position, suit.forward);
+    engine.fx.spawnEnemyAppearance(sprite, feetY);
+  }
   return suit;
 }
 
@@ -128,13 +134,13 @@ function groundBelow(session: GameSession, point: THREE.Vector3): number | null 
 }
 
 /**
- * Compile le shader TSL de l'explosion sous l'écran de chargement, dans les
+ * Compile les shaders TSL d'explosion, de tir et d'apparition sous le chargement, dans les
  * mêmes conditions que celui des douches : framebuffer écran, et ancienne
  * racine détachée au hot reload pour que ses lampes n'entrent pas dans la
  * variante compilée.
  * see: docs/4-technique/rendu.md#préparation-des-douches
  */
-async function warmExplosionShader(engine: PersistentEngine, previousRoot?: THREE.Object3D): Promise<void> {
+async function warmFxShaders(engine: PersistentEngine, previousRoot?: THREE.Object3D): Promise<void> {
   const previousTarget = engine.renderer.getRenderTarget();
   const previousParent = previousRoot?.parent;
   const render = () => {
@@ -144,6 +150,8 @@ async function warmExplosionShader(engine: PersistentEngine, previousRoot?: THRE
   try {
     previousRoot?.removeFromParent();
     await engine.fx.warmExplosions(engine.camera, render);
+    await engine.fx.warmMuzzleFlashes(engine.camera, render);
+    await engine.fx.warmEnemyAppearances(engine.camera, render);
   } finally {
     if (previousRoot && previousParent) previousParent.add(previousRoot);
     // Efface l'image de préparation avant le prochain paint.
@@ -271,7 +279,8 @@ export function loadGltfLevel(
         await warmShaderDouches(
           engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
         );
-        await warmExplosionShader(engine, session.gltfLevelSession?.current?.root);
+        reportLoading("Préparation des effets", 0.97);
+        await warmFxShaders(engine, session.gltfLevelSession?.current?.root);
 
         return () => {
           // Toutes les affectations de session restent dans ce commit : tant

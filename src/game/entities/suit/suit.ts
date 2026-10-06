@@ -20,6 +20,7 @@ import {
 import { createEnemyBody, configureEnemyCharacterController } from "../shared/enemyPhysics";
 import type { EnemyMachineContext, EnemyState, EnemyUpdateContext } from "../shared/enemyTypes";
 import type { EnemyAnimationInput } from "../../../render/sprites/enemySpriteTypes";
+import { ENEMY_MATERIALIZATION_DURATION } from "../shared/enemySpawnConfig";
 
 // see: docs/archive/systems-entites.md#suit-et-director-deux-fines-couches-au-dessus-de-la-machine-partagée
 
@@ -39,6 +40,7 @@ export class Suit implements Entity {
   readonly cfg: SuitConfig;
   readonly appearanceIndex: number;
   private actor: EnemyActor;
+  private appearanceRemaining = 0;
 
   constructor(
     physics: PhysicsWorld,
@@ -145,6 +147,18 @@ export class Suit implements Entity {
     return value !== "dead" && value !== "corpse";
   }
 
+  get appearanceProgress(): number {
+    return 1 - this.appearanceRemaining / ENEMY_MATERIALIZATION_DURATION;
+  }
+
+  beginAppearance(): void {
+    this.appearanceRemaining = ENEMY_MATERIALIZATION_DURATION;
+  }
+
+  advanceAppearance(dt: number): void {
+    this.appearanceRemaining = Math.max(0, this.appearanceRemaining - dt);
+  }
+
   get velocityHorizontal(): THREE.Vector3 {
     return this.ctx.velocityHorizontal;
   }
@@ -186,6 +200,7 @@ export class Suit implements Entity {
   }
 
   update(dt: number, ctx: SuitUpdateContext) {
+    if (this.isAlive && this.appearanceRemaining > 0) return;
     tickEnemy(this.actor, dt, ctx);
   }
 }

@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { Schema } from "effect";
 
 import { assetUrl } from "../../core/loading/assetPath";
+import { applyMinimumLight } from "../materials/minimumLight";
 import type { WeaponModels } from "./viewmodelTypes";
 
 const decodeVector = Schema.decodeUnknownSync(Schema.Tuple([Schema.Finite, Schema.Finite, Schema.Finite]));
@@ -37,6 +38,7 @@ function disposeImportedMaterials(scene: THREE.Object3D): void {
 export async function loadWeaponModels(): Promise<WeaponModels> {
   const gltf = await new GLTFLoader().loadAsync(assetUrl("assets/weapons/armes.glb"));
   const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  applyMinimumLight(material, 0.32);
   const geometries = new Set<THREE.BufferGeometry>();
   gltf.scene.traverse((object) => {
     if (object instanceof THREE.Mesh) geometries.add(object.geometry);
@@ -61,6 +63,8 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
     const pump = node("vm_shotgun_pump");
 
     const models: WeaponModels = {
+      kick: node("vm_kick").geometry,
+      kickPivot: vec3(extra("vm_kick", "prise"), "vm_kick.prise"),
       crowbar: crowbar.geometry,
       pistol: pistol.geometry,
       shotgun: shotgun.geometry,
@@ -71,12 +75,13 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       crowbarPivot: vec3(extra("vm_crowbar", "prise"), "vm_crowbar.prise"),
       pistolPivot: vec3(extra("vm_pistol", "prise"), "vm_pistol.prise"),
       pistolMuzzle: vec3(extra("vm_pistol", "bout_canon"), "vm_pistol.bout_canon"),
+      pistolAxis: vec3(extra("vm_pistol", "axe_canon"), "vm_pistol.axe_canon").normalize(),
       shotgunPivot: vec3(extra("vm_shotgun", "prise"), "vm_shotgun.prise"),
       shotgunMuzzle: vec3(extra("vm_shotgun", "bout_canon"), "vm_shotgun.bout_canon"),
       pumpAxis: vec3(extra("vm_shotgun_pump", "axe_glissiere"), "vm_shotgun_pump.axe_glissiere").normalize(),
       material,
     };
-    for (const geometry of [models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
+    for (const geometry of [models.kick, models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
       geometries.delete(geometry);
     }
     return models;
@@ -100,6 +105,8 @@ function coloredBox(size: [number, number, number], center: [number, number, num
 
 export function placeholderWeaponModels(): WeaponModels {
   return {
+    kick: coloredBox([0.20, 0.28, 0.15], [0.12, -0.30, -0.72], 0x38342e),
+    kickPivot: new THREE.Vector3(0.12, -0.45, -0.62),
     crowbar: coloredBox([0.06, 0.06, 0.7], [0.32, -0.28, -0.55], 0x8a5a34),
     pistol: coloredBox([0.06, 0.1, 0.26], [0.26, -0.26, -0.45], 0x3a3d44),
     shotgun: coloredBox([0.09, 0.12, 0.85], [0.3, -0.3, -0.65], 0x555a60),
@@ -110,6 +117,7 @@ export function placeholderWeaponModels(): WeaponModels {
     crowbarPivot: new THREE.Vector3(0.32, -0.28, -0.4),
     pistolPivot: new THREE.Vector3(0.26, -0.26, -0.32),
     pistolMuzzle: new THREE.Vector3(0.26, -0.22, -0.6),
+    pistolAxis: new THREE.Vector3(0, 0, -1),
     shotgunPivot: new THREE.Vector3(0.3, -0.3, -0.4),
     shotgunMuzzle: new THREE.Vector3(0.3, -0.25, -1.05),
     pumpAxis: new THREE.Vector3(0, 0, -1),

@@ -2,7 +2,7 @@
 title: Contrats des ennemis et de leurs machines
 tags: [gameplay, ennemis, xstate, code]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-05
 ---
 
 # Contrats des ennemis et de leurs machines
@@ -23,6 +23,12 @@ télégraphie, qui laisse au joueur une fenêtre visible d’au moins 0,2 s.
 Les champs pending sont remis à zéro au début du tick puis lus par le manager.
 Les horloges d’animation et la distance parcourue fournissent une vue sans décider
 la simulation. Les cadavres gardent leur pose, sans collider ni rigid body.
+
+Les renforts d'embuscade attendent 0,7 s avant leur premier tick d'IA.
+`SuitManager` avance ce délai au pas fixe, même lorsqu'un impact interrompt
+le tick normal. Ils restent touchables pendant leur matérialisation TSL ;
+une mort annule immédiatement l'effet. Les ennemis présents au chargement
+n'ont pas ce délai. Voir [Matérialisation des embuscades](notes-code-rendu.md#matérialisation-des-embuscades).
 
 ## Déplacement et combat
 

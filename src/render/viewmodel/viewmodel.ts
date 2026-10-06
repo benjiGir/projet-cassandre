@@ -3,16 +3,10 @@ import type { ViewmodelClocks } from "../../game/player/weapons/weaponTypes";
 
 import type { ViewmodelSource, WeaponModels, ViewmodelAnimation } from "./viewmodelTypes";
 import { viewmodelAnimationAt } from "./viewmodelAnimation";
+import { drawOverWorld } from "./viewmodelDepth";
+import { kickExtensionAt } from "./kickAnimation";
 
 // see: docs/6-reference/notes-code-rendu.md#viewmodel
-
-const VIEWMODEL_DEPTH_RANGE = 0.05;
-
-function drawOverWorld(mesh: THREE.Mesh): THREE.Mesh {
-  mesh.onBeforeRender = (renderer) => renderer.getContext().depthRange(0, VIEWMODEL_DEPTH_RANGE);
-  mesh.onAfterRender = (renderer) => renderer.getContext().depthRange(0, 1);
-  return mesh;
-}
 
 // Amplitudes du geste, repère caméra (mètres, radians).
 const SWING_ROLL = 0.45;
@@ -26,6 +20,7 @@ const PUMP_TRAVEL = 0.09;
 const PUMP_ROLL = 0.07;
 
 export class Viewmodel {
+  private readonly kick: THREE.Group;
   private readonly crowbar: THREE.Group;
   private readonly pistol: THREE.Group;
   private readonly shotgun: THREE.Group;
@@ -47,6 +42,7 @@ export class Viewmodel {
 
   constructor(camera: THREE.Camera, models: WeaponModels) {
     this.models = models;
+    this.kick = this.mount(camera, models.kick, models.kickPivot);
     this.crowbarElbow = models.crowbarPivot.clone().add(CROWBAR_ELBOW);
     this.crowbar = this.mount(camera, models.crowbar, this.crowbarElbow);
     this.pistol = this.mount(camera, models.pistol, models.pistolPivot);
@@ -73,6 +69,16 @@ export class Viewmodel {
     this.crowbar.visible = anim.weapon === "melee";
     this.pistol.visible = anim.weapon === "pistol";
     this.shotgun.visible = anim.weapon === "shotgun";
+    const extension = kickExtensionAt(this.clocks.sinceKickFire ?? Infinity);
+    this.kick.visible = this.clocks.active === "none" && extension > 0;
+    if (this.kick.visible) {
+      const withdrawn = 1 - extension;
+      this.kick.position.copy(this.models.kickPivot).add(this.scratchPosition);
+      this.kick.position.x += withdrawn * 0.28;
+      this.kick.position.y -= withdrawn * 0.62;
+      this.kick.position.z += withdrawn * 0.16;
+      this.kick.rotation.set(-withdrawn * 0.6, withdrawn * 0.22, -withdrawn * 0.35);
+    }
 
     if (anim.weapon === "melee") {
       const group = this.crowbar;
@@ -103,6 +109,12 @@ export class Viewmodel {
     const mesh = group.children[0]!;
     mesh.updateWorldMatrix(true, false);
     return mesh.localToWorld(out.copy(weapon === "pistol" ? this.models.pistolMuzzle : this.models.shotgunMuzzle));
+  }
+
+  muzzleWorldDirection(out: THREE.Vector3, weapon: "pistol" | "shotgun"): THREE.Vector3 {
+    const mesh = (weapon === "pistol" ? this.pistol : this.shotgun).children[0]!;
+    mesh.updateWorldMatrix(true, false);
+    return out.copy(weapon === "pistol" ? this.models.pistolAxis : this.models.pumpAxis).transformDirection(mesh.matrixWorld);
   }
 }
 
