@@ -10,13 +10,18 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 
 | Commande | Rôle |
 |---|---|
-| `status()` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
-| `build(out=…, detail=False)` | rejoue `build_niveau.py` ; copie de sécurité si la session est modifiée, car le build vide la scène |
-| `check(strict=False, audit=True)` | `validate_level.py` + `audit_niveau.py`, verdicts seuls |
+| `status(niveau=…)` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
+| `build(out=…, detail=False, niveau=…)` | rejoue le générateur du niveau choisi ; copie de sécurité si la session est modifiée, car le build vide la scène |
+| `check(strict=False, audit=True, niveau=…)` | `validate_level.py` + audit du plan choisi, verdicts seuls |
 | `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
 | `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
 | `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
-| `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
+| `export(out=…, niveau=…)` | `export_level.py`, sortie propre au profil, `ok` seulement si le contenu est vérifié |
+| `manifest(out=…, niveau=…)` | manifeste des espaces du plan choisi, conversion Blender → jeu |
+| `fingerprint()` | empreinte des poses, propriétés et surfaces du view layer sauvegardé ; comparaison des reconstructions dans un fichier voisin `.fingerprint.json` |
+| `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `docs/assets/` |
+| `metro_pilot()` | construit, sauvegarde, exporte et rend le quai et le tube N4, dans une session neuve `--factory-startup` |
+| `metro_kit(out=…)` | bibliothèque et planche métro N3, depuis une session neuve `--factory-startup` ; régénère les pièces et textures originales |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
 | `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
@@ -36,6 +41,24 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `gas_props(preview=…)` | pose les quinze bonbonnes de gaz explosives (`prop_gaz_*`, matière `gaz`) près des points d'apparition du chemin obligé ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `encounters(preview=…)` | pose les rencontres du lot B6 : rideau `door_reserve_nord` (ouvert au chargement), spawns à `groupe` de l'arène, de la meute du parking et du Vigile, et leurs trois `trig_*` ; retire quatre Costards du parking ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
+
+### Plusieurs niveaux
+
+Les profils sont `hypermarche` (générateur `tools/level_v2/`) et `metro`
+(`tools/metro/`). Sans `niveau`, le marqueur de scène ou le nom `metro.blend`
+fait le choix ; les scènes historiques gardent le magasin. Les sorties
+canoniques de l'autre profil sont protégées. Le panneau N › Cassandre
+offre le même sélecteur, après rechargement de l'extension.
+
+```bash
+blender -b --factory-startup -P tools/blender/cassandre_cli.py -- build niveau=metro out=renders/metro_n0/metro.blend
+blender -b renders/metro_n0/metro.blend -P tools/blender/cassandre_cli.py -- check strict=true
+blender -b renders/metro_n0/metro.blend -P tools/blender/cassandre_cli.py -- export out=renders/metro_n0/metro.glb
+python3 tools/blender/level_spaces.py --niveau metro --out renders/metro_n0/metro.espaces.json
+```
+
+Le métro contient pour l'instant l'atelier technique N0. Le tracé arrive au
+lot N2. [Contrats et limites](../../docs/4-technique/outillage-multi-niveaux.md).
 
 `where` lit le relevé écrit par le dernier `build()` dans
 `renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par
@@ -385,3 +408,5 @@ Après régénération, recopier les dimensions et rectangles du manifeste
 `weapon_pickups.json` dans `src/render/pickups/pickupConfig.ts`.
 La refonte de septembre décrite plus haut reste un état historique :
 les budgets actuels sont consignés dans la révision de l'ADR 0029.
+
+La recette `metro_trains` construit le pilote T2 dans une session neuve (`--factory-startup`). Elle écrit `metro_trains.blend/.glb` ; contrat et commandes : `docs/4-technique/trains-metro.md`.

@@ -1,0 +1,52 @@
+{
+  "espaces": [
+    {
+      "id": "pilote_quai",
+      "nom": "Quai du pilote",
+      "x": [
+        0,
+        18
+      ],
+      "z": [
+        -24,
+        0
+      ],
+      "y": [
+        0,
+        6.5
+      ]
+    },
+    {
+      "id": "pilote_tunnel",
+      "nom": "Tunnel du pilote",
+      "x": [
+        3,
+        9.5
+      ],
+      "z": [
+        -84,
+        -24
+      ],
+      "y": [
+        -0.25,
+        4.5
+      ]
+    },
+    {
+      "id": "pilote_service",
+      "nom": "Maintenance",
+      "x": [
+        4.75,
+        9.25
+      ],
+      "z": [
+        -88,
+        -84
+      ],
+      "y": [
+        0,
+        3
+      ]
+    }
+  ]
+}

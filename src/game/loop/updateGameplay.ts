@@ -53,6 +53,9 @@ import { basculerEau, updateDouches } from "../level/sanitaires/douches";
 import { updateStoreSign } from "../../render/environment/storeSign";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
+import { updateTrainRideGym } from "../session/player/trainRideGameplay";
+import { updateLevelTrains } from "../session/player/levelTrainGameplay";
+import { updateTrainGym } from "../session/player/trainGymGameplay";
 import { CardPickupBillboard } from "../../render/pickups/cardPickups";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -237,6 +240,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           {
+            onTrainUse: (name) => session.gltfLevelSession?.current?.trains?.use(name),
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
             onCardPickup: (card) => {
@@ -481,6 +485,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         }
         if (session.suitManager.playerHitEvents.length > suitPlayerHitsBefore) streamEvent(session, "degats");
 
+        updateTrainGym(engine, gameplayDt, activeFrame.use);
+        updateTrainRideGym(engine, gameplayDt, activeFrame.use);
+
         const directorDeathsBefore = session.directorManager.deathEvents.length;
         const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
         const directorAlertsBefore = session.directorManager.alertEvents.length;
@@ -507,6 +514,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "director");
         }
         if (session.directorManager.playerHitEvents.length > directorPlayerHitsBefore) streamEvent(session, "degats");
+
+        updateLevelTrains(engine, gameplayDt);
 
         const propsDestroyedBefore = session.propSystem?.destroyedEvents.length ?? 0;
         session.propSystem?.update(session.weapons.hitEvents);
@@ -618,7 +627,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         }
 
         updateLevelScript(
-          session.levelScript, session.scriptTriggers, LEVEL_EVENTS, gameplayDt, session.player.position,
+          session.levelScript, session.scriptTriggers, session.choice.scenarios ?? LEVEL_EVENTS, gameplayDt, session.player.position,
           (action) => runScriptAction(engine, session, action),
         );
 

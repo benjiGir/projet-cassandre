@@ -5,7 +5,7 @@ import { INITIAL_PLAYER_MAX_HP } from "./player/playerState";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../physics/world";
 import { DeterministicRandom } from "../../core/effect/random";
 import { setAudioRandom } from "../../core/audio/audio";
-import { resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/audio/zoneAmbience";
+import { initZoneAmbience, resetZoneAmbienceSession, stopZoneAmbienceSession } from "../../core/audio/zoneAmbience";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { HERO_LINE_SEED } from "./presentation/heroLines";
 import { createPlaceLineState } from "./player/placeLines";
@@ -18,6 +18,9 @@ import { suitConfig } from "../entities/suit/suitConfig";
 import { directorConfig } from "../entities/director/directorConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
+import { PathfindingService } from "../level/navigation/pathfinding";
+import { buildTrainRideGym, type TrainRideGym } from "../level/catalog/trainRideGym";
+import { buildTrainGym, type TrainGym } from "../level/catalog/trainGym";
 import { buildGym } from "../level/catalog/gym";
 import { SuitManager } from "../entities/suit/suitManager";
 import { DirectorManager } from "../entities/director/directorManager";
@@ -50,9 +53,13 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
 }
 
 export async function bootGameSession(engine: PersistentEngine, choice: LevelDef): Promise<GameSession> {
+  await initZoneAmbience(choice.ambience);
   const pickupResources = await loadPickupResources();
   try {
     pickupResources.warmTextures(engine.renderer);
+    if (import.meta.env.DEV && choice.kind === "train-ride-gym") {
+      await engine.fx.warmEnemyAppearances(engine.camera, () => engine.renderer.render(engine.scene, engine.camera));
+    }
     return buildGameSession(engine, choice, pickupResources);
   } catch (error) {
     try { pickupResources.dispose(); } catch (releaseError) {
@@ -79,6 +86,8 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   const physics = new PhysicsWorld();
   const player = new PlayerController(physics);
 
+  let trainGym: TrainGym | null = null;
+  let trainRideGym: TrainRideGym | null = null;
   let gymRoot: THREE.Group | null = null;
   let ballMesh: THREE.Mesh | null = null;
   let ballBody: RAPIER.RigidBody | null = null;
@@ -109,6 +118,20 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
         .setCollisionGroups(COLLISION_GROUPS.WORLD),
       ballBody,
     );
+  } else if (import.meta.env.DEV && choice.kind === "train-gym") {
+    gymRoot = new THREE.Group();
+    engine.scene.add(gymRoot);
+    trainGym = buildTrainGym(gymRoot, physics);
+    player.spawn(trainGym.spawn.x, trainGym.spawn.y + SPAWN_FEET_GUARD, trainGym.spawn.z);
+    engine.look.yaw = trainGym.spawnYaw;
+    engine.look.pitch = 0;
+  } else if (import.meta.env.DEV && choice.kind === "train-ride-gym") {
+    gymRoot = new THREE.Group();
+    engine.scene.add(gymRoot);
+    trainRideGym = buildTrainRideGym(gymRoot, physics);
+    player.spawn(trainRideGym.spawn.x, trainRideGym.spawn.y + SPAWN_FEET_GUARD, trainRideGym.spawn.z);
+    engine.look.yaw = 0;
+    engine.look.pitch = 0;
   } else {
     player.spawn(0, 2, 0);
     engine.look.yaw = 0;
@@ -124,6 +147,8 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
 
   const session: GameSession = {
     choice,
+    trainGym,
+    trainRideGym,
     difficulty,
     physics,
     player,
@@ -144,7 +169,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     levelScript: createLevelScriptState(),
     lightPool: null,
     propSystem: null,
-    doorSystem: null,
+    doorSystem: trainRideGym?.doors ?? null,
     vitreSystem: null,
     sanitaireSystem: null,
     ecranSystem: null,
@@ -201,6 +226,13 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     }
     // Rencontre d'essai du Vigile (lot B6) : seul, à l'écart, avec la place de lui tourner autour.
     spawnSuitAt(engine, session, -14, SPAWN_FEET_GUARD, -6, "vigile");
+  } else if (trainGym) {
+    session.currentNavGraph = runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics,
+      new THREE.Box3(new THREE.Vector3(-9.5, -.4, -21.5), new THREE.Vector3(13.5, 3, 24.5)))));
+    for (const [x, z] of [[9, -15], [12, -15], [9, -20], [12, -20]] as const) spawnSuitAt(engine, session, x, 1, z);
+  } else if (trainRideGym) {
+    session.currentNavGraph = runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics,
+      new THREE.Box3(new THREE.Vector3(-1.5, -.4, -22), new THREE.Vector3(1.5, .4, 22)))));
   } else if (choice.gltfName) {
     loadGltfLevel(engine, session, choice.gltfName);
   }
@@ -221,7 +253,9 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   release(() => session.pickupResources?.dispose());
   session.pickupResources = null;
 
+  release(() => session.trainGym?.presentation.dispose());
   if (session.gymRoot) {
+    release(() => session.trainRideGym?.presentation.dispose(session.gymRoot!));
     session.gymRoot.traverse((obj) => {
       if (!(obj instanceof THREE.Mesh)) return;
       release(() => obj.geometry.dispose());

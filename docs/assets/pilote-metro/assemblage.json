@@ -1,0 +1,1174 @@
+{
+  "instances": [
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "angle": 0,
+      "objects": 19
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        4,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        0,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        4,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        0,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        0,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        0,
+        4,
+        0
+      ],
+      "angle": 0,
+      "objects": 19
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        8,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        4,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        8,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        4,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        4,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        4,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        0,
+        8,
+        0
+      ],
+      "angle": 0,
+      "objects": 19
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        12,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        8,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        12,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        8,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        8,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        8,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        0,
+        12,
+        0
+      ],
+      "angle": 0,
+      "objects": 19
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        16,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        12,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        16,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        12,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        12,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        12,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        0,
+        16,
+        0
+      ],
+      "angle": 0,
+      "objects": 19
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        20,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        16,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        20,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        16,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        16,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        16,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "quai_5x4",
+      "origin": [
+        18,
+        24,
+        0
+      ],
+      "angle": 3.141592653589793,
+      "objects": 19
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        -0.3,
+        20,
+        0.75
+      ],
+      "angle": 0,
+      "objects": 4
+    },
+    {
+      "asset": "mur_quai_4m",
+      "origin": [
+        18.3,
+        24,
+        0.75
+      ],
+      "angle": 3.141592653589793,
+      "objects": 4
+    },
+    {
+      "asset": "voute_station_4m",
+      "origin": [
+        0,
+        20,
+        0
+      ],
+      "angle": 0,
+      "objects": 48
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        5,
+        20,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "voie_4x4",
+      "origin": [
+        9,
+        20,
+        0
+      ],
+      "angle": 0,
+      "objects": 16
+    },
+    {
+      "asset": "escalier_quai_075m",
+      "origin": [
+        5.5,
+        20,
+        0
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 13
+    },
+    {
+      "asset": "banc_3m",
+      "origin": [
+        1,
+        9,
+        0.75
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 8
+    },
+    {
+      "asset": "banc_3m",
+      "origin": [
+        1,
+        17,
+        0.75
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 8
+    },
+    {
+      "asset": "voiture_ligne_15m",
+      "origin": [
+        9.6,
+        5,
+        0
+      ],
+      "angle": 0,
+      "objects": 304
+    },
+    {
+      "text": "ACCES VOIES"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        1.75,
+        3,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_1.75_3_1",
+      "haut": 5.4611783872290545,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_1.75_3_2",
+      "haut": 5.88538578509729,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        14.5,
+        3,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_14.5_3_1",
+      "haut": 5.826770529071119,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_14.5_3_2",
+      "haut": 5.361626449025907,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        1.75,
+        9,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_1.75_9_1",
+      "haut": 5.4611783872290545,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_1.75_9_2",
+      "haut": 5.88538578509729,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        14.5,
+        9,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_14.5_9_1",
+      "haut": 5.826770529071119,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_14.5_9_2",
+      "haut": 5.361626449025907,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        1.75,
+        15,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_1.75_15_1",
+      "haut": 5.4611783872290545,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_1.75_15_2",
+      "haut": 5.88538578509729,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        14.5,
+        15,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_14.5_15_1",
+      "haut": 5.826770529071119,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_14.5_15_2",
+      "haut": 5.361626449025907,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        1.75,
+        21,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_1.75_21_1",
+      "haut": 5.4611783872290545,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_1.75_21_2",
+      "haut": 5.88538578509729,
+      "bas": 3.85
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        14.5,
+        21,
+        3.7
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_quai_14.5_21_1",
+      "haut": 5.826770529071119,
+      "bas": 3.85
+    },
+    {
+      "suspente": "suspente_quai_14.5_21_2",
+      "haut": 5.361626449025907,
+      "bas": 3.85
+    },
+    {
+      "text": "ACCES FERME"
+    },
+    {
+      "text": "VOTRE TEMPS"
+    },
+    {
+      "text": "NOUS APPARTIENT"
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        24,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        25,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_24_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_24_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_niche_4m",
+      "origin": [
+        4.75,
+        28,
+        0
+      ],
+      "angle": 0,
+      "objects": 91
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        29,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_28_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_28_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "REFUGE 01"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        3.6,
+        28.8,
+        2.6
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        32,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        33,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_32_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_32_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        36,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        37,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_36_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_36_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_niche_4m",
+      "origin": [
+        4.75,
+        40,
+        0
+      ],
+      "angle": 0,
+      "objects": 91
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        41,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_40_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_40_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "REFUGE 02"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        3.6,
+        40.8,
+        2.6
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        44,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        45,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_44_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_44_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        48,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        49,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_48_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_48_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_niche_4m",
+      "origin": [
+        4.75,
+        52,
+        0
+      ],
+      "angle": 0,
+      "objects": 91
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        53,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_52_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_52_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "REFUGE 03"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        3.6,
+        52.8,
+        2.6
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        56,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        57,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_56_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_56_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        60,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        61,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_60_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_60_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_niche_4m",
+      "origin": [
+        4.75,
+        64,
+        0
+      ],
+      "angle": 0,
+      "objects": 91
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        65,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_64_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_64_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "REFUGE 04"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        3.6,
+        64.8,
+        2.6
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        68,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        69,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_68_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_68_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        72,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        73,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_72_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_72_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "asset": "tunnel_niche_4m",
+      "origin": [
+        4.75,
+        76,
+        0
+      ],
+      "angle": 0,
+      "objects": 91
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        77,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_76_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_76_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "REFUGE 05"
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        3.6,
+        76.8,
+        2.6
+      ],
+      "angle": 1.5707963267948966,
+      "objects": 2
+    },
+    {
+      "asset": "tunnel_4m",
+      "origin": [
+        4.75,
+        80,
+        0
+      ],
+      "angle": 0,
+      "objects": 84
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        81,
+        4.05
+      ],
+      "angle": 0,
+      "objects": 2
+    },
+    {
+      "suspente": "suspente_tunnel_80_0",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "suspente": "suspente_tunnel_80_1",
+      "haut": 4.374597922523552,
+      "bas": 4.2
+    },
+    {
+      "text": "SERVICE"
+    },
+    {
+      "asset": "armoire_service",
+      "origin": [
+        5.25,
+        87.3,
+        0
+      ],
+      "angle": 0,
+      "objects": 10
+    },
+    {
+      "asset": "luminaire_2m",
+      "origin": [
+        6,
+        85,
+        2.8
+      ],
+      "angle": 0,
+      "objects": 2
+    }
+  ],
+  "tunnel_m": 60,
+  "niche_y": [
+    30,
+    42,
+    54,
+    66,
+    78
+  ],
+  "lamps": 29,
+  "source": "assets_src/blender/metro_pilote.blend"
+}

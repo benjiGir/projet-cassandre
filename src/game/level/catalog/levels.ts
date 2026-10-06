@@ -1,4 +1,6 @@
 // see: docs/2-fonctionnel/le-niveau.md
+import { METRO_TRAIN_EVENTS } from "../trains/metroTrainEvents";
+import type { Scenario } from "../scripting/levelScript";
 
 export interface LevelDef {
   /** Identifiant stable. Sert aussi de valeur pour le raccourci `?level=<id>` et de clé du registre. */
@@ -6,7 +8,7 @@ export interface LevelDef {
   /** Libellé affiché dans le menu de choix de niveau. */
   label: string;
   /** "gym" = boîte blanche construite à la main (gym.ts). "gltf" = pipeline glTF (loader.ts/hotReload.ts). */
-  kind: "gym" | "gltf";
+  kind: "gym" | "train-gym" | "train-ride-gym" | "gltf";
   /** Nom de fichier sous public/assets/levels/<gltfName>.glb, sans extension. Uniquement pour kind === "gltf". */
   gltfName?: string;
   /** Le joueur démarre désarmé (pied-de-biche au sol, ramassable via use_crowbar) — voir WeaponSystem.startUnarmed()/pickUpMelee(). */
@@ -19,11 +21,21 @@ export interface LevelDef {
   parTime?: number;
   /** Le niveau livre `<gltfName>.espaces.json` (`tools/level_v2/espaces_jeu.py`) : il porte les répliques de lieu. */
   spaces?: boolean;
+  /** Dossier d'ambiance sous assets/audio, préparé avant la session. */
+  ambience?: string;
+  /** Scénarios propres au niveau ; absent = registre historique du magasin. */
+  scenarios?: Readonly<Record<string, Scenario>>;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
+  ...(import.meta.env.DEV ? [{ id: "essai_trains", label: "Essai — Trains du métro (T1)", kind: "train-gym" as const }] : []),
+  ...(import.meta.env.DEV ? [{ id: "essai_voyage_rame", label: "Essai — Voyage à bord (T4)", kind: "train-ride-gym" as const }] : []),
+  ...(import.meta.env.DEV ? [{ id: "pilote_metro", label: "Pilote — Quai et tunnel (N4)", kind: "gltf" as const,
+    gltfName: "metro_pilote", lighting: "hybride" as const, ambience: "metro_pilote", spaces: true, scenarios: {} }] : []),
+  ...(import.meta.env.DEV ? [{ id: "trains_metro", label: "Essai — Trains intégrés (T2)", kind: "gltf" as const,
+    gltfName: "metro_trains", lighting: "hybride" as const, ambience: "metro_pilote", spaces: true, scenarios: METRO_TRAIN_EVENTS }] : []),
   { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },
   { id: "zone_b_caisses", label: "Zone B — Caisses", kind: "gltf", gltfName: "zone_b_caisses" },
   { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },

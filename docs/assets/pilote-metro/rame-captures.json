@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-06",
+  "level": "pilote_metro",
+  "capture_type": "review only; animations not frozen; no determinism claim",
+  "colliders": {
+    "cuboid": 233,
+    "convexHull": 136,
+    "trimesh": 0
+  },
+  "lights": 29,
+  "decor_batches": 23,
+  "views": {
+    "rame_droite": {
+      "image": "rame_droite.png",
+      "pose_blender": [
+        14.5,
+        9.5,
+        0.76,
+        75
+      ],
+      "dimensions": [
+        640,
+        360
+      ],
+      "sha256_pixels_rgb": "0feb923d2ea230257aaff9ee2f514877836e4d7e420b94afee0603d26e66fe94",
+      "draw_calls": 23,
+      "triangles": 44942
+    },
+    "rame_gauche": {
+      "image": "rame_gauche.png",
+      "pose_blender": [
+        8,
+        9.8,
+        0.01,
+        285
+      ],
+      "dimensions": [
+        640,
+        360
+      ],
+      "sha256_pixels_rgb": "94c8da9efb0f550ef8e3b223e86f9774bfdbc0be396e8890acc16a1633269d65",
+      "draw_calls": 15,
+      "triangles": 31094
+    }
+  }
+}

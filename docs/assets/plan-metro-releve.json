@@ -1,0 +1,514 @@
+{
+  "escape_budget_s": 3.386,
+  "gallery_axis_sightlines_m": {
+    "x": 40.75,
+    "y": 36.0
+  },
+  "reachable_nodes": [
+    "billets",
+    "depot",
+    "fret",
+    "galeries",
+    "machinerie",
+    "parvis",
+    "poste",
+    "privee",
+    "quais",
+    "quartier",
+    "secret_1",
+    "secret_2",
+    "secret_3",
+    "secret_4",
+    "tunnel_a",
+    "tunnel_b"
+  ],
+  "light_clusters": {
+    "rue_station": 42,
+    "station_tunnel": 44,
+    "depot_objectifs": 48,
+    "voyage": 28,
+    "sortie": 24
+  },
+  "extent": {
+    "x": [
+      -80.25,
+      132.5
+    ],
+    "y": [
+      0,
+      500.5
+    ]
+  },
+  "vehicle_envelopes": {
+    "tunnel_a": {
+      "poses_sampled": 269,
+      "outside_corners": 0,
+      "outside_rectangles": 0,
+      "max_missing_m2": 0.0,
+      "step_max_m": 0.5,
+      "car_m": [
+        15,
+        2.8
+      ],
+      "limit": "Enveloppe horizontale aux poses du prototype, rectangle complet à chaque pose échantillonnée. Extrémités hors plan exclues sur 8 m ; masques et raccords 3D à contrôler en T2/N5."
+    },
+    "tunnel_b": {
+      "poses_sampled": 136,
+      "outside_corners": 0,
+      "outside_rectangles": 0,
+      "max_missing_m2": 0.0,
+      "step_max_m": 0.5,
+      "car_m": [
+        15,
+        2.8
+      ],
+      "limit": "Enveloppe horizontale aux poses du prototype, rectangle complet à chaque pose échantillonnée. Extrémités hors plan exclues sur 8 m ; masques et raccords 3D à contrôler en T2/N5."
+    }
+  },
+  "ok": true,
+  "errors": [],
+  "overlaps": [],
+  "surface_m2": {
+    "quartier": 2432.0,
+    "descente": 170.0,
+    "billets": 904.0,
+    "quais": 1296.0,
+    "tunnel_a": 871.9,
+    "galeries": 464.38,
+    "secret_2": 780.5,
+    "depot": 2739.75,
+    "tunnel_b": 553.73,
+    "poste": 148.0,
+    "machinerie": 960.0,
+    "secret_4": 60.5,
+    "fret": 215.25,
+    "privee": 1152.0,
+    "remontee": 146.0,
+    "parvis": 1632.0,
+    "secret_3": 76.25,
+    "secret_1": 48.0
+  },
+  "total_floor_m2": 14650.25,
+  "routes": [
+    {
+      "id": "V2",
+      "length_m": 218.35,
+      "max_segment_m": 72.0,
+      "max_slope_deg": 3.68,
+      "points": [
+        [
+          -2,
+          118,
+          -9.75
+        ],
+        [
+          -2.0,
+          190.0,
+          -9.75
+        ],
+        [
+          -2.0,
+          194.0,
+          -10.0
+        ],
+        [
+          -2.0,
+          218.0,
+          -11.25
+        ],
+        [
+          -2.0,
+          222.0,
+          -11.5
+        ],
+        [
+          -1.75,
+          226.25,
+          -11.75
+        ],
+        [
+          -1.0,
+          230.25,
+          -12.0
+        ],
+        [
+          0.5,
+          234.25,
+          -12.25
+        ],
+        [
+          2.25,
+          238.0,
+          -12.5
+        ],
+        [
+          4.5,
+          241.5,
+          -12.75
+        ],
+        [
+          7.25,
+          244.75,
+          -13.0
+        ],
+        [
+          10.25,
+          247.5,
+          -13.25
+        ],
+        [
+          27.25,
+          264.5,
+          -14.5
+        ],
+        [
+          30.0,
+          267.25,
+          -14.75
+        ],
+        [
+          32.75,
+          270.5,
+          -15.0
+        ],
+        [
+          35.0,
+          274.0,
+          -15.25
+        ],
+        [
+          37.0,
+          277.75,
+          -15.5
+        ],
+        [
+          38.25,
+          281.5,
+          -15.75
+        ],
+        [
+          39.0,
+          285.75,
+          -16.0
+        ],
+        [
+          39.25,
+          290.0,
+          -16.25
+        ],
+        [
+          39.25,
+          294.0,
+          -16.5
+        ],
+        [
+          39.25,
+          318.0,
+          -17.75
+        ],
+        [
+          39.25,
+          322.0,
+          -18.0
+        ]
+      ],
+      "role": "Face au joueur dans A"
+    },
+    {
+      "id": "V1",
+      "length_m": 72.0,
+      "max_segment_m": 72.0,
+      "max_slope_deg": 0.0,
+      "points": [
+        [
+          2,
+          118,
+          -9.75
+        ],
+        [
+          2,
+          190,
+          -9.75
+        ]
+      ],
+      "role": "Sens opposé sur les quais"
+    },
+    {
+      "id": "VB",
+      "length_m": 79.64,
+      "max_segment_m": 16.0,
+      "max_slope_deg": 0.0,
+      "points": [
+        [
+          7.5,
+          354.0,
+          -18
+        ],
+        [
+          -8.5,
+          354.0,
+          -18.0
+        ],
+        [
+          -11.75,
+          354.25,
+          -18.0
+        ],
+        [
+          -14.75,
+          354.75,
+          -18.0
+        ],
+        [
+          -17.75,
+          355.75,
+          -18.0
+        ],
+        [
+          -20.5,
+          357.25,
+          -18.0
+        ],
+        [
+          -23.0,
+          359.0,
+          -18.0
+        ],
+        [
+          -25.5,
+          361.0,
+          -18.0
+        ],
+        [
+          -35.25,
+          371.0,
+          -18.0
+        ],
+        [
+          -37.75,
+          373.0,
+          -18.0
+        ],
+        [
+          -40.25,
+          374.75,
+          -18.0
+        ],
+        [
+          -43.25,
+          376.25,
+          -18.0
+        ],
+        [
+          -46.25,
+          377.25,
+          -18.0
+        ],
+        [
+          -49.25,
+          377.75,
+          -18.0
+        ],
+        [
+          -52.25,
+          378.0,
+          -18.0
+        ],
+        [
+          -64.25,
+          378.0,
+          -18.0
+        ]
+      ],
+      "role": "Aller calme ; retour, trafic dans le dos"
+    },
+    {
+      "id": "M",
+      "length_m": 48.0,
+      "max_segment_m": 48.0,
+      "max_slope_deg": 0.0,
+      "points": [
+        [
+          15.5,
+          338,
+          -18
+        ],
+        [
+          63.5,
+          338,
+          -18
+        ]
+      ],
+      "role": "Manœuvre, passage limité au dépôt"
+    },
+    {
+      "id": "M_deviee",
+      "length_m": 42.83,
+      "max_segment_m": 26.83,
+      "max_slope_deg": 0.0,
+      "points": [
+        [
+          15.5,
+          338,
+          -18
+        ],
+        [
+          31.5,
+          338,
+          -18
+        ],
+        [
+          55.5,
+          350,
+          -18
+        ]
+      ],
+      "role": "Branche de manœuvre à construire au lot T2"
+    },
+    {
+      "id": "F",
+      "length_m": 61.5,
+      "max_segment_m": 61.5,
+      "max_slope_deg": 0.0,
+      "points": [
+        [
+          39.5,
+          366,
+          -18
+        ],
+        [
+          39.5,
+          427.5,
+          -18
+        ]
+      ],
+      "role": "Rame fixe, défilement du décor"
+    }
+  ],
+  "floor_patches": 243,
+  "reserved_niches": 19,
+  "lamp_markers": {
+    "quartier": 18,
+    "billets": 8,
+    "quais": 12,
+    "tunnel_a": 16,
+    "galeries": 12,
+    "depot": 12,
+    "tunnel_b": 8,
+    "poste": 4,
+    "machinerie": 8,
+    "fret": 6,
+    "privee": 6,
+    "parvis": 8
+  },
+  "lamp_markers_total": 118,
+  "max_lights_selected": 48,
+  "links": [
+    [
+      "quartier",
+      "secret_1",
+      "facultatif"
+    ],
+    [
+      "quartier",
+      "billets",
+      "service"
+    ],
+    [
+      "billets",
+      "quartier",
+      "grille ouverte depuis les billets"
+    ],
+    [
+      "billets",
+      "quais",
+      "escalier"
+    ],
+    [
+      "quais",
+      "tunnel_a",
+      "deux traversées"
+    ],
+    [
+      "tunnel_a",
+      "galeries",
+      "avant grille"
+    ],
+    [
+      "galeries",
+      "tunnel_a",
+      "après grille et raccourci"
+    ],
+    [
+      "galeries",
+      "secret_2",
+      "facultatif"
+    ],
+    [
+      "tunnel_a",
+      "depot",
+      "sortie"
+    ],
+    [
+      "depot",
+      "secret_3",
+      "escalier latéral, NPC exclus"
+    ],
+    [
+      "depot",
+      "tunnel_b",
+      "objectif A"
+    ],
+    [
+      "tunnel_b",
+      "poste",
+      "objectif A"
+    ],
+    [
+      "poste",
+      "tunnel_b",
+      "retour"
+    ],
+    [
+      "tunnel_b",
+      "depot",
+      "retour"
+    ],
+    [
+      "depot",
+      "machinerie",
+      "objectif B"
+    ],
+    [
+      "machinerie",
+      "depot",
+      "seconde rampe"
+    ],
+    [
+      "machinerie",
+      "secret_4",
+      "facultatif"
+    ],
+    [
+      "depot",
+      "fret",
+      "après A et B et arène"
+    ],
+    [
+      "fret",
+      "privee",
+      "après voyage"
+    ],
+    [
+      "privee",
+      "parvis",
+      "escalier mécanique"
+    ]
+  ],
+  "limits": [
+    "Pas de validation Rapier ni de partie jouée : N5.",
+    "Les volumes de mobilier, grilles et murs sont à produire ; visibilité vérifiée par segments libres et réservations uniquement.",
+    "Le toit de rame secret remplace le sol navigable sous sa caisse ; NPC exclus de cette branche au blockout.",
+    "La machinerie réserve le ventilateur central sans sol praticable dans son emprise."
+  ]
+}

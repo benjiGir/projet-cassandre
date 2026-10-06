@@ -3,6 +3,7 @@ import type { LevelResources } from "./levelResources";
 import { configureRetroTexture } from "../../../render/pipeline/renderer";
 import { illuminateDoorControlPanel } from "../../../render/environment/doorControls";
 import { illuminateVendingMachine } from "../../../render/environment/vendingMachines";
+import { illuminateMetroFixture } from "../../../render/environment/metro/metroFixtures";
 import { cleanExtras } from "./levelExtras";
 
 // Conversion des matériaux glTF vers le rendu rétro.
@@ -23,6 +24,7 @@ function toLambert(mat: THREE.Material, hasVertexColors: boolean, resources: Lev
   lambert.name = mat.name;
   illuminateDoorControlPanel(lambert);
   illuminateVendingMachine(lambert, src);
+  illuminateMetroFixture(lambert, src);
   if (lambert.emissiveMap) configureRetroTexture(lambert.emissiveMap);
   if (lambert.map) {
     // Invariant #4 : `NearestFilter` à l'AGRANDISSEMENT, toujours — c'est lui

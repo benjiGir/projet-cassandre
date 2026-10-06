@@ -22,6 +22,7 @@ le rôle en attendant.
 from __future__ import annotations
 
 import random
+import hashlib
 
 import lib_helpers as H
 from lib_rayons import asset_coll
@@ -255,7 +256,7 @@ def kiosque(enseigne: str, seed: int = 0) -> str:
     # nue se lit comme un rayonnage vide, et une tablette garnie au hasard se
     # lit comme une erreur : c'est la marchandise qui dit le métier du kiosque.
     # Tout part en UN mesh par `H.boxes`, donc un seul appel de dessin.
-    rng = random.Random(abs(hash((name, seed))) % 100000)
+    rng = random.Random(int.from_bytes(hashlib.sha256(f"{name}:{seed}".encode()).digest()[:4], "big") % 100000)
     debout, a_plat = MARCHANDISE[enseigne]
     parts = []
     for z in niveaux:

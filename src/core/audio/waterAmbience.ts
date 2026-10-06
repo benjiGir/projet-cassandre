@@ -77,7 +77,7 @@ export function updateWaterAmbience(
   currentGain = smoothTowards(currentGain, targetMixScratch.gain, dt, GAIN_SMOOTH_TAU);
   currentPan = smoothTowards(currentPan, targetMixScratch.pan, dt, PAN_SMOOTH_TAU);
 
-  if (!waterHowl || !loaded || playbackId === null) return;
+  if (!waterHowl || !loaded || playbackId === null || !waterHowl.playing(playbackId)) return;
 
   const audible = currentGain > AUDIBLE_GAIN_EPSILON;
   isPlaying = audible;

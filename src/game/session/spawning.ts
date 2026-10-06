@@ -24,6 +24,7 @@ import { VitreSystem } from "../level/interactions/vitres";
 import { SanitaireSystem } from "../level/sanitaires/sanitaires";
 import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
+import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
 import { warmShaderDouches } from "../level/sanitaires/doucheShader";
 import { RenderService } from "../../render/pipeline/renderService";
 import { Suit } from "../entities/suit/suit";
@@ -38,6 +39,9 @@ import { readLevelScript } from "./progression/levelScriptSetup";
 import { reportLoading, letBrowserPaint } from "../../core/loading/loadingProgress";
 import { PathfindingService } from "../level/navigation/pathfinding";
 import { navGraphStats } from "../level/navigation/navGraph";
+import { TrainLevelError } from "../level/trains/trainLevelData";
+import { auditTrainSafety } from "../level/trains/trainSafety";
+import { excludeTrainRails } from "../level/trains/trainNavigation";
 import { useGameStore } from "../hud/state";
 import { type GameSession } from "./gameSession";
 import { type PersistentEngine } from "./gameEngine";
@@ -185,11 +189,17 @@ export function loadGltfLevel(
         reportLoading("Cuisson du graphe de navigation", 0.92);
         const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
         session.physics.refreshSceneQueries();
+        if (handle.trains) {
+          handle.trains.setDifficulty(session.difficulty);
+          const safety = runGameplaySync(auditTrainSafety(session.physics, handle.trains.data, handle.trains.config));
+          console.info("[trains] lisibilité : " + safety.samples + " points contrôlés.");
+        }
         let navGraph;
         try {
           navGraph = runGameplaySync(
             PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
           );
+          if (handle.trains) excludeTrainRails(navGraph, handle.trains.data.navigationZones, handle.trains.data.crossings);
         } finally {
           for (const collider of autoColliders) collider.setEnabled(true);
         }
@@ -244,9 +254,12 @@ export function loadGltfLevel(
         }
 
         const script = readLevelScript(
-          handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), LEVEL_EVENTS,
+          handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), session.choice.scenarios ?? LEVEL_EVENTS,
           handle.doors.map((door) => door.name),
+          handle.trains?.data.lanes,
         );
+        if (handle.trains && script.problems.length > 0)
+          throw new TrainLevelError({ message: script.problems.join("\n") });
         for (const problem of script.problems) console.error(`[level] ${problem}`);
         const planSpaces = (await loadLevelSpaces(name)) ?? [];
         const levelSpaces = planSpaces.length + script.placeSpaces.length > 0
@@ -279,6 +292,8 @@ export function loadGltfLevel(
         await warmShaderDouches(
           engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
         );
+        if (handle.trains) await warmTrainModel(engine.renderer, engine.scene, engine.camera, handle.root,
+          handle.trains.data.model, session.gltfLevelSession?.current?.root);
         reportLoading("Préparation des effets", 0.97);
         await warmFxShaders(engine, session.gltfLevelSession?.current?.root);
 

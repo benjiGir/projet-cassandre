@@ -38,6 +38,7 @@ export interface InteractionHandlers {
    * consommée — un refus doit rester réessayable, et c'est l'appelant qui
    * sait si le perk est déjà acheté. */
   onPerkKioskUse(offer: PerkOffer): void;
+  onTrainUse?(name: string): void;
 }
 
 export interface WeaponPickupHandlers {
@@ -184,6 +185,10 @@ export class InteractionSystem {
 
     if (useObject.sells) {
       handlers.onPerkKioskUse(useObject.sells);
+      return;
+    }
+    if (useObject.extras.train !== undefined) {
+      handlers.onTrainUse?.(useObject.name);
       return;
     }
 

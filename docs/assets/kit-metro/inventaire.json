@@ -1,0 +1,743 @@
+{
+  "etape": "N3_candidat",
+  "pieces": [
+    {
+      "id": "tunnel_4m",
+      "spec": "Tube 4.5 m libres, couronne 4,5 m ; longueur 4.000 m",
+      "bounds_m": [
+        [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        [
+          4.75,
+          4.0,
+          4.747861385345459
+        ]
+      ],
+      "meshes": 72,
+      "triangles": 1232,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 56
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "tunnel_niche_4m",
+      "spec": "Tube 4.5 m libres, couronne 4,5 m ; longueur 4.000 m",
+      "bounds_m": [
+        [
+          -1.75,
+          0.0,
+          -0.25
+        ],
+        [
+          4.75,
+          4.0,
+          4.747861385345459
+        ]
+      ],
+      "meshes": 77,
+      "triangles": 1476,
+      "colliders": {
+        "cuboid": 11,
+        "convex": 54
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_lampe",
+        "metro_petrole",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "tunnel_large_4m",
+      "spec": "Tube 7 m libres, couronne 4,5 m ; longueur 4.000 m",
+      "bounds_m": [
+        [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        [
+          7.25,
+          4.0,
+          4.749109268188477
+        ]
+      ],
+      "meshes": 72,
+      "triangles": 1296,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 56
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "courbe_R32_75deg",
+      "spec": "Tube 7 m libres, couronne 4,5 m ; longueur 4.189 m",
+      "bounds_m": [
+        [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        [
+          7.491682529449463,
+          4.666311264038086,
+          4.749109268188477
+        ]
+      ],
+      "meshes": 87,
+      "triangles": 1572,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 75
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "courbe_R24_75deg",
+      "spec": "Tube 7 m libres, couronne 4,5 m ; longueur 3.142 m",
+      "bounds_m": [
+        [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        [
+          7.42324161529541,
+          3.6221017837524414,
+          4.749109268188477
+        ]
+      ],
+      "meshes": 71,
+      "triangles": 1268,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 60
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "mur_quai_4m",
+      "spec": "Mur 4 m longitudinal × 3 m haut, frise pétrole à 1,25 m",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.30000001192092896,
+          4.0,
+          3.0
+        ]
+      ],
+      "meshes": 3,
+      "triangles": 148,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "metro_ivoire",
+        "metro_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "voute_station_4m",
+      "spec": "Voûte 18 m libres ; naissance à 3 m sur quai, sommet 6,5 m sur rail",
+      "bounds_m": [
+        [
+          -0.229595348238945,
+          0.0,
+          3.75
+        ],
+        [
+          18.229595184326172,
+          4.0,
+          6.749797821044922
+        ]
+      ],
+      "meshes": 48,
+      "triangles": 576,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 48
+      },
+      "materials": [
+        "metro_ivoire"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "quai_5x4",
+      "spec": "Quai 5 × 4 m ; dessus à 0,75 m du rail ; bande 0,5 m",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          5.0,
+          4.0,
+          0.7850000262260437
+        ]
+      ],
+      "meshes": 18,
+      "triangles": 344,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "metro_ambre",
+        "metro_ivoire",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "voie_4x4",
+      "spec": "Voie de station 4 × 4 m ; deux files de rails et traverses",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          -0.25
+        ],
+        [
+          4.0,
+          4.0,
+          0.1599999964237213
+        ]
+      ],
+      "meshes": 12,
+      "triangles": 384,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "escalier_2m",
+      "spec": "8 marches de 0,25 m / giron 0,5 m ; largeur 2.5 m ; proxy rampe",
+      "bounds_m": [
+        [
+          0.0,
+          -0.030000003054738045,
+          0.0
+        ],
+        [
+          2.5,
+          4.014028549194336,
+          3.200000047683716
+        ]
+      ],
+      "meshes": 28,
+      "triangles": 800,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 1
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ambre",
+        "metro_beton"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "escalier_quai_075m",
+      "spec": "3 marches de 0,25 m / giron 0,5 m ; largeur 2.5 m ; proxy rampe",
+      "bounds_m": [
+        [
+          0.0,
+          -0.030000003054738045,
+          0.0
+        ],
+        [
+          2.5,
+          1.5110679864883423,
+          1.7832038402557373
+        ]
+      ],
+      "meshes": 12,
+      "triangles": 288,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 1
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ambre",
+        "metro_beton"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "galerie_4m",
+      "spec": "Galerie 2,5 × 4 m ; hauteur libre 3 m, gaines hors gabarit",
+      "bounds_m": [
+        [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        [
+          2.75,
+          4.0,
+          3.25
+        ]
+      ],
+      "meshes": 6,
+      "triangles": 376,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "garde_corps_2m",
+      "spec": "2 m ; hauteur 1,25 m, lisse basse et proxy continu",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.07500000298023224,
+          2.075000047683716,
+          1.2549999952316284
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 116,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "portique_depot_8m",
+      "spec": "Travée de charpente 8 m ; ouverture 8 × 8 m",
+      "bounds_m": [
+        [
+          -0.375,
+          -0.125,
+          0.0
+        ],
+        [
+          8.375,
+          0.625,
+          8.5
+        ]
+      ],
+      "meshes": 7,
+      "triangles": 292,
+      "colliders": {
+        "cuboid": 3,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "voiture_ligne_15m",
+      "spec": "Voiture 15 × 2.8 m ; gabarit 3,2 m depuis rail",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.10000000149011612
+        ],
+        [
+          2.799999952316284,
+          15.0,
+          3.200000047683716
+        ]
+      ],
+      "meshes": 217,
+      "triangles": 4745,
+      "colliders": {
+        "cuboid": 62,
+        "convex": 86
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ambre",
+        "metro_ivoire",
+        "metro_lampe",
+        "metro_peinture",
+        "metro_petrole",
+        "metro_sol",
+        "metro_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "voiture_fret_15m",
+      "spec": "Voiture 15 × 3.75 m ; allée 2 m et intercirculation 2,25 m",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.10000000149011612
+        ],
+        [
+          3.75,
+          15.0,
+          3.9000000953674316
+        ]
+      ],
+      "meshes": 208,
+      "triangles": 4664,
+      "colliders": {
+        "cuboid": 100,
+        "convex": 45
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ambre",
+        "metro_ivoire",
+        "metro_lampe",
+        "metro_peinture",
+        "metro_petrole",
+        "metro_sol",
+        "metro_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "soufflet_fret_05m",
+      "spec": "Raccord 0,5 m, porte 2,25 × 2,5 m ; sol à 0,75 m",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.5
+        ],
+        [
+          3.75,
+          0.5,
+          3.75
+        ]
+      ],
+      "meshes": 13,
+      "triangles": 404,
+      "colliders": {
+        "cuboid": 13,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "banc_3m",
+      "spec": "Mobilier de station / maintenance, à placer hors passage",
+      "bounds_m": [
+        [
+          0.0,
+          0.15000000596046448,
+          0.0
+        ],
+        [
+          3.0,
+          0.7200000286102295,
+          1.0499999523162842
+        ]
+      ],
+      "meshes": 4,
+      "triangles": 80,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "armoire_service",
+      "spec": "Mobilier de station / maintenance, à placer hors passage",
+      "bounds_m": [
+        [
+          0.0,
+          -0.07500001043081284,
+          0.0
+        ],
+        [
+          1.5,
+          0.6499999761581421,
+          2.25
+        ]
+      ],
+      "meshes": 9,
+      "triangles": 241,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_beton",
+        "metro_ivoire",
+        "metro_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "pupitre_aiguillage",
+      "spec": "Mobilier de station / maintenance, à placer hors passage",
+      "bounds_m": [
+        [
+          0.0,
+          -0.05000000447034836,
+          0.0
+        ],
+        [
+          2.0,
+          1.0,
+          1.5
+        ]
+      ],
+      "meshes": 6,
+      "triangles": 168,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 1
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ivoire",
+        "metro_petrole",
+        "metro_signal"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "luminaire_2m",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          -0.02500000037252903
+        ],
+        [
+          2.0,
+          0.25,
+          0.15000000596046448
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 40,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_lampe"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "signal_voie",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          -0.030000003054738045,
+          0.0
+        ],
+        [
+          0.5,
+          0.30000001192092896,
+          2.5999999046325684
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 97,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ivoire",
+        "metro_rouge",
+        "metro_signal"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "arret_urgence",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          -0.10000000149011612,
+          0.0
+        ],
+        [
+          0.5,
+          0.25,
+          0.75
+        ]
+      ],
+      "meshes": 4,
+      "triangles": 111,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_acier",
+        "metro_ambre",
+        "metro_ivoire",
+        "metro_rouge"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "panneau_sortie",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          -0.010000009089708328,
+          0.0
+        ],
+        [
+          2.0,
+          0.11999999731779099,
+          0.6499999761581421
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 103,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_ivoire",
+        "metro_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "panneau_refuge",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          -0.02500000037252903,
+          0.0
+        ],
+        [
+          2.0,
+          0.11999999731779099,
+          0.6499999761581421
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 144,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_ivoire",
+        "metro_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "panneau_maintenance",
+      "spec": "Signalétique originale sans nom de réseau ni marque réelle",
+      "bounds_m": [
+        [
+          0.0,
+          -0.010000009089708328,
+          0.0
+        ],
+        [
+          2.0,
+          0.11999999731779099,
+          0.6499999761581421
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 107,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "metro_ivoire",
+        "metro_petrole"
+      ],
+      "ngons": 0
+    }
+  ],
+  "count": 26,
+  "triangles": 21072,
+  "runtime_integrated": false,
+  "limits": [
+    "Présentation EEVEE, pas une capture du moteur.",
+    "Proxies à exercer avec Rapier au pilote N4.",
+    "Courbes nominales 7,5° ; raccord au tracé quart-de-mètre à ajuster en N5."
+  ]
+}

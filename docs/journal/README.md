@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-04
+updated: 2026-10-06
 ---
 
 # Journal
@@ -12,6 +12,17 @@ conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
+
+- [Trains intégrés au métro](metro-trains-2026-10.md) — candidat T2, circulation dans le pilote Blender.
+- [Pièce pilote du métro](metro-pilote-2026-10.md) — N4 jouable, transfert des couleurs et profils d’ambiance.
+
+- [Kit du métro](metro-kit-2026-10.md) — pièces N3, planches et corrections après lecture des rendus.
+
+- [Plan de masse du métro](metro-plan-2026-10.md) — candidat N2, projections des supports, voies, refuges et budgets de placement.
+
+- [Références du métro](metro-references-2026-10.md) — lot N1, planche visuelle, charte proposée et dimensions dérivées du joueur.
+
+- [Outillage du métro](metro-outillage-2026-10.md) — lot N0, séparation des profils et comparaison des reconstructions du magasin.
 
 - [Les sponsors](les-sponsors-2026-10.md) — perks, explosifs, Rampant, Vigile, difficulté, rencontres et économie de la v1.2.
 

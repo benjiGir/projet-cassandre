@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import type { TrainRideGym } from "../level/catalog/trainRideGym";
+import type { TrainGym } from "../level/catalog/trainGym";
 import type { PhysicsWorld } from "../../physics/world";
 import type { LevelSession } from "../level/loading/hotReload";
 import type { LevelDef } from "../level/catalog/levels";
@@ -43,6 +45,8 @@ export interface ExitDoorTracking {
 
 // see: docs/archive/systems-session.md#létat-propre-à-une-partie-gamesession
 export interface GameSession {
+  trainGym: TrainGym | null;
+  trainRideGym: TrainRideGym | null;
   /** Niveau/chemin de boot utilisé pour CETTE partie — permet à "Rejouer" de reconstruire EXACTEMENT le même choix. */
   choice: LevelDef;
   /** Difficulté de CETTE partie, lue une fois à sa construction — voir `progression/difficulty.ts`. */

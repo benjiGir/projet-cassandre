@@ -10,6 +10,15 @@ import type { GameSession } from "../gameSession";
 /** Exécute une action du script de niveau, dans le pas fixe. */
 export function runScriptAction(engine: GameEngine, session: GameSession, action: ScriptAction): void {
   switch (action.kind) {
+    case "train": {
+      const trains = session.gltfLevelSession?.current?.trains;
+      if (action.commande === "enable" || action.commande === "disable")
+        trains?.system.enqueue({ type: "enable", lane: action.voie, enabled: action.commande === "enable" });
+      else if (action.commande === "switch")
+        trains?.system.enqueue({ type: "switch", lane: action.voie, route: action.trajet });
+      else trains?.system.enqueue({ type: action.commande, lane: action.voie });
+      return;
+    }
     case "replique":
       if (Object.hasOwn(HERO_LINES, action.id)) triggerHeroLine(session, action.id as HeroLineId);
       return;

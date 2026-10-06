@@ -39,7 +39,12 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import plan_de_masse as plan          # noqa: E402
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "blender"))
+from level_profiles import SCENE_LEVEL_KEY, load_plan, scene_level
+_args_niveau = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+_niveau = _args_niveau[_args_niveau.index("--niveau") + 1] if "--niveau" in _args_niveau else None
+profile = scene_level(_niveau, bpy.context.scene.get(SCENE_LEVEL_KEY), bpy.data.filepath)
+plan = load_plan(profile)
 
 # Un joueur fait 0,8 m de large : une case de 0,5 m ne peut pas rater un trou
 # qu'il traverserait. Coûte ~40 000 rayons sur le niveau entier, quelques
@@ -670,8 +675,10 @@ def main() -> int:
 
     global _SOURCES
     _SOURCES = objets_sources()
-    erreurs_pc, pc, ouvertures_pc = auditer_plan_pc_secu()
-    erreurs_pc.extend(auditer_geometrie_pc_secu(pc, ouvertures_pc))
+    erreurs_pc = []
+    if profile.pc_secu_audit:
+        erreurs_pc, pc, ouvertures_pc = auditer_plan_pc_secu()
+        erreurs_pc.extend(auditer_geometrie_pc_secu(pc, ouvertures_pc))
     cols = colliders()
     etat = isoler_colliders()
     try:
@@ -687,7 +694,9 @@ def main() -> int:
     print("\n[audit] " + "=" * 60)
     print(f"[audit] {len(cols)} proxies de collision, grille de sondage {pas} m")
 
-    print(f"\n[audit] PÉRIMÈTRE PC SÉCURITÉ — {len(erreurs_pc)} défaut(s)")
+    print(f"[audit] niveau : {profile.id}")
+    if profile.pc_secu_audit:
+        print(f"\n[audit] PÉRIMÈTRE PC SÉCURITÉ — {len(erreurs_pc)} défaut(s)")
     for erreur in erreurs_pc:
         print(f"[audit]   {erreur}")
 

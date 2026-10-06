@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Métro — pièce pilote N4</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#10181e;color:#e7e9df;font-family:system-ui,sans-serif}
+    main{max-width:1320px;margin:auto;padding:24px}header{border-top:5px solid #deb44b;padding-top:16px}
+    h1{margin:8px 0;font-size:36px}.eyebrow{font-size:12px;letter-spacing:3px;color:#a8b9b8}
+    p{line-height:1.55;color:#b9c7c7}a{color:#bce1df}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+    button{background:#29423f;color:#e7e9df;border:1px solid #6a9388;padding:10px 16px;font:inherit;cursor:pointer}
+    button:disabled{opacity:.4;cursor:wait}button[aria-pressed=true]{background:#537d74;color:white}
+    iframe{display:block;width:100%;aspect-ratio:16/9;border:1px solid #3e4b52;background:black}
+    #status{min-height:24px;font-size:13px}.capture{margin-top:20px}.capture img{max-width:100%;image-rendering:pixelated}
+    details{padding:12px 0;border-bottom:1px solid #3e4b52}pre{white-space:pre-wrap;font-size:12px;color:#aebec2}
+    .reviews{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px}.reviews div{padding:18px;border:1px solid #3e4b52}
+    h2{font-size:20px;margin:0 0 10px}audio{width:100%}footer{font-size:12px;margin-top:24px;color:#a2b3b8}
+    @media(max-width:700px){main{padding:16px}.reviews{grid-template-columns:1fr}h1{font-size:28px}}
+  </style>
+</head>
+<body><main>
+  <header><div class="eyebrow">PROJET CASSANDRE · N4 / 06 OCTOBRE 2026</div>
+    <h1>Du quai au refuge.</h1>
+    <p>Un quai de 24 m et 60 m de tunnel. Cinq refuges, une rame garée et un local de maintenance au fond.<br>
+      Clique dans le jeu pour prendre les commandes. La porte de service s'ouvre avec E.</p>
+    <a href="/?level=pilote_metro" target="_blank">Ouvrir le pilote seul</a> ·
+    <a href="../4-technique/pilote-metro.md">Fiche et limites</a> · <a href="board-metro.html">Références validées</a>
+  </header>
+  <div class="toolbar" aria-label="Points de vue">
+    <button data-view="quai" disabled>Quai</button><button data-view="entree" disabled>Entrée du tunnel</button>
+    <button data-view="niche" disabled>Dans un refuge</button><button data-view="fond" disabled>Au fond</button>
+    <button data-view="rame_droite" disabled>Rame côté quai</button><button data-view="rame_gauche" disabled>Rame côté voie</button>
+    <button id="capture" disabled>Capturer la vue</button>
+  </div>
+  <p id="status" role="status">Chargement du pilote…</p>
+  <iframe id="game" src="/?level=pilote_metro" title="Pièce pilote du métro" allow="autoplay; fullscreen"></iframe>
+  <div class="capture" id="saved" hidden><img id="capture-image" alt="Vue capturée dans le moteur"><br>
+    <a id="download" download="metro-n4.png">Télécharger la capture</a></div>
+  <details><summary>Relevé du pilote</summary><pre id="reading">Le relevé apparaît après le chargement.</pre></details>
+  <section class="reviews">
+    <div><h2>À juger en jeu</h2><p>Le quai paraît-il assez clair ? Les niches se repèrent-elles vite depuis la voie ? La largeur du tube et la descente du quai te conviennent-elles ?</p></div>
+    <div><h2>À juger au casque</h2><p>La transition quai / tunnel est-elle nette ? La nappe laisse-t-elle assez de place aux sons du joueur ? Le raccord de boucle s'entend-il ?</p></div>
+    <div><h2>Nappe du quai</h2><audio controls preload="none" src="/assets/audio/metro_pilote/quai.m4a"></audio></div>
+    <div><h2>Nappe du tunnel</h2><audio controls preload="none" src="/assets/audio/metro_pilote/tunnel.m4a"></audio></div>
+  </section>
+  <footer>Candidat de pièce pilote, à juger avant l'habillage du reste du métro. Les trains mobiles et les rencontres du niveau restent dans leurs lots T2 / N7.</footer>
+</main>
+<script>
+  const game = document.getElementById('game');
+  const status = document.getElementById('status');
+  const reading = document.getElementById('reading');
+  const views = {quai:[2.5,3,.76,0], entree:[7,25,.01,0], niche:[3.9,41.5,.01,270], fond:[7,79,.01,0],
+    rame_droite:[14.5,9.5,.76,75], rame_gauche:[8,9.8,.01,285]};
+  let api = null;
+  let selected = 'quai';
+  let loop = setInterval(() => {
+    const candidate = game.contentWindow.cassandre;
+    if (!candidate?.level.stats()) return;
+    api = candidate;
+    document.querySelectorAll('button').forEach(button => button.disabled = false);
+    status.textContent = 'Pilote chargé · clique dans le jeu pour marcher.';
+    clearInterval(loop);
+    updateReading();
+  }, 250);
+  function updateReading() {
+    reading.textContent = JSON.stringify({pose:api.pose(),niveau:api.level.stats(),ambiance:api.sfx.ambiance()}, null, 2);
+  }
+  document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => {
+    selected = button.dataset.view;
+    api.tp(...views[selected]);
+    document.querySelectorAll('[data-view]').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
+    status.textContent = button.textContent + ' · clique dans le jeu pour marcher.';
+    setTimeout(updateReading, 200);
+  }));
+  document.getElementById('capture').addEventListener('click', async () => {
+    const canvas = game.contentDocument.querySelector('canvas');
+    const bench = api.renderBench(1);
+    const url = canvas.toDataURL('image/png');
+    document.getElementById('capture-image').src = url;
+    const download = document.getElementById('download');
+    download.href = url;
+    download.download = `metro-n4-${selected}.png`;
+    document.getElementById('saved').hidden = false;
+    reading.textContent = JSON.stringify({pose:api.pose(),niveau:api.level.stats(),ambiance:api.sfx.ambiance(),rendu:bench}, null, 2);
+    try {
+      const blob = await (await fetch(url)).blob();
+      const response = await fetch(`/__cassandre/pilot-capture/${selected}`, {method:'POST',body:blob});
+      if (!response.ok) throw new Error('Capture non enregistrée');
+      const saved = await response.json();
+      download.href = saved.url;
+      status.textContent = 'Capture enregistrée · ' + selected;
+    } catch {
+      status.textContent = 'Capture visible ci-dessous ; enregistrement local indisponible.';
+    }
+  });
+</script>
+</body></html>

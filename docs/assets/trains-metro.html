@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Métro — le trafic reprend</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10181e;color:#e7e9df;font-family:system-ui,sans-serif}
+main{max-width:1320px;margin:auto;padding:24px}header{border-top:5px solid #deb44b;padding-top:16px}
+h1{margin:8px 0;font-size:36px}p{line-height:1.55;color:#b9c7c7}a{color:#bce1df}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}button{background:#29423f;color:#e7e9df;border:1px solid #6a9388;padding:10px 16px;font:inherit;cursor:pointer}
+button:disabled{opacity:.4}button[aria-pressed=true]{background:#537d74}iframe{display:block;width:100%;aspect-ratio:16/9;border:1px solid #3e4b52;background:black}
+#status{min-height:24px;font-size:13px}pre{white-space:pre-wrap;font-size:12px;color:#aebec2}details{margin:20px 0}img{max-width:100%;image-rendering:pixelated}
+</style></head><body><main>
+<header><p>PROJET CASSANDRE · MÉTRO / T2</p><h1>Le trafic reprend.</h1>
+<p>Les rames circulent dans le quai et le tunnel. Les panneaux annoncent le passage ; les cinq refuges permettent de se protéger.<br>
+L’arrêt d’urgence retient les prochaines rames. Une rame déjà annoncée passe quand même.</p>
+<a href="/?level=trains_metro" target="_blank">Jouer en plein écran</a> · <a href="../4-technique/trains-metro.md">Fiche de l’intégration</a> · <a href="pilote-metro.html">Pilote visuel N4</a></header>
+<div class="toolbar" aria-label="Points de vue"><button data-view="quai" disabled>Sur le quai</button><button data-view="bancs" disabled>Bancs</button><button data-view="commandes" disabled>Arrêt du quai</button><button data-view="aiguille" disabled>Aiguillage</button><button data-view="panneaux" disabled>Panneaux suspendus</button><button data-view="refuge_arret" disabled>Arrêt du refuge</button><button data-view="niche" disabled>Dans un refuge</button><button data-view="tunnel" disabled>À l’entrée du tunnel</button></div>
+<div class="toolbar" aria-label="Essai du trafic"><button data-command="stop" disabled>Arrêter le trafic A</button><button data-command="switch" disabled>Aiguiller ligne / dépôt</button><button id="pass" disabled>Un passage sur la voie B</button><button id="reset" disabled>Recommencer les horaires</button><button id="capture-now" disabled>Capturer cette vue</button><button id="capture" disabled>Capturer le prochain passage</button></div>
+<p id="status" role="status">Chargement…</p><iframe id="game" src="/?level=trains_metro" title="Métro avec trains en circulation" allow="autoplay; fullscreen"></iframe>
+<p>Clique dans le jeu pour marcher. E actionne les boîtiers. Dans cette pièce, la bifurcation ligne / dépôt se trouve après le portail sud, hors de vue.</p>
+<details open><summary>État du trafic</summary><pre id="reading">Chargement du relevé…</pre></details>
+<div id="saved" hidden><img id="capture-image" alt="Vue du métro dans le moteur"><br><a id="download" download="metro-trafic.png">Télécharger la capture</a></div>
+</main><script>
+const game=document.getElementById('game'), status=document.getElementById('status'), reading=document.getElementById('reading');
+const views={quai:[2.5,10,.76,290],niche:[3.8,41.5,.01,270],tunnel:[3.8,29.5,.01,340],bancs:[3.4,10.5,.76,90],commandes:[1.25,3,.76,90],aiguille:[1.25,21.2,.76,90],panneaux:[3.4,3,.76,0],refuge_arret:[4,42,.01,90]};
+let api=null,selected='quai',capturePending=false;
+setInterval(()=>{
+  let candidate;
+  try{candidate=game.contentWindow.cassandre;}catch(error){if(error.name==='SecurityError')return;throw error;}
+  if(!candidate?.trains.etat())return;
+  if(candidate!==api){api=candidate;
+    document.querySelectorAll('button').forEach(b=>b.disabled=false);status.textContent='Trafic chargé · clique dans le jeu pour marcher.';api.tp(...views[selected]);}
+  const traffic=api.trains.etat();reading.textContent=JSON.stringify({trafic:traffic,pose:api.pose(),niveau:api.level.stats()},null,2);
+  const arrival=traffic?.voies.find(v=>v.id==='A')?.countdown;
+  if(capturePending&&arrival<=.1&&arrival>=-1){capturePending=false;capture();}
+},200);
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{selected=b.dataset.view;api.tp(...views[selected]);document.querySelectorAll('[data-view]').forEach(o=>o.setAttribute('aria-pressed',String(o===b)));}));
+document.querySelectorAll('[data-command]').forEach(b=>b.addEventListener('click',()=>api.trains.system.enqueue({type:b.dataset.command,lane:'A'})));
+document.getElementById('pass').addEventListener('click',()=>api.trains.system.enqueue({type:'pass',lane:'B'}));
+document.getElementById('reset').addEventListener('click',()=>api.trains.system.enqueue({type:'reset'}));
+document.getElementById('capture').addEventListener('click',()=>{capturePending=true;status.textContent='En attente du prochain passage sur la voie A…';});
+document.getElementById('capture-now').addEventListener('click',capture);
+async function capture(){
+  api.renderBench(1);const canvas=game.contentDocument.querySelector('canvas'),url=canvas.toDataURL('image/png');
+  document.getElementById('capture-image').src=url;document.getElementById('saved').hidden=false;
+  const download=document.getElementById('download');download.href=url;download.download=`metro-trafic-${selected}.png`;
+  try{const blob=await(await fetch(url)).blob(),res=await fetch(`/__cassandre/pilot-capture/trafic_${selected}`,{method:'POST',body:blob});
+    if(!res.ok)throw new Error('Capture');download.href=(await res.json()).url;status.textContent='Vue capturée · '+selected;
+  }catch{status.textContent='Capture visible ci-dessous ; enregistrement local indisponible.';}
+}
+</script></body></html>

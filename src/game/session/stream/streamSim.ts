@@ -13,7 +13,7 @@ import {
 // see: docs/decisions/0038-simulation-du-direct.md
 
 /** Ce que le joueur vient de faire et que le direct remarque. */
-export type StreamEventKind = "kill" | "boss" | "secret" | "casse" | "degats" | "toilettes" | "carte" | "moment";
+export type StreamEventKind = "kill" | "boss" | "secret" | "casse" | "degats" | "toilettes" | "carte" | "moment" | "train";
 
 /** Graine du flux RNG du direct : spectateurs, dons et chat, jamais les armes ni les ennemis. */
 export const STREAM_SEED = 0x71e75;
@@ -68,6 +68,7 @@ export const streamConfig = {
     toilettes: { audience: 0.5, donation: 0.7, amounts: [1, 2] },
     carte: { audience: 1.5, donation: 0.56, amounts: [5, 10] },
     moment: { audience: 1, donation: 0, amounts: [] },
+    train: { audience: 2, donation: 0, amounts: [] },
   } satisfies Record<StreamEventKind | "serie", EventRule> as Record<StreamEventKind | "serie", EventRule>,
   /** Dons du donateur mystère, en euros : ils grossissent au fil de l'histoire, et ne dépendent ni du hasard ni de la difficulté. */
   mystery: { depart: 10, carte_argent: 10, quai: 15, carte_or: 20, escalier: 45 } as Record<MysteryBeat, number>,
@@ -157,7 +158,7 @@ function donate(state: StreamState, now: number, alert: DonationAlert): Donation
 }
 
 function donationTopic(kind: StreamEventKind | "serie"): DonationTopic {
-  return kind === "degats" || kind === "moment" ? "generique" : kind;
+  return kind === "degats" || kind === "moment" || kind === "train" ? "generique" : kind;
 }
 
 /**
@@ -189,7 +190,7 @@ export function notifyStream(
   state.peakViewers = Math.max(state.peakViewers, state.viewers);
   state.followers = streamConfig.startFollowers + Math.floor(state.gained / streamConfig.viewersPerFollower);
   state.lastEventAt = now;
-  state.lastTopic = effective;
+  state.lastTopic = effective === "train" ? "moment" : effective;
 
   if (rule.amounts.length === 0 || now - state.lastDonationAt < streamConfig.donationCooldown) return null;
   if (random() >= rule.donation * state.generosity) return null;

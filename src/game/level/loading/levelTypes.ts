@@ -11,6 +11,7 @@ import type { FoodItem } from "../interactions/food";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
 import type { SuitKind } from "../../entities/suit/suitConfig";
+import type { LevelTrains } from "../trains/levelTrains";
 export interface SpawnPoint {
   /** Position MONDE, pieds du joueur (pas les yeux).
    * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
@@ -116,6 +117,7 @@ export interface LevelStats {
 }
 
 export interface LevelHandle {
+  trains?: LevelTrains | null;
   /** Racine ajoutée à `scene` (= `gltf.scene`). */
   root: THREE.Object3D;
   gltf: GLTF;

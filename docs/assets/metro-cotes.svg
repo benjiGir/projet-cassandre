@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1040" viewBox="0 0 1280 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Métro N1 — cotes proposées pour le quai et la niche</title>
+  <desc id="desc">Coupe d'une station de 18 mètres avec deux quais de 5 mètres et deux voies de 4 mètres. Quai à 0,75 mètre au-dessus de la voie. Plan d'un tunnel de 4,5 mètres avec niche de 3 mètres sur 1,5 mètre, hors du gabarit dangereux.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="#d8c9a3"/></marker>
+    <pattern id="tile" width="36" height="18" patternUnits="userSpaceOnUse"><rect width="36" height="18" fill="#bcbba8"/><path d="M0,0H36V18H0Z" stroke="#858a7d" fill="none"/></pattern>
+    <style>text{font-family:Arial,sans-serif;fill:#e4e9df}.title{font-size:30px;font-weight:bold}.h{font-size:21px;font-weight:bold}.label{font-size:16px}.small{font-size:13px;fill:#b3c3c4}.dim{stroke:#d8c9a3;stroke-width:1.5;marker-start:url(#arrow);marker-end:url(#arrow)}.guide{stroke:#738891;stroke-dasharray:5 5;fill:none}</style>
+  </defs>
+  <rect width="1280" height="1040" fill="#101b22"/>
+  <path d="M48,40H1232" stroke="#cf8948" stroke-width="4"/>
+  <text x="48" y="84" class="title">MÉTRO / N1 — COTES DE DÉPART</text>
+  <text x="48" y="112" class="small">Schémas de principe pour le kit. Dimensions utiles, murs en supplément. À exercer au blockout.</text>
+  <text x="48" y="150" class="h">01 — COUPE DE STATION · 18 m</text>
+  <path d="M100,350V265 Q100,177 320,177 H960 Q1180,177 1180,265V350" fill="url(#tile)" stroke="#718888" stroke-width="12"/>
+  <path d="M100,315H400 M880,315H1180" stroke="#537d74" stroke-width="15"/>
+  <rect x="100" y="350" width="300" height="45" fill="#728080"/>
+  <rect x="880" y="350" width="300" height="45" fill="#728080"/>
+  <rect x="370" y="347" width="30" height="6" fill="#d8b455"/>
+  <rect x="880" y="347" width="30" height="6" fill="#d8b455"/>
+  <rect x="400" y="395" width="480" height="12" fill="#34474e"/>
+  <path d="M490,392H550 M730,392H790" stroke="#a9bec1" stroke-width="4"/>
+  <g fill="#527d83" stroke="#a9bcba" stroke-width="3">
+    <path d="M436,385V258Q436,203 474,203H566Q604,203 604,258V385Z"/>
+    <path d="M676,385V258Q676,203 714,203H806Q844,203 844,258V385Z"/>
+  </g>
+  <g fill="#20333b"><rect x="449" y="242" width="142" height="65" rx="18"/><rect x="689" y="242" width="142" height="65" rx="18"/></g>
+  <g fill="#efe2ae"><circle cx="462" cy="339" r="8"/><circle cx="578" cy="339" r="8"/><circle cx="702" cy="339" r="8"/><circle cx="818" cy="339" r="8"/></g>
+  <rect x="302" y="230" width="48" height="120" rx="24" fill="#deb872" stroke="#f1e2bb" stroke-width="2"/>
+  <path d="M305,254H348" stroke="#273e46" stroke-width="4"/>
+  <text x="239" y="214" class="label">Joueur : 2 m</text>
+  <path d="M100,421V463 M400,407V463 M640,407V463 M880,407V463 M1180,421V463" class="guide"/>
+  <path d="M105,450H395 M405,450H635 M645,450H875 M885,450H1175" class="dim"/>
+  <text x="230" y="440" class="label">5 m</text><text x="503" y="440" class="label">4 m</text><text x="743" y="440" class="label">4 m</text><text x="1005" y="440" class="label">5 m</text>
+  <text x="180" y="488" class="small">Quai / bande de bord 0,5 m</text><text x="487" y="488" class="small">Voie 1</text><text x="732" y="488" class="small">Voie 2</text><text x="965" y="488" class="small">Quai</text>
+  <path d="M905,356V389" class="dim"/>
+  <text x="922" y="382" class="small">0,75 m</text>
+  <text x="48" y="528" class="small">Voitures de ligne : 2,8 m de large × 3,2 m de haut. Escaliers de sortie aux deux bouts ; aucune borne sur la bande de bord.</text>
+  <path d="M48,554H1232" stroke="#42565f"/>
+  <text x="48" y="597" class="h">02 — NICHE EN PLAN · TUNNEL À UNE VOIE</text>
+  <rect x="170" y="630" width="315" height="310" fill="#283b43"/>
+  <rect x="485" y="687" width="105" height="210" fill="#537d74"/>
+  <rect x="194.5" y="630" width="266" height="310" fill="#98524b" opacity=".42"/>
+  <rect x="229.5" y="634" width="196" height="303" rx="24" fill="#527d83" stroke="#adbcba" stroke-width="2"/>
+  <path d="M170,630V940 M485,630V687H590V897H485V940" stroke="#c0c8b2" stroke-width="8" fill="none"/>
+  <path d="M327.5,630V940" class="guide"/>
+  <circle cx="544" cy="792" r="28" fill="#d8d0b8"/>
+  <path d="M544,781V803 M533,792H555" stroke="#315751" stroke-width="4"/>
+  <path d="M486,655H589" class="dim"/>
+  <text x="505" y="642" class="label">1,5 m</text>
+  <path d="M620,693V891" class="dim"/>
+  <text x="633" y="799" class="label">3 m</text>
+  <path d="M175,964H480" class="dim"/>
+  <text x="253" y="989" class="label">4,5 m libres</text>
+  <text x="730" y="660" class="h">Le mur seul n'abrite pas.</text>
+  <text x="730" y="698" class="label">Centre du joueur hors danger :</text>
+  <text x="730" y="727" class="label">1,4 m train + 0,4 m capsule + 0,1 m marge</text>
+  <text x="730" y="756" class="label" font-weight="bold">→ plus de 1,9 m de l'axe.</text>
+  <rect x="730" y="793" width="18" height="18" fill="#98524b"/>
+  <text x="760" y="808" class="small">Bande interdite au centre de la capsule</text>
+  <rect x="730" y="823" width="18" height="18" fill="#537d74"/>
+  <text x="760" y="838" class="small">Refuge creusé au-delà du tube</text>
+  <text x="730" y="887" class="label">Niches tous les 12 m, du même côté.</text>
+  <text x="730" y="916" class="label">Volume vide, lumière et pictogramme.</text>
+  <text x="730" y="953" class="small">≈ 1,58 s de déplacement sans course, hors réaction.</text>
+  <text x="730" y="978" class="small">Les courbes exigent leur enveloppe balayée réelle.</text>
+</svg>

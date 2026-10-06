@@ -14,7 +14,8 @@ export type ScriptAction =
   /** Ferme ces `door_*` et les tient fermées : une arène. */
   | { readonly kind: "verrouiller"; readonly portes: readonly string[] }
   /** Rend ces `door_*` à leur état d'avant le verrou. */
-  | { readonly kind: "deverrouiller"; readonly portes: readonly string[] };
+  | { readonly kind: "deverrouiller"; readonly portes: readonly string[] }
+  | { readonly kind: "train"; readonly voie: string; readonly commande: "enable" | "disable" | "pass" | "stop" | "switch"; readonly trajet?: string };
 
 /** Attente d'une étape : un groupe réveillé doit être tombé. */
 export interface ScriptGate {

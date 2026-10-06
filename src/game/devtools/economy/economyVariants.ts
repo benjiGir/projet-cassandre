@@ -22,7 +22,7 @@ export interface EconomyVariant {
 
 /** Probabilités de don d'avant le lot B7 : la base que chaque variante multiplie. */
 export const DONATION_REFERENCE: Readonly<Record<StreamEventKind | "serie", number>> = {
-  kill: 0.12, serie: 0.5, boss: 1, secret: 0.6, casse: 0.05, degats: 0.04, toilettes: 0.5, carte: 0.4, moment: 0,
+  kill: 0.12, serie: 0.5, boss: 1, secret: 0.6, casse: 0.05, degats: 0.04, toilettes: 0.5, carte: 0.4, moment: 0, train: 0,
 };
 
 /**

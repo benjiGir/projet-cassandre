@@ -2,6 +2,8 @@ import { useEffect, useEffectEvent, useState } from "react";
 
 import { DevCheats } from "../sections/DevCheats/DevCheats";
 import { HitFeedbackTuning } from "../sections/hitFeedback/HitFeedbackTuning/HitFeedbackTuning";
+import { TrainRideTuning } from "../sections/TrainRideTuning/TrainRideTuning";
+import { TrainTuning } from "../sections/TrainTuning/TrainTuning";
 import { MoveTuning } from "../sections/MoveTuning/MoveTuning";
 import { PerkTuning } from "../sections/PerkTuning/PerkTuning";
 import styles from "./TuningPanel.module.css";
@@ -32,6 +34,8 @@ export function TuningPanel() {
 
   return (
     <aside className={styles.panel} aria-label="Panneau de tuning">
+      <TrainTuning />
+      <TrainRideTuning />
       <MoveTuning />
       <HitFeedbackTuning />
       <PerkTuning />

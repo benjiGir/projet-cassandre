@@ -2,7 +2,7 @@
 title: Documentation PROJET_CASSANDRE
 tags: [index]
 status: stable
-updated: 2026-10-01
+updated: 2026-10-06
 ---
 
 # PROJET_CASSANDRE
@@ -39,6 +39,10 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Chargement de niveau](4-technique/chargement-de-niveau.md) — loader, extras et hot reload.
 - [Board des voitures](assets/board-voitures.md) et [board des motos](assets/board-motos.md) — références des véhicules proposés.
 - [Board des armes et mains](assets/board-armes-mains.md) — références, proportions et composition de la vue subjective.
+- [Board du métro](assets/board-metro.md) — huit références regardées, charte proposée et dimensions dérivées du joueur (N1).
+- [Plan de masse du métro](assets/plan-metro.md) — tracé N2 accepté pour poursuivre, voies, niches, boucles et relevé calculé.
+- [Pièce pilote du métro](4-technique/pilote-metro.md) — quai et 60 m de tunnel jouables, lumière et ambiances originales (N4).
+- [Kit du métro](assets/kit-metro.md) — 26 pièces originales, bibliothèque Blender et planche N3 à juger.
 
 ### Je cherche une valeur, une commande ou une convention
 

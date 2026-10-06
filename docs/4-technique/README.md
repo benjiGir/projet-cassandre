@@ -2,7 +2,7 @@
 title: Technique
 tags: [sommaire]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-06
 ---
 
 # Technique
@@ -27,7 +27,13 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Interface React](interface-react.md) — store, machine de flux, structure `src/ui/`
 - [Audio runtime](audio-runtime.md) — sprite Howler, `SFX_TABLE`, ambiances positionnelles
 - [Outillage Blender](outillage-blender.md) — scripts headless, session live, validation, export
+- [Outillage pour plusieurs niveaux](outillage-multi-niveaux.md) — profils magasin/métro, sorties protégées, manifestes et reconstruction.
 - [Studio audio](studio-audio.md) — synthèse procédurale, recettes, mesures, sprite
 - [Générateurs](generateurs.md) — générateurs de textures et de sprites
 - [Tests et qualité](tests-et-qualite.md) — Vitest, typecheck, build, contrôles des docs et validations de contenu
 - [Debug](debug.md) — console `cassandre`, panneau de debug, touches, harnais A/B
+- [Prototype des trains](prototype-trains.md) — salle d’essai T1 du métro, horaires, aiguillage, arrêt et contacts mortels ; principe accepté, réglages fins à confirmer.
+- [Prototype du voyage à bord](prototype-voyage-rame.md) — salle d’essai T4, rame fixe, tunnel défilant, portes et embuscade.
+
+- [Pièce pilote du métro](pilote-metro.md) — assemblage N4, matériaux et ambiances par niveau.
+- [Trains dans le pipeline](trains-metro.md) — modèle Blender, commandes, volumes balayés et zones de sécurité.

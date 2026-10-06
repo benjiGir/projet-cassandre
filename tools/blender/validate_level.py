@@ -49,7 +49,8 @@ SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_", "prop_", "vitre_",
-    "sanitaire_", "ecran_", "cam_",
+    "sanitaire_", "ecran_", "cam_", "voie_", "rail_", "train_modele_",
+    "signal_train_", "nav_voie_", "traversee_train_", "refuge_train_",
 )
 
 # Extras d'un `door_*` animé — doivent rester identiques à ce que lit
@@ -101,7 +102,7 @@ def _cles_ts(chemin: str, motif: str) -> tuple[str, ...]:
 # (`evenement`), répliques qu'il peut faire dire (`replique`) et groupes
 # d'ennemis qu'un scénario réveille (`groupe` sur un `spawn_suit_*`). Un test
 # du jeu (`levelScriptSetup.test.ts`) verrouille la mise en forme lue ici.
-EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[")
+EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/trains/metroTrainEvents.ts", r"^  (\w+): \[")
 REPLIQUES = _cles_ts("src/game/session/presentation/heroLines.ts", r"^  (\w+): \{ text:")
 GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
 
@@ -195,7 +196,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
                     "cet ennemi n'apparaîtrait jamais")
-        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk", "train"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -551,7 +552,7 @@ def check_textures() -> None:
 def check_vertex_colors(meshes) -> None:
     missing = [
         o.name for o in meshes
-        if not base_name(o.name).startswith(("col_", "trig_"))
+        if not base_name(o.name).startswith(("col_", "trig_", "nav_voie_", "traversee_train_", "refuge_train_"))
         and len(o.data.color_attributes) == 0
     ]
     if missing:
@@ -560,7 +561,7 @@ def check_vertex_colors(meshes) -> None:
     # Un mur en 2 triangles ne peut pas recevoir de bake utile
     for o in meshes:
         n = base_name(o.name)
-        if n.startswith(("col_", "trig_")):
+        if n.startswith(("col_", "trig_", "nav_voie_", "traversee_train_", "refuge_train_")):
             continue
         area = sum(p.area for p in o.data.polygons)
         verts = len(o.data.vertices)
@@ -617,6 +618,8 @@ def main() -> None:
     check_units()
     check_transforms(meshes)
     check_naming(objects, kit_mode)
+    from validate_trains import check_trains
+    check_trains(objects, err)
     kinds = check_colliders(meshes)
     sanitaires = check_sanitaires(objects)
     check_textures()

@@ -72,3 +72,4 @@ reste conservé et renvoie à son successeur.
 | [0040](0040-bornes-et-perks.md) | Bornes et perks : achat en partie, effets posés sur la session | accepté |
 | [0041](0041-explosifs.md) | Explosifs : une matière de prop, un souffle dans le pas fixe | accepté |
 | [0042](0042-difficulte.md) | Difficulté : trois niveaux posés sur la partie, records séparés | accepté |
+| [0044](0044-trains-de-niveau.md) | Trains pilotés par les données glTF, contacts balayés et ressources par niveau | accepté |

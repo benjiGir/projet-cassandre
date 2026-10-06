@@ -1,0 +1,90 @@
+{
+  "quai": [
+    {
+      "codec": "ogg",
+      "samples": 882000,
+      "rms_db": -20.02,
+      "peak_db": -6.62,
+      "dc": 7.58e-05,
+      "loop_jump": 0.011783,
+      "jump_percentile": 39.96
+    },
+    {
+      "codec": "m4a",
+      "samples": 882000,
+      "rms_db": -20.05,
+      "peak_db": -6.56,
+      "dc": 4.5e-06,
+      "loop_jump": 0.004403,
+      "jump_percentile": 24.51
+    }
+  ],
+  "tunnel": [
+    {
+      "codec": "ogg",
+      "samples": 882000,
+      "rms_db": -20.92,
+      "peak_db": -7.94,
+      "dc": 4.24e-05,
+      "loop_jump": 0.013363,
+      "jump_percentile": 58.39
+    },
+    {
+      "codec": "m4a",
+      "samples": 882000,
+      "rms_db": -20.94,
+      "peak_db": -8.06,
+      "dc": -5e-06,
+      "loop_jump": 0.005839,
+      "jump_percentile": 55.7
+    }
+  ],
+  "rail": [
+    {
+      "codec": "ogg",
+      "samples": 110272,
+      "rms_db": -31.36,
+      "peak_db": -12.55,
+      "dc": -4e-07
+    },
+    {
+      "codec": "m4a",
+      "samples": 110250,
+      "rms_db": -31.33,
+      "peak_db": -8.09,
+      "dc": -1.2e-06
+    }
+  ],
+  "goutte": [
+    {
+      "codec": "ogg",
+      "samples": 79424,
+      "rms_db": -30.01,
+      "peak_db": -11.48,
+      "dc": 1.6e-06
+    },
+    {
+      "codec": "m4a",
+      "samples": 79380,
+      "rms_db": -29.95,
+      "peak_db": -8.35,
+      "dc": 1.2e-06
+    }
+  ],
+  "alerte": [
+    {
+      "codec": "ogg",
+      "samples": 20480,
+      "rms_db": -15.83,
+      "peak_db": -6.91,
+      "dc": 1.7e-06
+    },
+    {
+      "codec": "m4a",
+      "samples": 19845,
+      "rms_db": -15.67,
+      "peak_db": -6.8,
+      "dc": 4e-07
+    }
+  ]
+}

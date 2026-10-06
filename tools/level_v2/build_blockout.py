@@ -660,6 +660,7 @@ REGLES_REPERES = [
     ("micro-ondes", "rien", None),
     ("bouton compacteur", "rien", None),
     ("grille sur le quai", "rien", None),
+    ("rideau vers la réserve", "rien", None),
     ("balles de carton", "rien", None),
     ("balle mal cerclée", "rien", None),
     ("guichet + sonnette", "rien", None),

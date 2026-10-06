@@ -2,7 +2,7 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-06
 ---
 
 # Audio runtime
@@ -131,6 +131,10 @@ avec son panoramique. Il reste en boucle : le mix ne fait ensuite que régler
 volume et pan. Sous le seuil de silence, le volume est exactement nul.
 Le module s'actualise pendant le jeu ; les écrans de menu et de fin ne produisent pas de jet audible.
 La douche suit la même préparation dans `showerAmbience.ts`.
+Les réglages de volume et de panoramique attendent la lecture effective
+du son. Un fichier décodé peut encore attendre le geste utilisateur ;
+envoyer les réglages à chaque image pendant cette attente accumule une
+file Howler, qui peut déborder à la reprise du contexte audio.
 
 ### Répliques
 

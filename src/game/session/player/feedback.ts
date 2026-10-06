@@ -105,10 +105,11 @@ const HEAVY_HIT_DAMAGE = 10;
 
 /** Résout les PV et la mort dans le pas fixe. Aucun effet visuel ou timer mural. */
 export function applyPlayerDamage(engine: GameEngine, session: GameSession, amount: number,
-  normal?: { readonly x: number; readonly z: number }, source: "suit" | "director" = "suit"): void {
+  normal?: { readonly x: number; readonly z: number }, source: "suit" | "director" | "train" = "suit"): void {
   const hpBefore = session.playerHp;
   session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
   recordHpLost(session.stats, hpBefore - session.playerHp);
+  if (amount > 0) session.stats.lastDamageSource = source;
 
   const maxHp = session.playerMaxHp;
   const lateral = normal ? normal.x * Math.cos(engine.look.yaw) - normal.z * Math.sin(engine.look.yaw) : 0;
@@ -124,6 +125,7 @@ export function applyPlayerDamage(engine: GameEngine, session: GameSession, amou
 
   if (!session.deathHandled && session.playerHp <= 0) {
     session.deathHandled = true;
+    if (source === "train") session.stats.trainDeaths++;
     triggerHeroLine(session, "mort_hero");
     noteRunOutcome(true);
     publishLevelRecap(session, false);

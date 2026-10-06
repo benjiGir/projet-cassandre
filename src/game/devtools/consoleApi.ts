@@ -24,6 +24,8 @@ import {
 } from "../player/weapons/weaponConfig";
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
+import { trainRideConfig, TRAIN_RIDE_VARIANTS } from "../level/trainRide/trainRideConfig";
+import { trainConfig, TRAIN_VARIANTS } from "../level/trains/trainConfig";
 import { kickConfig, KICK_VARIANTS } from "../player/weapons/kickConfig";
 import { Suit } from "../entities/suit/suit";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suit/suitConfig";
@@ -111,6 +113,22 @@ export function exposeDebugApi(engine: GameEngine): void {
     weaponConfig,
     kickConfig,
     kickVariants: KICK_VARIANTS,
+    trains: {
+      get config() { return engine.session.gltfLevelSession?.current?.trains?.config ?? trainConfig; },
+      variantes: TRAIN_VARIANTS,
+      get system() { return engine.session.gltfLevelSession?.current?.trains?.system ?? engine.session.trainGym?.system ?? null; },
+      etat() {
+        const trains = engine.session.gltfLevelSession?.current?.trains;
+        return trains ? { voies: trains.data.lanes.map(lane => trains.system.status(lane.id, engine.session.player.position)),
+          rames: trains.system.passes.map(pass => ({ voie: pass.lane, trajet: pass.route.id, avant: pass.front })),
+          morts: engine.session.stats.trainDeaths, ennemis: engine.session.stats.trainKills, traversées: engine.session.stats.trainCrossings } : null;
+      },
+    },
+    voyageRame: {
+      config: trainRideConfig,
+      variantes: TRAIN_RIDE_VARIANTS,
+      get system() { return engine.session.trainRideGym?.system ?? null; },
+    },
     recoilVariants: RECOIL_VARIANTS,
     recoilInterpolationVariants: RECOIL_INTERPOLATION_VARIANTS,
     applyRecoilVariant,
@@ -403,6 +421,18 @@ declare global {
       weapons: WeaponSystem;
       kickConfig: typeof kickConfig;
       kickVariants: typeof KICK_VARIANTS;
+      trains: {
+        config: typeof trainConfig;
+        variantes: typeof TRAIN_VARIANTS;
+        readonly system: import("../level/trains/trainSystem").TrainSystem | null;
+        etat(): { voies: import("../level/trains/trainTypes").TrainLaneStatus[];
+          rames: { voie: string; trajet: string; avant: number }[]; morts: number; ennemis: number; traversées: number } | null;
+      };
+      voyageRame: {
+        config: typeof trainRideConfig;
+        variantes: typeof TRAIN_RIDE_VARIANTS;
+        readonly system: import("../level/trainRide/trainRideSystem").TrainRideSystem | null;
+      };
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;

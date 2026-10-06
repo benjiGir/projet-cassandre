@@ -68,6 +68,10 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
       });
 
       yield* Effect.sync(() => {
+        session.trainRideGym?.presentation.interpolate(session.trainRideGym.system, alpha, session.stats.gameplayElapsed);
+        const trains = session.gltfLevelSession?.current?.trains;
+        trains?.presentation.interpolate(trains.system, alpha, session.stats.gameplayElapsed);
+        session.trainGym?.presentation.interpolate(session.trainGym.system, alpha, session.stats.gameplayElapsed);
         session.propSystem?.interpolate(alpha, engine.camera.position);
         session.doorSystem?.interpolate(alpha);
         // Objets interactifs : élagués par distance comme les props, pour la

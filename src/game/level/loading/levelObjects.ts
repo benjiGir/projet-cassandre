@@ -406,6 +406,7 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       ammo === null &&
       !cameras &&
       !sells &&
+      extras.train === undefined &&
       !NAME_WIRED_USE_OBJECTS.has(name)
     ) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(

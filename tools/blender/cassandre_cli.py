@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import cassandre  # noqa: E402
 
-COMMANDES = {"status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
+COMMANDES = {"metro_trains", "metro_pilot", "metro_kit", "plan", "fingerprint", "manifest", "status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
 
 
 def _valeur(texte: str):
@@ -39,7 +39,10 @@ def main() -> int:
     for arg in args[1:]:
         cle, _, valeur = arg.partition("=")
         kwargs[cle] = _valeur(valeur)
-    res = getattr(cassandre, args[0])(**kwargs)
+    try:
+        res = getattr(cassandre, args[0])(**kwargs)
+    except (ValueError, TypeError) as exc:
+        res = {"ok": False, "error": str(exc)}
     print("[cassandre] " + cassandre.as_json(res))
     echec = res.get("ok") is False or res.get("code") not in (None, 0)
     return 1 if echec else 0

@@ -1,0 +1,20 @@
+{
+  "old_door_warning": {
+    "duration_s": 0.479,
+    "peak_db": -7.44,
+    "rms_100ms_db": -19.85,
+    "clipped": 0
+  },
+  "train_warning_ogg": {
+    "duration_s": 0.464,
+    "peak_db": -20.06,
+    "rms_100ms_db": -25.41,
+    "clipped": 0
+  },
+  "train_warning_aac": {
+    "duration_s": 0.45,
+    "peak_db": -19.95,
+    "rms_100ms_db": -25.39,
+    "clipped": 0
+  }
+}

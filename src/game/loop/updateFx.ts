@@ -1,8 +1,10 @@
+import { trainConfig } from "../level/trains/trainConfig";
 import { kickConfig } from "../player/weapons/kickConfig";
 import * as THREE from "three";
 import { Effect } from "effect";
 
 import {
+  playTrainWarning,
   playDoorMovementSfx,
   playEnemySfx,
   playImpactSfx,
@@ -78,7 +80,7 @@ type FxSession = Readonly<Pick<GameSession,
   "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
   "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
   "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons" |
-  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait" | "pickupResources"
+  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait" | "pickupResources" | "trainGym"
 >>;
 type FxEngine = Omit<Pick<GameEngine,
   "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
@@ -104,6 +106,11 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
       });
 
       yield* Effect.sync(() => {
+        const trainWarnings = session.trainGym?.system.takeWarningSounds() ?? 0;
+        if (trainWarnings > 0 && trainConfig.soundWarning) playTrainWarning();
+        const levelTrains = session.gltfLevelSession?.current?.trains;
+        const levelWarnings = levelTrains?.system.takeWarningSounds() ?? 0;
+        if (levelWarnings > 0 && levelTrains?.config.soundWarning) playTrainWarning();
         for (const event of session.weapons.fireEvents) {
           if (event.weapon === "pistol" || event.weapon === "shotgun") {
             engine.fx.spawnMuzzleFlash(
@@ -260,7 +267,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
         }
-        if (playerWasHit) presentPlayerDamage(session.playerHp);
+        if (playerWasHit || useGameStore.getState().debug.playerHp !== session.playerHp) presentPlayerDamage(session.playerHp);
         session.directorManager.clearFrameEvents();
       });
 

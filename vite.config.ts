@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
+import { pilotCapturePlugin } from "./tools/probe/pilotCapture.js";
 
 let buildOutputDir: string;
 
@@ -14,6 +15,7 @@ export default defineConfig({
   base: "./",
   plugins: [
     react(),
+    pilotCapturePlugin(),
     {
       // DEV : `cassandre.pose()` dépose la pose du joueur ici, et Blender la
       // relit (`C.shot("joueur")`, tools/blender/cassandre.py).

@@ -68,7 +68,7 @@ export function updateShowerAmbience(
 
   if (!showerHowl || !loaded) return;
 
-  if (playbackId !== null) {
+  if (playbackId !== null && showerHowl.playing(playbackId)) {
     showerHowl.volume(currentGain > AUDIBLE_GAIN_EPSILON ? currentGain * PEAK_VOLUME * channelGain : 0, playbackId);
     showerHowl.stereo(currentPan, playbackId);
   }

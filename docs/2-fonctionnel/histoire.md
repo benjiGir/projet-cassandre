@@ -105,8 +105,10 @@ Deux ou trois habitués reviennent assez pour être reconnus.
 
 - Le héros a toujours raison sur les faits et ne gagne jamais la
   reconnaissance.
-- Le complot est celui du magasin, et lui seul. Aucune théorie du complot
-  réelle, aucun groupe réel, aucune allusion politique.
+- Le magasin est le point de départ du complot, pas sa limite : il est plus
+  grand que lui (précisé par l'utilisateur le 2026-10-06). Il reste inventé :
+  aucune théorie du complot réelle, aucun groupe réel, aucune allusion
+  politique.
 - Aucune personne, marque ou plateforme réelle. La plateforme de diffusion
   n'est jamais nommée. Les pseudos sont inventés.
 - Les trolls restent satiriques : pas d'insulte réelle, pas de harcèlement.
@@ -147,6 +149,7 @@ Deux ou trois habitués reviennent assez pour être reconnus.
 
 ## Pour aller plus loin
 
+- [Histoire — le métro](histoire-metro.md) — la suite, bible du second niveau.
 - [Expérience de jeu](experience-de-jeu.md) — le déroulé actuel du niveau.
 - [Interface](interface.md) — le HUD de stream.
 - [Ennemis](ennemis.md) — le Costard et le Directeur.

@@ -501,6 +501,10 @@ trois difficultés, et le gate B8 est vert.
 
 ## 3. v2.0 — esquisse
 
+> Le second niveau a maintenant son propre plan, ouvert le 2026-10-05 :
+> [`PLAN_V2.md`](PLAN_V2.md) — le métro qui mène au siège. L'esquisse
+> ci-dessous reste pour mémoire.
+
 À détailler quand la v1.2 sera jouée. Rien ici n'est engagé.
 
 - **Quatrième arme**, à rôle net : de zone ou explosive (cloueuse, fusées de

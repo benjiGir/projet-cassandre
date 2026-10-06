@@ -9,6 +9,9 @@ import { type GameEngine } from "../../session/gameEngine";
 // see: docs/archive/systems-session.md#harnais-f9-et-f10
 
 export function startRecording(engine: GameEngine, session: GameSession): void {
+  session.gltfLevelSession?.current?.trains?.reset();
+  session.trainGym?.system.enqueue({ type: "reset" });
+  session.trainRideGym?.system.enqueue("reset");
   inputRecorder.startRecording(
     {
       position: { x: session.player.position.x, y: session.player.position.y, z: session.player.position.z },
@@ -26,5 +29,8 @@ export function startPlayback(engine: GameEngine, session: GameSession, rec: Rec
   session.player.velocity.set(rec.start.velocity.x, rec.start.velocity.y, rec.start.velocity.z);
   engine.look.yaw = rec.start.yaw;
   engine.look.pitch = rec.start.pitch;
+  session.gltfLevelSession?.current?.trains?.reset();
+  session.trainGym?.system.enqueue({ type: "reset" });
+  session.trainRideGym?.system.enqueue("reset");
   inputRecorder.startPlayback(rec);
 }

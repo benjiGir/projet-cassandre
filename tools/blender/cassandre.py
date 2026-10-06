@@ -25,6 +25,7 @@ from __future__ import annotations
 import contextlib
 import fnmatch
 import io
+import hashlib
 import json
 import math
 import os
@@ -41,6 +42,7 @@ from mathutils import Euler, Vector
 if str(Path(__file__).resolve().parent) not in sys.path:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 import provenance  # noqa: E402
+from level_profiles import SCENE_LEVEL_KEY, load_plan, output_path, resolve_level, scene_level
 
 REPO = Path(__file__).resolve().parents[2]
 TOOLS = REPO / "tools"
@@ -57,7 +59,7 @@ GAME_LENS = 13.2        # 107° horizontal, comme `render_ingame.py`
 EYE_HEIGHT = 1.6
 SHOT_CAM = "_cassandre_cam"
 # Ce que le joueur ne voit jamais : proxies de collision, volumes logiques.
-INVISIBLES = ("col_", "trig_", "secret_", "cam_", "spawn_")
+INVISIBLES = ("col_", "trig_", "secret_", "cam_", "spawn_", "nav_voie_", "traversee_train_", "refuge_train_", "train_modele_")
 
 
 # --- Exécution des scripts du pipeline ----------------------------------------
@@ -107,6 +109,8 @@ def run(script: str | Path, *args: str, keep: str | None = None, tail: int = 40)
             try:
                 runpy.run_path(str(script), run_name="__main__")
             except SystemExit as exc:
+                if exc.code is not None and not isinstance(exc.code, int):
+                    print(exc.code)
                 code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 1)
             except RuntimeError as exc:
                 # Le bac à sable du MCP refuse `sys.exit` par un RuntimeError :
@@ -125,6 +129,8 @@ def run(script: str | Path, *args: str, keep: str | None = None, tail: int = 40)
     lignes = texte.splitlines()
     if code == -1:
         extrait = lignes[-15:]
+    elif code not in (0, None):
+        extrait = lignes[-15:]
     elif keep:
         extrait = [ligne for ligne in lignes if ligne.startswith(keep)]
     else:
@@ -141,11 +147,13 @@ def _ecrire_log(nom: str, texte: str) -> str:
 
 # --- État de la session ---------------------------------------------------------
 
-def status() -> dict:
+def status(niveau: str | None = None) -> dict:
     """Où en est la session : fichier, fraîcheur face au disque et aux sources."""
     fichier = bpy.data.filepath
+    profile = _niveau(niveau)
     objets = bpy.data.objects
     etat = {
+        "niveau": profile.id,
         "file": _rel(fichier) if fichier else None,
         "dirty": bpy.data.is_dirty,
         "objects": len(objets),
@@ -156,9 +164,14 @@ def status() -> dict:
         # La session peut être PLUS VIEILLE que son fichier : un build headless
         # réécrit le .blend sans que le Blender ouvert le relise.
         etat["disk_newer_than_session"] = os.path.getmtime(fichier) > _ouvert_a()
-    sources = max(p.stat().st_mtime for d in ("level_v2", "blender")
-                  for p in (TOOLS / d).rglob("*.py"))
-    if BLEND_V2.exists():
+    sources = max(p.stat().st_mtime for d in (profile.source_dir, TOOLS / "blender")
+                  for p in d.rglob("*.py"))
+    if profile.blend.exists():
+        blend_date = profile.blend.stat().st_mtime
+        etat["blend"] = _rel(str(profile.blend))
+        etat["sources_newer_than_blend"] = sources > blend_date
+        etat["glb_older_than_blend"] = not profile.glb.exists() or profile.glb.stat().st_mtime < blend_date
+    if profile.id == "hypermarche" and BLEND_V2.exists():
         blend = BLEND_V2.stat().st_mtime
         etat["v2_blend_age_min"] = round((time.time() - blend) / 60)
         etat["v2_sources_newer_than_blend"] = sources > blend
@@ -194,24 +207,29 @@ def _sauver_si_sale(raison: str) -> str | None:
     return _rel(str(copie))
 
 
-# --- Pipeline du niveau v2 ------------------------------------------------------
+# --- Pipeline des niveaux ------------------------------------------------------
 
-def build(out: str | Path = BLEND_V2, detail: bool = False) -> dict:
-    """Reconstruit le niveau v2 DANS la session (≈ 20 s) et l'enregistre sous `out`.
+def build(out: str | Path | None = None, detail: bool = False, niveau: str | None = None) -> dict:
+    """Reconstruit le niveau choisi DANS la session et l'enregistre sous `out`.
 
     Une session modifiée non sauvegardée est d'abord copiée dans
     `renders/_cassandre/` : le build vide la scène. Sans `detail`, les lignes
     par espace habillé et par spawn recalé sont résumées en un compte.
     """
+    profile = resolve_level(niveau, scene_id=bpy.context.scene.get(SCENE_LEVEL_KEY), filepath=bpy.data.filepath)
+    out = output_path(profile, out, "blend")
     copie = _sauver_si_sale("build")
-    out = Path(out).resolve()
+    for key in (SCENE_LEVEL_KEY, "cassandre_etape"):
+        if key in bpy.context.scene:
+            del bpy.context.scene[key]
     with provenance.enregistrer(TOOLS) as journal:
-        res = run(BUILD, "--out", str(out), keep="[niveau]")
+        res = run(profile.builder, "--out", str(out), keep="[niveau]")
+    res["niveau"] = profile.id
     if res["code"] in (0, None):
         res["provenance"] = journal.ecrire(_fichier_provenance(out), str(out))
     lignes = [ligne.removeprefix("[niveau] ") for ligne in res["lines"]
               if not ligne.startswith("[niveau] ---")]
-    if not detail:
+    if not detail and profile.id == "hypermarche" and res["code"] in (0, None):
         habilles = [ligne for ligne in lignes if ligne.startswith("HABILLÉ ")]
         recales = [ligne for ligne in lignes if ligne.startswith("spawn recalé")]
         lignes = [ligne for ligne in lignes if ligne not in habilles and ligne not in recales]
@@ -222,6 +240,63 @@ def build(out: str | Path = BLEND_V2, detail: bool = False) -> dict:
     res["ok"] = res["code"] in (0, None)
     return res
 
+
+
+def fingerprint() -> dict:
+    """Empreinte du contenu du view layer, sans les métadonnées du fichier Blender.
+
+    see: docs/4-technique/outillage-multi-niveaux.md#reconstruction-du-magasin
+    """
+    digest = hashlib.sha256()
+    count = 0
+    object_hashes = {}
+
+    def serializable(data):
+        if hasattr(data, "to_dict"):
+            return data.to_dict()
+        if hasattr(data, "to_list"):
+            return data.to_list()
+        if isinstance(data, bpy.types.ID):
+            return data.name
+        raise TypeError(f"propriété non sérialisable : {type(data).__name__}")
+
+    def value(data):
+        digest.update(json.dumps(data, sort_keys=True, ensure_ascii=False, default=serializable).encode())
+
+    for obj in sorted(bpy.context.view_layer.objects, key=lambda item: item.name):
+        digest = hashlib.sha256()
+        value([obj.name, obj.type, [list(row) for row in obj.matrix_world], obj.hide_render,
+               {key: obj[key] for key in obj.keys()}, obj.parent.name if obj.parent else None])
+        count += 1
+        if obj.type != "MESH":
+            object_hashes[obj.name] = digest.hexdigest()
+            continue
+        mesh = obj.data
+        value(sorted(tuple(vertex.co) for vertex in mesh.vertices))
+        value([(uv.name) for uv in mesh.uv_layers])
+        value([(color.name, color.domain, color.data_type) for color in mesh.color_attributes])
+        faces = []
+        for face in mesh.polygons:
+            corners = []
+            for index in face.loop_indices:
+                vertex = mesh.loops[index].vertex_index
+                corners.append((tuple(mesh.vertices[vertex].co),
+                    tuple(tuple(uv.data[index].uv) for uv in mesh.uv_layers),
+                    tuple(tuple(color.data[vertex if color.domain == "POINT" else index].color)
+                          for color in mesh.color_attributes)))
+            cycle = tuple(corners)
+            canonical = min(cycle[i:] + cycle[:i] for i in range(len(cycle)))
+            faces.append((canonical, face.material_index, face.use_smooth))
+        value(sorted(faces))
+        value([(mat.name, list(mat.diffuse_color)) if mat else None for mat in mesh.materials])
+        object_hashes[obj.name] = digest.hexdigest()
+    digest = hashlib.sha256(json.dumps(object_hashes, sort_keys=True).encode())
+    res = {"niveau": _niveau().id, "objects": count, "sha256": digest.hexdigest()}
+    out = Path(bpy.data.filepath).with_suffix(".fingerprint.json")
+    if not bpy.data.filepath:
+        raise ValueError("sauvegarder le niveau avant de relever son empreinte")
+    out.write_text(json.dumps(res | {"object_hashes": object_hashes}, indent=2) + "\n")
+    return res | {"out": _rel(str(out))}
 
 def _fichier_provenance(blend: str | Path) -> Path:
     return OUT_DIR / f"provenance_{Path(blend).stem}.json"
@@ -405,13 +480,15 @@ def store_sign(preview: str | None = None) -> dict:
     return result
 
 
-def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
+def check(strict: bool = False, audit: bool = True, details: int = 8, niveau: str | None = None) -> dict:
     """Contrat (`validate_level`) + ce qui ne se voit qu'en jouant (`audit_niveau`)."""
+    profile = _niveau(niveau)
     args = ["--strict"] if strict else []
     val = run(VALIDATE, *args, tail=400)
     lignes = [ligne.strip() for ligne in val["lines"]]
     verdict = next((ligne for ligne in lignes if ligne.startswith("VERDICT")), None)
     res = {
+        "niveau": profile.id,
         "validate": {
             "verdict": verdict or f"introuvable (code {val['code']}, voir {val['log']})",
             "errors": [ligne.removeprefix("ERROR  ") for ligne in lignes if ligne.startswith("ERROR")][:details],
@@ -421,7 +498,7 @@ def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
     if val["code"] == -1:
         res["validate"]["crash"] = val["lines"]
     if audit:
-        aud = run(AUDIT, keep="[audit]")
+        aud = run(AUDIT, "--niveau", profile.id, keep="[audit]")
         comptes, detail, courant = {}, {}, None
         for ligne in aud["lines"]:
             m = _AUDIT_TITRE.match(ligne)
@@ -432,19 +509,25 @@ def check(strict: bool = False, audit: bool = True, details: int = 8) -> dict:
                 detail.setdefault(courant, [])
                 if len(detail[courant]) < details:
                     detail[courant].append(" ".join(ligne.split()[1:]))
-        res["audit"] = {"counts": comptes, "details": detail, "log": aud["log"]}
+        res["audit"] = {"counts": comptes, "details": detail, "log": aud["log"], "code": aud["code"]}
         if aud["code"] == -1:
             res["audit"]["crash"] = aud["lines"]
+    res["ok"] = val["code"] in (0, None) and verdict is not None and "CONFORME" in verdict
+    if audit:
+        res["ok"] = res["ok"] and aud["code"] in (0, None)
     return res
 
 
-def export(out: str | Path = GLB_V2) -> dict:
+def export(out: str | Path | None = None, niveau: str | None = None) -> dict:
     """Exporte le `.glb` par `export_level.py` (le seul export fiable, voir README).
 
     Le jeu en dev recharge le niveau tout seul : il sonde le fichier (ADR 0011).
     """
+    profile = _niveau(niveau)
+    out = output_path(profile, out, "glb")
     _supprimer_cam()
-    res = run(EXPORT, "--out", str(Path(out).resolve()), keep="[export]")
+    res = run(EXPORT, "--out", str(out), keep="[export]")
+    res["niveau"] = profile.id
     res["verified"] = any("contenu vérifié" in ligne for ligne in res["lines"])
     res["ok"] = res["code"] in (0, None) and res["verified"]
     return res
@@ -662,12 +745,61 @@ def _cadrer_objet(cam, obj) -> dict:
     return {"type": "objet", "objet": obj.name, "centre": [round(v, 2) for v in centre]}
 
 
+def _niveau(niveau: str | None = None):
+    return scene_level(niveau, bpy.context.scene.get(SCENE_LEVEL_KEY), bpy.data.filepath)
+
+
 def _plan():
-    dossier = str(TOOLS / "level_v2")
-    if dossier not in sys.path:
-        sys.path.insert(0, dossier)
-    import plan_de_masse  # noqa: PLC0415 — propre au niveau v2, chargé à la demande
-    return plan_de_masse
+    return load_plan(_niveau())
+
+
+def manifest(out: str | Path | None = None, niveau: str | None = None) -> dict:
+    """Écrit le manifeste d'espaces du niveau ouvert, ou du niveau explicite."""
+    profile = resolve_level(niveau, scene_id=bpy.context.scene.get(SCENE_LEVEL_KEY), filepath=bpy.data.filepath)
+    out = output_path(profile, out, "manifest")
+    res = run(TOOLS / "blender/level_spaces.py", "--niveau", profile.id, "--out", str(out))
+    res["niveau"] = profile.id
+    res["ok"] = res["code"] == 0
+    return res
+
+
+def metro_pilot() -> dict:
+    """Construit et exporte la pièce pilote N4, dans une session neuve."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer metro_pilot dans Blender avec --factory-startup."}
+    res = run("tools/metro/pilot/build_pilot.py", keep="[metro-pilot")
+    return {"ok": res["code"] == 0, **res}
+
+
+def metro_trains() -> dict:
+    """Construit un pilote T2 séparé du pilote N4 validé."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer metro_trains avec --factory-startup."}
+    res = run("tools/metro/pilot/build_pilot.py", "--trains", keep="[metro-pilot")
+    return {"ok": res["code"] == 0, **res}
+
+
+def metro_kit(out: str | Path | None = None) -> dict:
+    """Construit la bibliothèque métro N3 et ses vues, dans une session dédiée."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer metro_kit dans Blender avec --factory-startup : cette recette reconstruit une scène dédiée."}
+    args = ["--out", str(out or REPO / "docs/assets/kit-metro")]
+    res = run("tools/metro/kit/produce_kit.py", *args, keep="[metro-kit]")
+    return {"ok": res["code"] == 0, **res}
+
+
+def plan(out: str | Path | None = None, niveau: str = "metro") -> dict:
+    """Produit le plan candidat N2 et son relevé, sans remplacer la scène ouverte.
+
+    see: docs/assets/plan-metro.md#reproduire-le-plan
+    """
+    if niveau != "metro":
+        raise ValueError("le plan candidat N2 est disponible pour metro uniquement")
+    args = ["--out", str(Path(out).resolve())] if out is not None else []
+    result = run(TOOLS / "metro/layout/produce_plan.py", *args)
+    result["ok"] = result["code"] in (0, None)
+    result["niveau"] = niveau
+    return result
 
 
 def _espace_en(x: float, y: float):

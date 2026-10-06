@@ -45,6 +45,8 @@ import {
   buildSecretZone,
 } from "./levelObjects";
 import { convertToLambert, buildLevelLight } from "./levelPresentation";
+import { readTrainLevel, TrainLevelError } from "../trains/trainLevelData";
+import { LevelTrains } from "../trains/levelTrains";
 
 // Point d'entrée.
 
@@ -94,7 +96,7 @@ function buildLevelResourceEffect(
     const movableRoots = new Set(
       nodes.filter((o) => {
         const n = blenderName(o);
-        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_");
+        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_") || n.startsWith("train_modele_");
       }),
     );
     const animatedNodeNames = new Set(
@@ -111,6 +113,10 @@ function buildLevelResourceEffect(
     for (const obj of nodes) {
       // Nom "tel que tapé dans Blender", PAS `obj.name` — voir `blenderName`.
       const name = blenderName(obj);
+      if (/^(nav_voie_|traversee_train_|refuge_train_)/.test(name)) {
+        obj.visible = false;
+        continue;
+      }
 
       // Empties : jamais un THREE.Mesh, traités avant le filtre `instanceof`.
       if (name === "spawn_player") {
@@ -280,6 +286,19 @@ function buildLevelResourceEffect(
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
     initialiserDouches(root);
     initializeStoreSign(root);
+    const trainData = yield* Effect.try({
+      try: () => readTrainLevel(nodes),
+      catch: (cause) => new TrainLevelError({ message: String(cause) }),
+    }).pipe(Effect.orDie);
+    let trains: LevelTrains | null = null;
+    if (trainData) {
+      const meshes: THREE.Mesh[] = [];
+      trainData.model.traverse((obj) => { if (obj instanceof THREE.Mesh) meshes.push(obj); });
+      mergeStaticDecor(trainData.model, meshes, resources);
+      trainData.model.removeFromParent();
+      trainData.model.visible = false;
+      trains = new LevelTrains(root, physics, trainData, resources);
+    }
     resources.collect();
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
@@ -305,7 +324,7 @@ function buildLevelResourceEffect(
       useCount: useObjects.length,
       secretCount: secrets.length,
       unprefixedMeshCount,
-      decorBatchCount: unprefixedMeshCount - decor.mergedMeshCount + decor.batchCount,
+      decorBatchCount: decorCandidates.length - decor.mergedMeshCount + decor.batchCount,
       lightCount: lights.length,
       propCount: props.length,
       vitreCount: vitreMerge.vitres.length,
@@ -318,6 +337,7 @@ function buildLevelResourceEffect(
     };
 
     return {
+      trains,
       root,
       gltf,
       spawnPlayer,
@@ -359,6 +379,7 @@ function acquireLevelResourceEffect(
 function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
   let restoreSuspension: (() => void) | null = null;
   return {
+    trains: resource.trains,
     root: resource.root,
     gltf: resource.gltf,
     spawnPlayer: resource.spawnPlayer,

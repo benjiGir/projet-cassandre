@@ -1,5 +1,6 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import { Howl, Howler } from "howler";
+import { prepareTrainWarning, playTrainWarning as playPreparedTrainWarning } from "./trainWarning";
 
 import {
   DEFAULT_IMPACT_SFX, DEFAULT_PROP_BREAK_SFX, DOOR_MOVEMENT_SFX, DOOR_SFX,
@@ -74,7 +75,7 @@ export function initAudio(): Promise<void> {
           avertirUneFois(id, `"${id}" pointe sur la recette "${cle}", absente du sprite`);
         }
       }
-      await waitForAudioLoad(atlas);
+      await Promise.all([waitForAudioLoad(atlas), prepareTrainWarning()]);
     })
     .catch((e) => {
       avertirUneFois("manifeste", `manifeste audio illisible (${e})`);
@@ -125,4 +126,8 @@ export function playDoorSfx(event: DoorSfxEvent) {
 
 export function playDoorMovementSfx(movement: DoorMovement) {
   playSfx(DOOR_MOVEMENT_SFX[movement]);
+}
+
+export function playTrainWarning(): void {
+  playPreparedTrainWarning(sfxGain);
 }
