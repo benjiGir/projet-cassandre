@@ -11,6 +11,7 @@ import { HERO_LINE_SEED } from "./presentation/heroLines";
 import { createPlaceLineState } from "./player/placeLines";
 import { createLevelScriptState } from "../level/scripting/levelScript";
 import { createStreamState, STREAM_SEED } from "./stream/streamSim";
+import { levelStreamTexts } from "./stream/levelStreamTexts";
 import { createInitialStats } from "./progression/score";
 import { difficultyConfig } from "./progression/difficulty";
 import { getDifficulty } from "../settings/difficultySettings";
@@ -215,7 +216,7 @@ function buildGameSession(
     heroPortrait: new HeroPortrait(),
     firstKillTriggered: false,
     lowHpLineTriggered: false,
-    stream: createStreamState(rules.donations),
+    stream: createStreamState(rules.donations, levelStreamTexts(choice.textes)),
     streamRandom: runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(STREAM_SEED))),
     deathHandled: false,
     levelCompleteHandled: false,

@@ -22,6 +22,7 @@
     // test/game/session/progression/levelScriptSetup.test.ts.
     "src/game/session/presentation/heroLines.ts",
     "src/game/session/progression/levelEvents.ts",
-    "src/game/level/trains/metroTrainEvents.ts"
+    "src/game/level/trains/metroTrainEvents.ts",
+    "src/game/level/blockout/metroEncounterEvents.ts"
   ]
 }

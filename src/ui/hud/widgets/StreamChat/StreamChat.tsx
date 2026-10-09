@@ -12,7 +12,10 @@ export function StreamChat() {
     <ul className={styles.chat} aria-hidden="true">
       {chat.map((message) => (
         <li key={message.id} className={styles.line} data-kind={message.kind}>
-          <span className={styles.pseudo}>{message.pseudo}</span> {message.text}
+          <span className={styles.pseudo} data-verified={message.verified}>
+            {message.pseudo}
+          </span>{" "}
+          {message.text}
         </li>
       ))}
     </ul>

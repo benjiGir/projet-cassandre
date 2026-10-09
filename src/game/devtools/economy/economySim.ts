@@ -8,6 +8,8 @@ import {
   updateStream,
   type StreamEventKind,
 } from "../../session/stream/streamSim";
+import { levelStreamTexts } from "../../session/stream/levelStreamTexts";
+import type { MetroMysteryBeat } from "../../session/stream/streamTexts";
 import { PARCOURS, PROFILES, type PlayProfile, type ProfileId } from "./economyProfiles";
 import { Effect } from "effect";
 import { DeterministicRandom } from "../../../core/effect/random";
@@ -146,7 +148,7 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
 
 export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, prices: PriceList, seed: number) {
   const store = simulateRun(profile, difficulty, prices, seed);
-  const state = createStreamState(difficultyConfig[difficulty].donations);
+  const state = createStreamState(difficultyConfig[difficulty].donations, levelStreamTexts("metro"));
   state.wallet = store.wallet;
   const perks = new Set(store.bought);
   const random = mulberry32(seed ^ 0xc1c1);
@@ -161,6 +163,7 @@ export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, p
       updateStream(state, STEP, seconds, random);
     }
     for (let i = 0; i < kills; i++) notifyStream(state, "kill", seconds, random);
+    for (const beat of stop.beats ?? []) mysteryDonation(state, beat, seconds);
     if (stop.kiosk) {
       const offer = kioskOffer(perks, { perk: stop.kiosk, price: prices[stop.kiosk] });
       const wallet = state.wallet;
@@ -186,13 +189,19 @@ export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, p
 }
 
 // see: docs/4-technique/campagne.md#relevé-déconomie
-const METRO_ECONOMY_ROUTE: readonly { id: string; kills: number; kiosk?: Perk }[] = [
-  { id: "quartier", kills: 4, kiosk: "boisson" },
+// Les dons du compte vérifié suivent `streamFeed.ts` ; celui du premier badge attend que le niveau en pose un.
+const METRO_ECONOMY_ROUTE: readonly {
+  id: string;
+  kills: number;
+  kiosk?: Perk;
+  beats?: readonly MetroMysteryBeat[];
+}[] = [
+  { id: "quartier", kills: 4, kiosk: "boisson", beats: ["metro_depart"] },
   { id: "hall", kills: 6, kiosk: "perche" },
   { id: "mezzanine", kills: 4, kiosk: "vpn" },
-  { id: "quai_1", kills: 8, kiosk: "aimant" },
+  { id: "quai_1", kills: 8, kiosk: "aimant", beats: ["metro_passage"] },
   { id: "maintenance", kills: 6, kiosk: "premium" },
-  { id: "rame", kills: 4 },
+  { id: "rame", kills: 4, beats: ["metro_fret", "metro_bord"] },
   { id: "station_2", kills: 8, kiosk: "gilet" },
   { id: "sortie", kills: 4, kiosk: "boisson" },
 ];

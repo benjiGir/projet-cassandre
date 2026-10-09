@@ -3,6 +3,7 @@ import { subtitlesEnabled } from "../../settings/audioSettings";
 import { useGameStore } from "../../hud/state";
 import {
   HERO_LINES,
+  OPENING_LINES,
   heroVoiceKey,
   type HeroBarkId,
   type HeroLineDef,
@@ -93,8 +94,9 @@ const OPENING_LINE_DELAY_SECONDS = 1.5;
 /** Réplique d'ouverture, une fois par partie : « nouvelle tentative » si la précédente s'est finie par la mort. */
 export function sayOpeningLine(session: GameSession): void {
   if (session.stats.gameplayElapsed < OPENING_LINE_DELAY_SECONDS) return;
-  if (session.heroLinesSaid.has("depart") || session.heroLinesSaid.has("nouvelle_tentative")) return;
-  triggerHeroLine(session, partiePrecedentePerdue ? "nouvelle_tentative" : "depart");
+  const opening = OPENING_LINES[session.choice.textes ?? "magasin"];
+  if (session.heroLinesSaid.has(opening) || session.heroLinesSaid.has("nouvelle_tentative")) return;
+  triggerHeroLine(session, partiePrecedentePerdue ? "nouvelle_tentative" : opening);
 }
 
 /** Retient l'issue de la partie pour la réplique d'ouverture de la suivante. */
@@ -144,7 +146,7 @@ export function applyPlayerDamage(
   if (!session.deathHandled && session.playerHp <= 0) {
     session.deathHandled = true;
     if (source === "train") session.stats.trainDeaths++;
-    triggerHeroLine(session, "mort_hero");
+    if (!(source === "train" && triggerHeroLine(session, "metro_mort_rame"))) triggerHeroLine(session, "mort_hero");
     noteRunOutcome(true);
     publishLevelRecap(session, false);
     engine.flow.playerDied();

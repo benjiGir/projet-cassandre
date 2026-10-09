@@ -3,6 +3,9 @@ import { METRO_TRAIN_EVENTS } from "../trains/metroTrainEvents";
 import { METRO_ENCOUNTER_EVENTS } from "../blockout/metroEncounterEvents";
 import type { Scenario } from "../scripting/levelScript";
 
+/** Jeux de textes d'un niveau : réplique d'ouverture, chat et dons, étapes du donateur de l'histoire. */
+export type LevelTexts = "magasin" | "metro";
+
 export interface LevelDef {
   /** Identifiant stable. Sert aussi de valeur pour le raccourci `?level=<id>` et de clé du registre. */
   id: string;
@@ -26,6 +29,8 @@ export interface LevelDef {
   ambience?: string;
   /** Scénarios propres au niveau ; absent = registre historique du magasin. */
   scenarios?: Readonly<Record<string, Scenario>>;
+  /** Jeu de textes du niveau ; absent = celui du magasin. */
+  textes?: LevelTexts;
   mysteryDonations?: boolean;
 }
 
@@ -42,7 +47,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
     ambience: "quartier_pilote",
     spaces: true,
     scenarios: METRO_ENCOUNTER_EVENTS,
-    mysteryDonations: false,
+    textes: "metro",
   },
   ...(import.meta.env.DEV
     ? [
@@ -56,7 +61,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
           ambience: "quartier_pilote",
           spaces: true,
           scenarios: METRO_ENCOUNTER_EVENTS,
-          mysteryDonations: false,
+          textes: "metro" as const,
         },
       ]
     : []),

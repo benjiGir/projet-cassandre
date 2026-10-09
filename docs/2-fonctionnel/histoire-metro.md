@@ -2,16 +2,15 @@
 title: Histoire — le métro
 tags: [fonctionnel, histoire, niveau-2]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-09
 ---
 
 # Histoire — le métro
 
 Cette page est la bible d'histoire du second niveau, « Trafic interrompu »
 (v2.0). Elle prolonge la [bible du premier niveau](histoire.md). Elle fixe des
-intentions ; **rien de ce qu'elle décrit n'est encore dans le jeu**. La section
-« État » distingue ce que l'utilisateur a décidé de ce qui reste une
-proposition.
+intentions. La section « État » distingue ce que l'utilisateur a décidé de ce
+qui reste une proposition, et dit ce qui est déjà dans le jeu.
 
 ## La place de ce niveau
 
@@ -215,12 +214,18 @@ Propositions à valider. Rien n'est figé dans le jeu.
 - **À écrire avec l'utilisateur** : la tour, puis le choix entre temple et
   laboratoire.
 - **En jeu depuis le 2026-10-09** : les huit panneaux, images et légendes
-  (`src/game/session/presentation/storyPanels.ts`). Les légendes restent à
-  valider par l'utilisateur. Le reste de cette page n'est pas en jeu. Le plan
-  de travail est `PLAN_V2.md`, à la racine du dépôt.
+  (`src/game/session/presentation/storyPanels.ts`) ; les répliques du héros,
+  les annonces du réseau, les cinq dons du compte vérifié et le chat du
+  niveau, en texte seul. Tous ces textes restent à valider par l'utilisateur :
+  ils sont réunis dans le
+  [catalogue du métro](../6-reference/repliques-metro.md). Les indices de
+  décor ne sont encore que schématiques, et le don du premier badge attend
+  les badges. Le plan de travail est `PLAN_V2.md`, à la racine du dépôt.
 
 ## Pour aller plus loin
 
 - [Histoire](histoire.md) — la bible du premier niveau, dont celle-ci hérite.
+- [Catalogue de répliques du métro](../6-reference/repliques-metro.md) — les
+  textes écrits à partir de cette page, tels qu'ils sont en jeu.
 - [Sponsors](sponsors.md) — la cagnotte et les bornes, qui se gardent d'un
   niveau à l'autre.

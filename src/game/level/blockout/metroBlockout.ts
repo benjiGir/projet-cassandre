@@ -16,6 +16,7 @@ export class MetroBlockout {
   private readonly quarterTower: THREE.Object3D | undefined;
   private doors: DoorSystem | null = null;
   private readonly messages: string[] = [];
+  /** Scénarios à lancer : vagues à bord, arrivée, et ce que les commandes et le départ font dire. */
   private readonly encounters: MetroEncounterEvent[] = [];
   private rideWaves = 0;
   aiguillage = false;
@@ -81,11 +82,13 @@ export class MetroBlockout {
         this.aiguillage = true;
         this.trains?.system.enqueue({ type: "enable", lane: "VB", enabled: true });
         this.messages.push("Aiguillage rétabli — trafic actif dans le tunnel B");
+        this.encounters.push("metro_aiguillage");
         break;
       case "use_n5_courant":
         if (this.courant) break;
         this.courant = true;
         this.messages.push("Courant rétabli — retour au dépôt");
+        this.encounters.push("metro_courant");
         break;
       case "use_n5_raccourci":
         this.shortcut = true;
@@ -94,9 +97,10 @@ export class MetroBlockout {
         this.messages.push("Raccourci du tunnel ouvert");
         break;
       case "use_n5_depart":
-        if (!this.aiguillage || !this.courant)
+        if (!this.aiguillage || !this.courant) {
           this.messages.push("Départ impossible : rétablissez l’aiguillage et le courant");
-        else if (this.aboard(position)) this.system.enqueue("depart");
+          this.encounters.push("metro_depart_refuse");
+        } else if (this.aboard(position)) this.system.enqueue("depart");
         break;
       case "use_n5_fin":
         if (this.system.state.phase === "arrived") this.completed = true;
@@ -134,6 +138,7 @@ export class MetroBlockout {
         doors.lock(BLOCKOUT_ENTRY);
         doors.lock(BLOCKOUT_EXIT);
         this.messages.push("Départ — destination privée");
+        this.encounters.push("metro_depart");
       } else if (event === "arrived") {
         doors.unlock(BLOCKOUT_EXIT, position);
         doors.open(BLOCKOUT_EXIT, position);

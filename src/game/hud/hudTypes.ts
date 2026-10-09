@@ -49,6 +49,8 @@ export interface ChatMessage {
   readonly text: string;
   /** `don` : la ligne annonce un don, `message` : un spectateur écrit. */
   readonly kind: "message" | "don";
+  /** Le pseudo porte le badge de compte vérifié. */
+  readonly verified?: boolean;
 }
 
 /** Un don qui vient d'arriver, affiché en alerte. */
@@ -59,6 +61,8 @@ export interface DonationAlert {
   readonly text: string;
   /** Le don vient du donateur mystère de l'histoire. */
   readonly mystery: boolean;
+  /** Il écrit sous un compte vérifié : c'est le cas à partir du métro. */
+  readonly verified: boolean;
 }
 
 /** Ce que vend la borne à portée du joueur, pour l'invite d'interaction. */

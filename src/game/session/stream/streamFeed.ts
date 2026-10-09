@@ -3,6 +3,7 @@ import type { DonationAlert } from "../../hud/hudTypes";
 import { chatEnabled } from "../../settings/audioSettings";
 import type { GameSession } from "../gameSession";
 import { triggerHeroLine } from "../player/feedback";
+import { ridingFreightTrain, trainPassingPlatform } from "../player/metroMoments";
 import { mysteryDonation, notifyStream, updateStream, type StreamEventKind, type StreamState } from "./streamSim";
 import type { MysteryBeat } from "./streamTexts";
 
@@ -16,14 +17,35 @@ const IDLE_PUBLISH_INTERVAL = 1;
 
 let lastIdlePublishAt = 0;
 
+interface MysteryStep {
+  readonly beat: MysteryBeat;
+  readonly reached: (session: GameSession) => boolean;
+}
+
 /** Où en est l'histoire : chaque étape déclenche un don du donateur mystère, une seule fois. */
-const MYSTERY_BEATS: readonly { readonly beat: MysteryBeat; readonly reached: (session: GameSession) => boolean }[] = [
+const MYSTERY_BEATS: readonly MysteryStep[] = [
   { beat: "depart", reached: (session) => session.stats.gameplayElapsed >= 12 },
   { beat: "carte_argent", reached: (session) => session.cards.has("argent") },
   { beat: "quai", reached: (session) => session.heroLinesSaid.has("quai") },
   { beat: "carte_or", reached: (session) => session.cards.has("or") },
   { beat: "escalier", reached: (session) => session.placeLine.space === "c_escalier" },
 ];
+
+// see: docs/2-fonctionnel/histoire-metro.md#le-premier-abonné-à-visage-découvert
+// Aucune étape ne dépend d'une réplique dite : couper les sous-titres ne doit pas changer le portefeuille.
+const METRO_MYSTERY_BEATS: readonly MysteryStep[] = [
+  { beat: "metro_depart", reached: (session) => session.stats.gameplayElapsed >= 12 },
+  // En sommeil tant que le niveau ne pose aucun badge (lot C3 de PLAN_V2.md).
+  { beat: "metro_badge", reached: (session) => session.cards.size > 0 },
+  { beat: "metro_passage", reached: trainPassingPlatform },
+  { beat: "metro_fret", reached: (session) => session.placeLine.space === "fret" },
+  { beat: "metro_bord", reached: ridingFreightTrain },
+];
+
+function mysterySteps(session: GameSession): readonly MysteryStep[] {
+  if (session.choice.mysteryDonations === false) return [];
+  return session.choice.textes === "metro" ? METRO_MYSTERY_BEATS : MYSTERY_BEATS;
+}
 
 /** Recopie audience, abonnés et solde dans le store — seulement s'ils ont changé. */
 export function publishCounters(stream: StreamState): void {
@@ -44,6 +66,8 @@ function showDonation(session: GameSession, donation: DonationAlert): void {
     if (useGameStore.getState().donation === donation) useGameStore.getState().showDonation(null);
   }, DONATION_DISPLAY_MS);
   publishChat(session.stream);
+  // Le héros prend le compte vérifié pour un allié : il le dit une fois, avant toute autre réaction.
+  if (donation.verified && triggerHeroLine(session, "metro_don_verifie")) return;
   triggerHeroLine(session, donation.amount >= BIG_DONATION ? "don_gros" : "don_premier");
 }
 
@@ -59,7 +83,7 @@ export function updateStreamFeed(session: GameSession, dt: number): void {
   const now = session.stats.gameplayElapsed;
   const stream = session.stream;
 
-  for (const { beat, reached } of session.choice.mysteryDonations === false ? [] : MYSTERY_BEATS) {
+  for (const { beat, reached } of mysterySteps(session)) {
     if (stream.mysteryDone.has(beat) || !reached(session)) continue;
     const donation = mysteryDonation(stream, beat, now);
     if (donation) {

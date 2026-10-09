@@ -88,6 +88,7 @@ function seedHudState() {
     amount: 50,
     text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.",
     mystery: true,
+    verified: false,
   });
   state.setCards(["argent", "or"]);
   state.setPerkOffer({

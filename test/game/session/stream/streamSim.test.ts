@@ -10,7 +10,13 @@ import {
   updateStream,
   type StreamEventKind,
 } from "../../../../src/game/session/stream/streamSim";
-import { MYSTERY_DONOR, MYSTERY_TEXTS } from "../../../../src/game/session/stream/streamTexts";
+import {
+  MYSTERY_DONOR,
+  MYSTERY_TEXTS,
+  STORE_STREAM_TEXTS,
+  type ChatLine,
+} from "../../../../src/game/session/stream/streamTexts";
+import { METRO_STREAM_TEXTS } from "../../../../src/game/session/stream/metroStreamTexts";
 import { difficultyConfig } from "../../../../src/game/session/progression/difficulty";
 
 /** Petit générateur déterministe, local au test. */
@@ -23,6 +29,7 @@ function rng(seed: number): () => number {
 }
 
 const DT = 1 / 60;
+const texte = (line: ChatLine) => (typeof line === "string" ? line : line.text);
 
 function partie(seed: number, evenements: readonly [number, StreamEventKind][], duree: number) {
   const state = createStreamState();
@@ -146,6 +153,7 @@ describe("simulation du direct", () => {
     expect(don).toEqual({
       pseudo: MYSTERY_DONOR,
       mystery: true,
+      verified: false,
       amount: streamConfig.mystery.carte_or,
       text: MYSTERY_TEXTS.carte_or,
     });
@@ -167,6 +175,32 @@ describe("simulation du direct", () => {
       { at: 42, amount: 20, source: "don", wallet: recu + 20 },
       { at: 50, amount: -15, source: "achat", wallet: recu + 5 },
     ]);
+  });
+});
+
+describe("textes du niveau", () => {
+  it("le métro écrit avec ses propres lignes, et son donateur porte le badge de compte vérifié", () => {
+    const state = createStreamState(1, METRO_STREAM_TEXTS);
+    const random = rng(11);
+    for (let now = 0; now < 120; now += DT) updateStream(state, DT, now, random);
+    const lignes = new Set(Object.values(METRO_STREAM_TEXTS.chat).flatMap((lines) => lines.map(texte)));
+    for (const message of state.chat) expect(lignes.has(message.text), message.text).toBe(true);
+
+    const don = mysteryDonation(state, "metro_depart", 121);
+    expect(don).toMatchObject({ pseudo: MYSTERY_DONOR, verified: true, text: MYSTERY_TEXTS.metro_depart });
+    expect(state.chat.at(-1)).toMatchObject({ pseudo: MYSTERY_DONOR, kind: "don", verified: true });
+  });
+
+  it("une traversée de voie fait parler le chat des rames, pas d'une annonce", () => {
+    const state = createStreamState(1, METRO_STREAM_TEXTS);
+    notifyStream(state, "train", 1, () => 0);
+    expect(state.lastTopic).toBe("train");
+    updateStream(state, DT, streamConfig.chatInterval[1], () => 0);
+    expect(state.chat.at(-1)?.text).toBe(texte(METRO_STREAM_TEXTS.chat.train[0]));
+  });
+
+  it("le magasin n'a pas de rames : un passage s'y commente comme un moment", () => {
+    expect(STORE_STREAM_TEXTS.chat.train).toBe(STORE_STREAM_TEXTS.chat.moment);
   });
 });
 

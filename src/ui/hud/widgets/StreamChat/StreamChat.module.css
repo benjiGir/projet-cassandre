@@ -49,6 +49,15 @@
   content: "";
 }
 
+/* Compte vérifié : la coche suit le pseudo, sur une ligne de don comme sur un message. */
+.pseudo[data-verified="true"]::after {
+  content: " ✓ :";
+}
+
+.line[data-kind="don"] .pseudo[data-verified="true"]::after {
+  content: " ✓";
+}
+
 .line[data-kind="don"]::before {
   content: "★ ";
 }

@@ -28,6 +28,7 @@ import {
   SECRET_LINES,
 } from "../session/presentation/heroLines";
 import { relieveAtSanitaire, trySanitaire } from "../session/player/sanitaires";
+import { updateMetroMoments } from "../session/player/metroMoments";
 import { updatePlaceLine } from "../session/player/placeLines";
 import { startLevelScenario, updateLevelScript } from "../level/scripting/levelScript";
 import { LEVEL_EVENTS } from "../session/progression/levelEvents";
@@ -256,7 +257,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           {
             onMetroBlockoutUse: (name) =>
               session.gltfLevelSession?.current?.metroBlockout?.use(name, session.player.position),
-            onTrainUse: (name) => session.gltfLevelSession?.current?.trains?.use(name),
+            onTrainUse: (name) => {
+              const trains = session.gltfLevelSession?.current?.trains;
+              trains?.use(name);
+              if (trains?.data.commands.get(name)?.type === "stop") triggerHeroLine(session, "metro_arret_urgence");
+            },
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
             onCardPickup: (card) => {
@@ -677,6 +682,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.player.position,
           (action) => runScriptAction(engine, session, action),
         );
+
+        updateMetroMoments(session);
 
         // En dernier : une réplique d'événement (secret, carte, arme, moment
         // scripté) dite dans ce pas passe avant celle de la pièce.

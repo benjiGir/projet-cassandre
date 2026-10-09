@@ -5,9 +5,15 @@ import { describe, expect, it } from "vitest";
 
 import type { NamedSpawn, TriggerVolume } from "../../../../src/game/level/loading/levelTypes";
 import type { Scenario } from "../../../../src/game/level/scripting/levelScript";
+import { METRO_ENCOUNTER_EVENTS } from "../../../../src/game/level/blockout/metroEncounterEvents";
 import { LEVEL_EVENTS } from "../../../../src/game/session/progression/levelEvents";
 import { readLevelScript } from "../../../../src/game/session/progression/levelScriptSetup";
-import { HERO_LINES, PLACE_LINES } from "../../../../src/game/session/presentation/heroLines";
+import {
+  HERO_LINES,
+  PLACE_LINES,
+  type HeroLineDef,
+  type HeroLineId,
+} from "../../../../src/game/session/presentation/heroLines";
 
 function trig(name: string, extras: Record<string, unknown>): TriggerVolume {
   return {
@@ -99,9 +105,14 @@ describe("readLevelScript — arènes", () => {
   });
 });
 
-describe("scénarios du niveau", () => {
+const registres: [string, Record<string, Scenario>][] = [
+  ["magasin", LEVEL_EVENTS],
+  ["métro", METRO_ENCOUNTER_EVENTS],
+];
+
+describe.each(registres)("scénarios du niveau — %s", (_nom, evenements) => {
   it("une arène rend toujours les portes qu'elle a prises, et chaque attente a son garde-fou", () => {
-    for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
+    for (const [event, steps] of Object.entries(evenements)) {
       const prises = steps.flatMap(({ action }) => (action.kind === "verrouiller" ? action.portes : []));
       const rendues = steps.flatMap(({ action }) => (action.kind === "deverrouiller" ? action.portes : []));
       expect([...rendues].sort(), event).toEqual([...prises].sort());
@@ -113,16 +124,21 @@ describe("scénarios du niveau", () => {
     }
   });
 
-  it("chaque réplique citée existe et ne dépend pas d'un tirage", () => {
-    for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
+  it("chaque réplique citée existe, passe devant les autres et ne dépend pas d'un tirage", () => {
+    for (const [event, steps] of Object.entries(evenements)) {
       for (const { action, delay } of steps) {
         expect(delay, event).toBeGreaterThanOrEqual(0);
         if (action.kind !== "replique") continue;
         expect(Object.hasOwn(HERO_LINES, action.id), `${event} : ${action.id}`).toBe(true);
+        const def: HeroLineDef = HERO_LINES[action.id as HeroLineId];
+        expect(def.priority, action.id).toBe(true);
+        expect(def.chance, action.id).toBeUndefined();
       }
     }
   });
+});
 
+describe("contrat avec le validateur Blender", () => {
   it("le validateur Blender lit ses listes dans les sources du jeu", () => {
     // `validate_level.py` retrouve les événements et les répliques par ces motifs :
     // un changement de mise en forme des deux fichiers doit faire échouer ce test.
@@ -135,5 +151,16 @@ describe("scénarios du niveau", () => {
     );
     expect(events.sort()).toEqual(Object.keys(LEVEL_EVENTS).sort());
     expect(lines.sort()).toEqual(Object.keys(HERO_LINES).sort());
+
+    const metro = lire("src/game/level/blockout/metroEncounterEvents.ts");
+    expect([...metro.matchAll(/^ {2}(\w+): \[/gm)].map((m) => m[1]).sort()).toEqual(
+      Object.keys(METRO_ENCOUNTER_EVENTS).sort(),
+    );
+    const reveilles = Object.values<Scenario>(METRO_ENCOUNTER_EVENTS)
+      .flat()
+      .flatMap(({ action }) => (action.kind === "reveiller" ? [action.groupe] : []));
+    expect([...metro.matchAll(/kind: "reveiller", groupe: "(\w+)"/g)].map((m) => m[1]).sort()).toEqual(
+      reveilles.sort(),
+    );
   });
 });

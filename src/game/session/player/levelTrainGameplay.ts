@@ -2,7 +2,8 @@ import { Vector3 } from "three";
 import { moveConfig } from "../../player/movement/moveConfig";
 import { directorConfig } from "../../entities/director/directorConfig";
 import type { GameEngine } from "../gameEngine";
-import { applyPlayerDamage, showHudMessage } from "./feedback";
+import type { GameSession } from "../gameSession";
+import { applyPlayerDamage, showHudMessage, triggerHeroLine } from "./feedback";
 import { recordDirectorKills, recordSuitKills } from "../progression/score";
 import { startKillRush } from "../progression/perks";
 import { streamEvent } from "../stream/streamFeed";
@@ -53,6 +54,7 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
     startKillRush(session);
     for (let i = 0; i < kills; i++) streamEvent(session, directorKills > i ? "boss" : "kill");
     showHudMessage("Ennemi fauché par une rame");
+    triggerHeroLine(session, "metro_ennemi_fauche");
   }
   if (session.playerHp <= 0) return;
   if (
@@ -67,7 +69,12 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
     applyPlayerDamage(engine, session, session.playerHp, undefined, "train");
     return;
   }
-  const crossings = trains.crossed(session.player.position);
+  noteCrossings(session, trains.crossed(session.player.position));
+}
+
+/** Une traversée de voie réussie : le direct la voit, et le héros en dit un mot la première fois. */
+function noteCrossings(session: GameSession, crossings: number): void {
   session.stats.trainCrossings += crossings;
   for (let i = 0; i < crossings; i++) streamEvent(session, "train");
+  if (crossings > 0) triggerHeroLine(session, "metro_traversee");
 }

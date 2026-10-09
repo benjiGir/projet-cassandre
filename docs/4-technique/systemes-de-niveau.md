@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-09
 ---
 
 # Systèmes de niveau
@@ -111,7 +111,7 @@ Un `cam_*` est un empty dont la position et l'orientation monde sont figées au 
 
 Un niveau qui déclare `spaces: true` dans `src/game/level/catalog/levels.ts` livre un manifeste `<niveau>.espaces.json` à côté de son `.glb`. `tools/level_v2/espaces_jeu.py` le produit depuis le plan de masse : une boîte par espace, dans le repère du jeu, avec un mètre de marge en hauteur. Le manifeste se charge pendant la préparation du niveau, à la frontière asynchrone ; s'il manque ou ne se décode pas, le niveau reste jouable sans répliques de lieu.
 
-`levelSpaceAt` rend l'identifiant de l'espace qui contient le joueur. Les boîtes sont triées par emprise au sol croissante : quand deux se recouvrent, la plus petite gagne.
+`levelSpaceAt` rend le lieu qui contient le joueur : l'identifiant de l'espace, ou son `nom` quand le plan a découpé un même lieu en plusieurs boîtes. Le métro découpe ainsi ses tunnels courbes en une centaine de tronçons, qui portent tous le `nom` `tunnel_a` : le temps d'observation ne repart pas de zéro à chaque tronçon. Les boîtes sont triées par emprise au sol croissante : quand deux se recouvrent, la plus petite gagne.
 
 `updatePlaceLine` tourne à la fin du pas fixe. Il propose la réplique de l'espace (`PLACE_LINES` dans `src/game/session/presentation/heroLines.ts`) selon quatre règles :
 
