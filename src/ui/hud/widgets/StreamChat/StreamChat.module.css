@@ -13,14 +13,20 @@
   color: var(--phosphor);
   font-size: calc(var(--vpx) * 6.5);
   line-height: 1.25;
-  text-shadow: 1px 1px 1px #000, 0 0 2px #000;
+  text-shadow:
+    1px 1px 1px #000,
+    0 0 2px #000;
   opacity: 0.85;
   animation: arrive 180ms steps(3) both;
 }
 
 /* Le chat s'efface vers le haut : la ligne la plus récente est la plus lisible. */
-.line:nth-last-child(n + 4) { opacity: 0.55; }
-.line:nth-last-child(n + 5) { opacity: 0.35; }
+.line:nth-last-child(n + 4) {
+  opacity: 0.55;
+}
+.line:nth-last-child(n + 5) {
+  opacity: 0.35;
+}
 
 .pseudo {
   color: var(--phosphor-dim);
@@ -48,10 +54,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .line { animation: none; }
+  .line {
+    animation: none;
+  }
 }
 
 @keyframes arrive {
-  from { transform: translateX(calc(var(--vpx) * -4)); }
-  to { transform: none; }
+  from {
+    transform: translateX(calc(var(--vpx) * -4));
+  }
+  to {
+    transform: none;
+  }
 }

@@ -20,17 +20,17 @@ export function initialiserDouches(root: THREE.Object3D): void {
     const match = NOM_FILET.exec(objet.name) ?? NOM_FILET.exec(nomGlb);
     if (!match) return;
 
-    let poste = postes.get(match[1]!);
+    let poste = postes.get(match[1]);
     if (!poste) {
       poste = { meshes: [], origine: new THREE.Vector3() };
-      postes.set(match[1]!, poste);
+      postes.set(match[1], poste);
     }
     poste.meshes.push(objet);
   });
 
   installShaderDouches(root);
   for (const poste of postes.values()) {
-    poste.meshes[0]!.getWorldPosition(poste.origine);
+    poste.meshes[0].getWorldPosition(poste.origine);
   }
   postesParRacine.set(root, postes);
 }
@@ -43,10 +43,7 @@ export function updateDouches(root: THREE.Object3D | null, dt: number): void {
 }
 
 /** Écrit les origines des jets actifs dans le tableau réutilisé par l'audio. */
-export function collectActiveShowerOrigins(
-  root: THREE.Object3D | null,
-  out: THREE.Vector3[],
-): void {
+export function collectActiveShowerOrigins(root: THREE.Object3D | null, out: THREE.Vector3[]): void {
   out.length = 0;
   if (!root) return;
   initialiserDouches(root);
@@ -62,10 +59,10 @@ export function basculerEau(root: THREE.Object3D, nomCommande: string): boolean 
   if (!match) return null;
 
   initialiserDouches(root);
-  const poste = postesParRacine.get(root)?.get(match[1]!);
+  const poste = postesParRacine.get(root)?.get(match[1]);
   if (!poste) return null;
 
-  const active = !poste.meshes[0]!.visible;
+  const active = !poste.meshes[0].visible;
   for (const mesh of poste.meshes) mesh.visible = active;
   return active;
 }

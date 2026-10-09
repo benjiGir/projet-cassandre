@@ -30,8 +30,8 @@ function partie(seed: number, evenements: readonly [number, StreamEventKind][], 
   const dons: number[] = [];
   let i = 0;
   for (let now = 0; now < duree; now += DT) {
-    while (i < evenements.length && evenements[i]![0] <= now) {
-      const don = notifyStream(state, evenements[i]![1], now, random);
+    while (i < evenements.length && evenements[i][0] <= now) {
+      const don = notifyStream(state, evenements[i][1], now, random);
       if (don) dons.push(don.amount);
       i++;
     }
@@ -42,7 +42,13 @@ function partie(seed: number, evenements: readonly [number, StreamEventKind][], 
 
 describe("simulation du direct", () => {
   const scenario: [number, StreamEventKind][] = [
-    [2, "kill"], [3, "kill"], [4, "kill"], [10, "secret"], [14, "casse"], [20, "degats"], [30, "boss"],
+    [2, "kill"],
+    [3, "kill"],
+    [4, "kill"],
+    [10, "secret"],
+    [14, "casse"],
+    [20, "degats"],
+    [30, "boss"],
   ];
 
   it("la même séquence d'actions donne le même direct, au message près", () => {
@@ -137,7 +143,12 @@ describe("simulation du direct", () => {
     const state = createStreamState();
     notifyStream(state, "secret", 1, () => 0);
     const don = mysteryDonation(state, "carte_or", 1.1);
-    expect(don).toEqual({ pseudo: MYSTERY_DONOR, mystery: true, amount: streamConfig.mystery.carte_or, text: MYSTERY_TEXTS.carte_or });
+    expect(don).toEqual({
+      pseudo: MYSTERY_DONOR,
+      mystery: true,
+      amount: streamConfig.mystery.carte_or,
+      text: MYSTERY_TEXTS.carte_or,
+    });
     expect(mysteryDonation(state, "carte_or", 50)).toBeNull();
     expect(state.chat.at(-1)).toMatchObject({ pseudo: MYSTERY_DONOR, kind: "don" });
   });

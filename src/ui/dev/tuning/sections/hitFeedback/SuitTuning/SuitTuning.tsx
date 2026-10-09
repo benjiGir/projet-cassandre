@@ -1,4 +1,9 @@
-import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../../../../../../game/entities/suit/suitConfig";
+import {
+  FLASH_VARIANTS,
+  KNOCKBACK_VARIANTS,
+  suitConfig,
+  type SuitConfig,
+} from "../../../../../../game/entities/suit/suitConfig";
 import { applyFlashVariant, applyKnockbackVariant } from "../../../../../../game/devtools/replay/testHarness";
 import { FieldSliders } from "../../../controls/FieldSliders/FieldSliders";
 import { SUIT_FEEDBACK_FIELDS } from "../../../lib/tuningFields";

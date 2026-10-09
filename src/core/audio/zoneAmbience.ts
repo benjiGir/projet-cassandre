@@ -69,7 +69,9 @@ function prepareProfile(profile: string): Promise<PreparedProfile | null> {
             onload: () => {
               bed.playback = bed.howl.play("boucle");
             },
-            onplay: () => { bed.started = true; },
+            onplay: () => {
+              bed.started = true;
+            },
             onloaderror: () => console.warn(`[ambiance] nappe "${def.nappe}" introuvable — zone muette.`),
           }),
           playback: null,
@@ -87,8 +89,13 @@ function prepareProfile(profile: string): Promise<PreparedProfile | null> {
         }
       }
       await Promise.all(loads);
-      return { beds: profileBeds, events: profileEvents, zones: manifeste.zones,
-        boxes: profileBoxes, defaultZone: manifeste.defaut };
+      return {
+        beds: profileBeds,
+        events: profileEvents,
+        zones: manifeste.zones,
+        boxes: profileBoxes,
+        defaultZone: manifeste.defaut,
+      };
     })
     .catch((e) => {
       console.warn(`[ambiance] profil ${profile} illisible (${e}) — pas d'ambiance de zone.`);
@@ -122,7 +129,14 @@ function area(box: AmbienceBoxData): number {
 
 function zoneAt(p: Vec3Like): string | null {
   for (const { zone, box } of boxes) {
-    if (p.x >= box.x[0] && p.x <= box.x[1] && p.y >= box.y[0] && p.y <= box.y[1] && p.z >= box.z[0] && p.z <= box.z[1]) {
+    if (
+      p.x >= box.x[0] &&
+      p.x <= box.x[1] &&
+      p.y >= box.y[0] &&
+      p.y <= box.y[1] &&
+      p.z >= box.z[0] &&
+      p.z <= box.z[1]
+    ) {
       return zone;
     }
   }

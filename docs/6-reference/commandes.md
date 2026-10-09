@@ -18,10 +18,10 @@ Les commandes du projet viennent de `package.json`. PNPM utilise la version verr
 | `pnpm test` | Exécute Vitest une fois. |
 | `pnpm test:watch` | Garde Vitest actif en mode interactif. |
 | `pnpm lint` | Oxlint (avec types) sur `src`, `test` et les configs. Config : `.oxlintrc.json`. Les erreurs cassent ; les avertissements sont de la dette plafonnée par `options.maxWarnings` (le plafond ne fait que descendre). |
-| `pnpm lint:fix` | Oxlint avec les correctifs sûrs (`--fix`) : `import type`, assertions inutiles, gabarits de chaîne. À lancer sur un arbre propre. |
-| `pnpm format` | Oxfmt écrit le formatage (`printWidth` 120, config `.oxfmtrc.json`). À lancer sur un arbre propre, dans un commit dédié. |
-| `pnpm format:check` | Oxfmt vérifie sans écrire. Pas encore dans `pnpm check` tant que le dépôt n'a pas été formaté une fois. |
-| `pnpm check` | Typecheck, lint, tests Vitest et build de production. Le contrôle documentaire n'en fait pas partie ; la CI (`.github/workflows/deploy.yml`) lance `pnpm check` sans lui. |
+| `pnpm lint:fix` | Oxlint avec les correctifs sûrs (`--fix`) : `import type`, assertions inutiles, gabarits de chaîne. À lancer sur un arbre propre. Relire le diff : la règle `no-unnecessary-type-assertion` se trompe sur l'idiome XState `types: {} as {...}` (déjà marqué ligne par ligne). |
+| `pnpm format` | Oxfmt écrit le formatage (`printWidth` 120, config `.oxfmtrc.json`). À lancer sur un arbre propre. Exclus du formatage : `heroLines.ts`, `levelEvents.ts`, `metroTrainEvents.ts`, lus par regex par `tools/blender/validate_level.py`. |
+| `pnpm format:check` | Oxfmt vérifie sans écrire. |
+| `pnpm check` | Typecheck, lint, formatage, tests Vitest et build de production. Le contrôle documentaire n'en fait pas partie ; la CI (`.github/workflows/deploy.yml`) lance `pnpm check` sans lui. |
 | `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. À lancer à part : ni `pnpm check` ni la CI ne l'exécutent. |
 | `pnpm check:docs:test` | Exécute les tests Python du vérificateur documentaire. |
 | `pnpm verify` | Typecheck, lint et tests, sortie réduite aux échecs ; `-- --format` ajoute le formatage, `-- --level` le contrat et l'audit du niveau (Blender headless), `-- --docs` le contrôle documentaire. |

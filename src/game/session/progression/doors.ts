@@ -5,8 +5,8 @@ import { LOYALTY_CARD_LABELS, type LoyaltyCard } from "../../player/loyaltyCards
 import { hasCard } from "./cards";
 import { noteRunOutcome, showHudMessage } from "../player/feedback";
 import { publishLevelRecap } from "./recap";
-import { type GameSession } from "../gameSession";
-import { type GameEngine } from "../gameEngine";
+import type { GameSession } from "../gameSession";
+import type { GameEngine } from "../gameEngine";
 import { captureArrival } from "../campaign/campaignArrival";
 import { queueCampaignSave } from "../campaign/campaignStorage";
 import { STORE_LEVEL_ID } from "../campaign/campaignCatalog";

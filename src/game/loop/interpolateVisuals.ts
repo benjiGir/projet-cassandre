@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { createEnemyAnimationInput, enemySpriteRow } from "../../render/sprites/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/movement/moveConfig";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 import { suitSheetFor } from "../session/spawning";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -68,7 +68,11 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
       });
 
       yield* Effect.sync(() => {
-        session.trainRideGym?.presentation.interpolate(session.trainRideGym.system, alpha, session.stats.gameplayElapsed);
+        session.trainRideGym?.presentation.interpolate(
+          session.trainRideGym.system,
+          alpha,
+          session.stats.gameplayElapsed,
+        );
         const trains = session.gltfLevelSession?.current?.trains;
         const blockout = session.gltfLevelSession?.current?.metroBlockout;
         session.gltfLevelSession?.current?.fountainWater?.interpolate(engine.flow.isPlaying() ? alpha : 1);
@@ -80,10 +84,7 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         session.doorSystem?.interpolate(alpha);
         // Objets interactifs : élagués par distance comme les props, pour la
         // même raison (voir `render/environment/useObjectCulling.ts`).
-        engine.useObjectCulling.update(
-          session.gltfLevelSession?.current?.useObjects ?? [],
-          engine.camera.position,
-        );
+        engine.useObjectCulling.update(session.gltfLevelSession?.current?.useObjects ?? [], engine.camera.position);
         // Sanitaires : même élagage, même portée — une cuvette est aussi
         // petite qu'une trousse (voir `SanitaireMergeResult.rendus`).
         engine.useObjectCulling.update(

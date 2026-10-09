@@ -129,13 +129,21 @@ export const useGameStore = create<GameState>((set) => ({
   campaign: { levelId: "", nextAvailable: false },
   setCampaign: (campaign) => set({ campaign }),
   heroPortrait: INITIAL_HERO_PORTRAIT,
-  setHeroPortrait: (view) => set((state) => {
-    const previous = state.heroPortrait;
-    if (previous.sheet === view.sheet && previous.frame === view.frame && previous.reaction === view.reaction
-      && previous.healthBand === view.healthBand && previous.side === view.side && previous.impact === view.impact
-      && previous.combo === view.combo) return state;
-    return { heroPortrait: view };
-  }),
+  setHeroPortrait: (view) =>
+    set((state) => {
+      const previous = state.heroPortrait;
+      if (
+        previous.sheet === view.sheet &&
+        previous.frame === view.frame &&
+        previous.reaction === view.reaction &&
+        previous.healthBand === view.healthBand &&
+        previous.side === view.side &&
+        previous.impact === view.impact &&
+        previous.combo === view.combo
+      )
+        return state;
+      return { heroPortrait: view };
+    }),
   debug: { ...INITIAL_DEBUG },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
@@ -172,7 +180,19 @@ export const useGameStore = create<GameState>((set) => ({
   story: null,
   setStory: (panels) => set({ story: panels }),
 
-  resetGameStore: () => set({ campaign: { levelId: "", nextAvailable: false }, debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
-    hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, perkOffer: null, recap: null,
-    liveRecap: null, story: null }),
+  resetGameStore: () =>
+    set({
+      campaign: { levelId: "", nextAvailable: false },
+      debug: { ...INITIAL_DEBUG },
+      heroPortrait: INITIAL_HERO_PORTRAIT,
+      hudMessage: null,
+      heroLine: null,
+      announcement: null,
+      chat: [],
+      donation: null,
+      perkOffer: null,
+      recap: null,
+      liveRecap: null,
+      story: null,
+    }),
 }));

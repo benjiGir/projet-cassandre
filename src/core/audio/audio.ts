@@ -3,9 +3,17 @@ import { Howl, Howler } from "howler";
 import { prepareTrainWarning, playTrainWarning as playPreparedTrainWarning } from "./trainWarning";
 
 import {
-  DEFAULT_IMPACT_SFX, DEFAULT_PROP_BREAK_SFX, DOOR_MOVEMENT_SFX, DOOR_SFX,
-  ENEMY_SFX, MATERIAL_IMPACT_SFX, PITCH_VARIATION, POOL_LECTURES, PROP_BREAK_SFX,
-  SFX_TABLE, WEAPON_FIRE_SFX,
+  DEFAULT_IMPACT_SFX,
+  DEFAULT_PROP_BREAK_SFX,
+  DOOR_MOVEMENT_SFX,
+  DOOR_SFX,
+  ENEMY_SFX,
+  MATERIAL_IMPACT_SFX,
+  PITCH_VARIATION,
+  POOL_LECTURES,
+  PROP_BREAK_SFX,
+  SFX_TABLE,
+  WEAPON_FIRE_SFX,
 } from "./audioCatalog";
 import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxId } from "./audioTypes";
 import { decodeAudioSpriteManifest } from "./audioManifest";
@@ -65,8 +73,7 @@ export function initAudio(): Promise<void> {
           const sprite = Object.keys(manifeste.sprite)[0];
           if (sprite) warmAudioPool(atlas!, sprite, voices);
         },
-        onloaderror: () =>
-          avertirUneFois("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
+        onloaderror: () => avertirUneFois("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
       });
 
       for (const id of Object.keys(SFX_TABLE) as SfxId[]) {

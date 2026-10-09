@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && vite build",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && vite build",
     "probe": "node tools/probe/probe.mjs",
     "economy": "node tools/economy/releve.mjs",
     "verify": "node tools/verify.mjs",

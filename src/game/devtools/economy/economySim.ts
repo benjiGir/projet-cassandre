@@ -25,8 +25,9 @@ export type PriceList = Readonly<Record<Perk, number>>;
 
 /** Générateur déterministe local : le relevé ne touche à aucun flux du jeu. */
 function mulberry32(seed: number): () => number {
-  return Effect.runSync(DeterministicRandom.useSync((random) => random.forSeed(seed))
-    .pipe(Effect.provide(DeterministicRandom.layer)));
+  return Effect.runSync(
+    DeterministicRandom.useSync((random) => random.forSeed(seed)).pipe(Effect.provide(DeterministicRandom.layer)),
+  );
 }
 
 export interface KioskReading {
@@ -109,7 +110,8 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
       visits.push({ perk: stop.kiosk, donated: state.donated });
     }
 
-    const present = stop.kills + (stop.groups ?? []).reduce((sum, size) => sum + wokenGroupSize(size, rules.groupShare), 0);
+    const present =
+      stop.kills + (stop.groups ?? []).reduce((sum, size) => sum + wokenGroupSize(size, rules.groupShare), 0);
     const kills = Math.round(present * (stop.detour || present <= 1 ? 1 : profile.killShare));
     for (let i = 0; i < kills; i++) {
       // Intervalle étalé autour de la moyenne : des doublés, donc des séries, et des temps morts.
@@ -129,7 +131,17 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
   }
 
   const spendable = visits.at(-1)?.donated ?? 0;
-  return { wallet: state.wallet, consumables, seconds: now, donated: state.donated, mystery, spendable, bought: [...bought], best: bestCount(visits, prices), kiosks };
+  return {
+    wallet: state.wallet,
+    consumables,
+    seconds: now,
+    donated: state.donated,
+    mystery,
+    spendable,
+    bought: [...bought],
+    best: bestCount(visits, prices),
+    kiosks,
+  };
 }
 
 export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, prices: PriceList, seed: number) {
@@ -158,8 +170,19 @@ export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, p
       visits.push({ stop: stop.id, perk: stop.kiosk, price: offer.price, wallet, bought, at: seconds });
     }
   }
-  return { store, metro: { entryWallet: store.wallet, entryPerks: store.bought,
-    wallet: state.wallet, perks: [...perks], donated: state.donated, consumables, seconds, visits } };
+  return {
+    store,
+    metro: {
+      entryWallet: store.wallet,
+      entryPerks: store.bought,
+      wallet: state.wallet,
+      perks: [...perks],
+      donated: state.donated,
+      consumables,
+      seconds,
+      visits,
+    },
+  };
 }
 
 // see: docs/4-technique/campagne.md#relevé-déconomie
@@ -234,7 +257,7 @@ export function summarize(profile: ProfileId, difficulty: Difficulty, prices: Pr
   const perks = Object.fromEntries(
     PERKS.map((perk) => [perk, runs.filter((run) => run.bought.includes(perk)).length / runs.length]),
   ) as Record<Perk, number>;
-  const first = runs[0]!;
+  const first = runs[0];
   return {
     profile,
     difficulty,
@@ -249,7 +272,7 @@ export function summarize(profile: ProfileId, difficulty: Difficulty, prices: Pr
       stop: kiosk.stop,
       perk: kiosk.perk,
       price: kiosk.price,
-      wallet: median(runs.map((run) => run.kiosks[index]!.wallet)),
+      wallet: median(runs.map((run) => run.kiosks[index].wallet)),
     })),
   };
 }

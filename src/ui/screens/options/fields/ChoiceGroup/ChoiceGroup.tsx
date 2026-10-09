@@ -15,7 +15,13 @@ export interface ChoiceGroupProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-export function ChoiceGroup<T extends string>({ label, value, choices, layout = "row", onChange }: ChoiceGroupProps<T>) {
+export function ChoiceGroup<T extends string>({
+  label,
+  value,
+  choices,
+  layout = "row",
+  onChange,
+}: ChoiceGroupProps<T>) {
   return (
     <div className={cx(styles.group, styles[layout])} role="radiogroup" aria-label={label}>
       {choices.map((choice) => (

@@ -28,9 +28,9 @@ import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
 import { warmShaderDouches } from "../level/sanitaires/doucheShader";
 import { suspendPreviousFountainWater, warmFountainWater } from "../../render/environment/fountain/warmFountainWater";
 import { RenderService } from "../../render/pipeline/renderService";
-import { Suit } from "../entities/suit/suit";
+import type { Suit } from "../entities/suit/suit";
 import type { SuitKind } from "../entities/suit/suitConfig";
-import { Director } from "../entities/director/director";
+import type { Director } from "../entities/director/director";
 import { directorConfig } from "../entities/director/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/loading/hotReload";
 import { loadLevelSpaces } from "../level/loading/loadLevelSpaces";
@@ -44,15 +44,18 @@ import { TrainLevelError } from "../level/trains/trainLevelData";
 import { auditTrainSafety } from "../level/trains/trainSafety";
 import { excludeTrainRails } from "../level/trains/trainNavigation";
 import { useGameStore } from "../hud/state";
-import { type GameSession } from "./gameSession";
-import { type PersistentEngine } from "./gameEngine";
+import type { GameSession } from "./gameSession";
+import type { PersistentEngine } from "./gameEngine";
 
 // see: docs/archive/systems-rendu.md#éclairage-des-sprites
 const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
 // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
 /** Planche de sprites d'une espèce — le seul endroit qui associe les deux. */
-export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet">, kind: SuitKind) {
+export function suitSheetFor(
+  engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet">,
+  kind: SuitKind,
+) {
   switch (kind) {
     case "costard":
       return engine.suitSheet;
@@ -185,8 +188,12 @@ export function loadGltfLevel(
         // annonce l'étape avant de la commencer pour laisser React l'afficher.
         reportLoading("Construction du décor et des portes", 0.86);
         const doorSystem = new DoorSystem(handle.doors);
-        const autoColliders = [...doorSystem.autoGroupColliders,
-          ...(handle.metroBlockout ? handle.doors.filter(door => door.name === "door_n5_tunnel").map(door => door.collider) : [])];
+        const autoColliders = [
+          ...doorSystem.autoGroupColliders,
+          ...(handle.metroBlockout
+            ? handle.doors.filter((door) => door.name === "door_n5_tunnel").map((door) => door.collider)
+            : []),
+        ];
         for (const collider of autoColliders) collider.setEnabled(false);
 
         reportLoading("Cuisson du graphe de navigation", 0.92);
@@ -195,14 +202,13 @@ export function loadGltfLevel(
         if (handle.trains) {
           handle.trains.setDifficulty(session.difficulty);
           const safety = runGameplaySync(auditTrainSafety(session.physics, handle.trains.data, handle.trains.config));
-          console.info("[trains] lisibilité : " + safety.samples + " points contrôlés.");
+          console.info(`[trains] lisibilité : ${safety.samples} points contrôlés.`);
         }
         let navGraph;
         try {
-          navGraph = runGameplaySync(
-            PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
-          );
-          if (handle.trains) excludeTrainRails(navGraph, handle.trains.data.navigationZones, handle.trains.data.crossings);
+          navGraph = runGameplaySync(PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)));
+          if (handle.trains)
+            excludeTrainRails(navGraph, handle.trains.data.navigationZones, handle.trains.data.crossings);
         } finally {
           for (const collider of autoColliders) collider.setEnabled(true);
         }
@@ -226,9 +232,14 @@ export function loadGltfLevel(
         const cardPickupBillboards: CardPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
           if (useObject.grantsCard) {
-            cardPickupBillboards.push(dressCardPickup(
-              useObject.object, useObject.grantsCard, groundBelow(session, useObject.position), engine.cardPickupTextures,
-            ));
+            cardPickupBillboards.push(
+              dressCardPickup(
+                useObject.object,
+                useObject.grantsCard,
+                groundBelow(session, useObject.position),
+                engine.cardPickupTextures,
+              ),
+            );
             if (session.cards.has(useObject.grantsCard)) useObject.object.visible = false;
             continue;
           }
@@ -257,7 +268,10 @@ export function loadGltfLevel(
         }
 
         const script = readLevelScript(
-          handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), session.choice.scenarios ?? LEVEL_EVENTS,
+          handle.triggers,
+          handle.spawnSuits,
+          handle.ecrans.map((ecran) => ecran.name),
+          session.choice.scenarios ?? LEVEL_EVENTS,
           handle.doors.map((door) => door.name),
           handle.trains?.data.lanes,
         );
@@ -265,9 +279,10 @@ export function loadGltfLevel(
           throw new TrainLevelError({ message: script.problems.join("\n") });
         for (const problem of script.problems) console.error(`[level] ${problem}`);
         const planSpaces = (await loadLevelSpaces(name)) ?? [];
-        const levelSpaces = planSpaces.length + script.placeSpaces.length > 0
-          ? sortLevelSpaces([...planSpaces, ...script.placeSpaces])
-          : null;
+        const levelSpaces =
+          planSpaces.length + script.placeSpaces.length > 0
+            ? sortLevelSpaces([...planSpaces, ...script.placeSpaces])
+            : null;
 
         const navStats = navGraphStats(navGraph);
         console.info(
@@ -291,7 +306,9 @@ export function loadGltfLevel(
 
         reportLoading("Préparation des effets d’eau", 0.96);
         if (info.isFirstLoad && !engine.flow.isPlaying()) await letBrowserPaint();
-        lightPool.update(info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position);
+        lightPool.update(
+          info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position,
+        );
         const previousRoot = session.gltfLevelSession?.current?.root;
         const previousParent = previousRoot?.parent;
         const restoreFountain = suspendPreviousFountainWater(previousRoot);
@@ -299,10 +316,16 @@ export function loadGltfLevel(
           previousRoot?.removeFromParent();
           engine.fx.releaseShaderPrograms();
           await warmShaderDouches(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
-          if (handle.fountainWater) await warmFountainWater(handle.fountainWater, engine.renderer,
-            engine.scene, engine.camera, previousRoot);
-          if (handle.trains) await warmTrainModel(engine.renderer, engine.scene, engine.camera,
-            handle.trains.presentation.warmMeshes, previousRoot);
+          if (handle.fountainWater)
+            await warmFountainWater(handle.fountainWater, engine.renderer, engine.scene, engine.camera, previousRoot);
+          if (handle.trains)
+            await warmTrainModel(
+              engine.renderer,
+              engine.scene,
+              engine.camera,
+              handle.trains.presentation.warmMeshes,
+              previousRoot,
+            );
           reportLoading("Préparation des effets", 0.97);
           await warmFxShaders(engine, previousRoot);
         } finally {
@@ -333,7 +356,11 @@ export function loadGltfLevel(
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
           if (info.isFirstLoad && handle.spawnPlayer) {
-            session.player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
+            session.player.spawn(
+              handle.spawnPlayer.position.x,
+              handle.spawnPlayer.position.y,
+              handle.spawnPlayer.position.z,
+            );
             engine.look.yaw = handle.spawnPlayer.yaw;
             engine.look.pitch = 0;
           }

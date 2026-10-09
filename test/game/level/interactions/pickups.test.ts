@@ -19,7 +19,11 @@ import {
   type InteractionHandlers,
   type WeaponPickupHandlers,
 } from "../../../../src/game/level/interactions/interactive";
-import { UseObjectCulling, USE_RENDER_DISTANCE, type CullableUseObject } from "../../../../src/render/environment/useObjectCulling";
+import {
+  UseObjectCulling,
+  USE_RENDER_DISTANCE,
+  type CullableUseObject,
+} from "../../../../src/render/environment/useObjectCulling";
 
 await initPhysics();
 

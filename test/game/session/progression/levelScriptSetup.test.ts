@@ -10,7 +10,13 @@ import { readLevelScript } from "../../../../src/game/session/progression/levelS
 import { HERO_LINES, PLACE_LINES } from "../../../../src/game/session/presentation/heroLines";
 
 function trig(name: string, extras: Record<string, unknown>): TriggerVolume {
-  return { name, object: new THREE.Object3D(), min: new THREE.Vector3(0, 0, 0), max: new THREE.Vector3(2, 3, 4), extras };
+  return {
+    name,
+    object: new THREE.Object3D(),
+    min: new THREE.Vector3(0, 0, 0),
+    max: new THREE.Vector3(2, 3, 4),
+    extras,
+  };
 }
 
 function spawn(name: string, group: string | null): NamedSpawn {
@@ -65,7 +71,11 @@ describe("readLevelScript — arènes", () => {
     arene: [
       { delay: 0, action: { kind: "verrouiller", portes: ["door_nord", "door_sud"] } },
       { delay: 0, action: { kind: "reveiller", groupe: "vague" } },
-      { delay: 0, apres: { groupe: "vague", auPlusTard: 30 }, action: { kind: "deverrouiller", portes: ["door_nord", "door_sud"] } },
+      {
+        delay: 0,
+        apres: { groupe: "vague", auPlusTard: 30 },
+        action: { kind: "deverrouiller", portes: ["door_nord", "door_sud"] },
+      },
     ],
   };
 
@@ -76,7 +86,10 @@ describe("readLevelScript — arènes", () => {
 
   it("signale une porte absente du niveau et une attente sur un groupe sans spawn", () => {
     const fautive: Record<string, Scenario> = {
-      arene: [...arene.arene!, { delay: 0, apres: { groupe: "fantome", auPlusTard: 30 }, action: { kind: "replique", id: "quai" } }],
+      arene: [
+        ...arene.arene,
+        { delay: 0, apres: { groupe: "fantome", auPlusTard: 30 }, action: { kind: "replique", id: "quai" } },
+      ],
     };
     const setup = readLevelScript([], [spawn("spawn_suit_a", "vague")], [], fautive, ["door_nord"]);
     const texte = setup.problems.join("\n");
@@ -114,8 +127,12 @@ describe("scénarios du niveau", () => {
     // `validate_level.py` retrouve les événements et les répliques par ces motifs :
     // un changement de mise en forme des deux fichiers doit faire échouer ce test.
     const lire = (chemin: string) => new TextDecoder().decode(readFileSync(resolve(chemin)));
-    const events = [...lire("src/game/session/progression/levelEvents.ts").matchAll(/^ {2}(\w+): \[/gm)].map((m) => m[1]);
-    const lines = [...lire("src/game/session/presentation/heroLines.ts").matchAll(/^ {2}(\w+): \{ text:/gm)].map((m) => m[1]);
+    const events = [...lire("src/game/session/progression/levelEvents.ts").matchAll(/^ {2}(\w+): \[/gm)].map(
+      (m) => m[1],
+    );
+    const lines = [...lire("src/game/session/presentation/heroLines.ts").matchAll(/^ {2}(\w+): \{ text:/gm)].map(
+      (m) => m[1],
+    );
     expect(events.sort()).toEqual(Object.keys(LEVEL_EVENTS).sort());
     expect(lines.sort()).toEqual(Object.keys(HERO_LINES).sort());
   });

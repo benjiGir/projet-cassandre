@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { BillboardSprite } from "../../../src/render/sprites/billboard";
 
 function normalesDe(sprite: BillboardSprite): THREE.Vector3[] {
-  const n = sprite.mesh.geometry.attributes.normal!;
+  const n = sprite.mesh.geometry.attributes.normal;
   return Array.from({ length: n.count }, (_, i) => new THREE.Vector3(n.getX(i), n.getY(i), n.getZ(i)));
 }
 
@@ -24,6 +24,6 @@ describe("BillboardSprite — normales", () => {
       expect(n.z).toBeCloseTo(Math.SQRT1_2);
       expect(n.length()).toBeCloseTo(1);
     }
-    expect(incline.mesh.geometry.attributes.position!.array).toEqual(droit.mesh.geometry.attributes.position!.array);
+    expect(incline.mesh.geometry.attributes.position.array).toEqual(droit.mesh.geometry.attributes.position.array);
   });
 });

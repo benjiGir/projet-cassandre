@@ -344,7 +344,6 @@ export const HITMARKER_VARIANTS: Record<"OFF" | "SOBRE" | "ARCADE", HitmarkerVar
   },
 };
 
-
 export interface CrosshairVariant {
   crosshairEnabled: boolean;
   crosshairStyle: "cross" | "dot";

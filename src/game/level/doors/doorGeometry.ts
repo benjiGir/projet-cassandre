@@ -160,9 +160,14 @@ export function resolveMemberOpenSign(member: DoorMember, openerPosition: THREE.
 }
 
 export function buildDoorMember(info: DoorInfo, config: ParsedDoorConfig): DoorMember {
-  const hinge = info.movement === "battant" ? computeHingeGeometry(info.localMin, info.localMax, config.charniere) : null;
+  const hinge =
+    info.movement === "battant" ? computeHingeGeometry(info.localMin, info.localMax, config.charniere) : null;
   const axis: "x" | "z" | null =
-    info.movement === "coulisse" ? (info.localMax.x - info.localMin.x >= info.localMax.z - info.localMin.z ? "x" : "z") : null;
+    info.movement === "coulisse"
+      ? info.localMax.x - info.localMin.x >= info.localMax.z - info.localMin.z
+        ? "x"
+        : "z"
+      : null;
 
   let courseWorld: number;
   if (config.course !== null) {

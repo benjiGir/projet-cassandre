@@ -26,11 +26,11 @@ import { SuitManager } from "../entities/suit/suitManager";
 import { DirectorManager } from "../entities/director/directorManager";
 import { useGameStore } from "../hud/state";
 import { HEAL_PICKUP_RADIUS } from "../level/interactions/interactive";
-import { type LevelDef } from "../level/catalog/levels";
+import type { LevelDef } from "../level/catalog/levels";
 import { chargerCiel } from "../../render/environment/ciel";
 import { spawnSuitAt, loadGltfLevel } from "./spawning";
-import { type GameSession } from "./gameSession";
-import { type PersistentEngine } from "./gameEngine";
+import type { GameSession } from "./gameSession";
+import type { PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./presentation/heroPortrait";
 import { createStaticSurfaceProbe } from "./presentation/surfaceProbe";
 import { loadPickupResources, type PickupResources } from "../../render/pickups/pickupResources";
@@ -55,7 +55,11 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   engine.scene.background = choice.ciel ? chargerCiel(choice.ciel) : null;
 }
 
-export async function bootGameSession(engine: PersistentEngine, choice: LevelDef, entry: SessionEntry = { mode: "dev" }): Promise<GameSession> {
+export async function bootGameSession(
+  engine: PersistentEngine,
+  choice: LevelDef,
+  entry: SessionEntry = { mode: "dev" },
+): Promise<GameSession> {
   await initZoneAmbience(choice.ambience);
   const pickupResources = await loadPickupResources();
   try {
@@ -65,14 +69,23 @@ export async function bootGameSession(engine: PersistentEngine, choice: LevelDef
     }
     return buildGameSession(engine, choice, pickupResources, entry);
   } catch (error) {
-    try { pickupResources.dispose(); } catch (releaseError) {
-      throw new AggregateError([error, releaseError], "Construction de la session interrompue");
+    try {
+      pickupResources.dispose();
+    } catch (releaseError) {
+      throw new AggregateError([error, releaseError], "Construction de la session interrompue", {
+        cause: releaseError,
+      });
     }
     throw error;
   }
 }
 
-function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupResources: PickupResources, entry: SessionEntry): GameSession {
+function buildGameSession(
+  engine: PersistentEngine,
+  choice: LevelDef,
+  pickupResources: PickupResources,
+  entry: SessionEntry,
+): GameSession {
   // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
   // de recréer leurs pools, mais leur état transitoire appartient à UNE
   // partie. Le reset précède toute construction de la nouvelle session.
@@ -225,7 +238,9 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   if (arrival) applyArrival(session, arrival);
   session.entryArrival = captureArrival(session);
   useGameStore.getState().setCampaign({ levelId: choice.id, nextAvailable: false });
-  useGameStore.getState().setDebug({ playerHp: session.playerHp, playerMaxHp: session.playerMaxHp, wallet: session.stream.wallet });
+  useGameStore
+    .getState()
+    .setDebug({ playerHp: session.playerHp, playerMaxHp: session.playerMaxHp, wallet: session.stream.wallet });
 
   applyLightRig(engine, choice);
 
@@ -235,18 +250,38 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     spawnSuitAt(engine, session, 0, SPAWN_FEET_GUARD, 13);
     // Rencontre d'essai du Rampant (lot B4) : une meute de quatre, au fond de
     // la salle, à juger ici avant toute pose dans le niveau.
-    for (const [x, z] of [[-6, 17], [-2, 19], [2, 19], [6, 17]] as const) {
+    for (const [x, z] of [
+      [-6, 17],
+      [-2, 19],
+      [2, 19],
+      [6, 17],
+    ] as const) {
       spawnSuitAt(engine, session, x, SPAWN_FEET_GUARD, z, "rampant");
     }
     // Rencontre d'essai du Vigile (lot B6) : seul, à l'écart, avec la place de lui tourner autour.
     spawnSuitAt(engine, session, -14, SPAWN_FEET_GUARD, -6, "vigile");
   } else if (trainGym) {
-    session.currentNavGraph = runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics,
-      new THREE.Box3(new THREE.Vector3(-9.5, -.4, -21.5), new THREE.Vector3(13.5, 3, 24.5)))));
-    for (const [x, z] of [[9, -15], [12, -15], [9, -20], [12, -20]] as const) spawnSuitAt(engine, session, x, 1, z);
+    session.currentNavGraph = runGameplaySync(
+      PathfindingService.use((pathfinding) =>
+        pathfinding.bake(
+          physics,
+          new THREE.Box3(new THREE.Vector3(-9.5, -0.4, -21.5), new THREE.Vector3(13.5, 3, 24.5)),
+        ),
+      ),
+    );
+    for (const [x, z] of [
+      [9, -15],
+      [12, -15],
+      [9, -20],
+      [12, -20],
+    ] as const)
+      spawnSuitAt(engine, session, x, 1, z);
   } else if (trainRideGym) {
-    session.currentNavGraph = runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics,
-      new THREE.Box3(new THREE.Vector3(-1.5, -.4, -22), new THREE.Vector3(1.5, .4, 22)))));
+    session.currentNavGraph = runGameplaySync(
+      PathfindingService.use((pathfinding) =>
+        pathfinding.bake(physics, new THREE.Box3(new THREE.Vector3(-1.5, -0.4, -22), new THREE.Vector3(1.5, 0.4, 22))),
+      ),
+    );
   } else if (choice.gltfName) {
     loadGltfLevel(engine, session, choice.gltfName);
   }
@@ -259,11 +294,19 @@ export async function teardownGameSession(engine: PersistentEngine, session: Gam
   session.levelLoadGeneration += 1;
   const errors: unknown[] = [];
   const release = (action: () => void): void => {
-    try { action(); } catch (error) { errors.push(error); }
+    try {
+      action();
+    } catch (error) {
+      errors.push(error);
+    }
   };
   release(stopZoneAmbienceSession);
   // Attendre les acquisitions en vol avant de libérer les ressources qu'elles empruntent.
-  try { await session.gltfLevelSession?.stop(); } catch (error) { errors.push(error); }
+  try {
+    await session.gltfLevelSession?.stop();
+  } catch (error) {
+    errors.push(error);
+  }
   release(() => session.pickupResources?.dispose());
   session.pickupResources = null;
 

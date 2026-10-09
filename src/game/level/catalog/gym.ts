@@ -58,7 +58,7 @@ function addBox(
   cz: number,
   w: number,
   h: number,
-  d: number
+  d: number,
 ): void {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), materialFor(materials, color));
   mesh.position.set(cx, cy, cz);
@@ -77,7 +77,7 @@ function addRampBetween(
   base: THREE.Vector3,
   top: THREE.Vector3,
   width: number,
-  thickness: number
+  thickness: number,
 ): void {
   const zAxis = new THREE.Vector3().subVectors(top, base).normalize();
   const upHint = Math.abs(zAxis.y) > 0.99 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
@@ -96,7 +96,7 @@ function addRampBetween(
   const body = physics.world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed()
       .setTranslation(center.x, center.y, center.z)
-      .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w })
+      .setRotation({ x: quat.x, y: quat.y, z: quat.z, w: quat.w }),
   );
   physics.world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, thickness / 2, length / 2), body);
 }
@@ -110,25 +110,106 @@ const CORRIDOR_OPENING = 6; // largeur de l'ouverture nord, doit matcher CORRIDO
 const RAMPS_OPENING = 20; // largeur de l'ouverture sud, doit matcher RAMPS_WIDTH
 const EAST_OPENING = 20; // largeur de l'ouverture est, doit matcher EAST_WING_WIDTH
 
-function buildOpenArea(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
-  addBox(scene, physics, materials, darken(OPEN_AREA_COLOR, 0.6), 0, -FLOOR_THICK / 2, 0, HUB_SIZE, FLOOR_THICK, HUB_SIZE);
+function buildOpenArea(
+  scene: THREE.Object3D,
+  physics: PhysicsWorld,
+  materials: Map<number, THREE.MeshLambertMaterial>,
+): void {
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(OPEN_AREA_COLOR, 0.6),
+    0,
+    -FLOOR_THICK / 2,
+    0,
+    HUB_SIZE,
+    FLOOR_THICK,
+    HUB_SIZE,
+  );
 
   const wallY = WALL_HEIGHT / 2;
 
   // Nord : ouverture vers le couloir, x in [-3, 3]
   const nSeg = (HUB_SIZE - CORRIDOR_OPENING) / 2;
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, -(CORRIDOR_OPENING / 2 + nSeg / 2), wallY, HUB_HALF, nSeg, WALL_HEIGHT, WALL_THICK);
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, CORRIDOR_OPENING / 2 + nSeg / 2, wallY, HUB_HALF, nSeg, WALL_HEIGHT, WALL_THICK);
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    -(CORRIDOR_OPENING / 2 + nSeg / 2),
+    wallY,
+    HUB_HALF,
+    nSeg,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    CORRIDOR_OPENING / 2 + nSeg / 2,
+    wallY,
+    HUB_HALF,
+    nSeg,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
 
   // Sud : ouverture vers les rampes, x in [-10, 10]
   const sSeg = (HUB_SIZE - RAMPS_OPENING) / 2;
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, -(RAMPS_OPENING / 2 + sSeg / 2), wallY, -HUB_HALF, sSeg, WALL_HEIGHT, WALL_THICK);
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, RAMPS_OPENING / 2 + sSeg / 2, wallY, -HUB_HALF, sSeg, WALL_HEIGHT, WALL_THICK);
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    -(RAMPS_OPENING / 2 + sSeg / 2),
+    wallY,
+    -HUB_HALF,
+    sSeg,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    RAMPS_OPENING / 2 + sSeg / 2,
+    wallY,
+    -HUB_HALF,
+    sSeg,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
 
   // Est : ouverture vers escaliers/gouffres, z in [-10, 10]
   const eSeg = (HUB_SIZE - EAST_OPENING) / 2;
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, HUB_HALF, wallY, -(EAST_OPENING / 2 + eSeg / 2), WALL_THICK, WALL_HEIGHT, eSeg);
-  addBox(scene, physics, materials, OPEN_AREA_COLOR, HUB_HALF, wallY, EAST_OPENING / 2 + eSeg / 2, WALL_THICK, WALL_HEIGHT, eSeg);
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    HUB_HALF,
+    wallY,
+    -(EAST_OPENING / 2 + eSeg / 2),
+    WALL_THICK,
+    WALL_HEIGHT,
+    eSeg,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    OPEN_AREA_COLOR,
+    HUB_HALF,
+    wallY,
+    EAST_OPENING / 2 + eSeg / 2,
+    WALL_THICK,
+    WALL_HEIGHT,
+    eSeg,
+  );
 
   // Ouest : mur plein, pas d'aile
   addBox(scene, physics, materials, OPEN_AREA_COLOR, -HUB_HALF, wallY, 0, WALL_THICK, WALL_HEIGHT, HUB_SIZE);
@@ -142,13 +223,50 @@ const CORRIDOR_Z_START = HUB_HALF; // 22, mur nord du hub
 const CORRIDOR_Z_END = CORRIDOR_Z_START + CORRIDOR_LENGTH; // 66
 const CORRIDOR_MARKER_SPACING = 5;
 
-function buildCorridor(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildCorridor(
+  scene: THREE.Object3D,
+  physics: PhysicsWorld,
+  materials: Map<number, THREE.MeshLambertMaterial>,
+): void {
   const centerZ = (CORRIDOR_Z_START + CORRIDOR_Z_END) / 2;
-  addBox(scene, physics, materials, darken(CORRIDOR_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, CORRIDOR_WIDTH, FLOOR_THICK, CORRIDOR_LENGTH);
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(CORRIDOR_COLOR, 0.6),
+    0,
+    -FLOOR_THICK / 2,
+    centerZ,
+    CORRIDOR_WIDTH,
+    FLOOR_THICK,
+    CORRIDOR_LENGTH,
+  );
 
   const wallY = WALL_HEIGHT / 2;
-  addBox(scene, physics, materials, CORRIDOR_COLOR, -CORRIDOR_WIDTH / 2, wallY, centerZ, WALL_THICK, WALL_HEIGHT, CORRIDOR_LENGTH);
-  addBox(scene, physics, materials, CORRIDOR_COLOR, CORRIDOR_WIDTH / 2, wallY, centerZ, WALL_THICK, WALL_HEIGHT, CORRIDOR_LENGTH);
+  addBox(
+    scene,
+    physics,
+    materials,
+    CORRIDOR_COLOR,
+    -CORRIDOR_WIDTH / 2,
+    wallY,
+    centerZ,
+    WALL_THICK,
+    WALL_HEIGHT,
+    CORRIDOR_LENGTH,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    CORRIDOR_COLOR,
+    CORRIDOR_WIDTH / 2,
+    wallY,
+    centerZ,
+    WALL_THICK,
+    WALL_HEIGHT,
+    CORRIDOR_LENGTH,
+  );
   addBox(scene, physics, materials, CORRIDOR_COLOR, 0, wallY, CORRIDOR_Z_END, CORRIDOR_WIDTH, WALL_HEIGHT, WALL_THICK); // fond, jamais de vide infini
 
   let markerIndex = 0;
@@ -174,10 +292,25 @@ const RAMP_WIDTH = 4;
 const RAMP_THICKNESS = 0.4;
 const RAMP_LANDING_DEPTH = 2.5;
 
-function buildRampsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildRampsZone(
+  scene: THREE.Object3D,
+  physics: PhysicsWorld,
+  materials: Map<number, THREE.MeshLambertMaterial>,
+): void {
   const centerZ = (RAMPS_Z_START + RAMPS_Z_END) / 2;
   const depth = RAMPS_Z_START - RAMPS_Z_END;
-  addBox(scene, physics, materials, darken(RAMPS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(RAMPS_COLOR, 0.6),
+    0,
+    -FLOOR_THICK / 2,
+    centerZ,
+    RAMPS_WIDTH,
+    FLOOR_THICK,
+    depth,
+  );
 
   const wallY = WALL_HEIGHT / 2;
   addBox(scene, physics, materials, RAMPS_COLOR, -RAMPS_WIDTH / 2, wallY, centerZ, WALL_THICK, WALL_HEIGHT, depth);
@@ -198,7 +331,7 @@ function buildRampsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials:
       new THREE.Vector3(laneX, 0, baseZ),
       new THREE.Vector3(laneX, RAMP_RISE, topZ),
       RAMP_WIDTH,
-      RAMP_THICKNESS
+      RAMP_THICKNESS,
     );
 
     // palier d'arrivée en haut de la rampe
@@ -212,7 +345,7 @@ function buildRampsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials:
       topZ - RAMP_LANDING_DEPTH / 2,
       RAMP_WIDTH,
       FLOOR_THICK,
-      RAMP_LANDING_DEPTH
+      RAMP_LANDING_DEPTH,
     );
   });
 }
@@ -228,10 +361,25 @@ const PLATFORM_WIDTH = 4;
 const PLATFORM_DEPTH = 3;
 const PLATFORM_Z = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2; // -45, ~4 m de recul depuis la limite de l'aile rampes
 
-function buildPlatformsZone(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildPlatformsZone(
+  scene: THREE.Object3D,
+  physics: PhysicsWorld,
+  materials: Map<number, THREE.MeshLambertMaterial>,
+): void {
   const centerZ = (PLATFORMS_Z_START + PLATFORMS_Z_END) / 2;
   const depth = PLATFORMS_Z_START - PLATFORMS_Z_END;
-  addBox(scene, physics, materials, darken(PLATFORMS_COLOR, 0.6), 0, -FLOOR_THICK / 2, centerZ, RAMPS_WIDTH, FLOOR_THICK, depth);
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(PLATFORMS_COLOR, 0.6),
+    0,
+    -FLOOR_THICK / 2,
+    centerZ,
+    RAMPS_WIDTH,
+    FLOOR_THICK,
+    depth,
+  );
 
   const wallY = WALL_HEIGHT / 2;
   addBox(scene, physics, materials, PLATFORMS_COLOR, -RAMPS_WIDTH / 2, wallY, centerZ, WALL_THICK, WALL_HEIGHT, depth);
@@ -239,7 +387,18 @@ function buildPlatformsZone(scene: THREE.Object3D, physics: PhysicsWorld, materi
   addBox(scene, physics, materials, PLATFORMS_COLOR, 0, wallY, PLATFORMS_Z_END, RAMPS_WIDTH, WALL_HEIGHT, WALL_THICK); // fond de l'aile sud
 
   PLATFORM_HEIGHTS.forEach((height, i) => {
-    addBox(scene, physics, materials, GRADIENT[i], PLATFORM_LANE_X[i], height / 2, PLATFORM_Z, PLATFORM_WIDTH, height, PLATFORM_DEPTH);
+    addBox(
+      scene,
+      physics,
+      materials,
+      GRADIENT[i],
+      PLATFORM_LANE_X[i],
+      height / 2,
+      PLATFORM_Z,
+      PLATFORM_WIDTH,
+      height,
+      PLATFORM_DEPTH,
+    );
   });
 }
 
@@ -273,21 +432,69 @@ const PIT_DEPTH = 1.5; // fond de fosse, avec rampe de remontée : pas punitif
 const PIT_Z_CENTER = EAST_WING_HALF / 2; // centre de la bande gouffres, dans z in [0, 10] -> centre à z=5
 const RECOVERY_RAMP_RUN = 3;
 
-function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, materials: Map<number, THREE.MeshLambertMaterial>): void {
+function buildStairsAndGapsWing(
+  scene: THREE.Object3D,
+  physics: PhysicsWorld,
+  materials: Map<number, THREE.MeshLambertMaterial>,
+): void {
   const wallY = WALL_HEIGHT / 2;
 
   const stairsCenterX = (EAST_X_START + GAPS_START_X) / 2;
   const stairsDepth = GAPS_START_X - EAST_X_START;
-  addBox(scene, physics, materials, darken(STAIRS_COLOR, 0.6), stairsCenterX, -FLOOR_THICK / 2, 0, stairsDepth, FLOOR_THICK, EAST_WING_WIDTH);
-  addBox(scene, physics, materials, STAIRS_COLOR, stairsCenterX, wallY, -EAST_WING_HALF, stairsDepth, WALL_HEIGHT, WALL_THICK);
-  addBox(scene, physics, materials, STAIRS_COLOR, stairsCenterX, wallY, EAST_WING_HALF, stairsDepth, WALL_HEIGHT, WALL_THICK);
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(STAIRS_COLOR, 0.6),
+    stairsCenterX,
+    -FLOOR_THICK / 2,
+    0,
+    stairsDepth,
+    FLOOR_THICK,
+    EAST_WING_WIDTH,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    STAIRS_COLOR,
+    stairsCenterX,
+    wallY,
+    -EAST_WING_HALF,
+    stairsDepth,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    STAIRS_COLOR,
+    stairsCenterX,
+    wallY,
+    EAST_WING_HALF,
+    stairsDepth,
+    WALL_HEIGHT,
+    WALL_THICK,
+  );
 
   STEP_HEIGHTS.forEach((stepHeight, lane) => {
     const laneZ = STAIR_LANE_Z[lane];
     for (let s = 1; s <= STEP_COUNT; s++) {
       const xStart = STAIRS_STEPS_START_X + (s - 1) * STEP_TREAD;
       const height = s * stepHeight;
-      addBox(scene, physics, materials, GRADIENT[lane], xStart + STEP_TREAD / 2, height / 2, laneZ, STEP_TREAD, height, STAIR_LANE_WIDTH);
+      addBox(
+        scene,
+        physics,
+        materials,
+        GRADIENT[lane],
+        xStart + STEP_TREAD / 2,
+        height / 2,
+        laneZ,
+        STEP_TREAD,
+        height,
+        STAIR_LANE_WIDTH,
+      );
     }
     const topHeight = STEP_COUNT * stepHeight;
     const landingDepth = GAPS_START_X - STAIRS_STEPS_END_X;
@@ -301,7 +508,7 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
       laneZ,
       landingDepth,
       FLOOR_THICK,
-      STAIR_LANE_WIDTH
+      STAIR_LANE_WIDTH,
     );
   });
 
@@ -311,7 +518,18 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
 
   const addPad = (color: number) => {
     const cx = cursor + GAP_PAD_DEPTH / 2;
-    addBox(scene, physics, materials, color, cx, -PIT_DEPTH / 2, PIT_Z_CENTER, GAP_PAD_DEPTH, PIT_DEPTH, EAST_WING_HALF);
+    addBox(
+      scene,
+      physics,
+      materials,
+      color,
+      cx,
+      -PIT_DEPTH / 2,
+      PIT_Z_CENTER,
+      GAP_PAD_DEPTH,
+      PIT_DEPTH,
+      EAST_WING_HALF,
+    );
     padCenters.push(cx);
     cursor += GAP_PAD_DEPTH;
   };
@@ -336,7 +554,7 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
     PIT_Z_CENTER,
     trenchEndX - trenchStartX,
     FLOOR_THICK,
-    EAST_WING_HALF
+    EAST_WING_HALF,
   );
 
   // Rampe de récupération : fond de fosse pas punitif.
@@ -348,12 +566,23 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
     new THREE.Vector3(cursor, -PIT_DEPTH, PIT_Z_CENTER),
     new THREE.Vector3(cursor + RECOVERY_RAMP_RUN, 0, PIT_Z_CENTER),
     EAST_WING_HALF,
-    FLOOR_THICK
+    FLOOR_THICK,
   );
   cursor += RECOVERY_RAMP_RUN;
 
   const backWallX = cursor + 1;
-  addBox(scene, physics, materials, darken(GAPS_COLOR, 0.6), (cursor + backWallX) / 2, -FLOOR_THICK / 2, PIT_Z_CENTER, backWallX - cursor, FLOOR_THICK, EAST_WING_HALF);
+  addBox(
+    scene,
+    physics,
+    materials,
+    darken(GAPS_COLOR, 0.6),
+    (cursor + backWallX) / 2,
+    -FLOOR_THICK / 2,
+    PIT_Z_CENTER,
+    backWallX - cursor,
+    FLOOR_THICK,
+    EAST_WING_HALF,
+  );
 
   // Sol de la bande escaliers prolongée le long des gouffres (contournement à pied).
   const gapsSectionCenterX = (GAPS_START_X + backWallX) / 2;
@@ -368,13 +597,46 @@ function buildStairsAndGapsWing(scene: THREE.Object3D, physics: PhysicsWorld, ma
     -EAST_WING_HALF / 2,
     gapsSectionDepth,
     FLOOR_THICK,
-    EAST_WING_HALF
+    EAST_WING_HALF,
   );
 
   // Murs de la section gouffres (plongent sous le fond de fosse).
-  addBox(scene, physics, materials, GAPS_COLOR, gapsSectionCenterX, PIT_WALL_CENTER_Y, -EAST_WING_HALF, gapsSectionDepth, PIT_WALL_HEIGHT, WALL_THICK);
-  addBox(scene, physics, materials, GAPS_COLOR, gapsSectionCenterX, PIT_WALL_CENTER_Y, EAST_WING_HALF, gapsSectionDepth, PIT_WALL_HEIGHT, WALL_THICK);
-  addBox(scene, physics, materials, GAPS_COLOR, backWallX, PIT_WALL_CENTER_Y, 0, WALL_THICK, PIT_WALL_HEIGHT, EAST_WING_WIDTH);
+  addBox(
+    scene,
+    physics,
+    materials,
+    GAPS_COLOR,
+    gapsSectionCenterX,
+    PIT_WALL_CENTER_Y,
+    -EAST_WING_HALF,
+    gapsSectionDepth,
+    PIT_WALL_HEIGHT,
+    WALL_THICK,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    GAPS_COLOR,
+    gapsSectionCenterX,
+    PIT_WALL_CENTER_Y,
+    EAST_WING_HALF,
+    gapsSectionDepth,
+    PIT_WALL_HEIGHT,
+    WALL_THICK,
+  );
+  addBox(
+    scene,
+    physics,
+    materials,
+    GAPS_COLOR,
+    backWallX,
+    PIT_WALL_CENTER_Y,
+    0,
+    WALL_THICK,
+    PIT_WALL_HEIGHT,
+    EAST_WING_WIDTH,
+  );
 }
 
 // Spawn au centre du hub, orienté vers l'entrée du couloir nord.
@@ -384,7 +646,7 @@ const SPAWN_YAW = Math.PI; // face +Z, vers l'entrée du couloir
 
 export function buildGym(
   scene: THREE.Object3D,
-  physics: PhysicsWorld
+  physics: PhysicsWorld,
 ): {
   spawn: THREE.Vector3;
   spawnYaw: number;

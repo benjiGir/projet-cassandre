@@ -21,12 +21,17 @@ const ArrivalSchema = Schema.Struct({
   wallet: Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0)),
   hp: Schema.Finite.check(Schema.isGreaterThan(0)),
   difficulty: Schema.Literals(DIFFICULTIES),
-}).check(Schema.makeFilter((arrival) =>
-  (arrival.weapons.active === "none" || arrival.weapons.owned.includes(arrival.weapons.active))
-  && arrival.hp <= INITIAL_PLAYER_MAX_HP + (arrival.perks.includes("gilet") ? perkConfig.giletMaxHpBonus : 0)
-  && arrival.weapons.pistolAmmo <= weaponConfig.pistolMaxAmmo + (arrival.perks.includes("premium") ? perkConfig.premiumPistolAmmoBonus : 0)
-  && arrival.weapons.shotgunAmmo <= weaponConfig.shotgunMaxAmmo,
-  { expected: "un équipement cohérent et des PV compatibles avec les perks" }));
+}).check(
+  Schema.makeFilter(
+    (arrival) =>
+      (arrival.weapons.active === "none" || arrival.weapons.owned.includes(arrival.weapons.active)) &&
+      arrival.hp <= INITIAL_PLAYER_MAX_HP + (arrival.perks.includes("gilet") ? perkConfig.giletMaxHpBonus : 0) &&
+      arrival.weapons.pistolAmmo <=
+        weaponConfig.pistolMaxAmmo + (arrival.perks.includes("premium") ? perkConfig.premiumPistolAmmoBonus : 0) &&
+      arrival.weapons.shotgunAmmo <= weaponConfig.shotgunMaxAmmo,
+    { expected: "un équipement cohérent et des PV compatibles avec les perks" },
+  ),
+);
 const SaveSchema = Schema.Struct({ version: Schema.Literal(1), arrival: ArrivalSchema });
 
 let current: CampaignArrival | null = null;

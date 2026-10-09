@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 import { GameClock } from "../../core/loop/time";
-import { type Recording } from "../../core/input/inputTypes";
+import type { Recording } from "../../core/input/inputTypes";
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/pipeline/renderer";
 import { FxSystem } from "../../render/fx/fx";
 import { UseObjectCulling } from "../../render/environment/useObjectCulling";
@@ -13,7 +13,7 @@ import { HitmarkerOverlay } from "../../render/overlays/hitmarker";
 import { CrosshairOverlay } from "../../render/overlays/crosshair";
 import { CameraViewOverlay } from "../../render/overlays/cameraView";
 import { BallisticsDebugOverlay } from "../../render/debug/ballisticsDebug";
-import { type EnemySpriteSheet } from "../../render/sprites/enemySpriteTypes";
+import type { EnemySpriteSheet } from "../../render/sprites/enemySpriteTypes";
 import { weaponConfig } from "../player/weapons/weaponConfig";
 import { moveConfig } from "../player/movement/moveConfig";
 import { InteractionSystem } from "../level/interactions/interactive";
@@ -115,8 +115,9 @@ export function buildGameEngine(
   // L'objet reste vivant à travers un reset ; `bootGameSession` remet son
   // temps écoulé et tout hitstop actif à zéro.
   const clock = new GameClock();
-  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile]
-    .flatMap((sheet) => Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined));
+  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile].flatMap((sheet) =>
+    Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined),
+  );
   const fx = new FxSystem(scene, enemyAtlases);
   const viewmodel = new Viewmodel(camera, weaponModels);
   const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);

@@ -12,7 +12,7 @@
   "options": {
     "typeAware": true,
     "reportUnusedDisableDirectives": "warn",
-    "maxWarnings": 694
+    "maxWarnings": 202
   },
   "env": { "browser": true, "es2022": true },
   "ignorePatterns": ["dist", "public", "docs", "tools", "assets", "assets_src", "refs", "renders", "tmp"],
@@ -29,15 +29,16 @@
     "typescript/no-floating-promises": "warn",
     "typescript/no-misused-promises": "warn",
     // Sans `noUncheckedIndexedAccess`, la plupart des `!` sur accès indexé ne servent à rien.
-    "typescript/no-unnecessary-type-assertion": "warn",
-    "typescript/no-meaningless-void-operator": "warn",
+    // Faux positif connu : l'idiome XState `types: {} as {...}` (désactivé ligne par ligne, voir enemyMachine.ts).
+    "typescript/no-unnecessary-type-assertion": "error",
+    "typescript/no-meaningless-void-operator": "error",
     // Un seul style d'import de types : `import type { X }`.
     "typescript/consistent-type-imports": "warn",
-    "typescript/no-import-type-side-effects": "warn",
+    "typescript/no-import-type-side-effects": "error",
     // --- Imports ------------------------------------------------------------------------
     "import/no-self-import": "error",
     "import/no-default-export": "error",
-    "import/no-duplicates": "warn",
+    "import/no-duplicates": "error",
     // Cycles, y compris de types (ignoreTypes: false) : ils trahissent une couche mal découpée.
     "import/no-cycle": ["warn", { "ignoreTypes": false }],
     // Jamais de fichier barrel (`index.ts` qui ré-exporte) : on importe depuis le fichier qui définit.
@@ -55,7 +56,7 @@
     "eslint/prefer-const": "error",
     "eslint/no-alert": "error",
     "eslint/no-eval": "error",
-    "eslint/prefer-template": "warn",
+    "eslint/prefer-template": "error",
     // --- Règles des catégories suspicious/perf écartées : bruit sans valeur ici -----------------
     // `_champ` privé adossé à un getter public (files d'événements des gestionnaires).
     "eslint/no-underscore-dangle": "off",

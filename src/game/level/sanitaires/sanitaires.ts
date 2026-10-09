@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
@@ -127,8 +127,8 @@ export function mergeSanitaireDecor(
 
   for (const group of groups.values()) {
     if (group.length < 2) {
-      sanitaires.push(passthroughSanitaireInfo(group[0]!));
-      rendus.push(renduDe(group[0]!.mesh));
+      sanitaires.push(passthroughSanitaireInfo(group[0]));
+      rendus.push(renduDe(group[0].mesh));
       continue;
     }
 
@@ -152,7 +152,7 @@ export function mergeSanitaireDecor(
       continue;
     }
 
-    const batch = new THREE.Mesh(merged, group[0]!.mesh.material);
+    const batch = new THREE.Mesh(merged, group[0].mesh.material);
     batch.name = `sanitaire_fusion_${batchCount}`;
     root.add(batch);
     batch.updateMatrixWorld(true);
@@ -162,8 +162,8 @@ export function mergeSanitaireDecor(
     const mergedPosition = merged.getAttribute("position") as THREE.BufferAttribute;
     let cursor = 0;
     for (let i = 0; i < group.length; i++) {
-      const candidate = group[i]!;
-      const count = (geometries[i]!.getAttribute("position") as THREE.BufferAttribute).count;
+      const candidate = group[i];
+      const count = (geometries[i].getAttribute("position") as THREE.BufferAttribute).count;
       sanitaires.push({
         name: candidate.name,
         collider: candidate.collider,
@@ -335,7 +335,7 @@ export class SanitaireSystem {
 
   update(hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
@@ -382,7 +382,8 @@ export class SanitaireSystem {
     }
     position.needsUpdate = true;
 
-    const finalDirection = direction.lengthSq() < 1e-8 ? DEFAULT_BREAK_DIRECTION.clone() : direction.clone().normalize();
+    const finalDirection =
+      direction.lengthSq() < 1e-8 ? DEFAULT_BREAK_DIRECTION.clone() : direction.clone().normalize();
     this._destroyedEvents.push({
       name: state.info.name,
       point: point.clone(),

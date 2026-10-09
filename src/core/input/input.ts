@@ -75,8 +75,7 @@ class InputManager {
   };
 
   private requestPointerLock = () => {
-    this.canvas?.requestPointerLock().catch(() => {
-    });
+    this.canvas?.requestPointerLock().catch(() => {});
   };
 
   private onPointerLockChange = () => {
@@ -118,7 +117,6 @@ class InputManager {
     this.mouseDeltaY = 0;
     return { dx, dy };
   }
-
 
   isActionDown(action: GameAction): boolean {
     return this.isDown(this.bindings[action]);

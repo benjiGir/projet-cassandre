@@ -25,9 +25,11 @@ const AmbienceZone = Schema.Struct({
 export const ZoneAmbienceManifest = Schema.Struct({
   defaut: Schema.NonEmptyString,
   zones: Schema.Record(Schema.NonEmptyString, AmbienceZone),
-}).check(Schema.makeFilter((manifest) =>
-  manifest.zones[manifest.defaut] !== undefined || "La zone par défaut est absente du manifeste.",
-));
+}).check(
+  Schema.makeFilter(
+    (manifest) => manifest.zones[manifest.defaut] !== undefined || "La zone par défaut est absente du manifeste.",
+  ),
+);
 
 export type AudioSpriteManifestData = typeof AudioSpriteManifest.Type;
 export type ZoneAmbienceManifestData = typeof ZoneAmbienceManifest.Type;

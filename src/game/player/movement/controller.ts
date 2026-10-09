@@ -18,13 +18,7 @@ import {
 const TAU = Math.PI * 2;
 
 // see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
-export function approach(
-  current: number,
-  target: number,
-  responseTime: number,
-  dt: number,
-  range: number,
-): number {
+export function approach(current: number, target: number, responseTime: number, dt: number, range: number): number {
   if (responseTime <= 0 || range <= 0) return target;
   const diff = target - current;
   const step = (range / responseTime) * dt;
@@ -94,9 +88,7 @@ export class PlayerController {
 
     this.body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
     this.collider = physics.world.createCollider(
-      RAPIER.ColliderDesc.capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius).setCollisionGroups(
-        COLLISION_GROUPS.PLAYER,
-      ),
+      RAPIER.ColliderDesc.capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius).setCollisionGroups(COLLISION_GROUPS.PLAYER),
       this.body,
     );
     this.kcc = physics.createCharacterController(cfg);
@@ -167,11 +159,7 @@ export class PlayerController {
 
     let cycle = 0;
     if (intensity > 0 && cfg.bobDistancePerCycle > 0) {
-      const distance = THREE.MathUtils.lerp(
-        this.previousDistanceTravelled,
-        this.distanceTravelled,
-        alpha,
-      );
+      const distance = THREE.MathUtils.lerp(this.previousDistanceTravelled, this.distanceTravelled, alpha);
       cycle = (distance / cfg.bobDistancePerCycle) * TAU;
     }
 
@@ -257,9 +245,7 @@ export class PlayerController {
       this.velocity.y = -cfg.groundStickSpeed;
     }
 
-    this.jumpBufferTimer = frame.jump
-      ? cfg.jumpBufferTime
-      : Math.max(0, this.jumpBufferTimer - dt);
+    this.jumpBufferTimer = frame.jump ? cfg.jumpBufferTime : Math.max(0, this.jumpBufferTimer - dt);
     const wantsJump = frame.jump || this.jumpBufferTimer > 0;
     const canJump = this.isGrounded || this.timeSinceGrounded <= cfg.coyoteTime;
     if (wantsJump && canJump && !this.jumpLatched) {
@@ -354,21 +340,9 @@ export class PlayerController {
       1,
     );
 
-    this.runFactor = approach(
-      this.runFactor,
-      fovRunFactorTarget(cfg, speed),
-      cfg.fovResponseTime,
-      dt,
-      1,
-    );
+    this.runFactor = approach(this.runFactor, fovRunFactorTarget(cfg, speed), cfg.fovResponseTime, dt, 1);
 
-    this.landingDip = approach(
-      this.landingDip,
-      0,
-      cfg.landingDipRecoverTime,
-      dt,
-      cfg.landingDipMax,
-    );
+    this.landingDip = approach(this.landingDip, 0, cfg.landingDipRecoverTime, dt, cfg.landingDipMax);
     if (impactSpeed > 0) {
       this.lastLandingSpeed = impactSpeed;
       this.landingDip = Math.max(this.landingDip, landingDipFor(cfg, impactSpeed));

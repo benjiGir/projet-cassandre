@@ -68,7 +68,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
       assert.isAtLeast(metricsAfter.lastMs, 0);
 
       assert.isAbove(path.length, 0);
-      const last = path[path.length - 1]!;
+      const last = path[path.length - 1];
       assert.approximately(last.x, to.x, graph.cellSize);
       assert.approximately(last.z, to.z, graph.cellSize);
 
@@ -169,7 +169,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
 
         assert.isAbove(path.length, 0, "un chemin doit être trouvé entre le rez-de-chaussée et la mezzanine");
 
-        const last = path[path.length - 1]!;
+        const last = path[path.length - 1];
         assert.approximately(last.x, to.x, graph.cellSize * 2);
         assert.approximately(last.y, to.y, 0.3);
 
@@ -212,10 +212,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
       physics.step(0);
 
       const pf = yield* PathfindingService;
-      const graph = yield* pf.bake(
-        physics,
-        new THREE.Box3(new THREE.Vector3(-2, -1, -1), new THREE.Vector3(2, 2, 1)),
-      );
+      const graph = yield* pf.bake(physics, new THREE.Box3(new THREE.Vector3(-2, -1, -1), new THREE.Vector3(2, 2, 1)));
       const error = yield* Effect.flip(pf.findPath(graph, new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0.8, 0)));
       assert.instanceOf(error, PathNotFoundError);
     }).pipe(Effect.provide(GameLayer)),
@@ -241,15 +238,9 @@ describe("PathfindingService.test (jalon M4) — Layer scriptée, sans monde Rap
 
     return Effect.gen(function* () {
       const pf = yield* PathfindingService;
-      const path = yield* pf.findPath(
-        null as unknown as NavGraph,
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-      );
+      const path = yield* pf.findPath(null as unknown as NavGraph, new THREE.Vector3(), new THREE.Vector3());
       assert.strictEqual(path, scriptedPath);
-    }).pipe(
-      Effect.provide(PathfindingService.test({ findPath: () => Effect.succeed(scriptedPath) })),
-    );
+    }).pipe(Effect.provide(PathfindingService.test({ findPath: () => Effect.succeed(scriptedPath) })));
   });
 });
 

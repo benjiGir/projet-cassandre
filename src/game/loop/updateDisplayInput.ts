@@ -1,7 +1,7 @@
 import { input } from "../../core/input/input";
 import { inputRecorder } from "../../core/input/inputRecorder";
 import { moveConfig } from "../player/movement/moveConfig";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 type DisplayInputEngine = Pick<GameEngine, "look" | "lookDelta">;
 
 // see: docs/6-reference/notes-code-gameplay.md#boucle-et-présentation

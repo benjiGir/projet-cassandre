@@ -33,7 +33,10 @@ export function AudioTab() {
 
   return (
     <>
-      <OptionSection title="TABLE DE MIXAGE" hint="100 % = le mixage d'origine. ▶ fait entendre le canal à son nouveau niveau.">
+      <OptionSection
+        title="TABLE DE MIXAGE"
+        hint="100 % = le mixage d'origine. ▶ fait entendre le canal à son nouveau niveau."
+      >
         <div className={styles.mixer}>
           {AUDIO_CHANNELS.map((channel) => (
             <VolumeFader

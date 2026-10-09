@@ -43,8 +43,8 @@ class MinHeap {
     let i = start;
     while (i > 0) {
       const parent = (i - 1) >> 1;
-      if (this.less(this.items[i]!, this.items[parent]!)) {
-        const tmp = this.items[i]!;
+      if (this.less(this.items[i], this.items[parent])) {
+        const tmp = this.items[i];
         this.items[i] = this.items[parent]!;
         this.items[parent] = tmp;
         i = parent;
@@ -59,10 +59,10 @@ class MinHeap {
       const left = i * 2 + 1;
       const right = i * 2 + 2;
       let smallest = i;
-      if (left < n && this.less(this.items[left]!, this.items[smallest]!)) smallest = left;
-      if (right < n && this.less(this.items[right]!, this.items[smallest]!)) smallest = right;
+      if (left < n && this.less(this.items[left], this.items[smallest])) smallest = left;
+      if (right < n && this.less(this.items[right], this.items[smallest])) smallest = right;
       if (smallest === i) break;
-      const tmp = this.items[i]!;
+      const tmp = this.items[i];
       this.items[i] = this.items[smallest]!;
       this.items[smallest] = tmp;
       i = smallest;
@@ -123,7 +123,7 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
       if (current.index === goalIdx) return reconstructPath(cameFrom, startIdx, goalIdx);
       closed[current.index] = 1;
 
-      const mask = graph.neighborMask[current.index]!;
+      const mask = graph.neighborMask[current.index];
       if (mask === 0) continue;
 
       const ix = current.index % graph.cols;
@@ -131,7 +131,7 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
 
       for (let dirIndex = 0; dirIndex < DIRS.length; dirIndex++) {
         if ((mask & (1 << dirIndex)) === 0) continue;
-        const dir = DIRS[dirIndex]!;
+        const dir = DIRS[dirIndex];
         const nx = ix + dir.dx;
         const nz = iz + dir.dz;
         if (nx < 0 || nx >= graph.cols || nz < 0 || nz >= graph.rows) continue;
@@ -139,8 +139,8 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
         const nIdx = nz * graph.cols + nx;
         if (closed[nIdx] === 1) continue;
 
-        const tentativeG = gScore[current.index]! + dir.cost * graph.cellSize;
-        if (tentativeG < gScore[nIdx]!) {
+        const tentativeG = gScore[current.index] + dir.cost * graph.cellSize;
+        if (tentativeG < gScore[nIdx]) {
           gScore[nIdx] = tentativeG;
           cameFrom[nIdx] = current.index;
           open.push({ index: nIdx, f: tentativeG + heuristic(graph, nIdx, goalIdx) });

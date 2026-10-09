@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 // see: docs/archive/systems-entites.md#le-contrat-minimal-partagé-par-toute-entité-entity
 export interface Entity {

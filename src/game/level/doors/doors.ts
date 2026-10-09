@@ -177,7 +177,7 @@ export class DoorSystem {
     }
     if (!cible) return null;
 
-    const nom = cible.members[0]!.info.name;
+    const nom = cible.members[0].info.name;
     if (cible.target === 1) {
       this.beginClosing(cible);
       return { name: nom, action: "fermee" };
@@ -191,14 +191,14 @@ export class DoorSystem {
     group.permanent = false;
     group.idleTimer = 0;
     group.target = 0;
-    const representative = group.members[0]!;
+    const representative = group.members[0];
     this._movementEvents.push({ name: representative.info.name, movement: representative.info.movement });
   }
 
   private beginOpening(group: DoorGroup, openerPosition: THREE.Vector3, silent: boolean): void {
     const wasFullyClosed = group.progress === 0 && group.target === 0;
     if (wasFullyClosed && !silent) {
-      const representative = group.members[0]!;
+      const representative = group.members[0];
       this._movementEvents.push({ name: representative.info.name, movement: representative.info.movement });
     }
     if (wasFullyClosed) {
@@ -298,7 +298,14 @@ export class DoorSystem {
           pivotScratch,
         );
         const theta = member.openSign * member.config.angleRad * progress;
-        composeBattantPose(info.closedPosition, info.closedQuaternion, pivotWorld, theta, member.currPosition, member.currQuaternion);
+        composeBattantPose(
+          info.closedPosition,
+          info.closedQuaternion,
+          pivotWorld,
+          theta,
+          member.currPosition,
+          member.currQuaternion,
+        );
         break;
       }
       case "coulisse":
@@ -330,7 +337,8 @@ export class DoorSystem {
         // Au repos, on n'écrit rien — mais UNE dernière fois après l'arrivée :
         // la pose écrite juste avant est une interpolation (alpha < 1), et le
         // vantail resterait arrêté quelques degrés avant sa butée.
-        const repos = member.prevPosition.equals(member.currPosition) && member.prevQuaternion.equals(member.currQuaternion);
+        const repos =
+          member.prevPosition.equals(member.currPosition) && member.prevQuaternion.equals(member.currQuaternion);
         if (repos && member.settled) continue;
         member.settled = repos;
         const object = member.info.object;
@@ -353,12 +361,24 @@ export class DoorSystem {
   private readonly movedBatches = new Set<THREE.BatchedMesh>();
 
   /** Résumé lisible pour la console de dev (`cassandre.doors2()`/tests). */
-  describe(): Array<{ name: string; movement: DoorMovement; state: DoorRuntimeState; groupe: string; locked: boolean }> {
+  describe(): Array<{
+    name: string;
+    movement: DoorMovement;
+    state: DoorRuntimeState;
+    groupe: string;
+    locked: boolean;
+  }> {
     const out: ReturnType<DoorSystem["describe"]> = [];
     for (const group of this.groups) {
       const state = runtimeState(group);
       for (const member of group.members) {
-        out.push({ name: member.info.name, movement: member.info.movement, state, groupe: group.key, locked: group.locked });
+        out.push({
+          name: member.info.name,
+          movement: member.info.movement,
+          state,
+          groupe: group.key,
+          locked: group.locked,
+        });
       }
     }
     return out;

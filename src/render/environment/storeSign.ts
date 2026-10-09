@@ -18,7 +18,7 @@ function brightnessAt(letter: SignLetter, time: number): number {
     if (phase < duration) return brightness;
     phase -= duration;
   }
-  return letter.steps[0]![1];
+  return letter.steps[0][1];
 }
 
 export function initializeStoreSign(root: THREE.Object3D): void {

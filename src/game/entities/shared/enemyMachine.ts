@@ -36,7 +36,7 @@ const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
 export function readEnemyAnimation(actor: EnemyActor, out: EnemyAnimationInput): EnemyAnimationInput {
   const snapshot = actor.getSnapshot();
   const ctx = snapshot.context;
-  const state = snapshot.value as EnemyState;
+  const state = snapshot.value;
   out.pose = ENEMY_POSE[state];
   out.poseTime = ctx.stateTimer;
   out.poseDuration =
@@ -124,6 +124,7 @@ export function createEnemyPrng(seed: number): () => number {
 // see: docs/archive/systems-entites.md#pourquoi-le-calcul-de-transition-vit-hors-des-gardes-xstate
 
 export const enemyMachine = setup({
+  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- idiome XState des types fantômes : l'annotation porte le typage du contexte et des événements
   types: {} as {
     context: EnemyMachineContext;
     events: EnemyEvent;

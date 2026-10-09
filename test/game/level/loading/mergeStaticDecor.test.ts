@@ -13,7 +13,7 @@ const sharedMap = new THREE.Texture();
 function coloredBox(material: THREE.MeshLambertMaterial, position: [number, number, number], rgb: number): THREE.Mesh {
   const geometry = new THREE.BoxGeometry(1, 1, 1);
   const c = new THREE.Color(rgb);
-  const colors = new Float32Array(geometry.attributes.position!.count * 3);
+  const colors = new Float32Array(geometry.attributes.position.count * 3);
   for (let i = 0; i < colors.length; i += 3) colors.set([c.r, c.g, c.b], i);
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   const mesh = new THREE.Mesh(geometry, material);
@@ -32,7 +32,11 @@ describe("mergeStaticDecor", () => {
     const a = coloredBox(texturedMat(), [0, 0, 0], 0xff0000);
     const b = coloredBox(texturedMat(), [10, 0, 0], 0x00ff00);
     const c = coloredBox(texturedMat(), [0, 0, 10], 0x0000ff);
-    const other = coloredBox(new THREE.MeshLambertMaterial({ color: 0x123456, vertexColors: true }), [5, 5, 5], 0xffffff);
+    const other = coloredBox(
+      new THREE.MeshLambertMaterial({ color: 0x123456, vertexColors: true }),
+      [5, 5, 5],
+      0xffffff,
+    );
     root.add(a, b, c, other);
     root.updateWorldMatrix(true, true);
 
@@ -42,11 +46,11 @@ describe("mergeStaticDecor", () => {
     expect(root.children).toHaveLength(2);
     expect(root.children).toContain(other);
     const batch = root.children.find((o) => o !== other) as THREE.Mesh;
-    expect(batch.geometry.attributes.position!.count).toBe(3 * 24);
+    expect(batch.geometry.attributes.position.count).toBe(3 * 24);
     batch.geometry.computeBoundingBox();
     expect(batch.geometry.boundingBox!.min.toArray()).toEqual([-0.5, -0.5, -0.5]);
     expect(batch.geometry.boundingBox!.max.toArray()).toEqual([10.5, 0.5, 10.5]);
-    const colors = batch.geometry.attributes.color!;
+    const colors = batch.geometry.attributes.color;
     expect([colors.getX(24), colors.getY(24), colors.getZ(24)]).toEqual([0, 1, 0]);
   });
 
@@ -87,7 +91,7 @@ describe("mergeStaticDecor", () => {
 
     // Le sol n'a pas de `color` : c'est l'attribut, pas la cellule, qui les
     // sépare — on compare donc à la même paire avec l'attribut aligné.
-    const colors = new Float32Array(sol.geometry.attributes.position!.count * 3).fill(1);
+    const colors = new Float32Array(sol.geometry.attributes.position.count * 3).fill(1);
     sol.geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     expect(mergeStaticDecor(root, [sol, voisine])).toEqual({ mergedMeshCount: 2, batchCount: 1 });
@@ -121,13 +125,20 @@ describe("buildLevelFromGltf — fusion du décor", () => {
     shelfB.position.x = 3;
     const door = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 0.2), new THREE.MeshStandardMaterial({ color: 0xffffff }));
     door.name = "door_test";
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    const handle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.1, 0.1),
+      new THREE.MeshStandardMaterial({ color: 0xffffff }),
+    );
     handle.name = "poignee";
     door.add(handle);
     const group = new THREE.Group();
     group.add(spawn, shelfA, shelfB, door);
 
-    const level = buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, new THREE.Scene(), new PhysicsWorld());
+    const level = buildLevelFromGltf(
+      { scene: group, animations: [] } as unknown as GLTF,
+      new THREE.Scene(),
+      new PhysicsWorld(),
+    );
 
     expect(level.stats.unprefixedMeshCount).toBe(3);
     expect(level.stats.decorBatchCount).toBe(2);

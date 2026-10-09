@@ -69,15 +69,16 @@ export function computeWaterAmbienceMix(
     return out;
   }
 
-  const dominantLength = Math.sqrt(dominantDirX * dominantDirX + dominantDirY * dominantDirY + dominantDirZ * dominantDirZ);
+  const dominantLength = Math.sqrt(
+    dominantDirX * dominantDirX + dominantDirY * dominantDirY + dominantDirZ * dominantDirZ,
+  );
   if (dominantLength < 1e-6) {
     out.pan = 0;
     return out;
   }
 
   const lateral =
-    (dominantDirX * listenerRight.x + dominantDirY * listenerRight.y + dominantDirZ * listenerRight.z) /
-    dominantLength;
+    (dominantDirX * listenerRight.x + dominantDirY * listenerRight.y + dominantDirZ * listenerRight.z) / dominantLength;
   out.pan = clamp(lateral * PAN_MAX, -PAN_MAX, PAN_MAX);
   return out;
 }

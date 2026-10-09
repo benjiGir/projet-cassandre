@@ -23,7 +23,12 @@ export function VolumeFader({ label, percent, onChange, onPreview }: VolumeFader
         onChange={onChange}
       />
       {onPreview ? (
-        <button type="button" className={styles.preview} aria-label={`Écouter : ${label.toLowerCase()}`} onClick={onPreview}>
+        <button
+          type="button"
+          className={styles.preview}
+          aria-label={`Écouter : ${label.toLowerCase()}`}
+          onClick={onPreview}
+        >
           ▶
         </button>
       ) : (

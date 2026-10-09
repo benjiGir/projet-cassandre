@@ -63,7 +63,9 @@ function createFireballMaterial(): MeshBasicNodeMaterial {
 
   // Grain fin, au fragment : il casse les aplats et sert à ronger la surface.
   const grain = clamp(
-    mx_fractal_noise_float(vDirection.mul(4.6).add(flow.mul(1.6)).add(11.3), 2, 2, 0.55).mul(0.7).add(0.5),
+    mx_fractal_noise_float(vDirection.mul(4.6).add(flow.mul(1.6)).add(11.3), 2, 2, 0.55)
+      .mul(0.7)
+      .add(0.5),
     0,
     1,
   );
@@ -111,7 +113,10 @@ export class Explosions {
   private cursor = 0;
   private lightCursor = 0;
 
-  constructor(scene: THREE.Scene, private readonly random: () => number) {
+  constructor(
+    scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {
     const material = createFireballMaterial();
     for (let i = 0; i < POOL_SIZE; i++) {
       const ball = new THREE.Mesh(BALL_GEOMETRY, material);
@@ -133,7 +138,7 @@ export class Explosions {
   }
 
   spawn(point: THREE.Vector3): void {
-    const slot = this.slots[this.cursor]!;
+    const slot = this.slots[this.cursor];
     this.cursor = (this.cursor + 1) % this.slots.length;
     this.release(slot);
     slot.age = 0;
@@ -143,7 +148,7 @@ export class Explosions {
     slot.ball.rotation.y = this.random() * Math.PI * 2;
     slot.ball.visible = true;
 
-    const light = this.lights[this.lightCursor]!;
+    const light = this.lights[this.lightCursor];
     this.lightCursor = (this.lightCursor + 1) % this.lights.length;
     for (const other of this.slots) if (other.light === light) other.light = null;
     slot.light = light;
@@ -174,11 +179,11 @@ export class Explosions {
    * see: docs/4-technique/rendu.md#préparation-des-douches
    */
   releaseShaderPrograms(): void {
-    this.slots[0]!.ball.material.dispose();
+    this.slots[0].ball.material.dispose();
   }
 
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
-    const ball = this.slots[0]!.ball;
+    const ball = this.slots[0].ball;
     const pose = { visible: ball.visible, position: ball.position.clone(), age: ball.userData.explosionAge as unknown };
     try {
       camera.getWorldDirection(ball.position).multiplyScalar(8).add(camera.getWorldPosition(new THREE.Vector3()));

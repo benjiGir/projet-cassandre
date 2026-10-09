@@ -26,8 +26,17 @@ function hash(n: number): number {
   return (x >>> 0) / 0x100000000;
 }
 
-interface Disc { x: number; y: number; r: number }
-interface Drip { x: number; top: number; bottom: number; halfWidth: number }
+interface Disc {
+  x: number;
+  y: number;
+  r: number;
+}
+interface Drip {
+  x: number;
+  top: number;
+  bottom: number;
+  halfWidth: number;
+}
 
 function splatShapes(variant: number, wall: boolean): { discs: Disc[]; drips: Drip[] } {
   let serial = variant * 1000;
@@ -97,7 +106,8 @@ export function createSplatAtlas(): THREE.DataTexture {
           let depth = -1;
           for (const disc of discs) depth = Math.max(depth, disc.r - Math.hypot(x - disc.x, y - disc.y));
           for (const drip of drips) {
-            if (y >= drip.top && y <= drip.bottom && Math.abs(x - drip.x) <= drip.halfWidth) depth = Math.max(depth, 1.2);
+            if (y >= drip.top && y <= drip.bottom && Math.abs(x - drip.x) <= drip.halfWidth)
+              depth = Math.max(depth, 1.2);
           }
           if (depth < 0) continue;
           let color: readonly number[] = depth < 0.8 ? RIM : depth > 3.2 ? CORE : BODY;

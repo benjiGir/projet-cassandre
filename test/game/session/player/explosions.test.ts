@@ -11,8 +11,8 @@ import { suitConfig } from "../../../../src/game/entities/suit/suitConfig";
 import { SuitManager } from "../../../../src/game/entities/suit/suitManager";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { blastDamageAt, explosionConfig } from "../../../../src/game/level/props/propConfig";
-import { type GameEngine } from "../../../../src/game/session/gameEngine";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import type { GameEngine } from "../../../../src/game/session/gameEngine";
+import type { GameSession } from "../../../../src/game/session/gameSession";
 import { applyBlast } from "../../../../src/game/session/player/explosions";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
 import { createInitialStats } from "../../../../src/game/session/progression/score";
@@ -75,7 +75,7 @@ describe("applyBlast — souffle d'une explosion", () => {
     expect(loin.hp).toBeLessThan(suitConfig.maxHp);
     expect(dehors.hp).toBe(suitConfig.maxHp);
     // À bout portant du souffle, le Costard part en morceaux.
-    expect(s.suitManager.deathEvents[0]!.gibs).toBe(true);
+    expect(s.suitManager.deathEvents[0].gibs).toBe(true);
   });
 
   it("un mur arrête le souffle : ni le Costard ni le joueur derrière lui ne sont touchés", () => {

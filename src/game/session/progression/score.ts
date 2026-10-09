@@ -24,7 +24,10 @@ export interface SessionStats {
 
 export function createInitialStats(): SessionStats {
   return {
-    trainKills: 0, trainCrossings: 0, trainDeaths: 0, lastDamageSource: null,
+    trainKills: 0,
+    trainCrossings: 0,
+    trainDeaths: 0,
+    lastDamageSource: null,
     suitKills: 0,
     directorKills: 0,
     shotsFired: 0,
@@ -107,11 +110,15 @@ export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
   const { stats, suitTotal, directorTotal, secretsFound, secretsTotal, parTimeSeconds, difficulty } = input;
   const lines: RecapLine[] = [];
   if (stats.trainDeaths > 0) lines.push({ label: "Fauché par une rame", detail: "Mort immédiate", points: 0 });
-  if (stats.trainCrossings > 0) lines.push({ label: "Traversées de voie", detail: String(stats.trainCrossings), points: 0 });
+  if (stats.trainCrossings > 0)
+    lines.push({ label: "Traversées de voie", detail: String(stats.trainCrossings), points: 0 });
 
   lines.push({
     label: "Costards éliminés",
-    detail: suitTotal > 0 ? `${stats.suitKills}/${suitTotal} × ${SCORE_SUIT_KILL}` : `${stats.suitKills} × ${SCORE_SUIT_KILL}`,
+    detail:
+      suitTotal > 0
+        ? `${stats.suitKills}/${suitTotal} × ${SCORE_SUIT_KILL}`
+        : `${stats.suitKills} × ${SCORE_SUIT_KILL}`,
     points: stats.suitKills * SCORE_SUIT_KILL,
   });
 

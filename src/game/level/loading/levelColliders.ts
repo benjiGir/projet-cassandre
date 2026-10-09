@@ -148,12 +148,9 @@ export function buildCuboidCollider(mesh: THREE.Mesh, physics: PhysicsWorld, bod
   );
   bodies.push(body);
   physics.world.createCollider(
-    RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(
-      COLLISION_GROUPS.WORLD,
-    ),
+    RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setCollisionGroups(COLLISION_GROUPS.WORLD),
     body,
   );
-
 }
 
 function buildConvexHullColliderEffect(

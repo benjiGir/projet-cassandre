@@ -77,7 +77,8 @@ describe("Vigile — bouclier", () => {
 
   it("couvre l'arc avant, pas les flancs", () => {
     const { manager, suit } = vigile();
-    const dans = (deg: number) => new THREE.Vector3(Math.sin((deg * Math.PI) / 180), 0, Math.cos((deg * Math.PI) / 180));
+    const dans = (deg: number) =>
+      new THREE.Vector3(Math.sin((deg * Math.PI) / 180), 0, Math.cos((deg * Math.PI) / 180));
     const bord = tir(suit, dans(vigileConfig.shield!.halfArcDeg - 5));
     const flanc = tir(suit, dans(vigileConfig.shield!.halfArcDeg + 15));
 
@@ -109,7 +110,12 @@ describe("Vigile — bouclier", () => {
   it("ne protège pas d'une explosion", () => {
     const { manager, suit } = vigile();
     // Le souffle part de devant lui, côté bouclier.
-    manager.applyBlast(new THREE.Vector3(0, 1, 2), () => 60, () => true, 0);
+    manager.applyBlast(
+      new THREE.Vector3(0, 1, 2),
+      () => 60,
+      () => true,
+      0,
+    );
     expect(suit.hp).toBe(vigileConfig.maxHp - 60);
   });
 
@@ -143,8 +149,14 @@ describe("Convention glTF `spawn_vigile_*`", () => {
       Object.assign(obj.userData, extras);
       group.add(obj);
     }
-    const handle = buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, new THREE.Scene(), new PhysicsWorld());
+    const handle = buildLevelFromGltf(
+      { scene: group, animations: [] } as unknown as GLTF,
+      new THREE.Scene(),
+      new PhysicsWorld(),
+    );
 
-    expect(handle.spawnSuits.map((s) => [s.name, s.kind, s.group])).toEqual([["spawn_vigile_escalier", "vigile", "escalier"]]);
+    expect(handle.spawnSuits.map((s) => [s.name, s.kind, s.group])).toEqual([
+      ["spawn_vigile_escalier", "vigile", "escalier"],
+    ]);
   });
 });

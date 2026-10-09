@@ -21,6 +21,6 @@ export class RollingP95 {
     if (this.count === 0) return 0;
     this.sorted.set(this.samples.subarray(0, this.count));
     this.sorted.subarray(0, this.count).sort();
-    return this.sorted[Math.ceil(this.count * 0.95) - 1]!;
+    return this.sorted[Math.ceil(this.count * 0.95) - 1];
   }
 }

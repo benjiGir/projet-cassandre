@@ -1,4 +1,4 @@
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { Context, Effect, Layer } from "effect";
 
 import type { PhysicsWorld } from "./world";
@@ -109,11 +109,31 @@ export class RaycastService extends Context.Service<RaycastService, RaycastServi
           ),
         ),
 
-      castShape: (physics, shapePos, shapeRot, shapeVel, shape, targetDistance, maxToi, stopAtPenetration, filterFlags, filterGroups) =>
-        Effect.sync(() => physics.world.castShape(
-          shapePos, shapeRot, shapeVel, shape, targetDistance, maxToi, stopAtPenetration,
-          filterFlags, filterGroups,
-        )),
+      castShape: (
+        physics,
+        shapePos,
+        shapeRot,
+        shapeVel,
+        shape,
+        targetDistance,
+        maxToi,
+        stopAtPenetration,
+        filterFlags,
+        filterGroups,
+      ) =>
+        Effect.sync(() =>
+          physics.world.castShape(
+            shapePos,
+            shapeRot,
+            shapeVel,
+            shape,
+            targetDistance,
+            maxToi,
+            stopAtPenetration,
+            filterFlags,
+            filterGroups,
+          ),
+        ),
 
       intersectionsWithShape: (
         physics,

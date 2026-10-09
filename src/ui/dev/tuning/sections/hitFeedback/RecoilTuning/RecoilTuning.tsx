@@ -1,7 +1,4 @@
-import {
-  RECOIL_INTERPOLATION_VARIANTS,
-  type WeaponConfig,
-} from "../../../../../../game/player/weapons/weaponConfig";
+import { RECOIL_INTERPOLATION_VARIANTS, type WeaponConfig } from "../../../../../../game/player/weapons/weaponConfig";
 import { TuningCheckbox } from "../../../controls/TuningCheckbox/TuningCheckbox";
 import { TuningSlider } from "../../../controls/TuningSlider/TuningSlider";
 import { TuningActions } from "../../../layout/TuningActions/TuningActions";
@@ -37,8 +34,8 @@ export function RecoilTuning({ weapon }: RecoilTuningProps) {
         ))}
       </TuningActions>
       <TuningNote>
-        Enregistre 15 secondes de tirs avec F9. Arrête avec F9, puis rejoue avec F10
-        dans chacun des deux modes. Garde les amplitudes identiques pour comparer.
+        Enregistre 15 secondes de tirs avec F9. Arrête avec F9, puis rejoue avec F10 dans chacun des deux modes. Garde
+        les amplitudes identiques pour comparer.
       </TuningNote>
       {RECOIL_WEAPONS.map(({ key, label }) => (
         <TuningGroup key={key} title={label}>

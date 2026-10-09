@@ -6,7 +6,7 @@ import type { UseObject } from "../../level/loading/levelTypes";
 import { showHudMessage, triggerHeroLine } from "../player/feedback";
 import { publishCounters } from "../stream/streamFeed";
 import { spend } from "../stream/streamSim";
-import { type GameSession } from "../gameSession";
+import type { GameSession } from "../gameSession";
 import { kioskOffer, kioskConfig, type KioskOffer } from "../../player/kioskOffer";
 
 // Les bornes : un `use_*` qui vend UN perk, payé avec les dons du direct. Ce
@@ -115,8 +115,11 @@ type KioskTarget = Pick<GameSession, "perks" | "playerHp" | "playerMaxHp" | "wea
 
 function consumableUseful(session: KioskTarget, kind: KioskOffer["kind"]): boolean {
   if (kind === "heal") return session.playerHp < session.playerMaxHp;
-  if (kind === "ammo") return (session.weapons.owns("pistol") && session.weapons.pistolAmmo < session.weapons.pistolMaxAmmo)
-    || (session.weapons.owns("shotgun") && session.weapons.shotgunAmmo < session.weapons.shotgunMaxAmmo);
+  if (kind === "ammo")
+    return (
+      (session.weapons.owns("pistol") && session.weapons.pistolAmmo < session.weapons.pistolMaxAmmo) ||
+      (session.weapons.owns("shotgun") && session.weapons.shotgunAmmo < session.weapons.shotgunMaxAmmo)
+    );
   return true;
 }
 
@@ -158,7 +161,14 @@ export function publishPerkOffer(session: KioskTarget, nearest: UseObject | null
   }
   const { label, effect, price, kind } = kioskOffer(session.perks, offer);
   const sold = !consumableUseful(session, kind);
-  if (affichee && affichee.key === key && affichee.label === label && affichee.effect === effect && affichee.price === price
-    && affichee.sold === sold) return;
+  if (
+    affichee &&
+    affichee.key === key &&
+    affichee.label === label &&
+    affichee.effect === effect &&
+    affichee.price === price &&
+    affichee.sold === sold
+  )
+    return;
   store.setPerkOffer({ key, label, effect, price, sold });
 }

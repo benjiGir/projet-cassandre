@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
@@ -250,7 +250,7 @@ export class PropSystem {
   update(hitEvents: ReadonlyArray<HitEvent>): void {
     this.burnFuses();
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.destroyed) continue;
 
@@ -260,7 +260,10 @@ export class PropSystem {
 
       // `normal` pointe VERS le tireur (convention `castRayAndGetNormal`) :
       // l'impulsion pousse dans l'autre sens, donc vers l'intérieur du prop.
-      impulseScratch.copy(hit.normal).negate().multiplyScalar(damage * IMPULSE_PER_DAMAGE);
+      impulseScratch
+        .copy(hit.normal)
+        .negate()
+        .multiplyScalar(damage * IMPULSE_PER_DAMAGE);
       state.info.body.applyImpulseAtPoint(
         { x: impulseScratch.x, y: impulseScratch.y, z: impulseScratch.z },
         { x: hit.point.x, y: hit.point.y, z: hit.point.z },
@@ -372,10 +375,7 @@ export class PropSystem {
         origin.z + Math.sin(angle) * radius,
       );
 
-      const mesh = new THREE.Mesh(
-        FOOD_DROP_GEOMETRY,
-        new THREE.MeshLambertMaterial({ color: FOOD_DROP_COLORS[item] }),
-      );
+      const mesh = new THREE.Mesh(FOOD_DROP_GEOMETRY, new THREE.MeshLambertMaterial({ color: FOOD_DROP_COLORS[item] }));
       mesh.position.copy(position).applyMatrix4(this.rootInverse);
       this.root.add(mesh);
 
@@ -429,8 +429,7 @@ export class PropSystem {
       const r = state.info.body.rotation();
       state.currPos.set(t.x, t.y, t.z);
       state.currQuat.set(r.x, r.y, r.z, r.w);
-      state.moving =
-        !state.prevPos.equals(state.currPos) || !state.prevQuat.equals(state.currQuat);
+      state.moving = !state.prevPos.equals(state.currPos) || !state.prevQuat.equals(state.currQuat);
     }
   }
 
@@ -455,16 +454,19 @@ export class PropSystem {
       worldMatrixScratch.compose(lerpPosScratch, lerpQuatScratch, state.scale);
       worldMatrixScratch.multiply(state.offsetMatrix);
       localMatrixScratch.multiplyMatrices(this.rootInverse, worldMatrixScratch);
-      localMatrixScratch.decompose(
-        state.info.object.position,
-        state.info.object.quaternion,
-        state.info.object.scale,
-      );
+      localMatrixScratch.decompose(state.info.object.position, state.info.object.quaternion, state.info.object.scale);
     }
   }
 
   /** Résumé lisible pour la console de dev (`cassandre.props()`). */
-  describe(): Array<{ name: string; matiere: PropMaterial; hp: number; maxHp: number | null; destroyed: boolean; position: THREE.Vector3 }> {
+  describe(): Array<{
+    name: string;
+    matiere: PropMaterial;
+    hp: number;
+    maxHp: number | null;
+    destroyed: boolean;
+    position: THREE.Vector3;
+  }> {
     return this.states.map((state) => ({
       name: state.info.name,
       matiere: state.info.matiere,
@@ -474,5 +476,4 @@ export class PropSystem {
       position: state.currPos.clone(),
     }));
   }
-
 }

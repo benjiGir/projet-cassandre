@@ -23,7 +23,7 @@ import { InteractionSystem, type InteractionHandlers } from "../../../src/game/l
 import { DoorSystem } from "../../../src/game/level/doors/doors";
 import { grantCard, hasCard, syncCardsToStore } from "../../../src/game/session/progression/cards";
 import { tryOpenCardDoor } from "../../../src/game/session/progression/doors";
-import { type GameSession } from "../../../src/game/session/gameSession";
+import type { GameSession } from "../../../src/game/session/gameSession";
 import { HeroPortrait } from "../../../src/game/session/presentation/heroPortrait";
 import { useGameStore } from "../../../src/game/hud/state";
 
@@ -343,7 +343,7 @@ function sessionAvecPorte(cards: LoyaltyCard[] = []) {
   const group = new THREE.Group();
   group.add(spawn, door);
   const handle = buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, scene, physics);
-  const doorInfo = handle.doors[0]!;
+  const doorInfo = handle.doors[0];
   const doorSystem = new DoorSystem([doorInfo]);
 
   const session = {

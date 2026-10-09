@@ -48,7 +48,7 @@ export class Viewmodel {
     this.pistol = this.mount(camera, models.pistol, models.pistolPivot);
     this.shotgun = this.mount(camera, models.shotgun, models.shotgunPivot);
     this.pump = drawOverWorld(new THREE.Mesh(models.shotgunPump, models.material));
-    this.shotgun.children[0]!.add(this.pump);
+    this.shotgun.children[0].add(this.pump);
   }
 
   private mount(camera: THREE.Camera, geometry: THREE.BufferGeometry, pivot: THREE.Vector3): THREE.Group {
@@ -106,15 +106,17 @@ export class Viewmodel {
   // Position mondiale du canon tel qu’affiché ; ne modifie pas le tir.
   muzzleWorldPosition(out: THREE.Vector3, weapon: "pistol" | "shotgun" = "shotgun"): THREE.Vector3 {
     const group = weapon === "pistol" ? this.pistol : this.shotgun;
-    const mesh = group.children[0]!;
+    const mesh = group.children[0];
     mesh.updateWorldMatrix(true, false);
     return mesh.localToWorld(out.copy(weapon === "pistol" ? this.models.pistolMuzzle : this.models.shotgunMuzzle));
   }
 
   muzzleWorldDirection(out: THREE.Vector3, weapon: "pistol" | "shotgun"): THREE.Vector3 {
-    const mesh = (weapon === "pistol" ? this.pistol : this.shotgun).children[0]!;
+    const mesh = (weapon === "pistol" ? this.pistol : this.shotgun).children[0];
     mesh.updateWorldMatrix(true, false);
-    return out.copy(weapon === "pistol" ? this.models.pistolAxis : this.models.pumpAxis).transformDirection(mesh.matrixWorld);
+    return out
+      .copy(weapon === "pistol" ? this.models.pistolAxis : this.models.pumpAxis)
+      .transformDirection(mesh.matrixWorld);
   }
 }
 

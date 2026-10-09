@@ -10,7 +10,9 @@
   height: 100%;
 }
 
-.impact[data-hit="true"] { animation: flinch .36s steps(3) both; }
+.impact[data-hit="true"] {
+  animation: flinch 0.36s steps(3) both;
+}
 
 .face {
   width: calc(var(--vpx) * 54);
@@ -29,22 +31,36 @@
   background-size: 400% 500%;
 }
 
-.portrait[data-health="4"] .face { animation-duration: 1.25s; }
-.portrait[data-reaction="hurt"] .face { animation: none; }
-.portrait[data-reaction="focus"] .face { animation: none; }
-.portrait[data-combo="true"] .face { filter: drop-shadow(0 0 calc(var(--vpx) * 1) var(--amber)); }
-.portrait[data-reaction="dead"] .face { animation: collapse .65s steps(5) .3s both; }
+.portrait[data-health="4"] .face {
+  animation-duration: 1.25s;
+}
+.portrait[data-reaction="hurt"] .face {
+  animation: none;
+}
+.portrait[data-reaction="focus"] .face {
+  animation: none;
+}
+.portrait[data-combo="true"] .face {
+  filter: drop-shadow(0 0 calc(var(--vpx) * 1) var(--amber));
+}
+.portrait[data-reaction="dead"] .face {
+  animation: collapse 0.65s steps(5) 0.3s both;
+}
 .portrait[data-paused="true"] .face,
 .portrait[data-paused="true"] .impact,
-.portrait[data-paused="true"] .interference { animation-play-state: paused; }
+.portrait[data-paused="true"] .interference {
+  animation-play-state: paused;
+}
 
 .interference {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(transparent 0 calc(var(--vpx) * 3),
-    rgba(255, 100, 100, .35) calc(var(--vpx) * 3) calc(var(--vpx) * 4));
-  animation: signalHit .36s steps(3) both;
+  background: repeating-linear-gradient(
+    transparent 0 calc(var(--vpx) * 3),
+    rgba(255, 100, 100, 0.35) calc(var(--vpx) * 3) calc(var(--vpx) * 4)
+  );
+  animation: signalHit 0.36s steps(3) both;
 }
 
 .signalLost {
@@ -55,36 +71,80 @@
   font-size: calc(var(--vpx) * 7);
   color: var(--alert);
   text-shadow: 0 0 calc(var(--vpx) * 2) #000;
-  animation: lost .95s steps(1) both;
+  animation: lost 0.95s steps(1) both;
 }
 
 @keyframes breathe {
-  0%, 100% { transform: translateY(calc(var(--vpx) * .8)); }
-  50% { transform: translateY(0); }
+  0%,
+  100% {
+    transform: translateY(calc(var(--vpx) * 0.8));
+  }
+  50% {
+    transform: translateY(0);
+  }
 }
 
 @keyframes flinch {
-  0% { transform: translate(calc(var(--vpx) * var(--hit-shift) * 3), calc(var(--vpx) * 2)); }
-  50% { transform: translate(calc(var(--vpx) * var(--hit-shift)), 0); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(calc(var(--vpx) * var(--hit-shift) * 3), calc(var(--vpx) * 2));
+  }
+  50% {
+    transform: translate(calc(var(--vpx) * var(--hit-shift)), 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 @keyframes signalHit {
-  0% { opacity: .6; transform: translateX(calc(var(--vpx) * 2)); }
-  60% { opacity: .25; transform: translateX(calc(var(--vpx) * -1)); }
-  100% { opacity: 0; transform: none; }
+  0% {
+    opacity: 0.6;
+    transform: translateX(calc(var(--vpx) * 2));
+  }
+  60% {
+    opacity: 0.25;
+    transform: translateX(calc(var(--vpx) * -1));
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
 }
 
 @keyframes collapse {
-  0% { transform: translateY(0) rotate(0); opacity: 1; }
-  100% { transform: translateY(100%) rotate(12deg); opacity: 0; }
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%) rotate(12deg);
+    opacity: 0;
+  }
 }
 
-@keyframes lost { 0%, 99% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes lost {
+  0%,
+  99% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .face, .impact[data-hit="true"] { animation: none; }
-  .interference { display: none; }
-  .portrait[data-reaction="dead"] .face { animation: none; opacity: 0; }
-  .signalLost { animation: none; }
+  .face,
+  .impact[data-hit="true"] {
+    animation: none;
+  }
+  .interference {
+    display: none;
+  }
+  .portrait[data-reaction="dead"] .face {
+    animation: none;
+    opacity: 0;
+  }
+  .signalLost {
+    animation: none;
+  }
 }

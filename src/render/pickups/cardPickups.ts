@@ -7,17 +7,19 @@ import { configureRetroTexture } from "../pipeline/renderer";
 export type CardPickupTextures = Readonly<Record<LoyaltyCard, THREE.Texture>>;
 
 const CARD_WIDTH = 0.7;
-const CARD_HEIGHT = CARD_WIDTH * 80 / 128;
+const CARD_HEIGHT = (CARD_WIDTH * 80) / 128;
 const CARD_FLOAT_HEIGHT = 0.22;
 const CARD_BOB_AMPLITUDE = 0.06;
 const UP = new THREE.Vector3(0, 1, 0);
 
 export async function loadCardPickupTextures(): Promise<CardPickupTextures> {
-  const textures = await Promise.all(LOYALTY_CARDS.map(async (card) => {
-    const texture = await new THREE.TextureLoader().loadAsync(assetUrl(`assets/sprites/cards/${card}.png`));
-    configureRetroTexture(texture);
-    return [card, texture] as const;
-  }));
+  const textures = await Promise.all(
+    LOYALTY_CARDS.map(async (card) => {
+      const texture = await new THREE.TextureLoader().loadAsync(assetUrl(`assets/sprites/cards/${card}.png`));
+      configureRetroTexture(texture);
+      return [card, texture] as const;
+    }),
+  );
   return Object.fromEntries(textures) as Record<LoyaltyCard, THREE.Texture>;
 }
 
@@ -94,7 +96,11 @@ export function dressCardPickup(
   if (object instanceof THREE.Mesh) {
     object.material = new THREE.MeshLambertMaterial({ visible: false });
   }
-  const billboard = new CardPickupBillboard(card, new THREE.Vector3(center.x, groundY ?? bounds.min.y, center.z), textures);
+  const billboard = new CardPickupBillboard(
+    card,
+    new THREE.Vector3(center.x, groundY ?? bounds.min.y, center.z),
+    textures,
+  );
   billboard.attachTo(object);
   return billboard;
 }

@@ -13,7 +13,16 @@ import {
 // see: docs/decisions/0038-simulation-du-direct.md
 
 /** Ce que le joueur vient de faire et que le direct remarque. */
-export type StreamEventKind = "kill" | "boss" | "secret" | "casse" | "degats" | "toilettes" | "carte" | "moment" | "train";
+export type StreamEventKind =
+  | "kill"
+  | "boss"
+  | "secret"
+  | "casse"
+  | "degats"
+  | "toilettes"
+  | "carte"
+  | "moment"
+  | "train";
 
 /** Graine du flux RNG du direct : spectateurs, dons et chat, jamais les armes ni les ennemis. */
 export const STREAM_SEED = 0x71e75;
@@ -138,7 +147,7 @@ export function createStreamState(generosity = 1): StreamState {
 }
 
 function pick<T>(items: readonly T[], random: () => number): T {
-  return items[Math.min(items.length - 1, Math.floor(random() * items.length))]!;
+  return items[Math.min(items.length - 1, Math.floor(random() * items.length))];
 }
 
 function pushChat(state: StreamState, message: Omit<ChatMessage, "id">): ChatMessage {
@@ -260,7 +269,11 @@ export function updateStream(state: StreamState, dt: number, now: number, random
 
   // Pas deux fois le même texte à l'écran : on retire jusqu'à trouver une ligne absente du chat.
   let line = pick(CHAT_LINES[topic], random);
-  for (let attempt = 0; attempt < 3 && state.chat.some((m) => m.text === (typeof line === "string" ? line : line.text)); attempt++) {
+  for (
+    let attempt = 0;
+    attempt < 3 && state.chat.some((m) => m.text === (typeof line === "string" ? line : line.text));
+    attempt++
+  ) {
     line = pick(CHAT_LINES[topic], random);
   }
   const pseudo = typeof line === "string" ? pick(PSEUDOS, random) : line.pseudo;

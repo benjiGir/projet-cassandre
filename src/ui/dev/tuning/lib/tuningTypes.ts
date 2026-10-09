@@ -63,4 +63,7 @@ export type CrosshairKey = Extract<
   | "crosshairPulseDuration"
 >;
 
-export type SuitFeedbackKey = Extract<keyof SuitConfig, "knockbackSpeed" | "knockbackDecayTime" | "knockbackUpBoost" | "hitFlashDuration">;
+export type SuitFeedbackKey = Extract<
+  keyof SuitConfig,
+  "knockbackSpeed" | "knockbackDecayTime" | "knockbackUpBoost" | "hitFlashDuration"
+>;

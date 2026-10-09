@@ -35,7 +35,13 @@ function stream(angle: number, cascade: boolean): THREE.BufferGeometry {
   }
   const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 40, cascade ? 0.033 : 0.026, 6, false);
   const uv = geometry.getAttribute("uv");
-  geometry.setAttribute("fountainFlow", new THREE.Float32BufferAttribute(Array.from({ length: uv.count }, (_, i) => uv.getX(i)), 1));
+  geometry.setAttribute(
+    "fountainFlow",
+    new THREE.Float32BufferAttribute(
+      Array.from({ length: uv.count }, (_, i) => uv.getX(i)),
+      1,
+    ),
+  );
   return geometry;
 }
 
@@ -43,10 +49,16 @@ export function createFountainStreams(): THREE.BufferGeometry {
   const core = new THREE.CylinderGeometry(0.09, 0.055, 2.02, 10, 28, true);
   core.translate(0, 2.99, 0);
   const uv = core.getAttribute("uv");
-  core.setAttribute("fountainFlow", new THREE.Float32BufferAttribute(Array.from({ length: uv.count }, (_, i) => uv.getY(i)), 1));
+  core.setAttribute(
+    "fountainFlow",
+    new THREE.Float32BufferAttribute(
+      Array.from({ length: uv.count }, (_, i) => uv.getY(i)),
+      1,
+    ),
+  );
   const parts: THREE.BufferGeometry[] = [core];
   for (let i = 0; i < 8; i++) {
-    const angle = i * TAU / 8;
+    const angle = (i * TAU) / 8;
     parts.push(stream(angle, false), stream(angle, true));
   }
   return merge(parts);
@@ -61,7 +73,7 @@ export function createFountainDroplets(): THREE.BufferGeometry {
     const flight = new Float32Array(positions.count * 3);
     for (let j = 0; j < positions.count; j++) {
       flight[j * 3] = (i % 48) / 48;
-      flight[j * 3 + 1] = (i % 8) * TAU / 8;
+      flight[j * 3 + 1] = ((i % 8) * TAU) / 8;
       flight[j * 3 + 2] = i < 48 ? 0 : 1;
     }
     drop.setAttribute("fountainFlight", new THREE.BufferAttribute(flight, 3));

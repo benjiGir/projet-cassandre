@@ -1,5 +1,4 @@
-import type { ConfigEditor } from "../../lib/tuningTypes";
-import type { TuningField } from "../../lib/tuningTypes";
+import type { ConfigEditor, TuningField } from "../../lib/tuningTypes";
 import { TuningSlider } from "../TuningSlider/TuningSlider";
 
 export interface FieldSlidersProps<K extends string, T extends Record<K, number>> {
@@ -7,7 +6,10 @@ export interface FieldSlidersProps<K extends string, T extends Record<K, number>
   fields: ReadonlyArray<TuningField<K>>;
 }
 
-export function FieldSliders<K extends string, T extends Record<K, number>>({ editor, fields }: FieldSlidersProps<K, T>) {
+export function FieldSliders<K extends string, T extends Record<K, number>>({
+  editor,
+  fields,
+}: FieldSlidersProps<K, T>) {
   return (
     <>
       {fields.map((field) => (

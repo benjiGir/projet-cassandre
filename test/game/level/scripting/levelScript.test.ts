@@ -63,14 +63,17 @@ describe("updateLevelScript", () => {
     const state = createLevelScriptState();
     const actions: string[] = [];
     updateLevelScript(state, [declencheur], scenarios, DT, dedans, (a) => actions.push(a.kind));
-    for (let i = 0; i < 600; i++) updateLevelScript(state, [declencheur], scenarios, 0, dedans, (a) => actions.push(a.kind));
+    for (let i = 0; i < 600; i++)
+      updateLevelScript(state, [declencheur], scenarios, 0, dedans, (a) => actions.push(a.kind));
     expect(actions).toEqual(["annonce"]);
   });
 
   it("un déclencheur dont le scénario est inconnu est consommé sans effet", () => {
     const state = createLevelScriptState();
     const actions: string[] = [];
-    updateLevelScript(state, [{ ...declencheur, event: "inconnu" }], scenarios, DT, dedans, (a) => actions.push(a.kind));
+    updateLevelScript(state, [{ ...declencheur, event: "inconnu" }], scenarios, DT, dedans, (a) =>
+      actions.push(a.kind),
+    );
     expect(actions).toEqual([]);
     expect(state.fired.has("trig_essai")).toBe(true);
   });
@@ -95,7 +98,7 @@ describe("updateLevelScript — attendre qu'un groupe soit tombé", () => {
           actions.push(action.kind === "reveiller" ? action.groupe : action.kind);
           if (action.kind === "reveiller") {
             ennemis[action.groupe] = { isAlive: true };
-            state.woken.set(action.groupe, [ennemis[action.groupe]!]);
+            state.woken.set(action.groupe, [ennemis[action.groupe]]);
           }
         });
       }
@@ -108,13 +111,13 @@ describe("updateLevelScript — attendre qu'un groupe soit tombé", () => {
     avancer(5);
     expect(actions).toEqual(["vague_1"]);
 
-    ennemis.vague_1!.isAlive = false;
+    ennemis.vague_1.isAlive = false;
     avancer(0.3);
     expect(actions).toEqual(["vague_1"]);
     avancer(0.3);
     expect(actions).toEqual(["vague_1", "vague_2"]);
 
-    ennemis.vague_2!.isAlive = false;
+    ennemis.vague_2.isAlive = false;
     avancer(0.1);
     expect(actions).toEqual(["vague_1", "vague_2", "deverrouiller"]);
   });

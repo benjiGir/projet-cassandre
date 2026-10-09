@@ -17,8 +17,5 @@ export class DeterministicRandom extends Context.Service<
     readonly forSeed: (seed: number) => () => number;
   }
 >()("cassandre/core/DeterministicRandom") {
-  static readonly layer = Layer.succeed(
-    DeterministicRandom,
-    DeterministicRandom.of({ forSeed: mulberry32 }),
-  );
+  static readonly layer = Layer.succeed(DeterministicRandom, DeterministicRandom.of({ forSeed: mulberry32 }));
 }

@@ -42,15 +42,12 @@ const DEFAULT_DELAI = 1.2;
 export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, unknown>): ParsedDoorConfig {
   const charniere: DoorHinge = extras.charniere === "max" ? "max" : "min";
 
-  const angleDeg =
-    typeof extras.angle === "number" && Number.isFinite(extras.angle) ? extras.angle : DEFAULT_ANGLE_DEG;
+  const angleDeg = typeof extras.angle === "number" && Number.isFinite(extras.angle) ? extras.angle : DEFAULT_ANGLE_DEG;
 
   const sens: DoorSens = extras.sens === "+" || extras.sens === "-" ? extras.sens : "auto";
 
   const course =
-    typeof extras.course === "number" && Number.isFinite(extras.course) && extras.course > 0
-      ? extras.course
-      : null;
+    typeof extras.course === "number" && Number.isFinite(extras.course) && extras.course > 0 ? extras.course : null;
 
   const duree =
     typeof extras.duree === "number" && Number.isFinite(extras.duree) && extras.duree > 0

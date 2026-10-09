@@ -1,19 +1,6 @@
 import * as THREE from "three";
 import { MeshLambertNodeMaterial } from "three/webgpu";
-import {
-  abs,
-  floor,
-  fract,
-  float,
-  mix,
-  positionLocal,
-  positionWorld,
-  sin,
-  step,
-  sub,
-  uniform,
-  vec3,
-} from "three/tsl";
+import { abs, floor, fract, float, mix, positionLocal, positionWorld, sin, step, sub, uniform, vec3 } from "three/tsl";
 
 import { runGameplaySync } from "../../../app/runtime/gameRuntime";
 import { RenderService } from "../../../render/pipeline/renderService";
@@ -40,18 +27,12 @@ function creerMateriauFilet(): MeshLambertNodeMaterial {
   const derive = sin(hauteur.mul(3.1).add(uniformTemps.mul(1.7)).add(poste)).mul(0.13);
   const coordonneeLargeur = positionLocal.x.mul(44).add(derive);
   const celluleLargeur = floor(coordonneeLargeur);
-  const graineFilet = fract(
-    sin(celluleLargeur.mul(12.9898).add(poste.mul(78.233)).add(4.17)).mul(43758.5453),
-  );
-  const graineGoutte = fract(
-    sin(celluleLargeur.mul(39.3467).add(poste.mul(19.19)).add(11.3)).mul(24634.6345),
-  );
+  const graineFilet = fract(sin(celluleLargeur.mul(12.9898).add(poste.mul(78.233)).add(4.17)).mul(43758.5453));
+  const graineGoutte = fract(sin(celluleLargeur.mul(39.3467).add(poste.mul(19.19)).add(11.3)).mul(24634.6345));
 
   const distanceFilet = abs(fract(coordonneeLargeur).sub(0.5));
   const largeurFilet = graineFilet.mul(0.075).add(0.035);
-  const filet = step(distanceFilet, largeurFilet)
-    .mul(step(0.2, graineFilet))
-    .mul(step(0.12, graineGoutte));
+  const filet = step(distanceFilet, largeurFilet).mul(step(0.2, graineFilet)).mul(step(0.12, graineGoutte));
 
   // Les filets restent lisibles mais se fragmentent en gouttes en descendant.
   const phaseChute = fract(hauteur.mul(3.7).add(uniformTemps.mul(5.2)).add(graineFilet));
@@ -67,9 +48,7 @@ function creerMateriauFilet(): MeshLambertNodeMaterial {
 
   // Un bruit en damier très discret casse l'aplat sans transformer l'eau en grille.
   const celluleHauteur = floor(hauteur.mul(14).add(uniformTemps.mul(8)));
-  const grain = fract(
-    sin(celluleLargeur.mul(17.17).add(celluleHauteur.mul(31.73)).add(poste)).mul(15731.743),
-  );
+  const grain = fract(sin(celluleLargeur.mul(17.17).add(celluleHauteur.mul(31.73)).add(poste)).mul(15731.743));
   const mousse = step(0.91, grain).mul(step(0.28, phaseChute));
 
   const materiau = new MeshLambertNodeMaterial({
@@ -86,15 +65,8 @@ function creerMateriauFilet(): MeshLambertNodeMaterial {
   const couleurVeine = vec3(0.08, 0.46, 0.56);
   const couleurMousse = vec3(0.24, 0.66, 0.72);
   const couleurÉclat = vec3(0.72, 0.94, 0.97);
-  materiau.colorNode = mix(
-    mix(mix(couleurVolume, couleurVeine, veine), couleurMousse, mousse),
-    couleurÉclat,
-    éclat,
-  );
-  materiau.opacityNode = float(0.19)
-    .add(veine.mul(0.29))
-    .add(mousse.mul(0.1))
-    .add(éclat.mul(0.3));
+  materiau.colorNode = mix(mix(mix(couleurVolume, couleurVeine, veine), couleurMousse, mousse), couleurÉclat, éclat);
+  materiau.opacityNode = float(0.19).add(veine.mul(0.29)).add(mousse.mul(0.1)).add(éclat.mul(0.3));
 
   return materiau;
 }

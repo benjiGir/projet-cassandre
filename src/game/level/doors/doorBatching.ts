@@ -34,11 +34,11 @@ export function batchDoorMeshes(root: THREE.Object3D, doors: readonly DoorInfo[]
     const meshes = group.map((door) => door.object as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>);
     const vertices = meshes.reduce((n, m) => n + m.geometry.getAttribute("position").count, 0);
     const indices = meshes.reduce((n, m) => n + (m.geometry.index?.count ?? 0), 0);
-    const batch = new THREE.BatchedMesh(meshes.length, vertices, indices, meshes[0]!.material);
+    const batch = new THREE.BatchedMesh(meshes.length, vertices, indices, meshes[0].material);
     resources?.batch(batch);
     batch.name = `lot_vantaux_${lots}`;
     group.forEach((door, i) => {
-      const mesh = meshes[i]!;
+      const mesh = meshes[i];
       const instanceId = batch.addInstance(batch.addGeometry(mesh.geometry));
       mesh.updateMatrix();
       batch.setMatrixAt(instanceId, mesh.matrix);

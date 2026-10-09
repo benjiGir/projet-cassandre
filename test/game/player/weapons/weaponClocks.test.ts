@@ -5,7 +5,7 @@ import { initPhysics, PhysicsWorld } from "../../../../src/physics/world";
 import { GameClock } from "../../../../src/core/loop/time";
 import { emptyInputFrame } from "../../../../src/core/input/inputRecorder";
 import { WeaponSystem } from "../../../../src/game/player/weapons/weapons";
-import { type ViewmodelClocks } from "../../../../src/game/player/weapons/weaponTypes";
+import type { ViewmodelClocks } from "../../../../src/game/player/weapons/weaponTypes";
 
 await initPhysics();
 

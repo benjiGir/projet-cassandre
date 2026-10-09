@@ -49,7 +49,13 @@ describe("handleEnemyShotMiss", () => {
 
   it("ne plante jamais sans aucune cible (gym, aucun niveau glTF chargé)", () => {
     expect(() =>
-      handleEnemyShotMiss([undefined, undefined], fakeCollider(7), false, new THREE.Vector3(), new THREE.Vector3(0, 0, 1)),
+      handleEnemyShotMiss(
+        [undefined, undefined],
+        fakeCollider(7),
+        false,
+        new THREE.Vector3(),
+        new THREE.Vector3(0, 0, 1),
+      ),
     ).not.toThrow();
     expect(() =>
       handleEnemyShotMiss([], fakeCollider(7), false, new THREE.Vector3(), new THREE.Vector3(0, 0, 1)),
@@ -60,7 +66,13 @@ describe("handleEnemyShotMiss", () => {
     const { target: vitreSystem, tryBreak: tryBreakVitre } = fakeTarget(true);
     const { target: sanitaireSystem, tryBreak: tryBreakSanitaire } = fakeTarget(true);
 
-    handleEnemyShotMiss([vitreSystem, sanitaireSystem], fakeCollider(9), false, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
+    handleEnemyShotMiss(
+      [vitreSystem, sanitaireSystem],
+      fakeCollider(9),
+      false,
+      new THREE.Vector3(),
+      new THREE.Vector3(0, 1, 0),
+    );
 
     expect(tryBreakVitre).toHaveBeenCalledTimes(1);
     expect(tryBreakSanitaire).not.toHaveBeenCalled();
@@ -84,7 +96,13 @@ describe("handleEnemyShotMiss", () => {
     const { target: sanitaireSystem, tryBreak: tryBreakSanitaire } = fakeTarget(false);
 
     expect(() =>
-      handleEnemyShotMiss([vitreSystem, sanitaireSystem], fakeCollider(13), false, new THREE.Vector3(), new THREE.Vector3(0, 1, 0)),
+      handleEnemyShotMiss(
+        [vitreSystem, sanitaireSystem],
+        fakeCollider(13),
+        false,
+        new THREE.Vector3(),
+        new THREE.Vector3(0, 1, 0),
+      ),
     ).not.toThrow();
     expect(tryBreakVitre).toHaveBeenCalledTimes(1);
     expect(tryBreakSanitaire).toHaveBeenCalledTimes(1);

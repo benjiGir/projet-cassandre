@@ -17,7 +17,6 @@ const TAU = Math.PI * 2;
 /** Valeur plafond des horloges du viewmodel : « il y a très longtemps ». */
 const CLOCK_AT_REST = 1e3; // s
 
-
 // see: docs/6-reference/notes-code-gameplay-joueur.md#contrats-des-armes
 const PLACEHOLDER_MATERIAL = "concrete";
 
@@ -26,16 +25,12 @@ export const FLESH_MATERIAL = "flesh";
 /** Axe local le long duquel `RAPIER.Capsule` place sa demi-hauteur (voir sa doc) — sert à orienter la capsule de test du pied-de-biche sur la direction de visée dans `fireMelee`. */
 const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
-
-
 // see: docs/decisions/0007-rng-deterministe.md
 
 /** Graine fixe et arbitraire — seule contrainte : ne JAMAIS dériver du temps réel ou de `Math.random`. */
 const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
 
 // see: docs/archive/systems-armes.md#architecture-munitions-un-seul-pool
-
-
 
 export class WeaponSystem {
   activeWeapon: WeaponKind = "melee";
@@ -309,7 +304,11 @@ export class WeaponSystem {
       if (this.activeWeapon === "none") {
         if (this.kickCooldownRemaining <= 0) {
           this.computeAimBasis(yaw, pitch);
-          this._fireEvents.push({ weapon: "kick", muzzlePosition: eyeOrigin.clone(), muzzleDirection: this.aimForward.clone() });
+          this._fireEvents.push({
+            weapon: "kick",
+            muzzlePosition: eyeOrigin.clone(),
+            muzzleDirection: this.aimForward.clone(),
+          });
           this.sinceKickFire = this.previousSinceKickFire = 0;
           this.kickImpactRemaining = kickConfig.strike;
           this.kickCooldownRemaining = kickConfig.cooldown;
@@ -378,23 +377,47 @@ export class WeaponSystem {
 
   private hitKick(eyeOrigin: THREE.Vector3, yaw: number, pitch: number): void {
     this.computeAimBasis(yaw, pitch);
-    const hit = runGameplaySync(RaycastService.use((raycast) => raycast.castShape(
-      this.physics, eyeOrigin, { x: 0, y: 0, z: 0, w: 1 }, this.aimForward,
-      new RAPIER.Ball(kickConfig.hitRadius), 0, Math.max(0, kickConfig.range - kickConfig.hitRadius), true,
-      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, COLLISION_GROUPS.PLAYER_SHOT,
-    )));
+    const hit = runGameplaySync(
+      RaycastService.use((raycast) =>
+        raycast.castShape(
+          this.physics,
+          eyeOrigin,
+          { x: 0, y: 0, z: 0, w: 1 },
+          this.aimForward,
+          new RAPIER.Ball(kickConfig.hitRadius),
+          0,
+          Math.max(0, kickConfig.range - kickConfig.hitRadius),
+          true,
+          RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+          COLLISION_GROUPS.PLAYER_SHOT,
+        ),
+      ),
+    );
     if (!hit) return;
     const center = this.meleeCenterScratch.copy(eyeOrigin).addScaledVector(this.aimForward, hit.time_of_impact);
-    const projection = this.physics.world.projectPoint(center, false, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      COLLISION_GROUPS.PLAYER_SHOT, undefined, undefined, (collider) => collider.handle === hit.collider.handle);
+    const projection = this.physics.world.projectPoint(
+      center,
+      false,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+      COLLISION_GROUPS.PLAYER_SHOT,
+      undefined,
+      undefined,
+      (collider) => collider.handle === hit.collider.handle,
+    );
     if (!projection) return;
     const point = new THREE.Vector3(projection.point.x, projection.point.y, projection.point.z);
     const normal = new THREE.Vector3().subVectors(center, point);
     if (normal.lengthSq() < 1e-8) normal.copy(this.aimForward).negate();
     else normal.normalize();
     const material = this.materialForCollider(hit.collider);
-    this._hitEvents.push({ point, normal, material, weapon: "kick", colliderHandle: hit.collider.handle,
-      distance: eyeOrigin.distanceTo(point) });
+    this._hitEvents.push({
+      point,
+      normal,
+      material,
+      weapon: "kick",
+      colliderHandle: hit.collider.handle,
+      distance: eyeOrigin.distanceTo(point),
+    });
     this.triggerHitstopFor(material);
   }
 

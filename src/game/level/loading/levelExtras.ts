@@ -182,7 +182,7 @@ export function readPropContent(name: string, raw: unknown): Effect.Effect<{ ite
     const match = PROP_CONTENT_PATTERN.exec(String(raw).trim());
     const count = match ? Number(match[2]) : NaN;
     if (match && Number.isFinite(count) && count > 0) {
-      return { item: match[1]!.toLowerCase(), count };
+      return { item: match[1].toLowerCase(), count };
     }
     yield* Effect.fail(new InvalidPropContentWarning({ name, value: String(raw) })).pipe(
       Effect.catch((error) => Effect.sync(() => console.error(formatInvalidPropContent(error)))),

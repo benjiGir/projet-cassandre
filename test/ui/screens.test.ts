@@ -3,7 +3,12 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { beginLoading, finishLoading, reportLoading, waitForLoadingRetry } from "../../src/core/loading/loadingProgress";
+import {
+  beginLoading,
+  finishLoading,
+  reportLoading,
+  waitForLoadingRetry,
+} from "../../src/core/loading/loadingProgress";
 import { input } from "../../src/core/input/input";
 import { useGameStore } from "../../src/game/hud/state";
 import { MainMenu } from "../../src/ui/screens/mainMenu/MainMenu/MainMenu";
@@ -67,10 +72,10 @@ describe("écrans React — comportements DOM", () => {
   it("les onglets d'options restent navigables au clavier et le retour fonctionne", () => {
     const onBack = vi.fn();
     render(createElement(OptionsScreen, { onBack }));
-    const controls = host.querySelector<HTMLButtonElement>('#options-tab-controles')!;
+    const controls = host.querySelector<HTMLButtonElement>("#options-tab-controles")!;
     expect(controls.getAttribute("aria-selected")).toBe("true");
     act(() => controls.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true })));
-    const display = host.querySelector<HTMLButtonElement>('#options-tab-affichage')!;
+    const display = host.querySelector<HTMLButtonElement>("#options-tab-affichage")!;
     expect(display.getAttribute("aria-selected")).toBe("true");
     expect(display.getAttribute("tabindex")).toBe("0");
     expect(document.activeElement).toBe(display);
@@ -97,7 +102,9 @@ describe("écrans React — comportements DOM", () => {
     expect(progress.getAttribute("aria-valuenow")).toBe("45");
     expect(progress.getAttribute("aria-valuetext")).toContain("Décor");
     let retry!: Promise<void>;
-    act(() => { retry = waitForLoadingRetry(new Error("Niveau illisible")); });
+    act(() => {
+      retry = waitForLoadingRetry(new Error("Niveau illisible"));
+    });
     expect(host.querySelector('[role="alert"]')?.textContent).toContain("Niveau illisible");
     click("RÉESSAYER");
     await retry;
@@ -114,7 +121,11 @@ describe("écrans React — comportements DOM", () => {
     expect(onReturnToMenu).toHaveBeenCalledOnce();
 
     act(() => useGameStore.getState().setFlowState("levelComplete"));
-    act(() => useGameStore.getState().setLiveRecap({ peakViewers: 4200, followers: 305, followersGained: 105, donations: 86, donationCount: 7 }));
+    act(() =>
+      useGameStore
+        .getState()
+        .setLiveRecap({ peakViewers: 4200, followers: 305, followersGained: 105, donations: 86, donationCount: 7 }),
+    );
     render(createElement(LevelCompleteScreen, { onReplay, onReturnToMenu }));
     expect(host.textContent).toContain("VIDÉO DÉMONÉTISÉE");
     expect(host.textContent).toContain("86 € retenus par la plateforme");
@@ -170,7 +181,14 @@ describe("écrans React — comportements DOM", () => {
     submitRun("niveau_v2", "habitue", 12400, 572);
     const onChoose = vi.fn();
     const onBack = vi.fn();
-    render(createElement(DifficultyScreen, { options: difficultyOptions("niveau_v2"), selected: "habitue", onChoose, onBack }));
+    render(
+      createElement(DifficultyScreen, {
+        options: difficultyOptions("niveau_v2"),
+        selected: "habitue",
+        onChoose,
+        onBack,
+      }),
+    );
     resetRecords();
 
     const choix = [...host.querySelectorAll("button[aria-current]")];
@@ -185,7 +203,15 @@ describe("écrans React — comportements DOM", () => {
   });
 
   it("le récapitulatif affiche la difficulté, et le record seulement quand la partie en pose ou en rappelle un", () => {
-    const recap = { lines: [], total: 900, elapsedSeconds: 60, parTimeSeconds: null, accuracy: 0, difficulty: "Client", record: null };
+    const recap = {
+      lines: [],
+      total: 900,
+      elapsedSeconds: 60,
+      parTimeSeconds: null,
+      accuracy: 0,
+      difficulty: "Client",
+      record: null,
+    };
     render(createElement(RecapTable, { recap }));
     expect(host.textContent).toContain("Difficulté : Client");
     expect(host.textContent).not.toContain("ecord");

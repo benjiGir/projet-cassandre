@@ -14,7 +14,7 @@ export function createEnemyAnimationInput(): EnemyAnimationInput {
 }
 
 export function enemyHumanAtlas(sheet: EnemySpriteSheet, appearanceIndex: number): THREE.Texture {
-  const skin = HUMAN_SKIN_VARIANTS[appearanceIndex % HUMAN_SKIN_VARIANTS.length]!;
+  const skin = HUMAN_SKIN_VARIANTS[appearanceIndex % HUMAN_SKIN_VARIANTS.length];
   return sheet.atlases[skin] ?? sheet.atlases.humain;
 }
 
@@ -100,7 +100,7 @@ export async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteShe
     pixelsPerMeter: manifest.pixelsPerMeter,
     feetFromBottom: manifest.feetFromBottom,
     animations: manifest.animations,
-    atlases: { ...atlases, humain: atlases.humain! },
+    atlases: { ...atlases, humain: atlases.humain },
   };
 }
 

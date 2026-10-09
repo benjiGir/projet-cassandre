@@ -35,7 +35,11 @@ export function LevelCompleteScreen({ onReplay, onNextLevel, onReturnToMenu }: L
       <CornerFrame className={styles.panel}>
         <StatusFlag>TRANSMISSION ACHEVÉE</StatusFlag>
         <ScreenTitle className={styles.title}>{metro ? "SORTIE DU MÉTRO" : "ÉCHAPPÉ D'HYPER VARAN"}</ScreenTitle>
-        <p className={styles.body}>{metro ? "Le direct continue au-delà du réseau." : "Vidéo retirée, chaîne suspendue. Mais les images existent, et toi, tu es dehors."}</p>
+        <p className={styles.body}>
+          {metro
+            ? "Le direct continue au-delà du réseau."
+            : "Vidéo retirée, chaîne suspendue. Mais les images existent, et toi, tu es dehors."}
+        </p>
         {live && <LiveSummary live={live} />}
         {recap && (
           <div className={styles.stats}>
@@ -45,9 +49,11 @@ export function LevelCompleteScreen({ onReplay, onNextLevel, onReturnToMenu }: L
         <RecapTable recap={recap} className={styles.recap} />
 
         <ButtonRow className={styles.actions}>
-          {nextAvailable && onNextLevel && <Button className={styles.actionButton} variant="primary" onClick={onNextLevel}>
-            ▶ CONTINUER — MÉTRO
-          </Button>}
+          {nextAvailable && onNextLevel && (
+            <Button className={styles.actionButton} variant="primary" onClick={onNextLevel}>
+              ▶ CONTINUER — MÉTRO
+            </Button>
+          )}
           <Button className={styles.actionButton} variant={nextAvailable ? "default" : "primary"} onClick={onReplay}>
             ▶ REJOUER
           </Button>

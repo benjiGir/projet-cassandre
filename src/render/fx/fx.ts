@@ -37,7 +37,9 @@ export class FxSystem {
     this.appearances = new EnemyAppearances(scene, enemyAtlases);
   }
 
-  setRandom(random: () => number): void { this.random = random; }
+  setRandom(random: () => number): void {
+    this.random = random;
+  }
 
   resetSession(): void {
     this.shake.reset();
@@ -53,41 +55,63 @@ export class FxSystem {
   }
 
   /** Donne au gore de quoi trouver le décor de CETTE partie — voir `SurfaceProbe`. */
-  setSurfaceProbe(probe: SurfaceProbe | null): void { this.gore.setSurfaceProbe(probe); }
+  setSurfaceProbe(probe: SurfaceProbe | null): void {
+    this.gore.setSurfaceProbe(probe);
+  }
 
-  triggerShake(amplitude: number, duration: number): void { this.shake.triggerShake(amplitude, duration); }
-  currentShakeOffset(out: THREE.Vector3): THREE.Vector3 { return this.shake.currentShakeOffset(out); }
+  triggerShake(amplitude: number, duration: number): void {
+    this.shake.triggerShake(amplitude, duration);
+  }
+  currentShakeOffset(out: THREE.Vector3): THREE.Vector3 {
+    return this.shake.currentShakeOffset(out);
+  }
   spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
     this.flashes.spawnMuzzleFlash(position, direction, weapon);
   }
   followMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
     this.flashes.followMuzzle(position, direction, weapon);
   }
-  advanceMuzzleFlashes(dt: number): void { this.flashes.advance(dt); }
+  advanceMuzzleFlashes(dt: number): void {
+    this.flashes.advance(dt);
+  }
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string): void {
     this.decals.spawnImpactDecal(point, normal, material);
   }
   spawnImpactParticles(point: THREE.Vector3, normal: THREE.Vector3, weapon: FiringWeapon, material: string): void {
     this.debris.spawnImpactParticles(point, normal, weapon, material);
   }
-  spawnShellCasing(position: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnShellCasing(position, direction); }
+  spawnShellCasing(position: THREE.Vector3, direction: THREE.Vector3): void {
+    this.debris.spawnShellCasing(position, direction);
+  }
   /** Un ennemi explose : flaque, giclées et morceaux qui retombent — voir `gore.ts`. */
-  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3): void { this.gore.spawnGibs(point, direction); }
+  spawnGibs(point: THREE.Vector3, direction: THREE.Vector3): void {
+    this.gore.spawnGibs(point, direction);
+  }
   /** Giclée sur le décor derrière un ennemi touché. */
   spawnBloodSpray(point: THREE.Vector3, direction: THREE.Vector3, weapon: FiringWeapon): void {
     this.gore.spawnSpray(point, direction, weapon);
   }
   /** Flaque qui s'étale sous un ennemi mort sur place. */
-  spawnBloodPool(center: THREE.Vector3): void { this.gore.spawnPool(center); }
+  spawnBloodPool(center: THREE.Vector3): void {
+    this.gore.spawnPool(center);
+  }
   /** Taches et morceaux en place, pour les outils et les tests. */
   get goreStats(): { splats: number; restingChunks: number; flyingChunks: number } {
-    return { splats: this.gore.splatCount, restingChunks: this.gore.restingChunkCount, flyingChunks: this.gore.flyingChunkCount };
+    return {
+      splats: this.gore.splatCount,
+      restingChunks: this.gore.restingChunkCount,
+      flyingChunks: this.gore.flyingChunkCount,
+    };
   }
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number): void {
     this.debris.spawnDebris(point, direction, color, count);
   }
-  spawnFrostBurst(point: THREE.Vector3): void { this.debris.spawnFrostBurst(point); }
-  spawnCeramicBurst(point: THREE.Vector3, direction: THREE.Vector3): void { this.debris.spawnCeramicBurst(point, direction); }
+  spawnFrostBurst(point: THREE.Vector3): void {
+    this.debris.spawnFrostBurst(point);
+  }
+  spawnCeramicBurst(point: THREE.Vector3, direction: THREE.Vector3): void {
+    this.debris.spawnCeramicBurst(point, direction);
+  }
   /** Compile le shader de l'explosion sous l'écran de chargement — voir `Explosions.warm`. */
   warmExplosions(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.explosions.warm(camera, render);
@@ -100,7 +124,9 @@ export class FxSystem {
   warmMuzzleFlashes(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.flashes.warm(camera, render);
   }
-  spawnEnemyAppearance(sprite: BillboardSprite, feetY: number): void { this.appearances.spawn(sprite, feetY); }
+  spawnEnemyAppearance(sprite: BillboardSprite, feetY: number): void {
+    this.appearances.spawn(sprite, feetY);
+  }
   followEnemyAppearance(sprite: BillboardSprite, progress: number, alive: boolean): void {
     this.appearances.follow(sprite, progress, alive);
   }
@@ -112,8 +138,12 @@ export class FxSystem {
     this.explosions.spawn(point);
     this.debris.spawnExplosionBurst(point);
   }
-  addWaterJet(origin: THREE.Vector3): void { this.water.addWaterJet(origin); }
-  clearWaterJets(): void { this.water.clearWaterJets(); }
+  addWaterJet(origin: THREE.Vector3): void {
+    this.water.addWaterJet(origin);
+  }
+  clearWaterJets(): void {
+    this.water.clearWaterJets();
+  }
 
   update(realDt: number): void {
     this.shake.update(realDt);

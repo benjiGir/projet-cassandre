@@ -1,9 +1,10 @@
-import * as THREE from "three";
-import { Effect, Fiber, Schedule, Semaphore } from "effect";
+import type * as THREE from "three";
+import type { Fiber } from "effect";
+import { Effect, Schedule, Semaphore } from "effect";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import { loadLevel } from "./loader";
-import { type LevelHandle } from "./levelTypes";
+import type { LevelHandle } from "./levelTypes";
 import { GameRuntime } from "../../../app/runtime/gameRuntime";
 
 // see: docs/archive/pipeline-niveau-blender.md#hot-reload
@@ -159,11 +160,9 @@ export function createLevelSession(
     });
   }
 
-  let pollFiber: Fiber.Fiber<unknown, never> | null = null;
+  let pollFiber: Fiber.Fiber<unknown> | null = null;
   if (import.meta.env.DEV) {
-    pollFiber = GameRuntime.runFork(
-      pollOnceEffect().pipe(Effect.repeat(Schedule.spaced(pollIntervalMs))),
-    );
+    pollFiber = GameRuntime.runFork(pollOnceEffect().pipe(Effect.repeat(Schedule.spaced(pollIntervalMs))));
   }
 
   const firstLoad = reload();

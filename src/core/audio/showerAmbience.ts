@@ -43,7 +43,9 @@ export function initShowerAmbience(): Promise<void> {
       loaded = false;
       if (warnedMissing) return;
       warnedMissing = true;
-      console.warn(`[audio] boucle de douche introuvable (${SHOWER_AMBIENCE_PATH}/amb_shower.{ogg,m4a}) — le jeu continue sans elle.`);
+      console.warn(
+        `[audio] boucle de douche introuvable (${SHOWER_AMBIENCE_PATH}/amb_shower.{ogg,m4a}) — le jeu continue sans elle.`,
+      );
     },
   });
   preparation = waitForAudioLoad(showerHowl).then(() => {});

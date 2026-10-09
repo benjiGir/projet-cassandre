@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { applyPlayerDamage, presentPlayerDamage } from "../../../../src/game/session/player/feedback";
 import { createInitialStats } from "../../../../src/game/session/progression/score";
 import { useGameStore } from "../../../../src/game/hud/state";
-import { type GameEngine } from "../../../../src/game/session/gameEngine";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import type { GameEngine } from "../../../../src/game/session/gameEngine";
+import type { GameSession } from "../../../../src/game/session/gameSession";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
 import { createStreamState } from "../../../../src/game/session/stream/streamSim";
 
@@ -50,23 +50,22 @@ describe("applyPlayerDamage — résolution dans le pas fixe", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [[15]],
-    [[7, 8]],
-    [Array.from({ length: 15 }, () => 1)],
-  ])("déclenche la mort au même pas logique après 1, 2 ou 15 groupes : %j", (groups) => {
-    const send = vi.fn();
-    const session = sessionWithHp(15);
-    const engine = engineWithSend(send);
+  it.each([[[15]], [[7, 8]], [Array.from({ length: 15 }, () => 1)]])(
+    "déclenche la mort au même pas logique après 1, 2 ou 15 groupes : %j",
+    (groups) => {
+      const send = vi.fn();
+      const session = sessionWithHp(15);
+      const engine = engineWithSend(send);
 
-    for (const amount of groups) applyPlayerDamage(engine, session, amount);
+      for (const amount of groups) applyPlayerDamage(engine, session, amount);
 
-    expect(session.playerHp).toBe(0);
-    expect(session.stats.hpLost).toBe(15);
-    expect(session.deathHandled).toBe(true);
-    expect(send).toHaveBeenCalledTimes(1);
-    expect(send).toHaveBeenCalledWith({ type: "DIED" });
-  });
+      expect(session.playerHp).toBe(0);
+      expect(session.stats.hpLost).toBe(15);
+      expect(session.deathHandled).toBe(true);
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(send).toHaveBeenCalledWith({ type: "DIED" });
+    },
+  );
 
   it("reste idempotent face à un second impact après la mort", () => {
     const send = vi.fn();

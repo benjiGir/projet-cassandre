@@ -19,5 +19,5 @@ export async function prepareTrainWarning(): Promise<void> {
 export function playTrainWarning(gain: number): void {
   if (warning?.state() !== "loaded") return;
   const id = warning.play("approach");
-  warning.volume(.22 * gain, id);
+  warning.volume(0.22 * gain, id);
 }

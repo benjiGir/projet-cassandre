@@ -34,12 +34,36 @@ const HUMAIN = "definitivement_humain";
 const JEANMI = "JeanMi_du_38";
 
 export const PSEUDOS: readonly string[] = [
-  "xX_Sceptik_Xx", "veritas_1987", "lezard_curieux", "kevin_la_preuve", "mamie_gamer",
-  "le_doute_raisonnable", "caddie_fou", "promo_du_jeudi", "pixel_baveux", "404_cerveau",
-  "ticket_de_caisse", "rayon_frais", "pas_un_bot", "sang_chaud_garanti", "oeil_ouvert_73",
-  "tonton_wifi", "la_verite_svp", "gondole_en_tete", "insomniaque_du_59", "chef_de_rayon",
-  "poulet_roti_fan", "dubitatif_pro", "neon_qui_grésille", "sac_de_caisse", "reveille_moi",
-  "premier_degre", "zoom_x200", "croissant_tiede", "vigile_en_pause", "client_mystere",
+  "xX_Sceptik_Xx",
+  "veritas_1987",
+  "lezard_curieux",
+  "kevin_la_preuve",
+  "mamie_gamer",
+  "le_doute_raisonnable",
+  "caddie_fou",
+  "promo_du_jeudi",
+  "pixel_baveux",
+  "404_cerveau",
+  "ticket_de_caisse",
+  "rayon_frais",
+  "pas_un_bot",
+  "sang_chaud_garanti",
+  "oeil_ouvert_73",
+  "tonton_wifi",
+  "la_verite_svp",
+  "gondole_en_tete",
+  "insomniaque_du_59",
+  "chef_de_rayon",
+  "poulet_roti_fan",
+  "dubitatif_pro",
+  "neon_qui_grésille",
+  "sac_de_caisse",
+  "reveille_moi",
+  "premier_degre",
+  "zoom_x200",
+  "croissant_tiede",
+  "vigile_en_pause",
+  "client_mystere",
 ];
 
 export const CHAT_LINES: Readonly<Record<ChatTopic, readonly ChatLine[]>> = {
@@ -229,26 +253,15 @@ export const DONATION_LINES: Readonly<Record<DonationTopic, readonly string[]>> 
     "pour le maquilleur, s'il existe",
     "meilleur direct de l'année",
   ],
-  secret: [
-    "pour le flair",
-    "comment t'as trouvé ça, sérieux",
-    "une pièce cachée, un don",
-    "fouille encore",
-  ],
+  secret: ["pour le flair", "comment t'as trouvé ça, sérieux", "une pièce cachée, un don", "fouille encore"],
   toilettes: [
     "pour le papier",
     "contenu rare, je soutiens",
     "lave-toi les mains avec ça",
     "je ne sais pas pourquoi je paye pour ça",
   ],
-  carte: [
-    "pour ta fidélité",
-    "tu cumules des points au moins ?",
-  ],
-  casse: [
-    "pour la vitrine",
-    "casse le reste, je finance",
-  ],
+  carte: ["pour ta fidélité", "tu cumules des points au moins ?"],
+  casse: ["pour la vitrine", "casse le reste, je finance"],
 };
 
 /** Le spectateur qui donne trop bien : voir `docs/2-fonctionnel/histoire.md#le-donateur-mystère`. */

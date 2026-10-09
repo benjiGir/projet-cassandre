@@ -34,10 +34,9 @@ const spriteManifest = Schema.Struct({
   rows: positiveInteger,
   pixelsPerMeter: positiveNumber,
   feetFromBottom: nonNegativeInteger,
-  atlases: Schema.StructWithRest(
-    Schema.Struct({ humain: Schema.NonEmptyString }),
-    [Schema.Record(Schema.String, Schema.NonEmptyString)],
-  ),
+  atlases: Schema.StructWithRest(Schema.Struct({ humain: Schema.NonEmptyString }), [
+    Schema.Record(Schema.String, Schema.NonEmptyString),
+  ]),
   animations,
 }).check(
   Schema.makeFilter((manifest) => {

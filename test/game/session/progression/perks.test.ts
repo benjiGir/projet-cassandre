@@ -20,7 +20,7 @@ import { BOISSON_VARIANTS, perkConfig } from "../../../../src/game/player/perkCo
 import { PERKS, type PerkOffer } from "../../../../src/game/player/perks";
 import { damageForHit, weaponConfig } from "../../../../src/game/player/weapons/weaponConfig";
 import { WeaponSystem } from "../../../../src/game/player/weapons/weapons";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import type { GameSession } from "../../../../src/game/session/gameSession";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
 import {
   buyPerk,
@@ -301,7 +301,13 @@ describe("effet des perks", () => {
 
   it("aimant : une trousse hors de portée sans lui est ramassée de plus loin", () => {
     const session = sessionAvec(0);
-    const trousse = { name: "use_soin_test", object: new THREE.Object3D(), position: new THREE.Vector3(2.5, 0, 0), heals: 25, ammo: null } as unknown as UseObject;
+    const trousse = {
+      name: "use_soin_test",
+      object: new THREE.Object3D(),
+      position: new THREE.Vector3(2.5, 0, 0),
+      heals: 25,
+      ammo: null,
+    } as unknown as UseObject;
     const system = new InteractionSystem();
     const soigner = vi.fn(() => true);
 

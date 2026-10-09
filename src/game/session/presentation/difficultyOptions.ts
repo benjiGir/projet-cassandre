@@ -27,8 +27,16 @@ export function difficultyOptions(levelId: string): DifficultyOptionView[] {
   return DIFFICULTIES.map((id) => ({
     id,
     ...DIFFICULTY_INFO[id],
-    ...(levelId === "metro" ? { pitch: id === "client" ? "Vous prenez le dernier métro. Le réseau vous ménage."
-      : id === "habitue" ? "Vous connaissez les quais. Eux aussi vous connaissent." : DIFFICULTY_INFO[id].pitch } : {}),
+    ...(levelId === "metro"
+      ? {
+          pitch:
+            id === "client"
+              ? "Vous prenez le dernier métro. Le réseau vous ménage."
+              : id === "habitue"
+                ? "Vous connaissez les quais. Eux aussi vous connaissent."
+                : DIFFICULTY_INFO[id].pitch,
+        }
+      : {}),
     effects: difficultyEffects(difficultyConfig[id]),
     record: recordFor(levelId, id),
   }));

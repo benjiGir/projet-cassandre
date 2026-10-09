@@ -2,7 +2,7 @@ import { BOISSON_VARIANTS, perkConfig, type BoissonVariant } from "../../player/
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { type Recording } from "../../../core/input/inputTypes";
+import type { Recording } from "../../../core/input/inputTypes";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../../physics/world";
 import { PlayerController } from "../../player/movement/controller";
 import { FEEL_VARIANTS, fovForRunFactor, moveConfig, type MoveConfig } from "../../player/movement/moveConfig";
@@ -22,10 +22,7 @@ import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../../entities/s
 export function simulateRecording(rec: Recording, cfg: MoveConfig) {
   const world = new PhysicsWorld();
   const floor = world.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.1, 0));
-  world.world.createCollider(
-    RAPIER.ColliderDesc.cuboid(50, 0.1, 50).setCollisionGroups(COLLISION_GROUPS.WORLD),
-    floor,
-  );
+  world.world.createCollider(RAPIER.ColliderDesc.cuboid(50, 0.1, 50).setCollisionGroups(COLLISION_GROUPS.WORLD), floor);
 
   const sim = new PlayerController(world, cfg);
   const feetY = rec.start.position.y - (cfg.capsuleHalfHeight + cfg.capsuleRadius);
@@ -76,9 +73,7 @@ export function checkDeterminism(rec: Recording) {
   );
   const passed = delta < 1e-6;
   console.info(
-    `[determinism] ${rec.frames.length} pas fixes · écart max ${delta.toExponential(3)} · ${
-      passed ? "OK" : "ÉCHEC"
-    }`,
+    `[determinism] ${rec.frames.length} pas fixes · écart max ${delta.toExponential(3)} · ${passed ? "OK" : "ÉCHEC"}`,
   );
   return { passed, delta, a, b };
 }
@@ -108,7 +103,11 @@ export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantR
 /** Pointe de vitesse du perk boisson : même protocole que `applyFeelVariant`. */
 export function applyBoissonVariant(name: keyof typeof BOISSON_VARIANTS): BoissonVariant & { variant: string } {
   Object.assign(perkConfig, BOISSON_VARIANTS[name]);
-  const report = { variant: name, boissonSpeedScale: perkConfig.boissonSpeedScale, boissonDuration: perkConfig.boissonDuration };
+  const report = {
+    variant: name,
+    boissonSpeedScale: perkConfig.boissonSpeedScale,
+    boissonDuration: perkConfig.boissonDuration,
+  };
   console.info(`[feel] variante de boisson ${name} appliquée`, report);
   return report;
 }
@@ -277,11 +276,7 @@ export interface LightBudgetReport {
   budget: number | null;
 }
 
-export function applyLightBudget(
-  scene: THREE.Scene,
-  camera: THREE.Camera,
-  budget: number | null,
-): LightBudgetReport {
+export function applyLightBudget(scene: THREE.Scene, camera: THREE.Camera, budget: number | null): LightBudgetReport {
   const lampes: THREE.PointLight[] = [];
   scene.traverse((obj) => {
     if ((obj as THREE.PointLight).isPointLight) lampes.push(obj as THREE.PointLight);

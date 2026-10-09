@@ -32,7 +32,8 @@ export function initHeroVoice(): Promise<void> {
         sprite: manifeste.sprite,
         pool: 2,
         volume: VOIX_VOLUME * gain,
-        onloaderror: () => console.warn(`[voix] atlas introuvable (${VOIX_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
+        onloaderror: () =>
+          console.warn(`[voix] atlas introuvable (${VOIX_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
       });
       await waitForAudioLoad(atlas);
     })

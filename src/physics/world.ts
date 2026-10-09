@@ -42,23 +42,14 @@ const ALL_GROUPS =
 
 export const COLLISION_GROUPS = {
   WORLD: interactionGroups(GROUP.WORLD, ALL_GROUPS),
-  PLAYER: interactionGroups(
-    GROUP.PLAYER,
-    GROUP.WORLD | GROUP.ENEMY | GROUP.ENEMY_SHOT | GROUP.TRIGGER | GROUP.PROP,
-  ),
-  ENEMY: interactionGroups(
-    GROUP.ENEMY,
-    GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT | GROUP.ENEMY | GROUP.PROP,
-  ),
+  PLAYER: interactionGroups(GROUP.PLAYER, GROUP.WORLD | GROUP.ENEMY | GROUP.ENEMY_SHOT | GROUP.TRIGGER | GROUP.PROP),
+  ENEMY: interactionGroups(GROUP.ENEMY, GROUP.WORLD | GROUP.PLAYER | GROUP.PLAYER_SHOT | GROUP.ENEMY | GROUP.PROP),
   PLAYER_SHOT: interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD | GROUP.ENEMY | GROUP.PROP),
   ENEMY_SHOT: interactionGroups(GROUP.ENEMY_SHOT, GROUP.WORLD | GROUP.PLAYER),
   DEBRIS: interactionGroups(GROUP.DEBRIS, GROUP.WORLD),
   TRIGGER: interactionGroups(GROUP.TRIGGER, GROUP.PLAYER),
   // PROP reste hors WORLD et ignore les tirs ennemis : visibilité et navigation ignorent le mobilier mobile.
-  PROP: interactionGroups(
-    GROUP.PROP,
-    GROUP.WORLD | GROUP.PLAYER | GROUP.ENEMY | GROUP.PLAYER_SHOT | GROUP.PROP,
-  ),
+  PROP: interactionGroups(GROUP.PROP, GROUP.WORLD | GROUP.PLAYER | GROUP.ENEMY | GROUP.PLAYER_SHOT | GROUP.PROP),
 } as const;
 
 export function configureCharacterController(
@@ -68,11 +59,7 @@ export function configureCharacterController(
   controller.setUp({ x: 0, y: 1, z: 0 });
   controller.setOffset(cfg.colliderOffset);
   controller.setSlideEnabled(true);
-  controller.enableAutostep(
-    cfg.autostepMaxHeight,
-    cfg.autostepMinWidth,
-    cfg.autostepIncludeDynamicBodies,
-  );
+  controller.enableAutostep(cfg.autostepMaxHeight, cfg.autostepMinWidth, cfg.autostepIncludeDynamicBodies);
   controller.enableSnapToGround(cfg.snapToGroundDistance);
   controller.setMaxSlopeClimbAngle((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);
   controller.setMinSlopeSlideAngle((cfg.minSlopeSlideAngleDeg * Math.PI) / 180);

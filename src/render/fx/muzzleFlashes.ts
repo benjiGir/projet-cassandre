@@ -39,11 +39,11 @@ export class MuzzleFlashes {
   }
 
   spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: MuzzleFlashWeapon): void {
-    const slot = this.slots[this.cursor]!;
+    const slot = this.slots[this.cursor];
     this.cursor = (this.cursor + 1) % this.slots.length;
     const preset = MUZZLE_FLASH_PRESETS[weapon];
     const serial = this.shotSerial++;
-    const variation = 0.94 + (serial * 5 % 7) * 0.02;
+    const variation = 0.94 + ((serial * 5) % 7) * 0.02;
     slot.weapon = weapon;
     slot.age = 0;
     slot.mesh.userData.flashAge = 0;
@@ -86,12 +86,12 @@ export class MuzzleFlashes {
   }
 
   releaseShaderPrograms(): void {
-    this.slots[0]!.mesh.material.dispose();
+    this.slots[0].mesh.material.dispose();
   }
 
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
     this.reset();
-    const slot = this.slots[0]!;
+    const slot = this.slots[0];
     const position = new THREE.Vector3();
     const direction = new THREE.Vector3();
     camera.getWorldDirection(direction);

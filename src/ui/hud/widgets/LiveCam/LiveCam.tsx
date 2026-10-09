@@ -17,7 +17,8 @@ export function LiveCam() {
         <HeroFace />
       </CornerFrame>
       <div className={styles.caption}>
-        <span>RÉVEIL_DU_PEUPLE</span><span className={styles.subscribers}>{`${formatViews(followers)} abonnés`}</span>
+        <span>RÉVEIL_DU_PEUPLE</span>
+        <span className={styles.subscribers}>{`${formatViews(followers)} abonnés`}</span>
       </div>
     </div>
   );

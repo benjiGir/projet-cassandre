@@ -28,11 +28,11 @@ describe("les trois difficultés", () => {
   it("durcissent chaque réglage dans le même sens", () => {
     const [client, habitue, lanceur] = DIFFICULTIES.map((id) => difficultyConfig[id]);
     for (const key of ["enemyHp", "enemyDamage", "groupShare"] as const) {
-      expect(client![key]).toBeLessThan(habitue![key]);
-      expect(habitue![key]).toBeLessThan(lanceur![key]);
+      expect(client[key]).toBeLessThan(habitue[key]);
+      expect(habitue[key]).toBeLessThan(lanceur[key]);
     }
-    expect(client!.donations).toBeGreaterThan(habitue!.donations);
-    expect(habitue!.donations).toBeGreaterThan(lanceur!.donations);
+    expect(client.donations).toBeGreaterThan(habitue.donations);
+    expect(habitue.donations).toBeGreaterThan(lanceur.donations);
   });
 
   it("« Habitué » ne multiplie ni les ennemis ni les dons", () => {
@@ -64,7 +64,9 @@ describe("taille des groupes réveillés", () => {
 
     expect(noms(difficultyConfig.client.groupShare)).toEqual(["spawn_suit_arene_1", "spawn_suit_arene_2"]);
     expect(noms(difficultyConfig.habitue.groupShare)).toEqual([
-      "spawn_suit_arene_1", "spawn_suit_arene_2", "spawn_suit_arene_3",
+      "spawn_suit_arene_1",
+      "spawn_suit_arene_2",
+      "spawn_suit_arene_3",
     ]);
     expect(noms(difficultyConfig.lanceur.groupShare)).toHaveLength(4);
     expect(wokenSpawns(spawns, "inconnu", 1)).toEqual([]);

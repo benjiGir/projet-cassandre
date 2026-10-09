@@ -65,7 +65,7 @@ describe("chargement d'un sanitaire_*", () => {
       }),
     ]);
     expect(handle.stats.sanitaireCount).toBe(1);
-    const s = handle.sanitaires[0]!;
+    const s = handle.sanitaires[0];
     expect(s.collider.isEnabled()).toBe(true);
     expect(s.maxHp).toBeNull(); // pv absent -> incassable au tir du joueur, mais reste utilisable
     expect(s.kind).toBe("cuvette");
@@ -77,7 +77,7 @@ describe("chargement d'un sanitaire_*", () => {
       sanitaireMesh("sanitaire_wc_3", new THREE.Vector3(0.6, 0.8, 0.7), new THREE.Vector3(0, 0, 0)),
     ]);
 
-    expect(handle.sanitaires[0]!.kind).toBe("cuvette");
+    expect(handle.sanitaires[0].kind).toBe("cuvette");
     const warnings = sanitaireWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("sorte");
@@ -92,7 +92,7 @@ describe("chargement d'un sanitaire_*", () => {
       }),
     ]);
 
-    expect(handle.sanitaires[0]!.kind).toBe("cuvette");
+    expect(handle.sanitaires[0].kind).toBe("cuvette");
     const warnings = sanitaireWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("lavabo");
@@ -106,7 +106,7 @@ describe("chargement d'un sanitaire_*", () => {
       }),
     ]);
 
-    expect(handle.sanitaires[0]!.kind).toBe("urinoir");
+    expect(handle.sanitaires[0].kind).toBe("urinoir");
     expect(sanitaireWarnings(errorSpy)).toHaveLength(0);
   });
 
@@ -119,7 +119,7 @@ describe("chargement d'un sanitaire_*", () => {
       }),
     ]);
     expect(handle.sanitaires).toHaveLength(1);
-    expect(handle.sanitaires[0]!.maxHp).toBeNull();
+    expect(handle.sanitaires[0].maxHp).toBeNull();
     const warnings = sanitaireWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("pv");
@@ -131,7 +131,7 @@ describe("chargement d'un sanitaire_*", () => {
         sorte: "cuvette",
       }),
     ]);
-    const s = handle.sanitaires[0]!;
+    const s = handle.sanitaires[0];
     // Origine au coin (3, 1, -2), boîte (0.6, 0.8, 0.7) -> centre monde (3.3, 1.4, -1.65), bas = y minimal (1).
     expect(s.jetOrigin.x).toBeCloseTo(3.3, 5);
     expect(s.jetOrigin.y).toBeCloseTo(1, 5);
@@ -160,7 +160,7 @@ describe("mergeSanitaireDecor — un lot par matériau pour tout le niveau", () 
     const bottomY = at.y - 0.5;
     return {
       name,
-      mesh: mesh as THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>,
+      mesh: mesh,
       collider: { handle: nextFakeHandle++ } as never,
       body: {} as never,
       kind: "cuvette",
@@ -181,10 +181,10 @@ describe("mergeSanitaireDecor — un lot par matériau pour tout le niveau", () 
     const result = mergeSanitaireDecor(root, [a, b]);
     expect(result.batchCount).toBe(1);
     expect(result.sanitaires).toHaveLength(2);
-    expect(result.sanitaires[0]!.batchGeometry).toBe(result.sanitaires[1]!.batchGeometry);
+    expect(result.sanitaires[0].batchGeometry).toBe(result.sanitaires[1].batchGeometry);
     const [sa, sb] = result.sanitaires;
-    expect(sa!.vertexStart).toBe(0);
-    expect(sb!.vertexStart).toBe(sa!.vertexCount);
+    expect(sa.vertexStart).toBe(0);
+    expect(sb.vertexStart).toBe(sa.vertexCount);
   });
 
   it("un sanitaire seul de son matériau reste sur sa propre géométrie (passthrough)", () => {
@@ -193,11 +193,11 @@ describe("mergeSanitaireDecor — un lot par matériau pour tout le niveau", () 
     const a = candidate("sanitaire_seul", new THREE.Vector3(0, 1, 0));
     const result = mergeSanitaireDecor(root, [a]);
     expect(result.batchCount).toBe(0);
-    expect(result.sanitaires[0]!.batchGeometry).toBe(a.mesh.geometry);
+    expect(result.sanitaires[0].batchGeometry).toBe(a.mesh.geometry);
     // Resté seul, c'est son propre mesh qui est élagué par distance.
     expect(result.rendus).toHaveLength(1);
-    expect(result.rendus[0]!.object).toBe(a.mesh);
-    expect(result.rendus[0]!.position.distanceTo(new THREE.Vector3(0, 1, 0))).toBeLessThan(1e-6);
+    expect(result.rendus[0].object).toBe(a.mesh);
+    expect(result.rendus[0].position.distanceTo(new THREE.Vector3(0, 1, 0))).toBeLessThan(1e-6);
   });
 
   it("expose le lot RENDU et son centre monde, pour l'élagage par distance", () => {
@@ -210,8 +210,8 @@ describe("mergeSanitaireDecor — un lot par matériau pour tout le niveau", () 
 
     const result = mergeSanitaireDecor(root, [a, b]);
     expect(result.rendus).toHaveLength(1);
-    expect(result.rendus[0]!.object.name).toMatch(/^sanitaire_fusion_/);
-    expect(result.rendus[0]!.position.distanceTo(new THREE.Vector3(61, 1, -15))).toBeLessThan(1e-6);
+    expect(result.rendus[0].object.name).toMatch(/^sanitaire_fusion_/);
+    expect(result.rendus[0].position.distanceTo(new THREE.Vector3(61, 1, -15))).toBeLessThan(1e-6);
   });
 });
 
@@ -226,7 +226,7 @@ describe("SanitaireSystem — casse par PV (tir du joueur)", () => {
       }),
     ]);
     const sanitaires = new SanitaireSystem(handle.sanitaires);
-    const colliderHandle = handle.sanitaires[0]!.collider.handle;
+    const colliderHandle = handle.sanitaires[0].collider.handle;
     const accumulatedFrameHits = [hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))];
 
     sanitaires.update(accumulatedFrameHits);
@@ -273,9 +273,9 @@ describe("SanitaireSystem — casse par PV (tir du joueur)", () => {
       expect(position.getZ(a.vertexStart + i)).toBeCloseTo(a.localCenter.z, 5);
     }
     for (let i = 0; i < b.vertexCount; i++) {
-      expect(position.getX(b.vertexStart + i)).toBeCloseTo(bBefore[i]![0]!, 5);
-      expect(position.getY(b.vertexStart + i)).toBeCloseTo(bBefore[i]![1]!, 5);
-      expect(position.getZ(b.vertexStart + i)).toBeCloseTo(bBefore[i]![2]!, 5);
+      expect(position.getX(b.vertexStart + i)).toBeCloseTo(bBefore[i][0], 5);
+      expect(position.getY(b.vertexStart + i)).toBeCloseTo(bBefore[i][1], 5);
+      expect(position.getZ(b.vertexStart + i)).toBeCloseTo(bBefore[i][2], 5);
     }
   });
 
@@ -287,7 +287,7 @@ describe("SanitaireSystem — casse par PV (tir du joueur)", () => {
       }),
     ]);
     const sanitaires = new SanitaireSystem(handle.sanitaires);
-    const colliderHandle = handle.sanitaires[0]!.collider.handle;
+    const colliderHandle = handle.sanitaires[0].collider.handle;
     sanitaires.update([hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))]);
     sanitaires.clearFrameEvents();
     sanitaires.update([hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))]);
@@ -302,7 +302,7 @@ describe("SanitaireSystem — casse par PV (tir du joueur)", () => {
       }),
     ]);
     const sanitaires = new SanitaireSystem(handle.sanitaires);
-    const colliderHandle = handle.sanitaires[0]!.collider.handle;
+    const colliderHandle = handle.sanitaires[0].collider.handle;
     for (let i = 0; i < 50; i++) sanitaires.update([hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))]);
     expect(sanitaires.intactCount).toBe(1);
   });
@@ -316,15 +316,21 @@ describe("SanitaireSystem — tir ENNEMI (effet Duke Nukem)", () => {
       }),
     ]);
     const sanitaires = new SanitaireSystem(handle.sanitaires);
-    const collider = handle.sanitaires[0]!.collider;
+    const collider = handle.sanitaires[0].collider;
 
-    const cassee = sanitaires.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1));
+    const cassee = sanitaires.tryBreakByColliderHandle(
+      collider.handle,
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1),
+    );
     expect(cassee).toBe(true);
     expect(sanitaires.destroyedEvents).toHaveLength(1);
     expect(collider.isEnabled()).toBe(false);
 
     // Idempotent : une deuxième tentative sur le même sanitaire échoue proprement.
-    expect(sanitaires.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(), new THREE.Vector3(0, 0, 1))).toBe(false);
+    expect(sanitaires.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(), new THREE.Vector3(0, 0, 1))).toBe(
+      false,
+    );
   });
 
   it("un collider inconnu (mur, prop) ne casse rien", () => {
@@ -362,7 +368,7 @@ describe("SanitaireSystem — harnais de console/test (destroyByName)", () => {
     const sanitaires = new SanitaireSystem(handle.sanitaires);
     expect(sanitaires.describe()).toEqual([{ name: "sanitaire_a", kind: "urinoir", hp: 10, maxHp: 10, broken: false }]);
     sanitaires.destroyByName("sanitaire_a");
-    expect(sanitaires.describe()[0]!.broken).toBe(true);
+    expect(sanitaires.describe()[0].broken).toBe(true);
   });
 });
 
@@ -386,7 +392,7 @@ describe("SanitaireSystem — resolveAim (neartag de visée, ADR 0032 section «
   it("sanitaire INTACT touché en premier par le rayon (worldHit = son propre collider) : gagne, sans regarder la géométrie du jet", () => {
     const { handle } = build([unSanitaire()]);
     const sanitaires = new SanitaireSystem(handle.sanitaires);
-    const collider = handle.sanitaires[0]!.collider;
+    const collider = handle.sanitaires[0].collider;
 
     const aimed = sanitaires.resolveAim(eyeOrigin, direction, 6, { colliderHandle: collider.handle, distance: 1.23 });
     expect(aimed).toEqual({ name: "sanitaire_a", kind: "cuvette", broken: false });
@@ -493,9 +499,9 @@ describe("SanitaireSystem — jets d'eau actifs (activeJets)", () => {
 
     sanitaires.destroyByName("sanitaire_a");
     expect(sanitaires.activeJets).toHaveLength(1);
-    expect(sanitaires.activeJets[0]!.name).toBe("sanitaire_a");
-    expect(sanitaires.activeJets[0]!.kind).toBe("cuvette");
-    expect(sanitaires.activeJets[0]!.origin.y).toBeCloseTo(0, 5); // bas de la bbox, posée à y=0
+    expect(sanitaires.activeJets[0].name).toBe("sanitaire_a");
+    expect(sanitaires.activeJets[0].kind).toBe("cuvette");
+    expect(sanitaires.activeJets[0].origin.y).toBeCloseTo(0, 5); // bas de la bbox, posée à y=0
   });
 });
 
@@ -514,7 +520,7 @@ describe("SanitaireSystem — collectActiveJetOrigins (lecture sans allocation, 
     sanitaires.destroyByName("sanitaire_a");
     sanitaires.collectActiveJetOrigins(out);
     expect(out).toHaveLength(1);
-    expect(out[0]!.x).toBeCloseTo(0.3, 5); // bas-centre de la bbox (origine = coin, taille 0.6 en x)
+    expect(out[0].x).toBeCloseTo(0.3, 5); // bas-centre de la bbox (origine = coin, taille 0.6 en x)
 
     sanitaires.destroyByName("sanitaire_b");
     sanitaires.collectActiveJetOrigins(out);

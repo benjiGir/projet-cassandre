@@ -15,7 +15,12 @@ export type ScriptAction =
   | { readonly kind: "verrouiller"; readonly portes: readonly string[] }
   /** Rend ces `door_*` à leur état d'avant le verrou. */
   | { readonly kind: "deverrouiller"; readonly portes: readonly string[] }
-  | { readonly kind: "train"; readonly voie: string; readonly commande: "enable" | "disable" | "pass" | "stop" | "switch"; readonly trajet?: string };
+  | {
+      readonly kind: "train";
+      readonly voie: string;
+      readonly commande: "enable" | "disable" | "pass" | "stop" | "switch";
+      readonly trajet?: string;
+    };
 
 /** Attente d'une étape : un groupe réveillé doit être tombé. */
 export interface ScriptGate {
@@ -77,9 +82,12 @@ export function isGroupDown(state: LevelScriptState, groupe: string): boolean {
 
 function contains(trigger: ScriptTrigger, p: { readonly x: number; readonly y: number; readonly z: number }): boolean {
   return (
-    p.x >= trigger.min.x && p.x <= trigger.max.x &&
-    p.y >= trigger.min.y && p.y <= trigger.max.y &&
-    p.z >= trigger.min.z && p.z <= trigger.max.z
+    p.x >= trigger.min.x &&
+    p.x <= trigger.max.x &&
+    p.y >= trigger.min.y &&
+    p.y <= trigger.max.y &&
+    p.z >= trigger.min.z &&
+    p.z <= trigger.max.z
   );
 }
 
@@ -105,10 +113,10 @@ export function updateLevelScript(
   }
 
   for (let i = state.running.length - 1; i >= 0; i--) {
-    const scenario = state.running[i]!;
+    const scenario = state.running[i];
     scenario.elapsed += dt;
     while (scenario.next < scenario.steps.length) {
-      const step = scenario.steps[scenario.next]!;
+      const step = scenario.steps[scenario.next];
       if (step.apres && !scenario.gateOpen) {
         if (!isGroupDown(state, step.apres.groupe) && scenario.waited < step.apres.auPlusTard) {
           scenario.waited += dt;

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import { allocateEntityId, type Entity } from "../shared/entity";
@@ -105,7 +105,7 @@ export class Suit implements Entity {
   }
 
   get state(): SuitState {
-    return this.actor.getSnapshot().value as SuitState;
+    return this.actor.getSnapshot().value;
   }
   set state(next: SuitState) {
     this.actor = forceEnemyState(this.actor, next);

@@ -65,7 +65,15 @@ export function startLoop(callbacks: LoopCallbacks) {
     const alpha = accumulator / FIXED_DT;
     const renderStart = performance.now();
     callbacks.interpolateVisuals(alpha);
-    callbacks.updateFx(frameTime, { steps, accumulator, alpha, gameplayMs, gameplayP95Ms, physicsMs, renderMs: lastRenderMs });
+    callbacks.updateFx(frameTime, {
+      steps,
+      accumulator,
+      alpha,
+      gameplayMs,
+      gameplayP95Ms,
+      physicsMs,
+      renderMs: lastRenderMs,
+    });
     callbacks.render();
     lastRenderMs = performance.now() - renderStart;
 

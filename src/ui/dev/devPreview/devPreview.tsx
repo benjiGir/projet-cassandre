@@ -83,9 +83,20 @@ function seedHudState() {
     { id: 4, pseudo: "definitivement_humain", text: "ce magasin est très bien noté par ses clients", kind: "message" },
     { id: 5, pseudo: "pixel_baveux", text: "c'est quel jeu ?", kind: "message" },
   ]);
-  state.showDonation({ pseudo: "premier_abonne", amount: 50, text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.", mystery: true });
+  state.showDonation({
+    pseudo: "premier_abonne",
+    amount: 50,
+    text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.",
+    mystery: true,
+  });
   state.setCards(["argent", "or"]);
-  state.setPerkOffer({ key: "E", label: "Gilet Alu-Tactique", effect: "PV maximum augmentés", price: 100, sold: false });
+  state.setPerkOffer({
+    key: "E",
+    label: "Gilet Alu-Tactique",
+    effect: "PV maximum augmentés",
+    price: 100,
+    sold: false,
+  });
   state.showHudMessage("Porte déverrouillée");
   state.showHeroLine("Ils ne veulent pas que vous voyiez ça. Moi je filme.");
 }
@@ -125,16 +136,26 @@ export function maybeRenderDevPreview(root: Root): boolean {
     case "levelComplete":
       useGameStore.setState({ flowState: "levelComplete" });
       useGameStore.getState().setDebug({ views: 612044 });
-      useGameStore.getState().setLiveRecap({ peakViewers: 612044, followers: 15501, followersGained: 15301, donations: 262, donationCount: 19 });
+      useGameStore.getState().setLiveRecap({
+        peakViewers: 612044,
+        followers: 15501,
+        followersGained: 15301,
+        donations: 262,
+        donationCount: 19,
+      });
       useGameStore.getState().setSecretsTotal(2);
       useGameStore.getState().incrementSecretsFound();
       root.render(<LevelCompleteScreen onReplay={noop} onReturnToMenu={noop} />);
       break;
     case "storyIntro":
-      root.render(<StoryPanels panels={levelStory("niveau_v2")?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />);
+      root.render(
+        <StoryPanels panels={levelStory("niveau_v2")?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />,
+      );
       break;
     case "storyOutro":
-      root.render(<StoryPanels panels={levelStory("niveau_v2")?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />);
+      root.render(
+        <StoryPanels panels={levelStory("niveau_v2")?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />,
+      );
       break;
     case "loading":
       beginLoading("Chargement du niveau", 0.47);

@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 import {
   INTERNAL_HEIGHT,
@@ -23,10 +23,30 @@ export interface ResolutionPreset {
 }
 
 export const RESOLUTION_PRESETS: readonly ResolutionPreset[] = [
-  { id: "origine", width: INTERNAL_WIDTH, height: INTERNAL_HEIGHT, label: `${INTERNAL_WIDTH}×${INTERNAL_HEIGHT} — résolution d'origine du jeu` },
-  { id: "x1.5", width: INTERNAL_WIDTH * 1.5, height: INTERNAL_HEIGHT * 1.5, label: `${INTERNAL_WIDTH * 1.5}×${INTERNAL_HEIGHT * 1.5}` },
-  { id: "x2", width: INTERNAL_WIDTH * 2, height: INTERNAL_HEIGHT * 2, label: `${INTERNAL_WIDTH * 2}×${INTERNAL_HEIGHT * 2}` },
-  { id: "x2.5", width: INTERNAL_WIDTH * 2.5, height: INTERNAL_HEIGHT * 2.5, label: `${INTERNAL_WIDTH * 2.5}×${INTERNAL_HEIGHT * 2.5}` },
+  {
+    id: "origine",
+    width: INTERNAL_WIDTH,
+    height: INTERNAL_HEIGHT,
+    label: `${INTERNAL_WIDTH}×${INTERNAL_HEIGHT} — résolution d'origine du jeu`,
+  },
+  {
+    id: "x1.5",
+    width: INTERNAL_WIDTH * 1.5,
+    height: INTERNAL_HEIGHT * 1.5,
+    label: `${INTERNAL_WIDTH * 1.5}×${INTERNAL_HEIGHT * 1.5}`,
+  },
+  {
+    id: "x2",
+    width: INTERNAL_WIDTH * 2,
+    height: INTERNAL_HEIGHT * 2,
+    label: `${INTERNAL_WIDTH * 2}×${INTERNAL_HEIGHT * 2}`,
+  },
+  {
+    id: "x2.5",
+    width: INTERNAL_WIDTH * 2.5,
+    height: INTERNAL_HEIGHT * 2.5,
+    label: `${INTERNAL_WIDTH * 2.5}×${INTERNAL_HEIGHT * 2.5}`,
+  },
 ];
 
 export interface GraphicsSettings {
@@ -73,7 +93,10 @@ function loadPersisted(): GraphicsSettings {
     return {
       filtrage: isFiltrage(parsed.filtrage) ? parsed.filtrage : FACTORY_DEFAULTS.filtrage,
       resolution: isResolutionId(parsed.resolution) ? parsed.resolution : FACTORY_DEFAULTS.resolution,
-      fovBase: typeof parsed.fovBase === "number" && Number.isFinite(parsed.fovBase) ? parsed.fovBase : FACTORY_DEFAULTS.fovBase,
+      fovBase:
+        typeof parsed.fovBase === "number" && Number.isFinite(parsed.fovBase)
+          ? parsed.fovBase
+          : FACTORY_DEFAULTS.fovBase,
       shakeIntensity:
         typeof parsed.shakeIntensity === "number" && Number.isFinite(parsed.shakeIntensity)
           ? Math.max(0, Math.min(SHAKE_SCALE_MAX, parsed.shakeIntensity))
@@ -130,7 +153,11 @@ interface RenderTarget {
 /** `null` tant qu'aucun moteur n'est construit (menu principal, avant `buildGameEngine`) — voir `registerRenderTarget`. */
 let renderTarget: RenderTarget | null = null;
 
-export function registerRenderTarget(scene: THREE.Object3D, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer): void {
+export function registerRenderTarget(
+  scene: THREE.Object3D,
+  camera: THREE.PerspectiveCamera,
+  renderer: THREE.WebGLRenderer,
+): void {
   renderTarget = { scene, camera, renderer };
   applyRenderSettings(current, scene, camera, renderer);
 }

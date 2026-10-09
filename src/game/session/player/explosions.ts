@@ -4,8 +4,8 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import { hasClearWorldPath } from "../../entities/shared/enemyPerception";
 import { blastDamageAt, explosionConfig } from "../../level/props/propConfig";
 import { useGameStore } from "../../hud/state";
-import { type GameEngine } from "../gameEngine";
-import { type GameSession } from "../gameSession";
+import type { GameEngine } from "../gameEngine";
+import type { GameSession } from "../gameSession";
 import { applyPlayerDamage } from "./feedback";
 
 // Le souffle d'un prop `gaz` sur les vivants. `PropSystem` s'occupe des

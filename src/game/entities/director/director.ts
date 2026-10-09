@@ -1,7 +1,7 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
-import { type LoyaltyCard } from "../../player/loyaltyCards";
+import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PhysicsWorld } from "../../../physics/world";
 import { allocateEntityId, type Entity } from "../shared/entity";
 import { directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
@@ -104,7 +104,7 @@ export class Director implements Entity {
 
   /** État courant — voir la doc identique dans `suit.ts` (`Suit.state`) pour la justification du setter (filet de test de caractérisation, `forceEnemyState`). */
   get state(): DirectorState {
-    return this.actor.getSnapshot().value as DirectorState;
+    return this.actor.getSnapshot().value;
   }
   set state(next: DirectorState) {
     this.actor = forceEnemyState(this.actor, next);

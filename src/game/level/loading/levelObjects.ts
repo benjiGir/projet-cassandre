@@ -141,10 +141,11 @@ export function buildVitreCandidateEffect(
     if (extras.matiere !== undefined && extras.matiere !== null && extras.matiere !== "") {
       const parsed = parsePropMaterial(extras.matiere);
       if (parsed) matiere = parsed;
-      else console.error(
-        `[level] "${name}" (vitre_*) : propriété "matiere" = "${String(extras.matiere)}" ` +
-        `inconnue (${PROP_MATERIALS.join(", ")}) — défaut "verre".`,
-      );
+      else
+        console.error(
+          `[level] "${name}" (vitre_*) : propriété "matiere" = "${String(extras.matiere)}" ` +
+            `inconnue (${PROP_MATERIALS.join(", ")}) — défaut "verre".`,
+        );
     }
 
     const material = mesh.material as THREE.MeshLambertMaterial;
@@ -183,7 +184,6 @@ export function buildVitreCandidateEffect(
         ),
         body,
       );
-
     }
 
     return {
@@ -393,7 +393,10 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
     const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
     const cameras =
       typeof extras.cameras === "string"
-        ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
+        ? extras.cameras
+            .split(",")
+            .map((c) => c.trim())
+            .filter((c) => c.length > 0)
         : null;
     const sells = yield* readPerkOffer(name, extras.perk, extras.prix);
 
@@ -414,7 +417,21 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, aliment, cameras, sells, extras };
+    return {
+      name,
+      object: mesh,
+      position,
+      range: USE_RANGE_METERS,
+      targetName,
+      grantsCard,
+      requiresCard,
+      heals,
+      ammo,
+      aliment,
+      cameras,
+      sells,
+      extras,
+    };
   });
 }
 

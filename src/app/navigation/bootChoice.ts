@@ -58,12 +58,15 @@ export function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise
 
 export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<SessionStart> {
   const levelParam = new URLSearchParams(window.location.search).get("level");
-  if (levelParam) return resolveLevelChoice(root).then((choice) => {
-    const profile = new URLSearchParams(window.location.search).get("campaignProfile");
-    const arrival = import.meta.env.DEV && (profile === "type" || profile === "pauvre" || profile === "riche")
-      ? metroArrival(getDifficulty(), profile) : undefined;
-    return { choice, entry: { mode: "dev", arrival } };
-  });
+  if (levelParam)
+    return resolveLevelChoice(root).then((choice) => {
+      const profile = new URLSearchParams(window.location.search).get("campaignProfile");
+      const arrival =
+        import.meta.env.DEV && (profile === "type" || profile === "pauvre" || profile === "riche")
+          ? metroArrival(getDifficulty(), profile)
+          : undefined;
+      return { choice, entry: { mode: "dev", arrival } };
+    });
 
   return new Promise((resolve) => {
     function showMainMenu() {
@@ -72,11 +75,15 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
       root.render(
         createElement(MainMenu, {
           onPlay: () => showDifficulty(MAIN_LEVEL, "new-game"),
-          onContinue: arrival ? () => resolve({ choice: metroLevel(), entry: { mode: "continue", arrival } }) : undefined,
+          onContinue: arrival
+            ? () => resolve({ choice: metroLevel(), entry: { mode: "continue", arrival } })
+            : undefined,
           onChooseLevel: showLevels,
           onReplayIntro: intro
             ? () => {
-                root.render(createElement(StoryPanels, { panels: intro, doneLabel: "RETOUR AU MENU", onDone: showMainMenu }));
+                root.render(
+                  createElement(StoryPanels, { panels: intro, doneLabel: "RETOUR AU MENU", onDone: showMainMenu }),
+                );
               }
             : undefined,
           onOptions: () => {
@@ -94,19 +101,31 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
     }
     function showLevels() {
       const unlocked = campaignArrival() !== null;
-      root.render(createElement(LevelSelectScreen, {
-        options: [
-          { id: MAIN_LEVEL.id, label: "Hyper Varan", description: "Le premier direct. Départ sans arme ni amélioration.", locked: false },
-          { id: METRO_LEVEL_ID, label: "Le métro — pilote", description: unlocked
-            ? "Quai et trains en chantier. Équipement type, trois armes et 40 €."
-            : "Terminez Hyper Varan pour débloquer ce direct.", locked: !unlocked },
-        ],
-        onChoose: (id) => {
-          if (id === MAIN_LEVEL.id) showDifficulty(MAIN_LEVEL, "standalone");
-          else if (id === METRO_LEVEL_ID && unlocked) showDifficulty(metroLevel(), "standalone");
-        },
-        onBack: showMainMenu,
-      }));
+      root.render(
+        createElement(LevelSelectScreen, {
+          options: [
+            {
+              id: MAIN_LEVEL.id,
+              label: "Hyper Varan",
+              description: "Le premier direct. Départ sans arme ni amélioration.",
+              locked: false,
+            },
+            {
+              id: METRO_LEVEL_ID,
+              label: "Le métro — pilote",
+              description: unlocked
+                ? "Quai et trains en chantier. Équipement type, trois armes et 40 €."
+                : "Terminez Hyper Varan pour débloquer ce direct.",
+              locked: !unlocked,
+            },
+          ],
+          onChoose: (id) => {
+            if (id === MAIN_LEVEL.id) showDifficulty(MAIN_LEVEL, "standalone");
+            else if (id === METRO_LEVEL_ID && unlocked) showDifficulty(metroLevel(), "standalone");
+          },
+          onBack: showMainMenu,
+        }),
+      );
     }
 
     function showDifficulty(choice: LevelDef, mode: "new-game" | "standalone") {

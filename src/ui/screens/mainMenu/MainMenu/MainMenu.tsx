@@ -21,12 +21,7 @@ export interface MainMenuProps {
   devTools?: ReactNode;
 }
 
-const TICKER_ITEMS = [
-  "SIGNAL NON AUTORISÉ",
-  "200 ABONNÉS",
-  "NE COUPEZ PAS LA DIFFUSION",
-  "ILS SURVEILLENT CE CANAL",
-];
+const TICKER_ITEMS = ["SIGNAL NON AUTORISÉ", "200 ABONNÉS", "NE COUPEZ PAS LA DIFFUSION", "ILS SURVEILLENT CE CANAL"];
 
 // see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
 export function MainMenu({ onPlay, onContinue, onChooseLevel, onOptions, onReplayIntro, devTools }: MainMenuProps) {
@@ -57,13 +52,19 @@ export function MainMenu({ onPlay, onContinue, onChooseLevel, onOptions, onRepla
           </p>
         ) : (
           <div className={styles.actions}>
-            {onContinue && <Button size="large" variant="primary" icon="▶" onClick={onContinue}>
-              CONTINUER — MÉTRO
-            </Button>}
+            {onContinue && (
+              <Button size="large" variant="primary" icon="▶" onClick={onContinue}>
+                CONTINUER — MÉTRO
+              </Button>
+            )}
             <Button size="large" variant={onContinue ? "default" : "primary"} icon="▶" onClick={onPlay}>
               NOUVELLE PARTIE
             </Button>
-            {onChooseLevel && <Button size="large" icon="▶" onClick={onChooseLevel}>CHOISIR UN NIVEAU</Button>}
+            {onChooseLevel && (
+              <Button size="large" icon="▶" onClick={onChooseLevel}>
+                CHOISIR UN NIVEAU
+              </Button>
+            )}
             {onReplayIntro !== undefined && (
               <Button size="large" icon="▶" onClick={onReplayIntro}>
                 REVOIR L'INTRODUCTION

@@ -7,7 +7,7 @@ import { RaycastService } from "../../../physics/raycast";
 import { GROUP, interactionGroups } from "../../../physics/world";
 import { useGameStore } from "../../hud/state";
 import { showHudMessage, triggerHeroLine } from "./feedback";
-import { type GameSession } from "../gameSession";
+import type { GameSession } from "../gameSession";
 import { streamEvent } from "../stream/streamFeed";
 
 // see: docs/6-reference/notes-code-gameplay.md#progression-et-fin
@@ -52,7 +52,8 @@ export function relieveAtSanitaire(session: GameSession): void {
     return;
   }
 
-  const healed = Math.min(maxHp, session.playerHp + Math.round(maxHp * SANITAIRE_RELIEF_HEAL_FRACTION)) - session.playerHp;
+  const healed =
+    Math.min(maxHp, session.playerHp + Math.round(maxHp * SANITAIRE_RELIEF_HEAL_FRACTION)) - session.playerHp;
   session.playerHp += healed;
   session.heroPortrait.heal(session.playerHp, maxHp);
   useGameStore.getState().setPlayerHp(session.playerHp);

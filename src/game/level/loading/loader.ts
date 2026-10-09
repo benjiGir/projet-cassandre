@@ -98,7 +98,13 @@ function buildLevelResourceEffect(
     const movableRoots = new Set(
       nodes.filter((o) => {
         const n = blenderName(o);
-        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_") || n.startsWith("train_modele_") || n.startsWith("stage_voyage_");
+        return (
+          n.startsWith("door_") ||
+          n.startsWith("use_") ||
+          n.startsWith("prop_") ||
+          n.startsWith("train_modele_") ||
+          n.startsWith("stage_voyage_")
+        );
       }),
     );
     const animatedNodeNames = new Set(
@@ -164,9 +170,10 @@ function buildLevelResourceEffect(
         const quaternion = new THREE.Quaternion();
         obj.getWorldPosition(position);
         obj.getWorldQuaternion(quaternion);
-        const label = typeof (obj.userData as Record<string, unknown>).nom === "string"
-          ? ((obj.userData as Record<string, unknown>).nom as string)
-          : name;
+        const label =
+          typeof (obj.userData as Record<string, unknown>).nom === "string"
+            ? ((obj.userData as Record<string, unknown>).nom as string)
+            : name;
         cams.push({ name, position, quaternion, label });
         continue;
       }
@@ -296,7 +303,9 @@ function buildLevelResourceEffect(
     let trains: LevelTrains | null = null;
     if (trainData) {
       const meshes: THREE.Mesh[] = [];
-      trainData.model.traverse((obj) => { if (obj instanceof THREE.Mesh) meshes.push(obj); });
+      trainData.model.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) meshes.push(obj);
+      });
       mergeStaticDecor(trainData.model, meshes, resources);
       trainData.model.removeFromParent();
       trainData.model.visible = false;
@@ -417,7 +426,7 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
         restored = true;
         resource.root.visible = rootWasVisible;
         for (let i = 0; i < resource.bodies.length; i++) {
-          resource.bodies[i]!.setEnabled(enabledBodies[i]!);
+          resource.bodies[i].setEnabled(enabledBodies[i]);
         }
         restoreSuspension = null;
       };
@@ -437,7 +446,7 @@ export function buildLevelFromGltfEffect(
     return yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(
       Scope.provide(scope),
       Effect.map((resource) => toLevelHandle(resource, scope)),
-      Effect.onExit((exit) => Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void),
+      Effect.onExit((exit) => (Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void)),
     );
   });
 }

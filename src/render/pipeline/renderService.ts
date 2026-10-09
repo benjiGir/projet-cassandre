@@ -1,13 +1,9 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 import { Context, Effect, Layer } from "effect";
 
 // see: docs/6-reference/notes-code-rendu.md#frontiere-effect-et-temps
 export interface RenderServiceShape {
-  readonly render: (
-    renderer: THREE.WebGLRenderer,
-    scene: THREE.Scene,
-    camera: THREE.Camera,
-  ) => Effect.Effect<void>;
+  readonly render: (renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) => Effect.Effect<void>;
 }
 
 export class RenderService extends Context.Service<RenderService, RenderServiceShape>()(

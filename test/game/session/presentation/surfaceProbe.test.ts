@@ -41,7 +41,10 @@ describe("sonde du décor statique", () => {
   it("traverse le mobilier : un prop posé sur le sol ne reçoit pas la tache", () => {
     const physics = world();
     const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 0.5, 0));
-    physics.world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setCollisionGroups(COLLISION_GROUPS.PROP), body);
+    physics.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(0.5, 0.5, 0.5).setCollisionGroups(COLLISION_GROUPS.PROP),
+      body,
+    );
     physics.world.step();
     const probe = createStaticSurfaceProbe({ physics, gltfLevelSession: null });
 
@@ -54,7 +57,9 @@ describe("sonde du décor statique", () => {
       RAPIER.ColliderDesc.cuboid(1, 0.1, 1).setTranslation(0, 1, 0).setCollisionGroups(COLLISION_GROUPS.WORLD),
     );
     physics.world.step();
-    const level = { current: { doors: [{ collider: door }], vitres: [], sanitaires: [], props: [] } } as unknown as LevelSession;
+    const level = {
+      current: { doors: [{ collider: door }], vitres: [], sanitaires: [], props: [] },
+    } as unknown as LevelSession;
 
     const through = createStaticSurfaceProbe({ physics, gltfLevelSession: level });
     expect(through(new THREE.Vector3(0, 3, 0), DOWN, 5)?.point.y).toBeCloseTo(0);

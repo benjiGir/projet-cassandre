@@ -22,15 +22,34 @@ export class LevelTrains {
   private readonly center = new Vector3();
   private readonly forward = new Vector3();
 
-  constructor(private readonly root: THREE.Object3D, physics: PhysicsWorld, readonly data: TrainLevelData, resources: LevelResources) {
+  constructor(
+    private readonly root: THREE.Object3D,
+    physics: PhysicsWorld,
+    readonly data: TrainLevelData,
+    resources: LevelResources,
+  ) {
     this.system = new TrainSystem(data.lanes, this.config);
     this.presentation = new TrainPresentation(root, physics, data.model, resources.bodies);
-    this.beacons = new TrainBeacons(root, data.signals.filter(signal => signal.appearance === "feu"));
-    resources.onCleanup(() => { this.presentation.dispose(); this.beacons.dispose(); });
+    this.beacons = new TrainBeacons(
+      root,
+      data.signals.filter((signal) => signal.appearance === "feu"),
+    );
+    resources.onCleanup(() => {
+      this.presentation.dispose();
+      this.beacons.dispose();
+    });
     this.presentation.prepare(data.lanes.length * 2);
     for (const signal of data.signals) {
       if (signal.appearance !== "ecran") continue;
-      this.presentation.addDisplay(signal.position, signal.position, signal.yaw, [signal.lane], "TRAFIC — VOIE " + signal.lane, .5, true);
+      this.presentation.addDisplay(
+        signal.position,
+        signal.position,
+        signal.yaw,
+        [signal.lane],
+        `TRAFIC — VOIE ${signal.lane}`,
+        0.5,
+        true,
+      );
     }
   }
 
@@ -55,7 +74,9 @@ export class LevelTrains {
     this.presentation.updateFixed(this.system);
   }
 
-  get active(): boolean { return this.root.visible; }
+  get active(): boolean {
+    return this.root.visible;
+  }
 
   reset(): void {
     this.system.enqueue({ type: "reset" });
@@ -65,8 +86,8 @@ export class LevelTrains {
   crossed(position: THREE.Vector3): number {
     let completed = 0;
     for (let index = 0; index < this.data.crossings.length; index++) {
-      const crossing = this.data.crossings[index]!;
-      const route = this.data.lanes.find((lane) => lane.id === crossing.lane)!.routes[0]!;
+      const crossing = this.data.crossings[index];
+      const route = this.data.lanes.find((lane) => lane.id === crossing.lane)!.routes[0];
       crossing.box.getCenter(this.center);
       poseOnRoute(route, distanceAlongRoute(route, this.center), this.center, this.forward);
       const lateral = (position.x - this.center.x) * this.forward.z - (position.z - this.center.z) * this.forward.x;

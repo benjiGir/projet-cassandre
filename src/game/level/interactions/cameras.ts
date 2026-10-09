@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 import type { InputFrame } from "../../../core/input/inputTypes";
 
@@ -38,7 +38,7 @@ export class CameraViewSystem {
    * la console est introuvable (avertissement déjà émis par `loader.ts`). */
   get currentCam(): CamPoint | null {
     if (!this.activeNames) return null;
-    return this.byName.get(this.activeNames[this.index]!) ?? null;
+    return this.byName.get(this.activeNames[this.index]) ?? null;
   }
 
   get cameraIndex(): number {

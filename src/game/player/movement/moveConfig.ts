@@ -222,11 +222,7 @@ function saturate(t: number): number {
   return t < 0 ? 0 : t > 1 ? 1 : t;
 }
 
-export function bobIntensityTarget(
-  cfg: MoveConfig,
-  horizontalSpeed: number,
-  isGrounded: boolean,
-): number {
+export function bobIntensityTarget(cfg: MoveConfig, horizontalSpeed: number, isGrounded: boolean): number {
   if (!isGrounded) return 0;
   const span = cfg.runSpeed - cfg.bobSpeedFloor;
   if (span <= 0) return horizontalSpeed > cfg.bobSpeedFloor ? 1 : 0;

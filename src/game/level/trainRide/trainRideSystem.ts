@@ -12,7 +12,9 @@ export class TrainRideSystem {
 
   constructor(private readonly overrides: Partial<TrainRideConfig> = {}) {}
 
-  enqueue(command: TrainRideCommand): void { this.commands.push(command); }
+  enqueue(command: TrainRideCommand): void {
+    this.commands.push(command);
+  }
 
   private reset(): void {
     Object.assign(this.state, { phase: "boarding", elapsed: 0, distance: 0, speed: 0, remaining: 0 });
@@ -29,8 +31,8 @@ export class TrainRideSystem {
       else if (this.state.phase === "boarding" && aboard) {
         this.rules = { ...trainRideConfig, ...this.overrides };
         this.rules.duration = Math.max(10, this.rules.duration);
-        this.rules.acceleration = Math.max(.1, Math.min(this.rules.acceleration, this.rules.duration / 3));
-        this.rules.braking = Math.max(.1, Math.min(this.rules.braking, this.rules.duration / 3));
+        this.rules.acceleration = Math.max(0.1, Math.min(this.rules.acceleration, this.rules.duration / 3));
+        this.rules.braking = Math.max(0.1, Math.min(this.rules.braking, this.rules.duration / 3));
         this.state.phase = "closing";
         this.events.push("depart");
         departing = true;
@@ -39,7 +41,10 @@ export class TrainRideSystem {
     if (departing) return;
     if (this.state.phase === "boarding" || this.state.phase === "arrived") return;
     if (this.state.phase === "closing") {
-      if (!aboard) { this.reset(); return; }
+      if (!aboard) {
+        this.reset();
+        return;
+      }
       if (!doorsClosed) return;
       this.state.phase = "accelerating";
       this.state.elapsed = 0;
@@ -52,7 +57,7 @@ export class TrainRideSystem {
     if (t < a) {
       const u = t / a;
       this.state.speed = speed * (3 * u * u - 2 * u * u * u);
-      this.state.distance = speed * a * (u ** 3 - .5 * u ** 4);
+      this.state.distance = speed * a * (u ** 3 - 0.5 * u ** 4);
       this.state.phase = "accelerating";
     } else if (t < cruiseEnd) {
       this.state.speed = speed;
@@ -61,7 +66,7 @@ export class TrainRideSystem {
     } else {
       const u = (t - cruiseEnd) / b;
       this.state.speed = speed * (1 - 3 * u * u + 2 * u * u * u);
-      this.state.distance = speed * (a / 2 + cruiseEnd - a + b * (u - u ** 3 + .5 * u ** 4));
+      this.state.distance = speed * (a / 2 + cruiseEnd - a + b * (u - u ** 3 + 0.5 * u ** 4));
       this.state.phase = "braking";
     }
     if (!this.waveSent && t >= Math.min(this.rules.waveDelay, duration - b)) {
@@ -75,5 +80,7 @@ export class TrainRideSystem {
     }
   }
 
-  takeEvents(): TrainRideEvent[] { return this.events.splice(0); }
+  takeEvents(): TrainRideEvent[] {
+    return this.events.splice(0);
+  }
 }

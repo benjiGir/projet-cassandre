@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
@@ -116,7 +116,10 @@ function materialKey(mat: THREE.MeshLambertMaterial): string {
 }
 
 function computeNormalizedUV(uv: THREE.BufferAttribute, start: number, count: number): Float32Array {
-  let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+  let uMin = Infinity,
+    uMax = -Infinity,
+    vMin = Infinity,
+    vMax = -Infinity;
   for (let i = start; i < start + count; i++) {
     const u = uv.getX(i);
     const v = uv.getY(i);
@@ -151,7 +154,11 @@ function passthroughEcranInfo(candidate: EcranCandidate): EcranInfo {
   };
 }
 
-export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly EcranCandidate[], resources?: LevelResources): EcranMergeResult {
+export function mergeEcranDecor(
+  root: THREE.Object3D,
+  candidates: readonly EcranCandidate[],
+  resources?: LevelResources,
+): EcranMergeResult {
   const groups = new Map<string, EcranCandidate[]>();
   for (const candidate of candidates) {
     const key = materialKey(candidate.mesh.material);
@@ -167,7 +174,7 @@ export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly Ecran
 
   for (const group of groups.values()) {
     if (group.length < 2) {
-      ecrans.push(passthroughEcranInfo(group[0]!));
+      ecrans.push(passthroughEcranInfo(group[0]));
       continue;
     }
 
@@ -185,7 +192,7 @@ export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly Ecran
       continue;
     }
 
-    const batch = new THREE.Mesh(merged, group[0]!.mesh.material);
+    const batch = new THREE.Mesh(merged, group[0].mesh.material);
     batch.name = `ecran_fusion_${batchCount}`;
     root.add(batch);
     batch.updateMatrixWorld(true);
@@ -193,7 +200,7 @@ export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly Ecran
 
     let cursor = 0;
     for (let i = 0; i < group.length; i++) {
-      const candidate = group[i]!;
+      const candidate = group[i];
       const originalUv = candidate.mesh.geometry.getAttribute("uv") as THREE.BufferAttribute;
       const count = originalUv.count;
       ecrans.push({
@@ -289,7 +296,7 @@ export class EcranSystem {
 
   update(dtFixed: number, hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
@@ -347,12 +354,12 @@ export class EcranSystem {
  * courante — jamais la géométrie/position, voir la doc de tête. */
 function applyFrame(state: EcranState): void {
   const { info } = state;
-  const cellIndex = ECRAN_ATLAS[state.track][state.frameIndex]!;
+  const cellIndex = ECRAN_ATLAS[state.track][state.frameIndex];
   const { u0, v0 } = cellRect(cellIndex);
   const uv = info.batchGeometry.getAttribute("uv") as THREE.BufferAttribute;
   for (let i = 0; i < info.vertexCount; i++) {
-    const nu = info.normalizedUV[i * 2]!;
-    const nv = info.normalizedUV[i * 2 + 1]!;
+    const nu = info.normalizedUV[i * 2];
+    const nv = info.normalizedUV[i * 2 + 1];
     uv.setXY(info.vertexStart + i, u0 + nu * CELL_UV, v0 + nv * CELL_UV);
   }
   uv.needsUpdate = true;

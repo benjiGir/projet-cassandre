@@ -10,18 +10,24 @@ import { cleanExtras } from "./levelExtras";
 // Conversion des matériaux glTF vers le rendu rétro.
 // see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
 
-function toLambert(mat: THREE.Material, hasVertexColors: boolean, resources: LevelResources): THREE.MeshLambertMaterial {
+function toLambert(
+  mat: THREE.Material,
+  hasVertexColors: boolean,
+  resources: LevelResources,
+): THREE.MeshLambertMaterial {
   const src = mat as THREE.MeshStandardMaterial;
-  const lambert = resources.material(new THREE.MeshLambertMaterial({
-    color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
-    map: src.map ?? null,
-    transparent: src.transparent,
-    opacity: src.opacity,
-    side: src.side,
-    alphaTest: src.alphaTest,
-    vertexColors: hasVertexColors,
-    // Le décor Lambert ignore les cartes PBR ; les effets TSL sont posés ensuite.
-  }));
+  const lambert = resources.material(
+    new THREE.MeshLambertMaterial({
+      color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
+      map: src.map ?? null,
+      transparent: src.transparent,
+      opacity: src.opacity,
+      side: src.side,
+      alphaTest: src.alphaTest,
+      vertexColors: hasVertexColors,
+      // Le décor Lambert ignore les cartes PBR ; les effets TSL sont posés ensuite.
+    }),
+  );
   lambert.name = mat.name;
   illuminateDoorControlPanel(lambert);
   illuminateVendingMachine(lambert, src);

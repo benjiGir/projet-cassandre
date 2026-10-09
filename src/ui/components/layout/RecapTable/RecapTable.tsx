@@ -1,4 +1,4 @@
-import { type LevelRecap } from "../../../../game/hud/hudTypes";
+import type { LevelRecap } from "../../../../game/hud/hudTypes";
 import { cx, cssVars } from "../../../lib/styleHelpers";
 import { formatPoints } from "../../../lib/format";
 import styles from "./RecapTable.module.css";

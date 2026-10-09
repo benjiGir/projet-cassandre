@@ -65,7 +65,7 @@ describe("buildLevelFromGltf (jalon M2) — chemin heureux", () => {
     const bodies: RAPIER.RigidBody[] = [];
     physics.world.forEachRigidBody((body) => bodies.push(body));
     expect(bodies.length).toBeGreaterThan(0);
-    bodies[0]!.setEnabled(false);
+    bodies[0].setEnabled(false);
 
     const restore = handle.suspend();
     expect(handle.root.visible).toBe(false);
@@ -74,7 +74,7 @@ describe("buildLevelFromGltf (jalon M2) — chemin heureux", () => {
     restore();
     restore();
     expect(handle.root.visible).toBe(true);
-    expect(bodies[0]!.isEnabled()).toBe(false);
+    expect(bodies[0].isEnabled()).toBe(false);
     expect(bodies.slice(1).every((body) => body.isEnabled())).toBe(true);
 
     handle.dispose();
@@ -212,7 +212,9 @@ describe("buildLevelFromGltf (jalon M2) — les 7 cas de dégradation", () => {
     const { handle } = build([player, mesh]);
 
     expect(handle.stats.colliderCount).toBe(0);
-    expect(errorSpy).toHaveBeenCalledWith('[level] "col_mesh_empty" (col_*) sans géométrie valide — aucun collider créé.');
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[level] "col_mesh_empty" (col_*) sans géométrie valide — aucun collider créé.',
+    );
   });
 
   it("col_* (col_mesh_*) avec 0 triangle : MissingColliderGeometryError, pas de collider", () => {

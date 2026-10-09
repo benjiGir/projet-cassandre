@@ -51,10 +51,11 @@ const NIVEAU_V2: LevelStory = {
       "« Votre vidéo ne respecte pas nos règles. » Démonétisée.",
       "Ils ont peur. C'est la preuve que j'ai raison.",
     ]),
-    panel("outro_4", "La chambre dans le noir, un cadenas à l'écran, une ficelle rouge tendue vers une tour de verre.", [
-      "Chaîne suspendue. Revenus retenus.",
-      "Un dernier don, signé de la plateforme : « Merci pour le contenu. »",
-    ]),
+    panel(
+      "outro_4",
+      "La chambre dans le noir, un cadenas à l'écran, une ficelle rouge tendue vers une tour de verre.",
+      ["Chaîne suspendue. Revenus retenus.", "Un dernier don, signé de la plateforme : « Merci pour le contenu. »"],
+    ),
   ],
 };
 

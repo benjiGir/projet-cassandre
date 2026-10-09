@@ -16,6 +16,12 @@
     ".codex",
     "**/*.md",
     "pnpm-lock.yaml",
-    "skills-lock.json"
+    "skills-lock.json",
+    // Contrat avec tools/blender/validate_level.py : ces fichiers sont lus par expression régulière
+    // (une entrée = une ligne). Les reformater casse le validateur de niveau ; voir
+    // test/game/session/progression/levelScriptSetup.test.ts.
+    "src/game/session/presentation/heroLines.ts",
+    "src/game/session/progression/levelEvents.ts",
+    "src/game/level/trains/metroTrainEvents.ts"
   ]
 }

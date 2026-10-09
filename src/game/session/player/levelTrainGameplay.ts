@@ -16,17 +16,32 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
   if (!trains?.active) return;
   trains.fixed(dt, session.player.position);
   for (const message of trains.system.takeFeedback()) showHudMessage(message);
-  let suitKills = 0, directorKills = 0;
+  let suitKills = 0,
+    directorKills = 0;
   for (const suit of session.suitManager.suits) {
-    if (!suit.isAlive || !trains.system.touches({ position: suit.position,
-      previous: suit.interpolatedPosition(0, previousEnemy), radius: suit.cfg.capsuleRadius,
-      halfHeight: suit.cfg.capsuleHalfHeight + suit.cfg.capsuleRadius })) continue;
+    if (
+      !suit.isAlive ||
+      !trains.system.touches({
+        position: suit.position,
+        previous: suit.interpolatedPosition(0, previousEnemy),
+        radius: suit.cfg.capsuleRadius,
+        halfHeight: suit.cfg.capsuleHalfHeight + suit.cfg.capsuleRadius,
+      })
+    )
+      continue;
     if (session.suitManager.debugKill(suit)) suitKills++;
   }
   for (const director of session.directorManager.directors) {
-    if (!director.isAlive || !trains.system.touches({ position: director.position,
-      previous: director.previousPosition, radius: directorConfig.capsuleRadius,
-      halfHeight: directorConfig.capsuleHalfHeight + directorConfig.capsuleRadius })) continue;
+    if (
+      !director.isAlive ||
+      !trains.system.touches({
+        position: director.position,
+        previous: director.previousPosition,
+        radius: directorConfig.capsuleRadius,
+        halfHeight: directorConfig.capsuleHalfHeight + directorConfig.capsuleRadius,
+      })
+    )
+      continue;
     if (session.directorManager.debugKill(director)) directorKills++;
   }
   recordSuitKills(session.stats, suitKills);
@@ -40,8 +55,14 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
     showHudMessage("Ennemi fauché par une rame");
   }
   if (session.playerHp <= 0) return;
-  if (trains.system.touches({ position: session.player.position, previous: session.player.previousPosition,
-    radius: moveConfig.capsuleRadius, halfHeight: moveConfig.capsuleHalfHeight + moveConfig.capsuleRadius })) {
+  if (
+    trains.system.touches({
+      position: session.player.position,
+      previous: session.player.previousPosition,
+      radius: moveConfig.capsuleRadius,
+      halfHeight: moveConfig.capsuleHalfHeight + moveConfig.capsuleRadius,
+    })
+  ) {
     showHudMessage("Fauché par une rame");
     applyPlayerDamage(engine, session, session.playerHp, undefined, "train");
     return;

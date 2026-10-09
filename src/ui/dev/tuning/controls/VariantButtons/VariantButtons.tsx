@@ -4,7 +4,11 @@ export interface VariantButtonsProps<N extends string> {
   label?: (name: N) => string;
 }
 
-export function VariantButtons<N extends string>({ names, onApply, label = (name) => `Variante ${name}` }: VariantButtonsProps<N>) {
+export function VariantButtons<N extends string>({
+  names,
+  onApply,
+  label = (name) => `Variante ${name}`,
+}: VariantButtonsProps<N>) {
   return (
     <>
       {names.map((name) => (

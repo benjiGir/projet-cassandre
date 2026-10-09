@@ -11,8 +11,13 @@ const DT = 1 / 60;
 const aucune: ReadonlySet<HeroLineId> = new Set();
 const lignes = new Map<string, HeroLineId>([...Object.entries(PLACE_LINES), ["trig_lieu_surgeles", "surgeles"]]);
 
-function attendre(state: ReturnType<typeof createPlaceLineState>, space: string | null, secondes: number,
-  said = aucune, engaged = false): HeroLineId | null {
+function attendre(
+  state: ReturnType<typeof createPlaceLineState>,
+  space: string | null,
+  secondes: number,
+  said = aucune,
+  engaged = false,
+): HeroLineId | null {
   let line: HeroLineId | null = null;
   for (let t = 0; t < secondes; t += DT) line = nextPlaceLine(state, space, DT, said, engaged, lignes);
   return line;

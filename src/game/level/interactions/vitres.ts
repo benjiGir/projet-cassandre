@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
@@ -84,7 +84,11 @@ function passthroughVitreInfo(candidate: VitreCandidate): VitreInfo {
   };
 }
 
-export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly VitreCandidate[], resources?: LevelResources): VitreMergeResult {
+export function mergeVitreDecor(
+  root: THREE.Object3D,
+  candidates: readonly VitreCandidate[],
+  resources?: LevelResources,
+): VitreMergeResult {
   const groups = new Map<string, VitreCandidate[]>();
   const vitres: VitreInfo[] = [];
   for (const candidate of candidates) {
@@ -116,7 +120,7 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
 
   for (const group of groups.values()) {
     if (group.length < 2) {
-      vitres.push(passthroughVitreInfo(group[0]!));
+      vitres.push(passthroughVitreInfo(group[0]));
       continue;
     }
 
@@ -137,7 +141,7 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
       continue;
     }
 
-    const batch = new THREE.Mesh(merged, group[0]!.mesh.material);
+    const batch = new THREE.Mesh(merged, group[0].mesh.material);
     batch.name = `vitre_fusion_${batchCount}`;
     root.add(batch);
     batch.updateMatrixWorld(true);
@@ -146,8 +150,8 @@ export function mergeVitreDecor(root: THREE.Object3D, candidates: readonly Vitre
     const mergedPosition = merged.getAttribute("position") as THREE.BufferAttribute;
     let cursor = 0;
     for (let i = 0; i < group.length; i++) {
-      const candidate = group[i]!;
-      const count = (geometries[i]!.getAttribute("position") as THREE.BufferAttribute).count;
+      const candidate = group[i];
+      const count = (geometries[i].getAttribute("position") as THREE.BufferAttribute).count;
       vitres.push({
         name: candidate.name,
         collider: candidate.collider,
@@ -245,7 +249,7 @@ export class VitreSystem {
 
   update(hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
@@ -292,7 +296,8 @@ export class VitreSystem {
     }
     position.needsUpdate = true;
 
-    const finalDirection = direction.lengthSq() < 1e-8 ? DEFAULT_BREAK_DIRECTION.clone() : direction.clone().normalize();
+    const finalDirection =
+      direction.lengthSq() < 1e-8 ? DEFAULT_BREAK_DIRECTION.clone() : direction.clone().normalize();
     this._destroyedEvents.push({
       name: state.info.name,
       point: point.clone(),

@@ -22,7 +22,6 @@ const SHELL_FRICTION = 0.6;
 // Plan de rebond approximé à y=0 ; une douille peut traverser marches et étages.
 const SHELL_GROUND_Y = 0;
 
-
 const DEBRIS_LIFETIME = 1.4; // s
 const DEBRIS_SIZE = 0.06; // m
 const DEBRIS_SPEED_MIN = 2;
@@ -81,7 +80,6 @@ interface ToyParticle {
   gravityScale: number;
 }
 
-
 const PARTICLE_GEOMETRY = new THREE.BoxGeometry(PARTICLE_SIZE, PARTICLE_SIZE, PARTICLE_SIZE);
 
 const PARTICLE_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x2c2620 });
@@ -90,7 +88,6 @@ const BLOOD_MATERIAL = new THREE.MeshLambertMaterial({ color: BLOOD_COLOR });
 const FLESH_SURFACE = "flesh";
 const SHELL_GEOMETRY = new THREE.CylinderGeometry(0.012, 0.012, 0.05, 6);
 const SHELL_MATERIAL = new THREE.MeshLambertMaterial({ color: 0xc98a2c }); // laiton
-
 
 const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
 
@@ -106,8 +103,10 @@ export class ToyDebris {
   // Réutiliser le matériau par couleur pour éviter une allocation GPU à chaque casse.
   private readonly debrisMaterials = new Map<number, THREE.MeshLambertMaterial>();
 
-
-  constructor(private readonly scene: THREE.Scene, private readonly random: () => number) {}
+  constructor(
+    private readonly scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {}
 
   private clearToyParticles(list: ToyParticle[]): void {
     for (const particle of list) this.scene.remove(particle.mesh);
@@ -237,7 +236,7 @@ export class ToyDebris {
 
   private updateToyPhysics(list: ToyParticle[], realDt: number) {
     for (let i = list.length - 1; i >= 0; i--) {
-      const p = list[i]!;
+      const p = list[i];
       p.life -= realDt;
       if (p.life <= 0) {
         this.scene.remove(p.mesh);

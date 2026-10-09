@@ -5,6 +5,7 @@ import type { GameFlowEvent, GameFlowState } from "./gameFlowTypes";
 // see: docs/decisions/0019-machine-xstate-flux-ecran.md
 
 export const gameFlowMachine = setup({
+  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- idiome XState des types fantômes : l'annotation porte le typage des événements
   types: {} as {
     events: GameFlowEvent;
   },
@@ -100,7 +101,9 @@ export function isPlayingState(state: GameFlowState): boolean {
 
 /** Le monde physique existe et continue de tourner derrière l'écran affiché. */
 export function isPhysicsLiveState(state: GameFlowState): boolean {
-  return state === "playing" || state === "paused" || state === "dead" || state === "outro" || state === "levelComplete";
+  return (
+    state === "playing" || state === "paused" || state === "dead" || state === "outro" || state === "levelComplete"
+  );
 }
 
 export function createGameFlowActor(): GameFlowActor {

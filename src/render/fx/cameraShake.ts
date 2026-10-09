@@ -1,14 +1,12 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 const SHAKE_NEGLIGIBLE_FRACTION = 0.05;
 const SHAKE_DECAY_RATE = -Math.log(SHAKE_NEGLIGIBLE_FRACTION); // ≈ 2.9957
-
 
 export class CameraShake {
   private shakePeak = 0;
   private shakeElapsed = 0;
   private shakeDurationActive = 0;
-
 
   constructor(private readonly random: () => number) {}
 
@@ -38,7 +36,9 @@ export class CameraShake {
     out.set(r * sinPhi * Math.cos(theta), r * sinPhi * Math.sin(theta), r * Math.cos(phi));
     return out;
   }
-  update(realDt: number): void { this.shakeElapsed += realDt; }
+  update(realDt: number): void {
+    this.shakeElapsed += realDt;
+  }
 
   reset(): void {
     this.shakePeak = 0;

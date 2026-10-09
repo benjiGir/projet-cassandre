@@ -50,9 +50,7 @@ export class CrosshairOverlay {
 
     const cx = this.canvas.width / 2;
     const cy = this.canvas.height / 2;
-    const scale = this.cfg.crosshairPulseEnabled
-      ? 1 + (this.cfg.crosshairPulseScale - 1) * this.pulseEnvelope
-      : 1;
+    const scale = this.cfg.crosshairPulseEnabled ? 1 + (this.cfg.crosshairPulseScale - 1) * this.pulseEnvelope : 1;
 
     ctx.strokeStyle = hexToCss(this.cfg.crosshairColor);
     ctx.fillStyle = hexToCss(this.cfg.crosshairColor);

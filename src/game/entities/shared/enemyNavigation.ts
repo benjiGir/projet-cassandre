@@ -73,7 +73,7 @@ export function turnTowards(ctx: EnemyMachineContext, targetDir: THREE.Vector3, 
   const currentAngle = Math.atan2(ctx.forward.x, ctx.forward.z);
   const targetAngle = Math.atan2(targetDir.x, targetDir.z);
   let delta = targetAngle - currentAngle;
-  delta = ((delta + Math.PI) % TAU + TAU) % TAU - Math.PI; // repli dans [-PI, PI]
+  delta = ((((delta + Math.PI) % TAU) + TAU) % TAU) - Math.PI; // repli dans [-PI, PI]
   const maxStep = ctx.cfg.turnRateRadPerSec * dt;
   const applied = Math.abs(delta) <= maxStep ? delta : Math.sign(delta) * maxStep;
   const newAngle = currentAngle + applied;
@@ -109,13 +109,13 @@ export function tryComputeChaseDirectionFromPath(
 
   while (
     ctx.currentWaypointIndex < ctx.currentPath.length - 1 &&
-    horizontalDistanceSq(ctx.position, ctx.currentPath[ctx.currentWaypointIndex]!) <
+    horizontalDistanceSq(ctx.position, ctx.currentPath[ctx.currentWaypointIndex]) <
       WAYPOINT_REACHED_DISTANCE * WAYPOINT_REACHED_DISTANCE
   ) {
     ctx.currentWaypointIndex++;
   }
 
-  const waypoint = ctx.currentPath[ctx.currentWaypointIndex]!;
+  const waypoint = ctx.currentPath[ctx.currentWaypointIndex];
   out.set(waypoint.x - ctx.position.x, 0, waypoint.z - ctx.position.z);
   if (out.lengthSq() < 1e-8) return true; // déjà sur le waypoint : pathfinding "actif" mais rien à déplacer ce pas-ci.
   out.normalize();

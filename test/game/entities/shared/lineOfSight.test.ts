@@ -39,7 +39,11 @@ import { describe, expect, it } from "vitest";
 
 import { GROUP, initPhysics, interactionGroups, PhysicsWorld } from "../../../../src/physics/world";
 import { buildLevelFromGltf } from "../../../../src/game/level/loading/loader";
-import { Suit, configureSuitCharacterController, type SuitUpdateContext } from "../../../../src/game/entities/suit/suit";
+import {
+  Suit,
+  configureSuitCharacterController,
+  type SuitUpdateContext,
+} from "../../../../src/game/entities/suit/suit";
 import { suitConfig } from "../../../../src/game/entities/suit/suitConfig";
 
 await initPhysics();

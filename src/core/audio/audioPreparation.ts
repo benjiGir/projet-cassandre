@@ -1,4 +1,5 @@
-import { Howl, Howler } from "howler";
+import type { Howl } from "howler";
+import { Howler } from "howler";
 
 const LOAD_TIMEOUT_MS = 15000;
 let activationInstalled = false;
@@ -48,10 +49,14 @@ export function warmAudioPool(howl: Howl, sprite: string, voices: number): void 
       const id = howl.play(sprite);
       if (typeof id !== "number") continue;
       howl.mute(true, id);
-      howl.once("play", () => {
-        howl.stop(id);
-        howl.mute(false, id);
-      }, id);
+      howl.once(
+        "play",
+        () => {
+          howl.stop(id);
+          howl.mute(false, id);
+        },
+        id,
+      );
     }
   } finally {
     howl.volume(volume);

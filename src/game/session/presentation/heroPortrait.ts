@@ -1,13 +1,34 @@
 import { INITIAL_HERO_PORTRAIT } from "./portraitState";
 import type { HeroPortraitReaction, HeroPortraitView } from "../../hud/hudTypes";
 const PRIORITIES: Record<HeroPortraitReaction, number> = {
-  idle: 0, talk: 10, focus: 20, victory: 30, heal: 35, discover: 40, hurt: 80, dead: 100,
+  idle: 0,
+  talk: 10,
+  focus: 20,
+  victory: 30,
+  heal: 35,
+  discover: 40,
+  hurt: 80,
+  dead: 100,
 };
 const COLUMNS: Record<HeroPortraitReaction, number> = {
-  idle: 0, hurt: 1, focus: 2, victory: 3, discover: 4, talk: 5, heal: 5, dead: 0,
+  idle: 0,
+  hurt: 1,
+  focus: 2,
+  victory: 3,
+  discover: 4,
+  talk: 5,
+  heal: 5,
+  dead: 0,
 };
 const DURATIONS: Record<HeroPortraitReaction, number> = {
-  idle: 0, talk: 4, focus: .3, victory: .8, heal: .7, discover: 1.1, hurt: .6, dead: Infinity,
+  idle: 0,
+  talk: 4,
+  focus: 0.3,
+  victory: 0.8,
+  heal: 0.7,
+  discover: 1.1,
+  hurt: 0.6,
+  dead: Infinity,
 };
 
 /** Réactions et horloge au pas fixe ; le HUD ne lit que la dernière image résolue.
@@ -25,7 +46,9 @@ export class HeroPortrait {
   private killChain = 0;
   private _view: HeroPortraitView = INITIAL_HERO_PORTRAIT;
 
-  get view(): HeroPortraitView { return this._view; }
+  get view(): HeroPortraitView {
+    return this._view;
+  }
 
   advance(dt: number, hp: number, maxHp: number): void {
     this.time += Math.max(0, dt);
@@ -41,7 +64,7 @@ export class HeroPortrait {
     if (lost <= 0) return;
     this.impact++;
     this.side = side;
-    this.react(hp <= 0 ? "dead" : "hurt", lost >= maxHp * .2 ? .85 : .6);
+    this.react(hp <= 0 ? "dead" : "hurt", lost >= maxHp * 0.2 ? 0.85 : 0.6);
   }
 
   heal(hp: number, maxHp: number): void {
@@ -58,7 +81,7 @@ export class HeroPortrait {
     if (count <= 0) return;
     this.killChain = this.time - this.lastKill <= 2 ? this.killChain + count : count;
     this.lastKill = this.time;
-    this.react("victory", this.killChain > 1 ? 1.2 : .8);
+    this.react("victory", this.killChain > 1 ? 1.2 : 0.8);
   }
 
   react(reaction: HeroPortraitReaction, duration = DURATIONS[reaction]): void {
@@ -71,7 +94,7 @@ export class HeroPortrait {
 
   private setHealth(hp: number, maxHp: number): void {
     const ratio = maxHp > 0 ? hp / maxHp : 0;
-    this.healthBand = ratio >= .8 ? 0 : ratio >= .6 ? 1 : ratio >= .4 ? 2 : ratio >= .2 ? 3 : 4;
+    this.healthBand = ratio >= 0.8 ? 0 : ratio >= 0.6 ? 1 : ratio >= 0.4 ? 2 : ratio >= 0.2 ? 3 : 4;
     this.previousHp = hp;
     if (hp <= 0) {
       this.reaction = "dead";
@@ -84,18 +107,30 @@ export class HeroPortrait {
     if (reaction === "idle" && this.time < this.speakingUntil) reaction = "talk";
     let sheet: HeroPortraitView["sheet"] = "reactions";
     let column = COLUMNS[reaction];
-    if (reaction === "dead") { sheet = "ambient"; column = 3; }
-    else if (reaction === "talk" || reaction === "heal") column = Math.floor(this.time * 5) % 2 === 0 ? 5 : 0;
+    if (reaction === "dead") {
+      sheet = "ambient";
+      column = 3;
+    } else if (reaction === "talk" || reaction === "heal") column = Math.floor(this.time * 5) % 2 === 0 ? 5 : 0;
     else if (reaction === "idle") {
       const phase = this.time % 10;
       if ((phase >= 2.6 && phase < 2.8) || (phase >= 7.2 && phase < 7.4)) {
-        sheet = "ambient"; column = 2;
-      } else if (phase >= 4.0 && phase < 4.8) { sheet = "ambient"; column = 0; }
-      else if (phase >= 8.2 && phase < 9.0 && this.healthBand === 0) { sheet = "ambient"; column = 1; }
+        sheet = "ambient";
+        column = 2;
+      } else if (phase >= 4.0 && phase < 4.8) {
+        sheet = "ambient";
+        column = 0;
+      } else if (phase >= 8.2 && phase < 9.0 && this.healthBand === 0) {
+        sheet = "ambient";
+        column = 1;
+      }
     }
     this._view = {
-      sheet, frame: this.healthBand * (sheet === "ambient" ? 4 : 6) + column,
-      reaction, healthBand: this.healthBand, side: this.side, impact: this.impact,
+      sheet,
+      frame: this.healthBand * (sheet === "ambient" ? 4 : 6) + column,
+      reaction,
+      healthBand: this.healthBand,
+      side: this.side,
+      impact: this.impact,
       combo: reaction === "victory" && this.killChain > 1,
     };
   }

@@ -15,7 +15,6 @@ const DEFAULT_FLASH_DURATION = 0.25; // s
 const FLASH_EPSILON = 1e-3;
 
 export interface BillboardSpriteOptions {
-
   rows?: number;
   // Largeur du quad, en mètres. Défaut 1.
   width?: number;
@@ -77,7 +76,7 @@ export class BillboardSprite {
     geometry.translate(0, height * (0.5 - anchor), 0);
     const tilt = options.normalTilt ?? 0;
     if (tilt !== 0) {
-      const normals = geometry.attributes.normal!;
+      const normals = geometry.attributes.normal;
       for (let i = 0; i < normals.count; i++) normals.setXYZ(i, 0, Math.sin(tilt), Math.cos(tilt));
     }
 
@@ -119,8 +118,7 @@ export class BillboardSprite {
       const dot = this.scratchForward.x * this.scratchToCam.x + this.scratchForward.z * this.scratchToCam.z; // produit scalaire
       const angle = Math.atan2(cross, dot);
 
-      this.lastDirection =
-        Math.round(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4)) % BILLBOARD_COLUMNS;
+      this.lastDirection = Math.round(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4)) % BILLBOARD_COLUMNS;
     }
     // Garder la dernière case évite un flash arbitraire lorsque la direction dégénère.
 
@@ -173,7 +171,6 @@ export class BillboardSprite {
     this.texture.dispose();
   }
 }
-
 
 const PLACEHOLDER_CELL_WIDTH = 32; // px, largement sous la limite 128×128/texture (invariant #4)
 const PLACEHOLDER_CELL_HEIGHT = 48; // px, portrait — gabarit humanoïde approximatif

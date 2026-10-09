@@ -1,22 +1,13 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { NavGraph } from "../../level/navigation/pathfindingTypes";
 import type { VitreHitTarget } from "../shared/enemyTypes";
-import {
-  Director,
-  DroppedCard,
-  configureDirectorCharacterController,
-  type DirectorUpdateContext,
-} from "./director";
-import {
-  DIRECTOR_DROPPED_CARD,
-  directorConfig as defaultDirectorConfig,
-  type DirectorConfig,
-} from "./directorConfig";
+import { Director, DroppedCard, configureDirectorCharacterController, type DirectorUpdateContext } from "./director";
+import { DIRECTOR_DROPPED_CARD, directorConfig as defaultDirectorConfig, type DirectorConfig } from "./directorConfig";
 import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
 
 // see: docs/archive/systems-entites.md#les-managers-qui-pilotent-chaque-type-dennemi-suitmanager-et-directormanager
@@ -84,7 +75,11 @@ export class DirectorManager {
   private readonly aggregationScratch = new Map<Director, AggregatedHit>();
 
   /** `tuning` : PV et dégâts de CETTE partie, posés par sa difficulté. */
-  constructor(physics: PhysicsWorld, cfg: DirectorConfig = defaultDirectorConfig, tuning: EnemyTuning = NEUTRAL_ENEMY_TUNING) {
+  constructor(
+    physics: PhysicsWorld,
+    cfg: DirectorConfig = defaultDirectorConfig,
+    tuning: EnemyTuning = NEUTRAL_ENEMY_TUNING,
+  ) {
     this.physics = physics;
     this.cfg = tuneEnemyConfig(cfg, tuning);
     this.kcc = physics.world.createCharacterController(cfg.colliderOffset);
@@ -260,7 +255,7 @@ export class DirectorManager {
   private consumeNewHits(hitEvents: ReadonlyArray<HitEvent>): Map<Director, AggregatedHit> {
     const aggregated = this.aggregationScratch;
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hitEvent = hitEvents[i]!;
+      const hitEvent = hitEvents[i];
       const director = this.colliderToDirector.get(hitEvent.colliderHandle);
       if (!director || !director.isAlive) continue;
 

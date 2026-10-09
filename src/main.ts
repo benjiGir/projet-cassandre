@@ -53,7 +53,13 @@ async function main() {
 
   installAudioActivation();
   initAudioSettingsAtBoot();
-  const audioReady = Promise.all([initAudio(), initHeroVoice(), initZoneAmbience(), initWaterAmbience(), initShowerAmbience()]);
+  const audioReady = Promise.all([
+    initAudio(),
+    initHeroVoice(),
+    initZoneAmbience(),
+    initWaterAmbience(),
+    initShowerAmbience(),
+  ]);
 
   initGraphicsSettingsAtBoot();
 
@@ -65,7 +71,7 @@ async function main() {
     isPhysicsLive: () => isPhysicsLiveState(flowActor.getSnapshot().value),
     playerDied: () => {
       flowActor.send({ type: "DIED" });
-      void document.exitPointerLock();
+      document.exitPointerLock();
     },
     levelCompleted: () => {
       const levelId = currentLevelId();
@@ -76,7 +82,7 @@ async function main() {
       } else {
         flowActor.send({ type: "LEVEL_COMPLETED" });
       }
-      void document.exitPointerLock();
+      document.exitPointerLock();
     },
     pause: () => flowActor.send({ type: "PAUSE" }),
     resume: () => flowActor.send({ type: "RESUME" }),

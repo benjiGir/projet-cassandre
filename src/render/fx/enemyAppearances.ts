@@ -19,7 +19,10 @@ export class EnemyAppearances {
   private readonly ringMaterial = createEnemyAppearanceRingMaterial();
   private serial = 0;
 
-  constructor(private readonly scene: THREE.Scene, atlases: readonly THREE.Texture[] = []) {
+  constructor(
+    private readonly scene: THREE.Scene,
+    atlases: readonly THREE.Texture[] = [],
+  ) {
     this.placeholderAtlas.colorSpace = THREE.SRGBColorSpace;
     this.placeholderAtlas.magFilter = THREE.NearestFilter;
     this.placeholderAtlas.minFilter = THREE.NearestFilter;

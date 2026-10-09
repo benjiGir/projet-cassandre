@@ -20,7 +20,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
 import { GameRuntime } from "../../../../src/app/runtime/gameRuntime";
@@ -32,7 +32,7 @@ import {
   SANITAIRE_RELIEF_COOLDOWN_SECONDS,
   SANITAIRE_AIM_RANGE_METERS,
 } from "../../../../src/game/session/player/sanitaires";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import type { GameSession } from "../../../../src/game/session/gameSession";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { HERO_LINES } from "../../../../src/game/session/presentation/heroLines";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
@@ -57,7 +57,7 @@ function fakeHit(colliderHandle: number, timeOfImpact: number): RAPIER.RayCollid
   return {
     collider: { handle: colliderHandle } as unknown as RAPIER.Collider,
     timeOfImpact,
-  } as unknown as RAPIER.RayColliderHit;
+  };
 }
 
 interface FakeAimedResult {
@@ -260,7 +260,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       trySanitaire(session, true, new THREE.Vector3(1, 0, 2), 1.6, 0, 0);
 
       expect(system.resolveAim).toHaveBeenCalledTimes(1);
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toBeNull(); // worldHit
     });
 
@@ -276,7 +276,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       const consumed = trySanitaire(session, true, new THREE.Vector3(1, 0, 2), 1.6, 0, 0);
 
       expect(consumed).toBe(false);
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toEqual({ colliderHandle: 999, distance: 3 });
     });
 
@@ -291,7 +291,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
 
       trySanitaire(session, true, new THREE.Vector3(0, 0, 0), 1.6, 0, 0);
 
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toEqual({ colliderHandle: 42, distance: 0.6 });
     });
 
@@ -303,7 +303,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       // yaw=0, pitch=0 : convention caméra/armes (Euler 'YXZ') -> visée droit devant, -z.
       trySanitaire(session, true, playerPosition, 1.6, 0, 0);
 
-      const [eyeOrigin, direction, range] = system.resolveAim.mock.calls[0]!;
+      const [eyeOrigin, direction, range] = system.resolveAim.mock.calls[0];
       expect(eyeOrigin.x).toBeCloseTo(3, 5);
       expect(eyeOrigin.y).toBeCloseTo(2.2, 5); // 0.6 + 1.6
       expect(eyeOrigin.z).toBeCloseTo(-2, 5);

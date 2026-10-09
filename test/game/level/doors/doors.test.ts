@@ -233,8 +233,18 @@ describe("isActorBlockingClosedDoor / isActorInAutoRange", () => {
   it("respecte la rotation du vantail (test en espace LOCAL)", () => {
     // Vantail tourné de 90° : sa "largeur" (halfExtents.x=1) pointe maintenant sur Z.
     const rotated = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
-    const surXMonde: DoorActor = { position: new THREE.Vector3(0.5, 1, 0), radius: 0.05, halfHeight: 0.9, joueur: true };
-    const surZMonde: DoorActor = { position: new THREE.Vector3(0, 1, 0.5), radius: 0.05, halfHeight: 0.9, joueur: true };
+    const surXMonde: DoorActor = {
+      position: new THREE.Vector3(0.5, 1, 0),
+      radius: 0.05,
+      halfHeight: 0.9,
+      joueur: true,
+    };
+    const surZMonde: DoorActor = {
+      position: new THREE.Vector3(0, 1, 0.5),
+      radius: 0.05,
+      halfHeight: 0.9,
+      joueur: true,
+    };
     expect(isActorBlockingClosedDoor(closedPosition, rotated, halfExtents, surXMonde)).toBe(false);
     expect(isActorBlockingClosedDoor(closedPosition, rotated, halfExtents, surZMonde)).toBe(true);
   });
@@ -252,7 +262,7 @@ describe("isActorBlockingClosedDoor / isActorInAutoRange", () => {
 
 describe("advanceDoorProgress", () => {
   it("avance vers 1, recule vers 0, clampé aux deux bouts", () => {
-    expect(advanceDoorProgress(0, 1, 1 / 60, 0.5)).toBeCloseTo((1 / 60) / 0.5, 5);
+    expect(advanceDoorProgress(0, 1, 1 / 60, 0.5)).toBeCloseTo(1 / 60 / 0.5, 5);
     expect(advanceDoorProgress(0.99, 1, 1, 0.5)).toBe(1); // dépasserait 1 sans le clamp
     expect(advanceDoorProgress(0.01, 0, 1, 0.5)).toBe(0); // dépasserait 0 sans le clamp
   });
@@ -291,23 +301,25 @@ describe("DoorSystem — chargement", () => {
   it("mouvement absent -> DEFAULT_DOOR_MOVEMENT, sans avertissement", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { handle } = build([doorMesh("door_plain", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0))]);
-    expect(handle.doors[0]!.movement).toBe(DEFAULT_DOOR_MOVEMENT);
+    expect(handle.doors[0].movement).toBe(DEFAULT_DOOR_MOVEMENT);
     expect(doorWarnings(errorSpy)).toHaveLength(0);
   });
 
   it("mouvement inconnu -> avertissement bruyant, repli sur le défaut", () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const { handle } = build([
-      doorMesh("door_bizarre", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0), { mouvement: "teleporte" }),
+      doorMesh("door_bizarre", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0), {
+        mouvement: "teleporte",
+      }),
     ]);
-    expect(handle.doors[0]!.movement).toBe(DEFAULT_DOOR_MOVEMENT);
+    expect(handle.doors[0].movement).toBe(DEFAULT_DOOR_MOVEMENT);
     const messages = errorSpy.mock.calls.map((c) => String(c[0]));
     expect(messages.some((m) => m.includes("door_*") && m.includes("teleporte"))).toBe(true);
   });
 
   it("corps FIXE à la pose fermée, collider actif par défaut", () => {
     const { handle } = build([doorMesh("door_x", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0))]);
-    const door = handle.doors[0]!;
+    const door = handle.doors[0];
     expect(door.body.isFixed()).toBe(true);
     expect(door.collider.isEnabled()).toBe(true);
   });
@@ -317,7 +329,7 @@ describe("DoorSystem — descend (défaut), collider actif seulement fermé", ()
   it("s'enfonce de sa propre hauteur, collider désactivé dès l'ouverture, réactivé une fois fermé", () => {
     const { handle } = build([doorMesh("door_x", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0))]);
     const doors = new DoorSystem(handle.doors);
-    const collider = handle.doors[0]!.collider;
+    const collider = handle.doors[0].collider;
 
     expect(doors.open("door_x", new THREE.Vector3())).toBe(true);
     expect(collider.isEnabled()).toBe(false);
@@ -327,7 +339,7 @@ describe("DoorSystem — descend (défaut), collider actif seulement fermé", ()
     for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
     expect(doors.stateOf("door_x")).toBe("open");
     doors.interpolate(1);
-    expect(handle.doors[0]!.object.position.y).toBeCloseTo(1.25 - 2.5, 3); // descend de sa hauteur
+    expect(handle.doors[0].object.position.y).toBeCloseTo(1.25 - 2.5, 3); // descend de sa hauteur
 
     // `open` sur une porte à carte/`use_*` est PERMANENT : jamais de fermeture automatique.
     for (let i = 0; i < 600; i++) doors.update(DT, NO_ACTORS);
@@ -360,7 +372,7 @@ describe("DoorSystem — battant, sens auto", () => {
     doors.update(1, NO_ACTORS); // 1s = durée complète -> progress = 1, angle = 90°
     doors.interpolate(1);
 
-    const pose = handle.doors[0]!.object;
+    const pose = handle.doors[0].object;
     // Bord +X du vantail (là où était le bout libre) : après rotation de 90°
     // autour de la charnière (-1,1.25,0), doit être passé du côté -Z.
     expect(pose.position.z).toBeLessThan(0);
@@ -380,7 +392,7 @@ describe("DoorSystem — coulisse, longueur par défaut", () => {
     doors.update(1, NO_ACTORS);
     doors.interpolate(1);
 
-    const pose = handle.doors[0]!.object;
+    const pose = handle.doors[0].object;
     const deplacement = pose.position.distanceTo(new THREE.Vector3(5, 1.1, 2));
     expect(deplacement).toBeCloseTo(1.8, 3); // longueur du grand axe (X, 1.8 m)
   });
@@ -399,7 +411,7 @@ describe("DoorSystem — monte, course explicite", () => {
     doors.open("door_argent", new THREE.Vector3());
     doors.update(1, NO_ACTORS);
     doors.interpolate(1);
-    expect(handle.doors[0]!.object.position.y).toBeCloseTo(1.25 + 2.45, 3);
+    expect(handle.doors[0].object.position.y).toBeCloseTo(1.25 + 2.45, 3);
   });
 });
 
@@ -440,10 +452,10 @@ describe("batchDoorMeshes — un lot de dessin par matériau", () => {
     const { handle } = paire();
     expect(handle.stats.doorBatchCount).toBe(1);
     const [a, b] = handle.doors;
-    expect(a!.batchSlot).toBeDefined();
-    expect(b!.batchSlot!.batch).toBe(a!.batchSlot!.batch);
-    expect(a!.object.visible).toBe(false);
-    expect(b!.object.visible).toBe(false);
+    expect(a.batchSlot).toBeDefined();
+    expect(b.batchSlot!.batch).toBe(a.batchSlot!.batch);
+    expect(a.object.visible).toBe(false);
+    expect(b.object.visible).toBe(false);
   });
 
   it("la pose animée est recopiée dans le lot, pas seulement dans le mesh caché", () => {
@@ -456,14 +468,14 @@ describe("batchDoorMeshes — un lot de dessin par matériau", () => {
     }
     doors.interpolate(1);
 
-    const door = handle.doors[0]!;
+    const door = handle.doors[0];
     const slot = door.batchSlot!;
     const dansLeLot = new THREE.Matrix4();
     slot.batch.getMatrixAt(slot.instanceId, dansLeLot);
     door.object.updateMatrix();
     // Un lot stocke ses matrices en simple précision : on compare à 1e-5 près.
     for (let i = 0; i < 16; i++) {
-      expect(dansLeLot.elements[i]!).toBeCloseTo(door.object.matrix.elements[i]!, 5);
+      expect(dansLeLot.elements[i]).toBeCloseTo(door.object.matrix.elements[i], 5);
     }
     const fermee = new THREE.Matrix4().compose(door.closedPosition, door.closedQuaternion, door.scale);
     expect(dansLeLot.equals(fermee)).toBe(false); // elle a vraiment bougé
@@ -472,8 +484,8 @@ describe("batchDoorMeshes — un lot de dessin par matériau", () => {
   it("un vantail seul de son matériau reste un mesh ordinaire, visible", () => {
     const { handle } = build([doorMesh("door_seule", new THREE.Vector3(2, 2.5, 0.2), new THREE.Vector3(0, 1.25, 0))]);
     expect(handle.stats.doorBatchCount).toBe(1);
-    expect(handle.doors[0]!.batchSlot).toBeUndefined();
-    expect(handle.doors[0]!.object.visible).toBe(true);
+    expect(handle.doors[0].batchSlot).toBeUndefined();
+    expect(handle.doors[0].object.visible).toBe(true);
   });
 });
 
@@ -533,7 +545,7 @@ describe("DoorSystem — portes manœuvrables à la main", () => {
     expect(doors.autoGroupColliders).toHaveLength(1);
   });
 
-  it("`manuelle: \"fermer\"` (porte coupe-feu) : la main la referme, jamais ne l'ouvre", () => {
+  it('`manuelle: "fermer"` (porte coupe-feu) : la main la referme, jamais ne l\'ouvre', () => {
     const { handle } = build([
       doorMesh("door_coupe_feu", new THREE.Vector3(1.25, 2.25, 0.05), new THREE.Vector3(0, 1.13, 0), {
         mouvement: "battant",
@@ -596,7 +608,7 @@ describe("DoorSystem — portes auto", () => {
     // Plus personne : referme après `delai` (0.5s) + `duree` (0.2s).
     for (let i = 0; i < 60; i++) doors.update(DT, NO_ACTORS);
     expect(doors.stateOf("door_auto")).toBe("closed");
-    expect(handle.doors[0]!.collider.isEnabled()).toBe(true);
+    expect(handle.doors[0].collider.isEnabled()).toBe(true);
   });
 
   it("`referme: false` : reste ouverte pour toujours une fois ouverte", () => {
@@ -614,7 +626,7 @@ describe("DoorSystem — portes auto", () => {
   it("rouvre plutôt que de refermer sur un acteur qui chevauche encore le vantail", () => {
     const { handle } = build([autoDoor()]);
     const doors = new DoorSystem(handle.doors);
-    const collider = handle.doors[0]!.collider;
+    const collider = handle.doors[0].collider;
 
     doors.update(DT, [PRES]);
     for (let i = 0; i < 30; i++) doors.update(DT, [PRES]);
@@ -650,7 +662,7 @@ describe("DoorSystem — hot reload", () => {
     doors.open("door_or", new THREE.Vector3(), { silent: true });
     expect(doors.movementEvents).toHaveLength(0);
     expect(doors.stateOf("door_or")).toBe("opening");
-    expect(handle.doors[0]!.collider.isEnabled()).toBe(false);
+    expect(handle.doors[0].collider.isEnabled()).toBe(false);
   });
 });
 describe("DoorSystem — verrou du script de niveau", () => {
@@ -671,12 +683,12 @@ describe("DoorSystem — verrou du script de niveau", () => {
     const doors = new DoorSystem(handle.doors);
 
     expect(doors.stateOf("door_rideau")).toBe("open");
-    expect(handle.doors[0]!.collider.isEnabled()).toBe(false);
+    expect(handle.doors[0].collider.isEnabled()).toBe(false);
     settle(doors);
     doors.interpolate(1);
     expect(doors.stateOf("door_rideau")).toBe("open");
     // Le mesh est en haut de sa course dès la première image, pas à sa pose fermée.
-    expect(handle.doors[0]!.object.position.y).toBeCloseTo(1.5 + 3, 5);
+    expect(handle.doors[0].object.position.y).toBeCloseTo(1.5 + 3, 5);
   });
 
   it("verrouiller ferme une porte ouverte et la tient fermée ; déverrouiller la rouvre", () => {
@@ -687,7 +699,7 @@ describe("DoorSystem — verrou du script de niveau", () => {
     settle(doors);
     expect(doors.stateOf("door_rideau")).toBe("closed");
     expect(doors.isLocked("door_rideau")).toBe(true);
-    expect(handle.doors[0]!.collider.isEnabled()).toBe(true);
+    expect(handle.doors[0].collider.isEnabled()).toBe(true);
     expect(doors.open("door_rideau", DEVANT)).toBe(false);
     settle(doors);
     expect(doors.stateOf("door_rideau")).toBe("closed");

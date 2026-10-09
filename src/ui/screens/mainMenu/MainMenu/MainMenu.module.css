@@ -17,9 +17,19 @@
 }
 
 @media (max-width: 640px), (max-height: 760px) {
-  .panel { gap: 10px; padding: 20px; max-width: calc(100vw - 24px); }
-  .title { font-size: clamp(18px, 4.4vw, 32px); letter-spacing: 2px; }
-  .actions { min-width: 0; gap: 6px; }
+  .panel {
+    gap: 10px;
+    padding: 20px;
+    max-width: calc(100vw - 24px);
+  }
+  .title {
+    font-size: clamp(18px, 4.4vw, 32px);
+    letter-spacing: 2px;
+  }
+  .actions {
+    min-width: 0;
+    gap: 6px;
+  }
 }
 
 .title {
@@ -36,12 +46,20 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cursor { animation: none; }
+  .cursor {
+    animation: none;
+  }
 }
 
 @keyframes cursor {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .tagline {

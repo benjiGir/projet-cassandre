@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import type { PhysicsWorld } from "../../../physics/world";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
@@ -142,11 +142,25 @@ export class SuitManager {
     }
   }
 
-  spawnSuit(x: number, feetY: number, z: number, facing = new THREE.Vector3(0, 0, 1), kind: SuitKind = "costard"): Suit {
+  spawnSuit(
+    x: number,
+    feetY: number,
+    z: number,
+    facing = new THREE.Vector3(0, 0, 1),
+    kind: SuitKind = "costard",
+  ): Suit {
     const seed = (BASE_SUIT_SEED + this.spawnCount * SEED_STRIDE) >>> 0;
     this.spawnCount++;
     const appearanceIndex = this.appearanceCounts[kind]++;
-    const suit = new Suit(this.physics, new THREE.Vector3(x, feetY, z), facing, seed, this.configFor(kind), kind, appearanceIndex);
+    const suit = new Suit(
+      this.physics,
+      new THREE.Vector3(x, feetY, z),
+      facing,
+      seed,
+      this.configFor(kind),
+      kind,
+      appearanceIndex,
+    );
     this.suits.push(suit);
     if (suit.collider) this.colliderToSuit.set(suit.collider.handle, suit);
     return suit;
@@ -284,7 +298,7 @@ export class SuitManager {
   private consumeNewHits(hitEvents: ReadonlyArray<HitEvent>): Map<Suit, AggregatedHit> {
     const aggregated = this.aggregationScratch;
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hitEvent = hitEvents[i]!;
+      const hitEvent = hitEvents[i];
       const suit = this.colliderToSuit.get(hitEvent.colliderHandle);
       if (!suit || !suit.isAlive) continue;
       if (isShieldedHit(suit.cfg.shield, suit.forward, hitEvent.normal)) {

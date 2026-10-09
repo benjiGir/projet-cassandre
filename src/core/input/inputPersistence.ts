@@ -20,8 +20,7 @@ export function loadStoredBindings(): Record<GameAction, string> {
       const code = decodeBindingCode(parsed[action]);
       if (Result.isSuccess(code)) bindings[action] = code.success;
     }
-  } catch {
-  }
+  } catch {}
   return bindings;
 }
 
@@ -29,6 +28,5 @@ export function saveStoredBindings(bindings: Record<GameAction, string>) {
   if (typeof localStorage === "undefined") return;
   try {
     localStorage.setItem(BINDINGS_STORAGE_KEY, JSON.stringify(bindings));
-  } catch {
-  }
+  } catch {}
 }

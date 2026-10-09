@@ -18,8 +18,17 @@ describe("spawn_suit_* et leur groupe", () => {
   it("lit `groupe` ; un spawn sans groupe est présent dès le chargement", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const group = new THREE.Group();
-    group.add(empty("spawn_player"), empty("spawn_suit_a"), empty("spawn_suit_b", { groupe: "renfort" }), empty("spawn_suit_c", { groupe: "  " }));
-    const handle = buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, new THREE.Scene(), new PhysicsWorld());
+    group.add(
+      empty("spawn_player"),
+      empty("spawn_suit_a"),
+      empty("spawn_suit_b", { groupe: "renfort" }),
+      empty("spawn_suit_c", { groupe: "  " }),
+    );
+    const handle = buildLevelFromGltf(
+      { scene: group, animations: [] } as unknown as GLTF,
+      new THREE.Scene(),
+      new PhysicsWorld(),
+    );
     expect(handle.spawnSuits.map((spawn) => [spawn.name, spawn.group])).toEqual([
       ["spawn_suit_a", null],
       ["spawn_suit_b", "renfort"],

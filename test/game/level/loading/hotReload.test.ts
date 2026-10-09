@@ -79,10 +79,7 @@ beforeEach(() => {
   // dans hotReload.ts). Stub global pour ne jamais taper un vrai réseau
   // pendant ces tests, et un intervalle large pour qu'il ne se déclenche
   // jamais dans la fenêtre de vie d'un test.
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockRejectedValue(new Error("réseau non disponible dans les tests")),
-  );
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("réseau non disponible dans les tests")));
 });
 
 afterEach(() => {

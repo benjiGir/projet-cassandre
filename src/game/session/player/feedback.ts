@@ -1,11 +1,17 @@
 import { heroVoiceDuration, playAnnouncementVoice, playHeroVoice } from "../../../core/audio/heroVoice";
 import { subtitlesEnabled } from "../../settings/audioSettings";
 import { useGameStore } from "../../hud/state";
-import { HERO_LINES, heroVoiceKey, type HeroBarkId, type HeroLineDef, type HeroLineId } from "../presentation/heroLines";
+import {
+  HERO_LINES,
+  heroVoiceKey,
+  type HeroBarkId,
+  type HeroLineDef,
+  type HeroLineId,
+} from "../presentation/heroLines";
 import { publishLevelRecap } from "../progression/recap";
 import { recordHpLost } from "../progression/score";
-import { type GameSession } from "../gameSession";
-import { type GameEngine } from "../gameEngine";
+import type { GameSession } from "../gameSession";
+import type { GameEngine } from "../gameEngine";
 const HUD_MESSAGE_DURATION_MS = 1800;
 
 // see: docs/archive/systems-session.md#feedback-joueur
@@ -104,8 +110,13 @@ const LOW_HP_HERO_LINE_THRESHOLD = 0.3;
 const HEAVY_HIT_DAMAGE = 10;
 
 /** Résout les PV et la mort dans le pas fixe. Aucun effet visuel ou timer mural. */
-export function applyPlayerDamage(engine: GameEngine, session: GameSession, amount: number,
-  normal?: { readonly x: number; readonly z: number }, source: "suit" | "director" | "train" = "suit"): void {
+export function applyPlayerDamage(
+  engine: GameEngine,
+  session: GameSession,
+  amount: number,
+  normal?: { readonly x: number; readonly z: number },
+  source: "suit" | "director" | "train" = "suit",
+): void {
   const hpBefore = session.playerHp;
   session.playerHp = Math.max(0, session.playerHp - Math.max(0, amount));
   recordHpLost(session.stats, hpBefore - session.playerHp);
@@ -113,14 +124,21 @@ export function applyPlayerDamage(engine: GameEngine, session: GameSession, amou
 
   const maxHp = session.playerMaxHp;
   const lateral = normal ? normal.x * Math.cos(engine.look.yaw) - normal.z * Math.sin(engine.look.yaw) : 0;
-  session.heroPortrait.damage(session.playerHp, maxHp, lateral < -.25 ? "left" : lateral > .25 ? "right" : "front");
+  session.heroPortrait.damage(session.playerHp, maxHp, lateral < -0.25 ? "left" : lateral > 0.25 ? "right" : "front");
   if (session.playerHp > 0 && !session.lowHpLineTriggered && session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD) {
     session.lowHpLineTriggered = true;
     triggerHeroLine(session, "pv_bas");
-  } else if (session.playerHp > 0 && amount > 0
-    && !triggerHeroLine(session, source === "director" ? "boss_touche_hero" : "touche")) {
-    triggerHeroBark(session,
-      amount >= HEAVY_HIT_DAMAGE || session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD ? "douleur_forte" : "douleur_legere");
+  } else if (
+    session.playerHp > 0 &&
+    amount > 0 &&
+    !triggerHeroLine(session, source === "director" ? "boss_touche_hero" : "touche")
+  ) {
+    triggerHeroBark(
+      session,
+      amount >= HEAVY_HIT_DAMAGE || session.playerHp / maxHp <= LOW_HP_HERO_LINE_THRESHOLD
+        ? "douleur_forte"
+        : "douleur_legere",
+    );
   }
 
   if (!session.deathHandled && session.playerHp <= 0) {

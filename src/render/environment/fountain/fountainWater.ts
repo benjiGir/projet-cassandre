@@ -1,7 +1,12 @@
 import * as THREE from "three";
 import type { LevelResources } from "../../../game/level/loading/levelResources";
 import { createFountainDroplets, createFountainPools, createFountainStreams } from "./fountainWaterGeometry";
-import { createFountainClock, createFountainDropMaterial, createFountainPoolMaterial, createFountainStreamMaterial } from "./fountainWaterMaterial";
+import {
+  createFountainClock,
+  createFountainDropMaterial,
+  createFountainPoolMaterial,
+  createFountainStreamMaterial,
+} from "./fountainWaterMaterial";
 
 export class FountainWater {
   readonly group = new THREE.Group();
@@ -12,9 +17,18 @@ export class FountainWater {
   constructor(root: THREE.Object3D, position: THREE.Vector3, resources: LevelResources) {
     this.group.name = "fx_fontaine_eau";
     this.group.position.copy(position);
-    const pool = new THREE.Mesh(resources.geometry(createFountainPools()), resources.material(createFountainPoolMaterial(this.clock)));
-    const streams = new THREE.Mesh(resources.geometry(createFountainStreams()), resources.material(createFountainStreamMaterial(this.clock)));
-    const drops = new THREE.Mesh(resources.geometry(createFountainDroplets()), resources.material(createFountainDropMaterial(this.clock)));
+    const pool = new THREE.Mesh(
+      resources.geometry(createFountainPools()),
+      resources.material(createFountainPoolMaterial(this.clock)),
+    );
+    const streams = new THREE.Mesh(
+      resources.geometry(createFountainStreams()),
+      resources.material(createFountainStreamMaterial(this.clock)),
+    );
+    const drops = new THREE.Mesh(
+      resources.geometry(createFountainDroplets()),
+      resources.material(createFountainDropMaterial(this.clock)),
+    );
     resources.onCleanup(() => {
       pool.geometry.dispose();
       streams.geometry.dispose();
@@ -23,8 +37,10 @@ export class FountainWater {
       streams.material.dispose();
       drops.material.dispose();
     });
-    const nozzle = new THREE.Mesh(resources.geometry(new THREE.CylinderGeometry(0.072, 0.09, 0.12, 10)),
-      resources.material(new THREE.MeshLambertMaterial({ color: 0x627a7c })));
+    const nozzle = new THREE.Mesh(
+      resources.geometry(new THREE.CylinderGeometry(0.072, 0.09, 0.12, 10)),
+      resources.material(new THREE.MeshLambertMaterial({ color: 0x627a7c })),
+    );
     pool.name = "fx_fontaine_bassins";
     streams.name = "fx_fontaine_jets";
     drops.name = "fx_fontaine_gouttes";

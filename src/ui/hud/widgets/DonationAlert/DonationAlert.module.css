@@ -45,10 +45,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alert { animation: none; }
+  .alert {
+    animation: none;
+  }
 }
 
 @keyframes flash {
-  0%, 66% { background: rgba(255, 226, 122, 0.25); }
-  33%, 100% { background: rgba(20, 15, 0, 0.7); }
+  0%,
+  66% {
+    background: rgba(255, 226, 122, 0.25);
+  }
+  33%,
+  100% {
+    background: rgba(20, 15, 0, 0.7);
+  }
 }

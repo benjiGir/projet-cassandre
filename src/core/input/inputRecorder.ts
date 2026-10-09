@@ -60,7 +60,7 @@ class InputRecorder {
       this.playback = null;
       return null;
     }
-    return this.playback.frames[this.playbackIndex++]!;
+    return this.playback.frames[this.playbackIndex++];
   }
 
   stopPlayback() {

@@ -17,9 +17,16 @@ export function updateTrainGym(engine: GameEngine, dt: number, use: boolean): vo
   gym.presentation.updateFixed(gym.system);
   for (const message of gym.system.takeFeedback()) showHudMessage(message);
   for (const suit of session.suitManager.suits) {
-    if (!suit.isAlive || !gym.system.touches({ position: suit.position,
-      previous: suit.interpolatedPosition(0, previousEnemy), radius: suit.cfg.capsuleRadius,
-      halfHeight: suit.cfg.capsuleHalfHeight + suit.cfg.capsuleRadius })) continue;
+    if (
+      !suit.isAlive ||
+      !gym.system.touches({
+        position: suit.position,
+        previous: suit.interpolatedPosition(0, previousEnemy),
+        radius: suit.cfg.capsuleRadius,
+        halfHeight: suit.cfg.capsuleHalfHeight + suit.cfg.capsuleRadius,
+      })
+    )
+      continue;
     if (session.suitManager.debugKill(suit)) {
       recordSuitKills(session.stats, 1);
       session.heroPortrait.kill(1);
@@ -27,8 +34,14 @@ export function updateTrainGym(engine: GameEngine, dt: number, use: boolean): vo
       showHudMessage("Ennemi fauché par une rame");
     }
   }
-  if (gym.system.touches({ position: session.player.position, previous: session.player.previousPosition,
-    radius: moveConfig.capsuleRadius, halfHeight: moveConfig.capsuleHalfHeight + moveConfig.capsuleRadius })) {
+  if (
+    gym.system.touches({
+      position: session.player.position,
+      previous: session.player.previousPosition,
+      radius: moveConfig.capsuleRadius,
+      halfHeight: moveConfig.capsuleHalfHeight + moveConfig.capsuleRadius,
+    })
+  ) {
     showHudMessage("Fauché par une rame");
     applyPlayerDamage(engine, session, session.playerHp, undefined, "train");
   }

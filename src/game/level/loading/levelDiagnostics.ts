@@ -73,18 +73,19 @@ export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmou
   { name: Schema.String, value: Schema.String, property: Schema.String },
 ) {}
 
-export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()(
-  "UnknownFoodItemWarning",
-  { name: Schema.String, value: Schema.String },
-) {}
+export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()("UnknownFoodItemWarning", {
+  name: Schema.String,
+  value: Schema.String,
+}) {}
 
 /** `use_*` dont la paire `perk`/`prix` ne fait pas une borne : perk inconnu,
  * prix qui n'est pas un nombre strictement positif, ou l'un sans l'autre.
  * Jamais bloquant : l'objet est retourné avec `sells: null`, il ne vend rien. */
-export class InvalidPerkOfferWarning extends Schema.TaggedError<InvalidPerkOfferWarning>()(
-  "InvalidPerkOfferWarning",
-  { name: Schema.String, perk: Schema.String, prix: Schema.String },
-) {}
+export class InvalidPerkOfferWarning extends Schema.TaggedError<InvalidPerkOfferWarning>()("InvalidPerkOfferWarning", {
+  name: Schema.String,
+  perk: Schema.String,
+  prix: Schema.String,
+}) {}
 
 /** `prop_*` dont `extras.matiere` n'est pas une matière connue — jamais
  * bloquant : le prop est construit avec `DEFAULT_PROP_MATERIAL`. */
@@ -120,10 +121,10 @@ export class UnknownDoorMovementWarning extends Schema.TaggedError<UnknownDoorMo
 /** `vitre_*` dont `extras.pv` n'est pas un nombre strictement positif —
  * jamais bloquant : la vitre est construite INCASSABLE (même règle que `pv`
  * sur un `prop_*`). */
-export class InvalidVitrePvWarning extends Schema.TaggedError<InvalidVitrePvWarning>()(
-  "InvalidVitrePvWarning",
-  { name: Schema.String, value: Schema.String },
-) {}
+export class InvalidVitrePvWarning extends Schema.TaggedError<InvalidVitrePvWarning>()("InvalidVitrePvWarning", {
+  name: Schema.String,
+  value: Schema.String,
+}) {}
 
 export class UnknownSanitaireKindWarning extends Schema.TaggedError<UnknownSanitaireKindWarning>()(
   "UnknownSanitaireKindWarning",
@@ -144,10 +145,10 @@ export class UnknownEcranChaineWarning extends Schema.TaggedError<UnknownEcranCh
 
 /** `ecran_*` dont `extras.pv` n'est pas un nombre strictement positif — jamais
  * bloquant, même règle que `pv` sur un `vitre_*`/`sanitaire_*`. */
-export class InvalidEcranPvWarning extends Schema.TaggedError<InvalidEcranPvWarning>()(
-  "InvalidEcranPvWarning",
-  { name: Schema.String, value: Schema.String },
-) {}
+export class InvalidEcranPvWarning extends Schema.TaggedError<InvalidEcranPvWarning>()("InvalidEcranPvWarning", {
+  name: Schema.String,
+  value: Schema.String,
+}) {}
 
 /** `col_hull_*` dont `RAPIER.ColliderDesc.convexHull` retourne `null`
  * (sommets dégénérés) — toujours suivi d'un repli sur un collider trimesh
@@ -232,10 +233,7 @@ export function formatUnknownPropMaterial(error: UnknownPropMaterialWarning): st
 }
 
 export function formatInvalidPropNumber(error: InvalidPropNumberWarning): string {
-  const repli =
-    error.property === "masse"
-      ? `repli sur ${DEFAULT_PROP_MASS_KG} kg`
-      : "prop laissé indestructible";
+  const repli = error.property === "masse" ? `repli sur ${DEFAULT_PROP_MASS_KG} kg` : "prop laissé indestructible";
   return (
     `[level] "${error.name}" (prop_*) : propriété "${error.property}" = "${error.value}", ` +
     `qui n'est pas un nombre strictement positif — ${repli}.`

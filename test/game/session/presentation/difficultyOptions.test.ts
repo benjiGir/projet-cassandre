@@ -35,9 +35,9 @@ describe("difficultyOptions", () => {
   it("rappelle le record du niveau demandé, difficulté par difficulté", () => {
     submitRun("niveau_v2", "lanceur", 9000, 480);
     const [client, habitue, lanceur] = difficultyOptions("niveau_v2");
-    expect(client!.record).toBeNull();
-    expect(habitue!.record).toBeNull();
-    expect(lanceur!.record).toEqual({ score: 9000, seconds: 480 });
+    expect(client.record).toBeNull();
+    expect(habitue.record).toBeNull();
+    expect(lanceur.record).toEqual({ score: 9000, seconds: 480 });
     expect(difficultyOptions("gym").every((option) => option.record === null)).toBe(true);
   });
 });

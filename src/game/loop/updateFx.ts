@@ -17,7 +17,7 @@ import { updateWaterAmbience } from "../../core/audio/waterAmbience";
 import { updateShowerAmbience } from "../../core/audio/showerAmbience";
 import { updateZoneAmbience } from "../../core/audio/zoneAmbience";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
-import { type LoopStats } from "../../core/loop/loop";
+import type { LoopStats } from "../../core/loop/loop";
 import { FLESH_MATERIAL } from "../player/weapons/weapons";
 import { weaponConfig } from "../player/weapons/weaponConfig";
 import { suitConfig } from "../entities/suit/suitConfig";
@@ -25,7 +25,7 @@ import { directorConfig } from "../entities/director/directorConfig";
 import { useGameStore } from "../hud/state";
 import { presentPlayerDamage } from "../session/player/feedback";
 import { isMovableOrBreakableHandle } from "../level/loading/movableColliders";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import { astarMetricsSnapshot } from "../level/navigation/navSearch";
 import { collectActiveShowerOrigins } from "../level/sanitaires/douches";
@@ -56,7 +56,7 @@ const EXPLOSION_SHAKE_AMPLITUDE = 0.45;
 const EXPLOSION_SHAKE_DURATION = 0.4;
 /** Au-delà, l'explosion ne secoue plus la caméra — elle reste entendue. */
 const EXPLOSION_SHAKE_RANGE = 25;
-const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois!;
+const DEFAULT_PROP_DEBRIS = PROP_DEBRIS.bois;
 
 // Scratch de l'offset de screenshake, réutilisé à chaque frame (`fx.currentShakeOffset`).
 const shakeOffsetScratch = new THREE.Vector3();
@@ -76,16 +76,50 @@ const DEBUG_UPDATE_INTERVAL = 1 / 10; // invariant #2 : 10 Hz maximum
 // Tourne au taux d'affichage, comme `interpolateVisuals` — même frontière
 // Effect synchrone stricte (`runGameplaySync`) que le pas fixe.
 // see: docs/archive/systems-boucle-de-jeu.md#frontière-effect-synchrone-du-pas-fixe
-type FxSession = Readonly<Pick<GameSession,
-  "ballBody" | "directorManager" | "directorSprites" | "doorSystem" | "gltfLevelSession" |
-  "ecranSystem" | "lightPool" | "player" | "playerHp" | "propSystem" | "sanitaireSystem" |
-  "suitManager" | "suitSprites" | "vitreSystem" | "weaponPickupBillboards" | "weapons" |
-  "cardPickupBillboards" | "droppedCardBillboard" | "heroPortrait" | "pickupResources" | "trainGym"
->>;
-type FxEngine = Omit<Pick<GameEngine,
-  "ballisticsDebug" | "camera" | "crosshair" | "debugAccumulator" | "directorSheet" |
-  "flow" | "fpsSmoothed" | "fx" | "hitmarker" | "renderer" | "viewmodel" | "wireframeToggle"
->, "session"> & { readonly session: FxSession };
+type FxSession = Readonly<
+  Pick<
+    GameSession,
+    | "ballBody"
+    | "directorManager"
+    | "directorSprites"
+    | "doorSystem"
+    | "gltfLevelSession"
+    | "ecranSystem"
+    | "lightPool"
+    | "player"
+    | "playerHp"
+    | "propSystem"
+    | "sanitaireSystem"
+    | "suitManager"
+    | "suitSprites"
+    | "vitreSystem"
+    | "weaponPickupBillboards"
+    | "weapons"
+    | "cardPickupBillboards"
+    | "droppedCardBillboard"
+    | "heroPortrait"
+    | "pickupResources"
+    | "trainGym"
+  >
+>;
+type FxEngine = Omit<
+  Pick<
+    GameEngine,
+    | "ballisticsDebug"
+    | "camera"
+    | "crosshair"
+    | "debugAccumulator"
+    | "directorSheet"
+    | "flow"
+    | "fpsSmoothed"
+    | "fx"
+    | "hitmarker"
+    | "renderer"
+    | "viewmodel"
+    | "wireframeToggle"
+  >,
+  "session"
+> & { readonly session: FxSession };
 
 export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): void {
   const session = engine.session;
@@ -267,7 +301,8 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
           engine.fx.spawnImpactParticles(event.point, event.normal, "shotgun", "flesh");
           engine.fx.triggerShake(directorConfig.playerHitShakeAmplitude, directorConfig.playerHitShakeDuration);
         }
-        if (playerWasHit || useGameStore.getState().debug.playerHp !== session.playerHp) presentPlayerDamage(session.playerHp);
+        if (playerWasHit || useGameStore.getState().debug.playerHp !== session.playerHp)
+          presentPlayerDamage(session.playerHp);
         session.directorManager.clearFrameEvents();
       });
 

@@ -34,7 +34,7 @@ export function materialKey(mat: THREE.MeshLambertMaterial): string {
 // `mergeGeometries` refuse de mélanger géométries indexées et non indexées, ou des jeux d'attributs différents.
 export function attributeKey(geometry: THREE.BufferGeometry): string {
   const names = Object.keys(geometry.attributes).sort();
-  return `${geometry.index ? "i" : "n"}:${names.map((n) => `${n}${geometry.attributes[n]!.itemSize}`).join(",")}`;
+  return `${geometry.index ? "i" : "n"}:${names.map((n) => `${n}${geometry.attributes[n].itemSize}`).join(",")}`;
 }
 
 const centerScratch = new THREE.Vector3();
@@ -64,7 +64,11 @@ function isMergeable(mesh: THREE.Mesh): mesh is THREE.Mesh<THREE.BufferGeometry,
   );
 }
 
-export function mergeStaticDecor(root: THREE.Object3D, candidates: readonly THREE.Mesh[], resources?: LevelResources): DecorMergeResult {
+export function mergeStaticDecor(
+  root: THREE.Object3D,
+  candidates: readonly THREE.Mesh[],
+  resources?: LevelResources,
+): DecorMergeResult {
   const groups = new Map<string, THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>[]>();
   for (const mesh of candidates) {
     if (!isMergeable(mesh)) continue;
@@ -92,7 +96,7 @@ export function mergeStaticDecor(root: THREE.Object3D, candidates: readonly THRE
     for (const g of geometries) g.dispose();
     if (!merged) continue;
 
-    const batch = new THREE.Mesh(merged, group[0]!.material);
+    const batch = new THREE.Mesh(merged, group[0].material);
     batch.name = `decor_fusion_${batches}`;
     root.add(batch);
     batch.updateMatrixWorld(true);

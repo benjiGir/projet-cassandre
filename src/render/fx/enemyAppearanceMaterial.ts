@@ -1,8 +1,26 @@
 import { DoubleSide, Vector4, type Texture } from "three";
 import { MeshBasicNodeMaterial } from "three/webgpu";
 import {
-  Fn, If, abs, atan, clamp, color, dot, floor, fract, length, max, mix,
-  oneMinus, sin, step, texture, uniform, uv, vec2, vec4,
+  Fn,
+  If,
+  abs,
+  atan,
+  clamp,
+  color,
+  dot,
+  floor,
+  fract,
+  length,
+  max,
+  mix,
+  oneMinus,
+  sin,
+  step,
+  texture,
+  uniform,
+  uv,
+  vec2,
+  vec4,
 } from "three/tsl";
 
 const readProgress = () => uniform(0).onObjectUpdate(({ object }) => object?.userData.appearanceProgress ?? 0);
@@ -19,9 +37,11 @@ export function createEnemyAppearanceMaterial(atlases: readonly Texture[]): Mesh
   const atlasIndex = uniform(0).onObjectUpdate(({ object }) => object?.userData.appearanceAtlasIndex ?? 0);
   const samples = atlases.map((atlas) => texture(atlas, uv().mul(rect.xy).add(rect.zw)));
   const sample = Fn(() => {
-    const result = samples[0]!.toVar();
+    const result = samples[0].toVar();
     for (let i = 1; i < samples.length; i++) {
-      If(atlasIndex.equal(i), () => { result.assign(samples[i]!); });
+      If(atlasIndex.equal(i), () => {
+        result.assign(samples[i]);
+      });
     }
     return result;
   })();
@@ -57,7 +77,8 @@ export function createEnemyAppearanceRingMaterial(): MeshBasicNodeMaterial {
   const inner = oneMinus(step(0.016, abs(radius.sub(0.48))));
   const segments = step(0.22, fract(angle.mul(3.1831).add(progress.mul(0.8))));
   const spokes = step(0.94, fract(angle.mul(1.9099).sub(progress.mul(0.4))))
-    .mul(step(0.5, radius)).mul(step(radius, 0.84));
+    .mul(step(0.5, radius))
+    .mul(step(radius, 0.84));
   const mask = max(max(outer.mul(segments), inner), spokes);
   const ramp = mix(color(0x168c9b), color(0x73ffe0), step(0.35, sin(progress.mul(Math.PI))));
   const material = new MeshBasicNodeMaterial({ side: DoubleSide, depthWrite: true, toneMapped: false });

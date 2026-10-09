@@ -29,9 +29,8 @@ export function KickTuning() {
         <TuningSlider key={key} {...field} value={kick.values[key]} onChange={(value) => kick.set(key, value)} />
       ))}
       <TuningNote>
-        Avant de ramasser une arme, enregistre 15 secondes de déplacements et de coups
-        avec F9. Arrête avec F9, puis compare Vif, Franc et Lourd avec F10.
-        Les variantes gardent la même portée et les mêmes dégâts.
+        Avant de ramasser une arme, enregistre 15 secondes de déplacements et de coups avec F9. Arrête avec F9, puis
+        compare Vif, Franc et Lourd avec F10. Les variantes gardent la même portée et les mêmes dégâts.
       </TuningNote>
     </TuningGroup>
   );

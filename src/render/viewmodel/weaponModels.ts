@@ -55,7 +55,8 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       if (!mesh) throw new Error(`[armes] nœud "${name}" absent de armes.glb`);
       return mesh;
     };
-    const extra = (name: string, key: string): unknown => byName.get(name)?.find((obj) => key in obj.userData)?.userData[key];
+    const extra = (name: string, key: string): unknown =>
+      byName.get(name)?.find((obj) => key in obj.userData)?.userData[key];
 
     const crowbar = node("vm_crowbar");
     const pistol = node("vm_pistol");
@@ -81,7 +82,16 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       pumpAxis: vec3(extra("vm_shotgun_pump", "axe_glissiere"), "vm_shotgun_pump.axe_glissiere").normalize(),
       material,
     };
-    for (const geometry of [models.kick, models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
+    for (const geometry of [
+      models.kick,
+      models.crowbar,
+      models.pistol,
+      models.shotgun,
+      models.shotgunPump,
+      models.worldCrowbar,
+      models.worldPistol,
+      models.worldShotgun,
+    ]) {
       geometries.delete(geometry);
     }
     return models;
@@ -94,10 +104,14 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
   }
 }
 
-function coloredBox(size: [number, number, number], center: [number, number, number], color: number): THREE.BufferGeometry {
+function coloredBox(
+  size: [number, number, number],
+  center: [number, number, number],
+  color: number,
+): THREE.BufferGeometry {
   const geometry = new THREE.BoxGeometry(...size).translate(...center);
   const c = new THREE.Color(color);
-  const colors = new Float32Array(geometry.attributes.position!.count * 3);
+  const colors = new Float32Array(geometry.attributes.position.count * 3);
   for (let i = 0; i < colors.length; i += 3) colors.set([c.r, c.g, c.b], i);
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   return geometry;
@@ -105,7 +119,7 @@ function coloredBox(size: [number, number, number], center: [number, number, num
 
 export function placeholderWeaponModels(): WeaponModels {
   return {
-    kick: coloredBox([0.20, 0.28, 0.15], [0.12, -0.30, -0.72], 0x38342e),
+    kick: coloredBox([0.2, 0.28, 0.15], [0.12, -0.3, -0.72], 0x38342e),
     kickPivot: new THREE.Vector3(0.12, -0.45, -0.62),
     crowbar: coloredBox([0.06, 0.06, 0.7], [0.32, -0.28, -0.55], 0x8a5a34),
     pistol: coloredBox([0.06, 0.1, 0.26], [0.26, -0.26, -0.45], 0x3a3d44),

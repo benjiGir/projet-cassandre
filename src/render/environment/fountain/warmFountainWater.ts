@@ -13,7 +13,9 @@ export function suspendPreviousFountainWater(root?: THREE.Object3D): () => void 
     if (!(mesh instanceof Mesh) || mesh.name === "fx_fontaine_buse") continue;
     for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) material.dispose();
   }
-  return () => { fountain.visible = visible; };
+  return () => {
+    fountain.visible = visible;
+  };
 }
 
 export async function warmFountainWater(
@@ -25,14 +27,14 @@ export async function warmFountainWater(
 ): Promise<void> {
   const target = renderer.getRenderTarget();
   const parent = previousRoot?.parent;
-  const poses = fountain.group.children.map(mesh => ({ mesh, culled: mesh.frustumCulled }));
+  const poses = fountain.group.children.map((mesh) => ({ mesh, culled: mesh.frustumCulled }));
   try {
     previousRoot?.removeFromParent();
     for (const { mesh } of poses) mesh.frustumCulled = false;
     renderer.setRenderTarget(null);
-    runGameplaySync(RenderService.use(rs => rs.render(renderer, scene, camera)));
+    runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
     await Promise.resolve();
-    runGameplaySync(RenderService.use(rs => rs.render(renderer, scene, camera)));
+    runGameplaySync(RenderService.use((rs) => rs.render(renderer, scene, camera)));
   } finally {
     for (const { mesh, culled } of poses) mesh.frustumCulled = culled;
     if (previousRoot && parent) parent.add(previousRoot);

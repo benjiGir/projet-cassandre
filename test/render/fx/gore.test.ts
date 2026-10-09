@@ -17,7 +17,11 @@ function rng(seed: number): () => number {
   };
 }
 
-interface Plane { point: THREE.Vector3; normal: THREE.Vector3; inside?: (p: THREE.Vector3) => boolean }
+interface Plane {
+  point: THREE.Vector3;
+  normal: THREE.Vector3;
+  inside?: (p: THREE.Vector3) => boolean;
+}
 
 function probeOf(planes: readonly Plane[]): SurfaceProbe {
   return (origin, direction, maxDistance) => {
@@ -54,12 +58,14 @@ function settle(gore: Gore, seconds: number): void {
 
 /** Positions des quatre coins de chaque tache posée. */
 function splatCorners(scene: THREE.Scene): THREE.Vector3[][] {
-  const mesh = scene.children.find((child) => child instanceof THREE.Mesh && !(child instanceof THREE.InstancedMesh)) as THREE.Mesh;
+  const mesh = scene.children.find(
+    (child) => child instanceof THREE.Mesh && !(child instanceof THREE.InstancedMesh),
+  ) as THREE.Mesh;
   const position = mesh.geometry.getAttribute("position");
   const quads: THREE.Vector3[][] = [];
   for (let i = 0; i < position.count; i += 4) {
     const corners = [0, 1, 2, 3].map((c) => new THREE.Vector3().fromBufferAttribute(position, i + c));
-    if (corners[0]!.distanceTo(corners[2]!) > 1e-6) quads.push(corners);
+    if (corners[0].distanceTo(corners[2]) > 1e-6) quads.push(corners);
   }
   return quads;
 }
@@ -119,7 +125,7 @@ describe("gore — taches", () => {
 
     const width = () => {
       const [quad] = splatCorners(scene);
-      return quad![0]!.distanceTo(quad![1]!);
+      return quad[0].distanceTo(quad[1]);
     };
     const start = width();
     settle(gore, goreConfig.deathPoolGrow + 0.2);
@@ -137,11 +143,11 @@ describe("gore — taches", () => {
     gore.spawnSpray(new THREE.Vector3(-20, 1.2, 0), new THREE.Vector3(1, 0, 0), "pistol");
 
     const [wall, floor] = splatCorners(scene);
-    expect(wall!.every((c) => Math.abs(c.x - (4 - goreConfig.surfaceOffset)) < 1e-4)).toBe(true);
-    expect(floor!.every((c) => Math.abs(c.y - goreConfig.surfaceOffset) < 1e-4)).toBe(true);
+    expect(wall.every((c) => Math.abs(c.x - (4 - goreConfig.surfaceOffset)) < 1e-4)).toBe(true);
+    expect(floor.every((c) => Math.abs(c.y - goreConfig.surfaceOffset) < 1e-4)).toBe(true);
     // Au mur, la tache est droite : ses coulures descendent.
-    expect(wall![3]!.y - wall![0]!.y).toBeGreaterThan(0.2);
-    expect(Math.abs(wall![1]!.y - wall![0]!.y)).toBeLessThan(1e-6);
+    expect(wall[3].y - wall[0].y).toBeGreaterThan(0.2);
+    expect(Math.abs(wall[1].y - wall[0].y)).toBeLessThan(1e-6);
   });
 
   it("ne dépasse pas d'une arête : réduite près du bord, refusée au bord", () => {
@@ -151,7 +157,7 @@ describe("gore — taches", () => {
     gore.spawnPool(new THREE.Vector3(-0.35, 1, 0));
     settle(gore, 2);
     const [reduced] = splatCorners(scene);
-    expect(reduced![0]!.distanceTo(reduced![1]!)).toBeLessThan(goreConfig.deathPoolSize[0]);
+    expect(reduced[0].distanceTo(reduced[1])).toBeLessThan(goreConfig.deathPoolSize[0]);
 
     gore.spawnPool(new THREE.Vector3(-0.05, 1, 0));
     expect(gore.splatCount).toBe(1);

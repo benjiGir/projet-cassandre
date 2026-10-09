@@ -31,9 +31,12 @@ export function levelSpaceAt(
 ): string | null {
   for (const space of spaces) {
     if (
-      p.x >= space.x[0] && p.x <= space.x[1] &&
-      p.y >= space.y[0] && p.y <= space.y[1] &&
-      p.z >= space.z[0] && p.z <= space.z[1]
+      p.x >= space.x[0] &&
+      p.x <= space.x[1] &&
+      p.y >= space.y[0] &&
+      p.y <= space.y[1] &&
+      p.z >= space.z[0] &&
+      p.z <= space.z[1]
     ) {
       return space.id;
     }

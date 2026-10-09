@@ -60,7 +60,12 @@ export function updatePlaceLine(session: GameSession, dt: number): void {
   if (!session.levelSpaces) return;
   const space = levelSpaceAt(session.levelSpaces, session.player.position);
   const line = nextPlaceLine(
-    session.placeLine, space, dt, session.heroLinesSaid, enemyEngaged(session), session.placeLines,
+    session.placeLine,
+    space,
+    dt,
+    session.heroLinesSaid,
+    enemyEngaged(session),
+    session.placeLines,
   );
   if (line) triggerHeroLine(session, line);
 }

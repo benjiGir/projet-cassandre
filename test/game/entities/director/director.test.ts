@@ -21,7 +21,7 @@
  * puis on réécrit ses méthodes par `Object.assign` avec la forme produite
  * par `XxxService.test(overrides)`.
  */
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
 import { Effect } from "effect";
 import { assert, beforeEach, describe, it } from "@effect/vitest";
@@ -328,7 +328,11 @@ describe("Director — table de transition (jalon M5, caractérisation)", () => 
     scriptRaycast({
       castRay: () => Effect.succeed(null),
       castRayAndGetNormal: () =>
-        Effect.succeed({ collider: WORLD_COLLIDER, timeOfImpact: 3, normal: { x: 0, y: 0, z: -1 } } as RAPIER.RayColliderIntersection),
+        Effect.succeed({
+          collider: WORLD_COLLIDER,
+          timeOfImpact: 3,
+          normal: { x: 0, y: 0, z: -1 },
+        } as RAPIER.RayColliderIntersection),
     });
 
     director.state = "attack";
@@ -384,14 +388,8 @@ describe("Director — table de transition (jalon M5, caractérisation)", () => 
     assert.strictEqual(director.hp, 0);
     assert.isNull(director.body);
     assert.isNull(director.collider);
-    assert.strictEqual(
-      (director as unknown as { velocityHorizontal: THREE.Vector3 }).velocityHorizontal.lengthSq(),
-      0,
-    );
-    assert.strictEqual(
-      (director as unknown as { knockbackVelocity: THREE.Vector3 }).knockbackVelocity.lengthSq(),
-      0,
-    );
+    assert.strictEqual((director as unknown as { velocityHorizontal: THREE.Vector3 }).velocityHorizontal.lengthSq(), 0);
+    assert.strictEqual((director as unknown as { knockbackVelocity: THREE.Vector3 }).knockbackVelocity.lengthSq(), 0);
   });
 
   it("dead -> corpse : après deathFrameDuration * DIRECTOR_DEATH_FRAME_COUNT, jamais avant", () => {

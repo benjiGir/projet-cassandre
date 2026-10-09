@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 import type { UseObject } from "../loading/levelTypes";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
@@ -207,7 +207,6 @@ export class InteractionSystem {
     }
 
     switch (useObject.name) {
-
       case "use_exit_door":
         // PAS marqué consommé : un essai refusé doit rester réessayable —
         // `main.ts` a sa propre garde contre un ré-essai une fois déverrouillée.

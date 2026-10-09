@@ -1,7 +1,7 @@
 import { LOYALTY_CARD_LABELS, LOYALTY_CARDS, type LoyaltyCard } from "../../player/loyaltyCards";
 import { useGameStore } from "../../hud/state";
 import { showHudMessage } from "../player/feedback";
-import { type GameSession } from "../gameSession";
+import type { GameSession } from "../gameSession";
 
 // see: docs/archive/systems-session.md#cartes-de-fidélité
 

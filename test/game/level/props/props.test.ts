@@ -56,19 +56,15 @@ afterEach(() => {
 /** Les messages `prop_*` seulement : un fixture sans `spawn_player` en produit
  * un autre, sans rapport, et il ne doit pas entrer dans ces assertions. */
 function propWarnings(spy: { mock: { calls: unknown[][] } }): string[] {
-  return spy.mock.calls
-    .map((call: unknown[]) => String(call[0]))
-    .filter((msg: string) => msg.includes("(prop_*)"));
+  return spy.mock.calls.map((call: unknown[]) => String(call[0])).filter((msg: string) => msg.includes("(prop_*)"));
 }
 
 describe("chargement d'un prop_*", () => {
   it("pose le corps sur le CENTRE de la boîte, pas sur l'origine du mesh", () => {
-    const { handle } = build([
-      propMesh("prop_caisse", new THREE.Vector3(1, 2, 3), new THREE.Vector3(10, 5, -3)),
-    ]);
+    const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 2, 3), new THREE.Vector3(10, 5, -3))]);
 
     expect(handle.stats.propCount).toBe(1);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
     const t = prop.body.translation();
     // Origine du mesh (10, 5, −3) + demi-boîte : c'est là qu'est le centre de masse.
     expect(t.x).toBeCloseTo(10.5, 5);
@@ -80,7 +76,7 @@ describe("chargement d'un prop_*", () => {
 
   it("crée un corps DYNAMIQUE dans le groupe PROP, pas un collider de monde", () => {
     const { handle } = build([propMesh("prop_caddie", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 1, 0))]);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     expect(prop.body.isDynamic()).toBe(true);
     const membership = (prop.collider.collisionGroups() >>> 16) & 0xffff;
@@ -92,7 +88,7 @@ describe("chargement d'un prop_*", () => {
 
   it("reste visible et n'est jamais compté comme décor fusionnable", () => {
     const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 1, 0))]);
-    expect(handle.props[0]!.object.visible).toBe(true);
+    expect(handle.props[0].object.visible).toBe(true);
     // `unprefixedMeshCount` ne compte que les meshes SANS préfixe reconnu :
     // un prop est reconnu, donc il n'y entre pas — et ne peut pas se retrouver
     // dans un lot fusionné par ce chemin.
@@ -126,7 +122,7 @@ describe("chargement d'un prop_*", () => {
     ]);
 
     expect(handle.props).toHaveLength(1);
-    expect(handle.props[0]!.matiere).toBe("bois");
+    expect(handle.props[0].matiere).toBe("bois");
     const warnings = propWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("plutonium");
@@ -139,7 +135,7 @@ describe("chargement d'un prop_*", () => {
     ]);
 
     expect(handle.props).toHaveLength(1);
-    expect(handle.props[0]!.body.mass()).toBeCloseTo(25, 3); // DEFAULT_PROP_MASS_KG
+    expect(handle.props[0].body.mass()).toBeCloseTo(25, 3); // DEFAULT_PROP_MASS_KG
     const warnings = propWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("masse");
@@ -153,7 +149,7 @@ describe("PropSystem — tir, poussée, destruction", () => {
       propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: damage * 2 }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
     const accumulatedFrameHits = [hitFrom(prop.collider.handle, new THREE.Vector3(0.5, 0.5, 0.5))];
 
     props.update(accumulatedFrameHits);
@@ -168,7 +164,7 @@ describe("PropSystem — tir, poussée, destruction", () => {
       propMesh("prop_caddie", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { masse: 10 }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
     const avant = prop.body.translation().x;
 
     // Normale vers +X (le tireur est à droite) : l'impulsion doit pousser vers −X.
@@ -188,18 +184,18 @@ describe("PropSystem — tir, poussée, destruction", () => {
       }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
     const point = new THREE.Vector3(0.5, 0.5, 0.5);
 
     props.update([hitFrom(prop.collider.handle, point)]);
     expect(props.destroyedEvents).toHaveLength(0);
-    expect(props.hitEvents[0]!.fatal).toBe(false);
+    expect(props.hitEvents[0].fatal).toBe(false);
     expect(props.aliveCount).toBe(1);
     props.clearFrameEvents();
 
     props.update([hitFrom(prop.collider.handle, point)]);
     expect(props.destroyedEvents).toHaveLength(1);
-    expect(props.destroyedEvents[0]!.matiere).toBe("carton");
+    expect(props.destroyedEvents[0].matiere).toBe("carton");
     expect(props.aliveCount).toBe(0);
     expect(prop.object.visible).toBe(false);
     expect(prop.collider.isEnabled()).toBe(false);
@@ -213,11 +209,9 @@ describe("PropSystem — tir, poussée, destruction", () => {
   });
 
   it("ne détruit jamais un prop sans pv, quel que soit le nombre de coups", () => {
-    const { handle } = build([
-      propMesh("prop_pilier", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0)),
-    ]);
+    const { handle } = build([propMesh("prop_pilier", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0))]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     for (let i = 0; i < 200; i++) {
       props.update([hitFrom(prop.collider.handle, new THREE.Vector3(0.5, 0.5, 0.5))]);
@@ -228,7 +222,9 @@ describe("PropSystem — tir, poussée, destruction", () => {
   });
 
   it("ignore un impact qui ne touche aucun prop", () => {
-    const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 1 })]);
+    const { handle } = build([
+      propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 1 }),
+    ]);
     const props = new PropSystem(handle.props, handle.root);
 
     props.update([hitFrom(9999, new THREE.Vector3(0, 0, 0))]);
@@ -237,7 +233,9 @@ describe("PropSystem — tir, poussée, destruction", () => {
   });
 
   it("destroyByName casse un prop sans tir, et refuse un nom inconnu ou déjà cassé", () => {
-    const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 50 })]);
+    const { handle } = build([
+      propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 50 }),
+    ]);
     const props = new PropSystem(handle.props, handle.root);
 
     expect(props.destroyByName("prop_inconnu")).toBe(false);
@@ -253,7 +251,7 @@ describe("PropSystem — interpolation du rendu", () => {
       propMesh("prop_caisse", new THREE.Vector3(2, 2, 2), new THREE.Vector3(4, 0, 7), { masse: 10 }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     // Corps téléporté d'un mètre en +X : le mesh doit suivre EXACTEMENT, donc
     // garder son origine à un coin (4+1, 0, 7) et non se recentrer dessus.
@@ -268,9 +266,11 @@ describe("PropSystem — interpolation du rendu", () => {
   });
 
   it("ne touche plus un mesh une fois le prop détruit", () => {
-    const { handle } = build([propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 1 })]);
+    const { handle } = build([
+      propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { pv: 1 }),
+    ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     props.destroyByName("prop_caisse");
     const figee = prop.object.position.clone();
@@ -286,7 +286,7 @@ describe("PropSystem — interpolation du rendu", () => {
       propMesh("prop_caisse", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { masse: 10 }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     // Caméra à 100 m : au-delà de la portée de rendu, le prop n'est pas dessiné.
     props.interpolate(1, new THREE.Vector3(100, 0, 0));
@@ -326,7 +326,7 @@ describe("chargement d'un prop_* — matières étendues (chantier « Les coulis
       propMesh("prop_frigo", new THREE.Vector3(1, 1, 1), new THREE.Vector3(0, 0, 0), { contenu: "donut:3" }),
     ]);
 
-    expect(handle.props[0]!.contenu).toEqual({ item: "donut", count: 3 });
+    expect(handle.props[0].contenu).toEqual({ item: "donut", count: 3 });
     expect(propWarnings(errorSpy)).toHaveLength(0);
     errorSpy.mockRestore();
   });
@@ -339,7 +339,7 @@ describe("chargement d'un prop_* — matières étendues (chantier « Les coulis
     ]);
 
     expect(handle.props).toHaveLength(1);
-    expect(handle.props[0]!.contenu).toBeNull();
+    expect(handle.props[0].contenu).toBeNull();
     const warnings = propWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("contenu");
@@ -356,7 +356,7 @@ describe("PropSystem — nourriture lâchée à la casse (`contenu`)", () => {
       }),
     ]);
     const props = new PropSystem(handle.props, handle.root);
-    const prop = handle.props[0]!;
+    const prop = handle.props[0];
 
     props.destroyByName(prop.name);
     expect(props.foodDropCount).toBe(2);
@@ -380,7 +380,7 @@ describe("PropSystem — nourriture lâchée à la casse (`contenu`)", () => {
     ]);
     const props = new PropSystem(handle.props, handle.root);
 
-    props.destroyByName(handle.props[0]!.name);
+    props.destroyByName(handle.props[0].name);
     expect(props.foodDropCount).toBe(0);
   });
 
@@ -397,7 +397,7 @@ describe("PropSystem — nourriture lâchée à la casse (`contenu`)", () => {
       const props = new PropSystem(handle.props, handle.root);
       props.destroyByName("prop_frigo");
       return handle.root.children
-        .filter((obj): obj is THREE.Mesh => obj instanceof THREE.Mesh && obj !== handle.props[0]!.object)
+        .filter((obj): obj is THREE.Mesh => obj instanceof THREE.Mesh && obj !== handle.props[0].object)
         .map((mesh) => mesh.position.clone());
     }
 
@@ -436,7 +436,7 @@ describe("PropSystem — explosifs (`matiere: gaz`, lot B3)", () => {
         props.update([]);
         physics.step(1 / 60);
       }
-      for (; lus < props.explosionEvents.length; lus++) journal.push([i, props.explosionEvents[lus]!.name]);
+      for (; lus < props.explosionEvents.length; lus++) journal.push([i, props.explosionEvents[lus].name]);
     }
     const poses = handle.props.map((p) => {
       const t = p.body.translation();
@@ -451,7 +451,7 @@ describe("PropSystem — explosifs (`matiere: gaz`, lot B3)", () => {
     props.destroyByName("prop_gaz_a");
 
     expect(props.explosionEvents.map((e) => e.name)).toEqual(["prop_gaz_a"]);
-    expect(props.explosionEvents[0]!.point.x).toBeCloseTo(0.2, 5);
+    expect(props.explosionEvents[0].point.x).toBeCloseTo(0.2, 5);
     expect(props.destroyedEvents.map((e) => e.matiere)).toEqual(["gaz"]);
   });
 

@@ -7,11 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import {
-  createGameFlowActor,
-  isPhysicsLiveState,
-  isPlayingState,
-} from "../../../src/app/navigation/gameFlowMachine";
+import { createGameFlowActor, isPhysicsLiveState, isPlayingState } from "../../../src/app/navigation/gameFlowMachine";
 
 describe("gameFlowMachine", () => {
   it("démarre sur boot", () => {

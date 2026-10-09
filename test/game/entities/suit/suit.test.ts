@@ -42,7 +42,7 @@
  * services sont des singletons PARTAGÉS par tous les `it()` de ce fichier,
  * vitest isolant les modules par FICHIER de test, pas par test individuel).
  */
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import * as THREE from "three";
 import { Effect } from "effect";
 import { afterEach, assert, beforeEach, describe, it } from "@effect/vitest";
@@ -400,7 +400,11 @@ describe("Suit — table de transition (jalon M5, caractérisation)", () => {
     scriptRaycast({
       castRay: () => Effect.succeed(null), // LOS dégagée...
       castRayAndGetNormal: () =>
-        Effect.succeed({ collider: WORLD_COLLIDER, timeOfImpact: 3, normal: { x: 0, y: 0, z: -1 } } as RAPIER.RayColliderIntersection), // ...mais le jitter fait toucher un mur en premier.
+        Effect.succeed({
+          collider: WORLD_COLLIDER,
+          timeOfImpact: 3,
+          normal: { x: 0, y: 0, z: -1 },
+        } as RAPIER.RayColliderIntersection), // ...mais le jitter fait toucher un mur en premier.
     });
 
     suit.state = "attack";
@@ -471,7 +475,11 @@ describe("Suit — table de transition (jalon M5, caractérisation)", () => {
     const stepsBeforeThreshold = Math.floor(totalDeathTime / step); // reste strictement sous le total.
     for (let i = 0; i < stepsBeforeThreshold; i++) {
       suit.update(step, ctx);
-      assert.strictEqual(suit.state, "dead", `ne doit pas devenir corpse avant deathFrameDuration*DEATH_FRAME_COUNT (étape ${i})`);
+      assert.strictEqual(
+        suit.state,
+        "dead",
+        `ne doit pas devenir corpse avant deathFrameDuration*DEATH_FRAME_COUNT (étape ${i})`,
+      );
     }
 
     for (let i = 0; i < 3; i++) suit.update(step, ctx); // dépasse nettement le total.

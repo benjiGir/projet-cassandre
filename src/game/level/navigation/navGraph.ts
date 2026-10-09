@@ -54,7 +54,7 @@ export function cellIndex(graph: NavGraph, ix: number, iz: number): number {
 export function cellWorldPosition(graph: NavGraph, index: number, out = new THREE.Vector3()): THREE.Vector3 {
   const ix = index % graph.cols;
   const iz = Math.floor(index / graph.cols);
-  return out.set(graph.originX + ix * graph.cellSize, graph.groundY[index]!, graph.originZ + iz * graph.cellSize);
+  return out.set(graph.originX + ix * graph.cellSize, graph.groundY[index], graph.originZ + iz * graph.cellSize);
 }
 
 /** Lecture debug directe d'une cellule par ses coordonnées de grille — exportée pour `cassandre.pathfinding`/les tests, voir `navGraphStats` pour un résumé agrégé. */
@@ -76,11 +76,18 @@ export function navGraphStats(graph: NavGraph): {
   let edgeCount = 0;
   for (let i = 0; i < graph.walkable.length; i++) {
     if (graph.walkable[i] === 1) walkableCount++;
-    const mask = graph.neighborMask[i]!;
+    const mask = graph.neighborMask[i];
     // Popcount 8 bits — assez petit pour une boucle simple, pas besoin d'une astuce bit-à-bit.
     for (let bit = 0; bit < 8; bit++) if ((mask & (1 << bit)) !== 0) edgeCount++;
   }
-  return { cellSize: graph.cellSize, cols: graph.cols, rows: graph.rows, cellCount: graph.walkable.length, walkableCount, edgeCount };
+  return {
+    cellSize: graph.cellSize,
+    cols: graph.cols,
+    rows: graph.rows,
+    cellCount: graph.walkable.length,
+    walkableCount,
+    edgeCount,
+  };
 }
 
 export function nearestWalkableCellIndex(graph: NavGraph, x: number, z: number): number | null {

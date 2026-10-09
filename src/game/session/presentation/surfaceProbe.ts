@@ -19,7 +19,8 @@ const STATIC_GROUPS = interactionGroups(GROUP.PLAYER_SHOT, GROUP.WORLD);
 /** Sonde du décor statique de CETTE partie, pour les effets qui s'y posent — voir `render/fx/gore.ts`. */
 export function createStaticSurfaceProbe(session: ProbeSession): SurfaceProbe {
   const ray = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: -1, z: 0 });
-  const isStatic = (collider: RAPIER.Collider) => !isMovableOrBreakableHandle(session.gltfLevelSession, collider.handle);
+  const isStatic = (collider: RAPIER.Collider) =>
+    !isMovableOrBreakableHandle(session.gltfLevelSession, collider.handle);
   return (origin, direction, maxDistance) => {
     ray.origin.x = origin.x;
     ray.origin.y = origin.y;

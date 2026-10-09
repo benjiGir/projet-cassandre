@@ -5,7 +5,7 @@ import { playSfx } from "../../core/audio/audio";
 import { input } from "../../core/input/input";
 import { formatKeyCode } from "../../core/input/inputBindings";
 import { emptyInputFrame, inputRecorder } from "../../core/input/inputRecorder";
-import { type InputFrame } from "../../core/input/inputTypes";
+import type { InputFrame } from "../../core/input/inputTypes";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { useGameStore } from "../hud/state";
 import { triggerLevelComplete, tryOpenCardDoor, unlockDoor } from "../session/progression/doors";
@@ -41,7 +41,7 @@ import {
   recordSuitKills,
   recordVitresDestroyed,
 } from "../session/progression/score";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 import { DIRECTOR_DROPPED_CARD, directorConfig } from "../entities/director/directorConfig";
 import { suitConfig } from "../entities/suit/suitConfig";
 import { moveConfig } from "../player/movement/moveConfig";
@@ -51,7 +51,7 @@ import { FLESH_MATERIAL } from "../player/weapons/weapons";
 import type { DoorActor } from "../level/doors/doorTypes";
 import { basculerEau, updateDouches } from "../level/sanitaires/douches";
 import { updateStoreSign } from "../../render/environment/storeSign";
-import { type GameSession } from "../session/gameSession";
+import type { GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
 import { applyCampaignCommand } from "../devtools/campaignCommands";
 import { updateTrainRideGym } from "../session/player/trainRideGameplay";
@@ -227,7 +227,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         const chute = -session.player.velocity.y;
         updateKillRush(session, gameplayDt);
         session.player.update(gameplayDt, activeFrame);
-        if (enLAir && session.player.isGrounded && chute >= LANDING_BARK_SPEED) triggerHeroBark(session, "effort_reception");
+        if (enLAir && session.player.isGrounded && chute >= LANDING_BARK_SPEED)
+          triggerHeroBark(session, "effort_reception");
       });
 
       // Filet de chute (`session/fallRescue.ts`) : le dernier sol RÉELLEMENT
@@ -253,7 +254,8 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           {
-            onMetroBlockoutUse: (name) => session.gltfLevelSession?.current?.metroBlockout?.use(name, session.player.position),
+            onMetroBlockoutUse: (name) =>
+              session.gltfLevelSession?.current?.metroBlockout?.use(name, session.player.position),
             onTrainUse: (name) => session.gltfLevelSession?.current?.trains?.use(name),
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
@@ -308,14 +310,16 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         );
         publishPerkOffer(session, engine.interaction.nearestInRange, formatKeyCode(input.getBinding("use")));
 
-        const consommeSanitaire = !consomme && trySanitaire(
-          session,
-          activeFrame.use,
-          session.player.position,
-          session.player.eyeOffset,
-          activeFrame.yaw,
-          activeFrame.pitch,
-        );
+        const consommeSanitaire =
+          !consomme &&
+          trySanitaire(
+            session,
+            activeFrame.use,
+            session.player.position,
+            session.player.eyeOffset,
+            activeFrame.yaw,
+            activeFrame.pitch,
+          );
 
         if (activeFrame.use && !consomme && !consommeSanitaire) {
           session.doorSystem?.actionner(session.player.position);
@@ -337,10 +341,16 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
             const pris = session.weapons.addPistolAmmo(amount);
             if (pris <= 0) return false;
             showHudMessage(`+${pris} munitions`);
-            session.heroPortrait.react("victory", .45);
+            session.heroPortrait.react("victory", 0.45);
             playSfx("ammo_pickup");
-            triggerHeroLine(session, useObject.name === "use_munitions_gaine_1" ? "cache_gaine"
-              : amount >= 36 ? "munitions_36" : "munitions_24");
+            triggerHeroLine(
+              session,
+              useObject.name === "use_munitions_gaine_1"
+                ? "cache_gaine"
+                : amount >= 36
+                  ? "munitions_36"
+                  : "munitions_24",
+            );
             return true;
           },
           session.pickupRadius,
@@ -384,11 +394,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
               const avantAmmo = session.weapons.pistolAmmo;
               const pris = session.weapons.tryCollectPistol();
               if (pris) {
-                session.heroPortrait.react("victory", dejaPossede ? .45 : 1);
+                session.heroPortrait.react("victory", dejaPossede ? 0.45 : 1);
                 showHudMessage(
-                  dejaPossede
-                    ? `+${session.weapons.pistolAmmo - avantAmmo} munitions`
-                    : "Pistolet récupéré",
+                  dejaPossede ? `+${session.weapons.pistolAmmo - avantAmmo} munitions` : "Pistolet récupéré",
                 );
                 playSfx("ammo_pickup");
                 if (!dejaPossede) triggerHeroLine(session, "arme_pistolet");
@@ -434,17 +442,21 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       // soin que ci-dessus, mais lue depuis `PropSystem` plutôt que
       // `useObjects` (voir `props.ts::PropSystem.collectFoodDrops`).
       yield* Effect.sync(() =>
-        session.propSystem?.collectFoodDrops(session.player.position, (amount) => {
-          const maxHp = session.playerMaxHp;
-          if (session.playerHp >= maxHp) return false;
-          const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
-          session.playerHp += healed;
-          session.heroPortrait.heal(session.playerHp, maxHp);
-          useGameStore.getState().setPlayerHp(session.playerHp);
-          showHudMessage(`+${healed} PV`);
-          playSfx("food_eat");
-          return true;
-        }, session.pickupRadius),
+        session.propSystem?.collectFoodDrops(
+          session.player.position,
+          (amount) => {
+            const maxHp = session.playerMaxHp;
+            if (session.playerHp >= maxHp) return false;
+            const healed = Math.min(maxHp, session.playerHp + amount) - session.playerHp;
+            session.playerHp += healed;
+            session.heroPortrait.heal(session.playerHp, maxHp);
+            useGameStore.getState().setPlayerHp(session.playerHp);
+            showHudMessage(`+${healed} PV`);
+            playSfx("food_eat");
+            return true;
+          },
+          session.pickupRadius,
+        ),
       );
 
       yield* Effect.sync(() => {
@@ -460,7 +472,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.heroPortrait.react("focus");
           let hitEnemy = false;
           for (let i = hitCountBefore; i < session.weapons.hitEvents.length; i++) {
-            if (session.weapons.hitEvents[i]!.material === FLESH_MATERIAL) {
+            if (session.weapons.hitEvents[i].material === FLESH_MATERIAL) {
               hitEnemy = true;
               break;
             }
@@ -494,7 +506,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // Premier tir arrêté par un bouclier : le héros dit quoi en faire.
         if (session.suitManager.blockedHits.size > 0) triggerHeroLine(session, "vigile_bouclier");
         for (let i = suitPlayerHitsBefore; i < session.suitManager.playerHitEvents.length; i++) {
-          const hit = session.suitManager.playerHitEvents[i]!;
+          const hit = session.suitManager.playerHitEvents[i];
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "suit");
         }
         if (session.suitManager.playerHitEvents.length > suitPlayerHitsBefore) streamEvent(session, "degats");
@@ -521,14 +533,19 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.sanitaireSystem ?? undefined,
         );
         const directorKills = session.directorManager.deathEvents.length - directorDeathsBefore;
-        if (session.directorManager.alertEvents.length > directorAlertsBefore
-          || session.directorManager.revealEvents.length > directorRevealsBefore) session.heroPortrait.react("discover");
+        if (
+          session.directorManager.alertEvents.length > directorAlertsBefore ||
+          session.directorManager.revealEvents.length > directorRevealsBefore
+        )
+          session.heroPortrait.react("discover");
         recordDirectorKills(session.stats, directorKills);
         recordDirectorKillFeedback(session, directorKills);
-        if (session.directorManager.revealEvents.length > directorRevealsBefore) triggerHeroLine(session, "boss_revelation");
-        else if (session.directorManager.telegraphEvents.length > directorAttacksBefore) triggerHeroLine(session, "boss_attaque");
+        if (session.directorManager.revealEvents.length > directorRevealsBefore)
+          triggerHeroLine(session, "boss_revelation");
+        else if (session.directorManager.telegraphEvents.length > directorAttacksBefore)
+          triggerHeroLine(session, "boss_attaque");
         for (let i = directorPlayerHitsBefore; i < session.directorManager.playerHitEvents.length; i++) {
-          const hit = session.directorManager.playerHitEvents[i]!;
+          const hit = session.directorManager.playerHitEvents[i];
           applyPlayerDamage(engine, session, hit.amount, hit.normal, "director");
         }
         if (session.directorManager.playerHitEvents.length > directorPlayerHitsBefore) streamEvent(session, "degats");
@@ -596,7 +613,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
       yield* Effect.sync(() => {
         const dropped = session.directorManager.droppedCard;
         if (dropped && !dropped.collected && !session.droppedCardBillboard) {
-          session.droppedCardBillboard = new CardPickupBillboard(dropped.card, dropped.position, engine.cardPickupTextures);
+          session.droppedCardBillboard = new CardPickupBillboard(
+            dropped.card,
+            dropped.position,
+            engine.cardPickupTextures,
+          );
           engine.scene.add(session.droppedCardBillboard.spriteMesh);
         }
         if (session.directorManager.tryCollectCard(session.player.position)) {
@@ -646,7 +667,11 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         }
 
         updateLevelScript(
-          session.levelScript, session.scriptTriggers, session.choice.scenarios ?? LEVEL_EVENTS, gameplayDt, session.player.position,
+          session.levelScript,
+          session.scriptTriggers,
+          session.choice.scenarios ?? LEVEL_EVENTS,
+          gameplayDt,
+          session.player.position,
           (action) => runScriptAction(engine, session, action),
         );
 

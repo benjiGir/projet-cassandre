@@ -34,9 +34,7 @@ await initPhysics();
  */
 function buildWallWorld() {
   const physics = new PhysicsWorld();
-  const body = physics.world.createRigidBody(
-    RAPIER.RigidBodyDesc.fixed().setTranslation(0, 0, 10),
-  );
+  const body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 0, 10));
   const collider = physics.world.createCollider(
     RAPIER.ColliderDesc.cuboid(1, 1, 1).setCollisionGroups(COLLISION_GROUPS.WORLD),
     body,
@@ -56,12 +54,14 @@ describe("RaycastService (jalon M3) — contre un vrai monde Rapier", () => {
         { x: 0, y: 0, z: 0, w: 1 },
         { x: 0, y: 0, z: 10 },
         new RAPIER.Capsule(0.5, 0.3),
-        0, 1, false,
+        0,
+        1,
+        false,
         RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
         COLLISION_GROUPS.WORLD,
       );
       assert.isNotNull(hit);
-      assert.strictEqual(hit!.collider.handle, collider.handle);
+      assert.strictEqual(hit.collider.handle, collider.handle);
     }).pipe(Effect.provide(RaycastService.layer)),
   );
 
@@ -81,9 +81,9 @@ describe("RaycastService (jalon M3) — contre un vrai monde Rapier", () => {
       );
 
       assert.isNotNull(hit);
-      assert.strictEqual(hit!.collider.handle, collider.handle);
+      assert.strictEqual(hit.collider.handle, collider.handle);
       // Face avant du cuboïde : centre z=10, demi-étendue 1 → touché à z=9.
-      assert.approximately(hit!.timeOfImpact, 9, 1e-6);
+      assert.approximately(hit.timeOfImpact, 9, 1e-6);
     }).pipe(Effect.provide(RaycastService.layer)),
   );
 
@@ -162,10 +162,10 @@ describe("RaycastService (jalon M3) — contre un vrai monde Rapier", () => {
       );
 
       assert.isNotNull(hit);
-      assert.strictEqual(hit!.collider.handle, collider.handle);
-      assert.approximately(hit!.timeOfImpact, 9, 1e-6);
+      assert.strictEqual(hit.collider.handle, collider.handle);
+      assert.approximately(hit.timeOfImpact, 9, 1e-6);
       // La normale de la face touchée (perpendiculaire à z, tournée vers le rayon) pointe vers -z.
-      assert.approximately(hit!.normal.z, -1, 1e-6);
+      assert.approximately(hit.normal.z, -1, 1e-6);
     }).pipe(Effect.provide(RaycastService.layer)),
   );
 
@@ -206,7 +206,7 @@ describe("RaycastService (jalon M3) — contre un vrai monde Rapier", () => {
       );
 
       assert.strictEqual(hits.length, 1);
-      assert.strictEqual(hits[0]!.handle, collider.handle);
+      assert.strictEqual(hits[0].handle, collider.handle);
     }).pipe(Effect.provide(RaycastService.layer)),
   );
 
@@ -258,12 +258,7 @@ describe("RaycastService.test (jalon M3) — Layer scriptée, sans monde Rapier 
 
     return Effect.gen(function* () {
       const raycast = yield* RaycastService;
-      const hit = yield* raycast.castRay(
-        null as unknown as PhysicsWorld,
-        null as unknown as RAPIER.Ray,
-        10,
-        true,
-      );
+      const hit = yield* raycast.castRay(null as unknown as PhysicsWorld, null as unknown as RAPIER.Ray, 10, true);
 
       assert.strictEqual(hit, scriptedHit);
     }).pipe(Effect.provide(RaycastService.test({ castRay: () => Effect.succeed(scriptedHit) })));

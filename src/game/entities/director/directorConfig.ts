@@ -1,6 +1,6 @@
 // see: docs/6-reference/valeurs-ennemis.md
 
-import { type LoyaltyCard } from "../../player/loyaltyCards";
+import type { LoyaltyCard } from "../../player/loyaltyCards";
 export interface DirectorConfig {
   /** Points de vie max. */
   maxHp: number;

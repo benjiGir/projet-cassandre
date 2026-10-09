@@ -12,9 +12,15 @@
   pointer-events: none;
 }
 
-.level[data-level="ok"] { color: #0f0; }
-.level[data-level="warn"] { color: #fa3; }
-.level[data-level="bad"] { color: #f44; }
+.level[data-level="ok"] {
+  color: #0f0;
+}
+.level[data-level="warn"] {
+  color: #fa3;
+}
+.level[data-level="bad"] {
+  color: #f44;
+}
 
 .strong {
   font-weight: bold;
