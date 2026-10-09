@@ -1,0 +1,1090 @@
+{
+  "spawns": [
+    {
+      "nom": "spawn_suit_metro_quartier_01",
+      "groupe": "metro_quartier",
+      "espece": "costard",
+      "pieds": [
+        -10.0,
+        50.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quartier_02",
+      "groupe": "metro_quartier",
+      "espece": "costard",
+      "pieds": [
+        10.0,
+        54.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quartier_03",
+      "groupe": "metro_quartier",
+      "espece": "costard",
+      "pieds": [
+        9.0,
+        63.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_billets_tireurs_01",
+      "groupe": "metro_billets_tireurs",
+      "espece": "costard",
+      "pieds": [
+        -12.0,
+        93.0,
+        -4.980000019073486
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_billets_tireurs_02",
+      "groupe": "metro_billets_tireurs",
+      "espece": "costard",
+      "pieds": [
+        -13.0,
+        104.0,
+        -4.980000019073486
+      ]
+    },
+    {
+      "nom": "spawn_vigile_metro_billets_garde_01",
+      "groupe": "metro_billets_garde",
+      "espece": "vigile",
+      "pieds": [
+        -11.5,
+        101.0,
+        -4.980000019073486
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_01",
+      "groupe": "metro_quais_sud",
+      "espece": "costard",
+      "pieds": [
+        -6.5,
+        141.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_02",
+      "groupe": "metro_quais_sud",
+      "espece": "costard",
+      "pieds": [
+        6.5,
+        145.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_03",
+      "groupe": "metro_quais_sud",
+      "espece": "costard",
+      "pieds": [
+        6.5,
+        154.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quais_nord_01",
+      "groupe": "metro_quais_nord",
+      "espece": "costard",
+      "pieds": [
+        -6.5,
+        173.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_quais_nord_02",
+      "groupe": "metro_quais_nord",
+      "espece": "costard",
+      "pieds": [
+        6.5,
+        176.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_vigile_metro_quais_garde_01",
+      "groupe": "metro_quais_garde",
+      "espece": "vigile",
+      "pieds": [
+        -6.5,
+        171.0,
+        -12.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_entree_01",
+      "groupe": "metro_galerie_entree",
+      "espece": "rampant",
+      "pieds": [
+        23.0,
+        215.25,
+        -14.428942680358887
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_entree_02",
+      "groupe": "metro_galerie_entree",
+      "espece": "rampant",
+      "pieds": [
+        40.0,
+        219.25,
+        -14.428942680358887
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_01",
+      "groupe": "metro_galerie_coude",
+      "espece": "rampant",
+      "pieds": [
+        69.75,
+        261.0,
+        -15.529999732971191
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_02",
+      "groupe": "metro_galerie_coude",
+      "espece": "rampant",
+      "pieds": [
+        69.75,
+        266.0,
+        -15.529999732971191
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_03",
+      "groupe": "metro_galerie_coude",
+      "espece": "rampant",
+      "pieds": [
+        63.75,
+        283.0,
+        -16.27056121826172
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_retour_01",
+      "groupe": "metro_galerie_retour",
+      "espece": "rampant",
+      "pieds": [
+        63.75,
+        300.0,
+        -17.45545768737793
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_retour_02",
+      "groupe": "metro_galerie_retour",
+      "espece": "rampant",
+      "pieds": [
+        45.0,
+        303.25,
+        -17.45545768737793
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_01",
+      "groupe": "metro_depot_tireurs",
+      "espece": "costard",
+      "pieds": [
+        45.0,
+        345.0,
+        -17.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_02",
+      "groupe": "metro_depot_tireurs",
+      "espece": "costard",
+      "pieds": [
+        58.0,
+        351.0,
+        -17.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_03",
+      "groupe": "metro_depot_tireurs",
+      "espece": "costard",
+      "pieds": [
+        64.0,
+        355.0,
+        -17.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_vigile_metro_depot_garde_01",
+      "groupe": "metro_depot_garde",
+      "espece": "vigile",
+      "pieds": [
+        47.0,
+        358.0,
+        -17.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_vigile_metro_acces_poste_01",
+      "groupe": "metro_acces_poste",
+      "espece": "vigile",
+      "pieds": [
+        10.0,
+        348.70001220703125,
+        -17.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_machinerie_tireurs_01",
+      "groupe": "metro_machinerie_tireurs",
+      "espece": "costard",
+      "pieds": [
+        95.0,
+        329.0,
+        -21.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_machinerie_tireurs_02",
+      "groupe": "metro_machinerie_tireurs",
+      "espece": "costard",
+      "pieds": [
+        115.0,
+        329.0,
+        -21.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_machinerie_meute_01",
+      "groupe": "metro_machinerie_meute",
+      "espece": "rampant",
+      "pieds": [
+        113.0,
+        352.0,
+        -21.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_machinerie_meute_02",
+      "groupe": "metro_machinerie_meute",
+      "espece": "rampant",
+      "pieds": [
+        114.0,
+        343.0,
+        -21.979999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_nord_01",
+      "groupe": "metro_rame_1_nord",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        419.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_nord_02",
+      "groupe": "metro_rame_1_nord",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        423.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_sud_01",
+      "groupe": "metro_rame_1_sud",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        371.5,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_sud_02",
+      "groupe": "metro_rame_1_sud",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        375.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_01",
+      "groupe": "metro_rame_2_nord",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        417.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_02",
+      "groupe": "metro_rame_2_nord",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        420.75,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_03",
+      "groupe": "metro_rame_2_nord",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        422.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_01",
+      "groupe": "metro_rame_2_sud",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        369.5,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_02",
+      "groupe": "metro_rame_2_sud",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        373.25,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_03",
+      "groupe": "metro_rame_2_sud",
+      "espece": "rampant",
+      "pieds": [
+        39.5,
+        376.5,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_arrivee_01",
+      "groupe": "metro_arrivee",
+      "espece": "costard",
+      "pieds": [
+        58.0,
+        419.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_arrivee_02",
+      "groupe": "metro_arrivee",
+      "espece": "costard",
+      "pieds": [
+        58.0,
+        426.0,
+        -17.229999542236328
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_01",
+      "groupe": "metro_parvis_tireurs",
+      "espece": "costard",
+      "pieds": [
+        32.0,
+        489.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_02",
+      "groupe": "metro_parvis_tireurs",
+      "espece": "costard",
+      "pieds": [
+        62.0,
+        491.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_03",
+      "groupe": "metro_parvis_tireurs",
+      "espece": "costard",
+      "pieds": [
+        50.0,
+        493.0,
+        0.019999999552965164
+      ]
+    },
+    {
+      "nom": "spawn_vigile_metro_parvis_garde_01",
+      "groupe": "metro_parvis_garde",
+      "espece": "vigile",
+      "pieds": [
+        50.0,
+        495.0,
+        0.019999999552965164
+      ]
+    }
+  ],
+  "implantation": [
+    {
+      "nom": "spawn_suit_metro_quartier_01",
+      "sol": 0.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quartier_02",
+      "sol": -1.1920928955078125e-07,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quartier_03",
+      "sol": -1.1920928955078125e-07,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_billets_tireurs_01",
+      "sol": -5.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_billets_tireurs_02",
+      "sol": -5.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_vigile_metro_billets_garde_01",
+      "sol": -5.0,
+      "rayon": 0.5,
+      "degagement": 0.535
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_01",
+      "sol": -13.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_02",
+      "sol": -13.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quais_sud_03",
+      "sol": -13.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quais_nord_01",
+      "sol": -13.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_quais_nord_02",
+      "sol": -13.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_vigile_metro_quais_garde_01",
+      "sol": -13.0,
+      "rayon": 0.5,
+      "degagement": 0.535
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_entree_01",
+      "sol": -14.448942184448242,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_entree_02",
+      "sol": -14.448942184448242,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_01",
+      "sol": -15.550000190734863,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_02",
+      "sol": -15.550000190734863,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_coude_03",
+      "sol": -16.29056167602539,
+      "rayon": 0.35,
+      "degagement": 0.384
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_retour_01",
+      "sol": -17.4754581451416,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_galerie_retour_02",
+      "sol": -17.4754581451416,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_01",
+      "sol": -18.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_02",
+      "sol": -18.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_depot_tireurs_03",
+      "sol": -18.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_vigile_metro_depot_garde_01",
+      "sol": -18.0,
+      "rayon": 0.5,
+      "degagement": 0.535
+    },
+    {
+      "nom": "spawn_vigile_metro_acces_poste_01",
+      "sol": -18.0,
+      "rayon": 0.5,
+      "degagement": 0.535
+    },
+    {
+      "nom": "spawn_suit_metro_machinerie_tireurs_01",
+      "sol": -22.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_machinerie_tireurs_02",
+      "sol": -22.0,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_rampant_metro_machinerie_meute_01",
+      "sol": -22.0,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_machinerie_meute_02",
+      "sol": -22.0,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_nord_01",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_nord_02",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_sud_01",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_1_sud_02",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_01",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_02",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_nord_03",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_01",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_02",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_rampant_metro_rame_2_sud_03",
+      "sol": -17.25,
+      "rayon": 0.35,
+      "degagement": 0.385
+    },
+    {
+      "nom": "spawn_suit_metro_arrivee_01",
+      "sol": -17.25,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_arrivee_02",
+      "sol": -17.25,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_01",
+      "sol": -5.960464477539063e-08,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_02",
+      "sol": -5.960464477539063e-08,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_suit_metro_parvis_tireurs_03",
+      "sol": -5.960464477539063e-08,
+      "rayon": 0.4,
+      "degagement": 0.435
+    },
+    {
+      "nom": "spawn_vigile_metro_parvis_garde_01",
+      "sol": -5.960464477539063e-08,
+      "rayon": 0.5,
+      "degagement": 0.535
+    },
+    {
+      "nom": "use_metro_soin_rue",
+      "sol": -0.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_rue",
+      "sol": -0.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_billets",
+      "sol": -5.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_billets",
+      "sol": -5.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_vestiaire",
+      "sol": -15.550000190734863,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_vestiaire",
+      "sol": -15.550000190734863,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_depot",
+      "sol": -18.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_depot",
+      "sol": -18.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_machinerie",
+      "sol": -22.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_machinerie",
+      "sol": -22.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_rame",
+      "sol": -17.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_ammo_rame",
+      "sol": -17.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_soin_parvis",
+      "sol": 0.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    }
+  ],
+  "declencheurs": [
+    {
+      "nom": "quartier",
+      "evenement": "metro_quartier",
+      "origine": [
+        -8,
+        26,
+        -0.5
+      ],
+      "taille": [
+        16,
+        4,
+        3
+      ]
+    },
+    {
+      "nom": "billets",
+      "evenement": "metro_billets",
+      "origine": [
+        9,
+        89.8,
+        -5.4
+      ],
+      "taille": [
+        9,
+        4,
+        3
+      ]
+    },
+    {
+      "nom": "quais_sud",
+      "evenement": "metro_quais_sud",
+      "origine": [
+        -9,
+        119,
+        -13.4
+      ],
+      "taille": [
+        5,
+        3,
+        3
+      ]
+    },
+    {
+      "nom": "quais_nord",
+      "evenement": "metro_quais_nord",
+      "origine": [
+        -9,
+        150,
+        -13.4
+      ],
+      "taille": [
+        18,
+        3,
+        3
+      ]
+    },
+    {
+      "nom": "galerie_entree",
+      "evenement": "metro_galerie_entree",
+      "origine": [
+        2,
+        213.75,
+        -14.848942550505052
+      ],
+      "taille": [
+        5,
+        3,
+        3
+      ]
+    },
+    {
+      "nom": "galerie_coude",
+      "evenement": "metro_galerie_coude",
+      "origine": [
+        62.25,
+        238,
+        -16
+      ],
+      "taille": [
+        3,
+        5,
+        3
+      ]
+    },
+    {
+      "nom": "galerie_retour",
+      "evenement": "metro_galerie_retour",
+      "origine": [
+        62.25,
+        278,
+        -17.5
+      ],
+      "taille": [
+        3,
+        4,
+        4
+      ]
+    },
+    {
+      "nom": "depot",
+      "evenement": "metro_depot",
+      "origine": [
+        37.5,
+        322,
+        -18.4
+      ],
+      "taille": [
+        4,
+        3,
+        3
+      ]
+    },
+    {
+      "nom": "acces_poste",
+      "evenement": "metro_acces_poste",
+      "origine": [
+        26,
+        346,
+        -18.4
+      ],
+      "taille": [
+        3,
+        20,
+        3
+      ]
+    },
+    {
+      "nom": "machinerie_sud",
+      "evenement": "metro_machinerie",
+      "origine": [
+        70,
+        327.5,
+        -19
+      ],
+      "taille": [
+        3,
+        5.5,
+        4
+      ]
+    },
+    {
+      "nom": "machinerie_nord",
+      "evenement": "metro_machinerie",
+      "origine": [
+        70,
+        350.5,
+        -19
+      ],
+      "taille": [
+        3,
+        5.5,
+        4
+      ]
+    },
+    {
+      "nom": "parvis",
+      "evenement": "metro_parvis",
+      "origine": [
+        48,
+        466.5,
+        -0.4
+      ],
+      "taille": [
+        4,
+        3.5,
+        3
+      ]
+    }
+  ],
+  "ramassages": [
+    {
+      "nom": "soin_rue",
+      "pieds": [
+        1.5,
+        20,
+        -0.25
+      ],
+      "propriete": "soin",
+      "quantite": 50
+    },
+    {
+      "nom": "ammo_rue",
+      "pieds": [
+        1.5,
+        25,
+        -0.25
+      ],
+      "propriete": "munitions",
+      "quantite": 24
+    },
+    {
+      "nom": "soin_billets",
+      "pieds": [
+        -15,
+        92,
+        -5
+      ],
+      "propriete": "soin",
+      "quantite": 25
+    },
+    {
+      "nom": "ammo_billets",
+      "pieds": [
+        -15,
+        94,
+        -5
+      ],
+      "propriete": "munitions",
+      "quantite": 24
+    },
+    {
+      "nom": "soin_vestiaire",
+      "pieds": [
+        78,
+        261,
+        -15.55
+      ],
+      "propriete": "soin",
+      "quantite": 25
+    },
+    {
+      "nom": "ammo_vestiaire",
+      "pieds": [
+        78,
+        263,
+        -15.55
+      ],
+      "propriete": "munitions",
+      "quantite": 24
+    },
+    {
+      "nom": "ammo_depot",
+      "pieds": [
+        49,
+        327,
+        -18
+      ],
+      "propriete": "munitions",
+      "quantite": 36
+    },
+    {
+      "nom": "soin_depot",
+      "pieds": [
+        49,
+        329,
+        -18
+      ],
+      "propriete": "soin",
+      "quantite": 50
+    },
+    {
+      "nom": "soin_machinerie",
+      "pieds": [
+        93,
+        354,
+        -22
+      ],
+      "propriete": "soin",
+      "quantite": 25
+    },
+    {
+      "nom": "ammo_machinerie",
+      "pieds": [
+        115,
+        355,
+        -22
+      ],
+      "propriete": "munitions",
+      "quantite": 24
+    },
+    {
+      "nom": "soin_rame",
+      "pieds": [
+        39.5,
+        400.5,
+        -17.25
+      ],
+      "propriete": "soin",
+      "quantite": 25
+    },
+    {
+      "nom": "ammo_rame",
+      "pieds": [
+        39.5,
+        402,
+        -17.25
+      ],
+      "propriete": "munitions",
+      "quantite": 36
+    },
+    {
+      "nom": "soin_parvis",
+      "pieds": [
+        50,
+        470,
+        0
+      ],
+      "propriete": "soin",
+      "quantite": 25
+    }
+  ]
+}

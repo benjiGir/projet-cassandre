@@ -8,7 +8,7 @@ export type ScriptAction =
   /** Annonce des haut-parleurs ou de l'interphone, sur son propre canal texte ; `voix` est la clé de sa prise, si elle en a une. */
   | { readonly kind: "annonce"; readonly speaker: string; readonly text: string; readonly voix?: string }
   /** Fait apparaître les ennemis dont le point d'apparition porte ce `groupe`. */
-  | { readonly kind: "reveiller"; readonly groupe: string }
+  | { readonly kind: "reveiller"; readonly groupe: string; readonly alerte?: boolean }
   /** Passe sur `chaine` les `ecran_*` dont le nom commence par `ecrans`. */
   | { readonly kind: "chaine"; readonly ecrans: string; readonly chaine: EcranChaine }
   /** Ferme ces `door_*` et les tient fermées : une arène. */
@@ -64,7 +64,7 @@ export interface WokenEnemy {
 
 /** État de partie du script : il survit à un hot reload du niveau. */
 export interface LevelScriptState {
-  /** Noms des `trig_*` déjà franchis CETTE partie. */
+  /** Noms des déclencheurs franchis et clés des événements explicites déjà lancés cette partie. */
   readonly fired: Set<string>;
   readonly running: RunningScenario[];
   /** Ennemis réveillés CETTE partie, par groupe — voir `ScriptGate`. */
@@ -73,6 +73,19 @@ export interface LevelScriptState {
 
 export function createLevelScriptState(): LevelScriptState {
   return { fired: new Set(), running: [], woken: new Map() };
+}
+
+export function startLevelScenario(
+  state: LevelScriptState,
+  scenarios: Readonly<Record<string, Scenario>>,
+  event: string,
+  source = `event:${event}`,
+): void {
+  if (state.fired.has(source)) return;
+  const steps = scenarios[event];
+  if (!steps) return;
+  state.fired.add(source);
+  state.running.push({ steps, next: 0, elapsed: 0, waited: 0, gateOpen: false });
 }
 
 /** Un groupe est tombé quand tous ses ennemis réveillés sont morts. Un groupe jamais réveillé n'attend personne. */
@@ -107,9 +120,7 @@ export function updateLevelScript(
 ): void {
   for (const trigger of triggers) {
     if (state.fired.has(trigger.name) || !contains(trigger, player)) continue;
-    state.fired.add(trigger.name);
-    const steps = scenarios[trigger.event];
-    if (steps) state.running.push({ steps, next: 0, elapsed: 0, waited: 0, gateOpen: false });
+    startLevelScenario(state, scenarios, trigger.event, trigger.name);
   }
 
   for (let i = state.running.length - 1; i >= 0; i--) {

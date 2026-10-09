@@ -5,6 +5,7 @@ import type { LevelTrains } from "../trains/levelTrains";
 import { TrainRideSystem } from "../trainRide/trainRideSystem";
 import { TrainRidePresentation } from "../../../render/environment/trainRide/trainRidePresentation";
 import { BLOCKOUT_ENTRY, BLOCKOUT_EXIT, BLOCKOUT_GATE } from "./blockoutConfig";
+import type { MetroEncounterEvent } from "./metroEncounterEvents";
 
 // see: docs/4-technique/blockout-metro.md#progression
 export class MetroBlockout {
@@ -15,6 +16,8 @@ export class MetroBlockout {
   private readonly quarterTower: THREE.Object3D | undefined;
   private doors: DoorSystem | null = null;
   private readonly messages: string[] = [];
+  private readonly encounters: MetroEncounterEvent[] = [];
+  private rideWaves = 0;
   aiguillage = false;
   courant = false;
   shortcut = false;
@@ -56,6 +59,7 @@ export class MetroBlockout {
     this.courant = previous.courant;
     this.shortcut = previous.raccourci;
     this.completed = previous.completed;
+    this.rideWaves = previous.rideWaves;
     Object.assign(this.system.state, previous.voyage);
     this.system.previousDistance = previous.voyage.distance;
     if (this.aiguillage) this.trains?.system.enqueue({ type: "enable", lane: "VB", enabled: true });
@@ -134,11 +138,25 @@ export class MetroBlockout {
         doors.unlock(BLOCKOUT_EXIT, position);
         doors.open(BLOCKOUT_EXIT, position);
         this.messages.push("Arrivée — sortie sur le quai privé");
+        this.encounters.push("metro_arrivee");
       } else if (event === "reset") {
         doors.unlock(BLOCKOUT_ENTRY, position);
         doors.open(BLOCKOUT_ENTRY, position);
       }
     }
+    if (this.aboard(position)) {
+      for (const [index, time] of [10, 30].entries()) {
+        const mask = 1 << index;
+        if ((this.rideWaves & mask) !== 0 || this.system.state.elapsed < time) continue;
+        this.rideWaves |= mask;
+        const end = position.z > this.center.z ? "nord" : "sud";
+        this.encounters.push(index === 0 ? `metro_rame_1_${end}` : `metro_rame_2_${end}`);
+      }
+    }
+  }
+
+  takeEncounterEvents(): MetroEncounterEvent[] {
+    return this.encounters.splice(0);
   }
 
   takeMessages(): string[] {
@@ -151,6 +169,7 @@ export class MetroBlockout {
       courant: this.courant,
       raccourci: this.shortcut,
       completed: this.completed,
+      rideWaves: this.rideWaves,
       voyage: { ...this.system.state },
     };
   }

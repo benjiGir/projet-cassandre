@@ -102,9 +102,9 @@ def _cles_ts(chemin: str, motif: str) -> tuple[str, ...]:
 # (`evenement`), répliques qu'il peut faire dire (`replique`) et groupes
 # d'ennemis qu'un scénario réveille (`groupe` sur un `spawn_suit_*`). Un test
 # du jeu (`levelScriptSetup.test.ts`) verrouille la mise en forme lue ici.
-EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/trains/metroTrainEvents.ts", r"^  (\w+): \[")
+EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/trains/metroTrainEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/blockout/metroEncounterEvents.ts", r"^  (\w+): \[")
 REPLIQUES = _cles_ts("src/game/session/presentation/heroLines.ts", r"^  (\w+): \{ text:")
-GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
+GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"') + _cles_ts("src/game/level/blockout/metroEncounterEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
 
 # Perks vendus par les bornes (`use_*` portant `perk` et `prix`) : les clés de
 # `PERK_INFO`. Un test du jeu (`bornes.test.ts`) verrouille la mise en forme lue ici.

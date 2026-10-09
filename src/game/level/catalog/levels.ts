@@ -1,5 +1,6 @@
 // see: docs/2-fonctionnel/le-niveau.md
 import { METRO_TRAIN_EVENTS } from "../trains/metroTrainEvents";
+import { METRO_ENCOUNTER_EVENTS } from "../blockout/metroEncounterEvents";
 import type { Scenario } from "../scripting/levelScript";
 
 export interface LevelDef {
@@ -40,7 +41,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
     ciel: "nuit",
     ambience: "quartier_pilote",
     spaces: true,
-    scenarios: {},
+    scenarios: METRO_ENCOUNTER_EVENTS,
     mysteryDonations: false,
   },
   ...(import.meta.env.DEV
@@ -54,7 +55,7 @@ export const LEVEL_CHOICES: LevelDef[] = [
           ciel: "nuit",
           ambience: "quartier_pilote",
           spaces: true,
-          scenarios: {},
+          scenarios: METRO_ENCOUNTER_EVENTS,
           mysteryDonations: false,
         },
       ]

@@ -1892,3 +1892,74 @@ Les retouches de géométrie et de placement reprendront à partir de ses
 retours de playtest. Aucun chantier supplémentaire n'est lancé. Cette
 décision clôt la passe de création ; elle ne complète pas les preuves
 techniques manquantes ni les rencontres et l'équilibrage prévus dans le plan.
+
+## Première passe de rencontres — 9 octobre
+
+À la demande de l'utilisateur, implantation des ennemis sur le parcours
+construit. Cette passe utilise les trois espèces existantes, sans nouveau
+Contrôleur : Costards dans le quartier, tireurs d'un quai à l'autre,
+Vigiles dans les passages, Rampants dans les galeries et la rame. Le
+[détail des effectifs et contrats](../4-technique/rencontres-metro.md)
+reste la référence de cette première implantation.
+
+Douze volumes réveillent les groupes au passage. Les deux entrées de la
+machinerie partagent un seul réveil, pour éviter un doublon au retour.
+Les vagues de la rame partent à 10 et 30 secondes, du bout opposé au joueur ;
+les gardes du quai privé ne sont activés qu'à l'arrivée. Chaque ennemi
+réveillé utilise la matérialisation existante. Aucune nouvelle porte ne
+bloque la progression en attendant les kills.
+
+Effectifs pour le trajet : **25 en Client, 33 en Habitué, 39 en Lanceur
+d'alerte**. Les 44 marqueurs du GLB comprennent cinq alternatives de vagues
+qui ne sont jamais réveillées ensemble. Treize ramassages de soins et
+balles de pistolet ponctuent les pauses, dont une trousse avant le premier
+combat. Ils ne représentent pas encore l'économie finale.
+
+### Placement et observations
+
+Le contrôle d'implantation sur les meshes de collision réels relève un
+sol sous chaque position et le dégagement des capsules de chaque espèce.
+Les deux premiers points trop proches du mobilier du quartier et d'un
+mât du parvis sont déplacés. Le garde ouest du dépôt est repris après la
+revue visuelle pour rejoindre l'axe du passage vers le poste, à Y 348,70,
+plutôt qu'une poche en retrait à Y 362. Les marches et cabines restent
+libres. Le [manifeste](../assets/blockout-metro/rencontres.json) contient
+ces appuis et toutes les positions finales.
+
+Les rencontres sont inspectées par poses d'auteur et mouvements ordinaires,
+en difficulté Habitué. Les captures moteur sont regardées :
+
+- [Billetterie](../assets/blockout-metro/rencontres-billets-2026-10-09.png),
+  [quai nord](../assets/blockout-metro/rencontres-combat_quais_nord-2026-10-09.png)
+  et [tireurs du quai sud en poursuite](../assets/blockout-metro/rencontres-quais-2026-10-09.png).
+- [Première galerie](../assets/blockout-metro/rencontres-galerie-2026-10-09.png),
+  [coude franchi](../assets/blockout-metro/rencontres-combat_galerie_coude-2026-10-09.png)
+  et [retour](../assets/blockout-metro/rencontres-combat_galerie_retour-2026-10-09.png).
+- [Dépôt](../assets/blockout-metro/rencontres-combat_depot-2026-10-09.png)
+  et [entrée de machinerie](../assets/blockout-metro/rencontres-combat_machinerie-2026-10-09.png),
+  [garde dans le passage ouest à sa position finale](../assets/blockout-metro/rencontres-combat_poste-2026-10-09.png).
+- [Meutes de la rame](../assets/blockout-metro/rencontres-rame-vagues-2026-10-09.png),
+  [tireurs du quai privé](../assets/blockout-metro/rencontres-arrivee-2026-10-09.png)
+  et [garde du parvis](../assets/blockout-metro/rencontres-parvis-2026-10-09.png).
+
+La première revue du dépôt avec trafic actif tue le joueur par contact avec
+une rame : elle est abandonnée puis refaite, trafic suspendu. Les revues de
+placement neutralisent les attaques et nettoient les acteurs entre les
+zones ; ces morts de debug ne prouvent pas un combat gagné.
+
+Un voyage avec IA active montre les Rampants partis à Y 371,50 et 375
+rejoindre le pupitre : à 19,40 secondes, un acteur est en attaque et l'autre
+en poursuite vers Y 424. Le joueur laissé immobile est tué à 27,58 secondes.
+Un autre voyage, attaques neutralisées, atteint 60 secondes avec les deux
+vagues réveillées et les deux Costards du quai privé. Il prouve les
+déclenchements et l'arrivée, sans revendiquer une traversée victorieuse.
+Les [observations moteur](../assets/blockout-metro/rencontres-revue-2026-10-09.json)
+conservent ces limites. La variante nord des vagues reste à jouer.
+
+La compilation de production passe. L'export comporte 4 339 objets et
+33 487 Ko, sans fuite de bibliothèque. Aucune suite de tests lancée.
+Une erreur `MutationObserver.observe` sans URL a été relevée dans le
+navigateur ; origine non attribuée, console globale non déclarée validée.
+La partie complète, les profils d'arrivée pauvre et riche, Contrôleur,
+secrets, bornes et équilibrage final restent ouverts. Le candidat est prêt
+pour une première passe de retours sur les rencontres.

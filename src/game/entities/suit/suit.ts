@@ -41,6 +41,7 @@ export class Suit implements Entity {
   readonly appearanceIndex: number;
   private actor: EnemyActor;
   private appearanceRemaining = 0;
+  private alertRequested = false;
 
   constructor(
     physics: PhysicsWorld,
@@ -109,6 +110,10 @@ export class Suit implements Entity {
   }
   set state(next: SuitState) {
     this.actor = forceEnemyState(this.actor, next);
+  }
+
+  alertPlayer(): void {
+    this.alertRequested = true;
   }
 
   get hp(): number {
@@ -202,6 +207,10 @@ export class Suit implements Entity {
   update(dt: number, ctx: SuitUpdateContext) {
     if (this.isAlive && this.appearanceRemaining > 0) return;
     tickEnemy(this.actor, dt, ctx);
+    if (this.alertRequested) {
+      this.alertRequested = false;
+      if (this.state === "idle") this.actor.send({ type: "SAW_PLAYER" });
+    }
   }
 }
 

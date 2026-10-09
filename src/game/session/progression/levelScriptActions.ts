@@ -27,6 +27,7 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
       streamEvent(session, "moment");
       return;
     case "reveiller": {
+      if (session.levelScript.woken.has(action.groupe)) return;
       const group = wokenSpawns(
         session.gltfLevelSession?.current?.spawnSuits ?? [],
         action.groupe,
@@ -34,9 +35,17 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
       );
       const woken = session.levelScript.woken.get(action.groupe) ?? [];
       for (const spawn of group) {
-        woken.push(
-          spawnSuitAt(engine, session, spawn.position.x, spawn.position.y, spawn.position.z, spawn.kind, true),
+        const enemy = spawnSuitAt(
+          engine,
+          session,
+          spawn.position.x,
+          spawn.position.y,
+          spawn.position.z,
+          spawn.kind,
+          true,
         );
+        if (action.alerte) enemy.alertPlayer();
+        woken.push(enemy);
       }
       session.levelScript.woken.set(action.groupe, woken);
       return;

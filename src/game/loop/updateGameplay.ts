@@ -29,7 +29,7 @@ import {
 } from "../session/presentation/heroLines";
 import { relieveAtSanitaire, trySanitaire } from "../session/player/sanitaires";
 import { updatePlaceLine } from "../session/player/placeLines";
-import { updateLevelScript } from "../level/scripting/levelScript";
+import { startLevelScenario, updateLevelScript } from "../level/scripting/levelScript";
 import { LEVEL_EVENTS } from "../session/progression/levelEvents";
 import { runScriptAction } from "../session/progression/levelScriptActions";
 import {
@@ -515,6 +515,9 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         updateTrainRideGym(engine, gameplayDt, activeFrame.use);
         const blockout = session.gltfLevelSession?.current?.metroBlockout;
         blockout?.fixed(gameplayDt, session.player.position);
+        for (const event of blockout?.takeEncounterEvents() ?? []) {
+          startLevelScenario(session.levelScript, session.choice.scenarios ?? LEVEL_EVENTS, event);
+        }
         for (const message of blockout?.takeMessages() ?? []) showHudMessage(message);
         if (blockout?.completed) triggerLevelComplete(engine, session);
 

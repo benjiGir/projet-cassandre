@@ -34,6 +34,7 @@ from tools.metro.blockout.switching_post import build as switching_post
 from tools.metro.blockout.machinery_room import build as machinery_room
 from tools.metro.blockout.freight_carriage import build as freight, prepare_materials as prepare_freight_materials, preview as preview_freight
 from tools.metro.blockout.tower_approach import build as tower_approach
+from tools.metro.blockout.encounters import build as encounters
 
 OUT = ROOT/"assets_src/blender/metro_blockout.blend"
 GLB = ROOT/"public/assets/levels/metro_blockout.glb"
@@ -221,6 +222,7 @@ def main():
     rail_architecture(a)
     depot_workshop(a,departure)
     upgrade_access_controls(a)
+    encounters(a)
     scene.world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.18
     bpy.context.view_layer.update()
     bpy.context.preferences.filepaths.save_version=0

@@ -41,3 +41,4 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Trains dans le pipeline](trains-metro.md) — modèle Blender, commandes, volumes balayés et zones de sécurité.
 
 - [Métro complet — blockout N5](blockout-metro.md) — parcours, objectifs, trains et voyage jusqu’au hall.
+- [Rencontres du métro](rencontres-metro.md) — première implantation N7, déclencheurs, vagues à bord et ressources.

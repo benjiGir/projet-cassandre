@@ -22,8 +22,9 @@ décrites ci-dessous. Le secret d'arrière-boutique
 n'est pas construit ici. Le local d’agents possède son décor, sans déclencheur
 ni récompense de secret. Le local de maintenance dans la réservation de machinerie est meublé ;
 son déclencheur et sa récompense, ainsi que le toit S3, attendent N7.
-Rencontres, récompenses, économie
-finale et habillage espace par espace restent à N6/N7/N8.
+Une [première passe de rencontres](rencontres-metro.md) est intégrée le
+9 octobre : trois espèces existantes, ressources et deux vagues à bord.
+Contrôleur, secrets, bornes et équilibre final restent à N7/N8.
 
 ## Fichiers
 
@@ -64,6 +65,8 @@ finale et habillage espace par espace restent à N6/N7/N8.
 | Quai privé et sortie nord | `tools/metro/blockout/private_station.py` |
 | Jardinières et assises du parvis | `tools/metro/blockout/tower_plaza_furniture.py` |
 | Remontée, parvis et seuil de tour | `tools/metro/blockout/tower_approach.py` |
+| Ennemis, déclencheurs et ressources | `tools/metro/blockout/encounters.py` |
+| Scénarios des rencontres | `src/game/level/blockout/metroEncounterEvents.ts` |
 | Sas du trafic VB et raccords | `tools/metro/blockout/traffic_layout.py` |
 | Quartier conservé | `tools/metro/quartier/build_pilot.py`, mode `save=False` |
 | Source / runtime | `assets_src/blender/metro_blockout.blend`, `public/assets/levels/metro_blockout.glb` |
@@ -626,8 +629,10 @@ Les trois phases départ/voyage/arrivée utilisent des groupes glTF exclus
 de la fusion statique. Leurs colliders restent fixes. Le quai privé est
 séparé du dépôt par une paroi ; la porte latérale de la rame reste verrouillée
 jusqu'à l'arrivée. Les portes d'entrée et de sortie se ferment au départ.
-Le voyage conserve le trucage T4 : rame fixe, tunnel défilant, 60 secondes,
-sans vague de combat N7. Le hot reload conserve les objectifs et la phase.
+Le voyage conserve le trucage T4 : rame fixe, tunnel défilant, 60 secondes.
+La première passe N7 ajoute deux vagues de Rampants à 10 et 30 secondes,
+puis des Costards sur le quai privé à l'arrivée. Le hot reload conserve les
+objectifs, la phase et les vagues déjà lancées.
 
 ## Trains
 
