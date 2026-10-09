@@ -2,7 +2,7 @@
 title: Valeurs des ennemis
 tags: [reference, ennemis]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Valeurs des ennemis

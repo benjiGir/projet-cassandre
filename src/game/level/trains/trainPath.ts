@@ -11,7 +11,7 @@ export function routeLength(route: TrainRoute): number {
   return length;
 }
 
-export function poseOnRoute(route: TrainRoute, distance: number, position: THREE.Vector3, direction: THREE.Vector3): void {
+function pointOnRoute(route: TrainRoute, distance: number, position: THREE.Vector3, direction: THREE.Vector3): void {
   for (let i = 1; i < route.points.length; i++) {
     const start = route.points[i - 1]!;
     const end = route.points[i]!;
@@ -24,6 +24,18 @@ export function poseOnRoute(route: TrainRoute, distance: number, position: THREE
     }
     distance -= length;
   }
+}
+
+const rearBogie = new THREE.Vector3();
+const frontBogie = new THREE.Vector3();
+const bogieDirection = new THREE.Vector3();
+
+// see: docs/4-technique/blockout-metro.md#signaux-et-cadence
+export function poseOnRoute(route: TrainRoute, distance: number, position: THREE.Vector3, direction: THREE.Vector3): void {
+  pointOnRoute(route, distance, position, direction);
+  pointOnRoute(route, distance - 4, rearBogie, bogieDirection);
+  pointOnRoute(route, distance + 4, frontBogie, bogieDirection);
+  direction.subVectors(frontBogie, rearBogie).normalize();
 }
 
 export function distanceAlongRoute(route: TrainRoute, point: THREE.Vector3): number {

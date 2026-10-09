@@ -14,6 +14,7 @@ import { useGameStore } from "../../game/hud/state";
 
 export interface AppProps {
   onReplay: () => void;
+  onNextLevel?: () => void;
   onReturnToMenu: () => void;
   onResume: () => void;
   onIntroDone: () => void;
@@ -21,7 +22,7 @@ export interface AppProps {
 }
 
 // see: docs/archive/systems-hud.md#composition-de-app
-export function App({ onReplay, onReturnToMenu, onResume, onIntroDone, onOutroDone }: AppProps) {
+export function App({ onReplay, onNextLevel, onReturnToMenu, onResume, onIntroDone, onOutroDone }: AppProps) {
   const flowState = useGameStore((state) => state.flowState);
   if (flowState === "loading" || flowState === "loadFailed") return <LoadingScreen />;
 
@@ -37,7 +38,7 @@ export function App({ onReplay, onReturnToMenu, onResume, onIntroDone, onOutroDo
       <DeathScreen onReplay={onReplay} onReturnToMenu={onReturnToMenu} />
       <StoryScreen sequence="intro" doneLabel="LANCER LE DIRECT" onDone={onIntroDone} />
       <StoryScreen sequence="outro" doneLabel="VOIR LE BILAN" onDone={onOutroDone} />
-      <LevelCompleteScreen onReplay={onReplay} onReturnToMenu={onReturnToMenu} />
+      <LevelCompleteScreen onReplay={onReplay} onNextLevel={onNextLevel} onReturnToMenu={onReturnToMenu} />
     </>
   );
 }

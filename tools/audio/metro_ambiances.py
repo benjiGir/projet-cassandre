@@ -92,10 +92,10 @@ def decoded(path):
     return np.frombuffer(pcm, dtype="<f4").reshape(-1, 2)
 
 
-def spectrogram(signals):
+def spectrogram(signals, title="METRO N4 / nappes et evenements originaux / 44 100 Hz"):
     image = Image.new("RGB", (960, len(signals) * 210 + 45), "#101b22")
     draw = ImageDraw.Draw(image)
-    draw.text((20, 12), "METRO N4 / nappes et evenements originaux / 44 100 Hz", fill="#d8d0b8")
+    draw.text((20, 12), title, fill="#d8d0b8")
     for i, (name, signal) in enumerate(signals.items()):
         mono = signal.mean(axis=1)
         size, hop = 2048, 512

@@ -1,0 +1,52 @@
+{
+  "espaces": [
+    {
+      "id": "quartier_place",
+      "nom": "Place et rue",
+      "x": [
+        -24,
+        28.5
+      ],
+      "z": [
+        -72,
+        -8
+      ],
+      "y": [
+        -0.5,
+        15
+      ]
+    },
+    {
+      "id": "quartier_billets",
+      "nom": "Accès aux billets",
+      "x": [
+        -18.5,
+        28.5
+      ],
+      "z": [
+        -92.5,
+        -84
+      ],
+      "y": [
+        -5.5,
+        -1
+      ]
+    },
+    {
+      "id": "quartier_service",
+      "nom": "Descente de service",
+      "x": [
+        24.5,
+        27.5
+      ],
+      "z": [
+        -84,
+        -70
+      ],
+      "y": [
+        -5.5,
+        0
+      ]
+    }
+  ]
+}

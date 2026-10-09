@@ -11,6 +11,9 @@ export interface TrainConfig {
 }
 
 export interface TrainRoute {
+  visibleStart?: number;
+  visibleEnd?: number;
+  visualPadding?: number;
   id: string;
   points: readonly THREE.Vector3[];
 }

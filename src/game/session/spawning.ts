@@ -26,6 +26,7 @@ import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
 import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
 import { warmShaderDouches } from "../level/sanitaires/doucheShader";
+import { suspendPreviousFountainWater, warmFountainWater } from "../../render/environment/fountain/warmFountainWater";
 import { RenderService } from "../../render/pipeline/renderService";
 import { Suit } from "../entities/suit/suit";
 import type { SuitKind } from "../entities/suit/suitConfig";
@@ -179,11 +180,13 @@ export function loadGltfLevel(
       // `main.ts` se partage ce qui l'encadre.
       onProgress: (fraction) => reportLoading("Chargement du niveau", 0.3 + fraction * 0.55),
       prepare: async (handle, info) => {
+        const previousBlockout = session.gltfLevelSession?.current?.metroBlockout?.snapshot();
         // Le glTF est là mais tout ce qui suit est SYNCHRONE et bloque : on
         // annonce l'étape avant de la commencer pour laisser React l'afficher.
         reportLoading("Construction du décor et des portes", 0.86);
         const doorSystem = new DoorSystem(handle.doors);
-        const autoColliders = doorSystem.autoGroupColliders;
+        const autoColliders = [...doorSystem.autoGroupColliders,
+          ...(handle.metroBlockout ? handle.doors.filter(door => door.name === "door_n5_tunnel").map(door => door.collider) : [])];
         for (const collider of autoColliders) collider.setEnabled(false);
 
         reportLoading("Cuisson du graphe de navigation", 0.92);
@@ -289,13 +292,23 @@ export function loadGltfLevel(
         reportLoading("Préparation des effets d’eau", 0.96);
         if (info.isFirstLoad && !engine.flow.isPlaying()) await letBrowserPaint();
         lightPool.update(info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position);
-        await warmShaderDouches(
-          engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
-        );
-        if (handle.trains) await warmTrainModel(engine.renderer, engine.scene, engine.camera, handle.root,
-          handle.trains.data.model, session.gltfLevelSession?.current?.root);
-        reportLoading("Préparation des effets", 0.97);
-        await warmFxShaders(engine, session.gltfLevelSession?.current?.root);
+        const previousRoot = session.gltfLevelSession?.current?.root;
+        const previousParent = previousRoot?.parent;
+        const restoreFountain = suspendPreviousFountainWater(previousRoot);
+        try {
+          previousRoot?.removeFromParent();
+          engine.fx.releaseShaderPrograms();
+          await warmShaderDouches(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
+          if (handle.fountainWater) await warmFountainWater(handle.fountainWater, engine.renderer,
+            engine.scene, engine.camera, previousRoot);
+          if (handle.trains) await warmTrainModel(engine.renderer, engine.scene, engine.camera,
+            handle.trains.presentation.warmMeshes, previousRoot);
+          reportLoading("Préparation des effets", 0.97);
+          await warmFxShaders(engine, previousRoot);
+        } finally {
+          if (previousRoot && previousParent) previousParent.add(previousRoot);
+          restoreFountain();
+        }
 
         return () => {
           // Toutes les affectations de session restent dans ce commit : tant
@@ -307,6 +320,7 @@ export function loadGltfLevel(
           session.placeLines = script.placeLines;
           session.scriptTriggers = script.triggers;
           session.doorSystem = doorSystem;
+          handle.metroBlockout?.bind(doorSystem, previousBlockout);
           session.vitreSystem = vitreSystem;
           session.sanitaireSystem = sanitaireSystem;
           session.ecranSystem = ecranSystem;

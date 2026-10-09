@@ -203,8 +203,12 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   jetable.
 - **Mesurer en jeu, vérifier le dépôt** : `pnpm probe` rend en un JSON les draw
   calls de `tools/probe/poses.json` (Chrome headless, ~15 s ; `-- --pose x,y,z,cap`
-  pour un point) ; `pnpm verify` = typecheck +
-  tests, sortie réduite aux échecs (`-- --level`, `-- --docs` en plus).
+  pour un point) ; `pnpm verify` = typecheck + lint +
+  tests, sortie réduite aux échecs (`-- --format`, `-- --level`, `-- --docs` en plus).
+  Lint = Oxlint (`.oxlintrc.json`) : **erreur = garde-fou propre** (invariants #11/#12,
+  pas de `any`, pas de barrel, pas de `console.log`), **avertissement = dette**
+  plafonnée par `options.maxWarnings` — un nouvel avertissement casse `pnpm check`,
+  et le plafond se baisse quand on en corrige. Formatage = Oxfmt (`pnpm format`).
 - **Économie du direct** : `pnpm economy` relève le portefeuille sur trois
   parties types simulées (`-- --toutes` pour les variantes A/B/C et les trois
   difficultés) ; en jeu, `cassandre.economie.appliquer("A")` met une variante

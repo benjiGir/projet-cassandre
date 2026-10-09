@@ -1,0 +1,440 @@
+{
+  "zone": "coude, distribution et première descente",
+  "date": "2026-10-09",
+  "trafic": "suspendu pendant la marche",
+  "saut": false,
+  "vueDeDépart": "Coude des galeries",
+  "repositionnementPendantLaMarche": false,
+  "rotations": "boutons de cap sans déplacement",
+  "poses": [
+    {
+      "action": "départ",
+      "pose": {
+        "x": 25.5,
+        "y": 216.5,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "petit pas vers le coude",
+      "pose": {
+        "x": 25.5,
+        "y": 217.26,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "petit pas vers le coude",
+      "pose": {
+        "x": 25.5,
+        "y": 218.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "petit pas vers le coude",
+      "pose": {
+        "x": 25.5,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 29.95,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 34.4,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 38.85,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 43.31,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 47.76,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 52.21,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 56.66,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "avancer vers la descente",
+      "pose": {
+        "x": 61.11,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le second coude",
+      "pose": {
+        "x": 61.96,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le second coude",
+      "pose": {
+        "x": 62.81,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le second coude",
+      "pose": {
+        "x": 63.66,
+        "y": 219.11,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre",
+      "pose": {
+        "x": 63.66,
+        "y": 223.56,
+        "z": -14.53,
+        "eye": -12.93,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre",
+      "pose": {
+        "x": 63.66,
+        "y": 228.01,
+        "z": -14.81,
+        "eye": -13.21,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre",
+      "pose": {
+        "x": 63.66,
+        "y": 232.46,
+        "z": -15.08,
+        "eye": -13.48,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre",
+      "pose": {
+        "x": 63.66,
+        "y": 236.92,
+        "z": -15.35,
+        "eye": -13.75,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre",
+      "pose": {
+        "x": 63.66,
+        "y": 241.37,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter",
+      "pose": {
+        "x": 63.66,
+        "y": 236.93,
+        "z": -15.35,
+        "eye": -13.75,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter",
+      "pose": {
+        "x": 63.66,
+        "y": 232.51,
+        "z": -15.08,
+        "eye": -13.48,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter",
+      "pose": {
+        "x": 63.66,
+        "y": 228.08,
+        "z": -14.81,
+        "eye": -13.21,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter",
+      "pose": {
+        "x": 63.66,
+        "y": 223.65,
+        "z": -14.54,
+        "eye": -12.94,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter",
+      "pose": {
+        "x": 63.66,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 59.21,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 54.76,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 50.16,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 45.78,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 41.33,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 36.88,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 32.43,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "pose": {
+        "x": 27.98,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au premier coude",
+      "pose": {
+        "x": 27.13,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au premier coude",
+      "pose": {
+        "x": 26.28,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au premier coude",
+      "pose": {
+        "x": 25.43,
+        "y": 219.21,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au départ",
+      "pose": {
+        "x": 25.43,
+        "y": 218.36,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au départ",
+      "pose": {
+        "x": 25.43,
+        "y": 217.36,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au départ",
+      "pose": {
+        "x": 25.43,
+        "y": 216.51,
+        "z": -14.44,
+        "eye": -12.84,
+        "cap": 180,
+        "pitch": 0
+      }
+    }
+  ]
+}

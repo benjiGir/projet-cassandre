@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "pnpm typecheck && pnpm test && vite build",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && vite build",
     "probe": "node tools/probe/probe.mjs",
     "economy": "node tools/economy/releve.mjs",
     "verify": "node tools/verify.mjs",
@@ -22,7 +22,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src test vite.config.ts vitest.config.ts",
+    "lint:fix": "oxlint --fix src test vite.config.ts vitest.config.ts",
+    "format": "oxfmt --write src test vite.config.ts vitest.config.ts",
+    "format:check": "oxfmt --check src test vite.config.ts vitest.config.ts"
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",
@@ -43,6 +47,9 @@
     "@types/three": "0.185.4",
     "@vitejs/plugin-react": "6.0.5",
     "jsdom": "26.1.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
+    "oxlint-tsgolint": "7.0.2003",
     "playwright-core": "^1.63.0",
     "typescript": "7.0.2",
     "vite": "8.2.1",

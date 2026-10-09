@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import cassandre  # noqa: E402
 
-COMMANDES = {"metro_trains", "metro_pilot", "metro_kit", "plan", "fingerprint", "manifest", "status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
+COMMANDES = {"metro_blockout", "quartier_pilot", "quartier_kit", "metro_trains", "metro_pilot", "metro_kit", "plan", "fingerprint", "manifest", "status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
 
 
 def _valeur(texte: str):

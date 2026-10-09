@@ -7,6 +7,10 @@ import { noteRunOutcome, showHudMessage } from "../player/feedback";
 import { publishLevelRecap } from "./recap";
 import { type GameSession } from "../gameSession";
 import { type GameEngine } from "../gameEngine";
+import { captureArrival } from "../campaign/campaignArrival";
+import { queueCampaignSave } from "../campaign/campaignStorage";
+import { STORE_LEVEL_ID } from "../campaign/campaignCatalog";
+import { useGameStore } from "../../hud/state";
 
 // see: docs/archive/systems-session.md#portes-et-fin-de-niveau
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
@@ -67,8 +71,13 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
 }
 
 export function triggerLevelComplete(engine: GameEngine, session: GameSession): void {
-  if (session.levelCompleteHandled) return;
+  if (session.levelCompleteHandled || session.deathHandled || session.playerHp <= 0) return;
   session.levelCompleteHandled = true;
+  session.completedArrival = captureArrival(session);
+  if (session.choice.id === STORE_LEVEL_ID) {
+    queueCampaignSave(session.completedArrival);
+    useGameStore.getState().setCampaign({ levelId: session.choice.id, nextAvailable: true });
+  }
   noteRunOutcome(false);
   // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
   publishLevelRecap(session, true);

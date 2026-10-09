@@ -8,9 +8,9 @@ const Offset = Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0));
 const RouteExtras = Schema.Struct({
   voie: Schema.NonEmptyString, trajet: Schema.NonEmptyString, points: Schema.NonEmptyString,
   debut_visible: Offset, fin_visible: Offset, premier: Schema.optionalKey(Offset),
-  active: Schema.optionalKey(Schema.Boolean),
+  active: Schema.optionalKey(Schema.Boolean), marge_visuelle: Schema.optionalKey(Offset),
 });
-const SignalExtras = Schema.Struct({ voie: Schema.NonEmptyString, cap: Schema.optionalKey(Schema.Finite) });
+const SignalExtras = Schema.Struct({ voie: Schema.NonEmptyString, cap: Schema.optionalKey(Schema.Finite), aspect: Schema.optionalKey(Schema.Literals(["feu", "ecran"])) });
 const ControlExtras = Schema.Struct({
   voie: Schema.NonEmptyString, train: Schema.Literals(["stop", "switch"]),
   trajet: Schema.optionalKey(Schema.NonEmptyString),
@@ -24,6 +24,7 @@ export interface TrainSignal {
   lane: string;
   position: THREE.Vector3;
   yaw: number;
+  appearance: "feu" | "ecran";
 }
 
 export interface TrainBox {
@@ -83,7 +84,7 @@ export function readTrainLevel(nodes: readonly THREE.Object3D[]): TrainLevelData
       length += delta.length();
     }
     if (extra.fin_visible <= extra.debut_visible || extra.fin_visible > length) invalid("Intervalle visible invalide : " + extra.trajet);
-    const route = { id: extra.trajet, points };
+    const route = { id: extra.trajet, points, visibleStart: extra.debut_visible, visibleEnd: extra.fin_visible, visualPadding: extra.marge_visuelle ?? 0 };
     const previous = lanes.get(extra.voie);
     if (previous) {
       if (previous.routes.some((candidate) => candidate.id === route.id)) invalid("Trajet de voie répété : " + extra.voie + "/" + route.id);
@@ -104,7 +105,7 @@ export function readTrainLevel(nodes: readonly THREE.Object3D[]): TrainLevelData
     if (name.startsWith("signal_train_")) {
       const extra = Schema.decodeUnknownSync(SignalExtras)(node.userData);
       requireLane(extra.voie);
-      signals.push({ lane: extra.voie, position: node.getWorldPosition(new THREE.Vector3()), yaw: (extra.cap ?? 0) * Math.PI / 180 });
+      signals.push({ lane: extra.voie, position: node.getWorldPosition(new THREE.Vector3()), yaw: (extra.cap ?? 0) * Math.PI / 180, appearance: extra.aspect ?? "ecran" });
     }
     if (name.startsWith("use_") && node.userData.train !== undefined) {
       const extra = Schema.decodeUnknownSync(ControlExtras)(node.userData);

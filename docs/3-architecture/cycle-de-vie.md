@@ -2,7 +2,7 @@
 title: Cycle de vie
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Cycle de vie
@@ -44,7 +44,7 @@ flowchart TD
 | Objet | Construit par | Détruit par | Durée de vie |
 |---|---|---|---|
 | `PersistentEngine` (scène, caméra, renderer, horloge, `FxSystem`, viewmodel, atlas d'ennemis, `InteractionSystem`) | `buildGameEngine` (`src/game/session/gameEngine.ts`), une fois dans `main()` | Jamais explicitement — meurt avec l'onglet | Onglet |
-| `GameFlowActor` (`gameFlowMachine`) | `createGameFlowActor` (`src/main.ts`), une fois | Jamais — un seul acteur pour tout l'onglet | Onglet |
+| `GameFlowActor` (`gameFlowMachine`) | `createGameFlowActor` (`src/app/navigation/gameFlowMachine.ts`), appelée une fois dans `src/main.ts` | Jamais — un seul acteur pour tout l'onglet | Onglet |
 | `PickupResources` (atlas et modèles partagés des ramassages) | `loadPickupResources`, attendu par `bootGameSession` | après `LevelSession.stop()` dans `teardownGameSession` | Partie ; survit au hot reload |
 | `GameSession` (monde Rapier, joueur, armes, managers d'ennemis, systèmes de niveau, score) | `bootGameSession` (`src/game/session/lifecycle.ts`) | `teardownGameSession` | Partie |
 | `LevelSession` (niveau `.glb` courant, sondage de hot reload) | `createLevelSession`, appelée par `loadGltfLevel` à chaque `bootGameSession` sur le chemin glTF | `.stop()`, appelée par `teardownGameSession` et par tout remplacement explicite (console, `?level=`) | Partie (recréée à chaque partie, pas seulement rechargée) |
@@ -119,7 +119,7 @@ petite interface (`isPlaying`, `isPhysicsLive`, `playerDied`,
 `levelCompleted`, `pause`, `resume`) que `main.ts` implémente par-dessus
 l'acteur réel — `updateGameplay`/`stepPhysics` lisent ce port, jamais
 l'acteur XState directement. Détail des écrans et de ce que voit le
-joueur : `2-fonctionnel/interface.md` (page pas encore écrite, D24).
+joueur : [Interface](../2-fonctionnel/interface.md).
 
 ## Hot reload
 

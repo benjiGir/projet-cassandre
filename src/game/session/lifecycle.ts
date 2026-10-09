@@ -34,6 +34,9 @@ import { type PersistentEngine } from "./gameEngine";
 import { HeroPortrait } from "./presentation/heroPortrait";
 import { createStaticSurfaceProbe } from "./presentation/surfaceProbe";
 import { loadPickupResources, type PickupResources } from "../../render/pickups/pickupResources";
+import type { SessionEntry } from "./campaign/campaignTypes";
+import { applyArrival, captureArrival, metroArrival } from "./campaign/campaignArrival";
+import { METRO_LEVEL_ID } from "./campaign/campaignCatalog";
 /** Garde verticale entre les pieds au spawn et le sol, en mètres : évite une
  * interpénétration au tout premier pas fixe (même garde que l'ancienne salle
  * de test). `buildGym` retourne la hauteur EXACTE du sol au point de spawn. */
@@ -52,7 +55,7 @@ function applyLightRig(engine: PersistentEngine, choice: LevelDef): void {
   engine.scene.background = choice.ciel ? chargerCiel(choice.ciel) : null;
 }
 
-export async function bootGameSession(engine: PersistentEngine, choice: LevelDef): Promise<GameSession> {
+export async function bootGameSession(engine: PersistentEngine, choice: LevelDef, entry: SessionEntry = { mode: "dev" }): Promise<GameSession> {
   await initZoneAmbience(choice.ambience);
   const pickupResources = await loadPickupResources();
   try {
@@ -60,7 +63,7 @@ export async function bootGameSession(engine: PersistentEngine, choice: LevelDef
     if (import.meta.env.DEV && choice.kind === "train-ride-gym") {
       await engine.fx.warmEnemyAppearances(engine.camera, () => engine.renderer.render(engine.scene, engine.camera));
     }
-    return buildGameSession(engine, choice, pickupResources);
+    return buildGameSession(engine, choice, pickupResources, entry);
   } catch (error) {
     try { pickupResources.dispose(); } catch (releaseError) {
       throw new AggregateError([error, releaseError], "Construction de la session interrompue");
@@ -69,7 +72,7 @@ export async function bootGameSession(engine: PersistentEngine, choice: LevelDef
   }
 }
 
-function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupResources: PickupResources): GameSession {
+function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupResources: PickupResources, entry: SessionEntry): GameSession {
   // `GameClock` et `FxSystem` appartiennent au moteur persistant pour éviter
   // de recréer leurs pools, mais leur état transitoire appartient à UNE
   // partie. Le reset précède toute construction de la nouvelle session.
@@ -139,7 +142,7 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   }
 
   const weapons = new WeaponSystem(physics, engine.clock);
-  const difficulty = getDifficulty();
+  const difficulty = entry.arrival?.difficulty ?? getDifficulty();
   const rules = difficultyConfig[difficulty];
   const enemyTuning = { hp: rules.enemyHp, damage: rules.enemyDamage };
   const suitManager = new SuitManager(physics, suitConfig, enemyTuning);
@@ -150,6 +153,11 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
     trainGym,
     trainRideGym,
     difficulty,
+    entryMode: entry.mode,
+    entryArrival: null,
+    completedArrival: null,
+    devCompleteRequested: false,
+    devCampaignCommands: [],
     physics,
     player,
     weapons,
@@ -212,6 +220,12 @@ function buildGameSession(engine: PersistentEngine, choice: LevelDef, pickupReso
   if (choice.startUnarmed) {
     weapons.startUnarmed();
   }
+
+  const arrival = entry.arrival ?? (choice.id === METRO_LEVEL_ID ? metroArrival(difficulty) : null);
+  if (arrival) applyArrival(session, arrival);
+  session.entryArrival = captureArrival(session);
+  useGameStore.getState().setCampaign({ levelId: choice.id, nextAvailable: false });
+  useGameStore.getState().setDebug({ playerHp: session.playerHp, playerMaxHp: session.playerMaxHp, wallet: session.stream.wallet });
 
   applyLightRig(engine, choice);
 

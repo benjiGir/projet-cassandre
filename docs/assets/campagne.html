@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Campagne — du magasin au métro</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#10181e;color:#e7e9df;font-family:system-ui,sans-serif}
+main{max-width:1320px;margin:auto;padding:24px}header{border-top:5px solid #deb44b;padding-top:12px}
+h1{font-size:32px;margin:8px 0}p{color:#b9c7c7;line-height:1.5}a{color:#bce1df}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}button{background:#29423f;color:#e7e9df;border:1px solid #6a9388;padding:10px 14px;font:inherit;cursor:pointer}
+button:disabled{opacity:.4}iframe{display:block;width:100%;aspect-ratio:16/9;min-height:560px;border:1px solid #3e4b52;background:black}
+pre{font-size:12px;white-space:pre-wrap;color:#aebec2}details{margin:16px 0}
+</style></head><body><main>
+<header><p>PROJET CASSANDRE · C1</p><h1>Le direct descend dans le métro.</h1>
+<p>Finis le magasin, passe les panneaux puis choisis « Continuer ». Tes armes, PV, améliorations et cagnotte suivent.<br>
+Le métro est encore le pilote du quai et des trains : son parcours complet arrive avec N5.</p>
+<a href="/">Ouvrir le menu en plein écran</a> · <a href="../4-technique/campagne.md">Fiche de la campagne</a></header>
+<div class="toolbar" aria-label="Écrans de campagne">
+<button data-start="menu">Menu</button><button data-start="type">Magasin — équipement type</button>
+<button data-start="pauvre">Magasin — profil pauvre</button><button data-start="riche">Magasin — profil riche</button>
+<button data-start="metro">Métro seul — équipement type</button></div>
+<div class="toolbar" aria-label="Actions de démonstration">
+<button id="complete" disabled>Simuler la sortie du magasin</button><button id="death" disabled>Simuler une mort</button>
+<button data-action="consume" disabled>Dépenser des munitions et perdre 10 PV</button>
+<button data-action="ammo" disabled>Acheter à la borne Perche</button><button data-action="heal" disabled>Acheter à la borne Boisson</button>
+<button id="reload">Recharger la page du jeu</button></div>
+<p id="status" role="status">La démonstration utilise les commandes d’auteur. Une sortie simulée remplace aussi la reprise enregistrée du magasin.</p>
+<iframe id="game" src="/" title="Campagne magasin et métro" allow="autoplay; fullscreen"></iframe>
+<details><summary>Équipement d’entrée et équipement actuel</summary><pre id="reading">Lance une partie pour lire son équipement.</pre></details>
+</main><script>
+const game=document.getElementById('game'), reading=document.getElementById('reading');
+let api=null;
+document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{
+  api=null;const start=button.dataset.start;
+  game.src=start==='menu'?'/':start==='metro'?'/?level=metro':`/?level=niveau_v2&campaignProfile=${start}`;
+}));
+document.getElementById('complete').addEventListener('click',()=>api.recap.completeLevel());
+document.getElementById('death').addEventListener('click',()=>api.recap.killPlayer());
+document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>api.campagne.action(button.dataset.action)));
+document.getElementById('reload').addEventListener('click',()=>game.contentWindow.location.reload());
+setInterval(()=>{
+  api=game.contentWindow.cassandre??null;
+  const state=api?.campagne?.etat();
+  document.getElementById('complete').disabled=!state?.playing||state.level!=='niveau_v2';
+  document.getElementById('death').disabled=!state?.playing;
+  document.querySelectorAll('[data-action]').forEach(button=>button.disabled=!state?.playing);
+  if(!state)reading.textContent='Lance une partie pour lire son équipement.';
+  if(state)reading.textContent=JSON.stringify(state,null,2);
+},500);
+</script></body></html>

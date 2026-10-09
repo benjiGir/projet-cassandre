@@ -1,7 +1,7 @@
 ---
 title: Alternative de placement des coulisses et des bureaux
 tags: [journal, niveau, proposition, agencement]
-status: validé
+status: stable
 updated: 2026-10-01
 ---
 

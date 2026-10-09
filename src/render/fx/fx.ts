@@ -92,6 +92,11 @@ export class FxSystem {
   warmExplosions(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.explosions.warm(camera, render);
   }
+  releaseShaderPrograms(): void {
+    this.explosions.releaseShaderPrograms();
+    this.flashes.releaseShaderPrograms();
+    this.appearances.releaseShaderPrograms();
+  }
   warmMuzzleFlashes(camera: THREE.Camera, render: () => void): Promise<void> {
     return this.flashes.warm(camera, render);
   }

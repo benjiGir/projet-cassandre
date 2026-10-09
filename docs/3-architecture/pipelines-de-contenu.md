@@ -2,7 +2,7 @@
 title: Pipelines de contenu
 tags: [architecture]
 status: stable
-updated: 2026-09-28
+updated: 2026-10-08
 ---
 
 # Pipelines de contenu
@@ -147,7 +147,7 @@ option `--debug`). Le script imprime, pour chaque bras, la distance
 
 ## 5. Son
 
-**Sources** : `tools/audio/recipes.py` (38 recettes paramétriques,
+**Sources** : `tools/audio/recipes.py` (39 recettes paramétriques,
 déterministes) et `assets_src/cc0_raw/` (enregistrements CC0, ignoré par
 git, un contributeur par famille de sons).
 
@@ -158,10 +158,10 @@ WAV), `analyze_sfx.py` (mesures : timbre, crête, masquage, boucle),
 `audition.py` (page d'écoute locale).
 
 **Sortie** : `public/assets/audio/sfx/sfx.ogg`/`.m4a`/`.json` (sprite
-unique) et quatre ambiances bouclées (`amb_*.{ogg,m4a}`).
+unique) et 25 nappes de zone en `.ogg` et `.m4a` (`public/assets/audio/ambiances/`, index `ambiances.json`).
 
 **Consommateur** : `src/core/audio/audio.ts`. Deux vocabulaires séparés exprès :
-`SFX_TABLE` associe un identifiant du JEU (`melee_fire`, `enemy_telegraph`…)
+`SFX_TABLE` (`src/core/audio/audioCatalog.ts`) associe un identifiant du JEU (`melee_fire`, `enemy_telegraph`…)
 à un nom de RECETTE (`crowbar_swing`, `suit_telegraph`…) — seul endroit à
 toucher pour renommer l'un sans l'autre.
 
@@ -172,7 +172,7 @@ détail dans `tools/audio/README.md`.
 distinguer), facteur de crête, masquage spectral (la télégraphie d'un
 Costard ne doit pas être couverte par le tir du joueur), boucle exacte
 vérifiée après décodage `.ogg`/`.m4a`. Détail :
-`docs/4-technique/studio-audio.md` (à écrire).
+[Studio audio](../4-technique/studio-audio.md).
 
 **Déterminisme** : même graine, même octet — y compris l'`.ogg`, dont le
 numéro de série de flux (tiré au hasard par défaut) est fixé par le nom du

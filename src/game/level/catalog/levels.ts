@@ -25,15 +25,24 @@ export interface LevelDef {
   ambience?: string;
   /** Scénarios propres au niveau ; absent = registre historique du magasin. */
   scenarios?: Readonly<Record<string, Scenario>>;
+  mysteryDonations?: boolean;
 }
 
 // Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
+  { id: "metro", label: "Le métro — parcours N5", kind: "gltf", gltfName: "metro_blockout",
+    lighting: "hybride", ciel: "nuit", ambience: "quartier_pilote", spaces: true, scenarios: {}, mysteryDonations: false },
+  ...(import.meta.env.DEV ? [{ id: "blockout_metro", label: "Blockout — Métro complet (N5)", kind: "gltf" as const,
+    gltfName: "metro_blockout", lighting: "hybride" as const, ciel: "nuit", ambience: "quartier_pilote",
+    spaces: true, scenarios: {}, mysteryDonations: false }] : []),
   ...(import.meta.env.DEV ? [{ id: "essai_trains", label: "Essai — Trains du métro (T1)", kind: "train-gym" as const }] : []),
   ...(import.meta.env.DEV ? [{ id: "essai_voyage_rame", label: "Essai — Voyage à bord (T4)", kind: "train-ride-gym" as const }] : []),
   ...(import.meta.env.DEV ? [{ id: "pilote_metro", label: "Pilote — Quai et tunnel (N4)", kind: "gltf" as const,
     gltfName: "metro_pilote", lighting: "hybride" as const, ambience: "metro_pilote", spaces: true, scenarios: {} }] : []),
+  ...(import.meta.env.DEV ? [{ id: "pilote_quartier", label: "Pilote — Place du quartier (N4b)", kind: "gltf" as const,
+    gltfName: "quartier_pilote", lighting: "hybride" as const, ciel: "nuit", ambience: "quartier_pilote",
+    spaces: true, scenarios: {}, mysteryDonations: false }] : []),
   ...(import.meta.env.DEV ? [{ id: "trains_metro", label: "Essai — Trains intégrés (T2)", kind: "gltf" as const,
     gltfName: "metro_trains", lighting: "hybride" as const, ambience: "metro_pilote", spaces: true, scenarios: METRO_TRAIN_EVENTS }] : []),
   { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },

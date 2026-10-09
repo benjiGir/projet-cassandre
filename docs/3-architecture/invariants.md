@@ -2,7 +2,7 @@
 title: Invariants
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Invariants
@@ -100,9 +100,10 @@ Rapier. Jamais d'implémentation maison capsule-contre-monde.
   déjà réglés une fois sur ce contrôleur partagé.
 - **Code** : `controller.ts`, `physics/world.ts`, réutilisé par `suit.ts`/
   `director.ts`. **Test** : aucun (`suit.test.ts` utilise un vrai KCC comme
-  outillage, pas garde-fou). **Décision** : pas d'ADR initial ; réglages dans
-  [ADR 0016](../decisions/0016-garde-fous-degenerescence-kcc.md) et
-  [ADR 0006](../decisions/0006-air-strafing.md).
+  outillage, pas garde-fou). **Décision** : pas d'ADR initial ; les garde-fous
+  du contrôleur sont dans [ADR 0016](../decisions/0016-garde-fous-degenerescence-kcc.md).
+  Le contrôle aérien relève de [ADR 0006](../decisions/0006-air-strafing.md),
+  toujours `propose`.
 
 ### #7 — Gravité −25 m/s²
 
@@ -136,7 +137,8 @@ n'empêche une action du joueur.
 - **Pourquoi / casse si violé** : un boomer shooter fait l'inverse du
   réalisme moderne — la réactivité prime, sinon le contrôle se ressent mou.
 - **Code** : `src/game/player/weapons/weapons.ts` (invariant cité en commentaire) ;
-  `updateGameplay.ts` (`isDead` stoppe le pas fixe sans geler d'animation).
+  `updateGameplay.ts` (hors de l'état `playing` de la machine de flux, le joueur
+  n'avance plus ; la boucle continue, voir [Joueur](../4-technique/joueur.md)).
   **Test** : `test/render/viewmodel/viewmodel.test.ts` (« tirer pendant le changement
   d'arme remet l'arme en place aussitôt, invariant #10 »). **Décision** :
   aucun ADR, `CLAUDE.md` (#10).
@@ -166,7 +168,7 @@ Jamais `Math.random()`, jamais le service `Random` d'Effect. Seule source :
   exécutions en silence, sans erreur visible.
 - **Code** : `src/core/effect/random.ts`, consommé via
   `runGameplaySync(DeterministicRandom.useSync(...))` dans `enemyMachine.ts`,
-  `weapons.ts`, `pathfinding.ts`, `lifecycle.ts`, `gameSession.ts`. **Test** :
+  `weapons.ts`, `props.ts` et `lifecycle.ts`. **Test** :
   `random.test.ts` (valeurs de référence indépendantes) ; `suit.test.ts`/
   `director.test.ts` via graines déterministes. **Décision** :
   [ADR 0007](../decisions/0007-rng-deterministe.md), complété par
@@ -183,7 +185,7 @@ données du store. Un module qui persiste ou pilote le moteur ne vit pas dans
   l'utilisateur sur l'état du code React existant — le niveau attendu, pas
   une préférence de style ; régression de maintenabilité déjà constatée.
 - **Code** : `src/ui/` ; détail dans les quatre pages
-  `docs/reference/react-*.md`. **Test** : aucun — revue de code. **Décision** :
+  `docs/6-reference/react-*.md`. **Test** : aucun — revue de code. **Décision** :
   pas d'ADR, `CLAUDE.md` (« Conventions React », 2026-09-23).
 
 ## Invariants retirés

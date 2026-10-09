@@ -1,0 +1,409 @@
+{
+  "zone": "Franchissement A vers dépôt",
+  "trafic": "suspendu pendant la marche",
+  "saut": false,
+  "reposition_apres_depart": false,
+  "poses": [
+    {
+      "action": "depart_platelage",
+      "pose": {
+        "x": 39.25,
+        "y": 325.15,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approche_sud",
+      "pose": {
+        "x": 39.25,
+        "y": 320.7,
+        "z": -17.95,
+        "eye": -16.35,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_sur_platelage_depuis_A",
+      "pose": {
+        "x": 39.25,
+        "y": 325.09,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_1",
+      "pose": {
+        "x": 40.1,
+        "y": 325.09,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_2",
+      "pose": {
+        "x": 40.95,
+        "y": 325.09,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_3",
+      "pose": {
+        "x": 41.88,
+        "y": 325.09,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_4",
+      "pose": {
+        "x": 42.73,
+        "y": 325.09,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_5",
+      "pose": {
+        "x": 43.58,
+        "y": 325.09,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_6",
+      "pose": {
+        "x": 44.43,
+        "y": 325.09,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie_est_7",
+      "pose": {
+        "x": 45.16,
+        "y": 325.09,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allee_nord_1",
+      "pose": {
+        "x": 45.16,
+        "y": 329.44,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allee_nord_2",
+      "pose": {
+        "x": 45.16,
+        "y": 333.89,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_allee_1",
+      "pose": {
+        "x": 45.16,
+        "y": 329.44,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_allee_2",
+      "pose": {
+        "x": 45.16,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_1",
+      "pose": {
+        "x": 44.31,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_2",
+      "pose": {
+        "x": 43.5,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_3",
+      "pose": {
+        "x": 42.7,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_4",
+      "pose": {
+        "x": 41.85,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_5",
+      "pose": {
+        "x": 41,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_6",
+      "pose": {
+        "x": 40.3,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_7",
+      "pose": {
+        "x": 39.44,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_8",
+      "pose": {
+        "x": 38.59,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_9",
+      "pose": {
+        "x": 37.74,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_10",
+      "pose": {
+        "x": 37.04,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversee_ouest_11",
+      "pose": {
+        "x": 36.18,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_1",
+      "pose": {
+        "x": 36.98,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_2",
+      "pose": {
+        "x": 37.83,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_3",
+      "pose": {
+        "x": 38.68,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_4",
+      "pose": {
+        "x": 39.53,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_5",
+      "pose": {
+        "x": 40.41,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_6",
+      "pose": {
+        "x": 41.26,
+        "y": 324.99,
+        "z": -17.81,
+        "eye": -16.21,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_7",
+      "pose": {
+        "x": 42.11,
+        "y": 324.99,
+        "z": -17.82,
+        "eye": -16.22,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_8",
+      "pose": {
+        "x": 42.97,
+        "y": 324.99,
+        "z": -17.89,
+        "eye": -16.29,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_9",
+      "pose": {
+        "x": 43.82,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_10",
+      "pose": {
+        "x": 44.52,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour_est_11",
+      "pose": {
+        "x": 45.36,
+        "y": 324.99,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    }
+  ],
+  "trafic_restaure": {
+    "A": true,
+    "B": true,
+    "VB": false
+  }
+}

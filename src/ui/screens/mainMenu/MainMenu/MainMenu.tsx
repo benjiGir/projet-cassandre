@@ -12,6 +12,8 @@ import styles from "./MainMenu.module.css";
 
 export interface MainMenuProps {
   onPlay: () => void;
+  onContinue?: () => void;
+  onChooseLevel?: () => void;
   onOptions: () => void;
   /** Revoir les panneaux d'intro — absent tant qu'ils n'ont pas été vus une première fois. */
   onReplayIntro?: () => void;
@@ -27,7 +29,7 @@ const TICKER_ITEMS = [
 ];
 
 // see: docs/archive/systems-hud.md#menu-principal-et-écran-de-choix-de-niveau
-export function MainMenu({ onPlay, onOptions, onReplayIntro, devTools }: MainMenuProps) {
+export function MainMenu({ onPlay, onContinue, onChooseLevel, onOptions, onReplayIntro, devTools }: MainMenuProps) {
   const [quitRefused, setQuitRefused] = useState(false);
 
   // `window.close()` ne ferme qu'un onglet ouvert par script, et échoue sans
@@ -55,9 +57,13 @@ export function MainMenu({ onPlay, onOptions, onReplayIntro, devTools }: MainMen
           </p>
         ) : (
           <div className={styles.actions}>
-            <Button size="large" variant="primary" icon="▶" onClick={onPlay}>
-              REJOINDRE LE DIRECT
+            {onContinue && <Button size="large" variant="primary" icon="▶" onClick={onContinue}>
+              CONTINUER — MÉTRO
+            </Button>}
+            <Button size="large" variant={onContinue ? "default" : "primary"} icon="▶" onClick={onPlay}>
+              NOUVELLE PARTIE
             </Button>
+            {onChooseLevel && <Button size="large" icon="▶" onClick={onChooseLevel}>CHOISIR UN NIVEAU</Button>}
             {onReplayIntro !== undefined && (
               <Button size="large" icon="▶" onClick={onReplayIntro}>
                 REVOIR L'INTRODUCTION

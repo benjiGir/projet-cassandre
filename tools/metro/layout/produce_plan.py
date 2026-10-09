@@ -20,27 +20,27 @@ ROOT=Path(__file__).resolve().parents[3]
 COLORS={'quartier':'#647d88','descente':'#a7b5af','billets':'#c5baa0','quais':'#a5bcaa','tunnel_a':'#90664a','galeries':'#618b82','depot':'#aa925e','tunnel_b':'#896447','poste':'#729bbb','machinerie':'#658591','secret_1':'#cf9dd0','secret_3':'#cf9dd0','secret_2':'#cf9dd0','secret_4':'#cf9dd0','fret':'#b2cbb7','privee':'#b9c9d5','remontee':'#bbc6d2','parvis':'#98adb7'}
 
 
-def prepare():
+def prepare(plan=P):
     # Les volumes réservés aux niches sont recoupés avec le tube : un seul sol.
     main=[]
-    for surface in P.SURFACES:
+    for surface in plan.SURFACES:
         pieces=[surface.points]
         if surface.id=='quartier':
-            for x0,x1,y0,y1 in P.BLOCKS:
+            for x0,x1,y0,y1 in plan.BLOCKS:
                 block=[(x0,y0,0),(x1,y0,0),(x1,y1,0),(x0,y1,0)]
                 pieces=[fragment for piece in pieces for fragment in subtract(piece,block)]
         if surface.groupe=='depot':
-            for roof in [r for r in P.SURFACES if r.groupe=='secret_3']:
+            for roof in [r for r in plan.SURFACES if r.groupe=='secret_3']:
                 pieces=[fragment for piece in pieces for fragment in subtract(piece,roof.points)]
-        main.extend(P.Surface(surface.id+f'_part_{i}',surface.groupe,piece) for i,piece in enumerate(pieces))
+        main.extend(plan.Surface(surface.id+f'_part_{i}',surface.groupe,piece) for i,piece in enumerate(pieces))
     floors=list(main)
-    for niche in P.NICHES:
+    for niche in plan.NICHES:
         pieces=[niche.points]
         for floor in main:
             pieces=[fragment for piece in pieces for fragment in subtract(piece,floor.points)]
         for i,piece in enumerate(pieces):
             if area(piece)<=1e-6: continue
-            floors.append(P.Surface(niche.id+f'_part_{i}',niche.groupe,piece))
+            floors.append(plan.Surface(niche.id+f'_part_{i}',niche.groupe,piece))
     return floors
 
 

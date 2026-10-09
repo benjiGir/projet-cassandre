@@ -2,7 +2,7 @@
 title: Boucle et temps
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Boucle et temps
@@ -71,7 +71,7 @@ Séquence de `frame()` dans `src/core/loop/loop.ts` :
 | `input.endFrame()` | `src/core/input/input.ts` | affichage | Doit rester le dernier appel de l'image |
 
 `updateGameplay` lit l'input du pas fixe via `captureInputFrame` (nommé par
-action, `core/input/input.ts::GameAction`, pas par touche physique) ou par
+action, `core/input/inputTypes.ts::GameAction`, pas par touche physique) ou par
 `inputRecorder.nextFrame()` en rejeu — jamais les deux à la fois. En dev
 seulement (`import.meta.env.DEV`), `handleDevGameplayInput`
 (`src/game/loop/devGameplayInput.ts`) consomme F8-F10 (notarget, rejeu
@@ -94,7 +94,7 @@ contenu est ignoré.
 
 Le hitstop ralentit le gameplay à l'impact sans jamais arrêter le pas fixe
 lui-même. `GameClock.tick(fixedDt)` (`src/core/loop/time.ts`) renvoie `fixedDt`
-inchangé la plupart du temps, ou `fixedDt * hitstopScale` (0,05 par défaut)
+inchangé la plupart du temps, ou `fixedDt * hitstopScale` (0,05 dans `weaponConfig`)
 tant que `hitstopRemaining > 0`, décrémenté à chaque appel. Ce résultat,
 `gameplayDt`, est ce que `updateGameplay` propage à tout ce qui doit
 ralentir : `advanceGameplayTime`, le délai de soulagement des sanitaires, et

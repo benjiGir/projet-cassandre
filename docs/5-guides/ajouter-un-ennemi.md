@@ -2,7 +2,7 @@
 title: Ajouter un ennemi
 tags: [guide, recette]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Ajouter un ennemi
@@ -37,9 +37,10 @@ simulation ou le contrat des collisions existants.
    dispersés dans les branches de l'IA.
 4. Implémentez une classe qui satisfait `Entity` dans
    `src/game/entities/shared/entity.ts`.
-5. Réutilisez les fonctions communes de
-   `src/game/entities/shared/enemyMachine.ts` pour corps, collider, acteur,
-   RNG, machine et interpolation.
+5. Réutilisez les fonctions communes de `src/game/entities/shared/` : corps et
+   collider dans `enemyPhysics.ts`, acteur, RNG, machine et interpolation dans
+   `enemyMachine.ts`, perception, navigation et combat dans leurs modules
+   `enemyPerception.ts`, `enemyNavigation.ts` et `enemyCombat.ts`.
 6. Gardez la machine partagée aussi générique que les états
    véritablement communs. Les propriétés de boss restent dans la classe
    du boss.

@@ -2,7 +2,7 @@
 title: Conventions de nommage glTF
 tags: [reference, pipeline]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Conventions de nommage glTF

@@ -2,7 +2,7 @@
 title: Ennemis et IA
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Ennemis et IA
@@ -25,7 +25,7 @@ d'affichage, `src/game/loop/updateFx.ts` + `src/render/`). N'applique pas
 lui-même les dégâts au joueur — il produit un `pendingAttackDamage`, c'est
 `updateGameplay.ts` qui appelle `applyPlayerDamage` ([Joueur](joueur.md)).
 Ne connaît aucune arme du joueur au-delà du contrat `HitEvent` qu'il consomme
-en entrée (D28).
+en entrée.
 
 ## Fichiers
 
@@ -295,7 +295,7 @@ chemin de production (`tickEnemy`/`applyEnemyDamageCore`).
 - Touche `B` : gizmos des rayons de tir réellement lancés (raté silencieux,
   jitter). Touche `V` : wireframe, capsule/déplacement réel sous le sprite.
 
-**Ajouter un type d'ennemi** (recette complète prévue en D56) : dupliquer la
+**Ajouter un type d'ennemi** (recette complète dans [Ajouter un ennemi](../5-guides/ajouter-un-ennemi.md)) : dupliquer la
 forme de `SuitConfig` (jamais l'étendre —
 [ADR 0009](../decisions/0009-machine-partagee-suit-director.md)), dupliquer
 le fin wrapper `suit.ts`/`suitManager.ts` (la logique de combat reste dans

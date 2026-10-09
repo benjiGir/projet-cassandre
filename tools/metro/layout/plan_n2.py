@@ -95,7 +95,9 @@ def ramp(name, group, x0, x1, y0, y1, axis, low, high):
         lambda x, y: low + (high - low) * ((x-x0)/(x1-x0) if axis == 'x' else (y-y0)/(y1-y0)))
 
 
-def tube(route, group):
+def tube(route, group, surfaces=None, tube_edges=None):
+    surfaces = SURFACES if surfaces is None else surfaces
+    tube_edges = TUBE_EDGES if tube_edges is None else tube_edges
     points = route.points
     normals = []
     for a, b in zip(points, points[1:]):
@@ -111,9 +113,9 @@ def tube(route, group):
         width = max(route.widths[max(0, i-1)], route.widths[min(i, len(route.widths)-1)])
         half = width/2 / (nx*following[0]+ny*following[1])
         edges.append(((p[0]+nx*half,p[1]+ny*half,p[2]), (p[0]-nx*half,p[1]-ny*half,p[2])))
-    TUBE_EDGES[group] = edges
+    tube_edges[group] = edges
     for i, (a,b) in enumerate(zip(edges, edges[1:])):
-        SURFACES.append(Surface(f'{group}_{i:02}', group, (a[1],b[1],b[0],a[0])))
+        surfaces.append(Surface(f'{group}_{i:02}', group, (a[1],b[1],b[0],a[0])))
 
 
 def hauteur_y(points, y):

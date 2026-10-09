@@ -2,7 +2,7 @@
 title: Commandes
 tags: [reference, commandes]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Commandes
@@ -17,10 +17,14 @@ Les commandes du projet viennent de `package.json`. PNPM utilise la version verr
 | `pnpm typecheck` | Lance uniquement `tsc --noEmit`. |
 | `pnpm test` | Exécute Vitest une fois. |
 | `pnpm test:watch` | Garde Vitest actif en mode interactif. |
-| `pnpm check` | Typecheck, tests Vitest, contrôle documentaire strict et build de production. |
-| `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. Aussi exécuté par `pnpm check` et la CI. |
+| `pnpm lint` | Oxlint (avec types) sur `src`, `test` et les configs. Config : `.oxlintrc.json`. Les erreurs cassent ; les avertissements sont de la dette plafonnée par `options.maxWarnings` (le plafond ne fait que descendre). |
+| `pnpm lint:fix` | Oxlint avec les correctifs sûrs (`--fix`) : `import type`, assertions inutiles, gabarits de chaîne. À lancer sur un arbre propre. |
+| `pnpm format` | Oxfmt écrit le formatage (`printWidth` 120, config `.oxfmtrc.json`). À lancer sur un arbre propre, dans un commit dédié. |
+| `pnpm format:check` | Oxfmt vérifie sans écrire. Pas encore dans `pnpm check` tant que le dépôt n'a pas été formaté une fois. |
+| `pnpm check` | Typecheck, lint, tests Vitest et build de production. Le contrôle documentaire n'en fait pas partie ; la CI (`.github/workflows/deploy.yml`) lance `pnpm check` sans lui. |
+| `pnpm check:docs` | Vérifie le graphe documentaire, les chemins de code et les ancres. À lancer à part : ni `pnpm check` ni la CI ne l'exécutent. |
 | `pnpm check:docs:test` | Exécute les tests Python du vérificateur documentaire. |
-| `pnpm verify` | Typecheck et tests, sortie réduite aux échecs ; `-- --level` ajoute le contrat et l'audit du niveau (Blender headless), `-- --docs` le contrôle documentaire. |
+| `pnpm verify` | Typecheck, lint et tests, sortie réduite aux échecs ; `-- --format` ajoute le formatage, `-- --level` le contrat et l'audit du niveau (Blender headless), `-- --docs` le contrôle documentaire. |
 | `pnpm probe` | Mesure les lots de dessin en jeu aux poses de `tools/probe/poses.json`. |
 | `pnpm economy` | Relève le portefeuille sur trois parties types simulées ; `-- --variante A`, `-- --difficulte client`, `-- --toutes`. |
 
@@ -86,9 +90,11 @@ Les ajouts locaux au niveau v2 passent par les recettes rejouables de `tools/ble
 | `tools/textures/generate_surgeles.py` | Aucune option CLI ; sortie définie dans le générateur. |
 | `tools/textures/generate_trims.py` | Aucune option CLI ; sortie définie dans le générateur. |
 | `tools/textures/make_kenney_atlas.py` | Aucune option CLI ; sortie définie dans le générateur. |
+| `tools/textures/generate_panneaux.py` | `--raw DOSSIER`, `--out DOSSIER`, `--couleurs N`, `--check`. |
+| `tools/textures/generate_backstage_signs.py`, `generate_card_pickups.py`, `generate_checkout_signs.py`, `generate_compacteur.py`, `generate_door_controls.py`, `generate_public_compositions.py`, `generate_service_landmarks.py` | Aucune option CLI ; sortie définie dans le générateur. |
 | `tools/docs/check_docs_links.py DOCS` | `--src DIR`, `--strict`, `--allow-empty-drafts`. |
 | `tools/docs/audit_comments.py RACINE` | `--max-ratio N`, `--long-block N`, `--json FICHIER`. |
-| `tools/docs/remap_anchors.py` | `--root DIR`, `--table FICHIER`, `--dry-run`, `--diff FICHIER`, `--archive-plan`. `--apply` est réservé à la phase I, D65. |
+| `tools/docs/remap_anchors.py` | `--root DIR`, `--table FICHIER`, `--dry-run`, `--diff FICHIER`, `--archive-plan`. `--apply` écrit réellement les changements, après revue du `--diff` ; la migration déjà menée est appliquée. |
 | `python3 -m unittest discover -s tools/docs -p 'test_*.py'` | Lance les tests de `tools/docs/test_check_docs_links.py` et `tools/docs/test_remap_anchors.py`. |
 
 Les scripts Blender de support, les spécifications et les helpers Python comme `tools/blender/kit_spec.py`, `tools/blender/level_spec.py`, `tools/blender/geo_utils.py` et `tools/blender/lib_helpers.py` fournissent des fonctions aux commandes ci-dessus ; ils ne sont pas des commandes autonomes.

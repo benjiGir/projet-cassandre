@@ -32,6 +32,7 @@ import type { StreamState } from "./stream/streamSim";
 import type { HeroPortrait } from "./presentation/heroPortrait";
 import type { PlaceLineState } from "./player/placeLines";
 import type { Difficulty } from "./progression/difficulty";
+import type { CampaignArrival, EntryMode, CampaignDebugCommand } from "./campaign/campaignTypes";
 /** Suivi de franchissement de `door_e_exit` — voir `game/session/progression/doors.ts::setupExitDoorTracking`. */
 export interface ExitDoorTracking {
   /** Position MONDE du vantail au moment du déverrouillage (X/Z stables ensuite — seul le glissement cosmétique en Y bouge le corps, voir `OpeningDoor`). */
@@ -51,6 +52,11 @@ export interface GameSession {
   choice: LevelDef;
   /** Difficulté de CETTE partie, lue une fois à sa construction — voir `progression/difficulty.ts`. */
   difficulty: Difficulty;
+  entryMode: EntryMode;
+  entryArrival: CampaignArrival | null;
+  completedArrival: CampaignArrival | null;
+  devCompleteRequested: boolean;
+  devCampaignCommands: CampaignDebugCommand[];
 
   physics: PhysicsWorld;
   player: PlayerController;

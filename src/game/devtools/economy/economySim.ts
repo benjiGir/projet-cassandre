@@ -9,6 +9,9 @@ import {
   type StreamEventKind,
 } from "../../session/stream/streamSim";
 import { PARCOURS, PROFILES, type PlayProfile, type ProfileId } from "./economyProfiles";
+import { Effect } from "effect";
+import { DeterministicRandom } from "../../../core/effect/random";
+import { kioskOffer } from "../../player/kioskOffer";
 
 // Relevé du portefeuille (lot B7 de PLAN_SUITE.md) : une partie type, décrite
 // comme une suite d'étapes du niveau, rejouée à travers la VRAIE simulation
@@ -22,13 +25,8 @@ export type PriceList = Readonly<Record<Perk, number>>;
 
 /** Générateur déterministe local : le relevé ne touche à aucun flux du jeu. */
 function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  return Effect.runSync(DeterministicRandom.useSync((random) => random.forSeed(seed))
+    .pipe(Effect.provide(DeterministicRandom.layer)));
 }
 
 export interface KioskReading {
@@ -43,6 +41,8 @@ export interface KioskReading {
 }
 
 export interface RunReading {
+  readonly wallet: number;
+  readonly consumables: number;
   readonly seconds: number;
   /** Total des dons reçus, achats non déduits. */
   readonly donated: number;
@@ -68,6 +68,7 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
   let now = 0;
   let mystery = 0;
   let secretsLeft = profile.secrets;
+  let consumables = 0;
   const bought = new Set<Perk>();
   const kiosks: KioskReading[] = [];
   /** Total reçu à chaque passage devant une borne, pour le calcul du meilleur achat possible. */
@@ -98,10 +99,12 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
     }
 
     if (stop.kiosk) {
-      const price = prices[stop.kiosk];
+      const resolved = kioskOffer(bought, { perk: stop.kiosk, price: prices[stop.kiosk] });
+      const price = resolved.price;
       const wallet = state.wallet;
-      const buys = !bought.has(stop.kiosk) && spend(state, price);
-      if (buys) bought.add(stop.kiosk);
+      const buys = spend(state, price);
+      if (buys && resolved.kind === "perk") bought.add(stop.kiosk);
+      if (buys && resolved.kind !== "perk") consumables++;
       kiosks.push({ stop: stop.id, perk: stop.kiosk, price, at: now, wallet, bought: buys });
       visits.push({ perk: stop.kiosk, donated: state.donated });
     }
@@ -126,8 +129,50 @@ export function simulateRun(profile: PlayProfile, difficulty: Difficulty, prices
   }
 
   const spendable = visits.at(-1)?.donated ?? 0;
-  return { seconds: now, donated: state.donated, mystery, spendable, bought: [...bought], best: bestCount(visits, prices), kiosks };
+  return { wallet: state.wallet, consumables, seconds: now, donated: state.donated, mystery, spendable, bought: [...bought], best: bestCount(visits, prices), kiosks };
 }
+
+export function simulateCampaign(profile: PlayProfile, difficulty: Difficulty, prices: PriceList, seed: number) {
+  const store = simulateRun(profile, difficulty, prices, seed);
+  const state = createStreamState(difficultyConfig[difficulty].donations);
+  state.wallet = store.wallet;
+  const perks = new Set(store.bought);
+  const random = mulberry32(seed ^ 0xc1c1);
+  let seconds = 0;
+  let consumables = 0;
+  const visits: KioskReading[] = [];
+  for (const stop of METRO_ECONOMY_ROUTE) {
+    const kills = Math.round(stop.kills * profile.killShare * difficultyConfig[difficulty].groupShare);
+    const duration = profile.travel + kills * profile.killInterval;
+    for (let t = 0; t < duration; t += STEP) {
+      seconds += STEP;
+      updateStream(state, STEP, seconds, random);
+    }
+    for (let i = 0; i < kills; i++) notifyStream(state, "kill", seconds, random);
+    if (stop.kiosk) {
+      const offer = kioskOffer(perks, { perk: stop.kiosk, price: prices[stop.kiosk] });
+      const wallet = state.wallet;
+      const bought = spend(state, offer.price);
+      if (bought && offer.kind === "perk") perks.add(stop.kiosk);
+      if (bought && offer.kind !== "perk") consumables++;
+      visits.push({ stop: stop.id, perk: stop.kiosk, price: offer.price, wallet, bought, at: seconds });
+    }
+  }
+  return { store, metro: { entryWallet: store.wallet, entryPerks: store.bought,
+    wallet: state.wallet, perks: [...perks], donated: state.donated, consumables, seconds, visits } };
+}
+
+// see: docs/4-technique/campagne.md#relevé-déconomie
+const METRO_ECONOMY_ROUTE: readonly { id: string; kills: number; kiosk?: Perk }[] = [
+  { id: "quartier", kills: 4, kiosk: "boisson" },
+  { id: "hall", kills: 6, kiosk: "perche" },
+  { id: "mezzanine", kills: 4, kiosk: "vpn" },
+  { id: "quai_1", kills: 8, kiosk: "aimant" },
+  { id: "maintenance", kills: 6, kiosk: "premium" },
+  { id: "rame", kills: 4 },
+  { id: "station_2", kills: 8, kiosk: "gilet" },
+  { id: "sortie", kills: 4, kiosk: "boisson" },
+];
 
 /** Le plus grand panier qu'on pouvait remplir, en achetant chaque perk à son dernier passage possible. */
 function bestCount(visits: readonly { perk: Perk; donated: number }[], prices: PriceList): number {

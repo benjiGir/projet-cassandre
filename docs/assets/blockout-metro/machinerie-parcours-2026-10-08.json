@@ -1,0 +1,741 @@
+{
+  "debut": {
+    "pose": {
+      "x": 115,
+      "y": 354.7,
+      "z": -21.99,
+      "eye": -20.39,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1093,
+      "colliderKindCounts": {
+        "cuboid": 347,
+        "convexHull": 746,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2292,
+      "decorBatchCount": 257,
+      "lightCount": 183,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 6,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "opening",
+        "groupe": "door_n5_tunnel",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.26657805789669087,
+        "service": 0
+      },
+      "horloge": 120.15150000005806,
+      "prochainEvenementDans": 4.4226438957302205
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": false,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": 13.287499489654987,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "B",
+          "countdown": 39.31666666666666,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "parcours": [
+    {
+      "frames": 241,
+      "p95": 9.2,
+      "maximum": 9.3,
+      "plusDe34ms": 0,
+      "pas": 121,
+      "maxVertical": 0.03757286071777344,
+      "maxHorizontal": 0.15002168733266694,
+      "camera": {
+        "images": 211,
+        "immobiles": 0,
+        "minHorizontal": 0.06289943120135895,
+        "maxHorizontal": 0.0837195653414429
+      },
+      "pose": {
+        "x": 92.72,
+        "y": 330,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "frames": 240,
+      "p95": 8.9,
+      "maximum": 9.4,
+      "plusDe34ms": 0,
+      "pas": 120,
+      "maxVertical": 0.006345133297145367,
+      "maxHorizontal": 0.1500202119374918,
+      "camera": {
+        "images": 210,
+        "immobiles": 0,
+        "minHorizontal": 0.06570924682551013,
+        "maxHorizontal": 0.0837138861588984
+      },
+      "pose": {
+        "x": 110.68,
+        "y": 330,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "frames": 241,
+      "p95": 9.1,
+      "maximum": 9.4,
+      "plusDe34ms": 0,
+      "pas": 121,
+      "maxVertical": 0.009017613316245843,
+      "maxHorizontal": 0.15001799191832027,
+      "camera": {
+        "images": 211,
+        "immobiles": 1,
+        "minHorizontal": 0.000002932548511580535,
+        "maxHorizontal": 0.08461291690904402
+      },
+      "pose": {
+        "x": 115.22,
+        "y": 347.58,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "frames": 241,
+      "p95": 9.3,
+      "maximum": 9.4,
+      "plusDe34ms": 0,
+      "pas": 121,
+      "maxVertical": 0.038221243768930435,
+      "maxHorizontal": 0.15002089738845859,
+      "camera": {
+        "images": 211,
+        "immobiles": 0,
+        "minHorizontal": 0.041528997445513305,
+        "maxHorizontal": 0.08461432501812134
+      },
+      "pose": {
+        "x": 97.45,
+        "y": 354.83,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "frames": 240,
+      "p95": 9.1,
+      "maximum": 9.3,
+      "plusDe34ms": 0,
+      "pas": 121,
+      "maxVertical": 0.041864342987537384,
+      "maxHorizontal": 0.15000857412896376,
+      "camera": {
+        "images": 211,
+        "immobiles": 0,
+        "minHorizontal": 0.0014112981576406697,
+        "maxHorizontal": 0.08371963001883963
+      },
+      "pose": {
+        "x": 80.01,
+        "y": 354.83,
+        "z": -20.1,
+        "eye": -18.5,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "frames": 240,
+      "p95": 9.3,
+      "maximum": 9.4,
+      "plusDe34ms": 0,
+      "pas": 120,
+      "maxVertical": 0.052102748304605484,
+      "maxHorizontal": 0.15001343190670013,
+      "camera": {
+        "images": 210,
+        "immobiles": 0,
+        "minHorizontal": 0.0018854396298140822,
+        "maxHorizontal": 0.08461914954429207
+      },
+      "pose": {
+        "x": 62.8,
+        "y": 354.83,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    }
+  ],
+  "commande": {
+    "pose": {
+      "x": 115.22,
+      "y": 355.68,
+      "z": -21.99,
+      "eye": -20.39,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1093,
+      "colliderKindCounts": {
+        "cuboid": 347,
+        "convexHull": 746,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2292,
+      "decorBatchCount": 257,
+      "lightCount": 183,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 6,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.2694748400763103,
+        "service": 0
+      },
+      "horloge": 164.17550000006506,
+      "prochainEvenementDans": 9.153940717914736
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "B",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "retour": {
+    "pose": {
+      "x": 62.56,
+      "y": 354.83,
+      "z": -17.99,
+      "eye": -16.39,
+      "cap": 90,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1093,
+      "colliderKindCounts": {
+        "cuboid": 347,
+        "convexHull": 746,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2292,
+      "decorBatchCount": 257,
+      "lightCount": 183,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 6,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.277528594712445,
+        "service": 0
+      },
+      "horloge": 207.1510000000724,
+      "prochainEvenementDans": 6.413851958108007
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "B",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "versionFinale": {
+    "pose": {
+      "x": 115,
+      "y": 354.7,
+      "z": -21.99,
+      "eye": -20.39,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1093,
+      "colliderKindCounts": {
+        "cuboid": 347,
+        "convexHull": 746,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2292,
+      "decorBatchCount": 257,
+      "lightCount": 183,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 6,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.2725309212250852,
+        "service": 0
+      },
+      "horloge": 319.35900000001095,
+      "prochainEvenementDans": 13.403846753817824
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": 9.987499489656164,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": "ligne",
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "B",
+          "countdown": 16.01666666666784,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [
+        {
+          "voie": "A",
+          "trajet": "ligne",
+          "avant": 367.59999999997177
+        },
+        {
+          "voie": "B",
+          "trajet": "ligne",
+          "avant": 7.599999999971772
+        }
+      ],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  }
+}

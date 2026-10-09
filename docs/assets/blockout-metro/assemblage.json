@@ -1,0 +1,6 @@
+{
+  "source": "assets_src/blender/metro_blockout.blend",
+  "supports": 247,
+  "niches": 10,
+  "route": "quartier → billets → quais → A / galeries → dépôt → aiguillage et courant → rame → privée → parvis"
+}

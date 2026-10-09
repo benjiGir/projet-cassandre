@@ -59,7 +59,7 @@ export function updateStreamFeed(session: GameSession, dt: number): void {
   const now = session.stats.gameplayElapsed;
   const stream = session.stream;
 
-  for (const { beat, reached } of MYSTERY_BEATS) {
+  for (const { beat, reached } of session.choice.mysteryDonations === false ? [] : MYSTERY_BEATS) {
     if (stream.mysteryDone.has(beat) || !reached(session)) continue;
     const donation = mysteryDonation(stream, beat, now);
     if (donation) {

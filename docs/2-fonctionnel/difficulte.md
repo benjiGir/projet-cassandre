@@ -2,14 +2,14 @@
 title: Difficulté
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Difficulté
 
 ## Ce que vit le joueur
 
-Après « Rejoindre le direct », un écran demande qui entre dans le magasin.
+Après « NOUVELLE PARTIE », un écran demande qui entre dans le magasin.
 Trois profils sont proposés, du plus doux au plus dur.
 
 | Profil | L'idée |

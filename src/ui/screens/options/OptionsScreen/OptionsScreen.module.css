@@ -3,6 +3,10 @@
   gap: 10px;
   width: 520px;
   max-width: 92vw;
+  /* Jamais plus haut que l'écran : 72px = marges intérieures et bordure, que
+     `max-height` ne compte pas. C'est `TabBody` qui défile, le titre et
+     « Retour » restent en vue. */
+  max-height: calc(100% - 72px);
   padding: 40px 46px 30px;
 }
 
@@ -10,10 +14,4 @@
   margin-bottom: 4px;
   font-size: 24px;
   letter-spacing: 4px;
-}
-
-.footer {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(140, 255, 150, 0.15);
 }

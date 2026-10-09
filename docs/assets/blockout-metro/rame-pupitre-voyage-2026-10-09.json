@@ -1,0 +1,1072 @@
+{
+  "date": "2026-10-09",
+  "scope": "commande de départ et sortie après voyage",
+  "preparation": [
+    {
+      "view": "aiguillage",
+      "pose": {
+        "x": -73.13,
+        "y": 378.5,
+        "z": -15.99,
+        "eye": -14.39,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    },
+    {
+      "view": "courant",
+      "pose": {
+        "x": 115,
+        "y": 354.7,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    }
+  ],
+  "samples": [
+    {
+      "pose": {
+        "x": 39.5,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "closing",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closing",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "pose": {
+        "x": 39.5,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "open",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "action": "Approcher le bouton de départ",
+      "count": 1,
+      "pose": {
+        "x": 39.5,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "action": "Lancer le départ après les deux objectifs",
+      "count": 1,
+      "pose": {
+        "x": 39.5,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "closing",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closing",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "action": "Faire face à la sortie ouverte",
+      "count": 1,
+      "pose": {
+        "x": 39.5,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "opening",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    },
+    {
+      "action": "Franchir la sortie vers le quai privé",
+      "count": 1,
+      "pose": {
+        "x": 43.65,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "opening",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    },
+    {
+      "action": "Regarder la rame depuis le quai privé",
+      "count": 2,
+      "pose": {
+        "x": 43.65,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "open",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    },
+    {
+      "action": "Revenir dans la rame par la sortie ouverte",
+      "count": 1,
+      "pose": {
+        "x": 39.2,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "open",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    },
+    {
+      "action": "Regarder le pupitre après le retour",
+      "count": 1,
+      "pose": {
+        "x": 39.2,
+        "y": 424.6,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": true,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "arrived",
+          "elapsed": 60,
+          "distance": 1296,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "open",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_entree",
+          "locked": true
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_sortie",
+          "locked": false
+        }
+      ]
+    }
+  ],
+  "noJump": true,
+  "noPresetAfterStart": true,
+  "initial": {
+    "pose": {
+      "x": 39.5,
+      "y": 423.75,
+      "z": -17.24,
+      "eye": -15.64,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1330,
+      "colliderKindCounts": {
+        "cuboid": 350,
+        "convexHull": 980,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2314,
+      "decorBatchCount": 326,
+      "lightCount": 189,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 5,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.2518319788083402,
+        "service": 0
+      },
+      "horloge": 289.2049000000489,
+      "prochainEvenementDans": 0.1368579367012136
+    },
+    "progression": {
+      "aiguillage": true,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": 4.5972324575481105,
+          "announced": true,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "B",
+          "countdown": 5.60389600516283,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "VB",
+          "countdown": 4.29224592782091,
+          "announced": true,
+          "route": "ligne",
+          "pendingRoute": "ligne",
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        }
+      ],
+      "rames": [
+        {
+          "voie": "A",
+          "trajet": "ligne",
+          "avant": 506.3999999999911
+        },
+        {
+          "voie": "VB",
+          "trajet": "ligne",
+          "avant": 410.3999999999911
+        },
+        {
+          "voie": "B",
+          "trajet": "ligne",
+          "avant": 146.39999999999108
+        },
+        {
+          "voie": "A",
+          "trajet": "ligne",
+          "avant": 26.39999999999108
+        }
+      ],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "final": {
+    "pose": {
+      "x": 39.2,
+      "y": 424.6,
+      "z": -17.24,
+      "eye": -15.64,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1330,
+      "colliderKindCounts": {
+        "cuboid": 350,
+        "convexHull": 980,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2314,
+      "decorBatchCount": 326,
+      "lightCount": 189,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 5,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "open",
+        "groupe": "door_n5_tunnel",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_entree",
+        "locked": true
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_sortie",
+        "locked": false
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.2588455285516993,
+        "service": 0
+      },
+      "horloge": 454.57199999983817,
+      "prochainEvenementDans": 11.283459810483526
+    },
+    "progression": {
+      "aiguillage": true,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "arrived",
+        "elapsed": 60,
+        "distance": 1296,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": -0.7694342091658252,
+          "announced": true,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "B",
+          "countdown": 0.22472936958566928,
+          "announced": true,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "VB",
+          "countdown": -1.0619207700297997,
+          "announced": true,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        }
+      ],
+      "rames": [
+        {
+          "voie": "B",
+          "trajet": "ligne",
+          "avant": 275.20000000112555
+        },
+        {
+          "voie": "A",
+          "trajet": "ligne",
+          "avant": 155.20000000112555
+        },
+        {
+          "voie": "VB",
+          "trajet": "ligne",
+          "avant": 59.200000001125545
+        }
+      ],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "console": []
+}

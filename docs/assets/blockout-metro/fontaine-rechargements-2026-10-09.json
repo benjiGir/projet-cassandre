@@ -1,0 +1,206 @@
+[
+  {
+    "pose": {
+      "x": -2.5,
+      "y": 49.5,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "fontaines": [
+      {
+        "position": [
+          -2.5,
+          0,
+          -56
+        ],
+        "meshes": [
+          {
+            "nom": "fx_fontaine_bassins",
+            "sommets": 180,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_jets",
+            "sommets": 4911,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_gouttes",
+            "sommets": 2304,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_buse",
+            "sommets": 64,
+            "materiau": "MeshLambertMaterial"
+          }
+        ]
+      }
+    ],
+    "rendu": {
+      "frames": 3,
+      "msParImage": 1.5,
+      "imagesParSecondeRendu": 666.7,
+      "drawCalls": 141,
+      "triangles": 186910,
+      "programmes": 19,
+      "geometries": 231,
+      "textures": 24
+    }
+  },
+  {
+    "pose": {
+      "x": -2.5,
+      "y": 49.5,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "fontaines": [
+      {
+        "position": [
+          -2.5,
+          0,
+          -56
+        ],
+        "meshes": [
+          {
+            "nom": "fx_fontaine_bassins",
+            "sommets": 180,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_jets",
+            "sommets": 4911,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_gouttes",
+            "sommets": 2304,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_buse",
+            "sommets": 64,
+            "materiau": "MeshLambertMaterial"
+          }
+        ]
+      }
+    ],
+    "rendu": {
+      "frames": 3,
+      "msParImage": 1.167,
+      "imagesParSecondeRendu": 857.1,
+      "drawCalls": 141,
+      "triangles": 186910,
+      "programmes": 29,
+      "geometries": 389,
+      "textures": 24
+    }
+  },
+  {
+    "pose": {
+      "x": -2.5,
+      "y": 49.5,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "fontaines": [
+      {
+        "position": [
+          -2.5,
+          0,
+          -56
+        ],
+        "meshes": [
+          {
+            "nom": "fx_fontaine_bassins",
+            "sommets": 180,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_jets",
+            "sommets": 4911,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_gouttes",
+            "sommets": 2304,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_buse",
+            "sommets": 64,
+            "materiau": "MeshLambertMaterial"
+          }
+        ]
+      }
+    ],
+    "rendu": {
+      "frames": 3,
+      "msParImage": 1.133,
+      "imagesParSecondeRendu": 882.4,
+      "drawCalls": 141,
+      "triangles": 186910,
+      "programmes": 29,
+      "geometries": 389,
+      "textures": 24
+    }
+  },
+  {
+    "pose": {
+      "x": -2.5,
+      "y": 49.5,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "fontaines": [
+      {
+        "position": [
+          -2.5,
+          0,
+          -56
+        ],
+        "meshes": [
+          {
+            "nom": "fx_fontaine_bassins",
+            "sommets": 180,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_jets",
+            "sommets": 4911,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_gouttes",
+            "sommets": 2304,
+            "materiau": "MeshBasicNodeMaterial"
+          },
+          {
+            "nom": "fx_fontaine_buse",
+            "sommets": 64,
+            "materiau": "MeshLambertMaterial"
+          }
+        ]
+      }
+    ],
+    "rendu": {
+      "frames": 3,
+      "msParImage": 1.2,
+      "imagesParSecondeRendu": 833.3,
+      "drawCalls": 141,
+      "triangles": 186910,
+      "programmes": 29,
+      "geometries": 389,
+      "textures": 24
+    }
+  }
+]

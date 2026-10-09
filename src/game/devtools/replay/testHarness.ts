@@ -234,6 +234,8 @@ export interface RenderBenchmark {
   triangles: number;
   /** Programmes GPU compilés — utile pour repérer une explosion de matériaux. */
   programmes: number;
+  geometries: number;
+  textures: number;
 }
 
 export function benchmarkRender(
@@ -261,6 +263,8 @@ export function benchmarkRender(
     drawCalls: info.render.calls,
     triangles: info.render.triangles,
     programmes: info.programs?.length ?? 0,
+    geometries: info.memory.geometries,
+    textures: info.memory.textures,
   };
 }
 

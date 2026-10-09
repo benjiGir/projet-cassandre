@@ -2,7 +2,7 @@
 title: Interface
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Interface
@@ -49,7 +49,7 @@ bandeau « SIGNAL INTERCEPTÉ », une légende de caméra
 (« CAM_04 · RÉVEIL_DU_PEUPLE »), le titre « PROJET_CASSANDRE » sous
 l'accroche « RÉVEIL_DU_PEUPLE — la vérité, en direct », et un bandeau
 défilant sans lien avec la partie (« SIGNAL NON AUTORISÉ », « 200
-ABONNÉS »…). Trois actions : « REJOINDRE LE DIRECT » mène au choix du
+ABONNÉS »…). Trois actions : « NOUVELLE PARTIE » mène au choix du
 profil, « PARAMÈTRES DU SIGNAL » ouvre les options, « COUPER LA DIFFUSION »
 tente de fermer l'onglet et l'explique en toutes lettres quand ça échoue.
 
@@ -152,7 +152,7 @@ teinte à part : voir [Histoire](histoire.md).
 Puis : les cartes de fidélité en poche (si au moins une est
 détenue), puis les PV en barre et en chiffres, colorés selon la vie
 restante. En bas à droite : les munitions de l'arme en main — un compte de
-cartouches pour pistolet et pompe, ou « PIED-DE-BICHE »/« À MAINS NUES ».
+cartouches pour pistolet et pompe, ou « PIED-DE-BICHE »/« COUP DE PIED » quand aucune arme n'est en main.
 
 Deux canaux de message distincts se superposent : la réplique du héros
 ci-dessus (cooldown de 15 secondes de gameplay, suspendu en pause) et un message système transitoire pour

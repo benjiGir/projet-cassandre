@@ -22,6 +22,8 @@ import { INITIAL_HERO_PORTRAIT } from "../session/presentation/portraitState";
 // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
 
 interface GameState {
+  campaign: { readonly levelId: string; readonly nextAvailable: boolean };
+  setCampaign: (state: GameState["campaign"]) => void;
   heroPortrait: HeroPortraitView;
   setHeroPortrait: (view: HeroPortraitView) => void;
   debug: DebugState;
@@ -124,6 +126,8 @@ const INITIAL_DEBUG: DebugState = {
 };
 
 export const useGameStore = create<GameState>((set) => ({
+  campaign: { levelId: "", nextAvailable: false },
+  setCampaign: (campaign) => set({ campaign }),
   heroPortrait: INITIAL_HERO_PORTRAIT,
   setHeroPortrait: (view) => set((state) => {
     const previous = state.heroPortrait;
@@ -168,7 +172,7 @@ export const useGameStore = create<GameState>((set) => ({
   story: null,
   setStory: (panels) => set({ story: panels }),
 
-  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
+  resetGameStore: () => set({ campaign: { levelId: "", nextAvailable: false }, debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
     hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, perkOffer: null, recap: null,
     liveRecap: null, story: null }),
 }));

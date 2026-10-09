@@ -2,7 +2,7 @@
 title: Reprendre le projet
 tags: [guide, parcours]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Reprendre le projet

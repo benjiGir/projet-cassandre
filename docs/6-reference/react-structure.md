@@ -101,6 +101,7 @@ Ce que ce tableau interdit, et pourquoi :
 screens/options/
   OptionsScreen/     OptionsScreen.tsx   OptionsScreen.module.css
   OptionsTabs/       OptionsTabs.tsx     OptionsTabs.module.css
+  TabBody/           TabBody.tsx         TabBody.module.css      useScrollEdges.ts
   controls/          l'onglet CONTRÔLES
     ControlsTab/     ControlsTab.tsx  ControlsTab.module.css  useInputCapture.ts
     KeyBinding/      KeyBinding.tsx   KeyBinding.module.css

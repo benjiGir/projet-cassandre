@@ -34,6 +34,7 @@ export interface WeaponConfig {
   shotgunDamagePerPellet: number;
   shotgunMagazineSize: number;
   shotgunStartingAmmo: number;
+  shotgunMaxAmmo: number;
 
   /** Kick de recul du pied-de-biche à la frappe. Récupéré par rampe linéaire (`approach()`), au dt de gameplay. */
   meleeRecoil: RecoilKick;
@@ -136,6 +137,7 @@ export const weaponConfig: WeaponConfig = {
   shotgunDamagePerPellet: 6,
   shotgunMagazineSize: 6,
   shotgunStartingAmmo: 48,
+  shotgunMaxAmmo: 96,
 
   // Valeurs de départ = variante B ci-dessous (« classique »), même
   // convention que `moveConfig`/`FEEL_VARIANTS`.

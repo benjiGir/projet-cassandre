@@ -1,0 +1,208 @@
+{
+  "zone": "accès latéral et vestiaire des agents",
+  "date": "2026-10-09",
+  "trafic": "suspendu pendant la marche",
+  "saut": false,
+  "repositionnementPendantLaMarche": false,
+  "rotations": "boutons de cap sans déplacement",
+  "poses": [
+    {
+      "action": "départ depuis la galerie",
+      "pose": {
+        "x": 69.8,
+        "y": 261.25,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "franchir l’accès",
+      "pose": {
+        "x": 74.22,
+        "y": 261.25,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le banc par son extrémité ouest",
+      "pose": {
+        "x": 75.07,
+        "y": 261.25,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le banc par son extrémité ouest",
+      "pose": {
+        "x": 75.85,
+        "y": 261.25,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher le banc par son extrémité ouest",
+      "pose": {
+        "x": 76.55,
+        "y": 261.25,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "contourner le banc à l’ouest",
+      "pose": {
+        "x": 76.55,
+        "y": 262.1,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "contourner le banc à l’ouest",
+      "pose": {
+        "x": 76.55,
+        "y": 262.95,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer entre banc et casiers",
+      "pose": {
+        "x": 77.4,
+        "y": 262.95,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer entre banc et casiers",
+      "pose": {
+        "x": 78.25,
+        "y": 262.95,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer entre banc et casiers",
+      "pose": {
+        "x": 79.1,
+        "y": 262.95,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "contourner le banc à l’est",
+      "pose": {
+        "x": 79.83,
+        "y": 262.59,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 240,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "contourner le banc à l’est",
+      "pose": {
+        "x": 80.52,
+        "y": 262.42,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 240,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "rejoindre l’allée devant le banc",
+      "pose": {
+        "x": 80.52,
+        "y": 261.66,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "rejoindre l’allée devant le banc",
+      "pose": {
+        "x": 80.52,
+        "y": 260.81,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortir vers la galerie",
+      "pose": {
+        "x": 76.21,
+        "y": 260.81,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortir vers la galerie",
+      "pose": {
+        "x": 71.87,
+        "y": 260.81,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retrouver la galerie",
+      "pose": {
+        "x": 71.02,
+        "y": 260.81,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retrouver la galerie",
+      "pose": {
+        "x": 70.16,
+        "y": 260.81,
+        "z": -15.54,
+        "eye": -13.94,
+        "cap": 90,
+        "pitch": 0
+      }
+    }
+  ]
+}

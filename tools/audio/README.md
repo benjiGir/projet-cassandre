@@ -111,6 +111,44 @@ et les événements en FLAC ; `finalize` écrit `public/assets/audio/ambiances/`
 (stéréo, ogg + m4a, manifeste avec les espaces du plan de masse de chaque zone,
 table `ESPACES`) et mesure le raccord de chaque boucle après décodage.
 
+## Sons du train (`ia_sfx.py --cat train`, repris le 2026-10-08)
+
+Onze sons pour les rames du métro, écrits dans `ia_prompts.py` et listés par
+`SONS_TRAIN`. Le train se joue en couches : un roulement en boucle qui suit la
+rame, et des sons ponctuels calés sur des instants (annonce, passage de
+l'avant, freinage, choc, commandes, voyage à bord).
+
+| Étape | Commande (`ia_sfx.py`) |
+|---|---|
+| Coût, sans rien appeler | `generate --cat train --variants 2` |
+| Générer | la même, avec `--go` |
+| Écouter et cocher | `page --cat train` → `http://localhost:5173/audition/ia/index.html` |
+| Retenir | `pick train_pass=1 train_horn=2 …` |
+
+**Le lieu d'abord.** Les prises du 2026-10-06 ont été abandonnées
+(`assets_src/audio_ia/candidats/_abandonnes/2026-10-06_train/`) : leurs prompts
+décrivaient un train — joints de rail, bogies, wagon de fret. Chaque prompt
+commence maintenant par l'endroit (`STATION`, `TUNNEL`, `A_BORD` : quai,
+tunnel, intérieur d'une voiture de métro souterrain) et décrit une rame
+électrique. Le service refuse un prompt de plus de 450 caractères ; `generate`
+le dit avant d'appeler.
+
+Seul `rail_sing` est demandé en boucle (`BOUCLES`, modèle v2, paramètre
+`loop`). Le roulement (`train_roll`) et la boucle du voyage à bord se découpent
+dans le palier des prises retenues de `train_pass` et `ride_interior` : demandé
+en boucle, le modèle rendait un bourdonnement, pas une rame.
+
+Une prise se mesure avant de s'écouter (part d'énergie sous 60 Hz, raies,
+enveloppe, écrêtage). Deux leçons : demander un « grondement lointain » ou un
+« coup de basse » donne un son dont presque toute l'énergie est sous 60 Hz,
+inaudible sur la plupart des enceintes ; et le cadre « Field recording » dans
+une voûte donne des prises sombres, sans rien au-dessus de 2 kHz. Les deux
+prises d'un même son n'ont pas toujours le même prompt : la page d'écoute
+montre celui de chaque prise au survol de son bouton, `manifest.json` le garde.
+
+Rien n'est encore branché dans le jeu : le prototype ne joue que l'alerte
+synthétique de `core/audio/trainWarning.ts`.
+
 ## Répliques parlées (`ia_voix.py`, 2026-10-02)
 
 Texte → voix ElevenLabs, lu directement dans le

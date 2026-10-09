@@ -2,7 +2,7 @@
 title: Simulation et présentation
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Simulation et présentation
@@ -73,8 +73,8 @@ pas fixes dans la même image traiterait deux fois le même coup.
 Un second canal, plus direct, sert le texte du HUD : les messages système
 (`showHudMessage`) et les répliques du héros (`triggerHeroLine`,
 `src/game/session/player/feedback.ts`) sont écrits dans le store zustand **depuis le
-pas fixe lui-même** (`updateGameplay.ts`, `session/doors.ts`,
-`session/cards.ts`, `session/sanitaires.ts`), sans passer par une file
+pas fixe lui-même** (`updateGameplay.ts`, `session/progression/doors.ts`,
+`session/progression/cards.ts`, `session/player/sanitaires.ts`), sans passer par une file
 consommée à l'affichage. Ce n'est pas une exception à la règle : ces écritures
 sont ponctuelles (un ramassage, une porte, un secret), jamais une par frame,
 donc sans risque pour l'invariant #2. Leur disparition, elle, est bien de la
@@ -86,7 +86,7 @@ de code, ex-invariant #13 — voir [Invariants retirés](invariants.md#invariant
 
 ## Le RNG de présentation
 
-`FxSystem` et l'audio possèdent chacun leur propre flux `DeterministicRandom`,
+`FxSystem`, l'audio et l'ambiance de zone possèdent chacun leur propre flux `DeterministicRandom`,
 réinitialisé au boot de session, qui ne peut avancer aucun RNG de simulation
 — [ADR 0033](../decisions/0033-rng-presentation-et-portee-du-rejeu.md),
 qui précise l'[ADR 0007](../decisions/0007-rng-deterministe.md). Le nombre
@@ -113,7 +113,7 @@ Le store zustand (`src/game/hud/state.ts`) est écrit depuis deux points : le
 throttle explicite à 10 Hz du panneau de debug dans `updateFx` (invariant #2),
 et les écritures ponctuelles de texte décrites plus haut. Les composants React
 du HUD s'y abonnent en lecture, jamais l'inverse. Détail du contrat
-UI ↔ moteur : `4-technique/flux-de-donnees.md` (page pas encore écrite, D15).
+UI ↔ moteur : [Flux de données](flux-de-donnees.md).
 
 ## Ce qui est interdit
 
@@ -134,7 +134,7 @@ UI ↔ moteur : `4-technique/flux-de-donnees.md` (page pas encore écrite, D15).
   (ex-invariant #13, [retiré le 2026-09-25](invariants.md#invariants-retirés)).
 - **Poser un decal sur une surface qui peut bouger ou disparaître** (prop,
   porte, vitre, sanitaire, ennemi) : `updateFx` les exclut explicitement
-  (`isMovableOrBreakableHandle`, `src/game/loop/updateFx.ts`) et leur réserve
+  (`isMovableOrBreakableHandle`, `src/game/level/loading/movableColliders.ts`, appelée par `updateFx`) et leur réserve
   une giclée de particules à la place.
 
 ## Invariants concernés

@@ -23,7 +23,8 @@ export class TrainRidePresentation {
   private readonly display: THREE.Mesh;
   private displayAt = -Infinity;
 
-  constructor(root: THREE.Group, private readonly departure: THREE.Group, private readonly arrival: THREE.Group) {
+  constructor(root: THREE.Group, private readonly departure: THREE.Object3D, private readonly arrival: THREE.Object3D,
+    private readonly options: { length?: number; title?: string; displayWidth?: number; displayHeight?: number; displayInset?: number } = {}) {
     for (let i = 0; i < SECTION_COUNT; i++) {
       const section = new THREE.Group();
       for (const side of [-1, 1]) {
@@ -39,13 +40,14 @@ export class TrainRidePresentation {
       this.tunnel.add(section); this.sections.push(section);
     }
     root.add(this.tunnel, this.blackout);
-    for (const side of [-1, 1]) this.box(this.blackout, 0x070b10, [.02, 2, 46], [side * 1.68, 1.75, 0], true);
+    for (const side of [-1, 1]) this.box(this.blackout, 0x070b10, [.02, 2, options.length ?? 46], [side * 1.68, 1.75, 0], true);
     this.canvas.width = 512; this.canvas.height = 160;
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.magFilter = THREE.NearestFilter;
     this.texture.colorSpace = THREE.SRGBColorSpace;
-    this.display = new THREE.Mesh(new THREE.PlaneGeometry(2.8, .875), new THREE.MeshBasicMaterial({ map: this.texture }));
-    this.display.position.set(0, 2.35, -22.25); root.add(this.display);
+    const width = options.displayWidth ?? 2.8;
+    this.display = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 160 / 512), new THREE.MeshBasicMaterial({ map: this.texture }));
+    this.display.position.set(0, options.displayHeight ?? 2.35, -(options.length ?? 46)/2+(options.displayInset ?? .75)); root.add(this.display);
   }
 
   private box(root: THREE.Group, color: number, size: number[], at: number[], emissive = false): void {
@@ -74,7 +76,7 @@ export class TrainRidePresentation {
     this.displayAt = elapsed;
     const ctx = this.canvas.getContext("2d")!;
     ctx.fillStyle = "#11202b"; ctx.fillRect(0, 0, 512, 160);
-    ctx.font = "bold 23px monospace"; ctx.fillStyle = "#c9d8ce"; ctx.fillText("ESSAI T4 — VOYAGE À BORD", 15, 32);
+    ctx.font = "bold 23px monospace"; ctx.fillStyle = "#c9d8ce"; ctx.fillText(this.options.title ?? "ESSAI T4 — VOYAGE À BORD", 15, 32);
     ctx.font = "bold 23px monospace"; ctx.fillStyle = state.phase === "arrived" ? "#a5df8d" : "#efd594";
     ctx.fillText(LABELS[state.phase], 15, 74);
     ctx.font = "22px monospace"; ctx.fillStyle = "#c9d8ce";

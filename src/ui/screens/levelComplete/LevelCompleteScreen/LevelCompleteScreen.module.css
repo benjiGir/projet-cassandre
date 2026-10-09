@@ -36,6 +36,8 @@
 }
 
 .actions {
+  flex-wrap: wrap;
+  justify-content: center;
   margin-top: max(calc(var(--vpx) * 1.5), 4px);
 }
 

@@ -1,0 +1,272 @@
+{
+  "date": "2026-10-09",
+  "scope": "Allée occidentale et accès à l’établi électrique déplacé",
+  "method": "Un preset au départ, marche et rotations par commandes de revue, lectures après capture, aucun saut",
+  "steps": [
+    {
+      "action": "départ mesuré près de l’accès B",
+      "pose": {
+        "x": 11.5,
+        "y": 348.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée jusqu’au cadre du hall",
+      "count": 4,
+      "pose": {
+        "x": 28.65,
+        "y": 348.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers accès de l’établi",
+      "count": 2,
+      "pose": {
+        "x": 28.65,
+        "y": 348.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "alignement au sud du poste",
+      "count": 5,
+      "pose": {
+        "x": 24.39,
+        "y": 348.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers établi",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 348.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passage devant l’armoire",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 353.15,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approche de la bobine",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 354,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "regard vers le plateau",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 354,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers extrémité nord du poste",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 354,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passage devant le piètement nord",
+      "count": 2,
+      "pose": {
+        "x": 24.39,
+        "y": 355.63,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "demi-tour vers allée",
+      "count": 2,
+      "pose": {
+        "x": 24.39,
+        "y": 355.63,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour devant l’armoire",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 351.18,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour dans l’allée principale",
+      "count": 3,
+      "pose": {
+        "x": 24.39,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers accès B",
+      "count": 1,
+      "pose": {
+        "x": 24.39,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au portail B",
+      "count": 3,
+      "pose": {
+        "x": 11.52,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers portail",
+      "count": 1,
+      "pose": {
+        "x": 11.52,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "franchissement du portail B",
+      "count": 1,
+      "pose": {
+        "x": 11.52,
+        "y": 353.07,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers dépôt",
+      "count": 2,
+      "pose": {
+        "x": 11.52,
+        "y": 353.07,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "sortie du portail B",
+      "count": 1,
+      "pose": {
+        "x": 11.52,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers hall",
+      "count": 1,
+      "pose": {
+        "x": 11.52,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée et cadre franchis au retour",
+      "count": 4,
+      "pose": {
+        "x": 29.02,
+        "y": 348.62,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    }
+  ],
+  "traffic_restored": [
+    {
+      "id": "A",
+      "enabled": true
+    },
+    {
+      "id": "B",
+      "enabled": true
+    },
+    {
+      "id": "VB",
+      "enabled": false
+    }
+  ]
+}

@@ -1,0 +1,613 @@
+{
+  "date": "2026-10-09",
+  "scope": "troisième voiture, assises relevées et dernier soufflet",
+  "initial": {
+    "pose": {
+      "x": 39.5,
+      "y": 397.55,
+      "z": -17.24,
+      "eye": -15.64,
+      "cap": 0,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1330,
+      "colliderKindCounts": {
+        "cuboid": 350,
+        "convexHull": 980,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2311,
+      "decorBatchCount": 327,
+      "lightCount": 189,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 5,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.2728902200423923,
+        "service": 0
+      },
+      "horloge": 47.53910000004988,
+      "prochainEvenementDans": 9.86527312712964
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": false,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "B",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "steps": [
+    {
+      "action": "Approcher la rangée de sièges est",
+      "count": 3,
+      "pose": {
+        "x": 39.5,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder le siège relevé est",
+      "count": 1,
+      "pose": {
+        "x": 39.5,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "S’approcher latéralement du siège relevé est",
+      "count": 2,
+      "pose": {
+        "x": 40.47,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Tenter un nouveau pas contre le siège relevé est",
+      "count": 1,
+      "pose": {
+        "x": 40.47,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers le centre",
+      "count": 2,
+      "pose": {
+        "x": 40.47,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Quitter le siège relevé est",
+      "count": 1,
+      "pose": {
+        "x": 39.62,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers le nord",
+      "count": 1,
+      "pose": {
+        "x": 39.62,
+        "y": 400.1,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Passer la seconde rangée",
+      "count": 1,
+      "pose": {
+        "x": 39.62,
+        "y": 404.41,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers la seconde rangée",
+      "count": 2,
+      "pose": {
+        "x": 39.62,
+        "y": 404.41,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Se placer près du siège relevé ouest",
+      "count": 1,
+      "pose": {
+        "x": 39.62,
+        "y": 403.59,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder le siège relevé ouest",
+      "count": 1,
+      "pose": {
+        "x": 39.62,
+        "y": 403.59,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "S’approcher latéralement du siège relevé ouest",
+      "count": 2,
+      "pose": {
+        "x": 38.53,
+        "y": 403.66,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Tenter un nouveau pas contre le siège relevé ouest",
+      "count": 1,
+      "pose": {
+        "x": 38.53,
+        "y": 403.66,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers l’allée centrale",
+      "count": 2,
+      "pose": {
+        "x": 38.53,
+        "y": 403.66,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Quitter le siège relevé ouest",
+      "count": 1,
+      "pose": {
+        "x": 39.38,
+        "y": 403.66,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers le dernier soufflet",
+      "count": 1,
+      "pose": {
+        "x": 39.38,
+        "y": 403.66,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Rejoindre le dernier soufflet",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 412.41,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Franchir le soufflet vers la quatrième voiture",
+      "count": 1,
+      "pose": {
+        "x": 39.38,
+        "y": 413.26,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder la troisième voiture depuis le soufflet",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 413.26,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Revenir entre les banquettes",
+      "count": 3,
+      "pose": {
+        "x": 39.38,
+        "y": 400.06,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Rejoindre l’avant de la troisième voiture",
+      "count": 3,
+      "pose": {
+        "x": 39.38,
+        "y": 397.7,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers les banquettes",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 397.7,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Traverser les deux rangées par le centre",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 406.48,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Regarder vers l’avant",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 406.48,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "Revenir par le centre",
+      "count": 2,
+      "pose": {
+        "x": 39.38,
+        "y": 397.58,
+        "z": -17.24,
+        "eye": -15.64,
+        "cap": 180,
+        "pitch": 0
+      }
+    }
+  ],
+  "noJump": true,
+  "noPresetAfterStart": true,
+  "final": {
+    "pose": {
+      "x": 39.38,
+      "y": 397.58,
+      "z": -17.24,
+      "eye": -15.64,
+      "cap": 180,
+      "pitch": 0
+    },
+    "niveau": {
+      "colliderCount": 1330,
+      "colliderKindCounts": {
+        "cuboid": 350,
+        "convexHull": 980,
+        "trimesh": 0
+      },
+      "spawnSuitCount": 0,
+      "spawnDirectorCount": 0,
+      "triggerCount": 0,
+      "doorCount": 7,
+      "useCount": 18,
+      "secretCount": 0,
+      "unprefixedMeshCount": 2311,
+      "decorBatchCount": 327,
+      "lightCount": 189,
+      "propCount": 0,
+      "vitreCount": 0,
+      "vitreBatchCount": 0,
+      "doorBatchCount": 5,
+      "sanitaireCount": 0,
+      "sanitaireBatchCount": 0,
+      "ecranCount": 0,
+      "ecranBatchCount": 0
+    },
+    "portes": [
+      {
+        "name": "door_n5_tunnel",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_n5_tunnel",
+        "locked": true
+      },
+      {
+        "name": "door_quartier_grille",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_1",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_grille_2",
+        "movement": "monte",
+        "state": "closed",
+        "groupe": "door_quartier_grille",
+        "locked": false
+      },
+      {
+        "name": "door_quartier_trappe",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_quartier_trappe",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_entree",
+        "movement": "coulisse",
+        "state": "open",
+        "groupe": "door_n5_rame_entree",
+        "locked": false
+      },
+      {
+        "name": "door_n5_rame_sortie",
+        "movement": "coulisse",
+        "state": "closed",
+        "groupe": "door_n5_rame_sortie",
+        "locked": true
+      }
+    ],
+    "ambiance": {
+      "profil": "quartier_pilote",
+      "zone": "rue",
+      "nappes": {
+        "rue": 0.23607668050828062,
+        "service": 0
+      },
+      "horloge": 146.27640000006187,
+      "prochainEvenementDans": 8.040886541941754
+    },
+    "progression": {
+      "aiguillage": false,
+      "courant": false,
+      "raccourci": false,
+      "completed": false,
+      "voyage": {
+        "phase": "boarding",
+        "elapsed": 0,
+        "distance": 0,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trains": {
+      "voies": [
+        {
+          "id": "A",
+          "countdown": 13.430565790881072,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "B",
+          "countdown": 34.432228904717626,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": true
+        },
+        {
+          "id": "VB",
+          "countdown": null,
+          "announced": false,
+          "route": "ligne",
+          "pendingRoute": null,
+          "stopped": 0,
+          "cooldown": 0,
+          "enabled": false
+        }
+      ],
+      "rames": [],
+      "morts": 0,
+      "ennemis": 0,
+      "traversées": 0
+    }
+  },
+  "console": [
+    {
+      "level": "error",
+      "message": "Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+      "timestamp": "2026-10-09T12:43:02.919Z"
+    }
+  ],
+  "observations": [
+    "Contact ouest : glissement de 7 cm vers le nord à l’approche du siège voisin, puis arrêt répété stable à x38.53/y403.66.",
+    "Aller-retour central à x39.38 constant de y397.70 à406.48 puis397.58."
+  ]
+}

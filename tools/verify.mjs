@@ -1,7 +1,8 @@
 /**
  * Vérification en une commande, sortie réduite à l'essentiel — PROJET_CASSANDRE.
  *
- *   pnpm verify                  # typecheck + tests
+ *   pnpm verify                  # typecheck + lint + tests
+ *   pnpm verify -- --format      # + formatage (oxfmt --check)
  *   pnpm verify -- --level       # + contrat et audit du niveau v2 (Blender headless)
  *   pnpm verify -- --docs        # + liens de la documentation
  *
@@ -10,10 +11,13 @@
  * complète (il y ajoute `vite build`).
  */
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+// Mêmes cibles que les scripts `lint` et `format:check` de package.json.
+const CIBLES_LINT = ["src", "test", "vite.config.ts", "vitest.config.ts"];
 const args = new Set(process.argv.slice(2));
 const BLENDER = process.env.BLENDER ?? "/Applications/Blender.app/Contents/MacOS/Blender";
 
@@ -39,6 +43,38 @@ function etape(nom, ok, secs, resume, detail) {
   const sortie = (r.stdout + r.stderr).trim();
   const erreurs = (sortie.match(/error TS\d+/g) ?? []).length;
   etape("typecheck", r.status === 0, r.secs, r.status === 0 ? "aucune erreur" : `${erreurs} erreur(s)`, tronquer(sortie, 20));
+}
+
+{
+  // Les erreurs cassent toujours ; les avertissements sont la dette plafonnée par `options.maxWarnings`.
+  const r = lancer("pnpm", ["exec", "oxlint", "-f", "json", ...CIBLES_LINT]);
+  let diagnostics = null;
+  try {
+    diagnostics = JSON.parse(r.stdout.slice(r.stdout.indexOf("{"))).diagnostics;
+  } catch {
+    /* sortie illisible : traitée comme un échec plus bas */
+  }
+  if (!diagnostics) {
+    etape("lint", false, r.secs, "sortie d'oxlint illisible", tronquer(r.stdout + r.stderr, 20));
+  } else {
+    const erreurs = diagnostics.filter((d) => d.severity === "error");
+    const avertissements = diagnostics.length - erreurs.length;
+    const plafond = Number(/"maxWarnings":\s*(\d+)/.exec(readFileSync(resolve(RACINE, ".oxlintrc.json"), "utf8"))?.[1] ?? Infinity);
+    const regles = new Map();
+    for (const d of diagnostics) regles.set(d.code, (regles.get(d.code) ?? 0) + 1);
+    const plusFrequentes = [...regles].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([code, n]) => `${n} × ${code}`).join("\n");
+    const detailErreurs = erreurs.slice(0, 10).map((d) => `${d.filename}:${d.labels?.[0]?.span?.line ?? "?"} ${d.code} — ${d.message}`).join("\n");
+    etape("lint", erreurs.length === 0 && avertissements <= plafond, r.secs,
+      `${erreurs.length} erreur(s), ${avertissements}/${plafond} avertissement(s)`,
+      erreurs.length > 0 ? detailErreurs : `plafond dépassé — règles les plus fréquentes :\n${plusFrequentes}`);
+  }
+}
+
+if (args.has("--format") || process.argv.includes("--format")) {
+  const r = lancer("pnpm", ["exec", "oxfmt", "--list-different", ...CIBLES_LINT]);
+  const fichiers = r.stdout.split("\n").filter(Boolean);
+  etape("format", r.status === 0, r.secs, r.status === 0 ? "tout est formaté" : `${fichiers.length} fichier(s) à formater (pnpm format)`,
+    fichiers.slice(0, 10).join("\n") + (fichiers.length > 10 ? `\n… ${fichiers.length - 10} autre(s)` : ""));
 }
 
 {

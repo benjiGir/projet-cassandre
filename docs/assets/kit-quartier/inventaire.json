@@ -1,0 +1,649 @@
+{
+  "etape": "N3b_candidat",
+  "pieces": [
+    {
+      "id": "facade_balcon_4m",
+      "spec": "4 × 0,5 × 3,5 m ; fenêtres en retrait ; façade vers -Y",
+      "bounds_m": [
+        [
+          0.0,
+          -0.699999988079071,
+          0.0
+        ],
+        [
+          4.0,
+          0.5799999833106995,
+          3.5
+        ]
+      ],
+      "meshes": 6,
+      "triangles": 680,
+      "colliders": {
+        "cuboid": 8,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ardoise",
+        "quartier_enduit",
+        "quartier_ivoire",
+        "quartier_nuit",
+        "quartier_vitre_chaude"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "facade_brique_4m",
+      "spec": "4 × 0,5 × 3,5 m ; fenêtres en retrait ; façade vers -Y",
+      "bounds_m": [
+        [
+          0.0,
+          -0.11999999731779099,
+          0.0
+        ],
+        [
+          4.0,
+          0.5799999833106995,
+          3.5
+        ]
+      ],
+      "meshes": 3,
+      "triangles": 472,
+      "colliders": {
+        "cuboid": 7,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_brique",
+        "quartier_ivoire",
+        "quartier_nuit"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "facade_volets_4m",
+      "spec": "4 × 0,5 × 3,5 m ; fenêtres en retrait ; façade vers -Y",
+      "bounds_m": [
+        [
+          0.0,
+          -0.11999999731779099,
+          0.0
+        ],
+        [
+          4.0,
+          0.5799999833106995,
+          3.5
+        ]
+      ],
+      "meshes": 4,
+      "triangles": 552,
+      "colliders": {
+        "cuboid": 7,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_ardoise",
+        "quartier_ivoire",
+        "quartier_nuit",
+        "quartier_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "vitrine_laverie_4m",
+      "spec": "4 × 2 × 3,5 m ; devanture vitrée avec intérieur visible",
+      "bounds_m": [
+        [
+          0.0,
+          -0.25999999046325684,
+          0.0
+        ],
+        [
+          4.0,
+          2.0,
+          3.5
+        ]
+      ],
+      "meshes": 8,
+      "triangles": 1062,
+      "colliders": {
+        "cuboid": 6,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_enduit",
+        "quartier_ivoire",
+        "quartier_lampe",
+        "quartier_nuit",
+        "quartier_pave",
+        "quartier_petrole",
+        "quartier_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "vitrine_epicerie_4m",
+      "spec": "4 × 2 × 3,5 m ; devanture vitrée avec intérieur visible",
+      "bounds_m": [
+        [
+          0.0,
+          -0.25999999046325684,
+          0.0
+        ],
+        [
+          4.0,
+          2.0,
+          3.5
+        ]
+      ],
+      "meshes": 9,
+      "triangles": 1129,
+      "colliders": {
+        "cuboid": 6,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_ambre",
+        "quartier_bois",
+        "quartier_enduit",
+        "quartier_ivoire",
+        "quartier_lampe",
+        "quartier_pave",
+        "quartier_petrole",
+        "quartier_rouge",
+        "quartier_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "mur_aveugle_4m",
+      "spec": "4 × 0,5 × 3,5 m ; raccord de cour et pignon",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          4.0,
+          0.5,
+          3.5
+        ]
+      ],
+      "meshes": 1,
+      "triangles": 96,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_brique"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "corniche_4m",
+      "spec": "4 × 1 × 0,5 m ; terminaison de façade à hauteur multiple de 3,5 m",
+      "bounds_m": [
+        [
+          0.0,
+          -0.25,
+          0.0
+        ],
+        [
+          4.0,
+          0.75,
+          0.5
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 72,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_ardoise",
+        "quartier_ivoire"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "trottoir_4x25",
+      "spec": "4 × 2,5 × 0,25 m ; face supérieure z=0 ; bordure chanfreinée côté +Y",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          -0.25
+        ],
+        [
+          4.0,
+          2.5,
+          0.0
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 88,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 1
+      },
+      "materials": [
+        "quartier_ivoire",
+        "quartier_pave"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "chaussee_4x4",
+      "spec": "4 × 4 m ; chaussée 0,25 m sous le trottoir",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          -0.5
+        ],
+        [
+          4.0,
+          4.0,
+          -0.25
+        ]
+      ],
+      "meshes": 1,
+      "triangles": 96,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_sol"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "bouche_6x12",
+      "spec": "6 × 12 m ; descente -5 m ; 20 marches de 0,25 m ; passage 4 m",
+      "bounds_m": [
+        [
+          0.0,
+          -0.03000001236796379,
+          -5.25
+        ],
+        [
+          6.0,
+          12.0,
+          3.5
+        ]
+      ],
+      "meshes": 6,
+      "triangles": 4197,
+      "colliders": {
+        "cuboid": 8,
+        "convex": 1
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ardoise",
+        "quartier_enduit",
+        "quartier_ivoire",
+        "quartier_pave",
+        "quartier_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "grille_5m",
+      "spec": "5 × 0,15 × 2,75 m ; pièce séparée pour door_* au pilote",
+      "bounds_m": [
+        [
+          0.0,
+          -0.15000000596046448,
+          0.0
+        ],
+        [
+          5.0,
+          0.11999999731779099,
+          2.75
+        ]
+      ],
+      "meshes": 3,
+      "triangles": 970,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ivoire",
+        "quartier_nuit"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "abribus_4m",
+      "spec": "4 × 1,5 × 2,75 m ; banc adossé ; façade ouverte",
+      "bounds_m": [
+        [
+          0.0,
+          -0.029999999329447746,
+          0.0
+        ],
+        [
+          4.0,
+          1.5,
+          2.680000066757202
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 412,
+      "colliders": {
+        "cuboid": 7,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_bois",
+        "quartier_ivoire",
+        "quartier_petrole",
+        "quartier_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "kiosque_3x2",
+      "spec": "3 × 2 × 3 m ; auvent en pente ; façade de vente en retrait",
+      "bounds_m": [
+        [
+          0.0,
+          -0.10000000894069672,
+          0.0
+        ],
+        [
+          3.0,
+          2.0,
+          3.069999933242798
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 448,
+      "colliders": {
+        "cuboid": 4,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_bois",
+        "quartier_ivoire",
+        "quartier_petrole",
+        "quartier_rouge"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "lampadaire_5m",
+      "spec": "fût effilé 5 m ; luminaire déporté au-dessus de la rue",
+      "bounds_m": [
+        [
+          0.0,
+          -0.05000000074505806,
+          0.0
+        ],
+        [
+          1.5499999523162842,
+          0.44999998807907104,
+          5.057214736938477
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 124,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_lampe"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "banc_2m",
+      "spec": "2 × 0,75 × 1 m ; assise à 0,5 m",
+      "bounds_m": [
+        [
+          0.0,
+          0.10000000149011612,
+          0.0
+        ],
+        [
+          2.0,
+          0.7300000190734863,
+          1.0
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 124,
+      "colliders": {
+        "cuboid": 2,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_bois"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "borne_075m",
+      "spec": "borne urbaine à tête claire ; base ancrée au sol",
+      "bounds_m": [
+        [
+          0.004999999888241291,
+          0.004999999888241291,
+          0.0
+        ],
+        [
+          0.24500000476837158,
+          0.24500000476837158,
+          0.8399999737739563
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 88,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ivoire"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "corbeille",
+      "spec": "0,5 × 0,5 × 0,9 m ; couvercle distinct et pied",
+      "bounds_m": [
+        [
+          -0.019999999552965164,
+          -0.019999999552965164,
+          0.0
+        ],
+        [
+          0.5199999809265137,
+          0.5199999809265137,
+          0.8999999761581421
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 100,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "trappe_service_2m",
+      "spec": "2 × 2 m ; cadre fixe, panneau séparable pour la cour de service",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          -0.15000000596046448
+        ],
+        [
+          2.0,
+          2.0,
+          0.019999999552965164
+        ]
+      ],
+      "meshes": 3,
+      "triangles": 136,
+      "colliders": {
+        "cuboid": 5,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ivoire",
+        "quartier_petrole"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "repere_tour_56m",
+      "spec": "repère unique distant, 24 × 18 × 56 m ; hors parcours ; vapeur au pilote",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          24.0,
+          18.0,
+          56.0
+        ]
+      ],
+      "meshes": 5,
+      "triangles": 4452,
+      "colliders": {
+        "cuboid": 0,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ardoise",
+        "quartier_nuit",
+        "quartier_petrole",
+        "quartier_vitre_chaude"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "fourgon_5m",
+      "spec": "fourgon original 2,25 × 5 × 2,35 m ; caisse fermée et cabine vitrée ; avant +Y",
+      "bounds_m": [
+        [
+          -0.029999999329447746,
+          0.0,
+          0.0
+        ],
+        [
+          2.259999990463257,
+          5.0,
+          2.3499999046325684
+        ]
+      ],
+      "meshes": 7,
+      "triangles": 862,
+      "colliders": {
+        "cuboid": 2,
+        "convex": 0
+      },
+      "materials": [
+        "quartier_acier",
+        "quartier_ivoire",
+        "quartier_lampe",
+        "quartier_nuit",
+        "quartier_petrole",
+        "quartier_rouge",
+        "quartier_verre"
+      ],
+      "ngons": 0
+    },
+    {
+      "id": "vehicule_citadine",
+      "spec": "véhicule déjà validé ; origine normalisée au coin du sol ; avant +Y",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.8200000524520874,
+          3.680000066757202,
+          1.4184650182724
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 1226,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "MAT_VEHICULES_COL_V1",
+        "MAT_VEHICULES_VERRE_V1"
+      ],
+      "ngons": 26
+    },
+    {
+      "id": "vehicule_berline",
+      "spec": "véhicule déjà validé ; origine normalisée au coin du sol ; avant +Y",
+      "bounds_m": [
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.9600000381469727,
+          4.610000133514404,
+          1.4908428192138672
+        ]
+      ],
+      "meshes": 2,
+      "triangles": 1298,
+      "colliders": {
+        "cuboid": 1,
+        "convex": 0
+      },
+      "materials": [
+        "MAT_VEHICULES_COL_V1",
+        "MAT_VEHICULES_VERRE_V1"
+      ],
+      "ngons": 26
+    }
+  ],
+  "count": 22,
+  "triangles": 18684,
+  "runtime_integrated": false,
+  "limits": [
+    "Rendus EEVEE de présentation, pas des captures du jeu.",
+    "Collision à exercer avec Rapier au pilote N4b.",
+    "Bouche, grille et trappe non branchées aux interactions.",
+    "Tour distante statique ; vapeur et ciel au pilote N4b.",
+    "Fourgon statique ; la cabine utilise des proxies simplifiés."
+  ],
+  "original_count": 20,
+  "reused_vehicles": 2
+}

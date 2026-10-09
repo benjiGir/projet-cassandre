@@ -1,0 +1,10 @@
+{
+  "depuis": "2026-10-09T14:23:51.958Z",
+  "logs": [
+    {
+      "level": "error",
+      "message": "Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+      "timestamp": "2026-10-09T14:23:52.026Z"
+    }
+  ]
+}

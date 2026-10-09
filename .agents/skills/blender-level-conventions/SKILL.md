@@ -113,6 +113,12 @@ Compression         : OFF au stade prototype
 `use_*`, ID de secret, son associé) dans `mesh.userData`. Sans cette case, tout
 le paramétrage côté Blender est perdu silencieusement.
 
+**Ne jamais exporter depuis l'interface ni avec un appel `export_scene.gltf`
+écrit à la main** : `C.export()` (ou `cassandre_cli.py -- export`) passe par
+`export_level.py`, qui pose ces réglages, exclut `_KIT`/`_LIB` et vérifie le
+fichier écrit ; il ne rend `ok` que si ce contrôle passe. Voir
+`blender-python-automation` pour les autres commandes.
+
 **Draco** reste désactivé tant que le proto n'est pas validé : ça ajoute une
 étape de décodage et complique le diagnostic pour un gain sans objet à cette
 échelle.

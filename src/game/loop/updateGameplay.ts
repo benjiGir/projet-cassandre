@@ -53,6 +53,7 @@ import { basculerEau, updateDouches } from "../level/sanitaires/douches";
 import { updateStoreSign } from "../../render/environment/storeSign";
 import { type GameSession } from "../session/gameSession";
 import { handleDevGameplayInput } from "./devGameplayInput";
+import { applyCampaignCommand } from "../devtools/campaignCommands";
 import { updateTrainRideGym } from "../session/player/trainRideGameplay";
 import { updateLevelTrains } from "../session/player/levelTrainGameplay";
 import { updateTrainGym } from "../session/player/trainGymGameplay";
@@ -183,6 +184,18 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
   // ordre et les mêmes appels qu'avant ce jalon, aucune réorganisation.
   runGameplaySync(
     Effect.gen(function* () {
+      if (import.meta.env.DEV) {
+        while (session.devCampaignCommands.length > 0) {
+          const command = session.devCampaignCommands.shift();
+          if (command) applyCampaignCommand(engine, command);
+          if (!engine.flow.isPlaying()) return;
+        }
+      }
+      if (import.meta.env.DEV && session.devCompleteRequested) {
+        session.devCompleteRequested = false;
+        triggerLevelComplete(engine, session);
+        return;
+      }
       const gameplayDt = engine.clock.tick(dt);
       engine.fx.advanceMuzzleFlashes(gameplayDt);
       session.heroPortrait.advance(gameplayDt, session.playerHp, session.playerMaxHp);
@@ -240,6 +253,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
           session.gltfLevelSession?.current?.useObjects ?? [],
           session.player.position,
           {
+            onMetroBlockoutUse: (name) => session.gltfLevelSession?.current?.metroBlockout?.use(name, session.player.position),
             onTrainUse: (name) => session.gltfLevelSession?.current?.trains?.use(name),
             onExitDoorUse: (targetName) => tryOpenCardDoor(session, targetName, "platine"),
             onCardDoorUse: (targetName, required) => tryOpenCardDoor(session, targetName, required),
@@ -487,6 +501,10 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
 
         updateTrainGym(engine, gameplayDt, activeFrame.use);
         updateTrainRideGym(engine, gameplayDt, activeFrame.use);
+        const blockout = session.gltfLevelSession?.current?.metroBlockout;
+        blockout?.fixed(gameplayDt, session.player.position);
+        for (const message of blockout?.takeMessages() ?? []) showHudMessage(message);
+        if (blockout?.completed) triggerLevelComplete(engine, session);
 
         const directorDeathsBefore = session.directorManager.deathEvents.length;
         const directorPlayerHitsBefore = session.directorManager.playerHitEvents.length;
@@ -566,6 +584,7 @@ export function updateGameplay(engine: GameEngine, dt: number): void {
         // Une seule fois par pas fixe : une rafale qui casse trois objets reste un seul évènement.
         if (casse) streamEvent(session, "casse");
         updateDouches(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
+        session.gltfLevelSession?.current?.fountainWater?.fixed(gameplayDt);
         updateStoreSign(session.gltfLevelSession?.current?.root ?? null, gameplayDt);
 
         session.doorSystem?.update(gameplayDt, collectDoorActors(session));

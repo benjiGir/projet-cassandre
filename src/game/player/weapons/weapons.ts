@@ -2,6 +2,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
 import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks } from "./weaponTypes";
+import type { WeaponInventory, OwnedWeapon } from "./weaponInventory";
 import type { InputFrame } from "../../../core/input/inputTypes";
 import { DeterministicRandom } from "../../../core/effect/random";
 import type { GameClock } from "../../../core/loop/time";
@@ -152,6 +153,38 @@ export class WeaponSystem {
     this.kickImpactRemaining = null;
     this.kickCooldownRemaining = 0;
     this.sinceKickFire = this.previousSinceKickFire = CLOCK_AT_REST;
+  }
+
+  inventory(): WeaponInventory {
+    const owned: OwnedWeapon[] = [];
+    if (this.hasMelee) owned.push("melee");
+    if (this.hasPistol) owned.push("pistol");
+    if (this.hasShotgun) owned.push("shotgun");
+    return { owned, active: this.activeWeapon, pistolAmmo: this.pistolAmmo, shotgunAmmo: this.shotgunAmmo };
+  }
+
+  owns(weapon: OwnedWeapon): boolean {
+    return weapon === "melee" ? this.hasMelee : weapon === "pistol" ? this.hasPistol : this.hasShotgun;
+  }
+
+  restoreInventory(inventory: WeaponInventory): void {
+    this.hasMelee = inventory.owned.includes("melee");
+    this.hasPistol = inventory.owned.includes("pistol");
+    this.hasShotgun = inventory.owned.includes("shotgun");
+    this.activeWeapon = inventory.active;
+    this.shownWeapon = this.switchedFrom = inventory.active;
+    this.pistolAmmo = inventory.pistolAmmo;
+    this.shotgunAmmo = inventory.shotgunAmmo;
+  }
+
+  get shotgunMaxAmmo(): number {
+    return this.cfg.shotgunMaxAmmo;
+  }
+
+  addShotgunAmmo(amount: number): number {
+    const before = this.shotgunAmmo;
+    this.shotgunAmmo = Math.min(this.shotgunMaxAmmo, this.shotgunAmmo + Math.max(0, amount));
+    return this.shotgunAmmo - before;
   }
 
   pickUpMelee(): void {

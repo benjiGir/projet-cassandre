@@ -16,11 +16,12 @@ export interface DifficultyScreenProps {
   selected: DifficultyOptionView["id"];
   onChoose: (id: DifficultyOptionView["id"]) => void;
   onBack: () => void;
+  title?: string;
 }
 
 // Choix de la difficulté, entre le menu et le chargement. Un clic choisit ET
 // lance : l'écran ne persiste rien lui-même, `bootChoice.ts` s'en charge.
-export function DifficultyScreen({ options, selected, onChoose, onBack }: DifficultyScreenProps) {
+export function DifficultyScreen({ options, selected, onChoose, onBack, title = "QUI ENTRE DANS LE MAGASIN ?" }: DifficultyScreenProps) {
   return (
     <Screen>
       <Scanlines />
@@ -28,7 +29,7 @@ export function DifficultyScreen({ options, selected, onChoose, onBack }: Diffic
       <RecIndicator placement="corner">PROFIL DU VISITEUR</RecIndicator>
 
       <CornerFrame className={styles.panel}>
-        <ScreenTitle className={styles.title}>QUI ENTRE DANS LE MAGASIN ?</ScreenTitle>
+        <ScreenTitle className={styles.title}>{title}</ScreenTitle>
 
         <div className={styles.options}>
           {options.map((option) => (

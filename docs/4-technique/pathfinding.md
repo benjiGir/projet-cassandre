@@ -2,7 +2,7 @@
 title: Pathfinding
 tags: [technique]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Pathfinding
@@ -191,7 +191,7 @@ carte ou une porte libre sans `auto` reste fermée pendant le bake ; si elle
 doit être traversable par les ennemis avant d'être ouverte pour de vrai,
 elle a besoin de `auto: "ennemis"` en plus de sa condition d'ouverture — pas
 un oubli à corriger ici, un contrat de nommage glTF
-(`6-reference/conventions-nommage.md`, pas encore écrite).
+([Conventions de nommage](../6-reference/conventions-nommage.md)).
 
 ## Tests
 

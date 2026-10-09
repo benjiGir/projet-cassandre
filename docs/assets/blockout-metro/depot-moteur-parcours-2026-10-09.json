@@ -1,0 +1,332 @@
+{
+  "date": "2026-10-09",
+  "scope": "Approche du poste moteur nord et passage devant le rack",
+  "method": "Un preset au départ, marche et rotations par les commandes de revue, lecture après capture, aucun saut",
+  "steps": [
+    {
+      "action": "départ mesuré",
+      "pose": {
+        "x": 49.5,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "entrée dans l’atelier",
+      "count": 4,
+      "pose": {
+        "x": 66.52,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "alignement allée est",
+      "count": 2,
+      "pose": {
+        "x": 68.23,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers nord",
+      "count": 1,
+      "pose": {
+        "x": 68.23,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée est le long des bogies",
+      "count": 5,
+      "pose": {
+        "x": 68.23,
+        "y": 351.66,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "au nord des essieux",
+      "count": 2,
+      "pose": {
+        "x": 68.23,
+        "y": 353.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers ouest",
+      "count": 1,
+      "pose": {
+        "x": 68.23,
+        "y": 353.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversée au nord des bogies",
+      "count": 3,
+      "pose": {
+        "x": 55.24,
+        "y": 353.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers poste nord",
+      "count": 1,
+      "pose": {
+        "x": 55.24,
+        "y": 353.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approche du poste moteur",
+      "count": 2,
+      "pose": {
+        "x": 55.24,
+        "y": 362.12,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "alignement devant le moteur",
+      "count": 1,
+      "pose": {
+        "x": 55.24,
+        "y": 362.12,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "face au moteur",
+      "count": 3,
+      "pose": {
+        "x": 57.79,
+        "y": 362.12,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers plateau",
+      "count": 1,
+      "pose": {
+        "x": 57.79,
+        "y": 362.12,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approche du plateau",
+      "count": 2,
+      "pose": {
+        "x": 57.79,
+        "y": 363.82,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers rack",
+      "count": 1,
+      "pose": {
+        "x": 57.79,
+        "y": 363.82,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passage devant le rack",
+      "count": 1,
+      "pose": {
+        "x": 62.24,
+        "y": 363.82,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "dégagement côté est du rack",
+      "count": 2,
+      "pose": {
+        "x": 63.94,
+        "y": 363.82,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers sud",
+      "count": 1,
+      "pose": {
+        "x": 63.94,
+        "y": 363.82,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au nord des bogies",
+      "count": 2,
+      "pose": {
+        "x": 63.94,
+        "y": 355.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers ouest",
+      "count": 1,
+      "pose": {
+        "x": 63.94,
+        "y": 355.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversée vers allée ouest",
+      "count": 2,
+      "pose": {
+        "x": 55.17,
+        "y": 355.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers seuil du hall",
+      "count": 1,
+      "pose": {
+        "x": 55.17,
+        "y": 355.37,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée ouest vers sud",
+      "count": 5,
+      "pose": {
+        "x": 55.17,
+        "y": 333.63,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "alignement dans la baie sud",
+      "count": 3,
+      "pose": {
+        "x": 55.17,
+        "y": 331.17,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers hall",
+      "count": 1,
+      "pose": {
+        "x": 55.17,
+        "y": 331.17,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au hall",
+      "count": 2,
+      "pose": {
+        "x": 46.55,
+        "y": 331.17,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    }
+  ],
+  "traffic_restored": [
+    {
+      "id": "A",
+      "enabled": true
+    },
+    {
+      "id": "B",
+      "enabled": true
+    },
+    {
+      "id": "VB",
+      "enabled": false
+    }
+  ]
+}

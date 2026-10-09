@@ -2,7 +2,7 @@
 title: Armes
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Armes
@@ -23,7 +23,7 @@ Ne fait pas la géométrie du ramassage au sol : `InteractionSystem` (`game/leve
 détecte la proximité, `WeaponSystem` décide seulement de l'effet. Ne dessine
 rien : viewmodel, muzzle flash, decals et sons sont posés par `updateFx`/
 `render/`, détaillés dans [Sprites et viewmodel](sprites-et-viewmodel.md)
-(page à écrire, D36).
+.
 
 ## Fichiers
 
@@ -96,8 +96,9 @@ sequenceDiagram
 
 ## Données et contrats
 
-**`WeaponKind`** (`"none" | "melee" | "pistol" | "shotgun"`) et
-`FiringWeapon` (le même sans `"none"`) : une arme absente ne produit ni tir
+**`WeaponKind`** (`"none" | "melee" | "pistol" | "shotgun"`, dans
+`src/game/player/weapons/weaponTypes.ts`) et `FiringWeapon` (le même sans
+`"none"`, plus `"kick"`) : une arme absente ne produit ni tir
 ni impact, `update()` ignore alors silencieusement `frame.fire`.
 
 **Munitions, trois régimes différents** :
@@ -149,7 +150,7 @@ avant même que l'arme ait fini de remonter à l'écran.
 `CROSSHAIR_VARIANTS`), chacune isolée sur un seul aspect du feedback (recul,
 hitstop/shake mur-vs-ennemi, marqueur de hit, style de réticule) sans jamais
 toucher dégâts/cadence/munitions. Protocole de comparaison au pas fixe près
-(F9/F10) : `5-guides/regler-la-sensation.md` (page à écrire, D57).
+(F9/F10) : [Régler la sensation](../5-guides/regler-la-sensation.md).
 
 ## Pièges
 

@@ -1,0 +1,72 @@
+{
+  "sols": 173,
+  "superpositions": [],
+  "galeries": [
+    {
+      "id": "galerie_est_1_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_est_coude_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_est_2_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_1_grade_0_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_1_grade_1_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_1_grade_2_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_coude_1_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_2_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_coude_2_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_3_grade_0_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_3_grade_1_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_nord_3_grade_2_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    },
+    {
+      "id": "galerie_ouest_part_0",
+      "max_ecart_plan_m": 0.0,
+      "devers_m": 0.0
+    }
+  ],
+  "surface_depot_m2": 2336.0
+}

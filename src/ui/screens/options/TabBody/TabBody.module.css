@@ -1,0 +1,47 @@
+.body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Un trait net là où le contenu passe sous les onglets, plutôt qu'une coupe à vif. */
+.body[data-above="true"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(140, 255, 150, 0.2);
+}
+
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* La place de la barre est réservée des deux côtés : le contenu reste
+     centré, qu'un onglet défile ou non. */
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: var(--phosphor-faint) transparent;
+  padding-bottom: 14px;
+}
+
+/* La ligne qui sépare le contenu du pied de panneau, et sous elle le repère
+   « suite ». La bande garde sa hauteur quand le repère s'éteint : le panneau
+   ne bouge pas. */
+.more {
+  height: 16px;
+  font-size: 10px;
+  line-height: 18px;
+  letter-spacing: 2px;
+  text-align: center;
+  color: transparent;
+  border-top: 1px solid rgba(140, 255, 150, 0.15);
+}
+
+.more[data-visible="true"] {
+  color: var(--text-dim);
+}

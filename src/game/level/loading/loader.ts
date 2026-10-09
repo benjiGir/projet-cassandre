@@ -24,6 +24,7 @@ import { mergeEcranDecor, type EcranCandidate } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import { initialiserDouches } from "../sanitaires/douches";
 import { initializeStoreSign } from "../../../render/environment/storeSign";
+import { createFountainWater } from "../../../render/environment/fountain/fountainWater";
 import { STORE_SIGN_PREFIX } from "../../../render/environment/storeSignConfig";
 import { LevelFetchError, validateSpawnPlayerCountEffect } from "./levelDiagnostics";
 import { blenderName, readSpawnGroup } from "./levelExtras";
@@ -47,6 +48,7 @@ import {
 import { convertToLambert, buildLevelLight } from "./levelPresentation";
 import { readTrainLevel, TrainLevelError } from "../trains/trainLevelData";
 import { LevelTrains } from "../trains/levelTrains";
+import { MetroBlockout } from "../blockout/metroBlockout";
 
 // Point d'entrée.
 
@@ -96,7 +98,7 @@ function buildLevelResourceEffect(
     const movableRoots = new Set(
       nodes.filter((o) => {
         const n = blenderName(o);
-        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_") || n.startsWith("train_modele_");
+        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_") || n.startsWith("train_modele_") || n.startsWith("stage_voyage_");
       }),
     );
     const animatedNodeNames = new Set(
@@ -286,6 +288,7 @@ function buildLevelResourceEffect(
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
     initialiserDouches(root);
     initializeStoreSign(root);
+    const fountainWater = createFountainWater(root, resources);
     const trainData = yield* Effect.try({
       try: () => readTrainLevel(nodes),
       catch: (cause) => new TrainLevelError({ message: String(cause) }),
@@ -299,6 +302,7 @@ function buildLevelResourceEffect(
       trainData.model.visible = false;
       trains = new LevelTrains(root, physics, trainData, resources);
     }
+    const metroBlockout = root.getObjectByName("n5_voyage_centre") ? new MetroBlockout(root, trains, resources) : null;
     resources.collect();
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
@@ -337,7 +341,9 @@ function buildLevelResourceEffect(
     };
 
     return {
+      metroBlockout,
       trains,
+      fountainWater,
       root,
       gltf,
       spawnPlayer,
@@ -379,7 +385,9 @@ function acquireLevelResourceEffect(
 function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
   let restoreSuspension: (() => void) | null = null;
   return {
+    metroBlockout: resource.metroBlockout,
     trains: resource.trains,
+    fountainWater: resource.fountainWater,
     root: resource.root,
     gltf: resource.gltf,
     spawnPlayer: resource.spawnPlayer,

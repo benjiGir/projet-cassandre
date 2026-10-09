@@ -2,7 +2,7 @@
 title: Session et score
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Session et score
@@ -24,9 +24,9 @@ combat (`feedback.ts` applique un montant déjà calculé par les managers
 d'ennemis, [Ennemis et IA](ennemis-et-ia.md)) ; ne connaît aucune arme,
 aucune géométrie de porte/vitre/sanitaire (déléguée à `session.doorSystem`/
 `vitreSystem`/`sanitaireSystem`, construits par `spawning.ts`, détail
-`4-technique/systemes-de-niveau.md`, pas encore écrit) ; ne rejoue rien
+[Systèmes de niveau](systemes-de-niveau.md)) ; ne rejoue rien
 lui-même (`recording.ts` positionne le joueur puis délègue à
-`inputRecorder`, détail `rejeu-et-determinisme.md`, pas encore écrit).
+`inputRecorder`, détail [Rejeu et déterminisme](rejeu-et-determinisme.md)).
 
 ## Fichiers
 
@@ -122,7 +122,7 @@ depuis `game/loop/devGameplayInput.ts` (F9/F10, dev seulement).
 | `levelLoadGeneration` | Jeton anti-course d'un chargement différé. |
 | `currentNavGraph`, `lightPool`, `propSystem`, `doorSystem`, `vitreSystem`, `sanitaireSystem`, `weaponPickupBillboards` | Systèmes du niveau COURANT, reconstruits ensemble à chaque commit — jamais partiellement. |
 | `sanitaireReliefCooldown` | Délai global de soulagement — état de PARTIE, remis à 0 par `bootGameSession`. |
-| `droppedCardMesh`, `cards` | Carte au sol après la mort du Directeur ; inventaire réel (`Set`, jamais le store). |
+| `droppedCardBillboard`, `cards` | Carte au sol après la mort du Directeur (`directorManager.droppedCard`) ; inventaire réel (`Set`, jamais le store). |
 | `unlockedDoors`, `exitDoorTracking`, `foundSecrets` | Portes déjà déverrouillées ; suivi de franchissement de la sortie ; secrets trouvés (`WeakSet`). |
 | `lastSafeGround` | Filet de chute. |
 | `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `stream`, `streamRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `lastHeroBarkAt`, `heroLinesSaid`, `heroLineRandom` | PV, drapeaux d'idempotence, répliques déjà dites, deux flux `DeterministicRandom` DÉDIÉS (vues, tirage des répliques occasionnelles — jamais `Math.random()`, invariant #12). |
@@ -153,7 +153,7 @@ COMPLET, avant l'évènement de flux) et `feedback.ts::applyPlayerDamage`
 (`false`, récap PARTIEL — une mort n'a pas gagné son bonus de chrono).
 
 **Cartes de fidélité** : `session.cards` (`Set<LoyaltyCard>`) est la source
-de vérité ([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) ;
+de vérité ([ADR 0036](../decisions/0036-contrats-feuilles-et-store-hud.md)) ;
 `grantCard` ignore un doublon en silence (hot reload). Détail des trois
 cartes et de leurs portes : [Objets interactifs](../2-fonctionnel/objets-interactifs.md)
 et [Joueur](joueur.md#données-et-contrats) — pas répété ici.
@@ -248,6 +248,11 @@ fait foi.
 
 ## Pièges
 
+La [campagne](campagne.md) conserve l’équipement de sortie du magasin et
+construit le métro avec cette arrivée. La mort emploie sa copie d’entrée,
+jamais l’inventaire au moment de mourir. Le mode `--campagne` du relevé
+économique ajoute un second parcours hypothétique jusqu’à N5.
+
 - Le don du Directeur arrive après la dernière borne : il compte pour le
   bilan, pas pour les achats. Le relevé distingue le total reçu de ce qui est
   utile.
@@ -322,7 +327,7 @@ vérifiés en jeu via la console, pas par une suite permanente.
 
 ## Décisions
 
-- [ADR 0020 — État, feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md) — l'inventaire de cartes et les PV vivent dans `GameSession`.
+- [ADR 0036 — Contrats feuilles et store HUD](../decisions/0036-contrats-feuilles-et-store-hud.md) — l'inventaire de cartes et les PV vivent dans `GameSession`.
 - [ADR 0031 — Portes animées et vitres](../decisions/0031-portes-animees-et-vitres.md) — le contrat `DoorSystem` que `doors.ts` pilote.
 - [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md) — la règle complète et ses écarts volontaires à Duke 3D.
 - [ADR 0033 — RNG de présentation et portée du rejeu F9/F10](../decisions/0033-rng-presentation-et-portee-du-rejeu.md) — les flux dédiés (vues, réplique de soulagement).

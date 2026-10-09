@@ -11,6 +11,7 @@ import { AudioTab } from "../audio/AudioTab/AudioTab";
 import { ControlsTab } from "../controls/ControlsTab/ControlsTab";
 import { DisplayTab } from "../display/DisplayTab/DisplayTab";
 import { OptionsTabs, type OptionsTab } from "../OptionsTabs/OptionsTabs";
+import { TabBody } from "../TabBody/TabBody";
 import styles from "./OptionsScreen.module.css";
 
 export interface OptionsScreenProps {
@@ -34,13 +35,13 @@ export function OptionsScreen({ onBack, backdrop }: OptionsScreenProps) {
         <ScreenTitle className={styles.title}>PARAMÈTRES</ScreenTitle>
         <OptionsTabs value={tab} onChange={setTab} />
 
-        <div id={`options-panel-${tab}`} role="tabpanel" aria-labelledby={`options-tab-${tab}`} tabIndex={0}>
+        <TabBody key={tab} tab={tab}>
           {tab === "controles" && <ControlsTab />}
           {tab === "affichage" && <DisplayTab />}
           {tab === "audio" && <AudioTab />}
-        </div>
+        </TabBody>
 
-        <ButtonRow className={styles.footer}>
+        <ButtonRow>
           <Button variant="primary" onClick={onBack}>
             ◀ RETOUR
           </Button>

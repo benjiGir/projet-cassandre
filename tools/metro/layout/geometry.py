@@ -9,6 +9,16 @@ def cross(a,b,c):
     return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
 
 
+def height(poly, xy):
+    a = poly[0]
+    b = next(p for p in poly[1:] if math.dist(a[:2],p[:2])>1e-5)
+    c = next(p for p in poly[1:] if abs(cross(a,b,p))>1e-8)
+    dx1, dy1, dx2, dy2 = b[0]-a[0], b[1]-a[1], c[0]-a[0], c[1]-a[1]
+    det = dx1*dy2-dx2*dy1
+    ux, uy = xy[0]-a[0], xy[1]-a[1]
+    return a[2]+(ux*dy2-uy*dx2)/det*(b[2]-a[2])+(dx1*uy-dy1*ux)/det*(c[2]-a[2])
+
+
 def area(poly):
     return abs(sum(a[0]*b[1]-a[1]*b[0] for a,b in zip(poly,poly[1:]+poly[:1])))/2 if len(poly)>2 else 0
 

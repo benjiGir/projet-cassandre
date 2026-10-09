@@ -7,6 +7,7 @@ import { showHudMessage, triggerHeroLine } from "../player/feedback";
 import { publishCounters } from "../stream/streamFeed";
 import { spend } from "../stream/streamSim";
 import { type GameSession } from "../gameSession";
+import { kioskOffer, kioskConfig, type KioskOffer } from "../../player/kioskOffer";
 
 // Les bornes : un `use_*` qui vend UN perk, payé avec les dons du direct. Ce
 // module tient l'achat et pose l'effet du perk sur les objets de la partie —
@@ -83,6 +84,8 @@ export function updateKillRush(
 
 /** Appui sur la touche d'usage devant une borne. Rien ne fige le joueur (invariant #10). */
 export function usePerkKiosk(session: GameSession, offer: PerkOffer): PerkPurchase {
+  const resolved = kioskOffer(session.perks, offer);
+  if (resolved.kind !== "perk") return useConsumable(session, resolved);
   const solde = session.stream.wallet;
   const prix = offerPrice(offer);
   const resultat = buyPerk(session, offer);
@@ -108,11 +111,44 @@ export function usePerkKiosk(session: GameSession, offer: PerkOffer): PerkPurcha
   return resultat;
 }
 
+type KioskTarget = Pick<GameSession, "perks" | "playerHp" | "playerMaxHp" | "weapons">;
+
+function consumableUseful(session: KioskTarget, kind: KioskOffer["kind"]): boolean {
+  if (kind === "heal") return session.playerHp < session.playerMaxHp;
+  if (kind === "ammo") return (session.weapons.owns("pistol") && session.weapons.pistolAmmo < session.weapons.pistolMaxAmmo)
+    || (session.weapons.owns("shotgun") && session.weapons.shotgunAmmo < session.weapons.shotgunMaxAmmo);
+  return true;
+}
+
+function useConsumable(session: GameSession, offer: KioskOffer): PerkPurchase {
+  if (!consumableUseful(session, offer.kind)) {
+    showHudMessage(offer.kind === "heal" ? "Santé déjà au maximum" : "Aucune arme à recharger");
+    return "epuisee";
+  }
+  if (!spend(session.stream, offer.price)) {
+    showHudMessage(`Solde insuffisant : il manque ${offer.price - session.stream.wallet} €`);
+    triggerHeroLine(session, "borne_solde");
+    return "solde_insuffisant";
+  }
+  if (offer.kind === "heal") {
+    session.playerHp = Math.min(session.playerMaxHp, session.playerHp + kioskConfig.healHp);
+    session.heroPortrait.heal(session.playerHp, session.playerMaxHp);
+    useGameStore.getState().setPlayerHp(session.playerHp);
+  } else {
+    if (session.weapons.owns("pistol")) session.weapons.addPistolAmmo(kioskConfig.pistolAmmo);
+    if (session.weapons.owns("shotgun")) session.weapons.addShotgunAmmo(kioskConfig.shotgunAmmo);
+  }
+  publishCounters(session.stream);
+  showHudMessage(`${offer.label} : −${offer.price} €`);
+  playSfx("ammo_pickup");
+  return "achete";
+}
+
 /**
  * Tient l'invite du HUD à jour : l'offre de la borne que viserait la touche
  * d'usage. Appelé à chaque pas fixe, n'écrit dans le store que sur un changement.
  */
-export function publishPerkOffer(session: Pick<GameSession, "perks">, nearest: UseObject | null, key: string): void {
+export function publishPerkOffer(session: KioskTarget, nearest: UseObject | null, key: string): void {
   const store = useGameStore.getState();
   const affichee = store.perkOffer;
   const offer = nearest?.sells ?? null;
@@ -120,10 +156,9 @@ export function publishPerkOffer(session: Pick<GameSession, "perks">, nearest: U
     if (affichee) store.setPerkOffer(null);
     return;
   }
-  const { label, effect } = PERK_INFO[offer.perk];
-  const sold = session.perks.has(offer.perk);
-  const price = offerPrice(offer);
-  if (affichee && affichee.key === key && affichee.label === label && affichee.price === price
+  const { label, effect, price, kind } = kioskOffer(session.perks, offer);
+  const sold = !consumableUseful(session, kind);
+  if (affichee && affichee.key === key && affichee.label === label && affichee.effect === effect && affichee.price === price
     && affichee.sold === sold) return;
   store.setPerkOffer({ key, label, effect, price, sold });
 }

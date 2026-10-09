@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Sprites et viewmodel
@@ -117,7 +117,7 @@ Le secours en boîtes garde le rendu disponible si le glTF des armes ou ses extr
 - N'envoyez pas une pose brute du pas fixe à `updatePose`. Elle produit une image en escalier au taux d'affichage.
 - Le flash est une horloge de présentation, alors que les frames de pose utilisent les valeurs de gameplay. Avancer les deux avec le même dt brouille le contrat de hitstop.
 - Les géométries du viewmodel sont cadrées dans Blender. Changer leur position globale dans le runtime affecte chaque arme et peut décaler le point du muzzle flash.
-- Le modèle d'arme affiché ne contrôle jamais les hitboxes ni le raycast ; les dégâts restent dans `player/weapons.ts`.
+- Le modèle d'arme affiché ne contrôle jamais les hitboxes ni le raycast ; les dégâts restent dans `player/weapons/weapons.ts`.
 
 ## Tests
 

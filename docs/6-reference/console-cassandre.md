@@ -2,7 +2,7 @@
 title: Console cassandre
 tags: [reference, debug]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 
 # Console cassandre
@@ -85,6 +85,20 @@ Les enregistrements F9/F10 ne sauvegardent pas l'état complet du monde. Des enn
 | `cassandre.recap.completeLevel()` / `cassandre.recap.killPlayer()` | Exécute un vrai chemin de fin de partie pour vérifier l'écran et le récap. |
 | `cassandre.pause()` / `cassandre.resume()` | Envoie une transition de pause ou reprise au flux de session. |
 | `cassandre.notarget()` / `cassandre.notarget(false)` | Rend les ennemis passifs ou les réactive. |
+
+## Trains, campagne et armes
+
+| Expression | Effet |
+|---|---|
+| `cassandre.trains.etat()` | Voies, rames et compteurs (morts, ennemis tués, traversées) du train du niveau chargé, `null` sans train. |
+| `cassandre.trains.config` / `cassandre.trains.variantes` / `cassandre.trains.system` | Réglages du train, variantes, système de train courant. |
+| `cassandre.voyageRame.etat()` / `.config` / `.variantes` / `.system` | Instantané de la rame de voyage, réglages, variantes et système courant. |
+| `cassandre.campagne.etat()` / `cassandre.campagne.action(commande)` | État de la campagne (niveau, mode d'entrée, arrivée figée, cartes, temps) et commandes de test. |
+| `cassandre.voix.liste()` / `cassandre.voix.joue(cle)` | Prises de voix du héros avec leur durée ; `joue` en fait entendre une sans provoquer la situation. |
+| `cassandre.lieu()` | Espace du niveau sous le joueur et répliques déjà dites. |
+| `cassandre.boissonVariants` / `cassandre.applyBoissonVariant(nom)` | Variantes A, B ou C de la pointe de vitesse de la boisson. |
+| `cassandre.kickVariants` / `cassandre.kickConfig` | Table des variantes et réglages du coup de pied. |
+| `cassandre.weapons` / `cassandre.perkConfig` | Arsenal de la session courante et barème des perks. |
 
 Ces commandes modifient la session ou son rendu. Pour une capture comparable, consignez l'état initial, la commande et les paramètres. Le panneau de tuning et le harnais de benchmark sont présentés dans [Debug](../4-technique/debug.md).
 

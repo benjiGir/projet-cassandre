@@ -2,7 +2,7 @@
 title: Valeurs de déplacement
 tags: [reference, joueur]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Valeurs de déplacement

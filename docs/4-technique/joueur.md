@@ -2,7 +2,7 @@
 title: Joueur
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Joueur
@@ -21,7 +21,7 @@ collision : [Physique](physique.md)) ; ne dessine rien (caméra et viewmodel
 posés par `interpolateVisuals`, au taux d'affichage) ; ne décide pas des
 dégâts qu'il reçoit (ennemis et `game/level/*` produisent des `HitEvent`/
 soins, `feedback.ts::applyPlayerDamage` les applique) ; ne connaît aucune
-arme (D28).
+arme.
 
 ## Fichiers
 
@@ -148,7 +148,7 @@ boucle. Garde-fou, pas une mécanique : logge les coordonnées en console à
 chaque déclenchement, signal pour `tools/level_v2/audit_niveau.py`.
 
 **Cartes de fidélité.** `session.cards` (`Set<LoyaltyCard>`) est la source de
-vérité, jamais le store zustand ([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) ;
+vérité, jamais le store zustand ([ADR 0036](../decisions/0036-contrats-feuilles-et-store-hud.md)) ;
 `grantCard(session, card)` ignore silencieusement un doublon (hot reload) et
 pousse un message HUD, `parseLoyaltyCard` tolère casse/espaces d'une
 propriété Blender mais reste strict sinon (valeur inconnue → `null`).

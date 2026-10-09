@@ -2,7 +2,7 @@
 title: Valeurs de l'économie
 tags: [reference, gameplay]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Valeurs de l'économie

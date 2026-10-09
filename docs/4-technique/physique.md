@@ -2,7 +2,7 @@
 title: Physique
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Physique
@@ -135,10 +135,10 @@ Rapier :
 
 | Méthode | Miroir de | Utilisé par |
 |---|---|---|
-| `castRay` | `RAPIER.World.castRay` | ligne de vue et évitement local des ennemis (`enemyMachine.ts`), sonde de sol (`spawning.ts`), rayon de visée des sanitaires (`session/sanitaires.ts`) |
-| `castRayAndGetNormal` | `RAPIER.World.castRayAndGetNormal` | résolution d'attaque ennemie, pistolet et pompe (`player/weapons.ts`), bake du graphe de navigation (`level/pathfinding.ts`) |
-| `castShape` | `RAPIER.World.castShape` | balayage de la capsule de personnage entre deux cellules de navigation, uniquement dans le bake (`level/pathfinding.ts`) |
-| `intersectionsWithShape` | `RAPIER.World.intersectionsWithShape` (callback natif, mais collecté dans un tableau retourné) | capsule du pied-de-biche (`player/weapons.ts`) |
+| `castRay` | `RAPIER.World.castRay` | ligne de vue (`enemyPerception.ts`), évitement local (`enemyNavigation.ts`), sonde de sol (`spawning.ts`), rayon de visée des sanitaires (`session/player/sanitaires.ts`), mur et sol du bake (`navBake.ts`), sécurité des trains (`trainSafety.ts`) |
+| `castRayAndGetNormal` | `RAPIER.World.castRayAndGetNormal` | attaque ennemie (`enemyCombat.ts`), tirs du pistolet et des plombs de la pompe (`weapons.ts`), sonde de surface de présentation (`surfaceProbe.ts`), bake (`navBake.ts`) |
+| `castShape` | `RAPIER.World.castShape` | coup de pied, sphère balayée (`hitKick` dans `weapons.ts`), capsule de personnage entre deux cellules de navigation (`navBake.ts`) |
+| `intersectionsWithShape` | `RAPIER.World.intersectionsWithShape` (callback natif, mais collecté dans un tableau retourné) | capsule du pied-de-biche (`weapons.ts`), chevauchement de cellules dans le bake (`navBake.ts`) |
 
 `physics: PhysicsWorld` est un **paramètre** de chaque méthode, jamais stocké
 dans le service : `PhysicsWorld` se construit après `GameLayer`/`GameRuntime`

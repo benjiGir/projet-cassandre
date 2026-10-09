@@ -414,7 +414,7 @@ export function updateFx(engine: FxEngine, realDt: number, stats: LoopStats): vo
               z: session.player.groundNormal.z,
             },
             shotgunAmmo: session.weapons.shotgunAmmo,
-            shotgunMaxAmmo: weaponConfig.shotgunStartingAmmo,
+            shotgunMaxAmmo: session.weapons.shotgunMaxAmmo,
             pistolAmmo: session.weapons.pistolAmmo,
             pistolMaxAmmo: session.weapons.pistolMaxAmmo,
             // HUD de prod (Phase 6, `ui/hud/widgets/AmmoPanel/AmmoPanel.tsx`) : quel libellé afficher pour

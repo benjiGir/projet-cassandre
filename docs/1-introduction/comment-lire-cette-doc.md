@@ -2,7 +2,7 @@
 title: Comment lire cette doc
 tags: [introduction, guide]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-08
 ---
 
 # Comment lire cette doc

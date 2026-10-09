@@ -17,6 +17,7 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Ennemis et IA](ennemis-et-ia.md) — machine à états partagée Costard/Directeur
 - [Pathfinding](pathfinding.md) — graphe de navigation 2.5D, évitement local
 - [Session et score](session-et-score.md) — comptage au pas fixe, barème, récap
+- [Campagne](campagne.md) — équipement d’arrivée, menu Continuer, reprise et bornes de consommables.
 - [Rejeu et déterminisme](rejeu-et-determinisme.md) — RNG déterministe, rejeu d'input F9/F10
 - [Chargement de niveau](chargement-de-niveau.md) — loader, conventions glTF, fusion du décor, hot reload
 - [Systèmes de niveau](systemes-de-niveau.md) — portes, props, vitres, sanitaires, interactifs
@@ -36,4 +37,7 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Prototype du voyage à bord](prototype-voyage-rame.md) — salle d’essai T4, rame fixe, tunnel défilant, portes et embuscade.
 
 - [Pièce pilote du métro](pilote-metro.md) — assemblage N4, matériaux et ambiances par niveau.
+- [Place pilote du quartier](pilote-quartier.md) — N4b, accès de service, retour par la grille publique et ambiances discrètes.
 - [Trains dans le pipeline](trains-metro.md) — modèle Blender, commandes, volumes balayés et zones de sécurité.
+
+- [Métro complet — blockout N5](blockout-metro.md) — parcours, objectifs, trains et voyage jusqu’au hall.

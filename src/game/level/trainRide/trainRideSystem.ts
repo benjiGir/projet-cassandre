@@ -10,6 +10,8 @@ export class TrainRideSystem {
   private rules: TrainRideConfig = { ...trainRideConfig };
   private waveSent = false;
 
+  constructor(private readonly overrides: Partial<TrainRideConfig> = {}) {}
+
   enqueue(command: TrainRideCommand): void { this.commands.push(command); }
 
   private reset(): void {
@@ -25,7 +27,7 @@ export class TrainRideSystem {
     for (const command of this.commands.splice(0)) {
       if (command === "reset") this.reset();
       else if (this.state.phase === "boarding" && aboard) {
-        this.rules = { ...trainRideConfig };
+        this.rules = { ...trainRideConfig, ...this.overrides };
         this.rules.duration = Math.max(10, this.rules.duration);
         this.rules.acceleration = Math.max(.1, Math.min(this.rules.acceleration, this.rules.duration / 3));
         this.rules.braking = Math.max(.1, Math.min(this.rules.braking, this.rules.duration / 3));

@@ -83,6 +83,7 @@ export const gameFlowMachine = setup({
     },
     levelComplete: {
       on: {
+        NEXT_LEVEL: "loading",
         REPLAY: "loading",
         RETURN_TO_MENU: "mainMenu",
       },

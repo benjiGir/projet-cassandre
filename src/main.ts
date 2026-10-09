@@ -40,6 +40,7 @@ import { updateFx } from "./game/loop/updateFx";
 import { exposeDebugApi } from "./game/devtools/consoleApi";
 import { maybeRenderDevPreview } from "./ui/dev/devPreview/devPreview";
 import { LoadingScreen } from "./ui/screens/loading/LoadingScreen/LoadingScreen";
+import { flushCampaignSave } from "./game/session/campaign/campaignStorage";
 import { beginLoading, letBrowserPaint, reportLoading } from "./core/loading/loadingProgress";
 
 // see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
@@ -87,7 +88,7 @@ async function main() {
   // `?level=` est le raccourci des outils et des mesures : il entre en jeu sans intro.
   const fromMenu = !new URLSearchParams(window.location.search).get("level");
   if (fromMenu) flowActor.send({ type: "ENTER_MENU" });
-  const choice = await resolveBootChoice(root);
+  const { choice, entry } = await resolveBootChoice(root);
   flowActor.send({ type: "BEGIN_LOAD" });
 
   beginLoading("Démarrage", 0.02);
@@ -126,7 +127,7 @@ async function main() {
 
   registerRenderTarget(persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);
 
-  const session = await bootGameSessionWithRetry(persistentEngine, choice, flowActor);
+  const session = await bootGameSessionWithRetry(persistentEngine, choice, flowActor, entry);
   const engine: GameEngine = { ...persistentEngine, session };
   currentLevelId = () => engine.session.choice.id;
 
@@ -147,6 +148,7 @@ async function main() {
     interpolateVisuals: (alpha) => interpolateVisuals(engine, alpha),
     updateFx: (realDt, stats) => {
       updateFx(engine, realDt, stats);
+      flushCampaignSave();
       engine.cameraViewOverlay.update(realDt);
     },
     render() {

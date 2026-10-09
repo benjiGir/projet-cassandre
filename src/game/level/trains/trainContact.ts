@@ -63,6 +63,7 @@ export function trainTouchesActor(pass: TrainPass, actor: TrainActor): boolean {
   const halfLength = (TRAIN_CAR_LENGTH - .35) / 2;
   for (let car = 0; car < Math.round(pass.length / TRAIN_CAR_LENGTH); car++) {
     const offset = (car + .5) * TRAIN_CAR_LENGTH;
+    if (pass.front-offset < (pass.route.visibleStart ?? -Infinity) - (pass.route.visualPadding ?? 0) || pass.previousFront-offset > (pass.route.visibleEnd ?? Infinity) + (pass.route.visualPadding ?? 0)) continue;
     poseOnRoute(pass.route, pass.previousFront - offset, a, previousDirection);
     poseOnRoute(pass.route, pass.front - offset, b, direction);
     if (Math.min(actor.position.y, actor.previous.y) - actor.halfHeight > Math.max(a.y, b.y) + TRAIN_HEIGHT ||

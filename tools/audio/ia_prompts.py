@@ -28,6 +28,11 @@ from __future__ import annotations
 
 EPOQUE = "1990s first-person shooter game sound effect"
 SEC = "dry, no music, no voice-over"
+SANS_TRAIN = "no voices, no music"
+# Le lieu, en tête de chaque prompt de train : sans lui, le modèle rend un train de grande ligne.
+STATION = "Field recording on an underground metro station platform, echoing tiled vault"
+TUNNEL = "Field recording inside an underground metro subway tunnel, close concrete walls"
+A_BORD = "Field recording inside an underground metro subway car"
 
 PROMPTS: dict[str, tuple[str, float, float]] = {
     # -- armes --------------------------------------------------------------
@@ -148,7 +153,101 @@ PROMPTS: dict[str, tuple[str, float, float]] = {
     "ui_deny": (
         f"A retro computer error buzz, short low negative tone, 1990s, {SEC}",
         0.6, 0.7),
+    # -- trains du métro (v2.0) ----------------------------------------------
+    # Le train se joue en couches, pas en un seul passage enregistré : sa
+    # vitesse et la distance au joueur changent, donc le jeu mélange une
+    # boucle de roulement qui suit la rame et des sons ponctuels calés sur des
+    # instants (annonce, passage de l'avant, arrêt, choc).
+    #
+    # Reprise du 2026-10-08 : les prises du 2026-10-06 sont abandonnées
+    # (`candidats/_abandonnes/`). Leurs prompts décrivaient un TRAIN — joints
+    # de rail, bogies, wagon de fret — et le mot « subway » n'y pesait rien.
+    # Chaque prompt commence maintenant par le LIEU (`STATION`, `TUNNEL`,
+    # `A_BORD`) et décrit une rame électrique : moteurs de traction qui
+    # sifflent, roues qui crissent, air poussé dans le tunnel, air comprimé.
+    # Le roulement en boucle (`train_roll`) n'est plus demandé au service : il
+    # se découpe dans le palier de la prise retenue de `train_pass`.
+    "train_pass": (
+        # Prise 1 (2026-10-08, prompt centré sur le sifflement des moteurs) :
+        # 42 % de l'énergie dans cinq raies vers 700 Hz, rien au-dessus de
+        # 2 kHz. Depuis, le prompt demande d'abord le fracas large des roues.
+        f"{STATION}: an electric metro train bursts out of the tunnel and runs through the station at speed "
+        "without stopping. A gust of air, then the loud broadband roar and clatter of steel wheels on the "
+        "rails close to the microphone, wheel squeal, hissing air, motor whine underneath, then it recedes "
+        f"into the far tunnel, one single pass, {SANS_TRAIN}, no horn, no announcements",
+        8.0, 0.55),
+    "rail_sing": (
+        # Demander un « grondement lointain » ne produisait que du grave sous
+        # 60 Hz, inaudible. À l'inverse, « thin, mostly high frequencies »
+        # (prise 1 du 2026-10-08) a mis 80 % de l'énergie au-dessus de 8 kHz.
+        "Seamless loop recorded inside a quiet underground metro tunnel, just before a train arrives: the "
+        "steel rails start to sing, a metallic ringing, whistling and zinging running along the rails like "
+        "bowed steel, with small ticks and pings, a faint electric buzz from the live third rail, tense and "
+        f"eerie, steady, {SANS_TRAIN}, no rumble, no bass, no train passing, no horn",
+        4.0, 0.55),
+    "train_horn": (
+        f"{TUNNEL}: an approaching electric metro train sounds its warning horn. One loud two-tone electric "
+        f"horn blast, urgent, ringing down the concrete tunnel with a long echo, {SANS_TRAIN}, no train rumble",
+        2.0, 0.6),
+    "train_whoosh": (
+        # Prise 1 (2026-10-08, « Field recording… ») : molle, sans attaque, la
+        # moitié de l'énergie sous 60 Hz. L'effet passe devant le lieu.
+        "The huge whoosh of an electric metro train rushing past at arm's length on an underground station "
+        "platform: a sudden violent blast of wind and hissing rushing air, screaming steel wheels and motor "
+        "whine inside it, sharp loud attack then fading into the station echo, bright, punchy exaggerated "
+        f"video game sound effect, {SANS_TRAIN}, no horn, no low rumble",
+        2.0, 0.5),
+    "train_brake": (
+        f"{STATION}: an electric metro train brakes hard to a full stop at the platform. A long piercing "
+        "brake squeal falling in pitch, the traction motor whine winding down, wheels grinding on the rails, "
+        f"then a final hiss of compressed air, echoing in the station, {SANS_TRAIN}, no horn, no announcements",
+        3.0, 0.5),
+    "train_hit": (
+        "A body struck by a speeding metro subway train: one massive heavy impact thud against the steel "
+        f"front of the car, a wet crunch and splatter, brutal and over the top, violent {EPOQUE}, {SEC}",
+        1.0, 0.5),
+    "switch_lever": (
+        f"{TUNNEL}: a heavy manual track switch lever is thrown. A big iron lever ratchets over and slams, "
+        "then the steel rail points slide and lock with a loud metallic clunk that rings down the tunnel, "
+        f"close microphone, {SANS_TRAIN}",
+        1.6, 0.55),
+    "emergency_stop": (
+        f"{STATION}: an emergency stop handle is pulled on the platform. The sharp mechanical clack of a "
+        "spring-loaded handle, immediately followed by a loud harsh electric alarm buzzer sounding for one "
+        f"second and echoing in the station, {SANS_TRAIN}",
+        1.8, 0.55),
+    "train_doors": (
+        # Prise 1 (2026-10-08) : 58 % sous 60 Hz, le grondement d'une rame en marche.
+        f"{A_BORD}, standing still at a station: the doors close. A loud harsh door-closing warning buzzer "
+        "for one second, then the sliding doors rattle shut and slam with a clack, a sharp pneumatic hiss, "
+        f"{SANS_TRAIN}, no announcements, no rumble",
+        2.5, 0.55),
+    "train_depart": (
+        f"{A_BORD}: the electric train pulls away from the station. A jolt, creaks, then the whine of the "
+        "electric traction motors rising steadily in pitch as the wheels roll faster and the roar of the "
+        f"tunnel builds, {SANS_TRAIN}, no horn, no announcements",
+        4.0, 0.5),
+    "ride_interior": (
+        # Plus demandé en boucle : le modèle rendait un grondement sourd (78 %
+        # de l'énergie sous 60 Hz). Un trajet enregistré à bord est un son
+        # qu'il connaît ; la boucle se découpera dans la prise retenue.
+        # Prise 1 du 2026-10-08 : nappe tonale entre 200 et 400 Hz, sans rien
+        # qui cliquette ; le fracas large passe en tête du prompt.
+        f"{A_BORD} at full speed through a tunnel: the loud broadband roar and hiss of the tunnel rushing "
+        "past, steel wheels clattering and screeching on the rails, rattling metal panels, handrails and "
+        f"windows, motor whine underneath, steady from the first to the last second, {SANS_TRAIN}, no "
+        "announcements, no stop, no fade",
+        8.0, 0.5),
 }
+
+# Sons demandés en boucle raccordable (paramètre `loop` du service).
+BOUCLES = frozenset({"rail_sing"})
+
+# Les sons du train, dans l'ordre d'écoute : `ia_sfx.py generate --cat train`.
+SONS_TRAIN = (
+    "train_pass", "rail_sing", "train_horn", "train_whoosh", "train_brake", "train_hit",
+    "switch_lever", "emergency_stop", "train_doors", "train_depart", "ride_interior",
+)
 
 # --- Ambiances de zone (`ia_ambiances.py`) -----------------------------------
 #

@@ -26,6 +26,7 @@ export type GameFlowEvent =
   | { type: "SHOW_OUTRO" }
   | { type: "LEVEL_COMPLETED" }
   | { type: "REPLAY" }
+  | { type: "NEXT_LEVEL" }
   | { type: "RETURN_TO_MENU" }
   | { type: "PAUSE" }
   | { type: "RESUME" };

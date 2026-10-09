@@ -25,6 +25,7 @@ import {
 import { PlayerController } from "../player/movement/controller";
 import { WeaponSystem } from "../player/weapons/weapons";
 import { trainRideConfig, TRAIN_RIDE_VARIANTS } from "../level/trainRide/trainRideConfig";
+import type { MetroBlockout } from "../level/blockout/metroBlockout";
 import { trainConfig, TRAIN_VARIANTS } from "../level/trains/trainConfig";
 import { kickConfig, KICK_VARIANTS } from "../player/weapons/kickConfig";
 import { Suit } from "../entities/suit/suit";
@@ -34,6 +35,7 @@ import { DirectorManager } from "../entities/director/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/director/directorConfig";
 import type { DoorInfo } from "../level/doors/doorTypes";
 import { type LevelStats, type SecretZone, type UseObject } from "../level/loading/levelTypes";
+import type { LevelLoadResult } from "../level/loading/hotReload";
 import type { PropSystem } from "../level/props/props";
 import type { DoorSystem } from "../level/doors/doors";
 import type { VitreSystem } from "../level/interactions/vitres";
@@ -53,8 +55,6 @@ import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../s
 import { grantCard } from "../session/progression/cards";
 import { grantPerk, startKillRush, usePerkKiosk, type PerkPurchase } from "../session/progression/perks";
 import { publishCounters } from "../session/stream/streamFeed";
-import { triggerLevelComplete } from "../session/progression/doors";
-import { applyPlayerDamage, presentPlayerDamage } from "../session/player/feedback";
 import { type SessionStats } from "../session/progression/score";
 import { useGameStore } from "../hud/state";
 import { type LevelRecap } from "../hud/hudTypes";
@@ -82,6 +82,7 @@ import {
   type RenderBenchmark,
 } from "./replay/testHarness";
 import { levelSpaceAt } from "../level/navigation/levelSpaces";
+import { createCampaignDebug } from "./campaignDebug";
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
@@ -93,9 +94,9 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.player;
     },
     recorder: inputRecorder,
-    pose: () => {
+    pose: (publish = true) => {
       const pose = readBlenderPose(engine);
-      void publishBlenderPose(pose);
+      if (publish) void publishBlenderPose(pose);
       return pose;
     },
     tp: (x, y, z, cap) => teleportBlender(engine, x, y, z, cap),
@@ -125,6 +126,7 @@ export function exposeDebugApi(engine: GameEngine): void {
       },
     },
     voyageRame: {
+      etat: () => engine.session.gltfLevelSession?.current?.metroBlockout?.snapshot() ?? null,
       config: trainRideConfig,
       variantes: TRAIN_RIDE_VARIANTS,
       get system() { return engine.session.trainRideGym?.system ?? null; },
@@ -204,6 +206,7 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     level: {
       load: (name) => loadGltfLevel(engine, engine.session, name),
+      reload: () => engine.session.gltfLevelSession?.reload() ?? Promise.resolve(null),
       stats: () => engine.session.gltfLevelSession?.current?.stats ?? null,
     },
     cards: () => LOYALTY_CARDS.filter((card) => engine.session.cards.has(card)),
@@ -329,14 +332,12 @@ export function exposeDebugApi(engine: GameEngine): void {
       }
       return pool.stats;
     },
+    campagne: createCampaignDebug(engine),
     recap: {
       stats: () => engine.session.stats,
       recap: () => useGameStore.getState().recap,
-      completeLevel: () => triggerLevelComplete(engine, engine.session),
-      killPlayer: () => {
-        applyPlayerDamage(engine, engine.session, engine.session.playerHp);
-        presentPlayerDamage(engine.session.playerHp);
-      },
+      completeLevel: () => { engine.session.devCompleteRequested = true; },
+      killPlayer: () => { if (engine.flow.isPlaying()) engine.session.devCampaignCommands.push("death"); },
     },
     pause: () => engine.flow.pause(),
     resume: () => engine.flow.resume(),
@@ -403,11 +404,12 @@ function inspectLighting(engine: GameEngine) {
 declare global {
   interface Window {
     cassandre: {
+      campagne: ReturnType<typeof createCampaignDebug>;
       moveConfig: MoveConfig;
       player: PlayerController;
       recorder: typeof inputRecorder;
       /** Pose du joueur en coordonnées BLENDER, déposée aussi pour `C.shot("joueur")` (`devtools/blenderPose.ts`). */
-      pose: () => BlenderPose;
+      pose: (publish?: boolean) => BlenderPose;
       /** Place le joueur en coordonnées BLENDER (pieds à `z`, cap en degrés) — la commande que rend `C.shot`. */
       tp: (x: number, y: number, z: number, cap?: number) => BlenderPose;
       lastRecording: () => Recording | null;
@@ -429,6 +431,7 @@ declare global {
           rames: { voie: string; trajet: string; avant: number }[]; morts: number; ennemis: number; traversées: number } | null;
       };
       voyageRame: {
+        etat(): ReturnType<MetroBlockout["snapshot"]> | null;
         config: typeof trainRideConfig;
         variantes: typeof TRAIN_RIDE_VARIANTS;
         readonly system: import("../level/trainRide/trainRideSystem").TrainRideSystem | null;
@@ -495,6 +498,7 @@ declare global {
       level: {
         /** Charge (ou recharge) `public/assets/levels/<name>.glb`, avec hot reload. */
         load: (name: string) => void;
+        reload: () => Promise<LevelLoadResult | null>;
         /** Compteurs du niveau glTF actuellement chargé, `null` si aucun. */
         stats: () => LevelStats | null;
       };

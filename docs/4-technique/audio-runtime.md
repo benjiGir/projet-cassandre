@@ -2,7 +2,7 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-08
 ---
 
 # Audio runtime
@@ -14,7 +14,7 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 
 ## Fichiers
 
-- `src/core/audio/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
+- `src/core/audio/audio.ts` charge le sprite des effets et lance les lectures ponctuelles ; la table `SFX_TABLE` vit dans `src/core/audio/audioCatalog.ts`.
 - `src/core/audio/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
 - `src/core/audio/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
 - `src/core/audio/showerAmbience.ts` gère la boucle localisée des douches.

@@ -1,0 +1,302 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // Principe : `error` = garde-fou propre aujourd'hui (une régression casse `pnpm check`),
+  // `warn` = dette existante, plafonnée par `options.maxWarnings`. Ce plafond ne fait que
+  // descendre : quand on corrige des avertissements, on le baisse au nouveau total.
+  "plugins": ["typescript", "oxc", "import", "unicorn"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "options": {
+    "typeAware": true,
+    "reportUnusedDisableDirectives": "warn",
+    "maxWarnings": 694
+  },
+  "env": { "browser": true, "es2022": true },
+  "ignorePatterns": ["dist", "public", "docs", "tools", "assets", "assets_src", "refs", "renders", "tmp"],
+  "rules": {
+    // --- Typage -------------------------------------------------------------------------
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-deprecated": "error",
+    "typescript/await-thenable": "error",
+    "typescript/no-for-in-array": "error",
+    "typescript/only-throw-error": "error",
+    "typescript/switch-exhaustiveness-check": "error",
+    // Promesses : une promesse jetée sans `void` ni `.catch` masque les erreurs de chargement.
+    "typescript/no-floating-promises": "warn",
+    "typescript/no-misused-promises": "warn",
+    // Sans `noUncheckedIndexedAccess`, la plupart des `!` sur accès indexé ne servent à rien.
+    "typescript/no-unnecessary-type-assertion": "warn",
+    "typescript/no-meaningless-void-operator": "warn",
+    // Un seul style d'import de types : `import type { X }`.
+    "typescript/consistent-type-imports": "warn",
+    "typescript/no-import-type-side-effects": "warn",
+    // --- Imports ------------------------------------------------------------------------
+    "import/no-self-import": "error",
+    "import/no-default-export": "error",
+    "import/no-duplicates": "warn",
+    // Cycles, y compris de types (ignoreTypes: false) : ils trahissent une couche mal découpée.
+    "import/no-cycle": ["warn", { "ignoreTypes": false }],
+    // Jamais de fichier barrel (`index.ts` qui ré-exporte) : on importe depuis le fichier qui définit.
+    "oxc/no-barrel-file": ["error", { "threshold": 0 }],
+    // --- Taille et complexité (cf. audit de qualité du 2026-10-08) ------------------------
+    "eslint/max-lines-per-function": ["warn", { "max": 120, "skipBlankLines": true, "skipComments": true }],
+    "eslint/max-lines": ["warn", { "max": 500, "skipBlankLines": true, "skipComments": true }],
+    "eslint/complexity": ["warn", { "max": 20 }],
+    "eslint/max-params": ["warn", { "max": 6 }],
+    // --- Hygiène --------------------------------------------------------------------------
+    "eslint/no-console": ["error", { "allow": ["info", "warn", "error"] }],
+    "eslint/no-empty": ["warn", { "allowEmptyCatch": false }],
+    "eslint/eqeqeq": "error",
+    "eslint/no-var": "error",
+    "eslint/prefer-const": "error",
+    "eslint/no-alert": "error",
+    "eslint/no-eval": "error",
+    "eslint/prefer-template": "warn",
+    // --- Règles des catégories suspicious/perf écartées : bruit sans valeur ici -----------------
+    // `_champ` privé adossé à un getter public (files d'événements des gestionnaires).
+    "eslint/no-underscore-dangle": "off",
+    // Cible ES2022 : `toSorted`/`toReversed` n'existent pas ; le tri en place est voulu.
+    "unicorn/no-array-sort": "off",
+    "unicorn/no-array-reverse": "off",
+    "unicorn/consistent-function-scoping": "off",
+    // Chargements séquentiels volontaires (ordre des ressources).
+    "eslint/no-await-in-loop": "off",
+    // `import * as THREE` / `import RAPIER from` : membres légitimes de l'espace de noms.
+    "import/no-named-as-default-member": "off",
+    // Import CSS à effet de bord dans main.ts.
+    "import/no-unassigned-import": "off",
+    // 211 casts `as` : à traiter au cas par cas, pas par règle globale.
+    "typescript/no-unsafe-type-assertion": "off",
+    // Dette recensée mais bruyante : à examiner avant d'imposer.
+    "typescript/no-base-to-string": "warn",
+    "typescript/unbound-method": "warn",
+    "typescript/restrict-template-expressions": "warn",
+    // --- Invariants du moteur (CLAUDE.md) ------------------------------------------------
+    // #12 : RNG déterministe uniquement (service `DeterministicRandom`), jamais `Math.random`.
+    "eslint/no-restricted-properties": [
+      "error",
+      { "object": "Math", "property": "random", "message": "Invariant #12 : utiliser DeterministicRandom (core/effect/random.ts)." },
+      { "object": "Date", "property": "now", "message": "Invariant #12 : pas d'horloge murale dans le jeu (UI seulement)." },
+      { "object": "Effect", "property": "tryPromise", "message": "Invariant #11 : pas d'asynchrone hors de la frontière de chargement." },
+      { "object": "Effect", "property": "promise", "message": "Invariant #11 : pas d'asynchrone hors de la frontière de chargement." },
+      { "object": "Effect", "property": "async", "message": "Invariant #11 : pas d'asynchrone hors de la frontière de chargement." },
+      { "object": "Effect", "property": "sleep", "message": "Invariant #11 : pas de suspension dans le pas fixe ni le rendu." },
+      { "object": "GameRuntime", "property": "runPromise", "message": "Invariant #11 : runPromise est réservé au chargement et au hot-reload." },
+      { "object": "GameRuntime", "property": "runFork", "message": "Invariant #11 : runFork est réservé au chargement et au hot-reload." }
+    ],
+    "eslint/no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          { "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le service Random par défaut d'Effect n'est pas déterministe." }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    // --- Couches : core ← physics ← render ← game ← app ← ui ------------------------------
+    // Chaque couche ne dépend que de celles qui la précèdent. Les violations actuelles sont
+    // des `warn` (dette recensée dans l'audit) ; elles passent en `error` quand elles sont résolues.
+    {
+      "files": ["src/core/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              {
+                "group": ["**/game/**", "**/render/**", "**/physics/**", "**/app/**", "**/ui/**"],
+                "message": "core est le socle : il ne dépend d'aucune autre couche."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/physics/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              { "group": ["**/game/**", "**/render/**", "**/app/**", "**/ui/**"], "message": "physics ne dépend que de core." }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/render/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              {
+                "group": ["**/game/**", "**/app/**", "**/ui/**"],
+                "message": "render reçoit des données ; il n'importe ni le jeu, ni app, ni ui."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/game/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [{ "group": ["**/app/**", "**/ui/**"], "message": "game ne dépend ni de app ni de ui." }]
+          }
+        ]
+      }
+    },
+    {
+      // Le code de gameplay ne lit pas les outils de développement (ex. `cheats`).
+      "files": [
+        "src/game/entities/**",
+        "src/game/player/**",
+        "src/game/level/**",
+        "src/game/hud/**",
+        "src/game/settings/**"
+      ],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              {
+                "group": ["**/game/devtools/**", "**/devtools/**", "**/app/**", "**/ui/**"],
+                "message": "Le gameplay ne dépend ni des devtools, ni de app, ni de ui."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // --- UI : components/ n'importe que lib/ ; hud/ et screens/ lisent game/hud et game/settings ---
+    {
+      "files": ["src/ui/components/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              {
+                "group": ["**/game/**", "**/core/**", "**/render/**", "**/physics/**", "**/app/**", "**/dev/**"],
+                "message": "Une primitive de components/ reçoit tout par props (voir docs/6-reference/react-structure.md)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/ui/hud/**", "src/ui/screens/**"],
+      "rules": {
+        "eslint/no-restricted-imports": [
+          "warn",
+          {
+            "paths": [{ "name": "effect", "importNames": ["Random"], "message": "Invariant #12 : le Random par défaut d'Effect n'est pas déterministe." }],
+            "patterns": [
+              {
+                "group": ["**/game/**", "!**/game/hud/**", "!**/game/settings/**", "**/render/**", "**/physics/**", "**/app/**", "**/dev/**"],
+                "message": "hud/ et screens/ ne lisent que game/hud et game/settings, et n'utilisent jamais dev/."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // --- React / accessibilité : uniquement dans l'interface (Service.use d'Effect n'est pas un hook) ---
+    {
+      "files": ["src/ui/**"],
+      "plugins": ["react", "jsx-a11y"],
+      "rules": {
+        "react/rules-of-hooks": "error",
+        "react/exhaustive-deps": "error",
+        "react/jsx-key": "error",
+        "react/no-danger": "error",
+        "react/button-has-type": "error",
+        // « Réinitialiser un état quand une prop change, c'est une `key`, pas un effet. »
+        "react/set-state-in-effect": "warn",
+        "react/no-array-index-key": "warn",
+        // `jsx: react-jsx` : pas besoin d'importer React dans chaque fichier.
+        "react/react-in-jsx-scope": "off",
+        "jsx-a11y/interactive-supports-focus": "warn",
+        // Menus de jeu : le focus initial est voulu, et les rôles ARIA portent des composants stylés.
+        "jsx-a11y/no-autofocus": "off",
+        "jsx-a11y/prefer-tag-over-role": "off"
+      }
+    },
+    {
+      // Le panneau de tuning édite volontairement des objets de config mutables (react-bonnes-pratiques.md).
+      "files": ["src/ui/dev/**"],
+      "plugins": ["react"],
+      "rules": { "react/immutability": "off" }
+    },
+    {
+      // Les outils de développement et le harnais de rejeu écrivent volontairement dans la console.
+      "files": ["src/game/devtools/**"],
+      "rules": { "eslint/no-console": "off" }
+    },
+    // --- Exceptions aux invariants --------------------------------------------------------
+    {
+      // Seuls points d'entrée asynchrones autorisés (invariant #11) : chargement et hot-reload.
+      "files": ["src/game/level/loading/loader.ts", "src/game/level/loading/hotReload.ts"],
+      "rules": { "eslint/no-restricted-properties": "off" }
+    },
+    {
+      // L'interface peut lire l'horloge murale (rotation des phrases de l'écran de chargement).
+      "files": ["src/ui/**"],
+      "rules": {
+        "eslint/no-restricted-properties": [
+          "error",
+          { "object": "Math", "property": "random", "message": "Invariant #12 : pas de Math.random." }
+        ]
+      }
+    },
+    {
+      // Fichiers de configuration d'outils : export par défaut imposé.
+      "files": ["*.config.ts", "**/*.config.ts"],
+      "env": { "node": true },
+      "rules": { "import/no-default-export": "off", "eslint/no-restricted-properties": "off" }
+    },
+    // --- Tests -----------------------------------------------------------------------------
+    {
+      "files": ["test/**"],
+      "plugins": ["vitest"],
+      "env": { "node": true },
+      "rules": {
+        "vitest/no-focused-tests": "error",
+        "vitest/no-disabled-tests": "warn",
+        "vitest/expect-expect": "warn",
+        "vitest/no-identical-title": "error",
+        // `expect(valeur, "message")` est une forme valide de Vitest.
+        "vitest/valid-expect": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "vitest/require-to-throw-message": "off",
+        // `x * 0` est un cas de test voulu (graine nulle).
+        "oxc/erasing-op": "off",
+        // Un `describe` est une longue fonction par nature.
+        "eslint/max-lines-per-function": "off",
+        "eslint/max-lines": "off",
+        "eslint/complexity": "off",
+        "eslint/no-restricted-properties": "off",
+        "eslint/no-restricted-imports": "off"
+      }
+    }
+  ]
+}

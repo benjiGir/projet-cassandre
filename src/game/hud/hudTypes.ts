@@ -70,7 +70,7 @@ export interface PerkOfferView {
   readonly effect: string;
   /** Euros. */
   readonly price: number;
-  /** Déjà acheté dans cette partie : la borne est épuisée. */
+  /** Consommable sans bénéfice : santé ou réserves déjà pleines. */
   readonly sold: boolean;
 }
 

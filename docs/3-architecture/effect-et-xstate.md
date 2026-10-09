@@ -2,7 +2,7 @@
 title: Effect et XState
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Effect et XState
@@ -46,10 +46,10 @@ tous assemblés dans `GameLayer` (`src/app/runtime/gameRuntime.ts`) :
 
 | Service | Fichier | Rôle | Consommé par |
 |---|---|---|---|
-| `DeterministicRandom` | `src/core/effect/random.ts` | Fabrique de générateurs `mulberry32` indépendants (`forSeed`) | `enemyMachine.ts`, `weapons.ts`, `gameSession.ts`, `lifecycle.ts`, `pathfinding.ts` |
-| `RaycastService` | `src/physics/raycast.ts` | Enveloppe Effect de `castRay`/`castRayAndGetNormal`/`castShape` (pas de `THREE.Raycaster`) | `weapons.ts`, `enemyMachine.ts`, `sanitaires.ts`, `spawning.ts` |
-| `PathfindingService` | `src/game/level/navigation/pathfinding.ts` | Bake et requête du graphe de navigation 2.5D | `enemyMachine.ts`, `spawning.ts` |
-| `RenderService` | `src/render/pipeline/renderService.ts` | Enveloppe Effect de l'appel de rendu Three.js | `main.ts` |
+| `DeterministicRandom` | `src/core/effect/random.ts` | Fabrique de générateurs `mulberry32` indépendants (`forSeed`) | `enemyMachine.ts`, `weapons.ts`, `props.ts`, `lifecycle.ts` |
+| `RaycastService` | `src/physics/raycast.ts` | Enveloppe Effect de `castRay`/`castRayAndGetNormal`/`castShape` (pas de `THREE.Raycaster`) | `weapons.ts`, `enemyPerception.ts`, `enemyCombat.ts`, `enemyNavigation.ts`, `navBake.ts`, `trainSafety.ts`, `surfaceProbe.ts`, `sanitaires.ts`, `spawning.ts` |
+| `PathfindingService` | `src/game/level/navigation/pathfinding.ts` | Bake et requête du graphe de navigation 2.5D | `enemyNavigation.ts`, `navBake.ts`, `spawning.ts`, `lifecycle.ts` |
+| `RenderService` | `src/render/pipeline/renderService.ts` | Enveloppe Effect de l'appel de rendu Three.js | `main.ts`, `spawning.ts`, `doucheShader.ts`, `warmTrainModel.ts` |
 
 Chacun est fourni par sa propre `Layer`, assemblées par `GameLayer =
 Layer.mergeAll(...)` (`src/app/runtime/gameRuntime.ts`) — racine de composition
@@ -102,7 +102,7 @@ Effect ([invariant #3](invariants.md)).
 
 ## Erreurs typées
 
-`src/game/level/loading/loader.ts` déclare une quinzaine d'erreurs
+`src/game/level/loading/levelDiagnostics.ts` déclare une vingtaine d'erreurs
 `Schema.TaggedError` (`MissingSpawnPlayerError`, `NonBoxTriggerError`,
 `UnknownSanitaireKindWarning`…). Patron dominant, répété à chaque site
 d'échec — le **fail immédiatement rattrapé** : `Effect.fail(new
@@ -164,9 +164,9 @@ Détail : [Boucle et temps](boucle-et-temps.md#hitstop).
 
 Graphe d'état **pur** (`src/app/navigation/gameFlowMachine.ts`,
 [ADR 0019](../decisions/0019-machine-xstate-flux-ecran.md)) : ne connaît ni
-`PhysicsWorld`, ni `scene`, ni `bootGameSession`. Dix états (`boot`,
-`mainMenu`, `options`, `levelSelect`, `loading`, `loadFailed`, `playing`,
-`paused`, `dead`, `levelComplete`), transitions sur évènement discret,
+`PhysicsWorld`, ni `scene`, ni `bootGameSession`. Douze états (`boot`,
+`mainMenu`, `options`, `levelSelect`, `loading`, `loadFailed`, `intro`, `playing`,
+`paused`, `dead`, `outro`, `levelComplete`), transitions sur évènement discret,
 jamais de minuterie — la règle « pas de temps mural » (ex-invariant #13) y
 est vacuously vraie. Un acteur unique
 pour tout l'onglet reçoit ses évènements de `sessionFlow.ts`/`main.ts`

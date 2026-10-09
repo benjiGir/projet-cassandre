@@ -14,14 +14,17 @@ import styles from "./LevelCompleteScreen.module.css";
 
 export interface LevelCompleteScreenProps {
   onReplay: () => void;
+  onNextLevel?: () => void;
   onReturnToMenu: () => void;
 }
 
 // see: docs/archive/systems-hud.md#écrans-de-mort-et-de-fin-de-niveau
-export function LevelCompleteScreen({ onReplay, onReturnToMenu }: LevelCompleteScreenProps) {
+export function LevelCompleteScreen({ onReplay, onNextLevel, onReturnToMenu }: LevelCompleteScreenProps) {
   const flowState = useGameStore((s) => s.flowState);
   const recap = useGameStore((s) => s.recap);
   const live = useGameStore((s) => s.liveRecap);
+  const nextAvailable = useGameStore((s) => s.campaign.nextAvailable);
+  const metro = useGameStore((s) => s.campaign.levelId === "metro");
   if (flowState !== "levelComplete") return null;
 
   return (
@@ -31,8 +34,8 @@ export function LevelCompleteScreen({ onReplay, onReturnToMenu }: LevelCompleteS
 
       <CornerFrame className={styles.panel}>
         <StatusFlag>TRANSMISSION ACHEVÉE</StatusFlag>
-        <ScreenTitle className={styles.title}>ÉCHAPPÉ D'HYPER VARAN</ScreenTitle>
-        <p className={styles.body}>Vidéo retirée, chaîne suspendue. Mais les images existent, et toi, tu es dehors.</p>
+        <ScreenTitle className={styles.title}>{metro ? "SORTIE DU MÉTRO" : "ÉCHAPPÉ D'HYPER VARAN"}</ScreenTitle>
+        <p className={styles.body}>{metro ? "Le direct continue au-delà du réseau." : "Vidéo retirée, chaîne suspendue. Mais les images existent, et toi, tu es dehors."}</p>
         {live && <LiveSummary live={live} />}
         {recap && (
           <div className={styles.stats}>
@@ -42,7 +45,10 @@ export function LevelCompleteScreen({ onReplay, onReturnToMenu }: LevelCompleteS
         <RecapTable recap={recap} className={styles.recap} />
 
         <ButtonRow className={styles.actions}>
-          <Button className={styles.actionButton} variant="primary" onClick={onReplay}>
+          {nextAvailable && onNextLevel && <Button className={styles.actionButton} variant="primary" onClick={onNextLevel}>
+            ▶ CONTINUER — MÉTRO
+          </Button>}
+          <Button className={styles.actionButton} variant={nextAvailable ? "default" : "primary"} onClick={onReplay}>
             ▶ REJOUER
           </Button>
           <Button className={styles.actionButton} onClick={onReturnToMenu}>

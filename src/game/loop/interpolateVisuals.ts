@@ -70,7 +70,11 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
       yield* Effect.sync(() => {
         session.trainRideGym?.presentation.interpolate(session.trainRideGym.system, alpha, session.stats.gameplayElapsed);
         const trains = session.gltfLevelSession?.current?.trains;
+        const blockout = session.gltfLevelSession?.current?.metroBlockout;
+        session.gltfLevelSession?.current?.fountainWater?.interpolate(engine.flow.isPlaying() ? alpha : 1);
+        blockout?.presentation.interpolate(blockout.system, alpha, session.stats.gameplayElapsed);
         trains?.presentation.interpolate(trains.system, alpha, session.stats.gameplayElapsed);
+        trains?.beacons.update(trains.system, session.stats.gameplayElapsed);
         session.trainGym?.presentation.interpolate(session.trainGym.system, alpha, session.stats.gameplayElapsed);
         session.propSystem?.interpolate(alpha, engine.camera.position);
         session.doorSystem?.interpolate(alpha);

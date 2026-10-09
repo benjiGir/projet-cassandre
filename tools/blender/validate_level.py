@@ -196,7 +196,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
                     "cet ennemi n'apparaîtrait jamais")
-        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk", "train"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_n5_aiguillage", "use_n5_courant", "use_n5_depart", "use_n5_fin", "use_n5_raccourci", "use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk", "train"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait

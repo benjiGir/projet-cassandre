@@ -173,6 +173,10 @@ export class Explosions {
    * l'appelant en redessine une dernière ensuite, pour effacer celle-ci.
    * see: docs/4-technique/rendu.md#préparation-des-douches
    */
+  releaseShaderPrograms(): void {
+    this.slots[0]!.ball.material.dispose();
+  }
+
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
     const ball = this.slots[0]!.ball;
     const pose = { visible: ball.visible, position: ball.position.clone(), age: ball.userData.explosionAge as unknown };

@@ -2,15 +2,15 @@
 title: Glossaire
 tags: [introduction]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Glossaire
 
 Le projet mélange français, anglais, jargon de jeu et jargon moteur. Cette
 page fait le pont : un terme employé ailleurs dans la doc doit figurer ici.
-Regroupé par thème, ordre alphabétique dans chaque thème. Première version
-(jalon D6) — enrichie à chaque phase suivante.
+Regroupé par thème, ordre alphabétique dans chaque thème. Enrichi au fil
+des versions.
 
 ## Univers
 
@@ -19,7 +19,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Annonce | Message des haut-parleurs du magasin ou de l'interphone de la direction, affiché en haut de l'écran par un scénario. | `src/game/session/progression/levelEvents.ts` |
 | Arène | Rencontre qui ferme les issues d'une salle le temps de deux vagues d'ennemis, puis les rouvre. Celle du niveau est dans la réserve. | `src/game/session/progression/levelEvents.ts`, `docs/decisions/0037-script-de-niveau.md` |
 | Bonbonne (de gaz) | Prop de matière `gaz` : poussable, et qui explose à sa casse en amorçant ses voisines. | `src/game/level/props/propConfig.ts`, `docs/decisions/0041-explosifs.md` |
-| Borne | Terminal de sponsor posé dans le niveau : un `use_*` qui vend un seul perk, une fois par partie, contre la cagnotte. | `src/game/session/progression/perks.ts`, `docs/decisions/0040-bornes-et-perks.md` |
+| Borne | Terminal de sponsor posé dans le niveau : un `use_*` qui vend un seul perk, une fois par partie, contre la cagnotte ; ensuite, il ne vend plus que sa recharge (soins ou munitions). | `src/game/session/progression/perks.ts`, `docs/decisions/0040-bornes-et-perks.md` |
 | Cagnotte | Solde des dons reçus pendant la partie, dépensable aux bornes. | `src/game/session/stream/streamSim.ts` |
 | Carte de fidélité (argent / or / platine) | Objet-clé façon Duke 3D : `argent` et `or` se ramassent via un `use_*` (propriété `card`), `platine` est lâchée par le Directeur à sa mort. Une porte peut exiger une carte (`requires`) pour être actionnée. | `src/game/player/loyaltyCards.ts`, `src/game/session/progression/cards.ts` |
 | Direct (le) | La simulation du stream : spectateurs qui montent avec l'action et partent avec l'ennui, abonnés, dons et chat. La cagnotte des dons est sans lien avec le score du récapitulatif. | `src/game/session/stream/streamSim.ts`, `docs/decisions/0038-simulation-du-direct.md` |
@@ -30,7 +30,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Espace | Une zone nommée du niveau (rayons, réserve, bureaux…), reliée aux autres par le hub. | `docs/6-reference/conventions-nommage.md` |
 | Gibs | Ce qui remplace l'animation de mort d'un ennemi tué au pompe à bout portant ou pris au cœur d'une explosion (distance ≤ `gibDistance`) : flaque, traînées, taches aux murs et morceaux qui retombent. Purement cosmétique, la simulation le garde `dead`/`corpse`. | `src/render/fx/gore.ts`, `src/game/entities/suit/suitManager.ts` |
 | Groupe (d'ennemis) | Points d'apparition qui portent le même `groupe` : leurs ennemis n'apparaissent qu'au réveil du groupe par un scénario, en nombre réglé par la difficulté. | `src/game/session/progression/levelScriptActions.ts` |
-| Hub | Zone centrale à la Duke 3D d'où partent les espaces du niveau, débloqués par les cartes de fidélité. | CLAUDE.md (section « Chantier Niveau v2 ») |
+| Hub | Zone centrale à la Duke 3D d'où partent les espaces du niveau, débloqués par les cartes de fidélité. | [Le niveau](../2-fonctionnel/le-niveau.md) |
 | Hypermarché | Le décor du prototype : un hypermarché des années 90, univers satirique. | `docs/1-introduction/le-projet.md` |
 | Hyper Varan | Le nom de l'enseigne, « le sang-froid des prix bas ». Le niveau s'appelle « Inventaire exceptionnel ». | `docs/2-fonctionnel/histoire.md` |
 | Knockback | Recul appliqué à un ennemi qui encaisse un coup non fatal ; converti en vélocité interne (les deux ennemis sont kinématiques, un impulse Rapier n'aurait aucun effet), décroissante sur `knockbackDecayTime`. | `src/game/entities/shared/enemyMachine.ts` |
@@ -42,7 +42,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Record | Meilleur score et meilleur temps d'un niveau terminé, tenus par difficulté et gardés sur le navigateur. | `src/game/settings/records.ts` |
 | Rencontre | Endroit du parcours où le script de niveau fait surgir des ennemis à l'arrivée du joueur. | `tools/blender/refresh_encounters.py` |
 | Panneau d'histoire | Illustration légendée de l'introduction ou de la fin, affichée hors de la partie. | `src/game/session/presentation/storyPanels.ts` |
-| Récapitulatif de fin de partie | Liste des sources de points révélée ligne par ligne à l'écran, suivie du total ; partiel à la mort (sans bonus de rapidité), complet à la vraie sortie du niveau. | `src/game/session/progression/score.ts` |
+| Récapitulatif de fin de partie | Liste des sources de points révélée ligne par ligne à l'écran, suivie du total ; partiel à la mort (sans bonus de rapidité), complet à la vraie sortie du niveau. | `src/game/session/progression/recap.ts`, `src/game/session/progression/score.ts` |
 | Réveil du peuple (« le Réveil ») | La chaîne du héros, qui lui sert aussi de pseudo : il n'a pas de nom civil. Le chat l'appelle « le Réveil ». | `src/ui/hud/widgets/LiveCam/LiveCam.tsx`, `docs/2-fonctionnel/histoire.md` |
 | Révélation reptilienne | Bascule cosmétique du Directeur à sa mort : costume humain remplacé par une peau `revele` verte à crête, posée par `setAtlas`. Purement visuelle, pas un changement de comportement. | `src/game/entities/director/directorConfig.ts` |
 | Sanitaire (`sanitaire_*`) | Cuvette ou urinoir façon Duke 3D : utilisable en visant (soin ou eau selon l'état), cassable si `pv`. | `src/game/level/sanitaires/sanitaires.ts` |
@@ -60,7 +60,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | `DeterministicRandom` | Service Effect canonique du RNG déterministe : enveloppe `mulberry32`, seule source de nombres aléatoires autorisée dans le gameplay (invariant #12). | `src/core/effect/random.ts` |
 | Fait de présentation | Évènement produit par le pas fixe (tir, casse, mort…) et poussé dans une file en lecture seule, consommée puis vidée au taux d'affichage sans jamais influencer une décision de jeu. | `src/game/loop/updateFx.ts`, [Simulation et présentation](../3-architecture/simulation-et-presentation.md) |
 | Flux cosmétique (RNG de présentation) | Générateur `DeterministicRandom` propre à `FxSystem`/l'audio, réinitialisé au boot de session, qui ne peut avancer aucun RNG de simulation. | [ADR 0033](../decisions/0033-rng-presentation-et-portee-du-rejeu.md) |
-| Frontière synchrone (`runGameplaySync`) | Point de passage obligé du pas fixe et du rendu/interpolation : exécute un `Effect` via `Runtime.runSync` sur `GameRuntime`, lève un defect si l'effet n'est pas synchrone. | `src/core/effect/runtime.ts` |
+| Frontière synchrone (`runGameplaySync`) | Point de passage obligé du pas fixe et du rendu/interpolation : exécute un `Effect` via `Runtime.runSync` sur `GameRuntime`, lève un defect si l'effet n'est pas synchrone. | `src/app/runtime/gameRuntime.ts`, `src/core/effect/runtime.ts` |
 | `gameplayDt` | Delta de temps réellement simulé par un pas fixe, hitstop compris — distinct du delta d'affichage brut. | `src/game/loop/updateGameplay.ts` |
 | Hitstop | Ralentissement bref du temps de gameplay à l'impact, pour la lisibilité du coup. Réalisé en réduisant `gameplayDt`, jamais par un `setTimeout`. | `src/game/loop/updateGameplay.ts` |
 | Interpolation | Calcul de la pose affichée entre deux pas fixes, à partir d'`alpha` (fraction de l'accumulateur), pour un rendu fluide indépendant du pas fixe. | `src/core/loop/loop.ts`, `src/game/loop/interpolateVisuals.ts` |
@@ -80,8 +80,8 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | `GameSession` | Ce qui vit le temps d'une partie (niveau chargé, entités, score…), reconstruite à chaque nouvelle partie ; distincte du `GameEngine` persistant. | `src/game/session/gameSession.ts` |
 | `gameFlowMachine` | Machine XState du flux d'écran (menu → jeu → mort/fin de niveau → reset), ne connaît rien du jeu lui-même. | `src/app/navigation/gameFlowMachine.ts` |
 | `GameFlowPort` | Petite interface (`isPlaying`, `isPhysicsLive`, `playerDied`…) par laquelle le pas fixe interroge le flux d'écran sans dépendre de XState ni de React. | `src/game/session/flowPort.ts` |
-| `GameLayer` / `GameRuntime` | `GameLayer` assemble tous les services Effect du jeu (`Layer.mergeAll(...)`) ; `GameRuntime` (`ManagedRuntime.make(GameLayer)`) est le runtime unique construit une fois pour tout l'onglet. | `src/core/effect/runtime.ts`, [Effect et XState](../3-architecture/effect-et-xstate.md) |
-| Erreur typée (`Schema.TaggedError`) | Classe d'erreur Effect déclarée par site d'échec (ex. `MissingSpawnPlayerError`) ; dans `loader.ts`, la quasi-totalité suit le patron « fail immédiatement rattrapé » — journalisée en console, jamais propagée. | `src/game/level/loading/loader.ts` |
+| `GameLayer` / `GameRuntime` | `GameLayer` assemble tous les services Effect du jeu (`Layer.mergeAll(...)`) ; `GameRuntime` (`ManagedRuntime.make(GameLayer)`) est le runtime unique construit une fois pour tout l'onglet. | `src/app/runtime/gameRuntime.ts`, [Effect et XState](../3-architecture/effect-et-xstate.md) |
+| Erreur typée (`Schema.TaggedError`) | Classe d'erreur Effect déclarée par site d'échec (ex. `MissingSpawnPlayerError`) ; dans le chargement de niveau, la quasi-totalité suit le patron « fail immédiatement rattrapé » — journalisée en console, jamais propagée. | `src/game/level/loading/levelDiagnostics.ts` |
 | Jeton de génération (`levelLoadGeneration`) | Entier incrémenté à chaque appel de `loadGltfLevel`, capturé au moment de l'appel ; un chargement dont la génération a changé à son retour est abandonné sans toucher `GameSession`. | `src/game/session/spawning.ts`, [Cycle de vie](../3-architecture/cycle-de-vie.md) |
 | Layer (Effect) | Recette de construction d'un service Effect (ex. `RaycastService.layer`), assemblée dans `GameLayer` au boot. | `src/physics/raycast.ts` |
 | `LevelDef` | Définition d'un niveau sélectionnable au menu (id, nom, chemin du fichier). | `src/game/level/catalog/levels.ts` |
@@ -95,7 +95,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 
 | Terme | Définition | Où le voir |
 |---|---|---|
-| Broad-phase | Phase de Rapier qui présélectionne les paires de colliders candidates à une collision, avant le calcul précis ; doit avoir tourné au moins une fois avant qu'un raycast de gameplay soit fiable. | CLAUDE.md (section pathfinding N5) |
+| Broad-phase | Phase de Rapier qui présélectionne les paires de colliders candidates à une collision, avant le calcul précis ; doit avoir tourné au moins une fois avant qu'un raycast de gameplay soit fiable. | `docs/6-reference/notes-code-core.md` |
 | Collider | Volume de collision Rapier attaché à un corps physique (cuboid, convex hull, trimesh). | `src/physics/world.ts` |
 | Groupes de collision (`WORLD`, `PROP`, `ENEMY`…) | Bits d'appartenance/filtre Rapier qui décident quel collider peut toucher quel autre ; `PROP` est volontairement séparé de `WORLD` (un prop poussé ne doit pas fausser la navigation ni la ligne de vue). | `src/physics/world.ts` |
 | Hitscan | Tir résolu instantanément par un raycast, sans projectile simulé. | `src/physics/raycast.ts` |
@@ -120,7 +120,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | `Col` / `COLOR_0` | Attribut de couleur de sommet portant l'éclairage/l'ombre bakée, exporté en glTF sous `COLOR_0` et lu par Three.js via `vertexColors: true`. | `src/game/level/loading/loader.ts`, `src/render/viewmodel/viewmodel.ts` |
 | Decal | Plan texturé posé sur le décor STATIQUE pour un impact de tir ; jamais sur une entité mobile (prop, porte, ennemi, joueur). | `src/render/fx/fx.ts` |
 | Fusion du décor par cellule | Le décor statique est regroupé par matériau et par cellule cubique de 48 m (`DECOR_CELL_SIZE`) pour limiter le nombre de lots de dessin. | `src/game/level/loading/mergeStaticDecor.ts` |
-| Lot de dessin (draw call) | Une soumission de géométrie au GPU ; le budget du niveau v2 est mesuré en lots par pire vue (~200). | `src/game/level/loading/mergeStaticDecor.ts` |
+| Lot de dessin (draw call) | Une soumission de géométrie au GPU. Mesuré en jeu par `cassandre.renderBench(...)` ; il n'y a plus de plafond de lots depuis l'[ADR 0039](../decisions/0039-abandon-du-plafond-de-lots.md). | `src/game/level/loading/mergeStaticDecor.ts` |
 | `MeshLambertMaterial` | Matériau Lambert classique, utilisé par défaut pour les niveaux et les viewmodels. | `src/render/viewmodel/viewmodel.ts` |
 | `MeshLambertNodeMaterial` | Variante nodale du Lambert classique ; permet de composer un shader avec TSL en gardant l'éclairage Lambert. | `src/game/level/sanitaires/doucheShader.ts` |
 | TSL | Three.js Shading Language : langage nodal pour composer des matériaux et shaders Three.js. | `src/game/level/sanitaires/doucheShader.ts` |
@@ -138,15 +138,15 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | Terme | Définition | Où le voir |
 |---|---|---|
 | Empty Blender | Nœud sans géométrie utilisé comme repère de spawn, lumière ou caméra ; il est exporté comme nœud glTF. | `src/game/level/loading/loader.ts` |
-| Blockout | Version en volumes gris d'un espace, jouable avant tout habillage. | CLAUDE.md (« Chantier Niveau v2 ») |
+| Blockout | Version en volumes gris d'un espace, jouable avant tout habillage. | `tools/level_v2/build_blockout.py` |
 | Custom property (extras) | Propriété Blender personnalisée lue par le loader depuis les `extras` du glTF (ex. `masse`, `pv`, `card`, `requires`). | `src/game/level/loading/loader.ts`, `docs/6-reference/conventions-nommage.md` |
 | glTF / `.glb` | Format d'export du niveau depuis Blender ; seul fichier lu par le jeu en runtime (`public/assets/levels/`). | `src/game/level/loading/loader.ts` |
 | Graphe de navigation / pathfinding 2.5D | Structure construite au chargement du niveau à partir des colliders `WORLD`, utilisée par les ennemis pour se déplacer. | `src/game/level/navigation/pathfinding.ts` |
-| Habillage | Passe qui remplace les volumes gris d'un espace par du décor texturé, sans retoucher la structure validée au blockout. | CLAUDE.md (« Chantier Niveau v2 », N9) |
+| Habillage | Passe qui remplace les volumes gris d'un espace par du décor texturé, sans retoucher la structure validée au blockout. | `tools/level_v2/build_niveau.py` (registre `HABILLAGE`) |
 | Hot reload | Rechargement du niveau en développement par sondage HTTP (`HEAD`, ETag/Last-Modified), actif uniquement sous `import.meta.env.DEV`. | `src/game/level/loading/hotReload.ts` |
 | Kit modulaire | Ensemble de pièces paramétriques réutilisées pour construire le niveau (murs, sols, gondoles…). | `docs/6-reference/conventions-nommage.md` |
 | `_KIT` / `_LIB` | Collections Blender portant les patrons d'assets (kit modulaire, bibliothèque), jamais exportées telles quelles dans le niveau. | `docs/6-reference/conventions-nommage.md` |
-| Plan de masse | Vue de dessus du niveau reliant les espaces entre eux, régénérée à chaque changement de structure. | CLAUDE.md (« Chantier Niveau v2 ») |
+| Plan de masse | Vue de dessus du niveau reliant les espaces entre eux, régénérée à chaque changement de structure. | `tools/level_v2/plan_de_masse.py` |
 | Préfixes de nommage (`col_*`, `spawn_*` — dont `spawn_rampant_*` et `spawn_vigile_*` —, `trig_*`, `door_*`, `use_*`, `secret_*`, `prop_*`, `vitre_*`, `sanitaire_*`, `ecran_*`, `light_*`, `cam_*`) | Convention de nommage d'objet Blender qui pilote l'import : chaque préfixe déclenche un traitement précis au chargement (collider, spawn, trigger, porte animée, interactif, secret, prop physique, vitrage, sanitaire, écran, lumière ou caméra). | `src/game/level/loading/loader.ts`, `docs/6-reference/conventions-nommage.md` |
 
 ## Audio
@@ -205,7 +205,7 @@ Regroupé par thème, ordre alphabétique dans chaque thème. Première version
 | `audit_niveau.py` | Script d'audit géométrique du niveau (trous de sol, bords ouverts, interpénétrations, objets flottants), à lancer après chaque construction. | `tools/level_v2/audit_niveau.py` |
 | CC0 | Indication du registre d'assets pour une source déclarée sous CC0 ; la fiche d'origine et son attribution éventuelle restent consignées dans le registre. | `assets_src/LICENCES_ASSETS.md` |
 | Console `cassandre` (`window.cassandre`) | Objet global exposé en développement pour inspecter/piloter le jeu depuis la console navigateur (niveau, portes, secrets, armes…) ; `game/devtools` est le seul dossier à l'écrire. | `src/game/devtools/consoleApi.ts` |
-| Gate | Critère de validation qui doit être franchi avant de passer à la suite (ex. gate de structure, gate `qa-evidence` — abandonné par défaut depuis 2026-08-19/20). | CLAUDE.md (fin de fichier) |
+| Gate | Critère de validation qui doit être franchi avant de passer à la suite (ex. gate de structure, gate `qa-evidence` — abandonné par défaut depuis 2026-08-19/20). | `docs/journal/premieres-phases-prototype-2026-08.md` |
 | Playtest | Session de jeu réelle par l'utilisateur, seul juge du ressenti (fun, lisibilité) — ce qu'aucun agent ne peut vérifier seul. | CLAUDE.md |
 | Session Blender live (MCP) | Mode de travail où les scripts modifient une session Blender déjà ouverte via le MCP, plutôt qu'un rebuild headless. | skill `blender-python-automation` |
 | Skill | Paquet d'instructions chargé par un agent avant une tâche précise (conventions, pièges connus, procédure). | `.claude/skills/` |

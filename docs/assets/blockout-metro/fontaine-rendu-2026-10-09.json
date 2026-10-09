@@ -1,0 +1,61 @@
+{
+  "pose": {
+    "x": -2.5,
+    "y": 49.5,
+    "z": 0.01,
+    "eye": 1.61,
+    "cap": 0,
+    "pitch": 0
+  },
+  "fontaines": [
+    {
+      "position": [
+        -2.5,
+        0,
+        -56
+      ],
+      "meshes": [
+        {
+          "nom": "fx_fontaine_bassins",
+          "sommets": 180,
+          "materiau": "MeshBasicNodeMaterial"
+        },
+        {
+          "nom": "fx_fontaine_jets",
+          "sommets": 4911,
+          "materiau": "MeshBasicNodeMaterial"
+        },
+        {
+          "nom": "fx_fontaine_gouttes",
+          "sommets": 2304,
+          "materiau": "MeshBasicNodeMaterial"
+        },
+        {
+          "nom": "fx_fontaine_buse",
+          "sommets": 64,
+          "materiau": "MeshLambertMaterial"
+        }
+      ]
+    }
+  ],
+  "rendu": {
+    "frames": 3,
+    "msParImage": 1.667,
+    "imagesParSecondeRendu": 600,
+    "drawCalls": 240,
+    "triangles": 202921,
+    "programmes": 29,
+    "geometries": 389,
+    "textures": 24
+  },
+  "sansEau": {
+    "frames": 3,
+    "msParImage": 1.867,
+    "imagesParSecondeRendu": 535.7,
+    "drawCalls": 236,
+    "triangles": 193585,
+    "programmes": 29,
+    "geometries": 389,
+    "textures": 24
+  }
+}

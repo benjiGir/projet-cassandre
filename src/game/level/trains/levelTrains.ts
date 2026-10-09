@@ -4,6 +4,7 @@ import type { PhysicsWorld } from "../../../physics/world";
 import type { Difficulty } from "../../session/progression/difficulty";
 import type { LevelResources } from "../loading/levelResources";
 import { TrainPresentation } from "../../../render/environment/trainGym/trainPresentation";
+import { TrainBeacons } from "../../../render/environment/trainGym/trainBeacons";
 import { TrainSystem } from "./trainSystem";
 import { trainDifficulty } from "./trainDifficulty";
 import type { TrainLevelData } from "./trainLevelData";
@@ -15,6 +16,7 @@ export class LevelTrains {
   readonly config: TrainConfig = trainDifficulty("habitue");
   readonly system: TrainSystem;
   readonly presentation: TrainPresentation;
+  readonly beacons: TrainBeacons;
   private resetRequested = false;
   private readonly crossingEntries = new Map<number, number>();
   private readonly center = new Vector3();
@@ -23,8 +25,11 @@ export class LevelTrains {
   constructor(private readonly root: THREE.Object3D, physics: PhysicsWorld, readonly data: TrainLevelData, resources: LevelResources) {
     this.system = new TrainSystem(data.lanes, this.config);
     this.presentation = new TrainPresentation(root, physics, data.model, resources.bodies);
-    resources.onCleanup(() => this.presentation.dispose());
+    this.beacons = new TrainBeacons(root, data.signals.filter(signal => signal.appearance === "feu"));
+    resources.onCleanup(() => { this.presentation.dispose(); this.beacons.dispose(); });
+    this.presentation.prepare(data.lanes.length * 2);
     for (const signal of data.signals) {
+      if (signal.appearance !== "ecran") continue;
       this.presentation.addDisplay(signal.position, signal.position, signal.yaw, [signal.lane], "TRAFIC — VOIE " + signal.lane, .5, true);
     }
   }

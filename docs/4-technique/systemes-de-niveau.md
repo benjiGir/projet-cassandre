@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-06
 ---
 
 # Systèmes de niveau
@@ -96,6 +96,10 @@ Vitres, sanitaires et écrans sont fusionnés dans des lots dédiés tout en gar
 Un `use_*` qui porte `perk` et `prix` est une borne ([ADR 0040](../decisions/0040-bornes-et-perks.md)). Le loader en fait une offre (`UseObject.sells`) ; une borne mal décrite ne vend rien et le dit en console. La borne n'est jamais consommée : c'est la session qui sait si le perk est déjà acheté.
 
 `usePerkKiosk` débite la cagnotte, range le perk dans la partie et pose son effet sur les objets de la session : le joueur, les armes, le gestionnaire des ennemis. `publishPerkOffer` tient l'invite du HUD à jour à chaque pas fixe et n'écrit dans le store que sur un changement.
+
+Depuis C1, un perk déjà possédé est remplacé par des soins ou des munitions,
+rechargeables tant qu’ils apportent un bénéfice. Une réserve pleine ne coûte
+rien. Les prix et règles sont dans la [fiche de campagne](campagne.md#consommables).
 
 Le prix d'une offre est celui du niveau, sauf quand une variante d'équilibrage est à l'essai : `offerPrice` rend alors le sien (voir [Session et score](session-et-score.md#économie-du-direct)).
 

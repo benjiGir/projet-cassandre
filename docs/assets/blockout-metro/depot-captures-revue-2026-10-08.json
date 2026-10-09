@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-08",
+  "note": "Captures de revue à poses fixes ; steps et seed non figés, aucune comparaison de hash déterministe revendiquée",
+  "views": [
+    {
+      "file": "depot-apres-arrivee-2026-10-08.png",
+      "pose": {
+        "x": 43.7,
+        "y": 325,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    },
+    {
+      "file": "depot-apres-carrefour-2026-10-08.png",
+      "pose": {
+        "x": 46,
+        "y": 348,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    },
+    {
+      "file": "depot-apres-atelier-2026-10-08.png",
+      "pose": {
+        "x": 49.5,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    },
+    {
+      "file": "depot-apres-rame-2026-10-08.png",
+      "pose": {
+        "x": 45,
+        "y": 359,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 35,
+        "pitch": 0
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": true,
+        "raccourci": false,
+        "completed": false,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      }
+    },
+    {
+      "file": "depot-quai-revue-2026-10-08.png",
+      "x": 35.5,
+      "y": 362,
+      "z": -17.99,
+      "eye": -16.39,
+      "cap": 325,
+      "pitch": 0
+    }
+  ]
+}

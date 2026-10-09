@@ -537,13 +537,14 @@ def export(out: str | Path | None = None, niveau: str | None = None) -> dict:
 
 def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = None,
          sol: float | None = None, plafonds: bool | None = None,
-         isoler: str | None = None, ajuster: bool = False) -> dict:
+         isoler: str | None = None, ajuster: bool = False,
+         voyage: str | None = None) -> dict:
     """Rend une image et renvoie le chemin du PNG — sans rien laisser dans la scène.
 
     `vue` :
       - `"spawn"`           : depuis `spawn_player`, à hauteur d'yeux, FOV du jeu ;
       - `"joueur"`          : la dernière `cassandre.pose()` tapée dans le jeu ;
-      - `(x, y, cap)`       : à hauteur d'yeux, cap en degrés (0 = +Y, 90 = −X,
+      - `(x, y, cap)` ou `(x, y, sol, cap)` : à hauteur d'yeux, cap en degrés (0 = +Y, 90 = −X,
                               même convention que `render_ingame.py`). L'altitude
                               du sol vient de l'espace du plan de masse qui
                               contient (x, y), ou de `sol` ;
@@ -553,8 +554,19 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
     `mode` : `"solid"` (Workbench texturé), `"material"` (EEVEE), ou
     `"silhouette"` (aplat noir sur blanc). `isoler` ne montre que les meshes
     dont le nom correspond au motif fnmatch, par exemple `"comp_ga_presse*"`.
+    `voyage` : `"depart"` ou `"arrivee"` masque l'autre environnement de N5.
     """
     scene = bpy.context.scene
+    stages = []
+    if voyage is not None:
+        if voyage not in ("depart", "arrivee"):
+            raise ValueError("voyage : 'depart' ou 'arrivee'")
+        for name, visible in (("stage_voyage_depart", voyage == "depart"),
+                              ("stage_voyage_arrivee", voyage == "arrivee")):
+            stage = scene.objects.get(name)
+            if stage is None:
+                raise ValueError(f"stage absent : {name}")
+            stages.append((stage, visible))
     cam = _nouvelle_cam(scene)
     cadrage = _cadrer(cam, vue, sol)
     if plafonds is None:
@@ -568,7 +580,13 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
         echelle = (min(taille[0] / largeur, taille[1] / profondeur) if ajuster
                    else max(taille) / max(largeur, profondeur))
         taille = (round(largeur * echelle), round(profondeur * echelle))
-    masques = _masquer(scene, plafonds)
+    masques = []
+    for stage, visible in stages:
+        for obj in stage.children_recursive:
+            if obj.type == "MESH" and not obj.name.startswith("col_"):
+                masques.append((obj, obj.hide_render))
+                obj.hide_render = not visible
+    masques.extend(_masquer(scene, plafonds))
     if isoler:
         for obj in scene.objects:
             if obj.type == "MESH" and not obj.hide_render and not fnmatch.fnmatch(obj.name, isoler):
@@ -582,16 +600,17 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
         bpy.ops.render.render(write_still=True)
     finally:
         restaurer()
-        for obj, etat in masques:
+        for obj, etat in reversed(masques):
             obj.hide_render = etat
         _supprimer_cam()
-    return {"png": str(png), "ko": round(png.stat().st_size / 1024), **cadrage}
+    return {"png": str(png), "ko": round(png.stat().st_size / 1024), **cadrage,
+            **({"voyage": voyage} if voyage is not None else {})}
 
 
 def sheet(vues, cols: int = 2, taille=(400, 225), mode: str = "solid", nom: str = "planche") -> dict:
     """Plusieurs vues en UNE image : un seul `Read` au lieu d'un par vue.
 
-    `vues` : liste de ce que `shot` accepte (`"spawn"`, `(x, y, cap)`,
+    `vues` : liste de ce que `shot` accepte (`"spawn"`, `(x, y, cap)`, `(x, y, sol, cap)`,
     `"dessus:<espace>"`, un nom d'objet…). Rangées de gauche à droite puis de
     haut en bas ; `cells` dit quelle case est quelle vue. Une vue de dessus a
     le cadre de son espace : elle est posée en haut à gauche de sa case.
@@ -687,7 +706,10 @@ def _pose_joueur(vue, sol) -> dict | None:
         pose["age_s"] = round(time.time() - pose.pop("t", time.time()))
         return pose
     if isinstance(vue, (tuple, list)):
-        x, y, cap = vue
+        if len(vue) == 4:
+            x, y, sol, cap = vue
+        else:
+            x, y, cap = vue
         if sol is None:
             espace = _espace_en(x, y)
             sol = espace.z if espace else 0.0
@@ -776,6 +798,31 @@ def metro_trains() -> dict:
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
         return {"ok": False, "erreur": "Lancer metro_trains avec --factory-startup."}
     res = run("tools/metro/pilot/build_pilot.py", "--trains", keep="[metro-pilot")
+    return {"ok": res["code"] == 0, **res}
+
+
+def metro_blockout(apercus: bool = True) -> dict:
+    """Construit le parcours complet N5 dans une session neuve."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer metro_blockout avec --factory-startup."}
+    res = run("tools/metro/blockout/build_blockout.py", *([] if apercus else ["--sans-apercus"]), keep="[metro-blockout")
+    return {"ok": res["code"] == 0, **res}
+
+
+def quartier_pilot() -> dict:
+    """Construit et exporte la place pilote N4b, dans une session neuve."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer quartier_pilot avec --factory-startup."}
+    res = run("tools/metro/quartier/build_pilot.py", keep="[quartier-pilot")
+    return {"ok": res["code"] == 0, **res}
+
+
+def quartier_kit(out: str | Path | None = None) -> dict:
+    """Construit la bibliothèque du quartier N3b et ses vues, en session neuve."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer quartier_kit avec --factory-startup."}
+    args = ["--out", str(out or REPO / "docs/assets/kit-quartier")]
+    res = run("tools/metro/quartier/produce_kit.py", *args, keep="[quartier-kit]")
     return {"ok": res["code"] == 0, **res}
 
 

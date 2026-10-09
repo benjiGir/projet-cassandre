@@ -85,6 +85,10 @@ export class MuzzleFlashes {
     this.shotSerial = 0;
   }
 
+  releaseShaderPrograms(): void {
+    this.slots[0]!.mesh.material.dispose();
+  }
+
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
     this.reset();
     const slot = this.slots[0]!;

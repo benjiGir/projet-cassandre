@@ -55,7 +55,7 @@ import numpy as np
 ICI = Path(__file__).resolve().parent
 sys.path.insert(0, str(ICI))
 
-from ia_prompts import PROMPTS  # noqa: E402
+from ia_prompts import BOUCLES, PROMPTS, SONS_TRAIN  # noqa: E402
 from synth import SR, read_wav, write_wav  # noqa: E402
 
 RACINE = ICI.parents[1]
@@ -66,6 +66,7 @@ REGISTRE = RACINE / "assets_src/LICENCES_ASSETS.md"
 PAGE = RACINE / "public/audition/ia"
 
 CREDITS_PAR_SECONDE = 40      # docs ElevenLabs, durée fixée
+TEXTE_MAX = 450               # longueur de prompt au-delà de laquelle le service répond 400
 VARIANTES_DEFAUT = 6
 URL = os.environ.get("ELEVENLABS_BASE_URL", "https://api.elevenlabs.io")
 
@@ -91,8 +92,11 @@ def cle_api() -> str:
     return cle
 
 
-def _appel(cle: str, prompt: str, duree: float, influence: float, fmt: str) -> bytes:
-    corps = json.dumps({"text": prompt, "duration_seconds": duree, "prompt_influence": influence}).encode()
+def _appel(cle: str, prompt: str, duree: float, influence: float, fmt: str, boucle: bool = False) -> bytes:
+    champs = {"text": prompt, "duration_seconds": duree, "prompt_influence": influence}
+    if boucle:      # seul le modèle v2 sait rendre une boucle raccordable
+        champs |= {"model_id": "eleven_text_to_sound_v2", "loop": True}
+    corps = json.dumps(champs).encode()
     req = urllib.request.Request(f"{URL}/v1/sound-generation?output_format={fmt}", data=corps,
                                  headers={"xi-api-key": cle, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=180) as r:
@@ -106,13 +110,14 @@ def _erreur(e: urllib.error.HTTPError) -> str:
         return ""
 
 
-def generer_une(cle: str, prompt: str, duree: float, influence: float) -> tuple[np.ndarray, str]:
+def generer_une(cle: str, prompt: str, duree: float, influence: float,
+                boucle: bool = False) -> tuple[np.ndarray, str]:
     """Une prise : (échantillons mono flottants à SR, format réellement obtenu)."""
     formats = ["pcm_44100", "mp3_44100_128"]      # le PCM brut, sinon MP3 décodé
     for i, fmt in enumerate(formats):
         for essai in range(4):
             try:
-                brut = _appel(cle, prompt, duree, influence, fmt)
+                brut = _appel(cle, prompt, duree, influence, fmt, boucle)
                 return (_pcm(brut, duree) if fmt.startswith("pcm") else _mp3(brut)), fmt
             except urllib.error.HTTPError as e:
                 if e.code == 401:
@@ -190,7 +195,9 @@ def choisir(args) -> list[str]:
         if inconnus:
             raise SystemExit(f"sons sans prompt : {', '.join(inconnus)} — voir ia_prompts.py")
         noms = voulus
-    if getattr(args, "cat", None):
+    if getattr(args, "cat", None) == "train":      # nés d'un prompt : pas de recette, donc pas de catégorie
+        noms = list(SONS_TRAIN)
+    elif getattr(args, "cat", None):
         noms = [n for n in noms if RECIPES[n][1] == args.cat]
     return noms
 
@@ -203,6 +210,9 @@ def prises(nom: str) -> list[Path]:
 
 def cmd_generate(args) -> int:
     noms = choisir(args)
+    longs = [f"{n} ({len(PROMPTS[n][0])})" for n in noms if len(PROMPTS[n][0]) > TEXTE_MAX]
+    if longs:      # le service refuse la requête entière, autant le dire avant
+        raise SystemExit(f"prompt de plus de {TEXTE_MAX} caractères : {', '.join(longs)}")
     plan, total = [], 0.0
     for nom in noms:
         prompt, duree, infl = PROMPTS[nom]
@@ -226,10 +236,10 @@ def cmd_generate(args) -> int:
         prompt, _, infl = PROMPTS[nom]
         for _ in range(manque):
             n = len(prises(nom)) + 1
-            x, fmt = generer_une(cle, prompt, duree, infl)
+            x, fmt = generer_une(cle, prompt, duree, infl, nom in BOUCLES)
             _ecrire_brut(CANDIDATS / nom / f"{n:02d}.wav", x)
             manifeste.setdefault(nom, {})[f"{n:02d}"] = {
-                "prompt": prompt, "duree": duree, "influence": infl, "format": fmt,
+                "prompt": prompt, "duree": duree, "influence": infl, "format": fmt, "boucle": nom in BOUCLES,
                 "date": time.strftime("%Y-%m-%d %H:%M")}
             (CANDIDATS).mkdir(parents=True, exist_ok=True)
             (CANDIDATS / "manifest.json").write_text(json.dumps(manifeste, ensure_ascii=False, indent=1))
@@ -251,6 +261,7 @@ def cmd_page(args) -> int:
         shutil.rmtree(PAGE)
     PAGE.mkdir(parents=True)
     retenus = _lire_json(RETENUS / "retenus.json")
+    manifeste = _lire_json(CANDIDATS / "manifest.json")
     lignes = []
     for nom in noms:
         boutons = []
@@ -263,11 +274,15 @@ def cmd_page(args) -> int:
             n = p.stem
             shutil.copy(p, PAGE / f"{nom}_{n}.wav")
             choisi = retenus.get(nom, {}).get("candidat") == n
-            boutons.append(f'<span class="prise"><button class="son" data-src="{nom}_{n}.wav">{int(n)}</button>'
+            boucle = ' data-boucle="1"' if nom in BOUCLES else ""
+            sien = html.escape(manifeste.get(nom, {}).get(n, {}).get("prompt", ""))     # le prompt de CETTE prise, au survol
+            boutons.append(f'<span class="prise"><button class="son" data-src="{nom}_{n}.wav" title="{sien}"{boucle}>'
+                           f'{int(n)}</button>'
                            f'<label><input type="radio" name="{nom}" value="{int(n)}"'
                            f'{" checked" if choisi else ""}> garder</label></span>')
         prompt = html.escape(PROMPTS[nom][0])
-        lignes.append(f'<section><h2>{nom}</h2><p class="prompt">{prompt}</p><div>{"".join(boutons)}</div></section>')
+        titre = f"{nom} — boucle : un clic la lance, un second l'arrête" if nom in BOUCLES else nom
+        lignes.append(f'<section><h2>{titre}</h2><p class="prompt">{prompt}</p><div>{"".join(boutons)}</div></section>')
     (PAGE / "index.html").write_text(_HTML.replace("@@SONS@@", "\n".join(lignes)))
     print(f"{len(noms)} son(s) — http://localhost:5173/audition/ia/index.html  (serveur de dev : pnpm dev)")
     return 0
@@ -371,11 +386,15 @@ code{display:block;word-break:break-all;margin:.4rem 0}
 <script>
 const ctx = new (window.AudioContext||window.webkitAudioContext)();
 const tampons = {};
+const boucles = new Map();
 async function jouer(b){
   const src=b.dataset.src;
+  if(boucles.has(b)){ boucles.get(b).stop(); boucles.delete(b); return; }
   if(!tampons[src]) tampons[src]=await ctx.decodeAudioData(await (await fetch(src)).arrayBuffer());
   if(ctx.state==='suspended') await ctx.resume();
-  const s=ctx.createBufferSource(); s.buffer=tampons[src]; s.connect(ctx.destination); s.start();
+  const s=ctx.createBufferSource(); s.buffer=tampons[src]; s.connect(ctx.destination);
+  if(b.dataset.boucle){ s.loop=true; boucles.set(b,s); }
+  s.start();
   b.classList.add('joue'); s.onended=()=>b.classList.remove('joue');
 }
 document.querySelectorAll('button.son').forEach(b=>b.onclick=()=>jouer(b));

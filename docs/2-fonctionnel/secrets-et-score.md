@@ -2,7 +2,7 @@
 title: Secrets et score
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 
 # Secrets et score

@@ -1,0 +1,335 @@
+{
+  "date": "2026-10-09",
+  "scope": "Circulation autour des deux postes de bogies",
+  "method": "Marche via les commandes de revue, un preset au départ, rotations sur place, aucun saut",
+  "steps": [
+    {
+      "action": "depart",
+      "pose": {
+        "x": 68,
+        "y": 351.9,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 130,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "entrée atelier vers est",
+      "count": 5,
+      "pose": {
+        "x": 71.37,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers nord",
+      "count": 1,
+      "pose": {
+        "x": 71.37,
+        "y": 330,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approche du seuil de machinerie, bord du mobilier",
+      "count": 2,
+      "pose": {
+        "x": 71.02,
+        "y": 331.89,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers est",
+      "count": 1,
+      "pose": {
+        "x": 71.02,
+        "y": 331.89,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "entrée dans la machinerie",
+      "count": 4,
+      "pose": {
+        "x": 87.97,
+        "y": 331.57,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "demi-tour vers atelier",
+      "count": 2,
+      "pose": {
+        "x": 87.97,
+        "y": 331.57,
+        "z": -21.99,
+        "eye": -20.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour par le seuil de machinerie",
+      "count": 4,
+      "pose": {
+        "x": 71.28,
+        "y": 331.57,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "recul vers allée est",
+      "count": 3,
+      "pose": {
+        "x": 68.72,
+        "y": 331.57,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers nord",
+      "count": 1,
+      "pose": {
+        "x": 68.72,
+        "y": 331.57,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée est le long des deux postes",
+      "count": 5,
+      "pose": {
+        "x": 68.72,
+        "y": 353.53,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers ouest au nord des postes",
+      "count": 1,
+      "pose": {
+        "x": 68.72,
+        "y": 353.53,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversée nord",
+      "count": 3,
+      "pose": {
+        "x": 55.81,
+        "y": 353.53,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers sud allée ouest",
+      "count": 1,
+      "pose": {
+        "x": 55.81,
+        "y": 353.53,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "allée ouest jusqu’à l’entre-postes",
+      "count": 2,
+      "pose": {
+        "x": 55.81,
+        "y": 344.95,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers est entre les postes",
+      "count": 1,
+      "pose": {
+        "x": 55.81,
+        "y": 344.95,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "traversée entre les postes",
+      "count": 3,
+      "pose": {
+        "x": 68.97,
+        "y": 344.95,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers sud allée est",
+      "count": 1,
+      "pose": {
+        "x": 68.97,
+        "y": 344.95,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour au seuil sud",
+      "count": 3,
+      "pose": {
+        "x": 68.97,
+        "y": 331.74,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers hall",
+      "count": 1,
+      "pose": {
+        "x": 68.97,
+        "y": 331.74,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour hall",
+      "count": 4,
+      "pose": {
+        "x": 51.75,
+        "y": 331.66,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "alignement dans la baie du hall",
+      "count": 1,
+      "pose": {
+        "x": 51.75,
+        "y": 331.66,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "recentrage au seuil",
+      "count": 1,
+      "pose": {
+        "x": 51.75,
+        "y": 330.96,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "vers hall",
+      "count": 1,
+      "pose": {
+        "x": 51.75,
+        "y": 330.96,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "franchissement vers hall",
+      "count": 1,
+      "pose": {
+        "x": 47.3,
+        "y": 330.96,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 90,
+        "pitch": 0
+      }
+    }
+  ],
+  "traffic_restored": [
+    {
+      "id": "A",
+      "enabled": true
+    },
+    {
+      "id": "B",
+      "enabled": true
+    },
+    {
+      "id": "VB",
+      "enabled": false
+    }
+  ],
+  "notes": [
+    "Le tout premier relevé de pose est antérieur au rafraîchissement du preset Seuil de l’atelier : il conserve la vue Essieux déposés. La commande de départ demandait X49,5/Y330/Z−17,99/cap270 ; ce relevé ancien est conservé et ne constitue pas une mesure du départ.",
+    "Les poses des trois premières rotations ont été lues avant le rafraîchissement du panneau ; les marches suivantes attestent le cap appliqué.",
+    "Le départ a atteint le mobilier côté machinerie ; la route a été recentrée dans l’allée est.",
+    "Le retour à Y331,74 a longé le jambage de la baie ; un pas vers le centre permet le franchissement.",
+    "Aucun saut ni nouveau preset après le départ."
+  ],
+  "requested_start": {
+    "preset": "depot_atelier",
+    "x": 49.5,
+    "y": 330,
+    "z": -17.99,
+    "cap": 270,
+    "kind": "commande demandée, distincte du premier relevé périmé"
+  }
+}

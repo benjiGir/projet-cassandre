@@ -3,11 +3,13 @@ import * as THREE from "three";
 import type { UseObject } from "../loading/levelTypes";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
+import { BLOCKOUT_CONTROLS } from "../blockout/blockoutConfig";
 
 // see: docs/archive/pipeline-niveau-blender.md#objets-interactifs
 
 // see: docs/6-reference/notes-code-gameplay-niveau.md#objets-cassables-et-interactions
 export interface InteractionHandlers {
+  onMetroBlockoutUse?(name: string): void;
   onExitDoorUse(targetName: string): void;
   /** `use_frozen_storage` (Zone B, secret 1) : ouvre `door_b_frozen` SANS
    * condition (pas de badge, contrairement à `onExitDoorUse`) — même
@@ -167,6 +169,10 @@ export class InteractionSystem {
   /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),
    * ensuite par NOM Blender exact — voir la doc de tête de fichier. */
   private dispatch(useObject: UseObject, handlers: InteractionHandlers): void {
+    if ((BLOCKOUT_CONTROLS as readonly string[]).includes(useObject.name)) {
+      handlers.onMetroBlockoutUse?.(useObject.name);
+      return;
+    }
     // Console de caméras : déclarative comme une carte, mais JAMAIS
     // consommée — une console se réutilise pour cycler (voir
     // `CameraViewSystem.activate`).
@@ -253,6 +259,7 @@ export class InteractionSystem {
  * `InteractionSystem`) : aucune `target` attendue dans le `.glb`, donc pas
  * d'avertissement « sans cible » au chargement (`loader.ts`). */
 export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
+  ...BLOCKOUT_CONTROLS,
   "use_crowbar",
   "use_shotgun",
   "use_pistol",

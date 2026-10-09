@@ -831,6 +831,12 @@ s'en servir dès le blockout.
 
 ## 8. Suivi
 
+**9 octobre 2026 — passe de création du niveau clôturée à la demande de
+l'utilisateur.** La construction et l'habillage actuels du métro sont
+conservés comme base pour sa prochaine passe de playtest. Les retouches
+reprendront à partir de ses retours. Cette clôture ne vaut pas validation
+des rencontres, de l'équilibrage ou des contrôles techniques encore ouverts.
+
 | Lot | État |
 |---|---|
 | Cadrage (§0) | histoire et règles des trains décidées (D1 à D6, D13 à D15, D19 à D23) ; **à valider : D7, D10 à D12, D16, D18, D24 à D27, D32, D37 à D40, D44 à D47** |
@@ -847,4 +853,8 @@ s'en servir dès le blockout.
 | N3 | kit métro candidat préparé le 2026-10-06 ; bibliothèque Blender et planche de rendu. **Accord pour lancer N4 reçu le 2026-10-06.** [Pièces et limites](docs/assets/kit-metro.md) |
 | N4 | candidat jouable préparé le 2026-10-06 : quai de 24 m, tube de 60 m, cinq refuges, 29 lampes, deux nappes et deux événements originaux. **Pilote accepté par l’utilisateur le 2026-10-06** (« on est pas mal la tu peux continuer »), après correction de la rame et des suspensions de luminaires. [Pilote et limites](docs/4-technique/pilote-metro.md) |
 | T2 | candidat d’intégration préparé le 2026-10-06 : modèle N3 dans le GLB, voies et commandes Blender, scénario, panneaux, contacts balayés, navigation exclue, difficultés et compteurs locaux. [Essai et limites](docs/4-technique/trains-metro.md). Gate automatisé et raccord de télémétrie encore ouverts ; prochain préalable de N5 : C1. |
-| Autres lots | non commencés ; N3b/N4b et blockout N5 suivent leurs gates |
+| C1 | candidat préparé et revu en jeu le 2026-10-06 : arrivée figée, déblocage, reprise après rechargement, métro seul, redémarrage et consommables. Le métro charge provisoirement le pilote T2. [Revue et limites](docs/4-technique/campagne.md), [page d’auteur](docs/assets/campagne.html). Playtest utilisateur et télémétrie distante encore ouverts. |
+| N3b | candidat préparé le 2026-10-06 : 20 pièces originales, deux voitures réemployées, bibliothèque Blender, cinq textures et huit vues regardées. [Kit et limites](docs/assets/kit-quartier.md), [galerie](docs/assets/kit-quartier.html). Le quartier jouable et son jugement restent à N4b. |
+| N4b | candidat jouable préparé le 2026-10-06 : rue et place, cour et trappe, descente à −5 m, retour par grille publique, tour distante et deux nappes. Lumière validée par l'utilisateur ; place reprise après ses retours : commerces distincts, entrées d'immeubles, fontaine, plantations et terrasse, raccords de façades fermés, arrêt de bus sur rue. [Fonctionnement et limites](docs/4-technique/pilote-quartier.md), [page d’essai](docs/assets/pilote-quartier.html). **Pilote corrigé validé par l’utilisateur le 2026-10-07** (« J’aime bien ce que tu as fais, tu peux continuer »), après fermeture de l’escalier public. |
+| N5 | **Passe de création clôturée par l’utilisateur le 2026-10-09.** Parcours du quartier au hall, gare et parvis repris, train de service validé, fontaine TSL ajoutée, derniers raccords poste / tunnel B / trappe corrigés. Construction et habillage actuels conservés pour la prochaine passe de playtest utilisateur. Le trajet intégral et les contrôles techniques encore ouverts ne sont pas déclarés validés. [Fonctionnement](docs/4-technique/blockout-metro.md), [page de revue](docs/assets/blockout-metro.html), [historique des reprises et clôture](docs/journal/metro-blockout-2026-10.md). |
+| Autres lots | Rencontres N7, équilibrage et publication N8 restent à traiter ; aucun lot suivant lancé par cette clôture. |

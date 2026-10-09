@@ -2,7 +2,7 @@
 title: Ennemis
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Ennemis

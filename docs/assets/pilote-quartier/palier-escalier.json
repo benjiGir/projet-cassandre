@@ -1,0 +1,75 @@
+{
+  "pose": {
+    "x": 0,
+    "y": 85.98,
+    "z": -4.99,
+    "eye": -3.39,
+    "cap": 0,
+    "pitch": 0
+  },
+  "niveau": {
+    "colliderCount": 178,
+    "colliderKindCounts": {
+      "cuboid": 176,
+      "convexHull": 2,
+      "trimesh": 0
+    },
+    "spawnSuitCount": 0,
+    "spawnDirectorCount": 0,
+    "triggerCount": 0,
+    "doorCount": 4,
+    "useCount": 3,
+    "secretCount": 0,
+    "unprefixedMeshCount": 1253,
+    "decorBatchCount": 119,
+    "lightCount": 21,
+    "propCount": 0,
+    "vitreCount": 0,
+    "vitreBatchCount": 0,
+    "doorBatchCount": 4,
+    "sanitaireCount": 0,
+    "sanitaireBatchCount": 0,
+    "ecranCount": 0,
+    "ecranBatchCount": 0
+  },
+  "portes": [
+    {
+      "name": "door_quartier_grille",
+      "movement": "monte",
+      "state": "closed",
+      "groupe": "door_quartier_grille",
+      "locked": false
+    },
+    {
+      "name": "door_quartier_grille_1",
+      "movement": "monte",
+      "state": "closed",
+      "groupe": "door_quartier_grille",
+      "locked": false
+    },
+    {
+      "name": "door_quartier_grille_2",
+      "movement": "monte",
+      "state": "closed",
+      "groupe": "door_quartier_grille",
+      "locked": false
+    },
+    {
+      "name": "door_quartier_trappe",
+      "movement": "coulisse",
+      "state": "closed",
+      "groupe": "door_quartier_trappe",
+      "locked": false
+    }
+  ],
+  "ambiance": {
+    "profil": "quartier_pilote",
+    "zone": "service",
+    "nappes": {
+      "rue": 0,
+      "service": 0
+    },
+    "horloge": 88.20339999990854,
+    "prochainEvenementDans": 5.720290777257056
+  }
+}

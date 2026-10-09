@@ -12,6 +12,16 @@ import { DifficultyScreen } from "../../ui/screens/difficulty/DifficultyScreen/D
 import { MainMenu } from "../../ui/screens/mainMenu/MainMenu/MainMenu";
 import { OptionsScreen } from "../../ui/screens/options/OptionsScreen/OptionsScreen";
 import { StoryPanels } from "../../ui/screens/story/StoryPanels/StoryPanels";
+import { LevelSelectScreen } from "../../ui/screens/levelSelect/LevelSelectScreen/LevelSelectScreen";
+import { campaignArrival } from "../../game/session/campaign/campaignStorage";
+import { metroLevel, METRO_LEVEL_ID } from "../../game/session/campaign/campaignCatalog";
+import type { SessionEntry } from "../../game/session/campaign/campaignTypes";
+import { metroArrival } from "../../game/session/campaign/campaignArrival";
+
+export interface SessionStart {
+  readonly choice: LevelDef;
+  readonly entry: SessionEntry;
+}
 
 // see: docs/6-reference/notes-code-core.md#chargement-et-orchestration
 
@@ -46,16 +56,24 @@ export function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise
   return import.meta.env.DEV ? chooseZone(root) : Promise.resolve(MAIN_LEVEL);
 }
 
-export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
+export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<SessionStart> {
   const levelParam = new URLSearchParams(window.location.search).get("level");
-  if (levelParam) return resolveLevelChoice(root);
+  if (levelParam) return resolveLevelChoice(root).then((choice) => {
+    const profile = new URLSearchParams(window.location.search).get("campaignProfile");
+    const arrival = import.meta.env.DEV && (profile === "type" || profile === "pauvre" || profile === "riche")
+      ? metroArrival(getDifficulty(), profile) : undefined;
+    return { choice, entry: { mode: "dev", arrival } };
+  });
 
   return new Promise((resolve) => {
     function showMainMenu() {
+      const arrival = campaignArrival();
       const intro = hasSeenIntro(MAIN_LEVEL.id) ? levelStory(MAIN_LEVEL.id)?.intro : undefined;
       root.render(
         createElement(MainMenu, {
-          onPlay: showDifficulty,
+          onPlay: () => showDifficulty(MAIN_LEVEL, "new-game"),
+          onContinue: arrival ? () => resolve({ choice: metroLevel(), entry: { mode: "continue", arrival } }) : undefined,
+          onChooseLevel: showLevels,
           onReplayIntro: intro
             ? () => {
                 root.render(createElement(StoryPanels, { panels: intro, doneLabel: "RETOUR AU MENU", onDone: showMainMenu }));
@@ -67,23 +85,39 @@ export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<
           devTools: import.meta.env.DEV
             ? createElement(ZoneChooserLink, {
                 onClick: () => {
-                  chooseZone(root).then(resolve);
+                  chooseZone(root).then((choice) => resolve({ choice, entry: { mode: "dev" } }));
                 },
               })
             : undefined,
         }),
       );
     }
-    // La difficulté se choisit au lancement, et se garde avec les réglages.
-    // `?level=` et le choix de zone du dev passent outre : ils gardent la dernière choisie.
-    function showDifficulty() {
+    function showLevels() {
+      const unlocked = campaignArrival() !== null;
+      root.render(createElement(LevelSelectScreen, {
+        options: [
+          { id: MAIN_LEVEL.id, label: "Hyper Varan", description: "Le premier direct. Départ sans arme ni amélioration.", locked: false },
+          { id: METRO_LEVEL_ID, label: "Le métro — pilote", description: unlocked
+            ? "Quai et trains en chantier. Équipement type, trois armes et 40 €."
+            : "Terminez Hyper Varan pour débloquer ce direct.", locked: !unlocked },
+        ],
+        onChoose: (id) => {
+          if (id === MAIN_LEVEL.id) showDifficulty(MAIN_LEVEL, "standalone");
+          else if (id === METRO_LEVEL_ID && unlocked) showDifficulty(metroLevel(), "standalone");
+        },
+        onBack: showMainMenu,
+      }));
+    }
+
+    function showDifficulty(choice: LevelDef, mode: "new-game" | "standalone") {
       root.render(
         createElement(DifficultyScreen, {
-          options: difficultyOptions(MAIN_LEVEL.id),
+          options: difficultyOptions(choice.id),
+          title: choice.id === METRO_LEVEL_ID ? "QUI DESCEND DANS LE MÉTRO ?" : undefined,
           selected: getDifficulty(),
           onChoose: (difficulty) => {
             setDifficulty(difficulty);
-            resolve(MAIN_LEVEL);
+            resolve({ choice, entry: { mode } });
           },
           onBack: showMainMenu,
         }),

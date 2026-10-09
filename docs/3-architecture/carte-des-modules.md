@@ -2,7 +2,7 @@
 title: Carte des modules
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Carte des modules
@@ -10,10 +10,12 @@ updated: 2026-10-03
 ## Rôle
 
 Cette carte indique où ranger les responsabilités et comment les modules se
-rejoignent. Le relevé du 3 octobre couvre 223 modules TS/TSX et 811 imports
-relatifs statiques, types compris. Aucun cycle entre fichiers à l'exécution
-n'est détecté. Les imports dynamiques et les packages externes sont hors du
-relevé ; un aller-retour entre dossiers ne prouve pas un cycle entre fichiers.
+rejoignent. Le relevé du 8 octobre couvre 331 modules TS/TSX de `src/` et
+1 322 imports relatifs statiques, types compris (973 imports de valeur). Aucun
+cycle entre fichiers à l'exécution n'est détecté ; deux groupes de fichiers ne
+se referment que par des imports de type. Les imports dynamiques (3) et les
+packages externes sont hors du relevé ; un aller-retour entre dossiers ne
+prouve pas un cycle entre fichiers.
 
 ## Diagramme
 
@@ -123,5 +125,5 @@ pour atteindre un type dont le propriétaire est déjà un module feuille.
 ## Décisions liées
 
 - [ADR 0014 — moteur et partie séparés](../decisions/0014-gameengine-persistentengine-separes.md).
-- [ADR 0020 — store comme feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md).
+- [ADR 0036 — contrats feuilles et store HUD](../decisions/0036-contrats-feuilles-et-store-hud.md), qui remplace l'[ADR 0020](../decisions/0020-state-feuille-de-dependances.md).
 - [ADR 0036 — contrats feuilles et store HUD](../decisions/0036-contrats-feuilles-et-store-hud.md).

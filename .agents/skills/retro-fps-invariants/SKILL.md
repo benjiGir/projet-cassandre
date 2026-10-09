@@ -1,6 +1,6 @@
 ---
 name: retro-fps-invariants
-description: Invariants non négociables de PROJET_CASSANDRE — fixed timestep, découplage React, pipeline 640×360, matériaux classiques et TSL, Rapier KCC, interdiction d'ECS prématuré. Charger en premier pour toute tâche sur le jeu, avant tout autre skill.
+description: Invariants non négociables de PROJET_CASSANDRE — fixed timestep, découplage React, pipeline 640×360, matériaux Lambert, Rapier KCC, interdiction d'ECS prématuré. Charger en premier pour toute tâche sur le jeu, avant tout autre skill.
 ---
 
 # Invariants — PROJET_CASSANDRE
@@ -17,7 +17,7 @@ contournée silencieusement.
 | 2 | React ne touche jamais la boucle | Budget de perf perdu avant d'avoir commencé |
 | 3 | Rotation caméra non interpolée, lue au taux d'affichage | Latence de visée perçue |
 | 4 | 640×360 interne, `NearestFilter`, pas de mipmaps | L'identité visuelle disparaît |
-| 5 | *(Retiré le 2026-09-28 — matériaux mixtes et TSL autorisés)* | — |
+| 5 | `MeshLambertMaterial` exclusivement | Le look Build vient de l'absence de spécularité |
 | 6 | Character controller = `KinematicCharacterController` de Rapier | ~6 semaines perdues, classiquement |
 | 7 | Gravité −25 m/s² | Saut mou et flottant |
 | 8 | Pas d'ECS avant 12 types d'ennemis | Un moteur magnifique et zéro jeu |

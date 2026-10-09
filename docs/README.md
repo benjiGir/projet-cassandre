@@ -43,6 +43,8 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Plan de masse du métro](assets/plan-metro.md) — tracé N2 accepté pour poursuivre, voies, niches, boucles et relevé calculé.
 - [Pièce pilote du métro](4-technique/pilote-metro.md) — quai et 60 m de tunnel jouables, lumière et ambiances originales (N4).
 - [Kit du métro](assets/kit-metro.md) — 26 pièces originales, bibliothèque Blender et planche N3 à juger.
+- [Kit du quartier](assets/kit-quartier.md) — façades, commerces, bouche de métro, mobilier, véhicules et tour du lot N3b.
+- [Place pilote du quartier](4-technique/pilote-quartier.md) — rue, cour de service, descente et retour par la grille publique (N4b).
 
 ### Je cherche une valeur, une commande ou une convention
 
@@ -83,3 +85,5 @@ Le travail de niveau v2 en cours est suivi dans
 [plan des coulisses](assets/plan-coulisses.md). Le plan du niveau v2, retiré
 du dépôt avec la 1.0.0, reste dans l'historique git
 (`git show 4e88907^:PLAN_NIVEAU_V2.md`).
+
+- [Parcours complet du métro N5](assets/blockout-metro.html) — blockout à juger sur la longueur et l’orientation.

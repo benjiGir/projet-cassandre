@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-06
+updated: 2026-10-09
 ---
 
 # Journal
@@ -12,6 +12,14 @@ conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
+
+- [Métro complet — blockout N5](metro-blockout-2026-10.md) — parcours du quartier au hall ; passe de création clôturée le 9 octobre, retours de playtest à venir.
+
+- [Place pilote du quartier](quartier-pilote-2026-10.md) — N4b jouable, trappe de service, grille publique et reprise des hauteurs libres.
+
+- [Kit du quartier](quartier-kit-2026-10.md) — N3b, façades, mobilier, bouche de métro, véhicules et tour.
+
+- [Campagne du magasin au métro](campagne-2026-10.md) — C1, équipement d’arrivée, reprise et économie de deux niveaux.
 
 - [Trains intégrés au métro](metro-trains-2026-10.md) — candidat T2, circulation dans le pilote Blender.
 - [Pièce pilote du métro](metro-pilote-2026-10.md) — N4 jouable, transfert des couleurs et profils d’ambiance.
@@ -34,6 +42,7 @@ guides et les plans ouverts à la racine du dépôt.
 
 - [Audit complet de src](audit-src-2026-10.md) — commentaires, frontières Effect et séparation des contrats.
 - [Audit du rendu](audit-src-render-2026-10.md) — constats détaillés sur les matériaux, manifestes et ressources.
+- [Audit du code gameplay](audit-src-gameplay-2026-10.md) — constats détaillés sur les systèmes de jeu et leurs frontières Effect.
 - [Premières utilisations audio et douche](premieres-utilisations-audio-douche-2026-10.md) — préparation au chargement et relevés de compilation GPU et de lecture audio.
 - [Portrait du stream](portrait-stream-2026-10.md) — planche du héros avec cinq états de santé, six expressions et aperçu interactif.
 - [Alternative pour les coulisses](alternative-coulisses-2026-10.md) — liaison directe depuis la réserve, carte Or au parking et plan SVG proposé.

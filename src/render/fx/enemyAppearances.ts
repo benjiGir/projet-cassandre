@@ -68,6 +68,11 @@ export class EnemyAppearances {
     this.serial = 0;
   }
 
+  releaseShaderPrograms(): void {
+    this.material.dispose();
+    this.ringMaterial.dispose();
+  }
+
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
     const geometry = new THREE.PlaneGeometry(1, 1.8);
     const placeholder = new THREE.MeshBasicMaterial();

@@ -1,0 +1,112 @@
+{
+  "noJump": true,
+  "noPresetAfterStart": true,
+  "steps": [
+    {
+      "label": "départ approche ouest",
+      "pose": {
+        "x": 50,
+        "y": 480,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 88,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche ouest walk",
+      "pose": {
+        "x": 45.83,
+        "y": 480.15,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 88,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche ouest walk",
+      "pose": {
+        "x": 45.05,
+        "y": 480.29,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 88,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche ouest step",
+      "pose": {
+        "x": 45.05,
+        "y": 480.31,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 88,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche est walk",
+      "pose": {
+        "x": 49.35,
+        "y": 480.16,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 268,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche est walk",
+      "pose": {
+        "x": 53.8,
+        "y": 480,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 268,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche est walk",
+      "pose": {
+        "x": 54.97,
+        "y": 479.86,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 268,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "approche est step",
+      "pose": {
+        "x": 54.97,
+        "y": 479.84,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 268,
+        "pitch": 0
+      }
+    },
+    {
+      "label": "retour dans l’axe",
+      "pose": {
+        "x": 50.93,
+        "y": 479.98,
+        "z": 0.01,
+        "eye": 1.61,
+        "cap": 88,
+        "pitch": 0
+      }
+    }
+  ],
+  "logs": [
+    {
+      "level": "error",
+      "message": "Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+      "timestamp": "2026-10-09T13:30:43.957Z"
+    }
+  ]
+}

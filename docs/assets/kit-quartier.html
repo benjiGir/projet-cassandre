@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quartier — kit N3b</title>
+  <style>
+    :root{color-scheme:dark;--bg:#121a21;--panel:#1b2830;--line:#3e5159;--ink:#e1dfce;--muted:#a7b9bc;--accent:#dca05d}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}
+    main{max-width:1200px;margin:auto;padding:40px 32px}header{border-top:4px solid var(--accent);padding-top:20px}
+    .eyebrow{color:var(--muted);font-size:11px;letter-spacing:3px}h1{font-size:clamp(32px,5vw,54px);line-height:1.08;margin:14px 0}
+    header p{max-width:780px;line-height:1.65;color:var(--muted);margin-bottom:22px}.badges{display:flex;gap:10px;flex-wrap:wrap}
+    .badge{padding:7px 11px;background:var(--panel);border:1px solid var(--line);font-size:12px}.badge:first-child{color:var(--accent)}
+    nav{margin:22px 0 28px;font-size:13px}a{color:#b9dad3;text-underline-offset:4px}nav a{margin-right:18px}
+    .hero{margin:0;border:1px solid var(--line);background:var(--panel)}img{display:block;width:100%;image-rendering:pixelated}
+    figcaption{padding:16px 20px;color:var(--muted);font-size:14px;line-height:1.6}figcaption strong{color:var(--ink)}
+    h2{font-size:25px;margin:36px 0 10px}.intro{color:var(--muted);font-size:14px;line-height:1.6;max-width:850px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:22px}.grid figure{margin:0;border:1px solid var(--line);background:var(--panel)}
+    .number{color:var(--accent);font-size:12px;letter-spacing:2px;margin-right:10px}footer{border-top:1px solid var(--line);margin-top:32px;padding-top:20px;color:var(--muted);font-size:13px;line-height:1.7}
+    @media(max-width:700px){main{padding:24px 18px}.grid{grid-template-columns:1fr}h1{font-size:36px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">PROJET CASSANDRE · NIVEAU 2 · N3b</div>
+    <h1>La rue avant la descente.</h1>
+    <p>Des commerces encore éclairés, des étages silencieux et une bouche de métro fermée. Le kit donne les pièces du quartier ; la place jouable vient avec N4b.</p>
+    <div class="badges"><span class="badge">CANDIDAT À REGARDER</span><span class="badge">20 pièces originales</span><span class="badge">2 voitures réemployées</span><span class="badge">22 assets Blender</span></div>
+  </header>
+  <nav aria-label="Documents du quartier"><a href="kit-quartier.md">Fiche du kit</a><a href="board-metro.html#ref-01">Référence de rue validée</a><a href="plan-metro.svg">Plan de masse</a></nav>
+  <figure class="hero">
+    <img src="kit-quartier/01-rue-nuit.png" width="640" height="360" alt="Rue de nuit avec façades verticales, épiceries, laverie et lampadaires">
+    <figcaption><strong>La direction de rue.</strong> Nuit ardoise, façades mates et points chauds au niveau des commerces. Vue depuis la hauteur du joueur.</figcaption>
+  </figure>
+  <h2>Des pièces qui se raccordent.</h2>
+  <p class="intro">Façades de 4 m, étages de 3,5 m et trottoirs de 2,5 m. La bouche reprend la descente de 5 m du plan, avec vingt marches de 25 cm. La grille et la trappe sont séparées pour devenir des passages actionnables.</p>
+  <section class="grid" aria-label="Pièces du quartier">
+    <figure><img src="kit-quartier/02-facades.png" width="640" height="360" alt="Trois façades complètes : balcon clair, brique, volets pétrole"><figcaption><span class="number">01</span><strong>Façades et commerces</strong><br>Trois profils d'étage, une épicerie et une laverie avec leur intérieur visible.</figcaption></figure>
+    <figure><img src="kit-quartier/03-bouche.png" width="640" height="360" alt="Bouche de métro avec grille et affichette Trafic interrompu"><figcaption><span class="number">02</span><strong>Bouche grillée</strong><br>Entrée de 6 × 12 m. Grille séparée, passage central de 4 m.</figcaption></figure>
+    <figure><img src="kit-quartier/04-descente.png" width="640" height="360" alt="Escalier de métro ouvert avec deux mains courantes descendantes"><figcaption><span class="number">03</span><strong>Descente ouverte</strong><br>Marches de 25 cm et mains courantes contre les murs ; palier à −5 m.</figcaption></figure>
+    <figure><img src="kit-quartier/05-mobilier.png" width="640" height="360" alt="Kiosque, abribus, banc, lampadaire, borne, corbeille et trappe"><figcaption><span class="number">04</span><strong>Les usages de la place</strong><br>Kiosque, abribus, banc, corbeille, borne, lampadaire et trappe de service.</figcaption></figure>
+    <figure><img src="kit-quartier/06-vehicules.png" width="640" height="360" alt="Citadine jaune, berline bleue et nouveau fourgon clair"><figcaption><span class="number">05</span><strong>Véhicules</strong><br>Citadine et berline validées réemployées, plus un fourgon original de 5 m.</figcaption></figure>
+    <figure><img src="kit-quartier/07-tour.png" width="640" height="360" alt="Tour sombre asymétrique de 56 mètres avec des fenêtres chaudes dispersées"><figcaption><span class="number">06</span><strong>Le but du voyage</strong><br>Une tour originale de 56 m, à poser dans le ciel du quartier. La vapeur vient au pilote.</figcaption></figure>
+  </section>
+  <h2>Lire les formes, même dans le noir.</h2>
+  <figure class="hero"><img src="kit-quartier/08-silhouettes.png" width="640" height="360" alt="Silhouettes distinctes du banc, du kiosque, de l'abribus et du lampadaire"><figcaption>Les contours distinguent assise, commerce, abri et éclairage. Le placement de ces pièces et leur lisibilité dans le jeu restent à juger sur la place pilote.</figcaption></figure>
+  <footer>Rendus Blender EEVEE à 640 × 360, éclairage de présentation. Ces images ne sont pas des captures du moteur.<br>Bibliothèque du quartier créée ; intégration jouable, interactions, collision Rapier et éclairage du niveau attendent N4b.<br><a href="kit-quartier/planche.png">Planche complète</a> · <a href="kit-quartier/inventaire.json">Inventaire de production</a> · <a href="../journal/quartier-kit-2026-10.md">Journal et corrections</a></footer>
+</main>
+</body>
+</html>

@@ -2,7 +2,7 @@
 title: Valeurs des armes
 tags: [reference, armes]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Valeurs des armes
@@ -31,10 +31,23 @@ plomb, pas la somme de la gerbe.
 | Portée | 2 | 60 | 30 | m |
 | Dispersion | — | 0,8 | 5 | degrés (cône pour le pompe) |
 | Munitions au départ | aucune | 48 | 48 | coups |
-| Réserve maximale | — | 150 | 48 fixes | coups |
+| Réserve maximale | — | 150 | 96 | coups |
 
-Le pistolet seul peut être rechargé en ramassant ses munitions. Le pompe ne
-dispose d'aucun ramassage de recharge.
+Les boîtes de munitions ramassées en marchant (`use_munitions_*`) ne rechargent
+que le pistolet. Le pompe se recharge par une borne de munitions, à 12 € : elle
+ajoute 24 coups au pistolet et 8 coups au pompe, pour chaque arme possédée
+(`src/game/player/kioskOffer.ts`, `src/game/session/progression/perks.ts`).
+La réserve de pistolet passe à 200 avec le perk `premium` (voir
+[Valeurs de l'économie](valeurs-economie.md)).
+
+## Coup de pied
+
+Le coup de pied n'est pas une arme : il part au clic gauche tant qu'aucune arme
+n'est équipée, sans munitions. Ses valeurs sont dans
+`src/game/player/weapons/kickConfig.ts` : 20 PV par coup, portée de 1,45 m,
+rayon de frappe de 0,24 m. Le délai entre deux coups est de 0,55 s dans la
+variante `FRANC` (la valeur par défaut) ; `VIF` (0,42 s) et `LOURD` (0,72 s)
+sont les autres variantes de `KICK_VARIANTS`.
 
 ## Source et usage
 

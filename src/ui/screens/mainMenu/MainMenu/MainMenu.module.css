@@ -12,6 +12,14 @@
   gap: 18px;
   padding: 46px 58px 34px;
   box-shadow: 0 0 40px rgba(60, 220, 90, 0.08) inset;
+  max-height: calc(100dvh - 80px);
+  overflow: hidden;
+}
+
+@media (max-width: 640px), (max-height: 760px) {
+  .panel { gap: 10px; padding: 20px; max-width: calc(100vw - 24px); }
+  .title { font-size: clamp(18px, 4.4vw, 32px); letter-spacing: 2px; }
+  .actions { min-width: 0; gap: 6px; }
 }
 
 .title {

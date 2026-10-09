@@ -2,7 +2,7 @@
 title: Démarrage rapide
 tags: [introduction]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-08
 ---
 
 # Démarrage rapide
@@ -18,7 +18,7 @@ updated: 2026-09-25
 - **Blender 5.1**, seulement pour éditer la géométrie du niveau (voir
   `tools/blender/README.md`).
 - **ffmpeg avec libvorbis**, seulement pour reconstruire l'audio sprite (le
-  `ffmpeg` de Homebrew en est dépourvu par défaut — voir `tools/audio/README.md`).
+  `ffmpeg` de Homebrew en est dépourvu par défaut — voir `tools/audio/build_sprite.py`).
 
 ## Installer et lancer
 
@@ -51,19 +51,22 @@ pnpm check:docs
 
 ## Premier lancement
 
-En développement, l'écran de démarrage n'est pas encore le menu principal :
-`src/app/navigation/bootChoice.ts::resolveBootChoice` affiche d'abord le **menu
-principal** (`src/ui/screens/mainMenu/MainMenu`), sauf si l'URL porte déjà
-`?level=`. Le bouton « Jouer » lance directement `niveau_v2` (« Niveau v2 —
-habillé »), désigné comme LE niveau du jeu dans le registre
-`src/game/level/catalog/levels.ts`. Un lien « Options » ouvre `OptionsScreen`.
+Sans paramètre dans l'URL, `src/app/navigation/bootChoice.ts::resolveBootChoice`
+affiche d'abord le **menu principal** (`src/ui/screens/mainMenu/MainMenu`). Le
+bouton « NOUVELLE PARTIE » ouvre le choix de difficulté, puis lance `niveau_v2`
+(« Niveau v2 — habillé »), désigné comme LE niveau du jeu dans le registre
+`src/game/level/catalog/levels.ts`. Le bouton « PARAMÈTRES DU SIGNAL » ouvre
+`OptionsScreen`.
+Avec `?level=`, le menu est sauté.
 
 En développement uniquement, le menu principal propose aussi un accès au
 **choix de zone** (`src/ui/dev/LevelMenu/LevelMenu.tsx`, outil d'auteur qui
 disparaît du build de production) : il liste tous les niveaux enregistrés,
 dont la gym de test, les cinq zones A à E prises séparément, la salle
-d'essai et le blockout gris du niveau v2, et `hypermarche_complet` (les cinq
-zones recollées en un seul fichier, gardé pour du test ciblé).
+d'essai et le blockout gris du niveau v2, `hypermarche_complet` (les cinq
+zones recollées en un seul fichier, gardé pour du test ciblé), et les essais
+du métro et du quartier (blockouts, pilotes, trains), réservés au
+développement.
 
 Le paramètre d'URL `?level=<id>` saute ce menu et charge directement
 l'entrée correspondante du registre ; un identifiant non enregistré retombe
@@ -71,7 +74,7 @@ sur un chargement glTF brut du même nom, sans passer par le registre.
 
 ## Contrôles par défaut
 
-Défauts de `src/core/input/input.ts` (`DEFAULT_BINDINGS`, rebindables en jeu et
+Défauts de `src/core/input/inputBindings.ts` (`DEFAULT_BINDINGS`, rebindables en jeu et
 persistés en `localStorage`) : ZQSD n'apparaît nulle part dans le code, ce
 sont les touches physiques `KeyW`/`KeyA`/`KeyS`/`KeyD` qui sont liées, donc
 déjà correctes en clavier AZERTY sans configuration.
@@ -119,5 +122,4 @@ vérifier lui-même sans un humain qui joue réellement (source : `CLAUDE.md`).
 ## Et ensuite
 
 - [Comment lire cette doc](comment-lire-cette-doc.md)
-- Reprendre le projet : `../5-guides/reprendre-le-projet.md` (page pas
-  encore écrite).
+- [Reprendre le projet](../5-guides/reprendre-le-projet.md).

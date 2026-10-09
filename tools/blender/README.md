@@ -13,15 +13,18 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `status(niveau=…)` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
 | `build(out=…, detail=False, niveau=…)` | rejoue le générateur du niveau choisi ; copie de sécurité si la session est modifiée, car le build vide la scène |
 | `check(strict=False, audit=True, niveau=…)` | `validate_level.py` + audit du plan choisi, verdicts seuls |
-| `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
+| `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; `voyage="depart"` ou `"arrivee"` choisit l’environnement N5 pour éviter leur superposition ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
 | `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
 | `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
 | `export(out=…, niveau=…)` | `export_level.py`, sortie propre au profil, `ok` seulement si le contenu est vérifié |
 | `manifest(out=…, niveau=…)` | manifeste des espaces du plan choisi, conversion Blender → jeu |
 | `fingerprint()` | empreinte des poses, propriétés et surfaces du view layer sauvegardé ; comparaison des reconstructions dans un fichier voisin `.fingerprint.json` |
 | `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `docs/assets/` |
+| `metro_blockout(apercus=True)` | reconstruit et exporte N5 avec ses vues ; `apercus=false` évite de rendre toutes les zones lors d’une retouche locale, puis `shot`/`sheet` produit les vues ciblées |
 | `metro_pilot()` | construit, sauvegarde, exporte et rend le quai et le tube N4, dans une session neuve `--factory-startup` |
 | `metro_kit(out=…)` | bibliothèque et planche métro N3, depuis une session neuve `--factory-startup` ; régénère les pièces et textures originales |
+| `quartier_kit(out=…)` | bibliothèque et planche du quartier N3b, depuis une session neuve ; 20 pièces originales et deux voitures réemployées ; [fiche et rendus](../../docs/assets/kit-quartier.md) |
+| `quartier_pilot()` | construit, sauvegarde, exporte et rend la place N4b depuis une session neuve ; [pilote et limites](../../docs/4-technique/pilote-quartier.md) |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
 | `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
@@ -73,6 +76,10 @@ objet créé par un opérateur `bpy.ops`.
 `C.shot("joueur")` / `C.budget(vue="joueur")`. `cassandre.tp(x, y, z, cap)`
 fait l'inverse : il place le joueur au point vu dans Blender. Le budget exact
 reste `cassandre.renderBench(3).drawCalls` en jeu, ennemis compris.
+
+Pour une vue souterraine hors du plan de référence, `C.shot((x, y, sol, cap))`
+fixe explicitement l'altitude des pieds. `C.sheet` accepte les mêmes quadruplets.
+Le triplet `(x, y, cap)` conserve la recherche automatique du sol dans le plan.
 
 Pour trouver une fonction sans ouvrir une bibliothèque de 1 000 lignes, sans
 Blender : `python3 tools/blender/api_index.py [module | --grep motif] [--all]`.
@@ -410,3 +417,5 @@ La refonte de septembre décrite plus haut reste un état historique :
 les budgets actuels sont consignés dans la révision de l'ADR 0029.
 
 La recette `metro_trains` construit le pilote T2 dans une session neuve (`--factory-startup`). Elle écrit `metro_trains.blend/.glb` ; contrat et commandes : `docs/4-technique/trains-metro.md`.
+
+La recette `metro_blockout` assemble N5 depuis le plan N2 et le quartier validé, dans une session neuve. Elle écrit `metro_blockout.blend/.glb` et le manifeste : [fonctionnement](../../docs/4-technique/blockout-metro.md).

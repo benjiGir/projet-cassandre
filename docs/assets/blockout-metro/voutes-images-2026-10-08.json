@@ -1,0 +1,41 @@
+{
+  "captures": [
+    {
+      "image": "voutes-quai-2026-10-08.png",
+      "size": [
+        640,
+        360
+      ],
+      "sha256_pixels": "e128675d6b7ae828df641a3407c9a47f0d76e1dac0548ddf51c01054a06a7324",
+      "non_black_percent": 99.99
+    },
+    {
+      "image": "voutes-raccord-2026-10-08.png",
+      "size": [
+        640,
+        360
+      ],
+      "sha256_pixels": "82899d45687c19e2701d2dae4eb70399d56df5ebcc85e7680a58b1717e170ba5",
+      "non_black_percent": 100.0
+    },
+    {
+      "image": "voutes-tunnel-2026-10-08.png",
+      "size": [
+        640,
+        360
+      ],
+      "sha256_pixels": "a500c23dbd635a3a726a03d4960e439cd5ea7ca42d3356fdc92002e60238c2fb",
+      "non_black_percent": 99.9
+    },
+    {
+      "image": "voutes-courbe-2026-10-08.png",
+      "size": [
+        640,
+        360
+      ],
+      "sha256_pixels": "90372aa8dc03ae33e74394b68d87dbe9c026eb6732788528e7c679358b84ddc2",
+      "non_black_percent": 99.99
+    }
+  ],
+  "comparison": "Nouvelle r\u00e9f\u00e9rence propos\u00e9e apr\u00e8s modification intentionnelle de g\u00e9om\u00e9trie ; pas de comparaison de r\u00e9gression d\u00e9terministe."
+}

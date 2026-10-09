@@ -2,7 +2,7 @@
 title: Pièges connus
 tags: [guide, diagnostic]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Pièges connus

@@ -1,0 +1,959 @@
+[
+  {
+    "step": "continue_after_reload",
+    "state": {
+      "level": "metro",
+      "mode": "continue",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 22.05000000000003,
+      "pickupRadius": 1.2,
+      "meleeDamageScale": 1,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "default_dev_metro",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 12.000000000000176,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "heal_full_no_debit",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 16.500000000000345,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "ammo_purchase",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 99,
+          "shotgunAmmo": 56
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 28,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 21.00000000000009,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "damage_and_ammo_spent",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 94,
+          "shotgunAmmo": 54
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 28,
+        "hp": 90,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 28.499999999999662,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "heal_purchase",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 94,
+          "shotgunAmmo": 54
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 18,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 33.49999999999938,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "death_after_purchases",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": false,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 94,
+          "shotgunAmmo": 54
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 18,
+        "hp": 0,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 33.76666666666603,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "replay_discards_purchases",
+    "state": {
+      "level": "metro",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 20.500000000000117,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "rich_store_before_exit",
+    "state": {
+      "level": "niveau_v2",
+      "mode": "dev",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 200,
+          "shotgunAmmo": 96
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 125,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 12,
+          "shotgunAmmo": 0
+        },
+        "perks": [],
+        "wallet": 10,
+        "hp": 20,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 8.91666666666669,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 125,
+      "pistolMaxAmmo": 200
+    }
+  },
+  {
+    "step": "rich_exit_saved",
+    "state": {
+      "level": "niveau_v2",
+      "mode": "dev",
+      "playing": false,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 200,
+          "shotgunAmmo": 96
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 125,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 9.250000000000039,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 125,
+      "pistolMaxAmmo": 200
+    }
+  },
+  {
+    "step": "rich_transition",
+    "state": {
+      "level": "metro",
+      "mode": "transition",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 9.933333333333406,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 125,
+      "pistolMaxAmmo": 200
+    }
+  },
+  {
+    "step": "standalone_client",
+    "state": {
+      "level": "metro",
+      "mode": "standalone",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "client"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 75,
+          "shotgunAmmo": 48
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "client"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 21.30000000000007,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 100,
+      "pistolMaxAmmo": 150
+    }
+  },
+  {
+    "step": "continue_preserves_difficulty",
+    "state": {
+      "level": "metro",
+      "mode": "continue",
+      "playing": true,
+      "entry": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "current": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "saved": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 195,
+          "shotgunAmmo": 94
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant",
+          "premium",
+          "gilet"
+        ],
+        "wallet": 150,
+        "hp": 115,
+        "difficulty": "habitue"
+      },
+      "persistenceFailed": false,
+      "cards": [],
+      "time": 20.000000000000146,
+      "pickupRadius": 3,
+      "meleeDamageScale": 1.5,
+      "sightRangeScale": 1,
+      "maxHp": 125,
+      "pistolMaxAmmo": 200
+    }
+  }
+]

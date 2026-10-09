@@ -12,6 +12,8 @@ import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
 import type { SuitKind } from "../../entities/suit/suitConfig";
 import type { LevelTrains } from "../trains/levelTrains";
+import type { MetroBlockout } from "../blockout/metroBlockout";
+import type { FountainWater } from "../../../render/environment/fountain/fountainWater";
 export interface SpawnPoint {
   /** Position MONDE, pieds du joueur (pas les yeux).
    * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
@@ -117,7 +119,9 @@ export interface LevelStats {
 }
 
 export interface LevelHandle {
+  metroBlockout?: MetroBlockout | null;
   trains?: LevelTrains | null;
+  fountainWater?: FountainWater | null;
   /** Racine ajoutée à `scene` (= `gltf.scene`). */
   root: THREE.Object3D;
   gltf: GLTF;

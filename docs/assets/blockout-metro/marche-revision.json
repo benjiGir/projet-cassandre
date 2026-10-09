@@ -1,0 +1,23 @@
+{
+  "frames": 240,
+  "p95": 8.4,
+  "maximum": 9.3,
+  "pas": 121,
+  "maxVertical": 0.020801851525902748,
+  "maxHorizontal": 0.15000344812870106,
+  "camera": {
+    "images": 211,
+    "immobiles": 0,
+    "minHorizontal": 0.067501209816275,
+    "maxHorizontal": 0.08370315679811378
+  },
+  "pose": {
+    "x": -2,
+    "y": 224.86,
+    "z": -11.65,
+    "eye": -10.05,
+    "cap": 0,
+    "pitch": 0
+  },
+  "plusDe34ms": 0
+}

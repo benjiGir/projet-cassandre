@@ -1,0 +1,351 @@
+{
+  "zone": "seconde pente et retour dans le tunnel A",
+  "date": "2026-10-09",
+  "trafic": "suspendu pendant la marche",
+  "saut": false,
+  "repositionnementPendantLaMarche": false,
+  "poses": [
+    {
+      "action": "départ de la seconde pente",
+      "pose": {
+        "x": 63.75,
+        "y": 276,
+        "z": -15.76,
+        "eye": -14.16,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 280.45,
+        "z": -16.09,
+        "eye": -14.49,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 284.9,
+        "z": -16.42,
+        "eye": -14.82,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 289.35,
+        "z": -16.75,
+        "eye": -15.15,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 293.81,
+        "z": -17.08,
+        "eye": -15.48,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 298.26,
+        "z": -17.41,
+        "eye": -15.81,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "descendre vers le retour",
+      "pose": {
+        "x": 63.75,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer le coude et le coffret",
+      "pose": {
+        "x": 59.3,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer le coude et le coffret",
+      "pose": {
+        "x": 54.85,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer le coude et le coffret",
+      "pose": {
+        "x": 50.4,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "passer le coude et le coffret",
+      "pose": {
+        "x": 46.38,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher la commande",
+      "pose": {
+        "x": 45.53,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "approcher la commande",
+      "pose": {
+        "x": 44.68,
+        "y": 302.63,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "se placer face à la commande",
+      "pose": {
+        "x": 43.83,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 0,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "franchir le seuil dans le tunnel A",
+      "pose": {
+        "x": 39.38,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 90,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers la seconde pente",
+      "pose": {
+        "x": 43.83,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers la seconde pente",
+      "pose": {
+        "x": 48.28,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers la seconde pente",
+      "pose": {
+        "x": 52.58,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers la seconde pente",
+      "pose": {
+        "x": 57.03,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retour vers la seconde pente",
+      "pose": {
+        "x": 61.48,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retrouver le coude",
+      "pose": {
+        "x": 62.34,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "retrouver le coude",
+      "pose": {
+        "x": 63.34,
+        "y": 303.48,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 270,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 299.03,
+        "z": -17.47,
+        "eye": -15.87,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 294.64,
+        "z": -17.14,
+        "eye": -15.54,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 290.22,
+        "z": -16.81,
+        "eye": -15.21,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 285.8,
+        "z": -16.49,
+        "eye": -14.89,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 281.38,
+        "z": -16.16,
+        "eye": -14.56,
+        "cap": 180,
+        "pitch": 0
+      }
+    },
+    {
+      "action": "remonter la seconde pente",
+      "pose": {
+        "x": 63.34,
+        "y": 276.96,
+        "z": -15.85,
+        "eye": -14.25,
+        "cap": 180,
+        "pitch": 0
+      }
+    }
+  ],
+  "action": {
+    "pose": {
+      "x": 43.83,
+      "y": 303.48,
+      "z": -17.47,
+      "eye": -15.87,
+      "cap": 0,
+      "pitch": 0
+    },
+    "grille": {
+      "name": "door_n5_tunnel",
+      "movement": "monte",
+      "state": "opening",
+      "groupe": "door_n5_tunnel",
+      "locked": false
+    }
+  },
+  "franchissement": {
+    "pose": {
+      "x": 39.38,
+      "y": 303.48,
+      "z": -17.47,
+      "eye": -15.87,
+      "cap": 90,
+      "pitch": 0
+    },
+    "grille": {
+      "name": "door_n5_tunnel",
+      "movement": "monte",
+      "state": "open",
+      "groupe": "door_n5_tunnel",
+      "locked": false
+    }
+  }
+}
