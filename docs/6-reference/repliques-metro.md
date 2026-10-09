@@ -8,7 +8,7 @@ updated: 2026-10-09
 # Catalogue de répliques du métro
 
 Tout ce qui se dit dans « Trafic interrompu » : le héros, les haut-parleurs
-du réseau, le compte vérifié et le chat. C'est le lot H2 de `PLAN_V2.md`.
+du réseau, le compte vérifié, le chat et l'écran de chargement. C'est le lot H2 de `PLAN_V2.md`.
 
 **Ces textes sont en jeu, en texte seul, et attendent votre relecture.**
 Aucun n'a de prise de voix. Une réplique en texte seul ne s'affiche que si
@@ -144,6 +144,31 @@ le réseau (« la ligne S est fermée pour la sécurité de tous »).
 juste. Les nouveaux arrivent par la page d'accueil, croient suivre une série
 et demandent la saison 2 ; personne ne leur répond. Huit pseudos s'ajoutent
 aux trente du magasin.
+
+## Écran de chargement
+
+Source : `src/ui/screens/loading/LoadingScreen/loadingQuips.ts`. Quatorze
+phrases d'attente, sur le ton de la régie, tournent toutes les 2,4 s quand
+on charge le métro. Les autres niveaux gardent celles du magasin.
+`beginLoading` (`src/core/loading/loadingProgress.ts`) reçoit le jeu de
+textes du niveau ; l'écran choisit ses phrases d'après lui.
+
+| Texte |
+|---|
+| Graissage des gonds de la grille… |
+| Contrôle de votre titre de transport… |
+| Trafic interrompu. Merci de patienter quand même. |
+| Rétablissement de votre chaîne… |
+| Prochaine rame dans 2 minutes. Ou pas. |
+| Mise à jour du plan de ligne. Un autocollant suffit. |
+| Rembobinage des caméras de quai… |
+| Purge des conduites. Attention, c'est tiède. |
+| Vérification des refuges. Ils sont étroits. |
+| Repassage des uniformes des agents… |
+| Éloignez-vous de la bordure du quai. |
+| Comptage des nouveaux spectateurs… |
+| Un agent va vous recevoir. Restez sur le quai. |
+| MUE. La ville fait peau neuve. |
 
 ## Ce qui reste ouvert
 

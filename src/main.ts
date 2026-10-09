@@ -28,6 +28,7 @@ import {
   bootGameSessionWithRetry,
   createSessionFlow,
   introPending,
+  loadingDestination,
   waitForGameSessionReady,
 } from "./app/navigation/sessionFlow";
 import { levelStory } from "./game/session/presentation/storyPanels";
@@ -97,7 +98,7 @@ async function main() {
   const { choice, entry } = await resolveBootChoice(root);
   flowActor.send({ type: "BEGIN_LOAD" });
 
-  beginLoading("Démarrage", 0.02);
+  beginLoading("Démarrage", 0.02, loadingDestination(choice));
   root.render(createElement(LoadingScreen));
   await letBrowserPaint();
 

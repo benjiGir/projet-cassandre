@@ -35,6 +35,11 @@ export async function bootGameSessionWithRetry(
   }
 }
 
+/** Ce que l'écran de chargement doit savoir du niveau : son jeu de textes. */
+export function loadingDestination(choice: LevelDef): string {
+  return choice.textes ?? "magasin";
+}
+
 /** L'intro du niveau reste à montrer : il en a une, et ce navigateur ne l'a pas encore vue. */
 export function introPending(choice: LevelDef): boolean {
   return levelStory(choice.id) !== null && !hasSeenIntro(choice.id);
@@ -110,10 +115,11 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
       actor.send({ type: "NEXT_LEVEL" });
       clearLevelShortcut();
       input.clearPendingEdges();
-      beginLoading("Descente dans le métro", 0.02);
+      const metro = metroLevel();
+      beginLoading("Descente dans le métro", 0.02, loadingDestination(metro));
       await letBrowserPaint();
       await teardownGameSession(engine, previous);
-      engine.session = await bootGameSessionWithRetry(engine, metroLevel(), actor, { mode: "transition", arrival });
+      engine.session = await bootGameSessionWithRetry(engine, metro, actor, { mode: "transition", arrival });
       await waitForGameSessionReady(actor, engine.session, introPending(engine.session.choice));
     });
   }
@@ -123,7 +129,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
     const entry: SessionEntry = { mode: engine.session.entryMode, arrival: engine.session.entryArrival ?? undefined };
     actor.send({ type: "REPLAY" });
     input.clearPendingEdges();
-    beginLoading("Redémarrage de la partie", 0.02);
+    beginLoading("Redémarrage de la partie", 0.02, loadingDestination(choice));
     await letBrowserPaint();
     await teardownGameSession(engine, engine.session);
     engine.session = await bootGameSessionWithRetry(engine, choice, actor, entry);
@@ -137,7 +143,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
     clearLevelShortcut();
     const { choice, entry } = await resolveBootChoice(root);
     actor.send({ type: "BEGIN_LOAD" });
-    beginLoading("Démarrage", 0.02);
+    beginLoading("Démarrage", 0.02, loadingDestination(choice));
     root.render(createElement(App, appProps()));
     await letBrowserPaint();
     input.clearPendingEdges();

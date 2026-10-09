@@ -35,4 +35,22 @@ describe("loadingProgress", () => {
     failed.retry();
     await expect(waiting).resolves.toBeUndefined();
   });
+
+  it("garde la destination d'un chargement à travers l'avancement, l'échec et la nouvelle tentative", async () => {
+    beginLoading("Descente", 0.02, "metro");
+    reportLoading("Chargement du niveau", 0.3);
+    expect(loadingSnapshot()?.destination).toBe("metro");
+
+    const waiting = waitForLoadingRetry(new Error("GLB invalide"));
+    const failed = loadingSnapshot();
+    expect(failed?.destination).toBe("metro");
+    if (failed?.status !== "failed") throw new Error("état d'échec attendu");
+    failed.retry();
+    await waiting;
+    beginLoading("Nouvelle tentative", 0.3);
+    expect(loadingSnapshot()?.destination).toBe("metro");
+
+    beginLoading("Démarrage", 0.02, "magasin");
+    expect(loadingSnapshot()?.destination).toBe("magasin");
+  });
 });
