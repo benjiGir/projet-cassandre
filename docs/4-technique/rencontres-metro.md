@@ -61,6 +61,13 @@ pistolet uniquement. La campagne conserve l'équipement du niveau précédent ;
 le lancement isolé de la page d'auteur ne prouve pas l'équilibre d'une
 arrivée pauvre ou riche.
 
+Chaque marqueur de ramassage porte son origine au centre de sa boîte, à
+16 cm au-dessus du sol prévu. La géométrie est ramenée dans son repère
+local : `buildUseObjectEffect` lit cette origine mondiale pour le ramassage,
+alors que le rendu des trousses et boîtes se place depuis leurs bounds.
+Une boîte construite en coordonnées monde avec une origine à zéro serait
+visible au bon endroit et impossible à ramasser en passant dessus.
+
 ## Contrats et fichiers
 
 | Responsabilité | Fichier |
@@ -106,6 +113,10 @@ La [page d'auteur](../assets/blockout-metro.html) expose les rencontres,
 l'état des ennemis, la neutralisation des attaques et le nettoyage des
 acteurs pour les observer séparément. Suspendre le trafic avant une
 téléportation sur une voie. Ces commandes sont réservées à la revue.
+Elle affiche aussi les ressources du joueur et les points de ramassage,
+avec deux approches de rue et une commande pour perdre 10 PV et dépenser
+5 balles au pas fixe. Ces positions logiques permettent de voir un décalage
+entre l'objet affiché et sa zone de collecte.
 
 Les [observations datées](../journal/metro-blockout-2026-10.md#première-passe-de-rencontres--9-octobre)
 distinguent placement, déclenchement et poursuite observée. La compilation

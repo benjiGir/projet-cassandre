@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 from mathutils.bvhtree import BVHTree
 
 from tools.blender import geo_utils
@@ -113,6 +113,9 @@ def build(a):
         obj['evenement']=event
     for name,(x,y,z),property_name,amount in PICKUPS:
         obj=a.box('ramassage_'+name,(x-.12,y-.12,z+.08),(.24,.24,.16),'petrole',False)
+        center=Vector((x,y,z+.16))
+        obj.data.transform(Matrix.Translation(-center))
+        obj.location=center
         obj.name='use_metro_'+name
         obj[property_name]=amount
     root=Path(__file__).resolve().parents[3]

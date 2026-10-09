@@ -1963,3 +1963,47 @@ navigateur ; origine non attribuée, console globale non déclarée validée.
 La partie complète, les profils d'arrivée pauvre et riche, Contrôleur,
 secrets, bornes et équilibrage final restent ouverts. Le candidat est prêt
 pour une première passe de retours sur les rencontres.
+
+## Correction des ramassages — 9 octobre
+
+L'utilisateur arrive du magasin avec 64 PV et des munitions de pistolet
+incomplètes, mais les ressources du métro ne se ramassent pas. Reproduction
+sur la page d'auteur avec 90 PV et 70 balles : traverser les deux objets de
+la rue laisse ces valeurs inchangées, les objets restent visibles.
+
+Cause : `Author.box` écrit la géométrie en coordonnées monde avec une
+origine à zéro. Les treize marqueurs `use_metro_*` gardaient cette origine ;
+`buildUseObjectEffect` lit la position mondiale de l'origine pour la
+collecte. Le dessin du ramassage utilise les bounds, donc l'objet paraît
+posé au bon endroit alors que sa détection se trouve à `(0, 0, 0)`.
+La recherche du sol partait aussi de ce point erroné. Le contrôle des
+appuis de la passe précédente vérifiait les coordonnées souhaitées,
+sans prouver le ramassage effectif.
+
+Dans `encounters.py`, les sommets des treize marqueurs sont ramenés dans
+leur repère local et l'origine est posée au centre de leur boîte, 16 cm
+au-dessus du sol prévu. La source Blender et le GLB sont reconstruits par
+la recette Cassandre : 4 339 objets, 33 488 Ko, aucun intrus ni fuite de
+bibliothèque. Les treize translations exportées correspondent maintenant
+aux lieux de ramassage. Le runtime et les règles de plafond sont conservés.
+
+La page d'auteur expose l'équipement actuel et les positions logiques des
+ramassages. Elle ajoute deux approches de rue et une action qui dépense
+5 balles et retire 10 PV via la file de commandes de développement au pas
+fixe. Ces outils n'écrivent pas la reprise de campagne.
+
+Après correction, la même marche donne **90 → 100 PV** et **70 → 94 balles**
+dans la rue. Au dépôt, une autre marche donne **70 → 100 PV** et
+**79 → 115 balles**. Les quatre objets sont consommés et masqués. Après une
+nouvelle perte de ressources, repasser au dépôt laisse **90 PV et 110
+balles** : les objets ne donnent pas une deuxième fois leurs ressources.
+La [trace avant/après](../assets/blockout-metro/ramassages-correction-2026-10-09.json)
+conserve les positions, équipements et visibilités. La
+[vue de rue](../assets/blockout-metro/ramassages-correction-2026-10-09.png)
+montre les modèles posés sur leur sol après reconstruction.
+
+Ces observations utilisent les déplacements ordinaires entre des poses
+d'auteur et le profil type du métro. Elles ne rejouent pas la sauvegarde
+personnelle à 64 PV ni une partie complète. Aucune suite de tests ajoutée
+ou lancée. La source de campagne est inchangée : recharger le niveau permet
+de récupérer ces ressources avec l'équipement d'arrivée conservé.

@@ -1,0 +1,2062 @@
+{
+  "avant": {
+    "soin": {
+      "pose": {
+        "x": 1.5,
+        "y": 22.65,
+        "z": -0.24,
+        "eye": 1.36,
+        "cap": 0,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 70,
+          "shotgunAmmo": 46
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 90,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.2378957931276113,
+          "service": 0
+        },
+        "horloge": 1.643299999952318,
+        "prochainEvenementDans": 4.35670000004769
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": 23.787865218591303,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "B",
+            "countdown": 26.161291732595437,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": []
+    },
+    "munitions": {
+      "pose": {
+        "x": 1.5,
+        "y": 27.77,
+        "z": -0.24,
+        "eye": 1.36,
+        "cap": 0,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 70,
+          "shotgunAmmo": 46
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 90,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "opening",
+          "groupe": "door_n5_tunnel",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.2504691116889183,
+          "service": 0
+        },
+        "horloge": 11.072399999952356,
+        "prochainEvenementDans": 7.568065742516512
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": 14.35453188525784,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "B",
+            "countdown": 16.727958399261976,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [
+          {
+            "voie": "A",
+            "trajet": "ligne",
+            "avant": 73.6000000000031
+          }
+        ],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": [
+        {
+          "id": 1,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            -10,
+            0.9199999995529652,
+            -50
+          ]
+        },
+        {
+          "id": 2,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            10,
+            0.9199999995529652,
+            -54
+          ]
+        }
+      ]
+    }
+  },
+  "apres": {
+    "soin": {
+      "pose": {
+        "x": 1.5,
+        "y": 22.35,
+        "z": -0.24,
+        "eye": 1.36,
+        "cap": 0,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 94,
+          "shotgunAmmo": 46
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -20
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -92
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -261
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -329
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            93,
+            -21.84000015258789,
+            -354
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -400.5
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            50,
+            0.1599999964237213,
+            -470
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -25
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -94
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -263
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -327
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            115,
+            -21.84000015258789,
+            -355
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -402
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.2389868256209043,
+          "service": 0
+        },
+        "horloge": 1.6763000000476853,
+        "prochainEvenementDans": 4.323699999952321
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": 23.75453188525797,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "B",
+            "countdown": 26.127958399262106,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": []
+    },
+    "munitions": {
+      "pose": {
+        "x": 1.5,
+        "y": 27.5,
+        "z": -0.24,
+        "eye": 1.36,
+        "cap": 0,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 94,
+          "shotgunAmmo": 46
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": true,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -20
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -92
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -261
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -329
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            93,
+            -21.84000015258789,
+            -354
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -400.5
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            50,
+            0.1599999964237213,
+            -470
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -25
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -94
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -263
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -327
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            115,
+            -21.84000015258789,
+            -355
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -402
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.26661764896999485,
+          "service": 0
+        },
+        "horloge": 2.8188000000476854,
+        "prochainEvenementDans": 3.1811999999523204
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": 22.604531885257977,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "B",
+            "countdown": 24.977958399262107,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": true
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": [
+        {
+          "id": 1,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            -10,
+            0.9199999995529652,
+            -50
+          ]
+        },
+        {
+          "id": 2,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            10,
+            0.9199999995529652,
+            -54
+          ]
+        }
+      ]
+    },
+    "depot": {
+      "pose": {
+        "x": 49.5,
+        "y": 325.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 115,
+          "shotgunAmmo": 40
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 100,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -20
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -92
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -261
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -329
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            93,
+            -21.84000015258789,
+            -354
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -400.5
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            50,
+            0.1599999964237213,
+            -470
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -25
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -94
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -263
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -327
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            115,
+            -21.84000015258789,
+            -355
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -402
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.26751501145553763,
+          "service": 0
+        },
+        "horloge": 24.551300000047558,
+        "prochainEvenementDans": 5.586106761097933
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          },
+          {
+            "id": "B",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": [
+        {
+          "id": 1,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            -10,
+            0.9099693728421698,
+            -50
+          ]
+        },
+        {
+          "id": 2,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            9.999998249904323,
+            0.9100887842650991,
+            -54.00000031450591
+          ]
+        }
+      ]
+    },
+    "secondPassage": {
+      "pose": {
+        "x": 49.5,
+        "y": 325.7,
+        "z": -17.99,
+        "eye": -16.39,
+        "cap": 180,
+        "pitch": 0
+      },
+      "equipement": {
+        "weapons": {
+          "owned": [
+            "melee",
+            "pistol",
+            "shotgun"
+          ],
+          "active": "pistol",
+          "pistolAmmo": 110,
+          "shotgunAmmo": 38
+        },
+        "perks": [
+          "perche",
+          "boisson",
+          "aimant"
+        ],
+        "wallet": 40,
+        "hp": 90,
+        "difficulty": "habitue"
+      },
+      "ramassages": [
+        {
+          "nom": "use_quartier_soin",
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -20
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -92
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -261
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -329
+          ],
+          "visible": false,
+          "soin": 50,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_machinerie",
+          "position": [
+            93,
+            -21.84000015258789,
+            -354
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -400.5
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_soin_parvis",
+          "position": [
+            50,
+            0.1599999964237213,
+            -470
+          ],
+          "visible": false,
+          "soin": 25,
+          "munitions": null
+        },
+        {
+          "nom": "use_metro_ammo_rue",
+          "position": [
+            1.5,
+            -0.09000000357627869,
+            -25
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_billets",
+          "position": [
+            -15,
+            -4.840000152587891,
+            -94
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_vestiaire",
+          "position": [
+            78,
+            -15.390000343322754,
+            -263
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_depot",
+          "position": [
+            49,
+            -17.84000015258789,
+            -327
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        },
+        {
+          "nom": "use_metro_ammo_machinerie",
+          "position": [
+            115,
+            -21.84000015258789,
+            -355
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 24
+        },
+        {
+          "nom": "use_metro_ammo_rame",
+          "position": [
+            39.5,
+            -17.09000015258789,
+            -402
+          ],
+          "visible": false,
+          "soin": null,
+          "munitions": 36
+        }
+      ],
+      "niveau": {
+        "colliderCount": 1335,
+        "colliderKindCounts": {
+          "cuboid": 361,
+          "convexHull": 974,
+          "trimesh": 0
+        },
+        "spawnSuitCount": 44,
+        "spawnDirectorCount": 0,
+        "triggerCount": 12,
+        "doorCount": 7,
+        "useCount": 31,
+        "secretCount": 0,
+        "unprefixedMeshCount": 2322,
+        "decorBatchCount": 325,
+        "lightCount": 188,
+        "propCount": 0,
+        "vitreCount": 0,
+        "vitreBatchCount": 0,
+        "doorBatchCount": 5,
+        "sanitaireCount": 0,
+        "sanitaireBatchCount": 0,
+        "ecranCount": 0,
+        "ecranBatchCount": 0
+      },
+      "portes": [
+        {
+          "name": "door_n5_tunnel",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_n5_tunnel",
+          "locked": true
+        },
+        {
+          "name": "door_quartier_grille",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_1",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_grille_2",
+          "movement": "monte",
+          "state": "closed",
+          "groupe": "door_quartier_grille",
+          "locked": false
+        },
+        {
+          "name": "door_quartier_trappe",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_quartier_trappe",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_entree",
+          "movement": "coulisse",
+          "state": "open",
+          "groupe": "door_n5_rame_entree",
+          "locked": false
+        },
+        {
+          "name": "door_n5_rame_sortie",
+          "movement": "coulisse",
+          "state": "closed",
+          "groupe": "door_n5_rame_sortie",
+          "locked": true
+        }
+      ],
+      "ambiance": {
+        "profil": "quartier_pilote",
+        "zone": "rue",
+        "nappes": {
+          "rue": 0.26841482761570656,
+          "service": 0
+        },
+        "horloge": 53.24340000005047,
+        "prochainEvenementDans": 4.157173127129614
+      },
+      "progression": {
+        "aiguillage": false,
+        "courant": false,
+        "raccourci": false,
+        "completed": false,
+        "rideWaves": 0,
+        "voyage": {
+          "phase": "boarding",
+          "elapsed": 0,
+          "distance": 0,
+          "speed": 0,
+          "remaining": 0
+        }
+      },
+      "trains": {
+        "voies": [
+          {
+            "id": "A",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          },
+          {
+            "id": "B",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          },
+          {
+            "id": "VB",
+            "countdown": null,
+            "announced": false,
+            "route": "ligne",
+            "pendingRoute": null,
+            "stopped": 0,
+            "cooldown": 0,
+            "enabled": false
+          }
+        ],
+        "rames": [],
+        "morts": 0,
+        "ennemis": 0,
+        "traversées": 0
+      },
+      "ennemis": [
+        {
+          "id": 1,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            -9.999999836050648,
+            0.9100693894361029,
+            -49.999999590126606
+          ]
+        },
+        {
+          "id": 2,
+          "espece": "costard",
+          "etat": "idle",
+          "vivant": true,
+          "pv": 50,
+          "position": [
+            9.999998249904323,
+            0.9100887842650991,
+            -54.00000031450591
+          ]
+        }
+      ]
+    }
+  }
+}
