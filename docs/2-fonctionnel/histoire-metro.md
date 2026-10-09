@@ -214,7 +214,10 @@ Propositions à valider. Rien n'est figé dans le jeu.
   panneaux et les noms de la section « Valeurs ».
 - **À écrire avec l'utilisateur** : la tour, puis le choix entre temple et
   laboratoire.
-- Rien n'est en jeu. Le plan de travail est `PLAN_V2.md`, à la racine du dépôt.
+- **En jeu depuis le 2026-10-09** : les huit panneaux, images et légendes
+  (`src/game/session/presentation/storyPanels.ts`). Les légendes restent à
+  valider par l'utilisateur. Le reste de cette page n'est pas en jeu. Le plan
+  de travail est `PLAN_V2.md`, à la racine du dépôt.
 
 ## Pour aller plus loin
 

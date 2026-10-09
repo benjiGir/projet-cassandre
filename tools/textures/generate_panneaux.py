@@ -4,7 +4,7 @@
     ./.venv-refs/bin/python3 tools/textures/generate_panneaux.py --check
 
 Entrée : `assets_src/panneaux/raw/<id>.png` (ou .jpg, .webp), produites avec
-les prompts de `assets_src/panneaux/PROMPTS.md`. Un panneau absent est
+les prompts de `assets_src/panneaux/PROMPTS.md` et `PROMPTS_METRO.md`. Un panneau absent est
 simplement sauté : le jeu affiche alors un aplat numéroté à sa place.
 
 Sortie : `public/assets/story/<id>.png` en 640×360, et la liste des panneaux
@@ -36,7 +36,11 @@ OUT = os.path.join(ROOT, "public", "assets", "story")
 LIVRES = os.path.join(ROOT, "src", "game", "session", "presentation", "storyImages.json")
 
 # Mêmes identifiants que `storyPanels.ts` : un test du jeu vérifie l'accord.
-PANNEAUX = ["intro_1", "intro_2", "intro_3", "intro_4", "outro_1", "outro_2", "outro_3", "outro_4"]
+PANNEAUX = [
+    "intro_1", "intro_2", "intro_3", "intro_4", "outro_1", "outro_2", "outro_3", "outro_4",
+    "metro_intro_1", "metro_intro_2", "metro_intro_3", "metro_intro_4",
+    "metro_outro_1", "metro_outro_2", "metro_outro_3", "metro_outro_4",
+]
 TAILLE = (640, 360)
 EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 # En dessous, l'agrandissement se verrait : on refuse plutôt que de livrer flou.

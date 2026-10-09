@@ -769,7 +769,7 @@ flowchart LR
 | Lot | Contenu | Taille | Gate |
 |---|---|---|---|
 | H0 | Bible du niveau : `docs/2-fonctionnel/histoire-metro.md` (place du niveau, trajet, indices, compte vérifié, noms) | S | **réécrite le 2026-10-06 après correction ; propositions à valider par l'utilisateur** |
-| H1 | Prompts des panneaux d'intro et de fin, mise au format ; images générées par l'utilisateur | S | images déposées |
+| H1 | Prompts des panneaux d'intro et de fin, mise au format ; images générées par l'utilisateur | S | **images déposées et branchées le 2026-10-09 ; légendes à valider par l'utilisateur** |
 | H2 | Catalogue de répliques du niveau, annonces de station, textes du chat et des dons | M | relecture |
 
 ### Piste technique

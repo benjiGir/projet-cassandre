@@ -1,0 +1,158 @@
+{
+  "date": "2026-10-09",
+  "generator": "Outil OpenAI imagegen intégré à Codex",
+  "promptSource": "assets_src/panneaux/PROMPTS_METRO.md",
+  "generationOrder": [
+    "metro_outro_4",
+    "metro_intro_1",
+    "metro_intro_3",
+    "metro_outro_1",
+    "metro_intro_4",
+    "metro_intro_2",
+    "metro_outro_2",
+    "metro_outro_3"
+  ],
+  "runtimeIntegration": true,
+  "preview": {
+    "path": "assets_src/panneaux/metro-planche-640.png",
+    "panelSize": [
+      640,
+      360
+    ],
+    "colorsPerPanel": 64,
+    "pipeline": "tools/textures/generate_panneaux.py : panneau()"
+  },
+  "assets": [
+    {
+      "id": "metro_intro_1",
+      "path": "assets_src/panneaux/raw/metro_intro_1.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/outro_4.png",
+        "assets_src/panneaux/raw/metro_outro_4.png"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE new full scene, not a collage. Story panel metro_intro_1. Landscape 16:9, at least 1280 pixels wide. Reference roles: Image 1: hero identity only. Image 2: same bedroom, furniture, pinned papers and pixel-art style. Image 3: tower design only, to use in the small pinned tower photograph. Do not bring the dawn colors into the bedroom.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by two accents only: sickly green monitor glow and one warm sodium-orange line from a street lamp through the blind. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image): the same original fictional French amateur video streamer, about 36, long slightly crooked nose, thick dark eyebrows, short tousled dark brown hair, three-day beard, brown eyes, worn olive zip hoodie over a muted rust-orange T-shirt. A fading yellowish bruise on one cheek and a small sticking plaster on the brow, left over from a fight a few days earlier. No headset, glasses or helmet.\nScene: interior, night, lights off, the same small cluttered rented bedroom as in the scene reference: a desk with two monitors, a black mesh office chair, empty energy-drink cans, a bookshelf with a hanging plant, a window with a slatted blind, and a whole wall covered with pinned photographs, till receipts and clippings joined by taut red string around one central photograph of a supermarket facade at night. Medium shot, three-quarter view from the side. The streamer stands at the wall, face in profile, determined and pleased with himself. With one hand he presses a large unfolded transit map flat against the wall; the other hand holds an uncapped red marker. The map is an invented diagram: one single thick line that snakes in two wide opposite curves, with four round station dots and no other line. From the last dot he has drawn a dashed red extension by hand, running off the edge of the map toward a pinned photograph of a tall dark glass office tower. A red string runs from the supermarket photograph, across the map, to the tower photograph. Behind him the main monitor shows a large grey padlock pictogram on a dark screen and casts the green glow that lights the scene. On the unmade bed in the foreground, laid out ready: a crowbar and a black chest harness holding a small action camera. Every pinned paper is blank or covered in abstract scribbles.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real transit maps, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [
+        "Edit image 1, preserve the entire bedroom, hero, art style, lighting, props and composition. Change ONLY two pinned papers. (1) The big transit map under the hero's hands must have a plain pale blank paper background, no underlying street map or network. Show ONE thick solid red line following two opposite wide curves and EXACTLY FOUR round station dots along the solid line. At the final dot a dashed red extension runs toward the pinned tower photograph. (2) Replace the tower inside the pinned photograph at upper right with the SAME invented architecture as image 2: slate-blue glass, broad solid vertical stone ribs, a low annex on its right flank, most windows dark with only a very few warmly lit. Show the full exterior of this same design at night in the photograph. Keep the photograph's small size, border and red strings. No text. All other elements unchanged."
+      ],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "1563237a72f938ef5f06e2433993a51cb2bdbd247053eb56ddf5884c01714405"
+    },
+    {
+      "id": "metro_intro_2",
+      "path": "assets_src/panneaux/raw/metro_intro_2.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/metro_intro_1.png"
+      ],
+      "prompt": "Use case: illustration-story. Generate ONE new full story panel, not a collage. Landscape 16:9, at least 1280 pixels wide. Reference roles: Image 1: same hero face and olive clothing. Image 2: same bedroom and pixel-art rendering, monitor position, wall map, tower photo, orange blind lighting. Create a new side shot at the desk rather than repeating the wall pose. Both fists raised in triumph, open-mouthed laugh. The big padlock on the main monitor is unmistakably OPEN; the notification shows a simple coin and pale-blue circular tick seal; all UI bars blank.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by two accents only: a bright sickly green monitor glow that floods the room, and one warm sodium-orange line from a street lamp through the blind. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image): the same original fictional French amateur video streamer, about 36, long slightly crooked nose, thick dark eyebrows, short tousled dark brown hair, three-day beard, brown eyes, worn olive zip hoodie over a muted rust-orange T-shirt. A fading yellowish bruise on one cheek and a small sticking plaster on the brow. No headset, glasses or helmet.\nScene: interior, night, the same small cluttered rented bedroom as in the scene reference, with its wall of pinned photographs and red string on the left. Side view of the streamer at his desk. He has just started a live broadcast: the small webcam on top of the monitor shows a red light. He leans back in his black mesh office chair with both fists raised, laughing in open-mouthed triumph, certain that he has won. The main monitor shows a large padlock pictogram, now open, its shackle swung up, glowing bright green. Under the padlock, one glowing notification bar holds a coin pictogram and, beside it, a small round pale-blue seal with a plain tick, followed by a short blank bar. The second monitor shows his own small video window. Green light falls on his face, on the cans on the desk and on the wall behind him.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "ef5007b9cb7106875f81068c20fe48cb458d0800425948475a44241c29dce38c"
+    },
+    {
+      "id": "metro_intro_3",
+      "path": "assets_src/panneaux/raw/metro_intro_3.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/intro_3.png",
+        "assets_src/panneaux/raw/metro_outro_4.png"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE new full scene, not a collage. Story panel metro_intro_3. Landscape 16:9, at least 1280 pixels wide. Reference roles: Image 1: hero identity only. Image 2: night palette, wet pavement, rear hero and pixel-art style only. Image 3: the same tower design for the distant skyline; depict it smaller at night. The camera is on the FRONT of his chest, NOT on his back; three-quarter rear angle allows the red recording light to show at the side of his chest.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by two accents only: a sickly green light rising from the metro stairway, and warm sodium-orange lamp posts and shop windows. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image, seen from behind in three-quarter view): the same original fictional French amateur video streamer, short tousled dark brown hair, worn olive zip hoodie, dark jeans, the black straps of a chest harness crossing his back. No headset or helmet.\nScene: exterior, wide establishing shot, night, just after rain. A narrow street in a provincial French town: flat matte apartment facades with shutters and small balconies, a closed laundromat and a corner grocery with warm lit windows, a bus shelter, one parked boxy 1990s van, tall sodium lamp posts, wet pavement reflecting the lamps. In the middle distance, the entrance of an underground metro station: a stairway sinking into the pavement between two low stone parapets with handrails, closed at the top by an iron bar gate with one pale sheet of paper fixed to it. Above the gate, a horizontal petrol-teal sign band carries a row of blank pale blocks in place of letters. A faint cold greenish light rises from the bottom of the stairs, behind the bars. Far away above the rooftops, the dark silhouette of a single tall glass office tower with a few lit windows. Deep slate-blue sky with a few stars. In the foreground, small in the frame, the streamer stands facing the entrance, a crowbar hanging from one hand; the red recording light of the action camera on his chest spills a small red glow onto his sleeve and is the brightest point of the image.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real metro signs or transit logos, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "0255780da25700ba12a76156424675fb4a306348d555d9e217ad92f44feb04b1"
+    },
+    {
+      "id": "metro_intro_4",
+      "path": "assets_src/panneaux/raw/metro_intro_4.png",
+      "references": [
+        "assets_src/panneaux/raw/intro_3.png",
+        "assets_src/panneaux/raw/metro_intro_3.png"
+      ],
+      "prompt": "Use case: illustration-story. Generate ONE new full story panel, landscape 16:9 at least 1280 pixels wide. Image 1: original pixel-art style and night lighting only. Image 2: the exact same station entrance design: two stone parapets, two iron gate leaves, narrow central gap, paper on bars, tiled walls and stairs. No hero physically in frame, only his SHADOW and a red recording-light reflection as specified. Close straight-on view of the gate.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by two accents only: sickly green light coming up from the bottom of the stairs, and warm sodium-orange light from behind the viewer. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nScene: exterior, night, straight-on close shot of the iron bar gate that closes the top of a metro stairway. The two leaves of the gate are shut, with a thin vertical gap between them. One sheet of paper, yellowed and warped by months of rain, is fixed to the bars at eye level with four strips of tape, slightly crooked, covered with a few abstract grey lines instead of text. Through the bars, the steps go down between ivory-tiled walls into darkness, and a cold green light comes up from below. The lamp behind the viewer throws the long dark shadow of a man in a hoodie across the bars and down the steps; one tiny red dot, the reflection of his recording light, shines on the glossy tiles. A simple, symmetrical, quiet composition with large plain dark areas.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real metro signs or transit logos, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "166831fe17a4df539f0a76bc1a4551ffbb137827cfaf428236846fbac783604a"
+    },
+    {
+      "id": "metro_outro_1",
+      "path": "assets_src/panneaux/raw/metro_outro_1.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/outro_1.png",
+        "assets_src/panneaux/raw/metro_outro_4.png"
+      ],
+      "prompt": "Use case: illustration-story. Create ONE new full scene, not a collage. Story panel metro_outro_1. Landscape 16:9, at least 1280 pixels wide. Reference roles: Image 1: hero identity and injuries. Image 2: pixel-art style and FRONT chest camera harness only, not the warm lighting or supermarket. Image 3: the same tower lower facade and cold blue-grey palette. The tiny footprint-in-ring emblem is on a small off-centre parapet plaque, never central or dominant. No warm lamps, no green; only a thin pale horizon sunrise line and the red FRONT chest recording light.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by a cold blue-grey dawn with one thin pink-orange line on the horizon, and by drifting white steam; the only saturated point is a small red recording light. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image): the same original fictional French amateur video streamer, about 36, long slightly crooked nose, thick dark eyebrows, short tousled dark brown hair, three-day beard, brown eyes, worn olive zip hoodie over a muted rust-orange T-shirt, dark jeans. A small action camera with a red recording light sits on a black chest harness over the hoodie. He is battered as in the lower rows of the reference: bruised cheek, split lip, a little blood on the brow, stylised and not gory. Hoodie blackened with soot and grease.\nScene: exterior, dawn, medium-wide shot at ground level. A wide, empty, immaculate forecourt paved with large pale stone slabs, with long ventilation grilles set into the ground; thick white steam rises from the grilles and drifts across the frame. In the centre, a bare stairway comes up out of the ground between two smooth pale stone parapets, with no sign on it. On one parapet, small and off-centre, a plain metal plaque engraved only with a tiny emblem: a three-clawed footprint inside a ring. The streamer has just climbed the last step, exhausted, a crowbar hanging from one hand, his head tilted back to look at something very high above him, outside the frame. Behind him, half hidden by the steam, only the ground floor of a large dark glass building is visible; everything above it is cut off by the top of the image.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real buildings, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [
+        "Edit this story panel. Preserve the hero's face, chest camera, pose, staircase, architectural composition, detailed pixel art, steam and cold blue-grey building. Correct the light and plaque. Shrink the footprint-in-circle emblem AND its metal plaque on the right parapet to ONE QUARTER their current width and height, keeping it in the same off-centre position; restore the stone around it. The emblem should be a subtle tiny engraved mark, not a prominent logo. Replace the orange and pink clouds with muted cold grey-blue dawn clouds, retaining at most ONE THIN pale pink-orange line just above the horizon. Eliminate the warm orange rimlight on the hero and the orange reflections on the paving. Use cold blue-white dawn rimlight and reflections instead. The red FRONT chest camera recording light is the only strongly saturated bright color. No text, all other details preserved."
+      ],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "ff06188c3614c736de6cb6956f2341badd96fe6d9bd4367e2d05595db7d9c81d"
+    },
+    {
+      "id": "metro_outro_2",
+      "path": "assets_src/panneaux/raw/metro_outro_2.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/metro_outro_1.png"
+      ],
+      "prompt": "Use case: illustration-story. Generate ONE new full story panel, not a collage. Landscape 16:9, at least 1280 pixels wide. Reference roles: Image 1: same hero face and olive clothing. Image 2: same pale forecourt, cold blue-grey dawn, steam and slate-glass facade plus pixel-art rendering. All background windows in this new shot are unlit. Over-shoulder viewpoint; smartphone dominates with its pale blue-white screen. Its only interface content is pictograms and blank colored rectangular bars; absolutely no readable or pseudo-written text, numbers, or real app layout. Camera straps only on the rear shoulder.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by a cold blue-grey dawn and by the cold blue-white glow of a phone screen, with white steam in the air. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image, seen from behind over his shoulder): the same original fictional French amateur video streamer, short tousled dark brown hair, three-day beard on the visible cheek, worn olive zip hoodie blackened with soot, the black strap of a chest harness on his shoulder. A bruise on the visible cheek, stylised and not gory.\nScene: exterior, dawn, the same pale stone forecourt with steam rising from ground grilles. Over-the-shoulder close shot from behind the streamer, who holds a smartphone up in one scraped hand and stares at it, stunned and flattered. The phone shows a generic live-stream layout invented for this image: one small video window showing the steaming forecourt; above it, an eye pictogram followed by a long row of small blank blocks that runs off the edge of the screen; beside it, a tall column of chat messages drawn as stacked blank coloured bars of different lengths, every one of them starting with the same tiny sparkle pictogram. The glow of the phone lights his cheek and the edge of his hood. Beyond the phone, in flat dark tones, the glass facade of a large building fills the background: rows and rows of identical dark windows, none of them lit.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real buildings, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "49707aa8ac5d864389fc708a06f9f615ad5fa38fc804b0fc50d26e6465512384"
+    },
+    {
+      "id": "metro_outro_3",
+      "path": "assets_src/panneaux/raw/metro_outro_3.png",
+      "references": [
+        "assets_src/panneaux/raw/metro_outro_2.png",
+        "assets_src/panneaux/raw/metro_outro_4.png"
+      ],
+      "prompt": "Use case: illustration-story. Generate ONE new full story panel, landscape 16:9, at least 1280 pixels wide. Input image 1: SAME phone housing, scraped hand, olive sleeve, wet pale forecourt, steam and pixel-art style, but create a NEW extreme close-up top-down angle showing BOTH hands holding the phone. Input image 2: SAME tower architecture to use only as a faint reflection on the phone glass. Screen: one single BRIGHT pale-blue pinned-message rectangle above several DIM blank chat bars. The pinned message has a small circular pale-blue seal with a simple white tick at its left edge, then ONE short blank horizontal bar. No text or numbers anywhere. Make the circular tick seal readable at 640-pixel-wide reduction. No green or orange ambient lighting; cold blue-white phone glow and blue-grey dawn.\n\n1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by the cold blue-white glow of a phone screen and a cold blue-grey dawn, with white steam. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nScene: exterior, dawn. Extreme close-up, three-quarter top-down view. Two scraped, soot-stained hands in worn olive hoodie cuffs hold a smartphone. The screen shows an invented live-stream layout: a column of chat messages drawn as stacked blank bars, all dimmed, and one message pinned above them, much larger and brighter: a wide pale-blue bar holding at its left end a small round pale-blue seal with a plain tick, followed by one short blank bar. Nothing else on the screen is highlighted. Under the phone, wet pale stone paving and the edge of a ventilation grille, with steam curling up between the hands. Faintly reflected on the glass of the phone: the tall dark outline of an office tower.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [
+        "Edit ONLY the tower reflection on the phone screen in this image. It is currently too clear and reads like a photograph playing on the phone. Replace it with a very FAINT ghostly tower outline reflected on a dark blue-grey glass screen, low contrast: broad vertical ribs and low annex barely discernible, with no clear sky or illuminated windows. Reduce the reflection's contrast and visibility by about 85%, so the phone surface is predominantly dark and the bright pinned message unmistakably dominates. Preserve exactly the bright pale-blue pinned bar and its circular white tick seal, all dim blank chat bars, the phone housing, two scraped hands, olive cuffs, cold dawn palette, pixel-art texture, wet paving, grille and steam. No text, no other changes."
+      ],
+      "size": [
+        1672,
+        941
+      ],
+      "sha256": "bc106d81ad036ef24a09f4c9c448277b522447456a50dd3c9fe0a3e3f3236eb5"
+    },
+    {
+      "id": "metro_outro_4",
+      "path": "assets_src/panneaux/raw/metro_outro_4.png",
+      "references": [
+        "docs/assets/portrait-stream-planche-v1.png",
+        "assets_src/panneaux/raw/outro_1.png"
+      ],
+      "prompt": "1990s PC game cutscene illustration, hand-painted pixel art, hard chunky pixels with no anti-aliasing, limited earthy palette of about 48 colours, strong readable shapes, clean silhouettes, flat lighting planes with a few hand-dithered transitions. Same art style as the supplied character reference, and same level of detail, pixel size and colour treatment as the supplied scene reference, which is an earlier panel of the same series. Dry satirical tone, never horror. Lit by a cold blue-grey dawn, by the cold blue-white light of a lobby, and by white steam; the first pink-orange sunlight touches only the very top of the tower. Landscape, composed for a 16:9 crop: keep every important element inside the central 16:9 band and treat the top and bottom edges as bleed. Must stay readable when reduced to 640 pixels wide.\nCharacter (preserve exactly from the reference image, seen from behind): the same original fictional French amateur video streamer, short tousled dark brown hair, worn olive zip hoodie blackened with soot, dark jeans, the black straps of a chest harness crossing his back.\nScene: exterior, dawn, extreme low-angle shot looking up from a pale stone forecourt. One tall modern office tower of dark slate-blue glass fills the frame and rises out of the top of the image, its vertical lines converging; a lower annex block stands against one of its sides. Almost every window is dark; a few are lit warm. The building carries no name and no sign. Above the entrance, small, a tiny emblem: a three-clawed footprint inside a ring. At the foot of the tower, the glass doors of the lobby stand open, with nobody there, and spill a cold blue-white light across the paving toward the viewer. Columns of white steam rise from ground grilles on both sides. At the bottom centre, small in the frame, the streamer stands facing the doors, a crowbar in one hand, his long shadow stretching behind him. An original invented building that resembles no real tower.\nAvoid: any text, letters, numbers, captions, speech bubbles, logos, real brands, real people, real buildings, real app or website interfaces, watermark, signature, borders or frames, photorealism, 3D render, smooth gradients, soft airbrushed shading, blur, lens flare, gore.",
+      "refinements": [
+        "Emblème réduit et décentré au bord droit du linteau ; éclairage extérieur refroidi ; caméra au dos supprimée au profit de la jonction des sangles, caméra portée sur la poitrine."
+      ],
+      "size": [
+        1660,
+        948
+      ],
+      "sha256": "9acd827260fc7302fd8f468378927e5af68378ab4246d3809eb8856caffd8e4e"
+    }
+  ]
+}

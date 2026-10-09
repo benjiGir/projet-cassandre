@@ -6,6 +6,8 @@ Huit illustrations : quatre pour l'intro, quatre pour la fin du niveau
 que les générateurs suivent le mieux. Les légendes restent en français, parce
 que **c'est le jeu qui les affiche sous l'image, pas l'IA qui les dessine**.
 
+Les panneaux du niveau 2 ont leur fichier : [`PROMPTS_METRO.md`](PROMPTS_METRO.md).
+
 ## Pourquoi les prompts sont faits comme ça
 
 En jeu, un panneau est réduit à **640 × 360 px**, ramené à 64 couleurs, puis

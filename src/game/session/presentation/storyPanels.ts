@@ -59,8 +59,51 @@ const NIVEAU_V2: LevelStory = {
   ],
 };
 
+// see: docs/2-fonctionnel/histoire-metro.md#les-panneaux
+// Prompts des images : assets_src/panneaux/PROMPTS_METRO.md.
+const METRO: LevelStory = {
+  intro: [
+    panel("metro_intro_1", "Le héros punaise un plan de métro au mur de ficelles, un cadenas à l'écran derrière lui.", [
+      "Chaîne suspendue. Revenus retenus. J'ai préparé une réclamation.",
+      "Et je sais où la déposer.",
+    ]),
+    panel("metro_intro_2", "Le héros lève les poings devant son écran, où le cadenas vient de s'ouvrir.", [
+      "Je relance un direct pour protester. La suspension saute aussitôt.",
+      "Ils ont reculé. Et mon premier abonné est revenu.",
+    ]),
+    panel("metro_intro_3", "Une rue mouillée la nuit, le héros de dos face à une bouche de métro grillée.", [
+      "Fermée « pour travaux ». Les gonds de la grille sont graissés.",
+      "Douze spectateurs. C'est un début.",
+    ]),
+    panel(
+      "metro_intro_4",
+      "La grille de la bouche de métro, une affichette jaunie, une lueur verte en bas des marches.",
+      ["TRAFIC INTERROMPU"],
+    ),
+  ],
+  outro: [
+    panel("metro_outro_1", "Le héros sort de terre sur un parvis à l'aube, dans la vapeur, et lève la tête.", [
+      "Terminus. Aucun nom sur les plaques.",
+      "Il fait chaud, ici. Vous ne trouvez pas ?",
+    ]),
+    panel("metro_outro_2", "Par-dessus l'épaule du héros, son téléphone : un compteur qui déborde, un chat plein.", [
+      "Jamais eu autant de spectateurs. Je ne reconnais aucun pseudo.",
+      "« C'est quand, la saison 2 ? »",
+    ]),
+    panel("metro_outro_3", "Le téléphone en gros plan, un seul message épinglé, marqué d'un sceau de compte vérifié.", [
+      "Un message de premier_abonne. Compte vérifié, maintenant.",
+      "« Bienvenue. »",
+    ]),
+    panel("metro_outro_4", "Le héros de dos au pied d'une tour de verre, les portes du hall ouvertes devant lui.", [
+      "Pas de nom sur la façade. Pas de gardien à la porte.",
+      "J'ai une réclamation à déposer.",
+    ]),
+  ],
+};
+
 const STORIES: Readonly<Record<string, LevelStory>> = {
   niveau_v2: NIVEAU_V2,
+  metro: METRO,
 };
 
 /** Panneaux d'intro et de fin du niveau, `null` s'il n'en a pas. */

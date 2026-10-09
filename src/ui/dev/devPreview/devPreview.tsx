@@ -101,6 +101,11 @@ function seedHudState() {
   state.showHeroLine("Ils ne veulent pas que vous voyiez ça. Moi je filme.");
 }
 
+/** Panneaux du niveau nommé par `&level=`, ceux du magasin par défaut. */
+function previewStory() {
+  return levelStory(new URLSearchParams(window.location.search).get("level") ?? "niveau_v2");
+}
+
 /**
  * Rend l'écran demandé par `?uiPreview=` et retourne `true` : l'appelant doit
  * alors s'arrêter là, sans jamais démarrer le reste du boot.
@@ -148,14 +153,10 @@ export function maybeRenderDevPreview(root: Root): boolean {
       root.render(<LevelCompleteScreen onReplay={noop} onReturnToMenu={noop} />);
       break;
     case "storyIntro":
-      root.render(
-        <StoryPanels panels={levelStory("niveau_v2")?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />,
-      );
+      root.render(<StoryPanels panels={previewStory()?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />);
       break;
     case "storyOutro":
-      root.render(
-        <StoryPanels panels={levelStory("niveau_v2")?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />,
-      );
+      root.render(<StoryPanels panels={previewStory()?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />);
       break;
     case "loading":
       beginLoading("Chargement du niveau", 0.47);

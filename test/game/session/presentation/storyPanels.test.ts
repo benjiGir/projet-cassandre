@@ -8,16 +8,24 @@ import { levelStory, STORY_IMAGE_DIR } from "../../../../src/game/session/presen
 // Liste vide tant qu'aucune image n'est livrée : son type inféré serait `never[]`.
 const livrees: readonly string[] = deliveredImages;
 
+const NIVEAUX = ["niveau_v2", "metro"] as const;
+
+function tousLesPanneaux() {
+  return NIVEAUX.flatMap((niveau) => {
+    const story = levelStory(niveau)!;
+    return [...story.intro, ...story.outro];
+  });
+}
+
 describe("panneaux d'histoire", () => {
-  it("le niveau principal a quatre panneaux d'intro et quatre de fin", () => {
-    const story = levelStory("niveau_v2");
+  it.each(NIVEAUX)("%s a quatre panneaux d'intro et quatre de fin", (niveau) => {
+    const story = levelStory(niveau);
     expect(story?.intro).toHaveLength(4);
     expect(story?.outro).toHaveLength(4);
   });
 
   it("chaque panneau a un identifiant unique, une description et une légende", () => {
-    const story = levelStory("niveau_v2")!;
-    const panels = [...story.intro, ...story.outro];
+    const panels = tousLesPanneaux();
     expect(new Set(panels.map((panel) => panel.id)).size).toBe(panels.length);
     for (const panel of panels) {
       expect(panel.alt.length, panel.id).toBeGreaterThan(0);
@@ -27,8 +35,7 @@ describe("panneaux d'histoire", () => {
   });
 
   it("chaque image livrée appartient à un panneau, existe sur disque et y est seule", () => {
-    const story = levelStory("niveau_v2")!;
-    const ids = new Set([...story.intro, ...story.outro].map((panel) => panel.id));
+    const ids = new Set(tousLesPanneaux().map((panel) => panel.id));
     const dossier = resolve("public", STORY_IMAGE_DIR);
     const fichiers = existsSync(dossier) ? readdirSync(dossier).filter((nom) => nom.endsWith(".png")) : [];
     expect(livrees.filter((id) => !ids.has(id))).toEqual([]);
@@ -36,8 +43,7 @@ describe("panneaux d'histoire", () => {
   });
 
   it("un panneau ne référence une image que si elle est livrée", () => {
-    const story = levelStory("niveau_v2")!;
-    for (const panel of [...story.intro, ...story.outro]) {
+    for (const panel of tousLesPanneaux()) {
       const attendu = livrees.includes(panel.id) ? `${STORY_IMAGE_DIR}/${panel.id}.png` : null;
       expect(panel.image, panel.id).toBe(attendu);
     }
