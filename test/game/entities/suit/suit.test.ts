@@ -1,5 +1,5 @@
 /**
- * Jalon M5 (PLAN_EFFECT_XSTATE.md) — tests de CARACTÉRISATION de `Suit`
+ * Tests de CARACTÉRISATION de `Suit`
  * (`src/game/entities/suit/suit.ts`), écrits contre le code ACTUEL, NON modifié.
  * Ce fichier est le filet de sécurité du futur refactor XState : chaque
  * assertion ci-dessous doit rester vraie, à l'identique, une fois la machine

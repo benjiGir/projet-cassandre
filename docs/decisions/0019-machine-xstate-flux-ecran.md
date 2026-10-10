@@ -2,7 +2,7 @@
 title: Machine XState de flux d'écran plutôt que rechargement de page
 tags: [adr, ui, xstate]
 status: accepte
-updated: 2026-09-25
+updated: 2026-10-10
 ---
 
 # ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page
@@ -98,3 +98,14 @@ l’utilisateur. Le boot envoie `BEGIN_LOAD`; replay envoie `REPLAY` vers
 Un premier échec envoie `LOAD_FAILED`, puis le bouton « Réessayer » provoque
 `RETRY_LOAD`. Le graphe représente ainsi la disponibilité réelle du monde au
 lieu d’assimiler « session allouée » à « niveau jouable ».
+
+## Révision — états `options`/`levelSelect` retirés (2026-10-10)
+
+Les deux états que la section « Conséquences » décrivait comme jamais
+atteints, et leurs évènements (`OPEN_OPTIONS`, `BACK_TO_MENU`, `CHOOSE_ZONE`),
+sont retirés de la machine, avec les deux tests qui les exerçaient (audit de
+qualité du 2026-10-08, action 15). La navigation interne du menu reste celle
+de `bootChoice.ts` : il n'y a plus qu'une seule description de « quel écran
+est affiché ». Le critère ci-dessus reste valable : si un composant doit un
+jour réagir à l'écran d'options, c'est le moment de les réintroduire **et**
+de les câbler.

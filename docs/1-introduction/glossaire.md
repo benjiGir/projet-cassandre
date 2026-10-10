@@ -87,7 +87,9 @@ des versions.
 | `LevelDef` | Définition d'un niveau sélectionnable au menu (id, nom, chemin du fichier). | `src/game/level/catalog/levels.ts` |
 | `LevelHandle` | Contrat du résultat public du chargement d'un niveau glTF (corps physiques, décor, spawns…), consommé par le reste du jeu. | `src/game/level/loading/levelTypes.ts` |
 | `LevelSession` | Niveau `.glb` COURANT d'une partie : porte le `LevelHandle` affiché, le sondage de hot reload et la logique de remplacement transactionnel (candidat, commit, arrêt). | `src/game/level/loading/hotReload.ts` |
-| `PersistentEngine` | `GameEngine` privé de son champ `session` ; type utilisé pendant la construction, avant que la première `GameSession` existe. | `src/game/session/gameEngine.ts` |
+| `LevelState` | Ce que le niveau chargé apporte à la partie (`session.level`) : graphe de navigation, systèmes de portes, props, vitres… Remplacé d'un bloc à chaque commit de niveau. | `src/game/session/levelState.ts`, [Cycle de vie](../3-architecture/cycle-de-vie.md#trois-durées-de-vie) |
+| `PersistentEngine` | Ce qui vit autant que l'onglet ; `GameEngine` l'étend avec `session`. Type reçu par ce qui construit ou détruit une partie, avant que la première `GameSession` existe. | `src/game/session/gameEngine.ts` |
+| `RunState` | État du joueur dans une partie (`session.run`) : PV, cartes, perks, secrets, direct, score. Survit à un hot reload. | `src/game/session/runState.ts`, [Cycle de vie](../3-architecture/cycle-de-vie.md#trois-durées-de-vie) |
 | Service Effect | Dépendance déclarée via `Context.Service`, injectée par une `Layer` et consommée avec `.use(...)` dans la frontière synchrone. | `src/physics/raycast.ts`, `src/core/effect/random.ts` |
 | Store zustand | État miroir pour l'UI React (`src/game/hud/state.ts`), jamais la source de vérité (qui reste dans `GameSession`) ; le HUD s'y abonne, throttlé à 10 Hz (invariant #2). | `src/game/hud/state.ts` |
 

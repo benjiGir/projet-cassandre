@@ -97,7 +97,7 @@ describe("Vigile — bouclier", () => {
 
     expect(manager.blockedHits.size).toBe(0);
     expect(suit.hp).toBeLessThan(vigileConfig.maxHp);
-    expect(manager.hurtEvents.map((e) => e.suit)).toEqual([suit]);
+    expect(manager.hurtEvents.map((e) => e.enemy)).toEqual([suit]);
   });
 
   it("viser la tête ne passe pas par-dessus : seule compte la direction vue de dessus", () => {

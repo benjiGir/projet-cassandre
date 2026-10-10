@@ -1,5 +1,5 @@
 /**
- * Jalon M2 (PLAN_EFFECT_XSTATE.md) : couvre les 7 cas de dégradation
+ * Couvre les 7 cas de dégradation
  * documentés dans `src/game/level/loading/loader.ts` (voir sa doc de tête, section
  * "Erreurs typées") + un chemin heureux complet.
  *

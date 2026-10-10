@@ -38,9 +38,14 @@ en entrée.
 - `src/game/entities/shared/enemyNavigation.ts` — poursuite, évitement et orientation.
 - `src/game/entities/shared/enemyPhysics.ts` — capsule, KCC, intégration et knockback.
 - `src/game/entities/shared/enemyCombat.ts` — visée, jitter et résolution du tir.
+- `src/game/entities/shared/enemyEntity.ts` / `enemyManager.ts` /
+  `eventQueue.ts` — le lot commun : `EnemyEntity` (corps Rapier, PRNG, acteur
+  de la machine), `EnemyManager` (un seul KCC partagé, regroupement des
+  impacts, graines d'apparition) et ses files d'évènements, lisibles « ce pas
+  fixe » ou « depuis la dernière image ».
 - `src/game/entities/suit/suit.ts` / `suitConfig.ts` / `suitManager.ts` — le
-  Costard : fin wrapper Rapier + config + PRNG + acteur ; `SuitManager`
-  pilote `Suit[]`, un seul KCC partagé, les files d'évènements par frame.
+  Costard : ce qu'il ajoute au lot commun (espèce, matérialisation, bouclier,
+  gibs, portée de vue d'un perk).
 - `src/game/entities/rampant/rampantConfig.ts` et
   `src/game/entities/vigile/vigileConfig.ts` — deux autres espèces du même
   gestionnaire : une configuration chacune, aucun code propre.
@@ -49,16 +54,17 @@ en entrée.
 - `src/game/entities/shared/enemyShield.ts` — l'arc d'un bouclier : un impact
   y est-il arrêté.
 - `src/game/entities/director/director.ts` / `directorConfig.ts` / `directorManager.ts`
-  — le Directeur : même schéma, plus la révélation (`revealed`), la carte
-  Platine lâchée à la mort (`DroppedCard`) et son délai de ramassage.
+  — le Directeur : le même lot commun, plus la révélation (`revealed`), la
+  carte Platine lâchée à la mort (`DroppedCard`) et son délai de ramassage.
 - `src/game/session/spawning.ts` — `spawnSuitAt`/`spawnDirectorAt`, appelées
   depuis les Empties `spawn_suit_*`/`spawn_director_*`, et
   `refreshSceneQueries()` avant le bake du graphe de navigation.
-- `src/game/loop/updateGameplay.ts` — appelle les deux managers après
-  `weapons.update`, applique les dégâts reçus par le joueur, appelle
-  `directorManager.tryCollectCard`.
-- `src/game/loop/updateFx.ts` — lit les files d'évènements et déclenche
-  sprite/son/fx ; vide les files en tout dernier (`clearFrameEvents()`).
+- `src/game/loop/steps/combatSteps.ts` (étapes d'`updateGameplay`) — appelle
+  les deux managers après `weapons.update` et applique les dégâts reçus par
+  le joueur ; `steps/levelSteps.ts` appelle `directorManager.tryCollectCard`.
+- `src/game/loop/presentation/enemyFx.ts` (étape d'`updateFx`) — lit les
+  files d'évènements et déclenche sprite/son/fx, par une seule fonction pour
+  les deux managers ; vide les files en tout dernier (`clearFrameEvents()`).
 - `src/render/fx/fx.ts` — `spawnGibs`, infrastructure partagée avec les débris
   de `prop_*`.
 - `src/core/effect/random.ts` — `DeterministicRandom`, seule source du PRNG par
@@ -132,8 +138,8 @@ hors id/rendu. Deux catégories de champs à distinguer à la lecture :
   indépendant de l'état). Les drapeaux `pendingAlert`/`pendingTelegraph`/
   `pendingAttackDamage` sont remis à `false`/`0` en tête de chaque
   `tickEnemy`, positionnés au plus une fois par pas par `runIdle`/`runAttack`,
-  et lus par le manager juste après (`drainSuitPendingEvents`/
-  `drainDirectorPendingEvents`) — jamais relus au pas suivant.
+  et lus par le manager juste après (`EnemyManager.drainPendingEvents`) —
+  jamais relus au pas suivant.
 - **Horloges d'animation**, avancées au pas fixe et **lues par le rendu
   seul** — aucune décision de `tickEnemy` ne les consulte : `animClock`
   (secondes de gameplay depuis l'apparition), `strideDistance` (mètres
@@ -218,9 +224,10 @@ chaque manager dérive sa graine d'une base fixe (`BASE_SUIT_SEED`/
 `BASE_DIRECTOR_SEED`, distinctes) plus `spawnCount × SEED_STRIDE` (pas
 impair), jamais `Date.now()`.
 
-**Gibs.** `SuitManager.consumeNewHits` marque un coup `gibs: true` si l'arme
-est le pompe et la distance ≤ `SuitConfig.gibDistance` (3 m) ; le
-`SuitDeathEvent` porte alors `gibs`/`point`/`direction`, lus par `updateFx.ts`
+**Gibs.** `EnemyManager.consumeNewHits` marque un coup `gibs: true` si l'arme
+est le pompe et la distance ≤ `SuitConfig.gibDistance` (3 m) — jamais pour le
+Directeur ; l'`EnemyDeathEvent` porte alors `gibs`/`point`/`direction`, lus par
+`presentation/enemyFx.ts`
 qui appelle `engine.fx.spawnGibs(point, direction)` **à la place** de
 l'animation de mort — côté simulation, l'entité reste `dead`/`corpse`
 normalement, seul le rendu change.

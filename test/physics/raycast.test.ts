@@ -1,5 +1,5 @@
 /**
- * Jalon M3 (PLAN_EFFECT_XSTATE.md) : `RaycastService` enveloppe les TROIS
+ * `RaycastService` enveloppe les TROIS
  * requêtes physiques réellement utilisées par le jeu — PAS `THREE.Raycaster`
  * (zéro occurrence dans `src/`, voir la correction de conception en tête de
  * la section M3 du plan) : `world.castRay`, `world.castRayAndGetNormal`,

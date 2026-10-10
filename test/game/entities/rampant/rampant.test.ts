@@ -47,7 +47,7 @@ describe("SuitManager — espèces", () => {
     manager.update(1 / 60, new THREE.Vector3(0, 0, 50), new THREE.Vector3(0, 1.6, 50), [impact, impact]);
 
     expect(rampant.isAlive).toBe(false);
-    expect(manager.deathEvents.map((e) => e.suit)).toEqual([rampant]);
+    expect(manager.deathEvents.map((e) => e.enemy)).toEqual([rampant]);
   });
 
   it("le souffle d'une explosion le prend aussi", () => {

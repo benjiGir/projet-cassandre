@@ -35,7 +35,7 @@ function disposeImportedMaterials(scene: THREE.Object3D): void {
 }
 
 // Frontière asynchrone au démarrage ; repli si nœuds ou extras manquent.
-export async function loadWeaponModels(): Promise<WeaponModels> {
+async function loadWeaponModels(): Promise<WeaponModels> {
   const gltf = await new GLTFLoader().loadAsync(assetUrl("assets/weapons/armes.glb"));
   const material = new THREE.MeshLambertMaterial({ vertexColors: true });
   applyMinimumLight(material, 0.32);
@@ -117,7 +117,7 @@ function coloredBox(
   return geometry;
 }
 
-export function placeholderWeaponModels(): WeaponModels {
+function placeholderWeaponModels(): WeaponModels {
   return {
     kick: coloredBox([0.2, 0.28, 0.15], [0.12, -0.3, -0.72], 0x38342e),
     kickPivot: new THREE.Vector3(0.12, -0.45, -0.62),

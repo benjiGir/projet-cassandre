@@ -76,7 +76,7 @@ export interface StreamTexts {
   readonly verifiedDonor: boolean;
 }
 
-export const CHAT_LINES: Readonly<Record<Exclude<ChatTopic, "train">, readonly ChatLine[]>> = {
+const CHAT_LINES: Readonly<Record<Exclude<ChatTopic, "train">, readonly ChatLine[]>> = {
   kill: [
     "il l'a pas raté",
     "pauvre vigile, il faisait que son travail",
@@ -226,7 +226,7 @@ export const CHAT_LINES: Readonly<Record<Exclude<ChatTopic, "train">, readonly C
 /** Ce qu'un spectateur écrit avec son don. */
 export type DonationTopic = "kill" | "serie" | "boss" | "secret" | "toilettes" | "carte" | "casse" | "generique";
 
-export const DONATION_LINES: Readonly<Record<DonationTopic, readonly string[]>> = {
+const DONATION_LINES: Readonly<Record<DonationTopic, readonly string[]>> = {
   generique: [
     "pour ton loyer",
     "achète-toi un deuxième sweat",

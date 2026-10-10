@@ -24,21 +24,21 @@ interface MysteryStep {
 
 /** Où en est l'histoire : chaque étape déclenche un don du donateur mystère, une seule fois. */
 const MYSTERY_BEATS: readonly MysteryStep[] = [
-  { beat: "depart", reached: (session) => session.stats.gameplayElapsed >= 12 },
-  { beat: "carte_argent", reached: (session) => session.cards.has("argent") },
-  { beat: "quai", reached: (session) => session.heroLinesSaid.has("quai") },
-  { beat: "carte_or", reached: (session) => session.cards.has("or") },
-  { beat: "escalier", reached: (session) => session.placeLine.space === "c_escalier" },
+  { beat: "depart", reached: (session) => session.run.stats.gameplayElapsed >= 12 },
+  { beat: "carte_argent", reached: (session) => session.run.cards.has("argent") },
+  { beat: "quai", reached: (session) => session.run.heroLinesSaid.has("quai") },
+  { beat: "carte_or", reached: (session) => session.run.cards.has("or") },
+  { beat: "escalier", reached: (session) => session.run.placeLine.space === "c_escalier" },
 ];
 
 // see: docs/2-fonctionnel/histoire-metro.md#le-premier-abonné-à-visage-découvert
 // Aucune étape ne dépend d'une réplique dite : couper les sous-titres ne doit pas changer le portefeuille.
 const METRO_MYSTERY_BEATS: readonly MysteryStep[] = [
-  { beat: "metro_depart", reached: (session) => session.stats.gameplayElapsed >= 12 },
+  { beat: "metro_depart", reached: (session) => session.run.stats.gameplayElapsed >= 12 },
   // En sommeil tant que le niveau ne pose aucun badge (lot C3 de PLAN_V2.md).
-  { beat: "metro_badge", reached: (session) => session.cards.size > 0 },
+  { beat: "metro_badge", reached: (session) => session.run.cards.size > 0 },
   { beat: "metro_passage", reached: trainPassingPlatform },
-  { beat: "metro_fret", reached: (session) => session.placeLine.space === "fret" },
+  { beat: "metro_fret", reached: (session) => session.run.placeLine.space === "fret" },
   { beat: "metro_bord", reached: ridingFreightTrain },
 ];
 
@@ -65,7 +65,7 @@ function showDonation(session: GameSession, donation: DonationAlert): void {
   globalThis.setTimeout(() => {
     if (useGameStore.getState().donation === donation) useGameStore.getState().showDonation(null);
   }, DONATION_DISPLAY_MS);
-  publishChat(session.stream);
+  publishChat(session.run.stream);
   // Le héros prend le compte vérifié pour un allié : il le dit une fois, avant toute autre réaction.
   if (donation.verified && triggerHeroLine(session, "metro_don_verifie")) return;
   triggerHeroLine(session, donation.amount >= BIG_DONATION ? "don_gros" : "don_premier");
@@ -73,15 +73,15 @@ function showDonation(session: GameSession, donation: DonationAlert): void {
 
 /** Le jeu signale un évènement notable au direct. Appelé dans le pas fixe. */
 export function streamEvent(session: GameSession, kind: StreamEventKind): void {
-  const donation = notifyStream(session.stream, kind, session.stats.gameplayElapsed, session.streamRandom);
-  publishCounters(session.stream);
+  const donation = notifyStream(session.run.stream, kind, session.run.stats.gameplayElapsed, session.run.streamRandom);
+  publishCounters(session.run.stream);
   if (donation) showDonation(session, donation);
 }
 
 /** Un pas fixe du direct : ennui, chat, et dons du donateur mystère. */
 export function updateStreamFeed(session: GameSession, dt: number): void {
-  const now = session.stats.gameplayElapsed;
-  const stream = session.stream;
+  const now = session.run.stats.gameplayElapsed;
+  const stream = session.run.stream;
 
   for (const { beat, reached } of mysterySteps(session)) {
     if (stream.mysteryDone.has(beat) || !reached(session)) continue;
@@ -92,7 +92,7 @@ export function updateStreamFeed(session: GameSession, dt: number): void {
     }
   }
 
-  if (updateStream(stream, dt, now, session.streamRandom)) publishChat(stream);
+  if (updateStream(stream, dt, now, session.run.streamRandom)) publishChat(stream);
   if (Math.abs(now - lastIdlePublishAt) >= IDLE_PUBLISH_INTERVAL) {
     lastIdlePublishAt = now;
     publishCounters(stream);

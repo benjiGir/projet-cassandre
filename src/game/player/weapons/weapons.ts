@@ -4,9 +4,9 @@ import RAPIER from "@dimforge/rapier3d-compat";
 import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks } from "./weaponTypes";
 import type { WeaponInventory, OwnedWeapon } from "./weaponInventory";
 import type { InputFrame } from "../../../core/input/inputTypes";
-import { DeterministicRandom } from "../../../core/effect/random";
+import { SHOTGUN_SPREAD_SEED } from "../../../core/effect/seeds";
 import type { GameClock } from "../../../core/loop/time";
-import { runGameplaySync } from "../../../app/runtime/gameRuntime";
+import { runGameplaySync, seededRandom } from "../../../app/runtime/gameRuntime";
 import { RaycastService } from "../../../physics/raycast";
 import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../../physics/world";
 import { approach } from "../movement/controller";
@@ -24,11 +24,6 @@ export const FLESH_MATERIAL = "flesh";
 
 /** Axe local le long duquel `RAPIER.Capsule` place sa demi-hauteur (voir sa doc) — sert à orienter la capsule de test du pied-de-biche sur la direction de visée dans `fireMelee`. */
 const UNIT_Y = new THREE.Vector3(0, 1, 0);
-
-// see: docs/decisions/0007-rng-deterministe.md
-
-/** Graine fixe et arbitraire — seule contrainte : ne JAMAIS dériver du temps réel ou de `Math.random`. */
-const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
 
 // see: docs/archive/systems-armes.md#architecture-munitions-un-seul-pool
 
@@ -100,9 +95,8 @@ export class WeaponSystem {
   private readonly pelletDirScratch = new THREE.Vector3();
   private readonly scratchRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: -1 });
 
-  private readonly nextRandom = runGameplaySync(
-    DeterministicRandom.useSync((random) => random.forSeed(SHOTGUN_SPREAD_SEED)),
-  );
+  // see: docs/decisions/0007-rng-deterministe.md
+  private readonly nextRandom = seededRandom(SHOTGUN_SPREAD_SEED);
 
   constructor(physics: PhysicsWorld, clock: GameClock, cfg: WeaponConfig = weaponConfig) {
     this.physics = physics;
@@ -546,18 +540,18 @@ export class WeaponSystem {
         ),
       ),
     );
-    const portee = hit ? hit.timeOfImpact : this.cfg.pistolRange;
-    const bout = new THREE.Vector3(
-      eyeOrigin.x + this.pelletDirScratch.x * portee,
-      eyeOrigin.y + this.pelletDirScratch.y * portee,
-      eyeOrigin.z + this.pelletDirScratch.z * portee,
+    const reach = hit ? hit.timeOfImpact : this.cfg.pistolRange;
+    const endpoint = new THREE.Vector3(
+      eyeOrigin.x + this.pelletDirScratch.x * reach,
+      eyeOrigin.y + this.pelletDirScratch.y * reach,
+      eyeOrigin.z + this.pelletDirScratch.z * reach,
     );
-    pelletEndpoints.push(bout);
+    pelletEndpoints.push(endpoint);
     if (!hit) return;
 
     const material = this.materialForCollider(hit.collider);
     this._hitEvents.push({
-      point: bout.clone(),
+      point: endpoint.clone(),
       normal: new THREE.Vector3(hit.normal.x, hit.normal.y, hit.normal.z),
       material,
       weapon: "pistol",
@@ -603,7 +597,7 @@ export class WeaponSystem {
       this.scratchRay.dir.y = this.pelletDirScratch.y;
       this.scratchRay.dir.z = this.pelletDirScratch.z;
 
-      // Jalon M3 (PLAN_EFFECT_XSTATE.md) : passe par `RaycastService`, un
+      // Passe par `RaycastService`, un
       // point d'entrée synchrone isolé PAR PLOMB (pas de restructuration de
       // la boucle en un seul Effect composé — ça, c'est le rôle de M6).
       const hit = runGameplaySync(

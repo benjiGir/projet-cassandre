@@ -1,5 +1,5 @@
 /**
- * Jalon M2 (PLAN_EFFECT_XSTATE.md) : `createLevelSession` retrofité vers
+ * `createLevelSession` retrofité vers
  * Effect (mutex de rechargement, polling `Schedule.spaced`) — voir la doc de
  * tête de `src/game/level/loading/hotReload.ts`. `./loader` est mocké : ces tests
  * portent sur l'orchestration de session (coalescing, callbacks, stop()),

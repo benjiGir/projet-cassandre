@@ -8,11 +8,11 @@ import { buildLevelRecap } from "./score";
 // terminé — le bonus de chrono compte, et la partie s'inscrit aux records.
 export function publishLevelRecap(session: GameSession, completed: boolean): void {
   const recap = buildLevelRecap({
-    stats: session.stats,
+    stats: session.run.stats,
     suitTotal: session.suitManager.suits.length,
     directorTotal: session.directorManager.directors.length,
-    secretsFound: session.secretsFound,
-    secretsTotal: session.secretsTotal,
+    secretsFound: session.run.secretsFound,
+    secretsTotal: session.level.secretsTotal,
     parTimeSeconds: completed ? (session.choice.parTime ?? null) : null,
     difficulty: DIFFICULTY_INFO[session.difficulty].label,
   });
@@ -20,5 +20,5 @@ export function publishLevelRecap(session: GameSession, completed: boolean): voi
     recap.record = submitRun(session.choice.id, session.difficulty, recap.total, recap.elapsedSeconds);
   }
   useGameStore.getState().setRecap(recap);
-  useGameStore.getState().setLiveRecap(streamRecap(session.stream));
+  useGameStore.getState().setLiveRecap(streamRecap(session.run.stream));
 }

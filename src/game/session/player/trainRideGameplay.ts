@@ -1,13 +1,12 @@
+import type { TrainRideGym } from "../../level/catalog/trainRideGym";
 import type { GameEngine } from "../gameEngine";
 import { RIDE_ENTRY_DOOR, RIDE_EXIT_DOOR } from "../../level/trainRide/trainRideConfig";
 import { spawnSuitAt } from "../spawning";
 import { showHudMessage } from "./feedback";
 
 // see: docs/4-technique/prototype-voyage-rame.md#horloge-et-mouvement
-export function updateTrainRideGym(engine: GameEngine, dt: number, use: boolean): void {
-  const session = engine.session,
-    gym = session.trainRideGym;
-  if (!gym) return;
+export function updateTrainRideGym(engine: GameEngine, gym: TrainRideGym, dt: number, use: boolean): void {
+  const session = engine.session;
   const position = session.player.position;
   const aboard = Math.abs(position.x) < 1.45 && Math.abs(position.z) < 22.5;
   if (use && position.distanceTo(gym.control) < 2) gym.system.enqueue("depart");
@@ -38,7 +37,7 @@ export function updateTrainRideGym(engine: GameEngine, dt: number, use: boolean)
         break;
       case "reset":
         gym.doors = gym.resetDoors();
-        session.doorSystem = gym.doors;
+        session.level.doorSystem = gym.doors;
         gym.doors.lock(RIDE_EXIT_DOOR);
         showHudMessage("Voyage remis à zéro — E dans la cabine");
         break;

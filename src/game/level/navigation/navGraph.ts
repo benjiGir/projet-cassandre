@@ -57,12 +57,6 @@ export function cellWorldPosition(graph: NavGraph, index: number, out = new THRE
   return out.set(graph.originX + ix * graph.cellSize, graph.groundY[index], graph.originZ + iz * graph.cellSize);
 }
 
-/** Lecture debug directe d'une cellule par ses coordonnées de grille — exportée pour `cassandre.pathfinding`/les tests, voir `navGraphStats` pour un résumé agrégé. */
-export function isCellWalkable(graph: NavGraph, ix: number, iz: number): boolean {
-  if (ix < 0 || ix >= graph.cols || iz < 0 || iz >= graph.rows) return false;
-  return graph.walkable[cellIndex(graph, ix, iz)] === 1;
-}
-
 /** Résumé agrégé d'un `NavGraph`, pour `cassandre.pathfinding.stats()`/les tests — évite de forcer un consommateur externe à itérer les tableaux typés bruts. */
 export function navGraphStats(graph: NavGraph): {
   cellSize: number;

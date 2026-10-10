@@ -36,13 +36,13 @@ export function applyBlast(engine: GameEngine, session: GameSession, center: THR
   let playerDamage = 0;
   const position = session.player.position;
   const amount = Math.round(blastDamageAt(position.distanceTo(center)) * explosionConfig.playerDamageScale);
-  if (amount > 0 && session.playerHp > 0 && reaches(position)) {
-    const hpBefore = session.playerHp;
+  if (amount > 0 && session.run.playerHp > 0 && reaches(position)) {
+    const hpBefore = session.run.playerHp;
     normalScratch.subVectors(center, position);
     applyPlayerDamage(engine, session, amount, normalScratch);
-    playerDamage = hpBefore - session.playerHp;
+    playerDamage = hpBefore - session.run.playerHp;
     // Ponctuel, comme un soin : le HUD n'attend pas le prochain coup d'un ennemi.
-    useGameStore.getState().setPlayerHp(session.playerHp);
+    useGameStore.getState().setPlayerHp(session.run.playerHp);
   }
 
   return {

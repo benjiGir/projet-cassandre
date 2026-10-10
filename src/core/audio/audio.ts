@@ -15,11 +15,13 @@ import {
   SFX_TABLE,
   WEAPON_FIRE_SFX,
 } from "./audioCatalog";
-import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxId } from "./audioTypes";
+import type { SfxId } from "./audioCatalog";
+import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice } from "./audioTypes";
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "../loading/assetPath";
 import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
 import type { DoorMovement } from "../../game/level/doors/doorTypes";
+import { fetchJson } from "../net/fetchJson";
 
 // Présentation : les lectures Howler restent hors du pas fixe.
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
@@ -41,60 +43,63 @@ export function setAllMuted(muted: boolean): void {
   Howler.mute(muted);
 }
 
+/** Coupe tout ce qui joue, boucles comprises. Sans retour : c'est pour un jeu qui s'arrête. */
+export function stopAllAudio(): void {
+  Howler.stop();
+}
+
 export function setAudioRandom(random: () => number): void {
   audioRandom = random;
 }
 
 let atlas: Howl | null = null;
-let cles: Set<string> = new Set();
-let chargement: Promise<void> | null = null;
-const avertis = new Set<string>();
+let spriteKeys: Set<string> = new Set();
+let loading: Promise<void> | null = null;
+const warned = new Set<string>();
 
-function avertirUneFois(cle: string, raison: string) {
-  if (avertis.has(cle)) return;
-  avertis.add(cle);
-  console.warn(`[audio] ${raison} — le jeu continue sans ce son.`);
+function warnOnce(key: string, reason: string) {
+  if (warned.has(key)) return;
+  warned.add(key);
+  console.warn(`[audio] ${reason} — le jeu continue sans ce son.`);
 }
 
 export function initAudio(): Promise<void> {
-  if (chargement) return chargement;
+  if (loading) return loading;
 
-  chargement = fetch(`${SFX_BASE_PATH}/sfx.json`, { signal: AbortSignal.timeout(15000) })
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-    .then(decodeAudioSpriteManifest)
-    .then(async (manifeste) => {
-      cles = new Set(Object.keys(manifeste.sprite));
-      const voices = manifeste.pool ?? POOL_LECTURES;
+  loading = fetchJson(`${SFX_BASE_PATH}/sfx.json`, decodeAudioSpriteManifest)
+    .then(async (manifest) => {
+      spriteKeys = new Set(Object.keys(manifest.sprite));
+      const voices = manifest.pool ?? POOL_LECTURES;
       atlas = new Howl({
-        src: manifeste.src.map((f) => `${SFX_BASE_PATH}/${f}`),
-        sprite: manifeste.sprite,
+        src: manifest.src.map((f) => `${SFX_BASE_PATH}/${f}`),
+        sprite: manifest.sprite,
         pool: voices,
         onload: () => {
-          const sprite = Object.keys(manifeste.sprite)[0];
+          const sprite = Object.keys(manifest.sprite)[0];
           if (sprite) warmAudioPool(atlas!, sprite, voices);
         },
-        onloaderror: () => avertirUneFois("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
+        onloaderror: () => warnOnce("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
       });
 
       for (const id of Object.keys(SFX_TABLE) as SfxId[]) {
-        const cle = SFX_TABLE[id].sprite;
-        if (!cles.has(cle)) {
-          avertirUneFois(id, `"${id}" pointe sur la recette "${cle}", absente du sprite`);
+        const key = SFX_TABLE[id].sprite;
+        if (!spriteKeys.has(key)) {
+          warnOnce(id, `"${id}" pointe sur la recette "${key}", absente du sprite`);
         }
       }
       await Promise.all([waitForAudioLoad(atlas), prepareTrainWarning()]);
     })
     .catch((e) => {
-      avertirUneFois("manifeste", `manifeste audio illisible (${e})`);
+      warnOnce("manifeste", `manifeste audio illisible (${e})`);
     });
-  return chargement;
+  return loading;
 }
 
 // Gain et pitch par lecture : ne pas modifier les sons déjà en cours.
 export function playSfx(id: SfxId, volumeScale = 1) {
   if (!atlas || atlas.state() !== "loaded") return;
   const def = SFX_TABLE[id];
-  if (!cles.has(def.sprite)) return;
+  if (!spriteKeys.has(def.sprite)) return;
 
   const lecture = atlas.play(def.sprite);
   if (lecture === undefined) return;
@@ -107,7 +112,7 @@ export function listSfx(): { id: SfxId; recette: string; present: boolean }[] {
   return (Object.keys(SFX_TABLE) as SfxId[]).map((id) => ({
     id,
     recette: SFX_TABLE[id].sprite,
-    present: cles.has(SFX_TABLE[id].sprite),
+    present: spriteKeys.has(SFX_TABLE[id].sprite),
   }));
 }
 

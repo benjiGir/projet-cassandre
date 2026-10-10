@@ -15,8 +15,8 @@ import { DEFAULT_DOOR_MOVEMENT, parseDoorConfig, parseDoorMovement } from "../..
 import type { DoorActor } from "../../../../src/game/level/doors/doorTypes";
 import {
   advanceDoorProgress,
-  composeBattantPose,
-  composeCoulissePose,
+  composeSwingPose,
+  composeSlidePose,
   composeVerticalPose,
   computeHingeGeometry,
   hingePivotInRootSpace,
@@ -159,7 +159,7 @@ describe("hingePivotInRootSpace / composeBattantPose", () => {
 
     const outPos = new THREE.Vector3();
     const outQuat = new THREE.Quaternion();
-    composeBattantPose(closedPosition, closedQuaternion, pivotWorld, Math.PI / 2, outPos, outQuat);
+    composeSwingPose(closedPosition, closedQuaternion, pivotWorld, Math.PI / 2, outPos, outQuat);
 
     const expected = closedPosition.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
     expect(outPos.x).toBeCloseTo(expected.x, 5);
@@ -174,7 +174,7 @@ describe("hingePivotInRootSpace / composeBattantPose", () => {
 
     const outPos = new THREE.Vector3();
     const outQuat = new THREE.Quaternion();
-    composeBattantPose(closedPosition, closedQuaternion, pivotWorld, 0, outPos, outQuat);
+    composeSwingPose(closedPosition, closedQuaternion, pivotWorld, 0, outPos, outQuat);
 
     expect(outPos.distanceTo(closedPosition)).toBeLessThan(1e-9);
     expect(outQuat.angleTo(closedQuaternion)).toBeLessThan(1e-9);
@@ -201,7 +201,7 @@ describe("composeCoulissePose / composeVerticalPose", () => {
     const closedPosition = new THREE.Vector3(0, 0, 0);
     const closedQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI / 2);
     const out = new THREE.Vector3();
-    composeCoulissePose(closedPosition, closedQuaternion, "x", 1, 2, out);
+    composeSlidePose(closedPosition, closedQuaternion, "x", 1, 2, out);
     // Axe local X tourné de 90° autour de Y -> -Z (voir composeBattantPose ci-dessus, même rotation).
     expect(out.x).toBeCloseTo(0, 5);
     expect(out.z).toBeCloseTo(-2, 5);

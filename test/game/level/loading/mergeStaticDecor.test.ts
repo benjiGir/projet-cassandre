@@ -141,7 +141,8 @@ describe("buildLevelFromGltf — fusion du décor", () => {
     );
 
     expect(level.stats.unprefixedMeshCount).toBe(3);
-    expect(level.stats.decorBatchCount).toBe(2);
+    // Les deux gondoles ne font plus qu'un lot ; la poignée, mobile, n'est pas du décor statique.
+    expect(level.stats.decorBatchCount).toBe(1);
     expect(handle.parent).toBe(door);
     expect(shelfA.parent).toBeNull();
     vi.restoreAllMocks();

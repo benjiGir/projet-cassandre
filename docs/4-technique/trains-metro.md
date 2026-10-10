@@ -172,10 +172,15 @@ Ouvrez le [pilote de trafic](../assets/trains-metro.html). Les raccourcis
 placent le joueur sur le quai ou dans un refuge. Les boîtiers répondent à E.
 Le panneau de revue expose les commandes et l’état des horaires.
 
-Pour reconstruire, utilisez `metro_trains` dans une session Blender neuve
-avec `--factory-startup`, via `tools/blender/cassandre_cli.py`. Sorties :
-`assets_src/blender/metro_trains.blend`, `public/assets/levels/metro_trains.glb`
-et son manifeste d’espaces. Contrôlez ensuite `check strict=true audit=false`.
+Ce pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.blend`
+et l'entrée `?level=trains_metro`. La page de revue ne charge plus rien.
+
+La recette de construction est conservée : `metro_trains` dans une session
+Blender neuve avec `--factory-startup`, via `tools/blender/cassandre_cli.py`.
+Elle écrit `metro_trains.blend` sous `assets_src/blender/`, `metro_trains.glb`
+et son manifeste d’espaces sous `public/assets/levels/`. Contrôlez ensuite
+`check strict=true audit=false`, puis réinscrivez le niveau dans
+`src/game/level/catalog/levels.ts`.
 
 Voir aussi la [décision du pipeline des trains](../decisions/0044-trains-de-niveau.md)
 et le [pilote visuel N4](pilote-metro.md).

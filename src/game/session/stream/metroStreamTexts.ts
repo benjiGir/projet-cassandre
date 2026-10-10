@@ -15,7 +15,7 @@ const HUMAIN = "definitivement_humain";
 const JEANMI = "JeanMi_du_38";
 
 /** Les habitués du premier niveau reviennent ; ceux-ci sont arrivés depuis. */
-export const METRO_PSEUDOS: readonly string[] = [
+const METRO_PSEUDOS: readonly string[] = [
   ...PSEUDOS,
   "dernier_metro",
   "strapontin_libre",
@@ -27,7 +27,7 @@ export const METRO_PSEUDOS: readonly string[] = [
   "saison2_quand",
 ];
 
-export const METRO_CHAT_LINES: Readonly<Record<ChatTopic, readonly ChatLine[]>> = {
+const METRO_CHAT_LINES: Readonly<Record<ChatTopic, readonly ChatLine[]>> = {
   kill: [
     "propre",
     "il valide pas son ticket mais il valide ses tirs",
@@ -185,7 +185,7 @@ export const METRO_CHAT_LINES: Readonly<Record<ChatTopic, readonly ChatLine[]>> 
   ],
 };
 
-export const METRO_DONATION_LINES: Readonly<Record<DonationTopic, readonly string[]>> = {
+const METRO_DONATION_LINES: Readonly<Record<DonationTopic, readonly string[]>> = {
   generique: [
     "bon retour",
     "pour ta réclamation",

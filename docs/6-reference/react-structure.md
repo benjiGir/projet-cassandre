@@ -33,7 +33,7 @@ src/ui/
     widgets/              vie, munitions, caméra, cartes, voix
     overlays/             messages et compteur FPS
   screens/                menus et écrans de partie
-    mainMenu/ difficulty/ loading/ death/ levelComplete/ pause/ story/
+    mainMenu/ difficulty/ loading/ death/ levelComplete/ pause/ story/ crash/
     options/               contrôles, affichage et champs
   dev/                    outils et réglage de développement
     tuning/                panneau, variantes, sections et contrôles

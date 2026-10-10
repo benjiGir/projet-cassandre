@@ -1,5 +1,4 @@
 // see: docs/2-fonctionnel/le-niveau.md
-import { METRO_TRAIN_EVENTS } from "../trains/metroTrainEvents";
 import { METRO_ENCOUNTER_EVENTS } from "../blockout/metroEncounterEvents";
 import type { Scenario } from "../scripting/levelScript";
 
@@ -34,109 +33,31 @@ export interface LevelDef {
   mysteryDonations?: boolean;
 }
 
-// Rôle de chaque zone, pourquoi armée/désarmée, note Zone D (pathfinding) :
+/** Le parcours du métro : le niveau de campagne et son entrée de dev partagent ces réglages. */
+const METRO_LEVEL: Omit<LevelDef, "id" | "label"> = {
+  kind: "gltf",
+  gltfName: "metro_blockout",
+  lighting: "hybride",
+  ciel: "nuit",
+  ambience: "quartier_pilote",
+  spaces: true,
+  scenarios: METRO_ENCOUNTER_EVENTS,
+  textes: "metro",
+};
+
+/** Salles d'essai et accès directs : jamais proposés hors développement. */
+const DEV_LEVELS: LevelDef[] = [
+  // Le même niveau que `metro`, sans l'équipement d'arrivée ni les panneaux de la campagne.
+  { id: "blockout_metro", label: "Blockout — Métro complet (N5)", ...METRO_LEVEL },
+  { id: "essai_trains", label: "Essai — Trains du métro (T1)", kind: "train-gym" },
+  { id: "essai_voyage_rame", label: "Essai — Voyage à bord (T4)", kind: "train-ride-gym" },
+];
+
+// Seuls les deux niveaux de la campagne ont un `.glb` sous `public/assets/levels/`.
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
-  {
-    id: "metro",
-    label: "Le métro — parcours N5",
-    kind: "gltf",
-    gltfName: "metro_blockout",
-    lighting: "hybride",
-    ciel: "nuit",
-    ambience: "quartier_pilote",
-    spaces: true,
-    scenarios: METRO_ENCOUNTER_EVENTS,
-    textes: "metro",
-  },
-  ...(import.meta.env.DEV
-    ? [
-        {
-          id: "blockout_metro",
-          label: "Blockout — Métro complet (N5)",
-          kind: "gltf" as const,
-          gltfName: "metro_blockout",
-          lighting: "hybride" as const,
-          ciel: "nuit",
-          ambience: "quartier_pilote",
-          spaces: true,
-          scenarios: METRO_ENCOUNTER_EVENTS,
-          textes: "metro" as const,
-        },
-      ]
-    : []),
-  ...(import.meta.env.DEV
-    ? [{ id: "essai_trains", label: "Essai — Trains du métro (T1)", kind: "train-gym" as const }]
-    : []),
-  ...(import.meta.env.DEV
-    ? [{ id: "essai_voyage_rame", label: "Essai — Voyage à bord (T4)", kind: "train-ride-gym" as const }]
-    : []),
-  ...(import.meta.env.DEV
-    ? [
-        {
-          id: "pilote_metro",
-          label: "Pilote — Quai et tunnel (N4)",
-          kind: "gltf" as const,
-          gltfName: "metro_pilote",
-          lighting: "hybride" as const,
-          ambience: "metro_pilote",
-          spaces: true,
-          scenarios: {},
-        },
-      ]
-    : []),
-  ...(import.meta.env.DEV
-    ? [
-        {
-          id: "pilote_quartier",
-          label: "Pilote — Place du quartier (N4b)",
-          kind: "gltf" as const,
-          gltfName: "quartier_pilote",
-          lighting: "hybride" as const,
-          ciel: "nuit",
-          ambience: "quartier_pilote",
-          spaces: true,
-          scenarios: {},
-          mysteryDonations: false,
-        },
-      ]
-    : []),
-  ...(import.meta.env.DEV
-    ? [
-        {
-          id: "trains_metro",
-          label: "Essai — Trains intégrés (T2)",
-          kind: "gltf" as const,
-          gltfName: "metro_trains",
-          lighting: "hybride" as const,
-          ambience: "metro_pilote",
-          spaces: true,
-          scenarios: METRO_TRAIN_EVENTS,
-        },
-      ]
-    : []),
-  { id: "zone_a_parking", label: "Zone A — Parking", kind: "gltf", gltfName: "zone_a_parking", startUnarmed: true },
-  { id: "zone_b_caisses", label: "Zone B — Caisses", kind: "gltf", gltfName: "zone_b_caisses" },
-  { id: "zone_c_rayons", label: "Zone C — Rayons", kind: "gltf", gltfName: "zone_c_rayons" },
-  { id: "zone_d_reserve", label: "Zone D — Réserve", kind: "gltf", gltfName: "zone_d_reserve" },
-  { id: "zone_e_bureau", label: "Zone E — Bureau", kind: "gltf", gltfName: "zone_e_bureau" },
-  // Salle d'essai du chantier Niveau v2 (jalon N4) : sert à juger la richesse
-  // visuelle de la bibliothèque d'assets, pas à jouer. Voir PLAN_NIVEAU_V2.md.
-  {
-    id: "salle_essai_rayons",
-    label: "Essai — Rayons (niveau v2)",
-    kind: "gltf",
-    gltfName: "salle_essai_rayons",
-    lighting: "hybride",
-  },
-  // see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
-  {
-    id: "blockout_v2",
-    label: "Blockout — Niveau v2",
-    kind: "gltf",
-    gltfName: "blockout_v2",
-    startUnarmed: true,
-  },
+  { id: "metro", label: "Le métro — parcours N5", ...METRO_LEVEL },
+  ...(import.meta.env.DEV ? DEV_LEVELS : []),
   {
     id: "niveau_v2",
     label: "Niveau v2 — habillé",
@@ -150,13 +71,5 @@ export const LEVEL_CHOICES: LevelDef[] = [
     // (CLAUDE.md), pour laisser une vraie marge de bonus à qui explore.
     parTime: 600,
     spaces: true,
-  },
-  // Niveau complet : les 5 zones individuelles ci-dessus restent disponibles pour du test ciblé.
-  {
-    id: "hypermarche_complet",
-    label: "Niveau complet — L'Hypermarché",
-    kind: "gltf",
-    gltfName: "hypermarche_complet",
-    startUnarmed: true,
   },
 ];

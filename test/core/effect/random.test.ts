@@ -1,22 +1,18 @@
 /**
- * Non-régression du jalon M1 (PLAN_EFFECT_XSTATE.md) : `DeterministicRandom`
+ * Non-régression : `DeterministicRandom`
  * doit produire EXACTEMENT la même séquence que le mulberry32 dupliqué dans
  * `weapons.ts`/`suitManager.ts`/`directorManager.ts`, pour ne jamais casser
  * le rejeu d'input déterministe (F9/F10). Les valeurs attendues ci-dessous
  * ont été calculées en exécutant l'algorithme de production tel quel, avec
- * les graines réelles du jeu (SHOTGUN_SPREAD_SEED, et les graines dérivées
- * par SuitManager/DirectorManager pour les deux premiers spawns) — pas
- * recopiées à la main depuis les fichiers source, pour ne pas se contenter
- * de comparer le code à lui-même.
+ * les graines réelles du jeu (`core/effect/seeds.ts` : SHOTGUN_SPREAD_SEED,
+ * et les graines dérivées par SuitManager/DirectorManager pour les deux
+ * premiers spawns). Changer une graine fait donc échouer ce test : c'est voulu,
+ * un enregistrement F9 existant ne se rejouerait plus à l'identique.
  */
 import { assert, describe, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { DeterministicRandom } from "../../../src/core/effect/random";
-
-const SHOTGUN_SPREAD_SEED = 0x9e3779b9;
-const BASE_SUIT_SEED = 0x5eed_c057;
-const SEED_STRIDE = 0x9e3779b1;
-const BASE_DIRECTOR_SEED = 0xd12ec704;
+import { BASE_DIRECTOR_SEED, BASE_SUIT_SEED, SEED_STRIDE, SHOTGUN_SPREAD_SEED } from "../../../src/core/effect/seeds";
 
 const suitSpawn0Seed = (BASE_SUIT_SEED + 0 * SEED_STRIDE) >>> 0;
 const suitSpawn1Seed = (BASE_SUIT_SEED + 1 * SEED_STRIDE) >>> 0;

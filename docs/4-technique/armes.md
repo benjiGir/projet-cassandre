@@ -53,10 +53,10 @@ le même pas fixe :
 1. `InteractionSystem.collectWeapons` (armes au sol), avant `weapons.update` —
    même bloc que `collectHeals`/`collectAmmo`. Un ramassage n'est vu par
    `activeWeapon` qu'au pas suivant : un pas de retard, invisible.
-2. `weapons.update(gameplayDt, activeFrame, weaponEyeOrigin, yaw, pitch)` —
-   `weaponEyeOrigin` est reconstruite depuis `session.player.position`
+2. `weapons.update(dt, frame, eyeOrigin, yaw, pitch)` (étape `fireWeapons`, `src/game/loop/steps/combatSteps.ts`) —
+   `eyeOrigin` est reconstruite depuis `session.player.position`
    **après** `player.update`, jamais depuis une position interpolée (même
-   règle que pour l'origine de tir, [Joueur](joueur.md)). `gameplayDt` porte
+   règle que pour l'origine de tir, [Joueur](joueur.md)). `dt` porte
    déjà le hitstop.
 3. Encore dans ce pas fixe, immédiatement après : `suitManager.update`/
    `directorManager.update`/`propSystem.update`/`vitreSystem.update`/
@@ -173,7 +173,7 @@ de revenir en silence : `MUZZLE_FLASH_PRESETS` (`render/fx/fx.ts`) est un
 `Record<"pistol" | "shotgun", …>`, `"melee"` n'y a pas d'entrée possible.
 
 **L'origine de tir ne vient jamais d'une position interpolée.**
-`weaponEyeOrigin` est reconstruite depuis `session.player.position` après
+`eyeOrigin` est reconstruite depuis `session.player.position` après
 `player.update`, jamais depuis `player.eyePosition()` (le rendu) : sinon le
 rejeu d'input (F9/F10) diverge selon le framerate d'affichage à
 l'enregistrement — même piège que documenté dans [Joueur](joueur.md#pièges)

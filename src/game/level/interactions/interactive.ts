@@ -133,16 +133,16 @@ export class InteractionSystem {
   private collectWalkOver(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
-    quantite: (useObject: UseObject) => number | null,
-    prendre: (amount: number, useObject: UseObject) => boolean,
+    amountOf: (useObject: UseObject) => number | null,
+    take: (amount: number, useObject: UseObject) => boolean,
     radius: number,
   ): void {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
-      const amount = quantite(useObject);
+      const amount = amountOf(useObject);
       if (amount === null || this.consumed.has(useObject.object)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!prendre(amount, useObject)) continue;
+      if (!take(amount, useObject)) continue;
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }

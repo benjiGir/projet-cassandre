@@ -4,6 +4,12 @@ import { distanceAlongRoute, poseOnRoute, routeLength } from "./trainPath";
 import { trainTouchesActor } from "./trainContact";
 import type { TrainActor, TrainCommand, TrainConfig, TrainLaneDef, TrainLaneStatus, TrainPass } from "./trainTypes";
 
+/** Planchers appliqués à la config, réglable en jeu : une rame avance toujours et deux rames ne se suivent jamais de trop près. */
+const MIN_SPEED = 1;
+const MIN_INTERVAL = 10;
+/** Au-delà de cette distance à la voie, l'auditeur n'entend pas l'avertissement. */
+const WARNING_HEARING_RADIUS = 20;
+
 interface LaneState {
   def: TrainLaneDef;
   nextArrival: number;
@@ -112,7 +118,7 @@ export class TrainSystem {
           lane: lane.def.id,
           route: lane.def.routes[lane.routeIndex],
           arrival: lane.nextArrival,
-          speed: Math.max(1, this.config.speed),
+          speed: Math.max(MIN_SPEED, this.config.speed),
           front: 0,
           previousFront: 0,
           length: TRAIN_CAR_COUNT * TRAIN_CAR_LENGTH,
@@ -126,7 +132,7 @@ export class TrainSystem {
           lane.singlePass = false;
         }
         lane.pending = null;
-        lane.nextArrival += Math.max(10, this.config.interval) + lane.delayAfterPending;
+        lane.nextArrival += Math.max(MIN_INTERVAL, this.config.interval) + lane.delayAfterPending;
         lane.delayAfterPending = 0;
       }
     }
@@ -148,7 +154,7 @@ export class TrainSystem {
     const countdown = pass.arrival - this.time + along / pass.speed;
     if (countdown <= 0 || countdown > this.config.warning) return;
     poseOnRoute(pass.route, along, this.warningPosition, this.warningDirection);
-    if (this.warningPosition.distanceToSquared(listener) > 20 * 20) return;
+    if (this.warningPosition.distanceToSquared(listener) > WARNING_HEARING_RADIUS ** 2) return;
     this.warnedPasses.add(pass);
     this.warningSounds++;
   }
@@ -158,7 +164,7 @@ export class TrainSystem {
     const route = lane.pending?.route ?? lane.def.routes[lane.routeIndex];
     let countdown =
       lane.enabled || lane.pending
-        ? lane.nextArrival - this.time + distanceAlongRoute(route, at) / Math.max(1, this.config.speed)
+        ? lane.nextArrival - this.time + distanceAlongRoute(route, at) / Math.max(MIN_SPEED, this.config.speed)
         : Infinity;
     for (const pass of this.passes) {
       if (pass.lane !== id) continue;

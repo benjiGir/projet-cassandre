@@ -15,9 +15,10 @@ sont dans les références liées en fin de page.
 
 `GameEngine` contient les objets qui survivent à un reset : scène, caméra,
 renderer, overlays, planches de sprites, modèles, horloge et interactions.
-`PersistentEngine` exclut la session pour permettre sa première construction.
-`GameSession` contient le monde Rapier et l’état d’une partie. Les systèmes du
-niveau sont reconstruits ensemble après préparation du nouveau niveau.
+`PersistentEngine` est ce moteur sans la session, pour permettre sa première
+construction ; `GameEngine` l’étend avec `session`. `GameSession` contient le
+monde Rapier, l’état d’une partie (`run`) et ce que le niveau chargé y apporte
+(`level`), remplacé d’un bloc après préparation du nouveau niveau.
 
 Les fonctions de spawn reçoivent explicitement la session en construction.
 Lire `engine.session` à ce moment placerait les ennemis dans l’ancienne partie.
@@ -71,7 +72,7 @@ références mutables lues par les systèmes concernés.
 
 ## Progression et fin
 
-Les cartes vivent dans `session.cards` ; le store copie un inventaire ordonné
+Les cartes vivent dans `session.run.cards` ; le store copie un inventaire ordonné
 Argent, Or, Platine. Un ramassage en double est sans effet. Le hot reload garde
 l’inventaire et les portes déjà déverrouillées, puis masque les cartes possédées.
 Un `use_*` à carte reste réessayable tant que son exigence manque.

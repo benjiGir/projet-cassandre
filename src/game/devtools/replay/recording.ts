@@ -10,8 +10,7 @@ import type { GameEngine } from "../../session/gameEngine";
 
 export function startRecording(engine: GameEngine, session: GameSession): void {
   session.gltfLevelSession?.current?.trains?.reset();
-  session.trainGym?.system.enqueue({ type: "reset" });
-  session.trainRideGym?.system.enqueue("reset");
+  session.mode?.resetForReplay?.();
   inputRecorder.startRecording(
     {
       position: { x: session.player.position.x, y: session.player.position.y, z: session.player.position.z },
@@ -30,7 +29,6 @@ export function startPlayback(engine: GameEngine, session: GameSession, rec: Rec
   engine.look.yaw = rec.start.yaw;
   engine.look.pitch = rec.start.pitch;
   session.gltfLevelSession?.current?.trains?.reset();
-  session.trainGym?.system.enqueue({ type: "reset" });
-  session.trainRideGym?.system.enqueue("reset");
+  session.mode?.resetForReplay?.();
   inputRecorder.startPlayback(rec);
 }

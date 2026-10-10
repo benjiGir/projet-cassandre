@@ -13,6 +13,6 @@ export const LOYALTY_CARD_LABELS: Record<LoyaltyCard, string> = {
 
 export function parseLoyaltyCard(value: unknown): LoyaltyCard | null {
   if (typeof value !== "string") return null;
-  const normalise = value.trim().toLowerCase();
-  return (LOYALTY_CARDS as readonly string[]).includes(normalise) ? (normalise as LoyaltyCard) : null;
+  const normalized = value.trim().toLowerCase();
+  return (LOYALTY_CARDS as readonly string[]).includes(normalized) ? (normalized as LoyaltyCard) : null;
 }

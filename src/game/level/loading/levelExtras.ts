@@ -63,8 +63,8 @@ const PROP_CONTENT_PATTERN = /^([a-z_]+):(\d+)$/i;
 
 export function readSanitaireKind(name: string, raw: unknown): Effect.Effect<SanitaireKind> {
   return Effect.gen(function* () {
-    const sorte = parseSanitaireKind(raw);
-    if (sorte) return sorte;
+    const kind = parseSanitaireKind(raw);
+    if (kind) return kind;
     const value = raw === undefined || raw === null || raw === "" ? "(absent)" : String(raw);
     yield* Effect.fail(new UnknownSanitaireKindWarning({ name, value })).pipe(
       Effect.catch((error) => Effect.sync(() => console.error(formatUnknownSanitaireKind(error)))),
@@ -152,8 +152,8 @@ export function readPropNumber(name: string, property: string, raw: unknown): Ef
 export function readDoorMovement(name: string, raw: unknown): Effect.Effect<DoorMovement> {
   return Effect.gen(function* () {
     if (raw === undefined || raw === null || raw === "") return DEFAULT_DOOR_MOVEMENT;
-    const mouvement = parseDoorMovement(raw);
-    if (mouvement) return mouvement;
+    const movement = parseDoorMovement(raw);
+    if (movement) return movement;
     yield* Effect.fail(new UnknownDoorMovementWarning({ name, value: String(raw) })).pipe(
       Effect.catch((error) => Effect.sync(() => console.error(formatUnknownDoorMovement(error)))),
     );
@@ -225,15 +225,15 @@ export function readAmountProperty(name: string, property: string, raw: unknown)
  * bruit ; perk inconnu, prix invalide ou paire incomplète -> `null` AVEC
  * avertissement bruyant. Une borne mal décrite ne vend rien : jamais de perk
  * gratuit par faute de frappe. */
-export function readPerkOffer(name: string, rawPerk: unknown, rawPrix: unknown): Effect.Effect<PerkOffer | null> {
+export function readPerkOffer(name: string, rawPerk: unknown, rawPrice: unknown): Effect.Effect<PerkOffer | null> {
   return Effect.gen(function* () {
     const absent = (raw: unknown) => raw === undefined || raw === null || raw === "";
-    if (absent(rawPerk) && absent(rawPrix)) return null;
+    if (absent(rawPerk) && absent(rawPrice)) return null;
     const perk = parsePerk(rawPerk);
-    const price = typeof rawPrix === "number" ? rawPrix : Number(absent(rawPrix) ? NaN : rawPrix);
+    const price = typeof rawPrice === "number" ? rawPrice : Number(absent(rawPrice) ? NaN : rawPrice);
     if (perk && Number.isFinite(price) && price > 0) return { perk, price };
     yield* Effect.fail(
-      new InvalidPerkOfferWarning({ name, perk: String(rawPerk ?? ""), prix: String(rawPrix ?? "") }),
+      new InvalidPerkOfferWarning({ name, perk: String(rawPerk ?? ""), prix: String(rawPrice ?? "") }),
     ).pipe(Effect.catch((error) => Effect.sync(() => console.error(formatInvalidPerkOffer(error)))));
     return null;
   });

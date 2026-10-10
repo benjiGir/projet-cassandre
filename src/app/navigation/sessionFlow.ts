@@ -13,6 +13,7 @@ import { hasSeenIntro, markIntroSeen } from "../../game/settings/storySettings";
 import { App, type AppProps } from "../../ui/App/App";
 import type { GameFlowActor } from "./gameFlowMachine";
 import { resolveBootChoice } from "./bootChoice";
+import { reportFatalError } from "../runtime/fatalError";
 import type { SessionEntry } from "../../game/session/campaign/campaignTypes";
 import { metroLevel, STORE_LEVEL_ID } from "../../game/session/campaign/campaignCatalog";
 import { flushCampaignSave } from "../../game/session/campaign/campaignStorage";
@@ -109,7 +110,7 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
   function nextLevel(): Promise<void> {
     return runTransition(async () => {
       const previous = engine.session;
-      const arrival = previous.completedArrival;
+      const arrival = previous.run.completedArrival;
       if (actor.getSnapshot().value !== "levelComplete" || previous.choice.id !== STORE_LEVEL_ID || !arrival) return;
       flushCampaignSave();
       actor.send({ type: "NEXT_LEVEL" });
@@ -126,7 +127,10 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
 
   async function replaySession(): Promise<void> {
     const choice = engine.session.choice;
-    const entry: SessionEntry = { mode: engine.session.entryMode, arrival: engine.session.entryArrival ?? undefined };
+    const entry: SessionEntry = {
+      mode: engine.session.entryMode,
+      arrival: engine.session.run.entryArrival ?? undefined,
+    };
     actor.send({ type: "REPLAY" });
     input.clearPendingEdges();
     beginLoading("Redémarrage de la partie", 0.02, loadingDestination(choice));
@@ -179,9 +183,10 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
 
   function appProps(): AppProps {
     return {
-      onReplay: () => void replay(),
-      onNextLevel: () => void nextLevel(),
-      onReturnToMenu: () => void returnToMenu(),
+      // Un changement de partie qui échoue laisserait le joueur devant un chargement sans fin.
+      onReplay: () => void replay().catch(reportFatalError),
+      onNextLevel: () => void nextLevel().catch(reportFatalError),
+      onReturnToMenu: () => void returnToMenu().catch(reportFatalError),
       onResume: resume,
       onIntroDone: finishIntro,
       onOutroDone: finishOutro,

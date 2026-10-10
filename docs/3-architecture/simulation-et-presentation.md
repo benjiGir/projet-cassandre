@@ -68,7 +68,7 @@ pas fixes dans la même image traiterait deux fois le même coup.
 | Casse d'un sanitaire | `SanitaireSystem.destroyedEvents` (`src/game/level/sanitaires/sanitaires.ts`) | `updateFx` : gerbe de faïence, jet d'eau permanent, son | `sanitaireSystem.clearFrameEvents()` |
 | Ouverture de porte | `DoorSystem.movementEvents` (`src/game/level/doors/doors.ts`) | `updateFx` : son de mouvement | `doorSystem.clearFrameEvents()` |
 | Alerte / télégraphie / dégât / mort ennemi | `SuitManager`/`DirectorManager` (`src/game/entities/`) | `updateFx` : son, flash du sprite, gibs, hitmarker | `clearFrameEvents()` de chaque manager |
-| Coup encaissé par le joueur | `SuitManager.playerHitEvents`/`DirectorManager.playerHitEvents` | `updateFx` : particules, shake ; `presentPlayerDamage` republie `session.playerHp` vers le store | Même `clearFrameEvents()` que la ligne au-dessus |
+| Coup encaissé par le joueur | `SuitManager.playerHitEvents`/`DirectorManager.playerHitEvents` | `updateFx` : particules, shake ; `presentPlayerDamage` republie `session.run.playerHp` vers le store | Même `clearFrameEvents()` que la ligne au-dessus |
 
 Un second canal, plus direct, sert le texte du HUD : les messages système
 (`showHudMessage`) et les répliques du héros (`triggerHeroLine`,

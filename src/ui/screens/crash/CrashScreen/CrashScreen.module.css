@@ -1,0 +1,42 @@
+/* see: docs/6-reference/react-css.md#lunité-du-hud */
+.panel {
+  --title-glow-radius: calc(var(--vpx) * 8);
+  gap: max(calc(var(--vpx) * 4), 7px);
+  width: clamp(280px, calc(var(--vpx) * 300), 92vw);
+  padding: max(calc(var(--vpx) * 22), 22px) max(calc(var(--vpx) * 28), 26px) max(calc(var(--vpx) * 18), 18px);
+}
+
+.title {
+  font-size: max(calc(var(--vpx) * 17), 24px);
+}
+
+.body {
+  max-width: clamp(230px, calc(var(--vpx) * 190), 460px);
+  margin: 0;
+  font-size: max(calc(var(--vpx) * 6.75), 12px);
+  line-height: 1.6;
+  text-align: center;
+  color: var(--text);
+}
+
+/* Le message brut de l'erreur : long, parfois sans espace — il se coupe plutôt que d'élargir le cadre. */
+.detail {
+  max-width: 100%;
+  max-height: calc(1.5em * 4);
+  margin: 0;
+  overflow: hidden;
+  font-size: max(calc(var(--vpx) * 5), 9.5px);
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+  color: var(--text-dim);
+}
+
+.actions {
+  margin-top: max(calc(var(--vpx) * 1.5), 4px);
+}
+
+.actionButton {
+  padding: max(calc(var(--vpx) * 5), 9px) max(calc(var(--vpx) * 9), 14px);
+  font-size: max(calc(var(--vpx) * 6.25), 11px);
+}

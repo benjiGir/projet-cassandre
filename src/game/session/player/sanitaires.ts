@@ -5,8 +5,8 @@ import { playSfx } from "../../../core/audio/audio";
 import { runGameplaySync } from "../../../app/runtime/gameRuntime";
 import { RaycastService } from "../../../physics/raycast";
 import { GROUP, interactionGroups } from "../../../physics/world";
-import { useGameStore } from "../../hud/state";
 import { showHudMessage, triggerHeroLine } from "./feedback";
+import { healPlayer } from "./pickups";
 import type { GameSession } from "../gameSession";
 import { streamEvent } from "../stream/streamFeed";
 
@@ -39,25 +39,21 @@ export function relieveAtSanitaire(session: GameSession): void {
   // La chasse d'eau part dans TOUS les cas — soin ou pas, contrat Duke.
   playSfx("sanitaire_use");
 
-  if (session.sanitaireReliefCooldown > 0) {
+  if (session.run.sanitaireReliefCooldown > 0) {
     showHudMessage(HUD_SANITAIRE_ON_COOLDOWN);
     triggerHeroLine(session, "toilettes_delai");
     return;
   }
 
-  const maxHp = session.playerMaxHp;
-  if (session.playerHp >= maxHp) {
+  const maxHp = session.run.playerMaxHp;
+  if (session.run.playerHp >= maxHp) {
     // Délai NON consommé : écart volontaire à Duke, voir la doc de tête.
     showHudMessage(HUD_SANITAIRE_FULL_HP);
     return;
   }
 
-  const healed =
-    Math.min(maxHp, session.playerHp + Math.round(maxHp * SANITAIRE_RELIEF_HEAL_FRACTION)) - session.playerHp;
-  session.playerHp += healed;
-  session.heroPortrait.heal(session.playerHp, maxHp);
-  useGameStore.getState().setPlayerHp(session.playerHp);
-  session.sanitaireReliefCooldown = SANITAIRE_RELIEF_COOLDOWN_SECONDS;
+  const healed = healPlayer(session, Math.round(maxHp * SANITAIRE_RELIEF_HEAL_FRACTION));
+  session.run.sanitaireReliefCooldown = SANITAIRE_RELIEF_COOLDOWN_SECONDS;
   showHudMessage(`+${healed} PV`);
   triggerHeroLine(session, "toilettes_soulagement");
   streamEvent(session, "toilettes");
@@ -65,17 +61,15 @@ export function relieveAtSanitaire(session: GameSession): void {
 
 /** Gorgée au jet d'eau permanent d'un sanitaire CASSÉ — voir la doc de tête du fichier. */
 function drinkFromSanitaire(session: GameSession): void {
-  const maxHp = session.playerMaxHp;
-  if (session.playerHp >= maxHp) {
+  const maxHp = session.run.playerMaxHp;
+  if (session.run.playerHp >= maxHp) {
     // Pas de son de gorgée à PV pleins — il n'y a rien à boire "pour rien",
     // contrairement à la chasse d'eau du soulagement qui part toujours.
     showHudMessage(HUD_SANITAIRE_FULL_HP);
     return;
   }
 
-  session.playerHp = Math.min(maxHp, session.playerHp + SANITAIRE_SIP_HEAL);
-  session.heroPortrait.heal(session.playerHp, maxHp);
-  useGameStore.getState().setPlayerHp(session.playerHp);
+  healPlayer(session, SANITAIRE_SIP_HEAL);
   playSfx("water_drink");
   showHudMessage(`+${SANITAIRE_SIP_HEAL} PV`);
   triggerHeroLine(session, "boire_fuite");
@@ -90,7 +84,7 @@ export function trySanitaire(
   pitch: number,
 ): boolean {
   if (!usePressed) return false;
-  const system = session.sanitaireSystem;
+  const system = session.level.sanitaireSystem;
   if (!system) return false;
 
   aimEyeOriginScratch.set(playerPosition.x, playerPosition.y + eyeOffset, playerPosition.z);

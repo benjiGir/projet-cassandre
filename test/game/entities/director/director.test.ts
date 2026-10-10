@@ -1,5 +1,5 @@
 /**
- * Jalon M5 (PLAN_EFFECT_XSTATE.md) — tests de CARACTÉRISATION de `Director`
+ * Tests de CARACTÉRISATION de `Director`
  * (`src/game/entities/director/director.ts`), écrits contre le code ACTUEL, NON
  * modifié. Miroir DÉLIBÉRÉMENT DUPLIQUÉ de `test/game/entities/suit/suit.test.ts`
  * (même choix de duplication que celui déjà assumé entre `suit.ts`/

@@ -41,32 +41,33 @@ function chooseZone(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
   });
 }
 
-export function resolveLevelChoice(root: ReturnType<typeof createRoot>): Promise<LevelDef> {
-  const levelParam = new URLSearchParams(window.location.search).get("level");
-  if (levelParam) {
-    const registered = LEVEL_CHOICES.find((entry) => entry.id === levelParam);
-    if (registered) return Promise.resolve(registered);
-    return Promise.resolve({
-      id: levelParam,
-      label: levelParam,
-      kind: "gltf",
-      gltfName: levelParam,
-    });
-  }
-  return import.meta.env.DEV ? chooseZone(root) : Promise.resolve(MAIN_LEVEL);
+/**
+ * `?level=<id>` : le raccourci des outils et des mesures, qui entre en jeu sans
+ * menu ni intro. Il n'existe qu'en développement ; en production, on ne joue
+ * que ce que le menu propose.
+ */
+export function devLevelShortcut(): string | null {
+  if (!import.meta.env.DEV) return null;
+  return new URLSearchParams(window.location.search).get("level");
+}
+
+/** Un identifiant hors registre charge le `.glb` du même nom, sans réglage de niveau. */
+function shortcutStart(id: string): SessionStart {
+  const choice = LEVEL_CHOICES.find((entry) => entry.id === id) ?? { id, label: id, kind: "gltf", gltfName: id };
+  const profile = new URLSearchParams(window.location.search).get("campaignProfile");
+  const arrival =
+    profile === "type" || profile === "pauvre" || profile === "riche"
+      ? metroArrival(getDifficulty(), profile)
+      : undefined;
+  return { choice, entry: { mode: "dev", arrival } };
 }
 
 export function resolveBootChoice(root: ReturnType<typeof createRoot>): Promise<SessionStart> {
-  const levelParam = new URLSearchParams(window.location.search).get("level");
-  if (levelParam)
-    return resolveLevelChoice(root).then((choice) => {
-      const profile = new URLSearchParams(window.location.search).get("campaignProfile");
-      const arrival =
-        import.meta.env.DEV && (profile === "type" || profile === "pauvre" || profile === "riche")
-          ? metroArrival(getDifficulty(), profile)
-          : undefined;
-      return { choice, entry: { mode: "dev", arrival } };
-    });
+  // La garde est écrite ici pour que le raccourci quitte le bundle de production.
+  if (import.meta.env.DEV) {
+    const shortcut = devLevelShortcut();
+    if (shortcut) return Promise.resolve(shortcutStart(shortcut));
+  }
 
   return new Promise((resolve) => {
     function showMainMenu() {

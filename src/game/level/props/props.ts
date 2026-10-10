@@ -3,8 +3,8 @@ import type RAPIER from "@dimforge/rapier3d-compat";
 
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
-import { runGameplaySync } from "../../../app/runtime/gameRuntime";
-import { DeterministicRandom } from "../../../core/effect/random";
+import { seededRandom } from "../../../app/runtime/gameRuntime";
+import { FOOD_DROP_SEED } from "../../../core/effect/seeds";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "../interactions/food";
 import { HEAL_PICKUP_RADIUS } from "../interactions/interactive";
 import { explosionConfig } from "./propConfig";
@@ -113,7 +113,6 @@ const localMatrixScratch = new THREE.Matrix4();
 const lerpPosScratch = new THREE.Vector3();
 const lerpQuatScratch = new THREE.Quaternion();
 
-const FOOD_DROP_SEED = 0x8f00d;
 /** Dispersion horizontale des drops autour du point de casse, mètres. */
 const FOOD_DROP_SCATTER_RADIUS = 0.5;
 /** Placeholder de rendu — géométrie/couleurs PARTAGÉES le temps que
@@ -155,9 +154,7 @@ export class PropSystem {
   private readonly pendingBlasts: PropExplosionEvent[] = [];
 
   /** Flux déterministe dédié aux drops de nourriture — voir `FOOD_DROP_SEED`. */
-  private readonly nextFoodRandom = runGameplaySync(
-    DeterministicRandom.useSync((random) => random.forSeed(FOOD_DROP_SEED)),
-  );
+  private readonly nextFoodRandom = seededRandom(FOOD_DROP_SEED);
 
   constructor(props: readonly PropInfo[], root: THREE.Object3D) {
     root.updateWorldMatrix(true, false);
@@ -440,13 +437,13 @@ export class PropSystem {
       // Élagage par distance AVANT tout le reste — c'est lui qui tient le
       // budget de lots de dessin (voir `PROP_RENDER_DISTANCE_SQ`).
       const visible = state.currPos.distanceToSquared(cameraPosition) <= PROP_RENDER_DISTANCE_SQ;
-      const reapparu = visible && !state.visible;
+      const reappeared = visible && !state.visible;
       state.visible = visible;
       if (state.info.object.visible !== visible) state.info.object.visible = visible;
 
       // Un prop qui revient dans la portée a pu bouger pendant qu'il était
       // élagué : sa pose est réécrite une fois, même s'il dort maintenant.
-      if (!visible || (!state.moving && !reapparu)) continue;
+      if (!visible || (!state.moving && !reappeared)) continue;
       lerpPosScratch.lerpVectors(state.prevPos, state.currPos, alpha);
       lerpQuatScratch.slerpQuaternions(state.prevQuat, state.currQuat, alpha);
       // Pose MONDE du CORPS, puis retour sur l'origine du mesh (voir

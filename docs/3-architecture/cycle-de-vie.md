@@ -2,7 +2,7 @@
 title: Cycle de vie
 tags: [architecture]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # Cycle de vie
@@ -49,9 +49,26 @@ flowchart TD
 | `GameSession` (monde Rapier, joueur, armes, managers d'ennemis, systèmes de niveau, score) | `bootGameSession` (`src/game/session/lifecycle.ts`) | `teardownGameSession` | Partie |
 | `LevelSession` (niveau `.glb` courant, sondage de hot reload) | `createLevelSession`, appelée par `loadGltfLevel` à chaque `bootGameSession` sur le chemin glTF | `.stop()`, appelée par `teardownGameSession` et par tout remplacement explicite (console, `?level=`) | Partie (recréée à chaque partie, pas seulement rechargée) |
 | `LevelHandle` (géométrie, colliders, spawns d'un `.glb` précis) | `loadLevel` (`src/game/level/loading/loader.ts`), à l'intérieur d'une `LevelSession` | `.dispose()`, appelé par la `LevelSession` à son remplacement ou à son arrêt | Niveau chargé (survit à un hot reload raté, remplacé par le suivant à un hot reload réussi) |
-| `NavGraph`, `LightPool`, `PropSystem`, `DoorSystem`, `VitreSystem`, `SanitaireSystem`, billboards d'armes au sol | Fonction `prepare` de `loadGltfLevel`, à chaque commit de niveau (premier chargement ET hot reload) | Remplacés au commit suivant ; le dernier jeu meurt avec la `GameSession` | Commit de niveau (plus court qu'une partie si le hot reload recharge plusieurs fois) |
-| `cards`, `unlockedDoors`, `foundSecrets`, `playerHp`, `stats` (score) | `bootGameSession`, dans l'objet `GameSession` | `teardownGameSession` (implicitement, avec le reste de `GameSession`) | Partie — un hot reload les laisse intacts (voir plus bas) |
+| `session.level` (`LevelState`) : `NavGraph`, `LightPool`, `PropSystem`, `DoorSystem`, `VitreSystem`, `SanitaireSystem`, billboards d'armes au sol | Fonction `prepare` de `loadGltfLevel`, à chaque commit de niveau (premier chargement ET hot reload) | Remplacé d'un bloc au commit suivant ; le dernier meurt avec la `GameSession` | Commit de niveau (plus court qu'une partie si le hot reload recharge plusieurs fois) |
+| `session.run` (`RunState`) : `cards`, `unlockedDoors`, `foundSecrets`, `playerHp`, `stats` (score) | `createRunState`, appelée par `bootGameSession` | `teardownGameSession` (implicitement, avec le reste de `GameSession`) | Partie — un hot reload les laisse intacts (voir plus bas) |
 | Pose interpolée (joueur, ennemis, props, portes, viewmodel) | `snapshotPrevious` / `interpolateVisuals` (`src/game/loop/`) | Écrasée au pas fixe suivant | Image |
+
+## Trois durées de vie
+
+`GameSession` (`src/game/session/gameSession.ts`) range ce qu'elle porte selon
+le moment où ça naît et meurt :
+
+| Où | Type | Contenu | Remplacé |
+|---|---|---|---|
+| à plat sur la session | `SessionSystems` | monde Rapier, joueur, armes, managers d'ennemis et leurs sprites, portrait, `LevelSession`, ressources des ramassages | jamais : construit avec la partie, libéré par `teardownGameSession` |
+| `session.run` | `RunState` (`runState.ts`) | PV, cartes, perks, portes déverrouillées, secrets trouvés, direct, répliques dites, score | jamais pendant la partie ; un hot reload n'y touche pas |
+| `session.level` | `LevelState` (`levelState.ts`) | graphe de navigation, espaces, déclencheurs, systèmes de portes, props, vitres, sanitaires, écrans, caméras, lampes, ramassages posés | d'un bloc, à chaque commit de niveau |
+
+Une donnée qui doit survivre à un rechargement du `.glb` va dans `run` ; une
+donnée lue dans le `.glb` va dans `level`. Comme `session.level` est remplacé
+en une affectation, un champ ne peut pas rester de l'ancien niveau. Un niveau
+construit à la main (`LevelMode`) part d'un `LevelState` vide et n'y pose que
+son graphe de navigation.
 
 ## Le chargement de niveau
 
@@ -132,7 +149,7 @@ ne repositionne le joueur sur `spawn_player` et ne fait apparaître aucun
 session ([ADR 0011](../decisions/0011-hot-reload-sondage-http.md)). Ce
 qu'un hot reload préserve, parce que ça vit sur `GameSession` et non sur le
 `LevelHandle` remplacé : position et PV du joueur, cartes en poche
-(`session.cards`), portes déjà déverrouillées (rouvertes silencieusement
+(`session.run.cards`), portes déjà déverrouillées (rouvertes silencieusement
 après le commit), secrets déjà trouvés, score en cours. Ce qu'il remet à
 l'état du fichier : PV des props/vitres/sanitaires, position des portes non
 déverrouillées, pool de lampes.
@@ -147,9 +164,9 @@ déverrouillées, pool de lampes.
 - **Aucune fonction de spawn ne lit `engine.session`** : `session` leur est
   toujours passé en paramètre explicite, précisément pour qu'un spawn en
   cours de construction ne puisse jamais atterrir dans l'ancienne partie.
-- **Un commit de niveau est une seule affectation groupée**, jamais une
-  suite de mutations étalées : soit le niveau candidat devient la vérité
-  d'un coup, soit il ne devient jamais rien.
+- **Un commit de niveau est une seule affectation groupée** (`session.level = { … }`),
+  jamais une suite de mutations étalées : soit le niveau candidat devient la
+  vérité d'un coup, soit il ne devient jamais rien.
 - **`stepPhysics` ne s'exécute que si `isPhysicsSessionLive(engine)`**,
   une garde distincte de `flow.isPlaying()` : le monde Rapier peut être en
   cours de reconstruction (`loading`, `loadFailed`) sans que le flux soit

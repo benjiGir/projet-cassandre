@@ -94,9 +94,9 @@ export function readLevelScript(
         setup.problems.push(`Scénario "${event}" : aucun ecran_* ne commence par "${action.ecrans}".`);
       }
       if (action.kind === "verrouiller" || action.kind === "deverrouiller") {
-        for (const porte of action.portes) {
-          if (!doorNames.includes(porte)) {
-            setup.problems.push(`Scénario "${event}" : la porte "${porte}" n'existe pas dans le niveau.`);
+        for (const door of action.portes) {
+          if (!doorNames.includes(door)) {
+            setup.problems.push(`Scénario "${event}" : la porte "${door}" n'existe pas dans le niveau.`);
           }
         }
       }

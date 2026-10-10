@@ -45,18 +45,18 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
       continue;
     if (session.directorManager.debugKill(director)) directorKills++;
   }
-  recordSuitKills(session.stats, suitKills);
-  recordDirectorKills(session.stats, directorKills);
+  recordSuitKills(session.run.stats, suitKills);
+  recordDirectorKills(session.run.stats, directorKills);
   const kills = suitKills + directorKills;
-  session.stats.trainKills += kills;
+  session.run.stats.trainKills += kills;
   if (kills > 0) {
     session.heroPortrait.kill(kills);
-    startKillRush(session);
+    startKillRush(session.run);
     for (let i = 0; i < kills; i++) streamEvent(session, directorKills > i ? "boss" : "kill");
     showHudMessage("Ennemi fauché par une rame");
     triggerHeroLine(session, "metro_ennemi_fauche");
   }
-  if (session.playerHp <= 0) return;
+  if (session.run.playerHp <= 0) return;
   if (
     trains.system.touches({
       position: session.player.position,
@@ -66,7 +66,7 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
     })
   ) {
     showHudMessage("Fauché par une rame");
-    applyPlayerDamage(engine, session, session.playerHp, undefined, "train");
+    applyPlayerDamage(engine, session, session.run.playerHp, undefined, "train");
     return;
   }
   noteCrossings(session, trains.crossed(session.player.position));
@@ -74,7 +74,7 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
 
 /** Une traversée de voie réussie : le direct la voit, et le héros en dit un mot la première fois. */
 function noteCrossings(session: GameSession, crossings: number): void {
-  session.stats.trainCrossings += crossings;
+  session.run.stats.trainCrossings += crossings;
   for (let i = 0; i < crossings; i++) streamEvent(session, "train");
   if (crossings > 0) triggerHeroLine(session, "metro_traversee");
 }

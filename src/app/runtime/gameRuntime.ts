@@ -15,3 +15,8 @@ export const GameLayer = Layer.mergeAll(
 // Un seul runtime par onglet ; le recréer perdrait l’état des services.
 export const GameRuntime = ManagedRuntime.make(GameLayer);
 export const runGameplaySync = createGameplayRunner(GameRuntime);
+
+/** Un flux déterministe indépendant, pour une graine de `core/effect/seeds.ts` (invariant #12). */
+export function seededRandom(seed: number): () => number {
+  return runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)));
+}

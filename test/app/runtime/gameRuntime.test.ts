@@ -1,5 +1,5 @@
 /**
- * Jalon M1 (PLAN_EFFECT_XSTATE.md) : `runGameplaySync` est la frontière
+ * `runGameplaySync` est la frontière
  * synchrone stricte du pas fixe (principe transverse #1) — ce fichier
  * teste cette frontière elle-même en vitest nu (pas `@effect/vitest`),
  * car son rôle est précisément le pont entre du code Effect et du code

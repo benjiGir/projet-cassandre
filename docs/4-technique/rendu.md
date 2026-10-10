@@ -73,7 +73,7 @@ Le renderer WebGL installe `WebGLNodesHandler` pour accepter des matériaux TSL 
 
 ### Préparation des douches
 
-`src/game/level/sanitaires/doucheShader.ts::warmShaderDouches` rend les jets avant le
+`src/game/level/sanitaires/doucheShader.ts::warmShowerShader` rend les jets avant le
 commit du niveau, sous l'écran de chargement. Le pool de lampes est déjà
 configuré. Les jets deviennent temporairement visibles et ne sont pas
 éliminés par le frustum ; leur état initial éteint est restauré ensuite.
@@ -144,7 +144,7 @@ gros pixels (`goreAtlas.ts`). Les réglages sont dans `goreConfig`
 
 Le HUD React est rendu séparément dans `#ui-root` et ne pilote pas le renderer. Le réticule, le hitmarker et l'habillage caméra sont des canevas 2D transparents de 640×360 superposés au jeu. Ils ne sont pas des enfants de la scène 3D.
 
-La caméra détermine le champ de vision, l'aspect et les plans de coupe. `setResolutionInterne` met à jour son aspect quand la résolution change, mais le ratio de sortie reste 16:9. Le réglage `cassandre.resolution` est un outil de comparaison ; il ne remplace pas l'observation des overlays à leur taille d'origine.
+La caméra détermine le champ de vision, l'aspect et les plans de coupe. `setInternalResolution` met à jour son aspect quand la résolution change, mais le ratio de sortie reste 16:9. Le réglage `cassandre.resolution` est un outil de comparaison ; il ne remplace pas l'observation des overlays à leur taille d'origine.
 
 ### Application des réglages
 
@@ -162,7 +162,7 @@ Le changement de résolution met à jour le buffer de dessin et le rapport de la
 
 `configureRetroTexture` règle aussi l'espace couleur sRGB, les mipmaps et l'anisotropie disponibles sur la machine. La texture reçoit ensuite `needsUpdate` pour que Three.js téléverse les changements au prochain rendu.
 
-`appliquerFiltrage` parcourt la scène et déduplique les cartes par identité : un atlas partagé par plusieurs meshes n'est reconfiguré qu'une fois. La fonction retourne le nombre de textures distinctes modifiées, utile pour vérifier qu'un changement a réellement touché les ressources présentes.
+`applyTextureFiltering` parcourt la scène et déduplique les cartes par identité : un atlas partagé par plusieurs meshes n'est reconfiguré qu'une fois. La fonction retourne le nombre de textures distinctes modifiées, utile pour vérifier qu'un changement a réellement touché les ressources présentes.
 
 Le renderer fixe le pixel ratio à 1 et désactive l'antialiasing. La netteté provient ensuite de l'agrandissement pixelisé du canevas, pas d'un rendu haute densité suivi d'un filtre lissant.
 

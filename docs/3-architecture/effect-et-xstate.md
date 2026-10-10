@@ -2,7 +2,7 @@
 title: Effect et XState
 tags: [architecture]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # Effect et XState
@@ -164,8 +164,8 @@ Détail : [Boucle et temps](boucle-et-temps.md#hitstop).
 
 Graphe d'état **pur** (`src/app/navigation/gameFlowMachine.ts`,
 [ADR 0019](../decisions/0019-machine-xstate-flux-ecran.md)) : ne connaît ni
-`PhysicsWorld`, ni `scene`, ni `bootGameSession`. Douze états (`boot`,
-`mainMenu`, `options`, `levelSelect`, `loading`, `loadFailed`, `intro`, `playing`,
+`PhysicsWorld`, ni `scene`, ni `bootGameSession`. Dix états (`boot`,
+`mainMenu`, `loading`, `loadFailed`, `intro`, `playing`,
 `paused`, `dead`, `outro`, `levelComplete`), transitions sur évènement discret,
 jamais de minuterie — la règle « pas de temps mural » (ex-invariant #13) y
 est vacuously vraie. Un acteur unique

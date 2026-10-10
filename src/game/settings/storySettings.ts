@@ -1,18 +1,14 @@
+import { persisted } from "../../core/storage/persisted";
+
 // see: docs/6-reference/notes-code-gameplay-outils.md#réglages
 
-const STORAGE_KEY = "cassandre.histoire";
-
-function loadPersisted(): Set<string> {
-  if (typeof localStorage === "undefined") return new Set();
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]");
-    return new Set(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : []);
-  } catch {
-    return new Set();
-  }
+function decodeLevelIds(stored: unknown): string[] {
+  return Array.isArray(stored) ? stored.filter((id): id is string => typeof id === "string") : [];
 }
 
-const seenIntros = loadPersisted();
+const stored = persisted("cassandre.histoire", decodeLevelIds, () => []);
+
+const seenIntros = new Set(stored.load());
 
 /** L'intro de ce niveau a déjà été vue ou passée sur ce navigateur. */
 export function hasSeenIntro(levelId: string): boolean {
@@ -22,12 +18,7 @@ export function hasSeenIntro(levelId: string): boolean {
 export function markIntroSeen(levelId: string): void {
   if (seenIntros.has(levelId)) return;
   seenIntros.add(levelId);
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...seenIntros]));
-  } catch {
-    // Dégrade silencieusement, même discipline que `audioSettings.ts`.
-  }
+  stored.save([...seenIntros]);
 }
 
 /** Oublie les intros vues — pour les tests. */

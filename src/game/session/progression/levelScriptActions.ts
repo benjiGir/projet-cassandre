@@ -27,13 +27,13 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
       streamEvent(session, "moment");
       return;
     case "reveiller": {
-      if (session.levelScript.woken.has(action.groupe)) return;
+      if (session.run.levelScript.woken.has(action.groupe)) return;
       const group = wokenSpawns(
         session.gltfLevelSession?.current?.spawnSuits ?? [],
         action.groupe,
         difficultyConfig[session.difficulty].groupShare,
       );
-      const woken = session.levelScript.woken.get(action.groupe) ?? [];
+      const woken = session.run.levelScript.woken.get(action.groupe) ?? [];
       for (const spawn of group) {
         const enemy = spawnSuitAt(
           engine,
@@ -47,17 +47,17 @@ export function runScriptAction(engine: GameEngine, session: GameSession, action
         if (action.alerte) enemy.alertPlayer();
         woken.push(enemy);
       }
-      session.levelScript.woken.set(action.groupe, woken);
+      session.run.levelScript.woken.set(action.groupe, woken);
       return;
     }
     case "chaine":
-      session.ecranSystem?.setChaine(action.ecrans, action.chaine);
+      session.level.ecranSystem?.setChaine(action.ecrans, action.chaine);
       return;
     case "verrouiller":
-      for (const porte of action.portes) session.doorSystem?.lock(porte);
+      for (const door of action.portes) session.level.doorSystem?.lock(door);
       return;
     case "deverrouiller":
-      for (const porte of action.portes) session.doorSystem?.unlock(porte, session.player.position);
+      for (const door of action.portes) session.level.doorSystem?.unlock(door, session.player.position);
       return;
     default:
       return action satisfies never;

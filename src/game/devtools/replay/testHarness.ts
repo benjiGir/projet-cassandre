@@ -254,11 +254,11 @@ export function benchmarkRender(
   const total = performance.now() - t0;
 
   const info = renderer.info;
-  const msParImage = total / frames;
+  const msPerFrame = total / frames;
   return {
     frames,
-    msParImage: Number(msParImage.toFixed(3)),
-    imagesParSecondeRendu: Number((1000 / msParImage).toFixed(1)),
+    msParImage: Number(msPerFrame.toFixed(3)),
+    imagesParSecondeRendu: Number((1000 / msPerFrame).toFixed(1)),
     drawCalls: info.render.calls,
     triangles: info.render.triangles,
     programmes: info.programs?.length ?? 0,
@@ -277,25 +277,25 @@ export interface LightBudgetReport {
 }
 
 export function applyLightBudget(scene: THREE.Scene, camera: THREE.Camera, budget: number | null): LightBudgetReport {
-  const lampes: THREE.PointLight[] = [];
+  const lights: THREE.PointLight[] = [];
   scene.traverse((obj) => {
-    if ((obj as THREE.PointLight).isPointLight) lampes.push(obj as THREE.PointLight);
+    if ((obj as THREE.PointLight).isPointLight) lights.push(obj as THREE.PointLight);
   });
 
   if (budget === null) {
-    for (const l of lampes) l.visible = true;
-    return { total: lampes.length, actives: lampes.length, budget: null };
+    for (const l of lights) l.visible = true;
+    return { total: lights.length, actives: lights.length, budget: null };
   }
 
   const cameraPos = new THREE.Vector3();
   camera.getWorldPosition(cameraPos);
   const pos = new THREE.Vector3();
-  const classees = lampes
+  const ranked = lights
     .map((l) => ({ l, d: l.getWorldPosition(pos).distanceToSquared(cameraPos) }))
     .sort((a, b) => a.d - b.d);
 
-  classees.forEach((e, i) => {
+  ranked.forEach((e, i) => {
     e.l.visible = i < budget;
   });
-  return { total: lampes.length, actives: Math.min(budget, lampes.length), budget };
+  return { total: lights.length, actives: Math.min(budget, lights.length), budget };
 }

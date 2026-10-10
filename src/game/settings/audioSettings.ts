@@ -3,6 +3,7 @@ import { setHeroVoiceGain } from "../../core/audio/heroVoice";
 import { setShowerAmbienceGain } from "../../core/audio/showerAmbience";
 import { setWaterAmbienceGain } from "../../core/audio/waterAmbience";
 import { setZoneAmbienceGain } from "../../core/audio/zoneAmbience";
+import { persisted } from "../../core/storage/persisted";
 
 // see: docs/6-reference/notes-code-gameplay-outils.md#réglages
 
@@ -42,39 +43,25 @@ function clamp01(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : fallback;
 }
 
-/** Ne throw jamais, dégrade sur les valeurs d'origine — même discipline que `graphicsSettings.ts`. */
-function loadPersisted(): AudioSettings {
-  if (typeof localStorage === "undefined") return { ...FACTORY_DEFAULTS };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...FACTORY_DEFAULTS };
-    const parsed = JSON.parse(raw) as Partial<AudioSettings>;
-    const settings = { ...FACTORY_DEFAULTS };
-    for (const channel of CHANNELS) settings[channel] = clamp01(parsed[channel], FACTORY_DEFAULTS[channel]);
-    if (typeof parsed.sousTitres === "boolean") settings.sousTitres = parsed.sousTitres;
-    if (typeof parsed.muetEnArrierePlan === "boolean") settings.muetEnArrierePlan = parsed.muetEnArrierePlan;
-    if (typeof parsed.chatDuDirect === "boolean") settings.chatDuDirect = parsed.chatDuDirect;
-    return settings;
-  } catch {
-    return { ...FACTORY_DEFAULTS };
-  }
+/** Un champ illisible ou hors bornes reprend sa valeur d'origine, sans faire perdre les autres. */
+function decodeSettings(stored: unknown): AudioSettings {
+  const parsed = stored as Partial<AudioSettings>;
+  const settings = { ...FACTORY_DEFAULTS };
+  for (const channel of CHANNELS) settings[channel] = clamp01(parsed[channel], FACTORY_DEFAULTS[channel]);
+  if (typeof parsed.sousTitres === "boolean") settings.sousTitres = parsed.sousTitres;
+  if (typeof parsed.muetEnArrierePlan === "boolean") settings.muetEnArrierePlan = parsed.muetEnArrierePlan;
+  if (typeof parsed.chatDuDirect === "boolean") settings.chatDuDirect = parsed.chatDuDirect;
+  return settings;
 }
 
-function savePersisted(settings: AudioSettings): void {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // Dégrade silencieusement, même discipline que `core/input/input.ts`.
-  }
-}
+const stored = persisted(STORAGE_KEY, decodeSettings, () => ({ ...FACTORY_DEFAULTS }));
 
 /** Valeur affichée (0..1) -> gain. Le carré suit mieux l'oreille qu'une droite. */
 export function channelGain(value: number): number {
   return value * value;
 }
 
-let current: AudioSettings = loadPersisted();
+let current: AudioSettings = stored.load();
 
 function apply(settings: AudioSettings): void {
   setMasterGain(channelGain(settings.general));
@@ -98,7 +85,7 @@ function applyBackgroundMute(): void {
 let focusListenersInstalled = false;
 
 export function initAudioSettingsAtBoot(): AudioSettings {
-  current = loadPersisted();
+  current = stored.load();
   apply(current);
   if (!focusListenersInstalled && typeof window !== "undefined") {
     focusListenersInstalled = true;
@@ -120,7 +107,7 @@ export function getAudioFactoryDefaults(): AudioSettings {
 /** Appelée par l'écran de réglages à chaque interaction : persiste et applique tout de suite. */
 export function setAudioSettings(partial: Partial<AudioSettings>): AudioSettings {
   current = { ...current, ...partial };
-  savePersisted(current);
+  stored.save(current);
   apply(current);
   return current;
 }

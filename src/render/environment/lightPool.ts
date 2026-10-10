@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 // see: docs/6-reference/notes-code-rendu.md#eclairage-et-elagage
 
-export const LIGHT_POOL_BUDGET = 48;
+const LIGHT_POOL_BUDGET = 48;
 
 const REEVALUATION_DISTANCE = 2.0;
 

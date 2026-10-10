@@ -1,11 +1,10 @@
 import * as THREE from "three";
 
 import { FLOOR_NORMAL_Y, goreConfig, type SurfaceHit, type SurfaceProbe } from "./goreConfig";
+import { GRAVITY_Y } from "../../physics/constants";
 
 // Les morceaux d'un ennemi qui éclate : un `InstancedMesh`, dans une réserve
 // tournante. Ils volent, heurtent le décor et s'y posent.
-
-const GRAVITY = -25;
 
 interface Chunk {
   readonly position: THREE.Vector3;
@@ -116,7 +115,7 @@ export class GoreChunks {
         continue;
       }
 
-      chunk.velocity.y += GRAVITY * realDt;
+      chunk.velocity.y += GRAVITY_Y * realDt;
       const distance = chunk.velocity.length() * realDt;
       const hit =
         probe && distance > 1e-6

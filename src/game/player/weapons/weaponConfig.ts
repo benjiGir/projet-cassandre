@@ -186,7 +186,7 @@ export const weaponConfig: WeaponConfig = {
   crosshairPulseDuration: 0.08,
 };
 
-export function damageForWeapon(weapon: FiringWeapon): number {
+function damageForWeapon(weapon: FiringWeapon): number {
   if (weapon === "kick") return kickConfig.damage;
   if (weapon === "shotgun") return weaponConfig.shotgunDamagePerPellet;
   if (weapon === "pistol") return weaponConfig.pistolDamage;

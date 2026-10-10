@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { DebugPanel } from "../dev/DebugPanel/DebugPanel";
 import { TuningPanel } from "../dev/tuning/TuningPanel/TuningPanel";
 import { FpsCounter } from "../hud/overlays/FpsCounter/FpsCounter";
@@ -7,6 +9,7 @@ import { HudMessage } from "../hud/overlays/HudMessage/HudMessage";
 import { PerkOffer } from "../hud/overlays/PerkOffer/PerkOffer";
 import { DeathScreen } from "../screens/death/DeathScreen/DeathScreen";
 import { LevelCompleteScreen } from "../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
+import { OptionsScreen } from "../screens/options/OptionsScreen/OptionsScreen";
 import { PauseScreen } from "../screens/pause/PauseScreen/PauseScreen";
 import { LoadingScreen } from "../screens/loading/LoadingScreen/LoadingScreen";
 import { StoryScreen } from "../screens/story/StoryScreen/StoryScreen";
@@ -19,6 +22,16 @@ export interface AppProps {
   onResume: () => void;
   onIntroDone: () => void;
   onOutroDone: () => void;
+}
+
+/**
+ * La pause et ses réglages : deux écrans qui s'ignorent, enchaînés ici. Montée
+ * seulement en pause, donc chaque pause rouvre sur le menu.
+ */
+function PauseLayer({ onResume, onReturnToMenu }: Pick<AppProps, "onResume" | "onReturnToMenu">) {
+  const [pane, setPane] = useState<"menu" | "options">("menu");
+  if (pane === "options") return <OptionsScreen backdrop="dim" onBack={() => setPane("menu")} />;
+  return <PauseScreen onResume={onResume} onOptions={() => setPane("options")} onReturnToMenu={onReturnToMenu} />;
 }
 
 // see: docs/archive/systems-hud.md#composition-de-app
@@ -34,7 +47,7 @@ export function App({ onReplay, onNextLevel, onReturnToMenu, onResume, onIntroDo
       <PerkOffer />
       <HudMessage />
       <Announcement />
-      <PauseScreen onResume={onResume} onReturnToMenu={onReturnToMenu} />
+      {flowState === "paused" && <PauseLayer onResume={onResume} onReturnToMenu={onReturnToMenu} />}
       <DeathScreen onReplay={onReplay} onReturnToMenu={onReturnToMenu} />
       <StoryScreen sequence="intro" doneLabel="LANCER LE DIRECT" onDone={onIntroDone} />
       <StoryScreen sequence="outro" doneLabel="VOIR LE BILAN" onDone={onOutroDone} />

@@ -9,9 +9,11 @@ updated: 2026-10-09
 
 ## Responsabilité et frontières
 
-La [page de revue](../assets/pilote-quartier.html) charge le quartier dans le
-moteur. Le raccourci `?level=pilote_quartier` existe en développement.
-Le métro de campagne conserve le pilote des trains T2.
+Le pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.blend`
+et l'entrée `?level=pilote_quartier`. La
+[page de revue](../assets/pilote-quartier.html) garde ses captures ; ses liens
+vers le jeu ne chargent plus rien. Le script d'assemblage est conservé ; les
+fichiers retirés restent lisibles dans l'historique git.
 
 N4b assemble le [kit N3b](../assets/kit-quartier.md) pour juger la rue,
 la place, ses accès et le repère de la tour. Les rencontres N7 et le
@@ -28,9 +30,9 @@ parcours complet N5 restent à construire. Il n'y a pas d'ennemi dans ce pilote.
 | Helpers de pose et contrats | `tools/metro/quartier/authoring.py` |
 | Recette | `tools/blender/cassandre.py`, commande `quartier_pilot` |
 | Bibliothèque | `assets_src/library/lib_quartier_N3b.blend` |
-| Source du pilote | `assets_src/blender/quartier_pilote.blend` |
-| Export | `public/assets/levels/quartier_pilote.glb` |
-| Espaces | `public/assets/levels/quartier_pilote.espaces.json` |
+| Source du pilote | `quartier_pilote.blend`, écrite sous `assets_src/blender/` par l'assemblage — retirée le 2026-10-10 |
+| Export | `quartier_pilote.glb`, écrit sous `public/assets/levels/` par le build — plus livré depuis le 2026-10-10 |
+| Espaces | `quartier_pilote.espaces.json`, au même endroit |
 | Catalogue | `src/game/level/catalog/levels.ts` |
 | Émissions | `src/render/environment/metro/quartierFixtures.ts` |
 | Ambiances | `tools/audio/quartier_ambiances.py` |

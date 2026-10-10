@@ -1,13 +1,13 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import type { DoorMovement } from "../../game/level/doors/doorTypes";
-import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxDef, SfxId } from "./audioTypes";
+import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxDef } from "./audioTypes";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 export const POOL_LECTURES = 12;
 
 export const PITCH_VARIATION = 0.08;
 
-export const SFX_TABLE: Record<SfxId, SfxDef> = {
+const SFX_DEFS = {
   melee_fire: { sprite: "crowbar_swing", volume: 0.7, pitch: 0.04 },
   shotgun_fire: { sprite: "shotgun", volume: 1.0, pitch: 0.025 },
   impact_concrete: { sprite: "impact_concrete", volume: 0.8 },
@@ -39,7 +39,12 @@ export const SFX_TABLE: Record<SfxId, SfxDef> = {
   rampant_telegraph: { sprite: "rampant_telegraph", volume: 0.9, pitch: 0.06 },
   rampant_attack: { sprite: "rampant_attack", volume: 0.8, pitch: 0.06 },
   rampant_death: { sprite: "rampant_death", volume: 0.85, pitch: 0.1 },
-};
+} satisfies Record<string, SfxDef>;
+
+/** Un évènement sonore du jeu : les clés de la table, jamais une liste tenue à part. */
+export type SfxId = keyof typeof SFX_DEFS;
+
+export const SFX_TABLE: Record<SfxId, SfxDef> = SFX_DEFS;
 
 export const WEAPON_FIRE_SFX: Record<FiringWeapon, SfxId> = {
   kick: "melee_fire",

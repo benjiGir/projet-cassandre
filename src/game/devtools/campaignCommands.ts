@@ -7,7 +7,7 @@ export function applyCampaignCommand(engine: GameEngine, command: CampaignDebugC
   const session = engine.session;
   switch (command) {
     case "death":
-      applyPlayerDamage(engine, session, session.playerHp);
+      applyPlayerDamage(engine, session, session.run.playerHp);
       break;
     case "consume":
       applyPlayerDamage(engine, session, 10);

@@ -21,7 +21,7 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 - `src/game/hud/state.ts` contient le store Zustand ; `src/game/hud/hudTypes.ts` porte les contrats exposés à React.
 - `src/ui/hud/Hud/Hud.tsx` compose les widgets du HUD sans s'abonner lui-même au store.
 - `src/ui/hud/widgets/` regroupe les widgets qui lisent leurs propres données.
-- `src/ui/screens/` contient les écrans de pause, mort, chargement et fin de niveau.
+- `src/ui/screens/` contient les écrans de pause, mort, chargement, fin de niveau et l'écran de secours.
 - `src/ui/dev/` contient les panneaux de debug et de réglage réservés au développement.
 - `src/app/navigation/bootChoice.ts` gère le choix avant le montage de l'arbre React `App`.
 - [Structure React](../6-reference/react-structure.md) fixe l'organisation des composants et dossiers.
@@ -86,6 +86,27 @@ stateDiagram-v2
 - **Images.** `tools/textures/generate_panneaux.py` réduit chaque image brute de `assets_src/panneaux/raw/` en 640×360 et 64 couleurs, puis inscrit le panneau dans `src/game/session/presentation/storyImages.json`. Un panneau absent de cette liste garde `image: null` et affiche un aplat numéroté ; un panneau livré s'agrandit en pixels francs. Les prompts sont dans `assets_src/panneaux/PROMPTS.md` (magasin) et `PROMPTS_METRO.md` (métro) ; `?uiPreview=storyIntro&level=metro` affiche ceux du métro.
 
 Les overlays canvas (viseur, marqueur de touche, vue caméra) suivent `#ui-root` dans le DOM et se peignent par-dessus lui. `index.html` les masque dès qu'un `Screen` est monté.
+
+### Écran de secours
+
+Une erreur dont le jeu ne se relève pas remplace toute l'interface par
+`CrashScreen` (`src/ui/screens/crash/`), qui montre le message de l'erreur et
+ne propose qu'une sortie : recharger la page. L'écran ne lit ni le store ni le
+moteur, qui sont peut-être ce qui a cassé. `src/app/runtime/fatalError.ts`
+décide de ce qui est fatal, `src/app/navigation/showCrashScreen.ts` arrête le
+son, libère le pointeur et monte l'écran ; `main.ts` arrête la boucle.
+
+| Source | Traitement |
+|---|---|
+| Exception non rattrapée (`window` `error`), dont une exception dans la boucle | fatale |
+| Erreur de rendu React que rien ne rattrape (`onUncaughtError` de la racine) | fatale |
+| Échec du démarrage (`main()`) ou d'un changement de partie (rejouer, niveau suivant, retour au menu) | fatale, signalée à sa source par `reportFatalError` |
+| Promesse rejetée sans suite (`unhandledrejection`) | journalisée, le jeu continue : il en existe d'inoffensives (lecture audio refusée, requête annulée) |
+| Évènement d'erreur sans objet d'erreur (script d'une extension) | ignoré |
+
+Seule la première erreur compte : une boucle cassée relancerait la même à
+chaque image. L'échec du chargement d'un niveau n'est pas fatal — il garde son
+propre écran, avec « Réessayer ». Aperçu : `?uiPreview=crash`.
 
 ### Store et abonnements
 

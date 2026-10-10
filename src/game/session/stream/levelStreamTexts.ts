@@ -8,6 +8,6 @@ const STREAM_TEXTS: Readonly<Record<LevelTexts, StreamTexts>> = {
 };
 
 /** Ce que le direct écrit dans un niveau, d'après son `LevelDef.textes` ; sans indication, les textes du magasin. */
-export function levelStreamTexts(textes: LevelTexts = "magasin"): StreamTexts {
-  return STREAM_TEXTS[textes];
+export function levelStreamTexts(texts: LevelTexts = "magasin"): StreamTexts {
+  return STREAM_TEXTS[texts];
 }

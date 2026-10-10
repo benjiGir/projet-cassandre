@@ -3,10 +3,6 @@ import type { LevelTexts } from "../../level/catalog/levels";
 
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
 
-/** Graine du tirage des répliques occasionnelles (`GameSession.heroLineRandom`) — famille
- * `SHOTGUN_SPREAD_SEED`/`BASE_SUIT_SEED`, jamais dérivée de `Math.random()`/`Date.now()`. */
-export const HERO_LINE_SEED = 0x50111e77;
-
 export interface HeroLineDef {
   readonly text: string;
   /** Passe outre le délai entre répliques et coupe celle en cours. */

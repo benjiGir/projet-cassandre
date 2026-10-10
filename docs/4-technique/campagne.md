@@ -9,9 +9,8 @@ updated: 2026-10-06
 
 ## Responsabilité et frontières
 
-C1 raccorde la sortie d’Hyper Varan au métro. Le métro complet attend N5 ;
-l’identifiant stable `metro` charge provisoirement `metro_trains.glb`.
-Le menu le présente comme un pilote, sans promettre un parcours complet.
+C1 raccorde la sortie d’Hyper Varan au métro. L’identifiant stable `metro`
+charge `metro_blockout.glb`, le parcours N5.
 
 La campagne garde uniquement l’équipement de la dernière sortie du magasin.
 Elle ne sauvegarde ni une position ni la progression à l’intérieur du métro.

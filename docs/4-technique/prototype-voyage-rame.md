@@ -40,7 +40,8 @@ fermées, rendu interpolé et refus de fermeture sur un acteur.
 
 ## Horloge et mouvement
 
-Dans le pas fixe, `updateTrainRideGym` consomme les commandes, avance
+Dans le pas fixe, `updateTrainRideGym` (appelé par le mode de niveau
+`src/game/session/modes/trainRideGymMode.ts`) consomme les commandes, avance
 `TrainRideSystem`, ferme les portes, déclenche la vague et libère la sortie.
 Le départ est refusé hors de la rame et annulé si le joueur en sort pendant
 la fermeture. La phase de fermeture attend que les

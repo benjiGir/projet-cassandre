@@ -4,54 +4,54 @@ import { abs, floor, fract, float, mix, positionLocal, positionWorld, sin, step,
 
 import { runGameplaySync } from "../../../app/runtime/gameRuntime";
 import { RenderService } from "../../../render/pipeline/renderService";
-interface AnimationDouche {
+interface ShowerAnimation {
   meshes: THREE.Mesh[];
-  temps: number;
+  time: number;
 }
 
-const animations = new WeakMap<THREE.Object3D, AnimationDouche>();
-const uniformTemps = uniform(0).setName("uTempsDouche");
-const NOM_FILET = /^fx_douche_[12]_stream_.+$/;
-const PERIODE_TEMPS = 16;
+const animations = new WeakMap<THREE.Object3D, ShowerAnimation>();
+const timeUniform = uniform(0).setName("uTempsDouche");
+const STREAM_NAME = /^fx_douche_[12]_stream_.+$/;
+const TIME_PERIOD = 16;
 
-function estUnFilet(mesh: THREE.Mesh): boolean {
-  const nomGlb = typeof mesh.userData.name === "string" ? mesh.userData.name : "";
-  return NOM_FILET.test(mesh.name) || NOM_FILET.test(nomGlb);
+function isStream(mesh: THREE.Mesh): boolean {
+  const glbName = typeof mesh.userData.name === "string" ? mesh.userData.name : "";
+  return STREAM_NAME.test(mesh.name) || STREAM_NAME.test(glbName);
 }
 
-function creerMateriauFilet(): MeshLambertNodeMaterial {
-  const poste = floor(positionWorld.x.mul(7));
-  const hauteur = positionWorld.y;
+function createStreamMaterial(): MeshLambertNodeMaterial {
+  const station = floor(positionWorld.x.mul(7));
+  const height = positionWorld.y;
 
   // Les veines descendent dans le volume, avec un léger balancement latéral.
-  const derive = sin(hauteur.mul(3.1).add(uniformTemps.mul(1.7)).add(poste)).mul(0.13);
-  const coordonneeLargeur = positionLocal.x.mul(44).add(derive);
-  const celluleLargeur = floor(coordonneeLargeur);
-  const graineFilet = fract(sin(celluleLargeur.mul(12.9898).add(poste.mul(78.233)).add(4.17)).mul(43758.5453));
-  const graineGoutte = fract(sin(celluleLargeur.mul(39.3467).add(poste.mul(19.19)).add(11.3)).mul(24634.6345));
+  const drift = sin(height.mul(3.1).add(timeUniform.mul(1.7)).add(station)).mul(0.13);
+  const widthCoord = positionLocal.x.mul(44).add(drift);
+  const widthCell = floor(widthCoord);
+  const streamSeed = fract(sin(widthCell.mul(12.9898).add(station.mul(78.233)).add(4.17)).mul(43758.5453));
+  const dropSeed = fract(sin(widthCell.mul(39.3467).add(station.mul(19.19)).add(11.3)).mul(24634.6345));
 
-  const distanceFilet = abs(fract(coordonneeLargeur).sub(0.5));
-  const largeurFilet = graineFilet.mul(0.075).add(0.035);
-  const filet = step(distanceFilet, largeurFilet).mul(step(0.2, graineFilet)).mul(step(0.12, graineGoutte));
+  const streamDistance = abs(fract(widthCoord).sub(0.5));
+  const streamWidth = streamSeed.mul(0.075).add(0.035);
+  const stream = step(streamDistance, streamWidth).mul(step(0.2, streamSeed)).mul(step(0.12, dropSeed));
 
   // Les filets restent lisibles mais se fragmentent en gouttes en descendant.
-  const phaseChute = fract(hauteur.mul(3.7).add(uniformTemps.mul(5.2)).add(graineFilet));
-  const chute = step(0.07, phaseChute).mul(sub(1, step(0.84, phaseChute)));
-  const veine = filet.mul(chute);
+  const fallPhase = fract(height.mul(3.7).add(timeUniform.mul(5.2)).add(streamSeed));
+  const fall = step(0.07, fallPhase).mul(sub(1, step(0.84, fallPhase)));
+  const vein = stream.mul(fall);
 
   // Éclats fins et rares : ils glissent plus vite que les veines principales.
-  const phaseÉclat = fract(hauteur.mul(9.5).add(uniformTemps.mul(10.5)).add(graineGoutte));
-  const éclat = step(0.84, graineGoutte)
-    .mul(step(distanceFilet, largeurFilet.mul(0.62)))
-    .mul(step(0.18, phaseÉclat))
-    .mul(sub(1, step(0.38, phaseÉclat)));
+  const sparklePhase = fract(height.mul(9.5).add(timeUniform.mul(10.5)).add(dropSeed));
+  const sparkle = step(0.84, dropSeed)
+    .mul(step(streamDistance, streamWidth.mul(0.62)))
+    .mul(step(0.18, sparklePhase))
+    .mul(sub(1, step(0.38, sparklePhase)));
 
   // Un bruit en damier très discret casse l'aplat sans transformer l'eau en grille.
-  const celluleHauteur = floor(hauteur.mul(14).add(uniformTemps.mul(8)));
-  const grain = fract(sin(celluleLargeur.mul(17.17).add(celluleHauteur.mul(31.73)).add(poste)).mul(15731.743));
-  const mousse = step(0.91, grain).mul(step(0.28, phaseChute));
+  const heightCell = floor(height.mul(14).add(timeUniform.mul(8)));
+  const grain = fract(sin(widthCell.mul(17.17).add(heightCell.mul(31.73)).add(station)).mul(15731.743));
+  const foam = step(0.91, grain).mul(step(0.28, fallPhase));
 
-  const materiau = new MeshLambertNodeMaterial({
+  const streamMaterial = new MeshLambertNodeMaterial({
     color: 0xffffff,
     emissive: 0x08212a,
     emissiveIntensity: 0.38,
@@ -61,28 +61,28 @@ function creerMateriauFilet(): MeshLambertNodeMaterial {
     side: THREE.DoubleSide,
   });
 
-  const couleurVolume = vec3(0.045, 0.17, 0.22);
-  const couleurVeine = vec3(0.08, 0.46, 0.56);
-  const couleurMousse = vec3(0.24, 0.66, 0.72);
-  const couleurÉclat = vec3(0.72, 0.94, 0.97);
-  materiau.colorNode = mix(mix(mix(couleurVolume, couleurVeine, veine), couleurMousse, mousse), couleurÉclat, éclat);
-  materiau.opacityNode = float(0.19).add(veine.mul(0.29)).add(mousse.mul(0.1)).add(éclat.mul(0.3));
+  const volumeColor = vec3(0.045, 0.17, 0.22);
+  const veinColor = vec3(0.08, 0.46, 0.56);
+  const foamColor = vec3(0.24, 0.66, 0.72);
+  const sparkleColor = vec3(0.72, 0.94, 0.97);
+  streamMaterial.colorNode = mix(mix(mix(volumeColor, veinColor, vein), foamColor, foam), sparkleColor, sparkle);
+  streamMaterial.opacityNode = float(0.19).add(vein.mul(0.29)).add(foam.mul(0.1)).add(sparkle.mul(0.3));
 
-  return materiau;
+  return streamMaterial;
 }
 
 /** Remplace les filets par un Lambert TSL partagé entre les jets de cette racine. */
-export function installShaderDouches(root: THREE.Object3D | null): void {
+export function installShowerShader(root: THREE.Object3D | null): void {
   if (!root || animations.has(root)) return;
 
   const meshes: THREE.Mesh[] = [];
-  root.traverse((objet) => {
-    if (objet instanceof THREE.Mesh && estUnFilet(objet)) meshes.push(objet);
+  root.traverse((object) => {
+    if (object instanceof THREE.Mesh && isStream(object)) meshes.push(object);
   });
   if (meshes.length === 0) return;
 
-  const animation: AnimationDouche = { meshes, temps: 0 };
-  const material = creerMateriauFilet();
+  const animation: ShowerAnimation = { meshes, time: 0 };
+  const material = createStreamMaterial();
   animations.set(root, animation);
   for (const mesh of meshes) {
     mesh.material = material;
@@ -91,19 +91,19 @@ export function installShaderDouches(root: THREE.Object3D | null): void {
 }
 
 /** Avance le motif au pas fixe ; aucun temps mural ni node `time`. */
-export function updateShaderDouches(root: THREE.Object3D | null, dt: number): void {
+export function updateShowerShader(root: THREE.Object3D | null, dt: number): void {
   if (!root || !Number.isFinite(dt) || dt <= 0) return;
 
   const animation = animations.get(root);
   if (!animation) return;
 
-  animation.temps = (animation.temps + dt) % PERIODE_TEMPS;
-  uniformTemps.value = animation.temps;
+  animation.time = (animation.time + dt) % TIME_PERIOD;
+  timeUniform.value = animation.time;
 }
 
 /** WebGLNodesHandler ne supporte pas compileAsync : amorçage sous l'écran de chargement.
  * see: docs/4-technique/rendu.md#préparation-des-douches */
-export async function warmShaderDouches(
+export async function warmShowerShader(
   renderer: THREE.WebGLRenderer,
   scene: THREE.Scene,
   camera: THREE.Camera,

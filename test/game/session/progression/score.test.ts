@@ -47,6 +47,10 @@ function baseInput(overrides: Partial<LevelRecapInput> = {}): LevelRecapInput {
 describe("createInitialStats", () => {
   it("démarre tous les compteurs à zéro", () => {
     expect(createInitialStats()).toEqual({
+      trainKills: 0,
+      trainCrossings: 0,
+      trainDeaths: 0,
+      lastDamageSource: null,
       suitKills: 0,
       directorKills: 0,
       shotsFired: 0,

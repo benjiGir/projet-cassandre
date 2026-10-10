@@ -28,9 +28,9 @@ export function dressFoodPickup(
   object.attach(model);
 }
 
-function poser(
+function placeModel(
   object: THREE.Object3D,
-  modele: { geometry: THREE.BufferGeometry; material: THREE.Material },
+  template: { geometry: THREE.BufferGeometry; material: THREE.Material },
   groundY: number | null,
   resources: PickupResources,
 ): void {
@@ -40,7 +40,7 @@ function poser(
   const mesh = object as THREE.Mesh;
   if (mesh.isMesh) mesh.material = resources.hiddenMaterial;
 
-  const model = new THREE.Mesh(modele.geometry, modele.material);
+  const model = new THREE.Mesh(template.geometry, template.material);
   model.position.set(center.x, groundY ?? box.min.y, center.z);
 
   model.rotation.y = Math.PI / 7;
@@ -48,11 +48,11 @@ function poser(
 }
 
 export function dressHealPickup(object: THREE.Object3D, groundY: number | null, resources: PickupResources): void {
-  poser(object, resources.healModel(), groundY, resources);
+  placeModel(object, resources.healModel(), groundY, resources);
 }
 
 export function dressAmmoPickup(object: THREE.Object3D, groundY: number | null, resources: PickupResources): void {
-  poser(object, resources.ammoModel(), groundY, resources);
+  placeModel(object, resources.ammoModel(), groundY, resources);
 }
 
 export class WeaponPickupBillboard {

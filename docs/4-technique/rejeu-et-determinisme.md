@@ -37,7 +37,7 @@ séparé et documenté dans [Simulation et présentation](../3-architecture/simu
   `inputRecorder`, rien de plus.
 - `src/game/loop/devGameplayInput.ts` — détection des touches F8/F9/F10 au
   pas fixe, DEV seulement.
-- `src/game/loop/updateGameplay.ts` — point où `activeFrame` vient soit du
+- `src/game/loop/steps/inputStep.ts` (`readInputFrame`) — point où l'entrée du pas vient soit du
   rejeu (`inputRecorder.nextFrame()`), soit de la capture live
   (`captureInputFrame`).
 - `src/core/effect/random.ts` — `DeterministicRandom` (service Effect), seule
@@ -117,18 +117,20 @@ transportable hors du process qui l'a produit.
 **`DeterministicRandom.forSeed(seed)`** (`core/effect/random.ts`) fabrique un
 générateur `mulberry32` INDÉPENDANT à chaque appel — jamais un flux partagé
 entre appelants, sinon l'ordre d'appel romprait le rejeu. Consommé via
-`runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)))`
+`seededRandom(seed)` (`src/app/runtime/gameRuntime.ts`)
 (détail du service : [Effect et XState](../3-architecture/effect-et-xstate.md#le-rng)).
-Graines et propriétaires, jamais dérivées de `Math.random()`/`Date.now()` :
+Toutes les graines sont déclarées dans `src/core/effect/seeds.ts`, jamais
+dérivées de `Math.random()`/`Date.now()` ; `test/core/effect/random.test.ts`
+échoue si l'une d'elles change. Graines et propriétaires :
 
 | Flux | Graine | Portée |
 |---|---|---|
 | Dispersion du pompe et du pistolet | `SHOTGUN_SPREAD_SEED` | Un seul flux, partagé par les deux armes, construit une fois à la création de `WeaponSystem` |
-| Jitter de visée / déviation d'un Costard | `BASE_SUIT_SEED + index * SEED_STRIDE` (pas impair) | Une instance par ennemi spawné, jamais partagée entre deux Costards |
+| Jitter de visée / déviation d'un Costard | `BASE_SUIT_SEED + index * SEED_STRIDE` (pas impair, `EnemyManager.nextSeed`) | Une instance par ennemi spawné, jamais partagée entre deux Costards |
 | Jitter de visée / déviation du Directeur | `BASE_DIRECTOR_SEED + index * SEED_STRIDE` | Même principe, base distincte — deux types d'ennemis ne partagent jamais une séquence |
-| Le direct : audience, dons et chat | graine dédiée dans `session.streamRandom` | Un flux par `GameSession`, avancé au pas fixe (à chaque évènement notable et à chaque message du chat) |
-| Répliques occasionnelles du héros | `HERO_LINE_SEED` dans `session.heroLineRandom` | Un flux par `GameSession`, avancé au pas fixe, seulement quand le cooldown laisse passer une réplique à probabilité (`heroLines.ts`) |
-| FX / audio (cosmétique) | graines dédiées dans `lifecycle.ts` (`bootGameSession`) | Un flux par `GameSession`, réinitialisé au boot ; ne peut avancer aucun flux de simulation |
+| Le direct : audience, dons et chat | `STREAM_SEED` dans `session.run.streamRandom` | Un flux par `GameSession`, avancé au pas fixe (à chaque évènement notable et à chaque message du chat) |
+| Répliques occasionnelles du héros | `HERO_LINE_SEED` dans `session.run.heroLineRandom` | Un flux par `GameSession`, avancé au pas fixe, seulement quand le cooldown laisse passer une réplique à probabilité (`heroLines.ts`) |
+| FX / audio (cosmétique) | `FX_SEED`, `AUDIO_SEED`, `ZONE_AMBIENCE_SEED`, posées par `lifecycle.ts` (`bootGameSession`) | Un flux par `GameSession`, réinitialisé au boot ; ne peut avancer aucun flux de simulation |
 
 Tous ces flux, sauf le dernier, sont consommés DANS le pas fixe et entrent
 donc dans la portée du rejeu déterministe (invariant #12). Le dernier (FX/
@@ -153,7 +155,7 @@ dynamiques/kinématiques. Rien dans les tests ne détecterait un ordre
 d'itération instable du monde physique lui-même.
 
 **L'origine de tir ne vient jamais d'une position interpolée.**
-`weaponEyeOrigin` (`updateGameplay.ts`) est reconstruite depuis
+`eyeOrigin` (`src/game/loop/steps/combatSteps.ts`) est reconstruite depuis
 `session.player.position` après `player.update`, jamais depuis
 `player.eyePosition(alpha, …)` (le rendu, [Simulation et présentation](../3-architecture/simulation-et-presentation.md)) :
 une origine interpolée dépend du nombre d'images rendues entre deux pas
@@ -174,7 +176,7 @@ la boucle d'un build livré — un F9/F10 pressé en production ne fait
 strictement rien, par construction plutôt que par convention respectée.
 
 **Les répliques se décident au temps de gameplay.** Le cooldown
-(`session.lastHeroLineAt`) et l'écart entre deux cris se comparent à
+(`session.run.lastHeroLineAt`) et l'écart entre deux cris se comparent à
 `stats.gameplayElapsed`, et le tirage d'une réplique occasionnelle n'a lieu
 qu'après ce test : à entrées identiques, le rejeu dit les mêmes répliques au
 même pas. Seule la durée d'AFFICHAGE du sous-titre suit la prise

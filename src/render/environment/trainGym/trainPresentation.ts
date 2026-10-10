@@ -1,15 +1,15 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
-import { GROUP, interactionGroups, type PhysicsWorld } from "../../../physics/world";
-import { TRAIN_CAR_COUNT, TRAIN_CAR_LENGTH, TRAIN_HEIGHT, TRAIN_WIDTH } from "../../../game/level/trains/trainConfig";
-import { poseOnRoute } from "../../../game/level/trains/trainPath";
+import { carDistance, carOnStage, poseCar } from "../../../game/level/trains/trainCars";
+import {
+  TRAIN_CAR_BODY_LENGTH,
+  TRAIN_CAR_COUNT,
+  TRAIN_CAR_LENGTH,
+  TRAIN_HEIGHT,
+  TRAIN_WIDTH,
+} from "../../../game/level/trains/trainConfig";
 import type { TrainPass } from "../../../game/level/trains/trainTypes";
 import type { TrainSystem } from "../../../game/level/trains/trainSystem";
 
-interface Car {
-  mesh: THREE.Object3D;
-  body: RAPIER.RigidBody;
-}
 interface Display {
   mesh: THREE.Mesh;
   canvas: HTMLCanvasElement;
@@ -20,23 +20,22 @@ interface Display {
   compact: boolean;
 }
 
+// Ce que le joueur voit des rames : les voitures et les panneaux de voie. Les
+// corps physiques sont à `game/level/trains/trainCarBodies.ts`.
 export class TrainPresentation {
-  private readonly spare: Car[][] = [];
-  private readonly allCars: Car[] = [];
-  private readonly active = new Map<TrainPass, Car[]>();
+  private readonly spare: THREE.Object3D[][] = [];
+  private readonly allCars: THREE.Object3D[] = [];
+  private readonly active = new Map<TrainPass, THREE.Object3D[]>();
   private readonly geometry = new THREE.BoxGeometry(1, 1, 1);
   private readonly materials = new Map<number, THREE.MeshLambertMaterial>();
   private readonly displays: Display[] = [];
   private displayAt = -Infinity;
   private readonly position = new THREE.Vector3();
-  private readonly direction = new THREE.Vector3();
   private readonly rotation = new THREE.Quaternion();
 
   constructor(
     private readonly root: THREE.Object3D,
-    private readonly physics: PhysicsWorld,
     private readonly model?: THREE.Object3D,
-    private readonly bodies?: RAPIER.RigidBody[],
   ) {}
 
   private box(parent: THREE.Object3D, color: number, size: readonly number[], position: readonly number[]): void {
@@ -85,18 +84,18 @@ export class TrainPresentation {
     for (let i = 0; i < passes; i++) this.spare.push(this.createCars());
   }
 
-  get warmMeshes(): THREE.Object3D[] {
-    return this.allCars.map((car) => car.mesh);
+  get warmMeshes(): readonly THREE.Object3D[] {
+    return this.allCars;
   }
 
-  private createCars(): Car[] {
-    const cars: Car[] = [];
+  private createCars(): THREE.Object3D[] {
+    const cars: THREE.Object3D[] = [];
     for (let i = 0; i < TRAIN_CAR_COUNT; i++) {
       const mesh = this.model?.clone(true) ?? new THREE.Group();
       mesh.visible = true;
       if (!this.model) {
-        this.box(mesh, 0x69757a, [TRAIN_WIDTH, TRAIN_HEIGHT, TRAIN_CAR_LENGTH - 0.35], [0, TRAIN_HEIGHT / 2, 0]);
-        this.box(mesh, 0xd4b54e, [TRAIN_WIDTH + 0.02, 0.22, TRAIN_CAR_LENGTH - 0.35], [0, 0.85, 0]);
+        this.box(mesh, 0x69757a, [TRAIN_WIDTH, TRAIN_HEIGHT, TRAIN_CAR_BODY_LENGTH], [0, TRAIN_HEIGHT / 2, 0]);
+        this.box(mesh, 0xd4b54e, [TRAIN_WIDTH + 0.02, 0.22, TRAIN_CAR_BODY_LENGTH], [0, 0.85, 0]);
         for (const x of [-TRAIN_WIDTH / 2 - 0.015, TRAIN_WIDTH / 2 + 0.015]) {
           for (const z of [-5, -2, 2, 5]) this.box(mesh, 0x17272b, [0.03, 1.15, 1.8], [x, 2.05, z]);
         }
@@ -106,91 +105,40 @@ export class TrainPresentation {
             this.box(mesh, 0xffe4a0, [0.3, 0.3, 0.08], [x, 0.55, TRAIN_CAR_LENGTH / 2 - 0.14]);
         }
       }
-      const body = this.physics.world.createRigidBody(
-        RAPIER.RigidBodyDesc.kinematicPositionBased()
-          .setTranslation(this.position.x, this.position.y, this.position.z)
-          .setRotation(this.rotation),
-      );
-      this.physics.world.createCollider(
-        RAPIER.ColliderDesc.cuboid(TRAIN_WIDTH / 2, TRAIN_HEIGHT / 2, (TRAIN_CAR_LENGTH - 0.35) / 2)
-          .setTranslation(0, TRAIN_HEIGHT / 2, 0)
-          .setCollisionGroups(
-            interactionGroups(
-              GROUP.WORLD,
-              GROUP.PLAYER_SHOT | GROUP.ENEMY_SHOT | GROUP.ENEMY | GROUP.PROP | GROUP.DEBRIS,
-            ),
-          ),
-        body,
-      );
-      this.bodies?.push(body);
       mesh.visible = false;
-      body.setEnabled(false);
       this.root.add(mesh);
-      const car = { mesh, body };
-      cars.push(car);
-      this.allCars.push(car);
+      cars.push(mesh);
+      this.allCars.push(mesh);
     }
     return cars;
   }
 
-  private release(cars: Car[]): void {
-    for (const car of cars) {
-      car.mesh.visible = false;
-      car.body.setEnabled(false);
-    }
+  private release(cars: THREE.Object3D[]): void {
+    for (const mesh of cars) mesh.visible = false;
     this.spare.push(cars);
   }
 
-  updateFixed(system: TrainSystem): void {
+  /** Une rame sortie de la voie rend ses voitures, une rame entrée en prend. */
+  private syncPasses(system: TrainSystem): void {
     for (const [pass, cars] of this.active) {
       if (system.passes.includes(pass)) continue;
       this.release(cars);
       this.active.delete(pass);
     }
     for (const pass of system.passes) {
-      let cars = this.active.get(pass);
-      if (!cars) {
-        cars = this.spare.pop() ?? this.createCars();
-        cars.forEach((car, i) => {
-          this.pose(pass, pass.front, i);
-          car.body.setTranslation(this.position, true);
-          car.body.setRotation(this.rotation, true);
-        });
-        this.active.set(pass, cars);
-      }
-      cars.forEach((car, i) => {
-        const at = pass.front - (i + 0.5) * TRAIN_CAR_LENGTH;
-        const visible =
-          at >= (pass.route.visibleStart ?? -Infinity) - (pass.route.visualPadding ?? 0) &&
-          at <= (pass.route.visibleEnd ?? Infinity) + (pass.route.visualPadding ?? 0);
-        this.pose(pass, pass.front, i);
-        if (visible && !car.body.isEnabled()) {
-          car.body.setTranslation(this.position, true);
-          car.body.setRotation(this.rotation, true);
-        }
-        car.body.setEnabled(visible);
-        car.body.setNextKinematicTranslation(this.position);
-        car.body.setNextKinematicRotation(this.rotation);
-      });
+      if (!this.active.has(pass)) this.active.set(pass, this.spare.pop() ?? this.createCars());
     }
   }
 
-  private pose(pass: TrainPass, front: number, car: number): void {
-    poseOnRoute(pass.route, front - (car + 0.5) * TRAIN_CAR_LENGTH, this.position, this.direction);
-    this.rotation.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, Math.atan2(this.direction.x, this.direction.z));
-  }
-
   interpolate(system: TrainSystem, alpha: number, elapsed: number): void {
+    this.syncPasses(system);
     for (const [pass, cars] of this.active)
-      cars.forEach((car, i) => {
+      cars.forEach((mesh, i) => {
         const front = THREE.MathUtils.lerp(pass.previousFront, pass.front, alpha);
-        const at = front - (i + 0.5) * TRAIN_CAR_LENGTH;
-        car.mesh.visible =
-          at >= (pass.route.visibleStart ?? -Infinity) - (pass.route.visualPadding ?? 0) &&
-          at <= (pass.route.visibleEnd ?? Infinity) + (pass.route.visualPadding ?? 0);
-        this.pose(pass, front, i);
-        car.mesh.position.copy(this.position);
-        car.mesh.quaternion.copy(this.rotation);
+        mesh.visible = carOnStage(pass.route, carDistance(front, i));
+        poseCar(pass, front, i, this.position, this.rotation);
+        mesh.position.copy(this.position);
+        mesh.quaternion.copy(this.rotation);
       });
     if (elapsed < this.displayAt + 0.1) return;
     this.displayAt = elapsed;
@@ -271,18 +219,9 @@ export class TrainPresentation {
     this.displayAt = -Infinity;
   }
 
-  private removeCar(car: Car): void {
-    car.mesh.removeFromParent();
-    this.physics.world.removeRigidBody(car.body);
-    if (this.bodies) {
-      const index = this.bodies.indexOf(car.body);
-      if (index >= 0) this.bodies.splice(index, 1);
-    }
-  }
-
   dispose(): void {
     this.reset();
-    for (const car of this.allCars) this.removeCar(car);
+    for (const mesh of this.allCars) mesh.removeFromParent();
     this.allCars.length = 0;
     this.spare.length = 0;
     for (const display of this.displays) {

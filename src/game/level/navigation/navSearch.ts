@@ -101,27 +101,66 @@ export function astarMetricsSnapshot(): Readonly<AStarMetrics> {
   return { ...astarMetrics };
 }
 
+// Tampons d'une recherche, gardés d'une requête à l'autre : les allouer à
+// chaque fois coûtait 13 octets par cellule de la grille (2,4 Mo sur le
+// magasin) et 0,15 ms, même pour deux cellules voisines. Une cellule n'est
+// lue que si son tampon de génération vaut la requête en cours : rien n'est
+// remis à zéro entre deux requêtes.
+// see: docs/4-technique/pathfinding.md#coût-dune-requête
+interface SearchScratch {
+  readonly size: number;
+  readonly gScore: Float64Array;
+  readonly cameFrom: Int32Array;
+  /** Génération à laquelle `gScore`/`cameFrom` de la cellule ont été écrits. */
+  readonly seenAt: Uint32Array;
+  /** Génération à laquelle la cellule a été fermée. */
+  readonly closedAt: Uint32Array;
+  generation: number;
+}
+
+const MAX_GENERATION = 0xffff_ffff;
+let scratch: SearchScratch | null = null;
+
+/** Les tampons de la grille demandée, prêts pour une requête neuve. A* n'est pas réentrant : un seul jeu suffit. */
+function beginSearch(size: number): SearchScratch {
+  if (!scratch || scratch.size !== size) {
+    scratch = {
+      size,
+      gScore: new Float64Array(size),
+      cameFrom: new Int32Array(size),
+      seenAt: new Uint32Array(size),
+      closedAt: new Uint32Array(size),
+      generation: 0,
+    };
+  }
+  if (scratch.generation === MAX_GENERATION) {
+    scratch.seenAt.fill(0);
+    scratch.closedAt.fill(0);
+    scratch.generation = 0;
+  }
+  scratch.generation++;
+  return scratch;
+}
+
 /** A* sur `graph`. Retourne `null` si `goalIdx` n'est pas atteignable depuis `startIdx` (composantes non connectées du graphe). */
 function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | null {
   const startedAt = performance.now();
   astarMetrics.queries++;
   let expandedNodes = 0;
-  const size = graph.cols * graph.rows;
-  const gScore = new Float64Array(size).fill(Infinity);
-  const cameFrom = new Int32Array(size).fill(-1);
-  const closed = new Uint8Array(size);
+  const { gScore, cameFrom, seenAt, closedAt, generation } = beginSearch(graph.cols * graph.rows);
   const open = new MinHeap();
 
   gScore[startIdx] = 0;
+  seenAt[startIdx] = generation;
   open.push({ index: startIdx, f: heuristic(graph, startIdx, goalIdx) });
 
   try {
     while (open.size > 0) {
       const current = open.pop()!;
-      if (closed[current.index] === 1) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
+      if (closedAt[current.index] === generation) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
       expandedNodes++;
       if (current.index === goalIdx) return reconstructPath(cameFrom, startIdx, goalIdx);
-      closed[current.index] = 1;
+      closedAt[current.index] = generation;
 
       const mask = graph.neighborMask[current.index];
       if (mask === 0) continue;
@@ -137,12 +176,13 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
         if (nx < 0 || nx >= graph.cols || nz < 0 || nz >= graph.rows) continue;
 
         const nIdx = nz * graph.cols + nx;
-        if (closed[nIdx] === 1) continue;
+        if (closedAt[nIdx] === generation) continue;
 
         const tentativeG = gScore[current.index] + dir.cost * graph.cellSize;
-        if (tentativeG < gScore[nIdx]) {
+        if (seenAt[nIdx] !== generation || tentativeG < gScore[nIdx]) {
           gScore[nIdx] = tentativeG;
           cameFrom[nIdx] = current.index;
+          seenAt[nIdx] = generation;
           open.push({ index: nIdx, f: tentativeG + heuristic(graph, nIdx, goalIdx) });
         }
       }

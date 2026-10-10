@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier3d-compat";
 
+import { GRAVITY_Y } from "./constants";
 import { moveConfig, type MoveConfig } from "../game/player/movement/moveConfig";
 
 let initialized = false;
@@ -70,7 +71,7 @@ export function configureCharacterController(
 export class PhysicsWorld {
   readonly world: RAPIER.World;
 
-  constructor(gravity: RAPIER.Vector3 = { x: 0, y: -25, z: 0 }) {
+  constructor(gravity: RAPIER.Vector3 = { x: 0, y: GRAVITY_Y, z: 0 }) {
     this.world = new RAPIER.World(gravity);
   }
 

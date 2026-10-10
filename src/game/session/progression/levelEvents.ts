@@ -76,5 +76,3 @@ export const LEVEL_EVENTS = {
     { delay: 0.5, action: { kind: "reveiller", groupe: "escalier" } },
   ],
 } as const satisfies Record<string, Scenario>;
-
-export type LevelEventId = keyof typeof LEVEL_EVENTS;

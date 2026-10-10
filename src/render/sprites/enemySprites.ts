@@ -67,7 +67,7 @@ export function enemySpriteQuad(
 }
 
 // Frontière asynchrone de démarrage, jamais dans la boucle.
-export async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteSheet> {
+async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteSheet> {
   const response = await fetch(assetUrl(`assets/sprites/${name}.json`));
   if (!response.ok) throw new Error(`[sprites] ${name}.json : HTTP ${response.status}`);
   const manifest = decodeSpriteManifest(await response.json());
@@ -104,7 +104,7 @@ export async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteShe
   };
 }
 
-export function placeholderSpriteSheet(): EnemySpriteSheet {
+function placeholderSpriteSheet(): EnemySpriteSheet {
   const rows = 10;
   const one = (row: number): SpriteAnimation => ({ row, frames: 1 });
   return {

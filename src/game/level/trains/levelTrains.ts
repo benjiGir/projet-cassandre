@@ -5,6 +5,7 @@ import type { Difficulty } from "../../session/progression/difficulty";
 import type { LevelResources } from "../loading/levelResources";
 import { TrainPresentation } from "../../../render/environment/trainGym/trainPresentation";
 import { TrainBeacons } from "../../../render/environment/trainGym/trainBeacons";
+import { TrainCarBodies } from "./trainCarBodies";
 import { TrainSystem } from "./trainSystem";
 import { trainDifficulty } from "./trainDifficulty";
 import type { TrainLevelData } from "./trainLevelData";
@@ -16,6 +17,7 @@ export class LevelTrains {
   readonly config: TrainConfig = trainDifficulty("habitue");
   readonly system: TrainSystem;
   readonly presentation: TrainPresentation;
+  private readonly bodies: TrainCarBodies;
   readonly beacons: TrainBeacons;
   private resetRequested = false;
   private readonly crossingEntries = new Map<number, number>();
@@ -29,15 +31,18 @@ export class LevelTrains {
     resources: LevelResources,
   ) {
     this.system = new TrainSystem(data.lanes, this.config);
-    this.presentation = new TrainPresentation(root, physics, data.model, resources.bodies);
+    this.bodies = new TrainCarBodies(physics, resources.bodies);
+    this.presentation = new TrainPresentation(root, data.model);
     this.beacons = new TrainBeacons(
       root,
       data.signals.filter((signal) => signal.appearance === "feu"),
     );
     resources.onCleanup(() => {
       this.presentation.dispose();
+      this.bodies.dispose();
       this.beacons.dispose();
     });
+    this.bodies.prepare(data.lanes.length * 2);
     this.presentation.prepare(data.lanes.length * 2);
     for (const signal of data.signals) {
       if (signal.appearance !== "ecran") continue;
@@ -67,11 +72,12 @@ export class LevelTrains {
     if (!this.active) return;
     if (this.resetRequested) {
       this.presentation.reset();
+      this.bodies.reset();
       this.crossingEntries.clear();
       this.resetRequested = false;
     }
     this.system.update(dt, listener);
-    this.presentation.updateFixed(this.system);
+    this.bodies.updateFixed(this.system);
   }
 
   get active(): boolean {

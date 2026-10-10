@@ -27,7 +27,7 @@ Les systèmes de niveau font vivre les objets décrits dans le glTF : portes, ob
 - `src/game/session/progression/perks.ts` — achat à une borne et pose de l'effet du perk.
 - `src/game/level/navigation/levelSpaces.ts` — schéma du manifeste des espaces et recherche de l'espace qui contient un point.
 - `src/game/level/loading/loadLevelSpaces.ts` — charge le manifeste des espaces avec le niveau.
-- `src/game/session/player/placeLines.ts` — réplique de première visite d'un espace.
+- `src/game/session/player/placeLineState.ts` — réplique de première visite d'un espace : l'automate (`nextPlaceLine`) ; `placeLines.ts` le branche sur la partie.
 - `src/game/session/spawning.ts` — crée une instance de chaque système au commit du niveau.
 - `src/game/loop/updateGameplay.ts`, `stepPhysics.ts`, `interpolateVisuals.ts` et `updateFx.ts` — appels fixes, synchronisation physique, interpolation et retours visuels.
 - `src/render/environment/useObjectCulling.ts` — élague les objets utilisables et les lots de sanitaires éloignés.

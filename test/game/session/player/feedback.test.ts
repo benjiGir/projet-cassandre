@@ -10,23 +10,27 @@ import { createStreamState } from "../../../../src/game/session/stream/streamSim
 
 function sessionWithHp(playerHp: number): GameSession {
   return {
-    playerHp,
-    playerMaxHp: 100,
-    secretsFound: 0,
-    secretsTotal: 0,
     heroPortrait: new HeroPortrait(),
-    lastHeroLineAt: -Infinity,
-    lastHeroBarkAt: -Infinity,
-    heroLinesSaid: new Set(),
-    heroLineRandom: () => 0.99,
-    deathHandled: false,
-    lowHpLineTriggered: false,
-    stats: createInitialStats(),
-    stream: createStreamState(),
     suitManager: { suits: [] },
     directorManager: { directors: [] },
     choice: {},
     difficulty: "habitue",
+    run: {
+      playerHp,
+      playerMaxHp: 100,
+      secretsFound: 0,
+      lastHeroLineAt: -Infinity,
+      lastHeroBarkAt: -Infinity,
+      heroLinesSaid: new Set(),
+      heroLineRandom: () => 0.99,
+      deathHandled: false,
+      lowHpLineTriggered: false,
+      stats: createInitialStats(),
+      stream: createStreamState(),
+    },
+    level: {
+      secretsTotal: 0,
+    },
   } as unknown as GameSession;
 }
 
@@ -45,8 +49,8 @@ describe("applyPlayerDamage — résolution dans le pas fixe", () => {
 
     applyPlayerDamage(engineWithSend(send), session, 25);
 
-    expect(session.playerHp).toBe(75);
-    expect(session.stats.hpLost).toBe(25);
+    expect(session.run.playerHp).toBe(75);
+    expect(session.run.stats.hpLost).toBe(25);
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -59,9 +63,9 @@ describe("applyPlayerDamage — résolution dans le pas fixe", () => {
 
       for (const amount of groups) applyPlayerDamage(engine, session, amount);
 
-      expect(session.playerHp).toBe(0);
-      expect(session.stats.hpLost).toBe(15);
-      expect(session.deathHandled).toBe(true);
+      expect(session.run.playerHp).toBe(0);
+      expect(session.run.stats.hpLost).toBe(15);
+      expect(session.run.deathHandled).toBe(true);
       expect(send).toHaveBeenCalledTimes(1);
       expect(send).toHaveBeenCalledWith({ type: "DIED" });
     },
@@ -75,14 +79,14 @@ describe("applyPlayerDamage — résolution dans le pas fixe", () => {
     applyPlayerDamage(engine, session, 10);
     applyPlayerDamage(engine, session, 10);
 
-    expect(session.stats.hpLost).toBe(5);
+    expect(session.run.stats.hpLost).toBe(5);
     expect(send).toHaveBeenCalledTimes(1);
   });
 
   it("la publication des PV ne modifie aucun drapeau de partie", () => {
     const session = sessionWithHp(25);
-    presentPlayerDamage(session.playerHp);
+    presentPlayerDamage(session.run.playerHp);
     expect(useGameStore.getState().debug.playerHp).toBe(25);
-    expect(session.lowHpLineTriggered).toBe(false);
+    expect(session.run.lowHpLineTriggered).toBe(false);
   });
 });

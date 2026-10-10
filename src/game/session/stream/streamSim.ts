@@ -23,9 +23,6 @@ export type StreamEventKind =
   | "moment"
   | "train";
 
-/** Graine du flux RNG du direct : spectateurs, dons et chat, jamais les armes ni les ennemis. */
-export const STREAM_SEED = 0x71e75;
-
 // Un barème, donc réglable : `devtools/economy/economyVariants.ts` y pose ses variantes.
 interface EventRule {
   /** Multiplicateur du gain de spectateurs. */

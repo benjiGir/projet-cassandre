@@ -26,6 +26,8 @@ function pointOnRoute(route: TrainRoute, distance: number, position: THREE.Vecto
   }
 }
 
+/** Distance du centre d'une voiture à chacun de ses bogies : elle s'oriente sur la corde qui les relie. */
+const BOGIE_OFFSET = 4;
 const rearBogie = new THREE.Vector3();
 const frontBogie = new THREE.Vector3();
 const bogieDirection = new THREE.Vector3();
@@ -38,8 +40,8 @@ export function poseOnRoute(
   direction: THREE.Vector3,
 ): void {
   pointOnRoute(route, distance, position, direction);
-  pointOnRoute(route, distance - 4, rearBogie, bogieDirection);
-  pointOnRoute(route, distance + 4, frontBogie, bogieDirection);
+  pointOnRoute(route, distance - BOGIE_OFFSET, rearBogie, bogieDirection);
+  pointOnRoute(route, distance + BOGIE_OFFSET, frontBogie, bogieDirection);
   direction.subVectors(frontBogie, rearBogie).normalize();
 }
 

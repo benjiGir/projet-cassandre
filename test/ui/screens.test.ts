@@ -63,7 +63,7 @@ describe("écrans React — comportements DOM", () => {
     const onPlay = vi.fn();
     const onOptions = vi.fn();
     render(createElement(MainMenu, { onPlay, onOptions }));
-    click("REJOINDRE LE DIRECT");
+    click("NOUVELLE PARTIE");
     click("PARAMÈTRES DU SIGNAL");
     expect(onPlay).toHaveBeenCalledOnce();
     expect(onOptions).toHaveBeenCalledOnce();

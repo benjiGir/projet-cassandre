@@ -12,7 +12,7 @@
   "options": {
     "typeAware": true,
     "reportUnusedDisableDirectives": "warn",
-    "maxWarnings": 202
+    "maxWarnings": 176
   },
   "env": { "browser": true, "es2022": true },
   "ignorePatterns": ["dist", "public", "docs", "tools", "assets", "assets_src", "refs", "renders", "tmp"],

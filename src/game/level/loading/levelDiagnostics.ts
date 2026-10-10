@@ -176,11 +176,11 @@ export function formatOversizedCollider(error: OversizedColliderWarning): string
   );
 }
 
-export function formatMissingSpawnPlayer(): string {
+function formatMissingSpawnPlayer(): string {
   return "[level] spawn_player absent du niveau — le joueur ne peut pas être positionné au chargement.";
 }
 
-export function formatDuplicateSpawnPlayer(error: DuplicateSpawnPlayerError): string {
+function formatDuplicateSpawnPlayer(error: DuplicateSpawnPlayerError): string {
   return `[level] spawn_player en double (${error.count} occurrences) — seule la première rencontrée est utilisée.`;
 }
 
@@ -233,10 +233,10 @@ export function formatUnknownPropMaterial(error: UnknownPropMaterialWarning): st
 }
 
 export function formatInvalidPropNumber(error: InvalidPropNumberWarning): string {
-  const repli = error.property === "masse" ? `repli sur ${DEFAULT_PROP_MASS_KG} kg` : "prop laissé indestructible";
+  const fallback = error.property === "masse" ? `repli sur ${DEFAULT_PROP_MASS_KG} kg` : "prop laissé indestructible";
   return (
     `[level] "${error.name}" (prop_*) : propriété "${error.property}" = "${error.value}", ` +
-    `qui n'est pas un nombre strictement positif — ${repli}.`
+    `qui n'est pas un nombre strictement positif — ${fallback}.`
   );
 }
 

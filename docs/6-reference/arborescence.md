@@ -61,7 +61,9 @@ src/
       stream/              direct : audience, dons et chat, dans le pas fixe
       lifecycle.ts         construction et destruction d'une partie
       gameEngine.ts        moteur persistant
-      gameSession.ts       données canoniques de la partie
+      gameSession.ts       la partie : ses systèmes, `run` et `level`
+      runState.ts          état du joueur dans la partie (survit au hot reload)
+      levelState.ts        ce que le niveau chargé apporte (remplacé à chaque commit)
       flowPort.ts          capacités de flux reçues de l'application
       spawning.ts          préparation du niveau et apparitions
   physics/                 monde Rapier et raycasts

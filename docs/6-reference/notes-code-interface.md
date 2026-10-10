@@ -20,10 +20,10 @@ session. Le graphe XState de navigation n’a besoin ni du DOM, ni de Three,
 ni de Rapier. Un seul acteur vit pendant toute la durée de l’onglet.
 
 Le pas fixe et le rendu continuent en pause ; le contenu du pas de gameplay
-est ignoré. `PauseScreen` compose l’écran d’options avec un fond translucide,
-et revient toujours à son panneau principal lors d’une nouvelle pause.
-Le menu principal emploie le fond opaque. Réutiliser les options ici est une
-composition, sans transférer la navigation vers cet écran.
+est ignoré. `App` enchaîne `PauseScreen` et l’écran d’options (fond
+translucide) : les deux écrans s’ignorent, et la couche n’est montée qu’en
+pause, donc une nouvelle pause rouvre toujours sur le panneau principal.
+Le menu principal emploie le fond opaque.
 
 Le récapitulatif est calculé par le jeu puis présenté par `RecapTable`.
 À la mort, il est partiel : aucun bonus de rapidité. À la fin du niveau,

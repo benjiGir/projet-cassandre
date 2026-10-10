@@ -2,6 +2,7 @@ import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { COLLISION_GROUPS, type PhysicsWorld } from "../../../physics/world";
 import { poseOnRoute, routeLength } from "../trains/trainPath";
+import { TrainCarBodies } from "../trains/trainCarBodies";
 import { TrainSystem } from "../trains/trainSystem";
 import { TrainPresentation } from "../../../render/environment/trainGym/trainPresentation";
 import type { TrainCommand } from "../trains/trainTypes";
@@ -9,6 +10,7 @@ import type { TrainCommand } from "../trains/trainTypes";
 export interface TrainGym {
   system: TrainSystem;
   presentation: TrainPresentation;
+  bodies: TrainCarBodies;
   spawn: THREE.Vector3;
   spawnYaw: number;
   use(position: THREE.Vector3): boolean;
@@ -139,7 +141,8 @@ export function buildTrainGym(root: THREE.Group, physics: PhysicsWorld): TrainGy
       firstArrival: 25,
     },
   ]);
-  const presentation = new TrainPresentation(root, physics);
+  const presentation = new TrainPresentation(root);
+  const bodies = new TrainCarBodies(physics);
   presentation.addDisplay(new THREE.Vector3(-5, 0, 10), new THREE.Vector3(-6, 2.8, -2));
   for (const z of niches)
     presentation.addDisplay(new THREE.Vector3(0, 0, z), new THREE.Vector3(-5.25, 2.2, z), Math.PI / 2);
@@ -166,6 +169,7 @@ export function buildTrainGym(root: THREE.Group, physics: PhysicsWorld): TrainGy
   return {
     system,
     presentation,
+    bodies,
     spawn: new THREE.Vector3(-6, 0.9, 10),
     spawnYaw: 0,
     use(position) {

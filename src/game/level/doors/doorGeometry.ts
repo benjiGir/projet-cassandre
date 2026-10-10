@@ -68,7 +68,7 @@ export function hingePivotInRootSpace(
   return out;
 }
 
-export function composeBattantPose(
+export function composeSwingPose(
   closedPosition: THREE.Vector3,
   closedQuaternion: THREE.Quaternion,
   pivotWorld: THREE.Vector3,
@@ -84,7 +84,7 @@ export function composeBattantPose(
 const UP_AXIS = new THREE.Vector3(0, 1, 0);
 
 /** Pose d'un coulissant : translation de `distance` mètres le long du grand axe LOCAL, signée par `sign`. */
-export function composeCoulissePose(
+export function composeSlidePose(
   closedPosition: THREE.Vector3,
   closedQuaternion: THREE.Quaternion,
   axis: "x" | "z",
@@ -128,16 +128,16 @@ export function isActorBlockingClosedDoor(
 }
 
 /** Un occupant (joueur ou ennemi) est-il à portée `auto` du centre d'un groupe ? Horizontal + tolérance d'altitude fixe. */
-export function isActorInAutoRange(center: THREE.Vector3, actor: DoorActor, portee: number): boolean {
+export function isActorInAutoRange(center: THREE.Vector3, actor: DoorActor, range: number): boolean {
   const dx = actor.position.x - center.x;
   const dz = actor.position.z - center.z;
   const horizontal = Math.hypot(dx, dz);
-  return horizontal <= portee && Math.abs(actor.position.y - center.y) < AUTO_ALTITUDE_TOLERANCE;
+  return horizontal <= range && Math.abs(actor.position.y - center.y) < AUTO_ALTITUDE_TOLERANCE;
 }
 
 /** Avance `progress` (0..1) vers `target` de `dt/duree`, clampé. Fonction pure, testée directement. */
-export function advanceDoorProgress(progress: number, target: 0 | 1, dt: number, duree: number): number {
-  const step = duree > 0 ? dt / duree : 1;
+export function advanceDoorProgress(progress: number, target: 0 | 1, dt: number, duration: number): number {
+  const step = duration > 0 ? dt / duration : 1;
   if (target === 1) return Math.min(1, progress + step);
   return Math.max(0, progress - step);
 }

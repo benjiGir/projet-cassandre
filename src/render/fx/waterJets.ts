@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { WATER_GEOMETRY, WATER_MATERIAL, WATER_DROPLET_SIZE } from "./waterResources";
+import { GRAVITY_Y } from "../../physics/constants";
 
-const TOY_GRAVITY = -25;
 const WATER_MAX_JETS = 8;
 const WATER_DROPLETS_PER_JET = 28; // gouttes en l'air, en vol continu
 const WATER_SPLASHES_PER_JET = 6; // éclaboussures au sol, round-robin PAR JET
@@ -101,10 +101,10 @@ export class WaterJets {
       const droplet = this.waterDroplets[jetIndex * WATER_DROPLETS_PER_JET + d];
       this.resetWaterDroplet(droplet, slot.origin);
       // Déphaser les gouttes évite une bouffée synchrone à l’allumage.
-      const flight = this.random() * ((2 * droplet.velocity.y) / -TOY_GRAVITY);
+      const flight = this.random() * ((2 * droplet.velocity.y) / -GRAVITY_Y);
       droplet.position.addScaledVector(droplet.velocity, flight);
-      droplet.position.y += 0.5 * TOY_GRAVITY * flight * flight;
-      droplet.velocity.y += TOY_GRAVITY * flight;
+      droplet.position.y += 0.5 * GRAVITY_Y * flight * flight;
+      droplet.velocity.y += GRAVITY_Y * flight;
     }
     for (let s = 0; s < WATER_SPLASHES_PER_JET; s++) {
       this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + s].life = 0;
@@ -142,7 +142,7 @@ export class WaterJets {
   private resetWaterDroplet(droplet: WaterDropletState, origin: THREE.Vector3) {
     droplet.position.copy(origin);
     const height = WATER_JET_HEIGHT_MIN + this.random() * (WATER_JET_HEIGHT_MAX - WATER_JET_HEIGHT_MIN);
-    const upSpeed = Math.sqrt(2 * -TOY_GRAVITY * height);
+    const upSpeed = Math.sqrt(2 * -GRAVITY_Y * height);
     const fanAngle = this.random() * Math.PI * 2;
     const fanSpeed = WATER_FAN_SPEED_MIN + this.random() * (WATER_FAN_SPEED_MAX - WATER_FAN_SPEED_MIN);
     droplet.velocity.set(Math.cos(fanAngle) * fanSpeed, upSpeed, Math.sin(fanAngle) * fanSpeed);
@@ -172,7 +172,7 @@ export class WaterJets {
         const idx = j * WATER_DROPLETS_PER_JET + d;
         const droplet = this.waterDroplets[idx];
 
-        droplet.velocity.y += TOY_GRAVITY * realDt;
+        droplet.velocity.y += GRAVITY_Y * realDt;
         droplet.position.addScaledVector(droplet.velocity, realDt);
 
         if (droplet.position.y <= slot.origin.y && droplet.velocity.y < 0) {

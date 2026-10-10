@@ -347,7 +347,7 @@ L'update suit la caméra au taux d'affichage.
 `renderer.ts` conserve le voisin le plus proche à l'agrandissement. Les modes
 nearest/mipmap/aniso changent seulement la réduction ; aniso est le défaut.
 La limite d'anisotropie provient du renderer construit au démarrage.
-`appliquerFiltrage` déduplique les textures par identité et visite
+`applyTextureFiltering` déduplique les textures par identité et visite
 les textures enregistrées et tous les canaux classiques, uniformes shader
 et entrées TSL explicitement enregistrées.
 Changer la résolution interne met à jour le ratio caméra ; les overlays

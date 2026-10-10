@@ -103,7 +103,7 @@ function addRampBetween(
 
 // Zone 6 — Espace ouvert (hub central).
 
-export const HUB_SIZE = 44; // >= 40x40 requis, x et z dans [-22, 22]
+const HUB_SIZE = 44; // >= 40x40 requis, x et z dans [-22, 22]
 const HUB_HALF = HUB_SIZE / 2;
 
 const CORRIDOR_OPENING = 6; // largeur de l'ouverture nord, doit matcher CORRIDOR_WIDTH
@@ -218,7 +218,7 @@ function buildOpenArea(
 // Zone 5 — Couloir long.
 
 const CORRIDOR_WIDTH = 6;
-export const CORRIDOR_LENGTH = 44; // >= 40 m requis
+const CORRIDOR_LENGTH = 44; // >= 40 m requis
 const CORRIDOR_Z_START = HUB_HALF; // 22, mur nord du hub
 const CORRIDOR_Z_END = CORRIDOR_Z_START + CORRIDOR_LENGTH; // 66
 const CORRIDOR_MARKER_SPACING = 5;

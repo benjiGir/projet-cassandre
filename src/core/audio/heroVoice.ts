@@ -3,62 +3,61 @@ import { Howl } from "howler";
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "../loading/assetPath";
 import { waitForAudioLoad } from "./audioPreparation";
+import { fetchJson } from "../net/fetchJson";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 
-const VOIX_BASE_PATH = assetUrl("assets/audio/voix");
-const VOIX_VOLUME = 1.0;
+const VOICE_BASE_PATH = assetUrl("assets/audio/voix");
+const VOICE_VOLUME = 1.0;
 
 let atlas: Howl | null = null;
-let durees = new Map<string, number>();
+let durations = new Map<string, number>();
 let lectureEnCours: number | null = null;
-let chargement: Promise<void> | null = null;
+let loading: Promise<void> | null = null;
 let gain = 1;
 
 export function setHeroVoiceGain(value: number): void {
   gain = value;
-  atlas?.volume(VOIX_VOLUME * gain);
+  atlas?.volume(VOICE_VOLUME * gain);
 }
 
 export function initHeroVoice(): Promise<void> {
-  if (chargement) return chargement;
-  chargement = fetch(`${VOIX_BASE_PATH}/voix.json`, { signal: AbortSignal.timeout(15000) })
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-    .then(decodeAudioSpriteManifest)
-    .then(async (manifeste) => {
-      durees = new Map(Object.entries(manifeste.sprite).map(([cle, [, ms]]) => [cle, ms / 1000]));
+  if (loading) return loading;
+  loading = fetchJson(`${VOICE_BASE_PATH}/voix.json`, decodeAudioSpriteManifest)
+    .then(async (manifest) => {
+      durations = new Map(Object.entries(manifest.sprite).map(([key, [, ms]]) => [key, ms / 1000]));
       atlas = new Howl({
-        src: manifeste.src.map((f) => `${VOIX_BASE_PATH}/${f}`),
-        sprite: manifeste.sprite,
+        src: manifest.src.map((f) => `${VOICE_BASE_PATH}/${f}`),
+        sprite: manifest.sprite,
         pool: 2,
-        volume: VOIX_VOLUME * gain,
+        volume: VOICE_VOLUME * gain,
         onloaderror: () =>
-          console.warn(`[voix] atlas introuvable (${VOIX_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
+          console.warn(`[voix] atlas introuvable (${VOICE_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
       });
       await waitForAudioLoad(atlas);
     })
     .catch((e) => {
       console.warn(`[voix] manifeste illisible (${e}) — répliques muettes.`);
     });
-  return chargement;
+  return loading;
 }
 
-export function heroVoiceDuration(cle: string): number | null {
-  return durees.get(cle) ?? null;
+export function heroVoiceDuration(key: string): number | null {
+  return durations.get(key) ?? null;
 }
 
-export function playHeroVoice(cle: string): void {
-  if (!atlas || atlas.state() !== "loaded" || !durees.has(cle)) return;
+export function playHeroVoice(key: string): void {
+  if (!atlas || atlas.state() !== "loaded" || !durations.has(key)) return;
   if (lectureEnCours !== null) atlas.stop(lectureEnCours);
-  lectureEnCours = atlas.play(cle) ?? null;
+  lectureEnCours = atlas.play(key) ?? null;
 }
 
 /** Les haut-parleurs ne sont pas la bouche du héros : une annonce ne coupe ni sa réplique ni la queue de l'annonce d'avant. */
-export function playAnnouncementVoice(cle: string): void {
-  if (!atlas || atlas.state() !== "loaded" || !durees.has(cle)) return;
-  atlas.play(cle);
+export function playAnnouncementVoice(key: string): void {
+  if (!atlas || atlas.state() !== "loaded" || !durations.has(key)) return;
+  atlas.play(key);
 }
 
 export function listHeroVoices(): { cle: string; duree: number }[] {
-  return [...durees].map(([cle, duree]) => ({ cle, duree }));
+  return [...durations].map(([key, duration]) => ({ cle: key, duree: duration }));
 }

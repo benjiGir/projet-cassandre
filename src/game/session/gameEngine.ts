@@ -20,8 +20,13 @@ import { InteractionSystem } from "../level/interactions/interactive";
 import type { GameFlowPort } from "./flowPort";
 import type { GameSession } from "./gameSession";
 
-// see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
-export interface GameEngine {
+/**
+ * Ce qui vit autant que l'onglet. Une fonction qui construit ou détruit une
+ * partie reçoit ce type : elle ne peut pas lire `engine.session`, donc pas
+ * confondre la partie en cours de remplacement avec celle qu'elle construit.
+ * see: docs/decisions/0014-gameengine-persistentengine-separes.md
+ */
+export interface PersistentEngine {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
@@ -56,12 +61,6 @@ export interface GameEngine {
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
   cardPickupTextures: CardPickupTextures;
 
-  /** Scratch de la balle de test (chemin "gym" seulement) — PARTAGÉ entre `loop/stepPhysics.ts` (écrit `ballCurr*` depuis la physique) et `loop/interpolateVisuals.ts` (lit `ballPrev*`/`ballCurr*` pour lerp/slerp). */
-  ballPrevPos: THREE.Vector3;
-  ballPrevQuat: THREE.Quaternion;
-  ballCurrPos: THREE.Vector3;
-  ballCurrQuat: THREE.Quaternion;
-
   /** Yaw/pitch de visée — mutés directement par `lifecycle.ts::bootGameSession` (respawn) et `spawning.ts::loadGltfLevel` (repositionnement sur `spawn_player`), jamais recréés en objet neuf : `loop/interpolateVisuals.ts` ferme dessus par référence. */
   look: { yaw: number; pitch: number };
   /** Delta souris agrégé depuis le dernier pas fixe, pour l'enregistrement. */
@@ -72,9 +71,6 @@ export interface GameEngine {
   /** Interaction (`use_*`, touche E) — UNE SEULE instance pour toute la durée de l'onglet, voir `game/level/interactions/interactive.ts`. */
   interaction: InteractionSystem;
 
-  /** Session de partie COURANTE — remplace la variable mutable `currentSession` de `main()`. Réassigné par `lifecycle.ts::bootGameSession`/`replay`/`returnToMenu`, jamais par les fonctions qui construisent une NOUVELLE session (elles reçoivent cette nouvelle session en paramètre explicite tant qu'elle n'est pas encore devenue "la" session courante — voir la doc de `spawning.ts::spawnSuitAt`). */
-  session: GameSession;
-
   /** Dernier enregistrement F9/F10 (`core/input/inputRecorder.ts`), pour rejeu (F10) et pour `window.cassandre.lastRecording`/`playRecording`. */
   lastRecording: Recording | null;
   /** FPS lissé, publié au `DebugPanel` (voir `loop/updateFx.ts`). */
@@ -83,8 +79,11 @@ export interface GameEngine {
   debugAccumulator: number;
 }
 
-// see: docs/archive/systems-session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
-export type PersistentEngine = Omit<GameEngine, "session">;
+// see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
+export interface GameEngine extends PersistentEngine {
+  /** Session de partie COURANTE — remplace la variable mutable `currentSession` de `main()`. Réassigné par `lifecycle.ts::bootGameSession`/`replay`/`returnToMenu`, jamais par les fonctions qui construisent une NOUVELLE session (elles reçoivent cette nouvelle session en paramètre explicite tant qu'elle n'est pas encore devenue "la" session courante — voir la doc de `spawning.ts::spawnSuitAt`). */
+  session: GameSession;
+}
 
 // see: docs/archive/systems-session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
@@ -128,11 +127,6 @@ export function buildGameEngine(
   // `render/overlays/cameraView.ts`.
   const cameraViewOverlay = new CameraViewOverlay(document.getElementById("app") as HTMLDivElement);
 
-  const ballPrevPos = new THREE.Vector3();
-  const ballPrevQuat = new THREE.Quaternion();
-  const ballCurrPos = new THREE.Vector3(3, 4, 0);
-  const ballCurrQuat = new THREE.Quaternion();
-
   const look = { yaw: 0, pitch: 0 };
   // Delta souris agrégé depuis le dernier pas fixe, pour l'enregistrement.
   const lookDelta = { dx: 0, dy: 0 };
@@ -162,10 +156,6 @@ export function buildGameEngine(
     rampantSheet: sheets.rampant,
     vigileSheet: sheets.vigile,
     cardPickupTextures,
-    ballPrevPos,
-    ballPrevQuat,
-    ballCurrPos,
-    ballCurrQuat,
     look,
     lookDelta,
     wireframeToggle,

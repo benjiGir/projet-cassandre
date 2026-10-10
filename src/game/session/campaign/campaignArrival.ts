@@ -17,9 +17,9 @@ export function freezeArrival(arrival: CampaignArrival): CampaignArrival {
 export function captureArrival(session: GameSession): CampaignArrival {
   return freezeArrival({
     weapons: session.weapons.inventory(),
-    perks: [...session.perks],
-    wallet: session.stream.wallet,
-    hp: session.playerHp,
+    perks: [...session.run.perks],
+    wallet: session.run.stream.wallet,
+    hp: session.run.playerHp,
     difficulty: session.difficulty,
   });
 }
@@ -27,9 +27,9 @@ export function captureArrival(session: GameSession): CampaignArrival {
 export function applyArrival(session: GameSession, arrival: CampaignArrival): void {
   for (const perk of arrival.perks) grantPerk(session, perk);
   session.weapons.restoreInventory(arrival.weapons);
-  session.stream.wallet = arrival.wallet;
-  session.playerHp = arrival.hp;
-  session.heroPortrait.heal(session.playerHp, session.playerMaxHp);
+  session.run.stream.wallet = arrival.wallet;
+  session.run.playerHp = arrival.hp;
+  session.heroPortrait.heal(session.run.playerHp, session.run.playerMaxHp);
 }
 
 export function metroArrival(difficulty: Difficulty, profile: "type" | "pauvre" | "riche" = "type"): CampaignArrival {

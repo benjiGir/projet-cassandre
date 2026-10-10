@@ -22,18 +22,6 @@ export const gameFlowMachine = setup({
     mainMenu: {
       on: {
         BEGIN_LOAD: "loading",
-        OPEN_OPTIONS: "options",
-        CHOOSE_ZONE: "levelSelect",
-      },
-    },
-    options: {
-      on: {
-        BACK_TO_MENU: "mainMenu",
-      },
-    },
-    levelSelect: {
-      on: {
-        BEGIN_LOAD: "loading",
       },
     },
     loading: {

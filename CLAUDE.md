@@ -67,6 +67,20 @@ explication**, pas contournée.
     dépend de cette continuité.
 13. *(Retiré le 2026-09-25 — « XState sans temps mural ».)*
 
+## Conventions de code
+
+Les règles d'écriture du TypeScript sont dans
+[`docs/6-reference/conventions-code.md`](docs/6-reference/conventions-code.md),
+**pour l'agent principal comme pour chaque sous-agent**. L'essentiel :
+**les identifiants sont en anglais** (décidé le 2026-10-10) ; restent en
+français le texte joueur, les commentaires et la documentation, les noms des
+choses du jeu (`Costard`, `VitreSystem`…), les champs qui portent une
+propriété Blender (`matiere`, `portee`…), les identifiants de contenu, les
+clés des sauvegardes et des manifestes, et l'API de console `cassandre`. Une
+valeur partagée a un seul nom à un seul endroit (`physics/constants.ts`,
+`core/effect/seeds.ts`), et tout accès à `localStorage` passe par
+`core/storage/persisted.ts`.
+
 ## Conventions React — non négociables
 
 Tout code React (`src/ui/`) suit quatre règles écrites, **pour l'agent

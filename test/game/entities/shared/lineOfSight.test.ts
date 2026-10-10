@@ -1,5 +1,5 @@
 /**
- * Jalon N5 (`PLAN_NIVEAU_V2.md`) — repro headless de l'occlusion des lignes
+ * Repro headless de l'occlusion des lignes
  * de vue ennemies, écrit pour trancher la cause racine restée ouverte dans
  * [ADR 0022](../../../docs/decisions/0022-occlusion-rangees-non-bloquante.md) :
  * une rangée de gondoles ou de racks bloque-t-elle VRAIMENT le regard d'un
@@ -13,7 +13,8 @@
  *    loader (même technique que `test/game/level/loading/loader.test.ts`). Elles
  *    isolent une pièce à la fois, aux cotes réelles du kit
  *    (`tools/blender/kit_spec.py`).
- * 2. **Le vrai niveau exporté** — `public/assets/levels/*.glb` relu par
+ * 2. **Un vrai niveau exporté** — `test/fixtures/levels/*.glb` (les zones C
+ *    et D du premier prototype, retirées du jeu mais gardées ici) relu par
  *    `GLTFLoader.parse` (pur ArrayBuffer, aucun DOM requis tant que le
  *    fichier n'a pas de texture), aux positions de spawn HISTORIQUES,
  *    celles-là mêmes que l'ADR 0022 a déplacées. C'est la fixture qui a
@@ -200,7 +201,7 @@ describe("Occlusion de la ligne de vue ennemie (N5) — pièces du kit isolées"
 // ---------------------------------------------------------------------------
 
 function parseLevel(file: string): Promise<GLTF> {
-  const buf = readFileSync(resolve("public/assets/levels", file));
+  const buf = readFileSync(resolve("test/fixtures/levels", file));
   const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
   // `parse` est asynchrone même sans I/O : le callback part sur une
   // microtâche. Aucun DOM requis, ces niveaux n'ont pas de texture.

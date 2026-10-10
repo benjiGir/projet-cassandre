@@ -1,5 +1,5 @@
 /**
- * Jalon N7 (`PLAN_NIVEAU_V2.md`) — les cartes de fidélité, qui remplacent le
+ * Les cartes de fidélité, qui remplacent le
  * badge unique du Directeur.
  *
  * Couvre les trois endroits où la convention peut se casser en silence :
@@ -256,7 +256,12 @@ describe("InteractionSystem — objets à carte", () => {
 
 /** Session réduite à ce que `cards.ts` touche réellement. */
 function sessionDeTest(): GameSession {
-  return { cards: new Set<LoyaltyCard>(), heroPortrait: new HeroPortrait() } as unknown as GameSession;
+  return {
+    heroPortrait: new HeroPortrait(),
+    run: {
+      cards: new Set<LoyaltyCard>(),
+    },
+  } as unknown as GameSession;
 }
 
 describe("Inventaire de cartes (game/session/progression/cards.ts)", () => {
@@ -290,7 +295,7 @@ describe("Inventaire de cartes (game/session/progression/cards.ts)", () => {
 
     expect(grantCard(session, "argent")).toBe(false);
     expect(useGameStore.getState().hudMessage).toBeNull();
-    expect(session.cards.size).toBe(1);
+    expect(session.run.cards.size).toBe(1);
   });
 
   it("le miroir du HUD garde l'ordre Argent/Or/Platine, pas l'ordre de ramassage", () => {
@@ -303,8 +308,8 @@ describe("Inventaire de cartes (game/session/progression/cards.ts)", () => {
 
   it("syncCardsToStore recopie un inventaire déjà rempli (chargement, reset)", () => {
     const session = sessionDeTest();
-    session.cards.add("or");
-    session.cards.add("platine");
+    session.run.cards.add("or");
+    session.run.cards.add("platine");
 
     syncCardsToStore(session);
 
@@ -347,14 +352,18 @@ function sessionAvecPorte(cards: LoyaltyCard[] = []) {
   const doorSystem = new DoorSystem([doorInfo]);
 
   const session = {
-    cards: new Set<LoyaltyCard>(cards),
-    unlockedDoors: new Set<string>(),
-    doorSystem,
-    exitDoorTracking: null,
     // Devant la porte (pas exactement dessus) — sert d'`openerPosition` pour
     // un éventuel battant en `sens: auto`, sans conséquence ici (`descend`).
     player: { position: new THREE.Vector3(0, 1, 2) },
     gltfLevelSession: { current: { doors: handle.doors } },
+    run: {
+      cards: new Set<LoyaltyCard>(cards),
+      unlockedDoors: new Set<string>(),
+      exitDoorTracking: null,
+    },
+    level: {
+      doorSystem,
+    },
   } as unknown as GameSession;
 
   return { session, collider: doorInfo.collider };
@@ -375,7 +384,7 @@ describe("tryOpenCardDoor — la garde de porte", () => {
 
     expect(tryOpenCardDoor(session, "door_reserve", "argent")).toBe(false);
     expect(useGameStore.getState().hudMessage).toBe("Carte Argent requise");
-    expect(session.unlockedDoors.has("door_reserve")).toBe(false);
+    expect(session.run.unlockedDoors.has("door_reserve")).toBe(false);
     expect(collider.isEnabled()).toBe(true);
 
     // Rien n'a été consommé : un deuxième essai refuse à l'identique.
@@ -388,9 +397,9 @@ describe("tryOpenCardDoor — la garde de porte", () => {
     const { session, collider } = sessionAvecPorte(["argent"]);
 
     expect(tryOpenCardDoor(session, "door_reserve", "argent")).toBe(true);
-    expect(session.unlockedDoors.has("door_reserve")).toBe(true);
+    expect(session.run.unlockedDoors.has("door_reserve")).toBe(true);
     expect(collider.isEnabled()).toBe(false);
-    expect(session.doorSystem?.stateOf("door_reserve")).toBe("opening");
+    expect(session.level.doorSystem?.stateOf("door_reserve")).toBe("opening");
   });
 
   it("une carte ne vaut pas pour une autre", () => {
@@ -402,13 +411,13 @@ describe("tryOpenCardDoor — la garde de porte", () => {
   it("déjà déverrouillée : non-événement, pas de second glissement", () => {
     const { session } = sessionAvecPorte(["argent"]);
     tryOpenCardDoor(session, "door_reserve", "argent");
-    const etatApresPremierDeverrouillage = session.doorSystem?.stateOf("door_reserve");
+    const etatApresPremierDeverrouillage = session.level.doorSystem?.stateOf("door_reserve");
 
     expect(tryOpenCardDoor(session, "door_reserve", "argent")).toBe(false);
     // Rien ne rejoue : le second essai est un non-événement (`unlockedDoors`
     // coupe court avant même de toucher `doorSystem`), l'état de la porte est
     // inchangé.
-    expect(session.doorSystem?.stateOf("door_reserve")).toBe(etatApresPremierDeverrouillage);
+    expect(session.level.doorSystem?.stateOf("door_reserve")).toBe(etatApresPremierDeverrouillage);
   });
 
   it("seule door_e_exit arme le suivi de fin de niveau", () => {
@@ -416,6 +425,6 @@ describe("tryOpenCardDoor — la garde de porte", () => {
 
     tryOpenCardDoor(session, "door_reserve", "platine");
 
-    expect(session.exitDoorTracking).toBeNull();
+    expect(session.run.exitDoorTracking).toBeNull();
   });
 });

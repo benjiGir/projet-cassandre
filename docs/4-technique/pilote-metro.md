@@ -9,10 +9,12 @@ updated: 2026-10-06
 
 ## Responsabilité et frontières
 
-Vous pouvez juger le kit dans le moteur avec le raccourci
-`?level=pilote_metro`. Cette entrée est réservée au développement.
-[La page de revue](../assets/pilote-metro.html) ouvre le même jeu et propose
-six points de vue, les captures et les nappes à écouter.
+Le pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.blend`
+et l'entrée `?level=pilote_metro`. Seuls les deux niveaux de la campagne
+restent sous `public/assets/levels/`. Le script d'assemblage ci-dessous est
+conservé ; les fichiers retirés restent lisibles dans l'historique git.
+[La page de revue](../assets/pilote-metro.html) garde les six points de vue,
+les captures et les nappes à écouter ; ses liens vers le jeu ne chargent plus rien.
 
 Le pilote contient une station de 24 m, deux quais de 5 m, deux voies,
 une rame garée, puis un tube de **60 m** à cinq refuges et un local de service.
@@ -27,8 +29,8 @@ Les trains mobiles relèvent de T2 ; les rencontres du niveau relèvent de N7.
 | Assemblage | `tools/metro/pilot/build_pilot.py` |
 | Recette | `tools/blender/cassandre.py`, commande `metro_pilot` |
 | Bibliothèque | `assets_src/library/lib_metro_N3.blend` |
-| Scène | `assets_src/blender/metro_pilote.blend` |
-| Runtime | `public/assets/levels/metro_pilote.glb` et `public/assets/levels/metro_pilote.espaces.json` |
+| Scène | `metro_pilote.blend`, écrite sous `assets_src/blender/` par l'assemblage — retirée le 2026-10-10 |
+| Runtime | `metro_pilote.glb` et `metro_pilote.espaces.json`, écrits sous `public/assets/levels/` par le build — plus livrés depuis le 2026-10-10 |
 | Catalogue | `src/game/level/catalog/levels.ts` |
 | Émission des tubes | `src/render/environment/metro/metroFixtures.ts` |
 | Ambiances originales | `tools/audio/metro_ambiances.py`, sorties `public/assets/audio/metro_pilote/` |

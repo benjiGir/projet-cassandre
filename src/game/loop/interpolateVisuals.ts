@@ -32,13 +32,6 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
   const session = engine.session;
   runGameplaySync(
     Effect.gen(function* () {
-      yield* Effect.sync(() => {
-        if (session.ballMesh) {
-          session.ballMesh.position.lerpVectors(engine.ballPrevPos, engine.ballCurrPos, alpha);
-          session.ballMesh.quaternion.slerpQuaternions(engine.ballPrevQuat, engine.ballCurrQuat, alpha);
-        }
-      });
-
       // La rotation brute a déjà été capturée au taux d'affichage par
       // `updateDisplayInput`, AVANT les pas fixes. Ici elle est seulement
       // recopiée sur la caméra, sans interpolation (invariant #3).
@@ -68,20 +61,15 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
       });
 
       yield* Effect.sync(() => {
-        session.trainRideGym?.presentation.interpolate(
-          session.trainRideGym.system,
-          alpha,
-          session.stats.gameplayElapsed,
-        );
+        session.mode?.interpolate?.(alpha, session.run.stats.gameplayElapsed);
         const trains = session.gltfLevelSession?.current?.trains;
         const blockout = session.gltfLevelSession?.current?.metroBlockout;
         session.gltfLevelSession?.current?.fountainWater?.interpolate(engine.flow.isPlaying() ? alpha : 1);
-        blockout?.presentation.interpolate(blockout.system, alpha, session.stats.gameplayElapsed);
-        trains?.presentation.interpolate(trains.system, alpha, session.stats.gameplayElapsed);
-        trains?.beacons.update(trains.system, session.stats.gameplayElapsed);
-        session.trainGym?.presentation.interpolate(session.trainGym.system, alpha, session.stats.gameplayElapsed);
-        session.propSystem?.interpolate(alpha, engine.camera.position);
-        session.doorSystem?.interpolate(alpha);
+        blockout?.presentation.interpolate(blockout.system, alpha, session.run.stats.gameplayElapsed);
+        trains?.presentation.interpolate(trains.system, alpha, session.run.stats.gameplayElapsed);
+        trains?.beacons.update(trains.system, session.run.stats.gameplayElapsed);
+        session.level.propSystem?.interpolate(alpha, engine.camera.position);
+        session.level.doorSystem?.interpolate(alpha);
         // Objets interactifs : élagués par distance comme les props, pour la
         // même raison (voir `render/environment/useObjectCulling.ts`).
         engine.useObjectCulling.update(session.gltfLevelSession?.current?.useObjects ?? [], engine.camera.position);

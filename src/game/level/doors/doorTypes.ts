@@ -12,7 +12,7 @@ export type DoorSens = "auto" | "+" | "-";
 export type DoorAuto = "non" | "tous" | "ennemis";
 
 /** Ce que la touche E peut faire à une porte, à moins de `PORTEE_ACTION_MANUELLE`. */
-export type DoorManuelle = "non" | "les-deux" | "fermer";
+export type DoorManualMode = "non" | "les-deux" | "fermer";
 
 export interface ParsedDoorConfig {
   charniere: DoorHinge;
@@ -20,7 +20,7 @@ export interface ParsedDoorConfig {
   sens: DoorSens;
   /** `auto: true` -> "tous", `auto: "ennemis"` -> "ennemis", absent -> "non". */
   autoQui: DoorAuto;
-  manuelle: DoorManuelle;
+  manuelle: DoorManualMode;
   /** `null` = calculée depuis la géométrie (voir `DoorSystem` — longueur du vantail pour `coulisse`, hauteur pour `monte`/`descend`). */
   course: number | null;
   duree: number;
@@ -116,7 +116,7 @@ export interface DoorGroup {
   auto: boolean;
   autoQui: DoorAuto;
   /** La plus permissive des valeurs de ses membres — un groupe se manœuvre d'un bloc. */
-  manuelle: DoorManuelle;
+  manuelle: DoorManualMode;
   portee: number;
   delai: number;
   /** `false` si UN SEUL membre porte `referme:false` — un groupe "reste ouvert" ne se referme sur AUCUN de ses vantaux. */

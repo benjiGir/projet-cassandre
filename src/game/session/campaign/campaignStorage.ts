@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { persisted } from "../../../core/storage/persisted";
 import { PERKS } from "../../player/perks";
 import { DIFFICULTIES } from "../progression/difficulty";
 import { perkConfig } from "../../player/perkConfig";
@@ -33,6 +34,17 @@ const ArrivalSchema = Schema.Struct({
   ),
 );
 const SaveSchema = Schema.Struct({ version: Schema.Literal(1), arrival: ArrivalSchema });
+type Save = typeof SaveSchema.Type;
+
+const stored = persisted<Save | null>(STORAGE_KEY, Schema.decodeUnknownSync(SaveSchema), () => null, {
+  onError: (phase, error) =>
+    console.warn(
+      phase === "load"
+        ? "[campagne] Sauvegarde indisponible ou illisible"
+        : "[campagne] Reprise disponible dans cet onglet seulement",
+      error,
+    ),
+});
 
 let current: CampaignArrival | null = null;
 let pending: CampaignArrival | null = null;
@@ -42,12 +54,8 @@ let persistenceFailed = false;
 export function campaignArrival(): CampaignArrival | null {
   if (loaded) return current;
   loaded = true;
-  try {
-    const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
-    if (raw) current = freezeArrival(Schema.decodeUnknownSync(SaveSchema)(JSON.parse(raw)).arrival);
-  } catch (error) {
-    console.warn("[campagne] Sauvegarde indisponible ou illisible", error);
-  }
+  const save = stored.load();
+  if (save) current = freezeArrival(save.arrival);
   return current;
 }
 
@@ -61,12 +69,8 @@ export function flushCampaignSave(): void {
   if (!pending) return;
   const arrival = pending;
   pending = null;
-  try {
-    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, arrival }));
-    persistenceFailed = false;
-  } catch (error) {
-    persistenceFailed = true;
-    console.warn("[campagne] Reprise disponible dans cet onglet seulement", error);
+  persistenceFailed = !stored.save({ version: 1, arrival });
+  if (persistenceFailed) {
     useGameStore.getState().showHudMessage("Sauvegarde indisponible : la reprise sera perdue en fermant cet onglet.");
   }
 }

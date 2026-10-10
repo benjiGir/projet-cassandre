@@ -4,7 +4,7 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { DoorInfo } from "../doors/doorTypes";
 import type { PropInfo } from "../props/props";
 import type { VitreInfo } from "../interactions/vitres";
-import type { SanitaireInfo, SanitaireRendu } from "../sanitaires/sanitaires";
+import type { SanitaireInfo, SanitaireVisual } from "../sanitaires/sanitaires";
 import type { EcranInfo } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import type { FoodItem } from "../interactions/food";
@@ -98,7 +98,7 @@ export interface LevelStats {
   secretCount: number;
   /** Meshes rendus tels quels, sans préfixe reconnu — le cas SILENCIEUX. Compté AVANT la fusion du décor. */
   unprefixedMeshCount: number;
-  /** Objets de décor réellement rendus après `mergeStaticDecor` : ordre de grandeur des draw calls du décor. */
+  /** Décor STATIQUE rendu après `mergeStaticDecor` (lots fusionnés + meshes restés seuls) : ordre de grandeur de ses draw calls. Un mesh mobile — enfant d'une porte, d'un prop, d'un `use_*` — n'y est pas compté. */
   decorBatchCount: number;
   /** `light_*` instanciées en `THREE.PointLight` — voir `buildLevelLight`. */
   lightCount: number;
@@ -144,7 +144,7 @@ export interface LevelHandle {
   // see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire
   sanitaires: SanitaireInfo[];
   /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
-  sanitaireRendus: SanitaireRendu[];
+  sanitaireRendus: SanitaireVisual[];
   /** Écrans `ecran_*` (chantier « Les coulisses ») — l'état de partie (PV,
    * frame courante, casse) vit dans `EcranSystem` (`game/level/interactions/ecrans.ts`),
    * reconstruit à chaque chargement comme `VitreSystem`. */

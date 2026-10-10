@@ -1,9 +1,9 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import * as THREE from "three";
 import { WATER_GEOMETRY, WATER_MATERIAL } from "./waterResources";
+import { GRAVITY_Y } from "../../physics/constants";
 
 // Même gravité visuelle, sans dépendance à Rapier.
-const TOY_GRAVITY = -25;
 
 const PARTICLE_LIFETIME = 0.4; // s
 const PARTICLES_PER_HIT_MELEE = 4;
@@ -244,7 +244,7 @@ export class ToyDebris {
         continue;
       }
 
-      p.velocity.y += TOY_GRAVITY * p.gravityScale * realDt;
+      p.velocity.y += GRAVITY_Y * p.gravityScale * realDt;
       p.mesh.position.addScaledVector(p.velocity, realDt);
 
       if (p.bounce && p.mesh.position.y <= SHELL_GROUND_Y && p.velocity.y < 0) {

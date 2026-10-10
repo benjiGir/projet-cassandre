@@ -1,5 +1,5 @@
 /**
- * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — test d'intégration hors navigateur
+ * Test d'intégration hors navigateur
  * pour le mécanisme de RESET lui-même (`main.ts::bootGameSession`/
  * `teardownGameSession`).
  *

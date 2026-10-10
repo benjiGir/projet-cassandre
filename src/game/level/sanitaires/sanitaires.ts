@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import type RAPIER from "@dimforge/rapier3d-compat";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
+import { mergeBreakableDecor, rangeCenter } from "../loading/mergeBreakableDecor";
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 
@@ -52,58 +52,18 @@ export interface SanitaireMergeResult {
   sanitaires: SanitaireInfo[];
   /** Lots de dessin ajoutés (un par matériau fusionné à 2 sanitaires ou plus). */
   batchCount: number;
-  rendus: SanitaireRendu[];
+  rendus: SanitaireVisual[];
 }
 
-export interface SanitaireRendu {
+export interface SanitaireVisual {
   object: THREE.Object3D;
   position: THREE.Vector3;
 }
 
-function renduDe(mesh: THREE.Mesh): SanitaireRendu {
+function visualOf(mesh: THREE.Mesh): SanitaireVisual {
   mesh.geometry.computeBoundingSphere();
   const position = mesh.geometry.boundingSphere!.center.clone().applyMatrix4(mesh.matrixWorld);
   return { object: mesh, position };
-}
-
-function materialKey(mat: THREE.MeshLambertMaterial): string {
-  return [mat.map?.uuid ?? "-", mat.color.getHexString(), mat.transparent, mat.opacity, mat.alphaTest].join("|");
-}
-
-/** Centre d'une plage de sommets `[start, start+count)` d'un attribut position — espace de l'attribut lui-même, quel qu'il soit. */
-function rangeCenter(position: THREE.BufferAttribute, start: number, count: number): THREE.Vector3 {
-  const min = new THREE.Vector3(Infinity, Infinity, Infinity);
-  const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
-  for (let i = start; i < start + count; i++) {
-    const x = position.getX(i);
-    const y = position.getY(i);
-    const z = position.getZ(i);
-    if (x < min.x) min.x = x;
-    if (y < min.y) min.y = y;
-    if (z < min.z) min.z = z;
-    if (x > max.x) max.x = x;
-    if (y > max.y) max.y = y;
-    if (z > max.z) max.z = z;
-  }
-  return min.add(max).multiplyScalar(0.5);
-}
-
-/** Un candidat non fusionné (seul de son matériau) devient sa propre "plage" : toute sa géométrie, espace inchangé. */
-function passthroughSanitaireInfo(candidate: SanitaireCandidate): SanitaireInfo {
-  const position = candidate.mesh.geometry.getAttribute("position") as THREE.BufferAttribute;
-  return {
-    name: candidate.name,
-    collider: candidate.collider,
-    body: candidate.body,
-    kind: candidate.kind,
-    maxHp: candidate.maxHp,
-    jetOrigin: candidate.jetOrigin,
-    extras: candidate.extras,
-    batchGeometry: candidate.mesh.geometry,
-    vertexStart: 0,
-    vertexCount: position.count,
-    localCenter: rangeCenter(position, 0, position.count),
-  };
 }
 
 export function mergeSanitaireDecor(
@@ -111,84 +71,21 @@ export function mergeSanitaireDecor(
   candidates: readonly SanitaireCandidate[],
   resources?: LevelResources,
 ): SanitaireMergeResult {
-  const groups = new Map<string, SanitaireCandidate[]>();
-  for (const candidate of candidates) {
-    const key = materialKey(candidate.mesh.material);
-    const list = groups.get(key);
-    if (list) list.push(candidate);
-    else groups.set(key, [candidate]);
-  }
-
-  const rootInverse = root.matrixWorld.clone().invert();
-  const toRootSpace = new THREE.Matrix4();
-  const sanitaires: SanitaireInfo[] = [];
-  const rendus: SanitaireRendu[] = [];
-  let batchCount = 0;
-
-  for (const group of groups.values()) {
-    if (group.length < 2) {
-      sanitaires.push(passthroughSanitaireInfo(group[0]));
-      rendus.push(renduDe(group[0].mesh));
-      continue;
-    }
-
-    const geometries = group.map((candidate) => {
-      toRootSpace.multiplyMatrices(rootInverse, candidate.mesh.matrixWorld);
-      const geometry = candidate.mesh.geometry.clone();
-      resources?.geometry(geometry);
-      return geometry.applyMatrix4(toRootSpace);
-    });
-    const merged = mergeGeometries(geometries, false);
-    if (merged) resources?.geometry(merged);
-    if (!merged) {
-      // Repli défensif, ne devrait jamais arriver pour un mesh à un seul
-      // matériau : chaque sanitaire garde sa PROPRE géométrie plutôt que de
-      // disparaître du niveau — même garde que `mergeVitreDecor`.
-      for (const g of geometries) g.dispose();
-      for (const candidate of group) {
-        sanitaires.push(passthroughSanitaireInfo(candidate));
-        rendus.push(renduDe(candidate.mesh));
-      }
-      continue;
-    }
-
-    const batch = new THREE.Mesh(merged, group[0].mesh.material);
-    batch.name = `sanitaire_fusion_${batchCount}`;
-    root.add(batch);
-    batch.updateMatrixWorld(true);
-    batchCount++;
-    rendus.push(renduDe(batch));
-
-    const mergedPosition = merged.getAttribute("position") as THREE.BufferAttribute;
-    let cursor = 0;
-    for (let i = 0; i < group.length; i++) {
-      const candidate = group[i];
-      const count = (geometries[i].getAttribute("position") as THREE.BufferAttribute).count;
-      sanitaires.push({
-        name: candidate.name,
-        collider: candidate.collider,
-        body: candidate.body,
-        kind: candidate.kind,
-        maxHp: candidate.maxHp,
-        jetOrigin: candidate.jetOrigin,
-        extras: candidate.extras,
-        batchGeometry: merged,
-        vertexStart: cursor,
-        vertexCount: count,
-        localCenter: rangeCenter(mergedPosition, cursor, count),
-      });
-      cursor += count;
-    }
-
-    for (const g of geometries) g.dispose();
-    for (const candidate of group) {
-      candidate.mesh.removeFromParent();
-      candidate.mesh.geometry.dispose();
-      if (candidate.mesh.material !== batch.material) candidate.mesh.material.dispose();
-    }
-  }
-
-  return { sanitaires, batchCount, rendus };
+  const merge = mergeBreakableDecor(root, candidates, "sanitaire_fusion", resources);
+  const sanitaires = merge.ranges.map(({ candidate, batchGeometry, vertexStart, vertexCount }) => ({
+    name: candidate.name,
+    collider: candidate.collider,
+    body: candidate.body,
+    kind: candidate.kind,
+    maxHp: candidate.maxHp,
+    jetOrigin: candidate.jetOrigin,
+    extras: candidate.extras,
+    batchGeometry,
+    vertexStart,
+    vertexCount,
+    localCenter: rangeCenter(batchGeometry.getAttribute("position") as THREE.BufferAttribute, vertexStart, vertexCount),
+  }));
+  return { sanitaires, batchCount: merge.batchCount, rendus: merge.rendered.map(visualOf) };
 }
 
 /** Un sanitaire touché par un tir du joueur (cassé ou non ce coup-ci). */

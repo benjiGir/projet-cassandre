@@ -25,7 +25,7 @@ import { SanitaireSystem } from "../level/sanitaires/sanitaires";
 import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
 import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
-import { warmShaderDouches } from "../level/sanitaires/doucheShader";
+import { warmShowerShader } from "../level/sanitaires/doucheShader";
 import { suspendPreviousFountainWater, warmFountainWater } from "../../render/environment/fountain/warmFountainWater";
 import { RenderService } from "../../render/pipeline/renderService";
 import type { Suit } from "../entities/suit/suit";
@@ -39,6 +39,8 @@ import { LEVEL_EVENTS } from "./progression/levelEvents";
 import { readLevelScript } from "./progression/levelScriptSetup";
 import { reportLoading, letBrowserPaint } from "../../core/loading/loadingProgress";
 import { PathfindingService } from "../level/navigation/pathfinding";
+import type { NavGraph } from "../level/navigation/pathfindingTypes";
+import type { PhysicsWorld } from "../../physics/world";
 import { navGraphStats } from "../level/navigation/navGraph";
 import { TrainLevelError } from "../level/trains/trainLevelData";
 import { auditTrainSafety } from "../level/trains/trainSafety";
@@ -206,7 +208,7 @@ export function loadGltfLevel(
         }
         let navGraph;
         try {
-          navGraph = runGameplaySync(PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)));
+          navGraph = bakeNavGraph(session.physics, navGraphBounds);
           if (handle.trains)
             excludeTrainRails(navGraph, handle.trains.data.navigationZones, handle.trains.data.crossings);
         } finally {
@@ -214,7 +216,7 @@ export function loadGltfLevel(
         }
 
         // Les portes déjà déverrouillées restent ouvertes après hot reload.
-        for (const unlockedName of session.unlockedDoors) {
+        for (const unlockedName of session.run.unlockedDoors) {
           doorSystem.open(unlockedName, session.player.position, { silent: true });
         }
 
@@ -240,7 +242,7 @@ export function loadGltfLevel(
                 engine.cardPickupTextures,
               ),
             );
-            if (session.cards.has(useObject.grantsCard)) useObject.object.visible = false;
+            if (session.run.cards.has(useObject.grantsCard)) useObject.object.visible = false;
             continue;
           }
           if (useObject.heals !== null) {
@@ -315,7 +317,7 @@ export function loadGltfLevel(
         try {
           previousRoot?.removeFromParent();
           engine.fx.releaseShaderPrograms();
-          await warmShaderDouches(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
+          await warmShowerShader(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
           if (handle.fountainWater)
             await warmFountainWater(handle.fountainWater, engine.renderer, engine.scene, engine.camera, previousRoot);
           if (handle.trains)
@@ -338,20 +340,23 @@ export function loadGltfLevel(
           // que la préparation n'est pas intégralement terminée, l'ancien
           // niveau et ses systèmes constituent encore un ensemble cohérent.
           engine.fx.clearWaterJets();
-          session.currentNavGraph = navGraph;
-          session.levelSpaces = levelSpaces;
-          session.placeLines = script.placeLines;
-          session.scriptTriggers = script.triggers;
-          session.doorSystem = doorSystem;
+          session.level = {
+            navGraph,
+            spaces: levelSpaces,
+            placeLines: script.placeLines,
+            scriptTriggers: script.triggers,
+            lightPool,
+            propSystem,
+            doorSystem,
+            vitreSystem,
+            sanitaireSystem,
+            ecranSystem,
+            cameraView,
+            weaponPickupBillboards,
+            cardPickupBillboards,
+            secretsTotal: handle.stats.secretCount,
+          };
           handle.metroBlockout?.bind(doorSystem, previousBlockout);
-          session.vitreSystem = vitreSystem;
-          session.sanitaireSystem = sanitaireSystem;
-          session.ecranSystem = ecranSystem;
-          session.cameraView = cameraView;
-          session.lightPool = lightPool;
-          session.propSystem = propSystem;
-          session.weaponPickupBillboards = weaponPickupBillboards;
-          session.cardPickupBillboards = cardPickupBillboards;
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
@@ -378,8 +383,7 @@ export function loadGltfLevel(
             }
           }
 
-          session.secretsTotal = handle.stats.secretCount;
-          useGameStore.getState().setSecretsTotal(session.secretsTotal);
+          useGameStore.getState().setSecretsTotal(session.level.secretsTotal);
         };
       },
     });
@@ -392,10 +396,15 @@ export function loadGltfLevel(
 }
 
 export function debugFindPath(session: GameSession, from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] | null {
-  const graph = session.currentNavGraph;
+  const graph = session.level.navGraph;
   if (!graph) return null;
   const result = runGameplaySync(
     PathfindingService.use((pf) => pf.findPath(graph, from, to)).pipe(Effect.catch(() => Effect.succeed(null))),
   );
   return result ? Array.from(result) : null;
+}
+
+/** Cuit le graphe de navigation des ennemis sur une zone du monde physique. */
+export function bakeNavGraph(physics: PhysicsWorld, bounds: THREE.Box3): NavGraph {
+  return runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics, bounds)));
 }

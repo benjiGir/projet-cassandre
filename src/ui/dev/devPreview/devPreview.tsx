@@ -7,6 +7,7 @@ import type { HeroPortraitReaction } from "../../../game/hud/hudTypes";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { PerkOffer } from "../../hud/overlays/PerkOffer/PerkOffer";
+import { CrashScreen } from "../../screens/crash/CrashScreen/CrashScreen";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
 import { DifficultyScreen } from "../../screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { LevelCompleteScreen } from "../../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
@@ -33,6 +34,7 @@ const PREVIEW_SCREENS = [
   "storyOutro",
   "loading",
   "loadFailed",
+  "crash",
   "hud",
   "debug",
   "tuning",
@@ -167,6 +169,11 @@ export function maybeRenderDevPreview(root: Root): boolean {
       beginLoading("Chargement du niveau", 0.47);
       void waitForLoadingRetry(new Error("Le fichier du niveau est absent ou invalide."));
       root.render(<LoadingScreen />);
+      break;
+    case "crash":
+      root.render(
+        <CrashScreen detail="TypeError : Cannot read properties of undefined (reading 'position')" onReload={noop} />,
+      );
       break;
     case "hud":
       seedHudState();

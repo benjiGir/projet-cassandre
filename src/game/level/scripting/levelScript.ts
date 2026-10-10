@@ -82,9 +82,10 @@ export function startLevelScenario(
   source = `event:${event}`,
 ): void {
   if (state.fired.has(source)) return;
+  // Consommée même si son scénario est inconnu : une source ne se réévalue jamais.
+  state.fired.add(source);
   const steps = scenarios[event];
   if (!steps) return;
-  state.fired.add(source);
   state.running.push({ steps, next: 0, elapsed: 0, waited: 0, gateOpen: false });
 }
 

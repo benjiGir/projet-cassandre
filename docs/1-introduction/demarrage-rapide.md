@@ -57,20 +57,21 @@ bouton « NOUVELLE PARTIE » ouvre le choix de difficulté, puis lance `niveau_v
 (« Niveau v2 — habillé »), désigné comme LE niveau du jeu dans le registre
 `src/game/level/catalog/levels.ts`. Le bouton « PARAMÈTRES DU SIGNAL » ouvre
 `OptionsScreen`.
-Avec `?level=`, le menu est sauté.
 
 En développement uniquement, le menu principal propose aussi un accès au
 **choix de zone** (`src/ui/dev/LevelMenu/LevelMenu.tsx`, outil d'auteur qui
-disparaît du build de production) : il liste tous les niveaux enregistrés,
-dont la gym de test, les cinq zones A à E prises séparément, la salle
-d'essai et le blockout gris du niveau v2, `hypermarche_complet` (les cinq
-zones recollées en un seul fichier, gardé pour du test ciblé), et les essais
-du métro et du quartier (blockouts, pilotes, trains), réservés au
-développement.
+disparaît du build de production) : il liste tous les niveaux enregistrés —
+les deux niveaux de la campagne (`niveau_v2`, `metro`), la gym de test et les
+essais construits à la main (trains, voyage en rame), réservés au
+développement. Les zones du premier prototype, les blockouts et les pilotes
+ont été retirés du dépôt le 2026-10-10, `.glb` et sources `.blend` compris ;
+ils restent lisibles dans l'historique git.
 
-Le paramètre d'URL `?level=<id>` saute ce menu et charge directement
-l'entrée correspondante du registre ; un identifiant non enregistré retombe
-sur un chargement glTF brut du même nom, sans passer par le registre.
+Toujours en développement uniquement, le paramètre d'URL `?level=<id>` saute
+le menu et l'intro, et charge directement l'entrée correspondante du registre ;
+un identifiant non enregistré retombe sur un chargement glTF brut du même nom.
+Le build de production ignore ce paramètre depuis le 2026-10-10 : on n'y joue
+que ce que le menu propose.
 
 ## Contrôles par défaut
 

@@ -11,7 +11,9 @@ import { installAudioActivation } from "./core/audio/audioPreparation";
 import { input } from "./core/input/input";
 import { initWaterAmbience } from "./core/audio/waterAmbience";
 import { initShowerAmbience } from "./core/audio/showerAmbience";
-import { startLoop } from "./core/loop/loop";
+import { startLoop, type LoopHandle } from "./core/loop/loop";
+import { installFatalErrorHandling, reportFatalError } from "./app/runtime/fatalError";
+import { showCrashScreen } from "./app/navigation/showCrashScreen";
 import { runGameplaySync } from "./app/runtime/gameRuntime";
 import { initPhysics } from "./physics/world";
 import { loadEnemySpriteSheetOrPlaceholder } from "./render/sprites/enemySprites";
@@ -23,7 +25,7 @@ import { App } from "./ui/App/App";
 import { initAudioSettingsAtBoot } from "./game/settings/audioSettings";
 import { initGraphicsSettingsAtBoot, registerRenderTarget } from "./game/settings/graphicsSettings";
 import { useGameStore } from "./game/hud/state";
-import { resolveBootChoice } from "./app/navigation/bootChoice";
+import { devLevelShortcut, resolveBootChoice } from "./app/navigation/bootChoice";
 import {
   bootGameSessionWithRetry,
   createSessionFlow,
@@ -48,7 +50,13 @@ import { beginLoading, letBrowserPaint, reportLoading } from "./core/loading/loa
 async function main() {
   const canvas = document.getElementById("game") as HTMLCanvasElement;
   const uiRoot = document.getElementById("ui-root") as HTMLDivElement;
-  const root = createRoot(uiRoot);
+  // Une erreur de rendu que rien ne rattrape démonte l'interface : elle arrête le jeu comme les autres.
+  const root = createRoot(uiRoot, { onUncaughtError: reportFatalError });
+  let loop: LoopHandle | null = null;
+  installFatalErrorHandling(window, (error) => {
+    loop?.stop();
+    showCrashScreen(root, error);
+  });
 
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
@@ -92,8 +100,7 @@ async function main() {
     useGameStore.getState().setFlowState(snapshot.value);
   });
 
-  // `?level=` est le raccourci des outils et des mesures : il entre en jeu sans intro.
-  const fromMenu = !new URLSearchParams(window.location.search).get("level");
+  const fromMenu = devLevelShortcut() === null;
   if (fromMenu) flowActor.send({ type: "ENTER_MENU" });
   const { choice, entry } = await resolveBootChoice(root);
   flowActor.send({ type: "BEGIN_LOAD" });
@@ -147,7 +154,7 @@ async function main() {
   const cameraViewPrevPos = new THREE.Vector3();
   const cameraViewPrevQuat = new THREE.Quaternion();
 
-  startLoop({
+  loop = startLoop({
     updateDisplayInput: () => updateDisplayInput(engine),
     snapshotPrevious: () => snapshotPrevious(engine),
     updateGameplay: (dt) => updateGameplay(engine, dt),
@@ -159,7 +166,7 @@ async function main() {
       engine.cameraViewOverlay.update(realDt);
     },
     render() {
-      const cam = engine.session.cameraView?.currentCam ?? null;
+      const cam = engine.session.level.cameraView?.currentCam ?? null;
       if (cam) {
         cameraViewPrevPos.copy(engine.camera.position);
         cameraViewPrevQuat.copy(engine.camera.quaternion);
@@ -184,4 +191,4 @@ async function main() {
   if (import.meta.env.DEV) exposeDebugApi(engine);
 }
 
-main();
+main().catch(reportFatalError);

@@ -1,68 +1,68 @@
 import * as THREE from "three";
 
-import { installShaderDouches, updateShaderDouches } from "./doucheShader";
-interface PosteDouche {
+import { installShowerShader, updateShowerShader } from "./doucheShader";
+interface ShowerStation {
   meshes: THREE.Mesh[];
-  origine: THREE.Vector3;
+  origin: THREE.Vector3;
 }
 
-const postesParRacine = new WeakMap<THREE.Object3D, Map<string, PosteDouche>>();
-const NOM_FILET = /^fx_douche_([12])_stream_.+$/;
+const stationsByRoot = new WeakMap<THREE.Object3D, Map<string, ShowerStation>>();
+const STREAM_NAME = /^fx_douche_([12])_stream_.+$/;
 
 /** Prépare les jets éteints avant le premier affichage du niveau chargé. */
-export function initialiserDouches(root: THREE.Object3D): void {
-  if (postesParRacine.has(root)) return;
+export function initShowers(root: THREE.Object3D): void {
+  if (stationsByRoot.has(root)) return;
 
-  const postes = new Map<string, PosteDouche>();
-  root.traverse((objet) => {
-    if (!(objet instanceof THREE.Mesh)) return;
-    const nomGlb = typeof objet.userData.name === "string" ? objet.userData.name : "";
-    const match = NOM_FILET.exec(objet.name) ?? NOM_FILET.exec(nomGlb);
+  const stations = new Map<string, ShowerStation>();
+  root.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    const glbName = typeof object.userData.name === "string" ? object.userData.name : "";
+    const match = STREAM_NAME.exec(object.name) ?? STREAM_NAME.exec(glbName);
     if (!match) return;
 
-    let poste = postes.get(match[1]);
-    if (!poste) {
-      poste = { meshes: [], origine: new THREE.Vector3() };
-      postes.set(match[1], poste);
+    let station = stations.get(match[1]);
+    if (!station) {
+      station = { meshes: [], origin: new THREE.Vector3() };
+      stations.set(match[1], station);
     }
-    poste.meshes.push(objet);
+    station.meshes.push(object);
   });
 
-  installShaderDouches(root);
-  for (const poste of postes.values()) {
-    poste.meshes[0].getWorldPosition(poste.origine);
+  installShowerShader(root);
+  for (const station of stations.values()) {
+    station.meshes[0].getWorldPosition(station.origin);
   }
-  postesParRacine.set(root, postes);
+  stationsByRoot.set(root, stations);
 }
 
 /** Anime le shader au pas fixe ; le rejeu garde ainsi le même écoulement. */
-export function updateDouches(root: THREE.Object3D | null, dt: number): void {
+export function updateShowers(root: THREE.Object3D | null, dt: number): void {
   if (!root) return;
-  initialiserDouches(root);
-  updateShaderDouches(root, dt);
+  initShowers(root);
+  updateShowerShader(root, dt);
 }
 
 /** Écrit les origines des jets actifs dans le tableau réutilisé par l'audio. */
 export function collectActiveShowerOrigins(root: THREE.Object3D | null, out: THREE.Vector3[]): void {
   out.length = 0;
   if (!root) return;
-  initialiserDouches(root);
+  initShowers(root);
 
-  for (const poste of postesParRacine.get(root)!.values()) {
-    if (poste.meshes[0]?.visible) out.push(poste.origine);
+  for (const station of stationsByRoot.get(root)!.values()) {
+    if (station.meshes[0]?.visible) out.push(station.origin);
   }
 }
 
 /** Bascule l'eau du poste associé ; `null` signale une scène sans ce poste. */
-export function basculerEau(root: THREE.Object3D, nomCommande: string): boolean | null {
-  const match = /^use_douche_([12])$/.exec(nomCommande);
+export function toggleShowerWater(root: THREE.Object3D, commandName: string): boolean | null {
+  const match = /^use_douche_([12])$/.exec(commandName);
   if (!match) return null;
 
-  initialiserDouches(root);
-  const poste = postesParRacine.get(root)?.get(match[1]);
-  if (!poste) return null;
+  initShowers(root);
+  const station = stationsByRoot.get(root)?.get(match[1]);
+  if (!station) return null;
 
-  const active = !poste.meshes[0].visible;
-  for (const mesh of poste.meshes) mesh.visible = active;
+  const active = !station.meshes[0].visible;
+  for (const mesh of station.meshes) mesh.visible = active;
   return active;
 }

@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import type RAPIER from "@dimforge/rapier3d-compat";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import type { LevelResources } from "../loading/levelResources";
+import { mergeBreakableDecor, rangeCenter } from "../loading/mergeBreakableDecor";
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 import type { PropMaterial } from "../props/props";
@@ -44,44 +44,12 @@ export interface VitreMergeResult {
   batchCount: number;
 }
 
-function materialKey(mat: THREE.MeshLambertMaterial): string {
-  return [mat.map?.uuid ?? "-", mat.color.getHexString(), mat.transparent, mat.opacity, mat.alphaTest].join("|");
-}
-
-/** Centre d'une plage de sommets `[start, start+count)` d'un attribut position — espace de l'attribut lui-même, quel qu'il soit. */
-function rangeCenter(position: THREE.BufferAttribute, start: number, count: number): THREE.Vector3 {
-  const min = new THREE.Vector3(Infinity, Infinity, Infinity);
-  const max = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
-  for (let i = start; i < start + count; i++) {
-    const x = position.getX(i);
-    const y = position.getY(i);
-    const z = position.getZ(i);
-    if (x < min.x) min.x = x;
-    if (y < min.y) min.y = y;
-    if (z < min.z) min.z = z;
-    if (x > max.x) max.x = x;
-    if (y > max.y) max.y = y;
-    if (z > max.z) max.z = z;
+/** Un vitrage enfant d'un vantail garde sa hiérarchie glTF : le détacher pour le lot global le laisserait immobile pendant l'ouverture. */
+function followsDoor(candidate: VitreCandidate): boolean {
+  for (let parent = candidate.mesh.parent; parent; parent = parent.parent) {
+    if (parent.name.startsWith("door_")) return true;
   }
-  return min.add(max).multiplyScalar(0.5);
-}
-
-/** Un candidat non fusionné (seul de son matériau, ou repli si `mergeGeometries` échoue) devient sa propre "plage" : toute sa géométrie, espace inchangé. */
-function passthroughVitreInfo(candidate: VitreCandidate): VitreInfo {
-  const position = candidate.mesh.geometry.getAttribute("position") as THREE.BufferAttribute;
-  return {
-    name: candidate.name,
-    collider: candidate.collider,
-    body: candidate.body,
-    maxHp: candidate.maxHp,
-    matiere: candidate.matiere ?? "verre",
-    givre: candidate.givre,
-    extras: candidate.extras,
-    batchGeometry: candidate.mesh.geometry,
-    vertexStart: 0,
-    vertexCount: position.count,
-    localCenter: rangeCenter(position, 0, position.count),
-  };
+  return false;
 }
 
 export function mergeVitreDecor(
@@ -89,94 +57,21 @@ export function mergeVitreDecor(
   candidates: readonly VitreCandidate[],
   resources?: LevelResources,
 ): VitreMergeResult {
-  const groups = new Map<string, VitreCandidate[]>();
-  const vitres: VitreInfo[] = [];
-  for (const candidate of candidates) {
-    // Un vitrage enfant d'un vantail doit garder sa hiérarchie glTF : le
-    // détacher pour le lot global le laisserait immobile pendant l'ouverture.
-    let parent = candidate.mesh.parent;
-    let suitPorte = false;
-    while (parent) {
-      if (parent.name.startsWith("door_")) {
-        suitPorte = true;
-        break;
-      }
-      parent = parent.parent;
-    }
-    if (suitPorte) {
-      vitres.push(passthroughVitreInfo(candidate));
-      continue;
-    }
-
-    const key = materialKey(candidate.mesh.material);
-    const list = groups.get(key);
-    if (list) list.push(candidate);
-    else groups.set(key, [candidate]);
-  }
-
-  const rootInverse = root.matrixWorld.clone().invert();
-  const toRootSpace = new THREE.Matrix4();
-  let batchCount = 0;
-
-  for (const group of groups.values()) {
-    if (group.length < 2) {
-      vitres.push(passthroughVitreInfo(group[0]));
-      continue;
-    }
-
-    const geometries = group.map((candidate) => {
-      toRootSpace.multiplyMatrices(rootInverse, candidate.mesh.matrixWorld);
-      const geometry = candidate.mesh.geometry.clone();
-      resources?.geometry(geometry);
-      return geometry.applyMatrix4(toRootSpace);
-    });
-    const merged = mergeGeometries(geometries, false);
-    if (merged) resources?.geometry(merged);
-    if (!merged) {
-      // Repli défensif (attributs incompatibles entre deux vitrages, ne
-      // devrait jamais arriver pour un mesh plat à un seul matériau) : chaque
-      // vitre garde sa PROPRE géométrie plutôt que de disparaître du niveau.
-      for (const g of geometries) g.dispose();
-      for (const candidate of group) vitres.push(passthroughVitreInfo(candidate));
-      continue;
-    }
-
-    const batch = new THREE.Mesh(merged, group[0].mesh.material);
-    batch.name = `vitre_fusion_${batchCount}`;
-    root.add(batch);
-    batch.updateMatrixWorld(true);
-    batchCount++;
-
-    const mergedPosition = merged.getAttribute("position") as THREE.BufferAttribute;
-    let cursor = 0;
-    for (let i = 0; i < group.length; i++) {
-      const candidate = group[i];
-      const count = (geometries[i].getAttribute("position") as THREE.BufferAttribute).count;
-      vitres.push({
-        name: candidate.name,
-        collider: candidate.collider,
-        body: candidate.body,
-        maxHp: candidate.maxHp,
-        matiere: candidate.matiere ?? "verre",
-        givre: candidate.givre,
-        extras: candidate.extras,
-        batchGeometry: merged,
-        vertexStart: cursor,
-        vertexCount: count,
-        localCenter: rangeCenter(mergedPosition, cursor, count),
-      });
-      cursor += count;
-    }
-
-    for (const g of geometries) g.dispose();
-    for (const candidate of group) {
-      candidate.mesh.removeFromParent();
-      candidate.mesh.geometry.dispose();
-      if (candidate.mesh.material !== batch.material) candidate.mesh.material.dispose();
-    }
-  }
-
-  return { vitres, batchCount };
+  const merge = mergeBreakableDecor(root, candidates, "vitre_fusion", resources, followsDoor);
+  const vitres = merge.ranges.map(({ candidate, batchGeometry, vertexStart, vertexCount }) => ({
+    name: candidate.name,
+    collider: candidate.collider,
+    body: candidate.body,
+    maxHp: candidate.maxHp,
+    matiere: candidate.matiere ?? "verre",
+    givre: candidate.givre,
+    extras: candidate.extras,
+    batchGeometry,
+    vertexStart,
+    vertexCount,
+    localCenter: rangeCenter(batchGeometry.getAttribute("position") as THREE.BufferAttribute, vertexStart, vertexCount),
+  }));
+  return { vitres, batchCount: merge.batchCount };
 }
 
 /** Une vitre touchée par un tir du joueur (cassée ou non ce coup-ci). */

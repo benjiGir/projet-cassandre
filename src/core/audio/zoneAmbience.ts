@@ -4,6 +4,7 @@ import { decodeZoneAmbienceManifest, type AmbienceBoxData, type AmbienceZoneData
 import { assetUrl } from "../loading/assetPath";
 import { waitForAudioLoad } from "./audioPreparation";
 import type { Vec3Like } from "./waterAmbienceMix";
+import { fetchJson } from "../net/fetchJson";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 
@@ -50,17 +51,15 @@ let currentProfile = "ambiances";
 function prepareProfile(profile: string): Promise<PreparedProfile | null> {
   const path = assetUrl(`assets/audio/${profile}`);
   const src = (name: string) => [`${path}/${name}.ogg`, `${path}/${name}.m4a`];
-  return fetch(`${path}/ambiances.json`, { signal: AbortSignal.timeout(15000) })
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-    .then(decodeZoneAmbienceManifest)
-    .then(async (manifeste) => {
+  return fetchJson(`${path}/ambiances.json`, decodeZoneAmbienceManifest)
+    .then(async (manifest) => {
       const profileBeds = new Map<string, Bed>();
       const profileEvents = new Map<string, Howl>();
-      const profileBoxes = Object.entries(manifeste.zones)
+      const profileBoxes = Object.entries(manifest.zones)
         .flatMap(([zone, def]) => def.espaces.map((box) => ({ zone, box })))
         .sort((a, b) => area(a.box) - area(b.box));
       const loads: Promise<boolean>[] = [];
-      for (const [zone, def] of Object.entries(manifeste.zones)) {
+      for (const [zone, def] of Object.entries(manifest.zones)) {
         const bed: Bed = {
           howl: new Howl({
             src: src(def.nappe),
@@ -92,9 +91,9 @@ function prepareProfile(profile: string): Promise<PreparedProfile | null> {
       return {
         beds: profileBeds,
         events: profileEvents,
-        zones: manifeste.zones,
+        zones: manifest.zones,
         boxes: profileBoxes,
-        defaultZone: manifeste.defaut,
+        defaultZone: manifest.defaut,
       };
     })
     .catch((e) => {

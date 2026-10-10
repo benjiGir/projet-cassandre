@@ -1,5 +1,6 @@
 import * as THREE from "three";
-import { TRAIN_CAR_LENGTH, TRAIN_HEIGHT, TRAIN_WIDTH } from "./trainConfig";
+import { TRAIN_CAR_BODY_LENGTH, TRAIN_CAR_LENGTH, TRAIN_HEIGHT, TRAIN_WIDTH } from "./trainConfig";
+import { carDistance, stageEnd, stageStart } from "./trainCars";
 import { poseOnRoute } from "./trainPath";
 import type { TrainActor, TrainPass } from "./trainTypes";
 
@@ -69,16 +70,14 @@ function segmentsDistanceSq(p: Point, q: Point, start: Point, end: Point): numbe
 // Le volume balayé reste indépendant du collider : aucune capsule n'est transportée par une rame.
 // see: docs/4-technique/trains-metro.md#contact-mortel
 export function trainTouchesActor(pass: TrainPass, actor: TrainActor): boolean {
-  const halfLength = (TRAIN_CAR_LENGTH - 0.35) / 2;
+  const halfLength = TRAIN_CAR_BODY_LENGTH / 2;
   for (let car = 0; car < Math.round(pass.length / TRAIN_CAR_LENGTH); car++) {
-    const offset = (car + 0.5) * TRAIN_CAR_LENGTH;
-    if (
-      pass.front - offset < (pass.route.visibleStart ?? -Infinity) - (pass.route.visualPadding ?? 0) ||
-      pass.previousFront - offset > (pass.route.visibleEnd ?? Infinity) + (pass.route.visualPadding ?? 0)
-    )
-      continue;
-    poseOnRoute(pass.route, pass.previousFront - offset, a, previousDirection);
-    poseOnRoute(pass.route, pass.front - offset, b, direction);
+    const from = carDistance(pass.previousFront, car);
+    const to = carDistance(pass.front, car);
+    // Hors scène sur tout le pas : la voiture n'existe pas, elle ne tue pas.
+    if (to < stageStart(pass.route) || from > stageEnd(pass.route)) continue;
+    poseOnRoute(pass.route, from, a, previousDirection);
+    poseOnRoute(pass.route, to, b, direction);
     if (
       Math.min(actor.position.y, actor.previous.y) - actor.halfHeight > Math.max(a.y, b.y) + TRAIN_HEIGHT ||
       Math.max(actor.position.y, actor.previous.y) + actor.halfHeight < Math.min(a.y, b.y)

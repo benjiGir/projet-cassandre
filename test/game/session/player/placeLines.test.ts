@@ -4,7 +4,7 @@ import {
   createPlaceLineState,
   nextPlaceLine,
   PLACE_LINE_DWELL_SECONDS,
-} from "../../../../src/game/session/player/placeLines";
+} from "../../../../src/game/session/player/placeLineState";
 import { PLACE_LINES, type HeroLineId } from "../../../../src/game/session/presentation/heroLines";
 
 const DT = 1 / 60;

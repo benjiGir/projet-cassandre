@@ -14,17 +14,17 @@ import { useGameStore } from "../../hud/state";
 
 // see: docs/archive/systems-session.md#portes-et-fin-de-niveau
 export function unlockDoor(session: GameSession, targetName: string, successMessage: string): boolean {
-  if (session.doorSystem?.isLocked(targetName)) {
+  if (session.level.doorSystem?.isLocked(targetName)) {
     showHudMessage("Verrouillée par la sécurité du magasin");
     playDoorSfx("locked");
     return false;
   }
-  const opened = session.doorSystem?.open(targetName, session.player.position) ?? false;
+  const opened = session.level.doorSystem?.open(targetName, session.player.position) ?? false;
   if (!opened) {
     console.error(`[main] use_* référence une porte introuvable ("${targetName}").`);
     return false;
   }
-  session.unlockedDoors.add(targetName);
+  session.run.unlockedDoors.add(targetName);
   showHudMessage(successMessage);
   playDoorSfx("unlock");
   return true;
@@ -32,19 +32,19 @@ export function unlockDoor(session: GameSession, targetName: string, successMess
 
 // see: docs/archive/systems-session.md#cartes-de-fidélité
 // see: docs/6-reference/notes-code-gameplay.md#progression-et-fin
-export function estPorteDeSortie(doorName: string): boolean {
+function isExitDoor(doorName: string): boolean {
   return doorName === "door_e_exit" || doorName === "door_exit";
 }
 
 export function tryOpenCardDoor(session: GameSession, targetName: string, required: LoyaltyCard): boolean {
-  if (session.unlockedDoors.has(targetName)) return false; // déjà déverrouillée
+  if (session.run.unlockedDoors.has(targetName)) return false; // déjà déverrouillée
   if (!hasCard(session, required)) {
     showHudMessage(`${LOYALTY_CARD_LABELS[required]} requise`);
     playDoorSfx("locked");
     return false;
   }
   const ouverte = unlockDoor(session, targetName, "Porte déverrouillée");
-  if (ouverte && estPorteDeSortie(targetName)) setupExitDoorTracking(session, targetName);
+  if (ouverte && isExitDoor(targetName)) setupExitDoorTracking(session, targetName);
   return ouverte;
 }
 
@@ -62,7 +62,7 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
   const playerOffset = new THREE.Vector3().subVectors(session.player.position, doorPosition);
   const insideSign: 1 | -1 = playerOffset.dot(crossingAxis) >= 0 ? 1 : -1;
 
-  session.exitDoorTracking = {
+  session.run.exitDoorTracking = {
     doorPosition,
     crossingAxis,
     insideSign,
@@ -71,11 +71,11 @@ export function setupExitDoorTracking(session: GameSession, doorName: string): v
 }
 
 export function triggerLevelComplete(engine: GameEngine, session: GameSession): void {
-  if (session.levelCompleteHandled || session.deathHandled || session.playerHp <= 0) return;
-  session.levelCompleteHandled = true;
-  session.completedArrival = captureArrival(session);
+  if (session.run.levelCompleteHandled || session.run.deathHandled || session.run.playerHp <= 0) return;
+  session.run.levelCompleteHandled = true;
+  session.run.completedArrival = captureArrival(session);
   if (session.choice.id === STORE_LEVEL_ID) {
-    queueCampaignSave(session.completedArrival);
+    queueCampaignSave(session.run.completedArrival);
     useGameStore.getState().setCampaign({ levelId: session.choice.id, nextAvailable: true });
   }
   noteRunOutcome(false);

@@ -2,7 +2,7 @@
 title: Pathfinding
 tags: [technique]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # Pathfinding
@@ -156,6 +156,28 @@ trouvées appartiennent à des composantes non connectées du graphe.
 `tryComputeChaseDirectionFromPath` avale cette erreur
 (`Effect.catch(() => Effect.succeed(null))`) et retourne `false` — jamais
 d'exception qui remonterait au pas fixe.
+
+### Coût d'une requête
+
+A* garde ses tampons d'une requête à l'autre (`navSearch.ts`, `beginSearch`) :
+quatre tableaux typés à la taille de la grille, refaits seulement quand la
+grille change. Une cellule n'y est lue que si sa génération est celle de la
+requête en cours, donc rien n'est remis à zéro entre deux requêtes.
+
+Mesuré le 2026-10-10 sur `niveau_v2` (grille 441 × 419, 184 779 cellules),
+serveur de développement :
+
+| | Tampons alloués à chaque requête | Tampons réutilisés |
+|---|---|---|
+| Mémoire allouée par requête | 2,4 Mo | les nœuds du tas et le chemin |
+| Chemin court | 0,146 ms (deux cellules voisines) | 0,003 ms (chemin de 8 points, à 4 m) |
+| Cible inatteignable (toute la composante explorée) | 4,26 ms | 4,2 ms |
+
+Une cible inatteignable reste le cas cher, et les tampons n'y changent rien :
+la recherche vide toute la composante avant de conclure. Sur un rejeu de 1000 pas avec 40 ennemis, le
+jeu a lancé 0,12 requête par pas, aucune sans chemin. Si ce cas devenait
+fréquent (ennemis enfermés qui poursuivent), c'est un étiquetage des
+composantes au moment de la cuisson qui le réglerait, pas A*.
 
 ## Pièges
 

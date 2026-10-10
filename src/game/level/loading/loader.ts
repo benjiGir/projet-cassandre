@@ -22,7 +22,7 @@ import { mergeVitreDecor, type VitreCandidate } from "../interactions/vitres";
 import { mergeSanitaireDecor, type SanitaireCandidate } from "../sanitaires/sanitaires";
 import { mergeEcranDecor, type EcranCandidate } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
-import { initialiserDouches } from "../sanitaires/douches";
+import { initShowers } from "../sanitaires/douches";
 import { initializeStoreSign } from "../../../render/environment/storeSign";
 import { createFountainWater } from "../../../render/environment/fountain/fountainWater";
 import { STORE_SIGN_PREFIX } from "../../../render/environment/storeSignConfig";
@@ -293,7 +293,7 @@ function buildLevelResourceEffect(
 
     // Après convertToLambert : le filet de douche remplace volontairement
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
-    initialiserDouches(root);
+    initShowers(root);
     initializeStoreSign(root);
     const fountainWater = createFountainWater(root, resources);
     const trainData = yield* Effect.try({
@@ -436,11 +436,7 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
   };
 }
 
-export function buildLevelFromGltfEffect(
-  gltf: GLTF,
-  scene: THREE.Scene,
-  physics: PhysicsWorld,
-): Effect.Effect<LevelHandle> {
+function buildLevelFromGltfEffect(gltf: GLTF, scene: THREE.Scene, physics: PhysicsWorld): Effect.Effect<LevelHandle> {
   return Effect.gen(function* () {
     const scope = Scope.makeUnsafe();
     return yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(
@@ -456,7 +452,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
 }
 
 /** Frontière asynchrone du chargement glTF ; la construction du niveau reste synchrone. */
-export function loadLevelEffect(
+function loadLevelEffect(
   url: string,
   scene: THREE.Scene,
   physics: PhysicsWorld,

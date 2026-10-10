@@ -1,4 +1,5 @@
 import { assetUrl } from "../../../core/loading/assetPath";
+import { fetchJson } from "../../../core/net/fetchJson";
 import { LEVEL_CHOICES } from "../catalog/levels";
 import { decodeLevelSpacesManifest, type LevelSpaceData } from "../navigation/levelSpaces";
 
@@ -11,9 +12,7 @@ export async function loadLevelSpaces(gltfName: string): Promise<LevelSpaceData[
   if (!LEVEL_CHOICES.some((level) => level.gltfName === gltfName && level.spaces)) return null;
   const url = assetUrl(`assets/levels/${gltfName}.espaces.json`);
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return [...decodeLevelSpacesManifest(await response.json()).espaces];
+    return [...(await fetchJson(url, decodeLevelSpacesManifest)).espaces];
   } catch (error) {
     console.warn(`[level] manifeste des espaces illisible ("${url}" : ${error}) — pas de répliques de lieu.`);
     return null;

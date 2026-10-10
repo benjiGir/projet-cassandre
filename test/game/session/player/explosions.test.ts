@@ -31,20 +31,22 @@ function session(joueur: THREE.Vector3): GameSession {
   return {
     physics,
     player: { position: joueur },
-    playerHp: 100,
-    playerMaxHp: 100,
     suitManager: new SuitManager(physics),
     directorManager: new DirectorManager(physics),
     heroPortrait: new HeroPortrait(),
-    lastHeroLineAt: -Infinity,
-    lastHeroBarkAt: -Infinity,
-    heroLinesSaid: new Set(),
-    heroLineRandom: () => 0.99,
-    deathHandled: false,
-    lowHpLineTriggered: false,
-    stats: createInitialStats(),
-    stream: createStreamState(),
     choice: {},
+    run: {
+      playerHp: 100,
+      playerMaxHp: 100,
+      lastHeroLineAt: -Infinity,
+      lastHeroBarkAt: -Infinity,
+      heroLinesSaid: new Set(),
+      heroLineRandom: () => 0.99,
+      deathHandled: false,
+      lowHpLineTriggered: false,
+      stats: createInitialStats(),
+      stream: createStreamState(),
+    },
   } as unknown as GameSession;
 }
 
@@ -88,7 +90,7 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     expect(bilan).toEqual({ suitKills: 0, directorKills: 0, playerDamage: 0 });
     expect(abrite.hp).toBe(suitConfig.maxHp);
-    expect(s.playerHp).toBe(100);
+    expect(s.run.playerHp).toBe(100);
   });
 
   it("le joueur encaisse une part des dégâts, publiée au HUD", () => {
@@ -99,8 +101,8 @@ describe("applyBlast — souffle d'une explosion", () => {
     const bilan = applyBlast(engine, s, CENTRE);
 
     expect(bilan.playerDamage).toBe(attendu);
-    expect(s.playerHp).toBe(100 - attendu);
-    expect(s.stats.hpLost).toBe(attendu);
+    expect(s.run.playerHp).toBe(100 - attendu);
+    expect(s.run.stats.hpLost).toBe(attendu);
     expect(useGameStore.getState().debug.playerHp).toBe(100 - attendu);
     expect(engine.flow.playerDied).not.toHaveBeenCalled();
   });
@@ -111,7 +113,7 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     applyBlast(engine, s, CENTRE);
 
-    expect(s.playerHp).toBeGreaterThan(0);
+    expect(s.run.playerHp).toBeGreaterThan(0);
   });
 
   it("le Directeur encaisse le souffle sans en mourir d'un coup", () => {

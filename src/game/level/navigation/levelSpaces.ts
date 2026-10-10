@@ -14,7 +14,7 @@ const LevelSpace = Schema.Struct({
   z: AxisRange,
 });
 
-export const LevelSpacesManifest = Schema.Struct({ espaces: Schema.Array(LevelSpace) });
+const LevelSpacesManifest = Schema.Struct({ espaces: Schema.Array(LevelSpace) });
 
 export type LevelSpaceData = typeof LevelSpace.Type;
 

@@ -26,6 +26,15 @@ const ControlExtras = Schema.Struct({
   trajet: Schema.optionalKey(Schema.NonEmptyString),
 });
 
+/** Sous cette longueur horizontale, un segment de voie est vertical ou nul. */
+const MIN_SEGMENT_RUN = 0.01;
+/** Pente maximale d'une voie, en dénivelé par mètre horizontal. */
+const MAX_SLOPE = 0.6;
+/** Heure de la première rame d'une voie qui ne porte pas `premier`, en secondes. */
+const DEFAULT_FIRST_ARRIVAL = 10;
+/** Écarts tolérés, en mètres, entre le modèle Blender et le gabarit de contact. */
+const MODEL_TOLERANCE = { width: 0.25, height: 0.3, length: 0.3, center: 0.1, floor: 0.2 };
+
 export class TrainLevelError extends Schema.TaggedError<TrainLevelError>()("TrainLevelError", {
   message: Schema.String,
 }) {}
@@ -101,8 +110,9 @@ export function readTrainLevel(nodes: readonly THREE.Object3D[]): TrainLevelData
     let length = 0;
     for (let i = 1; i < points.length; i++) {
       const delta = points[i].clone().sub(points[i - 1]);
-      if (Math.hypot(delta.x, delta.z) < 0.01) invalid(`Segment vertical ou nul : ${extra.trajet}`);
-      if (Math.abs(delta.y) / Math.hypot(delta.x, delta.z) > 0.6) invalid(`Pente de voie excessive : ${extra.trajet}`);
+      if (Math.hypot(delta.x, delta.z) < MIN_SEGMENT_RUN) invalid(`Segment vertical ou nul : ${extra.trajet}`);
+      if (Math.abs(delta.y) / Math.hypot(delta.x, delta.z) > MAX_SLOPE)
+        invalid(`Pente de voie excessive : ${extra.trajet}`);
       length += delta.length();
     }
     if (extra.fin_visible <= extra.debut_visible || extra.fin_visible > length)
@@ -118,14 +128,17 @@ export function readTrainLevel(nodes: readonly THREE.Object3D[]): TrainLevelData
     if (previous) {
       if (previous.routes.some((candidate) => candidate.id === route.id))
         invalid(`Trajet de voie répété : ${extra.voie}/${route.id}`);
-      if (previous.firstArrival !== (extra.premier ?? 10) || previous.enabled !== (extra.active ?? true))
+      if (
+        previous.firstArrival !== (extra.premier ?? DEFAULT_FIRST_ARRIVAL) ||
+        previous.enabled !== (extra.active ?? true)
+      )
         invalid(`Horaire incohérent entre les trajets : ${extra.voie}`);
       lanes.set(extra.voie, { ...previous, routes: [...previous.routes, route] });
     } else
       lanes.set(extra.voie, {
         id: extra.voie,
         routes: [route],
-        firstArrival: extra.premier ?? 10,
+        firstArrival: extra.premier ?? DEFAULT_FIRST_ARRIVAL,
         enabled: extra.active ?? true,
       });
     visibleRoutes.push({ lane: extra.voie, route, start: extra.debut_visible, end: extra.fin_visible });
@@ -200,12 +213,12 @@ export function readTrainLevel(nodes: readonly THREE.Object3D[]): TrainLevelData
     center = bounds.getCenter(new THREE.Vector3());
   if (
     bounds.isEmpty() ||
-    Math.abs(size.x - TRAIN_WIDTH) > 0.25 ||
-    Math.abs(size.y - TRAIN_HEIGHT) > 0.3 ||
-    Math.abs(size.z - TRAIN_CAR_LENGTH) > 0.3 ||
-    Math.abs(center.x) > 0.1 ||
-    Math.abs(center.z) > 0.1 ||
-    Math.abs(bounds.min.y) > 0.2
+    Math.abs(size.x - TRAIN_WIDTH) > MODEL_TOLERANCE.width ||
+    Math.abs(size.y - TRAIN_HEIGHT) > MODEL_TOLERANCE.height ||
+    Math.abs(size.z - TRAIN_CAR_LENGTH) > MODEL_TOLERANCE.length ||
+    Math.abs(center.x) > MODEL_TOLERANCE.center ||
+    Math.abs(center.z) > MODEL_TOLERANCE.center ||
+    Math.abs(bounds.min.y) > MODEL_TOLERANCE.floor
   )
     invalid("Gabarit du modèle incompatible : voiture de 15 × 2,8 × 3,2 m centrée en X/Z, sol à Y=0.");
   return {

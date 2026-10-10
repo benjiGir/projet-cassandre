@@ -6,16 +6,16 @@ import { assetUrl } from "../../core/loading/assetPath";
 
 const FACES = ["px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"];
 
-const charges = new Map<string, THREE.CubeTexture>();
+const loaded = new Map<string, THREE.CubeTexture>();
 
-export function chargerCiel(nom: string): THREE.CubeTexture {
-  const deja = charges.get(nom);
-  if (deja) return deja;
-  const texture = new THREE.CubeTextureLoader().load(FACES.map((f) => assetUrl(`assets/sky/${nom}/${f}`)));
+export function loadSky(name: string): THREE.CubeTexture {
+  const cached = loaded.get(name);
+  if (cached) return cached;
+  const texture = new THREE.CubeTextureLoader().load(FACES.map((f) => assetUrl(`assets/sky/${name}/${f}`)));
   texture.magFilter = THREE.NearestFilter;
   texture.minFilter = THREE.NearestFilter;
   texture.generateMipmaps = false;
   texture.colorSpace = THREE.SRGBColorSpace;
-  charges.set(nom, texture);
+  loaded.set(name, texture);
   return texture;
 }

@@ -5,7 +5,7 @@ const Duration = Schema.Finite.check(Schema.isGreaterThan(0));
 const TimeRange = Schema.mutable(Schema.Tuple([Offset, Duration]));
 const FileNames = Schema.mutable(Schema.Array(Schema.NonEmptyString));
 
-export const AudioSpriteManifest = Schema.Struct({
+const AudioSpriteManifest = Schema.Struct({
   src: FileNames.check(Schema.isMinLength(1)),
   sprite: Schema.Record(Schema.NonEmptyString, TimeRange),
   pool: Schema.optionalKey(Schema.Int.check(Schema.isGreaterThan(0))),
@@ -22,7 +22,7 @@ const AmbienceZone = Schema.Struct({
   espaces: Schema.mutable(Schema.Array(AmbienceBox)),
 });
 
-export const ZoneAmbienceManifest = Schema.Struct({
+const ZoneAmbienceManifest = Schema.Struct({
   defaut: Schema.NonEmptyString,
   zones: Schema.Record(Schema.NonEmptyString, AmbienceZone),
 }).check(
@@ -31,8 +31,6 @@ export const ZoneAmbienceManifest = Schema.Struct({
   ),
 );
 
-export type AudioSpriteManifestData = typeof AudioSpriteManifest.Type;
-export type ZoneAmbienceManifestData = typeof ZoneAmbienceManifest.Type;
 export type AmbienceBoxData = typeof AmbienceBox.Type;
 export type AmbienceZoneData = typeof AmbienceZone.Type;
 

@@ -10,8 +10,7 @@ import type {
   EnemyEvent,
   EnemyDamageOutcome,
 } from "./enemyTypes";
-import { DeterministicRandom } from "../../../core/effect/random";
-import { runGameplaySync } from "../../../app/runtime/gameRuntime";
+import { seededRandom } from "../../../app/runtime/gameRuntime";
 import { computeEyePosition, hasClearWorldPath } from "./enemyPerception";
 import { computeAvoidedDirection, turnTowards, tryComputeChaseDirectionFromPath } from "./enemyNavigation";
 import { detachEnemyPhysics, updateKnockback, integratePhysics } from "./enemyPhysics";
@@ -117,7 +116,7 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
 
 // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 export function createEnemyPrng(seed: number): () => number {
-  return runGameplaySync(DeterministicRandom.useSync((random) => random.forSeed(seed)));
+  return seededRandom(seed);
 }
 
 // Machine XState — graphe + actions d'entrée.

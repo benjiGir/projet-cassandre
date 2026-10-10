@@ -134,8 +134,8 @@ export function buildVitreCandidateEffect(
 ): Effect.Effect<VitreCandidate> {
   return Effect.gen(function* () {
     const extras = cleanExtras(mesh);
-    const solide = extras.solide !== false;
-    const maxHp = solide ? yield* readVitrePv(name, extras.pv) : null;
+    const solid = extras.solide !== false;
+    const maxHp = solid ? yield* readVitrePv(name, extras.pv) : null;
     const givre = extras.givre === true;
     let matiere: PropMaterial = "verre";
     if (extras.matiere !== undefined && extras.matiere !== null && extras.matiere !== "") {
@@ -154,7 +154,7 @@ export function buildVitreCandidateEffect(
 
     let collider: RAPIER.Collider | null = null;
     let body: RAPIER.RigidBody | null = null;
-    if (solide) {
+    if (solid) {
       mesh.geometry.computeBoundingBox();
       const bb = mesh.geometry.boundingBox!;
       const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
@@ -325,7 +325,7 @@ export function buildPropEffect(
     const matiere = yield* readPropMaterial(name, extras.matiere);
     const masse = yield* readPropNumber(name, "masse", extras.masse);
     const maxHp = yield* readPropNumber(name, "pv", extras.pv);
-    const contenu = yield* readPropContent(name, extras.contenu);
+    const content = yield* readPropContent(name, extras.contenu);
 
     root.attach(mesh);
     mesh.updateMatrixWorld(true);
@@ -367,7 +367,7 @@ export function buildPropEffect(
       body,
     );
 
-    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu, extras };
+    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu: content, extras };
   });
 }
 

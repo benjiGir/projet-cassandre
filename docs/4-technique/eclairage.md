@@ -77,7 +77,7 @@ La sélection ne mesure pas la contribution lumineuse de chaque lampe aux surfac
 
 ### Ciel
 
-`LevelDef.ciel` contient le nom d'un sous-dossier de `public/assets/sky/`. `chargerCiel` lit les six faces `px`, `nx`, `py`, `ny`, `pz` et `nz` et met la texture en cache. `applyLightRig` l'affecte à `scene.background` ; l'absence d'un ciel rétablit le fond uni.
+`LevelDef.ciel` contient le nom d'un sous-dossier de `public/assets/sky/`. `loadSky` lit les six faces `px`, `nx`, `py`, `ny`, `pz` et `nz` et met la texture en cache. `applyLightRig` l'affecte à `scene.background` ; l'absence d'un ciel rétablit le fond uni.
 
 La cubemap est un fond de scène, pas un mesh du niveau. Elle n'a pas de matériau du monde et ne change donc pas la règle Lambert. Son filtrage est `NearestFilter` dans les deux directions, sans mipmaps.
 
