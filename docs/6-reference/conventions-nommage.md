@@ -2,7 +2,7 @@
 title: Conventions de nommage glTF
 tags: [reference, pipeline]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-11
 ---
 
 # Conventions de nommage glTF
@@ -45,6 +45,7 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `soin` | `use_*` | Nombre de PV rendus par une trousse. |
 | `aliment` | `use_*` | Type de nourriture ; le runtime en déduit le soin. |
 | `munitions` | `use_*` | Quantité de munitions de pistolet donnée. |
+| `cartouches` | `use_*` | Quantité de cartouches de pompe donnée ; jamais sur la même boîte que `munitions`. |
 | `cameras` | `use_*` | Noms de `cam_*` séparés par des virgules, dans l'ordre de défilement. |
 | `perk`, `prix` | `use_*` | Une borne : le perk vendu (`boisson`, `vpn`, `gilet`, `premium`, `perche`, `aimant`) et son prix en euros, strictement positif. Les deux sont requis. |
 | `color`, `intensity`, `distance`, `decay` | `light_*` | Couleur hexadécimale et paramètres de portée/intensité de la lampe. |
@@ -75,7 +76,7 @@ session concernés, leurs tests et cette référence. Le validateur ne peut pas
 détecter une faute de frappe dans un extra qu'il ne connaît pas.
 
 Le validateur couvre notamment les cartes, les aliments, les montants `soin`
-et `munitions`, les matières et contenus de prop, les valeurs de porte, la
+`munitions` et `cartouches`, les matières et contenus de prop, les valeurs de porte, la
 chaîne d'écran, les caméras référencées et la sorte de sanitaire. Certaines
 options facultatives de porte sont lues avec un défaut par le runtime ; une
 valeur mal formée peut donc retomber sur ce défaut.
@@ -89,7 +90,8 @@ valeur mal formée peut donc retomber sur ce défaut.
 | Porte libre | `use_*` + `target`, sans `requires` ; `message` facultatif. |
 | Trousse | `use_*` + `soin` strictement positif ; ramassage au contact. |
 | Nourriture | `use_*` + `aliment` reconnu ; ramassage au contact. |
-| Munitions | `use_*` + `munitions` strictement positif ; ramassage au contact. |
+| Munitions de pistolet | `use_*` + `munitions` strictement positif ; ramassage au contact. |
+| Cartouches de pompe | `use_*` + `cartouches` strictement positif ; ramassage au contact. |
 | Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun` ; ramassage au contact. |
 | Console vidéo | Un `use_*` avec `cameras` référençant des noms `cam_*` existants. |
 | Borne de sponsor | Un `use_*` avec `perk` et `prix`. Elle n'est jamais consommée ; une borne mal décrite ne vend rien et le loader le signale. |

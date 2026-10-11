@@ -27,15 +27,17 @@ export function healPlayer(session: HealTarget, amount: number): number {
 // Une boîte ramassée au plafond de munitions ne donnerait rien : elle reste
 // au sol, comme une trousse sur un joueur en pleine forme.
 function takeAmmoBox(session: GameSession, amount: number, useObject: UseObject): boolean {
-  const taken = session.weapons.addPistolAmmo(amount);
+  const isShotgunAmmo = useObject.ammoWeapon === "shotgun";
+  const taken = isShotgunAmmo ? session.weapons.addShotgunAmmo(amount) : session.weapons.addPistolAmmo(amount);
   if (taken <= 0) return false;
-  showHudMessage(`+${taken} munitions`);
+  showHudMessage(isShotgunAmmo ? `+${taken} cartouches de pompe` : `+${taken} munitions`);
   session.heroPortrait.react("victory", 0.45);
   playSfx("ammo_pickup");
-  triggerHeroLine(
-    session,
-    AMMO_CACHE_LINES[useObject.name] ?? (amount >= LARGE_AMMO_BOX ? "munitions_36" : "munitions_24"),
-  );
+  if (!isShotgunAmmo)
+    triggerHeroLine(
+      session,
+      AMMO_CACHE_LINES[useObject.name] ?? (amount >= LARGE_AMMO_BOX ? "munitions_36" : "munitions_24"),
+    );
   return true;
 }
 

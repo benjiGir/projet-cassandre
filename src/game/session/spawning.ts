@@ -252,7 +252,12 @@ export function loadGltfLevel(
             continue;
           }
           if (useObject.ammo !== null) {
-            dressAmmoPickup(useObject.object, groundBelow(session, useObject.position), pickupResources);
+            dressAmmoPickup(
+              useObject.object,
+              groundBelow(session, useObject.position),
+              pickupResources,
+              useObject.ammoWeapon,
+            );
             continue;
           }
           const weapon =

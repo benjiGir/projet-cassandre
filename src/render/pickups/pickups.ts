@@ -3,6 +3,7 @@ import * as THREE from "three";
 import type { FoodItem } from "../../game/level/interactions/food";
 import type { PickupResources } from "./pickupResources";
 import type { PickupWeaponKind } from "./pickupTypes";
+import type { AmmoWeaponKind } from "../../game/player/weapons/weaponTypes";
 import { WEAPON_SPRITE_SIZE, WEAPON_BOB_AMPLITUDE, WEAPON_BOB_SPEED } from "./pickupConfig";
 
 // see: docs/6-reference/notes-code-rendu.md#ramassages
@@ -51,8 +52,13 @@ export function dressHealPickup(object: THREE.Object3D, groundY: number | null, 
   placeModel(object, resources.healModel(), groundY, resources);
 }
 
-export function dressAmmoPickup(object: THREE.Object3D, groundY: number | null, resources: PickupResources): void {
-  placeModel(object, resources.ammoModel(), groundY, resources);
+export function dressAmmoPickup(
+  object: THREE.Object3D,
+  groundY: number | null,
+  resources: PickupResources,
+  weapon: AmmoWeaponKind = "pistol",
+): void {
+  placeModel(object, weapon === "shotgun" ? resources.shotgunAmmoModel() : resources.ammoModel(), groundY, resources);
 }
 
 export class WeaponPickupBillboard {

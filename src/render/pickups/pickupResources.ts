@@ -22,6 +22,7 @@ const KIT_SIZE = { width: 0.5, height: 0.32, depth: 0.36 } as const;
 const KIT_GLOW = 0.35;
 
 const AMMO_SIZE = { width: 0.42, height: 0.22, depth: 0.3 } as const;
+const SHOTGUN_AMMO_SIZE = { width: 0.54, height: 0.28, depth: 0.34 } as const;
 
 const CELL = 32;
 
@@ -48,6 +49,7 @@ export class PickupResources {
   private readonly weaponGeometries = new Map<PickupWeaponKind, THREE.PlaneGeometry>();
   private kit: PickupModel | null = null;
   private ammo: PickupModel | null = null;
+  private shotgunAmmo: PickupModel | null = null;
   private disposed = false;
   private clock = 0;
   get weaponClock(): number {
@@ -73,6 +75,7 @@ export class PickupResources {
       );
       this.healModel();
       this.ammoModel();
+      this.shotgunAmmoModel();
       for (const item of FOOD_ITEMS) this.foodModel(item);
       for (const weapon of ["melee", "pistol", "shotgun"] as const) this.weaponGeometry(weapon);
     } catch (error) {
@@ -121,6 +124,7 @@ export class PickupResources {
     this.weaponGeometries.clear();
     this.kit = null;
     this.ammo = null;
+    this.shotgunAmmo = null;
     if (errors.length > 0) throw new AggregateError(errors, "Libération incomplète des ressources des ramassages");
   }
 
@@ -269,6 +273,51 @@ export class PickupResources {
       this.kit.geometry.translate(0, KIT_SIZE.height / 2, 0);
     }
     return this.kit;
+  }
+
+  private shotgunAmmoFaceTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = CELL;
+    canvas.height = CELL;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#572424";
+    ctx.fillRect(0, 0, CELL, CELL);
+    ctx.fillStyle = "#963e33";
+    ctx.fillRect(2, 2, CELL - 4, CELL - 4);
+    ctx.fillStyle = "#efe0bd";
+    ctx.fillRect(2, 3, CELL - 4, 11);
+    ctx.fillStyle = "#402225";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText("12", 9, 12);
+    for (const x of [5, 13, 21]) {
+      ctx.fillStyle = "#371c1b";
+      ctx.fillRect(x - 1, 16, 8, 14);
+      ctx.fillStyle = "#ef6650";
+      ctx.fillRect(x, 17, 6, 8);
+      ctx.fillStyle = "#f5d578";
+      ctx.fillRect(x, 25, 6, 4);
+      ctx.fillStyle = "#b0823b";
+      ctx.fillRect(x, 28, 6, 1);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    configureRetroTexture(texture);
+    return this.own(texture);
+  }
+
+  shotgunAmmoModel(): PickupModel {
+    this.assertActive();
+    if (!this.shotgunAmmo) {
+      const map = this.shotgunAmmoFaceTexture();
+      const { width, height, depth } = SHOTGUN_AMMO_SIZE;
+      this.shotgunAmmo = {
+        geometry: this.own(new THREE.BoxGeometry(width, height, depth)),
+        material: this.own(
+          new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 }),
+        ),
+      };
+      this.shotgunAmmo.geometry.translate(0, height / 2, 0);
+    }
+    return this.shotgunAmmo;
   }
 
   ammoModel(): PickupModel {

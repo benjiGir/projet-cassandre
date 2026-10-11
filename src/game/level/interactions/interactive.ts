@@ -48,9 +48,8 @@ export interface WeaponPickupHandlers {
    * l'a déjà n'a rien à en tirer, l'appelant renvoie alors `false` et
    * l'objet reste au sol indéfiniment (voir `docs/4-technique/armes.md`). */
   onCrowbarPickup(): boolean;
-  /** `use_shotgun`. Même contrat que `onCrowbarPickup` — le pompe garde sa
-   * dotation unique (aucun mécanisme de recharge n'existe pour lui), donc un
-   * second ramassage n'a également rien à offrir : `false`, reste au sol. */
+  /** `use_shotgun`. Un deuxième fusil reste au sol ; les boîtes de
+   * cartouches assurent la recharge séparément. */
   onShotgunPickup(): boolean;
   onPistolPickup(): boolean;
 }
@@ -120,7 +119,7 @@ export class InteractionSystem {
     this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius);
   }
 
-  /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions`). */
+  /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions` ou `cartouches`). */
   collectAmmo(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,

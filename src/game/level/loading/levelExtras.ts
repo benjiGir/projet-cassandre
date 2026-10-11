@@ -206,7 +206,7 @@ export function readCardProperty(name: string, property: string, raw: unknown): 
   });
 }
 
-/** Lit une quantité (`soin`, `munitions`) : absente -> `null` sans bruit,
+/** Lit une quantité (`soin`, `munitions`, `cartouches`) : absente -> `null` sans bruit,
  * présente mais pas un nombre > 0 -> `null` AVEC avertissement bruyant (même
  * règle que les cartes). */
 export function readAmountProperty(name: string, property: string, raw: unknown): Effect.Effect<number | null> {

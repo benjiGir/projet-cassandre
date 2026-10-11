@@ -10,6 +10,7 @@ import type { CamPoint } from "../interactions/cameras";
 import type { FoodItem } from "../interactions/food";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
+import type { AmmoWeaponKind } from "../../player/weapons/weaponTypes";
 import type { SuitKind } from "../../entities/suit/suitConfig";
 import type { LevelTrains } from "../trains/levelTrains";
 import type { MetroBlockout } from "../blockout/metroBlockout";
@@ -58,8 +59,10 @@ export interface UseObject {
    * `requires`) pour agir sur sa cible. `null` = aucune condition.
    * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
   requiresCard: LoyaltyCard | null;
-  // see: docs/archive/reference-conventions-nommage.md#boîtes-de-munitions
+  // see: docs/6-reference/conventions-nommage.md#cartes-et-objets-automatiques
   ammo: number | null;
+  /** Absent dans les anciens objets : munitions de pistolet. */
+  ammoWeapon?: AmmoWeaponKind;
   // see: docs/archive/reference-conventions-nommage.md#trousses-de-soin
   heals: number | null;
   // see: docs/6-reference/conventions-nommage.md#nourriture

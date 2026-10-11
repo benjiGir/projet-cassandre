@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 
 # Systèmes de niveau
@@ -63,7 +63,7 @@ Les poses de portes et de props sont décidées au pas fixe. `stepPhysics` mémo
 
 Le loader transforme un mesh `use_*` en `UseObject` avec une position monde et une portée de 2 m. `InteractionSystem.update` choisit le plus proche ; un seul objet reçoit l'appui. La liste d'objets doit être relue depuis `LevelSession.current` à chaque pas, car le hot reload remplace ses meshes.
 
-Les propriétés personnalisées donnent le comportement déclaratif : `target` nomme une porte, `card` donne une carte, `requires` en exige une, `message` fournit un retour de porte libre, `soin` et `munitions` indiquent un ramassage, `aliment` choisit une valeur de soin et `cameras` liste les points de vue. Les actions spécifiques historiques `use_pa_mic`, `use_toilet` et la sortie de niveau passent par des callbacks fournis par l'appelant.
+Les propriétés personnalisées donnent le comportement déclaratif : `target` nomme une porte, `card` donne une carte, `requires` en exige une, `message` fournit un retour de porte libre, `soin`, `munitions` (pistolet) et `cartouches` (pompe) indiquent un ramassage, `aliment` choisit une valeur de soin et `cameras` liste les points de vue. Les actions spécifiques historiques `use_pa_mic`, `use_toilet` et la sortie de niveau passent par des callbacks fournis par l'appelant.
 
 Les objets déjà consommés sont suivis par référence de mesh. Un refus d'accès ou une porte encore fermée reste réessayable ; une carte ou un ramassage accepté masque l'objet et le consomme. Un objet de soin ou d'arme reste au sol si l'inventaire ne peut rien recevoir.
 

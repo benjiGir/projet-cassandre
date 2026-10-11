@@ -2,7 +2,7 @@
 title: Rencontres du métro
 tags: [metro, ennemis, script]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 
 # Rencontres du métro
@@ -48,8 +48,8 @@ tous les ennemis et ne ferme aucune nouvelle porte d'arène.
 
 ## Ressources
 
-Treize ramassages réemploient les billboards du jeu : **225 PV de soins** et
-**168 balles de pistolet**, distribués entre rue, billetterie, vestiaire,
+Les dix-huit ramassages donnent **225 PV de soins**, **168 balles de
+pistolet** et **40 cartouches de pompe**, distribués entre rue, billetterie, vestiaire,
 entrée du dépôt, machinerie, rame et sortie sur le parvis. Les premiers
 soins sont dans la rue, avant le premier déclencheur. Ils restent des
 trousses pour cette passe ; la nourriture prévue dans le plan, les secrets,
@@ -57,7 +57,11 @@ bornes, armes et l'économie finale restent à traiter.
 
 Ces totaux sont des ressources posées : les plafonds du joueur peuvent en
 réduire le gain effectif. Les munitions `use_*.munitions` rechargent le
-pistolet uniquement. La campagne conserve l'équipement du niveau précédent ;
+pistolet ; `use_*.cartouches` recharge le pompe. Les cinq boîtes rouges
+contiennent 8 cartouches chacune : billetterie, vestiaire, dépôt, machinerie
+et rame. Elles se distinguent des boîtes olive du pistolet par leur taille,
+leur bande claire « 12 » et leur motif de cartouches rouges à culot doré.
+La campagne conserve l'équipement du niveau précédent ;
 le lancement isolé de la page d'auteur ne prouve pas l'équilibre d'une
 arrivée pauvre ou riche.
 
@@ -117,6 +121,8 @@ Elle affiche aussi les ressources du joueur et les points de ramassage,
 avec deux approches de rue et une commande pour perdre 10 PV et dépenser
 5 balles au pas fixe. Ces positions logiques permettent de voir un décalage
 entre l'objet affiché et sa zone de collecte.
+Deux vues supplémentaires montrent les cartouches de la billetterie et du
+vestiaire. Le relevé distingue `arme`, `munitions` et `cartouches`.
 
 Les [observations datées](../journal/metro-blockout-2026-10.md#première-passe-de-rencontres--9-octobre)
 distinguent placement, déclenchement et poursuite observée. La compilation

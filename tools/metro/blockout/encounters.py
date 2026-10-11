@@ -63,6 +63,11 @@ PICKUPS = (
     ('soin_rame',(39.5,400.5,-17.25),'soin',25),
     ('ammo_rame',(39.5,402,-17.25),'munitions',36),
     ('soin_parvis',(50,470,0),'soin',25),
+    ('cartouches_billets',(-16.5,94,-5),'cartouches',8),
+    ('cartouches_vestiaire',(78,259.5,-15.55),'cartouches',8),
+    ('cartouches_depot',(49,331,-18),'cartouches',8),
+    ('cartouches_machinerie',(115,353,-22),'cartouches',8),
+    ('cartouches_rame',(39.5,404,-17.25),'cartouches',8),
 )
 
 

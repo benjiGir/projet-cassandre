@@ -17,7 +17,12 @@ import {
 } from "../props/propConfig";
 import { FOOD_HEAL_AMOUNTS } from "../interactions/food";
 import { NAME_WIRED_USE_OBJECTS } from "../interactions/interactive";
-import { UntargetedUseObjectWarning, formatUntargetedUseObject } from "./levelDiagnostics";
+import {
+  UntargetedUseObjectWarning,
+  formatUntargetedUseObject,
+  AmbiguousAmmoPickupWarning,
+  formatAmbiguousAmmoPickup,
+} from "./levelDiagnostics";
 import {
   cleanExtras,
   readSanitaireKind,
@@ -388,7 +393,16 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
     const grantsCard = yield* readCardProperty(name, "card", extras.card);
     const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
     const explicitHeals = yield* readAmountProperty(name, "soin", extras.soin);
-    const ammo = yield* readAmountProperty(name, "munitions", extras.munitions);
+    const pistolAmmo = yield* readAmountProperty(name, "munitions", extras.munitions);
+    const shotgunAmmo = yield* readAmountProperty(name, "cartouches", extras.cartouches);
+    let ammo = shotgunAmmo ?? pistolAmmo;
+    if (extras.munitions !== undefined && extras.cartouches !== undefined) {
+      ammo = null;
+      yield* Effect.fail(new AmbiguousAmmoPickupWarning({ name })).pipe(
+        Effect.catch((error) => Effect.sync(() => console.error(formatAmbiguousAmmoPickup(error)))),
+      );
+    }
+    const ammoWeapon = shotgunAmmo !== null ? "shotgun" : "pistol";
     const aliment = yield* readFoodItem(name, extras.aliment);
     const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
     const cameras =
@@ -427,6 +441,7 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       requiresCard,
       heals,
       ammo,
+      ammoWeapon,
       aliment,
       cameras,
       sells,

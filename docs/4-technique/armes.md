@@ -2,7 +2,7 @@
 title: Armes
 tags: [technique]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-10
 ---
 
 # Armes
@@ -106,7 +106,7 @@ ni impact, `update()` ignore alors silencieusement `frame.fire`.
 | Arme | Munitions | Ramassage répété |
 |---|---|---|
 | Pied-de-biche | Aucune | Rien (`tryCollectMelee` renvoie `false` si déjà possédé) |
-| Pompe | Pool unique fixé au spawn (`shotgunStartingAmmo`), jamais renfloué | Rien (même contrat) |
+| Pompe | Rechargeable par les boîtes `cartouches`, plafonné à `shotgunMaxAmmo` | Un second fusil reste au sol ; une boîte recharge via `addShotgunAmmo` |
 | Pistolet | Pool rechargeable, plafonné (`pistolMaxAmmo`) | Recharge (`addPistolAmmo`), seule exception des trois |
 
 `tryCollectMelee`/`tryCollectShotgun`/`tryCollectPistol` sont les callbacks de

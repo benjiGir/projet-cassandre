@@ -1,5 +1,6 @@
 import type * as THREE from "three";
 export type WeaponKind = "none" | "melee" | "pistol" | "shotgun";
+export type AmmoWeaponKind = "pistol" | "shotgun";
 
 export type FiringWeapon = Exclude<WeaponKind, "none"> | "kick";
 

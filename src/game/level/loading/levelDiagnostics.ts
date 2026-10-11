@@ -73,6 +73,11 @@ export class InvalidHealAmountWarning extends Schema.TaggedError<InvalidHealAmou
   { name: Schema.String, value: Schema.String, property: Schema.String },
 ) {}
 
+export class AmbiguousAmmoPickupWarning extends Schema.TaggedError<AmbiguousAmmoPickupWarning>()(
+  "AmbiguousAmmoPickupWarning",
+  { name: Schema.String },
+) {}
+
 export class UnknownFoodItemWarning extends Schema.TaggedError<UnknownFoodItemWarning>()("UnknownFoodItemWarning", {
   name: Schema.String,
   value: Schema.String,
@@ -208,6 +213,10 @@ export function formatInvalidHealAmount(error: InvalidHealAmountWarning): string
     `[level] "${error.name}" (use_*) : propriété "${error.property}" = "${error.value}", ` +
     `qui n'est pas un nombre de ${unite} strictement positif — propriété ignorée.`
   );
+}
+
+export function formatAmbiguousAmmoPickup(error: AmbiguousAmmoPickupWarning): string {
+  return `[level] "${error.name}" (use_*) : "munitions" et "cartouches" sur la même boîte — ramassage ignoré.`;
 }
 
 export function formatUnknownFoodItem(error: UnknownFoodItemWarning): string {
