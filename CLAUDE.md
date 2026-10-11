@@ -101,23 +101,6 @@ ne vit pas dans `src/ui/`. Adoptées le 2026-09-23 après un verdict sans appel
 de l'utilisateur sur l'état du dossier (« la qualité du code React est
 ignoble ») : ce n'est pas une préférence de style, c'est le niveau attendu.
 
-## TypeSafe (Jev) — écarté du jeu (2026-09-20)
-
-Le plugin `typesafe-ai` donne accès à `jev-1.13.0` : un modèle qui ne génère
-rien, il répond à des questions typées sur du texte (`Choice`, `Noul`,
-`Score`) par un appel réseau. **Il n'a pas sa place dans le jeu**, et trois
-invariants l'interdisent, chacun suffisant : un appel réseau est asynchrone
-alors que le pas fixe et le rendu passent par la frontière synchrone stricte
-(#1, #11) ; le rejeu d'input exige un déroulé identique à entrées identiques,
-or les probabilités du modèle ne sont pas déterministes (#12) ; et la clé
-d'API partirait dans le bundle client. Ça vaut aussi pour les répliques du
-héros — elles restent écrites, et tirées par le RNG déterministe.
-
-Restait l'outillage hors-jeu (garde-fou de satire sur les marques inventées,
-pré-tri des licences à confirmer, triage des retours de playtest) : **écarté
-par l'utilisateur le 2026-09-20**. Aucune clé, aucune dépendance, aucun appel
-dans le dépôt.
-
 ## Conventions de nommage glTF
 
 | Préfixe | Effet à l'import |
@@ -228,36 +211,3 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   parties types simulées (`-- --toutes` pour les variantes A/B/C et les trois
   difficultés) ; en jeu, `cassandre.economie.appliquer("A")` met une variante
   à l'essai et `cassandre.economie.journal()` rend les dons et achats réels.
-
-## Phase courante
-
-**v1.0.0 livrée le 2026-10-02** (MVP, open source MIT — `LICENSE`,
-`CHANGELOG.md`). Les coulisses du niveau v2 sont construites ; leur fiche de
-travail reste dans [`docs/assets/plan-coulisses.md`](docs/assets/plan-coulisses.md)
-et son [board de références](docs/assets/board-coulisses.md).
-Les plans de travail du niveau v2 et de la documentation ont été retirés du
-dépôt le 2026-10-02 (commit `4e88907`) ; ils restent lisibles dans
-l'historique (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem
-`PLAN_DOCUMENTATION.md`).
-
-**v1.2 « Les sponsors » : tous les lots livrés le 2026-10-04, en attente du
-playtest de l'utilisateur** — bornes et perks, explosifs, Rampant et Vigile,
-trois difficultés, trois rencontres, économie équilibrée par relevé simulé
-(variante B en place, choix A/B/C ouvert). Compte rendu daté :
-[`docs/journal/les-sponsors-2026-10.md`](docs/journal/les-sponsors-2026-10.md).
-
-**v1.1 « Le live »** (depuis le 2026-10-03) : l'histoire d'abord.
-Le plan de travail est [`PLAN_SUITE.md`](PLAN_SUITE.md), découpé en lots
-autonomes (A0-A8 pour la v1.1, B1-B8 pour la v1.2) ; son tableau de suivi dit
-où en est chaque lot. La bible d'histoire est
-[`docs/2-fonctionnel/histoire.md`](docs/2-fonctionnel/histoire.md) : héros
-sans nom civil (pseudo = la chaîne, « le Réveil »), enseigne Hyper Varan,
-donateur mystère lié à la plateforme, victoire amère, **pas de second niveau
-dans un magasin**. Les images des panneaux sont générées par l'utilisateur à
-partir de `assets_src/panneaux/PROMPTS.md`.
-
-Les sons sont générés avec ElevenLabs ou synthétisés (`tools/audio/`) ; la
-mention ElevenLabs du `README.md` est une condition de licence, à garder.
-L'état daté des chantiers livrés et des retours est conservé dans
-[`docs/journal/README.md`](docs/journal/README.md).
-
