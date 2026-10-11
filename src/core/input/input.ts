@@ -12,6 +12,7 @@ class InputManager {
 
   private mouseDeltaX = 0;
   private mouseDeltaY = 0;
+  private pendingWeaponCycle = 0;
 
   private canvas: HTMLCanvasElement | null = null;
   private pointerLocked = false;
@@ -28,6 +29,7 @@ class InputManager {
     window.addEventListener("mousemove", this.onMouseMove);
     window.addEventListener("mousedown", this.onMouseDown);
     window.addEventListener("mouseup", this.onMouseUp);
+    window.addEventListener("wheel", this.onWheel, { passive: false });
     canvas.addEventListener("click", this.requestPointerLock);
     canvas.addEventListener("contextmenu", this.onContextMenu);
     document.addEventListener("pointerlockchange", this.onPointerLockChange);
@@ -74,12 +76,19 @@ class InputManager {
     e.preventDefault();
   };
 
+  private onWheel = (e: WheelEvent) => {
+    if (!this.pointerLocked || e.ctrlKey || e.deltaY === 0) return;
+    e.preventDefault();
+    this.pendingWeaponCycle += Math.sign(e.deltaY);
+  };
+
   private requestPointerLock = () => {
     this.canvas?.requestPointerLock().catch(() => {});
   };
 
   private onPointerLockChange = () => {
     this.pointerLocked = document.pointerLockElement === this.canvas;
+    if (!this.pointerLocked) this.pendingWeaponCycle = 0;
   };
 
   isDown(code: string): boolean {
@@ -107,6 +116,13 @@ class InputManager {
   clearPendingEdges(): void {
     this.edgesPendingFixedStep.clear();
     this.edgesThisDisplayFrame.clear();
+    this.pendingWeaponCycle = 0;
+  }
+
+  consumeWeaponCycle(): number {
+    const steps = this.pendingWeaponCycle;
+    this.pendingWeaponCycle = 0;
+    return steps;
   }
 
   // Lire une fois par image, hors du pas fixe, pour ne pas ajouter de latence de visée.
@@ -161,7 +177,10 @@ class InputManager {
   // Doit rester le dernier appel de l’image pour préserver les fronts d’affichage.
   endFrame() {
     this.edgesThisDisplayFrame.clear();
-    if (this.fixedStepsThisFrame > 0) this.edgesPendingFixedStep.clear();
+    if (this.fixedStepsThisFrame > 0) {
+      this.edgesPendingFixedStep.clear();
+      this.pendingWeaponCycle = 0;
+    }
   }
 }
 

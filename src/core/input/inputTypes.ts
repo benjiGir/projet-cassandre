@@ -27,6 +27,7 @@ export interface InputFrame {
   switchToPistol: boolean;
   switchToShotgun: boolean;
   switchToFlare: boolean;
+  weaponCycle?: number;
   use: boolean;
   yaw: number;
   pitch: number;

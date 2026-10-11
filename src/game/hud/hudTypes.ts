@@ -121,6 +121,13 @@ export interface LiveRecap {
   readonly donationCount: number;
 }
 
+export interface WeaponCarouselView {
+  readonly active: WeaponKind;
+  readonly available: readonly WeaponKind[];
+  readonly visible: boolean;
+  readonly revision: number;
+}
+
 export interface DebugState {
   fps: number;
   /** Position des yeux du joueur, m. */

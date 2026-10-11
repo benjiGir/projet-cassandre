@@ -16,6 +16,7 @@ const InputFrameSchema = Schema.Struct({
   switchToShotgun: Schema.Boolean,
   // Absent d'un enregistrement antérieur au pistolet de détresse.
   switchToFlare: Schema.optionalKey(Schema.Boolean),
+  weaponCycle: Schema.optionalKey(Schema.Int),
   use: Schema.Boolean,
   yaw: Schema.Finite,
   pitch: Schema.Finite,
@@ -37,7 +38,7 @@ const RecordingSchema = Schema.Struct({
 const decodeStoredRecording = Schema.decodeUnknownSync(RecordingSchema, { onExcessProperty: "preserve" });
 
 function completeFrame(frame: typeof InputFrameSchema.Type): InputFrame {
-  return { ...frame, switchToFlare: frame.switchToFlare ?? false };
+  return { ...frame, switchToFlare: frame.switchToFlare ?? false, weaponCycle: frame.weaponCycle ?? 0 };
 }
 
 export function decodeRecording(value: unknown): Recording {

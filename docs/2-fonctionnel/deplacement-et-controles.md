@@ -2,7 +2,7 @@
 title: Déplacement et contrôles
 tags: [fonctionnel]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-11
 ---
 
 # Déplacement et contrôles
@@ -67,15 +67,16 @@ suit la souris à l'instant même où vous bougez.
 | Viser | Souris |
 | Tirer (ou coup de pied, sans arme) | Clic gauche |
 | Utiliser | `E` |
-| Changer d'arme | `1` / `2` / `3` |
+| Changer d'arme | `1` / `2` / `3` / `4`, ou molette |
 
 Ce tableau donne les touches par défaut sur un clavier QWERTY. Le jeu lit la
 position physique de la touche plutôt que le caractère imprimé dessus : sur
 un clavier AZERTY, les mêmes emplacements donnent déjà ZQSD sans aucun
-réglage à faire. Toutes les actions ci-dessus se remappent librement dans
+réglage à faire. Les actions liées à une touche se remappent librement dans
 les options, et le remappage est conservé d'une session à l'autre. Seules
 les touches de débogage, jamais montrées au joueur, échappent à ce
-remappage.
+remappage. La molette garde son rôle précédent / suivant ; un carrousel
+temporaire indique le choix en bas de l’écran.
 
 ## Valeurs
 

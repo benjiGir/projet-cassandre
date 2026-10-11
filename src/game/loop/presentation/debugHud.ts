@@ -31,6 +31,12 @@ export function publishDebugHud({ engine, session, realDt, stats }: FxFrame): vo
     engine.debugAccumulator = 0;
     const astar = astarMetricsSnapshot();
     useGameStore.getState().setHeroPortrait(session.heroPortrait.view);
+    useGameStore.getState().setWeaponCarousel({
+      active: session.weapons.activeWeapon,
+      available: session.weapons.availableWeapons(),
+      visible: session.weapons.selectionRemaining > 0,
+      revision: session.weapons.selectionRevision,
+    });
     useGameStore.getState().setDebug({
       fps: engine.fpsSmoothed,
       position: { x: engine.camera.position.x, y: engine.camera.position.y, z: engine.camera.position.z },

@@ -26,7 +26,18 @@ une boîte de munitions et rechargent votre réserve jusqu'à un plafond ; le
 pied-de-biche et le pompe, eux, n'ont rien de plus à offrir et restent
 simplement au sol.
 
-Changer d'arme se fait au clavier, à tout moment. Le geste de rangement puis
+Changer d'arme se fait au clavier ou à la molette, à tout moment. La molette
+vers le bas choisit l’arme suivante, vers le haut la précédente. Elle boucle
+entre les armes ramassées ; le coup de pied occupe la place de mêlée tant que
+le pied-de-biche n’est pas obtenu. Les armes à sec restent sélectionnables.
+
+Un carrousel apparaît en bas de l’écran pendant 1,6 seconde après un choix
+à la molette ou au clavier. L’arme équipée est au centre, encadrée d’ambre,
+avec son nom et ses munitions ; ses voisines restent plus discrètes. Une
+réserve vide s’affiche en rouge. Le choix est immédiat, sans confirmation.
+Le carrousel se masque dans les menus et en pause.
+
+Le geste de rangement puis
 de dégainement qui accompagne le changement est purement visuel : il ne vous
 empêche jamais de bouger, de sauter ou de tirer, et un nouveau tir peut
 partir avant même que l'arme ait fini de remonter à l'écran. Il n'existe

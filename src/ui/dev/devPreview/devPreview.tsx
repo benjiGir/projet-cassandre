@@ -20,6 +20,7 @@ import { difficultyOptions } from "../../../game/session/presentation/difficulty
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
+import { WeaponCarouselPreview } from "./WeaponCarouselPreview/WeaponCarouselPreview";
 import styles from "./devPreview.module.css";
 
 // see: docs/4-technique/interface-react.md
@@ -36,6 +37,7 @@ const PREVIEW_SCREENS = [
   "loadFailed",
   "crash",
   "hud",
+  "weaponCarousel",
   "debug",
   "tuning",
 ] as const;
@@ -188,6 +190,24 @@ export function maybeRenderDevPreview(root: Root): boolean {
         </>,
       );
       break;
+    case "weaponCarousel": {
+      seedHudState();
+      const state = useGameStore.getState();
+      const available = ["melee", "pistol", "shotgun", "flare"] as const;
+      const requestedWeapon = new URLSearchParams(window.location.search).get("carouselWeapon");
+      const active = available.find((weapon) => weapon === requestedWeapon) ?? "shotgun";
+      state.setFlowState("playing");
+      state.setWeaponCarousel({ active, available, visible: true, revision: 1 });
+      state.setDebug({ activeWeapon: active });
+      state.showDonation(null);
+      root.render(
+        <>
+          <GameBackdrop />
+          <WeaponCarouselPreview />
+        </>,
+      );
+      break;
+    }
     case "debug":
       seedHudState();
       root.render(

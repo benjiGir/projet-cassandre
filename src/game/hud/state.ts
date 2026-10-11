@@ -13,6 +13,7 @@ import type {
   PerkOfferView,
   StoreAnnouncement,
   StoryPanel,
+  WeaponCarouselView,
 } from "./hudTypes";
 import { INITIAL_HERO_PORTRAIT } from "../session/presentation/portraitState";
 
@@ -26,6 +27,8 @@ interface GameState {
   setCampaign: (state: GameState["campaign"]) => void;
   heroPortrait: HeroPortraitView;
   setHeroPortrait: (view: HeroPortraitView) => void;
+  weaponCarousel: WeaponCarouselView;
+  setWeaponCarousel: (view: WeaponCarouselView) => void;
   debug: DebugState;
   // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
   /** Au plus 10 Hz depuis la boucle ; aucun appel par frame. */
@@ -127,8 +130,29 @@ const INITIAL_DEBUG: DebugState = {
   wallet: 0,
 };
 
+const INITIAL_WEAPON_CAROUSEL: WeaponCarouselView = {
+  active: "none",
+  available: [],
+  visible: false,
+  revision: 0,
+};
+
 export const useGameStore = create<GameState>((set) => ({
   campaign: { levelId: "", nextAvailable: false },
+  weaponCarousel: INITIAL_WEAPON_CAROUSEL,
+  setWeaponCarousel: (view) =>
+    set((state) => {
+      const previous = state.weaponCarousel;
+      if (
+        previous.active === view.active &&
+        previous.visible === view.visible &&
+        previous.revision === view.revision &&
+        previous.available.length === view.available.length &&
+        previous.available.every((weapon, index) => weapon === view.available[index])
+      )
+        return state;
+      return { weaponCarousel: view };
+    }),
   setCampaign: (campaign) => set({ campaign }),
   heroPortrait: INITIAL_HERO_PORTRAIT,
   setHeroPortrait: (view) =>
@@ -187,6 +211,7 @@ export const useGameStore = create<GameState>((set) => ({
       campaign: { levelId: "", nextAvailable: false },
       debug: { ...INITIAL_DEBUG },
       heroPortrait: INITIAL_HERO_PORTRAIT,
+      weaponCarousel: INITIAL_WEAPON_CAROUSEL,
       hudMessage: null,
       heroLine: null,
       announcement: null,

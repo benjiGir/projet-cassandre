@@ -2,7 +2,7 @@
 title: Rejeu et déterminisme
 tags: [technique]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-11
 ---
 
 # Rejeu et déterminisme
@@ -107,6 +107,12 @@ MOMENT du pas fixe, pas un delta (`dx`/`dy`, gardé à titre diagnostic
 seulement) : c'est ce contrat — l'input TEL QUE CONSOMMÉ par le pas fixe,
 jamais les évènements bruts du navigateur — qui rend un rejeu indépendant du
 framerate d'affichage à l'enregistrement.
+
+`weaponCycle` transporte le nombre signé de pas de molette consommés :
+positif vers l’arme suivante, négatif vers la précédente. Le lecteur des
+enregistrements valide un entier et complète ce champ à zéro lorsqu’il est
+absent d’une ancienne séquence. Le cycle des armes est résolu par le même
+pas fixe en direct et en rejeu.
 
 **`Recording`** : `version` (1, `recordingFromJson` refuse toute autre
 valeur), `fixedDt` (celui de l'enregistrement, pas forcément celui de la

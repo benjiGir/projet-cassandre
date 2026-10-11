@@ -13,6 +13,7 @@ import { COLLISION_GROUPS, GROUP, type PhysicsWorld } from "../../../physics/wor
 import { approach } from "../movement/controller";
 import { weaponConfig, type RecoilKick, type WeaponConfig } from "./weaponConfig";
 import { kickConfig } from "./kickConfig";
+import { cycleWeapon, WEAPON_CAROUSEL_SECONDS } from "./weaponSelection";
 const TAU = Math.PI * 2;
 
 /** Valeur plafond des horloges du viewmodel : « il y a très longtemps ». */
@@ -30,6 +31,8 @@ const UNIT_Y = new THREE.Vector3(0, 1, 0);
 
 export class WeaponSystem {
   activeWeapon: WeaponKind = "melee";
+  selectionRevision = 0;
+  selectionRemaining = 0;
 
   /** Munitions de pompe restantes. Lecture publique pour le débogage. */
   shotgunAmmo: number;
@@ -175,6 +178,7 @@ export class WeaponSystem {
   }
 
   startUnarmed(): void {
+    this.selectionRemaining = 0;
     this.hasMelee = false;
     this.hasPistol = false;
     this.hasShotgun = false;
@@ -202,6 +206,14 @@ export class WeaponSystem {
     };
   }
 
+  availableWeapons(): readonly WeaponKind[] {
+    const available: WeaponKind[] = [this.hasMelee ? "melee" : "none"];
+    if (this.hasPistol) available.push("pistol");
+    if (this.hasShotgun) available.push("shotgun");
+    if (this.hasFlare) available.push("flare");
+    return available;
+  }
+
   owns(weapon: OwnedWeapon): boolean {
     switch (weapon) {
       case "melee":
@@ -218,6 +230,7 @@ export class WeaponSystem {
   }
 
   restoreInventory(inventory: WeaponInventory): void {
+    this.selectionRemaining = 0;
     this.hasMelee = inventory.owned.includes("melee");
     this.hasPistol = inventory.owned.includes("pistol");
     this.hasShotgun = inventory.owned.includes("shotgun");
@@ -347,6 +360,7 @@ export class WeaponSystem {
 
   update(dt: number, frame: InputFrame, eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
     const cfg = this.cfg;
+    this.selectionRemaining = Math.max(0, this.selectionRemaining - dt);
 
     this.sinceMeleeFire = Math.min(CLOCK_AT_REST, this.sinceMeleeFire + dt);
     this.sinceKickFire = Math.min(CLOCK_AT_REST, this.sinceKickFire + dt);
@@ -378,10 +392,22 @@ export class WeaponSystem {
     // Le joueur ne peut pas se rééquiper d'une arme qu'il n'a pas ramassée en
     // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
     // pied-de-biche pendant que le joueur est censé être désarmé.
+    const cycle = frame.weaponCycle ?? 0;
+    if (cycle !== 0) this.activeWeapon = cycleWeapon(this.activeWeapon, this.availableWeapons(), cycle);
     if (frame.switchToMelee) this.activeWeapon = this.hasMelee ? "melee" : "none";
     if (frame.switchToPistol && this.hasPistol) this.activeWeapon = "pistol";
     if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
     if (frame.switchToFlare && this.hasFlare) this.activeWeapon = "flare";
+    if (
+      cycle !== 0 ||
+      frame.switchToMelee ||
+      (frame.switchToPistol && this.hasPistol) ||
+      (frame.switchToShotgun && this.hasShotgun) ||
+      (frame.switchToFlare && this.hasFlare)
+    ) {
+      this.selectionRevision++;
+      this.selectionRemaining = WEAPON_CAROUSEL_SECONDS;
+    }
     // Un ramassage (`pickUp*`, appelé par l'interaction APRÈS ce pas) est vu
     // au pas suivant : un pas de retard, invisible.
     if (this.activeWeapon !== this.shownWeapon) {

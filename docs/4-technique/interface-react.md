@@ -2,7 +2,7 @@
 title: Interface React
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-11
 ---
 
 # Interface React
@@ -139,6 +139,27 @@ l'effondrement visible au-dessus de la superposition opaque.
 La pose initiale et son contrat vivent dans des feuilles sans Zustand (`portraitState.ts`, `hudTypes.ts`).
 Les atlas et limites des prises de voix sont décrits dans le
 [journal du portrait](../journal/portrait-stream-2026-10.md).
+
+### Carrousel d’armes
+
+`WeaponSystem` résout la molette et les raccourcis au pas fixe. Il expose les
+armes disponibles, une révision de sélection et un délai de présentation de
+1,6 seconde (`src/game/player/weapons/weaponSelection.ts`). Ce délai ne
+conditionne jamais un tir. Le coup de pied remplace la mêlée tant que le
+pied-de-biche n’est pas ramassé. Les armes à sec restent dans la liste.
+
+`publishDebugHud` publie `weaponCarousel` au plus à 10 Hz. Le setter ignore
+les vues identiques ; les munitions restent dans les champs existants du
+store. `WeaponCarousel` lit ce contrat et ne s’affiche que pendant `playing`.
+Chaque `WeaponSlot` sélectionne sa propre réserve. Les silhouettes SVG, les
+cadres et les transitions en CSS utilisent l’unité virtuelle du HUD et
+respectent la réduction des mouvements. Aucun écouteur de molette ni timer
+React ne pilote le changement d’arme.
+
+L’aperçu `?uiPreview=weaponCarousel` conserve le bandeau à l’écran et propose
+deux boutons pour regarder les différentes armes. Il reste réservé au
+développement. La [capture dans le métro](../assets/carrousel-armes/en-jeu.png)
+montre le bandeau avec le reste du HUD.
 
 ### Structure des composants
 

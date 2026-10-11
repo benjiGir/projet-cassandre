@@ -1,0 +1,55 @@
+.slot {
+  position: absolute;
+  top: calc(var(--vpx) * 1);
+  left: 50%;
+  width: calc(var(--vpx) * 72);
+  height: calc(var(--vpx) * 39);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: calc(var(--vpx) * 1) solid var(--panel-border);
+  color: var(--phosphor-dim);
+  background: var(--control-bg);
+  opacity: 0.55;
+  transform: translateX(calc(var(--vpx) * var(--slot-offset) * 78 - 50%)) scale(var(--slot-scale));
+  transition:
+    transform 100ms steps(3),
+    opacity 100ms steps(3);
+}
+
+.slot[aria-current="true"] {
+  color: var(--phosphor-strong);
+  border-color: var(--amber);
+  background: var(--flag-bg);
+  opacity: 1;
+}
+
+.slot[aria-hidden="true"] {
+  opacity: 0;
+}
+
+.ammo {
+  position: absolute;
+  bottom: calc(var(--vpx) * 1);
+  right: calc(var(--vpx) * 3);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: calc(var(--vpx) * 7);
+  font-weight: bold;
+  line-height: 1;
+}
+
+.slot[aria-current="true"] .ammo {
+  color: var(--amber);
+}
+.ammo[data-empty="true"],
+.slot[aria-current="true"] .ammo[data-empty="true"] {
+  color: var(--alert);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot {
+    transition: none;
+  }
+}
