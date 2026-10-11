@@ -117,7 +117,7 @@ Chaque ligne a une valeur par défaut, celle que le reste du plan suppose.
 | D46 | Où vont les anciens ennemis | Costards en guetteurs dans le quartier et en tireurs d'un quai à l'autre ; Vigiles aux passages gardés ; Rampants dans les galeries et par les trappes de toit de la rame | le lot N7 |
 | D47 | La voix du Contrôleur | Une voix à lui, choisie par un casting comme celle des annonces ; en attendant, celle du Costard | le lot C4, les crédits de génération |
 | D9 | Fin du niveau | Pas de boss : le premier gros boss est dans la tour (D19). Le sommet du métro est la **séquence à bord** | §2, le lot T4 |
-| D10 | Quatrième arme (esquissée dans `PLAN_SUITE.md`) | **Hors du chemin critique** : un lot à part, livrable avant ou après le métro | le lot C5 |
+| D10 | Quatrième arme (esquissée dans `PLAN_SUITE.md`) | **Décidé le 2026-10-11 : le pistolet de détresse**, trouvé dans le métro ([ADR 0046](docs/decisions/0046-projectile-du-joueur.md)). Reste hors du chemin critique du plan : un lot à part | le lot C5 |
 | D11 | Nom du réseau, de la ligne et des stations | Réseau **MUE** (Métro Urbain Express), **ligne S**, stations Zone commerciale · Mairie-Annexe · Sang-Froid · Dépôt, terminus sans nom marqué du seul symbole | panneaux, signalétique, annonces |
 | D16 | Le symbole de la plateforme | Celui du ticket de caisse du niveau 1, repris sur les rames, les bacs, les écrans et la tour. À dessiner | décor, panneaux |
 | D12 | Durée visée | **13 à 15 minutes** pour une première partie : le quartier ajoute deux minutes au trajet. Pour rester à 12, raccourcir les galeries | le plan de masse, le temps de référence |
@@ -783,7 +783,7 @@ flowchart LR
 | C1 | Campagne (§4) : état d'arrivée qui se garde, déblocage par le niveau 1, « Continuer », équipement type, transition « niveau suivant », consommables aux bornes, relevé simulé sur deux niveaux | L | niveau 1 → métro avec le même état ; « Continuer » après rechargement de la page ; métro seul avec l'équipement type |
 | C3 | Badges : habillage des trois clés par niveau | S | — |
 | C4 | Le Contrôleur (§5) : charge et projection du joueur, quatrième espèce de la machine partagée, sprites, sons et voix, chef de brigade en variante | L | **essai en salle jugé par l'utilisateur**, d'abord sans train, puis au bord d'une voie du prototype T1 |
-| C5 | Quatrième arme (si retenue, D10) | L | essai en salle jugé |
+| C5 | Quatrième arme : pistolet de détresse (D10) — **intégré le 2026-10-11**, valeurs de départ | L | essai en salle jugé : **en attente** |
 
 ### Piste niveau
 

@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-11
 ---
 
 # Sprites et viewmodel
@@ -78,7 +78,7 @@ Le flash blanc de dégâts est purement visuel. `setFlash` peut renforcer un fla
 
 Les géométries utilisent un matériau Lambert à vertex colors. Si le fichier ou un extra requis manque, `loadWeaponModelsOrPlaceholder` journalise l'erreur et fournit des boîtes de remplacement. Le modèle de pompe contient un sous-mesh mobile pour la pompe ; les pivots guident le recul et le glissement.
 
-Le viewmodel interpole les clocks de chaque arme. Le changement fait descendre l'ancienne arme puis remonter la nouvelle ; le pied-de-biche balaie après l'appui ; le pompe recule puis pompe après le tir. Tirer avec la nouvelle arme peut la remettre en place immédiatement. Aucun de ces gestes ne retarde la possibilité de tirer, conformément à l'invariant [#10](../3-architecture/invariants.md).
+Le viewmodel interpole les clocks de chaque arme. Le changement fait descendre l'ancienne arme puis remonter la nouvelle ; le pied-de-biche balaie après l'appui ; le pompe recule puis pompe après le tir ; le pistolet et le pistolet de détresse (`vm_flare`) n'ont que leur recul. Tirer avec la nouvelle arme peut la remettre en place immédiatement. Aucun de ces gestes ne retarde la possibilité de tirer, conformément à l'invariant [#10](../3-architecture/invariants.md).
 
 Les armes au sol ne sont pas le viewmodel. `src/render/pickups/pickups.ts` dessine les billboards d'armes et les modèles de soin et de munitions ; `spawning.ts` habille les meshes `use_*` et conserve les billboards pour leur animation de présentation. `bootGameSession` attend l’atlas et préchauffe les textures avant la construction de la partie. Les modèles partagés vivent dans `session.pickupResources`, à travers les hot reloads ; ils sont libérés après l’arrêt du niveau.
 

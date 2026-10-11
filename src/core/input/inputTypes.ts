@@ -10,6 +10,7 @@ export type GameAction =
   | "switchMelee"
   | "switchPistol"
   | "switchShotgun"
+  | "switchFlare"
   | "use";
 
 // see: docs/6-reference/notes-code-core.md#rejeu-et-horloge
@@ -25,6 +26,7 @@ export interface InputFrame {
   switchToMelee: boolean;
   switchToPistol: boolean;
   switchToShotgun: boolean;
+  switchToFlare: boolean;
   use: boolean;
   yaw: number;
   pitch: number;

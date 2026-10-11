@@ -23,6 +23,7 @@ Les actions de gameplay sont définies dans `src/core/input/inputTypes.ts` (type
 | Pied-de-biche | `Digit1` | 1 |
 | Pistolet | `Digit2` | 2 |
 | Pompe | `Digit3` | 3 |
+| Pistolet de détresse | `Digit4` | 4 |
 | Utiliser | `KeyE` | E |
 
 Le jeu lit `KeyboardEvent.code`, qui désigne la position physique de la touche. Le déplacement par défaut convient donc à ZQSD sur un clavier AZERTY. Le libellé de rebinding est dérivé du code QWERTY et affiche W/A, même si le capuchon physique porte Z/Q.

@@ -52,6 +52,8 @@ export interface WeaponPickupHandlers {
    * cartouches assurent la recharge séparément. */
   onShotgunPickup(): boolean;
   onPistolPickup(): boolean;
+  /** `use_flare`. Même contrat que le pistolet : un second vaut sa dotation de fusées. */
+  onFlarePickup(): boolean;
 }
 
 /** Rayon des ramassages pris en marchant dessus, en mètres — celui d'une partie sans perk. */
@@ -156,10 +158,9 @@ export class InteractionSystem {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
-      const handler = weaponPickupHandlerFor(useObject.name, handlers);
-      if (!handler) continue;
+      if (!isWeaponPickupName(useObject.name)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!handler()) continue; // déjà possédée sans rien à offrir : reste au sol
+      if (!collectWeaponPickup(useObject.name, handlers)) continue; // déjà possédée sans rien à offrir : reste au sol
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }
@@ -253,14 +254,15 @@ export class InteractionSystem {
   }
 }
 
+const WEAPON_PICKUP_NAMES = ["use_crowbar", "use_shotgun", "use_pistol", "use_flare"] as const;
+type WeaponPickupName = (typeof WEAPON_PICKUP_NAMES)[number];
+
 /** `use_*` dont l'effet est câblé par NOM (armes au sol, `switch` de
  * `InteractionSystem`) : aucune `target` attendue dans le `.glb`, donc pas
  * d'avertissement « sans cible » au chargement (`loader.ts`). */
 export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
   ...BLOCKOUT_CONTROLS,
-  "use_crowbar",
-  "use_shotgun",
-  "use_pistol",
+  ...WEAPON_PICKUP_NAMES,
   "use_exit_door",
   "use_frozen_storage",
   "use_pa_mic",
@@ -271,23 +273,23 @@ export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
   "use_toilet",
 ]);
 
-/** Les trois noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
-function isWeaponPickupName(name: string): boolean {
-  return name === "use_crowbar" || name === "use_shotgun" || name === "use_pistol";
+/** Les noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
+function isWeaponPickupName(name: string): name is WeaponPickupName {
+  return (WEAPON_PICKUP_NAMES as readonly string[]).includes(name);
 }
 
-/** Résout le callback de `WeaponPickupHandlers` pour un nom donné, `null` si
- * ce n'est pas une arme au sol — factorisé pour que `isWeaponPickupName` et
- * `collectWeapons` ne puissent pas diverger sur la liste des trois noms. */
-function weaponPickupHandlerFor(name: string, handlers: WeaponPickupHandlers): (() => boolean) | null {
+/** Appelle le callback de `WeaponPickupHandlers` de cette arme ; rend ce qu'il rend. */
+function collectWeaponPickup(name: WeaponPickupName, handlers: WeaponPickupHandlers): boolean {
   switch (name) {
     case "use_crowbar":
-      return handlers.onCrowbarPickup;
+      return handlers.onCrowbarPickup();
     case "use_shotgun":
-      return handlers.onShotgunPickup;
+      return handlers.onShotgunPickup();
     case "use_pistol":
-      return handlers.onPistolPickup;
+      return handlers.onPistolPickup();
+    case "use_flare":
+      return handlers.onFlarePickup();
     default:
-      return null;
+      return name satisfies never;
   }
 }

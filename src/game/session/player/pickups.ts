@@ -27,13 +27,24 @@ export function healPlayer(session: HealTarget, amount: number): number {
 // Une boîte ramassée au plafond de munitions ne donnerait rien : elle reste
 // au sol, comme une trousse sur un joueur en pleine forme.
 function takeAmmoBox(session: GameSession, amount: number, useObject: UseObject): boolean {
-  const isShotgunAmmo = useObject.ammoWeapon === "shotgun";
-  const taken = isShotgunAmmo ? session.weapons.addShotgunAmmo(amount) : session.weapons.addPistolAmmo(amount);
+  const weapon = useObject.ammoWeapon ?? "pistol";
+  const taken =
+    weapon === "flare"
+      ? session.weapons.addFlareAmmo(amount)
+      : weapon === "shotgun"
+        ? session.weapons.addShotgunAmmo(amount)
+        : session.weapons.addPistolAmmo(amount);
   if (taken <= 0) return false;
-  showHudMessage(isShotgunAmmo ? `+${taken} cartouches de pompe` : `+${taken} munitions`);
+  showHudMessage(
+    weapon === "flare"
+      ? `+${taken} fusées de détresse`
+      : weapon === "shotgun"
+        ? `+${taken} cartouches de pompe`
+        : `+${taken} munitions`,
+  );
   session.heroPortrait.react("victory", 0.45);
   playSfx("ammo_pickup");
-  if (!isShotgunAmmo)
+  if (weapon === "pistol")
     triggerHeroLine(
       session,
       AMMO_CACHE_LINES[useObject.name] ?? (amount >= LARGE_AMMO_BOX ? "munitions_36" : "munitions_24"),
@@ -64,6 +75,22 @@ function takePistol(session: GameSession): boolean {
     showHudMessage(alreadyOwned ? `+${session.weapons.pistolAmmo - ammoBefore} munitions` : "Pistolet récupéré");
     playSfx("ammo_pickup");
     if (!alreadyOwned) triggerHeroLine(session, "arme_pistolet");
+  }
+  return taken;
+}
+
+function takeFlare(session: GameSession): boolean {
+  // Lus AVANT `tryCollectFlare()`, comme pour le pistolet juste au-dessus.
+  const alreadyOwned = session.weapons.hasFlareAlready;
+  const ammoBefore = session.weapons.flareAmmo;
+  const taken = session.weapons.tryCollectFlare();
+  if (taken) {
+    session.heroPortrait.react("victory", alreadyOwned ? 0.45 : 1);
+    showHudMessage(
+      alreadyOwned ? `+${session.weapons.flareAmmo - ammoBefore} fusées de détresse` : "Pistolet de détresse récupéré",
+    );
+    playSfx("ammo_pickup");
+    if (!alreadyOwned) triggerHeroLine(session, "arme_fusee");
   }
   return taken;
 }
@@ -110,6 +137,7 @@ export function updatePickups(interaction: InteractionSystem, session: GameSessi
       onShotgunPickup: () =>
         takeNewWeapon(session, session.weapons.tryCollectShotgun(), "Fusil à pompe récupéré", "arme_pompe"),
       onPistolPickup: () => takePistol(session),
+      onFlarePickup: () => takeFlare(session),
     },
     radius,
   );

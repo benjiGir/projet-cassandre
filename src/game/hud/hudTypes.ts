@@ -164,6 +164,8 @@ export interface DebugState {
   shotgunMaxAmmo: number;
   pistolAmmo: number;
   pistolMaxAmmo: number;
+  flareAmmo: number;
+  flareMaxAmmo: number;
 
   activeWeapon: WeaponKind;
 

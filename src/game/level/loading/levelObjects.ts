@@ -395,14 +395,16 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
     const explicitHeals = yield* readAmountProperty(name, "soin", extras.soin);
     const pistolAmmo = yield* readAmountProperty(name, "munitions", extras.munitions);
     const shotgunAmmo = yield* readAmountProperty(name, "cartouches", extras.cartouches);
-    let ammo = shotgunAmmo ?? pistolAmmo;
-    if (extras.munitions !== undefined && extras.cartouches !== undefined) {
+    const flareAmmo = yield* readAmountProperty(name, "fusees", extras.fusees);
+    let ammo = flareAmmo ?? shotgunAmmo ?? pistolAmmo;
+    const declaredAmmoKinds = [extras.munitions, extras.cartouches, extras.fusees].filter((v) => v !== undefined);
+    if (declaredAmmoKinds.length > 1) {
       ammo = null;
       yield* Effect.fail(new AmbiguousAmmoPickupWarning({ name })).pipe(
         Effect.catch((error) => Effect.sync(() => console.error(formatAmbiguousAmmoPickup(error)))),
       );
     }
-    const ammoWeapon = shotgunAmmo !== null ? "shotgun" : "pistol";
+    const ammoWeapon = flareAmmo !== null ? "flare" : shotgunAmmo !== null ? "shotgun" : "pistol";
     const aliment = yield* readFoodItem(name, extras.aliment);
     const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
     const cameras =

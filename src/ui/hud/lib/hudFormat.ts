@@ -1,6 +1,9 @@
 import type { DebugState } from "../../../game/hud/hudTypes";
 
-type AmmoFields = Pick<DebugState, "activeWeapon" | "shotgunAmmo" | "shotgunMaxAmmo" | "pistolAmmo" | "pistolMaxAmmo">;
+type AmmoFields = Pick<
+  DebugState,
+  "activeWeapon" | "shotgunAmmo" | "shotgunMaxAmmo" | "pistolAmmo" | "pistolMaxAmmo" | "flareAmmo" | "flareMaxAmmo"
+>;
 
 export function ammoLabel(ammo: AmmoFields): string {
   switch (ammo.activeWeapon) {
@@ -8,6 +11,8 @@ export function ammoLabel(ammo: AmmoFields): string {
       return `${ammo.shotgunAmmo} / ${ammo.shotgunMaxAmmo}`;
     case "pistol":
       return `${ammo.pistolAmmo} / ${ammo.pistolMaxAmmo}`;
+    case "flare":
+      return `${ammo.flareAmmo} / ${ammo.flareMaxAmmo}`;
     case "melee":
       return "PIED-DE-BICHE";
     case "none":

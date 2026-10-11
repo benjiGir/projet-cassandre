@@ -105,6 +105,8 @@ interface ExplosionSlot {
   light: THREE.PointLight | null;
   /** Secondes écoulées ; négatif = libre. */
   age: number;
+  /** Taille relative à une explosion de bonbonne. */
+  scale: number;
 }
 
 export class Explosions {
@@ -125,7 +127,7 @@ export class Explosions {
       ball.frustumCulled = false;
       ball.scale.setScalar(MAX_RADIUS);
       scene.add(ball);
-      this.slots.push({ ball, origin: new THREE.Vector3(), light: null, age: -1 });
+      this.slots.push({ ball, origin: new THREE.Vector3(), light: null, age: -1, scale: 1 });
     }
     // Lampes toujours visibles, éteintes par leur intensité : en allumer une
     // changerait le nombre de lampes de la scène, donc recompilerait tous les
@@ -137,11 +139,14 @@ export class Explosions {
     }
   }
 
-  spawn(point: THREE.Vector3): void {
+  /** `scale` réduit la boule, sa montée et sa lampe : 1 pour une bonbonne, moins pour une fusée. */
+  spawn(point: THREE.Vector3, scale = 1): void {
     const slot = this.slots[this.cursor];
     this.cursor = (this.cursor + 1) % this.slots.length;
     this.release(slot);
     slot.age = 0;
+    slot.scale = scale;
+    slot.ball.scale.setScalar(MAX_RADIUS * scale);
     slot.origin.copy(point);
     // Deux explosions voisines ne doivent pas montrer les mêmes volutes.
     slot.ball.userData.explosionSeed = this.random() * 40;
@@ -211,7 +216,7 @@ export class Explosions {
     const t = slot.age / DURATION;
     slot.ball.userData.explosionAge = t;
     slot.ball.position.copy(slot.origin);
-    slot.ball.position.y += RISE * t;
-    if (slot.light) slot.light.intensity = LIGHT_INTENSITY * Math.max(0, 1 - slot.age / LIGHT_DURATION);
+    slot.ball.position.y += RISE * slot.scale * t;
+    if (slot.light) slot.light.intensity = LIGHT_INTENSITY * slot.scale * Math.max(0, 1 - slot.age / LIGHT_DURATION);
   }
 }

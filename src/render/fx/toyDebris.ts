@@ -52,6 +52,13 @@ const EMBER_GEOMETRY = new THREE.BoxGeometry(EMBER_SIZE, EMBER_SIZE, EMBER_SIZE)
 // Lambert émissif, pas Basic : le programme des autres débris, déjà compilé.
 const EMBER_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xf2891d });
 
+// Pistolet de détresse : les étincelles rouges semées en vol, puis la gerbe de l'éclatement.
+const FLARE_SPARK_LIFETIME = 0.45; // s
+const FLARE_SPARK_SIZE = 0.045; // m
+const FLARE_SPARK_GEOMETRY = new THREE.BoxGeometry(FLARE_SPARK_SIZE, FLARE_SPARK_SIZE, FLARE_SPARK_SIZE);
+const FLARE_SPARK_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xff5a3c });
+const FLARE_BURST_COUNT = 14;
+
 // see: docs/6-reference/notes-code-rendu.md#fontaines-permanentes
 
 const CERAMIC_LIFETIME = 1.1; // s
@@ -177,6 +184,30 @@ export class ToyDebris {
       speedMin: EMBER_SPEED_MIN,
       speedMax: EMBER_SPEED_MAX,
       gravityScale: 1,
+    });
+  }
+
+  /** Une étincelle lâchée par une fusée en vol, vers l'arrière de sa course. */
+  spawnFlareSpark(point: THREE.Vector3, direction: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, direction, FLARE_SPARK_GEOMETRY, FLARE_SPARK_MATERIAL, {
+      count: 1,
+      lifetime: FLARE_SPARK_LIFETIME,
+      spread: 0.5,
+      speedMin: 0.6,
+      speedMax: 1.8,
+      gravityScale: 0.35,
+    });
+  }
+
+  /** Éclatement d'une fusée : moins d'éclats qu'une bonbonne, rouges, qui retombent lentement. */
+  spawnFlareBurst(point: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, UP_DIRECTION, FLARE_SPARK_GEOMETRY, FLARE_SPARK_MATERIAL, {
+      count: FLARE_BURST_COUNT,
+      lifetime: EMBER_LIFETIME,
+      spread: EMBER_SPREAD,
+      speedMin: 3,
+      speedMax: 9,
+      gravityScale: 0.5,
     });
   }
 

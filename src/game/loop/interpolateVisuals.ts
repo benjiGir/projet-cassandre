@@ -24,6 +24,7 @@ const suitForwardScratch = new THREE.Vector3();
 const directorPositionScratch = new THREE.Vector3();
 const directorForwardScratch = new THREE.Vector3();
 const enemyAnimationScratch = createEnemyAnimationInput();
+const flareMuzzle = new THREE.Vector3();
 
 // Tourne au taux d'affichage, pas le pas fixe — même frontière Effect
 // synchrone stricte (`runGameplaySync`) que le pas fixe.
@@ -58,6 +59,7 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         }
 
         engine.viewmodel.update(alpha, session.weapons);
+        engine.fx.poseFlares(session.weapons.flares, alpha, engine.viewmodel.muzzleWorldPosition(flareMuzzle, "flare"));
       });
 
       yield* Effect.sync(() => {

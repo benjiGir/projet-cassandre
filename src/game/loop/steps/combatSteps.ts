@@ -16,7 +16,11 @@ export function recordKillFeedback(session: GameSession, count: number): void {
     streamEvent(session, "kill");
     if (session.run.firstKillTriggered) {
       // Le kill vient de l'arme en main : un tir et sa mort tombent dans le même pas fixe.
-      triggerHeroLine(session, session.weapons.activeWeapon === "shotgun" ? "kill_pompe" : "kill_costard");
+      const weapon = session.weapons.activeWeapon;
+      triggerHeroLine(
+        session,
+        weapon === "shotgun" ? "kill_pompe" : weapon === "flare" ? "kill_fusee" : "kill_costard",
+      );
       continue;
     }
     session.run.firstKillTriggered = true;

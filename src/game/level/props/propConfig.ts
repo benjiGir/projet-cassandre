@@ -14,7 +14,8 @@ export const PROP_LINEAR_DAMPING = 0.6;
 export const PROP_ANGULAR_DAMPING = 0.8;
 
 // see: PLAN_SUITE.md, lot B3 — valeurs de départ, que le lot B7 règle.
-export interface ExplosionConfig {
+/** Un souffle, d'où qu'il vienne : bonbonne `gaz` ou fusée du pistolet de détresse. */
+export interface BlastConfig {
   /** Rayon du souffle, en mètres. Au-delà, rien n'est touché. */
   radius: number;
   /** Dégâts au centre ; ils décroissent linéairement jusqu'à 0 au bord du rayon. */
@@ -27,6 +28,9 @@ export interface ExplosionConfig {
   impulse: number;
   /** Part de l'impulsion envoyée vers le haut : un prop soufflé décolle au lieu de racler le sol. */
   impulseLift: number;
+}
+
+export interface ExplosionConfig extends BlastConfig {
   /** Pas fixes entre un souffle et l'explosion d'une bonbonne qu'il atteint. */
   chainDelaySteps: number;
 }
@@ -43,7 +47,7 @@ export const explosionConfig: ExplosionConfig = {
 };
 
 /** Dégâts du souffle à `distance` mètres de son centre. */
-export function blastDamageAt(distance: number, cfg: ExplosionConfig = explosionConfig): number {
+export function blastDamageAt(distance: number, cfg: BlastConfig = explosionConfig): number {
   if (distance >= cfg.radius) return 0;
   return cfg.damage * (1 - Math.max(0, distance) / cfg.radius);
 }

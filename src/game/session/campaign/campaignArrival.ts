@@ -46,6 +46,8 @@ export function metroArrival(difficulty: Difficulty, profile: "type" | "pauvre" 
           ? weaponConfig.pistolMaxAmmo + perkConfig.premiumPistolAmmoBonus
           : Math.floor(weaponConfig.pistolMaxAmmo / 2),
       shotgunAmmo: poor ? 0 : rich ? weaponConfig.shotgunMaxAmmo : Math.floor(weaponConfig.shotgunMaxAmmo / 2),
+      // Le pistolet de détresse se trouve dans le métro : aucun profil n'en arrive équipé.
+      flareAmmo: 0,
     },
     perks: poor ? [] : rich ? ["perche", "boisson", "aimant", "premium", "gilet"] : ["perche", "boisson", "aimant"],
     wallet: poor ? 0 : rich ? 150 : 40,

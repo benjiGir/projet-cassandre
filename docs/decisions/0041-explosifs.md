@@ -71,3 +71,7 @@ Si une chaîne de bonbonnes tue régulièrement le joueur sans qu'il ait vu la
 première sauter, le délai ou le placement sont à revoir avant le principe. Si
 d'autres objets doivent exploser autrement (une grenade lancée, un baril qui
 roule), la matière ne suffira plus et il faudra un vrai système de souffle.
+
+Le cas s'est présenté avec le pistolet de détresse : le souffle prend
+désormais sa configuration et son centre en paramètres
+([ADR 0046](0046-projectile-du-joueur.md)).

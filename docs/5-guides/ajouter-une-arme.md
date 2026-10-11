@@ -2,7 +2,7 @@
 title: Ajouter une arme
 tags: [guide, recette]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-11
 ---
 
 # Ajouter une arme
@@ -104,3 +104,17 @@ Commit `d8dbf40`, « Armes et feel de tir (Phase 2) + wireframe debug +
 fix stutter déplacement » : il ajoute la première implémentation du
 pied-de-biche et du pompe, les paramètres d'arme, les événements de tir
 et le viewmodel.
+
+Le pistolet de détresse (2026-10-11) est l'exemple le plus complet, et le seul
+à projectile. Il touche, dans l'ordre de ce guide : `weaponConfig.ts` (`flare*`),
+`weaponTypes.ts`, `inputTypes.ts`/`inputBindings.ts`/`inputStep.ts` et le
+schéma des enregistrements, `weapons.ts` et `flareFlight.ts`,
+`breakableSteps.ts` (le souffle), `viewmodel.ts` et `weaponModels.ts`,
+`tools/blender/weapons/flare.py` et `build_weapons.py`,
+`render_weapon_pickups.py` puis `pickupConfig.ts`, `audioCatalog.ts` et
+`tools/audio/sons_armes.py`, `hudTypes.ts`/`hudFormat.ts`, `interactive.ts` et
+`levelObjects.ts` (ramassage `use_flare`, boîtes `fusees`),
+`campaignStorage.ts` (la sauvegarde), `validate_level.py`. Ce que ce guide ne
+disait pas : une arme ajoutée change la forme de la **sauvegarde de campagne**
+et des **enregistrements d'input** — les deux doivent rester lisibles sans le
+nouveau champ.

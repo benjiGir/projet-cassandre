@@ -1,7 +1,7 @@
 import { offerPrice } from "./perkConfig";
 import { PERK_INFO, type Perk, type PerkOffer } from "./perks";
 
-export const kioskConfig = { healPrice: 10, healHp: 25, ammoPrice: 12, pistolAmmo: 24, shotgunAmmo: 8 };
+export const kioskConfig = { healPrice: 10, healHp: 25, ammoPrice: 12, pistolAmmo: 24, shotgunAmmo: 8, flareAmmo: 2 };
 
 export interface KioskOffer {
   readonly kind: "perk" | "heal" | "ammo";
@@ -23,7 +23,7 @@ export function kioskOffer(perks: ReadonlySet<Perk>, offer: PerkOffer): KioskOff
   return {
     kind: "ammo",
     label: "Recharge de munitions",
-    effect: `+${kioskConfig.pistolAmmo} balles / +${kioskConfig.shotgunAmmo} cartouches (armes possédées)`,
+    effect: `+${kioskConfig.pistolAmmo} balles / +${kioskConfig.shotgunAmmo} cartouches / +${kioskConfig.flareAmmo} fusées (armes possédées)`,
     price: kioskConfig.ammoPrice,
   };
 }

@@ -196,7 +196,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
                     "cet ennemi n'apparaîtrait jamais")
-        if n.startswith("use_") and n not in {"use_n5_aiguillage", "use_n5_courant", "use_n5_depart", "use_n5_fin", "use_n5_raccourci", "use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "cartouches", "aliment", "cameras", "perk", "train"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_n5_aiguillage", "use_n5_courant", "use_n5_depart", "use_n5_fin", "use_n5_raccourci", "use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2", "use_flare"} and not {"target", "card", "soin", "munitions", "cartouches", "fusees", "aliment", "cameras", "perk", "train"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -244,9 +244,11 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 if valeur not in LOYALTY_CARDS:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une carte "
                         f"({', '.join(LOYALTY_CARDS)})")
-        if n.startswith("use_") and "munitions" in o.keys() and "cartouches" in o.keys():
-            err(f"{o.name}: 'munitions' et 'cartouches' sur le même ramassage")
-        for cle, unite in (("soin", "PV"), ("munitions", "munitions"), ("cartouches", "cartouches")):
+        munitions_declarees = [cle for cle in ("munitions", "cartouches", "fusees") if cle in o.keys()]
+        if n.startswith("use_") and len(munitions_declarees) > 1:
+            err(f"{o.name}: {' et '.join(repr(cle) for cle in munitions_declarees)} sur le même ramassage")
+        for cle, unite in (("soin", "PV"), ("munitions", "munitions"), ("cartouches", "cartouches"),
+                           ("fusees", "fusées")):
             if n.startswith("use_") and cle in o.keys():
                 try:
                     quantite = float(o[cle])

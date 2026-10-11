@@ -16,6 +16,7 @@ function captureInputFrame(engine: GameEngine): InputFrame {
   liveFrame.switchToMelee = input.consumeActionJustPressed("switchMelee");
   liveFrame.switchToPistol = input.consumeActionJustPressed("switchPistol");
   liveFrame.switchToShotgun = input.consumeActionJustPressed("switchShotgun");
+  liveFrame.switchToFlare = input.consumeActionJustPressed("switchFlare");
   liveFrame.use = input.consumeActionJustPressed("use");
   liveFrame.yaw = engine.look.yaw;
   liveFrame.pitch = engine.look.pitch;

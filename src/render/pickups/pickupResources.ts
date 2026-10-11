@@ -23,6 +23,8 @@ const KIT_GLOW = 0.35;
 
 const AMMO_SIZE = { width: 0.42, height: 0.22, depth: 0.3 } as const;
 const SHOTGUN_AMMO_SIZE = { width: 0.54, height: 0.28, depth: 0.34 } as const;
+// Étui de fusées : plus haut que large, pour ne ressembler à aucune des deux autres boîtes.
+const FLARE_AMMO_SIZE = { width: 0.36, height: 0.34, depth: 0.26 } as const;
 
 const CELL = 32;
 
@@ -50,6 +52,7 @@ export class PickupResources {
   private kit: PickupModel | null = null;
   private ammo: PickupModel | null = null;
   private shotgunAmmo: PickupModel | null = null;
+  private flareAmmo: PickupModel | null = null;
   private disposed = false;
   private clock = 0;
   get weaponClock(): number {
@@ -76,8 +79,9 @@ export class PickupResources {
       this.healModel();
       this.ammoModel();
       this.shotgunAmmoModel();
+      this.flareAmmoModel();
       for (const item of FOOD_ITEMS) this.foodModel(item);
-      for (const weapon of ["melee", "pistol", "shotgun"] as const) this.weaponGeometry(weapon);
+      for (const weapon of ["melee", "pistol", "shotgun", "flare"] as const) this.weaponGeometry(weapon);
     } catch (error) {
       try {
         this.dispose();
@@ -125,6 +129,7 @@ export class PickupResources {
     this.kit = null;
     this.ammo = null;
     this.shotgunAmmo = null;
+    this.flareAmmo = null;
     if (errors.length > 0) throw new AggregateError(errors, "Libération incomplète des ressources des ramassages");
   }
 
@@ -318,6 +323,50 @@ export class PickupResources {
       this.shotgunAmmo.geometry.translate(0, height / 2, 0);
     }
     return this.shotgunAmmo;
+  }
+
+  private flareAmmoFaceTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = CELL;
+    canvas.height = CELL;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#8a3a12";
+    ctx.fillRect(0, 0, CELL, CELL);
+    ctx.fillStyle = "#e0701f"; // orange de signalisation : la couleur de l'arme
+    ctx.fillRect(2, 2, CELL - 4, CELL - 4);
+    ctx.fillStyle = "#f4ead2";
+    ctx.fillRect(2, 4, CELL - 4, 8);
+    ctx.fillStyle = "#3a1c10";
+    ctx.font = "bold 8px monospace";
+    ctx.fillText("SOS", 8, 11);
+    // Deux fusées debout : un tube large à tête rouge, le seul motif lisible à 640×360.
+    for (const x of [7, 18]) {
+      ctx.fillStyle = "#3a1c10";
+      ctx.fillRect(x - 1, 14, 9, 16);
+      ctx.fillStyle = "#d8d2c4";
+      ctx.fillRect(x, 19, 7, 10);
+      ctx.fillStyle = "#e23a2c";
+      ctx.fillRect(x, 15, 7, 4);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    configureRetroTexture(texture);
+    return this.own(texture);
+  }
+
+  flareAmmoModel(): PickupModel {
+    this.assertActive();
+    if (!this.flareAmmo) {
+      const map = this.flareAmmoFaceTexture();
+      const { width, height, depth } = FLARE_AMMO_SIZE;
+      this.flareAmmo = {
+        geometry: this.own(new THREE.BoxGeometry(width, height, depth)),
+        material: this.own(
+          new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 }),
+        ),
+      };
+      this.flareAmmo.geometry.translate(0, height / 2, 0);
+    }
+    return this.flareAmmo;
   }
 
   ammoModel(): PickupModel {

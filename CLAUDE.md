@@ -156,7 +156,8 @@ Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
 `target`), `message` (texte d'une porte LIBRE — `target` sans `requires` : le
 photomaton du secret 1, la porte coupe-feu ; le sens unique d'une porte tient à
 la place de son `use_*`, hors de portée depuis l'autre côté), `soin` (PV d'une
-trousse), `munitions` (recharge de pistolet), `perk` et `prix` (une BORNE de
+trousse), `munitions` (recharge de pistolet), `cartouches` (de pompe) et
+`fusees` (de pistolet de détresse) — une seule des trois par boîte —, `perk` et `prix` (une BORNE de
 sponsor : le perk vendu et son prix en euros, les deux requis,
 [ADR 0040](docs/decisions/0040-bornes-et-perks.md)) et `aliment` (chantier « Les
 coulisses », VARIANTE de `soin` — `donut`/`sandwich`/`jambon`/`poulet`/`pizza`,

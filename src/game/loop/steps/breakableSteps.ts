@@ -1,3 +1,7 @@
+import type * as THREE from "three";
+
+import type { BlastConfig } from "../../level/props/propConfig";
+import { weaponConfig } from "../../player/weapons/weaponConfig";
 import { applyBlast } from "../../session/player/explosions";
 import { triggerHeroLine } from "../../session/player/feedback";
 import { PROP_BREAK_LINES } from "../../session/presentation/heroLines";
@@ -12,21 +16,31 @@ import { streamEvent } from "../../session/stream/streamFeed";
 import { recordDirectorKillFeedback, recordKillFeedback } from "./combatSteps";
 import type { GameplayStep } from "./gameplayStep";
 
+/** Le souffle sur les vivants, et ce qu'il rapporte au score et au direct. */
+function blastLiving({ engine, session }: GameplayStep, center: THREE.Vector3, blast?: BlastConfig): void {
+  const outcome = applyBlast(engine, session, center, blast);
+  recordSuitKills(session.run.stats, outcome.suitKills);
+  recordKillFeedback(session, outcome.suitKills);
+  recordDirectorKills(session.run.stats, outcome.directorKills);
+  recordDirectorKillFeedback(session, outcome.directorKills);
+  if (outcome.playerDamage > 0) streamEvent(session, "degats");
+}
+
 /** Tout ce qui casse sous les tirs du pas : mobilier et explosifs, vitrages, sanitaires, écrans. */
-export function updateBreakables({ engine, session, dt }: GameplayStep): void {
+export function updateBreakables(step: GameplayStep): void {
+  const { session, dt } = step;
   const propsDestroyedBefore = session.level.propSystem?.destroyedEvents.length ?? 0;
   session.level.propSystem?.update(session.weapons.hitEvents);
   const propsDestroyed = session.level.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
   recordPropsDestroyed(session.run.stats, propsDestroyed.length);
   // Explosifs (`matiere: gaz`) : les props se sont déjà poussés et
   // amorcés entre eux, reste le souffle sur le joueur et les ennemis.
-  for (const explosion of session.level.propSystem?.takeNewExplosions() ?? []) {
-    const blast = applyBlast(engine, session, explosion.point);
-    recordSuitKills(session.run.stats, blast.suitKills);
-    recordKillFeedback(session, blast.suitKills);
-    recordDirectorKills(session.run.stats, blast.directorKills);
-    recordDirectorKillFeedback(session, blast.directorKills);
-    if (blast.playerDamage > 0) streamEvent(session, "degats");
+  for (const explosion of session.level.propSystem?.takeNewExplosions() ?? []) blastLiving(step, explosion.point);
+  // Fusées du pistolet de détresse : même souffle en plus court, et une
+  // bonbonne qu'il atteint s'amorce comme sous celui d'une autre bonbonne.
+  for (const detonation of session.weapons.takeNewFlareDetonations()) {
+    session.level.propSystem?.applyBlast(detonation.point, weaponConfig.flareBlast);
+    blastLiving(step, detonation.point, weaponConfig.flareBlast);
   }
   const breakLine = propsDestroyed.map((e) => PROP_BREAK_LINES[e.matiere]).find((l) => l !== undefined);
   if (breakLine) triggerHeroLine(session, breakLine);

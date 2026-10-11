@@ -7,4 +7,6 @@ export interface WeaponInventory {
   readonly active: WeaponKind;
   readonly pistolAmmo: number;
   readonly shotgunAmmo: number;
+  /** Absent d'une sauvegarde antérieure au pistolet de détresse : aucune fusée. */
+  readonly flareAmmo?: number;
 }

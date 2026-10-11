@@ -521,6 +521,21 @@ describe("PropSystem — explosifs (`matiere: gaz`, lot B3)", () => {
     expect(props.takeNewExplosions().map((e) => e.name)).toEqual(["prop_gaz_b"]);
   });
 
+  it("un souffle né hors de tout prop (fusée) amorce les bonbonnes à sa portée, sans exploser lui-même", () => {
+    const { handle, props } = scene();
+    const crate = handle.props.find((p) => p.name === "prop_caisse")!;
+
+    // Entre A et B, à moins de 3,5 m des deux ; C est à plus de 4 m.
+    props.applyBlast(new THREE.Vector3(1.7, 0.4, 0), weaponConfig.flareBlast);
+
+    expect(props.explosionEvents).toEqual([]);
+    expect(props.takeNewExplosions()).toEqual([]);
+    expect(crate.body.linvel().x).toBeLessThan(0);
+
+    for (let i = 0; i < explosionConfig.chainDelaySteps; i++) props.update([]);
+    expect(props.explosionEvents.map((e) => e.name)).toEqual(["prop_gaz_a", "prop_gaz_b"]);
+  });
+
   it("les dégâts du souffle décroissent jusqu'à zéro au bord du rayon", () => {
     expect(blastDamageAt(0)).toBe(explosionConfig.damage);
     expect(blastDamageAt(explosionConfig.radius / 2)).toBeCloseTo(explosionConfig.damage / 2, 5);

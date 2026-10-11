@@ -2,7 +2,7 @@
 title: Rencontres du métro
 tags: [metro, ennemis, script]
 status: brouillon
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # Rencontres du métro
@@ -64,6 +64,22 @@ leur bande claire « 12 » et leur motif de cartouches rouges à culot doré.
 La campagne conserve l'équipement du niveau précédent ;
 le lancement isolé de la page d'auteur ne prouve pas l'équilibre d'une
 arrivée pauvre ou riche.
+
+Le pistolet de détresse se trouve dans le métro (`use_flare`) : au sol devant
+l'établi de la première galerie de service (X 19,05 / Y 215), sous sa lampe de
+travail, sur le chemin obligé et quatre mètres avant la première meute de
+Rampants. Il donne 6 fusées. Trois étuis `use_*.fusees` de 4 fusées le
+rechargent, au dépôt, dans la machinerie et dans la rame : 18 fusées en tout,
+le plafond de l'arme. Une arme au sol n'est pas dans `PICKUPS` mais dans
+`WEAPONS` : le jeu la reconnaît à son nom exact, sans propriété.
+
+`tools/metro/blockout/refresh_weapon_pickups.py` pose ces quatre objets sur le
+`.blend` livré, avec le même contrôle d'appui et de dégagement que la
+construction, sans reconstruire tout le parcours :
+
+```bash
+blender -b assets_src/blender/metro_blockout.blend -P tools/metro/blockout/refresh_weapon_pickups.py
+```
 
 Chaque marqueur de ramassage porte son origine au centre de sa boîte, à
 16 cm au-dessus du sol prévu. La géométrie est ramenée dans son repère

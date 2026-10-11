@@ -4,6 +4,19 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Ajouté
+
+- Quatrième arme, trouvée dans le métro : le pistolet de détresse (touche
+  `4`). Sa fusée voyage au lieu de toucher à l'instant du tir, éclaire le
+  décor en rouge, puis éclate à l'impact ; le souffle blesse autour de lui,
+  passe le bouclier du Vigile, amorce les bonbonnes de gaz et n'épargne pas
+  le joueur. Six fusées avec l'arme, dix-huit au plus, rechargées par les
+  étuis orange « SOS » et les bornes de munitions.
+- Propriété de niveau `fusees` pour les étuis de fusées, et nom réservé
+  `use_flare` pour l'arme au sol.
+
 ## [1.3.0] — 2026-10-06
 
 Le combat gagne en lisibilité et les objets du magasin sont retravaillés.

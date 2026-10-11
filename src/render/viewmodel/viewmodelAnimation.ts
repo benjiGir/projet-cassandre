@@ -27,7 +27,9 @@ export function viewmodelAnimationAt(clocks: ViewmodelClocks, out: ViewmodelAnim
         ? clocks.sincePistolFire
         : clocks.active === "shotgun"
           ? clocks.sinceShotgunFire
-          : Infinity;
+          : clocks.active === "flare"
+            ? clocks.sinceFlareFire
+            : Infinity;
   const lowerPhase = clocks.previous === "none" ? 0 : t.lower;
   out.weapon = clocks.active;
   out.lowered = 0;
@@ -43,8 +45,8 @@ export function viewmodelAnimationAt(clocks: ViewmodelClocks, out: ViewmodelAnim
   const s = clocks.sinceMeleeFire;
   out.swing = s < t.strike ? easeOut(s / t.strike) : 1 - easeInOut(clamp01((s - t.strike) / t.recover));
 
-  // Le pistolet n'a pas de mouvement propre : tout son geste est le recul
-  // (`viewmodelPose`), plus sec et plus court que celui du pompe.
+  // Le pistolet et le pistolet de détresse n'ont pas de mouvement propre :
+  // tout leur geste est le recul (`viewmodelPose`).
   const p = clocks.sinceShotgunFire - t.pumpStart;
   out.pump =
     p < 0 ? 0 : p < t.pumpBack ? easeInOut(p / t.pumpBack) : 1 - easeInOut(clamp01((p - t.pumpBack) / t.pumpForward));

@@ -2,7 +2,7 @@
 title: Armes
 tags: [technique]
 status: stable
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # Armes
@@ -12,13 +12,16 @@ updated: 2026-10-10
 Fait : sélectionne l'arme active, avance ses cooldowns et ses munitions,
 résout ses tirs par raycast ou par requête de forme, déclenche le hitstop et
 porte l'état de recul du viewmodel — uniquement des nombres, aucun mesh ni
-matériau. Décide aussi, pour les trois ramassages au sol, si le joueur a déjà
-l'arme (et donc ce que ramasser change).
+matériau. Fait voler les fusées du pistolet de détresse, d'un pas fixe à
+l'autre, jusqu'à ce qu'elles éclatent. Décide aussi, pour les quatre
+ramassages au sol, si le joueur a déjà l'arme (et donc ce que ramasser change).
 
 Ne fait pas : n'applique aucun dégât — `WeaponSystem` produit des `hitEvents`
 en lecture seule, c'est `SuitManager`/`DirectorManager`/`PropSystem`/
 `VitreSystem`/`SanitaireSystem` qui les lisent au pas fixe suivant et
 décident d'une mort, d'une casse ou de rien ([Simulation et présentation](../3-architecture/simulation-et-presentation.md)).
+N'applique pas non plus le souffle d'une fusée : `WeaponSystem` dit où elle a
+éclaté, `updateBreakables` souffle.
 Ne fait pas la géométrie du ramassage au sol : `InteractionSystem` (`game/level/interactions/interactive.ts`)
 détecte la proximité, `WeaponSystem` décide seulement de l'effet. Ne dessine
 rien : viewmodel, muzzle flash, decals et sons sont posés par `updateFx`/
@@ -29,18 +32,25 @@ rien : viewmodel, muzzle flash, decals et sons sont posés par `updateFx`/
 
 - `src/game/player/weapons/weapons.ts` — `WeaponSystem` : sélection, munitions,
   cooldowns, raycasts/formes, hitstop, recul.
+- `src/game/player/weapons/flareFlight.ts` — `FlareFlight` : les fusées du
+  pistolet de détresse en vol, leur balayage par rayon et leurs éclatements
+  ([ADR 0046](../decisions/0046-projectile-du-joueur.md)).
 - `src/game/player/weapons/weaponConfig.ts` — `WeaponConfig` (source unique de
   vérité des nombres), `damageForWeapon`, les quatre tables de variantes
   A/B/C (`RECOIL_VARIANTS`, `IMPACT_VARIANTS`, `HITMARKER_VARIANTS`,
   `CROSSHAIR_VARIANTS`).
 - `src/game/level/interactions/interactive.ts` — `InteractionSystem.collectWeapons` : la
-  géométrie du ramassage au sol des trois armes, en marchant dessus (commit
+  géométrie du ramassage au sol des quatre armes, en marchant dessus (commit
   `6b768f1`, voir Pièges).
 - `src/game/loop/updateGameplay.ts` — appelle `collectWeapons` puis
   `weapons.update`, dans cet ordre, après `player.update`.
 - `src/game/loop/updateFx.ts` — seul lecteur de `fireEvents`/`hitEvents` côté
   présentation ; seul appelant de `weapons.clearFrameEvents()`.
+- `src/game/loop/steps/breakableSteps.ts` — applique le souffle des fusées
+  éclatées, sur les props puis sur les vivants.
 - `src/render/fx/fx.ts` — `MUZZLE_FLASH_PRESETS`, muzzle flash et douille éjectée.
+- `src/render/fx/flares.ts` — la fusée visible en vol : cœur, lueur rouge,
+  étincelles.
 - `src/render/overlays/hitmarker.ts`, `src/render/overlays/crosshair.ts`,
   `src/render/debug/ballisticsDebug.ts` — canaux de confirmation de hit, réticule,
   gizmos de debug (touche `B`).
@@ -57,13 +67,20 @@ le même pas fixe :
    `eyeOrigin` est reconstruite depuis `session.player.position`
    **après** `player.update`, jamais depuis une position interpolée (même
    règle que pour l'origine de tir, [Joueur](joueur.md)). `dt` porte
-   déjà le hitstop.
+   déjà le hitstop. Les fusées déjà en vol avancent ici, avant le tir du pas :
+   une fusée ne parcourt rien le pas où elle part, et celle qui touche pousse
+   son `HitEvent` dans la même file que les autres armes.
 3. Encore dans ce pas fixe, immédiatement après : `suitManager.update`/
    `directorManager.update`/`propSystem.update`/`vitreSystem.update`/
    `sanitaireSystem.update` lisent tous `weapons.hitEvents`, chacun avec son
    propre curseur — un tir touche donc sa cible le même pas fixe où il part,
    jamais un pas de retard.
-4. Au taux d'affichage, `updateFx` lit `weapons.fireEvents`/`hitEvents` (muzzle
+4. Toujours dans ce pas, `updateBreakables` prend les fusées éclatées
+   (`weapons.takeNewFlareDetonations()`) et applique leur souffle : le mobilier
+   d'abord, puis le joueur et les ennemis.
+5. Au taux d'affichage, `interpolateVisuals` pose les fusées en vol entre
+   leurs deux dernières positions (`fx.poseFlares`).
+6. Au taux d'affichage, `updateFx` lit `weapons.fireEvents`/`hitEvents` (muzzle
    flash, douille, sfx, decal, particules, shake, hitmarker, pulsation du
    réticule, gizmos de debug), puis appelle `weapons.clearFrameEvents()` en
    tout dernier — après tous les autres lecteurs de la même frame.
@@ -96,24 +113,33 @@ sequenceDiagram
 
 ## Données et contrats
 
-**`WeaponKind`** (`"none" | "melee" | "pistol" | "shotgun"`, dans
+**`WeaponKind`** (`"none" | "melee" | "pistol" | "shotgun" | "flare"`, dans
 `src/game/player/weapons/weaponTypes.ts`) et `FiringWeapon` (le même sans
 `"none"`, plus `"kick"`) : une arme absente ne produit ni tir
 ni impact, `update()` ignore alors silencieusement `frame.fire`.
 
-**Munitions, trois régimes différents** :
+**Munitions, quatre régimes** :
 
 | Arme | Munitions | Ramassage répété |
 |---|---|---|
 | Pied-de-biche | Aucune | Rien (`tryCollectMelee` renvoie `false` si déjà possédé) |
 | Pompe | Rechargeable par les boîtes `cartouches`, plafonné à `shotgunMaxAmmo` | Un second fusil reste au sol ; une boîte recharge via `addShotgunAmmo` |
-| Pistolet | Pool rechargeable, plafonné (`pistolMaxAmmo`) | Recharge (`addPistolAmmo`), seule exception des trois |
+| Pistolet | Pool rechargeable, plafonné (`pistolMaxAmmo`) | Recharge (`addPistolAmmo`) |
+| Pistolet de détresse | Fusées rechargeables par les boîtes `fusees`, plafonnées à `flareMaxAmmo` | Recharge (`addFlareAmmo`), comme le pistolet |
 
-`tryCollectMelee`/`tryCollectShotgun`/`tryCollectPistol` sont les callbacks de
-`WeaponPickupHandlers` (`interactive.ts`) : chacune décide « déjà possédée ? »
-et retourne si l'objet doit disparaître du monde. `hasPistolAlready` existe
-uniquement pour que l'appelant choisisse entre les deux messages HUD
-(« récupéré » vs `+N munitions`) avant l'appel.
+`tryCollectMelee`/`tryCollectShotgun`/`tryCollectPistol`/`tryCollectFlare`
+sont appelées par les callbacks de `WeaponPickupHandlers` (`interactive.ts`) :
+chacune décide « déjà possédée ? » et retourne si l'objet doit disparaître du
+monde. `hasPistolAlready` et `hasFlareAlready` existent uniquement pour que
+l'appelant choisisse entre les deux messages HUD (« récupéré » vs
+`+N munitions`) avant l'appel.
+
+**Fusées** (`FlareProjectile`, `FlareDetonation`, dans `weaponTypes.ts`) : une
+fusée en vol porte sa position, sa position du pas précédent, sa vitesse et son
+âge ; l'affichage interpole entre les deux positions. Une fusée éclatée est
+publiée deux fois, dans deux files : `flareDetonations`, que l'affichage lit et
+que `clearFrameEvents` vide, et celle de `takeNewFlareDetonations()`, remise
+une seule fois au pas fixe qui applique le souffle.
 
 **`FireEvent`/`HitEvent`** (fichiers en tête de `weapons.ts`) : deux files
 accumulées au pas fixe, lues en lecture seule à l'affichage, contrat détaillé
@@ -140,7 +166,7 @@ dispersion échantillonne un disque projeté dans le cône de visée (rayon
 ∝ √u₁, azimut = u₂·2π), une approximation standard d'un cône uniforme.
 
 **Horloges du viewmodel** (`sinceMeleeFire`, `sincePistolFire`,
-`sinceShotgunFire`, `sinceSwitch`) : avancées au pas fixe pour que le hitstop
+`sinceShotgunFire`, `sinceFlareFire`, `sinceSwitch`) : avancées au pas fixe pour que le hitstop
 les ralentisse aussi, lues uniquement par le rendu. Aucune ne conditionne un
 tir ou un changement d'arme (invariant #10) — un nouveau tir peut partir
 avant même que l'arme ait fini de remonter à l'écran.
@@ -192,6 +218,23 @@ tir de pompe) écrase la durée/l'échelle en cours plutôt que de les additionn
 (`GameClock.triggerHitstop`, dernier appel gagnant) — un tir à 9 plombs sur un
 Costard ne « sur-arme » donc pas 9× plus fort qu'un plomb seul.
 
+**La fusée part des yeux, l'image la fait partir du canon.** Même règle que
+ci-dessus : la trajectoire simulée commence à `eyeOrigin`. `Flares.pose`
+(`render/fx/flares.ts`) décale le dessin vers le bout du canon affiché et
+résorbe cet écart en 0,14 s de vol. Ne jamais « corriger » en lançant la fusée
+depuis le viewmodel : sa position dépend du rendu.
+
+**Le souffle d'une fusée ne se lit pas dans la file d'affichage.**
+`flareDetonations` est vidée à chaque image par `clearFrameEvents`. Lue par le
+pas fixe, elle ferait souffler deux fois une fusée quand deux pas tombent dans
+la même image, et jamais quand une image passe sans pas. Le pas fixe lit
+`takeNewFlareDetonations()` — le même partage que `PropSystem.explosionEvents`
+et `takeNewExplosions()`.
+
+**La vitesse d'une fusée est fixée au tir.** Modifier `weaponConfig.flareSpeed`
+à chaud ne change que les fusées suivantes ; `flareGravity` et `flareLifetime`,
+elles, sont relues à chaque pas.
+
 ## Tests
 
 - `test/game/player/weapons/weaponClocks.test.ts` — horloges du viewmodel, aucune ne
@@ -201,6 +244,11 @@ Costard ne « sur-arme » donc pas 9× plus fort qu'un plomb seul.
   symétrie et exception du pistolet.
 - `test/game/player/weapons/pistol.test.ts` — possession, dotation, cadence, plafond
   de munitions (mécanique du tir, pas la balistique — monde physique vide).
+- `test/game/player/weapons/flare.test.ts` — le pistolet de détresse : possession,
+  cadence, vol et chute de la fusée, impact sur un vrai mur Rapier, éclatement en
+  l'air, même résultat à chaque déroulé, file du souffle distincte de l'affichage.
+- `test/game/session/player/explosions.test.ts`, `test/game/level/props/props.test.ts` —
+  le souffle d'une fusée sur les vivants et sur le mobilier.
 - `test/game/level/interactions/pickups.test.ts` — traversée complète loader → `UseObject`
   → `InteractionSystem.collectHeals`/`collectAmmo`/`collectWeapons`.
 - `test/game/integration/gameplayStep.test.ts`, `gameSessionReset.test.ts` —
@@ -209,13 +257,15 @@ Costard ne « sur-arme » donc pas 9× plus fort qu'un plomb seul.
   l'arme en place aussitôt (invariant #10).
 
 Aucun test dédié ne couvre `fireMelee`/`firePistol`/`fireShotgun` contre un
-monde physique peuplé (géométrie d'impact, matériau perçu) : la couverture
-actuelle porte sur la mécanique (munitions, cooldowns, ramassage), pas sur la
-balistique elle-même.
+monde physique peuplé (géométrie d'impact, matériau perçu) : pour ces trois
+armes, la couverture porte sur la mécanique (munitions, cooldowns, ramassage),
+pas sur la balistique elle-même. La fusée, elle, est testée contre un mur.
 
 ## Comment vérifier que ça marche
 
-- `pnpm test -- weaponClocks weaponPickups pistol pickups gameplayStep`.
+- `pnpm test -- weaponClocks weaponPickups pistol flare pickups gameplayStep`.
+- En salle d'essai (`?level=gym`), le pistolet de détresse n'est pas au sol :
+  `cassandre.weapons.pickUpFlare()` le donne, la touche `4` y revient.
 - Console `cassandre.weapons` : l'instance `WeaponSystem` réelle
   (`activeWeapon`, `shotgunAmmo`, `pistolAmmo`, `fireEvents`, `hitEvents`).
 - `cassandre.weaponConfig` : mutation à chaud de tout `WeaponConfig`.
@@ -229,5 +279,7 @@ balistique elle-même.
 ## Décisions
 
 - [ADR 0029 — Armes en vue subjective](../decisions/0029-armes-en-vue-subjective.md)
+- [ADR 0046 — Projectile du joueur](../decisions/0046-projectile-du-joueur.md)
+- [ADR 0041 — Explosifs](../decisions/0041-explosifs.md)
 - [ADR 0007 — RNG déterministe](../decisions/0007-rng-deterministe.md)
 - [ADR 0010 — Curseur explicite d'événements multi-pas-fixe](../decisions/0010-curseur-evenements-multi-pas-fixe.md)

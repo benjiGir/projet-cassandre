@@ -58,7 +58,13 @@ export function dressAmmoPickup(
   resources: PickupResources,
   weapon: AmmoWeaponKind = "pistol",
 ): void {
-  placeModel(object, weapon === "shotgun" ? resources.shotgunAmmoModel() : resources.ammoModel(), groundY, resources);
+  const model =
+    weapon === "flare"
+      ? resources.flareAmmoModel()
+      : weapon === "shotgun"
+        ? resources.shotgunAmmoModel()
+        : resources.ammoModel();
+  placeModel(object, model, groundY, resources);
 }
 
 export class WeaponPickupBillboard {

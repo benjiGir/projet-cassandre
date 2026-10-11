@@ -7,7 +7,7 @@ import { seededRandom } from "../../../app/runtime/gameRuntime";
 import { FOOD_DROP_SEED } from "../../../core/effect/seeds";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "../interactions/food";
 import { HEAL_PICKUP_RADIUS } from "../interactions/interactive";
-import { explosionConfig } from "./propConfig";
+import { explosionConfig, type BlastConfig } from "./propConfig";
 
 // see: docs/decisions/0030-props-dynamiques.md
 
@@ -324,19 +324,27 @@ export class PropSystem {
     const event = { name: source.info.name, point: center };
     this._explosionEvents.push(event);
     this.pendingBlasts.push(event);
+    this.applyBlast(center);
+  }
 
+  /**
+   * Un souffle centré sur `center`, côté props : il pousse le mobilier à sa
+   * portée et amorce les bonbonnes. Sert aussi au souffle d'une fusée du
+   * pistolet de détresse, né hors de tout prop.
+   */
+  applyBlast(center: THREE.Vector3, blast: BlastConfig = explosionConfig): void {
     for (const state of this.states) {
       if (state.destroyed) continue;
       const p = state.info.body.translation();
       impulseScratch.set(p.x - center.x, p.y - center.y, p.z - center.z);
       const distance = impulseScratch.length();
-      if (distance >= explosionConfig.radius) continue;
+      if (distance >= blast.radius) continue;
 
       // Un prop exactement au centre n'a pas de direction : il part vers le haut.
       if (distance > 1e-4) impulseScratch.multiplyScalar(1 / distance);
       else impulseScratch.set(0, 0, 0);
-      impulseScratch.y += explosionConfig.impulseLift;
-      impulseScratch.multiplyScalar(explosionConfig.impulse * (1 - distance / explosionConfig.radius));
+      impulseScratch.y += blast.impulseLift;
+      impulseScratch.multiplyScalar(blast.impulse * (1 - distance / blast.radius));
       state.info.body.applyImpulse({ x: impulseScratch.x, y: impulseScratch.y, z: impulseScratch.z }, true);
 
       // Réaction en chaîne : une mèche déjà allumée n'est pas rallongée.

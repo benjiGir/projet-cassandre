@@ -46,6 +46,7 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `aliment` | `use_*` | Type de nourriture ; le runtime en déduit le soin. |
 | `munitions` | `use_*` | Quantité de munitions de pistolet donnée. |
 | `cartouches` | `use_*` | Quantité de cartouches de pompe donnée ; jamais sur la même boîte que `munitions`. |
+| `fusees` | `use_*` | Quantité de fusées du pistolet de détresse donnée ; jamais sur la même boîte que `munitions` ou `cartouches`. |
 | `cameras` | `use_*` | Noms de `cam_*` séparés par des virgules, dans l'ordre de défilement. |
 | `perk`, `prix` | `use_*` | Une borne : le perk vendu (`boisson`, `vpn`, `gilet`, `premium`, `perche`, `aimant`) et son prix en euros, strictement positif. Les deux sont requis. |
 | `color`, `intensity`, `distance`, `decay` | `light_*` | Couleur hexadécimale et paramètres de portée/intensité de la lampe. |
@@ -92,7 +93,8 @@ valeur mal formée peut donc retomber sur ce défaut.
 | Nourriture | `use_*` + `aliment` reconnu ; ramassage au contact. |
 | Munitions de pistolet | `use_*` + `munitions` strictement positif ; ramassage au contact. |
 | Cartouches de pompe | `use_*` + `cartouches` strictement positif ; ramassage au contact. |
-| Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun` ; ramassage au contact. |
+| Fusées de détresse | `use_*` + `fusees` strictement positif ; ramassage au contact. |
+| Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun`, `use_flare` ; ramassage au contact. |
 | Console vidéo | Un `use_*` avec `cameras` référençant des noms `cam_*` existants. |
 | Borne de sponsor | Un `use_*` avec `perk` et `prix`. Elle n'est jamais consommée ; une borne mal décrite ne vend rien et le loader le signale. |
 | Bonbonne explosive | Un `prop_*` avec `matiere: gaz` et des `pv`. |

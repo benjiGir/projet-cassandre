@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks } from "./weaponTypes";
+import type { WeaponKind, FireEvent, HitEvent, ViewmodelClocks, FlareProjectile, FlareDetonation } from "./weaponTypes";
+import { FlareFlight } from "./flareFlight";
 import type { WeaponInventory, OwnedWeapon } from "./weaponInventory";
 import type { InputFrame } from "../../../core/input/inputTypes";
 import { SHOTGUN_SPREAD_SEED } from "../../../core/effect/seeds";
@@ -36,6 +37,9 @@ export class WeaponSystem {
   /** Munitions de pistolet restantes, rechargées par les boîtes du niveau (`use_*` portant `munitions`). */
   pistolAmmo = 0;
 
+  /** Fusées du pistolet de détresse restantes, rechargées par les boîtes `fusees`. */
+  flareAmmo = 0;
+
   /** Ajouté au plafond de `cfg.pistolMaxAmmo` dans CETTE partie : 0 hors effet d'un perk. */
   pistolMaxAmmoBonus = 0;
   /** Multiplicateur des dégâts du pied-de-biche dans CETTE partie : 1 hors effet d'un perk. */
@@ -47,6 +51,8 @@ export class WeaponSystem {
 
   private hasPistol = false;
 
+  private hasFlare = false;
+
   private readonly physics: PhysicsWorld;
   private readonly clock: GameClock;
   private readonly cfg: WeaponConfig;
@@ -56,6 +62,7 @@ export class WeaponSystem {
   private kickImpactRemaining: number | null = null;
   private pistolCooldownRemaining = 0;
   private shotgunCooldownRemaining = 0;
+  private flareCooldownRemaining = 0;
 
   private recoilEnvelope = 0;
   private previousRecoilEnvelope = 0;
@@ -73,6 +80,8 @@ export class WeaponSystem {
   private previousSincePistolFire = CLOCK_AT_REST;
   private sinceShotgunFire = CLOCK_AT_REST;
   private previousSinceShotgunFire = CLOCK_AT_REST;
+  private sinceFlareFire = CLOCK_AT_REST;
+  private previousSinceFlareFire = CLOCK_AT_REST;
   private sinceSwitch = CLOCK_AT_REST;
   private previousSinceSwitch = CLOCK_AT_REST;
   /** Arme que le viewmodel montrait avant le dernier changement. */
@@ -83,6 +92,8 @@ export class WeaponSystem {
   // see: docs/archive/systems-armes.md#files-dévénements-de-frame-fireeventshitevents
   private readonly _fireEvents: FireEvent[] = [];
   private readonly _hitEvents: HitEvent[] = [];
+
+  private readonly flareFlight: FlareFlight;
 
   private readonly aimEuler = new THREE.Euler(0, 0, 0, "YXZ");
   private readonly aimQuat = new THREE.Quaternion();
@@ -103,6 +114,20 @@ export class WeaponSystem {
     this.clock = clock;
     this.cfg = cfg;
     this.shotgunAmmo = cfg.shotgunStartingAmmo;
+    this.flareFlight = new FlareFlight(cfg, (ray, reach) =>
+      runGameplaySync(
+        RaycastService.use((raycast) =>
+          raycast.castRayAndGetNormal(
+            physics,
+            ray,
+            reach,
+            true,
+            RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+            COLLISION_GROUPS.PLAYER_SHOT,
+          ),
+        ),
+      ),
+    );
   }
 
   /** Files de tir de la frame d'affichage courante. Lecture non destructive, plusieurs lecteurs indépendants. */
@@ -115,9 +140,25 @@ export class WeaponSystem {
     return this._hitEvents;
   }
 
+  /** Fusées du pistolet de détresse en vol — voir `FlareFlight`. */
+  get flares(): ReadonlyArray<FlareProjectile> {
+    return this.flareFlight.flares;
+  }
+
+  /** Fusées éclatées depuis l'image précédente. Même contrat que `fireEvents`. */
+  get flareDetonations(): ReadonlyArray<FlareDetonation> {
+    return this.flareFlight.detonations;
+  }
+
+  /** Les fusées éclatées dont le souffle reste à appliquer, une seule fois chacune — voir `FlareFlight.takeNewDetonations`. */
+  takeNewFlareDetonations(): ReadonlyArray<FlareDetonation> {
+    return this.flareFlight.takeNewDetonations();
+  }
+
   clearFrameEvents() {
     this._fireEvents.length = 0;
     this._hitEvents.length = 0;
+    this.flareFlight.clearFrameEvents();
   }
 
   /** À appeler avant `update`, au même endroit que `player.snapshotPrevious()`. */
@@ -126,6 +167,7 @@ export class WeaponSystem {
     this.previousSinceMeleeFire = this.sinceMeleeFire;
     this.previousSincePistolFire = this.sincePistolFire;
     this.previousSinceShotgunFire = this.sinceShotgunFire;
+    this.previousSinceFlareFire = this.sinceFlareFire;
     this.previousSinceSwitch = this.sinceSwitch;
     this.previousRecoilEnvelope = this.recoilEnvelope;
     this.previousRecoilKickPosition.copy(this.recoilKickPosition);
@@ -136,6 +178,7 @@ export class WeaponSystem {
     this.hasMelee = false;
     this.hasPistol = false;
     this.hasShotgun = false;
+    this.hasFlare = false;
     this.activeWeapon = "none";
     this.shownWeapon = "none";
     this.switchedFrom = "none";
@@ -149,21 +192,41 @@ export class WeaponSystem {
     if (this.hasMelee) owned.push("melee");
     if (this.hasPistol) owned.push("pistol");
     if (this.hasShotgun) owned.push("shotgun");
-    return { owned, active: this.activeWeapon, pistolAmmo: this.pistolAmmo, shotgunAmmo: this.shotgunAmmo };
+    if (this.hasFlare) owned.push("flare");
+    return {
+      owned,
+      active: this.activeWeapon,
+      pistolAmmo: this.pistolAmmo,
+      shotgunAmmo: this.shotgunAmmo,
+      flareAmmo: this.flareAmmo,
+    };
   }
 
   owns(weapon: OwnedWeapon): boolean {
-    return weapon === "melee" ? this.hasMelee : weapon === "pistol" ? this.hasPistol : this.hasShotgun;
+    switch (weapon) {
+      case "melee":
+        return this.hasMelee;
+      case "pistol":
+        return this.hasPistol;
+      case "shotgun":
+        return this.hasShotgun;
+      case "flare":
+        return this.hasFlare;
+      default:
+        return weapon satisfies never;
+    }
   }
 
   restoreInventory(inventory: WeaponInventory): void {
     this.hasMelee = inventory.owned.includes("melee");
     this.hasPistol = inventory.owned.includes("pistol");
     this.hasShotgun = inventory.owned.includes("shotgun");
+    this.hasFlare = inventory.owned.includes("flare");
     this.activeWeapon = inventory.active;
     this.shownWeapon = this.switchedFrom = inventory.active;
     this.pistolAmmo = inventory.pistolAmmo;
     this.shotgunAmmo = inventory.shotgunAmmo;
+    this.flareAmmo = inventory.flareAmmo ?? 0;
   }
 
   get shotgunMaxAmmo(): number {
@@ -204,6 +267,22 @@ export class WeaponSystem {
     this.activeWeapon = "shotgun";
   }
 
+  get flareMaxAmmo(): number {
+    return this.cfg.flareMaxAmmo;
+  }
+
+  pickUpFlare(): void {
+    if (!this.hasFlare) this.flareAmmo = Math.min(this.flareMaxAmmo, this.cfg.flareStartingAmmo);
+    this.hasFlare = true;
+    this.activeWeapon = "flare";
+  }
+
+  addFlareAmmo(amount: number): number {
+    const before = this.flareAmmo;
+    this.flareAmmo = Math.min(this.flareMaxAmmo, this.flareAmmo + Math.max(0, amount));
+    return this.flareAmmo - before;
+  }
+
   tryCollectMelee(): boolean {
     if (this.hasMelee) return false;
     this.pickUpMelee();
@@ -228,6 +307,19 @@ export class WeaponSystem {
     return this.hasPistol;
   }
 
+  /** Même contrat que `tryCollectPistol` : un second pistolet de détresse vaut sa dotation de fusées. */
+  tryCollectFlare(): boolean {
+    if (!this.hasFlare) {
+      this.pickUpFlare();
+      return true;
+    }
+    return this.addFlareAmmo(this.cfg.flareStartingAmmo) > 0;
+  }
+
+  get hasFlareAlready(): boolean {
+    return this.hasFlare;
+  }
+
   viewmodelPose(alpha: number, outPosition: THREE.Vector3, outEuler: THREE.Euler): void {
     const t = THREE.MathUtils.lerp(this.previousRecoilEnvelope, this.recoilEnvelope, alpha);
     if (this.cfg.recoilPositionInterpolated) {
@@ -249,6 +341,7 @@ export class WeaponSystem {
     out.sinceMeleeFire = THREE.MathUtils.lerp(this.previousSinceMeleeFire, this.sinceMeleeFire, alpha);
     out.sincePistolFire = THREE.MathUtils.lerp(this.previousSincePistolFire, this.sincePistolFire, alpha);
     out.sinceShotgunFire = THREE.MathUtils.lerp(this.previousSinceShotgunFire, this.sinceShotgunFire, alpha);
+    out.sinceFlareFire = THREE.MathUtils.lerp(this.previousSinceFlareFire, this.sinceFlareFire, alpha);
     return out;
   }
 
@@ -259,12 +352,28 @@ export class WeaponSystem {
     this.sinceKickFire = Math.min(CLOCK_AT_REST, this.sinceKickFire + dt);
     this.sincePistolFire = Math.min(CLOCK_AT_REST, this.sincePistolFire + dt);
     this.sinceShotgunFire = Math.min(CLOCK_AT_REST, this.sinceShotgunFire + dt);
+    this.sinceFlareFire = Math.min(CLOCK_AT_REST, this.sinceFlareFire + dt);
     this.sinceSwitch = Math.min(CLOCK_AT_REST, this.sinceSwitch + dt);
 
     this.meleeCooldownRemaining = Math.max(0, this.meleeCooldownRemaining - dt);
     this.kickCooldownRemaining = Math.max(0, this.kickCooldownRemaining - dt);
     this.pistolCooldownRemaining = Math.max(0, this.pistolCooldownRemaining - dt);
     this.shotgunCooldownRemaining = Math.max(0, this.shotgunCooldownRemaining - dt);
+    this.flareCooldownRemaining = Math.max(0, this.flareCooldownRemaining - dt);
+
+    // Avant le tir de ce pas : une fusée ne parcourt rien le pas où elle part.
+    this.flareFlight.advance(dt, (impact) => {
+      const material = this.materialForCollider(impact.collider);
+      this._hitEvents.push({
+        point: impact.point,
+        normal: impact.normal,
+        material,
+        weapon: "flare",
+        colliderHandle: impact.collider.handle,
+        distance: impact.distance,
+      });
+      this.triggerHitstopFor(material);
+    });
 
     // Le joueur ne peut pas se rééquiper d'une arme qu'il n'a pas ramassée en
     // appuyant sur `1` — sans garde, `frame.switchToMelee` réarmerait le
@@ -272,6 +381,7 @@ export class WeaponSystem {
     if (frame.switchToMelee) this.activeWeapon = this.hasMelee ? "melee" : "none";
     if (frame.switchToPistol && this.hasPistol) this.activeWeapon = "pistol";
     if (frame.switchToShotgun && this.hasShotgun) this.activeWeapon = "shotgun";
+    if (frame.switchToFlare && this.hasFlare) this.activeWeapon = "flare";
     // Un ramassage (`pickUp*`, appelé par l'interaction APRÈS ce pas) est vu
     // au pas suivant : un pas de retard, invisible.
     if (this.activeWeapon !== this.shownWeapon) {
@@ -335,6 +445,14 @@ export class WeaponSystem {
         }
         // Sinon : cooldown non écoulé OU munitions à 0 — clic à sec, RAF.
         // (Un futur son de clic à sec est un stretch, cf. `weaponConfig.ts`.)
+      } else if (this.activeWeapon === "flare" && this.hasFlare) {
+        if (this.flareCooldownRemaining <= 0 && this.flareAmmo > 0) {
+          this.fireFlare(eyeOrigin, yaw, pitch);
+          this.sinceFlareFire = 0;
+          this.flareCooldownRemaining = cfg.flareCooldown;
+          this.flareAmmo -= 1;
+          this.applyKick(cfg.flareRecoil);
+        }
       }
     }
   }
@@ -642,5 +760,15 @@ export class WeaponSystem {
       });
       this.triggerHitstopFor(material);
     }
+  }
+
+  private fireFlare(eyeOrigin: THREE.Vector3, yaw: number, pitch: number) {
+    this.computeAimBasis(yaw, pitch);
+    this._fireEvents.push({
+      weapon: "flare",
+      muzzlePosition: eyeOrigin.clone(),
+      muzzleDirection: this.aimForward.clone(),
+    });
+    this.flareFlight.launch(eyeOrigin, this.aimForward);
   }
 }

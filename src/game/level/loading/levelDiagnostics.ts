@@ -216,7 +216,7 @@ export function formatInvalidHealAmount(error: InvalidHealAmountWarning): string
 }
 
 export function formatAmbiguousAmmoPickup(error: AmbiguousAmmoPickupWarning): string {
-  return `[level] "${error.name}" (use_*) : "munitions" et "cartouches" sur la même boîte — ramassage ignoré.`;
+  return `[level] "${error.name}" (use_*) : plusieurs munitions ("munitions", "cartouches", "fusees") sur la même boîte — ramassage ignoré.`;
 }
 
 export function formatUnknownFoodItem(error: UnknownFoodItemWarning): string {

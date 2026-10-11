@@ -1,23 +1,33 @@
 import * as THREE from "three";
 
-import { playImpactSfx, playWeaponFireSfx } from "../../../core/audio/audio";
+import { playImpactSfx, playSfx, playWeaponFireSfx } from "../../../core/audio/audio";
 import { isMovableOrBreakableHandle } from "../../level/loading/movableColliders";
 import { kickConfig } from "../../player/weapons/kickConfig";
 import { weaponConfig } from "../../player/weapons/weaponConfig";
 import { FLESH_MATERIAL } from "../../player/weapons/weapons";
+import type { FiringWeapon } from "../../player/weapons/weaponTypes";
 import type { FxFrame } from "./fxFrame";
 
 const muzzleScratch = new THREE.Vector3();
 const muzzleDirectionScratch = new THREE.Vector3();
-const FLASH_WEAPONS = ["pistol", "shotgun"] as const;
+const FLASH_WEAPONS = ["pistol", "shotgun", "flare"] as const;
+/** Secousse d'une fusée qui éclate : entre celle d'un tir et celle d'une bonbonne, et elle porte moins loin. */
+const FLARE_SHAKE_AMPLITUDE = 0.3;
+const FLARE_SHAKE_DURATION = 0.3;
+const FLARE_SHAKE_RANGE = 16;
 const sprayDirectionScratch = new THREE.Vector3();
+
+/** Les armes dont part un éclair de tir. */
+function hasMuzzle(weapon: FiringWeapon): weapon is (typeof FLASH_WEAPONS)[number] {
+  return (FLASH_WEAPONS as readonly FiringWeapon[]).includes(weapon);
+}
 /** Matière d'un tir arrêté par un bouclier : le son et les éclats d'un impact de métal. */
 const SHIELD_MATERIAL = "metal";
 
 /** Tirs et impacts accumulés depuis l'image précédente : flash, douille, éclats, sang, secousse, sons. */
 export function presentWeaponEvents({ engine, session }: FxFrame): void {
   for (const event of session.weapons.fireEvents) {
-    if (event.weapon === "pistol" || event.weapon === "shotgun") {
+    if (hasMuzzle(event.weapon)) {
       engine.fx.spawnMuzzleFlash(
         engine.viewmodel.muzzleWorldPosition(muzzleScratch, event.weapon),
         engine.viewmodel.muzzleWorldDirection(muzzleDirectionScratch, event.weapon),
@@ -73,5 +83,16 @@ export function presentWeaponEvents({ engine, session }: FxFrame): void {
     if (isEnemyHit) engine.hitmarker.trigger("hit");
     playImpactSfx(material);
   }
+  presentFlareDetonations(engine, session);
   session.weapons.clearFrameEvents();
+}
+
+/** Fusées du pistolet de détresse éclatées depuis l'image précédente : boule de feu, gerbe, secousse selon la distance. */
+function presentFlareDetonations(engine: FxFrame["engine"], session: FxFrame["session"]): void {
+  for (const detonation of session.weapons.flareDetonations) {
+    engine.fx.spawnFlareBurst(detonation.point);
+    const proximity = 1 - session.player.position.distanceTo(detonation.point) / FLARE_SHAKE_RANGE;
+    if (proximity > 0) engine.fx.triggerShake(FLARE_SHAKE_AMPLITUDE * proximity, FLARE_SHAKE_DURATION);
+    playSfx("flare_burst", Math.max(0.35, proximity));
+  }
 }

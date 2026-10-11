@@ -210,6 +210,7 @@ function armeHandlersDeTest(overrides: Partial<WeaponPickupHandlers> = {}): Weap
     onCrowbarPickup: () => false,
     onShotgunPickup: () => false,
     onPistolPickup: () => false,
+    onFlarePickup: () => false,
     ...overrides,
   };
 }

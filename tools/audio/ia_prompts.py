@@ -44,6 +44,14 @@ PROMPTS: dict[str, tuple[str, float, float]] = {
     "shotgun": (
         f"Single pump shotgun blast for a modern first-person shooter video game, massive punchy low-end boom, sharp crack, heavily compressed, short controlled indoor tail, then the pump racked once, {SEC}",
         1.8, 0.45),
+    # Pistolet de détresse (2026-10-11). Pas encore généré : le jeu joue les
+    # recettes physiques de `sons_armes.py` tant qu'aucune prise n'est retenue.
+    "flare_fire": (
+        f"Single shot of a flare gun for a modern first-person shooter video game: a hollow low-pressure thump from a wide short barrel, immediately followed by the flare igniting and flying away with a bright sizzling hiss and magnesium crackle, punchy, compressed, short controlled indoor tail, {SEC}",
+        1.2, 0.45),
+    "flare_burst": (
+        f"A signal flare bursting on impact a few metres away for a modern first-person shooter video game: a sharp punchy fiery bang, smaller than a grenade, then burning magnesium sparks crackling and sizzling for a second, compressed, short indoor tail, {SEC}",
+        1.6, 0.45),
     "shotgun_pump": (
         f"Pump-action shotgun being racked once, heavy metallic chunk-chick, close microphone, {SEC}",
         0.9, 0.55),

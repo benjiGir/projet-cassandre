@@ -11,6 +11,7 @@ import { suitConfig } from "../../../../src/game/entities/suit/suitConfig";
 import { SuitManager } from "../../../../src/game/entities/suit/suitManager";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { blastDamageAt, explosionConfig } from "../../../../src/game/level/props/propConfig";
+import { weaponConfig } from "../../../../src/game/player/weapons/weaponConfig";
 import type { GameEngine } from "../../../../src/game/session/gameEngine";
 import type { GameSession } from "../../../../src/game/session/gameSession";
 import { applyBlast } from "../../../../src/game/session/player/explosions";
@@ -126,5 +127,35 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     expect(bilan.directorKills).toBe(0);
     expect(directeur.hp).toBeLessThan(pvAvant);
+  });
+});
+
+describe("applyBlast — souffle d'une fusée du pistolet de détresse", () => {
+  const flare = weaponConfig.flareBlast;
+
+  it("plus court que celui d'une bonbonne : tue de près, n'atteint pas ce qu'une bonbonne aurait blessé", () => {
+    const s = session(new THREE.Vector3(0, 1, 50));
+    const near = s.suitManager.spawnSuit(1, 0, 0);
+    const far = s.suitManager.spawnSuit(4.2, 0, 0);
+    s.physics.step(0);
+    expect(far.position.distanceTo(CENTRE)).toBeLessThan(explosionConfig.radius);
+
+    const outcome = applyBlast(engine, s, CENTRE, flare);
+
+    expect(outcome.suitKills).toBe(1);
+    expect(near.isAlive).toBe(false);
+    expect(far.hp).toBe(suitConfig.maxHp);
+  });
+
+  it("le joueur qui tire à ses pieds en prend sa part", () => {
+    const s = session(CENTRE.clone().add(new THREE.Vector3(0, 0, 1)));
+    s.physics.step(0);
+    const expected = Math.round(blastDamageAt(1, flare) * flare.playerDamageScale);
+
+    const outcome = applyBlast(engine, s, CENTRE, flare);
+
+    expect(expected).toBeGreaterThan(0);
+    expect(outcome.playerDamage).toBe(expected);
+    expect(s.run.playerHp).toBe(100 - expected);
   });
 });

@@ -14,6 +14,7 @@ export function emptyInputFrame(): InputFrame {
     switchToMelee: false,
     switchToPistol: false,
     switchToShotgun: false,
+    switchToFlare: false,
     use: false,
     yaw: 0,
     pitch: 0,

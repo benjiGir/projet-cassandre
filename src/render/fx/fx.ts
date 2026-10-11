@@ -7,10 +7,15 @@ import { ImpactDecals } from "./impactDecals";
 import { ToyDebris } from "./toyDebris";
 import { WaterJets } from "./waterJets";
 import { Explosions } from "./explosions";
+import { Flares, type FlareView } from "./flares";
+import type { MuzzleFlashWeapon } from "./muzzleFlashConfig";
 import { Gore } from "./gore";
 import { EnemyAppearances } from "./enemyAppearances";
 import type { BillboardSprite } from "../sprites/billboard";
 import type { SurfaceProbe } from "./goreConfig";
+
+/** Taille de l'éclatement d'une fusée par rapport à l'explosion d'une bonbonne — le rapport de leurs rayons de souffle. */
+const FLARE_BURST_SCALE = 0.6;
 
 // see: docs/6-reference/notes-code-rendu.md#effets-et-allocation
 export class FxSystem {
@@ -21,6 +26,7 @@ export class FxSystem {
   private readonly debris: ToyDebris;
   private readonly water: WaterJets;
   private readonly explosions: Explosions;
+  private readonly flares: Flares;
   private readonly gore: Gore;
   private readonly appearances: EnemyAppearances;
 
@@ -33,6 +39,7 @@ export class FxSystem {
     this.debris = new ToyDebris(scene, nextRandom);
     this.water = new WaterJets(scene, nextRandom);
     this.explosions = new Explosions(scene, nextRandom);
+    this.flares = new Flares(scene, (point, direction) => this.debris.spawnFlareSpark(point, direction));
     this.gore = new Gore(scene, nextRandom);
     this.appearances = new EnemyAppearances(scene, enemyAtlases);
   }
@@ -48,6 +55,7 @@ export class FxSystem {
     this.debris.reset();
     this.water.clearWaterJets();
     this.explosions.reset();
+    this.flares.reset();
     this.gore.reset();
     this.appearances.reset();
     // La sonde appartient à la partie qui vient de finir : son monde physique va être libéré.
@@ -65,10 +73,10 @@ export class FxSystem {
   currentShakeOffset(out: THREE.Vector3): THREE.Vector3 {
     return this.shake.currentShakeOffset(out);
   }
-  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
+  spawnMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: MuzzleFlashWeapon): void {
     this.flashes.spawnMuzzleFlash(position, direction, weapon);
   }
-  followMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: "pistol" | "shotgun"): void {
+  followMuzzleFlash(position: THREE.Vector3, direction: THREE.Vector3, weapon: MuzzleFlashWeapon): void {
     this.flashes.followMuzzle(position, direction, weapon);
   }
   advanceMuzzleFlashes(dt: number): void {
@@ -137,6 +145,15 @@ export class FxSystem {
   spawnExplosion(point: THREE.Vector3): void {
     this.explosions.spawn(point);
     this.debris.spawnExplosionBurst(point);
+  }
+  /** Fusées du pistolet de détresse en vol — voir `Flares.pose`. */
+  poseFlares(flares: ReadonlyArray<FlareView>, alpha: number, muzzle: THREE.Vector3): void {
+    this.flares.pose(flares, alpha, muzzle);
+  }
+  /** Éclatement d'une fusée : la boule de feu d'une bonbonne en réduction, et sa gerbe rouge. */
+  spawnFlareBurst(point: THREE.Vector3): void {
+    this.explosions.spawn(point, FLARE_BURST_SCALE);
+    this.debris.spawnFlareBurst(point);
   }
   addWaterJet(origin: THREE.Vector3): void {
     this.water.addWaterJet(origin);

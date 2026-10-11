@@ -60,7 +60,7 @@ PAD_M = 0.02  # marge autour de la silhouette, en mètres, avant mise à l'éche
 SUPERSAMPLE = 4
 GUTTER = 2  # px transparents entre deux icônes de l'atlas, anti-bleeding en NearestFilter
 
-ARMES = ("melee", "pistol", "shotgun")
+ARMES = ("melee", "pistol", "shotgun", "flare")
 
 
 def get_args() -> list[str]:
@@ -227,8 +227,8 @@ def main() -> int:
     scene = bpy.context.scene
     cam = configurer_scene()
 
-    pdb, pistolet, pompe = bw.armes_au_sol()
-    objets = {"melee": pdb, "pistol": pistolet, "shotgun": pompe}
+    pdb, pistolet, pompe, detresse = bw.armes_au_sol()
+    objets = {"melee": pdb, "pistol": pistolet, "shotgun": pompe, "flare": detresse}
 
     cases: dict[str, np.ndarray] = {}
     for nom, ob in objets.items():

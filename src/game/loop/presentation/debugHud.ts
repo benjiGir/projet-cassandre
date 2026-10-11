@@ -61,6 +61,8 @@ export function publishDebugHud({ engine, session, realDt, stats }: FxFrame): vo
       shotgunMaxAmmo: session.weapons.shotgunMaxAmmo,
       pistolAmmo: session.weapons.pistolAmmo,
       pistolMaxAmmo: session.weapons.pistolMaxAmmo,
+      flareAmmo: session.weapons.flareAmmo,
+      flareMaxAmmo: session.weapons.flareMaxAmmo,
       // HUD de prod (Phase 6, `ui/hud/widgets/AmmoPanel/AmmoPanel.tsx`) : quel libellé afficher pour
       // "munitions" dépend de l'arme active, pas seulement du compte de
       // cartouches. Même throttle 10 Hz que le reste de ce bloc.

@@ -71,6 +71,8 @@ function seedHudState() {
     playerMaxHp: 100,
     shotgunAmmo: 4,
     shotgunMaxAmmo: 8,
+    flareAmmo: 3,
+    flareMaxAmmo: 18,
     pistolAmmo: 11,
     pistolMaxAmmo: 15,
     activeWeapon: "shotgun",

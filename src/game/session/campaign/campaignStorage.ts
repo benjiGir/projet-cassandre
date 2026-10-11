@@ -13,10 +13,12 @@ const STORAGE_KEY = "cassandre.campaign.v1";
 const Count = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
 const ArrivalSchema = Schema.Struct({
   weapons: Schema.Struct({
-    owned: Schema.Array(Schema.Literals(["melee", "pistol", "shotgun"])).check(Schema.isUnique()),
-    active: Schema.Literals(["none", "melee", "pistol", "shotgun"]),
+    owned: Schema.Array(Schema.Literals(["melee", "pistol", "shotgun", "flare"])).check(Schema.isUnique()),
+    active: Schema.Literals(["none", "melee", "pistol", "shotgun", "flare"]),
     pistolAmmo: Count,
     shotgunAmmo: Count,
+    // Absent d'une sauvegarde antérieure au pistolet de détresse.
+    flareAmmo: Schema.optionalKey(Count),
   }),
   perks: Schema.Array(Schema.Literals(PERKS)).check(Schema.isUnique()),
   wallet: Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0)),
@@ -29,7 +31,8 @@ const ArrivalSchema = Schema.Struct({
       arrival.hp <= INITIAL_PLAYER_MAX_HP + (arrival.perks.includes("gilet") ? perkConfig.giletMaxHpBonus : 0) &&
       arrival.weapons.pistolAmmo <=
         weaponConfig.pistolMaxAmmo + (arrival.perks.includes("premium") ? perkConfig.premiumPistolAmmoBonus : 0) &&
-      arrival.weapons.shotgunAmmo <= weaponConfig.shotgunMaxAmmo,
+      arrival.weapons.shotgunAmmo <= weaponConfig.shotgunMaxAmmo &&
+      (arrival.weapons.flareAmmo ?? 0) <= weaponConfig.flareMaxAmmo,
     { expected: "un équipement cohérent et des PV compatibles avec les perks" },
   ),
 );

@@ -1,5 +1,6 @@
 import { FIXED_DT } from "../../../core/loop/loop";
 import { kickConfig } from "./kickConfig";
+import type { BlastConfig } from "../../level/props/propConfig";
 import type { FiringWeapon } from "./weaponTypes";
 
 // see: docs/6-reference/notes-code-gameplay-joueur.md#tuning
@@ -36,12 +37,30 @@ export interface WeaponConfig {
   shotgunStartingAmmo: number;
   shotgunMaxAmmo: number;
 
+  /** Temps entre deux fusées, en secondes. Long : chaque tir se choisit. */
+  flareCooldown: number;
+  /** Vitesse de la fusée, en m/s. Assez lente pour être vue partir, assez vite pour toucher ce qu'on vise. */
+  flareSpeed: number;
+  /** Chute de la fusée, en m/s². Bien moins que la gravité du joueur : une cloche à peine marquée. */
+  flareGravity: number;
+  /** Durée de vol, en secondes ; au-delà, la fusée éclate en l'air. */
+  flareLifetime: number;
+  /** Dégâts de la fusée sur ce qu'elle touche, avant le souffle. */
+  flareDirectDamage: number;
+  /** Fusées données par le ramassage de l'arme. */
+  flareStartingAmmo: number;
+  flareMaxAmmo: number;
+  /** Souffle de la fusée : plus court et moins fort que celui d'une bonbonne, et le joueur le prend aussi. */
+  flareBlast: BlastConfig;
+
   /** Kick de recul du pied-de-biche à la frappe. Récupéré par rampe linéaire (`approach()`), au dt de gameplay. */
   meleeRecoil: RecoilKick;
   /** Kick de recul du pistolet. Bien plus sec et court que celui du pompe. */
   pistolRecoil: RecoilKick;
   /** Kick de recul du pompe au tir. Même mécanique que `meleeRecoil`. */
   shotgunRecoil: RecoilKick;
+  /** Kick de recul du pistolet de détresse : un coup de poignet vers le haut, lent à revenir. */
+  flareRecoil: RecoilKick;
   recoilPositionInterpolated: boolean;
 
   // see: docs/archive/systems-armes.md#matériau-perçu-et-hitstop-murennemi
@@ -139,11 +158,23 @@ export const weaponConfig: WeaponConfig = {
   shotgunStartingAmmo: 48,
   shotgunMaxAmmo: 96,
 
+  // Valeurs de départ, à régler en salle d'essai. Repères : un Costard a 50 PV,
+  // un Vigile 140 ; la fusée tue ce qu'elle touche et ce qui se tient à 1,5 m.
+  flareCooldown: 1.1,
+  flareSpeed: 34,
+  flareGravity: 5,
+  flareLifetime: 2.5,
+  flareDirectDamage: 35,
+  flareStartingAmmo: 6,
+  flareMaxAmmo: 18,
+  flareBlast: { radius: 3.5, damage: 90, playerDamageScale: 0.5, gibDistance: 1.4, impulse: 380, impulseLift: 0.5 },
+
   // Valeurs de départ = variante B ci-dessous (« classique »), même
   // convention que `moveConfig`/`FEEL_VARIANTS`.
   meleeRecoil: { kickX: 0, kickY: -0.035, kickZ: 0.05, kickPitchDeg: 5, recoverTime: 0.18 },
   pistolRecoil: { kickX: 0, kickY: 0.012, kickZ: 0.05, kickPitchDeg: 3, recoverTime: 0.12 },
   shotgunRecoil: { kickX: 0, kickY: 0.025, kickZ: 0.14, kickPitchDeg: 7, recoverTime: 0.22 },
+  flareRecoil: { kickX: 0, kickY: 0.03, kickZ: 0.09, kickPitchDeg: 11, recoverTime: 0.3 },
   recoilPositionInterpolated: true,
 
   hitstopDuration: DEFAULT_HITSTOP_FRAMES * FIXED_DT,
@@ -190,6 +221,7 @@ function damageForWeapon(weapon: FiringWeapon): number {
   if (weapon === "kick") return kickConfig.damage;
   if (weapon === "shotgun") return weaponConfig.shotgunDamagePerPellet;
   if (weapon === "pistol") return weaponConfig.pistolDamage;
+  if (weapon === "flare") return weaponConfig.flareDirectDamage;
   return weaponConfig.meleeDamage;
 }
 

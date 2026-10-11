@@ -241,6 +241,50 @@ describe("updatePickups — armes au sol", () => {
   });
 });
 
+describe("updatePickups — pistolet de détresse", () => {
+  it("premier pistolet de détresse : l'arme et sa réplique ; un second : seulement ses fusées", () => {
+    const first = partie({ use_flare: {} });
+    first.pas();
+    expect(first.session.weapons.owns("flare")).toBe(true);
+    expect(first.session.weapons.activeWeapon).toBe("flare");
+    expect(hud()).toBe("Pistolet de détresse récupéré");
+    expect(first.session.run.heroLinesSaid.has("arme_fusee")).toBe(true);
+
+    const second = partie({ use_flare: {} });
+    second.session.weapons.pickUpFlare();
+    second.session.weapons.flareAmmo = 0;
+    second.pas();
+    expect(hud()).toBe(`+${weaponConfig.flareStartingAmmo} fusées de détresse`);
+    expect(second.session.run.heroLinesSaid.has("arme_fusee")).toBe(false);
+  });
+
+  it("une boîte `fusees` recharge le pistolet de détresse, pas les autres armes", () => {
+    const { session, pas } = partie({ use_fusees_test: { fusees: 4 } });
+    session.weapons.pickUpPistol();
+    session.weapons.pickUpFlare();
+    const flares = session.weapons.flareAmmo;
+    const bullets = session.weapons.pistolAmmo;
+
+    pas();
+
+    expect(session.weapons.flareAmmo).toBe(flares + 4);
+    expect(session.weapons.pistolAmmo).toBe(bullets);
+    expect(hud()).toBe("+4 fusées de détresse");
+    expect(playSfx).toHaveBeenCalledWith("ammo_pickup");
+  });
+
+  it("au plafond de fusées : la boîte reste au sol", () => {
+    const { session, pas } = partie({ use_fusees_test: { fusees: 4 } });
+    session.weapons.pickUpFlare();
+    session.weapons.addFlareAmmo(weaponConfig.flareMaxAmmo);
+
+    pas();
+
+    expect(session.weapons.flareAmmo).toBe(weaponConfig.flareMaxAmmo);
+    expect(hud()).toBeNull();
+  });
+});
+
 describe("updatePickups — portée", () => {
   it("hors du rayon de ramassage, rien n'est pris ; l'aimant l'élargit", () => {
     const { session, pas } = partie({ use_soin_test: { soin: 25 } });

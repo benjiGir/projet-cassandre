@@ -121,7 +121,8 @@ function consumableUseful(session: KioskTarget, kind: KioskOffer["kind"]): boole
   if (kind === "ammo")
     return (
       (session.weapons.owns("pistol") && session.weapons.pistolAmmo < session.weapons.pistolMaxAmmo) ||
-      (session.weapons.owns("shotgun") && session.weapons.shotgunAmmo < session.weapons.shotgunMaxAmmo)
+      (session.weapons.owns("shotgun") && session.weapons.shotgunAmmo < session.weapons.shotgunMaxAmmo) ||
+      (session.weapons.owns("flare") && session.weapons.flareAmmo < session.weapons.flareMaxAmmo)
     );
   return true;
 }
@@ -141,6 +142,7 @@ function useConsumable(session: GameSession, offer: KioskOffer): PerkPurchase {
   } else {
     if (session.weapons.owns("pistol")) session.weapons.addPistolAmmo(kioskConfig.pistolAmmo);
     if (session.weapons.owns("shotgun")) session.weapons.addShotgunAmmo(kioskConfig.shotgunAmmo);
+    if (session.weapons.owns("flare")) session.weapons.addFlareAmmo(kioskConfig.flareAmmo);
   }
   publishCounters(session.run.stream);
   showHudMessage(`${offer.label} : −${offer.price} €`);

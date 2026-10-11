@@ -68,7 +68,21 @@ PICKUPS = (
     ('cartouches_depot',(49,331,-18),'cartouches',8),
     ('cartouches_machinerie',(115,353,-22),'cartouches',8),
     ('cartouches_rame',(39.5,404,-17.25),'cartouches',8),
+    ('fusees_depot',(49,333,-18),'fusees',4),
+    ('fusees_machinerie',(115,351,-22),'fusees',4),
+    ('fusees_rame',(39.5,405.5,-17.25),'fusees',4),
 )
+
+# Armes au sol : le jeu les reconnaît à leur nom exact (`use_flare`), sans propriété.
+# Le pistolet de détresse attend devant l'établi de la première galerie, sous
+# sa lampe de travail : sur le chemin obligé, juste avant les meutes de Rampants.
+WEAPONS = (
+    ('use_flare',(19.05,215.0,None)),
+)
+
+
+def weapon_positions():
+    return [(name,(x,y,P.galerie_z(x,y) if z is None else z)) for name,(x,y,z) in WEAPONS]
 
 
 def inspect_positions(a,spawns):
@@ -86,6 +100,7 @@ def inspect_positions(a,spawns):
     capsules={'costard':(.4,.5),'vigile':(.5,.5),'rampant':(.35,.25)}
     positions=[(item['nom'],item['pieds'],*capsules[item['espece']]) for item in spawns]
     positions += [('use_metro_'+name,at,.3,0) for name,at,_,_ in PICKUPS]
+    positions += [(name,at,.3,0) for name,at in weapon_positions()]
     for name,(x,y,z),radius,half_height in positions:
         hit,_,_,_=tree.ray_cast(Vector((x,y,z+.8)),Vector((0,0,-1)),1.8)
         ground=None if hit is None else hit.z
@@ -123,10 +138,17 @@ def build(a):
         obj.location=center
         obj.name='use_metro_'+name
         obj[property_name]=amount
+    for name,(x,y,z) in weapon_positions():
+        obj=a.box('ramassage_'+name,(x-.12,y-.12,z+.08),(.24,.24,.16),'petrole',False)
+        center=Vector((x,y,z+.16))
+        obj.data.transform(Matrix.Translation(-center))
+        obj.location=center
+        obj.name=name
     root=Path(__file__).resolve().parents[3]
     (root/'docs/assets/blockout-metro/rencontres.json').write_text(json.dumps({
         'spawns':spawns,
         'implantation':placement,
         'declencheurs':[{'nom':name,'evenement':event,'origine':origin,'taille':size} for name,event,origin,size in TRIGGERS],
         'ramassages':[{'nom':name,'pieds':at,'propriete':prop,'quantite':amount} for name,at,prop,amount in PICKUPS],
+        'armes':[{'nom':name,'pieds':at} for name,at in weapon_positions()],
     },ensure_ascii=False,indent=2)+'\n')

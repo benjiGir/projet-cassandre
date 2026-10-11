@@ -116,6 +116,8 @@ const INITIAL_DEBUG: DebugState = {
   shotgunMaxAmmo: 0,
   pistolAmmo: 0,
   pistolMaxAmmo: 0,
+  flareAmmo: 0,
+  flareMaxAmmo: 0,
   activeWeapon: "melee",
   secretsFound: 0,
   secretsTotal: 0,

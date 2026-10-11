@@ -267,7 +267,9 @@ export function loadGltfLevel(
                 ? "pistol"
                 : useObject.name === "use_shotgun"
                   ? "shotgun"
-                  : null;
+                  : useObject.name === "use_flare"
+                    ? "flare"
+                    : null;
           if (!weapon) continue;
           weaponPickupBillboards.push(
             dressWeaponPickup(useObject.object, weapon, groundBelow(session, useObject.position), pickupResources),

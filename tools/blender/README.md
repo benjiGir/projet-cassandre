@@ -124,7 +124,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
 | `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
-| `build_weapons.py` | trois armes et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
+| `build_weapons.py` | quatre armes (dont le pistolet de détresse, `weapons/flare.py`) et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)

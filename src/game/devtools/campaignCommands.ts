@@ -13,6 +13,7 @@ export function applyCampaignCommand(engine: GameEngine, command: CampaignDebugC
       applyPlayerDamage(engine, session, 10);
       session.weapons.pistolAmmo = Math.max(0, session.weapons.pistolAmmo - 5);
       session.weapons.shotgunAmmo = Math.max(0, session.weapons.shotgunAmmo - 2);
+      session.weapons.flareAmmo = Math.max(0, session.weapons.flareAmmo - 1);
       break;
     case "ammo":
       usePerkKiosk(session, { perk: "perche", price: 10 });

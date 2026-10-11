@@ -87,6 +87,7 @@ describe("captureArrival / applyArrival — du magasin au métro", () => {
         active: "pistol",
         pistolAmmo: weaponConfig.pistolStartingAmmo,
         shotgunAmmo: session.weapons.shotgunAmmo,
+        flareAmmo: 0,
       },
       perks: ["vpn"],
       wallet: 64,
@@ -143,7 +144,7 @@ describe("captureArrival / applyArrival — du magasin au métro", () => {
     const session = partie();
     const mainsVides: CampaignArrival = {
       ...metroArrival("habitue", "pauvre"),
-      weapons: { owned: [], active: "none", pistolAmmo: 0, shotgunAmmo: 0 },
+      weapons: { owned: [], active: "none", pistolAmmo: 0, shotgunAmmo: 0, flareAmmo: 0 },
     };
 
     applyArrival(session, mainsVides);

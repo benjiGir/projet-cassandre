@@ -20,6 +20,7 @@ function lire(weapons: WeaponSystem): ViewmodelClocks {
     sinceMeleeFire: 0,
     sincePistolFire: 0,
     sinceShotgunFire: 0,
+    sinceFlareFire: 0,
   });
 }
 

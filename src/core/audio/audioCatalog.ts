@@ -35,6 +35,8 @@ const SFX_DEFS = {
   water_drink: { sprite: "water_gulp", volume: 0.7 },
   food_eat: { sprite: "food_eat", volume: 0.65 },
   explosion: { sprite: "explosion", volume: 1.0, pitch: 0.04 },
+  flare_fire: { sprite: "flare_fire", volume: 0.9, pitch: 0.03 },
+  flare_burst: { sprite: "flare_burst", volume: 0.95, pitch: 0.04 },
   rampant_alert: { sprite: "rampant_alert", volume: 0.85, pitch: 0.1 },
   rampant_telegraph: { sprite: "rampant_telegraph", volume: 0.9, pitch: 0.06 },
   rampant_attack: { sprite: "rampant_attack", volume: 0.8, pitch: 0.06 },
@@ -51,6 +53,7 @@ export const WEAPON_FIRE_SFX: Record<FiringWeapon, SfxId> = {
   pistol: "pistol_fire",
   melee: "melee_fire",
   shotgun: "shotgun_fire",
+  flare: "flare_fire",
 };
 
 export const MATERIAL_IMPACT_SFX: Record<string, SfxId> = {
