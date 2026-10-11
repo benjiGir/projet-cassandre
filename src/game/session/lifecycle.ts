@@ -78,6 +78,7 @@ function buildGameSession(
   // de recréer leurs pools, mais leur état transitoire appartient à UNE
   // partie. Le reset précède toute construction de la nouvelle session.
   engine.clock.reset();
+  engine.heroReflection.reset();
   engine.fx.resetSession();
   engine.fx.setRandom(seededRandom(FX_SEED));
   setAudioRandom(seededRandom(AUDIO_SEED));

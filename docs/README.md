@@ -46,6 +46,7 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Cafétéria du magasin](assets/cafeteria-direction-artistique.md) — damier, stratifié, métal et parois dans les familles communes.
 - [Sanitaires du magasin](assets/sanitaires-direction-artistique.md) — faïence, cabines vert pétrole et pièces métalliques.
 - [Nouveaux équipements des sanitaires](assets/sanitaires-assets.md) — cabines accessibles, grands lavabos et miroirs avec reflets dynamiques.
+- [Corps du héros dans les miroirs](4-technique/reflet-du-heros.md) — modèle original, clips, prises d'arme et revue interactive.
 - [Réserve et quai de livraison](assets/reserve-direction-artistique.md) — béton, peinture, bois, cartons et équipements industriels harmonisés.
 - [Personnel et bureaux](assets/bureaux-direction-artistique.md) — vestiaires, PC sécurité, escalier, moquette et mobilier administratif.
 - [Fournil, labo et SAV](assets/ateliers-direction-artistique.md) — grès, faïence, inox et surfaces de travail des ateliers.

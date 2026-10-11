@@ -112,10 +112,17 @@ nearest. Le reflet cache les autres miroirs et les enfants de la caméra pour
 Le panneau ne rejoint pas les lots fusionnés. `LevelResources` libère sa
 surface, son matériau et sa cible au remplacement du niveau.
 
+Le [corps du héros](reflet-du-heros.md) est chargé une fois avec les armes.
+`reflectionActors.ts` le rend visible uniquement pendant le rendu réfléchi,
+puis rétablit sa visibilité même en cas d'erreur. Ses mains et ses armes
+appartiennent à son squelette ; les armes subjectives restent cachées.
+
 `src/render/environment/warmLevelMirrors.ts` rend chaque surface depuis une
 caméra temporaire pendant la préparation du candidat. Tous les appels de rendu
 passent par `runGameplaySync` et `RenderService`. Les attentes restent à la
-frontière asynchrone du chargement. Les équipements sont décrits dans la
+frontière asynchrone du chargement. Le corps est temporairement placé devant
+chaque surface pour préparer aussi ses matériaux articulés. Sa pose est ensuite
+restaurée. Les équipements sont décrits dans la
 [fiche des sanitaires](../assets/sanitaires-assets.md).
 
 ### Fusions et durée de vie

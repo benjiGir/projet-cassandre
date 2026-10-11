@@ -19,6 +19,7 @@ import { initPhysics } from "./physics/world";
 import { loadEnemySpriteSheetOrPlaceholder } from "./render/sprites/enemySprites";
 import { RenderService } from "./render/pipeline/renderService";
 import { loadWeaponModelsOrPlaceholder } from "./render/viewmodel/weaponModels";
+import { loadHero } from "./render/hero/loadHero";
 import { loadCardPickupTextures } from "./render/pickups/cardPickups";
 import { createGameFlowActor, isPhysicsLiveState, isPlayingState } from "./app/navigation/gameFlowMachine";
 import { App } from "./ui/App/App";
@@ -119,15 +120,17 @@ async function main() {
   });
 
   reportLoading("Moteur physique et planches de sprites", 0.08);
-  const [, suitSheet, directorSheet, rampantSheet, vigileSheet, weaponModels, cardPickupTextures] = await Promise.all([
-    initPhysics(),
-    loadEnemySpriteSheetOrPlaceholder("costard"),
-    loadEnemySpriteSheetOrPlaceholder("directeur"),
-    loadEnemySpriteSheetOrPlaceholder("rampant"),
-    loadEnemySpriteSheetOrPlaceholder("vigile"),
-    loadWeaponModelsOrPlaceholder(),
-    loadCardPickupTextures(),
-  ]);
+  const [, suitSheet, directorSheet, rampantSheet, vigileSheet, weaponModels, cardPickupTextures, heroAsset] =
+    await Promise.all([
+      initPhysics(),
+      loadEnemySpriteSheetOrPlaceholder("costard"),
+      loadEnemySpriteSheetOrPlaceholder("directeur"),
+      loadEnemySpriteSheetOrPlaceholder("rampant"),
+      loadEnemySpriteSheetOrPlaceholder("vigile"),
+      loadWeaponModelsOrPlaceholder(),
+      loadCardPickupTextures(),
+      loadHero(),
+    ]);
   reportLoading("Chargement du niveau", 0.3);
   await letBrowserPaint();
 
@@ -137,6 +140,7 @@ async function main() {
     { suit: suitSheet, director: directorSheet, rampant: rampantSheet, vigile: vigileSheet },
     weaponModels,
     cardPickupTextures,
+    heroAsset,
   );
 
   registerRenderTarget(persistentEngine.scene, persistentEngine.camera, persistentEngine.renderer);

@@ -10,6 +10,7 @@ export function snapshotPrevious(engine: GameEngine): void {
   const session = engine.session;
   session.player.snapshotPrevious();
   session.weapons.snapshotPrevious();
+  engine.heroReflection.snapshotPrevious();
   session.suitManager.snapshotPrevious();
   session.directorManager.snapshotPrevious();
   session.level.propSystem?.snapshotPrevious();

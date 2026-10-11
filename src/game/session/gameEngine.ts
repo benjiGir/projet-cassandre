@@ -6,6 +6,8 @@ import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/pi
 import { FxSystem } from "../../render/fx/fx";
 import { UseObjectCulling } from "../../render/environment/useObjectCulling";
 import { Viewmodel } from "../../render/viewmodel/viewmodel";
+import { HeroReflection } from "../../render/hero/heroReflection";
+import type { HeroAsset } from "../../render/hero/heroTypes";
 import type { WeaponModels } from "../../render/viewmodel/viewmodelTypes";
 import type { CardPickupTextures } from "../../render/pickups/cardPickups";
 import { createWireframeToggle } from "../../render/debug/debugView";
@@ -38,6 +40,7 @@ export interface PersistentEngine {
   /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx/fx.ts`. */
   fx: FxSystem;
   viewmodel: Viewmodel;
+  heroReflection: HeroReflection;
   /** Élagage par distance des `use_*` — PERSISTANT, comme `fx`/`viewmodel` : il ne retient que des références faibles (voir `render/environment/useObjectCulling.ts`). */
   useObjectCulling: UseObjectCulling;
   /** Géométries des armes, partagées par le viewmodel et les ramassages posés dans les niveaux. */
@@ -96,6 +99,7 @@ export function buildGameEngine(
   sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet; vigile: EnemySpriteSheet },
   weaponModels: WeaponModels,
   cardPickupTextures: CardPickupTextures,
+  heroAsset: HeroAsset,
 ): PersistentEngine {
   const scene = new THREE.Scene();
   // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
@@ -119,6 +123,7 @@ export function buildGameEngine(
   );
   const fx = new FxSystem(scene, enemyAtlases);
   const viewmodel = new Viewmodel(camera, weaponModels);
+  const heroReflection = new HeroReflection(scene, heroAsset, weaponModels);
   const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
@@ -143,6 +148,7 @@ export function buildGameEngine(
     clock,
     fx,
     viewmodel,
+    heroReflection,
     useObjectCulling: new UseObjectCulling(),
     weaponModels,
     crosshair,

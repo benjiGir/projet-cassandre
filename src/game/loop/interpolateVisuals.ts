@@ -59,6 +59,14 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         }
 
         engine.viewmodel.update(alpha, session.weapons);
+        engine.heroReflection.update(
+          alpha,
+          session.player,
+          session.weapons,
+          engine.look.yaw,
+          engine.look.pitch,
+          moveConfig.eyeHeight,
+        );
         engine.fx.poseFlares(session.weapons.flares, alpha, engine.viewmodel.muzzleWorldPosition(flareMuzzle, "flare"));
       });
 

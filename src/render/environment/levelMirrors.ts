@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { Reflector } from "three/addons/objects/Reflector.js";
 import type { LevelResources } from "../../game/level/loading/levelResources";
+import { revealReflectionActors } from "./reflectionActors";
 
 const mirrorsByLevel = new WeakMap<LevelResources, Set<Reflector>>();
 
@@ -37,9 +38,11 @@ export function attachLevelMirror(mesh: THREE.Mesh, resources: LevelResources): 
     const cameraVisibility = camera.children.map((child) => [child, child.visible] as const);
     for (const [peer] of visibility) peer.visible = false;
     for (const [child] of cameraVisibility) child.visible = false;
+    const hideActors = revealReflectionActors(scene);
     try {
       drawReflection.call(mirror, renderer, scene, camera, geometry, material, group);
     } finally {
+      hideActors();
       for (const [peer, visible] of visibility) peer.visible = visible;
       for (const [child, visible] of cameraVisibility) child.visible = visible;
     }

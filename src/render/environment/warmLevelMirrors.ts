@@ -9,6 +9,7 @@ export async function warmLevelMirrors(
   scene: THREE.Scene,
   camera: THREE.Camera,
   root: THREE.Object3D,
+  prepareReflection?: (view: THREE.Camera) => () => void,
 ): Promise<void> {
   const mirrors: Reflector[] = [];
   root.traverse((object) => {
@@ -32,9 +33,14 @@ export async function warmLevelMirrors(
       view.position.copy(center).addScaledVector(normal, 3);
       view.lookAt(center);
       view.updateMatrixWorld(true);
-      render(view);
-      await Promise.resolve();
-      render(view);
+      const restore = prepareReflection?.(view);
+      try {
+        render(view);
+        await Promise.resolve();
+        render(view);
+      } finally {
+        restore?.();
+      }
     }
   } finally {
     renderer.setRenderTarget(target);

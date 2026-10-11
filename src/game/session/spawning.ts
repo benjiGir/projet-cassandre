@@ -326,7 +326,9 @@ export function loadGltfLevel(
           previousRoot?.removeFromParent();
           engine.fx.releaseShaderPrograms();
           await warmShowerShader(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
-          await warmLevelMirrors(engine.renderer, engine.scene, engine.camera, handle.root);
+          await warmLevelMirrors(engine.renderer, engine.scene, engine.camera, handle.root, (view) =>
+            engine.heroReflection.prepareWarmup(view),
+          );
           if (handle.fountainWater)
             await warmFountainWater(handle.fountainWater, engine.renderer, engine.scene, engine.camera, previousRoot);
           if (handle.trains)

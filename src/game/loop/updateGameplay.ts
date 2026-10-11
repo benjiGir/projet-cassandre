@@ -70,6 +70,7 @@ function stepGameplay(engine: GameEngine, session: GameSession, fixedDt: number)
     return;
   }
   const dt = engine.clock.tick(fixedDt);
+  engine.heroReflection.advance(dt);
   engine.fx.advanceMuzzleFlashes(dt);
   session.heroPortrait.advance(dt, session.run.playerHp, session.run.playerMaxHp);
 
