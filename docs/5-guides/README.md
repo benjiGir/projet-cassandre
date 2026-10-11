@@ -2,7 +2,7 @@
 title: Guides
 tags: [sommaire]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-10
 ---
 
 # Guides
@@ -20,6 +20,8 @@ Parcours de reprise, table des points d'entrée et recettes pas à pas.
 - [Travailler avec les agents](travailler-avec-les-agents.md) — responsabilités, skills et limites de vérification.
 
 ## Recettes
+
+- [Direction artistique commune](direction-artistique.md) — traitement approuvé sur le quai et méthode de déploiement par zone.
 
 - [Ajouter un objet interactif](ajouter-un-objet-interactif.md) — contrat glTF, runtime et validation.
 - [Modifier le niveau](modifier-le-niveau.md) — Blender live, audit et export.

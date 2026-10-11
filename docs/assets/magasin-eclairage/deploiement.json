@@ -1,0 +1,1367 @@
+{
+  "lampes": [
+    {
+      "nom": "light_c_bu_11_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_bu_19_1667_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_bu_26_8333_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_bu_34_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_bu_3_83333_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_bu_42_1667_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_escalier_5_145",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_ga_cf_32_7",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_ga_cs_3_18",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_ga_cs_m3_18",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_el_8_59",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_el_8_65",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_rs_3_94",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_rs_m3_94",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_ry_m8_63",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_hb_ry_m8_69",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_pk_ga_0_m2",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_ramp_m13_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_ramp_m22_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_ramp_m31_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_ramp_m4_5_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_104",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_112",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_120",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_128",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_136",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_88",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_short_w_m40_96",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_c_so_bu_42_128",
+      "couleur": "#d2c9ad",
+      "intensite": 4.2,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ca_36_14_0",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_36_14_1",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_36_6_0",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_36_6_1",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_44_14_0",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_44_14_1",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_44_6_0",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_44_6_1",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_52_14_0",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_ca_52_14_1",
+      "couleur": "#e1c8a1",
+      "intensite": 4.0,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_cs_0_22_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_0_22_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_0_28_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_0_28_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_0_36_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_0_36_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_22_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_22_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_28_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_28_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_36_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_36_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_41_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_11_41_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_28_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_28_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_36_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_36_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_41_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_22_41_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_22_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_22_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_28_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_28_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_36_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_36_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_41_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m11_41_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_22_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_22_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_28_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_28_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_36_0",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_cs_m22_36_1",
+      "couleur": "#d8d0b0",
+      "intensite": 4.6,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_di_m34_147_5_0",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m34_147_5_1",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m37_5_160_5_0",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m41_147_5_0",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m41_147_5_1",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m41_155_0",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_di_m41_155_1",
+      "couleur": "#ddc59b",
+      "intensite": 3.8,
+      "portee": 8.0
+    },
+    {
+      "nom": "light_el_13_5_49_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_49_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_57_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_57_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_65_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_65_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_72_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_13_5_72_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_18_5_57_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_18_5_57_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_22_5_72_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_49_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_49_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_57_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_57_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_65_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_27_5_65_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_34_60_4_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_34_70_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_56_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_56_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_63_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_63_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_69_5_0",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_el_41_5_69_5_1",
+      "couleur": "#bdd3d2",
+      "intensite": 4.6,
+      "portee": 8.5
+    },
+    {
+      "nom": "light_et_2_4_158_5_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_2_4_158_5_1",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_5_5_150_3_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m16_6_158_5_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m16_6_158_5_1",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m1_150_3_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m25_150_3_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m25_4_158_5_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m25_4_158_5_1",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m7_6_158_5_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m7_6_158_5_1",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_et_m9_150_3_0",
+      "couleur": "#d2c9ad",
+      "intensite": 3.5,
+      "portee": 7.5
+    },
+    {
+      "nom": "light_ga_10_11_5_0",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_10_11_5_1",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_22_11_5_0",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_22_11_5_1",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_lune_0",
+      "couleur": "#a8c0d2",
+      "intensite": 8.0,
+      "portee": 14.0
+    },
+    {
+      "nom": "light_ga_lune_1",
+      "couleur": "#a8c0d2",
+      "intensite": 8.0,
+      "portee": 14.0
+    },
+    {
+      "nom": "light_ga_lune_2",
+      "couleur": "#a8c0d2",
+      "intensite": 8.0,
+      "portee": 14.0
+    },
+    {
+      "nom": "light_ga_m26_11_5_0",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_m26_11_5_1",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_m2_11_5_0",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ga_m2_11_5_1",
+      "couleur": "#d7cfaf",
+      "intensite": 4.5,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_hb_3_5_46_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_46_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_62_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_62_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_72_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_72_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_80_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_80_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_88_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_3_5_88_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_46_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_46_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_54_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_54_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_62_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_62_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_72_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_72_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_88_0",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_hb_m4_5_88_1",
+      "couleur": "#cbd2b5",
+      "intensite": 5.5,
+      "portee": 10.0
+    },
+    {
+      "nom": "light_rs_12_108",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_12_116",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_12_127",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m20_100",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m20_108",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m20_127",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m5_100",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m5_108",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m5_116",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_rs_m5_127",
+      "couleur": "#d4cfb3",
+      "intensite": 10.0,
+      "portee": 13.0
+    },
+    {
+      "nom": "light_ry_m13_5_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m13_5_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m13_5_74_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_50_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_50_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_58_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_66_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_74_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m21_25_74_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_50_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_50_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_58_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m28_75_66_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_58_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_66_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_74_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m36_25_74_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_50_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_50_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_58_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_66_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_74_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m43_75_74_1",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m50_50_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m50_58_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m50_66_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_ry_m50_74_0",
+      "couleur": "#d4cfb1",
+      "intensite": 4.8,
+      "portee": 9.0
+    },
+    {
+      "nom": "light_wc_58_25_8_0",
+      "couleur": "#c2d0bf",
+      "intensite": 3.5,
+      "portee": 6.5
+    }
+  ],
+  "luminaires": [
+    "sig_rampe_2m_tube_neon_c_ga_cf_n_32_7",
+    "sig_rampe_2m_tube_neon_c_ga_cs_n_3_18",
+    "sig_rampe_2m_tube_neon_c_ga_cs_n_m3_18",
+    "sig_rampe_2m_tube_neon_c_hb_el_n_8_59",
+    "sig_rampe_2m_tube_neon_c_hb_el_n_8_65",
+    "sig_rampe_2m_tube_neon_c_hb_rs_n_3_94",
+    "sig_rampe_2m_tube_neon_c_hb_rs_n_m3_94",
+    "sig_rampe_2m_tube_neon_c_hb_ry_n_m8_63",
+    "sig_rampe_2m_tube_neon_c_hb_ry_n_m8_69",
+    "sig_rampe_2m_tube_neon_c_pk_ga_n_0_m2",
+    "sig_rampe_2m_tube_neon_door_coupe_feu_secours",
+    "sig_rampe_2m_tube_neon_fournil_neon_0",
+    "sig_rampe_2m_tube_neon_fournil_neon_1",
+    "sig_rampe_2m_tube_neon_fournil_neon_2",
+    "sig_rampe_2m_tube_neon_gaine_n_23_153",
+    "sig_rampe_2m_tube_neon_gaine_n_29_153",
+    "sig_rampe_2m_tube_neon_ry_secours",
+    "sig_rampe_4m_tube_neon_c_bu_n_11_5_136",
+    "sig_rampe_4m_tube_neon_c_bu_n_19_1667_136",
+    "sig_rampe_4m_tube_neon_c_bu_n_26_8333_136",
+    "sig_rampe_4m_tube_neon_c_bu_n_34_5_136",
+    "sig_rampe_4m_tube_neon_c_bu_n_3_83333_136",
+    "sig_rampe_4m_tube_neon_c_bu_n_42_1667_136",
+    "sig_rampe_4m_tube_neon_c_escalier_n_5_145",
+    "sig_rampe_4m_tube_neon_c_short_ramp_n_m13_5_136",
+    "sig_rampe_4m_tube_neon_c_short_ramp_n_m22_5_136",
+    "sig_rampe_4m_tube_neon_c_short_ramp_n_m31_5_136",
+    "sig_rampe_4m_tube_neon_c_short_ramp_n_m4_5_136",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_104",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_112",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_120",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_128",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_136",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_88",
+    "sig_rampe_4m_tube_neon_c_short_w_n_m40_96",
+    "sig_rampe_4m_tube_neon_c_so_bu_n_42_128",
+    "sig_rampe_4m_tube_neon_ca_n_36_14",
+    "sig_rampe_4m_tube_neon_ca_n_36_6",
+    "sig_rampe_4m_tube_neon_ca_n_44_14",
+    "sig_rampe_4m_tube_neon_ca_n_44_6",
+    "sig_rampe_4m_tube_neon_ca_n_52_14",
+    "sig_rampe_4m_tube_neon_cs_n_0_22",
+    "sig_rampe_4m_tube_neon_cs_n_0_28",
+    "sig_rampe_4m_tube_neon_cs_n_0_36",
+    "sig_rampe_4m_tube_neon_cs_n_11_22",
+    "sig_rampe_4m_tube_neon_cs_n_11_28",
+    "sig_rampe_4m_tube_neon_cs_n_11_36",
+    "sig_rampe_4m_tube_neon_cs_n_11_41",
+    "sig_rampe_4m_tube_neon_cs_n_22_28",
+    "sig_rampe_4m_tube_neon_cs_n_22_36",
+    "sig_rampe_4m_tube_neon_cs_n_22_41",
+    "sig_rampe_4m_tube_neon_cs_n_m11_22",
+    "sig_rampe_4m_tube_neon_cs_n_m11_28",
+    "sig_rampe_4m_tube_neon_cs_n_m11_36",
+    "sig_rampe_4m_tube_neon_cs_n_m11_41",
+    "sig_rampe_4m_tube_neon_cs_n_m22_22",
+    "sig_rampe_4m_tube_neon_cs_n_m22_28",
+    "sig_rampe_4m_tube_neon_cs_n_m22_36",
+    "sig_rampe_4m_tube_neon_di_n_m34_147_5",
+    "sig_rampe_4m_tube_neon_di_n_m37_5_160_5",
+    "sig_rampe_4m_tube_neon_di_n_m41_147_5",
+    "sig_rampe_4m_tube_neon_di_n_m41_155",
+    "sig_rampe_4m_tube_neon_el_n_13_5_49",
+    "sig_rampe_4m_tube_neon_el_n_13_5_57",
+    "sig_rampe_4m_tube_neon_el_n_13_5_65",
+    "sig_rampe_4m_tube_neon_el_n_13_5_72",
+    "sig_rampe_4m_tube_neon_el_n_18_5_57",
+    "sig_rampe_4m_tube_neon_el_n_22_5_72",
+    "sig_rampe_4m_tube_neon_el_n_27_5_49",
+    "sig_rampe_4m_tube_neon_el_n_27_5_57",
+    "sig_rampe_4m_tube_neon_el_n_27_5_65",
+    "sig_rampe_4m_tube_neon_el_n_34_60_4",
+    "sig_rampe_4m_tube_neon_el_n_34_70",
+    "sig_rampe_4m_tube_neon_el_n_41_5_56",
+    "sig_rampe_4m_tube_neon_el_n_41_5_63",
+    "sig_rampe_4m_tube_neon_el_n_41_5_69_5",
+    "sig_rampe_4m_tube_neon_et_n_2_4_158_5",
+    "sig_rampe_4m_tube_neon_et_n_5_5_150_3",
+    "sig_rampe_4m_tube_neon_et_n_m16_6_158_5",
+    "sig_rampe_4m_tube_neon_et_n_m1_150_3",
+    "sig_rampe_4m_tube_neon_et_n_m25_150_3",
+    "sig_rampe_4m_tube_neon_et_n_m25_4_158_5",
+    "sig_rampe_4m_tube_neon_et_n_m7_6_158_5",
+    "sig_rampe_4m_tube_neon_et_n_m9_150_3",
+    "sig_rampe_4m_tube_neon_ga_n_10_11_5",
+    "sig_rampe_4m_tube_neon_ga_n_22_11_5",
+    "sig_rampe_4m_tube_neon_ga_n_m26_11_5",
+    "sig_rampe_4m_tube_neon_ga_n_m2_11_5",
+    "sig_rampe_4m_tube_neon_hb_n_3_5_46",
+    "sig_rampe_4m_tube_neon_hb_n_3_5_62",
+    "sig_rampe_4m_tube_neon_hb_n_3_5_72",
+    "sig_rampe_4m_tube_neon_hb_n_3_5_80",
+    "sig_rampe_4m_tube_neon_hb_n_3_5_88",
+    "sig_rampe_4m_tube_neon_hb_n_m4_5_46",
+    "sig_rampe_4m_tube_neon_hb_n_m4_5_54",
+    "sig_rampe_4m_tube_neon_hb_n_m4_5_62",
+    "sig_rampe_4m_tube_neon_hb_n_m4_5_72",
+    "sig_rampe_4m_tube_neon_hb_n_m4_5_88",
+    "sig_rampe_4m_tube_neon_ry_n_m13_5_58",
+    "sig_rampe_4m_tube_neon_ry_n_m13_5_66",
+    "sig_rampe_4m_tube_neon_ry_n_m13_5_74",
+    "sig_rampe_4m_tube_neon_ry_n_m21_25_50",
+    "sig_rampe_4m_tube_neon_ry_n_m21_25_58",
+    "sig_rampe_4m_tube_neon_ry_n_m21_25_66",
+    "sig_rampe_4m_tube_neon_ry_n_m21_25_74",
+    "sig_rampe_4m_tube_neon_ry_n_m28_75_50",
+    "sig_rampe_4m_tube_neon_ry_n_m28_75_58",
+    "sig_rampe_4m_tube_neon_ry_n_m28_75_66",
+    "sig_rampe_4m_tube_neon_ry_n_m36_25_58",
+    "sig_rampe_4m_tube_neon_ry_n_m36_25_66",
+    "sig_rampe_4m_tube_neon_ry_n_m36_25_74",
+    "sig_rampe_4m_tube_neon_ry_n_m43_75_50",
+    "sig_rampe_4m_tube_neon_ry_n_m43_75_58",
+    "sig_rampe_4m_tube_neon_ry_n_m43_75_66",
+    "sig_rampe_4m_tube_neon_ry_n_m43_75_74",
+    "sig_rampe_4m_tube_neon_ry_n_m50_50",
+    "sig_rampe_4m_tube_neon_ry_n_m50_58",
+    "sig_rampe_4m_tube_neon_ry_n_m50_66",
+    "sig_rampe_4m_tube_neon_ry_n_m50_74",
+    "sig_rampe_4m_tube_neon_so_n_34_106",
+    "sig_rampe_4m_tube_neon_so_n_34_98_25",
+    "sig_rampe_4m_tube_neon_so_n_42_113_75",
+    "sig_rampe_4m_tube_neon_so_n_50_98_25",
+    "sig_rampe_4m_tube_neon_so_n_58_113_75",
+    "sig_rampe_4m_tube_neon_so_n_66_98_25",
+    "sig_rampe_4m_tube_neon_so_n_74_113_75",
+    "sig_rampe_4m_tube_neon_wc_n_58_25_8",
+    "str_suspension_0_neon_rs_su_12_108",
+    "str_suspension_0_neon_rs_su_12_116",
+    "str_suspension_0_neon_rs_su_12_127",
+    "str_suspension_0_neon_rs_su_m20_100",
+    "str_suspension_0_neon_rs_su_m20_108",
+    "str_suspension_0_neon_rs_su_m20_127",
+    "str_suspension_0_neon_rs_su_m5_100",
+    "str_suspension_0_neon_rs_su_m5_108",
+    "str_suspension_0_neon_rs_su_m5_116",
+    "str_suspension_0_neon_rs_su_m5_127"
+  ],
+  "luminaires_sans_source_proche": [
+    "str_suspension_0_neon_rs_su_12_100",
+    "str_suspension_0_neon_rs_su_m20_116"
+  ],
+  "hauteur_conservee_pres_panneaux": [
+    "light_cs_0_28_1"
+  ],
+  "sources_conservees": [
+    "light_camp_lanterne",
+    "light_chambre_froide",
+    "light_co_projecteur",
+    "light_door_coupe_feu_secours",
+    "light_enseigne_hyper_varan",
+    "light_fournil_four",
+    "light_fournil_neutre_0",
+    "light_fournil_neutre_1",
+    "light_fournil_neutre_2",
+    "light_fournil_rotissoire",
+    "light_gaine_0_0",
+    "light_gaine_1_0",
+    "light_gaine_23_153",
+    "light_gaine_29_153",
+    "light_labo_rouge",
+    "light_lb_poste_1",
+    "light_lb_poste_2",
+    "light_pk_0",
+    "light_pk_1",
+    "light_pk_2",
+    "light_pk_3",
+    "light_pk_4",
+    "light_pk_5",
+    "light_ps_bureau",
+    "light_ps_ecrans_a",
+    "light_ps_ecrans_b",
+    "light_ps_guichet",
+    "light_ps_guichet_vitre",
+    "light_ry_secours",
+    "light_ry_surgeles_0",
+    "light_ry_surgeles_1",
+    "light_s4_lampe",
+    "light_s4_tele",
+    "light_sav_ecrans",
+    "light_sav_etabli_0",
+    "light_sav_etabli_1",
+    "light_so_34_106_0",
+    "light_so_34_98_25_0",
+    "light_so_42_113_75_0",
+    "light_so_50_98_25_0",
+    "light_so_58_113_75_0",
+    "light_so_66_98_25_0",
+    "light_so_74_113_75_0",
+    "light_so_direction",
+    "light_vmc_couvee",
+    "light_vs_0",
+    "light_vs_1",
+    "light_vs_2",
+    "light_vs_3",
+    "light_vs_4",
+    "light_vs_douches"
+  ]
+}

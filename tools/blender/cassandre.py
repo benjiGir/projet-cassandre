@@ -388,6 +388,107 @@ def orient_office_screens(preview: str | None = None) -> dict:
     return result
 
 
+def restore_store_lighting() -> dict:
+    """Restitue les lampes et matières des luminaires depuis la sauvegarde."""
+    result = run("tools/blender/restore_store_lighting.py", keep="[store-lighting-restored]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def rework_restrooms() -> dict:
+    """Trois cabines accessibles, portes manuelles, grandes vasques et miroirs."""
+    result = run("tools/blender/refresh_restroom_assets.py", keep="[restroom-assets]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_finish(niveau: str = "hypermarche", inspect: bool = False) -> dict:
+    """Textures des parkings, extérieurs et raccords restants."""
+    if niveau not in ("hypermarche", "metro"):
+        raise ValueError("Choisir hypermarche ou metro")
+    args = (["--metro"] if niveau == "metro" else []) + (["--inspect"] if inspect else [])
+    result = run("tools/blender/refresh_art_direction_finish.py", *args, keep="[art-direction-finish]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def rework_office_finishes() -> dict:
+    """Moquette bleue continue et ossatures de faux plafond à l’étage."""
+    result = run("tools/blender/refresh_office_finishes.py", keep="[office-finishes]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_annexes(inspect: bool = False) -> dict:
+    """Matières de la planque et de la gaine, éclairage conservé."""
+    result = run("tools/blender/refresh_store_annexes.py", *(["--inspect"] if inspect else []), keep="[store-annexes-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_service(inspect: bool = False) -> dict:
+    """Matières de la chambre froide et du compacteur, lampes conservées."""
+    result = run("tools/blender/refresh_store_service.py", *(["--inspect"] if inspect else []), keep="[store-service-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def rework_fournil_ovens() -> dict:
+    """Deux fours à soles vitrés et une rôtissoire, lampes conservées."""
+    result = run("tools/blender/refresh_fournil_ovens.py", keep="[fournil-ovens]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_workshops(inspect: bool = False) -> dict:
+    """Textures du fournil, du laboratoire boucherie et de l’atelier SAV."""
+    result = run("tools/blender/refresh_store_workshops.py", *(["--inspect"] if inspect else []), keep="[store-workshops-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_offices(inspect: bool = False) -> dict:
+    """Textures des locaux du personnel, de l’étage et du bureau du Directeur."""
+    result = run("tools/blender/refresh_store_offices.py", *(["--inspect"] if inspect else []), keep="[store-offices-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_reserve(inspect: bool = False) -> dict:
+    """Béton et mobilier industriel de la réserve, sans modifier les lampes."""
+    result = run("tools/blender/refresh_store_reserve.py", *(["--inspect"] if inspect else []), keep="[store-reserve-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_restrooms() -> dict:
+    """Faïence, cloisons et métal des sanitaires de la cafétéria."""
+    result = run("tools/blender/refresh_store_restrooms.py", keep="[store-restrooms-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_cafeteria() -> dict:
+    """Matières du sol, des parois et du mobilier de la cafétéria."""
+    result = run("tools/blender/refresh_store_cafeteria.py", keep="[store-cafeteria-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_sales() -> dict:
+    """Matières des sols et du mobilier de la surface de vente."""
+    result = run("tools/blender/refresh_store_sales.py", keep="[store-sales-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
+def art_direction_store() -> dict:
+    """Finition locale du terrazzo, du carrelage et des six comptoirs."""
+    result = run("tools/blender/refresh_store_art_direction.py", keep="[store-da]")
+    result["ok"] = result["code"] == 0
+    return result
+
+
 def rework_checkouts(preview: str | None = None, inspect: bool = False) -> dict:
     """Six travées numérotées ; aperçu isolé ou mise à jour locale du niveau."""
     args = ["--inspect"] if inspect else []
@@ -607,20 +708,22 @@ def shot(vue="spawn", mode: str = "solid", taille=(640, 360), nom: str | None = 
             **({"voyage": voyage} if voyage is not None else {})}
 
 
-def sheet(vues, cols: int = 2, taille=(400, 225), mode: str = "solid", nom: str = "planche") -> dict:
+def sheet(vues, cols: int = 2, taille=(400, 225), mode: str = "solid", nom: str = "planche",
+          voyage: str | None = None) -> dict:
     """Plusieurs vues en UNE image : un seul `Read` au lieu d'un par vue.
 
     `vues` : liste de ce que `shot` accepte (`"spawn"`, `(x, y, cap)`, `(x, y, sol, cap)`,
     `"dessus:<espace>"`, un nom d'objet…). Rangées de gauche à droite puis de
     haut en bas ; `cells` dit quelle case est quelle vue. Une vue de dessus a
     le cadre de son espace : elle est posée en haut à gauche de sa case.
+    `voyage` passe le choix d'environnement N5 à chaque `shot`.
     """
     import numpy as np  # noqa: PLC0415 — fourni par Blender, inutile ailleurs
 
     cases, meta = [], []
     for i, vue in enumerate(vues):
         vue = tuple(vue) if isinstance(vue, list) else vue
-        res = shot(vue, mode=mode, taille=taille, nom=f"_{nom}_{i}", ajuster=True)
+        res = shot(vue, mode=mode, taille=taille, nom=f"_{nom}_{i}", ajuster=True, voyage=voyage)
         png = Path(res["png"])
         img = bpy.data.images.load(str(png))
         try:
@@ -798,6 +901,14 @@ def metro_trains() -> dict:
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
         return {"ok": False, "erreur": "Lancer metro_trains avec --factory-startup."}
     res = run("tools/metro/pilot/build_pilot.py", "--trains", keep="[metro-pilot")
+    return {"ok": res["code"] == 0, **res}
+
+
+def art_direction_quay() -> dict:
+    """Exporte les deux traitements de l'étalon sur un même quai."""
+    if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
+        return {"ok": False, "erreur": "Lancer art_direction_quay avec --factory-startup."}
+    res = run("tools/art_direction/quay_scene.py", keep="[art-direction]")
     return {"ok": res["code"] == 0, **res}
 
 

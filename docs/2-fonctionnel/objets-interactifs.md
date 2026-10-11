@@ -2,7 +2,7 @@
 title: Objets interactifs
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-11
 ---
 
 # Objets interactifs
@@ -116,6 +116,10 @@ tire dessus à travers une vitre sur son chemin la fait systématiquement
 exploser d'un coup, sans lien avec sa résistance habituelle au tir.
 
 ### Les sanitaires
+
+Les toilettes du magasin ont trois cabines dans lesquelles on peut entrer.
+Leurs portes s’ouvrent et se ferment avec `E`. Les grands lavabos ont des
+miroirs qui reflètent la pièce ; voir la [revue des équipements](../assets/sanitaires-assets.md).
 
 Une cuvette ou un urinoir intact se soulage en le visant vraiment — s'y tenir
 à proximité sans le regarder ne suffit pas — puis en appuyant sur `E`. La

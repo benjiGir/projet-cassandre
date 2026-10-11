@@ -1,0 +1,32 @@
+{
+  "vue": "entree",
+  "pose": {
+    "x": 0,
+    "y": 103.45,
+    "z": 0.01,
+    "eye": 1.61,
+    "cap": 0,
+    "pitch": 0
+  },
+  "equipement": {
+    "weapons": {
+      "owned": [
+        "melee",
+        "pistol",
+        "shotgun"
+      ],
+      "active": "pistol",
+      "pistolAmmo": 75,
+      "shotgunAmmo": 48,
+      "flareAmmo": 0
+    },
+    "perks": [
+      "perche",
+      "boisson",
+      "aimant"
+    ],
+    "wallet": 65,
+    "hp": 100,
+    "difficulty": "habitue"
+  }
+}

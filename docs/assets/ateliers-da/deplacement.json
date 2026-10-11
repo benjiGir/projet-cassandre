@@ -1,0 +1,32 @@
+{
+  "vue": "fournil",
+  "pose": {
+    "x": 14,
+    "y": 145.39,
+    "z": 0.01,
+    "eye": 1.61,
+    "cap": 0,
+    "pitch": 0
+  },
+  "equipement": {
+    "weapons": {
+      "owned": [
+        "melee",
+        "pistol",
+        "shotgun"
+      ],
+      "active": "pistol",
+      "pistolAmmo": 75,
+      "shotgunAmmo": 48,
+      "flareAmmo": 0
+    },
+    "perks": [
+      "perche",
+      "boisson",
+      "aimant"
+    ],
+    "wallet": 50,
+    "hp": 100,
+    "difficulty": "habitue"
+  }
+}

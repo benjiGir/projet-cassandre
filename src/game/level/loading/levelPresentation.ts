@@ -6,6 +6,7 @@ import { illuminateVendingMachine } from "../../../render/environment/vendingMac
 import { illuminateMetroFixture } from "../../../render/environment/metro/metroFixtures";
 import { illuminateQuartierFixture } from "../../../render/environment/metro/quartierFixtures";
 import { cleanExtras } from "./levelExtras";
+import { attachLevelMirror } from "../../../render/environment/levelMirrors";
 
 // Conversion des matériaux glTF vers le rendu rétro.
 // see: docs/6-reference/notes-code-gameplay-niveau.md#chargement-et-ressources
@@ -44,6 +45,7 @@ function toLambert(
 }
 
 export function convertToLambert(mesh: THREE.Mesh, resources: LevelResources): void {
+  if (attachLevelMirror(mesh, resources)) return;
   const hasVertexColors = mesh.geometry.hasAttribute("color");
   if (Array.isArray(mesh.material)) {
     mesh.material = mesh.material.map((mat) => toLambert(mat, hasVertexColors, resources));

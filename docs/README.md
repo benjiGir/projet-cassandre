@@ -2,7 +2,7 @@
 title: Documentation PROJET_CASSANDRE
 tags: [index]
 status: stable
-updated: 2026-10-06
+updated: 2026-10-11
 ---
 
 # PROJET_CASSANDRE
@@ -39,6 +39,27 @@ dans [Le projet](1-introduction/le-projet.md).
 - [Chargement de niveau](4-technique/chargement-de-niveau.md) — loader, extras et hot reload.
 - [Board des voitures](assets/board-voitures.md) et [board des motos](assets/board-motos.md) — références des véhicules proposés.
 - [Board des armes et mains](assets/board-armes-mains.md) — références, proportions et composition de la vue subjective.
+- [Étalon de direction artistique](assets/etalon-direction-artistique.md) — traitement du quai approuvé, comparaison jouable et charte commune.
+- [Galeries et vestiaire](assets/galerie-direction-artistique.md) — première application de la charte au métro jouable, comparaison avant/après.
+- [Quais et tunnels](assets/quais-direction-artistique.md) — carrelage, mobilier, béton et voies dans la continuité de l'étalon approuvé.
+- [Surface de vente et mobilier commercial](assets/vente-direction-artistique.md) — sols, métal peint, tôles, cartons et équipements avec l’éclairage d’origine.
+- [Cafétéria du magasin](assets/cafeteria-direction-artistique.md) — damier, stratifié, métal et parois dans les familles communes.
+- [Sanitaires du magasin](assets/sanitaires-direction-artistique.md) — faïence, cabines vert pétrole et pièces métalliques.
+- [Nouveaux équipements des sanitaires](assets/sanitaires-assets.md) — cabines accessibles, grands lavabos et miroirs avec reflets dynamiques.
+- [Réserve et quai de livraison](assets/reserve-direction-artistique.md) — béton, peinture, bois, cartons et équipements industriels harmonisés.
+- [Personnel et bureaux](assets/bureaux-direction-artistique.md) — vestiaires, PC sécurité, escalier, moquette et mobilier administratif.
+- [Fournil, labo et SAV](assets/ateliers-direction-artistique.md) — grès, faïence, inox et surfaces de travail des ateliers.
+- [Fours du fournil](assets/fours-fournil.md) — fours à soles vitrés et rôtissoire reconstruits.
+- [Locaux de service](assets/service-direction-artistique.md) — chambre froide et compacteur aux matières harmonisées.
+- [Planque et gaine VMC](assets/annexes-direction-artistique.md) — coin pause et passage métallique.
+- [Finitions des bureaux](assets/bureaux-finitions.md) — moquette bleue continue et faux plafonds en relief.
+- [Finition des décors restants](assets/finition-direction-artistique.md) — parkings, raccords, véhicules et quartier ; revue finale des matières.
+- [Entrée et caisses du magasin](assets/caisses-direction-artistique.md) — terrazzo plus calme, carrelage, stratifié, métal et tapis.
+- [Rames du métro](assets/rame-direction-artistique.md) — carrosserie, tissu, caoutchouc, garage et voitures de passage.
+- [Station privée et parvis](assets/arrivee-direction-artistique.md) — pierre froide, dalles, bancs, jardins et remontée vers la tour.
+- [Machinerie et aiguillage](assets/technique-direction-artistique.md) — équipements industriels, local de maintenance et poste de commande.
+- [Dépôt et ateliers](assets/depot-direction-artistique.md) — béton industriel, charpente, établis et pièces mécaniques aux matières distinctes.
+- [Billetterie et descente](assets/billetterie-direction-artistique.md) — finition du hall, du guichet, des portiques et de l'escalier jusqu'aux quais.
 - [Board du métro](assets/board-metro.md) — huit références regardées, charte proposée et dimensions dérivées du joueur (N1).
 - [Plan de masse du métro](assets/plan-metro.md) — tracé N2 accepté pour poursuivre, voies, niches, boucles et relevé calculé.
 - [Pièce pilote du métro](4-technique/pilote-metro.md) — quai et 60 m de tunnel jouables, lumière et ambiances originales (N4).

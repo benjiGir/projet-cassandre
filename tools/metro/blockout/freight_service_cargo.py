@@ -93,7 +93,7 @@ def cable_turn(p,x,y,z):
         j=(i+1)%24
         faces.extend(((i,j,j+24,i+24),(i+48,i+72,j+72,j+48),
                       (i+24,j+24,j+72,i+72),(i,i+48,j+48,j)))
-    p.mesh(verts,faces,'petrole')
+    p.mesh(verts,faces,'fret_cable')
 
 
 def reel(p,y,flange):

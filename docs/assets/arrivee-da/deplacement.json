@@ -1,0 +1,94 @@
+{
+  "avant": {
+    "vue": "remontee",
+    "pose": {
+      "x": 50,
+      "y": 448.5,
+      "z": -8.49,
+      "eye": -6.89,
+      "cap": 0,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 99,
+        "shotgunAmmo": 56
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 75,
+      "hp": 100,
+      "difficulty": "habitue"
+    },
+    "voyage": {
+      "aiguillage": true,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "rideWaves": 1,
+      "voyage": {
+        "phase": "arrived",
+        "elapsed": 10,
+        "distance": 216,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trainsSuspendus": true
+  },
+  "apres": {
+    "vue": "remontee",
+    "pose": {
+      "x": 50,
+      "y": 451.9,
+      "z": -7.02,
+      "eye": -5.42,
+      "cap": 0,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 99,
+        "shotgunAmmo": 56
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 75,
+      "hp": 100,
+      "difficulty": "habitue"
+    },
+    "voyage": {
+      "aiguillage": true,
+      "courant": true,
+      "raccourci": false,
+      "completed": false,
+      "rideWaves": 1,
+      "voyage": {
+        "phase": "arrived",
+        "elapsed": 10,
+        "distance": 216,
+        "speed": 0,
+        "remaining": 0
+      }
+    },
+    "trainsSuspendus": true
+  }
+}

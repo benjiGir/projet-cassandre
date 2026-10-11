@@ -1,0 +1,9 @@
+{
+  "ensemble": [59.3, 9.5, 0.01, 0],
+  "lavabos": [58.6, 9, 0.01, 180],
+  "cabine": [57.62, 12, 0.01, 0],
+  "urinoirs": [62, 10, 0.01, 270],
+  "entree_cabines": [[57.62, 11.6, 0.01, 0], [59.92, 11.6, 0.01, 0], [62.22, 11.6, 0.01, 0]],
+  "avance_cabine_ms": 400,
+  "capture_details_degres": {"lavabos": -22.5, "urinoirs": -22.5, "cabines": -45}
+}

@@ -1,0 +1,31 @@
+{
+  "vue": "escalier",
+  "pose": {
+    "x": -6.5,
+    "y": 114.12,
+    "z": -9.77,
+    "eye": -8.17,
+    "cap": 180,
+    "pitch": 0
+  },
+  "equipement": {
+    "weapons": {
+      "owned": [
+        "melee",
+        "pistol",
+        "shotgun"
+      ],
+      "active": "pistol",
+      "pistolAmmo": 75,
+      "shotgunAmmo": 48
+    },
+    "perks": [
+      "perche",
+      "boisson",
+      "aimant"
+    ],
+    "wallet": 65,
+    "hp": 100,
+    "difficulty": "habitue"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "vue": "trafic",
+  "pose": {
+    "x": -6.5,
+    "y": 145,
+    "z": -12.99,
+    "eye": -11.39,
+    "cap": 290,
+    "pitch": 0
+  },
+  "equipement": {
+    "weapons": {
+      "owned": [
+        "melee",
+        "pistol",
+        "shotgun"
+      ],
+      "active": "pistol",
+      "pistolAmmo": 75,
+      "shotgunAmmo": 48
+    },
+    "perks": [
+      "perche",
+      "boisson",
+      "aimant"
+    ],
+    "wallet": 65,
+    "hp": 100,
+    "difficulty": "habitue"
+  },
+  "trainsSuspendus": false,
+  "voyage": {
+    "phase": "boarding",
+    "elapsed": 0,
+    "distance": 0,
+    "speed": 0,
+    "remaining": 0
+  },
+  "configurationVoyage": {
+    "speed": 24,
+    "duration": 60,
+    "acceleration": 6,
+    "braking": 6,
+    "waveDelay": 12,
+    "combat": true
+  },
+  "rames": [
+    {
+      "voie": "A",
+      "trajet": "ligne",
+      "avant": 361.19999999999936
+    },
+    {
+      "voie": "B",
+      "trajet": "ligne",
+      "avant": 1.199999999999335
+    }
+  ],
+  "voies": [
+    {
+      "id": "A",
+      "active": true
+    },
+    {
+      "id": "B",
+      "active": true
+    },
+    {
+      "id": "VB",
+      "active": false
+    }
+  ]
+}

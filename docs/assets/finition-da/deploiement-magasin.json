@@ -1,0 +1,3531 @@
+{
+  "zone": "magasin : parkings, raccords et mobilier restant",
+  "objets_modifies": 721,
+  "categories": {
+    "sol": 8,
+    "mur": 80,
+    "plafond": 22,
+    "linteau": 12,
+    "imposte": 3,
+    "mobilier": 568
+  },
+  "objets": [
+    {
+      "nom": "sol_parking_ext",
+      "matiere": "finish_asphalte",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_parking_ext_s0",
+      "matiere": "finish_beton",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_parking_ext_n1",
+      "matiere": "finish_beton",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_parking_ext_n2",
+      "matiere": "finish_beton",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_parking_ext_o3",
+      "matiere": "finish_beton",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_parking_ext_e4",
+      "matiere": "finish_beton",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_s1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_n2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_n3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_o4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_o5",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_e6",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_galerie_e7",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_s1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_n2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_n3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_o4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_caisses_e5",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_caisses",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_hub_n0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_hub_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_hub_o2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_hub_o3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_hub_e4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_hub_e5",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_hub",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_rayons_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_rayons_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_rayons_n2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_rayons_o3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_rayons_e4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_rayons_e5",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_rayons",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_electro_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_electro_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_electro_o2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_electro_o3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_electro_e4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_electro",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "sol_secret1",
+      "matiere": "store_terrazzo",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_secret1_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret1_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret1_o2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret1_e3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret1_e4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_secret1",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_c_pk_ga_o0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_pk_ga_e1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_pk_ga",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "sol_c_ga_cf",
+      "matiere": "store_terrazzo",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_c_ga_cf_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_ga_cf_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_ga_cf",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_c_ga_cs_o0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_ga_cs_e1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_ga_cs",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_c_hb_ry_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_hb_ry_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_hb_ry",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_c_hb_el_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_hb_el_n1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_hb_el",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_c_hb_rs",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "sol_c_short_ramp",
+      "matiere": "reserve_sol",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_c_short_ramp_s0",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_ramp_n1",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_short_ramp",
+      "matiere": "reserve_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "linteau_parking_ext_c_pk_ga",
+      "matiere": "finish_beton",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "imposte_secret1_galerie",
+      "matiere": "office_enduit",
+      "categorie": "imposte"
+    },
+    {
+      "nom": "linteau_galerie_secret1",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_galerie_c_pk_ga",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_galerie_c_ga_cf",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_galerie_c_ga_cs",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_hub_caisses",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_hub_c_hb_ry",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_hub_c_hb_el",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "imposte_hub_c_hb_rs",
+      "matiere": "office_enduit",
+      "categorie": "imposte"
+    },
+    {
+      "nom": "linteau_hub_c_hb_rs",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "sol_sortie",
+      "matiere": "reserve_sol",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_sortie_n",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_sortie_o",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_sortie_e",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "sol_souterrain",
+      "matiere": "reserve_sol",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_souterrain_s0",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_souterrain_n1",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_souterrain_n2",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_souterrain_o3",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_souterrain_e4",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_souterrain",
+      "matiere": "reserve_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mur_c_so_bu_o0",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_so_bu_e1",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_so_bu",
+      "matiere": "reserve_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "sol_c_short_w",
+      "matiere": "reserve_sol",
+      "categorie": "sol"
+    },
+    {
+      "nom": "mur_c_short_w_s0",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_s1",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_n2",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_o3",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_o4",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_o5",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_e6",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_short_w_e7",
+      "matiere": "reserve_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "plafond_c_short_w",
+      "matiere": "reserve_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "imposte_rayons_c_short_w",
+      "matiere": "office_enduit",
+      "categorie": "imposte"
+    },
+    {
+      "nom": "linteau_rayons_c_short_w",
+      "matiere": "office_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_c_so_bu_souterrain",
+      "matiere": "reserve_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "linteau_c_short_w_labo",
+      "matiere": "reserve_enduit",
+      "categorie": "linteau"
+    },
+    {
+      "nom": "mur_c_hb_rs_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_hb_rs_s1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_hb_rs_o4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_c_hb_rs_e5",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret3_s0",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret3_s1",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret3_n2",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret3_o3",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "mur_secret3_e4",
+      "matiere": "office_enduit",
+      "categorie": "mur"
+    },
+    {
+      "nom": "sol_secret3",
+      "matiere": "store_damier",
+      "categorie": "sol"
+    },
+    {
+      "nom": "plafond_secret3",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "str_abri_caddies_6m_couverture_pk_abri",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_abri_caddies_6m_poteaux_pk_abri",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_abri_caddies_6m_rail_pk_abri",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_0",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_1",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_2",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_3",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_4",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm0_5",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_0",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_1",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_2",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_3",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_4",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_place_5x2_5_traits_pk_pm1_5",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp0",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp1",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp2",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp3",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp4",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_capot_pk_lp5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_crosse_pk_lp5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_fut_pk_lp5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_lampadaire_5m_socle_pk_lp5",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_pk_pou0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_pk_pou0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_pk_pou1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_pk_pou1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext0_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext0_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext0_2",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext1_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext2_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_parking_ext3_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "plafond_galerie_0",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_galerie_1",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_galerie_2",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_galerie_3",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_galerie_4",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "plafond_galerie_5",
+      "matiere": "finish_plafond",
+      "categorie": "plafond"
+    },
+    {
+      "nom": "mob_kiosque_presse_libre_comptoir_ga0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_presse_libre_etageres_ga0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_presse_libre_fronton_ga0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_presse_libre_murs_ga0",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_clefs_minute_comptoir_ga1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_clefs_minute_etageres_ga1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_clefs_minute_fronton_ga1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_clefs_minute_murs_ga1",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_desimlock_comptoir_ga2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_desimlock_etageres_ga2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_desimlock_fronton_ga2",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_desimlock_murs_ga2",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_photomaton_comptoir_ga3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_photomaton_etageres_ga3",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_photomaton_fronton_ga3",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_kiosque_photomaton_murs_ga3",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_verriere_4m_cadre_ga_vr0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_verriere_4m_cadre_ga_vr1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_verriere_4m_cadre_ga_vr2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "gp_machine_pinces_cage_ga_pinces",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "gp_machine_pinces_pince_ga_pinces",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "gp_photomaton_caisson_ga_photo",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "gp_photomaton_rideau_ga_photo",
+      "matiere": "finish_toile_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn0",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn1",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn2",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn3",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn3",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn4",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn4",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn5",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn5",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn6",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn6",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn6",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvn7",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvn7",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvn7",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs0",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs1",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs2",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs3",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs3",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs4",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs4",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs5",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs5",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs6",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs6",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs6",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_caisson_ga_dvs7",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_rideau_ga_dvs7",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_devanture_fermee_5m_tableau_ga_dvs7",
+      "matiere": "store_email",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_ga_pal0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_ga_pal0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_ga_pal1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_ga_pal1",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_ga_pal2",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_ga_pal2",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_ga_pal3",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_ga_pal3",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_assise_ga_bc0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_pieds_ga_bc0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_assise_ga_bc1",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_pieds_ga_bc1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_assise_ga_bc2",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_pieds_ga_bc2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_assise_ga_bc3",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_banc_pieds_ga_bc3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_ga_pou0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_ga_pou0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_ga_pou1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_ga_pou1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_ga_pou2",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_ga_pou2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ga_pan0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ga_pan1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ga_n_m26_11_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_ga_n_m14_11_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ga_n_m2_11_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ga_n_10_11_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ga_n_22_11_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_galerie0_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_galerie0_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_galerie1_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_galerie2_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ca_n_36_6",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ca_n_36_14",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ca_n_44_6",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ca_n_44_14",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_ca_n_52_6",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ca_n_52_14",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_rail_caddies_barres_cs_rail",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cd0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cd0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cd0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cd1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cd1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cd1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cd2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cd2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cd2",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cd3",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cd3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cd3",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_acier_cs_tete0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_dos_cs_tete0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_rouge_cs_tete0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_acier_cs_tete1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_dos_cs_tete1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_gondole_tete_rouge_cs_tete1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_bac_promo_acier_cs_bac0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_bac_promo_socle_cs_bac0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_bac_promo_acier_cs_bac1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_bac_promo_socle_cs_bac1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_mat_cs_pres0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau0_cs_pres0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau1_cs_pres0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau2_cs_pres0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_socle_cs_pres0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_mat_cs_pres1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau0_cs_pres1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau1_cs_pres1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_plateau2_cs_pres1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_presentoir_socle_cs_pres1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_cs_pou0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_cs_pou0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_cs_pou1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_cs_pou1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_cs_pal0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_cs_pal0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_cs_pal1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_cs_pal1",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cdl0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cdl0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cdl0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cdl1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cdl1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cdl1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cdl2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cdl2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cdl2",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_cs_cdl3",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_cs_cdl3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_cs_cdl3",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m22_22",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m22_28",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m22_36",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_cs_n_m22_41",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m11_22",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m11_28",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m11_36",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_m11_41",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_0_22",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_0_28",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_0_36",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_cs_n_0_41",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_11_22",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_11_28",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_11_36",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_11_41",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_cs_n_22_22",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_22_28",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_22_36",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_cs_n_22_41",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_caisses0_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_caisses1_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_caisses1_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_caisses2_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_caisses3_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_direction_rayon_epicerie_2m_tiges_hb_dir0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_direction_rayon_bazar_2m_tiges_hb_dir1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_direction_rayon_promos_2m_tiges_hb_dir2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_direction_rayon_frais_2m_tiges_hb_dir3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_hb_p0",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_hb_p1",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_hb_p2",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_hb_p3",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_hb_pou",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_hb_pou",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_m4_5_46",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_m4_5_54",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_m4_5_62",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_m4_5_72",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_hb_n_m4_5_80",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_m4_5_88",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_3_5_46",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_hb_n_3_5_54",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_3_5_62",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_3_5_72",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_3_5_80",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_hb_n_3_5_88",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub0_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub1_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub1_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub2_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub3_0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub4_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub4_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub4_2",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_hub5_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_surgeles_tiges_ry_surg_panneau0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_surgeles_tiges_ry_surg_panneau1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_ry_p0",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_ry_p1",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_ry_p2",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_corps_ry_p3",
+      "matiere": "office_enduit",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_ry_pou0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_ry_pou0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_ry_pou1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_ry_pou1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all00",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all01",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all10",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all11",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all20",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all21",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all30",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_panneau_allee_tiges_ry_all31",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_promo_suspendu_tige_ry_promo0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_promo_suspendu_tige_ry_promo1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_promo_suspendu_tige_ry_promo2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_promo_suspendu_tige_ry_promo3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_promo_suspendu_tige_ry_promo4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m43_75_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m43_75_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m43_75_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m43_75_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_ry_n_m36_25_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m36_25_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m36_25_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m36_25_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m28_75_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m28_75_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m28_75_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_ry_n_m28_75_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m21_25_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m21_25_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m21_25_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m21_25_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m50_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m50_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m50_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m50_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_ry_n_m13_5_50",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m13_5_58",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m13_5_66",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_ry_n_m13_5_74",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_ry_secours",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "caisse_acces_secret",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "camp_duvet",
+      "matiere": "finish_toile_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "camp_oreiller",
+      "matiere": "finish_toile_claire",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "camp_cartons",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "camp_conserves",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_rayons0_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_rayons1_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_rayons1_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_rayons2_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_rayons3_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_el_pou0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_el_pou0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_13_5_57",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_13_5_65",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_18_5_57",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_el_n_18_5_65",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_13_5_49",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_13_5_72",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_22_5_72",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_27_5_49",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_27_5_57",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_27_5_65",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_el_n_27_5_73",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_el_n_34_51",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_34_60_4",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_34_70",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_el_n_41_5_49",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_41_5_56",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_41_5_63",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_el_n_41_5_69_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_electro0_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_electro0_1",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_electro1_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_electro2_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_electro3_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_table_caf_1_chaises_et_pause_table",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_table_caf_1_dossiers_et_pause_table",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_et_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_et_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m25_150_3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_et_n_m17_150_3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m9_150_3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m1_150_3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_5_5_150_3",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m25_4_158_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m16_6_158_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_m7_6_158_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_et_n_2_4_158_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_di_n_m41_147_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_di_n_m34_147_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_di_n_m41_155",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_di_n_m34_155",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_di_n_m37_5_160_5",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_wc_n_58_25_8",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_wc_n_61_25_8",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "labo_liege",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "labo_etabli",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "labo_corde",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_fournil_neon_0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_fournil_neon_1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_fournil_neon_2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "labo_boucherie_rayons_cadre",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_pk_ga_n_0_m2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_ga_cf_n_32_7",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_ga_cs_n_m3_18",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_ga_cs_n_3_18",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_ry_n_m8_63",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_ry_n_m8_69",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_el_n_8_59",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_el_n_8_65",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_escalier_n_5_145",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_ramp_n_m31_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_ramp_n_m22_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_ramp_n_m13_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_ramp_n_m4_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_2m_carter_csr_neon_mort",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_transpalette_timon_csr_transpal",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_cartons_csr_palette_deco",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_palette_cartons_palette_csr_palette_deco",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_csr_palette",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csr_seau",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_88",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_96",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_104",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_112",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_120",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_128",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_short_w_n_m40_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_2m_carter_csw_neon_mort",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_transpalette_timon_csw_transpal",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_csw_palette",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_seau",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sas_sas_ext_alu",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sas_sas_int_alu",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "door_coupe_feu",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "door_coupe_feu_b",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_door_coupe_feu_secours",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "door_exit",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "door_exit_b",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_pk_cd0",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_pk_cd0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_pk_cd0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_pk_cd1",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_pk_cd1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_pk_cd1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_panier_pk_cd2",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_roues_pk_cd2",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "mob_caddie_rouge_pk_cd2",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_reserve_avancer_magasin_avancer_2_9_support_nav_hub_approche",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_reserve_avancer_magasin_avancer_2_9_support_nav_hub_reserve",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_enseigne_technique_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_escabeau",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_escabeau_tablette",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_maintenance_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_maintenance_suspension",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_roue_-37.62_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_roue_-37.62_117",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_roue_-36.62_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_roue_-36.62_117",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "csw_rep_carton_retours",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_csw_rep_extincteur",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_csw_rep_extincteur",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_tete_csw_rep_extincteur",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "comp_ga_presse_support",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "comp_ga_presse_tablettes",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "comp_ry_reassort_carton",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane1_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane2_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane2_sac",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane3_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane3_sac",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane4_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane5_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane5_sac",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "ck_lane6_tabouret_pied",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_rs_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_rs_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_tete_rs_ext",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m20_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m20_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m20_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m20_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m20_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m20_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m20_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m20_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m5_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m5_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m5_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m5_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m5_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m5_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_m5_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_m5_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_12_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_12_100",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_12_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_12_108",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_12_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_12_116",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_reflecteur_rs_su_12_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_suspension_0_tige_rs_su_12_127",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl38_97",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl38_108",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl38_119",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl46_97",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl46_108",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl46_119",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl54_97",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl54_108",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl54_119",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl62_97",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl62_108",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl62_119",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl70_97",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl70_108",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "str_pilier_beton_3_5m_corps_so_pl70_119",
+      "matiere": "finish_beton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_so_ext0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_so_ext0",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_tete_so_ext0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_so_ext1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_so_ext1",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_tete_so_ext1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "so_marquage_sud",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "so_marquage_mil_s",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "so_marquage_mil_n",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "so_marquage_nord",
+      "matiere": "finish_marques",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_fut_0_couvercle_so_fut0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_fut_1_couvercle_so_fut1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_so_pou",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_fut_so_pou",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_34_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_42_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_50_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_58_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_66_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_74_98_25",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_34_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_42_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_50_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_58_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_66_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_74_113_75",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_so_n_34_106",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_morte_4m_carter_so_n_74_106",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_souterrain0_0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_souterrain1_0",
+      "matiere": "reserve_bois",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "prop_souterrain2_0",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vs_patères",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vs_douches_tuyaux",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vs_reglettes",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_gaine_n_23_153",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_gaine_n_29_153",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "escalier_parking_marches",
+      "matiere": "reserve_sol",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "escalier_parking_main_courante_0",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "escalier_parking_main_courante_1",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_so_bu_n_42_128",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_poubelle_col_cbu_pou",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_corps_cbu_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "deco_extincteur_panneau_cbu_ext",
+      "matiere": "store_rouge",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_3_83333_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_11_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_19_1667_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_26_8333_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_34_5_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_4m_carter_c_bu_n_42_1667_136",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vitre_pc_gaine",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vitre_fournil_gaine",
+      "matiere": "store_perfore",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "door_sav_personnel",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_rs_n_m3_94",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_rampe_2m_carter_c_hb_rs_n_3_94",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_reserve_personnel.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_sav_reserve.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_objectif_or.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_objectif_voiture.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_parking_entree.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_sav_personnel.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_cctv_indice.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_voiture_direction.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "rear_sign_parking_retour.001_support",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_bureaux_gauche_vide_0_support_nav_personnel_bureaux",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_magasin_gauche_vide_0_support_nav_personnel_magasin",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_bureaux_avancer_vide_0_support_nav_escalier_bureaux",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_magasin_gauche_vide_0_support_nav_escalier_magasin",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_bureaux_gauche_bureaux_droite_0_7_support_nav_so_bureaux_relais",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_magasin_gauche_magasin_droite_0_35_support_nav_so_magasin_relais",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_bureaux_avancer_parking_avancer_0_7_support_nav_so_bureaux_rampe",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "sig_parcours_magasin_avancer_vide_0_35_support_nav_so_magasin_rampe",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vmc_caisson",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vmc_ventilateur",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vmc_nid",
+      "matiere": "reserve_carton",
+      "categorie": "mobilier"
+    },
+    {
+      "nom": "vmc_cadre",
+      "matiere": "store_inox",
+      "categorie": "mobilier"
+    }
+  ],
+  "vehicules": [
+    "veh_proposition_citadine_miel_pk_au_citadine",
+    "veh_proposition_berline_bleu_acier_pk_au_berline",
+    "veh_proposition_suv_olive_pk_au_suv",
+    "veh_proposition_muscle_prune_pk_au_muscle_pdb",
+    "veh_proposition_pickup_creme_pk_au_pickup",
+    "veh_proposition_sportive_turquoise_pk_au_sportive",
+    "veh_proposition_tout_terrain_sable_pk_au_4x4",
+    "veh_proposition_citadine_rouge_brique_pk_au_citadine_rouge",
+    "veh_proposition_roadster_pk_au_roadster",
+    "veh_proposition_scooter_pk_au_scooter",
+    "veh_proposition_camion_rs_camion",
+    "veh_proposition_citadine_bleu_orage_so_au0",
+    "veh_proposition_berline_ivoire_so_au1",
+    "veh_proposition_suv_sable_so_au2",
+    "veh_proposition_citadine_miel_so_au3",
+    "veh_proposition_sportive_rouge_corail_so_au4",
+    "veh_proposition_tout_terrain_vert_foret_so_au5",
+    "veh_proposition_citadine_rouge_brique_so_au6",
+    "veh_proposition_berline_vert_sauge_so_au7",
+    "veh_proposition_motocross_so_au8",
+    "veh_proposition_custom_so_au9",
+    "veh_proposition_roadster_so_au10",
+    "veh_proposition_scooter_so_au11",
+    "veh_proposition_suv_bleu_petrole_so_au12",
+    "veh_proposition_berline_bleu_acier_so_au13",
+    "veh_proposition_sportive_argent_so_au14",
+    "veh_proposition_citadine_bleu_orage_so_au15",
+    "veh_proposition_berline_bleu_acier_so_direction"
+  ],
+  "matieres": [
+    "finish_asphalte",
+    "finish_beton",
+    "finish_marques",
+    "finish_plafond",
+    "finish_toile_claire",
+    "finish_toile_rouge",
+    "office_enduit",
+    "reserve_bois",
+    "reserve_carton",
+    "reserve_enduit",
+    "reserve_plafond",
+    "reserve_sol",
+    "store_damier",
+    "store_email",
+    "store_inox",
+    "store_perfore",
+    "store_rouge",
+    "store_terrazzo"
+  ],
+  "texture_px": 128,
+  "texture_m": 2
+}

@@ -1,0 +1,126 @@
+{
+  "entree": {
+    "vue": "entree",
+    "pose": {
+      "x": 57,
+      "y": 11,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 270,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "lavabos": {
+    "vue": "lavabos",
+    "pose": {
+      "x": 58,
+      "y": 9,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 180,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "cabines": {
+    "vue": "cabines",
+    "pose": {
+      "x": 60.55,
+      "y": 12.25,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "urinoirs": {
+    "vue": "urinoirs",
+    "pose": {
+      "x": 62,
+      "y": 10,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 270,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  }
+}

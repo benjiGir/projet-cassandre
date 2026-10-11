@@ -1,0 +1,194 @@
+{
+  "froide": {
+    "vue": "froide",
+    "pose": {
+      "x": -46,
+      "y": 107,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 90,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "rails": {
+    "vue": "rails",
+    "pose": {
+      "x": -50,
+      "y": 100,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 30,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "evaporateur": {
+    "vue": "evaporateur",
+    "pose": {
+      "x": -49.5,
+      "y": 110,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 25,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "compacteur": {
+    "vue": "compacteur",
+    "pose": {
+      "x": -28,
+      "y": 120,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 150,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "presse": {
+    "vue": "presse",
+    "pose": {
+      "x": -31.7,
+      "y": 117.5,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 165,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  },
+  "stock": {
+    "vue": "stock",
+    "pose": {
+      "x": -29,
+      "y": 122.7,
+      "z": 0.01,
+      "eye": 1.61,
+      "cap": 0,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48,
+        "flareAmmo": 0
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 50,
+      "hp": 100,
+      "difficulty": "habitue"
+    }
+  }
+}

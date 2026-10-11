@@ -61,6 +61,7 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `pv`, `solide`, `givre` | `vitre_*` | Vie, présence d'un collider et effet de givre à la casse. |
 | `sorte`, `pv` | `sanitaire_*` | `sorte` est obligatoire : `cuvette` ou `urinoir`. PV facultatifs. |
 | `chaine`, `pv` | `ecran_*` | Boucle visuelle obligatoire à la validation et PV optionnels. |
+| `miroir` | Panneau de décor | `true` installe un reflet plan ; géométrie et cycle de vie : [Chargement — miroirs](../4-technique/chargement-de-niveau.md#miroirs). |
 | `nom` | `cam_*` | Libellé affiché pendant la vue caméra ; facultatif, mais un nom est recommandé. |
 
 Le validateur bloque les valeurs qu'il contrôle. Les propriétés reconnues dont

@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-10",
+  "mode": "Revue locale avec poses d’auteur puis déplacement ordinaire, attaques neutralisées.",
+  "avant": {
+    "pose": {
+      "x": 81.3,
+      "y": 259.5,
+      "z": -15.54,
+      "eye": -13.94,
+      "cap": 90,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 48
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 40,
+      "hp": 100,
+      "difficulty": "habitue"
+    },
+    "boite": {
+      "nom": "use_metro_cartouches_vestiaire",
+      "position": [
+        78,
+        -15.390000343322754,
+        -259.5
+      ],
+      "visible": true,
+      "soin": null,
+      "arme": "shotgun",
+      "munitions": null,
+      "cartouches": 8
+    }
+  },
+  "apres": {
+    "pose": {
+      "x": 77.06,
+      "y": 259.5,
+      "z": -15.54,
+      "eye": -13.94,
+      "cap": 90,
+      "pitch": 0
+    },
+    "equipement": {
+      "weapons": {
+        "owned": [
+          "melee",
+          "pistol",
+          "shotgun"
+        ],
+        "active": "pistol",
+        "pistolAmmo": 75,
+        "shotgunAmmo": 56
+      },
+      "perks": [
+        "perche",
+        "boisson",
+        "aimant"
+      ],
+      "wallet": 40,
+      "hp": 100,
+      "difficulty": "habitue"
+    },
+    "boite": {
+      "nom": "use_metro_cartouches_vestiaire",
+      "position": [
+        78,
+        -15.390000343322754,
+        -259.5
+      ],
+      "visible": false,
+      "soin": null,
+      "arme": "shotgun",
+      "munitions": null,
+      "cartouches": 8
+    }
+  }
+}

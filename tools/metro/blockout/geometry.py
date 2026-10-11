@@ -86,7 +86,8 @@ def build_support(a, surface, surfaces):
         bpy.data.objects.remove(slab,do_unlink=True)
     headroom = clearance(surface)
     if not stairs and surface.groupe not in ("parvis", "secret_3", "quais", "fret") and not surface.id.startswith(("tunnel_a_", "tunnel_b_")):
-        prism(p, [(x,y,z+headroom+.2) for x,y,z in floor], .2, "enduit", False)
+        ceiling_material = "peinture_ivoire" if surface.groupe == "billets" else "enduit"
+        prism(p, [(x,y,z+headroom+.2) for x,y,z in floor], .2, ceiling_material, False)
     for start, end in zip(floor, floor[1:] + floor[:1]):
         if stairs or surface.groupe in ("fret","parvis") or '_masque_' in surface.id: break
         dx, dy = end[0]-start[0], end[1]-start[1]

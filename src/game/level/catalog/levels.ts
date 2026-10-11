@@ -47,13 +47,31 @@ const METRO_LEVEL: Omit<LevelDef, "id" | "label"> = {
 
 /** Salles d'essai et accès directs : jamais proposés hors développement. */
 const DEV_LEVELS: LevelDef[] = [
+  {
+    id: "etalon_da",
+    label: "Étalon DA — proposition",
+    kind: "gltf",
+    gltfName: "etalon_da",
+    lighting: "hybride",
+    scenarios: {},
+    mysteryDonations: false,
+  },
+  {
+    id: "etalon_da_avant",
+    label: "Étalon DA — matières actuelles",
+    kind: "gltf",
+    gltfName: "etalon_da_avant",
+    lighting: "hybride",
+    scenarios: {},
+    mysteryDonations: false,
+  },
   // Le même niveau que `metro`, sans l'équipement d'arrivée ni les panneaux de la campagne.
   { id: "blockout_metro", label: "Blockout — Métro complet (N5)", ...METRO_LEVEL },
   { id: "essai_trains", label: "Essai — Trains du métro (T1)", kind: "train-gym" },
   { id: "essai_voyage_rame", label: "Essai — Voyage à bord (T4)", kind: "train-ride-gym" },
 ];
 
-// Seuls les deux niveaux de la campagne ont un `.glb` sous `public/assets/levels/`.
+// Les étalons et salles d'essai restent accessibles seulement en développement.
 export const LEVEL_CHOICES: LevelDef[] = [
   { id: "gym", label: "Gym (test)", kind: "gym" },
   { id: "metro", label: "Le métro — parcours N5", ...METRO_LEVEL },

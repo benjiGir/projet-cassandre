@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 
 # Journal
@@ -12,6 +12,8 @@ conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
 guides et les plans ouverts à la racine du dépôt.
 
 ## Octobre 2026
+
+- [Audit de direction artistique](audit-direction-artistique-2026-10.md) — comparaison du magasin, du métro, des personnages et du direct ; onze écarts et proposition d'harmonisation par étapes.
 
 - [Métro complet — blockout N5](metro-blockout-2026-10.md) — parcours du quartier au hall ; passe de création clôturée le 9 octobre, retours de playtest à venir.
 

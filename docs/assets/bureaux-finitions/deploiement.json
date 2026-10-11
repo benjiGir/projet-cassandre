@@ -1,0 +1,41 @@
+{
+  "zone": "bureaux et direction",
+  "surfaces": [
+    {
+      "nom": "sol_bureaux",
+      "matiere": "office_moquette_bleue"
+    },
+    {
+      "nom": "sol_direction",
+      "matiere": "office_moquette_bleue"
+    },
+    {
+      "nom": "plafond_bureaux",
+      "matiere": "office_acoustique"
+    },
+    {
+      "nom": "plafond_direction",
+      "matiere": "office_acoustique"
+    }
+  ],
+  "ossatures": [
+    {
+      "nom": "office_ceiling_rails_bureaux",
+      "pas_m": 0.6,
+      "largeur_m": 0.025,
+      "retombee_m": 0.04,
+      "barres": 1765,
+      "altitude": 7.0
+    },
+    {
+      "nom": "office_ceiling_rails_direction",
+      "pas_m": 0.6,
+      "largeur_m": 0.025,
+      "retombee_m": 0.04,
+      "barres": 806,
+      "altitude": 7.5
+    }
+  ],
+  "texture_px": 128,
+  "texture_m": 2
+}

@@ -1,0 +1,453 @@
+{
+  "zone": "fournil, labo et SAV",
+  "sols": 4,
+  "murs": 26,
+  "plafonds": 3,
+  "mobilier": 26,
+  "objets": [
+    {
+      "nom": "fournil_444a54",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "fournil_babcbc",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "fournil_deb789",
+      "categorie": "mobilier",
+      "matiere": "office_bois"
+    },
+    {
+      "nom": "fournil_desserte_cuve",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "fournil_petrin_cuve",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "fournil_pousse_444a54",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "fournil_pousse_babcbc",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "imposte_labo_c_short_w",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "imposte_sav_c_bu",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "lb_joints_gres",
+      "categorie": "mobilier",
+      "matiere": "atelier_joint"
+    },
+    {
+      "nom": "lb_planche_decoupe",
+      "categorie": "mobilier",
+      "matiere": "atelier_planche"
+    },
+    {
+      "nom": "lb_reglettes",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_robinet_maree",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_scie_arceau",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_scie_socle",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "lb_sol_gres_rouge",
+      "categorie": "sols",
+      "matiere": "atelier_gres"
+    },
+    {
+      "nom": "lb_table_maree_pieds",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_table_maree_plateau",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_table_viande_plateau",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_table_viande_structure",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "lb_tablette_vitrine",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "linteau_fournil_c_bu",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "linteau_fournil_gaine",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mob_frigo_caisson_sav_frigo_retour",
+      "categorie": "mobilier",
+      "matiere": "atelier_email"
+    },
+    {
+      "nom": "mob_lave_linge_caisson_sav_lave_linge_retour",
+      "categorie": "mobilier",
+      "matiere": "atelier_email"
+    },
+    {
+      "nom": "mur_fournil_e4",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_fournil_e5",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_fournil_n2",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_fournil_o3",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_fournil_s0",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_fournil_s1",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_e4",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_e5",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_n1",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_n2",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_o3",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_s0_labo_boucherie_rayons0",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_s0_labo_boucherie_rayons1",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_s0_labo_boucherie_rayons2",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_labo_s0_labo_boucherie_rayons3",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "mur_sav_e5",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "mur_sav_n1",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "mur_sav_n2",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "mur_sav_o3",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "mur_sav_o4",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "mur_sav_s0",
+      "categorie": "murs",
+      "matiere": "office_enduit"
+    },
+    {
+      "nom": "parapet_fournil_0",
+      "categorie": "murs",
+      "matiere": "atelier_faience"
+    },
+    {
+      "nom": "plafond_fournil",
+      "categorie": "plafonds",
+      "matiere": "atelier_plafond"
+    },
+    {
+      "nom": "plafond_labo",
+      "categorie": "plafonds",
+      "matiere": "atelier_plafond"
+    },
+    {
+      "nom": "plafond_sav",
+      "categorie": "plafonds",
+      "matiere": "atelier_plafond"
+    },
+    {
+      "nom": "prop_sav_carton_retour",
+      "categorie": "mobilier",
+      "matiere": "reserve_carton"
+    },
+    {
+      "nom": "sav_etablis",
+      "categorie": "mobilier",
+      "matieres": [
+        "atelier_noir",
+        "office_bois"
+      ]
+    },
+    {
+      "nom": "sav_etageres_tv",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "sav_guichet",
+      "categorie": "mobilier",
+      "matieres": [
+        "atelier_email",
+        "atelier_planche",
+        "office_bois"
+      ]
+    },
+    {
+      "nom": "sav_reglette_0",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "sav_reglette_1",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "sol_fournil",
+      "categorie": "sols",
+      "matiere": "atelier_gres"
+    },
+    {
+      "nom": "sol_labo",
+      "categorie": "sols",
+      "matiere": "atelier_gres"
+    },
+    {
+      "nom": "sol_sav",
+      "categorie": "sols",
+      "matiere": "reserve_sol"
+    }
+  ],
+  "atlas_conserves": [
+    {
+      "nom": "lb_scie_guide",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_bac_rincage",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_glace_poisson",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_robinet_poignees",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_vivier_soubassement",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_vivier_eau",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_homards_vivier",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_homards_pinces",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "lb_tubes",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_enseigne_fond",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_enseigne_pieds",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_enseigne_lettres",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_ticket_urgent_fond",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_ticket_urgent_pieds",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_ticket_urgent",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_sonnette_socle",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_instruments",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_traces_oscillo",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_boutons_oscillo",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_bacs_composants",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_lampes_loupes",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_rayonnage_retours",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "mob_frigo_facade_sav_frigo_retour",
+      "matiere": "mat_prd_ecrans"
+    },
+    {
+      "nom": "mob_lave_linge_facade_sav_lave_linge_retour",
+      "matiere": "mat_prd_ecrans"
+    },
+    {
+      "nom": "mob_k_televisionVintage_sav_tv_retour",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "mob_k_kitchenMicrowave_sav_micro_retour",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_etiquettes_depot",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_caissons_tv",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_commandes_tv",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_tube_0",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "sav_tube_1",
+      "matiere": "mat_palette"
+    }
+  ],
+  "matieres": [
+    "atelier_email",
+    "atelier_faience",
+    "atelier_gres",
+    "atelier_inox",
+    "atelier_joint",
+    "atelier_noir",
+    "atelier_plafond",
+    "atelier_planche",
+    "office_bois",
+    "office_enduit",
+    "reserve_carton",
+    "reserve_sol"
+  ],
+  "texture_px": 128,
+  "texture_m": 2
+}

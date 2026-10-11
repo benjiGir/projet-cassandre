@@ -133,6 +133,10 @@ def prepare_materials(a):
         loaded.materials=[name for name in available.materials if name in ('metro_beton','metro_ivoire','metro_acier','metro_sol')]
     for mat in loaded.materials:
         a.mats[mat.name.split('.')[0].removeprefix('metro_')]=mat
+    marking=a.mats['ivoire'].copy()
+    marking.name='metro_marquage_quai'
+    a.mats['marquage_quai']=marking
+    a.mats['peinture_ivoire']=marking
 
 
 def hidden_enclosure(piece, route, edges):
@@ -177,7 +181,7 @@ def build(a):
         p.box((x,118,P.QUAI_Z+.2),(.1,72,.28),"petrole")
         p.box((x,118,P.QUAI_Z+2.6),(.1,72,.15),"petrole")
     for x in (-4.65,4.1):
-        p.box((x,118,P.QUAI_Z+.01),(.55,72,.018),"ivoire")
+        p.box((x,118,P.QUAI_Z+.01),(.55,72,.018),"marquage_quai")
     for y in (118,):
         for left,right,opening in ((-9,-4.25,False),(-4.25,.25,True),(.25,3.75,True),(3.75,9,False)):
             shape=profile(2.75,4.5) if opening else [(i/SEGMENTS,0) for i in range(SEGMENTS+1)]

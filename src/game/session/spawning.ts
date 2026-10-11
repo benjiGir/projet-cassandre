@@ -26,6 +26,7 @@ import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
 import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
 import { warmShowerShader } from "../level/sanitaires/doucheShader";
+import { warmLevelMirrors } from "../../render/environment/warmLevelMirrors";
 import { suspendPreviousFountainWater, warmFountainWater } from "../../render/environment/fountain/warmFountainWater";
 import { RenderService } from "../../render/pipeline/renderService";
 import type { Suit } from "../entities/suit/suit";
@@ -325,6 +326,7 @@ export function loadGltfLevel(
           previousRoot?.removeFromParent();
           engine.fx.releaseShaderPrograms();
           await warmShowerShader(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
+          await warmLevelMirrors(engine.renderer, engine.scene, engine.camera, handle.root);
           if (handle.fountainWater)
             await warmFountainWater(handle.fountainWater, engine.renderer, engine.scene, engine.camera, previousRoot);
           if (handle.trains)

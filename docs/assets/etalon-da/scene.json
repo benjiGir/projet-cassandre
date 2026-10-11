@@ -1,0 +1,88 @@
+{
+  "variantes": {
+    "actuel": {
+      "blend": "assets_src/blender/etalon_da_avant.blend",
+      "glb": "public/assets/levels/etalon_da_avant.glb"
+    },
+    "proposition": {
+      "blend": "assets_src/blender/etalon_da.blend",
+      "glb": "public/assets/levels/etalon_da.glb"
+    }
+  },
+  "vues": [
+    {
+      "nom": "ensemble",
+      "pose": [
+        2.75,
+        1.5,
+        0.75,
+        0
+      ]
+    },
+    {
+      "nom": "matiere",
+      "pose": [
+        2.5,
+        3.1,
+        0.75,
+        60
+      ]
+    },
+    {
+      "nom": "service",
+      "pose": [
+        -1.5,
+        6.75,
+        0.75,
+        0
+      ]
+    }
+  ],
+  "palette": {
+    "ivoire": [
+      "a49e8d",
+      "c9c1aa",
+      "d8d0b8",
+      "e3dcc8"
+    ],
+    "sol": [
+      "303a3e",
+      "424f53",
+      "4c585b",
+      "5b6667"
+    ],
+    "beton": [
+      "414e50",
+      "505e60",
+      "5d6969",
+      "6a7573"
+    ],
+    "acier": [
+      "303b42",
+      "434d55",
+      "535f64",
+      "677276"
+    ],
+    "petrole": [
+      "365a54",
+      "487369",
+      "537d74",
+      "6b9184"
+    ],
+    "bois": [
+      "684c33",
+      "86613e",
+      "9d744a",
+      "b68b5c"
+    ],
+    "ambre": [
+      "9d7937",
+      "c49b42",
+      "deb44b",
+      "e7ca74"
+    ]
+  },
+  "texture_px": 128,
+  "texture_m": 2,
+  "comparaison": "Géométrie, lampes, spawns et ramassages identiques."
+}

@@ -1,0 +1,39 @@
+{
+  "objets": [
+    "fournil_four_inox",
+    "fournil_four_noir",
+    "fournil_four_sole",
+    "fournil_four_chauffe",
+    "vitre_fournil_four",
+    "fournil_four_cuisson",
+    "fournil_four_1_hotte",
+    "fournil_four_2_hotte",
+    "fournil_rotissoire_inox",
+    "fournil_rotissoire_noir",
+    "fournil_rotissoire_chauffe",
+    "vitre_fournil_rotissoire",
+    "fournil_rotissoire_cuisson"
+  ],
+  "modules": 2,
+  "etages": 4,
+  "vitres": 18,
+  "rotissoires": 1,
+  "sommets_anciens_retires": {
+    "fournil_babcbc": 0,
+    "fournil_444a54": 0,
+    "fournil_e8741c": 0,
+    "fournil_b8612e": 0
+  },
+  "export": {
+    "code": 0,
+    "secs": 6.0,
+    "lines": [
+      "[export] /Users/benji/Developer/boomer-shooter/public/assets/levels/niveau_v2.glb  (38310 Ko)",
+      "[export] contenu vérifié : 4001 objets du view layer, aucun intrus, aucune fuite de _KIT/_LIB"
+    ],
+    "log": "renders/_cassandre/export_level.log",
+    "niveau": "hypermarche",
+    "verified": true,
+    "ok": true
+  }
+}

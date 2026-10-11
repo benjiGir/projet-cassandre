@@ -31,7 +31,8 @@ def endcap(p,y,base):
 
 def prepare_materials(a):
     for name,hexcode in (('fret_paroi','c6cab9'),('fret_pare_brise','243942'),
-                         ('prive_pierre','aebec2'),('prive_sol','52636d')):
+                         ('prive_pierre','aebec2'),('prive_sol','52636d'),
+                         ('fret_tissu','547865'),('fret_cable','233735')):
         mat=bpy.data.materials.new('n5_'+name)
         mat.use_nodes=True
         mat.diffuse_color=(*color(hexcode),1)

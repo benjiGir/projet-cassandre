@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Étalon de direction artistique — quai</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#131b21;color:#e8e7df;font:16px system-ui,sans-serif}main{max-width:1320px;margin:auto;padding:24px}header{border-top:4px solid #deb44b}h1{font-size:30px;margin:15px 0}p{line-height:1.55;max-width:1000px;color:#b8c5c8}a{color:#a5ddd0}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}button{border:1px solid #65877e;background:#233b36;color:#e8e7df;padding:10px 14px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:#537d74;color:white;border-color:#d8d0b8}button:disabled{opacity:.45;cursor:wait}iframe{display:block;width:100%;aspect-ratio:16/9;border:1px solid #405158;background:black}#capture-image{display:block;max-width:100%;image-rendering:pixelated}#capture-image[hidden]{display:none}pre{white-space:pre-wrap;font-size:12px;color:#9eb4ba}.legend{border-left:3px solid #537d74;padding-left:16px}.comparison{max-width:100%;height:auto}figure{margin:24px 0}figcaption{color:#b8c5c8;margin:10px 0}
+</style>
+</head>
+<body><main>
+<header><p>PROJET CASSANDRE · HARMONISATION · ÉTAPE 1</p><h1>Une référence commune, sur le quai.</h1>
+<p>La même scène, les mêmes lampes, les mêmes personnages et objets. Compare les matières actuelles à la proposition : carrelage nuancé, sol plus lisible, peinture et acier travaillés, béton de service.</p>
+<p>Traitement approuvé le 10 octobre 2026. <a href="galerie-da.html">Voir son application aux galeries du métro</a>.</p>
+<p><a href="etalon-direction-artistique.md">Charte commune et compte rendu</a> · <a href="../journal/audit-direction-artistique-2026-10.md">Audit initial</a></p></header>
+<div class="toolbar" aria-label="Traitement graphique"><button data-variant="current" aria-pressed="false">Matières actuelles</button><button data-variant="candidate" aria-pressed="true">Proposition</button></div>
+<div class="toolbar" aria-label="Points de vue"><button data-view="ensemble" aria-pressed="true">Ensemble du quai</button><button data-view="matiere" aria-pressed="false">Banc et commande</button><button data-view="service" aria-pressed="false">Béton de service</button></div>
+<div class="toolbar" aria-label="Armes"><button data-key="Digit2">Pistolet</button><button data-key="Digit3">Fusil à pompe</button><button id="door">Actionner le rideau</button><button id="capture" disabled>Capturer la vue</button><button id="reset">Revenir à l’état initial</button></div>
+<p id="status" role="status">Chargement de la scène étalon…</p>
+<iframe id="game" src="/?level=etalon_da&amp;campaignProfile=type" title="Scène étalon de direction artistique" allow="autoplay; fullscreen"></iframe>
+<p class="legend">Clique dans le jeu pour te déplacer. Les ennemis restent neutralisés pour l’observation. La commande ouvre réellement le local de service. Les armes, mains, sprites, cartes et boîtes utilisent leurs ressources actuelles ; cette première proposition porte sur les matières du décor.</p>
+<details><summary>Pose et état de la comparaison</summary><pre id="reading">En attente…</pre></details>
+<figure><img id="capture-image" alt="Capture à 640 × 360 de la vue choisie" hidden><figcaption id="capture-caption"></figcaption></figure>
+<section><h2>Comparaison à cadrage identique</h2><p>Matières actuelles à gauche, proposition à droite. Les armes, personnages et ramassages gardent leurs ressources actuelles.</p><a href="etalon-da/comparaison.png"><img class="comparison" src="etalon-da/comparaison.png" alt="Comparaison de trois vues en jeu"></a></section></main>
+<script>
+const game=document.getElementById('game'),status=document.getElementById('status'),reading=document.getElementById('reading');
+const variants={current:'etalon_da_avant',candidate:'etalon_da'};
+let variant='candidate',view='ensemble',api=null,initialized=null,poses=null;
+fetch('etalon-da/scene.json').then(response=>{if(!response.ok)throw new Error('Scène absente');return response.json()}).then(data=>{poses=Object.fromEntries(data.vues.map(entry=>[entry.nom,entry.pose]))}).catch(error=>{status.textContent='La scène doit être générée : '+error.message});
+function position(){if(!api||!poses)return;api.tp(...poses[view]);status.textContent=(variant==='candidate'?'Proposition':'Matières actuelles')+' · '+view+' · 640 × 360';}
+function restart(){api=null;initialized=null;document.getElementById('capture').disabled=true;game.src='/?level='+variants[variant]+'&campaignProfile=type';document.getElementById('capture-image').hidden=true;document.getElementById('capture-caption').textContent='';status.textContent='Chargement…';}
+document.querySelectorAll('[data-variant]').forEach(button=>button.addEventListener('click',()=>{variant=button.dataset.variant;document.querySelectorAll('[data-variant]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));restart()}));
+document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{view=button.dataset.view;document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));position()}));
+document.querySelectorAll('[data-key]').forEach(button=>button.addEventListener('click',()=>{const win=game.contentWindow;for(const type of ['keydown','keyup'])win.dispatchEvent(new win.KeyboardEvent(type,{code:button.dataset.key,key:button.dataset.key.slice(-1),bubbles:true}))}));
+document.getElementById('reset').addEventListener('click',restart);
+document.getElementById('door').addEventListener('click',()=>{if(!api)return;api.tp(1.2,6.75,.75,90);api.doorSystem.actionner();status.textContent='Commande du rideau · ouverture ou fermeture';});
+document.getElementById('capture').addEventListener('click',()=>{if(!api)return;const button=document.getElementById('capture');button.disabled=true;game.contentWindow.requestAnimationFrame(()=>game.contentWindow.requestAnimationFrame(()=>{api.renderBench(1);const image=document.getElementById('capture-image');image.src=game.contentDocument.getElementById('game').toDataURL('image/png');image.hidden=false;document.getElementById('capture-caption').textContent=(variant==='candidate'?'Proposition':'Matières actuelles')+' · '+view+' · image du monde sans les overlays';button.disabled=false}))});
+setInterval(()=>{const current=game.contentWindow.cassandre;if(!current)return;current.notarget(true);const state=current.campagne.etat();if(!poses||!state.playing||state.level!==variants[variant])return;api=current;if(initialized!==current){initialized=current;current.resolution(640,360);current.filtrage('aniso');position();document.getElementById('capture').disabled=false}reading.textContent=JSON.stringify({traitement:variant,vue:view,pose:current.pose(false),equipement:current.campagne.etat().current,ennemis:current.suitCount(),portes:current.doorSystem.liste()},null,2)},100);
+</script></body></html>

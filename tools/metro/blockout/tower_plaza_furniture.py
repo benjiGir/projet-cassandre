@@ -41,7 +41,7 @@ def shrub(p,x,y,z,rx,ry,h,phase):
             vertices.append((x+rx*r*cos(angle),y+ry*r*sin(angle),z+dz))
     faces=[tuple(reversed(range(9))),tuple(range(27,36))]
     faces.extend((j+i,j+(i+1)%9,j+9+(i+1)%9,j+9+i) for j in (0,9,18) for i in range(9))
-    p.mesh(vertices,faces,'petrole')
+    p.mesh(vertices,faces,'parvis_feuillage')
     for i in range(13):
         angle=2*pi*i/13+phase*.3
         r=.35+.40*(.5+.5*sin(i*2.4))
@@ -55,7 +55,7 @@ def shrub(p,x,y,z,rx,ry,h,phase):
             verts=[(cx-dy*.095,cy+dx*.095,root),
                    (cx+dy*.095,cy-dx*.095,root),tip,
                    (cx+dx*.025,cy+dy*.025,root+.08)]
-            p.mesh(verts,[(0,1,2),(0,3,1),(0,2,3),(1,3,2)],'petrole')
+            p.mesh(verts,[(0,1,2),(0,3,1),(0,2,3),(1,3,2)],'parvis_feuillage')
 
 
 def island(p,x,y,w,d,side):
@@ -89,6 +89,9 @@ def vent(p,x,y):
 
 
 def build(a,stage):
+    foliage=a.mats['petrole'].copy()
+    foliage.name='n5_parvis_feuillage'
+    a.mats['parvis_feuillage']=foliage
     p=Piece('n5_parvis_jardins',a.mats,'trois îlots plantés, assises orientées vers l’axe et ventilation en périphérie')
     island(p,37,477,7,4,'east')
     island(p,56,479,7,5,'west')

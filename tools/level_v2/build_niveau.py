@@ -54,6 +54,7 @@ import sys
 import bpy
 
 ICI = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(ICI)))
 sys.path.insert(0, ICI)
 sys.path.insert(0, os.path.join(os.path.dirname(ICI), "blender"))
 
@@ -281,6 +282,26 @@ def main() -> None:
     if lib_layer:
         lib_layer.exclude = True
 
+    from tools.art_direction.store_checkout import apply, write_report
+    write_report(apply())
+    from tools.art_direction.store_sales import apply as apply_sales, write_report as sales_report
+    sales_report(apply_sales())
+    from tools.art_direction.store_cafeteria import apply as apply_cafeteria, write_report as cafeteria_report
+    cafeteria_report(apply_cafeteria())
+    from tools.art_direction.store_restrooms import apply as apply_restrooms, write_report as restrooms_report
+    restrooms_report(apply_restrooms())
+    from tools.art_direction.store_reserve import apply as apply_reserve, write_report as reserve_report
+    reserve_report(apply_reserve())
+    from tools.art_direction.store_offices import apply as apply_offices, write_report as offices_report
+    offices_report(apply_offices())
+    from tools.art_direction.store_workshops import apply as apply_workshops, write_report as workshops_report
+    workshops_report(apply_workshops())
+    from tools.art_direction.store_service import apply as apply_service, write_report as service_report
+    service_report(apply_service())
+    from tools.art_direction.store_annexes import apply as apply_annexes, write_report as annexes_report
+    annexes_report(apply_annexes())
+    from tools.art_direction.store_finish import apply as apply_finish, write_report as finish_report
+    finish_report(apply_finish())
     bpy.ops.wm.save_as_mainfile(filepath=out)
 
     print("\n[niveau] " + "-" * 54)

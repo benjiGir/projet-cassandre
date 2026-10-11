@@ -783,6 +783,60 @@
       "sol": 0.0,
       "rayon": 0.3,
       "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_cartouches_billets",
+      "sol": -5.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_cartouches_vestiaire",
+      "sol": -15.550000190734863,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_cartouches_depot",
+      "sol": -18.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_cartouches_machinerie",
+      "sol": -22.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_cartouches_rame",
+      "sol": -17.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_fusees_depot",
+      "sol": -18.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_fusees_machinerie",
+      "sol": -22.0,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_metro_fusees_rame",
+      "sol": -17.25,
+      "rayon": 0.3,
+      "degagement": 0.4
+    },
+    {
+      "nom": "use_flare",
+      "sol": -14.448942184448242,
+      "rayon": 0.3,
+      "degagement": 0.4
     }
   ],
   "declencheurs": [
@@ -1085,6 +1139,96 @@
       ],
       "propriete": "soin",
       "quantite": 25
+    },
+    {
+      "nom": "cartouches_billets",
+      "pieds": [
+        -16.5,
+        94,
+        -5
+      ],
+      "propriete": "cartouches",
+      "quantite": 8
+    },
+    {
+      "nom": "cartouches_vestiaire",
+      "pieds": [
+        78,
+        259.5,
+        -15.55
+      ],
+      "propriete": "cartouches",
+      "quantite": 8
+    },
+    {
+      "nom": "cartouches_depot",
+      "pieds": [
+        49,
+        331,
+        -18
+      ],
+      "propriete": "cartouches",
+      "quantite": 8
+    },
+    {
+      "nom": "cartouches_machinerie",
+      "pieds": [
+        115,
+        353,
+        -22
+      ],
+      "propriete": "cartouches",
+      "quantite": 8
+    },
+    {
+      "nom": "cartouches_rame",
+      "pieds": [
+        39.5,
+        404,
+        -17.25
+      ],
+      "propriete": "cartouches",
+      "quantite": 8
+    },
+    {
+      "nom": "fusees_depot",
+      "pieds": [
+        49,
+        333,
+        -18
+      ],
+      "propriete": "fusees",
+      "quantite": 4
+    },
+    {
+      "nom": "fusees_machinerie",
+      "pieds": [
+        115,
+        351,
+        -22
+      ],
+      "propriete": "fusees",
+      "quantite": 4
+    },
+    {
+      "nom": "fusees_rame",
+      "pieds": [
+        39.5,
+        405.5,
+        -17.25
+      ],
+      "propriete": "fusees",
+      "quantite": 4
+    }
+  ],
+  "armes": [
+    {
+      "nom": "use_flare",
+      "pieds": [
+        19.05,
+        215.0,
+        -14.448942550505052
+      ]
     }
   ]
 }

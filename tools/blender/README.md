@@ -15,12 +15,25 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `check(strict=False, audit=True, niveau=…)` | `validate_level.py` + audit du plan choisi, verdicts seuls |
 | `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; `voyage="depart"` ou `"arrivee"` choisit l’environnement N5 pour éviter leur superposition ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
 | `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
-| `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
+| `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue ; `voyage="depart"` ou `"arrivee"` applique le même environnement N5 à toutes les vues |
 | `export(out=…, niveau=…)` | `export_level.py`, sortie propre au profil, `ok` seulement si le contenu est vérifié |
 | `manifest(out=…, niveau=…)` | manifeste des espaces du plan choisi, conversion Blender → jeu |
 | `fingerprint()` | empreinte des poses, propriétés et surfaces du view layer sauvegardé ; comparaison des reconstructions dans un fichier voisin `.fingerprint.json` |
 | `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `docs/assets/` |
 | `metro_blockout(apercus=True)` | reconstruit et exporte N5 avec ses vues ; `apercus=false` évite de rendre toutes les zones lors d’une retouche locale, puis `shot`/`sheet` produit les vues ciblées |
+| `restore_store_lighting()` | restitue les lampes et les luminaires du magasin depuis la copie avant éclairage |
+| `art_direction_sales()` | applique localement les sols et les matières du mobilier commercial, sauvegarde et exporte ; [revue](../../docs/assets/vente-direction-artistique.md) |
+| `art_direction_finish(niveau="hypermarche", inspect=False)` | termine les matières des parkings et raccords du magasin, ou du quartier avec `niveau="metro"` ; conserve les couleurs des véhicules, sauvegarde et exporte vers les fichiers runtime ; inventaire seul avec `inspect` |
+| `art_direction_cafeteria()` | matières du sol, des murs, du plafond et du mobilier de la cafétéria ; conserve lampes et atlas, sauvegarde et exporte |
+| `rework_fournil_ovens()` | reconstruit deux fours à soles et la rôtissoire avec chambres visibles et vitres ; remplace leurs proxies, conserve les lampes, sauvegarde et exporte |
+| `art_direction_service(inspect=False)` | matières de la chambre froide et du compacteur ; préserve commandes, atlas de carton et éclairage, sauvegarde et exporte ; inventaire avec `inspect` |
+| `art_direction_workshops(inspect=False)` | matières du fournil, du labo et du SAV ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_offices(inspect=False)` | matières du personnel, de l’étage et de la direction ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_reserve(inspect=False)` | béton, enduit et mobilier industriel de la réserve ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_restrooms()` | faïence, cabines et métal des sanitaires ; conserve le sol partagé, les lampes et les appareils utilisables, sauvegarde et exporte |
+| `rework_restrooms()` | remplace les équipements par trois cabines accessibles, des portes manuelles, deux grandes vasques et des surfaces de miroir ; conserve les lampes, sauvegarde et exporte |
+| `art_direction_store()` | applique localement les matières de la galerie et des six caisses, sauvegarde et exporte le magasin ; [revue](../../docs/assets/caisses-direction-artistique.md) |
+| `art_direction_quay()` | construit deux exports du même quai pour comparer les matières actuelles et candidates ; [charte et comparaison](../../docs/assets/etalon-direction-artistique.md) |
 | `metro_pilot()` | construit, sauvegarde, exporte et rend le quai et le tube N4, dans une session neuve `--factory-startup` |
 | `metro_kit(out=…)` | bibliothèque et planche métro N3, depuis une session neuve `--factory-startup` ; régénère les pièces et textures originales |
 | `quartier_kit(out=…)` | bibliothèque et planche du quartier N3b, depuis une session neuve ; 20 pièces originales et deux voitures réemployées ; [fiche et rendus](../../docs/assets/kit-quartier.md) |
@@ -419,3 +432,9 @@ les budgets actuels sont consignés dans la révision de l'ADR 0029.
 La recette `metro_trains` construit le pilote T2 dans une session neuve (`--factory-startup`). Elle écrit `metro_trains.blend/.glb` ; contrat et commandes : `docs/4-technique/trains-metro.md`.
 
 La recette `metro_blockout` assemble N5 depuis le plan N2 et le quartier validé, dans une session neuve. Elle écrit `metro_blockout.blend/.glb` et le manifeste : [fonctionnement](../../docs/4-technique/blockout-metro.md).
+
+`art_direction_annexes inspect=true` inventorie la planque et la gaine VMC ;
+`art_direction_annexes` applique leurs matières, sauvegarde et exporte le magasin.
+
+`rework_office_finishes` remet une moquette bleue continue dans les bureaux
+et la direction, crée leurs ossatures de faux plafond, sauvegarde et exporte.

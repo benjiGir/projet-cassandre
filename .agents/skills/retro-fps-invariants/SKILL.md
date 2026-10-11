@@ -9,20 +9,32 @@ Skill racine. Chargé avant tous les autres. Toute proposition qui viole un
 point ci-dessous doit être **refusée avec explication du coût**, jamais
 contournée silencieusement.
 
-## Les dix
+## Référence courante — 10 octobre 2026
+
+Les instructions de `AGENTS.md` font foi en cas de divergence. Le code utilise
+actuellement mipmaps et anisotropie à la réduction (ADR 0027 encore proposé),
+et conserve nearest à l’agrandissement. L’exclusivité Lambert est retirée ;
+il n’y a plus de plafond de lots (ADR 0039). La charte artistique candidate
+et son étalon sont dans `docs/5-guides/direction-artistique.md` ; leur
+validation artistique appartient à l’utilisateur.
+
+## Invariants courants
 
 | # | Invariant | Coût de la violation |
 |---|---|---|
 | 1 | Fixed timestep 1/60, delta clampé à 0.25 s | Le feel devient dépendant de la machine ; tout le tuning est à refaire |
 | 2 | React ne touche jamais la boucle | Budget de perf perdu avant d'avoir commencé |
 | 3 | Rotation caméra non interpolée, lue au taux d'affichage | Latence de visée perçue |
-| 4 | 640×360 interne, `NearestFilter`, pas de mipmaps | L'identité visuelle disparaît |
-| 5 | `MeshLambertMaterial` exclusivement | Le look Build vient de l'absence de spécularité |
+| 4 | 640×360 interne, nearest à l’agrandissement ; réduction selon le code courant et ADR 0027 | L’identité visuelle et la stabilité des textures doivent être jugées ensemble |
+| 5 | *(Retiré le 2026-09-28 — matériaux classiques et TSL peuvent coexister.)* | — |
 | 6 | Character controller = `KinematicCharacterController` de Rapier | ~6 semaines perdues, classiquement |
 | 7 | Gravité −25 m/s² | Saut mou et flottant |
 | 8 | Pas d'ECS avant 12 types d'ennemis | Un moteur magnifique et zéro jeu |
 | 9 | *(Retiré le 2026-09-25 — « boîtes blanches jusqu'à la Phase 5 », dépassé par l'habillage du niveau. Ne pas le réintroduire par habitude.)* | — |
-| 10 | Aucune animation ne bloque le joueur | Casse le rythme d'un boomer shooter |
+| 10 | Aucune animation ne bloque le joueur | Casse le rythme d’un boomer shooter |
+| 11 | Gameplay et rendu passent par la frontière Effect synchrone | Une opération asynchrone dans ces arbres casse `runSync` |
+| 12 | RNG déterministe canonique uniquement | Le rejeu diverge |
+| 13 | *(Retiré le 2026-09-25 — XState sans temps mural.)* | — |
 
 ## Hiérarchie de décision
 

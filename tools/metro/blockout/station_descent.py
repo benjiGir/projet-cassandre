@@ -51,9 +51,9 @@ def build(a):
     p.box((-9.15,106.28,-5),(.15,.24,3.5),'petrole',True)
     p.box((-4,106.28,-5),(.15,.24,3.5),'petrole',True)
     p.box((-9.15,106.28,-2.25),(5.3,.24,.75),'petrole',True)
-    p.text('QUAIS',(-6.5,106.245,-2.02),.21,'ivoire')
+    p.text('QUAIS',(-6.5,106.245,-2.02),.21,'peinture_ivoire')
     for y,z in ((106.27,-5),(118.05,-13)):
-        p.box((-8.94,y,z+.006),(4.88,.16,.016),'ivoire')
+        p.box((-8.94,y,z+.006),(4.88,.16,.016),'peinture_ivoire')
         for i in range(24):
             p.box((-8.88+i*.2,y+.05,z+.023),(.08,.065,.01),'acier')
     install(a,p,(0,0,0))

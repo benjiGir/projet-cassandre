@@ -1,7 +1,7 @@
 ---
 title: Métro — parcours complet N5
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-10
 tags: [metro, niveau, blockout]
 ---
 
@@ -2007,3 +2007,36 @@ d'auteur et le profil type du métro. Elles ne rejouent pas la sauvegarde
 personnelle à 64 PV ni une partie complète. Aucune suite de tests ajoutée
 ou lancée. La source de campagne est inchangée : recharger le niveau permet
 de récupérer ces ressources avec l'équipement d'arrivée conservé.
+
+## Boîtes de cartouches de pompe — 10 octobre
+
+Ajout demandé par l'utilisateur : cinq boîtes de 8 cartouches, à la
+billetterie, au vestiaire, au dépôt, dans la machinerie et dans la rame.
+Le niveau compte désormais dix-huit ressources, dont 40 cartouches en plus
+des soins et balles de pistolet existants.
+
+La propriété Blender `cartouches` porte la quantité. Le loader expose la
+quantité commune `ammo` et son arme `ammoWeapon` ; les anciens objets sans
+ce champ restent des recharges de pistolet. Une boîte qui déclare à la fois
+`munitions` et `cartouches` est refusée à la validation et signalée au
+chargement. `InteractionSystem` garde le ramassage automatique, puis
+`takeAmmoBox` route vers `addShotgunAmmo` ou `addPistolAmmo` au pas fixe.
+Au plafond de l'arme concernée, la boîte reste disponible. Le ramassage
+ne change ni l'arme équipée ni sa possession.
+
+Le modèle partagé est une boîte rouge plus large, avec une bande ivoire
+« 12 » et trois cartouches rouges à culot doré. Ses ressources sont créées
+et chauffées avec les autres pickups, puis libérées avec la session.
+La [vue moteur du vestiaire](../assets/blockout-metro/cartouches-vestiaire-2026-10-10.png)
+montre son aspect à la résolution du jeu. Lors de la revue locale, marcher
+sur cette boîte avec le pistolet équipé fait passer le pompe de **48 à 56
+cartouches**, tandis que le pistolet conserve **75 balles**. Le
+[relevé avant/après](../assets/blockout-metro/cartouches-revue-2026-10-10.json)
+conserve cet équipement et l'état du ramassage.
+
+La première position du vestiaire se trouvait sur le banc ; le contrôle
+d'appui la refuse. Elle est déplacée à X 78 / Y 259,50, dans l'allée.
+La reconstruction finale passe : **4 344 objets, 33 497 Ko**, sans intrus
+ni fuite de bibliothèque. La compilation de production passe, avec
+l'avertissement de taille de bundle déjà présent. Aucune suite de tests
+ajoutée ou lancée ; cette revue n'est pas un playtest intégral du niveau.

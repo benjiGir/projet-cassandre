@@ -1,0 +1,400 @@
+{
+  "zone": "chambre froide et compacteur",
+  "sols": 3,
+  "murs": 20,
+  "plafonds": 2,
+  "mobilier": 26,
+  "matieres": [
+    "atelier_email",
+    "atelier_inox",
+    "atelier_noir",
+    "cold_evaporateur",
+    "cold_givre",
+    "cold_paroi",
+    "cold_plafond",
+    "cold_sol",
+    "reserve_bois",
+    "reserve_carton",
+    "reserve_enduit",
+    "reserve_plafond",
+    "reserve_rideau",
+    "reserve_sol",
+    "service_peint"
+  ],
+  "objets": [
+    {
+      "nom": "cf_cadre_porte",
+      "categorie": "mobilier",
+      "matieres": [
+        "atelier_email",
+        "atelier_noir"
+      ]
+    },
+    {
+      "nom": "cf_crochets",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_evaporateur",
+      "categorie": "mobilier",
+      "matiere": "cold_evaporateur"
+    },
+    {
+      "nom": "cf_evaporateur_grilles",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_evaporateur_ventilateurs",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "cf_faces_panneaux",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "cf_givre_angles",
+      "categorie": "mobilier",
+      "matiere": "cold_givre"
+    },
+    {
+      "nom": "cf_joints_panneaux",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_rail_rideau",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_rails_aeriens",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_reglette",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "cf_sol_isole",
+      "categorie": "sols",
+      "matiere": "cold_sol"
+    },
+    {
+      "nom": "co_benne",
+      "categorie": "mobilier",
+      "matieres": [
+        "atelier_noir",
+        "service_peint"
+      ]
+    },
+    {
+      "nom": "co_camera_carton",
+      "categorie": "mobilier",
+      "matiere": "reserve_carton"
+    },
+    {
+      "nom": "co_camera_corps",
+      "categorie": "mobilier",
+      "matiere": "atelier_email"
+    },
+    {
+      "nom": "co_camera_support",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "co_palettes_vides",
+      "categorie": "mobilier",
+      "matiere": "reserve_bois"
+    },
+    {
+      "nom": "co_presse_chassis",
+      "categorie": "mobilier",
+      "matieres": [
+        "atelier_email",
+        "atelier_inox",
+        "atelier_noir",
+        "service_peint"
+      ]
+    },
+    {
+      "nom": "co_presse_conduite0",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "co_presse_conduite1",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "co_presse_grille",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "co_presse_poignee",
+      "categorie": "mobilier",
+      "matiere": "atelier_noir"
+    },
+    {
+      "nom": "co_presse_portes",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "co_presse_tige",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "co_presse_verin",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "compacteur_service_rails",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "deco_transpalette_timon_co_transpalette",
+      "categorie": "mobilier",
+      "matiere": "atelier_inox"
+    },
+    {
+      "nom": "door_compacteur_service",
+      "categorie": "mobilier",
+      "matiere": "reserve_rideau"
+    },
+    {
+      "nom": "imposte_c_short_w_compacteur",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "imposte_chambre_froide_c_short_w",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "imposte_compacteur_reserve",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "linteau_chambre_froide_labo",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "linteau_compacteur_c_short_w",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "linteau_compacteur_secret4",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_chambre_froide_e4",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_chambre_froide_e5",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_chambre_froide_n2",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_chambre_froide_o3",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_chambre_froide_s0",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_chambre_froide_s1",
+      "categorie": "murs",
+      "matiere": "cold_paroi"
+    },
+    {
+      "nom": "mur_compacteur_e5",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_e6",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_n1",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_n2",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_o3",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_o4",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "mur_compacteur_s0",
+      "categorie": "murs",
+      "matiere": "reserve_enduit"
+    },
+    {
+      "nom": "plafond_chambre_froide",
+      "categorie": "plafonds",
+      "matiere": "cold_plafond"
+    },
+    {
+      "nom": "plafond_compacteur",
+      "categorie": "plafonds",
+      "matiere": "reserve_plafond"
+    },
+    {
+      "nom": "sol_chambre_froide",
+      "categorie": "sols",
+      "matiere": "cold_sol"
+    },
+    {
+      "nom": "sol_compacteur",
+      "categorie": "sols",
+      "matiere": "reserve_sol"
+    }
+  ],
+  "atlas_conserves": [
+    {
+      "nom": "cf_rideau_lanieres",
+      "matiere": "mat_verre"
+    },
+    {
+      "nom": "cf_carcasses",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "cf_tranches_gras",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "cf_tube",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_presse_carton_charge",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_presse_seuil_danger",
+      "matiere": "mat_metal_bandes_danger"
+    },
+    {
+      "nom": "co_plaque_presse",
+      "matiere": "mat_sig_compacteur"
+    },
+    {
+      "nom": "co_plaque_maintenance",
+      "matiere": "mat_sig_compacteur"
+    },
+    {
+      "nom": "co_plaque_danger",
+      "matiere": "mat_sig_compacteur"
+    },
+    {
+      "nom": "co_marquage_presse",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_benne_roue_-26.7_119",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_benne_roue_-26.7_120",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_benne_roue_-24.9_119",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_benne_roue_-24.9_120",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_benne_dechets",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "deco_transpalette_fourches_co_transpalette",
+      "matiere": "mat_metal_bandes_danger"
+    },
+    {
+      "nom": "co_balle_stock_0_0",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_balle_stock_0_1",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_balle_stock_1_0",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_balle_stock_1_1",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_balle_quai_0",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_balle_quai_1",
+      "matiere": "mat_carton_compresse"
+    },
+    {
+      "nom": "co_plaque_quai",
+      "matiere": "mat_sig_compacteur"
+    },
+    {
+      "nom": "co_projecteur_dos",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_projecteur_lampe",
+      "matiere": "mat_palette"
+    },
+    {
+      "nom": "co_projecteur_tige",
+      "matiere": "mat_palette"
+    }
+  ],
+  "texture_px": 128,
+  "texture_m": 2
+}

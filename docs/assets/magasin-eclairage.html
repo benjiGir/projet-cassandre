@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Éclairage du magasin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#131b21;color:#e8e7df;font:16px system-ui,sans-serif}main{max-width:1320px;margin:auto;padding:24px}header{border-top:4px solid #deb44b}h1{font-size:30px}p{line-height:1.55;color:#b8c5c8}a{color:#a5ddd0}.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}button{border:1px solid #65877e;background:#233b36;color:#e8e7df;padding:10px 14px;font:inherit;cursor:pointer}button[aria-pressed=true]{background:#537d74}button:disabled{opacity:.45}iframe{display:block;width:100%;aspect-ratio:16/9;border:1px solid #405158;background:black}img{max-width:100%;image-rendering:pixelated}img[hidden]{display:none}pre{white-space:pre-wrap;font-size:12px;color:#9eb4ba}figure{margin:24px 0}
+</style>
+</head>
+<body><main>
+<header><p>PROJET CASSANDRE · HARMONISATION · ÉTAPE 3</p><h1>Éclairage du magasin — proposition rejetée</h1><p>L’éclairage d’origine est restauré. La vue jouable utilise cet éclairage. Les images ci-dessous gardent la proposition historique. <a href="vente-da.html">Continuer avec les textures de vente</a>.</p>
+<p>Lumières ivoire et vert pâle, contrastes resserrés et accents froids. Une ambiance inspirée du métro, adaptée aux espaces du magasin.</p>
+<p><a href="etalon-da.html">Étalon approuvé</a> · <a href="../5-guides/direction-artistique.md">Charte commune</a> · <a href="magasin-eclairage.md">Compte rendu de cette passe</a> · <a href="rame-da.html">Rames du métro</a></p></header>
+<div class="toolbar" aria-label="Points de vue"><button data-view="galerie" aria-pressed="false">Galerie</button><button data-view="caisses" aria-pressed="true">Caisses</button><button data-view="hub" aria-pressed="false">Allée centrale</button><button data-view="rayons" aria-pressed="false">Rayons</button><button data-view="electro" aria-pressed="false">Électroménager</button><button data-view="cafeteria" aria-pressed="false">Cafétéria</button><button data-view="reserve" aria-pressed="false">Réserve</button><button data-view="bureaux" aria-pressed="false">Bureaux</button></div>
+<div class="toolbar"><button data-key="Digit2">Pistolet</button><button data-key="Digit3">Fusil à pompe</button><button id="walk" disabled>Avancer 0,5 s</button><button id="capture" disabled>Capturer la vue</button><button id="reset">Recommencer</button></div>
+<p id="status" role="status">Chargement du magasin…</p>
+<iframe id="game" src="/?level=niveau_v2&amp;campaignProfile=type" title="Éclairage du magasin en jeu" allow="autoplay; fullscreen"></iframe>
+<p>Les ennemis sont neutralisés pour comparer les surfaces. Clique dans le jeu pour parcourir les lieux ; Échap libère la souris.</p>
+<details><summary>Pose et équipement</summary><pre id="reading">En attente…</pre></details>
+<figure><img id="capture-image" alt="Vue capturée à 640 × 360" hidden><figcaption id="capture-caption"></figcaption></figure>
+<section><p>Mêmes vues et équipement, seul l’éclairage change.</p><img src="magasin-eclairage/comparaison.png" alt="Éclairage du magasin avant et après"><img src="magasin-eclairage/annexes.png" alt="Éclairage des annexes avant et après"><h2>Raccord avec le métro et cafétéria</h2><img src="magasin-eclairage/raccord-metro.png" alt="Quai du métro et cafétéria"><h2>En marchant vers les caisses</h2><img src="magasin-eclairage/en-marche.png" alt="Éclairage des caisses en marchant"></section>
+</main><script>
+const game=document.getElementById('game'),status=document.getElementById('status'),reading=document.getElementById('reading');
+const poses={"galerie": [0, 2, 0.01, 0], "caisses": [0, 24, 0.01, 0], "hub": [0, 47, 0.01, 0], "rayons": [-13.5, 60, 0.01, 90], "electro": [12, 62, 0.01, 270], "cafeteria": [46, 7, 0.01, 0], "reserve": [0, 99, 0.01, 0], "bureaux": [5, 152, 4.01, 90]};
+let view='caisses',api=null,initialized=null;
+function key(code,type){const win=game.contentWindow;win.dispatchEvent(new win.KeyboardEvent(type,{code,key:code.startsWith('Digit')?code.slice(-1):code.slice(-1).toLowerCase(),bubbles:true}))}
+function position(){if(!api)return;api.tp(...poses[view]);status.textContent='Magasin · '+view+' · 640 × 360'}
+document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{view=button.dataset.view;document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));position()}));
+document.querySelectorAll('[data-key]').forEach(button=>button.addEventListener('click',()=>{key(button.dataset.key,'keydown');key(button.dataset.key,'keyup')}));
+document.getElementById('walk').addEventListener('click',()=>{key('KeyW','keydown');setTimeout(()=>key('KeyW','keyup'),500)});
+document.getElementById('reset').addEventListener('click',()=>{api=null;initialized=null;document.getElementById('capture').disabled=true;document.getElementById('walk').disabled=true;game.src='/?level=niveau_v2&campaignProfile=type';status.textContent='Chargement…'});
+document.getElementById('capture').addEventListener('click',()=>{if(!api)return;const button=document.getElementById('capture');button.disabled=true;game.contentWindow.requestAnimationFrame(()=>game.contentWindow.requestAnimationFrame(()=>{api.renderBench(1);const image=document.getElementById('capture-image');image.src=game.contentDocument.getElementById('game').toDataURL('image/png');image.hidden=false;document.getElementById('capture-caption').textContent=view+' · capture du monde sans les overlays';button.disabled=false}))});
+setInterval(()=>{const current=game.contentWindow.cassandre;if(!current)return;current.notarget(true);const state=current.campagne.etat();if(!state.playing||state.level!=='niveau_v2')return;api=current;if(initialized!==current){initialized=current;current.resolution(640,360);current.filtrage('aniso');position();key('Digit2','keydown');key('Digit2','keyup');document.getElementById('capture').disabled=false;document.getElementById('walk').disabled=false;}reading.textContent=JSON.stringify({vue:view,pose:current.pose(false),equipement:state.current},null,2)},100);
+</script></body></html>

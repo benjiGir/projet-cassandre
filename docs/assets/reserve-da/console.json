@@ -1,0 +1,72 @@
+[
+  {
+    "level": "error",
+    "message": "[armes] armes.glb illisible, repli sur les boîtes Error: [armes] nœud \"vm_flare\" absent de armes.glb\n    at node (http://127.0.0.1:5199/src/render/viewmodel/weaponModels.ts?t=1791723602429:53:21)\n    at loadWeaponModels (http://127.0.0.1:5199/src/render/viewmodel/weaponModels.ts?t=1791723602429:61:17)\n    at async loadWeaponModelsOrPlaceholder (http://127.0.0.1:5199/src/render/viewmodel/weaponModels.ts?t=1791723602429:229:10)\n    at async Promise.all (index 5)\n    at async main (http://127.0.0.1:5199/src/main.ts?t=1791723639271:104:100)",
+    "timestamp": "2026-10-11T13:00:39.680Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_fire\" pointe sur la recette \"flare_fire\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:02:14.334Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_burst\" pointe sur la recette \"flare_burst\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:02:14.334Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "error",
+    "message": "ReferenceError: Cannot access 'WEAPON_PICKUP_NAMES' before initialization\n    at http://127.0.0.1:5199/src/game/level/interactions/interactive.ts?t=1791723928209:153:5",
+    "timestamp": "2026-10-11T13:05:28.698Z",
+    "url": "http://127.0.0.1:5199/src/game/level/interactions/interactive.ts?t=1791723928209"
+  },
+  {
+    "level": "error",
+    "message": "Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+    "timestamp": "2026-10-11T13:05:39.432Z"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_fire\" pointe sur la recette \"flare_fire\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:05:39.812Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_burst\" pointe sur la recette \"flare_burst\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:05:39.812Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_fire\" pointe sur la recette \"flare_fire\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:06:10.884Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_burst\" pointe sur la recette \"flare_burst\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:06:10.884Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "error",
+    "message": "Uncaught TypeError: Failed to execute 'observe' on 'MutationObserver': parameter 1 is not of type 'Node'.",
+    "timestamp": "2026-10-11T13:06:27.190Z"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_fire\" pointe sur la recette \"flare_fire\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:06:27.422Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  },
+  {
+    "level": "warn",
+    "message": "[audio] \"flare_burst\" pointe sur la recette \"flare_burst\", absente du sprite — le jeu continue sans ce son.",
+    "timestamp": "2026-10-11T13:06:27.422Z",
+    "url": "http://127.0.0.1:5199/@vite/client"
+  }
+]
