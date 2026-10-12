@@ -1,6 +1,6 @@
 """Déploiement local de l'étalon dans les galeries et le vestiaire.
 
-see: docs/assets/galerie-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

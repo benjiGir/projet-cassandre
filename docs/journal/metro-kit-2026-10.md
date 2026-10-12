@@ -19,8 +19,8 @@ avant la pièce pilote. Garder les cotes et la direction du board N1.
 
 ## Livré et preuve
 
-La [présentation N3](../assets/kit-metro.html) rassemble huit rendus.
-La [fiche de kit](../assets/kit-metro.md) décrit 26 collections d'assets,
+La présentation N3 rassemble huit rendus.
+La [fiche de kit](../4-technique/kit-metro.md) décrit 26 collections d'assets,
 leurs cotes, les surfaces originales et les limites d'intégration.
 La bibliothèque est `assets_src/library/lib_metro_N3.blend`.
 

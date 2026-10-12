@@ -1,6 +1,6 @@
 """Finition des rames, du garage et des suspentes de signal.
 
-see: docs/assets/rame-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import re
 

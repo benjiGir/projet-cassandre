@@ -1,7 +1,7 @@
 """Scène étalon DA : même assemblage exporté avec deux traitements de surface.
 
 Recette : C.art_direction_quay() dans une session Blender neuve.
-see: docs/assets/etalon-direction-artistique.md#reproduire
+see: docs/5-guides/direction-artistique.md#sources-et-reprise
 """
 from pathlib import Path
 import json
@@ -24,7 +24,7 @@ from tools.metro.blockout.station_dressing import seating, route_map
 from tools.metro.kit.modules import profile
 from tools.art_direction.surface_recipes import build_materials, RAMPS
 
-REPORT = ROOT / "docs/assets/etalon-da"
+REPORT = ROOT / "renders/reviews/etalon-da"
 TEXTURES = ROOT / "assets_src/library/art_direction/textures"
 FLOOR = .75
 VIEWS = {"ensemble": (2.75, 1.5, FLOOR, 0),

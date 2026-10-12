@@ -27,7 +27,7 @@ cohérence, ce sont les images jointes :
 
 | À joindre | Pour quels panneaux | Ce qu'elle fixe |
 |---|---|---|
-| `docs/assets/portrait-stream-planche-v1.png` | tous ceux où le héros apparaît | le visage et la tenue |
+| `assets_src/portrait_stream/portrait-stream-planche-v1.png` | tous ceux où le héros apparaît | le visage et la tenue |
 | `assets_src/panneaux/raw/outro_4.png` | 1 et 2 | la chambre, le mur de ficelles, la photo de la tour, le grain de l'image |
 | `assets_src/panneaux/raw/intro_3.png` | 3 et 4 | la nuit, le sol mouillé, le sodium, le héros de dos |
 | `assets_src/panneaux/raw/outro_1.png` | 5 à 8 | l'aube, le héros abîmé, le harnais de la caméra |
@@ -41,7 +41,7 @@ panneaux 3 et 7 : la tour doit être la même partout.
 L'intro garde les deux lumières du niveau 1, le vert des écrans et l'orange du
 sodium. La fin passe au **bleu froid** : aube gris-bleu, vapeur blanche,
 lumière blanche du hall. C'est la couleur de la plateforme dans la palette du
-niveau (`docs/assets/board-metro.md`, famille « Privée »). Le seul point chaud
+niveau (`docs/6-reference/references-metro.md`, famille « Privée »). Le seul point chaud
 qui reste est le voyant rouge de la caméra.
 
 Éléments qui reviennent et doivent rester identiques :

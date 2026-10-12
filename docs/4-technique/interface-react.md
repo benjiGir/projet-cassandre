@@ -158,8 +158,7 @@ React ne pilote le changement d’arme.
 
 L’aperçu `?uiPreview=weaponCarousel` conserve le bandeau à l’écran et propose
 deux boutons pour regarder les différentes armes. Il reste réservé au
-développement. La [capture dans le métro](../assets/carrousel-armes/en-jeu.png)
-montre le bandeau avec le reste du HUD.
+développement. Il permet de revoir le bandeau avec le reste du HUD.
 
 ### Structure des composants
 

@@ -81,6 +81,14 @@ valeur partagée a un seul nom à un seul endroit (`physics/constants.ts`,
 `core/effect/seeds.ts`), et tout accès à `localStorage` passe par
 `core/storage/persisted.ts`.
 
+## Hygiène documentaire
+
+`docs/assets/` contient uniquement les visuels utiles à la documentation durable.
+Les pages de revue, captures avant/après, inventaires et relevés générés vont
+dans `renders/`, ignoré par Git, et sont retirés après utilisation. Regrouper
+les recettes et choix retenus dans les pages existantes ; les originaux
+graphiques non reproductibles et leurs prompts restent dans `assets_src/`.
+
 ## Conventions React — non négociables
 
 Tout code React (`src/ui/`) suit quatre règles écrites, **pour l'agent

@@ -2,7 +2,7 @@
 title: Technique
 tags: [sommaire]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-12
 ---
 
 # Technique
@@ -42,3 +42,9 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 
 - [Métro complet — blockout N5](blockout-metro.md) — parcours, objectifs, trains et voyage jusqu’au hall.
 - [Rencontres du métro](rencontres-metro.md) — première implantation N7, déclencheurs, vagues à bord et ressources.
+
+- [Corps du héros dans les miroirs](reflet-du-heros.md) — modèle articulé, animations et visibilité dans les reflets.
+- [Équipements des sanitaires](equipements-sanitaires.md) — cabines, lavabos, miroirs et recette de reprise.
+- [Fours du fournil](fours-fournil.md) — fours à soles, rôtissoire et reconstruction.
+- [Kit du métro](kit-metro.md) — pièces modulaires, matériaux et recette.
+- [Kit du quartier](kit-quartier.md) — façades, mobilier et bibliothèque.

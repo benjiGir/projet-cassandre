@@ -13,8 +13,7 @@ Le pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.ble
 et l'entrée `?level=pilote_metro`. Seuls les deux niveaux de la campagne
 restent sous `public/assets/levels/`. Le script d'assemblage ci-dessous est
 conservé ; les fichiers retirés restent lisibles dans l'historique git.
-[La page de revue](../assets/pilote-metro.html) garde les six points de vue,
-les captures et les nappes à écouter ; ses liens vers le jeu ne chargent plus rien.
+La page de revue et les captures temporaires ont été retirées le 12 octobre.
 
 Le pilote contient une station de 24 m, deux quais de 5 m, deux voies,
 une rame garée, puis un tube de **60 m** à cinq refuges et un local de service.
@@ -125,19 +124,17 @@ Les nappes durent 20 s et portent 0,5 s de marge de chaque côté.
 Howler boucle la région `[500, 20000, true]` pour éviter les bords d'encodage.
 Les deux formats OGG et M4A sont livrés. Le générateur choisit libvorbis si
 disponible, sinon l'encodeur Vorbis natif de FFmpeg.
-[Mesures après décodage](../assets/pilote-metro/audio-mesures.json) et
-[spectrogrammes](../assets/pilote-metro/audio-spectres.png).
+Mesures après décodage et
+spectrogrammes.
 La mesure ne remplace pas votre écoute au casque.
 
 ### Captures du moteur
 
-La page de revue pilote l'API de développement par ses boutons.
-Elle rend une image avant de lire le canvas, puis propose la capture.
-Le serveur de développement accepte uniquement six noms de vue,
-un PNG et un corps de 2 Mio au plus. Il écrit sous `renders/metro_n4/`.
-Ce point d'entrée n'existe pas dans le build de production.
+La page temporaire pilotait l'API de développement et capturait le canvas
+après un rendu. Les fichiers de contrôle étaient écrits sous
+`renders/metro_n4/`. Cette page a été retirée après utilisation.
 
-Le [relevé des quatre captures conservées](../assets/pilote-metro/captures.json)
+Le relevé historique des quatre captures
 provient du moteur après la correction sRGB. Les animations ne sont pas
 figées : les hashes identifient les images sans valider le déterminisme.
 

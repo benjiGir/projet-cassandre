@@ -5,7 +5,7 @@ import shutil
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "docs/assets/finition-da"
+OUT = ROOT / "renders/reviews/finition-da"
 FONT = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 18)
 STORE = [("parking", "Parking extérieur"), ("muscle", "Véhicules et béton"),
          ("souterrain", "Parking souterrain"), ("service", "Raccord de service"),

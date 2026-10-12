@@ -1,6 +1,6 @@
 """Finition du hall public, du guichet et de la descente.
 
-see: docs/assets/billetterie-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

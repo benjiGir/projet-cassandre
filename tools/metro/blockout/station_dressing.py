@@ -1,6 +1,6 @@
 """Mobilier public adossé, composé dans le build métro via cassandre_cli.
 
-see: docs/assets/board-metro.md#1-direction-validée
+see: docs/6-reference/references-metro.md#1-direction-validée
 """
 import math
 

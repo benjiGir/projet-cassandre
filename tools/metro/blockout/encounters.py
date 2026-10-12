@@ -145,7 +145,7 @@ def build(a):
         obj.location=center
         obj.name=name
     root=Path(__file__).resolve().parents[3]
-    (root/'docs/assets/blockout-metro/rencontres.json').write_text(json.dumps({
+    (root/'renders/reviews/blockout-metro/rencontres.json').write_text(json.dumps({
         'spawns':spawns,
         'implantation':placement,
         'declencheurs':[{'nom':name,'evenement':event,'origine':origin,'taille':size} for name,event,origin,size in TRIGGERS],

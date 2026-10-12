@@ -2,7 +2,7 @@
 title: Référence
 tags: [sommaire]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 
 # Référence
@@ -35,3 +35,10 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Gameplay et session](notes-code-gameplay.md), [joueur et armes](notes-code-gameplay-joueur.md), [ennemis](notes-code-gameplay-ennemis.md).
 - [Niveau](notes-code-gameplay-niveau.md) et [outils de développement](notes-code-gameplay-outils.md).
 - [Rendu](notes-code-rendu.md) et [interface](notes-code-interface.md).
+
+- [Références du métro](references-metro.md) — palette, cotes et silhouettes.
+- [Références des tunnels](references-tunnels.md) — infrastructure et critères des reprises locales.
+- [Références des coulisses](references-coulisses.md) — usages réels et intentions de composition historiques.
+- [Références des armes et mains](references-armes-mains.md) — proportions, palette et prises.
+- [Références des voitures](references-voitures.md) — silhouettes et variantes des véhicules.
+- [Références des motos](references-motos.md) — motocross, custom, roadster et scooter.

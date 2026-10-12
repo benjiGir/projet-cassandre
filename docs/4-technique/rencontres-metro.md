@@ -2,7 +2,7 @@
 title: Rencontres du métro
 tags: [metro, ennemis, script]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Rencontres du métro
@@ -122,25 +122,20 @@ restent actives. Le mode auteur `notarget` coupe cette poursuite.
 
 ## Revue locale et limites
 
-Le [manifeste d'implantation](../assets/blockout-metro/rencontres.json)
+Le relevé régénéré dans `renders/reviews/blockout-metro/rencontres.json`
 donne les positions Blender, les déclencheurs et les appuis contrôlés sur
 les colliders réels. Deux positions initiales trop proches du mobilier du
 quartier et d'un mât du parvis ont été déplacées. Les capsules utilisent
 les rayons réels de chaque espèce. Ce contrôle de placement ne prouve pas
 qu'un chemin reste franchissable pendant un combat.
 
-La [page d'auteur](../assets/blockout-metro.html) expose les rencontres,
-l'état des ennemis, la neutralisation des attaques et le nettoyage des
-acteurs pour les observer séparément. Suspendre le trafic avant une
-téléportation sur une voie. Ces commandes sont réservées à la revue.
-Elle affiche aussi les ressources du joueur et les points de ramassage,
-avec deux approches de rue et une commande pour perdre 10 PV et dépenser
-5 balles au pas fixe. Ces positions logiques permettent de voir un décalage
-entre l'objet affiché et sa zone de collecte.
-Deux vues supplémentaires montrent les cartouches de la billetterie et du
-vestiaire. Le relevé distingue `arme`, `munitions` et `cartouches`.
+La page d'auteur temporaire a été retirée après la passe de création.
+Pour reprendre la revue, utiliser les commandes de la
+[console cassandre](../6-reference/console-cassandre.md). Suspendre le trafic
+avant une téléportation sur une voie. Le relevé distingue `arme`, `munitions`
+et `cartouches`.
 
-Les [observations datées](../journal/metro-blockout-2026-10.md#première-passe-de-rencontres--9-octobre)
+Les [observations datées](../journal/metro-blockout-2026-10.md#première-passe-de-rencontres-9-octobre)
 distinguent placement, déclenchement et poursuite observée. La compilation
 de production passe ; aucune suite de tests n'a été lancée. Une partie
 complète avec combats, les profils d'arrivée pauvre et riche, le réglage

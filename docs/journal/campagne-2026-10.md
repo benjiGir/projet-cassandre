@@ -26,7 +26,7 @@ La compilation et le build passent. Le relevé `pnpm economy -- --campagne`
 fonctionne sur 200 graines et montre les portefeuilles des deux niveaux.
 La suite de tests n’a pas été lancée.
 
-La [page d’auteur](../assets/campagne.html) expose les profils et la lecture
+La page d’auteur expose les profils et la lecture
 des équipements. La revue en jeu a constaté :
 
 - transition blessée : 20 PV, 12 balles et 10 € conservés ;
@@ -37,7 +37,7 @@ des équipements. La revue en jeu a constaté :
 - profil riche blessé : 115 / 125 PV, 195 / 200 balles, 94 cartouches et cinq perks conservés ;
 - métro seul en Client, puis Continuer : difficulté Habitué de la sauvegarde conservée.
 
-Les états observés figurent dans le [relevé de revue](../assets/campagne/releve.json).
+Les états observés figurent dans le relevé de revue.
 Le playtest utilisateur reste ouvert. La télémétrie distante n’est pas raccordée
 sur cette branche ; la provenance et l’équipement initial sont déjà dans la session.
 

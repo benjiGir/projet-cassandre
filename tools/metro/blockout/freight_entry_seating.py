@@ -1,6 +1,6 @@
 """Sièges de service de la première voiture, hors allée centrale.
 
-see: docs/assets/tunnels-references.md#sièges-de-la-première-voiture--9-octobre
+see: docs/6-reference/references-tunnels.md#sièges-de-la-première-voiture--9-octobre
 """
 from math import pi
 

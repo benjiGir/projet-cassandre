@@ -50,10 +50,8 @@ les couleurs, les vêtements et les lieux reconnaissables.
 - Les sources de filtrage, de matériaux, de ramassages, de l'interface,
   de la fontaine, de l'apparition des ennemis et de l'éclair de tir.
 
-[Ouvrir la planche de comparaison](../assets/audit-da-2026-10-10/planche.html).
 Les images complètes et l'inventaire sont accessibles depuis cette page.
 
-![Comparaison des environnements](../assets/audit-da-2026-10-10/comparaison.png)
 
 Les captures du magasin comportent le panneau technique de développement :
 il est exclu des jugements de DA. L'aperçu du HUD affiche volontairement
@@ -110,7 +108,7 @@ Autres repères confirmés :
 - Les cartes font 128×80 et les illustrations 640×360. Les faces des
   trousses et boîtes de munitions sont dessinées sur des canevas de 32×32.
 
-[Inventaire détaillé](../assets/audit-da-2026-10-10/inventaire-visuel.json).
+Inventaire détaillé.
 
 ### Écarts et recommandations
 
@@ -132,9 +130,6 @@ relatifs : petit, moyen, important ; ils ne sont pas des estimations horaires.
 | DA-10 | P2 | Le HUD se dimensionne en pixels virtuels du 640×360 ; plusieurs éléments des menus utilisent des tailles fixes. Les halos CSS et le texte du navigateur ont un grain différent du monde. Menu et aperçu actuels, `tokens.css`, CSS des boutons. | Garder le langage du stream et sa lisibilité. Harmoniser proportions, épaisseur des cadres et intensité des halos ; prévoir une règle commune d'échelle pour les écrans modaux. | Moyen |
 | DA-11 | P2 | Le flash de tir utilise quatre tons francs ; l'apparition utilise des cellules et du cyan ; l'eau mélange des variations continues et des accents clairs. La fontaine attire fortement le regard. Les sources ont des palettes indépendantes. | Établir une palette et une hiérarchie des effets : feu chaud, matérialisation cyan, eau pétrole claire. Observer ensemble leurs silhouettes et animations dans le décor de référence avant tout réglage. | Moyen ; revue animée nécessaire |
 
-![Textures sources](../assets/audit-da-2026-10-10/surfaces.png)
-
-![Personnages et objets à ramasser](../assets/audit-da-2026-10-10/ressources.png)
 
 ### Pourquoi le traitement diverge
 
@@ -151,7 +146,7 @@ Ces méthodes peuvent coexister. Aujourd'hui elles n'ont pas une référence
 commune suffisante pour leur niveau de finition. Un changement de shader
 global ne corrigerait pas, à lui seul, ces différences de production.
 
-La [charte du métro](../assets/board-metro.md) offre déjà une progression
+La [charte du métro](../6-reference/references-metro.md) offre déjà une progression
 chromatique cohérente. La reprise doit conserver le quai ivoire/pétrole,
 le service gris-vert/ambre et la station privée froide.
 
@@ -243,7 +238,7 @@ modification des assets de jeu n'est réalisé pour cet audit.
 ### Première application — 10 octobre
 
 À la demande « Commence le plan », l'étape 1 produit
-[l'étalon du quai](../assets/etalon-direction-artistique.md) et la
+[l'étalon du quai](../5-guides/direction-artistique.md) et la
 [charte commune](../5-guides/direction-artistique.md).
 Les deux traitements sont comparables dans une scène de développement.
 L'utilisateur approuve le traitement le 10 octobre : « Je valide c'est très
@@ -252,7 +247,7 @@ et le vestiaire des agents ; le reste du métro attend les passes suivantes.
 
 ### Déploiement local — galeries et vestiaire
 
-L'étape 2 commence par [les galeries de maintenance et le vestiaire](../assets/galerie-direction-artistique.md).
+L'étape 2 commence par [les galeries de maintenance et le vestiaire](../5-guides/direction-artistique.md).
 Les recettes de béton, sol, acier, peinture et bois de l'étalon sont
 appliquées aux objets de ces espaces. Une peinture ivoire complète les
 équipements sans leur donner les joints du carrelage. Les ambiances et
@@ -264,7 +259,7 @@ du métro ; le quai, les tunnels et les autres locaux sont les prochains lots.
 ### Extension — quais et tunnels
 
 À la demande de continuer, la passe suivante concerne
-[les quais et tunnels A/B](../assets/quais-direction-artistique.md).
+[les quais et tunnels A/B](../5-guides/direction-artistique.md).
 Le carrelage, les dalles piétonnes, le mobilier et le béton rejoignent le
 traitement approuvé. Le sol sous les rails reçoit une recette industrielle
 distincte ; les bandes de sécurité et fonds des plans restent peints.
@@ -274,7 +269,7 @@ matériaux, construites une fois par reconstruction.
 ### Extension — billetterie et descente
 
 La demande suivante de continuer reprend
-[la billetterie et la descente publique](../assets/billetterie-direction-artistique.md).
+[la billetterie et la descente publique](../5-guides/direction-artistique.md).
 Le hall, l'arrière-guichet, les bornes, les portiques et l'escalier utilisent
 le carrelage, les dalles, la peinture, l'acier et le bois de la charte.
 Les plafonds du hall et les marquages sont séparés du carrelage pour
@@ -282,7 +277,7 @@ conserver une finition calme et la lecture des repères.
 
 ### Extension — dépôt et ateliers
 
-La passe suivante concerne [le dépôt et ses ateliers](../assets/depot-direction-artistique.md).
+La passe suivante concerne [le dépôt et ses ateliers](../5-guides/direction-artistique.md).
 Le sol industriel, le béton, la charpente, les marquages et les établis
 reprennent les familles de l’étalon. Les équipements bleus, les roues, le
 métal usiné et les pièces de cuivre gardent des rampes distinctes. La
@@ -290,7 +285,7 @@ marquise et les marches du quai de service prolongent le traitement.
 
 ### Extension — machinerie et aiguillage
 
-La passe suivante concerne [la machinerie et le poste d’aiguillage](../assets/technique-direction-artistique.md).
+La passe suivante concerne [la machinerie et le poste d’aiguillage](../5-guides/direction-artistique.md).
 Le béton industriel, les rampes, la fosse, les armoires et le local
 d’entretien reprennent les matières de la charte. Les pales du ventilateur
 utilisent le métal usiné du dépôt. Le poste garde une peinture ivoire
@@ -305,7 +300,7 @@ discret ; les grandes surfaces restent calmes derrière les commandes.
 
 ### Extension — station privée et parvis, 11 octobre
 
-La passe suivante concerne [la station privée, la remontée et le parvis](../assets/arrivee-direction-artistique.md).
+La passe suivante concerne [la station privée, la remontée et le parvis](../5-guides/direction-artistique.md).
 Les parements de pierre et les dalles utilisent une sous-palette froide
 commune. Le bois des assises reprend la charte ; la végétation reçoit une
 matière propre. Les nez de marche, garde-corps, marquise et socle de la tour
@@ -320,7 +315,7 @@ conservant les joints et les arêtes.
 ### Extension — rames du métro, 11 octobre
 
 La passe suivante concerne [la rame de service, le garage et les voitures
-de trafic](../assets/rame-direction-artistique.md). Les coussins quittent
+de trafic](../5-guides/direction-artistique.md). Les coussins quittent
 la famille des peintures d’équipements pour une trame de tissu vert.
 Le sol intérieur et les câbles emploient du caoutchouc sombre ; la
 carrosserie garde une peinture claire avec un grain discret. Les rames
@@ -334,13 +329,13 @@ leurs lots dédiés.
 
 ### Étape 3 — entrée et caisses du magasin, 11 octobre
 
-La première passe concerne [la galerie d’entrée et les six caisses](../assets/caisses-direction-artistique.md).
+La première passe concerne [la galerie d’entrée et les six caisses](../5-guides/direction-artistique.md).
 Le terrazzo réduit le contraste de ses fragments ; le carrelage commercial
 garde des joints lisibles. Le stratifié, le métal brossé, le plastique
 et le caoutchouc donnent des matières distinctes aux comptoirs. Les deux
 passages d’entrée reprennent aussi le terrazzo pour assurer la continuité.
 
-Le [premier essai](../assets/caisses-da/essai-sol-trop-fin.png) réduit les
+Le premier essai réduit les
 fragments à un grain très fin. Le sol devient trop uniforme et perd sa
 lecture de terrazzo. La version retenue utilise des fragments plus nets,
 espacés et peu contrastés. Les vues du magasin sont comparées à l’étalon
@@ -353,7 +348,7 @@ les autres locaux et la finition des véhicules. DA-06, dont les grands
 ### Ajustement demandé — lumières du magasin, 11 octobre
 
 L’utilisateur préfère l’éclairage du métro et demande de reprendre celui du
-magasin. [La proposition](../assets/magasin-eclairage.md) remplace les néons
+magasin. [La proposition](../5-guides/direction-artistique.md) remplace les néons
 blancs froids par de l’ivoire, rapproche les portées et garde les accents des
 équipements. La première passe reste trop uniforme et brûle encore les halos
 au plafond ; la seconde abaisse l’ambiante propre au niveau et descend les
@@ -376,7 +371,7 @@ vente et du mobilier commercial.
 
 ### Étape 3 — surface de vente et mobilier, 11 octobre
 
-La [passe de textures](../assets/vente-direction-artistique.md) concerne
+La [passe de textures](../5-guides/direction-artistique.md) concerne
 12 sols et 277 éléments de mobilier dans l’allée centrale, les rayons et
 l’électroménager. Dix familles rapprochent le terrazzo, le carrelage, le
 damier, les métaux, les peintures, le bois et le carton de la charte commune.
@@ -386,7 +381,7 @@ complètent la revue. La suite concerne les autres locaux du magasin.
 
 ### Étape 3 — cafétéria, 11 octobre
 
-La [passe de cafétéria](../assets/cafeteria-direction-artistique.md) traite
+La [passe de cafétéria](../5-guides/direction-artistique.md) traite
 65 meshes : sol, parois, plafond et mobilier. Le damier rejoint celui des
 rayons ; les tables et le self reçoivent le stratifié ivoire des caisses.
 La première version du plafond présente des variations trop marquées :
@@ -397,7 +392,7 @@ passe locale concerne les sanitaires attenants.
 
 ### Étape 3 — sanitaires, 11 octobre
 
-La [passe des sanitaires](../assets/sanitaires-direction-artistique.md)
+La [passe des sanitaires](../5-guides/direction-artistique.md)
 traite 15 meshes : murs carrelés, plafond, cloisons et pièces métalliques.
 La faïence ivoire réduit son grain ; les cabines reprennent le vert pétrole
 commun. Le sol partage déjà le damier de la cafétéria. Les appareils utilisables
@@ -408,7 +403,7 @@ regardées. La prochaine passe concerne la réserve.
 ### Retour utilisateur — équipements des sanitaires, 11 octobre
 
 Avant la réserve, l’utilisateur demande des cabines dans lesquelles entrer,
-de plus grands lavabos et de vrais miroirs. La [refonte locale](../assets/sanitaires-assets.md)
+de plus grands lavabos et de vrais miroirs. La [refonte locale](../4-technique/equipements-sanitaires.md)
 remplace les équipements par des formes originales : trois cabines avec des
 portes manuelles, vasques creusées, appareils arrondis et accessoires.
 Les premières cuvettes ont un réservoir trop haut ; la dernière révision
@@ -426,7 +421,7 @@ sur ces équipements.
 ### Étape 3 — réserve et quai de livraison, 11 octobre
 
 L’utilisateur reprend le retexturing après la refonte des sanitaires.
-La [passe de réserve](../assets/reserve-direction-artistique.md) concerne
+La [passe de réserve](../5-guides/direction-artistique.md) concerne
 77 meshes : béton du sol et du quai, enduit, plafond, racks, palettes,
 cartons et outillage. Les éclats rouges très contrastés sont supprimés ;
 les fûts passent du motif de danger intégral à une peinture kaki cerclée.
@@ -460,7 +455,7 @@ du magasin conserve son réglage restauré. La reprise est approuvée par l’ut
 
 ### Étape 3 — personnel et bureaux, 11 octobre
 
-Après validation de la réserve, la [passe suivante](../assets/bureaux-direction-artistique.md)
+Après validation de la réserve, la [passe suivante](../5-guides/direction-artistique.md)
 concerne 201 meshes : couloir du personnel, vestiaires et PC sécurité, escalier,
 étage administratif et direction. Le béton rejoint celui de la réserve ;
 le carrelage et la moquette gardent des identités propres. Bois veiné, métal
@@ -487,7 +482,7 @@ de la revue ; la précédente reste dans `vestiaires-plafond-refuse.png`.
 ### Étape 3 — ateliers du magasin, 11 octobre
 
 L’utilisateur approuve la correction du plafond des vestiaires, puis
-demande la suite. La [passe des ateliers](../assets/ateliers-direction-artistique.md)
+demande la suite. La [passe des ateliers](../5-guides/direction-artistique.md)
 traite le fournil, le labo boucherie et le SAV : grès rouge-brun, faïence
 claire, panneaux de plafond, inox mat, polyéthylène marqué et bois des établis.
 Les façades d’appareils, instruments et produits conservent leurs détails.
@@ -499,7 +494,7 @@ vue après déplacement et une planche Blender accompagnent cette proposition.
 ### Retouche des fours — 11 octobre
 
 L’utilisateur demande de reprendre les fours après la passe des ateliers.
-La [proposition](../assets/fours-fournil.md) remplace la longue armoire par
+La [proposition](../4-technique/fours-fournil.md) remplace la longue armoire par
 deux modules à soles vitrés et reprend la rôtissoire. La photo constructeur
 Bongard guide les proportions et les ouvertures. Les pains, soles et broches
 sont visibles en jeu ; hottes et conduits rejoignent le plafond.
@@ -513,7 +508,7 @@ La proposition attend le retour utilisateur.
 ### Étape 3 — chambre froide et compacteur, 11 octobre
 
 L’utilisateur approuve les fours et demande la suite. La
-[passe des locaux de service](../assets/service-direction-artistique.md)
+[passe des locaux de service](../5-guides/direction-artistique.md)
 traite 51 meshes : sols, panneaux isolants et plafonds de la chambre froide,
 rails, évaporateur, murs et béton du compacteur, peinture de la presse,
 benne et petit mobilier. Les balles de carton gardent leurs atlas spécifiques.
@@ -530,7 +525,7 @@ La proposition attend le retour artistique de l’utilisateur.
 ### Étape 3 — planque et ventilation, 11 octobre
 
 L’utilisateur approuve les locaux de service et demande la suite.
-La [passe des annexes](../assets/annexes-direction-artistique.md) reprend
+La [passe des annexes](../5-guides/direction-artistique.md) reprend
 27 meshes : murs et plafond de la planque, canapé, table, caisses, frigo,
 casier, télévision et radio, puis parois et plancher de la gaine VMC.
 Les lumières, collisions, grilles cassables, affiches et objets de ramassage
@@ -548,7 +543,7 @@ de l’utilisateur.
 
 L’utilisateur demande de retrouver une moquette comme avant et d’avoir
 un faux plafond dans les bureaux et la direction. La
-[retouche des finitions](../assets/bureaux-finitions.md) reprend les deux
+[retouche des finitions](../5-guides/direction-artistique.md) reprend les deux
 sols et les deux plafonds : textile bleu continu inspiré de la texture
 initiale, panneaux acoustiques clairs et ossatures de 60 cm en relief.
 Deux meshes regroupent les profils ; les intersections n’ont pas de
@@ -558,7 +553,7 @@ La proposition attend le retour de l’utilisateur.
 ### Étape 3 — finition des décors restants, 11 octobre
 
 L’utilisateur demande de finir le reste du retexturing. La
-[passe finale des décors](../assets/finition-direction-artistique.md) traite
+[passe finale des décors](../5-guides/direction-artistique.md) traite
 721 meshes du magasin et 1 332 du métro : parkings, extérieurs, raccords,
 petit mobilier, locaux secrets, quartier et boîtiers. Les 30 meshes de
 véhicules gardent leurs couleurs ; un grain neutre complète les surfaces.

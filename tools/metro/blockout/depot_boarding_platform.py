@@ -1,6 +1,6 @@
 """Marches, garde-corps et marquise ancrés au quai de service.
 
-see: docs/assets/tunnels-references.md#appuis-du-quai-de-service--9-octobre
+see: docs/6-reference/references-tunnels.md#appuis-du-quai-de-service--9-octobre
 """
 from tools.metro.blockout.rail_architecture import track
 from tools.metro.quartier.geometry import Piece

@@ -20,7 +20,7 @@ jouable entier. Le pilote accepté reste séparé de la scène de trafic.
 ## Livré et preuve
 
 Un candidat d’intégration est accessible dans la
-[revue de trafic](../assets/trains-metro.html), `?level=trains_metro`.
+revue de trafic, `?level=trains_metro`.
 Il utilise la voiture N3, des commandes Blender, des panneaux à compte à
 rebours et les cinq refuges du tube N4. La voie A est régulière. B est
 suspendue au départ ; un scénario à l’entrée du tube demande un passage unique.
@@ -38,8 +38,8 @@ La scène finale contient 282 colliders statiques, 24 lots de décor,
 - Build TypeScript/Vite réussi ; avertissement habituel sur le bundle volumineux.
 - Contrôle Blender strict : zéro erreur, zéro avertissement.
 - Vue du quai et vue d’un refuge rendues dans Blender et regardées.
-- Captures du moteur regardées : [quai](../assets/trains-metro/quai.png)
-  et [refuge](../assets/trains-metro/refuge.png). Elles montrent une rame en passage.
+- Captures du moteur regardées : quai
+  et refuge. Elles montrent une rame en passage.
 - Aucune suite de tests exécutée ; aucune validation du rythme de N5 revendiquée.
 
 Le [contrat technique](../4-technique/trains-metro.md) et
@@ -86,13 +86,13 @@ des objets flottants et des écriteaux superposés.
   Le tintement aléatoire de rail est retiré des ambiances du pilote.
 
 Les sources N4 et T2 sont reconstruites. Les captures de contrôle montrent
-les [bancs](../assets/trains-metro/bancs.png), les
-[panneaux](../assets/trains-metro/panneaux.png) et une
-[commande de refuge](../assets/trains-metro/commande-refuge.png).
+les bancs, les
+panneaux et une
+commande de refuge.
 Le spectrogramme et les mesures des deux codecs sont dans la
-[planche audio](../assets/pilote-metro/audio-spectres.png) et son
-[relevé](../assets/pilote-metro/audio-mesures.json).
-La [comparaison à gain de lecture](../assets/trains-metro/audio-comparaison.json)
+planche audio et son
+relevé.
+La comparaison à gain de lecture
 relève un RMS maximal sur 100 ms inférieur de 5,5 dB et aucun échantillon
 écrêté dans les deux codecs. La revue audio est instrumentale ; l’écoute
 du mixage reste à l’utilisateur.

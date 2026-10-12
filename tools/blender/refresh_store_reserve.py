@@ -26,7 +26,7 @@ def inventory():
                         "matieres": [slot.material.name if slot.material else "" for slot in obj.material_slots],
                         "centre": [round(value, 2) for value in center]})
     report = {"objets": sorted(objects, key=lambda item: item["nom"])}
-    path = ROOT / "docs/assets/reserve-da/inventaire.json"
+    path = ROOT / "renders/reviews/reserve-da/inventaire.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
     names = sorted({re.sub(r"\.\d+$", "", mat) for obj in objects for mat in obj["matieres"]})

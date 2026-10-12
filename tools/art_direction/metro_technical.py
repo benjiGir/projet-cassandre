@@ -1,6 +1,6 @@
 """Finition de la machinerie, du local d'entretien et du poste d'aiguillage.
 
-see: docs/assets/technique-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

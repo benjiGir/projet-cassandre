@@ -9,7 +9,6 @@ updated: 2026-09-26
 
 ## Objectif
 
-Comparer des variantes de déplacement, de tir ou de feedback dans des
 conditions reproductibles, puis transmettre les mesures et les preuves à
 un humain pour arbitrage.
 

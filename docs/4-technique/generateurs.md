@@ -117,11 +117,9 @@ La génération et l'export du niveau sont décrits dans [Outillage Blender](out
 ## Comment vérifier que ça marche
 
 Consulter l'en-tête du générateur pour ses arguments, ses sources et son répertoire de sortie avant de l'exécuter.
-Comparer les images et manifestes générés avec leurs spécifications puis recharger le consommateur correspondant.
 Après une modification de texture de niveau, reconstruire et exporter le fichier glTF, puis le charger dans le jeu.
 Après un changement d'atlas ennemi, vérifier les huit directions et les rectangles dans le manifeste.
 Après la régénération d'un atlas qui équipe le niveau, reconstruire le fichier Blender ou le niveau concerné avant d'inspecter le runtime.
-Comparer le résultat d'un manifeste au lecteur réellement utilisé par `src/render/sprites/enemySprites.ts` ou par le système d'armes.
 Pour les recettes et commandes audio, suivre [Studio audio](studio-audio.md).
 Conserver côte à côte le PNG et le manifeste générés pour repérer un décalage de rectangles ou d'identifiants.
 Pour les textures utilisées par Blender, confirmer que le fichier exporté reflète la nouvelle image et non une sortie précédente.

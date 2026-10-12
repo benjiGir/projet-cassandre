@@ -1,6 +1,6 @@
 """Banquettes de l'équipe dans la troisième voiture.
 
-see: docs/assets/tunnels-references.md#sièges-de-la-troisième-voiture--9-octobre
+see: docs/6-reference/references-tunnels.md#sièges-de-la-troisième-voiture--9-octobre
 """
 from math import pi
 

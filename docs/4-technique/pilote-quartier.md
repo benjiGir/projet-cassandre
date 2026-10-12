@@ -10,12 +10,11 @@ updated: 2026-10-09
 ## Responsabilité et frontières
 
 Le pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.blend`
-et l'entrée `?level=pilote_quartier`. La
-[page de revue](../assets/pilote-quartier.html) garde ses captures ; ses liens
-vers le jeu ne chargent plus rien. Le script d'assemblage est conservé ; les
+et l'entrée `?level=pilote_quartier`. La page de revue et les captures
+temporaires ont été retirées le 12 octobre. Le script d'assemblage est conservé ; les
 fichiers retirés restent lisibles dans l'historique git.
 
-N4b assemble le [kit N3b](../assets/kit-quartier.md) pour juger la rue,
+N4b assemble le [kit N3b](kit-quartier.md) pour juger la rue,
 la place, ses accès et le repère de la tour. Les rencontres N7 et le
 parcours complet N5 restent à construire. Il n'y a pas d'ennemi dans ce pilote.
 
@@ -176,8 +175,8 @@ lentement et n'ont pas d'événement ponctuel à ce stade.
 
 Le RMS après décodage vaut environ −31 dBFS pour la rue et −35 dBFS pour le
 service, avant le gain du lecteur. Le son est volontairement discret.
-Les [mesures](../assets/pilote-quartier/audio-mesures.json) et
-[spectrogrammes](../assets/pilote-quartier/audio-spectres.png) sont conservés.
+Les mesures et
+spectrogrammes sont conservés.
 Le raccord et l'agrément restent à écouter au casque.
 
 ## Pièges

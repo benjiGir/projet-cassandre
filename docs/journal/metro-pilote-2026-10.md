@@ -18,7 +18,7 @@ Juger le kit et la direction artistique dans le moteur, sur un quai et
 
 ## Livré et preuve
 
-Le [pilote jouable](../assets/pilote-metro.html) contient une station de
+Le pilote jouable contient une station de
 24 m, une rame garée, cinq refuges à 12 m d'écart et une porte de service.
 Sa [fiche technique](../4-technique/pilote-metro.md) explique les limites.
 La recette Cassandre construit une scène et un GLB distincts de l'atelier N0.
@@ -35,10 +35,10 @@ Le premier relevé de chargement montre 337 colliders : 211 cuboids,
 Ces valeurs décrivent le candidat.
 
 Quatre vues du moteur sont capturées et regardées :
-[quai](../assets/pilote-metro/quai.png),
-[entrée](../assets/pilote-metro/entree.png),
-[refuge](../assets/pilote-metro/niche.png) et
-[fond](../assets/pilote-metro/fond.png).
+quai,
+entrée,
+refuge et
+fond.
 Ce sont des captures de revue : les animations ne sont pas figées,
 aucun déterminisme de capture n'est revendiqué.
 Les vues comportent 11 à 27 draw calls et 14 479 à 44 038 triangles ;
@@ -64,9 +64,9 @@ La première capture du correctif révèle un manque de carrosserie au-dessus
 des portes. Le bandeau est refermé et les cadres montent sous le toit,
 en conservant au moins 2,05 m de hauteur sous linteau côté ligne.
 Les portes restent fermées et statiques à ce stade.
-Les vues finales [côté quai](../assets/pilote-metro/rame_droite.png) et
-[côté voie](../assets/pilote-metro/rame_gauche.png) sont capturées dans le
-moteur et regardées. Le [relevé du correctif](../assets/pilote-metro/rame-captures.json)
+Les vues finales côté quai et
+côté voie sont capturées dans le
+moteur et regardées. Le relevé du correctif
 compte 369 colliders, 23 lots de décor et les mêmes 29 lampes.
 Le contrôle Blender strict reste conforme, sans erreur ni avertissement.
 
@@ -82,7 +82,7 @@ la nappe de quai active à un gain de 0,249. Le build final passe.
 
 Nouveau retour : les luminaires du quai semblent flotter. Les huit luminaires
 reçoivent chacun deux tiges et deux platines d'acier. Leurs fixations suivent
-la voûte facettée. La [vue du quai avec suspensions](../assets/pilote-metro/quai-suspensions.png)
+la voûte facettée. La vue du quai avec suspensions
 est rendue dans le moteur et regardée : 27 draw calls et 45 606 triangles.
 Le build et le contrôle Blender strict passent. La console de cette revue
 contient une erreur MutationObserver sans URL source ; elle n'est pas

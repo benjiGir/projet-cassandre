@@ -9,7 +9,7 @@ tags: [metro, niveau, blockout]
 
 Le 7 octobre 2026, l'utilisateur valide le quartier N4b après les corrections
 de la place et des parois de l'escalier. Le candidat N5 raccorde ce quartier
-au [parcours complet](../assets/blockout-metro.html), jusqu'à la tour.
+au parcours complet, jusqu'à la tour.
 Le fonctionnement et la reconstruction sont dans la
 [fiche technique](../4-technique/blockout-metro.md).
 
@@ -63,12 +63,9 @@ Les téléportations servent à rejoindre les segments et les consoles entre
 ces observations. **Ce relevé n'est pas une partie complète à pied** et ne
 valide pas la longueur ni l'orientation du parcours.
 
-Relevés enregistrés : [quais](../assets/blockout-metro/quais.json), [arrivée](../assets/blockout-metro/arrivee.json),
-[fin](../assets/blockout-metro/fin.json).
+Relevés enregistrés : quais, arrivée,
+fin.
 
-![Les quais provisoires](../assets/blockout-metro/quais.png)
-
-![Le parvis après la remontée](../assets/blockout-metro/parvis.png)
 
 ## Gate encore ouvert
 
@@ -91,7 +88,7 @@ saccade malgré plus de 120 FPS. Il précise que cette sensation concerne
 la marche **et** le train. Les observations précédentes décrivent le premier
 export ; les captures ci-dessous décrivent sa révision.
 
-Trois [photographies réelles](../assets/tunnels-references.md) sont regardées
+Trois [photographies réelles](../6-reference/references-tunnels.md) sont regardées
 avant la reprise : quai MF77, voies de Porte de Versailles et galerie de
 Porte Maillot. La révision ajoute les voûtes, deux bouches séparées, rails,
 traverses, câbles latéraux, suspentes et arrière-tunnels. Les jours autour
@@ -121,8 +118,8 @@ Mesures manuelles dans le navigateur intégré, avec la page d'auteur :
 | Observation | Résultat |
 |---|---|
 | Avant révision, quais immobiles, trafic actif, 20 s | 2 401 images ; p95 8,8 ms ; maximum 9,4 ms ; aucune image au-delà de 33 ms |
-| [Dernier export, quais, trafic actif, 20 s](../assets/blockout-metro/cadence-revision.json) | 2 396 images ; p95 9 ms ; maximum 33,3 ms ; une image au-delà de 17 ms, aucune au-delà de 34 ms |
-| [Après révision, marche sans trafic, 2 s](../assets/blockout-metro/marche-revision.json) | 240 images ; p95 8,4 ms ; maximum 9,3 ms ; 121 déplacements physiques ; variation verticale maximale 2,08 cm par pas |
+| Dernier export, quais, trafic actif, 20 s | 2 396 images ; p95 9 ms ; maximum 33,3 ms ; une image au-delà de 17 ms, aucune au-delà de 34 ms |
+| Après révision, marche sans trafic, 2 s | 240 images ; p95 8,4 ms ; maximum 9,3 ms ; 121 déplacements physiques ; variation verticale maximale 2,08 cm par pas |
 | Caméra pendant la même marche, après l'accélération | 211 images observées ; aucune position immobile ; déplacement horizontal de 6,75 à 8,37 cm par image |
 
 Le relevé avec une mort sous le train est écarté : sa pointe de 100 ms
@@ -142,11 +139,6 @@ moteur relève 957 proxies (242 boîtes, 715 enveloppes convexes), 165 lampes,
 7 meshes de portes et 27 interactions. Cinq vues Blender sont rendues ;
 les quais et le tunnel sont aussi regardés dans le moteur.
 
-![Voûtes et câbles du tunnel révisé](../assets/blockout-metro/tunnels-revision.png)
-
-![Les deux bouches depuis le quai](../assets/blockout-metro/quais-revision.png)
-
-![La rame A sortant de sa bouche](../assets/blockout-metro/rame-revision.png)
 
 La réservation de toit S3 et le raccord de la voie de manœuvre M sont
 différés à N7 ; M n'est plus déclarée dans ce blockout. Le sol du dépôt reste
@@ -164,7 +156,7 @@ Le fond noir du prolongement B était une poutre de section 4,5 × 4,5 m,
 centrée à Y 214 : son volume traversait la galerie. La nouvelle paroi de
 24 cm est posée à Y 212. La marche depuis X −2 jusqu'à X 2,45, à Y 215,
 franchit l'ouverture sans saut ; la pose finale reste au sol à −14,43 m.
-Le [relevé](../assets/blockout-metro/galeries-2026-10-08.json) et sa capture
+Le relevé et sa capture
 décrivent cet export.
 
 Les quais passent de −9 à −13 m, et les rails de −9,75 à −13,75 m. Les
@@ -176,7 +168,7 @@ le plancher des billets. Les données révisées sont isolées dans
 de leur validation historique.
 
 Depuis la salle des billets, une marche continue part de Y 106 et atteint
-Y 123,95 sur le quai à −12,99 m. Le [relevé de descente](../assets/blockout-metro/descente-2026-10-08.json)
+Y 123,95 sur le quai à −12,99 m. Le relevé de descente
 contient 240 images sur 2 s, un p95 de 8,4 ms et un maximum de 9,3 ms.
 Le raccord des galeries actionne toujours le raccourci après changement
 d'altitude. Ces observations utilisent les points de vue d'auteur pour
@@ -202,11 +194,6 @@ portes et 18 interactions. Le contrôle de signaux et de distances aux
 refuges intégré au chargement passe. Aucune suite de tests n'est ajoutée
 ni lancée.
 
-![Accès aux galeries dégagé](../assets/blockout-metro/galeries-2026-10-08.png)
-
-![Arrivée sur le quai plus profond](../assets/blockout-metro/quai-bas-2026-10-08.png)
-
-![Goulotte murale et signalisation réduite](../assets/blockout-metro/tunnel-2026-10-08.png)
 
 N5 reste en revue pour le trajet complet et son orientation ; N6 n'est
 pas lancé. Les fonds de voie restent des volumes provisoires.
@@ -217,7 +204,7 @@ Le 8 octobre, après la correction des profondeurs, l'utilisateur demande
 plus de cohérence dans l'assemblage et une reprise concentrée sur une zone
 à la fois. Cette passe couvre le front nord du quai, son accès de maintenance
 et l'entrée des galeries. Le dépôt et les autres salles ne sont pas repris.
-Les [références et contraintes](../assets/tunnels-references.md#première-zone-reprise-tête-nord-et-accès-de-maintenance)
+Les [références et contraintes](../6-reference/references-tunnels.md#première-zone-reprise-tête-nord-et-accès-de-maintenance)
 sont écrites avant la construction.
 
 Trois problèmes précis sont identifiés : les ouvertures des voies ont une
@@ -258,17 +245,14 @@ Le relevé des deux marches de 2 secondes ne contient aucune image de plus
 de 34 ms ; leurs maxima sont 9,3 et 9,4 ms. Ce court relevé ne constitue pas
 une mesure globale de performance. Le trajet est observé avant le dernier
 ajustement visuel des garde-corps, puis la version finale est rechargée et
-revue. [Relevé détaillé](../assets/blockout-metro/parcours-raccord-2026-10-08.json).
+revue. Relevé détaillé.
 La marche depuis le quai est répétée sur l'export final : elle atteint
 X −6,77, Y 197,09, pieds −13,91 m, sans saut ni blocage dans le passage.
-[Relevé final](../assets/blockout-metro/rampe-service-finale-2026-10-08.json).
+Relevé final.
 Le moteur relève 782 colliders, dont 233 boîtes et 549 enveloppes convexes,
 aucun trimesh, 161 lampes et 233 lots de décor.
 Aucune suite de tests n'est ajoutée ou lancée.
 
-![Front nord repris](../assets/blockout-metro/tete-station-2026-10-08.png)
-
-![Seuil des galeries vu depuis les rails](../assets/blockout-metro/seuil-service-2026-10-08.png)
 
 Le périmètre reste en revue utilisateur. La longueur totale, les raccords
 plus profonds et les futurs habillages ne sont pas validés par cette passe.
@@ -315,16 +299,13 @@ pour environ 51 484, 48 278 et 44 859 triangles.
 Une marche de 2 secondes sous la voûte va de Y 207 à Y 225,10,
 sans blocage. Le maximum est 9,4 ms, sans image de plus de 34 ms ; cette
 mesure courte ne valide pas la performance du niveau entier.
-[Relevé des vues et de la marche](../assets/blockout-metro/voutes-2026-10-08.json).
-Les captures sont accompagnées d'[empreintes de pixels](../assets/blockout-metro/voutes-images-2026-10-08.json) ;
+Relevé des vues et de la marche.
+Les captures sont accompagnées d'empreintes de pixels ;
 elles proposent une nouvelle référence, sans comparaison de régression
 déterministe. La console conserve les messages `MutationObserver` déjà
 présents avant cette passe ; leur origine n'est pas établie ici. Aucun gate
 global de console propre n'est revendiqué.
 
-![Voûte du quai reprise](../assets/blockout-metro/voutes-quai-2026-10-08.png)
-
-![Raccord de la voûte au front nord](../assets/blockout-metro/voutes-raccord-2026-10-08.png)
 
 ## Quai continu — 8 octobre
 
@@ -354,7 +335,7 @@ successivement Y 124,10, 142,20, 159,93 (au-delà de l'ancienne cloison),
 rails, elle atteint X −2,05 / Y 196, puis l'entrée de galerie à
 X 1,60 / Y 214,42 / pieds −14,42 m. Aucune sélection de point de vue ni
 aucun saut n'intervient entre ces points ; les boutons de rotation gardent
-la position courante. [Relevé du trajet](../assets/blockout-metro/quai-continu-2026-10-08.json).
+la position courante. Relevé du trajet.
 
 Le dernier export contient 3 354 objets pour 17 612 Kio. L'inspection des
 noms du GLB ne retrouve ni la cloison ni son collider. Aucune suite de
@@ -392,7 +373,7 @@ Une seconde observation commence donc au point de revue de la commande,
 X 44 / Y 302,35, puis franchit le portail vers X 39,46 / Y 302,47 dans A.
 Ce dernier franchissement est vérifié séparément, sans le présenter comme la
 continuation ininterrompue du premier parcours.
-[Relevé des deux observations](../assets/blockout-metro/galeries-parcours-2026-10-08.json).
+Relevé des deux observations.
 
 Les douze mesures courtes de marche ne montrent aucune image au-delà de
 34 ms ; le maximum observé est de 26 ms sur l'une d'elles. Les passages
@@ -402,16 +383,6 @@ Le moteur relève 897 colliders et 243 lots de décor. L'export contient
 3 415 objets pour 18 381 Kio, sans fuite de bibliothèque. Aucune suite de
 tests n'est ajoutée ni lancée. Le jugement de rythme et de longueur du niveau
 entier reste ouvert.
-
-![Galerie de service après reprise](../assets/blockout-metro/galeries-service-2026-10-08.png)
-
-![Commande du raccourci montée au mur](../assets/blockout-metro/galeries-commande-2026-10-08.png)
-
-![Raccord de retour vu depuis la voie](../assets/blockout-metro/galeries-portail-2026-10-08.png)
-
-![Le quai continu](../assets/blockout-metro/quai-continu-2026-10-08.png)
-
-![Vue après l'ancien emplacement du mur](../assets/blockout-metro/quai-apres-cloison-2026-10-08.png)
 
 
 ## Dépôt et embarquement — 8 octobre
@@ -467,16 +438,12 @@ Les huit mesures courtes associées ont un maximum de 9,50 ms et aucune
 image au-delà de 34 ms. Elles portent sur ces traversées, avec trafic
 suspendu ; elles ne remplacent ni une partie complète ni une mesure de
 performance avec combat. Aucun test automatisé n'est ajouté ni lancé.
-[Relevé des parcours](../assets/blockout-metro/depot-parcours-2026-10-08.json).
+Relevé des parcours.
 
 La page d'auteur ajoute un petit pas de 0,1 s pour approcher les seuils.
 Sa vue Dépôt montre désormais la baie de maintenance. La reprise des salles
 d'aiguillage et de machinerie reste la prochaine étape ; les deux objectifs
 ne sont pas actionnés lors de cette revue.
-
-![Atelier et charpente dans le moteur](../assets/blockout-metro/depot-atelier-2026-10-08.png)
-
-![Sas d'embarquement accessible depuis les marches](../assets/blockout-metro/depot-sas-2026-10-08.png)
 
 
 ## Poste d'aiguillage — 8 octobre
@@ -517,15 +484,11 @@ Aucun saut ni sélection de point de vue n'intervient pendant cet aller-retour.
 La mesure courte du retour relève un maximum de 9,40 ms et aucune image
 au-delà de 34 ms ; elle ne constitue pas un playtest du tunnel entier avec
 trafic. Les vues de présentation sont prises séparément après le trajet.
-[Relevé du poste](../assets/blockout-metro/poste-parcours-2026-10-08.json).
+Relevé du poste.
 Aucune suite de tests automatisés n'est ajoutée ni lancée.
 
 La progression TypeScript reste inchangée. La nouvelle vue « Accès du poste »
 permet de refaire cette montée depuis B. La prochaine zone est la machinerie.
-
-![Pupitre et tableau de voies dans le moteur](../assets/blockout-metro/poste-pupitre-2026-10-08.png)
-
-![Entrée du poste et escalier](../assets/blockout-metro/poste-acces-2026-10-08.png)
 
 
 ## Machinerie — 8 octobre
@@ -563,7 +526,7 @@ Les six mesures courtes du parcours ont un maximum de 9,40 ms et aucune
 image au-delà de 34 ms, avec trafic suspendu. Elles décrivent cette boucle,
 sans constituer un playtest du niveau entier ni du combat. Aucun test
 automatisé n'est ajouté ou lancé.
-[Relevé du parcours](../assets/blockout-metro/machinerie-parcours-2026-10-08.json).
+Relevé du parcours.
 
 L’export final contient 3 878 objets pour 20 977 Kio, sans fuite de
 bibliothèque. Le moteur relève 1 093 colliders : 347 cuboid, 746 convex
@@ -573,10 +536,6 @@ La commande est également actionnée sur cette dernière version.
 La progression TypeScript reste inchangée. La réservation du secret 4
 attend N7. La prochaine reprise concerne la rame de fret et son arrivée
 au quai privé ; le gate N5 du parcours complet reste ouvert.
-
-![Ventilation et fosse dans le moteur](../assets/blockout-metro/machinerie-ventilation-2026-10-08.png)
-
-![Commande intégrée aux armoires](../assets/blockout-metro/machinerie-courant-2026-10-08.png)
 
 
 ## Rame de fret et quai privé — 8 octobre
@@ -622,7 +581,7 @@ et la remontée ; les objectifs sont préparés séparément par les vues
 d’auteur avant ce parcours. Les trois mesures courtes dans les voitures
 ont un maximum de 10,30 ms, sans image au-delà de 34 ms. Elles ne
 mesurent ni le voyage entier ni un combat.
-[Relevé du trajet](../assets/blockout-metro/fret-parcours-2026-10-08.json).
+Relevé du trajet.
 Aucun test automatisé n’est ajouté ou lancé.
 
 L’export final contient 3 787 objets pour 23 493 Kio, sans fuite de
@@ -633,12 +592,6 @@ Les vues finales sont prises à l’arrivée sur cette dernière version.
 La progression, le voyage et son panneau TypeScript restent inchangés.
 La remontée, le parvis et le seuil de la tour attendent la prochaine
 passe ; le gate N5 du parcours complet reste ouvert.
-
-![Intérieur de la rame dans le moteur](../assets/blockout-metro/fret-interieur-2026-10-08.png)
-
-![Quai privé fermé et froid à l’arrivée](../assets/blockout-metro/fret-quai-prive-2026-10-08.png)
-
-![Sortie axiale vers la remontée](../assets/blockout-metro/fret-portail-2026-10-08.png)
 
 
 ## Remontée et seuil de la tour — 8 octobre
@@ -690,7 +643,7 @@ et aucune image au-delà de 34 ms. Les autres maxima vont de 9,40 à
 10,40 ms. Ces relevés n’établissent pas une cadence parfaite et ne
 remplacent pas un parcours complet avec combat. Aucun test automatisé
 n’est ajouté ni lancé.
-[Relevé de la montée et du seuil](../assets/blockout-metro/remontee-parcours-2026-10-08.json).
+Relevé de la montée et du seuil.
 Les vues sont prises pendant les itérations et la marche ; la façade
 montre l’enseigne de la dernière version.
 
@@ -699,12 +652,6 @@ bibliothèque. Le moteur relève 1 130 colliders : 371 cuboid, 759 convex
 hull, zéro trimesh ; 252 lots de décor et 178 lampes sur le niveau entier.
 Le gate N5 reste ouvert pour le parcours utilisateur de bout en bout,
 son rythme et son orientation. Cette passe ne lance pas N6/N7.
-
-![Montée dans le moteur](../assets/blockout-metro/remontee-escalier-2026-10-08.png)
-
-![Débouché sur le parvis](../assets/blockout-metro/parvis-tour-2026-10-08.png)
-
-![Façade et marquise du hall](../assets/blockout-metro/tour-facade-2026-10-08.png)
 
 
 ## Lecture des galeries et du dépôt — 8 octobre
@@ -759,12 +706,12 @@ pupitre. Les réglages de l’essai T4 restent inchangés.
   horizontale de sols. Les 13 supports de galerie sont coplanaires, sans
   dévers. Ce relevé ne prouve pas l’absence de défaut sur tous les décors.
 
-Preuves : [relevé géométrique](../assets/blockout-metro/lisibilite-geometrie-2026-10-08.json),
-[marche et accès](../assets/blockout-metro/lisibilite-parcours-2026-10-08.json),
-[vestiaire](../assets/blockout-metro/vestiaire-reprise-2026-10-08.png),
-[quai ouvert](../assets/blockout-metro/quai-service-ouvert-2026-10-08.png),
-[front de la rame](../assets/blockout-metro/rame-depot-reprise-2026-10-08.png),
-[pupitre réduit](../assets/blockout-metro/pupitre-service-reprise-2026-10-08.png).
+Preuves : relevé géométrique,
+marche et accès,
+vestiaire,
+quai ouvert,
+front de la rame,
+pupitre réduit.
 Le dernier export aboutit : 3 494 objets, 24 492 Ko, sans fuite de collection
 `_KIT` ou `_LIB`. Les deux dernières captures sont prises dans le moteur
 avec cet export chargé.
@@ -783,7 +730,7 @@ les captures récentes. Leur diagnostic commun : le hall reste un couloir sombre
 les branches sont masquées et le vitrage frontal donne encore l’impression
 d’une entrée de pièce. La passe se concentre sur le dépôt et ses seuils.
 
-Les références 04 à 06 du [board validé](../assets/board-metro.md#2-les-huit-images-et-ce-quon-en-tire)
+Les références 04 à 06 du [board validé](../6-reference/references-metro.md#2-les-huit-images-et-ce-quon-en-tire)
 sont rouvertes. Les contraintes reprises sont les allées latérales dégagées,
 les ossatures ajourées, les équipements groupés et le vitrage de cabine sombre.
 Les cotes de jeu restent 4 m pour les passages, 6,50 m sous charpente et 4,70 m
@@ -805,13 +752,13 @@ dans les annexes. Aucun nouvel itinéraire ni grand texte n’est ajouté.
   de machinerie. Les deux commandes restent indépendantes de leur ordre.
 
 Les vues de référence sont conservées aux mêmes poses :
-[arrivée avant](../assets/blockout-metro/depot-avant-arrivee-2026-10-08.png),
-[arrivée après](../assets/blockout-metro/depot-apres-arrivee-2026-10-08.png),
-[carrefour après](../assets/blockout-metro/depot-apres-carrefour-2026-10-08.png),
-[atelier après](../assets/blockout-metro/depot-apres-atelier-2026-10-08.png),
-[rame après](../assets/blockout-metro/depot-apres-rame-2026-10-08.png),
-[approche piétonne du quai](../assets/blockout-metro/depot-quai-revue-2026-10-08.png).
-Le [manifeste des captures](../assets/blockout-metro/depot-captures-revue-2026-10-08.json)
+arrivée avant,
+arrivée après,
+carrefour après,
+atelier après,
+rame après,
+approche piétonne du quai.
+Le manifeste des captures
 consigne les poses ; seed et nombre de steps ne sont pas figés. Il ne constitue
 pas une preuve de stabilité de hash exact.
 
@@ -823,7 +770,7 @@ jusqu’à X 44,58 / Y 353,95. Il rejoint ensuite les portes du garage B,
 revient dans le hall par le nord, monte les marches et entre latéralement
 dans la rame, jusqu’à X 39,50 / Y 372,53. Aucun saut ni téléportation après
 le point de départ ; trafic suspendu. Le poste d’aiguillage et le voyage
-ne sont pas rejoués dans cette passe. Le [relevé de circulation](../assets/blockout-metro/depot-circulation-revue-2026-10-08.json)
+ne sont pas rejoués dans cette passe. Le relevé de circulation
 conserve les segments mesurés et les positions de contrôle.
 
 Deux reconstructions sont regardées. Le dernier export contient 3 520 objets
@@ -864,11 +811,11 @@ garde le garage B et les masques nécessaires au trafic.
 Deux rendus Blender et les captures du jeu sont regardés. Le dernier export
 contient 3 532 objets et pèse 24 756 Ko, sans fuite `_KIT` ou `_LIB`.
 Les vues conservées montrent le
-[carrefour](../assets/blockout-metro/poste-liaison-carrefour-2026-10-08.png),
-[virage réel](../assets/blockout-metro/poste-liaison-coude-2026-10-08.png),
-[retour vers le hall](../assets/blockout-metro/poste-liaison-retour-2026-10-08.png),
-[pupitre activé](../assets/blockout-metro/poste-liaison-commande-2026-10-08.png) et
-[retour dans la rame](../assets/blockout-metro/poste-liaison-embarquement-2026-10-08.png).
+carrefour,
+virage réel,
+retour vers le hall,
+pupitre activé et
+retour dans la rame.
 Les captures ne sont pas des preuves de hash exact : seed et steps non figés.
 
 ### Parcours observé et limites
@@ -882,7 +829,7 @@ le point de départ. Une mauvaise orientation dans la courbe de retour mène
 contre la paroi ; la rotation corrigée permet de suivre les rails. Ce détour
 ne constitue pas un contrôle exhaustif de chaque mur.
 
-Le [relevé](../assets/blockout-metro/poste-liaison-parcours-2026-10-08.json)
+Le relevé
 conserve les segments mesurés et les poses. Les trains sont suspendus ;
 activer l’aiguillage réactive VB, aussitôt suspendue de nouveau pour la revue.
 Le courant et le voyage ne sont pas rejoués dans cette passe. Les mesures de
@@ -942,24 +889,24 @@ La recette `metro_blockout` sauvegarde la source et exporte **4 002 objets,
 27 284 Ko**, sans fuite de bibliothèque. Les vues Blender de l’entrée,
 du local et du dépôt sont regardées, puis comparées au moteur.
 
-Le [relevé de marche](../assets/blockout-metro/entree-locaux-raccords-2026-10-08.json)
+Le relevé de marche
 conserve la traversée des portiques et la descente à −13 m, l’entrée à pied
 du local de maintenance, deux tentatives de marche contre le mur du fret
 arrêtées à Y 365,39, et le retour sud depuis B jusqu’à l’embarquement.
 La descente est rejouée sur le dernier export : Y 94 → 107,11 → 120,46.
 Les marches de raccord sont parcourues trafic suspendu.
 
-- [Portiques et descente](../assets/blockout-metro/guichet-portiques-2026-10-08.png).
-- [Guichet](../assets/blockout-metro/guichet-detail-2026-10-08.png).
-- [Local de maintenance](../assets/blockout-metro/local-maintenance-jeu-2026-10-08.png).
-- [Raccord du mur fret](../assets/blockout-metro/mur-fret-contexte-2026-10-08.png).
-- [Retour sud du poste](../assets/blockout-metro/retour-poste-sud-2026-10-08.png).
+- Portiques et descente.
+- Guichet.
+- Local de maintenance.
+- Raccord du mur fret.
+- Retour sud du poste.
 
 La page d’auteur propose « Observer une apparition » : sept vues encadrent
 l’activation de la première voiture, à la pose réelle du joueur. Les
-séquences [A dépôt](../assets/blockout-metro/train-apparition-A-depot-2026-10-08.json),
-[B quais](../assets/blockout-metro/train-apparition-B-quais-2026-10-08.json)
-et [VB origine](../assets/blockout-metro/train-apparition-VB-origine-2026-10-08.json)
+séquences A dépôt,
+B quais
+et VB origine
 permettent de comparer l’activation avec l’entrée effective dans le champ.
 Les séquences sont rejouées sur le dernier export, trafic automatique
 suspendu et passage unique demandé. A est observé depuis l’arrivée au
@@ -1005,8 +952,8 @@ le hall : deux marches successives s’arrêtent à Y 89,14. Le vitrage nord
 avait un proxy continu jusqu’à X 18. L’intérieur était visible à travers
 la vitre, mais aucune issue n’était construite.
 
-- [Relevé avant correction](../assets/blockout-metro/guichet-service-avant-2026-10-08.json).
-- [Vitre et blocage](../assets/blockout-metro/guichet-service-bloque-2026-10-08.png).
+- Relevé avant correction.
+- Vitre et blocage.
 
 La façade nord possède maintenant une ouverture permanente entre X 15,50
 et 17,80, soit **2,30 m libres**, sous un linteau à 2,75 m. Le vitrage et
@@ -1030,9 +977,9 @@ des rotations de caméra, trafic suspendu :
 | Portiques franchis | −5,89 | 106,81 | −4,99 |
 | Quai atteint | −5,89 | 120,16 | −12,99 |
 
-Le [relevé après correction](../assets/blockout-metro/guichet-service-apres-2026-10-08.json)
-conserve ces positions et l’état du niveau. La [sortie depuis le poste](../assets/blockout-metro/guichet-sortie-service-2026-10-08.png)
-et l’[arrivée sur le quai](../assets/blockout-metro/guichet-service-quai-2026-10-08.png)
+Le relevé après correction
+conserve ces positions et l’état du niveau. La sortie depuis le poste
+et l’arrivée sur le quai
 sont capturées dans le moteur. Deux vues Blender supplémentaires encadrent
 l’arrivée de service et la sortie du poste. La relecture spécialisée porte
 sur ce trajet réel, au lieu de se limiter à des vues du hall.
@@ -1097,7 +1044,7 @@ par `shot` et par le moteur. Aucune suite de tests n’est lancée.
 
 ### Parcours et commandes observés
 
-Le [relevé du parcours](../assets/blockout-metro/escalier-parcours-service-2026-10-08.json)
+Le relevé du parcours
 part de la trappe et conserve les marches jusqu’au quai : sortie guichet
 X 17,24 / Y 93,71 ; passage des portiques à X −5,99 ; première volée
 Y 106,92 / Z −5,21 ; palier atteint ; seconde volée Y 115,83 / Z −11,14 ;
@@ -1105,21 +1052,21 @@ quai Y 120,16 / Z −12,99. Le retour remonte les deux volées et rejoint
 le hall à Y 100,33 / Z −4,99. Aucun saut ni déplacement par les boutons
 de vue après le départ ; trafic suspendu sur ce trajet.
 
-Les [commandes actionnées](../assets/blockout-metro/commandes-actionnees-2026-10-08.json)
+Les commandes actionnées
 montrent grille ouverte, aiguillage et courant rétablis, puis départ en
 phase `closing`. La trappe est actionnée au début de la marche.
-Le [relevé complémentaire](../assets/blockout-metro/mobilier-commandes-2026-10-08.json)
+Le relevé complémentaire
 montre un arrêt de trafic A de 7,63 s restant et le raccourci ouvert.
 La capture de grille révélait son dos depuis le hall ; son coffret est
 retourné vers le côté réellement utilisé. L’ancienne inscription GRILLE A
 est retirée lorsqu’elle touche le nouveau coffret RACCOURCI.
 
-- [Escalier depuis le quai](../assets/blockout-metro/escalier-quai-bas-2026-10-08.png).
-- [Mur fermé au palier](../assets/blockout-metro/escalier-quai-mur-2026-10-08.png).
-- [Bornes et plan mural](../assets/blockout-metro/station-bornes-2026-10-08.png).
-- [Bancs et corbeille](../assets/blockout-metro/station-bancs-2026-10-08.png).
-- [Commande du courant](../assets/blockout-metro/commande-courant-2026-10-08.png).
-- [Commande d’arrêt](../assets/blockout-metro/commande-arret-2026-10-08.png).
+- Escalier depuis le quai.
+- Mur fermé au palier.
+- Bornes et plan mural.
+- Bancs et corbeille.
+- Commande du courant.
+- Commande d’arrêt.
 
 Les dernières vues confirment la circulation et les silhouettes détaillées.
 Les plans graphiques et bornes de billets restent du décor. La densité du
@@ -1130,8 +1077,8 @@ l’utilisateur ; aucune clôture globale N5 n’est prononcée.
 La dernière source exporte **4 155 objets, 29 133 Ko**, sans fuite de
 bibliothèque. Les fixations de luminaires, cadres, conduits et commande
 de grille sont explicites. Le coffret de grille repose sur un potelet
-au sol ; la [vue finale](../assets/blockout-metro/commande-grille-2026-10-08.png)
-montre sa façade vers le hall. Le [gros plan d’aiguillage](../assets/blockout-metro/commande-aiguillage-face-2026-10-08.png)
+au sol ; la vue finale
+montre sa façade vers le hall. Le gros plan d’aiguillage
 remplace la vue oblique du pupitre qui cachait le poussoir. Le [dernier
 relevé](../assets/blockout-metro/commandes-façades-finales-2026-10-08.json)
 confirme de nouveau leurs actions E. Les liens documentaires sont conformes.
@@ -1162,15 +1109,15 @@ dans les refuges et anciens boutons visibles derrière les nouveaux.
   socle ancien de la trappe et son collider sont supprimés ; un seul
   support rejoint le sol. Les identifiants et fonctions sont conservés.
 
-Vues locales : [raccords de l'escalier](../assets/blockout-metro/escalier-raccords-revision-2026-10-08.png),
-[plafond et luminaires](../assets/blockout-metro/escalier-plafond-revision-2026-10-08.png),
-[arrêt A](../assets/blockout-metro/refuge-arret-a-revision-2026-10-08.png),
-[refuge en courbe](../assets/blockout-metro/refuge-courbe-revision-2026-10-08.png),
-[refuge de service](../assets/blockout-metro/refuge-vb-revision-2026-10-08.png),
-[raccourci sans doublon](../assets/blockout-metro/raccourci-sans-doublon-2026-10-08.png)
-et [trappe](../assets/blockout-metro/trappe-sans-doublon-2026-10-08.png).
-Les lectures des [actions initiales](../assets/blockout-metro/boutons-revision-2026-10-08.json)
-et des [commandes repositionnées](../assets/blockout-metro/refuges-commandes-revision-2026-10-08.json)
+Vues locales : raccords de l'escalier,
+plafond et luminaires,
+arrêt A,
+refuge en courbe,
+refuge de service,
+raccourci sans doublon
+et trappe.
+Les lectures des actions initiales
+et des commandes repositionnées
 conservent les états des portes et du trafic. Le dernier relevé attend le
 relâchement de E : arrêt A et arrêt VB à 7,72 s restants, raccourci ouvert,
 trappe en ouverture. L'arrêt en courbe partage le délai de réutilisation A ;
@@ -1207,10 +1154,10 @@ reçoit une lampe de travail sur deux consoles. Son câble rejoint le coffret
 voisin. Le reste des galeries conserve ses sources lumineuses. Le rendu
 révisé et les trois captures finales sont regardés de nouveau.
 
-- [Vanne et manomètre en jeu](../assets/blockout-metro/galerie-vanne-2026-10-09.png).
-- [Établi éclairé en jeu](../assets/blockout-metro/galerie-etabli-2026-10-09.png).
-- [Lecture de l'ensemble](../assets/blockout-metro/galerie-ensemble-2026-10-09.png).
-- [Marche aller-retour](../assets/blockout-metro/galerie-parcours-2026-10-09.json).
+- Vanne et manomètre en jeu.
+- Établi éclairé en jeu.
+- Lecture de l'ensemble.
+- Marche aller-retour.
 
 Le départ se fait à X −2 / Y 215 ; six avances atteignent X 24,75, puis six
 retours rejoignent X −1,79. Le sol reste à Z −14,44 dans le tronçon. Aucun
@@ -1251,10 +1198,10 @@ Les plinthes suivent les paliers et les changements de pente à Y 222 et
 240. Les altitudes, le sol et ses collisions restent ceux du parcours
 existant. L'éclairage général n'est pas modifié.
 
-- [Distribution en jeu](../assets/blockout-metro/galerie-distribution-2026-10-09.png).
-- [Descente en jeu](../assets/blockout-metro/galerie-descente-2026-10-09.png).
-- [Retour depuis le palier](../assets/blockout-metro/galerie-palier-2026-10-09.png).
-- [Relevé de marche aller-retour](../assets/blockout-metro/galerie-distribution-parcours-2026-10-09.json).
+- Distribution en jeu.
+- Descente en jeu.
+- Retour depuis le palier.
+- Relevé de marche aller-retour.
 
 Le trajet est parcouru avec les commandes de marche, sans saut ni nouveau
 point de vue après le départ : X 25,50 / Y 216,50 → X 63,66 / Y 219,11 →
@@ -1303,10 +1250,10 @@ l'espace libre, et ses ouïes reprennent celles des autres portes. Le
 contenu est visible sur le second rendu. Un proxy supplémentaire couvre
 l'emprise de ce battant pour éviter de le traverser.
 
-- [Casiers et banc en jeu](../assets/blockout-metro/vestiaire-casiers-2026-10-09.png).
-- [Lavabo en jeu](../assets/blockout-metro/vestiaire-lavabo-2026-10-09.png).
-- [Seuil depuis la galerie](../assets/blockout-metro/vestiaire-acces-2026-10-09.png).
-- [Tour du banc et retour vers la galerie](../assets/blockout-metro/vestiaire-parcours-2026-10-09.json).
+- Casiers et banc en jeu.
+- Lavabo en jeu.
+- Seuil depuis la galerie.
+- Tour du banc et retour vers la galerie.
 
 Marche réelle depuis X 69,80 / Y 261,25 : seuil franchi, contournement ouest
 du banc, passage entre banc et casiers à Y 262,95, contournement est puis
@@ -1353,11 +1300,11 @@ raccourci et sa cible restent identiques.
 
 Deux rendus Blender et quatre vues en jeu sont regardés :
 
-- [Seconde pente](../assets/blockout-metro/retour-pente-2026-10-09.png).
-- [Main courante dans le coude](../assets/blockout-metro/retour-coude-2026-10-09.png).
-- [Coffret raccordé](../assets/blockout-metro/retour-coffret-2026-10-09.png).
-- [Débouché dans A](../assets/blockout-metro/retour-portail-2026-10-09.png).
-- [Marche et ouverture du raccourci](../assets/blockout-metro/retour-parcours-2026-10-09.json).
+- Seconde pente.
+- Main courante dans le coude.
+- Coffret raccordé.
+- Débouché dans A.
+- Marche et ouverture du raccourci.
 
 Le trajet est parcouru sans saut ni nouveau point de vue après le départ :
 X 63,75 / Y 276 / Z −15,76 → coude à Y 302,63 / Z −17,47 → commande à
@@ -1400,11 +1347,11 @@ interactif, changement d'itinéraire ou modification du trafic.
 
 Deux rendus Blender et trois vues en jeu sont regardés :
 
-- [Première version avant correction des fixations](../assets/blockout-metro/depot-seuil-premiere-version-2026-10-09.png).
-- [Franchissement vers le dépôt](../assets/blockout-metro/depot-franchissement-2026-10-09.png).
-- [Seuil vu du hall](../assets/blockout-metro/depot-seuil-hall-2026-10-09.png).
-- [Raccord à l'allée](../assets/blockout-metro/depot-raccord-allee-2026-10-09.png).
-- [Parcours enregistré](../assets/blockout-metro/depot-seuil-parcours-2026-10-09.json).
+- Première version avant correction des fixations.
+- Franchissement vers le dépôt.
+- Seuil vu du hall.
+- Raccord à l'allée.
+- Parcours enregistré.
 
 La marche part du platelage à X 39,25 / Y 325,15 / Z −17,81. Elle descend
 dans A jusqu'à Y 320,70, revient sur le passage, puis gagne l'allée à
@@ -1454,10 +1401,10 @@ lampe est avancée au-dessus du plateau. Aucun nouvel interactif.
 
 Deux vues Blender finales et trois vues du moteur sont ouvertes :
 
-- [Poste complet](../assets/blockout-metro/depot-ajustage-2026-10-09.png).
-- [Étau et profil de rail](../assets/blockout-metro/depot-etau-2026-10-09.png).
-- [Allée devant le poste](../assets/blockout-metro/depot-ajustage-allee-2026-10-09.png).
-- [Marche enregistrée](../assets/blockout-metro/depot-ajustage-parcours-2026-10-09.json).
+- Poste complet.
+- Étau et profil de rail.
+- Allée devant le poste.
+- Marche enregistrée.
 
 La marche part du hall à X 49,50 / Y 330 / Z −17,99. Elle traverse l'atelier
 jusqu'à X 69,35, passe devant l'établi et au-delà de l'armoire jusqu'à
@@ -1481,16 +1428,16 @@ local et ne clôt pas N5 ; le candidat attend la revue utilisateur.
 
 ## Postes de révision des bogies — 9 octobre
 
-Passe limitée aux deux anciens bogies de l’atelier oriental et à leurs deux néons. Les photographies Alstom du levage et de l’atelier de Sydney sont ouvertes ; la seconde est rouverte après les premiers rendus. [Références et contraintes](../assets/tunnels-references.md#révision-des-bogies--9-octobre).
+Passe limitée aux deux anciens bogies de l’atelier oriental et à leurs deux néons. Les photographies Alstom du levage et de l’atelier de Sydney sont ouvertes ; la seconde est rouverte après les premiers rendus. [Références et contraintes](../6-reference/references-tunnels.md#révision-des-bogies-9-octobre).
 
 Au sud, le bogie assemblé possède roues à jante distincte, essieux, longerons ajourés, traverses, pivot, suspensions, freins et moteur attachés. Au nord, le châssis est levé sur quatre chandelles ; ses deux essieux sont calés au sol à côté. Les deux néons sont recentrés, avec suspentes jusqu’au plafond. Les repères au sol se limitent aux angles des postes ; aucun texte, rail ou interactif ajouté. Caisses et autres établis conservés.
 
 Après les premières images, les faces centrales des roues sont assombries. La relecture source repère un jour de 22,5 mm sous les suspensions secondaires : une semelle ferme ce jour. Tiges primaires et corps central des soufflets relient les anneaux. Deux rendus Blender finaux et trois captures du moteur sont ouverts :
 
-- [Bogie assemblé](../assets/blockout-metro/depot-bogie-assemble-2026-10-09.png).
-- [Châssis sur chandelles](../assets/blockout-metro/depot-bogie-revision-2026-10-09.png).
-- [Essieux déposés](../assets/blockout-metro/depot-essieux-2026-10-09.png).
-- [Marche autour des postes](../assets/blockout-metro/depot-bogies-parcours-2026-10-09.json).
+- Bogie assemblé.
+- Châssis sur chandelles.
+- Essieux déposés.
+- Marche autour des postes.
 
 La marche demande le preset de départ X 49,50 / Y 330. Le tout premier relevé précède son rafraîchissement et conserve la vue des essieux ; il est gardé comme relevé périmé, distinct de la commande demandée. Elle longe d’abord le mobilier de machinerie, entre jusqu’à X 87,97 / Z −21,99 puis revient dans l’atelier. Le parcours recentré longe les postes à X 68,72 jusqu’à Y 353,53 ; traverse au nord jusqu’à X 55,81 ; descend à Y 344,95 et passe entre les deux postes jusqu’à X 68,97. Le retour longe le jambage sud de la baie ; un petit pas vers le centre permet le franchissement et le retour au hall à X 47,30 / Y 330,96 / Z −17,99. Aucun blocage dû aux postes observé, aucun saut ni nouveau preset après le départ. Les premières lectures de cap après rotation sont antérieures au rafraîchissement du panneau ; les marches suivantes confirment la direction appliquée, et la trace le précise.
 
@@ -1504,17 +1451,17 @@ Ce verdict reste local, ne clôt pas N5 et laisse le candidat en revue utilisate
 
 ## Inspection du moteur au fond de l’atelier — 9 octobre
 
-Seul l’ancien établi nord est remplacé. La planche des ateliers de Fontenay publiée par la RATP est ouverte avant la construction, puis rouverte après les premières images. Elle sert pour les silhouettes d’organes déposés et l’organisation des supports et rangements ; le banc précis est une interprétation originale. [Référence et contraintes](../assets/tunnels-references.md#poste-dinspection-du-moteur--9-octobre).
+Seul l’ancien établi nord est remplacé. La planche des ateliers de Fontenay publiée par la RATP est ouverte avant la construction, puis rouverte après les premières images. Elle sert pour les silhouettes d’organes déposés et l’organisation des supports et rangements ; le banc précis est une interprétation originale. [Référence et contraintes](../6-reference/references-tunnels.md#poste-dinspection-du-moteur-9-octobre).
 
 Le nouveau poste comprend un plateau à 94 cm, un piètement et une tablette basse ajourés, un moteur sur pieds avec corps nervuré, flasques, arbre et capot ventilé. Le comparateur est fixé au plateau ; sa touche est déplacée vers X local 1,10 pour mesurer l’arbre nu, entre clavette et palier. Un bac contient deux roulements et une petite pièce ; le rack latéral conserve une étagère partiellement vide. La lampe est portée par deux consoles rejoignant le mur nord, avec dérivation et attaches de câble. Un point lumineux local de puissance 5 et portée 5 m est ajouté. Aucun interactif ajouté.
 
-La [capture avant](../assets/blockout-metro/depot-moteur-avant-2026-10-09.png) est prise après l’ajout des boutons de revue, avant le remplacement du modèle. Quatre rendus Blender finaux sont ouverts : vue générale, arbre/comparateur, capot et silhouette isolée. Quatre vues du moteur du jeu sont aussi ouvertes :
+La capture avant est prise après l’ajout des boutons de revue, avant le remplacement du modèle. Quatre rendus Blender finaux sont ouverts : vue générale, arbre/comparateur, capot et silhouette isolée. Quatre vues du moteur du jeu sont aussi ouvertes :
 
-- [Poste complet](../assets/blockout-metro/depot-moteur-2026-10-09.png).
-- [Arbre et comparateur](../assets/blockout-metro/depot-comparateur-2026-10-09.png).
-- [Capot et rangement latéral](../assets/blockout-metro/depot-moteur-capot-2026-10-09.png).
-- [Approche à pied](../assets/blockout-metro/depot-moteur-approche-2026-10-09.png).
-- [Parcours enregistré](../assets/blockout-metro/depot-moteur-parcours-2026-10-09.json).
+- Poste complet.
+- Arbre et comparateur.
+- Capot et rangement latéral.
+- Approche à pied.
+- Parcours enregistré.
 
 La marche démarre au hall à X 49,50 / Y 330 / Z −17,99. Elle longe l’allée est à X 68,23 jusqu’à Y 353,37, traverse vers X 55,24, puis rejoint le poste au nord. L’approche se termine à X 57,79 / Y 363,82 ; le passage devant le rack atteint X 63,94. Le retour repasse par Y 355,37, l’allée ouest et la baie sud ; arrivée au hall à X 46,55 / Y 331,17. Aucun saut, nouveau preset ni blocage observé. Tous les relevés sont lus après capture, y compris le départ et les rotations.
 
@@ -1529,19 +1476,19 @@ Candidat en revue utilisateur.
 
 ## Maintenance électrique du passage ouest — 9 octobre
 
-Le dernier établi générique du dépôt est repris. Les guides Omron sur relais et contacteurs sont consultés ; leurs deux schémas sont ouverts et regardés. Le schéma du relais est rouvert après l’itération de placement. Il sert pour bobine, noyau, armature et contacts ; la composition de l’établi est originale, sans reproduction d’un poste ferroviaire précis. [Références et contraintes](../assets/tunnels-references.md#maintenance-électrique-du-passage-ouest--9-octobre).
+Le dernier établi générique du dépôt est repris. Les guides Omron sur relais et contacteurs sont consultés ; leurs deux schémas sont ouverts et regardés. Le schéma du relais est rouvert après l’itération de placement. Il sert pour bobine, noyau, armature et contacts ; la composition de l’établi est originale, sans reproduction d’un poste ferroviaire précis. [Références et contraintes](../6-reference/references-tunnels.md#maintenance-électrique-du-passage-ouest-9-octobre).
 
-La [vue avant](../assets/blockout-metro/depot-relais-avant-2026-10-09.png) révèle l’ancien établi partiellement masqué par la paroi du garage VB. Son armoire à X 21,30–22,30 est proche des rails ; `cassandre find` relève notamment leurs centres X 22,40 / Y 364,43 et X 22,50 / Y 366. Le meuble est retiré du coude. Le poste remplaçant est placé à X 25,35–26,45 / Y 351,05–356,40, angle −90°. Il reste hors des traits de l’allée Y 346,05–350,10 et au-delà de la baie Y 345,92–350,27.
+La vue avant révèle l’ancien établi partiellement masqué par la paroi du garage VB. Son armoire à X 21,30–22,30 est proche des rails ; `cassandre find` relève notamment leurs centres X 22,40 / Y 364,43 et X 22,50 / Y 366. Le meuble est retiré du coude. Le poste remplaçant est placé à X 25,35–26,45 / Y 351,05–356,40, angle −90°. Il reste hors des traits de l’allée Y 346,05–350,10 et au-delà de la baie Y 345,92–350,27.
 
 Le plateau porte un appareil de mesure à aiguille, un relais ouvert avec bobine cuivrée et armature attachée au noyau, cordons reliant les bornes, capot déposé et outils espacés. Tiroir bas, boîtes et armoire complètent le poste. Son cadre arrière se prolonge depuis le piètement ; la lampe est portée par deux consoles fixées à ce cadre. La dérivation et son câble descendent le montant et rejoignent l’armoire. Un point lumineux local de puissance 5 / portée 5 m est ajouté. Aucun interactif ni fonctionnement électrique simulé.
 
 Premier candidat à X 24,40 : poste lisible de près, mais recul insuffisant devant le tube ; le preset général X 21,30 est dans sa paroi et produit une vue noire. L’établi est décalé d’un mètre vers l’est et les presets sont corrigés. Le contact de la lame de rappel et l’appui des outils sont ajustés avant l’export final. Trois vues matière et une silhouette Blender finales sont ouvertes, ainsi que quatre captures du moteur :
 
-- [Poste complet](../assets/blockout-metro/depot-relais-2026-10-09.png).
-- [Relais et appareil de mesure](../assets/blockout-metro/depot-relais-detail-2026-10-09.png).
-- [Poste vu depuis l’allée](../assets/blockout-metro/depot-relais-passage-2026-10-09.png).
-- [Approche à pied](../assets/blockout-metro/depot-relais-approche-2026-10-09.png).
-- [Marche enregistrée](../assets/blockout-metro/depot-relais-parcours-2026-10-09.json).
+- Poste complet.
+- Relais et appareil de mesure.
+- Poste vu depuis l’allée.
+- Approche à pied.
+- Marche enregistrée.
 
 La marche démarre à X 11,50 / Y 348,70 / Z −17,99 près du portail B. L’allée est franchie jusque X 28,65, puis l’approche du poste se fait par X 24,39 jusque Y 355,63. Le retour rejoint l’allée à Y 348,62 puis le portail à X 11,52. Celui-ci est franchi jusque Y 353,07 ; la sortie et le cadre du hall sont ensuite franchis au retour, jusqu’à X 29,02 / Y 348,62. Aucun saut, nouveau preset, blocage ni recentrage observé ; tous les relevés suivent une capture. La marche ne fait pas le trajet complet jusqu’au pupitre d’aiguillage.
 
@@ -1558,7 +1505,7 @@ Candidat en revue utilisateur.
 
 ## Quai de service et appuis — 9 octobre
 
-Le quai d’embarquement est repris après les trois postes d’atelier. La [vue avant](../assets/blockout-metro/depot-quai-avant-2026-10-09.png) montre les marches sans main courante et la paroi du garage masquant l’approche. La photographie Fortal d’une plateforme ferroviaire est ouverte, regardée puis rouverte après l’itération : elle sert pour les relations entre poteaux, traverses, consoles et garde-corps. La marquise et le quai fixe restent une composition originale. [Références et contraintes](../assets/tunnels-references.md#appuis-du-quai-de-service--9-octobre).
+Le quai d’embarquement est repris après les trois postes d’atelier. La vue avant montre les marches sans main courante et la paroi du garage masquant l’approche. La photographie Fortal d’une plateforme ferroviaire est ouverte, regardée puis rouverte après l’itération : elle sert pour les relations entre poteaux, traverses, consoles et garde-corps. La marquise et le quai fixe restent une composition originale. [Références et contraintes](../6-reference/references-tunnels.md#appuis-du-quai-de-service-9-octobre).
 
 Les deux poteaux initialement hors du bord et suspendus au-dessus du sol bas sont recentrés à X 34,87, sur semelles entièrement dans le quai. Une main courante continue longe les trois marches et rejoint la protection du palier ; lisse intermédiaire, plinthes et nez de marche complètent l’ensemble. Traverses, consoles diagonales et attaches portent la marquise. Deux suspentes relient son luminaire à la couverture ; câble et boîtier suivent le montant. Les deux points lumineux existants sont conservés, celui du quai abaissé de 20 cm. Les sols, marches et portes gardent leur implantation.
 
@@ -1566,12 +1513,12 @@ La paroi occidentale du garage traversait l’emprise des marches. Une première
 
 Les cinq captures finales du moteur sont ouvertes :
 
-- [Marches et nez de la rame](../assets/blockout-metro/depot-quai-acces-2026-10-09.png).
-- [Appuis et main courante](../assets/blockout-metro/depot-quai-appuis-2026-10-09.png).
-- [Retour vers le dépôt](../assets/blockout-metro/depot-quai-retour-2026-10-09.png).
-- [Approche à pied sur le palier](../assets/blockout-metro/depot-quai-approche-2026-10-09.png).
-- [Intérieur après franchissement de la porte](../assets/blockout-metro/depot-quai-entree-2026-10-09.png).
-- [Parcours enregistré](../assets/blockout-metro/depot-quai-parcours-2026-10-09.json).
+- Marches et nez de la rame.
+- Appuis et main courante.
+- Retour vers le dépôt.
+- Approche à pied sur le palier.
+- Intérieur après franchissement de la porte.
+- Parcours enregistré.
 
 La marche démarre à X 36,25 / Y 362,80 / Z −17,99. Un décalage à X 35,40 permet de longer la main courante. Les trois marches sont franchies jusque Y 367,01 / Z −17,24, puis la porte latérale est atteinte à Y 367,87. L’entrée atteint X 39,85, avec vue de l’intérieur ; la sortie revient à X 35,40 au même Y. La descente rejoint Y 363,42 / Z −17,99, puis le sol du dépôt à Y 362,57. Aucun saut, preset après départ, recentrage ni blocage observé ; chaque relevé suit une capture. Le voyage complet n’est pas relancé dans cette passe.
 
@@ -1589,17 +1536,17 @@ Candidat en revue utilisateur.
 
 ## Sièges de service de la première voiture — 9 octobre
 
-La passe suivante porte sur les banquettes près de l’entrée de la rame. La photo intérieure MF19 d’Alstom publiée par Île-de-France Mobilités est ouverte et regardée, puis rouverte après les rendus. Assises séparées, coques claires, barres rondes et appuis sol/plafond servent de contraintes ; disposition et palette restent originales. [Référence et cotes](../assets/tunnels-references.md#sièges-de-la-première-voiture--9-octobre). La [vue avant](../assets/blockout-metro/rame-sieges-avant-2026-10-09.png) montre les anciennes banquettes rectangulaires.
+La passe suivante porte sur les banquettes près de l’entrée de la rame. La photo intérieure MF19 d’Alstom publiée par Île-de-France Mobilités est ouverte et regardée, puis rouverte après les rendus. Assises séparées, coques claires, barres rondes et appuis sol/plafond servent de contraintes ; disposition et palette restent originales. [Référence et cotes](../6-reference/references-tunnels.md#sièges-de-la-première-voiture-9-octobre). La vue avant montre les anciennes banquettes rectangulaires.
 
 Les quatre banquettes Y 371,20 et 374 deviennent quatre paires de sièges : coques à profil cassé, coussins distincts, consoles murales et charnières. Le second siège du groupe ouest Y 374 est relevé, avec un proxy rapproché du mur. Des accoudoirs ronds rejoignent les montants ; semelles au sol, barres longitudinales et suspentes sous la toiture raccordent l’ensemble. Les anciens blocs et segments de mains courantes de cette voiture sont retirés. L’allée entre accoudoirs mesure 2,172 m. Aucun nouveau texte, interactif, matériau ou point lumineux.
 
 Trois rendus matière et une silhouette Blender sont ouverts, en configuration départ. Critique : coques et coussins se distinguent ; le siège relevé se lit de près, moins depuis l’entrée distante. Les quatre groupes sont symétriques ; la position relevée introduit une variation. La photographie de référence est rouverte pour comparer les proportions et les attaches. Quatre vues du moteur sont ouvertes :
 
-- [Vue depuis le vestibule](../assets/blockout-metro/rame-sieges-2026-10-09.png).
-- [Banquette ouverte](../assets/blockout-metro/rame-sieges-detail-2026-10-09.png).
-- [Siège relevé](../assets/blockout-metro/rame-siege-releve-2026-10-09.png).
-- [Vue depuis le premier soufflet, obtenue à pied](../assets/blockout-metro/rame-sieges-approche-2026-10-09.png).
-- [Parcours et observations](../assets/blockout-metro/rame-sieges-parcours-2026-10-09.json).
+- Vue depuis le vestibule.
+- Banquette ouverte.
+- Siège relevé.
+- Vue depuis le premier soufflet, obtenue à pied.
+- Parcours et observations.
 
 La marche démarre au pied du quai X 36,25 / Y 362,80 / Z −17,99. Après montée et entrée latérale à Y 367,87, le premier aller reste trop près de l’est à X 40,55 : le contact avec la banquette ramène X à 40,17. Ce passage ne sert pas de preuve d’absence d’accrochage. Le soufflet est ensuite franchi à Y 382,55 et le joueur revient au centre X 39,32. Une approche du bord nord du siège relevé atteint X 38,47 / Y 375,54 ; ce seul pas ne démontre pas un arrêt sur son proxy.
 
@@ -1616,17 +1563,17 @@ Empreintes RGBA 640 × 360 des quatre captures non vides, sans comparaison appro
 
 ## Charges de service de la deuxième voiture — 9 octobre
 
-La reprise se poursuit avec les charges Y 386–388,40. La [vue avant](../assets/blockout-metro/rame-charges-avant-2026-10-09.png) montre deux blocs bois identiques dans des cadres. Deux photos de fabricants sont ouvertes et regardées : valise Pelican 1620 et enrouleurs Schill Classic Line. Coques, fermeture et poignées servent aux valises ; flasques, câble, prises, manivelle et pieds servent aux enrouleurs. La composition du transport et les socles sont originaux. [Références et cotes](../assets/tunnels-references.md#charges-de-la-deuxième-voiture--9-octobre).
+La reprise se poursuit avec les charges Y 386–388,40. La vue avant montre deux blocs bois identiques dans des cadres. Deux photos de fabricants sont ouvertes et regardées : valise Pelican 1620 et enrouleurs Schill Classic Line. Coques, fermeture et poignées servent aux valises ; flasques, câble, prises, manivelle et pieds servent aux enrouleurs. La composition du transport et les socles sont originaux. [Références et cotes](../6-reference/references-tunnels.md#charges-de-la-deuxième-voiture-9-octobre).
 
 Les deux anciens blocs de cette voiture sont retirés. Côté ouest, quatre valises en deux piles possèdent coques à coins cassés, nervures, fermeture sombre, loquets et poignées. Les valises supérieures reposent sur les nervures inférieures ; les sangles touchent les couvercles et rejoignent les plaques d’ancrage du socle. Côté est, deux enrouleurs possèdent flasques de couleurs différentes, tours de câble, prises et manivelle. Leurs pieds rejoignent le socle et portent axes et poignée ; des brides recouvrent les pieds et sont boulonnées au support. Les bases de 0,62 × 2,40 m laissent 2,16 m dans l’allée. Proxies distincts pour socles et équipements ; aucun nouveau texte, interactif, matériau ou point lumineux.
 
 Les premières vues latérales à Y 387,10 coupent le bas des charges. Les poses sont reculées en diagonale à Y 384,40 pour voir les supports en entier. Trois rendus matière et une silhouette Blender finaux sont ouverts en configuration départ ; les photographies de référence sont rouvertes. Critique : valises et enrouleurs ont des silhouettes distinctes ; poignées, fermetures et brides se lisent de près, les petits éléments perdent leur détail depuis le soufflet distant. Les quatre vues du moteur sont ouvertes :
 
-- [Vue depuis l’avant de la voiture](../assets/blockout-metro/rame-charges-2026-10-09.png).
-- [Valises et sangles](../assets/blockout-metro/rame-charges-caisses-2026-10-09.png).
-- [Enrouleurs et pieds](../assets/blockout-metro/rame-charges-enrouleurs-2026-10-09.png).
-- [Retour vu depuis le soufflet, obtenu à pied](../assets/blockout-metro/rame-charges-parcours-vue-2026-10-09.png).
-- [Marche et contacts enregistrés](../assets/blockout-metro/rame-charges-parcours-2026-10-09.json).
+- Vue depuis l’avant de la voiture.
+- Valises et sangles.
+- Enrouleurs et pieds.
+- Retour vu depuis le soufflet, obtenu à pied.
+- Marche et contacts enregistrés.
 
 La marche démarre à X 39,50 / Y 383,20 / Z −17,24. Après passage central jusque Y 387,65, l’approche latérale des valises s’arrête à X 38,82 ; un second pas conserve cette position. L’approche des enrouleurs s’arrête à X 40,18 ; un second pas conserve également la pose. Le joueur quitte librement chaque contact puis rejoint X 39,33. Le soufflet vers la troisième voiture est franchi jusque Y 398,01, et le retour rejoint Y 383,08. Un nouvel aller-retour entre les charges garde X 39,33 : Y 383,08 → 391,85 → 383,10, sans déviation latérale ni variation de hauteur. Aucun saut ou preset après départ ; tous les relevés suivent une capture. Le trafic est suspendu pendant la marche puis restauré : A et B actives, VB inactive.
 
@@ -1641,17 +1588,17 @@ Empreintes RGBA 640 × 360 des quatre captures non vides, sans comparaison à un
 
 ## Sièges de l’équipe dans la troisième voiture — 9 octobre
 
-La reprise se poursuit avec les quatre banquettes Y 399,80 et 402,60. La [vue avant](../assets/blockout-metro/rame-equipe-avant-2026-10-09.png), prise à Y 398, montre les anciens blocs et montants. La photographie intérieure MF19 d’Alstom publiée par Île-de-France Mobilités est rouverte avant la construction puis après les rendus. Le mobilier conçu pour la première voiture est réemployé pour assurer une continuité d’équipement. [Référence et contraintes](../assets/tunnels-references.md#sièges-de-la-troisième-voiture--9-octobre).
+La reprise se poursuit avec les quatre banquettes Y 399,80 et 402,60. La vue avant, prise à Y 398, montre les anciens blocs et montants. La photographie intérieure MF19 d’Alstom publiée par Île-de-France Mobilités est rouverte avant la construction puis après les rendus. Le mobilier conçu pour la première voiture est réemployé pour assurer une continuité d’équipement. [Référence et contraintes](../6-reference/references-tunnels.md#sièges-de-la-troisième-voiture-9-octobre).
 
 Les quatre groupes portent deux sièges chacun, avec coques profilées, coussins, consoles et charnières. Une assise du groupe est Y 399,80 et une du groupe ouest Y 402,60 sont relevées. Les montants sont posés sur semelles au sol ; des barres continues Y 399,745–404,005 et des suspentes sous la toiture les raccordent. L’allée garde 2,172 m entre accoudoirs. Les anciens blocs, leurs montants et les segments de main courante de cette voiture sont retirés. Le helper de barres est extrait dans freight_entry_seating.py ; ses paramètres, noms et géométrie de première voiture sont conservés. Aucun nouveau matériau, texte, interactif ou point lumineux.
 
 Trois rendus matière et une silhouette Blender finaux sont ouverts, en configuration départ. Critique : coques et coussins se distinguent, les assises relevées varient la disposition sans couper l’allée ; charnières et consoles restent surtout lisibles de près. Les quatre vues du moteur sont ouvertes :
 
-- [Vue depuis l’avant de la voiture](../assets/blockout-metro/rame-equipe-2026-10-09.png).
-- [Banquettes côté ouest](../assets/blockout-metro/rame-equipe-ouest-2026-10-09.png).
-- [Assise relevée côté est](../assets/blockout-metro/rame-equipe-est-2026-10-09.png).
-- [Retour vu depuis le dernier soufflet, obtenu à pied](../assets/blockout-metro/rame-equipe-parcours-vue-2026-10-09.png).
-- [Parcours et contacts enregistrés](../assets/blockout-metro/rame-equipe-parcours-2026-10-09.json).
+- Vue depuis l’avant de la voiture.
+- Banquettes côté ouest.
+- Assise relevée côté est.
+- Retour vu depuis le dernier soufflet, obtenu à pied.
+- Parcours et contacts enregistrés.
 
 La marche démarre à X 39,50 / Y 397,55 / Z −17,24. L’approche du siège relevé côté est atteint X 40,47 / Y 400,10 ; un nouveau pas garde cette pose. Côté ouest, l’approche près du siège voisin provoque un glissement de 7 cm vers le nord, puis s’arrête à X 38,53 / Y 403,66 ; un nouveau pas garde cette pose. Chaque contact est quitté librement. Le dernier soufflet est franchi jusque Y 413,26. Un aller-retour central garde X 39,38 : Y 397,70 → 406,48 → 397,58, sans déviation latérale ni changement de hauteur. Aucun saut ou preset après départ ; tous les relevés suivent une capture. Le trafic est suspendu pendant la marche puis restauré : A et B actives, VB inactive.
 
@@ -1666,26 +1613,26 @@ Empreintes RGBA 640 × 360 des quatre captures non vides, sans comparaison appro
 
 ## Pupitre de départ de la dernière voiture — 9 octobre
 
-La passe suivante porte sur le pupitre, qui empile des blocs dans la [vue avant](../assets/blockout-metro/rame-pupitre-avant-2026-10-09.png). Deux photographies de simulateurs physiques Alstom sont ouvertes. La réplique Aventra vue depuis l’extérieur montre trop peu le pupitre ; elle est écartée. La vue rapprochée des dispositifs de bureau montre cadran, commandes et écrans sur surfaces inclinées. Elle est regardée puis rouverte après les rendus. Le poste de service du jeu reste original. [Référence et cotes](../assets/tunnels-references.md#pupitre-de-la-dernière-voiture--9-octobre).
+La passe suivante porte sur le pupitre, qui empile des blocs dans la vue avant. Deux photographies de simulateurs physiques Alstom sont ouvertes. La réplique Aventra vue depuis l’extérieur montre trop peu le pupitre ; elle est écartée. La vue rapprochée des dispositifs de bureau montre cadran, commandes et écrans sur surfaces inclinées. Elle est regardée puis rouverte après les rendus. Le poste de service du jeu reste original. [Référence et cotes](../6-reference/references-tunnels.md#pupitre-de-la-dernière-voiture-9-octobre).
 
 Les anciens blocs et le texte DEPART doublonné sont retirés. Un caisson profilé sur plinthe porte plateau incliné, façade ventilée et cadran ; levier et petites commandes de décor restent discrets. Le coffret interactif unique garde son identifiant et sa position X 39,50 / Y 426,04 / Z −16,24. L’encadrement du moniteur laisse entière la surface runtime de 1,20 × 0,375 m à X 39,50 / Y 426,08 / Z −15,30 ; deux montants rejoignent le plateau, un câble descend dans le caisson et une conduite touche la paroi arrière. Largeur maximale 1,50 m, passages latéraux de 1 m. Lumières, matériaux, conditions de départ et voyage sont conservés.
 
 Trois rendus matière et une silhouette Blender finaux sont ouverts. Le moniteur y reste vide : son texte est généré par le moteur. Les quatre vues moteur de construction sont aussi ouvertes ; elles confirment le texte entier, l’absence de doublon de bouton et la lecture du cadran de près :
 
-- [Vue frontale](../assets/blockout-metro/rame-pupitre-2026-10-09.png).
-- [Côté droit et approche de la sortie](../assets/blockout-metro/rame-pupitre-droite-2026-10-09.png).
-- [Façade et commandes](../assets/blockout-metro/rame-pupitre-commandes-2026-10-09.png).
-- [Approche obtenue à pied](../assets/blockout-metro/rame-pupitre-parcours-vue-2026-10-09.png).
-- [Parcours latéraux et refus du départ](../assets/blockout-metro/rame-pupitre-parcours-2026-10-09.json).
+- Vue frontale.
+- Côté droit et approche de la sortie.
+- Façade et commandes.
+- Approche obtenue à pied.
+- Parcours latéraux et refus du départ.
 
 La première marche démarre à X 39,50 / Y 423,75 / Z −17,24. L’approche à Y 424,60 permet d’actionner E : le HUD affiche « Départ impossible : rétablissez l’aiguillage et le courant », et la phase reste boarding. Le passage gauche est parcouru à X 38,16 jusque Y 427,09 puis retour à Y 422,53. Le côté droit est parcouru à X 40,84 jusque Y 426,98 puis retour à Y 422,82. Ce relevé établit la marche sur chaque côté jusqu’au fond de voiture ; il ne franchit pas l’arrière du caisson. Le retour devant la commande atteint X 39,14 / Y 424,52. Aucun saut ou preset après le départ de cette marche ; trafic suspendu puis restauré avec A/B actives et VB inactive.
 
 Un second relevé prépare les deux objectifs par leurs presets et actions E, puis démarre devant le pupitre. Ces téléportations préalables sont consignées séparément : ce relevé ne constitue pas une traversée du niveau. À X 39,50 / Y 424,60, E lance la fermeture. L’échantillon suivant est arrived, elapsed 60 s, distance 1 296 m et vitesse 0. Aucune phase intermédiaire n’est capturée. Le texte indique « Quai atteint — sortie droite » ; la porte est ouverte et déverrouillée, l’entrée fermée et verrouillée. Le franchissement de la sortie atteint X 43,65 / Y 424,60 / Z −17,24 sur le quai privé. Le retour par cette porte atteint X 39,20 au même Y. Aucun nouveau preset ni saut après la préparation. La fin de niveau n’est pas actionnée.
 
-- [Fermeture après le départ](../assets/blockout-metro/rame-pupitre-depart-2026-10-09.png).
-- [Afficheur à l’arrivée](../assets/blockout-metro/rame-pupitre-arrivee-2026-10-09.png).
-- [Vue depuis le quai après franchissement](../assets/blockout-metro/rame-pupitre-sortie-2026-10-09.png).
-- [Préparation, départ, arrivée et sortie enregistrés](../assets/blockout-metro/rame-pupitre-voyage-2026-10-09.json).
+- Fermeture après le départ.
+- Afficheur à l’arrivée.
+- Vue depuis le quai après franchissement.
+- Préparation, départ, arrivée et sortie enregistrés.
 
 Export final : **4 259 objets, 32 764 Ko**, sans intrus ni fuite de bibliothèque. Les rendus matière sont écrits avec code de sortie 0 ; le même résidu mémoire Blender de 0,062584 Mo reste signalé à la fermeture, non diagnostiqué. Aucune suite de tests lancée. Les captures ne servent pas de comparaison déterministe approuvée ; le trajet utilisateur complet et N5 globale restent ouverts. Les deux relevés navigateur ne recueillent aucune erreur ni avertissement. Relecture locale qa-evidence favorable : bouton et afficheur lisibles, appuis raccordés, passages latéraux franchis, refus sans objectifs puis départ et sortie confirmés. Candidat en revue utilisateur.
 
@@ -1702,7 +1649,7 @@ Empreintes RGBA 640 × 360 des quatre captures principales non vides, sans compa
 
 L’utilisateur valide le train de service et demande de concentrer les passes suivantes sur la gare et le parvis. L’idée de reprendre les dernières charges de la rame est abandonnée avant toute modification. Cette passe enrichit les lieux d’arrivée ; la caisse, les sièges, les charges, le pupitre et le voyage ne changent pas.
 
-Les vues initiales montrent un quai aux murs nus et un parvis peu occupé. La planche photographique RATP de la ligne 14 et les vues 2–3 de Centene Plaza chez Clayco sont ouvertes et regardées, puis rouvertes pendant la comparaison. [Sources et cotes](../assets/tunnels-references.md#gare-darrivée-et-parvis--9-octobre).
+Les vues initiales montrent un quai aux murs nus et un parvis peu occupé. La planche photographique RATP de la ligne 14 et les vues 2–3 de Centene Plaza chez Clayco sont ouvertes et regardées, puis rouvertes pendant la comparaison. [Sources et cotes](../6-reference/references-tunnels.md#gare-darrivée-et-parvis-9-octobre).
 
 Le quai privé est isolé dans `private_station.py`, appelé par l’assemblage de la rame. Les parements, une plinthe et une bande horizontale rythment le mur oriental ; deux dosserets en bois accompagnent les bancs de 2,70 et 3,60 m. Les blocs d’assise et motifs triangulaires anciens sont retirés. Le portail nord et sa lampe rejoignent le seuil de la remontée, avec un dallage d’approche et la seule inscription PARVIS. Les quatre mètres de montée restent libres. La relecture repère un panneau terminal débordant de 94 cm au nord : il est rogné à Y 429,80 avant l’export final.
 
@@ -1714,17 +1661,17 @@ Export final : **4 274 objets, 33 470 Ko**, contenu vérifié, sans intrus ni fu
 
 Les vues moteur finales sont ouvertes :
 
-- [Sortie du quai vers le parvis](../assets/blockout-metro/privee-sortie-tour-2026-10-09.png).
-- [Banc oriental du quai](../assets/blockout-metro/privee-bancs-tour-2026-10-09.png).
-- [Parvis vers la tour](../assets/blockout-metro/parvis-tour-2026-10-09.png).
-- [Jardinières et assises](../assets/blockout-metro/parvis-jardins-tour-2026-10-09.png).
-- [Retour vers la gare](../assets/blockout-metro/parvis-retour-tour-2026-10-09.png).
-- [Détail des plantes obtenu à pied](../assets/blockout-metro/parvis-assises-detail-2026-10-09.png).
-- [Débouché obtenu par les quatre volées](../assets/blockout-metro/gare-parvis-debouche-2026-10-09.png).
+- Sortie du quai vers le parvis.
+- Banc oriental du quai.
+- Parvis vers la tour.
+- Jardinières et assises.
+- Retour vers la gare.
+- Détail des plantes obtenu à pied.
+- Débouché obtenu par les quatre volées.
 
-Le voyage est préparé par les presets d’aiguillage, de courant et de pupitre avant cette marche. Une arrivée de 60 s est observée ; cette préparation ne prouve pas la traversée du niveau. Le [relevé gare–parvis](../assets/blockout-metro/gare-parvis-parcours-2026-10-09.json) commence à X 46 / Y 424,50 / Z −17,24. L’approche diagonale atteint X 49,15 / Y 427,65 ; puis la marche garde X 49,15. Les quatre volées atteignent Y 466,38 / Z −0,01, le parvis puis la marquise Y 498,08 / Z 0,01. Le retour franchit la sortie vitrée, les paliers et le seuil nord jusque Y 428,12 / Z −17,24. Aucun saut ni preset après le début du relevé. La commande de fin n’est pas actionnée.
+Le voyage est préparé par les presets d’aiguillage, de courant et de pupitre avant cette marche. Une arrivée de 60 s est observée ; cette préparation ne prouve pas la traversée du niveau. Le relevé gare–parvis commence à X 46 / Y 424,50 / Z −17,24. L’approche diagonale atteint X 49,15 / Y 427,65 ; puis la marche garde X 49,15. Les quatre volées atteignent Y 466,38 / Z −0,01, le parvis puis la marquise Y 498,08 / Z 0,01. Le retour franchit la sortie vitrée, les paliers et le seuil nord jusque Y 428,12 / Z −17,24. Aucun saut ni preset après le début du relevé. La commande de fin n’est pas actionnée.
 
-Le [contact du banc](../assets/blockout-metro/gare-banc-contact-2026-10-09.json) s’arrête à X 57,84 / Y 414,40, avec pose stable après un nouveau pas ; le retrait atteint X 53,53 librement. Les [contacts des assises du parvis](../assets/blockout-metro/parvis-contacts-2026-10-09.json) s’arrêtent à X 45,05 côté ouest puis X 54,97 côté est. X reste stable après un nouveau pas, mais les caps 88° et 268° provoquent un glissement de deux centimètres en Y, consigné. Le retour atteint X 50,93 au centre. Les deux contacts ne sont pas un tour de chaque jardinière.
+Le contact du banc s’arrête à X 57,84 / Y 414,40, avec pose stable après un nouveau pas ; le retrait atteint X 53,53 librement. Les contacts des assises du parvis s’arrêtent à X 45,05 côté ouest puis X 54,97 côté est. X reste stable après un nouveau pas, mais les caps 88° et 268° provoquent un glissement de deux centimètres en Y, consigné. Le retour atteint X 50,93 au centre. Les deux contacts ne sont pas un tour de chaque jardinière.
 
 Une erreur MutationObserver.observe sans URL est recueillie sur la page de revue ; son origine n’est pas attribuée. Les captures ne sont pas une comparaison déterministe à une référence approuvée. Relecture locale qa-evidence favorable : sortie, bancs et axe lisibles, appuis cohérents, aller-retour des quatre volées prouvé et passage central libre. Les buissons restent sombres mais leurs contours découpés sont lisibles. Console et N5 globale restent non validées ; candidat en revue utilisateur.
 
@@ -1755,39 +1702,39 @@ Le fonctionnement et la possession des ressources sont décrits dans
 
 Les trois vues moteur finales sont ouvertes :
 
-- [Ensemble](../assets/blockout-metro/fontaine-ensemble-2026-10-09.png).
-- [Cascades de côté](../assets/blockout-metro/fontaine-oblique-2026-10-09.png).
-- [Bassin et impacts](../assets/blockout-metro/fontaine-bassin-2026-10-09.png).
+- Ensemble.
+- Cascades de côté.
+- Bassin et impacts.
 
 Deux captures successives de la même vue en pause produisent le même
-dataURL PNG ; la [seconde capture](../assets/blockout-metro/fontaine-oblique-pause-b-2026-10-09.png) est conservée.
+dataURL PNG ; la seconde capture est conservée.
 Cela prouve l’immobilité de cette scène en pause, pas un rejeu complet ni
 une comparaison à une référence artistique approuvée.
 
 `pnpm build` réussit. L’avertissement habituel de taille du bundle subsiste.
-Aucune suite de tests n’est lancée. Le [relevé avec et sans eau](../assets/blockout-metro/fontaine-rendu-2026-10-09.json)
+Aucune suite de tests n’est lancée. Le relevé avec et sans eau
 donne **4 appels de dessin et 9 336 triangles supplémentaires**, aucune
 texture ajoutée. Trois images par échantillon ne permettent pas d’estimer
 finement une différence de temps GPU ; les durées de ce relevé restent indicatives.
 
-La [cadence sur 30 secondes](../assets/blockout-metro/fontaine-cadence-2026-10-09.json)
+La cadence sur 30 secondes
 à caméra fixe, trafic actif, rapporte 3 597 images : médiane 8,3 ms, p95
 9,3 ms, p99 10,2 ms, maximum 25 ms ; une image au-dessus de 17 ms, aucune
 au-dessus de 34 ms. Ce relevé concerne cette vue locale.
 
-Les [trois vrais rechargements à chaud](../assets/blockout-metro/fontaine-rechargements-2026-10-09.json)
+Les trois vrais rechargements à chaud
 conservent une seule fontaine et, après le premier remplacement, **389
 géométries / 24 textures / 29 programmes**, sans croissance entre les
 remplacements suivants. L’état initial (231 géométries, 19 programmes)
 n’est pas assimilé au régime après préparation complète du remplacement.
-Le [journal console](../assets/blockout-metro/fontaine-console-2026-10-09.json)
+Le journal console
 dans la fenêtre du relevé ne contient aucune erreur Three ni warning ;
 une erreur MutationObserver sans URL reste d’origine non attribuée.
 La console globale et N5 globale restent non validées.
 
 ### Corrections issues de la revue
 
-Le premier [relevé](../assets/blockout-metro/fontaine-rechargements-avant-correction-2026-10-09.json)
+Le premier relevé
 montrait 392 → 395 → 398 géométries. Le handler TSL appelle temporairement
 `geometry.dispose()` après compilation puis réutilise la géométrie. Le
 suivi général considère ce premier événement comme définitif. Un nettoyage
@@ -1844,16 +1791,16 @@ collision est conservée. L'assemblage partagé est dans `service_access.py`.
 
 ### Preuve locale
 
-- [Accès du poste](../assets/blockout-metro/poste-acces-apres-raccords-2026-10-09.png),
-  [vestibule](../assets/blockout-metro/poste-vestibule-raccords-2026-10-09.png) et
-  [jonction B](../assets/blockout-metro/poste-raccord-apres-2026-10-09.png).
-- [Escalier de service vu du bas](../assets/blockout-metro/trappe-escalier-raccords-2026-10-09.png) et
-  [panneau fermé avec son cadre, isolés dans Blender](../assets/blockout-metro/trappe-cadre-isole-raccords-2026-10-09.png).
-- [Aller-retour à pied du poste](../assets/blockout-metro/poste-parcours-raccords-2026-10-09.json) :
+- Accès du poste,
+  vestibule et
+  jonction B.
+- Escalier de service vu du bas et
+  panneau fermé avec son cadre, isolés dans Blender.
+- Aller-retour à pied du poste :
   montée de −18 à −16 m, retour jusqu'à B, sans saut.
-- [Ouverture de la trappe et descente jusqu'au guichet](../assets/blockout-metro/trappe-parcours-raccords-2026-10-09.json) :
+- Ouverture de la trappe et descente jusqu'au guichet :
   chute sur le palier à −2,25 m, marches jusqu'à −5 m, puis passage ouest.
-- [Franchissement du raccord nord VB](../assets/blockout-metro/tunnel-vb-parcours-raccords-2026-10-09.json) :
+- Franchissement du raccord nord VB :
   Y 410 à 423,21, altitude des pieds −17,99 m.
 
 Chaque parcours commence par une pose d'auteur, puis utilise les entrées
@@ -1870,7 +1817,7 @@ globale de N5 ni suite de tests supplémentaire.
 
 
 Relecture indépendante locale favorable sur les vues et les traces ci-dessus.
-Les [quatre vues de structure des branches B](../assets/blockout-metro/voie-b-raccords-structure-2026-10-09.png)
+Les quatre vues de structure des branches B
 complètent les vues moteur sombres : depuis la voie principale, le coude nord
 et les deux raccords extérieurs, sans trou visible.
 La remontée par la trappe et sa fermeture ne sont pas revendiquées : son
@@ -1923,24 +1870,24 @@ Les deux premiers points trop proches du mobilier du quartier et d'un
 mât du parvis sont déplacés. Le garde ouest du dépôt est repris après la
 revue visuelle pour rejoindre l'axe du passage vers le poste, à Y 348,70,
 plutôt qu'une poche en retrait à Y 362. Les marches et cabines restent
-libres. Le [manifeste](../assets/blockout-metro/rencontres.json) contient
+libres. Le manifeste contient
 ces appuis et toutes les positions finales.
 
 Les rencontres sont inspectées par poses d'auteur et mouvements ordinaires,
 en difficulté Habitué. Les captures moteur sont regardées :
 
-- [Billetterie](../assets/blockout-metro/rencontres-billets-2026-10-09.png),
-  [quai nord](../assets/blockout-metro/rencontres-combat_quais_nord-2026-10-09.png)
-  et [tireurs du quai sud en poursuite](../assets/blockout-metro/rencontres-quais-2026-10-09.png).
-- [Première galerie](../assets/blockout-metro/rencontres-galerie-2026-10-09.png),
-  [coude franchi](../assets/blockout-metro/rencontres-combat_galerie_coude-2026-10-09.png)
-  et [retour](../assets/blockout-metro/rencontres-combat_galerie_retour-2026-10-09.png).
-- [Dépôt](../assets/blockout-metro/rencontres-combat_depot-2026-10-09.png)
-  et [entrée de machinerie](../assets/blockout-metro/rencontres-combat_machinerie-2026-10-09.png),
-  [garde dans le passage ouest à sa position finale](../assets/blockout-metro/rencontres-combat_poste-2026-10-09.png).
-- [Meutes de la rame](../assets/blockout-metro/rencontres-rame-vagues-2026-10-09.png),
-  [tireurs du quai privé](../assets/blockout-metro/rencontres-arrivee-2026-10-09.png)
-  et [garde du parvis](../assets/blockout-metro/rencontres-parvis-2026-10-09.png).
+- Billetterie,
+  quai nord
+  et tireurs du quai sud en poursuite.
+- Première galerie,
+  coude franchi
+  et retour.
+- Dépôt
+  et entrée de machinerie,
+  garde dans le passage ouest à sa position finale.
+- Meutes de la rame,
+  tireurs du quai privé
+  et garde du parvis.
 
 La première revue du dépôt avec trafic actif tue le joueur par contact avec
 une rame : elle est abandonnée puis refaite, trafic suspendu. Les revues de
@@ -1953,7 +1900,7 @@ en poursuite vers Y 424. Le joueur laissé immobile est tué à 27,58 secondes.
 Un autre voyage, attaques neutralisées, atteint 60 secondes avec les deux
 vagues réveillées et les deux Costards du quai privé. Il prouve les
 déclenchements et l'arrivée, sans revendiquer une traversée victorieuse.
-Les [observations moteur](../assets/blockout-metro/rencontres-revue-2026-10-09.json)
+Les observations moteur
 conservent ces limites. La variante nord des vagues reste à jouer.
 
 La compilation de production passe. L'export comporte 4 339 objets et
@@ -1997,9 +1944,9 @@ dans la rue. Au dépôt, une autre marche donne **70 → 100 PV** et
 **79 → 115 balles**. Les quatre objets sont consommés et masqués. Après une
 nouvelle perte de ressources, repasser au dépôt laisse **90 PV et 110
 balles** : les objets ne donnent pas une deuxième fois leurs ressources.
-La [trace avant/après](../assets/blockout-metro/ramassages-correction-2026-10-09.json)
+La trace avant/après
 conserve les positions, équipements et visibilités. La
-[vue de rue](../assets/blockout-metro/ramassages-correction-2026-10-09.png)
+vue de rue
 montre les modèles posés sur leur sol après reconstruction.
 
 Ces observations utilisent les déplacements ordinaires entre des poses
@@ -2027,11 +1974,11 @@ ne change ni l'arme équipée ni sa possession.
 Le modèle partagé est une boîte rouge plus large, avec une bande ivoire
 « 12 » et trois cartouches rouges à culot doré. Ses ressources sont créées
 et chauffées avec les autres pickups, puis libérées avec la session.
-La [vue moteur du vestiaire](../assets/blockout-metro/cartouches-vestiaire-2026-10-10.png)
+La vue moteur du vestiaire
 montre son aspect à la résolution du jeu. Lors de la revue locale, marcher
 sur cette boîte avec le pistolet équipé fait passer le pompe de **48 à 56
 cartouches**, tandis que le pistolet conserve **75 balles**. Le
-[relevé avant/après](../assets/blockout-metro/cartouches-revue-2026-10-10.json)
+relevé avant/après
 conserve cet équipement et l'état du ramassage.
 
 La première position du vestiaire se trouvait sur le banc ; le contrôle

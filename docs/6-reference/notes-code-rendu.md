@@ -393,7 +393,7 @@ avec leur valeur existante. La correction est appliquée après le calcul
 Lambert, avant fog et colorimétrie ; elle garde les couleurs, les lampes
 et les éclairs de tir. Aucun lot ni lampe supplémentaire.
 
-Voir la [planche de références](../assets/board-armes-mains.md) et la
+Voir la [planche de références](references-armes-mains.md) et la
 [révision de l'ADR 0029](../decisions/0029-armes-en-vue-subjective.md).
 
 

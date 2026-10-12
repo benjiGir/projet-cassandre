@@ -1,6 +1,6 @@
 """Pupitre de service, commande et cadre de l'afficheur du voyage.
 
-see: docs/assets/tunnels-references.md#pupitre-de-la-dernière-voiture--9-octobre
+see: docs/6-reference/references-tunnels.md#pupitre-de-la-dernière-voiture--9-octobre
 """
 from math import cos, pi, sin
 

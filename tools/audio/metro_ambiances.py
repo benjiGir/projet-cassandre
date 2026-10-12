@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "public/assets/audio/metro_pilote"
-REPORT = ROOT / "docs/assets/pilote-metro"
+REPORT = ROOT / "renders/reviews/pilote-metro"
 SR, DURATION, MARGIN = 44100, 20, .5
 ENCODERS = subprocess.run(["ffmpeg", "-hide_banner", "-encoders"], capture_output=True, text=True, check=True).stdout
 VORBIS = ["-c:a", "libvorbis", "-q:a", "6"] if "libvorbis" in ENCODERS else ["-c:a", "vorbis", "-strict", "-2", "-b:a", "128k"]

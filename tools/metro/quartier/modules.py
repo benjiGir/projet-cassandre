@@ -1,6 +1,6 @@
 """Pièces de rue N3b, métriques et réutilisables hors scène de présentation.
 
-see: docs/assets/kit-quartier.md#pièces
+see: docs/4-technique/kit-quartier.md#pièces
 """
 import bpy
 

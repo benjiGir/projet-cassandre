@@ -46,7 +46,7 @@ from tools.art_direction.metro_service import apply as apply_service_materials
 
 OUT = ROOT/"assets_src/blender/metro_blockout.blend"
 GLB = ROOT/"public/assets/levels/metro_blockout.glb"
-REPORT = ROOT/"docs/assets/blockout-metro"
+REPORT = ROOT/"renders/reviews/blockout-metro"
 
 
 def marker(a,name,at=(0,0,0),**extras):
@@ -248,25 +248,25 @@ def main():
     GLB.parent.mkdir(parents=True,exist_ok=True)
     (GLB.parent/"metro_blockout.espaces.json").write_text(json.dumps({"espaces":spaces},ensure_ascii=False,indent=2)+"\n")
     REPORT.mkdir(parents=True,exist_ok=True)
-    review=ROOT/"docs/assets/galerie-da"
+    review=ROOT/"renders/reviews/galerie-da"
     review.mkdir(parents=True,exist_ok=True)
     (review/"deploiement.json").write_text(json.dumps(art_direction,ensure_ascii=False,indent=2)+"\n")
-    station_review=ROOT/"docs/assets/quais-da"
+    station_review=ROOT/"renders/reviews/quais-da"
     station_review.mkdir(parents=True,exist_ok=True)
     (station_review/"deploiement.json").write_text(json.dumps(station_art_direction,ensure_ascii=False,indent=2)+"\n")
-    ticket_review=ROOT/"docs/assets/billetterie-da"
+    ticket_review=ROOT/"renders/reviews/billetterie-da"
     ticket_review.mkdir(parents=True,exist_ok=True)
     (ticket_review/"deploiement.json").write_text(json.dumps(ticket_art_direction,ensure_ascii=False,indent=2)+"\n")
-    depot_review=ROOT/"docs/assets/depot-da"
+    depot_review=ROOT/"renders/reviews/depot-da"
     depot_review.mkdir(parents=True,exist_ok=True)
     (depot_review/"deploiement.json").write_text(json.dumps(depot_art_direction,ensure_ascii=False,indent=2)+"\n")
-    technical_review=ROOT/"docs/assets/technique-da"
+    technical_review=ROOT/"renders/reviews/technique-da"
     technical_review.mkdir(parents=True,exist_ok=True)
     (technical_review/"deploiement.json").write_text(json.dumps(technical_art_direction,ensure_ascii=False,indent=2)+"\n")
-    arrival_review=ROOT/"docs/assets/arrivee-da"
+    arrival_review=ROOT/"renders/reviews/arrivee-da"
     arrival_review.mkdir(parents=True,exist_ok=True)
     (arrival_review/"deploiement.json").write_text(json.dumps(arrival_art_direction,ensure_ascii=False,indent=2)+"\n")
-    service_review=ROOT/"docs/assets/rame-da"
+    service_review=ROOT/"renders/reviews/rame-da"
     service_review.mkdir(parents=True,exist_ok=True)
     (service_review/"deploiement.json").write_text(json.dumps(service_art_direction,ensure_ascii=False,indent=2)+"\n")
     (REPORT/"assemblage.json").write_text(json.dumps({"source":str(OUT.relative_to(ROOT)),"supports":len(floors),"niches":len(P.NICHES),"route":"quartier → billets → quais → A / galeries → dépôt → aiguillage et courant → rame → privée → parvis"},ensure_ascii=False,indent=2)+"\n")

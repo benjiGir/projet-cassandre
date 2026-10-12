@@ -2,7 +2,7 @@
 
     python3 tools/metro/layout/produce_plan.py
 
-see: docs/assets/plan-metro.md#reproduire-le-plan
+see: docs/journal/metro-plan-2026-10.md#tracé-n2-historique
 """
 import argparse
 from collections import defaultdict
@@ -178,7 +178,7 @@ def svg(floors,data):
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__.splitlines()[0]);parser.add_argument('--out',default=str(ROOT/'docs/assets'))
+    parser=argparse.ArgumentParser(description=__doc__.splitlines()[0]);parser.add_argument('--out',default=str(ROOT/'renders/reviews/plans'))
     args=parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else None)
     out=Path(args.out);out.mkdir(parents=True,exist_ok=True)
     floors=prepare();data=report(floors)

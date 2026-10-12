@@ -21,7 +21,7 @@ import lib_bureaux as B
 
 SOURCE = ROOT/"assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT/"public/assets/levels/niveau_v2.glb"
-OUT = ROOT/"docs/assets/bureaux-ecrans-2026-09-30"
+OUT = ROOT/"renders/reviews/bureaux-ecrans-2026-09-30"
 PARTS = ("plateau", "fauteuil", "pied_ecran", "ecran_dos", "ecran", "clavier")
 PATTERN = re.compile(r"^(mob_poste_bureau_\d+)_(pied_ecran|ecran_dos|ecran|clavier|plateau|fauteuil)(.*)$")
 

@@ -1,6 +1,6 @@
 """Candidat N2 : données métriques hors Blender, avant le blockout N5.
 
-see: docs/assets/plan-metro.md
+see: docs/journal/metro-plan-2026-10.md
 """
 from dataclasses import dataclass
 import math

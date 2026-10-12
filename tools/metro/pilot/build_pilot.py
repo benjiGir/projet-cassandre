@@ -23,7 +23,7 @@ TRAFFIC = "--trains" in sys.argv
 STEM = "metro_trains" if TRAFFIC else "metro_pilote"
 OUT = ROOT / f"assets_src/blender/{STEM}.blend"
 GLB = ROOT / f"public/assets/levels/{STEM}.glb"
-REPORT = ROOT / ("docs/assets/trains-metro" if TRAFFIC else "docs/assets/pilote-metro")
+REPORT = ROOT / ("renders/reviews/trains-metro" if TRAFFIC else "renders/reviews/pilote-metro")
 
 
 def main():

@@ -1,6 +1,6 @@
 """Inspection d'un moteur déposé au fond de l'atelier oriental.
 
-see: docs/assets/tunnels-references.md#poste-dinspection-du-moteur--9-octobre
+see: docs/6-reference/references-tunnels.md#poste-dinspection-du-moteur--9-octobre
 """
 import math
 

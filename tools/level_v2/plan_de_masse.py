@@ -375,8 +375,8 @@ SPACES: list[Space] = [
 
     # ===== Les coulisses, v2 (2026-09-26) =====
     # v1 rejetée par l'utilisateur (« posé au pif, aucun plaisir à explorer »).
-    # Disposition v2 : docs/assets/board-coulisses.md section 4 +
-    # docs/assets/coulisses-plan-v2.py (mutations reportées ici en dur).
+    # Disposition v2 : intentions de docs/6-reference/references-coulisses.md,
+    # section 4 ; les coordonnées retenues sont reportées ci-dessous.
     Space(
         id="pc_secu", nom="PC sécurité",
         x=(20, 32), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",

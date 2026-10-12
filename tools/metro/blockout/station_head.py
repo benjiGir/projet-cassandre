@@ -1,6 +1,6 @@
 """Tête nord de station et seuil de la galerie de maintenance.
 
-see: docs/assets/tunnels-references.md#première-zone-reprise-tête-nord-et-accès-de-maintenance
+see: docs/6-reference/references-tunnels.md#première-zone-reprise-tête-nord-et-accès-de-maintenance
 """
 import math
 

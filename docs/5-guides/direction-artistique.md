@@ -2,7 +2,7 @@
 title: Direction artistique commune
 tags: [guide, direction-artistique, rendu]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Direction artistique commune
@@ -14,7 +14,7 @@ les personnages et le direct partagent des couleurs, des valeurs et un
 niveau de finition reconnaissables. Les zones gardent leur ambiance propre.
 
 Le traitement de référence est **approuvé par l'utilisateur le 10 octobre
-2026**, après observation de [l'étalon du quai](../assets/etalon-direction-artistique.md).
+2026**, après observation de [l'étalon du quai](direction-artistique.md).
 Son déploiement dans les niveaux suit des passes locales comparées en jeu.
 
 ## Avant de commencer
@@ -25,8 +25,8 @@ mipmaps et anisotropie ; l'ADR 0027 reste proposé. Les matériaux classiques
 et les effets TSL peuvent coexister. Les lots de dessin sont des indicateurs.
 
 Références : [audit initial](../journal/audit-direction-artistique-2026-10.md),
-[métro validé](../assets/board-metro.md),
-[armes et mains](../assets/board-armes-mains.md).
+[métro validé](../6-reference/references-metro.md),
+[armes et mains](../6-reference/references-armes-mains.md).
 
 ## Étapes par famille
 
@@ -81,7 +81,6 @@ se juge en animation, dans un cadrage contenant ses voisins.
 
 ## Vérifier visuellement
 
-Comparer le même lieu, la même pose, la même résolution et les mêmes lampes.
 Regarder une vue d'ensemble, une vue proche et un passage en mouvement.
 Faire apparaître arme, personnage et ramassage dans la scène de référence.
 Une belle texture isolée ne suffit pas à valider son usage dans le monde.
@@ -94,103 +93,60 @@ proches peuvent saturer le métal du viewmodel ; conserver ses nuances.
 Les captures Blender vérifient l'assemblage, les captures du jeu arbitrent
 le rendu réel des sprites, objets et armes.
 
-## Exemple réel
+## Sources et reprise
 
-L'étalon du 10 octobre utilise `tools/art_direction/quay_scene.py` et
-`surface_recipes.py`. Il réemploie le kit du métro, ses bancs, ses commandes
-et ses ressources runtime. Les deux exports partagent l'assemblage et les
-lampes. La proposition applique sept recettes de textures distinctes.
-Le traitement de cet étalon est approuvé le 10 octobre 2026. La première
-extension concerne [les galeries et le vestiaire](../assets/galerie-direction-artistique.md)
-du métro jouable. Les modifications restent sans commit à cette date.
-La passe suivante applique ce traitement aux
-[quais et tunnels](../assets/quais-direction-artistique.md), avec une recette
-distincte pour le béton sous les rails et la peinture des bandes de sécurité.
-[La billetterie et sa descente](../assets/billetterie-direction-artistique.md)
-prolongent ensuite ces familles de matières jusqu'au guichet et aux portiques.
+Le traitement retenu est intégré aux builds normaux des deux niveaux.
+`tools/art_direction/surface_recipes.py` fournit les textures communes ;
+les modules ci-dessous appliquent les variantes par zone.
 
-[Le dépôt et ses ateliers](../assets/depot-direction-artistique.md) reprennent le
-béton industriel et les peintures communes, avec des rampes propres au bleu
-des équipements, au métal usiné et au cuivre.
+| Zone | Module dans `tools/art_direction/` |
+|---|---|
+| Étalon du quai | `quay_scene.py` |
+| Galeries et vestiaire | `metro_gallery.py` |
+| Quais et tunnels | `metro_materials.py` |
+| Billetterie et descente | `metro_ticket_hall.py` |
+| Dépôt et ateliers | `metro_depot.py` |
+| Machinerie et aiguillage | `metro_technical.py` |
+| Station privée et parvis | `metro_arrival.py` |
+| Rames et garage | `metro_service.py` |
+| Entrée et caisses | `store_checkout.py` |
+| Surface de vente | `store_sales.py` |
+| Cafétéria | `store_cafeteria.py` |
+| Sanitaires | `store_restrooms.py` |
+| Réserve et quai de livraison | `store_reserve.py` |
+| Personnel et bureaux | `store_offices.py`, `store_office_finishes.py` |
+| Fournil, labo et SAV | `store_workshops.py` |
+| Chambre froide et compacteur | `store_service.py` |
+| Planque et gaine VMC | `store_annexes.py` |
+| Décors restants et véhicules | `store_finish.py`, `metro_exteriors.py`, `vehicle_finish.py` |
 
-[La machinerie et le poste d’aiguillage](../assets/technique-direction-artistique.md)
-prolongent le béton industriel. Le poste de commande conserve une peinture
-ivoire et un sol de dalles ; les pales du ventilateur utilisent le métal
-usiné du dépôt.
+Le magasin conserve son éclairage d'origine : la proposition plus sombre
+est rejetée par l'utilisateur le 11 octobre. Les textures de la réserve
+utilisent béton jointé, parpaings peints, rubans et étiquettes de cartons ;
+la première passe trop lisse a été remplacée. Les bureaux et la direction
+retrouvent une moquette bleue continue et un faux plafond sur ossature de
+60 cm. Sols et plafonds des vestiaires utilisent des matières distinctes.
 
-[La station privée et le parvis](../assets/arrivee-direction-artistique.md)
-utilisent des parements de pierre et des dalles gris-bleu propres. Le
-feuillage dispose d’une matière distincte des peintures d’équipements.
+Les [équipements des sanitaires](../4-technique/equipements-sanitaires.md)
+et les [fours du fournil](../4-technique/fours-fournil.md) ont leurs recettes
+propres. Les matières du métro gardent ivoire/pétrole sur les quais,
+béton industriel en service et pierre gris-bleu à l'arrivée. Tissu des
+sièges, caoutchouc des sols et végétation restent des familles distinctes.
 
-[Les rames du métro](../assets/rame-direction-artistique.md) partagent les
-peintures claires, pétrole et acier. Le tissu des coussins et le caoutchouc
-des sols et câbles disposent de recettes propres, au contraste discret.
-Le garage prolonge le béton et le sol industriel du dépôt.
+Les commandes de reprise locale passent par `tools/blender/cassandre.py` ;
+consulter [le catalogue des recettes](../../tools/blender/README.md).
+La source magasin est `assets_src/blender/niveau_v2.blend` ; celle du métro
+est `assets_src/blender/metro_blockout.blend`.
 
-[L’entrée et les caisses du magasin](../assets/caisses-direction-artistique.md)
-prolongent les tons ivoire et gris de la charte. Le terrazzo conserve des
-fragments espacés ; les comptoirs emploient du stratifié, du métal brossé
-et du caoutchouc. Les étiquettes et les accents rouges gardent leur rôle.
+## Sorties de travail
 
-Le magasin conserve son éclairage d’origine : la proposition plus sombre est
-rejetée lors du retour utilisateur du 11 octobre. Les passes suivantes portent
-sur les textures.
+Les captures, comparaisons et relevés vont dans `renders/`, ignoré par Git.
+Les recettes de retouche et d'assemblage utilisent `renders/reviews/` ;
+le héros utilise `renders/hero/`. `out` permet de choisir une autre sortie
+pour les kits et le plan candidat du métro.
 
-[La surface de vente et le mobilier commercial](../assets/vente-direction-artistique.md)
-reprennent ensuite le terrazzo et les métaux des caisses. Le damier gris-ivoire,
-l’émail des appareils et la peinture des gondoles utilisent des rampes sobres ;
-les produits et les étiquettes gardent leurs atlas.
-
-[La cafétéria](../assets/cafeteria-direction-artistique.md) reprend le damier
-des rayons, le stratifié des caisses et les métaux communs. Les parois et le
-plafond gardent un grain discret ; la peinture rouge des chaises conserve
-l’accent du magasin sans l’ancienne usure très contrastée.
-
-[Les sanitaires attenants](../assets/sanitaires-direction-artistique.md)
-prolongent le damier partagé et l’enduit ivoire. La faïence a ses joints de
-25 cm ; le stratifié des cabines reprend le vert pétrole de l’étalon.
-
-La [refonte des équipements](../assets/sanitaires-assets.md) conserve ces matières
-et agrandit les passages des cabines. Les vasques et appareils gardent une
-céramique de palette ; les miroirs reflètent la scène en 640×360 avec un
-agrandissement nearest.
-
-[La réserve et son quai](../assets/reserve-direction-artistique.md) emploient
-un béton jointé et usé, des parpaings peints clairs et des racks rouges.
-Après le rejet de la première version trop lisse, les cartons reçoivent
-ruban et étiquettes, et les palettes des lattes et fixations lisibles. Ces
-motifs sont propres à la réserve. Les fûts gardent leurs cerclages et étiquettes ;
-les transpalettes gardent l’ambre sur leurs fourches. Les bandes de quai
-et les atlas fonctionnels conservent leur contraste.
-
-
-[Les locaux du personnel et les bureaux](../assets/bureaux-direction-artistique.md)
-prolongent le béton du couloir et les cartons de la réserve. Les vestiaires
-utilisent un carrelage gris-vert ; le PC et l’étage une moquette à trame fine.
-Les bureaux et bancs ont un bois veiné, les caissons un métal mat et les
-archives une peinture verte. Les atlas de casiers et d’interactions gardent
-leurs détails.
-
-
-[Le fournil, le labo et le SAV](../assets/ateliers-direction-artistique.md)
-partagent l’inox mat et les familles de surfaces de travail. La faïence
-claire et le grès rouge-brun distinguent les ateliers alimentaires ; le SAV
-garde le béton de manutention et ses établis de bois. Le plafond utilise
-des panneaux lessivables rectangulaires, distincts des petits carreaux.
-
-La [chambre froide et le compacteur](../assets/service-direction-artistique.md)
-prolongent les ateliers : panneaux isothermes clairs, sol antidérapant,
-évaporateur à ailettes, béton et peinture industrielle. Les commandes et les
-atlas des balles de carton conservent leurs détails.
-
-La [planque du vigile et la gaine VMC](../assets/annexes-direction-artistique.md)
-prolongent cette passe avec tissu, plastique et panneaux métalliques.
-
-Les [finitions des bureaux](../assets/bureaux-finitions.md) rétablissent une
-moquette bleue continue et ajoutent des ossatures de faux plafond en relief.
-
-La [passe des décors restants](../assets/finition-direction-artistique.md)
-termine les parkings, raccords et petits décors du magasin, puis les façades,
-la voirie et le mobilier du quartier. Les véhicules gardent leurs couleurs
-de sommets, avec un grain de surface discret. Le déploiement des matières
-du décor est intégré aux builds normaux des deux niveaux.
+`docs/assets/` conserve uniquement les plans qui expliquent la documentation.
+Les pages de revue et séries avant/après sont retirées après utilisation.
+Une référence graphique non reproductible reste dans `assets_src/` ; les
+originaux du portrait et leurs prompts sont dans `assets_src/portrait_stream/`.
+Les choix et retours restent dans le [journal de l'audit](../journal/audit-direction-artistique-2026-10.md).

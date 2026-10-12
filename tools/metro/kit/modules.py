@@ -1,6 +1,6 @@
 """Vocabulaire modulaire N3. Dimensions SI et dégagements de N1/N2.
 
-see: docs/assets/kit-metro.md#pièces
+see: docs/4-technique/kit-metro.md#pièces
 """
 import math
 

@@ -19,10 +19,10 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `export(out=…, niveau=…)` | `export_level.py`, sortie propre au profil, `ok` seulement si le contenu est vérifié |
 | `manifest(out=…, niveau=…)` | manifeste des espaces du plan choisi, conversion Blender → jeu |
 | `fingerprint()` | empreinte des poses, propriétés et surfaces du view layer sauvegardé ; comparaison des reconstructions dans un fichier voisin `.fingerprint.json` |
-| `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `docs/assets/` |
+| `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `renders/reviews/plans/` |
 | `metro_blockout(apercus=True)` | reconstruit et exporte N5 avec ses vues ; `apercus=false` évite de rendre toutes les zones lors d’une retouche locale, puis `shot`/`sheet` produit les vues ciblées |
 | `restore_store_lighting()` | restitue les lampes et les luminaires du magasin depuis la copie avant éclairage |
-| `art_direction_sales()` | applique localement les sols et les matières du mobilier commercial, sauvegarde et exporte ; [revue](../../docs/assets/vente-direction-artistique.md) |
+| `art_direction_sales()` | applique localement les sols et les matières du mobilier commercial, sauvegarde et exporte ; [revue](../../docs/5-guides/direction-artistique.md) |
 | `art_direction_finish(niveau="hypermarche", inspect=False)` | termine les matières des parkings et raccords du magasin, ou du quartier avec `niveau="metro"` ; conserve les couleurs des véhicules, sauvegarde et exporte vers les fichiers runtime ; inventaire seul avec `inspect` |
 | `art_direction_cafeteria()` | matières du sol, des murs, du plafond et du mobilier de la cafétéria ; conserve lampes et atlas, sauvegarde et exporte |
 | `rework_fournil_ovens()` | reconstruit deux fours à soles et la rôtissoire avec chambres visibles et vitres ; remplace leurs proxies, conserve les lampes, sauvegarde et exporte |
@@ -32,11 +32,11 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `art_direction_reserve(inspect=False)` | béton, enduit et mobilier industriel de la réserve ; inventaire avec `inspect`, sauvegarde et export sinon |
 | `art_direction_restrooms()` | faïence, cabines et métal des sanitaires ; conserve le sol partagé, les lampes et les appareils utilisables, sauvegarde et exporte |
 | `rework_restrooms()` | remplace les équipements par trois cabines accessibles, des portes manuelles, deux grandes vasques et des surfaces de miroir ; conserve les lampes, sauvegarde et exporte |
-| `art_direction_store()` | applique localement les matières de la galerie et des six caisses, sauvegarde et exporte le magasin ; [revue](../../docs/assets/caisses-direction-artistique.md) |
-| `art_direction_quay()` | construit deux exports du même quai pour comparer les matières actuelles et candidates ; [charte et comparaison](../../docs/assets/etalon-direction-artistique.md) |
+| `art_direction_store()` | applique localement les matières de la galerie et des six caisses, sauvegarde et exporte le magasin ; [revue](../../docs/5-guides/direction-artistique.md) |
+| `art_direction_quay()` | construit deux exports du même quai pour comparer les matières actuelles et candidates ; [charte et comparaison](../../docs/5-guides/direction-artistique.md) |
 | `metro_pilot()` | construit, sauvegarde, exporte et rend le quai et le tube N4, dans une session neuve `--factory-startup` |
 | `metro_kit(out=…)` | bibliothèque et planche métro N3, depuis une session neuve `--factory-startup` ; régénère les pièces et textures originales |
-| `quartier_kit(out=…)` | bibliothèque et planche du quartier N3b, depuis une session neuve ; 20 pièces originales et deux voitures réemployées ; [fiche et rendus](../../docs/assets/kit-quartier.md) |
+| `quartier_kit(out=…)` | bibliothèque et planche du quartier N3b, depuis une session neuve ; 20 pièces originales et deux voitures réemployées ; [fiche et rendus](../../docs/4-technique/kit-quartier.md) |
 | `quartier_pilot()` | construit, sauvegarde, exporte et rend la place N4b depuis une session neuve ; [pilote et limites](../../docs/4-technique/pilote-quartier.md) |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
 | `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
@@ -408,7 +408,7 @@ savoir comment s'en servir.
 
 ### Armes et mains — refonte 2026-10-04
 
-La [planche de références](../../docs/assets/board-armes-mains.md) documente
+La [planche de références](../../docs/6-reference/references-armes-mains.md) documente
 la culasse inox ouverte, le pompe à crosse bois et les doigts séparés.
 `build_weapons.py` garde assemblage, IK, cadrage et export ;
 `weapons/config.py`, `geometry.py`, `pistol.py`, `shotgun.py`, `hands.py`

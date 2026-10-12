@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     source = ROOT / "assets_src/blender/niveau_v2.blend"
     backup = ROOT / "renders/_cassandre/niveau_v2_avant_eclairage.blend"
-    report_path = ROOT / "docs/assets/magasin-eclairage/deploiement.json"
+    report_path = ROOT / "renders/reviews/magasin-eclairage/deploiement.json"
     if Path(bpy.data.filepath).resolve() != source or not backup.exists():
         raise ValueError("Ouvrir le magasin et conserver sa copie avant éclairage")
     fixtures = set(json.loads(report_path.read_text())["luminaires"])

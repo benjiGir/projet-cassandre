@@ -1,6 +1,6 @@
 """Toilettes publiques : cabines accessibles et équipements détaillés.
 
-see: docs/assets/sanitaires-assets.md
+see: docs/4-technique/equipements-sanitaires.md
 """
 from espaces import chemins  # noqa: F401
 

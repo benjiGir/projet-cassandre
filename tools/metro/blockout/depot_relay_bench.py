@@ -1,6 +1,6 @@
 """Maintenance électrique hors du coude VB, sur un établi autonome.
 
-see: docs/assets/tunnels-references.md#maintenance-électrique-du-passage-ouest--9-octobre
+see: docs/6-reference/references-tunnels.md#maintenance-électrique-du-passage-ouest--9-octobre
 """
 import math
 

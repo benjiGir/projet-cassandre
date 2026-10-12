@@ -1,6 +1,6 @@
 """Bogie assemblé et châssis déposé dans l'atelier oriental.
 
-see: docs/assets/tunnels-references.md#révision-des-bogies--9-octobre
+see: docs/6-reference/references-tunnels.md#révision-des-bogies--9-octobre
 """
 import math
 

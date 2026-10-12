@@ -19,13 +19,13 @@ l'utilisateur avant la suite.
 
 ## Livré et preuve
 
-- [Planche de huit images](../assets/board-metro.html), toutes ouvertes dans
+- Planche de huit images, toutes ouvertes dans
   le navigateur et regardées ; chargement des huit images confirmé.
-- [Fiche de référence](../assets/board-metro.md) : usages des lieux,
+- [Fiche de référence](../6-reference/references-metro.md) : usages des lieux,
   signatures, palette proposée, densité du mobilier et cotes utiles.
 - [Coupe SVG](../assets/metro-cotes.svg), ouverte et relue : station à deux
   voies, niveaux de quai et niche hors de la bande dangereuse.
-- [Mesures chromatiques](../assets/metro-reference-mesures.json), sept images
+- Mesures chromatiques, sept images
   regroupées en cinq familles, empreintes et URLs conservées. Les images
   originales restent en fichiers temporaires ; elles ne sont pas copiées
   dans les assets du dépôt.

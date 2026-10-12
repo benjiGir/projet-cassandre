@@ -13,8 +13,7 @@ Les rames de ligne sont un danger mobile. Elles ne portent jamais le joueur.
 La rame du voyage à bord reste dans le système distinct du
 [prototype T4](prototype-voyage-rame.md).
 
-Le [pilote de trafic](../assets/trains-metro.html) utilise le décor N4 et la
-voiture Blender N3. Le pilote visuel accepté reste accessible séparément.
+Le pilote de trafic utilisait le décor N4 et la voiture Blender N3.
 L’intégration est un candidat de T2 ; elle ne construit pas le blockout N5.
 
 ## Fichiers
@@ -168,12 +167,10 @@ plan et les mesures sur le parcours complet restent ouverts.
 
 ## Comment vérifier
 
-Ouvrez le [pilote de trafic](../assets/trains-metro.html). Les raccourcis
-placent le joueur sur le quai ou dans un refuge. Les boîtiers répondent à E.
-Le panneau de revue expose les commandes et l’état des horaires.
-
 Ce pilote a été retiré du dépôt le 2026-10-10 : son `.glb`, sa scène `.blend`
-et l'entrée `?level=trains_metro`. La page de revue ne charge plus rien.
+et l'entrée `?level=trains_metro`. Sa page de revue a été supprimée le
+12 octobre. Dans le niveau métro de campagne, observer les passages depuis
+le quai et utiliser les boîtiers avec E.
 
 La recette de construction est conservée : `metro_trains` dans une session
 Blender neuve avec `--factory-startup`, via `tools/blender/cassandre_cli.py`.

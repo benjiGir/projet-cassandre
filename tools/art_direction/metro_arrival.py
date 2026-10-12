@@ -1,6 +1,6 @@
 """Finition froide de la gare privée, de la remontée et du parvis.
 
-see: docs/assets/arrivee-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

@@ -942,7 +942,7 @@ def quartier_kit(out: str | Path | None = None) -> dict:
     """Construit la bibliothèque du quartier N3b et ses vues, en session neuve."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
         return {"ok": False, "erreur": "Lancer quartier_kit avec --factory-startup."}
-    args = ["--out", str(out or REPO / "docs/assets/kit-quartier")]
+    args = ["--out", str(out or REPO / "renders/reviews/kit-quartier")]
     res = run("tools/metro/quartier/produce_kit.py", *args, keep="[quartier-kit]")
     return {"ok": res["code"] == 0, **res}
 
@@ -951,7 +951,7 @@ def metro_kit(out: str | Path | None = None) -> dict:
     """Construit la bibliothèque métro N3 et ses vues, dans une session dédiée."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:
         return {"ok": False, "erreur": "Lancer metro_kit dans Blender avec --factory-startup : cette recette reconstruit une scène dédiée."}
-    args = ["--out", str(out or REPO / "docs/assets/kit-metro")]
+    args = ["--out", str(out or REPO / "renders/reviews/kit-metro")]
     res = run("tools/metro/kit/produce_kit.py", *args, keep="[metro-kit]")
     return {"ok": res["code"] == 0, **res}
 
@@ -959,7 +959,7 @@ def metro_kit(out: str | Path | None = None) -> dict:
 def plan(out: str | Path | None = None, niveau: str = "metro") -> dict:
     """Produit le plan candidat N2 et son relevé, sans remplacer la scène ouverte.
 
-    see: docs/assets/plan-metro.md#reproduire-le-plan
+    see: docs/journal/metro-plan-2026-10.md#tracé-n2-historique
     """
     if niveau != "metro":
         raise ValueError("le plan candidat N2 est disponible pour metro uniquement")

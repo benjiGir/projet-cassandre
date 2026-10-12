@@ -1,6 +1,6 @@
 """Surfaces originales N3, sans image issue du board.
 
-see: docs/assets/kit-metro.md#surfaces
+see: docs/4-technique/kit-metro.md#surfaces
 """
 from pathlib import Path
 

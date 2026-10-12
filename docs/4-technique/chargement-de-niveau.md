@@ -123,7 +123,7 @@ passent par `runGameplaySync` et `RenderService`. Les attentes restent à la
 frontière asynchrone du chargement. Le corps est temporairement placé devant
 chaque surface pour préparer aussi ses matériaux articulés. Sa pose est ensuite
 restaurée. Les équipements sont décrits dans la
-[fiche des sanitaires](../assets/sanitaires-assets.md).
+[fiche des sanitaires](equipements-sanitaires.md).
 
 ### Fusions et durée de vie
 

@@ -25,7 +25,7 @@ def inventory():
             continue
         objects.append({"nom": obj.name, "matieres": [slot.material.name if slot.material else ""
                         for slot in obj.material_slots], "centre": [round(value, 2) for value in center]})
-    path = ROOT / "docs/assets/bureaux-da/inventaire.json"
+    path = ROOT / "renders/reviews/bureaux-da/inventaire.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps({"objets": sorted(objects, key=lambda item: item["nom"])},
                                ensure_ascii=False, indent=2) + "\n")

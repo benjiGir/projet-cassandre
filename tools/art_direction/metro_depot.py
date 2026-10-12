@@ -1,6 +1,6 @@
 """Finition du dépôt, de ses ateliers et du quai d'embarquement.
 
-see: docs/assets/depot-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

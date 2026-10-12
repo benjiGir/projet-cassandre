@@ -30,7 +30,7 @@ jonction avec le couloir à 0 m. Les anciennes cotes venaient du plan et de
 
 La variante B est approuvée par l’utilisateur (« ça me plaît, go ») et
 intégrée le 1er octobre 2026 dans la source Blender et le GLB du niveau.
-Le [plan SVG](../assets/proposition-coulisses-2026-10-01.svg) et son aperçu
+Le plan SVG et son aperçu
 reprennent les cotes retenues.
 
 - Réserve : quai plein limité à X −24..−4, rampe déplacée à X −16..−4,
@@ -64,7 +64,6 @@ la porte administrative ; confort de l’escalier et de l’atelier ; durée du
 niveau. Ces points ne sont pas validés par les captures et N10 reste ouvert.
 Aucune suite de tests n’a été exécutée pour ce travail.
 
-![Implantation retenue](../assets/proposition-coulisses-2026-10-01.png)
 
 ### Parcours retenu
 

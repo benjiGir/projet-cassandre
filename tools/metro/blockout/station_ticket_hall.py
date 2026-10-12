@@ -1,6 +1,6 @@
 """Guichet et validation ouverte dans la billetterie N5.
 
-see: docs/assets/board-metro.md#1-direction-validée
+see: docs/6-reference/references-metro.md#1-direction-validée
 """
 import math
 

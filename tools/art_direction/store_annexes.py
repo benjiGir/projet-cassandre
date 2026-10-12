@@ -1,6 +1,6 @@
 """Matières de la planque du vigile et de la gaine VMC.
 
-see: docs/assets/annexes-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import json
 from pathlib import Path
@@ -131,6 +131,6 @@ def apply():
 
 
 def write_report(report):
-    path = ROOT/"docs/assets/annexes-da/deploiement.json"
+    path = ROOT/"renders/reviews/annexes-da/deploiement.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")

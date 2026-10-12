@@ -2,7 +2,7 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-10
+updated: 2026-10-12
 ---
 
 # Journal
@@ -79,3 +79,9 @@ guides et les plans ouverts à la racine du dépôt.
 Les plans du niveau v2 et de la documentation ont été retirés du dépôt avec
 la 1.0.0 (2026-10-02) ; ils restent lisibles dans l'historique git
 (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem `PLAN_DOCUMENTATION.md`).
+
+- [Plan candidat du métro](metro-plan-2026-10.md) — tracé N2 daté, antérieur aux révisions du niveau final.
+
+Les captures et pages de revue temporaires ont été retirées le 12 octobre
+2026. Les comptes rendus gardent les décisions et observations ; les anciens
+fichiers restent accessibles dans l'historique Git.

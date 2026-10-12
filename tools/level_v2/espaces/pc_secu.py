@@ -53,7 +53,7 @@ PS_GAINE_PUITS_Y = (150.0, 152.0)
 
 
 def _habiller_pc_secu_reference(space, gris, props, col_coll, logic) -> dict:
-    """Poste de surveillance du board (`docs/assets/board-coulisses.md`, 3.2.C).
+    """Poste de surveillance du board (`docs/6-reference/references-coulisses.md`, 3.2.C).
 
     Une porte vitrée donne sur le couloir, puis un passage cadré sans vantail
     mène au guichet et au poste. Consoles, meubles CRT, chaise et supports sont

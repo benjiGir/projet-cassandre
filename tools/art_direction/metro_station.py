@@ -1,6 +1,6 @@
 """Finition des quais, tunnels et raccords du réseau.
 
-see: docs/assets/quais-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import bpy
 

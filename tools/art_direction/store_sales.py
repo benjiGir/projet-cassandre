@@ -1,6 +1,6 @@
 """Sols et mobilier de vente : allée centrale, rayons et électroménager.
 
-see: docs/assets/vente-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import json
 from pathlib import Path
@@ -87,6 +87,6 @@ def apply():
 
 
 def write_report(report):
-    path = ROOT / "docs/assets/vente-da/deploiement.json"
+    path = ROOT / "renders/reviews/vente-da/deploiement.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")

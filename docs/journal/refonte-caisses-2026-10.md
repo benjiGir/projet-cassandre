@@ -40,13 +40,6 @@ La source `assets_src/blender/niveau_v2.blend` et son export
 `tools/blender/lib_checkouts.py` est partagé par la mise à jour locale et
 `tools/level_v2/build_niveau.py`. L'atlas ajouté mesure 128×128 pixels.
 
-![Ancienne et nouvelle zone depuis l'entrée](../assets/caisses-2026-10-01/comparaison.png)
-
-![Postes et files depuis le côté](../assets/caisses-2026-10-01/caisses.png)
-
-![Tapis, terminal et produits d'impulsion](../assets/caisses-2026-10-01/detail.png)
-
-![Agencement et vues Blender](../assets/caisses-2026-10-01/planche.png)
 
 Deux compositions sont rendues dans Blender puis regardées dans le jeu à
 640×360. Les captures finales viennent de l'export livré. Aucune erreur de

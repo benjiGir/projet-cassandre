@@ -66,7 +66,7 @@ def main():
     report["export"] = C.export(niveau="hypermarche")
     if not report["export"].get("ok"):
         raise RuntimeError(report["export"])
-    path = ROOT/"docs/assets/fours-fournil/deploiement.json"
+    path = ROOT/"renders/reviews/fours-fournil/deploiement.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
     print("[fournil-ovens] "+json.dumps(report))

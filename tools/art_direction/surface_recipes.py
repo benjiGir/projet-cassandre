@@ -1,6 +1,6 @@
 """Matières de l'étalon approuvé ; 128 px pour 2 m, variations déterministes.
 
-see: docs/assets/etalon-direction-artistique.md#matières
+see: docs/5-guides/direction-artistique.md#sources-et-reprise
 """
 from pathlib import Path
 

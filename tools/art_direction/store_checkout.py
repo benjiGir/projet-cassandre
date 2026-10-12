@@ -1,6 +1,6 @@
 """Matières de la galerie et des caisses, au build comme en retouche locale.
 
-see: docs/assets/caisses-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import json
 from pathlib import Path
@@ -12,7 +12,7 @@ from tools.art_direction.surface_recipes import build_materials
 
 ROOT = Path(__file__).resolve().parents[2]
 TEXTURES = ROOT / "assets_src/library/art_direction/textures"
-REVIEW = ROOT / "docs/assets/caisses-da"
+REVIEW = ROOT / "renders/reviews/caisses-da"
 RAMPS = {
     "store_terrazzo": ("8b8675", "a0a69b", "b1b6ac", "c2c6b8"),
     "store_terrazzo_fin": ("8e968b", "a3ac9f", "b1b6ac", "c2c6b8"),

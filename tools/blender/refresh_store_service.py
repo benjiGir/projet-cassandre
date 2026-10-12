@@ -23,7 +23,7 @@ def inventory():
             continue
         objects.append({"nom":obj.name,"matieres":[slot.material.name if slot.material else ""
                         for slot in obj.material_slots],"centre":[round(v,2) for v in center]})
-    path = ROOT/"docs/assets/service-da/inventaire.json"
+    path = ROOT/"renders/reviews/service-da/inventaire.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps({"objets":sorted(objects,key=lambda obj:obj["nom"])},
                                ensure_ascii=False,indent=2)+"\n")

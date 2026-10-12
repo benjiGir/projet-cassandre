@@ -1,6 +1,6 @@
 """Matières du quartier et dernières pièces de décor du métro.
 
-see: docs/assets/finition-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 from collections import Counter
 import json
@@ -80,6 +80,6 @@ def apply():
 
 
 def write_report(report):
-    path = ROOT/"docs/assets/finition-da/deploiement-metro.json"
+    path = ROOT/"renders/reviews/finition-da/deploiement-metro.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")

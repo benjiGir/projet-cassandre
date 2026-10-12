@@ -1,6 +1,6 @@
 """Outillage arrimé dans la deuxième voiture de service.
 
-see: docs/assets/tunnels-references.md#charges-de-la-deuxième-voiture--9-octobre
+see: docs/6-reference/references-tunnels.md#charges-de-la-deuxième-voiture--9-octobre
 """
 from math import cos, pi, sin
 

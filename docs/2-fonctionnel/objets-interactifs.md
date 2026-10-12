@@ -119,7 +119,7 @@ exploser d'un coup, sans lien avec sa résistance habituelle au tir.
 
 Les toilettes du magasin ont trois cabines dans lesquelles on peut entrer.
 Leurs portes s’ouvrent et se ferment avec `E`. Les grands lavabos ont des
-miroirs qui reflètent la pièce ; voir la [revue des équipements](../assets/sanitaires-assets.md).
+miroirs qui reflètent la pièce ; voir la [revue des équipements](../4-technique/equipements-sanitaires.md).
 
 Une cuvette ou un urinoir intact se soulage en le visant vraiment — s'y tenir
 à proximité sans le regarder ne suffit pas — puis en appuyant sur `E`. La

@@ -35,7 +35,6 @@ Le visage utilise un extrait de `public/assets/ui/hero-ambient.png`.
 | `src/render/hero/heroArms.ts` | articulation des bras vers les prises des armes à feu |
 | `src/render/hero/heroReflection.ts` | position du corps, équipement et durée de vie |
 | `src/render/environment/reflectionActors.ts` | visibilité limitée aux reflets |
-| `docs/assets/hero-mirror.html` | revue interactive du modèle et des sanitaires |
 
 ## Place dans la boucle
 
@@ -114,14 +113,9 @@ surface pour préparer aussi les variantes de shader des meshes articulés.
 ## Tests
 
 Il n'existe pas de suite automatisée dédiée au reflet du héros.
-La [revue interactive](../assets/hero-mirror.html) utilise la classe de rendu
-du jeu pour montrer les postures, les mouvements et les attaques.
-Son second cadre charge le magasin et place le joueur devant un vrai miroir.
-
-Rendus conservés : [modèle Blender](../assets/hero-mirror/model.png),
-[visage](../assets/hero-mirror/face.png),
-[silhouette](../assets/hero-mirror/silhouette.png) et
-[reflet équipé dans les sanitaires](../assets/hero-mirror/reflection.png).
+Le modèle et son reflet équipé ont été inspectés dans Blender et dans les
+sanitaires du magasin. La page de revue et les captures de travail ont été
+retirées après validation ; les sources et animations restent versionnées.
 
 ## Comment vérifier
 
@@ -134,11 +128,10 @@ blender -b --factory-startup -P tools/blender/cassandre_cli.py -- hero_model
 La recette sauvegarde la source, exporte le GLB et rend cinq vues dans
 `renders/hero/`. Elle refuse de remplacer une autre source Blender ouverte.
 
-Ouvrir la revue, comparer le modèle au portrait et utiliser les boutons de
-mouvement et d'équipement. Dans les sanitaires, « Face au miroir » cadre le
-premier lavabo. Les boutons du second cadre changent l'arme ou déclenchent
-un court déplacement dans la session de revue. Cliquer dans le jeu permet
-de viser et d'attaquer avec les commandes habituelles.
+Dans le magasin, rejoindre les lavabos des sanitaires. Comparer le reflet
+au portrait du retour de stream, puis observer le déplacement, le saut,
+le coup de pied et les attaques avec les armes équipées. Les rendus de la
+recette permettent de revoir le visage et la silhouette sans lancer le jeu.
 
 Les informations de santé du retour de stream restent celles du portrait.
 La texture du corps représente pour l'instant le visage au repos.

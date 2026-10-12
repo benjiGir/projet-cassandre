@@ -1,6 +1,6 @@
 """Recette N3, appelée par C.metro_kit(). Bibliothèque + vues de présentation.
 
-see: docs/assets/kit-metro.md#reproduire
+see: docs/4-technique/kit-metro.md#reproduire
 """
 from pathlib import Path
 import json
@@ -140,7 +140,7 @@ def inventory(pieces):
 
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    out = Path(args[args.index("--out") + 1]).resolve() if "--out" in args else ROOT / "docs/assets/kit-metro"
+    out = Path(args[args.index("--out") + 1]).resolve() if "--out" in args else ROOT / "renders/reviews/kit-metro"
     out.mkdir(parents=True, exist_ok=True)
     geo_utils.wipe_scene()
     geo_utils.configure_scene()

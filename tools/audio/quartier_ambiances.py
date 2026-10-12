@@ -11,7 +11,7 @@ import metro_ambiances as studio
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "public/assets/audio/quartier_pilote"
-REPORT = ROOT / "docs/assets/pilote-quartier"
+REPORT = ROOT / "renders/reviews/pilote-quartier"
 
 
 def wind(seed, cutoff, gain):

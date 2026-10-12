@@ -145,13 +145,13 @@ Compilation TypeScript et build de production contrôlés pendant C1.
 La suite de tests n’a pas été lancée pour ce lot.
 La revue en jeu a couvert la transition, la reprise après rechargement,
 les deux profils, le métro seul et la mort après achat. Les états lus dans
-la page d’auteur sont gardés dans le [relevé](../assets/campagne/releve.json).
+la page d’auteur sont gardés dans le relevé.
 Le playtest utilisateur et la télémétrie distante restent ouverts ; leur
 état est distingué dans le [journal C1](../journal/campagne-2026-10.md).
 
 ## Comment vérifier
 
-La [page d’auteur](../assets/campagne.html) propose les profils type, pauvre
+La page d’auteur propose les profils type, pauvre
 et riche au magasin, une sortie simulée dans le pas fixe et une mort.
 Elle peut aussi simuler une dépense de munitions et un dégât, puis utiliser
 les vrais achats Perche et Boisson. Ces commandes passent par une file lue

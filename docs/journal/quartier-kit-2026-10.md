@@ -32,8 +32,8 @@ contraste chaud des commerces et froid du ciel. Le rendu suit ces contraintes,
 avec des surfaces originales ; il ne reproduit pas les reflets physiques de
 la chaussée mouillée de la photo.
 
-La [galerie](../assets/kit-quartier.html) et la
-[fiche du kit](../assets/kit-quartier.md) sont prêtes à regarder.
+La galerie et la
+[fiche du kit](../4-technique/kit-quartier.md) sont prêtes à regarder.
 Le playtest Rapier et l'éclairage du moteur attendent N4b.
 Aucun test automatisé n'est ajouté ou lancé pour ce lot.
 

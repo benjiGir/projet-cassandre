@@ -49,15 +49,12 @@ ajoutée ni lancée. Les rendus Blender sont ouverts, puis la vue de la place
 est capturée dans le moteur.
 
 La première version comportait 284 proxies : 282 cuboids, deux convex hulls
-et aucun trimesh. Le [relevé du moteur](../assets/pilote-quartier/releve-jeu.json)
+et aucun trimesh. Le relevé du moteur
 est actualisé après la reprise de la place décrite ci-dessous.
 Le contrôle des liens documentaires passe sans erreur ni avertissement.
 
-![Place dans le moteur](../assets/pilote-quartier/place-jeu.png)
 
-![Façades de retour fermées dans le moteur](../assets/pilote-quartier/place-retour-jeu.png)
-
-La [page d'essai](../assets/pilote-quartier.html) et la
+La page d'essai et la
 [fiche technique](../4-technique/pilote-quartier.md) exposent les limites.
 Le gate utilisateur N4b reste ouvert ; N5 suit son jugement.
 
@@ -95,9 +92,6 @@ qui utilisent un proxy de mur par travée. Les 21 lampes et quatre meshes de
 portes sont toujours présents. Aucun test automatisé n'est ajouté ou lancé.
 Les nouveaux meubles ne font pas l'objet d'un parcours de combat dans ce lot.
 
-![Arrêt de bus au bord de la chaussée](../assets/pilote-quartier/arret-bus-jeu.png)
-
-![Terrasse devant le café](../assets/pilote-quartier/terrasse-jeu.png)
 
 La composition corrigée attend le jugement de l'utilisateur avant N5.
 
@@ -121,14 +115,13 @@ présents. Aucun test automatisé n'est ajouté ou lancé.
 
 La revue manuelle part du sommet des anciens murets, à z = 1 m. Un saut vers
 l'extérieur est arrêté aux X −2,59 et 2,59, avec retour au sol sur le muret.
-Les [relevés des rebords](../assets/pilote-quartier/rebords-escalier.json)
+Les relevés des rebords
 conservent les poses observées. La descente atteint Y 85,98 / z −4,99,
 en passant sous le plafond ; après ouverture de la grille, la remontée
 rejoint Y 68,64 / z 0,01 sur la place.
-[Palier](../assets/pilote-quartier/palier-escalier.json) et
-[retour](../assets/pilote-quartier/retour-escalier.json) sont conservés.
+Palier et
+retour sont conservés.
 
-![Enveloppe de l'escalier fermée](../assets/pilote-quartier/escalier-jeu.png)
 
 ## Rejeté et raison
 

@@ -1,6 +1,6 @@
 """Géométrie 2D du plan N2 ; sans dépendance Blender.
 
-see: docs/assets/plan-metro.md#contrôles-produits
+see: docs/journal/metro-plan-2026-10.md#tracé-n2-historique
 """
 import math
 

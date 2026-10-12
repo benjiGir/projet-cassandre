@@ -47,7 +47,7 @@ def main():
     report["export"] = C.export(niveau="hypermarche")
     if not report["export"].get("ok"):
         raise RuntimeError(report["export"])
-    path = ROOT / "docs/assets/sanitaires-assets/deploiement.json"
+    path = ROOT / "renders/reviews/sanitaires-assets/deploiement.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n")
     print("[restroom-assets] "+json.dumps({k:v for k,v in report.items() if k not in ("retire","matieres")}))

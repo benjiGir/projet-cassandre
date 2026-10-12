@@ -257,7 +257,7 @@ lieu.
     affiches : une image générée ne se retélécharge pas. La palette est propre
     à chaque panneau : celle des textures du jeu déformait les teintes.
 - **Cohérence du héros** : chaque prompt renvoie à la planche du portrait du
-  stream (`docs/assets/portrait-stream-animations-v1.png`) comme image de
+  stream (`assets_src/portrait_stream/portrait-stream-animations-v1.png`) comme image de
   référence.
 - **Les huit panneaux** :
 

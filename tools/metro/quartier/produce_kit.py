@@ -1,6 +1,6 @@
 """Recette N3b, appelée par C.quartier_kit() ; bibliothèque et planche.
 
-see: docs/assets/kit-quartier.md#reproduire
+see: docs/4-technique/kit-quartier.md#reproduire
 """
 from pathlib import Path
 import json
@@ -52,7 +52,7 @@ def streetscape(pieces, night=False):
 
 def main():
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    out = Path(args[args.index("--out") + 1]).resolve() if "--out" in args else ROOT / "docs/assets/kit-quartier"
+    out = Path(args[args.index("--out") + 1]).resolve() if "--out" in args else ROOT / "renders/reviews/kit-quartier"
     out.mkdir(parents=True, exist_ok=True)
     geo_utils.wipe_scene()
     geo_utils.configure_scene()

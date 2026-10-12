@@ -1,6 +1,6 @@
 """Finition locale des matières du magasin : C.art_direction_store().
 
-see: docs/assets/caisses-direction-artistique.md
+see: docs/5-guides/direction-artistique.md
 """
 import json
 from pathlib import Path

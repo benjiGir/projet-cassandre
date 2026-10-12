@@ -98,7 +98,7 @@ les unités SI, les proxies cuboid et les couleurs de sommets des helpers.
 La scène porte `cassandre_etape=atelier_N0`.
 
 Cette emprise sert à exercer les commandes ; elle ne décide aucune cote du
-niveau final. Le [candidat N2](../assets/plan-metro.md) est conservé séparément
+niveau final. Le [candidat N2](../journal/metro-plan-2026-10.md) est conservé séparément
 dans `tools/metro/layout/plan_n2.py` jusqu'au blockout N5. `plan()` produit
 son SVG et son relevé sans changer le fichier Blender ouvert.
 
@@ -112,7 +112,6 @@ L'empreinte est écrite à côté de la source dans `<nom>.fingerprint.json`.
 Le fichier doit être sauvegardé avant ce relevé. L'empreinte ne remplace pas
 une inspection de rendu ou des shaders des matériaux.
 
-Comparer les octets d'un GLB seul n'est pas une preuve de reconstruction :
 l'exporteur peut choisir une autre triangulation pour certains polygones.
 Le relevé du contenu Blender permet de comparer la géométrie source.
 Les traces et résultats de N0 sont dans le [journal](../journal/metro-outillage-2026-10.md).

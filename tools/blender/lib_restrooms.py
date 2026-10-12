@@ -1,6 +1,6 @@
 """Équipements et cabines des toilettes publiques.
 
-see: docs/assets/sanitaires-assets.md
+see: docs/4-technique/equipements-sanitaires.md
 """
 import math
 from pathlib import Path

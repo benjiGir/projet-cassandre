@@ -21,7 +21,7 @@ import cassandre as C
 
 OUT = ROOT / "assets_src/blender/quartier_pilote.blend"
 GLB = ROOT / "public/assets/levels/quartier_pilote.glb"
-REPORT = ROOT / "docs/assets/pilote-quartier"
+REPORT = ROOT / "renders/reviews/pilote-quartier"
 
 
 def main(save=True):

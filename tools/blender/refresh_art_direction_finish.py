@@ -37,7 +37,7 @@ def inventory(level):
                         "kit":obj.get("kit",""),"parent":obj.parent.name if obj.parent else "",
                         "bornes":[[round(min(v[i] for v in points),3) for i in range(3)],
                                   [round(max(v[i] for v in points),3) for i in range(3)]]})
-    path = ROOT/f"docs/assets/finition-da/inventaire-{level}.json"
+    path = ROOT/f"renders/reviews/finition-da/inventaire-{level}.json"
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps({"objets":sorted(objects,key=lambda obj:obj["nom"]),
                                "matieres":dict(totals.most_common())},ensure_ascii=False,indent=2)+"\n")

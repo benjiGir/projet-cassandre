@@ -25,7 +25,7 @@ from tools.metro.blockout import encounters
 
 BLEND = ROOT / "assets_src/blender/metro_blockout.blend"
 GLB = ROOT / "public/assets/levels/metro_blockout.glb"
-REPORT = ROOT / "docs/assets/blockout-metro/rencontres.json"
+REPORT = ROOT / "renders/reviews/blockout-metro/rencontres.json"
 # Un ramassage existant sert de gabarit : même boîte, même matière, même collection.
 TEMPLATE = "use_metro_cartouches_depot"
 
@@ -66,12 +66,13 @@ def main() -> int:
         print("[metro-armes] " + str(error).replace("\n", " | "))
         return 1
 
-    report = json.loads(REPORT.read_text())
+    report = json.loads(REPORT.read_text()) if REPORT.exists() else {"implantation": []}
     measured = {reading["nom"] for reading in readings}
     report["implantation"] = [r for r in report["implantation"] if r["nom"] not in measured] + readings
     report["ramassages"] = [{"nom": name, "pieds": at, "propriete": prop, "quantite": amount}
                             for name, at, prop, amount in encounters.PICKUPS]
     report["armes"] = [{"nom": name, "pieds": at} for name, at in encounters.weapon_positions()]
+    REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
 
     bpy.context.preferences.filepaths.save_version = 0

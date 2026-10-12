@@ -2,15 +2,15 @@
 title: Métro complet — blockout N5
 tags: [metro, niveau, blender, trains]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 
 # Métro complet — blockout N5
 
 ## Responsabilité
 
-Le [parcours d'essai](../assets/blockout-metro.html) raccorde le quartier
-validé aux espaces du [plan N2](../assets/plan-metro.md), jusqu'au hall de la
+Le parcours d'essai raccorde le quartier
+validé aux espaces du [plan N2](../journal/metro-plan-2026-10.md), jusqu'au hall de la
 tour. Le catalogue `metro` charge `metro_blockout.glb` ; `blockout_metro`
 offre le même fichier en développement. Les pilotes N4, N4b et T2 restent
 séparés et disponibles.
@@ -74,7 +74,7 @@ Contrôleur, secrets, bornes et équilibre final restent à N7/N8.
 | Noms des commandes | `src/game/level/blockout/blockoutConfig.ts` |
 | Chargement et installation | `src/game/level/loading/loader.ts`, `src/game/session/spawning.ts` |
 | Voyage partagé | `src/game/level/trainRide/trainRideSystem.ts`, `src/render/environment/trainRide/trainRidePresentation.ts` |
-| Revue | `docs/assets/blockout-metro.html` |
+| Relevés régénérés | `renders/reviews/blockout-metro/` |
 
 ## Géométrie
 
@@ -322,7 +322,7 @@ un petit diagramme de voies et sa conduite murale annoncent la branche ;
 l’applique du coude éclaire la véritable porte « POSTE ». Il ne porte aucun
 bouton ni nouvel objectif. La visite du 8 octobre rejoint cette commande
 par B, active l’aiguillage et revient au quai sans saut, trafic suspendu
-([relevé local](../assets/blockout-metro/poste-liaison-parcours-2026-10-08.json)).
+(relevé local).
 
 La sortie de A traverse un platelage de 1,55 m de large, à 17,5 cm au-dessus
 du sol, aligné sur les têtes des rails. Trois panneaux laissent des gorges
@@ -683,7 +683,7 @@ sonore complet restent à reprendre avec N6.
 
 Révision du 7 octobre après le retour sur les apparitions, panneaux et
 saccades, complétée le 8 octobre pour la profondeur et la circulation.
-[Références photographiques](../assets/tunnels-references.md).
+[Références photographiques](../6-reference/references-tunnels.md).
 
 Les tubes A/B et les quais reprennent une voûte, des rails continus,
 traverses, goulotte latérale et bouches de tunnel. Les matériaux N3 remplacent

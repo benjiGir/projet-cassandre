@@ -1,6 +1,6 @@
 """Jardinières et assises latérales du parvis d'arrivée.
 
-see: docs/assets/tunnels-references.md#gare-darrivée-et-parvis--9-octobre
+see: docs/6-reference/references-tunnels.md#gare-darrivée-et-parvis--9-octobre
 """
 from math import cos, pi, sin
 

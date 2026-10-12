@@ -125,5 +125,4 @@ Lancer la validation stricte sur la scène construite ; expliquer tout avertisse
 Exporter avec `tools/blender/export_level.py` vers `public/assets/levels/`.
 Charger le fichier dans le jeu et contrôler les spawns, portes, triggers et objets interactifs.
 Pour une capture d'apparence, exécuter `tools/blender/render_ingame.py` sur la scène construite et inspecter l'image produite.
-Comparer les comptes d'objets et le nom du fichier exporté au rapport de validation correspondant.
 Pour les commandes et arguments exacts, consulter `tools/blender/README.md`.

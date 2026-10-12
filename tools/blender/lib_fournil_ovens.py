@@ -1,6 +1,6 @@
 """Fours à soles et rôtissoire du fournil.
 
-see: docs/assets/fours-fournil.md
+see: docs/4-technique/fours-fournil.md
 """
 import math
 
