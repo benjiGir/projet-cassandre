@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-12
 ---
 
 # Contrats locaux du rendu
@@ -99,7 +99,9 @@ modifierait toutes les entités en même temps ([ADR 0017](../decisions/0017-clo
 Les dimensions par défaut sont 1 × 1,8 m, une ligne, teinte blanche et coupure
 alpha à 0,5. `verticalAnchor` mesure la fraction de hauteur sous `position.y` :
 0 pour le pied, 0,5 pour le centre, 1 pour le sommet. La géométrie se translate
-une fois ; elle ne change pas pendant l'interpolation.
+une fois pour les grilles régulières. Avec un `layout` peint, les quatre
+sommets suivent le rectangle de pose, son ancrage et sa densité, sans nouvelle
+géométrie. La caméra de chaque passe choisit la direction dans `onBeforeRender`.
 `normalTilt` incline uniquement les normales pour mieux capter une lampe au
 plafond. La silhouette et la pose du quad restent verticales.
 
@@ -139,7 +141,9 @@ Son repli numéroté comporte dix lignes, dont quatre pour la mort ; l'erreur es
 signalée en console et le jeu reste jouable.
 
 Les Costards et les Vigiles possèdent quatre carnations (`clair`, `humain`,
-`mate`, `fonce`), rendues avec les mêmes poses et uniformes par
+`mate`, `fonce`). Les Costards sont peints par Imagegen, avec leurs originaux et
+prompts dans `assets_src/costard_sprites/`, puis décrits par
+`tools/sprites/describe_costard.py`. Les Vigiles sont rendus par
 `tools/blender/render_enemy_sprites.py`. Visage et mains changent ensemble.
 `SuitManager` attribue un `appearanceIndex` par ordre d'apparition dans chaque
 espèce ; `enemyHumanAtlas` choisit l'atlas une seule fois au spawn, dans l'ordre

@@ -777,6 +777,9 @@ def main() -> int:
     filtre_anims = arg_value(args, "--anims", None)
     filtre_dirs = arg_value(args, "--directions", None)
     apercu = filtre_anims is not None or filtre_dirs is not None
+    if nom == "costard" and os.path.abspath(out) == os.path.abspath("public/assets/sprites"):
+        print("[sprites] Costard peint : utiliser tools/sprites/describe_costard.py ; rendre l'ancien modèle dans renders/ uniquement.")
+        return 1
     perso = PERSONNAGES[nom]
     os.makedirs(out, exist_ok=True)
     tmp = os.path.join(bpy.app.tempdir or "/tmp", f"sprite_{nom}.png")

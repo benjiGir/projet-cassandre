@@ -136,7 +136,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
-| `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
+| `render_enemy_sprites.py` | atlas 8 directions + manifeste du Directeur, du Rampant et du Vigile (`public/assets/sprites/`), rendus depuis les modèles CC0 |
 | `build_weapons.py` | quatre armes (dont le pistolet de détresse, `weapons/flare.py`) et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
@@ -159,11 +159,16 @@ source ne s'éclaire pas elle-même). Leur raison d'être est dans
 
 ```bash
 # Sprites des ennemis (ADR 0028) — ~10 s par personnage
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard
+python3 tools/sprites/describe_costard.py
 blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage directeur
 # Itération rapide : quelques animations et directions, écrit <personnage>_apercu.png
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard --anims aim,fire --directions 0,2 --out renders/sprites
+blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage vigile --anims aim,fire --directions 0,2 --out renders/sprites
 ```
+
+Les Costards peints viennent de `assets_src/costard_sprites/`, avec leurs prompts
+de génération. `describe_costard.py` mesure leur alpha et recopie les PNG sans
+les modifier ; il requiert Pillow. Le générateur Blender refuse d'écraser ces
+sprites dans le dossier runtime.
 
 Pièges payés en écrivant ce script, tous silencieux :
 

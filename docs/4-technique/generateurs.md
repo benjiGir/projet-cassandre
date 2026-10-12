@@ -2,7 +2,7 @@
 title: Générateurs d'assets
 tags: [technique]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-12
 ---
 
 # Générateurs d'assets
@@ -24,7 +24,8 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/textures/generate_portes.py` compose les textures d'ouvrants.
 - `tools/textures/generate_surgeles.py` génère les visuels du rayon surgelés.
 - `tools/textures/generate_ciel.py` génère les six faces du ciel de nuit.
-- `tools/blender/render_enemy_sprites.py` rend les sprites huit directions des ennemis.
+- `tools/blender/render_enemy_sprites.py` rend les sprites huit directions du Directeur, du Rampant et du Vigile.
+- `tools/sprites/describe_costard.py` mesure les sprites peints du Costard et écrit son manifeste, sans retoucher les originaux.
 - `tools/blender/build_weapons.py` construit et exporte les armes.
 - `tools/blender/render_weapon_pickups.py` rend l'atlas des armes au sol.
 - `tools/textures/generate_card_pickups.py` dessine les trois sprites des cartes de fidélité.
@@ -71,7 +72,11 @@ La recette Cassandre `rework_vending(preview=…)` remplace localement huit mach
 
 ### Sprites et armes
 
-`render_enemy_sprites.py` utilise un modèle source et écrit les atlas et manifestes sous `public/assets/sprites/`.
+`render_enemy_sprites.py` utilise un modèle source et écrit les atlas et manifestes sous `public/assets/sprites/`. Il refuse d'y écraser le Costard peint ; un rendu de l'ancien modèle reste possible vers `renders/`.
+Le Costard est généré par Imagegen à partir du style du héros et du costume
+historique. Ses originaux et prompts vivent dans `assets_src/costard_sprites/`.
+`describe_costard.py` mesure douze lignes, huit directions par ligne et quatre
+carnations, puis copie les PNG et écrit `public/assets/sprites/costard.json`.
 Les manifestes associent les directions, animations et rectangles de texture lus par le moteur.
 `build_weapons.py` écrit le modèle glTF des armes dans `public/assets/weapons/armes.glb`.
 `render_weapon_pickups.py` écrit l'atlas des armes au sol et son manifeste sous `public/assets/sprites/`.

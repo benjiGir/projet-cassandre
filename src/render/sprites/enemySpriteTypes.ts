@@ -5,10 +5,27 @@ export type SpriteAnimationName = "idle" | "alert" | "chase" | "aim" | "fire" | 
 export interface SpriteAnimation {
   row: number;
   frames: number;
+  sequence?: readonly number[];
   fps?: number;
   metersPerCycle?: number;
   // Durée d'affichage après l'évènement (`fire`).
   duration?: number;
+}
+
+export interface EnemySpriteFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  anchorX: number;
+  feetFromBottom: number;
+}
+
+export interface EnemySpriteLayout {
+  width: number;
+  height: number;
+  pixelsPerMeter: number;
+  frames: readonly (readonly EnemySpriteFrame[])[];
 }
 
 export interface EnemySpriteSheet {
@@ -19,6 +36,7 @@ export interface EnemySpriteSheet {
   feetFromBottom: number;
   animations: Record<SpriteAnimationName, SpriteAnimation>;
   atlases: { humain: THREE.Texture } & Record<string, THREE.Texture | undefined>;
+  layouts?: Readonly<Record<string, EnemySpriteLayout>>;
 }
 
 // see: docs/6-reference/notes-code-rendu.md#planches-et-chargement-ennemi

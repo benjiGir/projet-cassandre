@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Sprites et viewmodel
@@ -26,6 +26,7 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 - `src/game/loop/updateFx.ts` — fait décroître les flashes au temps réel.
 - `src/game/player/weapons/weapons.ts` — détient les horloges de tir et de changement d'arme consommées par le viewmodel.
 - `tools/blender/render_enemy_sprites.py` — produit les planches et manifestes ennemis.
+- `tools/sprites/describe_costard.py` — mesure les cases peintes du Costard et copie les originaux vers le runtime.
 - `tools/blender/build_weapons.py` — produit le glTF des modèles subjectifs et des armes au sol.
 - `public/assets/sprites/` et `public/assets/weapons/armes.glb` — ressources effectivement chargées.
 - [Rendu](rendu.md) — résolution, textures, matériau Lambert et ordre de frame.
@@ -62,11 +63,37 @@ Une planche contient huit colonnes directionnelles et un nombre de lignes fourni
 
 `enemySpriteQuad` transforme la taille en pixels et l'ancrage des pieds en mètres à partir du manifeste et de la capsule. Les pixels transparents au bas de la planche sont intégrés au calcul de l'ancrage.
 
+Le Costard utilise des dessins générés dans le style du héros, conservés dans
+`assets_src/costard_sprites/` avec leurs prompts. Ses quatre planches de
+1024 × 1536 pixels contiennent chacune 96 cases : huit directions et douze
+poses. Les colonnes montrent face, trois-quarts droit, profil droit, dos droit,
+dos, dos gauche, profil gauche et trois-quarts gauche.
+
+La poursuite joue les lignes 2, 3, 4, 3 par distance parcourue. Le tir, l'impact
+et la visée ont des poses distinctes. Quatre images de mort s'étalent sur la
+durée de mort existante ; le cadavre garde la dernière. L'IA, les capsules et
+les dégâts restent indépendants des images.
+
+Le champ facultatif `layouts` décrit, pour chaque peau, les rectangles de
+chaque pose, leur ancrage horizontal, les pieds et la densité. L'outil mesure
+l'alpha sans modifier les PNG. Une seule densité par peau préserve la taille
+du corps pendant qu'il tombe : le cadavre n'est pas agrandi à 1,8 m de haut.
+Les dimensions du PNG, les huit directions de chaque ligne et les bornes des
+rectangles sont contrôlées au chargement. Les autres ennemis gardent leur
+grille régulière et leurs rendus Blender.
+
 ### Billboard 8 directions
 
 `BillboardSprite` possède un `PlaneGeometry` et une texture clonée par instance. Le clonage est nécessaire : chaque ennemi change le `repeat` et l'`offset` de sa case sans modifier les UV d'un autre ennemi qui partage l'atlas.
 
 Le billboard ne pivote que sur l'axe vertical. L'angle entre le vecteur avant de l'ennemi et la direction horizontale vers la caméra est quantifié par pas de 45 degrés. Si l'un des vecteurs est dégénéré, le sprite garde la dernière direction valide.
+
+Avec un `layout` peint, les sommets du même quad suivent les dimensions de la
+case. Leur mise à jour n'alloue ni géométrie ni matériau. Le choix de vue est
+refait dans `onBeforeRender` avec la caméra de la passe, y compris celle d'un
+miroir. Une sphère englobant toutes ses poses conserve le culling hors champ
+sans recalculer les bornes par frame ; le sprite reste deux triangles. Le
+masque alpha de l'apparition TSL lit les mêmes offsets UV.
 
 Le matériau est un `MeshLambertMaterial` opaque avec `alphaTest` (0,5 par défaut) et `depthWrite`. Les pixels transparents sont coupés ; les sprites ne demandent pas de tri alpha. L'option `normalTilt` incline les normales pour recevoir la lumière, sans modifier la géométrie. `setTint` modifie la teinte et `setAtlas` remplace la peau tout en gardant la case courante.
 

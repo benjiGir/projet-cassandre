@@ -1,11 +1,12 @@
 import * as THREE from "three";
 
 import { assetUrl } from "../../core/loading/assetPath";
+import { fetchJson } from "../../core/net/fetchJson";
 import { BILLBOARD_COLUMNS, createPlaceholderAtlas } from "./billboard";
 import { configureRetroTexture } from "../pipeline/renderer";
 import { decodeSpriteManifest } from "./enemySpriteManifest";
 import { HUMAN_SKIN_VARIANTS } from "./enemySkinConfig";
-import type { EnemyAnimationInput, EnemySpriteSheet, SpriteAnimation } from "./enemySpriteTypes";
+import type { EnemyAnimationInput, EnemySpriteLayout, EnemySpriteSheet, SpriteAnimation } from "./enemySpriteTypes";
 
 // see: docs/6-reference/notes-code-rendu.md#planches-et-chargement-ennemi
 
@@ -18,19 +19,25 @@ export function enemyHumanAtlas(sheet: EnemySpriteSheet, appearanceIndex: number
   return sheet.atlases[skin] ?? sheet.atlases.humain;
 }
 
+export function enemySpriteLayout(sheet: EnemySpriteSheet, atlas: THREE.Texture): EnemySpriteLayout | undefined {
+  const skin = Object.keys(sheet.atlases).find((key) => sheet.atlases[key] === atlas);
+  return skin ? sheet.layouts?.[skin] : undefined;
+}
+
 const DEFAULT_FIRE_DURATION = 0.12; // s
 const DEFAULT_IDLE_FPS = 1.5;
 const DEFAULT_METERS_PER_CYCLE = 2.8;
 
 function loopedRow(animation: SpriteAnimation, index: number): number {
   const frames = animation.frames;
-  return animation.row + (((Math.floor(index) % frames) + frames) % frames);
+  const frame = ((Math.floor(index) % frames) + frames) % frames;
+  return animation.sequence?.[frame] ?? animation.row + frame;
 }
 
 function spreadRow(animation: SpriteAnimation, time: number, duration: number): number {
   const progress = duration > 0 ? time / duration : 1;
   const frame = Math.min(animation.frames - 1, Math.max(0, Math.floor(progress * animation.frames)));
-  return animation.row + frame;
+  return animation.sequence?.[frame] ?? animation.row + frame;
 }
 
 export function enemySpriteRow(sheet: EnemySpriteSheet, input: EnemyAnimationInput): number {
@@ -51,7 +58,9 @@ export function enemySpriteRow(sheet: EnemySpriteSheet, input: EnemyAnimationInp
     case "death":
       return spreadRow(a.death, input.poseTime, input.poseDuration);
     case "corpse":
-      return a.death.row + a.death.frames - 1;
+      return a.death.sequence?.[a.death.frames - 1] ?? a.death.row + a.death.frames - 1;
+    default:
+      throw new Error("[sprites] pose inconnue");
   }
 }
 
@@ -68,14 +77,17 @@ export function enemySpriteQuad(
 
 // Frontière asynchrone de démarrage, jamais dans la boucle.
 async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteSheet> {
-  const response = await fetch(assetUrl(`assets/sprites/${name}.json`));
-  if (!response.ok) throw new Error(`[sprites] ${name}.json : HTTP ${response.status}`);
-  const manifest = decodeSpriteManifest(await response.json());
+  const manifest = await fetchJson(assetUrl(`assets/sprites/${name}.json`), decodeSpriteManifest);
 
   const loader = new THREE.TextureLoader();
   const loaded = await Promise.allSettled(
     Object.entries(manifest.atlases).map(async ([skin, file]) => {
       const texture = await loader.loadAsync(assetUrl(`assets/sprites/${file}`));
+      const layout = manifest.layouts?.[skin];
+      if (layout && (texture.image.width !== layout.width || texture.image.height !== layout.height)) {
+        texture.dispose();
+        throw new Error(`[sprites] ${name}/${skin} : dimensions différentes du manifeste`);
+      }
       configureRetroTexture(texture);
       return [skin, texture] as const;
     }),
@@ -100,6 +112,7 @@ async function loadEnemySpriteSheet(name: string): Promise<EnemySpriteSheet> {
     pixelsPerMeter: manifest.pixelsPerMeter,
     feetFromBottom: manifest.feetFromBottom,
     animations: manifest.animations,
+    layouts: manifest.layouts,
     atlases: { ...atlases, humain: atlases.humain },
   };
 }

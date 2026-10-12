@@ -1,0 +1,83 @@
+{
+  "tool": "OpenAI image_gen intégré à Codex",
+  "generatedOn": "2026-10-12",
+  "prompts": [
+    {
+      "role": "base",
+      "prompt": "Use case: stylized-concept.\nAsset type: PROJET_CASSANDRE painted retro FPS enemy animation atlas, genuine transparent RGBA background.\nInput image 1 is ONLY the approved hero's painted art style reference. Input image 2 is the previous Costard atlas, ONLY for enemy costume, sunglasses, pistol and pose vocabulary. Create entirely new illustrated enemy sprites, NOT a render of a 3D model.\nSubject in every frame: the same stern middle-aged security henchman in a dark navy charcoal business suit, white dress shirt, vivid burgundy red necktie, polished dark shoes, short combed grey hair, black rectangular sunglasses, medium warm beige skin, clean shaven square jaw. A small dark steel pistol in his RIGHT hand. Body moderately broad, imposing and believable like the hero, not skinny primitive shapes. Costume never changes. Strong readable silhouette, fabric folds, lapels, hands, face, contrast and controlled shaded pixel-painted style matching image 1. NO hero hoodie or beard.\nCRITICAL layout: a tall rectangular sheet of EXACTLY EIGHT evenly spaced columns and TWELVE evenly spaced rows = 96 separate full sprites. Every row contains all 8 directions of the same action. Uniform invisible grid. Each slot has ample transparent padding on ALL sides: nothing touches neighboring slots or sheet edge, no clipping of arms, muzzle flash or prone bodies. Full entire person visible. Center body in each column, feet on the same baseline within each row. All upright figures same height. Prone figures naturally LOW and wide, not enlarged. Width of cell sufficient for a fallen body, keep all sprites small enough to fit. NO grid lines, titles, labels, numbers, shadows on ground, background, text or watermark.\nDIRECTIONS columns left to right IN EVERY ROW: 1 front, 2 front three-quarter facing RIGHT on image, 3 RIGHT profile, 4 rear three-quarter facing RIGHT, 5 directly back, 6 rear three-quarter facing LEFT, 7 LEFT profile, 8 front three-quarter facing LEFT.\nTWELVE ROWS top to bottom, exact:\n0 IDLE: upright relaxed alert posture, pistol pointing down beside right thigh.\n1 ALERT: spotting player, tense shoulders, pistol brought to chest ready to raise.\n2 WALK LEFT STRIDE: pursuing with left leg forward, right leg back, pistol low ready.\n3 WALK PASSING: pursuing, legs passing each other, knees bent slightly, pistol low ready.\n4 WALK RIGHT STRIDE: pursuing with right leg forward, left leg back, pistol low ready.\n5 AIM / TELEGRAPH: planted feet, both hands grip pistol extended aiming straight ahead of his OWN facing direction; unmistakably distinct from idle.\n6 FIRE: same planted aiming posture but small bright yellow orange muzzle burst at barrel, subtle recoil, no giant flame.\n7 HURT: torso rocks backwards reacting to bullet impact, bent elbows, gun hand drawn back, still standing.\n8 DEATH FIRST: clutching abdomen with left hand, gun lowering, knees buckling, bent forward, clearly wounded.\n9 DEATH KNEEL: down on both knees beginning to topple, shoulders droop.\n10 DEATH FALL: collapsed sideways close to ground, body partly curled and arm loosened.\n11 CORPSE: motionless lying fully on his side on floor, entire body horizontally laid out, pistol beside right hand, subtle blood spot underneath only.\nThis is a real game animation asset: consistent face proportions, outfit colors, pistol, proportions and view directions across 96 frames. Actual transparent alpha everywhere outside sprites. Low resolution hand-painted late-1990s shooter illustration, not anime, not smooth 3D, not photorealistic. Prioritize exact grid count and isolated silhouettes.",
+      "referenceImages": [
+        "assets_src/hero_sprites/locomotion.png",
+        "public/assets/sprites/costard.png (version 3069d51, rendue depuis le modèle CC0)"
+      ]
+    },
+    {
+      "role": "clair",
+      "prompt": "Use case: precise-object-edit. Edit target: supplied Costard enemy sprite atlas. Change ONLY the complexion on ALL exposed faces, ears, necks and hands in EVERY one of the 96 sprites to light warm peach skin, subtle pink undertone. Keep EXACTLY the same 1024 x 1536 pixel canvas, EIGHT columns, TWELVE rows, every action, body position, limb and pistol placement, sunglasses, combed grey hair, navy suit, white shirt, red tie, feet baselines, deaths, muzzle flashes, illustrated painted rendering and alpha silhouette. One consistent complexion throughout all eight viewing directions and all animations of this enemy. Preserve genuine transparent alpha background. Do not add a background, labels, grid, decoration or new characters. The reference has hidden RGB behind alpha: those pixels must remain TRANSPARENT, not painted grey. No shadow plane. Never crop or resize the sheet. Pixel painted illustration like the approved hero.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png"
+      ]
+    },
+    {
+      "role": "mate",
+      "prompt": "Use case: precise-object-edit. Edit target: supplied Costard enemy sprite atlas. Change ONLY the complexion on ALL exposed faces, ears, necks and hands in EVERY one of the 96 sprites to medium olive tan skin, distinctly deeper and warmer than the reference. Keep EXACTLY the same 1024 x 1536 pixel canvas, EIGHT columns, TWELVE rows, every action, body position, limb and pistol placement, sunglasses, combed grey hair, navy suit, white shirt, red tie, feet baselines, deaths, muzzle flashes, illustrated painted rendering and alpha silhouette. One consistent complexion throughout all eight viewing directions and all animations of this enemy. Preserve genuine transparent alpha background. Do not add a background, labels, grid, decoration or new characters. The reference has hidden RGB behind alpha: those pixels must remain TRANSPARENT, not painted grey. No shadow plane. Never crop or resize the sheet. Pixel painted illustration like the approved hero.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png"
+      ]
+    },
+    {
+      "role": "fonce",
+      "prompt": "Use case: precise-object-edit. Edit target: supplied Costard enemy sprite atlas. Change ONLY the complexion on ALL exposed faces, ears, necks and hands in EVERY one of the 96 sprites to deep brown skin with clearly visible warm highlights, distinctly dark brown NOT grey or black shadows. Keep EXACTLY the same 1024 x 1536 pixel canvas, EIGHT columns, TWELVE rows, every action, body position, limb and pistol placement, sunglasses, combed grey hair, navy suit, white shirt, red tie, feet baselines, deaths, muzzle flashes, illustrated painted rendering and alpha silhouette. One consistent complexion throughout all eight viewing directions and all animations of this enemy. Preserve genuine transparent alpha background. Do not add a background, labels, grid, decoration or new characters. The reference has hidden RGB behind alpha: those pixels must remain TRANSPARENT, not painted grey. No shadow plane. Never crop or resize the sheet. Pixel painted illustration like the approved hero.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png"
+      ]
+    },
+    {
+      "role": "mate-alpha-correction",
+      "prompt": "Use case: background-extraction. Edit target: supplied Costard sprite sheet 1024x1536, 8 columns x12 rows. REMOVE the entire grey-white gradient background and all ground drop-shadows to genuine alpha=0 transparent pixels. Keep every one of the 96 painted character sprites exactly in place, all bodies, pistols, orange muzzle flashes and small red blood patches. Preserve his MEDIUM OLIVE TAN complexion on every face and hand, preserve grey hair, sunglasses, dark navy suit, white shirt, red tie and every animation. Keep the same canvas size, exact positions and empty spacing. This image is a sprite atlas for a videogame and the background must be ACTUAL FULL TRANSPARENCY, not white, not grey, not a checkerboard painted into RGB, not a gradient. Every pixel between characters must have zero alpha. No shadow or haze or glow behind sprites. Crisp isolated silhouettes with no opaque rectangle. Only remove background.",
+      "referenceImages": [
+        "variante mate intermédiaire, non retenue"
+      ]
+    },
+    {
+      "role": "hand-correction-costard.png",
+      "prompt": "Use case: precise-object-edit. Edit target is this EXACT 1024x1536 transparent painted Costard animation atlas: eight columns, twelve rows. Correct ONE specific cell ONLY: FOURTH ROW FROM THE TOP, FIRST COLUMN FROM THE LEFT (front-facing walking passing pose, sprite roughly x=25..105, y=428..560). In that cell the gun is wrongly in the character's left hand on the RIGHT side of the image. Move the pistol to his anatomical RIGHT hand, which is on the LEFT side of the image for this frontal view, with barrel down beside the thigh, exactly like the first-row first-column idle pose and third-row first-column walk pose. His other hand must be empty. Keep the walking passing legs, body, head, costume, facial identity, complexion, and shading of that same cell. Preserve ALL OTHER 95 cells EXACTLY, same positions, actions, directions, colors and isolated silhouettes. Preserve the same 1024x1536 canvas, eight columns and twelve rows and every empty margin. Genuine transparent alpha outside silhouettes; never fill in a background, grey gradient, ground shadow or grid. Do not add extra hands or duplicate pistols. This is a surgical single-cell correction, not a redesign of the sprite sheet.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png (avant correction de la main)"
+      ]
+    },
+    {
+      "role": "hand-correction-costard_clair.png",
+      "prompt": "Use case: precise-object-edit. Edit target is this EXACT 1024x1536 transparent painted Costard animation atlas: eight columns, twelve rows. Correct ONE specific cell ONLY: FOURTH ROW FROM THE TOP, FIRST COLUMN FROM THE LEFT (front-facing walking passing pose, sprite roughly x=25..105, y=428..560). In that cell the gun is wrongly in the character's left hand on the RIGHT side of the image. Move the pistol to his anatomical RIGHT hand, which is on the LEFT side of the image for this frontal view, with barrel down beside the thigh, exactly like the first-row first-column idle pose and third-row first-column walk pose. His other hand must be empty. Keep the walking passing legs, body, head, costume, facial identity, complexion, and shading of that same cell. Preserve ALL OTHER 95 cells EXACTLY, same positions, actions, directions, colors and isolated silhouettes. Preserve the same 1024x1536 canvas, eight columns and twelve rows and every empty margin. Genuine transparent alpha outside silhouettes; never fill in a background, grey gradient, ground shadow or grid. Do not add extra hands or duplicate pistols. This is a surgical single-cell correction, not a redesign of the sprite sheet.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard_clair.png (avant correction de la main)"
+      ]
+    },
+    {
+      "role": "hand-correction-costard_mate.png",
+      "prompt": "Use case: precise-object-edit. Edit target is this EXACT 1024x1536 transparent painted Costard animation atlas: eight columns, twelve rows. Correct ONE specific cell ONLY: FOURTH ROW FROM THE TOP, FIRST COLUMN FROM THE LEFT (front-facing walking passing pose, sprite roughly x=25..105, y=428..560). In that cell the gun is wrongly in the character's left hand on the RIGHT side of the image. Move the pistol to his anatomical RIGHT hand, which is on the LEFT side of the image for this frontal view, with barrel down beside the thigh, exactly like the first-row first-column idle pose and third-row first-column walk pose. His other hand must be empty. Keep the walking passing legs, body, head, costume, facial identity, complexion, and shading of that same cell. Preserve ALL OTHER 95 cells EXACTLY, same positions, actions, directions, colors and isolated silhouettes. Preserve the same 1024x1536 canvas, eight columns and twelve rows and every empty margin. Genuine transparent alpha outside silhouettes; never fill in a background, grey gradient, ground shadow or grid. Do not add extra hands or duplicate pistols. This is a surgical single-cell correction, not a redesign of the sprite sheet.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard_mate.png (avant correction de la main)"
+      ]
+    },
+    {
+      "role": "hand-correction-costard_fonce.png",
+      "prompt": "Use case: precise-object-edit. Edit target is this EXACT 1024x1536 transparent painted Costard animation atlas: eight columns, twelve rows. Correct ONE specific cell ONLY: FOURTH ROW FROM THE TOP, FIRST COLUMN FROM THE LEFT (front-facing walking passing pose, sprite roughly x=25..105, y=428..560). In that cell the gun is wrongly in the character's left hand on the RIGHT side of the image. Move the pistol to his anatomical RIGHT hand, which is on the LEFT side of the image for this frontal view, with barrel down beside the thigh, exactly like the first-row first-column idle pose and third-row first-column walk pose. His other hand must be empty. Keep the walking passing legs, body, head, costume, facial identity, complexion, and shading of that same cell. Preserve ALL OTHER 95 cells EXACTLY, same positions, actions, directions, colors and isolated silhouettes. Preserve the same 1024x1536 canvas, eight columns and twelve rows and every empty margin. Genuine transparent alpha outside silhouettes; never fill in a background, grey gradient, ground shadow or grid. Do not add extra hands or duplicate pistols. This is a surgical single-cell correction, not a redesign of the sprite sheet.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard_fonce.png (avant correction de la main)"
+      ]
+    }
+  ],
+  "notes": [
+    "Costard peint dans le style approuvé du héros ; huit directions, douze poses et quatre carnations.",
+    "Alpha et pixels des originaux conservés. Mesure des rectangles et copie via tools/sprites/describe_costard.py.",
+    "Le runtime précédent utilisait déjà des billboards. Le modèle CC0 reste nécessaire au Directeur et au Vigile.",
+    "La première variante mate avait un fond opaque ; elle est remplacée par une extraction de fond via Imagegen.",
+    "Pose de passage vue de face corrigée sur les quatre peaux : pistolet conservé dans la main droite. Les références de variante sont les planches avant cette correction."
+  ],
+  "sha256": {
+    "costard.png": "89430c58f15d847df23437493fc46239f577e152d32dbaa0ad0d8345d15adecd",
+    "costard_clair.png": "98da24f3c0d26dcdeeb25293f176fa7c7319f2ab422263dbba61acc800524f9a",
+    "costard_fonce.png": "19af6483137f6cbc570dd0ad321ab77c3774005b47def53a82873f49c9491c6c",
+    "costard_mate.png": "c1b4d4be4ca1e9337a382e25e9b62e5e6fc7c5c113a233f9a764639505f8f6fc"
+  }
+}
