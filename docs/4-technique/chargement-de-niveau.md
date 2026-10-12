@@ -2,7 +2,7 @@
 title: Chargement de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Chargement de niveau
@@ -114,14 +114,14 @@ surface, son matériau et sa cible au remplacement du niveau.
 
 Le [corps du héros](reflet-du-heros.md) est chargé une fois avec les armes.
 `reflectionActors.ts` le rend visible uniquement pendant le rendu réfléchi,
-puis rétablit sa visibilité même en cas d'erreur. Ses mains et ses armes
-appartiennent à son squelette ; les armes subjectives restent cachées.
+puis rétablit sa visibilité même en cas d'erreur. Ses mains et son équipement
+sont dessinés dans les poses du billboard ; les armes subjectives restent cachées.
 
 `src/render/environment/warmLevelMirrors.ts` rend chaque surface depuis une
 caméra temporaire pendant la préparation du candidat. Tous les appels de rendu
 passent par `runGameplaySync` et `RenderService`. Les attentes restent à la
 frontière asynchrone du chargement. Le corps est temporairement placé devant
-chaque surface pour préparer aussi ses matériaux articulés. Sa pose est ensuite
+chaque surface pour préparer aussi son matériau de sprite. Sa pose est ensuite
 restaurée. Les équipements sont décrits dans la
 [fiche des sanitaires](equipements-sanitaires.md).
 

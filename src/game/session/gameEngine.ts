@@ -123,7 +123,8 @@ export function buildGameEngine(
   );
   const fx = new FxSystem(scene, enemyAtlases);
   const viewmodel = new Viewmodel(camera, weaponModels);
-  const heroReflection = new HeroReflection(scene, heroAsset, weaponModels);
+  const heroReflection = new HeroReflection(scene, heroAsset);
+  for (const atlas of Object.values(heroAsset.atlases)) renderer.initTexture(atlas.texture);
   const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const ballisticsDebug = new BallisticsDebugOverlay(scene);

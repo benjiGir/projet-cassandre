@@ -43,7 +43,7 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Métro complet — blockout N5](blockout-metro.md) — parcours, objectifs, trains et voyage jusqu’au hall.
 - [Rencontres du métro](rencontres-metro.md) — première implantation N7, déclencheurs, vagues à bord et ressources.
 
-- [Corps du héros dans les miroirs](reflet-du-heros.md) — modèle articulé, animations et visibilité dans les reflets.
+- [Corps du héros dans les miroirs](reflet-du-heros.md) — billboard peint, huit directions et animations dans les reflets.
 - [Équipements des sanitaires](equipements-sanitaires.md) — cabines, lavabos, miroirs et recette de reprise.
 - [Fours du fournil](fours-fournil.md) — fours à soles, rôtissoire et reconstruction.
 - [Kit du métro](kit-metro.md) — pièces modulaires, matériaux et recette.

@@ -1,8 +1,24 @@
 import type * as THREE from "three";
 
 export interface HeroAsset {
-  readonly root: THREE.Group;
-  readonly animations: readonly THREE.AnimationClip[];
+  readonly atlases: Readonly<Record<HeroAtlasKind, HeroAtlas>>;
+}
+
+export type HeroAtlasKind = "locomotion" | "equipment" | "actions" | "armedWalk";
+
+export interface HeroSpriteFrame {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly anchorX: number;
+}
+
+export interface HeroAtlas {
+  readonly texture: THREE.Texture;
+  readonly width: number;
+  readonly height: number;
+  readonly frames: readonly (readonly HeroSpriteFrame[])[];
 }
 
 export interface HeroMovementSource {

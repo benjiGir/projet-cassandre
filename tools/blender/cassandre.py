@@ -507,16 +507,6 @@ def rework_accesses(preview: str | None = None) -> dict:
     return result
 
 
-def hero_model() -> dict:
-    """Héros articulé pour les miroirs, source, animations glTF et vues de contrôle."""
-    if bpy.data.filepath and Path(bpy.data.filepath).resolve() != REPO / "assets_src/blender/hero.blend":
-        return {"ok": False, "error": "Ouvrir une session --factory-startup pour construire le héros."}
-    _sauver_si_sale("reconstruction du héros")
-    result = run("tools/blender/build_hero.py", keep="[hero]")
-    result["ok"] = result["code"] == 0
-    return result
-
-
 def weapon_kick(preview: str | None = None) -> dict:
     """Chaussure et bas de pantalon du coup de pied, ajoutés aux armes existantes."""
     args = ("--preview", str(Path(preview).resolve())) if preview else ()
