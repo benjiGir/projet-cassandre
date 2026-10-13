@@ -1,0 +1,74 @@
+{
+  "tool": "OpenAI image_gen intégré à Codex",
+  "generatedOn": "2026-10-13",
+  "prompts": [
+    {
+      "role": "base",
+      "prompt": "Use case: stylized-concept.\nCreate a brand new transparent animation sheet for the Vigile enemy, matching the attached Costard's painted retro shooter style ONLY. Do NOT reuse his suit or gun.\nCharacter: very broad stocky imposing2m tall security man, dark short beard, mediumtan face and bare hands. Navy peaked security cap, navy jacket and trousers, yellow stripe around chest and sleeves continuing across back, black boots, utilitybelt. LEFT arm carries one rectangular riot shield, smokygray translucent pane with black rim and yellow horizontalband. RIGHT hand carries ONE short black baton. No second baton or extra hand. Shield rests ahead of left torso. Front view: shield on imageRIGHT, batonhand on imageLEFT. Back view: shield on imageLEFT, batonhand on imageRIGHT.\nExactly8columns×10rows=80 complete separate sprites.1024x1536canvas with alpha0 background, no text or grid or ground shadows. Keep true transparent gaps and full shield/baton/feet within eachcell. Same scale every pose; falling/dead bodies stay low.\nColumns everyrow: FRONT, FRONT-RIGHT facing imageRIGHT, RIGHTPROFILE, BACK-RIGHT, BACK, BACK-LEFT, LEFTPROFILE, FRONT-LEFT facing imageLEFT. Keep exact turnarounds.\nRows:\n1 REST planted feet, leftshield guards torso, rightbaton down.\n2 ALERT head up, leftshield braced, rightbaton near chest.\n3 WALK A leftleg advances, rightleg back, leftshield stable, rightbaton down.\n4 WALK B rightleg advances, leftleg back, leftshield stable, rightbaton down. Distinct opposite gait.\n5 ATTACK WINDUP rightelbow bent and rightbaton ABOVE HEAD ready to strike, including both profiles and ALL backviews; leftshield stillguards. Only one baton, the raisedrightone. In straightback view the raisedbaton is imageRIGHT, shield imageLEFT.\n6 ATTACK STRIKE rightbaton drives forward/down past shield, rightarm extended, leftshield staysguards, leaning lunge.\n7 HURT recoils from flank hit, kneesbend, leftshield tilts, rightbaton low.\n8 DEATH KNEEL kneesgiveway, body sinks, leftshieldtips, rightbaton loosens.\n9 DEATH FALL mancollapsing onside almosthorizontal, shield and baton fallingbeside.\n10 CORPSE stilllying horizontal onfloor, shield and baton beside, smallredbloodpatch.\nPainted illustratedFPS sprite art like approved reference, tangible uniformfolds/scuffedshield, strong crisp silhouette, NOT3D-render/photoreal/cartoon. Preserve equipment handedness asmanrotates, no floatingobjects, no duplicatebatons. CountTENROWS, bothwalkingstrides are required.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png"
+      ]
+    },
+    {
+      "role": "clair",
+      "prompt": "Use case: identity-preserve. Edit target: supplied Vigile atlas. Change ONLY exposed facial skin, ears and bare hands to LIGHT fair peach complexion, consistently in ALL80 sprites. Preserve exactly TEN rows and EIGHT columns,1024x1536 dimensions, transparent background alpha, each body's size/location, beard, cap, uniform, yellow stripe, shield, baton, all8directions and all10poses. Keep the same single baton in RIGHT hand and shield in LEFT hand. The fifth row has the rightbaton raised overhead in all views: preserve this. Same painted style and shading, no opaque gradient or background, no captions. Rest2m, deadbodieslow. Only complexion changes; do not rearrange rows, add sprites, switch hands or redraw equipment.",
+      "referenceImages": [
+        "assets_src/vigile_sprites/vigile.png"
+      ]
+    },
+    {
+      "role": "mate",
+      "prompt": "Use case: identity-preserve. Edit target: supplied Vigile atlas. Change ONLY exposed facial skin, ears and bare hands to MEDIUM-DEEP warm brown complexion, consistently in ALL80 sprites. Preserve exactly TEN rows and EIGHT columns,1024x1536 dimensions, transparent background alpha, each body's size/location, beard, cap, uniform, yellow stripe, shield, baton, all8directions and all10poses. Keep the same single baton in RIGHT hand and shield in LEFT hand. The fifth row has the rightbaton raised overhead in all views: preserve this. Same painted style and shading, no opaque gradient or background, no captions. Rest2m, deadbodieslow. Only complexion changes; do not rearrange rows, add sprites, switch hands or redraw equipment.",
+      "referenceImages": [
+        "assets_src/vigile_sprites/vigile.png"
+      ]
+    },
+    {
+      "role": "fonce",
+      "prompt": "Use case: identity-preserve. Edit target: supplied Vigile atlas. Change ONLY exposed facial skin, ears and bare hands to DEEP dark brown complexion with readable facial highlights, consistently in ALL80 sprites. Preserve exactly TEN rows and EIGHT columns,1024x1536 dimensions, transparent background alpha, each body's size/location, beard, cap, uniform, yellow stripe, shield, baton, all8directions and all10poses. Keep the same single baton in RIGHT hand and shield in LEFT hand. The fifth row has the rightbaton raised overhead in all views: preserve this. Same painted style and shading, no opaque gradient or background, no captions. Rest2m, deadbodieslow. Only complexion changes; do not rearrange rows, add sprites, switch hands or redraw equipment.",
+      "referenceImages": [
+        "assets_src/vigile_sprites/vigile.png"
+      ]
+    }
+  ],
+  "specification": {
+    "columns": 8,
+    "rows": 10,
+    "restingHeightMeters": 2,
+    "directionOrder": [
+      "face",
+      "trois-quarts droit",
+      "profil droit",
+      "dos droit",
+      "dos",
+      "dos gauche",
+      "profil gauche",
+      "trois-quarts gauche"
+    ],
+    "animations": [
+      "repos",
+      "alerte",
+      "marche gauche",
+      "marche droite",
+      "matraque levée",
+      "coup de matraque",
+      "impact",
+      "mort à genoux",
+      "chute",
+      "cadavre"
+    ]
+  },
+  "notes": [
+    "Originaux RGBA conservés et copiés au runtime sans retouche des pixels.",
+    "Les rectangles excluent les minces fragments de cases voisines au bord des colonnes.",
+    "Ancrage horizontal de repos jusqu'à la chute, densité constante par carnation.",
+    "Capsule de 2 m, couverture du bouclier, portée, dégâts et durées du gameplay existant conservés.",
+    "Les premiers essais incomplets ont été écartés ; seul le jeu de dix poses retenu est conservé."
+  ],
+  "sha256": {
+    "vigile.png": "a9073f401ffa1b747df1edeab396e269eebfbbcd97ce855df5b7998c9e3b21fd",
+    "vigile_clair.png": "5f8dbc65675555300dfad3bbef662b48f610c905d78a74c915957251be4726e2",
+    "vigile_fonce.png": "624f094df859a32f80985c643d33df7d5b1acc99c4a079f0310910a3f1a38e7b",
+    "vigile_mate.png": "0a81c8016df2ac0c0b90df087bf5a89d05ed39edb4088fb935b5da71d6a5aa77"
+  }
+}

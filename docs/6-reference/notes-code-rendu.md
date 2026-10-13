@@ -143,8 +143,9 @@ signalée en console et le jeu reste jouable.
 Les Costards et les Vigiles possèdent quatre carnations (`clair`, `humain`,
 `mate`, `fonce`). Les Costards sont peints par Imagegen, avec leurs originaux et
 prompts dans `assets_src/costard_sprites/`, puis décrits par
-`tools/sprites/describe_costard.py`. Les Vigiles sont rendus par
-`tools/blender/render_enemy_sprites.py`. Visage et mains changent ensemble.
+`tools/sprites/describe_costard.py`. Les Vigiles sont également peints, avec
+leurs sources dans `assets_src/vigile_sprites/` et leur manifeste mesuré par
+`tools/sprites/describe_vigile.py` à une hauteur de repos de 2 m. Visage et mains changent ensemble.
 `SuitManager` attribue un `appearanceIndex` par ordre d'apparition dans chaque
 espèce ; `enemyHumanAtlas` choisit l'atlas une seule fois au spawn, dans l'ordre
 de `enemySkinConfig.ts`. Ce compteur ne consomme aucun tirage du RNG de combat,
@@ -152,7 +153,7 @@ et la carnation reste identique jusque sur le cadavre. Les anciennes planches
 sans variantes retombent sur `humain`. Le Rampant garde un seul atlas reptilien
 peint, décrit par `tools/sprites/describe_rampant.py`, avec une hauteur de
 repos de 1,2 m. Le Directeur garde ses atlas de transformation. Les mesures
-du Costard et du Rampant sont partagées dans `describe_painted.py`.
+du Costard, du Rampant et du Vigile sont partagées dans `describe_painted.py`.
 
 Les sprites humains ordinaires disposent aussi d'un plancher d'éclairage
 Lambert de 0,32 (`HUMAN_SPRITE_MINIMUM_LIGHT`). `BillboardSprite` borne le

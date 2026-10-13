@@ -28,6 +28,7 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 - `tools/blender/render_enemy_sprites.py` — produit les planches et manifestes ennemis.
 - `tools/sprites/describe_costard.py` — mesure les cases peintes du Costard et copie les originaux vers le runtime.
 - `tools/sprites/describe_rampant.py` — décrit le Rampant peint ; la mesure commune vit dans `tools/sprites/describe_painted.py`.
+- `tools/sprites/describe_vigile.py` — décrit les quatre carnations peintes du Vigile.
 - `tools/blender/build_weapons.py` — produit le glTF des modèles subjectifs et des armes au sol.
 - `public/assets/sprites/` et `public/assets/weapons/armes.glb` — ressources effectivement chargées.
 - [Rendu](rendu.md) — résolution, textures, matériau Lambert et ordre de frame.
@@ -80,8 +81,8 @@ chaque pose, leur ancrage horizontal, les pieds et la densité. L'outil mesure
 l'alpha sans modifier les PNG. Une seule densité par peau préserve la taille
 du corps pendant qu'il tombe : le cadavre n'est pas agrandi à 1,8 m de haut.
 Les dimensions du PNG, les huit directions de chaque ligne et les bornes des
-rectangles sont contrôlées au chargement. Le Directeur et le Vigile gardent
-leur grille régulière et leurs rendus Blender.
+rectangles sont contrôlées au chargement. Le Directeur garde sa grille
+régulière et ses rendus Blender.
 
 Le Rampant partage ce pipeline peint, avec une planche de 96 cases dans
 `assets_src/rampant_sprites/`. Sa pose de repos mesure 1,2 m de haut. La
@@ -94,6 +95,19 @@ du dessin. Le même quad conserve le flash d'impact et l'apparition TSL.
 L'ancrage horizontal du Rampant reprend la pose de repos de chaque direction
 jusqu'à la chute : une griffe levée ne décale pas son corps. Les poses au sol
 reprennent le centre du rectangle.
+
+Le Vigile utilise quatre planches peintes dans `assets_src/vigile_sprites/`,
+avec leurs prompts. Sa pose de repos mesure 2 m, comme sa capsule. La bande
+jaune continue dans le dos ; le bouclier reste porté devant le corps à gauche
+et la matraque à droite. L'anticipation lève la matraque avant le coup.
+Les rectangles mesurés conservent une densité par carnation et un ancrage de
+repos jusqu'à la chute, sans agrandir le cadavre. La marche reste liée à la
+distance parcourue, avec un cycle de 1,7 m ; les durées d'attaque, la couverture
+du bouclier et les dégâts restent ceux du gameplay existant.
+Chaque carnation contient 80 cases : huit directions, deux pas de marche et
+trois poses de mort parmi les dix lignes. La mesure exclut les petits
+fragments d'une case voisine qui touchent le bord d'une colonne ; seuls les
+rectangles changent, les originaux PNG restent intacts.
 
 ### Billboard 8 directions
 
