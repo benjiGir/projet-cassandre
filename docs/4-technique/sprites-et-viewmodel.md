@@ -2,7 +2,7 @@
 title: Sprites et viewmodel
 tags: [technique]
 status: brouillon
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # Sprites et viewmodel
@@ -27,6 +27,7 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 - `src/game/player/weapons/weapons.ts` — détient les horloges de tir et de changement d'arme consommées par le viewmodel.
 - `tools/blender/render_enemy_sprites.py` — produit les planches et manifestes ennemis.
 - `tools/sprites/describe_costard.py` — mesure les cases peintes du Costard et copie les originaux vers le runtime.
+- `tools/sprites/describe_rampant.py` — décrit le Rampant peint ; la mesure commune vit dans `tools/sprites/describe_painted.py`.
 - `tools/blender/build_weapons.py` — produit le glTF des modèles subjectifs et des armes au sol.
 - `public/assets/sprites/` et `public/assets/weapons/armes.glb` — ressources effectivement chargées.
 - [Rendu](rendu.md) — résolution, textures, matériau Lambert et ordre de frame.
@@ -79,8 +80,20 @@ chaque pose, leur ancrage horizontal, les pieds et la densité. L'outil mesure
 l'alpha sans modifier les PNG. Une seule densité par peau préserve la taille
 du corps pendant qu'il tombe : le cadavre n'est pas agrandi à 1,8 m de haut.
 Les dimensions du PNG, les huit directions de chaque ligne et les bornes des
-rectangles sont contrôlées au chargement. Les autres ennemis gardent leur
-grille régulière et leurs rendus Blender.
+rectangles sont contrôlées au chargement. Le Directeur et le Vigile gardent
+leur grille régulière et leurs rendus Blender.
+
+Le Rampant partage ce pipeline peint, avec une planche de 96 cases dans
+`assets_src/rampant_sprites/`. Sa pose de repos mesure 1,2 m de haut. La
+densité reste identique entre les poses : l'élan peut le redresser, puis son
+corps s'affaisse à la mort. Les lignes 5 et 6 représentent l'anticipation et
+le coup de griffe, sous les noms historiques `aim` et `fire` ; aucune arme
+à feu ni traînée magique n'est ajoutée. La course joue 2, 3, 4, 3, avec un
+cycle de 2,4 m. La capsule, la portée et la vitesse d'attaque ne viennent pas
+du dessin. Le même quad conserve le flash d'impact et l'apparition TSL.
+L'ancrage horizontal du Rampant reprend la pose de repos de chaque direction
+jusqu'à la chute : une griffe levée ne décale pas son corps. Les poses au sol
+reprennent le centre du rectangle.
 
 ### Billboard 8 directions
 

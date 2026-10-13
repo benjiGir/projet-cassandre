@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # Contrats locaux du rendu
@@ -149,8 +149,10 @@ prompts dans `assets_src/costard_sprites/`, puis décrits par
 espèce ; `enemyHumanAtlas` choisit l'atlas une seule fois au spawn, dans l'ordre
 de `enemySkinConfig.ts`. Ce compteur ne consomme aucun tirage du RNG de combat,
 et la carnation reste identique jusque sur le cadavre. Les anciennes planches
-sans variantes retombent sur `humain`. Le Rampant et la transformation du
-Directeur gardent leurs atlas spécifiques.
+sans variantes retombent sur `humain`. Le Rampant garde un seul atlas reptilien
+peint, décrit par `tools/sprites/describe_rampant.py`, avec une hauteur de
+repos de 1,2 m. Le Directeur garde ses atlas de transformation. Les mesures
+du Costard et du Rampant sont partagées dans `describe_painted.py`.
 
 Les sprites humains ordinaires disposent aussi d'un plancher d'éclairage
 Lambert de 0,32 (`HUMAN_SPRITE_MINIMUM_LIGHT`). `BillboardSprite` borne le

@@ -2,7 +2,7 @@
 title: Pipelines de contenu
 tags: [architecture]
 status: stable
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # Pipelines de contenu
@@ -110,13 +110,15 @@ des textures et vérifie la présence des vertex colors.
 
 ## 3. Sprites ennemis
 
-**Outil** : `tools/sprites/describe_costard.py` pour les Costards peints
-(originaux et prompts dans `assets_src/costard_sprites/`). Pour les autres
+**Outil** : `tools/sprites/describe_costard.py` et `describe_rampant.py` pour
+les ennemis peints (originaux et prompts dans `assets_src/costard_sprites/`
+et `assets_src/rampant_sprites/`). Pour les autres
 ennemis, `tools/blender/render_enemy_sprites.py`, rendu depuis les modèles
 CC0 Quaternius —
 [ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md).
 
 **Sortie** : `public/assets/sprites/costard.png`/`.json`,
+`public/assets/sprites/rampant.png`/`.json`,
 `public/assets/sprites/directeur.png`/`.json` (+
 `public/assets/sprites/directeur_revele.png`, peau de la révélation).
 
@@ -125,7 +127,8 @@ CC0 Quaternius —
 la colonne (direction).
 
 **Régénérer / contrôler** : `python3 tools/sprites/describe_costard.py` recopie
-les originaux peints du Costard et leur manifeste. Une commande par autre personnage dans
+les originaux peints du Costard et leur manifeste ; `describe_rampant.py` fait
+de même pour le Rampant. Une commande par autre personnage dans
 `tools/blender/README.md` (`--anims`/`--directions`/`--out` pour l'itération
 rapide). Contrôle par lisibilité mesurée en pixels par mètre à la distance de
 jeu (~38 px de haut à 11 m), pas de validateur automatique.
