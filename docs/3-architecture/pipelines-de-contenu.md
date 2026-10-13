@@ -110,11 +110,12 @@ des textures et vérifie la présence des vertex colors.
 
 ## 3. Sprites ennemis
 
-**Outil** : `tools/sprites/describe_costard.py`, `describe_rampant.py` et `describe_vigile.py` pour
+**Outil** : `tools/sprites/describe_costard.py`, `describe_rampant.py`, `describe_vigile.py` et `describe_directeur.py` pour
 les ennemis peints (originaux et prompts dans `assets_src/costard_sprites/`
-et `assets_src/rampant_sprites/`, `assets_src/vigile_sprites/`). Pour les autres
-ennemis, `tools/blender/render_enemy_sprites.py`, rendu depuis les modèles
-CC0 Quaternius —
+et `assets_src/rampant_sprites/`, `assets_src/vigile_sprites/`,
+`assets_src/directeur_sprites/`). Les rendus historiques restent possibles
+vers `renders/` via `tools/blender/render_enemy_sprites.py`, depuis les
+modèles CC0 Quaternius —
 [ADR 0028](../decisions/0028-sprites-ennemis-pre-rendus.md).
 
 **Sortie** : `public/assets/sprites/costard.png`/`.json`,
@@ -129,7 +130,8 @@ la colonne (direction).
 
 **Régénérer / contrôler** : `python3 tools/sprites/describe_costard.py` recopie
 les originaux peints du Costard et leur manifeste ; `describe_rampant.py` fait
-de même pour le Rampant et `describe_vigile.py` pour le Vigile. Une commande par autre personnage dans
+de même pour le Rampant, `describe_vigile.py` pour le Vigile et
+`describe_directeur.py` pour le Directeur. Les commandes sont dans
 `tools/blender/README.md` (`--anims`/`--directions`/`--out` pour l'itération
 rapide). Contrôle par lisibilité mesurée en pixels par mètre à la distance de
 jeu (~38 px de haut à 11 m), pas de validateur automatique.

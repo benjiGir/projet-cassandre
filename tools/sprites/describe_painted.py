@@ -6,10 +6,7 @@ from statistics import median
 from PIL import Image
 
 
-def frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments):
-    box = alpha.crop((left, top, right, bottom)).getbbox()
-    if box is None or not ignore_edge_fragments:
-        return box
+def alpha_components(alpha, left, top, right, bottom):
     pixels = alpha.load()
     remaining = {(x, y) for y in range(top, bottom) for x in range(left, right) if pixels[x, y] > 0}
     components = []
@@ -29,6 +26,14 @@ def frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments):
                     remaining.remove(neighbor)
                     pending.append(neighbor)
         components.append((size, (x0, y0, x1 + 1, y1 + 1)))
+    return components
+
+
+def frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments):
+    box = alpha.crop((left, top, right, bottom)).getbbox()
+    if box is None or not ignore_edge_fragments:
+        return box
+    components = alpha_components(alpha, left, top, right, bottom)
     largest = max(size for size, _ in components)
     # Les minces fragments d'une case voisine ne déterminent pas le rectangle.
     kept = [bounds for size, bounds in components
@@ -37,8 +42,27 @@ def frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments):
             max(bounds[2] for bounds in kept) - left, max(bounds[3] for bounds in kept) - top)
 
 
+def row_frame_bounds(alpha, top, bottom):
+    components = sorted(alpha_components(alpha, 0, top, alpha.width, bottom), reverse=True)
+    if len(components) < 8:
+        raise ValueError(f"Ligne {top} : moins de huit silhouettes séparées")
+    bodies = sorted((bounds for _, bounds in components[:8]), key=lambda bounds: bounds[0])
+    groups = [[bounds] for bounds in bodies]
+    for size, bounds in components[8:]:
+        if size < 4:
+            continue
+        distances = [(max(body[0] - bounds[2], bounds[0] - body[2], 0) ** 2
+                      + max(body[1] - bounds[3], bounds[1] - body[3], 0) ** 2)
+                     for body in bodies]
+        groups[distances.index(min(distances))].append(bounds)
+    return [(min(bounds[0] for bounds in group), min(bounds[1] for bounds in group) - top,
+             max(bounds[2] for bounds in group), max(bounds[3] for bounds in group) - top)
+            for group in groups]
+
+
 def describe_sheet(path: Path, rows: int, resting_height: float, corpse_row: int,
-                   fixed_rest_anchor: bool = False, ignore_edge_fragments: bool = False):
+                   fixed_rest_anchor: bool = False, ignore_edge_fragments: bool = False,
+                   isolated_sprites: bool = False):
     image = Image.open(path).convert("RGBA")
     width, height = image.size
     alpha = image.getchannel("A").point(lambda value: 255 if value >= 128 else 0)
@@ -63,14 +87,16 @@ def describe_sheet(path: Path, rows: int, resting_height: float, corpse_row: int
     rest_anchors = []
     for row_index, (top, bottom) in enumerate(bands):
         row = []
+        boxes = row_frame_bounds(alpha, top, bottom) if isolated_sprites and row_index < corpse_row else None
         for column in range(8):
-            left, right = round(column * width / 8), round((column + 1) * width / 8)
-            box = frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments)
+            left, right = (0, width) if boxes else (round(column * width / 8), round((column + 1) * width / 8))
+            box = boxes[column] if boxes else frame_bounds(alpha, left, top, right, bottom, ignore_edge_fragments)
             if box is None:
                 raise ValueError(f"{path.name} : case vide {row_index}/{column}")
             x0, y0, x1, y1 = box
-            x, y = max(left, left + x0 - 1), max(0, top + y0 - 1)
-            w, h = min(right, left + x1 + 1) - x, min(height, top + y1 + 1) - y
+            padding = 0 if isolated_sprites and row_index >= corpse_row else 1
+            x, y = max(left, left + x0 - padding), max(0, top + y0 - padding)
+            w, h = min(right, left + x1 + padding) - x, min(height, top + y1 + padding) - y
             if row_index < corpse_row:
                 if fixed_rest_anchor and row_index > 0:
                     anchor = max(0, min(w, rest_anchors[column] - x))

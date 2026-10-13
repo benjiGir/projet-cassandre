@@ -24,10 +24,11 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/textures/generate_portes.py` compose les textures d'ouvrants.
 - `tools/textures/generate_surgeles.py` génère les visuels du rayon surgelés.
 - `tools/textures/generate_ciel.py` génère les six faces du ciel de nuit.
-- `tools/blender/render_enemy_sprites.py` rend les sprites huit directions du Directeur.
+- `tools/blender/render_enemy_sprites.py` conserve les rendus historiques huit directions vers `renders/`.
 - `tools/sprites/describe_costard.py` mesure les sprites peints du Costard et écrit son manifeste, sans retoucher les originaux.
 - `tools/sprites/describe_rampant.py` fait de même pour le Rampant, via la mesure partagée de `describe_painted.py`.
 - `tools/sprites/describe_vigile.py` décrit les quatre carnations peintes du Vigile.
+- `tools/sprites/describe_directeur.py` décrit les formes humaine et révélée du Directeur.
 - `tools/blender/build_weapons.py` construit et exporte les armes.
 - `tools/blender/render_weapon_pickups.py` rend l'atlas des armes au sol.
 - `tools/textures/generate_card_pickups.py` dessine les trois sprites des cartes de fidélité.
@@ -74,7 +75,7 @@ La recette Cassandre `rework_vending(preview=…)` remplace localement huit mach
 
 ### Sprites et armes
 
-`render_enemy_sprites.py` utilise un modèle source et écrit les atlas et manifestes sous `public/assets/sprites/`. Il refuse d'y écraser les Costards, Rampants et Vigiles peints ; un rendu des anciens modèles reste possible vers `renders/`.
+`render_enemy_sprites.py` utilise les modèles sources historiques. Il refuse d'écraser les quatre espèces peintes dans `public/assets/sprites/` ; un rendu des anciens modèles reste possible vers `renders/`.
 Le Costard est généré par Imagegen à partir du style du héros et du costume
 historique. Ses originaux et prompts vivent dans `assets_src/costard_sprites/`.
 `describe_costard.py` mesure douze lignes, huit directions par ligne et quatre
@@ -83,14 +84,16 @@ Le Rampant utilise `assets_src/rampant_sprites/`, dont la planche et les prompts
 sont conservés. `describe_rampant.py` décrit douze poses et huit directions,
 avec une hauteur au repos de 1,2 m, et écrit `rampant.png` et `rampant.json`.
 Le Vigile utilise quatre planches dans `assets_src/vigile_sprites/`, mesurées
-par `describe_vigile.py`, avec une hauteur de repos de 2 m. La mesure des trois
-espèces est partagée dans `describe_painted.py`.
+par `describe_vigile.py`, avec une hauteur de repos de 2 m. Le Directeur
+utilise les deux planches de `assets_src/directeur_sprites/`, mesurées par
+`describe_directeur.py` à 2,05 m au repos. La mesure des quatre espèces est
+partagée dans `describe_painted.py`.
 Les manifestes associent les directions, animations et rectangles de texture lus par le moteur.
 `build_weapons.py` écrit le modèle glTF des armes dans `public/assets/weapons/armes.glb`.
 `render_weapon_pickups.py` écrit l'atlas des armes au sol et son manifeste sous `public/assets/sprites/`.
 `generate_card_pickups.py` écrit les trois PNG RGBA de 128×80 pixels sous `public/assets/sprites/cards/`. Il réutilise la police pixel de `generate_labels.py` ; ses sorties sont directement consommées par `src/render/pickups/cardPickups.ts`.
-Le Directeur passe par un rendu Blender ; les originaux peints du Costard,
-du Rampant et du Vigile sont recopiés sans retouche des pixels.
+Les originaux peints du Costard, du Rampant, du Vigile et du Directeur sont
+recopiés sans retouche des pixels.
 
 ### Déterminisme et provenance
 

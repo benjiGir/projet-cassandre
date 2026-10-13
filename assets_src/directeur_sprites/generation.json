@@ -1,0 +1,81 @@
+{
+  "tool": "OpenAI image_gen intégré à Codex",
+  "generatedOn": "2026-10-13",
+  "prompts": [
+    {
+      "role": "humain",
+      "prompt": "Use case: stylized-concept. Asset: PROJET_CASSANDRE painted retro FPS Directeur boss atlas. Reference1 Costard supplies only the approved painted shooter shading and crisp sprite edges. Reference2 oldDirecteur supplies identity: ivory suit, golden tie, gray-white hair and beard, pistol.\nCreate SAME imposing older human boss in all80cells. Tall2.05m versus1.8mCostard, broad elegant shoulders, cold severe expression, deep facecreases, neatly slicked silver-white hair and short white beard/moustache, no sunglasses. Cream ivory tailored suit jacket and matching trousers, white shirt, rich golden-yellow tie, goldcufflinks, dark leather shoes. One black semiautomatic pistol held RIGHT hand. Dignified corrupt corporate director, NOT a randomCostard recolor, NOT fatcomicboss, NOT3Drender.\n1024x1536 actualtransparentRGBA atlas. ExactlyTEN rows by EIGHT columns=80 separated complete sprites with transparent gaps. Entire pistol/hair/body/feet inside eachcell. Consistent scale, corpse stays low/same density. No background, gradient, groundshadow, checkerboard, labels, numbers, text, grid or watermark.\nEightcolumns lefttoright inEVERYrow: FRONT, FRONT-RIGHT facingimageRIGHT, RIGHTPROFILE, BACK-RIGHT, BACK, BACK-LEFT, LEFTPROFILE, FRONT-LEFT facingimageLEFT. Distinct45degree turnarounds, no duplicatedprofiles.\nTenrows:\n1 REST standingcommanding, pistol lowered inrighthand.\n2 ALERT spotsplayer, headraised, pistol closechest, otherhand steady.\n3 WALK A leftlegforward/rightback, armscounterbalance, pistol loweredright.\n4 WALK B rightlegforward/leftback, opposite stride, pistol loweredright.\n5 AIM deliberateaimatplayer, pistol raisedandextendedinrighthand, leftsupports; elbowsbent, readableanticipation.\n6 FIRE samepistolaimwithsharp golden-orange muzzleflash atbarreltip, readable recoil, no blast fromfingers or leftarm.\n7 HURT recoilsbackwards, shouldersflinch, kneesbend, pistolstaysright.\n8 DEATH KNEEL kneesbuckle, torsofolds, pistol low.\n9 DEATH FALL collapsingtoside nearfloor, limbsgo slack, pistolbeside.\n10 CORPSE lying stillonfloor, entirebodyandpistolinsidecell, small darkredbloodpatch below.\nPainted late1990sretroFPS style matching approvedCostard, tangibleclothfolds, warm offwhitecloth preserving shadows, face/browreadable underlighting, controlledsmallhighlights, strongsilhouette, notcartoon/photorender. Exactly10rows; bothwalkingstridesrequired. Do not make death as tall asstanding.\n",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png",
+        "public/assets/sprites/directeur.png (version 9b692ca, ancien rendu CC0)"
+      ]
+    },
+    {
+      "role": "revele",
+      "prompt": "Use case: identity-preserve. Edit target image1: painted Directeur boss atlas. Supporting reference image2: oldDirectorRevealed only explains the green reptilian identity, not the 3D style.\nTransform ONLY visible head/neck and barehands in ALL80 sprites into a sinister REPTILIAN boss. Green olive scales, yellowpredatoryeyes with slitpupils, scaly angular brows/cheekridges, subtle elongatedbluntlizardmuzzle with snarl, short darkgreencrest replaces whitehair. Barehands green with shortclawtips, stillholding SAME blackpistol RIGHT. No human whitehair/beard remain in this form. Face recognizably same olderboss skull/proportions, heavier reptilianskin nowrevealed.\nPreserve ivory suit, golden tie, white shirt, cufflinks, darkshoes, bodyproportions, each pose andlocation, pistolpositions, golden muzzleflashes, all TENrows/EIGHTcolumns and1024x1536canvas. Don't turn wholeclothesgreen. No armor, wings, horns, tail, extra limbs, gun changes ornewposes. Keep exact eight directionorder and ten roworder: rest, alert,walkA,walkB,aim,fire,hurt,deathkneel,deathfall,corpse. Stand2.05m, corpse stayslow. Keepheadincludingcrest withinoldheadheight, no character scaling. PaintedFPS style matches original. Genuine transparentRGBAbackground, no gradient/shadow/grid/labels, fullisolatedsprites only.",
+      "referenceImages": [
+        "assets_src/directeur_sprites/raw/directeur-v1.png",
+        "public/assets/sprites/directeur_revele.png (version 9b692ca, ancien rendu CC0)"
+      ]
+    },
+    {
+      "role": "espacement_humain",
+      "prompt": "Use case: precise-object-edit. Edit target: this Directeur atlas. Make every one of80 COMPLETE sprites uniformly15% SMALLER (scale0.85) about its own cell center, including muzzleflash, pistol, body and feet. Canvas stays1024x1536 with exactly TENrows EIGHTcolumns. Each128pxwide column must contain its WHOLE figure plus pistol and FULL muzzleflash, with generous transparent padding; no figure's pixel can enter another column. Firingrow must have a SMALL sharp flash completely contained with pistol, not a giant flash crossing into nextman's legs. Keep identical characteridentity, costumeivoire/goldtie, skin/head olderhuman silverhair/whitebeard, same all10poses and8directions, samebodyratios/handedness. Bothwalkingstrides andthree deathposes preserved. Standingfigures should be~130px high now. Give all figures same relative scale, corpses staylow, do not scale only the deaths. Absolutely transparentRGBA background, no gradient/shadow/grid/labels/text. This is ONLY a spacing/scale correction to retain fullsprites without neighbors bleeding into their rectangle.",
+      "referenceImages": [
+        "assets_src/directeur_sprites/raw/directeur-v1.png"
+      ]
+    },
+    {
+      "role": "espacement_revele",
+      "prompt": "Use case: precise-object-edit. Edit target: this Directeur atlas. Make every one of80 COMPLETE sprites uniformly15% SMALLER (scale0.85) about its own cell center, including muzzleflash, pistol, body and feet. Canvas stays1024x1536 with exactly TENrows EIGHTcolumns. Each128pxwide column must contain its WHOLE figure plus pistol and FULL muzzleflash, with generous transparent padding; no figure's pixel can enter another column. Firingrow must have a SMALL sharp flash completely contained with pistol, not a giant flash crossing into nextman's legs. Keep identical characteridentity, costumeivoire/goldtie, skin/head olivegreenreptilian withyelloweyes/darkcrest, same all10poses and8directions, samebodyratios/handedness. Bothwalkingstrides andthree deathposes preserved. Standingfigures should be~130px high now. Give all figures same relative scale, corpses staylow, do not scale only the deaths. Absolutely transparentRGBA background, no gradient/shadow/grid/labels/text. This is ONLY a spacing/scale correction to retain fullsprites without neighbors bleeding into their rectangle.",
+      "referenceImages": [
+        "assets_src/directeur_sprites/raw/directeur_revele-v1.png"
+      ]
+    }
+  ],
+  "specification": {
+    "columns": 8,
+    "rows": 10,
+    "restingHeightMeters": 2.05,
+    "directionOrder": [
+      "face",
+      "trois-quarts droit",
+      "profil droit",
+      "dos droit",
+      "dos",
+      "dos gauche",
+      "profil gauche",
+      "trois-quarts gauche"
+    ],
+    "appearance": [
+      "costume ivoire, chemise blanche, cravate dorée, pistolet noir dans la main droite",
+      "forme humaine : cheveux argentés, barbe blanche, visage âgé sans lunettes",
+      "forme révélée : tête et mains reptiliennes olive, yeux jaunes, crête sombre"
+    ],
+    "animations": [
+      "repos",
+      "alerte",
+      "marche gauche",
+      "marche droite",
+      "visée",
+      "tir",
+      "impact",
+      "mort à genoux",
+      "chute",
+      "cadavre"
+    ]
+  },
+  "notes": [
+    "Originaux RGBA conservés ; PNG runtime copiés sans retouche des pixels.",
+    "Densité constante par forme et ancrage horizontal de repos jusqu'à la chute.",
+    "Révélation à mi-vie, capsule, dégâts, carte Platine et durées du gameplay conservés.",
+    "Chaque forme possède ses rectangles de pose ; la révélation remplace aussi le layout et étend les bornes de culling si nécessaire.",
+    "Les silhouettes debout sont mesurées sur toute la ligne pour conserver l'éclair du pistolet au-delà d'une colonne ; les poses au sol utilisent les colonnes car leurs flaques peuvent se rejoindre."
+  ],
+  "sha256": {
+    "directeur.png": "c8f7317fcc44d093a2bff8f4cee4be340d1eeed3caaa7c532153d817a46b05cf",
+    "directeur_revele.png": "19708bd8e670432d72855a02344113be76920957e51444803493f3db9abd85e8",
+    "raw/directeur-v1.png": "67e43fc5d6c23ef7562912e123daf7805aed8b90703ce5ce1429b67c85b92b3c",
+    "raw/directeur_revele-v1.png": "5e1256871c5b98efe313c4ac6572f0bad33e4710f6573a5533f1370e91829a71"
+  }
+}

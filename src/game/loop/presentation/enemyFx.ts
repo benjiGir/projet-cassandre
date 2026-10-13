@@ -1,5 +1,6 @@
 import { playEnemySfx, playSfx } from "../../../core/audio/audio";
 import type { EnemyVoice } from "../../../core/audio/audioTypes";
+import { enemySpriteLayout } from "../../../render/sprites/enemySprites";
 import { directorConfig } from "../../entities/director/directorConfig";
 import type { EnemyEntity, EntityConfig } from "../../entities/shared/enemyEntity";
 import type { EnemyManager } from "../../entities/shared/enemyManager";
@@ -99,7 +100,7 @@ export function presentDirectorEvents(frame: FxFrame): boolean {
         // repli) une teinte — voir `Director.tintColor`/`revealed`.
         const sprite = session.directorSprites.get(event.enemy.id);
         const revealedAtlas = engine.directorSheet.atlases.revele;
-        if (revealedAtlas) sprite?.setAtlas(revealedAtlas);
+        if (revealedAtlas) sprite?.setAtlas(revealedAtlas, enemySpriteLayout(engine.directorSheet, revealedAtlas));
         else sprite?.setTint(event.enemy.tintColor);
         engine.fx.triggerShake(directorConfig.revealShakeAmplitude, directorConfig.revealShakeDuration);
       }

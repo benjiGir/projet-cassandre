@@ -136,7 +136,7 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
-| `render_enemy_sprites.py` | atlas 8 directions + manifeste du Directeur (`public/assets/sprites/`), rendus depuis les modèles CC0 |
+| `render_enemy_sprites.py` | rendus historiques 8 directions depuis les modèles CC0 vers `renders/` ; les quatre espèces runtime sont peintes |
 | `build_weapons.py` | quatre armes (dont le pistolet de détresse, `weapons/flare.py`) et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
@@ -162,13 +162,15 @@ source ne s'éclaire pas elle-même). Leur raison d'être est dans
 python3 tools/sprites/describe_costard.py
 python3 tools/sprites/describe_rampant.py
 python3 tools/sprites/describe_vigile.py
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage directeur
+python3 tools/sprites/describe_directeur.py
 # Itération rapide : quelques animations et directions, écrit <personnage>_apercu.png
 blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage vigile --anims aim,fire --directions 0,2 --out renders/sprites
 ```
 
-Les Costards, Rampants et Vigiles peints viennent de `assets_src/costard_sprites/`,
-`assets_src/rampant_sprites/` et `assets_src/vigile_sprites/`, avec leurs prompts de génération. Leurs outils
+Les Costards, Rampants, Vigiles et Directeurs peints viennent de
+`assets_src/costard_sprites/`, `assets_src/rampant_sprites/`,
+`assets_src/vigile_sprites/` et `assets_src/directeur_sprites/`, avec leurs
+prompts de génération. Leurs outils
 `describe_*.py` partagent la mesure dans `describe_painted.py`, puis recopient
 les PNG sans les modifier ; ils requièrent Pillow. Le générateur Blender
 refuse d'écraser ces sprites dans le dossier runtime.

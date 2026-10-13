@@ -93,7 +93,9 @@ zéro est en haut de l'image, donc son offset V est `1 - (row + 1) / rows`.
 
 Chaque instance clone la texture et possède sa géométrie. Partager les offsets
 modifierait toutes les entités en même temps ([ADR 0017](../decisions/0017-clone-texture-sprite-billboard.md)).
-`setAtlas` exige une disposition identique et conserve la case courante.
+`setAtlas` conserve la ligne et la direction courantes et accepte le `layout`
+de la nouvelle peau. Il étend la sphère de culling si ses poses dépassent les
+bornes précédentes ; aucun recalcul de bornes n'est fait par frame.
 `dispose` libère seulement les ressources propres à l'instance.
 
 Les dimensions par défaut sont 1 × 1,8 m, une ligne, teinte blanche et coupure
@@ -152,8 +154,11 @@ de `enemySkinConfig.ts`. Ce compteur ne consomme aucun tirage du RNG de combat,
 et la carnation reste identique jusque sur le cadavre. Les anciennes planches
 sans variantes retombent sur `humain`. Le Rampant garde un seul atlas reptilien
 peint, décrit par `tools/sprites/describe_rampant.py`, avec une hauteur de
-repos de 1,2 m. Le Directeur garde ses atlas de transformation. Les mesures
-du Costard, du Rampant et du Vigile sont partagées dans `describe_painted.py`.
+repos de 1,2 m. Le Directeur garde deux atlas peints de transformation,
+décrits par `tools/sprites/describe_directeur.py`, avec une hauteur de repos
+de 2,05 m. Son spawn utilise le layout humain et `presentDirectorEvents`
+remplace texture et layout à la révélation. Les mesures des quatre espèces
+sont partagées dans `describe_painted.py`.
 
 Les sprites humains ordinaires disposent aussi d'un plancher d'éclairage
 Lambert de 0,32 (`HUMAN_SPRITE_MINIMUM_LIGHT`). `BillboardSprite` borne le

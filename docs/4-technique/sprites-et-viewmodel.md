@@ -29,6 +29,7 @@ Cette page décrit les représentations visuelles des ennemis et des armes en vu
 - `tools/sprites/describe_costard.py` — mesure les cases peintes du Costard et copie les originaux vers le runtime.
 - `tools/sprites/describe_rampant.py` — décrit le Rampant peint ; la mesure commune vit dans `tools/sprites/describe_painted.py`.
 - `tools/sprites/describe_vigile.py` — décrit les quatre carnations peintes du Vigile.
+- `tools/sprites/describe_directeur.py` — décrit les formes humaine et révélée du Directeur.
 - `tools/blender/build_weapons.py` — produit le glTF des modèles subjectifs et des armes au sol.
 - `public/assets/sprites/` et `public/assets/weapons/armes.glb` — ressources effectivement chargées.
 - [Rendu](rendu.md) — résolution, textures, matériau Lambert et ordre de frame.
@@ -81,8 +82,8 @@ chaque pose, leur ancrage horizontal, les pieds et la densité. L'outil mesure
 l'alpha sans modifier les PNG. Une seule densité par peau préserve la taille
 du corps pendant qu'il tombe : le cadavre n'est pas agrandi à 1,8 m de haut.
 Les dimensions du PNG, les huit directions de chaque ligne et les bornes des
-rectangles sont contrôlées au chargement. Le Directeur garde sa grille
-régulière et ses rendus Blender.
+rectangles sont contrôlées au chargement. Les quatre espèces utilisent des
+planches peintes ; la grille régulière reste disponible pour le repli.
 
 Le Rampant partage ce pipeline peint, avec une planche de 96 cases dans
 `assets_src/rampant_sprites/`. Sa pose de repos mesure 1,2 m de haut. La
@@ -108,6 +109,22 @@ Chaque carnation contient 80 cases : huit directions, deux pas de marche et
 trois poses de mort parmi les dix lignes. La mesure exclut les petits
 fragments d'une case voisine qui touchent le bord d'une colonne ; seuls les
 rectangles changent, les originaux PNG restent intacts.
+
+Le Directeur possède deux planches de 80 cases dans
+`assets_src/directeur_sprites/` : humaine et révélée. Elles conservent le
+costume ivoire, la cravate dorée et le pistolet ; la tête et les mains deviennent
+reptiliennes à mi-vie. Sa hauteur de repos reste de 2,05 m. Les poses de visée,
+tir, impact et mort sont distinctes, et la marche suit un cycle de 2,8 m.
+Chaque forme possède ses rectangles et sa densité. Au spawn puis à la
+révélation, le rendu prend le `layout` correspondant ; la sphère de culling
+est étendue si la nouvelle forme en a besoin. Le plancher d'éclairage humain
+de 0,32 reste actif dans les deux formes. Le seuil de révélation, les dégâts,
+la capsule et le drop Platine restent définis par le gameplay.
+Les poses de tir gardent l'éclair entier dans leur rectangle, avec une marge
+transparente entre les silhouettes voisines.
+Le générateur du Directeur mesure les silhouettes debout sur toute la ligne,
+par composantes d'alpha, pour inclure le tir qui dépasse une colonne nominale.
+Les poses au sol utilisent les colonnes : leurs flaques peuvent se rejoindre.
 
 ### Billboard 8 directions
 

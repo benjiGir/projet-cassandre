@@ -102,17 +102,7 @@ export class BillboardSprite {
 
     this.mesh = new THREE.Mesh(geometry, material);
     if (this.layout) {
-      let radiusSquared = 0;
-      for (const row of this.layout.frames) {
-        for (const frame of row) {
-          const ppm = this.layout.pixelsPerMeter;
-          const x = Math.max(frame.anchorX, frame.width - frame.anchorX) / ppm;
-          const bottom = -this.belowCenter - frame.feetFromBottom / ppm;
-          const y = Math.max(Math.abs(bottom), Math.abs(bottom + frame.height / ppm));
-          radiusSquared = Math.max(radiusSquared, x * x + y * y);
-        }
-      }
-      geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Math.sqrt(radiusSquared));
+      this.expandBoundingSphere(this.layout);
       this.mesh.onBeforeRender = (_renderer, _scene, camera) => {
         this.updatePose(camera, this.mesh.position, this.scratchForward, this.currentRow);
         this.mesh.updateMatrixWorld(true);
@@ -180,7 +170,22 @@ export class BillboardSprite {
     return this.lastDirection;
   }
 
-  // Exige la même disposition et conserve la case courante.
+  private expandBoundingSphere(layout: EnemySpriteLayout): void {
+    const geometry = this.mesh.geometry;
+    let radiusSquared = (geometry.boundingSphere?.radius ?? 0) ** 2;
+    for (const row of layout.frames) {
+      for (const frame of row) {
+        const ppm = layout.pixelsPerMeter;
+        const x = Math.max(frame.anchorX, frame.width - frame.anchorX) / ppm;
+        const bottom = -this.belowCenter - frame.feetFromBottom / ppm;
+        const y = Math.max(Math.abs(bottom), Math.abs(bottom + frame.height / ppm));
+        radiusSquared = Math.max(radiusSquared, x * x + y * y);
+      }
+    }
+    geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Math.sqrt(radiusSquared));
+  }
+
+  // Conserve la pose ; les rectangles peuvent différer entre peaux.
   setAtlas(atlas: THREE.Texture, layout: EnemySpriteLayout | undefined = this.layout): void {
     const next = atlas.clone();
     next.needsUpdate = true;
@@ -191,6 +196,7 @@ export class BillboardSprite {
     this.material.map = next;
     this.layout = layout;
     this.currentFrame = undefined;
+    if (layout) this.expandBoundingSphere(layout);
   }
 
   setTint(color: number): void {

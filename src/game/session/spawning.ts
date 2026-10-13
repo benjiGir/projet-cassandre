@@ -122,7 +122,9 @@ export function spawnDirectorAt(
   const sheet = engine.directorSheet;
   const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
     rows: sheet.rows,
+    layout: enemySpriteLayout(sheet, sheet.atlases.humain),
     normalTilt: ENEMY_SPRITE_NORMAL_TILT,
+    minimumLight: HUMAN_SPRITE_MINIMUM_LIGHT,
     ...enemySpriteQuad(
       sheet,
       directorConfig.capsuleHalfHeight + directorConfig.capsuleRadius + directorConfig.colliderOffset,
