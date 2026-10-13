@@ -108,4 +108,32 @@ export class LevelTrains {
     }
     return completed;
   }
+
+  canEnemyChargeTo(position: THREE.Vector3): boolean {
+    const feetY = position.y;
+    for (const zone of this.data.navigationZones) {
+      const box = zone.box;
+      if (
+        position.x < box.min.x ||
+        position.x > box.max.x ||
+        position.z < box.min.z ||
+        position.z > box.max.z ||
+        feetY < box.min.y ||
+        feetY > box.max.y
+      )
+        continue;
+      if (
+        !this.data.crossings.some(
+          (crossing) =>
+            crossing.lane === zone.lane &&
+            position.x >= crossing.box.min.x &&
+            position.x <= crossing.box.max.x &&
+            position.z >= crossing.box.min.z &&
+            position.z <= crossing.box.max.z,
+        )
+      )
+        return false;
+    }
+    return true;
+  }
 }

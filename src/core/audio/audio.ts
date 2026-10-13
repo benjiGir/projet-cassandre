@@ -1,6 +1,7 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import { Howl, Howler } from "howler";
 import { prepareTrainWarning, playTrainWarning as playPreparedTrainWarning } from "./trainWarning";
+import { prepareControllerAudio, playControllerCue } from "./controllerAudio";
 
 import {
   DEFAULT_IMPACT_SFX,
@@ -87,7 +88,7 @@ export function initAudio(): Promise<void> {
           warnOnce(id, `"${id}" pointe sur la recette "${key}", absente du sprite`);
         }
       }
-      await Promise.all([waitForAudioLoad(atlas), prepareTrainWarning()]);
+      await Promise.all([waitForAudioLoad(atlas), prepareTrainWarning(), prepareControllerAudio()]);
     })
     .catch((e) => {
       warnOnce("manifeste", `manifeste audio illisible (${e})`);
@@ -129,6 +130,10 @@ export function playPropBreakSfx(matiere: string) {
 }
 
 export function playEnemySfx(event: EnemySfxEvent, voice: EnemyVoice = "costard") {
+  if ((voice === "controleur" || voice === "chef_brigade") && (event === "alert" || event === "telegraph")) {
+    playControllerCue(event, sfxGain, audioRandom);
+    return;
+  }
   playSfx(ENEMY_SFX[voice][event]);
 }
 

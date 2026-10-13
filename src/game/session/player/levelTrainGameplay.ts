@@ -1,3 +1,4 @@
+import type { LevelTrains } from "../../level/trains/levelTrains";
 import { Vector3 } from "three";
 import { moveConfig } from "../../player/movement/moveConfig";
 import { directorConfig } from "../../entities/director/directorConfig";
@@ -19,6 +20,7 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
   for (const message of trains.system.takeFeedback()) showHudMessage(message);
   let suitKills = 0,
     directorKills = 0;
+  let controllerKills = 0;
   for (const suit of session.suitManager.suits) {
     if (
       !suit.isAlive ||
@@ -30,7 +32,10 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
       })
     )
       continue;
-    if (session.suitManager.debugKill(suit)) suitKills++;
+    if (session.suitManager.debugKill(suit)) {
+      suitKills++;
+      if (suit.cfg.charge) controllerKills++;
+    }
   }
   for (const director of session.directorManager.directors) {
     if (
@@ -49,13 +54,9 @@ export function updateLevelTrains(engine: GameEngine, dt: number): void {
   recordDirectorKills(session.run.stats, directorKills);
   const kills = suitKills + directorKills;
   session.run.stats.trainKills += kills;
-  if (kills > 0) {
-    session.heroPortrait.kill(kills);
-    startKillRush(session.run);
-    for (let i = 0; i < kills; i++) streamEvent(session, directorKills > i ? "boss" : "kill");
-    showHudMessage("Ennemi fauché par une rame");
-    triggerHeroLine(session, "metro_ennemi_fauche");
-  }
+  session.run.stats.controllerTrainKills += controllerKills;
+  noteControllerPush(session, trains);
+  presentTrainKills(session, kills, directorKills, controllerKills);
   if (session.run.playerHp <= 0) return;
   if (
     trains.system.touches({
@@ -77,4 +78,38 @@ function noteCrossings(session: GameSession, crossings: number): void {
   session.run.stats.trainCrossings += crossings;
   for (let i = 0; i < crossings; i++) streamEvent(session, "train");
   if (crossings > 0) triggerHeroLine(session, "metro_traversee");
+}
+
+function noteControllerPush(session: GameSession, trains: LevelTrains): void {
+  if (session.run.stats.controllerPushExpires >= session.run.stats.gameplayElapsed) {
+    const feetY = session.player.position.y - moveConfig.capsuleHalfHeight - moveConfig.capsuleRadius;
+    if (
+      trains.data.navigationZones.some(
+        ({ box }) =>
+          session.player.position.x >= box.min.x &&
+          session.player.position.x <= box.max.x &&
+          session.player.position.z >= box.min.z &&
+          session.player.position.z <= box.max.z &&
+          feetY >= box.min.y &&
+          feetY <= box.max.y,
+      )
+    ) {
+      session.run.stats.controllerPushesToRail++;
+      session.run.stats.controllerPushExpires = -Infinity;
+    }
+  }
+}
+
+function presentTrainKills(session: GameSession, kills: number, directorKills: number, controllerKills: number): void {
+  if (kills > 0) {
+    session.heroPortrait.kill(kills);
+    startKillRush(session.run);
+    for (let i = 0; i < kills; i++)
+      streamEvent(
+        session,
+        directorKills > i ? "boss" : i < directorKills + controllerKills ? "controleur_rame" : "kill",
+      );
+    showHudMessage("Ennemi fauché par une rame");
+    triggerHeroLine(session, "metro_ennemi_fauche");
+  }
 }

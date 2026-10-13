@@ -32,16 +32,19 @@ export const METRO_ENCOUNTER_EVENTS = {
     { delay: 0, action: annonce("station", "sans_titre") },
     { delay: 1.2, action: { kind: "reveiller", groupe: "metro_billets_tireurs" } },
     { delay: 0, action: { kind: "reveiller", groupe: "metro_billets_garde" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_billets_controleur" } },
     { delay: 3.3, action: annonce("station", "camera") },
     { delay: 3, action: replique("metro_sans_titre") },
   ],
   metro_quais_sud: [
     { delay: 0, action: { kind: "reveiller", groupe: "metro_quais_sud" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_quais_sud_controleur" } },
     { delay: 0.5, action: annonce("station", "trafic") },
   ],
   metro_quais_nord: [
     { delay: 0, action: { kind: "reveiller", groupe: "metro_quais_nord" } },
     { delay: 0, action: { kind: "reveiller", groupe: "metro_quais_garde" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_quais_nord_controleur" } },
   ],
   metro_galerie_entree: [{ delay: 0.5, action: { kind: "reveiller", groupe: "metro_galerie_entree" } }],
   metro_galerie_coude: [
@@ -52,15 +55,20 @@ export const METRO_ENCOUNTER_EVENTS = {
       action: replique("metro_nichee"),
     },
   ],
-  metro_galerie_retour: [{ delay: 0.5, action: { kind: "reveiller", groupe: "metro_galerie_retour" } }],
+  metro_galerie_retour: [
+    { delay: 0.5, action: { kind: "reveiller", groupe: "metro_galerie_retour" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_galerie_controleur" } },
+  ],
   metro_depot: [
     { delay: 0, action: { kind: "reveiller", groupe: "metro_depot_tireurs" } },
     { delay: 0, action: { kind: "reveiller", groupe: "metro_depot_garde" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_depot_controleurs" } },
     { delay: 0.8, action: annonce("station", "depot") },
   ],
   metro_acces_poste: [{ delay: 0, action: { kind: "reveiller", groupe: "metro_acces_poste" } }],
   metro_machinerie: [
     { delay: 0, action: { kind: "reveiller", groupe: "metro_machinerie_tireurs" } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_machinerie_controleur" } },
     { delay: 1, action: { kind: "reveiller", groupe: "metro_machinerie_meute" } },
   ],
   metro_aiguillage: [
@@ -76,21 +84,27 @@ export const METRO_ENCOUNTER_EVENTS = {
   metro_rame_1_nord: [
     { delay: 0, action: annonce("rame", "controle") },
     { delay: 0.25, action: { kind: "reveiller", groupe: "metro_rame_1_nord", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_1_controleur_nord", alerte: true } },
     { delay: 1.5, action: replique("metro_rame_vague_1") },
   ],
   metro_rame_1_sud: [
     { delay: 0, action: annonce("rame", "controle") },
     { delay: 0.25, action: { kind: "reveiller", groupe: "metro_rame_1_sud", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_1_controleur_sud", alerte: true } },
     { delay: 1.5, action: replique("metro_rame_vague_1") },
   ],
   metro_rame_2_nord: [
     { delay: 0, action: annonce("rame", "controle_suite") },
     { delay: 0.25, action: { kind: "reveiller", groupe: "metro_rame_2_nord", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_2_controleur_nord", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_chef_nord", alerte: true } },
     { delay: 1.5, action: replique("metro_rame_vague_2") },
   ],
   metro_rame_2_sud: [
     { delay: 0, action: annonce("rame", "controle_suite") },
     { delay: 0.25, action: { kind: "reveiller", groupe: "metro_rame_2_sud", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_2_controleur_sud", alerte: true } },
+    { delay: 0, action: { kind: "reveiller", groupe: "metro_rame_chef_sud", alerte: true } },
     { delay: 1.5, action: replique("metro_rame_vague_2") },
   ],
   metro_arrivee: [

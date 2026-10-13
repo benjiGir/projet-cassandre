@@ -6,7 +6,7 @@ import { nextPlaceLine } from "./placeLineState";
 
 // see: docs/4-technique/systemes-de-niveau.md#espaces-du-niveau
 
-const ENGAGED_STATES: ReadonlySet<EnemyState> = new Set(["alert", "chase", "attack", "stagger"]);
+const ENGAGED_STATES: ReadonlySet<EnemyState> = new Set(["alert", "chase", "attack", "charge", "recover", "stagger"]);
 
 function enemyEngaged(session: GameSession): boolean {
   for (const suit of session.suitManager.suits) if (ENGAGED_STATES.has(suit.state)) return true;

@@ -29,7 +29,7 @@ export interface NamedSpawn {
   position: THREE.Vector3;
   /** Custom property Blender `groupe` : l'ennemi n'apparaît qu'au réveil de ce groupe par le script de niveau. `null` = présent dès le chargement. */
   group: string | null;
-  /** Espèce posée par le préfixe : `spawn_suit_*` un Costard (défaut), `spawn_rampant_*` un Rampant, `spawn_vigile_*` un Vigile. */
+  /** Espèce du marqueur d'apparition ; le chef de brigade est une variante du Contrôleur. */
   kind?: SuitKind;
 }
 

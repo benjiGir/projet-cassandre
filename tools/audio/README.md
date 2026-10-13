@@ -271,3 +271,17 @@ se rabat pas sur l'autre. Un sprite en ogg seul, c'est un jeu muet sur Safari.
 **Un agent ne peut pas entendre.** Il mesure, il regarde un spectrogramme, il
 vérifie la conformité. Le jugement final est humain, au casque. Voir le skill
 `audio-critique-loop`.
+
+## Contrôleur du métro
+
+Le sprite séparé conserve le mixage et les sources des sons existants :
+
+```bash
+./.venv-refs/bin/python3 tools/audio/sons_controleur.py
+./.venv-refs/bin/python3 tools/audio/build_sprite.py renders/controleur-billboard/audio --out public/assets/audio/controleur --nom controleur
+```
+
+L'appel vocal source-filtre et le sifflet à 1,65 kHz viennent de
+`sons_controleur.py`. Le runtime les prépare avant le jeu dans
+`src/core/audio/controllerAudio.ts`. La douleur, l'impact et la mort restent
+ceux du catalogue commun. L'appel n'est pas une phrase enregistrée.

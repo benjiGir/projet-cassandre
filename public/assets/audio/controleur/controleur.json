@@ -1,0 +1,18 @@
+{
+  "src": [
+    "controleur.ogg",
+    "controleur.m4a"
+  ],
+  "sprite": {
+    "controleur_alert": [
+      0.0,
+      420.0
+    ],
+    "controleur_telegraph": [
+      540.0,
+      360.0
+    ]
+  },
+  "pool": 12,
+  "_note": "Genere par tools/audio/build_sprite.py. Ne pas editer a la main \u2014 modifier recipes.py et regenerer."
+}

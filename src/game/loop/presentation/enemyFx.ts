@@ -70,7 +70,7 @@ function presentEnemyEvents<TEnemy extends EnemyEntity<EntityConfig>>(
   return playerWasHit;
 }
 
-/** Costards, Rampants et Vigiles. */
+/** Présentation des ennemis ordinaires. */
 export function presentSuitEvents(frame: FxFrame): boolean {
   const { session } = frame;
   return presentEnemyEvents(frame, session.suitManager, {

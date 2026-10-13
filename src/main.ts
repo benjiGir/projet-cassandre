@@ -120,24 +120,40 @@ async function main() {
   });
 
   reportLoading("Moteur physique et planches de sprites", 0.08);
-  const [, suitSheet, directorSheet, rampantSheet, vigileSheet, weaponModels, cardPickupTextures, heroAsset] =
-    await Promise.all([
-      initPhysics(),
-      loadEnemySpriteSheetOrPlaceholder("costard"),
-      loadEnemySpriteSheetOrPlaceholder("directeur"),
-      loadEnemySpriteSheetOrPlaceholder("rampant"),
-      loadEnemySpriteSheetOrPlaceholder("vigile"),
-      loadWeaponModelsOrPlaceholder(),
-      loadCardPickupTextures(),
-      loadHero(),
-    ]);
+  const [
+    ,
+    suitSheet,
+    directorSheet,
+    rampantSheet,
+    vigileSheet,
+    controllerSheet,
+    weaponModels,
+    cardPickupTextures,
+    heroAsset,
+  ] = await Promise.all([
+    initPhysics(),
+    loadEnemySpriteSheetOrPlaceholder("costard"),
+    loadEnemySpriteSheetOrPlaceholder("directeur"),
+    loadEnemySpriteSheetOrPlaceholder("rampant"),
+    loadEnemySpriteSheetOrPlaceholder("vigile"),
+    loadEnemySpriteSheetOrPlaceholder("controleur"),
+    loadWeaponModelsOrPlaceholder(),
+    loadCardPickupTextures(),
+    loadHero(),
+  ]);
   reportLoading("Chargement du niveau", 0.3);
   await letBrowserPaint();
 
   const persistentEngine = buildGameEngine(
     canvas,
     flow,
-    { suit: suitSheet, director: directorSheet, rampant: rampantSheet, vigile: vigileSheet },
+    {
+      suit: suitSheet,
+      director: directorSheet,
+      rampant: rampantSheet,
+      vigile: vigileSheet,
+      controller: controllerSheet,
+    },
     weaponModels,
     cardPickupTextures,
     heroAsset,

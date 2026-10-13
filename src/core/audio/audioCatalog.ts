@@ -79,6 +79,20 @@ export const PROP_BREAK_SFX: Record<string, SfxId> = {
 export const DEFAULT_PROP_BREAK_SFX: SfxId = "prop_break_wood";
 
 export const ENEMY_SFX: Record<EnemyVoice, Record<EnemySfxEvent, SfxId>> = {
+  controleur: {
+    alert: "enemy_alert",
+    telegraph: "enemy_telegraph",
+    shot: "impact_flesh",
+    hurt: "enemy_hurt",
+    death: "enemy_death",
+  },
+  chef_brigade: {
+    alert: "enemy_alert",
+    telegraph: "enemy_telegraph",
+    shot: "impact_flesh",
+    hurt: "enemy_hurt",
+    death: "enemy_death",
+  },
   costard: {
     alert: "enemy_alert",
     telegraph: "enemy_telegraph",

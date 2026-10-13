@@ -191,7 +191,7 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 err(f"{o.name}: 'replique' = '{replique}' n'est pas une réplique du héros "
                     "(src/game/session/presentation/heroLines.ts)")
         # `spawn_rampant_*` (lot B4), `spawn_vigile_*` (lot B6) : même liste, mêmes règles qu'un Costard.
-        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_")) and str(o.get("groupe", "")).strip():
+        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_", "spawn_controleur_", "spawn_chef_brigade_")) and str(o.get("groupe", "")).strip():
             groupe = str(o["groupe"]).strip()
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "

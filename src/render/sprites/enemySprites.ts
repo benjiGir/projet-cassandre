@@ -53,6 +53,10 @@ export function enemySpriteRow(sheet: EnemySpriteSheet, input: EnemyAnimationInp
       return loopedRow(a.chase, (input.stride / (a.chase.metersPerCycle ?? DEFAULT_METERS_PER_CYCLE)) * a.chase.frames);
     case "aim":
       return a.aim.row;
+    case "charge":
+      return a.fire.row;
+    case "recover":
+      return a.stagger.row;
     case "stagger":
       return spreadRow(a.stagger, input.poseTime, input.poseDuration);
     case "death":

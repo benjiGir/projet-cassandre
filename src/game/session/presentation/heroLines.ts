@@ -123,6 +123,9 @@ export const HERO_LINES = {
   vigile_alerte: { text: "La sécurité. Enfin quelqu'un qui prend ça au sérieux.", priority: true, once: true, textOnly: true },
   vigile_coup: { text: "C'est ça, votre service client ?", once: true, textOnly: true },
   vigile_bouclier: { text: "De face, ça ne passe pas. Par-derrière, alors.", priority: true, once: true, textOnly: true },
+  controleur_alerte: { text: "Mon ticket ? Il est dans mon autre pantalon.", priority: true, once: true, textOnly: true },
+  controleur_poussee: { text: "Le contrôle, c'est sans les mains !", once: true, textOnly: true },
+  brigade_alerte: { text: "Les galons, c'est pour les amendes ?", priority: true, once: true, textOnly: true },
   premier_kill: { text: "Un de moins. Une preuve de plus.", once: true },
   kill_costard: { text: "Ton service est terminé.", chance: 0.35 },
   kill_pompe: { text: "Ça remet les idées en place.", chance: 0.5 },
@@ -217,6 +220,8 @@ export const ALERT_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
   costard: "costard_alerte",
   rampant: "rampant_alerte",
   vigile: "vigile_alerte",
+  controleur: "controleur_alerte",
+  chef_brigade: "brigade_alerte",
 };
 
 /** Réplique à la première attaque d'un ennemi, selon son espèce. */
@@ -224,6 +229,8 @@ export const ATTACK_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
   costard: "costard_tire",
   rampant: "rampant_griffe",
   vigile: "vigile_coup",
+  controleur: "controleur_poussee",
+  chef_brigade: "controleur_poussee",
 };
 
 export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {

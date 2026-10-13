@@ -67,7 +67,13 @@ function applyEnemyHits(
 ): void {
   for (let i = 0; i < playerHits.stepCount; i++) {
     const hit = playerHits.stepAt(i);
-    if (hit) applyPlayerDamage(engine, session, hit.amount, hit.normal, source);
+    if (!hit) continue;
+    applyPlayerDamage(engine, session, hit.amount, hit.normal, hit.push ? "controleur" : source);
+    if (hit.push && session.run.playerHp > 0) {
+      session.player.applyPush(hit.push.displacement, hit.push.duration);
+      session.run.stats.controllerHits++;
+      session.run.stats.controllerPushExpires = session.run.stats.gameplayElapsed + hit.push.duration + 0.3;
+    }
   }
   if (playerHits.stepCount > 0) streamEvent(session, "degats");
 }

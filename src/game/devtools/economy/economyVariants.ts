@@ -33,6 +33,7 @@ const DONATION_REFERENCE: Readonly<Record<StreamEventKind | "serie", number>> = 
   carte: 0.4,
   moment: 0,
   train: 0,
+  controleur_rame: 0.25,
 };
 
 /**

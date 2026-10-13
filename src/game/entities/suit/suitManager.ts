@@ -4,6 +4,7 @@ import { BASE_SUIT_SEED } from "../../../core/effect/seeds";
 import type { PhysicsWorld } from "../../../physics/world";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 import { rampantConfig } from "../rampant/rampantConfig";
+import { controllerConfig, brigadeConfig } from "../controller/controllerConfig";
 import { EnemyManager } from "../shared/enemyManager";
 import { isShieldedHit } from "../shared/enemyShield";
 import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig, type EnemyTuning } from "../shared/enemyTuning";
@@ -14,14 +15,22 @@ import { suitConfig as defaultSuitConfig, type SuitConfig, type SuitKind } from 
 
 // see: docs/decisions/0010-curseur-evenements-multi-pas-fixe.md
 
-/** Costards, Rampants et Vigiles : trois configs, un même gestionnaire. */
+/** Ennemis ordinaires et leurs variantes, dans un même gestionnaire. */
 export class SuitManager extends EnemyManager<Suit> {
   readonly suits: Suit[] = this.enemies;
 
   private readonly cfg: SuitConfig;
   private readonly rampantCfg: SuitConfig;
   private readonly vigileCfg: SuitConfig;
-  private readonly appearanceCounts: Record<SuitKind, number> = { costard: 0, rampant: 0, vigile: 0 };
+  private readonly controllerCfg: SuitConfig;
+  private readonly brigadeCfg: SuitConfig;
+  private readonly appearanceCounts: Record<SuitKind, number> = {
+    costard: 0,
+    rampant: 0,
+    vigile: 0,
+    controleur: 0,
+    chef_brigade: 0,
+  };
 
   /** Part de `sightRange` à laquelle un Costard au repos repère le joueur dans CETTE partie : 1 hors effet d'un perk. */
   sightRangeScale = 1;
@@ -32,6 +41,8 @@ export class SuitManager extends EnemyManager<Suit> {
     this.cfg = tuneEnemyConfig(cfg, tuning);
     this.rampantCfg = tuneEnemyConfig(rampantConfig, tuning);
     this.vigileCfg = tuneEnemyConfig(vigileConfig, tuning);
+    this.controllerCfg = tuneEnemyConfig(controllerConfig, tuning);
+    this.brigadeCfg = tuneEnemyConfig(brigadeConfig, tuning);
   }
 
   // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
@@ -44,6 +55,10 @@ export class SuitManager extends EnemyManager<Suit> {
         return this.rampantCfg;
       case "vigile":
         return this.vigileCfg;
+      case "controleur":
+        return this.controllerCfg;
+      case "chef_brigade":
+        return this.brigadeCfg;
       default:
         return kind satisfies never;
     }

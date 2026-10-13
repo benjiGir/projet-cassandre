@@ -41,7 +41,7 @@ export interface EnemySpriteSheet {
 
 // see: docs/6-reference/notes-code-rendu.md#planches-et-chargement-ennemi
 export interface EnemyAnimationInput {
-  pose: "idle" | "alert" | "chase" | "aim" | "stagger" | "death" | "corpse";
+  pose: "idle" | "alert" | "chase" | "aim" | "charge" | "recover" | "stagger" | "death" | "corpse";
   poseTime: number;
   // Durée prévue de la pose (`alert`, `stagger`, `death`) sur laquelle étaler ses frames ; 0 sinon.
   poseDuration: number;

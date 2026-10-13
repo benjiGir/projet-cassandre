@@ -143,3 +143,12 @@ Pour les textures utilisées par Blender, confirmer que le fichier exporté refl
 Inspecter chaque atlas à son échelle native avant de le charger dans le jeu.
 Vérifier le nom des fichiers réellement chargés par le niveau avant de supprimer une sortie qui semble redondante.
 Garder les entrées brutes sous leur provenance documentée plutôt que de les confondre avec leurs versions quantifiées.
+
+### Contrôleur
+
+`tools/sprites/describe_controleur.py` mesure les cinq PNG de
+`assets_src/controleur_sprites/` et écrit le manifeste `controleur.json`.
+`tools/audio/sons_controleur.py` rend son appel vocal et son sifflet ;
+`build_sprite.py --nom controleur` les empaquette séparément, sans changer
+le sprite audio existant. Le placement Blender passe par
+`C.metro_controleurs()` et se retrouve dans `tools/metro/blockout/encounters.py`.

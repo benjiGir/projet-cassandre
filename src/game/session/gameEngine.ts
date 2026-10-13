@@ -61,6 +61,7 @@ export interface PersistentEngine {
   directorSheet: EnemySpriteSheet;
   rampantSheet: EnemySpriteSheet;
   vigileSheet: EnemySpriteSheet;
+  controllerSheet: EnemySpriteSheet;
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
   cardPickupTextures: CardPickupTextures;
 
@@ -96,7 +97,13 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
   flow: GameFlowPort,
-  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet; vigile: EnemySpriteSheet },
+  sheets: {
+    suit: EnemySpriteSheet;
+    director: EnemySpriteSheet;
+    rampant: EnemySpriteSheet;
+    vigile: EnemySpriteSheet;
+    controller: EnemySpriteSheet;
+  },
   weaponModels: WeaponModels,
   cardPickupTextures: CardPickupTextures,
   heroAsset: HeroAsset,
@@ -118,7 +125,7 @@ export function buildGameEngine(
   // L'objet reste vivant à travers un reset ; `bootGameSession` remet son
   // temps écoulé et tout hitstop actif à zéro.
   const clock = new GameClock();
-  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile].flatMap((sheet) =>
+  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile, sheets.controller].flatMap((sheet) =>
     Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined),
   );
   const fx = new FxSystem(scene, enemyAtlases);
@@ -162,6 +169,7 @@ export function buildGameEngine(
     directorSheet: sheets.director,
     rampantSheet: sheets.rampant,
     vigileSheet: sheets.vigile,
+    controllerSheet: sheets.controller,
     cardPickupTextures,
     look,
     lookDelta,

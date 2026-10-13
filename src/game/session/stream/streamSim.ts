@@ -21,7 +21,8 @@ export type StreamEventKind =
   | "toilettes"
   | "carte"
   | "moment"
-  | "train";
+  | "train"
+  | "controleur_rame";
 
 // Un barème, donc réglable : `devtools/economy/economyVariants.ts` y pose ses variantes.
 interface EventRule {
@@ -74,6 +75,7 @@ export const streamConfig = {
     carte: { audience: 1.5, donation: 0.56, amounts: [5, 10] },
     moment: { audience: 1, donation: 0, amounts: [] },
     train: { audience: 2, donation: 0, amounts: [] },
+    controleur_rame: { audience: 2, donation: 0.35, amounts: [2, 5, 10] },
   } satisfies Record<StreamEventKind | "serie", EventRule> as Record<StreamEventKind | "serie", EventRule>,
   /** Dons du donateur mystère, en euros : ils grossissent au fil de l'histoire, et ne dépendent ni du hasard ni de la difficulté. */
   mystery: {
@@ -178,6 +180,7 @@ function donate(state: StreamState, now: number, alert: DonationAlert): Donation
 }
 
 function donationTopic(kind: StreamEventKind | "serie"): DonationTopic {
+  if (kind === "controleur_rame") return "kill";
   return kind === "degats" || kind === "moment" || kind === "train" ? "generique" : kind;
 }
 
@@ -210,7 +213,7 @@ export function notifyStream(
   state.peakViewers = Math.max(state.peakViewers, state.viewers);
   state.followers = streamConfig.startFollowers + Math.floor(state.gained / streamConfig.viewersPerFollower);
   state.lastEventAt = now;
-  state.lastTopic = effective;
+  state.lastTopic = effective === "controleur_rame" ? "kill" : effective;
 
   if (rule.amounts.length === 0 || now - state.lastDonationAt < streamConfig.donationCooldown) return null;
   if (random() >= rule.donation * state.generosity) return null;

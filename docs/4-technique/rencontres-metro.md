@@ -2,14 +2,14 @@
 title: Rencontres du métro
 tags: [metro, ennemis, script]
 status: brouillon
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # Rencontres du métro
 
 Première implantation jouable, à ajuster au playtest. Elle utilise les
-Costards, Vigiles et Rampants existants. Le Contrôleur n'est pas encore
-implémenté ; ce travail ne clôt pas l'ensemble du lot N7.
+Costards, Vigiles et Rampants, avec le Contrôleur et son chef de brigade.
+Les secrets, bornes et l'équilibrage final restent ouverts ; N7 n'est pas clôturé.
 
 ## Parcours et effectifs
 
@@ -20,31 +20,74 @@ un. Les gardes sont dans leurs propres groupes pour rester présents en Client.
 | Rencontre | Rôle | Client | Habitué | Lanceur d'alerte |
 |---|---|---:|---:|---:|
 | Quartier | Costards devant les façades, après les premiers soins | 2 | 2 | 3 |
-| Billetterie | Tireurs côté ouest, Vigile derrière les portiques | 2 | 3 | 3 |
-| Quai sud | Tireurs sur les deux quais | 2 | 2 | 3 |
-| Quai nord | Deuxième ligne de tireurs, garde du passage de maintenance | 2 | 3 | 3 |
+| Billetterie | Tireurs côté ouest, Vigile derrière les portiques | 3 | 4 | 4 |
+| Quai sud | Tireurs sur les deux quais | 3 | 3 | 4 |
+| Quai nord | Deuxième ligne de tireurs, garde du passage de maintenance | 3 | 4 | 4 |
 | Galerie, entrée | Rampants au-delà du premier seuil | 1 | 2 | 2 |
 | Galerie, coude | Meute au-delà de la distribution technique | 2 | 2 | 3 |
-| Galerie, retour | Meute avant le retour au tunnel | 1 | 2 | 2 |
-| Dépôt | Tireurs dans le hall, garde du chemin d'embarquement | 3 | 3 | 4 |
+| Galerie, retour | Meute avant le retour au tunnel | 2 | 3 | 3 |
+| Dépôt | Tireurs dans le hall, garde du chemin d'embarquement | 5 | 5 | 7 |
 | Accès au poste | Vigile dans le passage ouest ; cabine et escalier libres | 1 | 1 | 1 |
-| Machinerie | Tireurs sur le pourtour, puis deux Rampants | 2 | 4 | 4 |
-| Rame, première vague | Rampants après 10 secondes de voyage | 1 | 2 | 2 |
-| Rame, seconde vague | Rampants après 30 secondes de voyage | 2 | 2 | 3 |
+| Machinerie | Tireurs sur le pourtour, puis deux Rampants | 3 | 5 | 5 |
+| Rame, première vague | Rampants après 10 secondes de voyage | 2 | 3 | 3 |
+| Rame, seconde vague | Rampants après 30 secondes de voyage | 4 | 4 | 5 |
 | Quai privé | Costards activés à l'arrivée effective | 1 | 2 | 2 |
 | Parvis | Tireurs sur les côtés, Vigile devant l'entrée de la tour | 3 | 3 | 4 |
-| **Total du parcours** | | **25** | **33** | **39** |
+| **Total du parcours** | | **35** | **43** | **50** |
 
-Le GLB contient 44 marqueurs : les deux vagues possèdent chacune une
+Le GLB contient 58 marqueurs : les deux vagues possèdent chacune une
 implantation nord et sud, mutuellement exclusives. À chaque vague, le
 contrôleur choisit l'extrémité opposée à la moitié de rame occupée par le
-joueur. Les cinq marqueurs de l'autre implantation ne sont pas réveillés.
+joueur. Les marqueurs de l'autre implantation ne sont pas réveillés.
 
 Les déclencheurs ordinaires sont sur le parcours, avant les positions de
 combat. Aucun ennemi n'est placé dans un gabarit ferroviaire, la cabine du
 guichet, une volée d'escalier ou la fosse de la machinerie. Les petits locaux
 et les tunnels conservent des pauses. La progression n'exige pas de tuer
 tous les ennemis et ne ferme aucune nouvelle porte d'arène.
+
+## Contrôleurs et chef de brigade
+
+La partie réveille neuf Contrôleurs en Client et Habitué, dix en Lanceur
+d'alerte, plus un chef. Quatorze marqueurs décrivent ces rencontres, dont
+six pour les extrémités alternatives des deux vagues. Le premier est dans
+la billetterie, sur sol plat loin des voies. Un Contrôleur attend sur chaque
+quai, un dans la galerie de retour, deux ou trois au dépôt, un sur le
+pourtour sud de la machinerie. Il n'y en a aucun dans les tunnels. Un entre
+à chaque vague de la rame ; le chef accompagne la seconde.
+
+La config `src/game/entities/controller/controllerConfig.ts` reprend les
+valeurs de départ du plan : signal de 0,8 s, 16 m/s, 12 m, projection de
+5 m en 0,5 s, récupération de 1 s. La direction est figée au signal ; les
+commandes du joueur restent actives. Le Contrôleur a 70 PV et inflige 5 PV
+avant difficulté. Le chef a 210 PV, une casquette galonnée et deux charges
+avec une nouvelle anticipation entre elles. Pas de barre de boss.
+
+Une balle ne casse pas la charge. Un impact de pompe à moins de 3 m
+interrompt son anticipation ou sa charge, même non mortel. Les coups et
+explosions restent mortels ; un souffle interrompt aussi la charge. Les
+murs, un appui absent ou une dénivellation supérieure à 55 cm interrompent
+l'élan. Les volumes `nav_voie_*` le limitent aux traversées désignées.
+Le KCC résout toutes les collisions, y compris la projection du joueur.
+
+L'alerte est une interpellation vocale synthétique ; le signal est un sifflet
+court. Le sprite audio séparé est chargé et préparé au démarrage.
+Les sons d'impact, de douleur et de mort reprennent le catalogue existant.
+L'interpellation n'est pas une phrase parlée enregistrée. Les répliques
+spécifiques du héros sont textuelles en attendant les prises de voix.
+
+`SessionStats` expose `controllerHits`, `controllerPushesToRail` et
+`controllerTrainKills`, avec `controleur` comme source de dégâts. Une
+projection suivie d'une entrée sur voie dans les 0,8 s est comptabilisée.
+Le direct récompense davantage un Contrôleur fauché par une rame : audience
+×2 et dons de 2/5/10 euros, contre audience ×1 et 1/2/5 euros pour un kill
+ordinaire. Ces valeurs restent à régler en jouant.
+
+La console expose `cassandre.spawnControleur(x, piedsY, z, chef)` et
+`cassandre.controleur` (config, charge, variantes A/B/C). Les coordonnées
+d'apparition sont celles de Three.js ; `cassandre.tp` utilise celles de Blender.
+La pose locale se rejoue avec `C.metro_controleurs()` : elle ne reconstruit
+pas le décor et utilise les mêmes positions que le générateur complet.
 
 ## Ressources
 

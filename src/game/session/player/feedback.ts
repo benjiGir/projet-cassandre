@@ -117,7 +117,7 @@ export function applyPlayerDamage(
   session: GameSession,
   amount: number,
   normal?: { readonly x: number; readonly z: number },
-  source: "suit" | "director" | "train" = "suit",
+  source: "suit" | "director" | "train" | "controleur" = "suit",
 ): void {
   const hpBefore = session.run.playerHp;
   session.run.playerHp = Math.max(0, session.run.playerHp - Math.max(0, amount));

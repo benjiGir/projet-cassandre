@@ -204,3 +204,13 @@ Lancez le niveau et comparez un ennemi de face, de dos et en trois-quarts en tou
 Tirez puis changez d'arme pendant le mouvement. Le coup doit partir à l'appui ; l'animation du viewmodel accompagne l'action sans suspendre les entrées. Regardez aussi le modèle d'arme au sol avant et après son ramassage.
 
 Couverture ciblée : `pnpm test -- billboard enemySprites viewmodel weapons`.
+
+## Contrôleur peint
+
+`assets_src/controleur_sprites/` contient quatre carnations et le chef galonné,
+avec les prompts et empreintes dans `generation.json`. Le générateur
+`tools/sprites/describe_controleur.py` mesure dix lignes de huit directions,
+à 1,9 m au repos, et copie les cinq PNG sans retoucher leurs pixels.
+Le chef utilise `atlases.chef` du même manifeste. `charge` tient la ligne
+`fire`, `recover` tient `stagger`, et `aim` correspond à l'épaule abaissée
+pendant l'anticipation. Les ancrages debout reprennent la pose de repos.

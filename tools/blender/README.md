@@ -163,6 +163,7 @@ python3 tools/sprites/describe_costard.py
 python3 tools/sprites/describe_rampant.py
 python3 tools/sprites/describe_vigile.py
 python3 tools/sprites/describe_directeur.py
+python3 tools/sprites/describe_controleur.py
 # Itération rapide : quelques animations et directions, écrit <personnage>_apercu.png
 blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage vigile --anims aim,fire --directions 0,2 --out renders/sprites
 ```
@@ -452,3 +453,11 @@ et la direction, crée leurs ossatures de faux plafond, sauvegarde et exporte.
 Le héros des miroirs est un [billboard peint](../../docs/4-technique/reflet-du-heros.md).
 Ses planches et leur description passent par `tools/sprites/describe_hero.py` ;
 sa création ne passe plus par une recette Blender.
+
+### Contrôleurs du métro
+
+`C.metro_controleurs()` (CLI : `metro_controleurs`) pose les quatorze marqueurs
+sur `assets_src/blender/metro_blockout.blend`, contrôle appuis et dégagements,
+sauvegarde puis exporte par `C.export`. Les positions viennent de
+`tools/metro/blockout/encounters.py`, également utilisé lors d'une construction
+complète. La migration est rejouable et ne reconstruit pas la géométrie.

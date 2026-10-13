@@ -920,6 +920,12 @@ def metro_blockout(apercus: bool = True) -> dict:
     return {"ok": res["code"] == 0, **res}
 
 
+def metro_controleurs() -> dict:
+    """Pose les Contrôleurs sur le métro livré, contrôle leurs appuis et exporte."""
+    res = run("tools/metro/blockout/refresh_controller_spawns.py", keep="[metro-controleurs]")
+    return {"ok": res["code"] == 0, **res}
+
+
 def quartier_pilot() -> dict:
     """Construit et exporte la place pilote N4b, dans une session neuve."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:

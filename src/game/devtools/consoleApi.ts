@@ -56,6 +56,12 @@ import { grantCard } from "../session/progression/cards";
 import { grantPerk, startKillRush, usePerkKiosk, type PerkPurchase } from "../session/progression/perks";
 import { publishCounters } from "../session/stream/streamFeed";
 import type { SessionStats } from "../session/progression/score";
+import {
+  controllerCharge,
+  controllerConfig,
+  brigadeConfig,
+  CONTROLLER_VARIANTS,
+} from "../entities/controller/controllerConfig";
 import { useGameStore } from "../hud/state";
 import type { LevelRecap } from "../hud/hudTypes";
 import { setNotarget } from "./cheats";
@@ -174,6 +180,17 @@ export function exposeDebugApi(engine: GameEngine): void {
     spawnRampant: (x, y, z, materialize = false) =>
       spawnSuitAt(engine, engine.session, x, y, z, "rampant", materialize),
     spawnVigile: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "vigile", materialize),
+    spawnControleur: (x, y, z, chief = false, materialize = false) =>
+      spawnSuitAt(engine, engine.session, x, y, z, chief ? "chef_brigade" : "controleur", materialize),
+    controleur: {
+      config: controllerConfig,
+      charge: controllerCharge,
+      variantes: CONTROLLER_VARIANTS,
+      appliquer: (variant: keyof typeof CONTROLLER_VARIANTS) => {
+        Object.assign(controllerCharge, CONTROLLER_VARIANTS[variant]);
+        Object.assign(brigadeConfig.charge!, CONTROLLER_VARIANTS[variant]);
+      },
+    },
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
@@ -499,6 +516,13 @@ declare global {
       spawnRampant: (x: number, y: number, z: number, materialize?: boolean) => Suit;
       /** Même chose pour un Vigile (lot B6) : lourd, lent, bouclier de face. */
       spawnVigile: (x: number, y: number, z: number, materialize?: boolean) => Suit;
+      spawnControleur: (x: number, y: number, z: number, chief?: boolean, materialize?: boolean) => Suit;
+      controleur: {
+        config: typeof controllerConfig;
+        charge: typeof controllerCharge;
+        variantes: typeof CONTROLLER_VARIANTS;
+        appliquer: (variant: keyof typeof CONTROLLER_VARIANTS) => void;
+      };
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */

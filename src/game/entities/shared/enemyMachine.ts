@@ -17,6 +17,7 @@ import { detachEnemyPhysics, updateKnockback, integratePhysics } from "./enemyPh
 import { resolveAttack, resolveMeleeAttack } from "./enemyCombat";
 import { cheats } from "../../devtools/cheats";
 import type { EnemyAnimationInput } from "../../../render/sprites/enemySpriteTypes";
+import { beginCharge, finishChargeStep, hasSafeChargeFloor, runCharge, runChargeRecovery } from "./enemyCharge";
 
 // see: docs/archive/systems-entites.md#la-machine-partagée-ce-quelle-porte-et-où-sarrête-sa-responsabilité
 
@@ -26,6 +27,8 @@ const ENEMY_POSE: Record<EnemyState, EnemyAnimationInput["pose"]> = {
   alert: "alert",
   chase: "chase",
   attack: "aim",
+  charge: "charge",
+  recover: "recover",
   stagger: "stagger",
   dead: "death",
   corpse: "corpse",
@@ -84,6 +87,12 @@ export function createEnemyMachineContext(params: CreateEnemyContextParams): Ene
     pendingAttackDamage: 0,
     pendingPlayerHitPoint: new THREE.Vector3(),
     pendingPlayerHitNormal: new THREE.Vector3(),
+    pendingPlayerPush: new THREE.Vector3(),
+    pendingPushDuration: 0,
+    chargeDirection: new THREE.Vector3(),
+    chargeRemaining: 0,
+    chargeHit: false,
+    chargesRemaining: 0,
 
     currentPath: [],
     currentWaypointIndex: 0,
@@ -145,9 +154,19 @@ export const enemyMachine = setup({
     armAttackCooldown: ({ context }) => {
       context.attackCooldownRemaining = context.cfg.attackCooldown;
     },
+    prepareCharge: ({ context }) => {
+      if (!context.cfg.charge) return;
+      context.chargesRemaining = context.cfg.charge.charges - 1;
+      beginCharge(context);
+    },
+    prepareRepeatCharge: ({ context }) => {
+      context.chargesRemaining--;
+      beginCharge(context);
+    },
     enterDead: ({ context, event }) => {
       if (event.type !== "HIT_FATAL") return;
       context.stateTimer = 0;
+      context.chargesRemaining = 0;
       context.hp = 0;
       context.velocityHorizontal.set(0, 0, 0);
       context.knockbackVelocity.set(0, 0, 0);
@@ -157,6 +176,7 @@ export const enemyMachine = setup({
     enterStagger: ({ context, event }) => {
       if (event.type !== "HIT_NONFATAL") return;
       context.stateTimer = 0;
+      context.chargesRemaining = 0;
       context.knockbackVelocity.set(
         event.knockbackDirection.x * context.cfg.knockbackSpeed,
         context.cfg.knockbackUpBoost,
@@ -185,7 +205,7 @@ export const enemyMachine = setup({
     },
     chase: {
       on: {
-        TARGET_IN_RANGE: { target: "attack", actions: ["resetStateTimer", "setPendingTelegraph"] },
+        TARGET_IN_RANGE: { target: "attack", actions: ["resetStateTimer", "setPendingTelegraph", "prepareCharge"] },
         CONTACT_LOST: { target: "idle", actions: "resetStateTimer" },
         HIT_FATAL: { target: "dead", actions: "enterDead" },
         HIT_NONFATAL: { target: "stagger", actions: "enterStagger" },
@@ -193,7 +213,26 @@ export const enemyMachine = setup({
     },
     attack: {
       on: {
+        CHARGE_STARTED: { target: "charge", actions: "resetStateTimer" },
         ATTACK_RESOLVED: {
+          target: "chase",
+          actions: ["resetStateTimer", "armAttackCooldown", "resetTimeSinceLastSeen"],
+        },
+        HIT_FATAL: { target: "dead", actions: "enterDead" },
+        HIT_NONFATAL: { target: "stagger", actions: "enterStagger" },
+      },
+    },
+    charge: {
+      on: {
+        CHARGE_FINISHED: { target: "recover", actions: "resetStateTimer" },
+        HIT_FATAL: { target: "dead", actions: "enterDead" },
+        HIT_NONFATAL: { target: "stagger", actions: "enterStagger" },
+      },
+    },
+    recover: {
+      on: {
+        REPEAT_CHARGE: { target: "attack", actions: ["resetStateTimer", "setPendingTelegraph", "prepareRepeatCharge"] },
+        RECOVERY_ELAPSED: {
           target: "chase",
           actions: ["resetStateTimer", "armAttackCooldown", "resetTimeSinceLastSeen"],
         },
@@ -311,6 +350,11 @@ function runAttack(
   dt: number,
   distance: number,
 ): void {
+  if (ctx.cfg.charge) {
+    ctx.stateTimer += dt;
+    if (ctx.stateTimer >= ctx.cfg.attackTelegraphDuration) actor.send({ type: "CHARGE_STARTED" });
+    return;
+  }
   turnTowards(ctx, ctx.scratchToPlayer, dt);
   ctx.stateTimer += dt;
   // Corps-à-corps : l'élan est un bond vers le joueur, qui s'arrête au contact
@@ -342,6 +386,8 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
   ctx.pendingTelegraph = false;
   ctx.pendingShot = false;
   ctx.pendingAttackDamage = 0;
+  ctx.pendingPlayerPush.set(0, 0, 0);
+  ctx.pendingPushDuration = 0;
   ctx.animClock += dt;
   ctx.timeSinceShot += dt;
 
@@ -378,12 +424,26 @@ export function tickEnemy(actor: EnemyActor, dt: number, updateCtx: EnemyUpdateC
     case "attack":
       runAttack(actor, ctx, updateCtx, dt, distance);
       break;
+    case "charge":
+      runCharge(actor, ctx, updateCtx, dt, cheats.notarget);
+      break;
+    case "recover":
+      runChargeRecovery(actor, ctx, updateCtx, dt, cheats.notarget);
+      break;
     case "stagger":
       runStagger(actor, ctx, dt);
       break;
   }
 
+  if (ctx.cfg.charge && state !== "charge" && ctx.velocityHorizontal.lengthSq() > 0) {
+    ctx.scratchMoveDir.copy(ctx.velocityHorizontal).normalize();
+    if (!hasSafeChargeFloor(ctx, updateCtx, ctx.scratchMoveDir, ctx.velocityHorizontal.length() * dt))
+      ctx.velocityHorizontal.set(0, 0, 0);
+  }
   integratePhysics(ctx, dt, updateCtx);
+  if (state === "charge" && actor.getSnapshot().value === "charge") {
+    finishChargeStep(actor, ctx, dt);
+  }
 }
 
 export function applyEnemyDamageCore(actor: EnemyActor, amount: number): EnemyDamageOutcome {

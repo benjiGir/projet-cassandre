@@ -29,6 +29,7 @@ export interface EnemyPlayerHitEvent {
   amount: number;
   point: THREE.Vector3;
   normal: THREE.Vector3;
+  push?: { displacement: THREE.Vector3; duration: number };
 }
 
 /** Dégâts reçus par UN ennemi sur un pas fixe : plusieurs plombs ne font qu'un coup. */
@@ -39,6 +40,7 @@ interface AggregatedHit {
   gibDirection: THREE.Vector3 | null;
   /** Point de repli pour `deathEvents` quand la mort n'est PAS un gib (pas besoin d'être précis, juste non nul). */
   anyPoint: THREE.Vector3;
+  interruptCharge?: boolean;
 }
 
 // Ce que tout gestionnaire d'ennemis fait à chaque pas fixe : regrouper les
@@ -51,6 +53,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly enemyByCollider = new Map<number, TEnemy>();
   private spawnCount = 0;
+  canChargeTo?: (position: THREE.Vector3) => boolean;
   // Remis à zéro uniquement après présentation, pas entre les pas fixes.
   private hitCursor = 0;
 
@@ -176,6 +179,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
       navGraph,
       vitreSystem,
       sanitaireSystem,
+      canChargeTo: this.canChargeTo,
     };
 
     for (const enemy of this.enemies) {
@@ -183,7 +187,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
       const hit = aggregated.get(enemy);
       if (hit) {
         this.applyAggregatedHit(enemy, hit, playerTargetPosition);
-        continue; // pas de tick de machine à états ce pas-ci : `applyDamage` a déjà positionné l'état (stagger/mort).
+        if (!enemy.cfg.charge || !enemy.isAlive || enemy.state === "stagger") continue;
       }
 
       this.prepareContext(enemy, ctx);
@@ -262,8 +266,13 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     return -Infinity;
   }
 
-  protected damage(enemy: TEnemy, amount: number, knockbackDirection: THREE.Vector3): { died: boolean } {
-    return enemy.applyDamage(amount, this.physics, knockbackDirection);
+  protected damage(
+    enemy: TEnemy,
+    amount: number,
+    knockbackDirection: THREE.Vector3,
+    interruptCharge = true,
+  ): { died: boolean } {
+    return enemy.applyDamage(amount, this.physics, knockbackDirection, interruptCharge);
   }
 
   protected onDeath(_enemy: TEnemy): void {}
@@ -278,7 +287,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     // Capturé AVANT les dégâts : la mort détache le collider (`enemy.collider`
     // redevient `null`), c'est donc le seul moment où ce handle est encore lisible.
     const handleBeforeDeath = enemy.collider?.handle;
-    const result = this.damage(enemy, hit.totalDamage, this.scratchKnockback);
+    const result = this.damage(enemy, hit.totalDamage, this.scratchKnockback, hit.interruptCharge ?? true);
 
     if (result.died) {
       // Retiré tout de suite : Rapier peut recycler le handle d'un collider supprimé.
@@ -304,6 +313,10 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
         amount: enemy.pendingAttackDamage,
         point: enemy.pendingPlayerHitPoint.clone(),
         normal: enemy.pendingPlayerHitNormal.clone(),
+        push:
+          enemy.pendingPushDuration > 0
+            ? { displacement: enemy.pendingPlayerPush.clone(), duration: enemy.pendingPushDuration }
+            : undefined,
       });
     }
   }
@@ -326,6 +339,11 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
       }
 
       entry.totalDamage += damageForHit(hitEvent);
+      if (enemy.cfg.charge) {
+        entry.interruptCharge =
+          (entry.interruptCharge ?? false) ||
+          (hitEvent.weapon === "shotgun" && hitEvent.distance <= enemy.cfg.charge.interruptRange);
+      }
 
       if (!entry.gibs && hitEvent.weapon === "shotgun" && hitEvent.distance <= this.gibDistanceOf(enemy)) {
         entry.gibs = true;

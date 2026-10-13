@@ -1,0 +1,40 @@
+{
+  "generator": "image_gen",
+  "date": "2026-10-13",
+  "reference": "assets_src/vigile_sprites/vigile.png",
+  "prompts": {
+    "humain": "Create a production sprite atlas for a new enemy in a painted retro FPS matching the provided Vigile reference style: bold shaded illustrated forms, strong dark outlines, gritty Duke Nukem/Ion Fury feel. NOT a 3D render.\nExactly 8 columns by 10 rows, 80 separate full-body sprites, transparent RGBA background, portrait canvas 1024x1536. Leave clear transparent spacing around EVERY sprite, never cross columns. Each standing character ~110 pixels high in a 128x154 cell. Fixed camera elevation and consistent scale. No text, grid or labels.\nCharacter: the CONTROLEUR, an angry burly metropolitan ticket inspector. Bottle-green uniform jacket with pale cream collar/shirt, black tie, dark green trousers, black shoes, peaked green cap with brass badge. Brown leather crossbody ticket bag fixed at his LEFT hip with strap from RIGHT shoulder. Bare hands, NO guns, NO batons, NO shields. Warm medium skin tone, short dark hair and mustache. Distinct from navy/yellow riot guard in reference. Big readable shoulders, believable anatomy.\nDirection columns, EVERY row left-to-right: FRONT, FRONT-RIGHT (face points towards IMAGE RIGHT), RIGHT PROFILE, REAR-RIGHT, BACK, REAR-LEFT, LEFT PROFILE, FRONT-LEFT.\nRows top-to-bottom:\n0 neutral rest fists relaxed, feet planted\n1 alert/interpellation one hand raised asking for ticket\n2 walk stride A\n3 walk stride B\n4 charge anticipation: stationary crouch shoulders lowered, clenched fists, clear intent to ram shoulder into player\n5 charging forward: aggressively leaned torso, shoulder leading, leg extended mid-sprint, bag trailing\n6 hurt/stagger: body recoils, pained face\n7 dying knees buckling, still vertical\n8 falling sideways, low body\n9 dead body lying on ground, very small dark red pool.\nMaintain same uniform, bag placement and character across all 80 poses. Bags always visible appropriately in 8 views. No scene, no floor, no shadows cast outside character, no magic streaks. Strong separated silhouettes, full bodies never cut off.",
+    "clair": "Edit this production 8-column 10-row transparent enemy sprite atlas. Change ONLY the skin of face, neck and hands on ALL 80 sprites to: light fair skin, keeping the dark mustache. Preserve absolutely every pixel placement, column and row count, pose, orientation, body size, green jacket and trousers, brown crossbody bag, black shoes, hair and mustache, transparency and empty spaces. No new props, no additional sprites, no text or background. All skin-bearing parts in ALL 80 poses need consistent treatment. Keep 1024x1536 portrait format and existing padding.",
+    "mate": "Edit this production 8-column 10-row transparent enemy sprite atlas. Change ONLY the skin of face, neck and hands on ALL 80 sprites to: medium deep brown skin. Preserve absolutely every pixel placement, column and row count, pose, orientation, body size, green jacket and trousers, brown crossbody bag, black shoes, hair and mustache, transparency and empty spaces. No new props, no additional sprites, no text or background. All skin-bearing parts in ALL 80 poses need consistent treatment. Keep 1024x1536 portrait format and existing padding.",
+    "fonce": "Edit this production 8-column 10-row transparent enemy sprite atlas. Change ONLY the skin of face, neck and hands on ALL 80 sprites to: deep dark brown skin. Preserve absolutely every pixel placement, column and row count, pose, orientation, body size, green jacket and trousers, brown crossbody bag, black shoes, hair and mustache, transparency and empty spaces. No new props, no additional sprites, no text or background. All skin-bearing parts in ALL 80 poses need consistent treatment. Keep 1024x1536 portrait format and existing padding.",
+    "chef": "Edit this production 8-column 10-row transparent enemy sprite atlas. Change ONLY the insignia as follows: keep original medium warm skin; add a thick clearly visible GOLD BRAID band to ALL peaked green caps, gold shoulder epaulettes and a second gold cuff stripe on uniform. The chief is otherwise the EXACT same character. Preserve absolutely every pixel placement, column and row count, pose, orientation, body size, green jacket and trousers, brown crossbody bag, black shoes, hair and mustache, transparency and empty spaces. No new props, no additional sprites, no text or background. All skin-bearing parts in ALL 80 poses need consistent treatment. Keep 1024x1536 portrait format and existing padding."
+  },
+  "files": [
+    {
+      "target": "controleur.png",
+      "source": "exec-89a00610-46f4-449e-a241-090f4aca6de4.png",
+      "sha256": "4c204e75046ec985ef117b74201200f020a1c5c9d475bf66b29aab4f38bb0306"
+    },
+    {
+      "target": "controleur_clair.png",
+      "source": "exec-947af14c-0466-4db3-89b0-9c625772996b.png",
+      "sha256": "906a2232d1464e717ca401d681978cd00b8327153ef212b380c34c5b60a1253b"
+    },
+    {
+      "target": "controleur_mate.png",
+      "source": "exec-c9ae62c8-335f-4d18-87b5-f1f0c7fbf3de.png",
+      "sha256": "aca2c4b21a4b58c5182c624a9fdcdf745bd93d7ed804325f859e9ff3c871de47"
+    },
+    {
+      "target": "controleur_fonce.png",
+      "source": "exec-56c899d5-3d92-45ac-81e3-479061303a30.png",
+      "sha256": "122e6cb91e4150ddf679fc302f8d9f4e73ccc2798a7b476e8af78de501b8289e"
+    },
+    {
+      "target": "chef_brigade.png",
+      "source": "exec-cfb8e799-8585-428e-b633-665823e82407.png",
+      "sha256": "835b590f7374f39b4e72cfba70b1d9caaac8dfbe3932b63ce71897ac5788ff65"
+    }
+  ],
+  "reference_sha256": "a9073f401ffa1b747df1edeab396e269eebfbbcd97ce855df5b7998c9e3b21fd"
+}

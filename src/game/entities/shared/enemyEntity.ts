@@ -129,6 +129,12 @@ export abstract class EnemyEntity<TConfig extends EntityConfig> implements Entit
   get pendingPlayerHitNormal(): THREE.Vector3 {
     return this.ctx.pendingPlayerHitNormal;
   }
+  get pendingPlayerPush(): THREE.Vector3 {
+    return this.ctx.pendingPlayerPush;
+  }
+  get pendingPushDuration(): number {
+    return this.ctx.pendingPushDuration;
+  }
 
   get isAlive(): boolean {
     const value = this.actor.getSnapshot().value;
@@ -162,7 +168,12 @@ export abstract class EnemyEntity<TConfig extends EntityConfig> implements Entit
     return interpolateEnemyForward(this.ctx, alpha, out);
   }
 
-  applyDamage(amount: number, physics: PhysicsWorld, knockbackDirection: THREE.Vector3): { died: boolean } {
+  applyDamage(
+    amount: number,
+    physics: PhysicsWorld,
+    knockbackDirection: THREE.Vector3,
+    interruptCharge = true,
+  ): { died: boolean } {
     const outcome = applyEnemyDamageCore(this.actor, amount);
     if (outcome === "already-dead") return { died: false }; // garde-fou : le gestionnaire ne vise que des vivants.
 
@@ -171,7 +182,9 @@ export abstract class EnemyEntity<TConfig extends EntityConfig> implements Entit
       return { died: true };
     }
 
-    this.actor.send({ type: "HIT_NONFATAL", knockbackDirection });
+    if (interruptCharge || !this.cfg.charge || (this.state !== "attack" && this.state !== "charge")) {
+      this.actor.send({ type: "HIT_NONFATAL", knockbackDirection });
+    }
     return { died: false };
   }
 

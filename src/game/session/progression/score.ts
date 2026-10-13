@@ -6,7 +6,11 @@ export interface SessionStats {
   trainKills: number;
   trainCrossings: number;
   trainDeaths: number;
-  lastDamageSource: "suit" | "director" | "train" | null;
+  lastDamageSource: "suit" | "director" | "train" | "controleur" | null;
+  controllerHits: number;
+  controllerPushesToRail: number;
+  controllerTrainKills: number;
+  controllerPushExpires: number;
   suitKills: number;
   directorKills: number;
   /** Un tir = un appui sur "tirer" qui a réellement déclenché l'arme (cooldown écoulé, munitions dispo) — jamais une tentative à sec. */
@@ -28,6 +32,10 @@ export function createInitialStats(): SessionStats {
     trainCrossings: 0,
     trainDeaths: 0,
     lastDamageSource: null,
+    controllerHits: 0,
+    controllerPushesToRail: 0,
+    controllerTrainKills: 0,
+    controllerPushExpires: -Infinity,
     suitKills: 0,
     directorKills: 0,
     shotsFired: 0,
@@ -114,7 +122,7 @@ export function buildLevelRecap(input: LevelRecapInput): LevelRecap {
     lines.push({ label: "Traversées de voie", detail: String(stats.trainCrossings), points: 0 });
 
   lines.push({
-    label: "Costards éliminés",
+    label: "Ennemis éliminés",
     detail:
       suitTotal > 0
         ? `${stats.suitKills}/${suitTotal} × ${SCORE_SUIT_KILL}`

@@ -38,6 +38,9 @@ export class PlayerController {
   readonly previousPosition = new THREE.Vector3();
   /** Vitesse intégrée, m/s. Sa composante horizontale est reclippée par les collisions. */
   readonly velocity = new THREE.Vector3();
+  private readonly pushVelocity = new THREE.Vector3();
+  private pushDecay = 0;
+  private readonly pushStep = new THREE.Vector3();
   /** Normale du sol sous les pieds (0,1,0 si non au sol). */
   readonly groundNormal = new THREE.Vector3(0, 1, 0);
 
@@ -119,6 +122,8 @@ export class PlayerController {
     this.position.set(x, centerY, z);
     this.previousPosition.copy(this.position);
     this.velocity.set(0, 0, 0);
+    this.pushVelocity.set(0, 0, 0);
+    this.pushDecay = 0;
     this.groundNormal.set(0, 1, 0);
     this.isGrounded = false;
     this.numCollisions = 0;
@@ -143,6 +148,12 @@ export class PlayerController {
     this.previousBobIntensity = this.bobIntensity;
     this.previousRunFactor = this.runFactor;
     this.previousLandingDip = this.landingDip;
+  }
+
+  applyPush(displacement: THREE.Vector3, duration: number): void {
+    if (duration <= 0) return;
+    this.pushVelocity.copy(displacement).multiplyScalar(2 / duration);
+    this.pushDecay = this.pushVelocity.length() / duration;
   }
 
   eyePosition(alpha: number, out: THREE.Vector3): THREE.Vector3 {
@@ -262,9 +273,10 @@ export class PlayerController {
     if (this.velocity.y > 0) this.kcc.disableSnapToGround();
     else this.kcc.enableSnapToGround(cfg.snapToGroundDistance);
 
-    this.desired.x = this.velocity.x * dt;
+    this.advancePush(dt);
+    this.desired.x = this.velocity.x * dt + this.pushStep.x;
     this.desired.y = this.velocity.y * dt;
-    this.desired.z = this.velocity.z * dt;
+    this.desired.z = this.velocity.z * dt + this.pushStep.z;
 
     this.kcc.computeColliderMovement(
       this.collider,
@@ -301,10 +313,7 @@ export class PlayerController {
       this.velocity.y = 0; // atterrissage
     }
 
-    if (hitWall && dt > 0) {
-      this.velocity.x = this.movement.x / dt;
-      this.velocity.z = this.movement.z / dt;
-    }
+    this.resolveWallVelocity(hitWall, dt);
 
     if (grounded) {
       this.jumpLatched = false;
@@ -325,6 +334,27 @@ export class PlayerController {
     this.distanceTravelled += Math.hypot(this.movement.x, this.movement.z);
 
     this.updateViewState(dt, impactSpeed);
+  }
+
+  private advancePush(dt: number): void {
+    const pushSpeed = this.pushVelocity.length();
+    const remainingPush = Math.max(0, pushSpeed - this.pushDecay * dt);
+    const pushTime = this.pushDecay > 0 ? Math.min(dt, pushSpeed / this.pushDecay) : 0;
+    this.pushStep
+      .copy(this.pushVelocity)
+      .multiplyScalar(pushSpeed > 0 ? ((pushSpeed + remainingPush) * 0.5 * pushTime) / pushSpeed : 0);
+    this.pushVelocity.multiplyScalar(pushSpeed > 0 ? remainingPush / pushSpeed : 0);
+  }
+
+  private resolveWallVelocity(hitWall: boolean, dt: number): void {
+    if (hitWall && dt > 0) {
+      if (this.pushStep.lengthSq() > 0) this.velocity.x = this.velocity.z = 0;
+      else {
+        this.velocity.x = this.movement.x / dt;
+        this.velocity.z = this.movement.z / dt;
+      }
+      this.pushVelocity.set(0, 0, 0);
+    }
   }
 
   private updateViewState(dt: number, impactSpeed: number) {

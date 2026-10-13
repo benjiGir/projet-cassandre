@@ -18,7 +18,7 @@ export type SuitState = EnemyState;
 // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
 export type SuitUpdateContext = EnemyUpdateContext;
 
-/** Costard, Rampant ou Vigile : la même machine, une config et une planche de sprites par espèce. */
+/** Ennemis ordinaires : une machine commune, une config et une planche par espèce. */
 export class Suit extends EnemyEntity<SuitConfig> {
   /** Espèce : décide de la planche de sprites, des sons et des répliques — jamais du code de la machine. */
   readonly kind: SuitKind;

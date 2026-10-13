@@ -32,6 +32,18 @@ GROUPS = {
     'metro_arrivee': ('costard', ((58,419,-17.25),(58,426,-17.25))),
     'metro_parvis_tireurs': ('costard', ((32,489,0),(62,491,0),(50,493,0))),
     'metro_parvis_garde': ('vigile', ((50,495,0),)),
+    'metro_billets_controleur': ('controleur', ((-6,103,-5),)),
+    'metro_quais_sud_controleur': ('controleur', ((-6.5,144,P.QUAI_Z),)),
+    'metro_quais_nord_controleur': ('controleur', ((6.5,174,P.QUAI_Z),)),
+    'metro_galerie_controleur': ('controleur', ((63.75,295.75,None),)),
+    'metro_depot_controleurs': ('controleur', ((43,346,-18),(56,350,-18),(63,354,-18))),
+    'metro_machinerie_controleur': ('controleur', ((103,329,-22),)),
+    'metro_rame_1_controleur_nord': ('controleur', ((39.5,422,-17.25),)),
+    'metro_rame_1_controleur_sud': ('controleur', ((39.5,373,-17.25),)),
+    'metro_rame_2_controleur_nord': ('controleur', ((39.5,419,-17.25),)),
+    'metro_rame_2_controleur_sud': ('controleur', ((39.5,371,-17.25),)),
+    'metro_rame_chef_nord': ('chef_brigade', ((39.5,424,-17.25),)),
+    'metro_rame_chef_sud': ('chef_brigade', ((39.5,374.25,-17.25),)),
 }
 
 TRIGGERS = (
@@ -97,7 +109,7 @@ def inspect_positions(a,spawns):
     tree=BVHTree.FromPolygons(vertices,faces)
     readings=[]
     errors=[]
-    capsules={'costard':(.4,.5),'vigile':(.5,.5),'rampant':(.35,.25)}
+    capsules={'costard':(.4,.5),'vigile':(.5,.5),'rampant':(.35,.25),'controleur':(.4,.5),'chef_brigade':(.4,.5)}
     positions=[(item['nom'],item['pieds'],*capsules[item['espece']]) for item in spawns]
     positions += [('use_metro_'+name,at,.3,0) for name,at,_,_ in PICKUPS]
     positions += [(name,at,.3,0) for name,at in weapon_positions()]
@@ -118,7 +130,7 @@ def inspect_positions(a,spawns):
 def build(a):
     spawns=[]
     for group,(kind,points) in GROUPS.items():
-        prefix={'costard':'suit','rampant':'rampant','vigile':'vigile'}[kind]
+        prefix={'costard':'suit','rampant':'rampant','vigile':'vigile','controleur':'controleur','chef_brigade':'chef_brigade'}[kind]
         for index,(x,y,z) in enumerate(points,1):
             z=P.galerie_z(x,y) if z is None else z
             obj=bpy.data.objects.new(f'spawn_{prefix}_{group}_{index:02d}',None)

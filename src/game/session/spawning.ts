@@ -56,7 +56,7 @@ const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
 /** Planche de sprites d'une espèce — le seul endroit qui associe les deux. */
 export function suitSheetFor(
-  engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet">,
+  engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet" | "controllerSheet">,
   kind: SuitKind,
 ) {
   switch (kind) {
@@ -66,6 +66,9 @@ export function suitSheetFor(
       return engine.rampantSheet;
     case "vigile":
       return engine.vigileSheet;
+    case "controleur":
+    case "chef_brigade":
+      return engine.controllerSheet;
     default:
       return kind satisfies never;
   }
@@ -89,7 +92,12 @@ export function spawnSuitAt(
   // posent sur son bas, offset du KCC compris.
   const sheet = suitSheetFor(engine, kind);
   const cfg = suit.cfg;
-  const atlas = kind === "rampant" ? sheet.atlases.humain : enemyHumanAtlas(sheet, suit.appearanceIndex);
+  const atlas =
+    kind === "chef_brigade"
+      ? (sheet.atlases.chef ?? sheet.atlases.humain)
+      : kind === "rampant"
+        ? sheet.atlases.humain
+        : enemyHumanAtlas(sheet, suit.appearanceIndex);
   const sprite = new BillboardSprite(engine.scene, atlas, {
     rows: sheet.rows,
     layout: enemySpriteLayout(sheet, atlas),
@@ -371,6 +379,9 @@ export function loadGltfLevel(
             secretsTotal: handle.stats.secretCount,
           };
           handle.metroBlockout?.bind(doorSystem, previousBlockout);
+          session.suitManager.canChargeTo = handle.trains
+            ? (position) => handle.trains!.canEnemyChargeTo(position)
+            : undefined;
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).

@@ -46,6 +46,19 @@ export interface EnemyConfig {
 
   /** Attaque au corps-à-corps ; absent = tir à distance (Costard, Directeur). */
   melee?: EnemyMeleeConfig;
+  charge?: EnemyChargeConfig;
+}
+
+export interface EnemyChargeConfig {
+  speed: number;
+  distance: number;
+  reach: number;
+  recovery: number;
+  pushDistance: number;
+  pushDuration: number;
+  charges: number;
+  interruptRange: number;
+  maxDrop: number;
 }
 
 export interface EnemyMeleeConfig {
@@ -60,7 +73,7 @@ export interface EnemyShieldConfig {
   halfArcDeg: number;
 }
 
-export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "stagger";
+export type EnemyLiveState = "idle" | "alert" | "chase" | "attack" | "charge" | "recover" | "stagger";
 
 export type EnemyState = EnemyLiveState | "dead" | "corpse";
 
@@ -83,6 +96,8 @@ export interface EnemyUpdateContext {
   vitreSystem?: BreakableHitTarget;
   // see: docs/decisions/0032-sanitaires-utilisables.md
   sanitaireSystem?: BreakableHitTarget;
+  /** Point d'appui prévu, aux pieds : voies interdites hors traversées. */
+  canChargeTo?: (position: THREE.Vector3) => boolean;
 }
 
 export interface EnemyMachineContext {
@@ -117,6 +132,12 @@ export interface EnemyMachineContext {
   pendingAttackDamage: number;
   readonly pendingPlayerHitPoint: THREE.Vector3;
   readonly pendingPlayerHitNormal: THREE.Vector3;
+  readonly pendingPlayerPush: THREE.Vector3;
+  pendingPushDuration: number;
+  readonly chargeDirection: THREE.Vector3;
+  chargeRemaining: number;
+  chargeHit: boolean;
+  chargesRemaining: number;
 
   currentPath: ReadonlyArray<THREE.Vector3>;
   currentWaypointIndex: number;
@@ -168,9 +189,17 @@ export type EnemyEvent =
   | { type: "TARGET_IN_RANGE" }
   | { type: "CONTACT_LOST" }
   | { type: "ATTACK_RESOLVED" }
+  | { type: "CHARGE_STARTED" }
+  | { type: "CHARGE_FINISHED" }
+  | { type: "REPEAT_CHARGE" }
+  | { type: "RECOVERY_ELAPSED" }
   | { type: "STAGGER_ELAPSED" }
   | { type: "HIT_FATAL"; physics: PhysicsWorld }
   | { type: "HIT_NONFATAL"; knockbackDirection: THREE.Vector3 }
   | { type: "DEATH_ANIM_DONE" };
 
 export type EnemyDamageOutcome = "already-dead" | "fatal" | "nonfatal";
+
+export interface EnemyEventSink {
+  send(event: EnemyEvent): void;
+}

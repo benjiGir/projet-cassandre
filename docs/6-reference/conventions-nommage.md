@@ -20,6 +20,8 @@ Le loader interprète les noms et les propriétés glTF comme un contrat de game
 | `spawn_suit_*` | Point d'apparition d'un Costard ; avec `groupe`, il attend son réveil par le script de niveau. |
 | `spawn_rampant_*` | Point d'apparition d'un Rampant ; mêmes règles qu'un Costard. |
 | `spawn_vigile_*` | Point d'apparition d'un Vigile ; mêmes règles qu'un Costard. |
+| `spawn_controleur_*` | Contrôleur ; mêmes règles de groupe qu’un Costard. |
+| `spawn_chef_brigade_*` | Variante du Contrôleur ; mêmes règles de groupe. |
 | `spawn_director_*` | Point d'apparition du Directeur. |
 | `trig_*` | Boîte du script de niveau : lance un scénario (`evenement`) ou désigne une sous-zone à réplique (`replique`). |
 | `use_*` | Objet actionnable à portée de 2 m, ou ramassage spécialisé selon ses extras/nom. |
@@ -53,7 +55,7 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `secret_id` | `secret_*` | Identifiant stable du secret. |
 | `evenement` | `trig_*` | Nom d'un scénario de `src/game/session/progression/levelEvents.ts`, lancé une fois par partie à l'entrée du joueur. |
 | `replique` | `trig_*` | Identifiant d'une réplique du héros, dite à la première visite de la sous-zone. |
-| `groupe` | `spawn_suit_*`, `spawn_rampant_*`, `spawn_vigile_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. Un groupe se pose à sa taille la plus dure : les difficultés plus basses n'en réveillent que les premiers par ordre de nom. |
+| `groupe` | `spawn_suit_*`, `spawn_rampant_*`, `spawn_vigile_*`, `spawn_controleur_*`, `spawn_chef_brigade_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. Un groupe se pose à sa taille la plus dure : les difficultés plus basses n'en réveillent que les premiers par ordre de nom. |
 | `masse`, `pv`, `matiere`, `contenu` | `prop_*` | Masse en kg (défaut 25), PV optionnels, matière de casse et contenu lâché. |
 | `mouvement`, `groupe`, `auto`, `manuelle`, `charniere`, `sens` | `door_*` | Mouvement et configuration du vantail, de l'ouverture auto et de l'action manuelle. |
 | `angle`, `course`, `duree`, `portee`, `delai`, `referme` | `door_*` | Géométrie et temporisation de l'ouverture ou de la refermeture. |
