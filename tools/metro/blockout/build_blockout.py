@@ -247,6 +247,8 @@ def main():
     from tools.metro.blockout.kiosks import build as build_kiosks, check_placements
     build_kiosks(a)
     check_placements(a)
+    from tools.metro.blockout.colliders import repair as repair_colliders
+    repair_colliders()
     scene.world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.18
     bpy.context.view_layer.update()
     bpy.context.preferences.filepaths.save_version=0

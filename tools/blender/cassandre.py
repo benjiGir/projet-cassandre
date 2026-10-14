@@ -939,6 +939,12 @@ def metro_kiosks(apercus: bool = True) -> dict:
     return {"ok": res["code"] == 0, **res}
 
 
+def metro_colliders(inspect: bool = False) -> dict:
+    """Inspecte ou répare les proxies statiques du métro livré."""
+    res = run("tools/metro/blockout/colliders.py", *(["--inspect"] if inspect else []), keep="[metro-colliders]")
+    return {"ok": res["code"] == 0, **res}
+
+
 def quartier_pilot() -> dict:
     """Construit et exporte la place pilote N4b, dans une session neuve."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:

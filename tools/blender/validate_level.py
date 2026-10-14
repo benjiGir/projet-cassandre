@@ -35,6 +35,8 @@ MAX_STEP = 0.35               # autostep du character controller
 MIN_CEILING = 2.0
 MIN_PASSAGE = 1.0
 MIN_PROXY_THICKNESS = 0.1
+# Les coordonnées glTF sont en float32 ; à 400 m, une cote de 10 cm est arrondie.
+PROXY_THICKNESS_TOLERANCE = 1e-4
 MAX_THIN_RATIO = 20.0
 # Budget MESURÉ, pas supposé : 1,45 million de triangles dans le champ coûtent
 # 4,94 ms GPU sur la machine de mesure, pour une image de 16,6 ms. Les 200 000
@@ -517,7 +519,7 @@ def check_colliders(meshes) -> Counter:
                 warn(f"{o.name}: trimesh à {len(o.data.polygons)} faces — proxy plus simple ?")
 
         dims = o.dimensions
-        if min(dims) < MIN_PROXY_THICKNESS:
+        if min(dims) + PROXY_THICKNESS_TOLERANCE < MIN_PROXY_THICKNESS:
             err(f"{o.name}: épaisseur {min(dims):.3f} m < {MIN_PROXY_THICKNESS} — risque de tunneling")
 
     if kinds["trimesh"] and kinds.total() and kinds["trimesh"] / kinds.total() > 0.15:

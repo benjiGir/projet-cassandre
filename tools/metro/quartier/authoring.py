@@ -77,7 +77,9 @@ class Author:
             obj.name = name if i == 0 else f"{name}_{i}"
             obj["groupe"] = name
             obj["mouvement"], obj["course"], obj["duree"] = movement, course, .7
-            obj["referme"], obj["manuelle"] = False, manual
+            obj["referme"] = False
+            if manual: obj["manuelle"] = manual
+            elif "manuelle" in obj: del obj["manuelle"]
         return panels[0]
 
     def command(self, name, at, target, message):

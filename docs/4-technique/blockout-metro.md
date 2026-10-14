@@ -2,7 +2,7 @@
 title: Métro complet — blockout N5
 tags: [metro, niveau, blender, trains]
 status: brouillon
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Métro complet — blockout N5
@@ -23,8 +23,9 @@ l'atelier du quartier, des archives derrière le local des agents, le toit
 de la rame de fret et le local d'entretien de la machinerie.
 Une [première passe de rencontres](rencontres-metro.md) est intégrée le
 9 octobre : trois espèces existantes, ressources et deux vagues à bord.
-Contrôleur et secrets sont implantés le 13 octobre ; bornes et équilibre
-final restent à N7/N8.
+Contrôleur et secrets sont implantés le 13 octobre ; les six bornes sont
+implantées puis acceptées par l'utilisateur le 14 octobre.
+L'équilibre final reste à N8.
 
 ## Fichiers
 
@@ -104,6 +105,43 @@ N4b. La paroi « QUAIS — HORS PILOTE » est retirée. Les voies publiques ont
 des traversées guidées à Y 134 et 172. Le quai gauche reste continu jusqu'au
 passage de maintenance ; aucune cloison transversale n'en coupe le parcours.
 Les deux quais restent à 0,75 m au-dessus des rails, franchissables en saut.
+
+### Proxies statiques
+
+`tools/metro/blockout/colliders.py` répare les proxies après la construction
+du décor, des secrets et des bornes. `C.metro_colliders()` applique la même
+recette localement au métro livré, contrôle le niveau, puis sauvegarde et
+exporte. `inspect=True` relève les proxies trop fins sans modifier la scène.
+
+Les fronts sud et nord de station sont partitionnés en volumes convexes :
+191 lamelles deviennent 80 volumes, avec le contour des passages conservé.
+Les petits coins qui restent étroits sont renforcés uniquement dans la
+maçonnerie déjà occupée. La recette vérifie la surface de la partition et
+l'inclusion des renforts dans le contour d'origine.
+
+Les raccords de niches permettent 17 fusions de voisins convexes, acceptées
+uniquement quand le volume de leur enveloppe correspond à leur union.
+Six derniers proxies reçoivent une dimension minimale de 10,1 cm. Les
+plans inclinés des sols et le dessus du socle de grille gardent leur cote.
+Leur géométrie visible ne change pas : une empreinte des meshes rendus est
+comparée avant et après la réparation.
+
+Le validateur garde un minimum de 10 cm, avec une tolérance numérique de
+0,1 mm pour les coordonnées stockées en flottants. Cela évite de signaler
+un proxy de 10 cm comme un objet trop mince après son déplacement loin de
+l'origine. Les portes automatiques omettent `manuelle` ; une valeur `False`
+explicite est retirée des quatre panneaux historiques concernés.
+
+Le relevé du 14 octobre passe de 85 à **0 erreur de contrat**. Le niveau
+contient 643 cuboids et 620 convex hulls, sans trimesh statique.
+Les 349 avertissements de grille, textures, subdivision et budget restent
+présents : le contrôle normal passe, le mode strict demeure en échec sur
+ces avertissements. Les dix points d'accès aux secrets et les six positions
+devant les bornes passent leurs contrôles. Rejouer la recette ne produit
+aucune nouvelle fusion ni modification de proxy.
+La revue en jeu franchit l'accès nord du quai, monte l'escalier sud et entre
+dans la galerie. Les niches A et B gardent un appui après déplacement ou
+saut ; la console ne signale ni erreur ni avertissement pendant cette revue.
 
 ## Profondeur et circulation
 

@@ -481,3 +481,12 @@ La pose est rejouable ; elle remplace uniquement ses propres objets.
 Avec `apercus=True`, elle rend aussi une planche des six façades dans `renders/`.
 Le générateur complet utilise la même recette `tools/metro/blockout/kiosks.py`.
 [Implantation et offres](../../docs/4-technique/rencontres-metro.md#bornes-de-sponsor).
+
+### Collisions du métro
+
+`C.metro_colliders()` (CLI : `metro_colliders`) répare les proxies du métro
+livré, vérifie le contrat, les accès aux secrets et les positions devant les
+bornes, puis sauvegarde et exporte. `inspect=True` produit seulement un
+relevé dans `renders/`. Le générateur complet appelle la même réparation.
+Elle conserve les ouvertures et vérifie l'empreinte de la géométrie visible.
+[Recette et limites](../../docs/4-technique/blockout-metro.md#proxies-statiques).
