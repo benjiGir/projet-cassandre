@@ -134,14 +134,47 @@ explicite est retirée des quatre panneaux historiques concernés.
 
 Le relevé du 14 octobre passe de 85 à **0 erreur de contrat**. Le niveau
 contient 643 cuboids et 620 convex hulls, sans trimesh statique.
-Les 349 avertissements de grille, textures, subdivision et budget restent
-présents : le contrôle normal passe, le mode strict demeure en échec sur
-ces avertissements. Les dix points d'accès aux secrets et les six positions
-devant les bornes passent leurs contrôles. Rejouer la recette ne produit
+Les dix points d'accès aux secrets et les six positions devant les bornes
+passent leurs contrôles. Rejouer la recette ne produit
 aucune nouvelle fusion ni modification de proxy.
 La revue en jeu franchit l'accès nord du quai, monte l'escalier sud et entre
 dans la galerie. Les niches A et B gardent un appui après déplacement ou
 saut ; la console ne signale ni erreur ni avertissement pendant cette revue.
+
+### Finition du contrat
+
+La passe de finition du 14 octobre fait passer le contrôle strict de
+349 à **0 avertissement**, avec toujours 0 erreur.
+`C.metro_warnings()` applique localement `tools/metro/blockout/finish_validation.py`,
+vérifie le contrat strict, les accès aux secrets et les bornes, sauvegarde
+puis exporte. `inspect=True` relève les surfaces restantes ; `apercus=False`
+évite les rendus. Le générateur complet appelle la même finition.
+Une seconde exécution ajoute zéro sommet et conserve le verdict strict propre.
+
+293 meshes de décor reçoivent 107 573 sommets supplémentaires. Les positions,
+UV et couleurs sont interpolées ; les normales d'origine sont transférées
+pour préserver le lissage. Les contours des meshes sont contrôlés, et les
+empreintes des colliders ainsi que les positions des `use_*` restent identiques.
+Le relevé total passe de 496 896 à 711 000 triangles pour un budget de
+1,5 million. Le GLB passe de 35,15 à 41,90 Mo : cette subdivision augmente
+le poids du niveau.
+
+Le contrôle de grille vise les origines de construction. Les `use_*`, comme
+les portes, portent un centre physique ou un point d'usage : leurs
+positions restent vérifiées séparément par les recettes de placement.
+Les quatre volumes `secret_*` sont invisibles dans le loader et sortent
+des contrôles de couleurs et de subdivision du décor.
+Le nombre de matériaux reste un indicateur (53 utilisés, 66 datablocks),
+conformément à [l'ADR 0039](../decisions/0039-abandon-du-plafond-de-lots.md).
+Le plafond de triangles, les contrôles de transforms et les autres contrats
+restent appliqués.
+
+Quatre vues avant/après sont relues : billetterie, local des agents, quai
+et dépôt. La comparaison exacte relève 5 529 pixels différents sur 929 616
+(0,59 %) après retessellation ; les empreintes ne sont donc pas identiques.
+En jeu, les quatre zones se chargent, la recharge de borne fonctionne avec E
+et la console reste propre. Cette revue locale ne constitue pas un gate
+de performance ni une partie complète.
 
 ## Profondeur et circulation
 

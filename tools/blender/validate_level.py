@@ -47,6 +47,7 @@ TRI_BUDGET = 1_500_000
 
 # Collections sources, jamais exportées (voir `export_level.py`).
 SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
+LOGIC_MESH_PREFIXES = ("col_", "trig_", "secret_", "nav_voie_", "traversee_train_", "refuge_train_")
 
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
@@ -151,9 +152,9 @@ def check_transforms(meshes) -> None:
         if any(abs(c - 1.0) > 1e-4 for c in s):
             err(f"{o.name}: scale non appliqué {tuple(round(c, 3) for c in s)}")
 
-        # Un vantail a son origine au CENTRE de sa boîte (le loader y pose son
-        # corps, ADR 0012) : elle dépend de ses dimensions, pas de la grille.
-        if base_name(o.name).startswith("door_"):
+        # Portes et interactifs portent un centre physique ou un point d'usage,
+        # distinct du coin de construction ; voir blockout-metro.md#finition-du-contrat.
+        if base_name(o.name).startswith(("door_", "use_")):
             continue
         loc = o.location
         off = [c for c in loc if abs(c / GRID - round(c / GRID)) > 1e-3]
@@ -558,7 +559,7 @@ def check_textures() -> None:
 def check_vertex_colors(meshes) -> None:
     missing = [
         o.name for o in meshes
-        if not base_name(o.name).startswith(("col_", "trig_", "nav_voie_", "traversee_train_", "refuge_train_"))
+        if not base_name(o.name).startswith(LOGIC_MESH_PREFIXES)
         and len(o.data.color_attributes) == 0
     ]
     if missing:
@@ -567,7 +568,7 @@ def check_vertex_colors(meshes) -> None:
     # Un mur en 2 triangles ne peut pas recevoir de bake utile
     for o in meshes:
         n = base_name(o.name)
-        if n.startswith(("col_", "trig_", "nav_voie_", "traversee_train_", "refuge_train_")):
+        if n.startswith(LOGIC_MESH_PREFIXES):
             continue
         area = sum(p.area for p in o.data.polygons)
         verts = len(o.data.vertices)
@@ -587,22 +588,14 @@ def check_budget(meshes) -> int:
 
 
 # --- 8. Matériaux ------------------------------------------------------------
-def check_materials() -> None:
-    """Seuil relevé de 8 à 24 : depuis l'ADR 0023, le décor statique est fusionné
-    PAR MATÉRIAU au chargement, donc un matériau vaut un lot de dessin pour tout
-    le niveau, et non plus un par objet. Viser le matériau unique n'a plus de
-    sens ; ce qui compte est de rester loin du budget de 200 lots."""
-    n = len(bpy.data.materials)
-    if n > 24:
-        warn(f"{n} matériaux — autant de lots de dessin après fusion (ADR 0023), "
-             f"budget 200")
+def material_count(meshes) -> int:
+    """Indicateur des matières rendues ; aucun plafond depuis l'ADR 0039."""
+    return len({m for obj in meshes if not base_name(obj.name).startswith(LOGIC_MESH_PREFIXES)
+                for m in obj.data.materials if m is not None})
 
 
 # --- Rapport -----------------------------------------------------------------
-def main() -> None:
-    strict = "--strict" in sys.argv
-    kit_mode = "--kit" in sys.argv
-
+def level_objects():
     # Les collections SOURCES (kit, bibliothèque v2) ne partent pas en jeu :
     # leurs originaux ne sont ni bakés ni exportés, les valider ferait du bruit.
     # La bibliothèque range un asset par SOUS-collection : il faut descendre
@@ -617,8 +610,13 @@ def main() -> None:
             coll = stack.pop()
             sources.add(coll)
             stack.extend(coll.children)
-    objects = [o for o in bpy.context.scene.objects
-               if not any(c in sources for c in o.users_collection)]
+    return [o for o in bpy.context.scene.objects if not any(c in sources for c in o.users_collection)]
+
+
+def main() -> None:
+    strict = "--strict" in sys.argv
+    kit_mode = "--kit" in sys.argv
+    objects = level_objects()
     meshes = [o for o in objects if o.type == "MESH"]
 
     check_units()
@@ -631,14 +629,14 @@ def main() -> None:
     check_textures()
     check_vertex_colors(meshes)
     tris = check_budget(meshes)
-    check_materials()
+    rendered_materials = material_count(meshes)
 
     print("\n" + "=" * 62)
     print("VALIDATION — PROJET_CASSANDRE" + ("  [mode KIT]" if kit_mode else ""))
     print("=" * 62)
     print(f"  Objets            {len(objects)}  ({len(meshes)} meshes)")
     print(f"  Triangles         {tris} / {TRI_BUDGET}")
-    print(f"  Matériaux         {len(bpy.data.materials)}")
+    print(f"  Matériaux         {rendered_materials} utilisés ({len(bpy.data.materials)} datablocks)")
     print(f"  Textures          {len(project_images())}")
     print("  Colliders         " + (
         "  ".join(f"{k}:{v}" for k, v in sorted(kinds.items())) or "aucun"

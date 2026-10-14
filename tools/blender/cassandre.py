@@ -945,6 +945,13 @@ def metro_colliders(inspect: bool = False) -> dict:
     return {"ok": res["code"] == 0, **res}
 
 
+def metro_warnings(inspect: bool = False, apercus: bool = True) -> dict:
+    """Finit la subdivision du métro et exige un contrat sans avertissement."""
+    args = ["--inspect"] if inspect else ([] if apercus else ["--sans-apercus"])
+    res = run("tools/metro/blockout/finish_validation.py", *args, keep="[metro-warnings]")
+    return {"ok": res["code"] == 0, **res}
+
+
 def quartier_pilot() -> dict:
     """Construit et exporte la place pilote N4b, dans une session neuve."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:

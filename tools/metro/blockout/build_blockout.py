@@ -249,6 +249,8 @@ def main():
     check_placements(a)
     from tools.metro.blockout.colliders import repair as repair_colliders
     repair_colliders()
+    from tools.metro.blockout.finish_validation import finish as finish_validation
+    finish_validation()
     scene.world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.18
     bpy.context.view_layer.update()
     bpy.context.preferences.filepaths.save_version=0

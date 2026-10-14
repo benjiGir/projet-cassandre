@@ -490,3 +490,14 @@ bornes, puis sauvegarde et exporte. `inspect=True` produit seulement un
 relevé dans `renders/`. Le générateur complet appelle la même réparation.
 Elle conserve les ouvertures et vérifie l'empreinte de la géométrie visible.
 [Recette et limites](../../docs/4-technique/blockout-metro.md#proxies-statiques).
+
+### Finition des avertissements du métro
+
+`C.metro_warnings(apercus=False)` (CLI : `metro_warnings apercus=false`)
+subdivise les surfaces de décor trop pauvres en sommets, conserve leurs UV,
+couleurs et normales, exige le contrat strict, puis sauvegarde et exporte.
+Les colliders et positions d'interaction sont comparés avant/après.
+`inspect=True` produit un relevé sans mutation ; avec les aperçus, quatre
+vues sont rendues et comparées à une planche précédente si elle existe.
+La recette est aussi appelée par le générateur complet.
+[Contrat, coût et revue](../../docs/4-technique/blockout-metro.md#finition-du-contrat).
