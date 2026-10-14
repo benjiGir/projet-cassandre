@@ -62,7 +62,7 @@ function partie(ramassages: Record<string, Extras>, hp = 60) {
     },
   } as unknown as GameSession;
   const interaction = new InteractionSystem();
-  return { session, interaction, pas: () => updatePickups(interaction, session) };
+  return { session, interaction, pas: () => updatePickups(interaction, session, () => true) };
 }
 
 const hud = () => useGameStore.getState().hudMessage;

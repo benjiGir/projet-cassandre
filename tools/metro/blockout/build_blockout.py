@@ -241,6 +241,9 @@ def main():
     service_art_direction = apply_service_materials(a, floors, art_materials)
     from tools.art_direction.metro_exteriors import apply as apply_exteriors, write_report as exteriors_report
     exteriors_report(apply_exteriors())
+    from tools.metro.blockout.secrets import build as build_secrets, check_accesses
+    build_secrets(a)
+    check_accesses(a)
     scene.world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.18
     bpy.context.view_layer.update()
     bpy.context.preferences.filepaths.save_version=0

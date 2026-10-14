@@ -461,3 +461,13 @@ sur `assets_src/blender/metro_blockout.blend`, contrôle appuis et dégagements,
 sauvegarde puis exporte par `C.export`. Les positions viennent de
 `tools/metro/blockout/encounters.py`, également utilisé lors d'une construction
 complète. La migration est rejouable et ne reconstruit pas la géométrie.
+
+### Secrets du métro
+
+`C.metro_secrets(apercus=False)` (CLI : `metro_secrets apercus=false`) pose
+les quatre caches et huit récompenses sur le `.blend` livré, contrôle les
+appuis et les dégagements des accès, sauvegarde puis exporte. La recette est
+rejouable ; le générateur complet utilise aussi `tools/metro/blockout/secrets.py`.
+`inspect=True` relève les objets voisins sans modifier la scène.
+Les emplacements et récompenses sont dans
+[Rencontres du métro](../../docs/4-technique/rencontres-metro.md#secrets).

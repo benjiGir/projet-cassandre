@@ -156,6 +156,10 @@ export const HERO_LINES = {
   // --- Métro — voir `docs/6-reference/repliques-metro.md`. Aucune prise de voix pour l'instant. ---
   metro_depart: { text: "Interrompu pour qui ? Je descends demander.", priority: true, once: true, textOnly: true },
   metro_mort_rame: { text: "J'aurais dû attendre la suivante.", priority: true, once: true, textOnly: true },
+  metro_secret_atelier: { text: "Le service après-vente a du stock.", priority: true, once: true, textOnly: true },
+  metro_secret_archives: { text: "Sang-Froid. Ils ont même rangé les preuves.", priority: true, once: true, textOnly: true },
+  metro_secret_toit: { text: "Pas de supplément pour les bagages.", priority: true, once: true, textOnly: true },
+  metro_secret_entretien: { text: "Accès réservé ? Ça me concerne.", priority: true, once: true, textOnly: true },
 
   // Lieux du métro — première visite, voir `PLACE_LINES`
   metro_billets: { text: "Le plan de la ligne S s'arrête au Dépôt. On verra bien.", once: true, textOnly: true },
@@ -234,6 +238,10 @@ export const ATTACK_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
 };
 
 export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {
+  secret_metro_atelier: "metro_secret_atelier",
+  secret_metro_sang_froid: "metro_secret_archives",
+  secret_metro_toit: "metro_secret_toit",
+  secret_metro_entretien: "metro_secret_entretien",
   secret_1_photomaton: "secret_photomaton",
   secret_3_aeration: "secret_aeration",
   secret_4_planque: "secret_vigile",

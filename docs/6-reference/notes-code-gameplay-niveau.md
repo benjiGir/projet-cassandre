@@ -2,7 +2,7 @@
 title: Contrats de chargement et des objets de niveau
 tags: [gameplay, niveau, gltf, rapier, code]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-14
 ---
 
 # Contrats de chargement et des objets de niveau
@@ -143,6 +143,21 @@ pleins, il ne consomme pas ce délai. La chasse d’eau se joue même sans soin.
 Une gorgée sur un jet rend 1 PV sans délai, et reste silencieuse à PV pleins.
 La portée de visée 1,4 m exige de regarder de près, plus courte que le use à 2 m.
 Le rayon sanitaire inclut WORLD seulement pour respecter murs et cloisons.
+
+### Ramassages et obstacles
+
+Les armes, boîtes de munitions et soins déclarés dans le niveau exigent
+un chemin libre entre le centre de la capsule et l'origine du ramassage.
+Aimant augmente le rayon à 3 m ; il ne permet pas de traverser un mur,
+un plancher ou une porte fermée. La vérification vient après le filtre de
+distance, avant de consommer le pickup ou d'afficher une réplique.
+
+`src/game/session/player/pickupVisibility.ts` utilise `RaycastService` via
+`runGameplaySync`, dans le pas fixe. Le rayon ne considère que les colliders
+WORLD non sensors : personnages, débris et mobilier dynamique ne bloquent
+pas l'attraction. Une marge de 2 cm avant la cible évite de compter un contact
+sur l'appui du ramassage comme un obstacle. Les aliments lâchés par les props
+gardent leur collecte indépendante dans `PropSystem`.
 
 ## Navigation
 

@@ -2,7 +2,7 @@
 title: Catalogue de répliques du métro
 tags: [reference, dialogues, niveau-2, direct]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-13
 ---
 
 # Catalogue de répliques du métro
@@ -31,6 +31,18 @@ jouer ; elles ne sont pas reprises ici.
 |---|---|---|
 | `metro_depart` | 1,5 s après le carton « TRAFIC INTERROMPU » | Interrompu pour qui ? Je descends demander. |
 | `metro_mort_rame` | Fauché par une rame | J'aurais dû attendre la suivante. |
+
+### Secrets
+
+Une fois par cache, à l'entrée dans son volume. Ces quatre lignes sont en
+texte seul, avec priorité sur une réplique de lieu.
+
+| Identifiant | Cache | Texte |
+|---|---|---|
+| `metro_secret_atelier` | Atelier du quartier | Le service après-vente a du stock. |
+| `metro_secret_archives` | Archives Sang-Froid | Sang-Froid. Ils ont même rangé les preuves. |
+| `metro_secret_toit` | Toit de la rame | Pas de supplément pour les bagages. |
+| `metro_secret_entretien` | Local d'entretien | Accès réservé ? Ça me concerne. |
 
 ### Lieux
 
@@ -136,7 +148,8 @@ propre jeu de lignes, choisi par `textes: "metro"` dans
 | `train` | Une traversée de voie réussie | 12 |
 | `calme`, `ambiance` | Rien de notable | 13, 16 |
 | `touristes` | Un bond d'audience : ce sont **les nouveaux** | 10 |
-| `secret`, `casse`, `carte`, `toilettes`, `boss` | Rien encore dans ce niveau | 6 à 8 |
+| `secret` | Découverte d'une des quatre caches | 8 |
+| `casse`, `carte`, `toilettes`, `boss` | Registres disponibles ; certains événements ne sont pas posés dans le métro | 6 à 8 |
 
 Les registres du premier niveau continuent. `definitivement_humain` défend
 le réseau (« la ligne S est fermée pour la sécurité de tous »).
@@ -182,9 +195,8 @@ textes du niveau ; l'écran choisit ses phrases d'après lui.
   bacs de la rame. Ces objets existent ; leur dessin lisible reste à faire.
 - **Le premier badge.** Le niveau n'en pose aucun : l'étape `metro_badge`
   dort jusqu'au lot C3.
-- **Le Contrôleur, les secrets et les bornes** ne sont pas dans le niveau.
-  Leurs répliques s'écriront avec eux. Les deux locaux à l'écart ont une
-  réplique de lieu en attendant leur volume de secret.
+- **Les bornes** restent à implanter. Le Contrôleur et les quatre secrets
+  ont leurs répliques textuelles, sans prises de voix.
 
 ## Vérifier
 

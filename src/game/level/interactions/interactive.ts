@@ -59,6 +59,8 @@ export interface WeaponPickupHandlers {
 /** Rayon des ramassages pris en marchant dessus, en mètres — celui d'une partie sans perk. */
 export const HEAL_PICKUP_RADIUS = 1.2;
 
+export type PickupAccessCheck = (useObject: UseObject) => boolean;
+
 export class InteractionSystem {
   /** Objets `use_*` déjà consommés, PAR RÉFÉRENCE DE MESH, pas par nom — un
    * hot reload remplace tout mesh, donc redevient déclenchable (dev-only).
@@ -117,8 +119,9 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     tryHeal: (amount: number, useObject: UseObject) => boolean,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius, canCollect);
   }
 
   /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions` ou `cartouches`). */
@@ -127,8 +130,9 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     tryTake: (amount: number, useObject: UseObject) => boolean,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake, radius);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake, radius, canCollect);
   }
 
   private collectWalkOver(
@@ -137,12 +141,14 @@ export class InteractionSystem {
     amountOf: (useObject: UseObject) => number | null,
     take: (amount: number, useObject: UseObject) => boolean,
     radius: number,
+    canCollect?: PickupAccessCheck,
   ): void {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       const amount = amountOf(useObject);
       if (amount === null || this.consumed.has(useObject.object)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
+      if (canCollect && !canCollect(useObject)) continue;
       if (!take(amount, useObject)) continue;
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
@@ -154,12 +160,14 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     handlers: WeaponPickupHandlers,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
       if (!isWeaponPickupName(useObject.name)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
+      if (canCollect && !canCollect(useObject)) continue;
       if (!collectWeaponPickup(useObject.name, handlers)) continue; // déjà possédée sans rien à offrir : reste au sol
       useObject.object.visible = false;
       this.consumed.add(useObject.object);

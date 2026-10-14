@@ -7,6 +7,7 @@ import type { GameEngine } from "../session/gameEngine";
 import type { GameSession } from "../session/gameSession";
 import { updateLevelTrains } from "../session/player/levelTrainGameplay";
 import { updatePickups } from "../session/player/pickups";
+import { hasClearPickupPath } from "../session/player/pickupVisibility";
 import { triggerLevelComplete } from "../session/progression/doors";
 import { advanceGameplayTime } from "../session/progression/score";
 import { handleDevGameplayInput } from "./devGameplayInput";
@@ -38,7 +39,10 @@ const GAMEPLAY_STEPS: readonly ((step: GameplayStep) => void)[] = [
   movePlayer,
   rescueFromFall,
   useInteractions,
-  ({ engine, session }) => updatePickups(engine.interaction, session),
+  ({ engine, session }) =>
+    updatePickups(engine.interaction, session, (useObject) =>
+      runGameplaySync(hasClearPickupPath(session, useObject.position)),
+    ),
   fireWeapons,
   updateSuits,
   updateLevelRules,

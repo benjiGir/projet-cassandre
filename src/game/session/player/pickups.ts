@@ -1,6 +1,6 @@
 import { playSfx } from "../../../core/audio/audio";
 import { useGameStore } from "../../hud/state";
-import type { InteractionSystem } from "../../level/interactions/interactive";
+import type { InteractionSystem, PickupAccessCheck } from "../../level/interactions/interactive";
 import type { UseObject } from "../../level/loading/levelTypes";
 import type { GameSession } from "../gameSession";
 import type { RunState } from "../runState";
@@ -122,12 +122,22 @@ function eatFoodDrop(session: GameSession, amount: number): boolean {
  * munitions, armes au sol, trousses et aliments, puis la nourriture lâchée par
  * un prop cassé. Un ramassage qui n'apporterait rien reste au sol.
  */
-export function updatePickups(interaction: InteractionSystem, session: GameSession): void {
+export function updatePickups(
+  interaction: InteractionSystem,
+  session: GameSession,
+  canCollect: PickupAccessCheck,
+): void {
   const useObjects = session.gltfLevelSession?.current?.useObjects ?? [];
   const position = session.player.position;
   const radius = session.run.pickupRadius;
 
-  interaction.collectAmmo(useObjects, position, (amount, useObject) => takeAmmoBox(session, amount, useObject), radius);
+  interaction.collectAmmo(
+    useObjects,
+    position,
+    (amount, useObject) => takeAmmoBox(session, amount, useObject),
+    radius,
+    canCollect,
+  );
   interaction.collectWeapons(
     useObjects,
     position,
@@ -140,7 +150,14 @@ export function updatePickups(interaction: InteractionSystem, session: GameSessi
       onFlarePickup: () => takeFlare(session),
     },
     radius,
+    canCollect,
   );
-  interaction.collectHeals(useObjects, position, (amount, useObject) => takeHeal(session, amount, useObject), radius);
+  interaction.collectHeals(
+    useObjects,
+    position,
+    (amount, useObject) => takeHeal(session, amount, useObject),
+    radius,
+    canCollect,
+  );
   session.level.propSystem?.collectFoodDrops(position, (amount) => eatFoodDrop(session, amount), radius);
 }

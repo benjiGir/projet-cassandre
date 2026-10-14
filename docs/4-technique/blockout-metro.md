@@ -2,7 +2,7 @@
 title: Métro complet — blockout N5
 tags: [metro, niveau, blender, trains]
 status: brouillon
-updated: 2026-10-12
+updated: 2026-10-13
 ---
 
 # Métro complet — blockout N5
@@ -18,13 +18,13 @@ séparés et disponibles.
 Le quartier conserve sa composition, ses collisions et ses lampes validées.
 Sa rue et sa place reprennent l'emprise N4b, affinée avec l'utilisateur,
 plutôt que les masses schématiques de 80 × 72 m de N2. Le reste du parcours conserve ses raccords, avec les révisions N5
-décrites ci-dessous. Le secret d'arrière-boutique
-n'est pas construit ici. Le local d’agents possède son décor, sans déclencheur
-ni récompense de secret. Le local de maintenance dans la réservation de machinerie est meublé ;
-son déclencheur et sa récompense, ainsi que le toit S3, attendent N7.
+décrites ci-dessous. Quatre [secrets](rencontres-metro.md#secrets) utilisent
+l'atelier du quartier, des archives derrière le local des agents, le toit
+de la rame de fret et le local d'entretien de la machinerie.
 Une [première passe de rencontres](rencontres-metro.md) est intégrée le
 9 octobre : trois espèces existantes, ressources et deux vagues à bord.
-Contrôleur, secrets, bornes et équilibre final restent à N7/N8.
+Contrôleur et secrets sont implantés le 13 octobre ; bornes et équilibre
+final restent à N7/N8.
 
 ## Fichiers
 
@@ -66,6 +66,7 @@ Contrôleur, secrets, bornes et équilibre final restent à N7/N8.
 | Jardinières et assises du parvis | `tools/metro/blockout/tower_plaza_furniture.py` |
 | Remontée, parvis et seuil de tour | `tools/metro/blockout/tower_approach.py` |
 | Ennemis, déclencheurs et ressources | `tools/metro/blockout/encounters.py` |
+| Secrets, accès et récompenses | `tools/metro/blockout/secrets.py` |
 | Scénarios des rencontres | `src/game/level/blockout/metroEncounterEvents.ts` |
 | Sas du trafic VB et raccords | `tools/metro/blockout/traffic_layout.py` |
 | Quartier conservé | `tools/metro/quartier/build_pilot.py`, mode `save=False` |

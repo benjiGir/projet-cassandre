@@ -926,6 +926,13 @@ def metro_controleurs() -> dict:
     return {"ok": res["code"] == 0, **res}
 
 
+def metro_secrets(inspect: bool = False, apercus: bool = True) -> dict:
+    """Prépare les quatre secrets du métro ou inspecte leurs emplacements."""
+    args = ["--inspect"] if inspect else ([] if apercus else ["--sans-apercus"])
+    res = run("tools/metro/blockout/secrets.py", *args, keep="[metro-secrets]")
+    return {"ok": res["code"] == 0, **res}
+
+
 def quartier_pilot() -> dict:
     """Construit et exporte la place pilote N4b, dans une session neuve."""
     if bpy.data.filepath or {o.name for o in bpy.context.scene.objects} != {"Cube", "Camera", "Light"}:

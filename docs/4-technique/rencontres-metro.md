@@ -2,14 +2,15 @@
 title: Rencontres du métro
 tags: [metro, ennemis, script]
 status: brouillon
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # Rencontres du métro
 
 Première implantation jouable, à ajuster au playtest. Elle utilise les
 Costards, Vigiles et Rampants, avec le Contrôleur et son chef de brigade.
-Les secrets, bornes et l'équilibrage final restent ouverts ; N7 n'est pas clôturé.
+Quatre secrets complètent le parcours. Les bornes et l'équilibrage final
+restent ouverts ; N7 n'est pas clôturé.
 
 ## Parcours et effectifs
 
@@ -95,7 +96,7 @@ Les dix-huit ramassages donnent **225 PV de soins**, **168 balles de
 pistolet** et **40 cartouches de pompe**, distribués entre rue, billetterie, vestiaire,
 entrée du dépôt, machinerie, rame et sortie sur le parvis. Les premiers
 soins sont dans la rue, avant le premier déclencheur. Ils restent des
-trousses pour cette passe ; la nourriture prévue dans le plan, les secrets,
+trousses pour cette passe ; la nourriture prévue dans le plan,
 bornes, armes et l'économie finale restent à traiter.
 
 Ces totaux sont des ressources posées : les plafonds du joueur peuvent en
@@ -131,11 +132,68 @@ alors que le rendu des trousses et boîtes se place depuis leurs bounds.
 Une boîte construite en coordonnées monde avec une origine à zéro serait
 visible au bon endroit et impossible à ramasser en passant dessus.
 
+## Secrets
+
+Quatre détours facultatifs portent un volume `secret_*`. Entrer dans une
+cache déclenche le compteur, le son de découverte, le retour de stream et
+une réplique propre, en texte seul. Revenir dans la même cache ne la compte
+pas une seconde fois. Les récompenses utilisent les ramassages existants.
+
+| Cache | Accès et indice | Récompenses |
+|---|---|---|
+| Atelier du quartier | Rideau ATELIER, poussoir sur le jambage, éclairage intérieur | 25 PV, 24 balles |
+| Archives Sang-Froid | Bouton au fond d'un casier ouvert du local des agents ; armoire pivotante | 36 balles, 4 fusées |
+| Toit de la rame de fret | Escalier de maintenance, marquise puis toiture de la rame déjà posée | 25 PV, 16 cartouches |
+| Local d'entretien | Grille ouvrable au-delà de la ventilation, commande sur le mur latéral | 50 PV, 12 cartouches |
+
+Les huit récompenses ajoutent 100 PV, 60 balles, 28 cartouches et 4 fusées
+aux ressources du chemin principal. Ce sont des quantités posées ; les
+plafonds d'inventaire limitent les gains effectifs. Aucune progression
+obligatoire ne demande un secret.
+
+La station abandonnée prévue dans le premier plan devient un local
+d'archives derrière le vestiaire existant. L'accès au toit réutilise la
+rame de fret sur sa voie actuelle : aucune rame ni voie isolée n'est ajoutée.
+Les trois portes restent ouvertes après leur première activation, pour
+laisser revenir chercher une boîte quand l'inventaire n'est plus plein.
+Les murs et portes fermées bloquent l'attraction des récompenses, même avec
+Aimant. Le volume du toit couvre le palier supérieur, la marquise, la
+passerelle et toute la zone praticable de toiture ; sa limite basse exclut
+l'intérieur de la rame.
+
+`tools/metro/blockout/secrets.py` est commun à la reconstruction et à
+`C.metro_secrets(apercus=False)`. La pose locale réutilise les textures de
+la DA, découpe le mur des archives et contrôle dix appuis/dégagements ainsi
+que les huit appuis des ramassages avant de sauvegarder. Les volumes de
+secret restent alignés aux axes ; leur origine et leur géométrie sont
+cohérentes avec le chargement glTF. Le cadre des archives utilise quatre
+proxies séparés : un seul hull convexe reboucherait son ouverture dans Rapier.
+Une partie complète reste à jouer pour
+régler les indices et les quantités.
+
+La revue locale du 14 octobre couvre les commandes, le passage des archives
+dans les deux sens, l'escalier et les découvertes jusqu'à 4/4. Compilation
+et liens documentaires passent. Le contrôle strict du niveau reste en
+échec sur 85 erreurs de colliders existants ; les nouveaux objets de secret
+ne présentent plus d'erreur de contrat. Cette revue ne clôture pas N7/N8.
+
+La contre-revue relève puis corrige deux P2 : l'attraction à travers le
+rideau fermé, et un volume de toit qui excluait ses bords. Avec Aimant,
+soins et balles restent en place derrière le rideau (80 PV, 65 balles) ; les
+balles montent à 89 après ouverture, puis les PV à 100 à l'intérieur.
+Sous la toiture, les ressources restent bloquées
+et aucun secret ne se déclenche. Sur son bord est, découverte, soins et
+cartouches fonctionnent ; la marquise déclenche également la découverte.
+Le pistolet de détresse reste ramassable dans la galerie.
+L'agent QA valide les corrections statiquement ;
+ces observations locales ne remplacent pas une partie complète.
+
 ## Contrats et fichiers
 
 | Responsabilité | Fichier |
 |---|---|
 | Positions, volumes et ramassages Blender | `tools/metro/blockout/encounters.py` |
+| Caches, accès et récompenses de secret | `tools/metro/blockout/secrets.py` |
 | Contrôle des appuis et dégagements à la construction | `inspect_positions` dans ce même module |
 | Scénarios, délais et annonces | `src/game/level/blockout/metroEncounterEvents.ts` |
 | Choix des deux extrémités et événement d'arrivée | `src/game/level/blockout/metroBlockout.ts` |
