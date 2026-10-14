@@ -471,3 +471,13 @@ rejouable ; le générateur complet utilise aussi `tools/metro/blockout/secrets.
 `inspect=True` relève les objets voisins sans modifier la scène.
 Les emplacements et récompenses sont dans
 [Rencontres du métro](../../docs/4-technique/rencontres-metro.md#secrets).
+
+### Bornes du métro
+
+`C.metro_kiosks(apercus=False)` (CLI : `metro_kiosks apercus=false`) pose
+les six distributeurs de sponsor sur le `.blend` livré, contrôle les appuis,
+le dégagement et la portée devant chaque façade, sauvegarde puis exporte.
+La pose est rejouable ; elle remplace uniquement ses propres objets.
+Avec `apercus=True`, elle rend aussi une planche des six façades dans `renders/`.
+Le générateur complet utilise la même recette `tools/metro/blockout/kiosks.py`.
+[Implantation et offres](../../docs/4-technique/rencontres-metro.md#bornes-de-sponsor).

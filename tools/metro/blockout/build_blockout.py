@@ -244,6 +244,9 @@ def main():
     from tools.metro.blockout.secrets import build as build_secrets, check_accesses
     build_secrets(a)
     check_accesses(a)
+    from tools.metro.blockout.kiosks import build as build_kiosks, check_placements
+    build_kiosks(a)
+    check_placements(a)
     scene.world.node_tree.nodes.get("Background").inputs["Strength"].default_value=.18
     bpy.context.view_layer.update()
     bpy.context.preferences.filepaths.save_version=0

@@ -9,8 +9,8 @@ updated: 2026-10-14
 
 Première implantation jouable, à ajuster au playtest. Elle utilise les
 Costards, Vigiles et Rampants, avec le Contrôleur et son chef de brigade.
-Quatre secrets complètent le parcours. Les bornes et l'équilibrage final
-restent ouverts ; N7 n'est pas clôturé.
+Quatre secrets et six bornes de sponsor complètent le parcours.
+L'équilibrage final et la partie complète restent ouverts ; N7 n'est pas clôturé.
 
 ## Parcours et effectifs
 
@@ -96,8 +96,8 @@ Les dix-huit ramassages donnent **225 PV de soins**, **168 balles de
 pistolet** et **40 cartouches de pompe**, distribués entre rue, billetterie, vestiaire,
 entrée du dépôt, machinerie, rame et sortie sur le parvis. Les premiers
 soins sont dans la rue, avant le premier déclencheur. Ils restent des
-trousses pour cette passe ; la nourriture prévue dans le plan,
-bornes, armes et l'économie finale restent à traiter.
+trousses pour cette passe ; la nourriture prévue dans le plan et
+l'économie finale restent à traiter.
 
 Ces totaux sont des ressources posées : les plafonds du joueur peuvent en
 réduire le gain effectif. Les munitions `use_*.munitions` rechargent le
@@ -188,12 +188,53 @@ Le pistolet de détresse reste ramassable dans la galerie.
 L'agent QA valide les corrections statiquement ;
 ces observations locales ne remplacent pas une partie complète.
 
+## Bornes de sponsor
+
+Les six perks existants sont proposés sur le parcours, avant le voyage.
+Les bornes ont une vitrine avec un pictogramme de produit, une façade de
+sponsor et un poussoir vert. Elles utilisent les matières du métro et une
+petite applique intégrée ; elles restent fixes, hors des portes et des voies.
+
+| Emplacement | Perk | Prix initial |
+|---|---|---:|
+| Billetterie, après les assises du mur ouest | Perche Titane | 10 € |
+| Quai ouest, entre les deux groupes de bancs | VPN Faraday | 20 € |
+| Local des agents, mur sud à côté du lavabo | Aimant Magnétips | 25 € |
+| Entrée du dépôt, côté atelier | Abonnement Vérité+ | 35 € |
+| Pourtour sud de la machinerie | Zone 51 Energy | 55 € |
+| Dépôt, avant l'accès à la rame | Gilet Alu-Tactique | 85 € |
+
+Ces prix reprennent le magasin et totalisent 230 €. Une variante d'économie
+active peut les remplacer. Les perks conservés depuis le niveau 1 ne sont
+pas rachetés : la borne propose alors la trousse (25 PV, 10 €) pour Boisson,
+VPN et Gilet, ou la recharge (24 balles, 8 cartouches, 2 fusées, 12 €) pour
+les trois autres. Seules les armes possédées reçoivent des munitions.
+Un joueur plein ou sans solde suffisant n'est pas débité.
+Le comportement reste celui de [l'ADR 0040](../decisions/0040-bornes-et-perks.md).
+
+`tools/metro/blockout/kiosks.py` porte la géométrie et les six positions.
+`C.metro_kiosks(apercus=False)` rejoue uniquement ce lot, contrôle le sol,
+le dégagement et la portée depuis la façade, puis sauvegarde et exporte.
+Le générateur complet appelle la même pose après les matières et les secrets.
+Chaque `use_borne_metro_*` porte `perk` et `prix` ; aucune nouvelle logique
+de jeu n'est ajoutée.
+
+La revue locale du 14 octobre couvre les six offres et achats avec E,
+les bonus appliqués, les soins et les munitions après acquisition, et le
+refus sans argent. Les vues sont relues après correction du plan de
+billetterie masqué et du contraste dans la machinerie.
+La compilation et les liens documentaires passent. Le contrôle strict
+retrouve les 85 erreurs et 349 avertissements existants, sans signalement
+sur les bornes ajoutées.
+L'économie d'une partie complète reste à régler en N8.
+
 ## Contrats et fichiers
 
 | Responsabilité | Fichier |
 |---|---|
 | Positions, volumes et ramassages Blender | `tools/metro/blockout/encounters.py` |
 | Caches, accès et récompenses de secret | `tools/metro/blockout/secrets.py` |
+| Bornes, façades et accès de sponsor | `tools/metro/blockout/kiosks.py` |
 | Contrôle des appuis et dégagements à la construction | `inspect_positions` dans ce même module |
 | Scénarios, délais et annonces | `src/game/level/blockout/metroEncounterEvents.ts` |
 | Choix des deux extrémités et événement d'arrivée | `src/game/level/blockout/metroBlockout.ts` |
