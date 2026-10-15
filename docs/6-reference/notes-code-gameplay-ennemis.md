@@ -2,7 +2,7 @@
 title: Contrats des ennemis et de leurs machines
 tags: [gameplay, ennemis, xstate, code]
 status: brouillon
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Contrats des ennemis et de leurs machines
@@ -22,7 +22,8 @@ zéro comme lui. Le temps du jeu inclut le hitstop. Les durées ne passent pas p
 télégraphie, qui laisse au joueur une fenêtre visible d’au moins 0,2 s.
 Les champs pending sont remis à zéro au début du tick puis lus par le manager.
 Les horloges d’animation et la distance parcourue fournissent une vue sans décider
-la simulation. Les cadavres gardent leur pose, sans collider ni rigid body.
+la simulation. Les cadavres gardent leur pose ; le corps vivant est retiré,
+puis un volume bas et destructible prend le relais après la chute.
 
 Les renforts d'embuscade attendent 0,7 s avant leur premier tick d'IA.
 `SuitManager` avance ce délai au pas fixe, même lorsqu'un impact interrompt
@@ -70,6 +71,40 @@ meurt au même coup. `justRevealed` ne vaut vrai qu’une fois. L’atlas révé
 teinte sont choisis par la présentation. La carte Platine apparaît aux pieds,
 avec un délai de 0,6 s pour qu’un kill à bout portant ne la consomme pas avant
 qu’elle ait été vue. Le ramassage est par proximité, sans touche E.
+
+## Cadavres destructibles
+
+`src/game/entities/shared/enemyCorpses.ts` maintient une réserve de 64 corps par
+manager. À la fin de l’animation de mort, un cuboid fixe apparaît au sol :
+appartenance `ENEMY`, filtre `PLAYER_SHOT` uniquement. Les coups et projectiles
+le touchent comme de la chair ; joueur, ennemis et débris le traversent.
+Le bouclier d’un Vigile mort ne protège plus son corps.
+
+`src/game/entities/shared/corpseConfig.ts` règle sa résistance (60 PV), sa
+hauteur (0,56 m) et sa largeur suivant le gabarit de l’ennemi. Au réglage
+courant, il faut trois coups de pied-de-biche, quatre balles de pistolet ou
+deux gerbes complètes de pompe. Le perk Perche applique son multiplicateur.
+Les impacts font saigner le corps ; un souffle peut aussi épuiser sa résistance.
+
+L’éclatement retire immédiatement le collider et passe `hasRemains` à `false`.
+La présentation masque le sprite et consomme `corpseBurstEvents` une seule fois :
+flaque, giclées, morceaux projetés vers le haut et son de démembrement existant.
+Cette file est séparée des morts : aucun kill, don, réplique de mort ou nouvelle
+carte. Frapper un cadavre ne compte pas comme toucher un ennemi vivant dans la
+précision du récapitulatif. Les cadavres du Directeur utilisent le même système,
+sans toucher à sa révélation ni à sa carte déjà lâchée.
+
+Une bonbonne porte `gibOnKill: true` dans `explosionConfig` : toute mort
+causée par son souffle démembre immédiatement, dans tout son rayon. Le souffle
+garde ses dégâts décroissants et son arrêt par les murs. Le Directeur suit
+aussi cette règle si le souffle lui retire ses derniers PV ; révélation,
+carte et comptage de la mort restent uniques. Une fusée garde son propre
+seuil de démembrement de 1,4 m pour les ennemis ordinaires.
+
+La réserve reprend les corps les plus anciens lorsqu’elle est pleine : collider
+et sprite disparaissent ensemble. Un ennemi déjà démembré à sa mort ne crée
+jamais de cadavre touchable. Le niveau suivant libère le monde physique et les
+sprites ; les morceaux et taches restent dans les pools cosmétiques existants.
 
 ## Compatibilité de debug
 

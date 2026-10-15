@@ -16,11 +16,25 @@ interface Chunk {
   flight: number;
 }
 
-const CHUNK_COLORS = [0x3a120f, 0x5a1418, 0x7a1e1e, 0x8f3a34].map((hex) => new THREE.Color(hex));
+const CHUNK_COLORS = [0x3a120f, 0x5a1418, 0x7a1e1e, 0x8f3a34, 0xb46155, 0xc78d7b].map((hex) => new THREE.Color(hex));
 const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
 const chunkMatrix = new THREE.Matrix4();
 const chunkQuaternion = new THREE.Quaternion();
 const stepDirection = new THREE.Vector3();
+
+function createChunkGeometry(): THREE.BufferGeometry {
+  const geometry = new THREE.IcosahedronGeometry(0.7, 0);
+  const positions = geometry.getAttribute("position");
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i),
+      y = positions.getY(i),
+      z = positions.getZ(i);
+    const scale = 0.88 + 0.12 * Math.sin(x * 9 + y * 7 + z * 5);
+    positions.setXYZ(i, (x + 0.15 * y * z) * scale, y * scale, z * scale);
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
 
 export class GoreChunks {
   readonly mesh: THREE.InstancedMesh;
@@ -29,7 +43,7 @@ export class GoreChunks {
 
   constructor(private readonly random: () => number) {
     const capacity = goreConfig.chunkCapacity;
-    this.mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial(), capacity);
+    this.mesh = new THREE.InstancedMesh(createChunkGeometry(), new THREE.MeshLambertMaterial(), capacity);
     // three calcule la sphère englobante une seule fois, toutes instances à l'origine.
     this.mesh.frustumCulled = false;
     for (let i = 0; i < capacity; i++) {

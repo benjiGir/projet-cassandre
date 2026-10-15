@@ -50,7 +50,12 @@ export function fireWeapons({ session, dt, frame, eyeOrigin }: GameplayStep): vo
     session.heroPortrait.react("focus");
     let hitEnemy = false;
     for (let i = hitCountBefore; i < session.weapons.hitEvents.length; i++) {
-      if (session.weapons.hitEvents[i].material === FLESH_MATERIAL) {
+      const hit = session.weapons.hitEvents[i];
+      if (
+        hit.material === FLESH_MATERIAL &&
+        !session.suitManager.isCorpseCollider(hit.colliderHandle) &&
+        !session.directorManager.isCorpseCollider(hit.colliderHandle)
+      ) {
         hitEnemy = true;
         break;
       }

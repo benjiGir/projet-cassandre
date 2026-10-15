@@ -52,6 +52,7 @@ function presentEnemyEvents<TEnemy extends EnemyEntity<EntityConfig>>(
       // Bout portant au pompe : gibs À LA PLACE de l'animation de mort. L'ennemi
       // reste "dead"/"corpse" côté simulation, seul le RENDU change ici.
       engine.fx.spawnGibs(event.point, event.direction);
+      engine.fx.spawnImpactParticles(event.point, event.direction, "shotgun", "flesh");
       playSfx("enemy_gib");
     } else {
       engine.fx.spawnBloodPool(event.enemy.position);
@@ -59,6 +60,11 @@ function presentEnemyEvents<TEnemy extends EnemyEntity<EntityConfig>>(
     engine.hitmarker.trigger("kill");
     playEnemySfx("death", presentation.voice(event.enemy));
     // Les vues et le premier kill sont déjà décidés dans le pas fixe.
+  }
+  for (const event of manager.corpseBurstEvents) {
+    engine.fx.spawnGibs(event.point, event.direction);
+    engine.fx.spawnImpactParticles(event.point, event.direction, "shotgun", "flesh");
+    playSfx("enemy_gib");
   }
   const playerWasHit = manager.playerHitEvents.length > 0;
   for (const event of manager.playerHitEvents) {
@@ -81,7 +87,7 @@ export function presentSuitEvents(frame: FxFrame): boolean {
   });
 }
 
-/** Le Directeur : le lot commun, plus sa révélation. Il ne laisse jamais de gibs, seulement une flaque. */
+/** Le Directeur : le lot commun, plus sa révélation. */
 export function presentDirectorEvents(frame: FxFrame): boolean {
   const { engine, session } = frame;
   const manager = session.directorManager;

@@ -2,7 +2,7 @@
 title: Ennemis et IA
 tags: [technique]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-15
 ---
 
 # Ennemis et IA
@@ -210,8 +210,9 @@ une teinte via `Director.tintColor` si la planche manque) et déclenche un
 screenshake dédié. `DroppedCard` (`director.ts`, objet de logique pur, sans
 `THREE.Object3D`) est ramassée par **proximité seule** (`tryCollectCard`,
 pas de `use_*`), gardée par `cardPickupDelay` (0.6 s) pour qu'un kill à bout
-portant ne la ramasse pas au pas fixe de sa création. Pas de gibs pour le
-Directeur (casserait la mise en scène de révélation).
+portant ne la ramasse pas au pas fixe de sa création. Le Directeur garde son animation de mort, sauf si une bonbonne lui inflige le
+coup fatal ; son cadavre peut ensuite être détruit, sans rejouer la révélation
+ni lâcher une seconde carte.
 
 **Spawn et RNG.** `spawn_suit_*`/`spawn_director_*` (loader.ts) →
 `spawnSuitAt`/`spawnDirectorAt` (`spawning.ts`) → `SuitManager.spawnSuit`/
@@ -231,6 +232,11 @@ Directeur ; l'`EnemyDeathEvent` porte alors `gibs`/`point`/`direction`, lus par
 qui appelle `engine.fx.spawnGibs(point, direction)` **à la place** de
 l'animation de mort — côté simulation, l'entité reste `dead`/`corpse`
 normalement, seul le rendu change.
+
+**Cadavres destructibles.** Après la chute, `EnemyCorpses` crée une zone basse
+qui répond uniquement aux armes du joueur. À 60 dégâts cumulés, les restes
+disparaissent et `corpseBurstEvents` déclenche le gore existant, sans nouvelle
+mort comptabilisée. Voir [le contrat et les limites](../6-reference/notes-code-gameplay-ennemis.md#cadavres-destructibles).
 
 ## Pièges
 

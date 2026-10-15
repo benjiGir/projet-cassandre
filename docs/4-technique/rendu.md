@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-15
 ---
 
 # Rendu
@@ -115,7 +115,11 @@ d'affichage, flux de présentation, aucun effet sur la simulation.
 Le coût est fixe : **deux lots de dessin**, quelle que soit la quantité de
 sang. Les taches sont les quads d'une seule géométrie, écrits dans une réserve
 tournante de 192 ; les morceaux sont un `InstancedMesh` de 48. Les plus
-anciens sont repris quand la réserve est pleine.
+anciens sont repris quand la réserve est pleine. Les morceaux partagent une
+géométrie anguleuse irrégulière à 20 triangles, avec des teintes chair et sang.
+Le profil `RENFORCE` projette 18 morceaux et 14 giclées, étalées en 0,09 s ;
+`SOBRE` conserve 14 morceaux, 12 giclées et 0,12 s. Les deux profils et leurs
+curseurs sont dans le panneau de tuning. Le pool reste limité à 48 morceaux.
 
 Le rendu ne connaît pas Rapier. Le jeu lui fournit une sonde
 (`createStaticSurfaceProbe`) qui rend le premier décor **statique** sur un
@@ -137,6 +141,11 @@ Trois règles de pose :
 L'atlas des taches est dessiné par le code, sans tirage : huit formes fixes en
 gros pixels (`goreAtlas.ts`). Les réglages sont dans `goreConfig`
 (`goreConfig.ts`).
+
+Les cadavres détruits alimentent le même gore via `corpseBurstEvents`, distinct
+des événements de mort. La simulation masque leurs restes avec `hasRemains` ;
+la présentation réutilise les taches et morceaux existants, sans nouvelle
+réserve graphique. Voir [Cadavres destructibles](../6-reference/notes-code-gameplay-ennemis.md#cadavres-destructibles).
 
 ### Frontières des couches
 

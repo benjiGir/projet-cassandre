@@ -30,6 +30,7 @@ export type EntityConfig = EnemyConfig & { readonly maxHp: number };
 export abstract class EnemyEntity<TConfig extends EntityConfig> implements Entity {
   readonly id: number;
   readonly cfg: TConfig;
+  hasRemains = true;
   protected actor: EnemyActor;
 
   constructor(

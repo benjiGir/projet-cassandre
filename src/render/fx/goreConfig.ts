@@ -18,6 +18,13 @@ export type SurfaceProbe = (origin: THREE.Vector3, direction: THREE.Vector3, max
 
 export type Range = readonly [number, number];
 
+export const GORE_BURST_VARIANTS = {
+  SOBRE: { gibChunks: 14, gibSprayCount: 12, gibSprayGrow: 0.12 },
+  RENFORCE: { gibChunks: 18, gibSprayCount: 14, gibSprayGrow: 0.09 },
+};
+
+export type GoreBurstVariant = keyof typeof GORE_BURST_VARIANTS;
+
 // Valeurs de départ, à juger en jouant.
 export const goreConfig = {
   splatCapacity: 192,
@@ -33,14 +40,12 @@ export const goreConfig = {
   gibPoolSize: [1.9, 2.5] as Range,
   gibPoolGrow: 0.3,
   /** Giclées projetées dans l'axe du coup, et leur portée en mètres. */
-  gibSprayCount: 12,
   gibSprayRange: 5,
   gibSpraySpread: 0.8,
   gibSpraySize: [0.6, 1.1] as Range,
   /** Au sol, une giclée s'allonge dans l'axe du coup : longueur en multiples de sa largeur. */
   gibSprayStretch: [1.4, 2.4] as Range,
-  gibSprayGrow: 0.12,
-  gibChunks: 14,
+  ...GORE_BURST_VARIANTS.RENFORCE,
 
   chunkSpeed: [3, 8] as Range,
   chunkSpread: 0.9,

@@ -10,6 +10,7 @@ import type { EnemyEntity, EntityConfig } from "./enemyEntity";
 import { configureEnemyCharacterController } from "./enemyPhysics";
 import type { EnemyConfig, EnemyUpdateContext, VitreHitTarget } from "./enemyTypes";
 import { EventQueue, type StepEvents } from "./eventQueue";
+import { EnemyCorpses, type CorpseBurstEvent } from "./enemyCorpses";
 
 export interface EnemyEvent<TEnemy> {
   enemy: TEnemy;
@@ -52,6 +53,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
   protected readonly physics: PhysicsWorld;
   private readonly kcc: RAPIER.KinematicCharacterController;
   private readonly enemyByCollider = new Map<number, TEnemy>();
+  private readonly corpses: EnemyCorpses<TEnemy>;
   private spawnCount = 0;
   canChargeTo?: (position: THREE.Vector3) => boolean;
   // Remis à zéro uniquement après présentation, pas entre les pas fixes.
@@ -76,6 +78,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     private readonly baseSeed: number,
   ) {
     this.physics = physics;
+    this.corpses = new EnemyCorpses(physics);
     this.kcc = physics.world.createCharacterController(controllerConfig.colliderOffset);
     configureEnemyCharacterController(this.kcc, controllerConfig);
   }
@@ -121,6 +124,14 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     return this._blockedHits;
   }
 
+  get corpseBurstEvents(): readonly CorpseBurstEvent[] {
+    return this.corpses.burstEvents;
+  }
+
+  isCorpseCollider(handle: number): boolean {
+    return this.corpses.hasCollider(handle);
+  }
+
   // see: docs/6-reference/notes-code-gameplay-ennemis.md#état-et-horloges
   clearFrameEvents() {
     this.alertQueue.clear();
@@ -130,6 +141,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     this.deathQueue.clear();
     this.playerHitQueue.clear();
     this._blockedHits.clear();
+    this.corpses.clearFrameEvents();
     this.hitCursor = 0;
   }
 
@@ -193,6 +205,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
       this.prepareContext(enemy, ctx);
       enemy.update(dt, ctx);
       this.drainPendingEvents(enemy);
+      if (enemy.state === "corpse") this.corpses.register(enemy);
     }
 
     aggregated.clear();
@@ -224,6 +237,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     reaches: (point: THREE.Vector3) => boolean,
     gibDistance = -Infinity,
   ): void {
+    this.corpses.applyBlast(center, damageAt, reaches);
     for (const enemy of this.enemies) {
       if (!enemy.isAlive) continue;
       const distance = enemy.position.distanceTo(center);
@@ -290,6 +304,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     const result = this.damage(enemy, hit.totalDamage, this.scratchKnockback, hit.interruptCharge ?? true);
 
     if (result.died) {
+      enemy.hasRemains = !hit.gibs;
       // Retiré tout de suite : Rapier peut recycler le handle d'un collider supprimé.
       if (handleBeforeDeath !== undefined) this.enemyByCollider.delete(handleBeforeDeath);
       this.deathQueue.push({
@@ -325,6 +340,7 @@ export abstract class EnemyManager<TEnemy extends EnemyEntity<EntityConfig>> {
     const aggregated = this.aggregationScratch;
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
       const hitEvent = hitEvents[i];
+      if (this.corpses.applyHit(hitEvent)) continue;
       const enemy = this.enemyByCollider.get(hitEvent.colliderHandle);
       if (!enemy || !enemy.isAlive) continue;
       if (this.blocksHit(enemy, hitEvent)) {

@@ -2,7 +2,7 @@
 title: Ennemis
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-15
 ---
 
 # Ennemis
@@ -46,6 +46,18 @@ Tué à l'arme de corps-à-corps ou au pistolet, il s'écroule en plusieurs pose
 successives (à genoux, une supplication, une chute) avant de rester à plat au
 sol, un corps parmi le décor. Tué au fusil à pompe à bout portant, il
 n'a pas cette agonie : le coup l'envoie en pièces sur place.
+
+### Frapper les cadavres
+
+Un corps au sol reste destructible. Visez-le et frappez : chaque impact fait
+jaillir du sang ; après plusieurs coups, il éclate en morceaux qui volent puis
+retombent sur le décor. Au réglage courant, trois coups de pied-de-biche
+suffisent. Les balles et les explosions peuvent aussi le détruire, y compris
+le corps d’un Vigile ou du Directeur.
+
+Le corps disparaît à l’éclatement et laisse les taches et morceaux. Le joueur
+peut toujours le traverser. Détruire un cadavre ne rapporte aucun kill ni
+récompense supplémentaire.
 
 ### Le Rampant
 

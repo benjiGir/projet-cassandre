@@ -96,6 +96,11 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         for (const suit of session.suitManager.suits) {
           const sprite = session.suitSprites.get(suit.id);
           if (!sprite) continue;
+          if (!suit.hasRemains) {
+            engine.fx.followEnemyAppearance(sprite, suit.appearanceProgress, false);
+            sprite.mesh.visible = false;
+            continue;
+          }
           const pos = suit.interpolatedPosition(alpha, suitPositionScratch);
           const fwd = suit.interpolatedForward(alpha, suitForwardScratch);
           const row = enemySpriteRow(suitSheetFor(engine, suit.kind), suit.animation(enemyAnimationScratch));
@@ -108,6 +113,10 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         for (const director of session.directorManager.directors) {
           const sprite = session.directorSprites.get(director.id);
           if (!sprite) continue;
+          if (!director.hasRemains) {
+            sprite.mesh.visible = false;
+            continue;
+          }
           const pos = director.interpolatedPosition(alpha, directorPositionScratch);
           const fwd = director.interpolatedForward(alpha, directorForwardScratch);
           const row = enemySpriteRow(engine.directorSheet, director.animation(enemyAnimationScratch));

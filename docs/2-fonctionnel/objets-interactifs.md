@@ -2,7 +2,7 @@
 title: Objets interactifs
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-15
 ---
 
 # Objets interactifs
@@ -89,8 +89,9 @@ si de rien n'était.
 
 Une bonbonne rouge à bandeau jaune se pousse comme un carton, et explose
 quand elle casse. Le souffle blesse tout ce qui est proche et en vue : les
-ennemis, et vous aussi, à moitié prix. Un ennemi pris au cœur de l'explosion
-éclate. Le mobilier voisin est projeté.
+ennemis, et vous aussi, à moitié prix. Tout ennemi tué par ce souffle éclate
+immédiatement en morceaux. Un ennemi assez résistant peut survivre : les dégâts
+diminuent avec la distance. Le mobilier voisin est projeté.
 
 Une bonbonne atteinte par le souffle d'une autre saute à son tour, une
 fraction de seconde plus tard : deux ou trois bonbonnes voisines font une

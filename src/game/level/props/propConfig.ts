@@ -24,6 +24,8 @@ export interface BlastConfig {
   playerDamageScale: number;
   /** Distance sous laquelle un Costard tué par le souffle part en morceaux, en mètres. */
   gibDistance: number;
+  /** Un souffle mortel démembre à toute distance atteinte, même au-delà de `gibDistance`. */
+  gibOnKill?: boolean;
   /** Impulsion donnée à un prop au centre, en N·s ; même décroissance que les dégâts. */
   impulse: number;
   /** Part de l'impulsion envoyée vers le haut : un prop soufflé décolle au lieu de racler le sol. */
@@ -40,6 +42,7 @@ export const explosionConfig: ExplosionConfig = {
   damage: 120,
   playerDamageScale: 0.5,
   gibDistance: 2.5,
+  gibOnKill: true,
   impulse: 600,
   impulseLift: 0.5,
   // 9 pas = 0,15 s : assez pour LIRE la chaîne, pas assez pour s'en échapper.

@@ -34,11 +34,12 @@ export function applyBlast(
 ): BlastOutcome {
   const damageAt = (distance: number) => blastDamageAt(distance, blast);
   const reaches = (point: THREE.Vector3) => hasClearWorldPath(session.physics, center, point, rayScratch);
+  const gibDistance = blast.gibOnKill ? blast.radius : blast.gibDistance;
 
   const suitDeathsBefore = session.suitManager.deathEvents.length;
-  session.suitManager.applyBlast(center, damageAt, reaches, blast.gibDistance);
+  session.suitManager.applyBlast(center, damageAt, reaches, gibDistance);
   const directorDeathsBefore = session.directorManager.deathEvents.length;
-  session.directorManager.applyBlast(center, damageAt, reaches);
+  session.directorManager.applyBlast(center, damageAt, reaches, blast.gibOnKill ? blast.radius : undefined);
 
   let playerDamage = 0;
   const position = session.player.position;
