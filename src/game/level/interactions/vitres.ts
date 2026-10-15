@@ -6,6 +6,7 @@ import { mergeBreakableDecor, rangeCenter } from "../loading/mergeBreakableDecor
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 import type { PropMaterial } from "../props/props";
+import type { PropBreakShape } from "../props/propAppearance";
 
 // see: docs/6-reference/notes-code-gameplay-niveau.md#objets-cassables-et-interactions
 
@@ -89,6 +90,7 @@ export interface VitreDestroyedEvent {
   direction: THREE.Vector3;
   givre: boolean;
   matiere: PropMaterial;
+  shape?: PropBreakShape;
 }
 
 interface VitreState {
@@ -199,7 +201,22 @@ export class VitreSystem {
       direction: finalDirection,
       givre: state.info.givre,
       matiere: state.info.matiere,
+      shape: this.captureShape(state.info.collider),
     });
+  }
+
+  private captureShape(collider: RAPIER.Collider | null): PropBreakShape | undefined {
+    if (!collider) return undefined;
+    const center = collider.translation(),
+      rotation = collider.rotation(),
+      half = collider.halfExtents();
+    if (!half) return undefined;
+    return {
+      center: new THREE.Vector3(center.x, center.y, center.z),
+      rotation: new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w),
+      halfExtents: new THREE.Vector3(half.x, half.y, half.z),
+      color: new THREE.Color(),
+    };
   }
 
   /** Résumé lisible pour la console de dev (`cassandre.vitres()`). */

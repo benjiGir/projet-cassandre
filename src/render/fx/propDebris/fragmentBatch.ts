@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GRAVITY_Y } from "../../../physics/constants";
 import { FLOOR_NORMAL_Y, type SurfaceProbe } from "../goreConfig";
 import { createFragmentGeometry, createFragmentMaterial } from "./fragmentGeometry";
+import { FRAGMENT_RECIPES } from "./fragmentRecipes";
 import { propDebrisConfig } from "./propDebrisConfig";
 import type { FragmentMaterial, FragmentPose } from "./propDebrisTypes";
 
@@ -24,6 +25,7 @@ export class FragmentBatch {
   readonly mesh: THREE.InstancedMesh;
   private readonly slots: Fragment[];
   private cursor = 0;
+  private activeCount = 0;
   private readonly matrix = new THREE.Matrix4();
   private readonly direction = new THREE.Vector3();
   private readonly support = new THREE.Vector3();
@@ -61,6 +63,7 @@ export class FragmentBatch {
     const index = this.cursor;
     this.cursor = (this.cursor + 1) % this.slots.length;
     const slot = this.slots[index];
+    if (!slot.active) this.activeCount++;
     slot.active = slot.flying = true;
     slot.age = 0;
     slot.position.copy(pose.position);
@@ -75,6 +78,7 @@ export class FragmentBatch {
   }
 
   update(dt: number, probe: SurfaceProbe | null): void {
+    if (this.activeCount === 0) return;
     let remaining = Math.min(dt, 0.1);
     while (remaining > 1e-6) {
       const step = Math.min(remaining, 1 / 60);
@@ -84,25 +88,32 @@ export class FragmentBatch {
   }
 
   private step(dt: number, probe: SurfaceProbe | null): void {
+    const recipe = FRAGMENT_RECIPES[this.kind];
     for (let i = 0; i < this.slots.length; i++) {
       const slot = this.slots[i];
       if (!slot.active || !slot.flying) continue;
       slot.age += dt;
-      if (slot.age > propDebrisConfig.maxFlight) {
+      if (slot.age > (recipe.lifetime || propDebrisConfig.maxFlight)) {
         slot.active = false;
+        this.activeCount--;
         this.write(i);
         continue;
       }
-      slot.velocity.y += GRAVITY_Y * dt;
-      slot.velocity.multiplyScalar(
-        Math.exp(-(this.kind === "carton" ? propDebrisConfig.cardboardDrag : propDebrisConfig.woodDrag) * dt),
-      );
+      slot.velocity.y += GRAVITY_Y * recipe.gravity * dt;
+      slot.velocity.multiplyScalar(Math.exp(-recipe.drag * dt));
+      if (recipe.lifetime) {
+        const growth = this.kind === "farine" ? (slot.age < recipe.lifetime * 0.55 ? 0.9 : -8) : -1.5;
+        slot.scale.multiplyScalar(Math.exp(growth * dt));
+      }
       const distance = slot.velocity.length() * dt;
       this.direction.copy(slot.velocity).normalize();
       const radius = this.supportRadius(slot, this.direction);
       const hit = probe && distance > 1e-6 ? probe(slot.position, this.direction, distance + radius) : null;
       if (hit) {
-        if (hit.normal.y > FLOOR_NORMAL_Y) {
+        if (recipe.lifetime) {
+          slot.active = false;
+          this.activeCount--;
+        } else if (hit.normal.y > FLOOR_NORMAL_Y) {
           slot.flying = false;
           this.facing.setFromUnitVectors(UP, hit.normal);
           this.spinRotation.setFromAxisAngle(UP, this.random() * Math.PI * 2);
@@ -119,6 +130,7 @@ export class FragmentBatch {
       }
       this.write(i);
     }
+    this.mesh.visible = this.activeCount > 0;
   }
 
   private supportRadius(slot: Fragment, normal: THREE.Vector3): number {
@@ -146,5 +158,6 @@ export class FragmentBatch {
     this.mesh.instanceMatrix.needsUpdate = true;
     this.mesh.visible = false;
     this.cursor = 0;
+    this.activeCount = 0;
   }
 }

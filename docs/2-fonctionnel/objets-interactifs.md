@@ -85,7 +85,12 @@ Un carton cassé s’affaisse en grands pans déchirés ; une caisse en bois lai
 des planchettes. Les morceaux reprennent la taille et les teintes de l’objet,
 volent selon le coup, heurtent les murs et retombent sur le sol. Ils restent
 visibles et traversables ; les plus anciens sont remplacés si le lieu est
-couvert de débris. Le contenu prévu dans un carton tombe toujours normalement.
+couvert de débris. Le verre laisse des éclats, le métal et les bonbonnes des
+tôles pliées, les appareils électroniques des coques et circuits imprimés.
+Un sac de farine laisse une projection brève et de la poudre ; un contenant
+d’eau laisse des gouttes puis une flaque mate sur un sol proche. Ces traces
+ne glissent pas et ne bloquent personne. Le contenu prévu dans un carton
+tombe toujours normalement.
 Un souffle peut briser les cartons et meubles en bois destructibles à portée,
 avec des dégâts qui diminuent avec la distance et les murs qui les protègent.
 

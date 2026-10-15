@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 
-export type FragmentMaterial = "carton" | "bois";
+export type PropDebrisMaterial = "carton" | "bois" | "verre" | "metal" | "electronique" | "gaz" | "farine" | "eau";
+export type FragmentMaterial = PropDebrisMaterial | "circuit";
 
 export interface PropFragmentSource {
   center: THREE.Vector3;

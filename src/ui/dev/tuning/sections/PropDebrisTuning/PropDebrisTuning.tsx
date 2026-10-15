@@ -9,7 +9,7 @@ import { useConfigEditor } from "../../lib/useConfigEditor";
 import { PROP_DEBRIS_FIELDS, PROP_DEBRIS_VARIANT_LABELS, PROP_DEBRIS_VARIANT_NAMES } from "./propDebrisFields";
 
 // La présentation seule est réglée ici ; les dégâts restent ceux du jeu.
-// see: docs/4-technique/rendu.md#débris-de-carton-et-de-bois
+// see: docs/4-technique/rendu.md#débris-par-matière
 export function PropDebrisTuning() {
   const fragments = useConfigEditor(propDebrisConfig);
   return (

@@ -34,14 +34,11 @@ export function presentPropEvents({ engine, session }: FxFrame): void {
   const props = session.level.propSystem;
   if (props) {
     for (const event of props.destroyedEvents) {
-      const debris = PROP_DEBRIS[event.matiere] ?? DEFAULT_PROP_DEBRIS;
-      if (event.matiere === "carton" || event.matiere === "bois") {
-        engine.fx.spawnPropFragments(event.matiere, {
-          ...event.shape,
-          direction: event.direction,
-          strength: event.strength,
-        });
-      } else engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
+      engine.fx.spawnPropFragments(event.matiere, {
+        ...event.shape,
+        direction: event.direction,
+        strength: event.strength,
+      });
       engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
       playPropBreakSfx(event.matiere);
     }
@@ -63,7 +60,13 @@ export function presentBreakableEvents({ engine, session }: FxFrame): void {
   if (vitres) {
     for (const event of vitres.destroyedEvents) {
       const debris = PROP_DEBRIS[event.matiere] ?? DEFAULT_PROP_DEBRIS;
-      engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
+      if (event.shape)
+        engine.fx.spawnPropFragments(event.matiere, {
+          ...event.shape,
+          direction: event.direction,
+          strength: 1,
+        });
+      else engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
       if (event.givre) engine.fx.spawnFrostBurst(event.point);
       engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
       playPropBreakSfx(event.matiere);

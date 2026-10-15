@@ -14,7 +14,7 @@ import { EnemyAppearances } from "./enemyAppearances";
 import type { BillboardSprite } from "../sprites/billboard";
 import type { SurfaceProbe } from "./goreConfig";
 import { PropDebris } from "./propDebris/propDebris";
-import type { FragmentMaterial, PropFragmentSource } from "./propDebris/propDebrisTypes";
+import type { PropDebrisMaterial, PropFragmentSource } from "./propDebris/propDebrisTypes";
 
 /** Taille de l'éclatement d'une fusée par rapport à l'explosion d'une bonbonne — le rapport de leurs rayons de souffle. */
 const FLARE_BURST_SCALE = 0.6;
@@ -120,7 +120,7 @@ export class FxSystem {
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number): void {
     this.debris.spawnDebris(point, direction, color, count);
   }
-  spawnPropFragments(kind: FragmentMaterial, source: PropFragmentSource): void {
+  spawnPropFragments(kind: PropDebrisMaterial, source: PropFragmentSource): void {
     this.propFragments.spawn(kind, source);
   }
   warmPropFragments(camera: THREE.Camera, render: () => void): void {

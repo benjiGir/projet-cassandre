@@ -121,8 +121,8 @@ créer des aliments, dispersés par un PRNG dédié. Les nouveaux pickups resten
 jusqu’à ce qu’un soin soit accepté ; être à PV pleins ne les consomme pas.
 `PropDestroyedEvent.shape` capture centre, rotation, demi-étendues et couleur
 moyenne de la géométrie ; `strength` distingue l’impact fatal et le souffle.
-La présentation utilise ces valeurs pour les pans de carton et planchettes
-persistants, sans réactiver l’ancien corps physique.
+La présentation utilise ces valeurs pour les débris et résidus propres à chaque
+matière, sans réactiver l’ancien corps physique.
 
 `PropSystem` reçoit au chargement une fonction de visibilité statique pour les
 souffles. Les murs bloquent impulsions et amorçage des bonbonnes voisines. Les

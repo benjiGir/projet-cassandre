@@ -5,12 +5,11 @@ export const PROP_FRAGMENT_VARIANTS = {
 
 export const propDebrisConfig = {
   capacityPerMaterial: 96,
-  cardboardCount: 6,
-  woodCount: 10,
   maxFlight: 5,
   surfaceOffset: 0.018,
-  cardboardDrag: 1.8,
-  woodDrag: 0.5,
+  residueCapacity: 32,
+  residueReach: 3,
+  residueSize: 1.25,
   wallRestitution: 0.22,
   ...PROP_FRAGMENT_VARIANTS.SOBRE,
 };

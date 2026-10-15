@@ -147,17 +147,22 @@ des événements de mort. La simulation masque leurs restes avec `hasRemains` ;
 la présentation réutilise les taches et morceaux existants, sans nouvelle
 réserve graphique. Voir [Cadavres destructibles](../6-reference/notes-code-gameplay-ennemis.md#cadavres-destructibles).
 
-### Débris de carton et de bois
+### Débris par matière
 
 `src/render/fx/propDebris/propDebris.ts` remplace les petits cubes temporaires
-pour les props `carton` et `bois`. La casse transmet le centre, la rotation,
+pour les props physiques. La casse transmet le centre, la rotation,
 les demi-étendues physiques et la teinte moyenne du mesh depuis le pas fixe.
 Six pans froissés de carton ou dix planchettes déchirées prennent leur place.
+Le verre laisse quatorze éclats triangulaires ; métal et gaz produisent des
+tôles pliées. L’électronique laisse six morceaux de coque et deux circuits.
+Les vitrages cassables transmettent aussi le volume de leur collider avant
+l’écrasement du lot fusionné ; les écrans gardent leur effet propre.
 Les textures procédurales mates portent fibres, adhésif, marquage et veines.
 Une texture par matière conserve le filtrage rétro du renderer.
 
-`FragmentBatch` réutilise 96 emplacements par matière, dans deux
-`InstancedMesh`. Les fragments partent des faces du volume original. Le coup
+`fragmentRecipes.ts` regroupe forme, nombre, taille, vitesse, traînée et teinte
+par matière. `FragmentBatch` réutilise 96 emplacements dans chacun de ses neuf
+`InstancedMesh` (dont les circuits, la poudre et les gouttes). Les fragments partent des faces du volume original. Le coup
 fatal règle leur projection : force 1 au pied-de-biche/pistolet, 1,8 au pompe,
 2,3 en impact direct de fusée et 2,6 au souffle. Les tailles sont plafonnées
 pour les grands meubles. Les débris traversent les personnages et restent
@@ -168,7 +173,12 @@ petits sous-pas et l’étendue du fragment limitent les traversées. Les murs
 renvoient les morceaux, les sols les arrêtent à plat selon leur normale.
 Les morceaux posés persistent sans nouvelle requête ; un emplacement ancien
 est repris si la réserve est pleine. Un fragment tombé hors du niveau disparaît
-après cinq secondes. Une nouvelle partie vide la réserve et sa sonde.
+après cinq secondes. Farine et eau projettent de petites particules pendant
+0,75 et 0,7 seconde : elles disparaissent aussi dès le contact avec le décor.
+`surfaceResidue.ts` pose une trace de poudre ou une flaque mate dans deux
+réserves de 32 traces, sans collision. Le centre et les coins doivent être
+supportés par un sol statique proche ; la trace est réduite ou refusée si elle
+dépasse un rebord. Une nouvelle partie vide les réserves et leur sonde.
 
 `propDebrisConfig.ts` porte les réglages et les profils `SOBRE` et `DYNAMIQUE`,
 exposés avec leurs curseurs dans le panneau de tuning. Le replay F9/F10

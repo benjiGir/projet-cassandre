@@ -278,9 +278,9 @@ Seules les douilles rebondissent, sur un plan y=0 supposé : l'approximation
 peut traverser des marches ou étages. L'éjection presque verticale se rabat
 sur +X si sa direction horizontale dégénère.
 
-Le carton et le bois utilisent désormais deux réserves de fragments persistants,
+Les props utilisent des réserves de fragments par matière et des traces au sol,
 avec collision cosmétique sur le décor statique. Le détail est dans
-[Débris de carton et de bois](../4-technique/rendu.md#débris-de-carton-et-de-bois).
+[Débris par matière](../4-technique/rendu.md#débris-par-matière).
 
 Les gibs changent taille, quantité et couleur ; les autres débris reçoivent une
 couleur externe mise en cache pour éviter un matériau par casse. Le givre
