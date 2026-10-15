@@ -23,7 +23,7 @@ describe("cycle de vie d'une GameSession", () => {
     const session = {
       gltfLevelSession: { stop },
       levelLoadGeneration: 3,
-      gymRoot: null,
+      mode: null,
       suitSprites: new Map(),
       directorSprites: new Map(),
       droppedCardMesh: null,

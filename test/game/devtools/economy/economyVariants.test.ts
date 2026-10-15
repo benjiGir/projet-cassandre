@@ -77,7 +77,7 @@ describe("variante B — celle du jeu", () => {
           .reduce((sum, kiosk) => sum + kiosk.price, 0);
         return dernier.wallet + depense;
       });
-      const mediane = [...recus].sort((a, b) => a - b)[50]!;
+      const mediane = [...recus].sort((a, b) => a - b)[50];
       expect(mediane, perk).toBeGreaterThanOrEqual(B.prices[perk]);
     }
   });

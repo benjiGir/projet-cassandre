@@ -445,8 +445,8 @@ différent pour chaque boîte identique.
 - `src/game/player/weapons/weapons.ts` : armes, tirs et munitions.
 - `src/game/level/interactions/food.ts` et `src/game/level/props/props.ts` : nourriture et mobilier cassable.
 - `src/game/level/interactions/ecrans.ts` et `src/game/level/interactions/cameras.ts` : écrans et caméras.
-- [Plan des coulisses](../assets/plan-coulisses.md) et
-  [board des coulisses](../assets/board-coulisses.md) : interactions futures.
+- [Plan des coulisses](../journal/alternative-coulisses-2026-10.md) et
+  [board des coulisses](references-coulisses.md) : interactions futures.
 
 Les anciennes zones de test, les outils de développement, les messages
 d'erreur et le dépannage du moteur n'ont pas de voix de personnage prévue.

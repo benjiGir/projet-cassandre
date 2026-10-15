@@ -3,6 +3,8 @@
 interface LoadingBaseState {
   label: string;
   progress: number;
+  /** Ce vers quoi on charge, tel que `beginLoading` l'a reçu : l'écran y accorde ses phrases d'attente. */
+  destination: string | null;
 }
 
 export type LoadingState =
@@ -15,6 +17,7 @@ export type LoadingState =
 
 let state: LoadingState | null = null;
 let done = false;
+let destination: string | null = null;
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -23,12 +26,14 @@ function emit() {
 
 export function reportLoading(label: string, progress: number) {
   if (done) return;
-  state = { status: "loading", label, progress: Math.max(0, Math.min(1, progress)) };
+  state = { status: "loading", label, progress: Math.max(0, Math.min(1, progress)), destination };
   emit();
 }
 
-export function beginLoading(label = "Démarrage", progress = 0): void {
+/** `towards` : ce vers quoi on charge. Omis (nouvelle tentative), la destination en cours est gardée. */
+export function beginLoading(label = "Démarrage", progress = 0, towards?: string): void {
   done = false;
+  if (towards !== undefined) destination = towards;
   reportLoading(label, progress);
 }
 
@@ -46,6 +51,7 @@ export function waitForLoadingRetry(error: unknown): Promise<void> {
       status: "failed",
       label: "Chargement interrompu",
       progress: state?.progress ?? 0,
+      destination,
       message: message || "Le niveau n’a pas pu être chargé.",
       retry,
     };

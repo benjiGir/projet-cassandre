@@ -49,6 +49,8 @@ export interface ChatMessage {
   readonly text: string;
   /** `don` : la ligne annonce un don, `message` : un spectateur écrit. */
   readonly kind: "message" | "don";
+  /** Le pseudo porte le badge de compte vérifié. */
+  readonly verified?: boolean;
 }
 
 /** Un don qui vient d'arriver, affiché en alerte. */
@@ -59,6 +61,8 @@ export interface DonationAlert {
   readonly text: string;
   /** Le don vient du donateur mystère de l'histoire. */
   readonly mystery: boolean;
+  /** Il écrit sous un compte vérifié : c'est le cas à partir du métro. */
+  readonly verified: boolean;
 }
 
 /** Ce que vend la borne à portée du joueur, pour l'invite d'interaction. */
@@ -70,7 +74,7 @@ export interface PerkOfferView {
   readonly effect: string;
   /** Euros. */
   readonly price: number;
-  /** Déjà acheté dans cette partie : la borne est épuisée. */
+  /** Consommable sans bénéfice : santé ou réserves déjà pleines. */
   readonly sold: boolean;
 }
 
@@ -117,6 +121,13 @@ export interface LiveRecap {
   readonly donationCount: number;
 }
 
+export interface WeaponCarouselView {
+  readonly active: WeaponKind;
+  readonly available: readonly WeaponKind[];
+  readonly visible: boolean;
+  readonly revision: number;
+}
+
 export interface DebugState {
   fps: number;
   /** Position des yeux du joueur, m. */
@@ -160,6 +171,8 @@ export interface DebugState {
   shotgunMaxAmmo: number;
   pistolAmmo: number;
   pistolMaxAmmo: number;
+  flareAmmo: number;
+  flareMaxAmmo: number;
 
   activeWeapon: WeaponKind;
 

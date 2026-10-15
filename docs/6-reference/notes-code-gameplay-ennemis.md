@@ -2,7 +2,7 @@
 title: Contrats des ennemis et de leurs machines
 tags: [gameplay, ennemis, xstate, code]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-13
 ---
 
 # Contrats des ennemis et de leurs machines
@@ -56,8 +56,9 @@ Les managers agrègent les impacts nouveaux par collider. Chaque manager a son
 curseur et partage la même file d’impacts d’armes ; ce curseur se remet à zéro
 uniquement lors de la vidange après présentation. Tous les plombs reçus pendant
 un pas fixe produisent un seul événement de blessure ou mort par ennemi.
-Un ennemi blessé ne reçoit pas aussi un tick normal dans ce même pas, afin de ne
-pas avancer immédiatement son stagger ni produire une nouvelle attaque.
+Un ennemi qui entre en stagger ne reçoit pas aussi un tick normal dans ce
+même pas. Un Contrôleur dont la charge résiste à une balle reçoit ses dégâts
+et son flash, puis poursuit son tick : les balles ne ralentissent pas son élan.
 
 Le collider est retiré de la map avant que sa référence ne disparaisse. Les
 événements possèdent leurs positions/directions. Les Costards gardent une mort
@@ -86,3 +87,18 @@ Les variantes flash/recul sont lues à chaud dans les configurations partagées.
 porte les rayons de visibilité, `enemyNavigation` les chemins et l’évitement,
 `enemyPhysics` le KCC et le knockback, `enemyCombat` la résolution du tir.
 L’ordre d’appel et les scratches restent ceux de l’orchestrateur.
+
+## Charge et projection
+
+`enemyCharge.ts` porte les décisions de charge de la machine partagée.
+`attack` devient l'anticipation immobile, suivie de `charge`, puis `recover`.
+La direction est figée au début d'`attack`. Chaque charge ne touche qu'une
+fois ; le chef redémarre une anticipation après récupération, en visant à
+nouveau. Une interruption ou une mort annule cet enchaînement.
+
+L'événement de coup transporte une projection et sa durée. Le pas fixe
+appelle `PlayerController.applyPush` ; une vitesse distincte de celle des
+commandes décroît linéairement, intégrée par trapèzes avant le KCC. Une
+collision au mur arrête cette vitesse, un respawn la remet à zéro.
+Les [rencontres](../4-technique/rencontres-metro.md#contrôleurs-et-chef-de-brigade)
+décrivent appuis, voies, stats et réglages.

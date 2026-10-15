@@ -55,7 +55,7 @@ describe("chargement d'un vitre_*", () => {
   it("collider cuboid actif par défaut, groupe WORLD, matériau double face sans écriture de profondeur", () => {
     const { handle } = build([vitreMesh("vitre_baie", new THREE.Vector3(2, 2), new THREE.Vector3(0, 1, 0))]);
     expect(handle.stats.vitreCount).toBe(1);
-    const vitre = handle.vitres[0]!;
+    const vitre = handle.vitres[0];
     expect(vitre.collider).not.toBeNull();
     expect(vitre.collider!.isEnabled()).toBe(true);
     expect(vitre.maxHp).toBeNull(); // pv absent -> incassable, mais SOLIDE (collider posé)
@@ -71,7 +71,7 @@ describe("chargement d'un vitre_*", () => {
     const { handle } = build([
       vitreMesh("vitre_verriere", new THREE.Vector3(3, 3), new THREE.Vector3(0, 4, 0), { solide: false, pv: 30 }),
     ]);
-    const vitre = handle.vitres[0]!;
+    const vitre = handle.vitres[0];
     expect(vitre.collider).toBeNull();
     expect(vitre.maxHp).toBeNull(); // `pv` ignoré : solide:false force incassable
   });
@@ -80,7 +80,7 @@ describe("chargement d'un vitre_*", () => {
     const { handle } = build([
       vitreMesh("vitre_surgeles", new THREE.Vector3(1, 1.5), new THREE.Vector3(0, 1, 0), { pv: 24, givre: true }),
     ]);
-    const vitre = handle.vitres[0]!;
+    const vitre = handle.vitres[0];
     expect(vitre.maxHp).toBe(24);
     expect(vitre.givre).toBe(true);
   });
@@ -91,7 +91,7 @@ describe("chargement d'un vitre_*", () => {
       vitreMesh("vitre_cassee", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv: -5 }),
     ]);
     expect(handle.vitres).toHaveLength(1);
-    expect(handle.vitres[0]!.maxHp).toBeNull();
+    expect(handle.vitres[0].maxHp).toBeNull();
     const warnings = vitreWarnings(errorSpy);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("pv");
@@ -129,13 +129,13 @@ describe("mergeVitreDecor — un lot par matériau pour tout le niveau", () => {
     const result = mergeVitreDecor(root, [a, b]);
     expect(result.batchCount).toBe(1);
     expect(result.vitres).toHaveLength(2);
-    expect(result.vitres[0]!.batchGeometry).toBe(result.vitres[1]!.batchGeometry);
+    expect(result.vitres[0].batchGeometry).toBe(result.vitres[1].batchGeometry);
     // Plages disjointes qui couvrent tout le lot.
     const [va, vb] = result.vitres;
-    expect(va!.vertexStart).toBe(0);
-    expect(vb!.vertexStart).toBe(va!.vertexCount);
-    expect(va!.vertexCount + vb!.vertexCount).toBe(
-      (result.vitres[0]!.batchGeometry.getAttribute("position") as THREE.BufferAttribute).count,
+    expect(va.vertexStart).toBe(0);
+    expect(vb.vertexStart).toBe(va.vertexCount);
+    expect(va.vertexCount + vb.vertexCount).toBe(
+      (result.vitres[0].batchGeometry.getAttribute("position") as THREE.BufferAttribute).count,
     );
   });
 
@@ -149,7 +149,7 @@ describe("mergeVitreDecor — un lot par matériau pour tout le niveau", () => {
 
     const result = mergeVitreDecor(root, [a, b]);
     expect(result.batchCount).toBe(1);
-    expect(result.vitres[0]!.batchGeometry).toBe(result.vitres[1]!.batchGeometry);
+    expect(result.vitres[0].batchGeometry).toBe(result.vitres[1].batchGeometry);
   });
 
   it("une vitre seule de son matériau reste sur sa propre géométrie (passthrough)", () => {
@@ -158,8 +158,10 @@ describe("mergeVitreDecor — un lot par matériau pour tout le niveau", () => {
     const a = candidate("vitre_seule", new THREE.Vector3(0, 1, 0));
     const result = mergeVitreDecor(root, [a]);
     expect(result.batchCount).toBe(0);
-    expect(result.vitres[0]!.batchGeometry).toBe(a.mesh.geometry);
-    expect(result.vitres[0]!.vertexCount).toBe((a.mesh.geometry.getAttribute("position") as THREE.BufferAttribute).count);
+    expect(result.vitres[0].batchGeometry).toBe(a.mesh.geometry);
+    expect(result.vitres[0].vertexCount).toBe(
+      (a.mesh.geometry.getAttribute("position") as THREE.BufferAttribute).count,
+    );
   });
 });
 
@@ -169,7 +171,7 @@ describe("VitreSystem — casse par PV (tir du joueur)", () => {
   it("ne relit pas le même impact lors d'un second pas fixe de la même frame", () => {
     const { handle } = build([vitreMesh("vitre_a", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv })]);
     const vitres = new VitreSystem(handle.vitres);
-    const colliderHandle = handle.vitres[0]!.collider!.handle;
+    const colliderHandle = handle.vitres[0].collider!.handle;
     const accumulatedFrameHits = [hitFrom(colliderHandle, new THREE.Vector3(0, 1, 0))];
 
     vitres.update(accumulatedFrameHits);
@@ -212,16 +214,16 @@ describe("VitreSystem — casse par PV (tir du joueur)", () => {
     }
     // Plage de `b` STRICTEMENT inchangée — le lot reste un seul mesh, mais une seule vitre a cédé.
     for (let i = 0; i < b.vertexCount; i++) {
-      expect(position.getX(b.vertexStart + i)).toBeCloseTo(bBefore[i]![0]!, 5);
-      expect(position.getY(b.vertexStart + i)).toBeCloseTo(bBefore[i]![1]!, 5);
-      expect(position.getZ(b.vertexStart + i)).toBeCloseTo(bBefore[i]![2]!, 5);
+      expect(position.getX(b.vertexStart + i)).toBeCloseTo(bBefore[i][0], 5);
+      expect(position.getY(b.vertexStart + i)).toBeCloseTo(bBefore[i][1], 5);
+      expect(position.getZ(b.vertexStart + i)).toBeCloseTo(bBefore[i][2], 5);
     }
   });
 
   it("un tir de plus sur une vitre déjà cassée ne produit plus rien", () => {
     const { handle } = build([vitreMesh("vitre_a", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv: 1 })]);
     const vitres = new VitreSystem(handle.vitres);
-    const handleCollider = handle.vitres[0]!.collider!.handle;
+    const handleCollider = handle.vitres[0].collider!.handle;
     vitres.update([hitFrom(handleCollider, new THREE.Vector3(0, 1, 0))]);
     vitres.clearFrameEvents();
     vitres.update([hitFrom(handleCollider, new THREE.Vector3(0, 1, 0))]);
@@ -242,17 +244,25 @@ describe("VitreSystem — casse par PV (tir du joueur)", () => {
 
 describe("VitreSystem — tir ENNEMI (effet Duke Nukem)", () => {
   it("tryBreakByColliderHandle casse D'UN COUP, quel que soit le pv restant", () => {
-    const { handle } = build([vitreMesh("vitre_solide", new THREE.Vector3(2, 2), new THREE.Vector3(0, 1, 0), { pv: 500 })]);
+    const { handle } = build([
+      vitreMesh("vitre_solide", new THREE.Vector3(2, 2), new THREE.Vector3(0, 1, 0), { pv: 500 }),
+    ]);
     const vitres = new VitreSystem(handle.vitres);
-    const collider = handle.vitres[0]!.collider!;
+    const collider = handle.vitres[0].collider!;
 
-    const cassee = vitres.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1));
+    const cassee = vitres.tryBreakByColliderHandle(
+      collider.handle,
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1),
+    );
     expect(cassee).toBe(true);
     expect(vitres.destroyedEvents).toHaveLength(1);
     expect(collider.isEnabled()).toBe(false);
 
     // Idempotent : une deuxième tentative sur la même vitre échoue proprement.
-    expect(vitres.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(), new THREE.Vector3(0, 0, 1))).toBe(false);
+    expect(vitres.tryBreakByColliderHandle(collider.handle, new THREE.Vector3(), new THREE.Vector3(0, 0, 1))).toBe(
+      false,
+    );
   });
 
   it("givre propagé jusqu'à l'évènement de destruction", () => {
@@ -260,8 +270,8 @@ describe("VitreSystem — tir ENNEMI (effet Duke Nukem)", () => {
       vitreMesh("vitre_surgeles", new THREE.Vector3(1, 1), new THREE.Vector3(0, 1, 0), { pv: 10, givre: true }),
     ]);
     const vitres = new VitreSystem(handle.vitres);
-    vitres.tryBreakByColliderHandle(handle.vitres[0]!.collider!.handle, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
-    expect(vitres.destroyedEvents[0]!.givre).toBe(true);
+    vitres.tryBreakByColliderHandle(handle.vitres[0].collider!.handle, new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
+    expect(vitres.destroyedEvents[0].givre).toBe(true);
   });
 
   it("un collider inconnu (mur, prop) ne casse rien", () => {
@@ -287,6 +297,6 @@ describe("VitreSystem — harnais de console/test (destroyByName)", () => {
     const vitres = new VitreSystem(handle.vitres);
     expect(vitres.describe()).toEqual([{ name: "vitre_a", hp: 10, maxHp: 10, broken: false, givre: false }]);
     vitres.destroyByName("vitre_a");
-    expect(vitres.describe()[0]!.broken).toBe(true);
+    expect(vitres.describe()[0].broken).toBe(true);
   });
 });

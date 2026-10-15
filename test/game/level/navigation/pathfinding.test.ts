@@ -1,5 +1,5 @@
 /**
- * Jalon M4 (PLAN_EFFECT_XSTATE.md) : `PathfindingService` — premier vrai
+ * `PathfindingService` — premier vrai
  * système de pathfinding du jeu (graphe de praticabilité 2.5D baké au
  * chargement, A* déterministe). Fixtures Rapier synthétiques construites à
  * la main (pas de vrai `.glb`), même style que `test/physics/raycast.test.ts`
@@ -68,7 +68,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
       assert.isAtLeast(metricsAfter.lastMs, 0);
 
       assert.isAbove(path.length, 0);
-      const last = path[path.length - 1]!;
+      const last = path[path.length - 1];
       assert.approximately(last.x, to.x, graph.cellSize);
       assert.approximately(last.z, to.z, graph.cellSize);
 
@@ -169,7 +169,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
 
         assert.isAbove(path.length, 0, "un chemin doit être trouvé entre le rez-de-chaussée et la mezzanine");
 
-        const last = path[path.length - 1]!;
+        const last = path[path.length - 1];
         assert.approximately(last.x, to.x, graph.cellSize * 2);
         assert.approximately(last.y, to.y, 0.3);
 
@@ -180,6 +180,49 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
         const maxIntermediateY = path.slice(0, -1).reduce((m, w) => Math.max(m, w.y), Number.NEGATIVE_INFINITY);
         assert.isAbove(maxIntermediateY, 0.5);
       }).pipe(Effect.provide(GameLayer)),
+  );
+
+  it.effect("les tampons réutilisés ne laissent rien d'une requête à la suivante", () =>
+    Effect.gen(function* () {
+      const pf = yield* PathfindingService;
+      const points = (path: ReadonlyArray<THREE.Vector3>) => path.map((p) => [p.x, p.y, p.z]);
+
+      // Un mur avec ouverture : le chemin dépend vraiment de ce que la recherche a exploré.
+      const walled = new PhysicsWorld();
+      box(walled, { x: 0, y: -0.1, z: 0 }, { x: 10, y: 0.1, z: 10 });
+      box(walled, { x: 0, y: 1.5, z: -3.9 }, { x: 0.5, y: 1.5, z: 6.1 });
+      walled.step(0);
+      const large = yield* pf.bake(
+        walled,
+        new THREE.Box3(new THREE.Vector3(-10, -1, -10), new THREE.Vector3(10, 4, 10)),
+      );
+
+      // Deux îlots séparés, sur une grille d'une AUTRE taille : les tampons sont refaits, et une requête échoue.
+      const islands = new PhysicsWorld();
+      box(islands, { x: -5, y: -0.15, z: 0 }, { x: 2, y: 0.15, z: 2 });
+      box(islands, { x: 5, y: -0.15, z: 0 }, { x: 2, y: 0.15, z: 2 });
+      islands.step(0);
+      const small = yield* pf.bake(islands, new THREE.Box3(new THREE.Vector3(-8, -1, -3), new THREE.Vector3(8, 2, 3)));
+
+      const a = new THREE.Vector3(-8, 0, 0);
+      const b = new THREE.Vector3(8, 0, 0);
+      const c = new THREE.Vector3(-6, 0, 7);
+
+      const first = points(yield* pf.findPath(large, a, b));
+      const other = points(yield* pf.findPath(large, c, a));
+      // Même grille, requêtes entrelacées : chaque chemin est celui d'une recherche neuve.
+      assert.deepStrictEqual(points(yield* pf.findPath(large, a, b)), first);
+      assert.deepStrictEqual(points(yield* pf.findPath(large, c, a)), other);
+
+      // Autre grille, puis un échec, puis retour à la première.
+      assert.isAbove((yield* pf.findPath(small, new THREE.Vector3(-6, 0, 0), new THREE.Vector3(-4, 0, 1))).length, 0);
+      assert.instanceOf(
+        yield* Effect.flip(pf.findPath(small, new THREE.Vector3(-5, 0, 0), new THREE.Vector3(5, 0, 0))),
+        PathNotFoundError,
+      );
+      assert.deepStrictEqual(points(yield* pf.findPath(large, a, b)), first);
+      assert.deepStrictEqual(points(yield* pf.findPath(large, c, a)), other);
+    }).pipe(Effect.provide(GameLayer)),
   );
 
   it.effect("deux plateformes non reliées : findPath échoue avec PathNotFoundError", () =>
@@ -212,10 +255,7 @@ describe("PathfindingService (jalon M4) — bake + findPath, contre un vrai mond
       physics.step(0);
 
       const pf = yield* PathfindingService;
-      const graph = yield* pf.bake(
-        physics,
-        new THREE.Box3(new THREE.Vector3(-2, -1, -1), new THREE.Vector3(2, 2, 1)),
-      );
+      const graph = yield* pf.bake(physics, new THREE.Box3(new THREE.Vector3(-2, -1, -1), new THREE.Vector3(2, 2, 1)));
       const error = yield* Effect.flip(pf.findPath(graph, new THREE.Vector3(-1, 0, 0), new THREE.Vector3(1, 0.8, 0)));
       assert.instanceOf(error, PathNotFoundError);
     }).pipe(Effect.provide(GameLayer)),
@@ -241,15 +281,9 @@ describe("PathfindingService.test (jalon M4) — Layer scriptée, sans monde Rap
 
     return Effect.gen(function* () {
       const pf = yield* PathfindingService;
-      const path = yield* pf.findPath(
-        null as unknown as NavGraph,
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-      );
+      const path = yield* pf.findPath(null as unknown as NavGraph, new THREE.Vector3(), new THREE.Vector3());
       assert.strictEqual(path, scriptedPath);
-    }).pipe(
-      Effect.provide(PathfindingService.test({ findPath: () => Effect.succeed(scriptedPath) })),
-    );
+    }).pipe(Effect.provide(PathfindingService.test({ findPath: () => Effect.succeed(scriptedPath) })));
   });
 });
 

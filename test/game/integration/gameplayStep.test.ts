@@ -1,5 +1,5 @@
 /**
- * Jalon M6 (PLAN_EFFECT_XSTATE.md, §8) — test d'intégration hors navigateur
+ * Test d'intégration hors navigateur
  * remplaçant l'extraction de `updateGameplay` hors de `main.ts` (voir la
  * réduction de périmètre notée en tête du §8 du plan) : construit de VRAIES
  * instances `WeaponSystem`/`SuitManager`/`Suit` contre un vrai (petit) monde

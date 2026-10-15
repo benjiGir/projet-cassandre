@@ -26,7 +26,10 @@ export class Gore {
   private readonly chunks: GoreChunks;
   private probe: SurfaceProbe | null = null;
 
-  constructor(scene: THREE.Scene, private readonly random: () => number) {
+  constructor(
+    scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {
     this.splats = new GoreSplats(random);
     this.chunks = new GoreChunks(random);
     scene.add(this.splats.mesh, this.chunks.mesh);

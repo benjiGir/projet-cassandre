@@ -32,6 +32,15 @@ describe("levelSpaceAt", () => {
   it("rend null hors de tout espace", () => {
     expect(levelSpaceAt(spaces, { x: 50, y: 1, z: 10 })).toBeNull();
   });
+
+  it("rend le lieu commun aux morceaux d'un espace découpé", () => {
+    const tunnel = sortLevelSpaces([
+      { id: "tunnel_00", nom: "tunnel", x: [0, 4], y: [0, 5], z: [0, 10] },
+      { id: "tunnel_01", nom: "tunnel", x: [0, 4], y: [0, 5], z: [10, 20] },
+    ]);
+    expect(levelSpaceAt(tunnel, { x: 2, y: 1, z: 5 })).toBe("tunnel");
+    expect(levelSpaceAt(tunnel, { x: 2, y: 1, z: 15 })).toBe("tunnel");
+  });
 });
 
 describe("decodeLevelSpacesManifest", () => {
@@ -40,20 +49,45 @@ describe("decodeLevelSpacesManifest", () => {
   });
 });
 
-describe("manifeste livré de niveau_v2", () => {
-  const manifeste = decodeLevelSpacesManifest(
-    JSON.parse(new TextDecoder().decode(readFileSync(resolve("public/assets/levels/niveau_v2.espaces.json")))),
+function manifesteLivre(niveau: string) {
+  return decodeLevelSpacesManifest(
+    JSON.parse(new TextDecoder().decode(readFileSync(resolve(`public/assets/levels/${niveau}.espaces.json`)))),
   );
-  const ids = new Set(manifeste.espaces.map((espace) => espace.id));
+}
 
-  it("contient chaque espace auquel une réplique de lieu est attachée", () => {
-    expect(Object.keys(PLACE_LINES).filter((id) => !ids.has(id))).toEqual([]);
+describe("manifeste livré de niveau_v2", () => {
+  const manifeste = manifesteLivre("niveau_v2");
+
+  it("chaque réplique de lieu est attachée à un lieu du magasin ou du métro", () => {
+    const lieux = new Set(
+      [...manifeste.espaces, ...manifesteLivre("metro_blockout").espaces].map((espace) => espace.nom ?? espace.id),
+    );
+    expect(Object.keys(PLACE_LINES).filter((id) => !lieux.has(id))).toEqual([]);
   });
 
   it("place le départ du joueur sur le parking extérieur", () => {
     const spaces = sortLevelSpaces(manifeste.espaces);
     // Repère du jeu : le parking est au sud, donc en z positif.
     expect(levelSpaceAt(spaces, { x: 0, y: 1, z: 20 })).toBe("parking_ext");
+  });
+});
+
+describe("manifeste livré du métro", () => {
+  const manifeste = manifesteLivre("metro_blockout");
+
+  it("chaque lieu du parcours a sa réplique de première visite", () => {
+    const lieux = [...new Set(manifeste.espaces.map((espace) => espace.nom ?? espace.id))];
+    expect(lieux.filter((lieu) => !Object.hasOwn(PLACE_LINES, lieu))).toEqual([]);
+  });
+
+  it("un tunnel découpé en tronçons reste un seul lieu d'un bout à l'autre", () => {
+    const spaces = sortLevelSpaces(manifeste.espaces);
+    const troncons = manifeste.espaces.filter((espace) => espace.nom === "tunnel_a");
+    expect(troncons.length).toBeGreaterThan(10);
+    for (const { x, y, z } of troncons) {
+      const centre = { x: (x[0] + x[1]) / 2, y: (y[0] + y[1]) / 2, z: (z[0] + z[1]) / 2 };
+      expect(["tunnel_a", "galeries", "quais"]).toContain(levelSpaceAt(spaces, centre));
+    }
   });
 });
 

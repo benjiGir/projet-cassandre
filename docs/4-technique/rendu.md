@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-09
 ---
 
 # Rendu
@@ -73,7 +73,7 @@ Le renderer WebGL installe `WebGLNodesHandler` pour accepter des matériaux TSL 
 
 ### Préparation des douches
 
-`src/game/level/sanitaires/doucheShader.ts::warmShaderDouches` rend les jets avant le
+`src/game/level/sanitaires/doucheShader.ts::warmShowerShader` rend les jets avant le
 commit du niveau, sous l'écran de chargement. Le pool de lampes est déjà
 configuré. Les jets deviennent temporairement visibles et ne sont pas
 éliminés par le frustum ; leur état initial éteint est restauré ensuite.
@@ -144,7 +144,7 @@ gros pixels (`goreAtlas.ts`). Les réglages sont dans `goreConfig`
 
 Le HUD React est rendu séparément dans `#ui-root` et ne pilote pas le renderer. Le réticule, le hitmarker et l'habillage caméra sont des canevas 2D transparents de 640×360 superposés au jeu. Ils ne sont pas des enfants de la scène 3D.
 
-La caméra détermine le champ de vision, l'aspect et les plans de coupe. `setResolutionInterne` met à jour son aspect quand la résolution change, mais le ratio de sortie reste 16:9. Le réglage `cassandre.resolution` est un outil de comparaison ; il ne remplace pas l'observation des overlays à leur taille d'origine.
+La caméra détermine le champ de vision, l'aspect et les plans de coupe. `setInternalResolution` met à jour son aspect quand la résolution change, mais le ratio de sortie reste 16:9. Le réglage `cassandre.resolution` est un outil de comparaison ; il ne remplace pas l'observation des overlays à leur taille d'origine.
 
 ### Application des réglages
 
@@ -162,7 +162,7 @@ Le changement de résolution met à jour le buffer de dessin et le rapport de la
 
 `configureRetroTexture` règle aussi l'espace couleur sRGB, les mipmaps et l'anisotropie disponibles sur la machine. La texture reçoit ensuite `needsUpdate` pour que Three.js téléverse les changements au prochain rendu.
 
-`appliquerFiltrage` parcourt la scène et déduplique les cartes par identité : un atlas partagé par plusieurs meshes n'est reconfiguré qu'une fois. La fonction retourne le nombre de textures distinctes modifiées, utile pour vérifier qu'un changement a réellement touché les ressources présentes.
+`applyTextureFiltering` parcourt la scène et déduplique les cartes par identité : un atlas partagé par plusieurs meshes n'est reconfiguré qu'une fois. La fonction retourne le nombre de textures distinctes modifiées, utile pour vérifier qu'un changement a réellement touché les ressources présentes.
 
 Le renderer fixe le pixel ratio à 1 et désactive l'antialiasing. La netteté provient ensuite de l'agrandissement pixelisé du canevas, pas d'un rendu haute densité suivi d'un filtre lissant.
 
@@ -227,3 +227,73 @@ Le temps vient du pas fixe de `SuitManager`, le rendu lit sa progression
 dans `interpolateVisuals`. Les ennemis présents au chargement n'ont pas
 cet effet. Les shaders sont préparés par `warmFxShaders` sous le chargement.
 Contrat : [Matérialisation des embuscades](../6-reference/notes-code-rendu.md#matérialisation-des-embuscades).
+
+
+### Fontaine du quartier en TSL
+
+`src/render/environment/fountain/` ajoute l’eau à l’asset octogonal
+`fontaine_place`. Le loader repère ses meshes par l’extra glTF `kit`,
+calcule leur enveloppe dans le repère du niveau avant la fusion du décor,
+puis pose un groupe `fx_fontaine_eau` à son centre horizontal et à sa base.
+Le quartier pilote et le parcours métro utilisent ce même asset.
+Un niveau sans cet asset ne crée aucune ressource de fontaine.
+
+Le groupe contient quatre meshes : les deux surfaces fusionnées, les jets
+fusionnés, les 96 gouttelettes fusionnées et la buse métallique.
+Les trois matériaux d’eau sont des `MeshBasicNodeMaterial` procéduraux TSL.
+Les surfaces et filets transparents utilisent `forceSinglePass` : une seule
+passe suffit pour ces formes fines et évite les programmes et groupes
+d’uniformes distincts pour la face avant et la face arrière.
+Les anneaux aux impacts, les éclats mobiles et les trajectoires des gouttes
+sont calculés sur le GPU. La buse utilise un matériau Lambert classique.
+Aucune texture, lumière, collision ou simulation physique n’est ajoutée.
+
+Le bassin inférieur est à 0,49 m, sous la margelle de 0,65 m. La surface
+supérieure est à 1,865 m, au-dessus du disque existant qui culmine à 1,85 m.
+Le jet monte jusqu’à environ 4 m ; les huit cascades retombent à 1,50 m
+du centre, à l’intérieur du bassin. Les géométries conservent une enveloppe
+qui inclut les déplacements du shader pour le culling.
+
+`FountainWater.fixed` avance le temps dans `updateGameplay`.
+`interpolateVisuals` interpole le temps précédent et courant pour éviter
+un mouvement limité à 60 images/s. L’uniforme boucle sur 64 secondes ;
+chaque fréquence accomplit un nombre entier de cycles. Aucun node `time`,
+temps mural, tirage aléatoire ou travail asynchrone n’entre dans ces appels.
+
+`warmFountainWater` effectue deux rendus réels via `RenderService`, séparés
+par une microtask, dans la préparation asynchrone du niveau sous l’écran
+de chargement. Le culling est désactivé temporairement pour compiler les
+matériaux même si la fontaine est hors champ. L’ancien niveau est détaché
+pendant la préparation ; le parent, le culling et la cible sont restaurés.
+Toutes les géométries et tous les matériaux sont enregistrés dans
+`LevelResources` dès leur création et libérés avec le niveau.
+Les trois géométries et matériaux TSL ont aussi un nettoyage explicite via `onCleanup` :
+le handler appelle temporairement `geometry.dispose()` après compilation
+pour rafraîchir les attributs, puis les réutilise. Ce premier événement
+les retire du suivi général ; le nettoyage explicite assure leur libération
+au véritable déchargement.
+
+Avant tous les préchauffages d’un remplacement de niveau, l’ancienne
+fontaine est masquée et ses matériaux sont disposés pour libérer leurs
+groupes d’uniformes. Leur graphe reste réutilisable en cas de rollback.
+Cette suspension évite de réserver simultanément les groupes de l’ancienne
+et de la nouvelle fontaine. L’ancienne racine reste détachée pendant toute
+la séquence, pour éviter les variantes de shaders avec les lampes des deux
+niveaux à la fois. Les effets persistants (explosion, flash et apparition)
+libèrent aussi leurs anciens programmes avant cette séquence : le handler
+TSL inclut les identifiants des lampes dans sa clé même pour un matériau
+Basic. Garder leurs anciennes variantes réserverait des groupes d’uniformes
+à chaque remplacement de niveau. La visibilité précédente est restaurée dans
+le `finally` de la préparation ; le candidat est ensuite validé, ou libéré
+par le chargeur avant le prochain rendu en cas d’échec.
+
+En pause, l’interpolation de la fontaine lit la fin du dernier pas fixe
+plutôt qu’un alpha qui continue d’osciller entre deux images.
+
+La commande de développement `cassandre.level.reload()` attend le résultat
+du remplacement à chaud en conservant la session courante.
+La page de revue du métro offre trois vues de fontaine, une pause de
+l’animation, un relevé de rendu avec et sans l’eau, et trois rechargements.
+`cassandre.renderBench` rapporte également les nombres de géométries et
+textures de `renderer.info.memory`. Les relevés et limites de validation
+sont conservés dans le [journal du métro](../journal/metro-blockout-2026-10.md).

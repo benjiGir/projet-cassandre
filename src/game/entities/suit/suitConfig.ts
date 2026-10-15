@@ -1,10 +1,10 @@
-import type { EnemyMeleeConfig, EnemyShieldConfig } from "../shared/enemyTypes";
+import type { EnemyChargeConfig, EnemyMeleeConfig, EnemyShieldConfig } from "../shared/enemyTypes";
 
 /**
  * Espèces d'ennemis qui partagent le gestionnaire et la machine d'état du
  * Costard : un `switch` sur ce champ, pas une hiérarchie (invariant #8).
  */
-export type SuitKind = "costard" | "rampant" | "vigile";
+export type SuitKind = "costard" | "rampant" | "vigile" | "controleur" | "chef_brigade";
 
 // see: docs/6-reference/valeurs-ennemis.md
 export interface SuitConfig {
@@ -78,6 +78,7 @@ export interface SuitConfig {
 
   /** Attaque au corps-à-corps (Rampant, Vigile) ; absent = tir à distance. */
   melee?: EnemyMeleeConfig;
+  charge?: EnemyChargeConfig;
   /** Bouclier tenu devant soi (Vigile) : un tir qui l'atteint de face ne fait rien. Un souffle passe outre. */
   shield?: EnemyShieldConfig;
 }

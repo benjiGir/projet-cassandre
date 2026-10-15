@@ -14,6 +14,7 @@ function clocks(partial: Partial<ViewmodelClocks>): ViewmodelClocks {
     sinceMeleeFire: REPOS,
     sincePistolFire: REPOS,
     sinceShotgunFire: REPOS,
+    sinceFlareFire: REPOS,
     ...partial,
   };
 }

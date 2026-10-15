@@ -1,8 +1,8 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
-import type { SfxId } from "../../core/audio/audioTypes";
+import type { SfxId } from "../../core/audio/audioCatalog";
 import { inputRecorder, recordingFromJson, recordingToJson } from "../../core/input/inputRecorder";
-import { type Recording } from "../../core/input/inputTypes";
+import type { Recording } from "../../core/input/inputTypes";
 import { listSfx, playSfx } from "../../core/audio/audio";
 import { goreConfig } from "../../render/fx/goreConfig";
 import { ECONOMY_VARIANTS, applyEconomyVariant, pricesInPlay, type EconomyVariantId } from "./economy/economyVariants";
@@ -22,46 +22,54 @@ import {
   weaponConfig,
   type WeaponConfig,
 } from "../player/weapons/weaponConfig";
-import { PlayerController } from "../player/movement/controller";
-import { WeaponSystem } from "../player/weapons/weapons";
+import type { PlayerController } from "../player/movement/controller";
+import type { WeaponSystem } from "../player/weapons/weapons";
+import { trainRideConfig, TRAIN_RIDE_VARIANTS } from "../level/trainRide/trainRideConfig";
+import type { MetroBlockout } from "../level/blockout/metroBlockout";
+import { trainConfig, TRAIN_VARIANTS } from "../level/trains/trainConfig";
 import { kickConfig, KICK_VARIANTS } from "../player/weapons/kickConfig";
-import { Suit } from "../entities/suit/suit";
+import type { Suit } from "../entities/suit/suit";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig, type SuitConfig } from "../entities/suit/suitConfig";
-import { Director } from "../entities/director/director";
-import { DirectorManager } from "../entities/director/directorManager";
+import type { Director } from "../entities/director/director";
+import type { DirectorManager } from "../entities/director/directorManager";
 import { directorConfig, type DirectorConfig } from "../entities/director/directorConfig";
 import type { DoorInfo } from "../level/doors/doorTypes";
-import { type LevelStats, type SecretZone, type UseObject } from "../level/loading/levelTypes";
+import type { LevelStats, SecretZone, UseObject } from "../level/loading/levelTypes";
+import type { LevelLoadResult } from "../level/loading/hotReload";
 import type { PropSystem } from "../level/props/props";
 import type { DoorSystem } from "../level/doors/doors";
 import type { VitreSystem } from "../level/interactions/vitres";
 import type { SanitaireSystem } from "../level/sanitaires/sanitaires";
 import { navGraphStats } from "../level/navigation/navGraph";
 import type { NavGraph } from "../level/navigation/pathfindingTypes";
-import { type LightPoolStats } from "../../render/environment/lightPool";
+import type { LightPoolStats } from "../../render/environment/lightPool";
 import {
-  anisotropieDisponible,
-  appliquerFiltrage,
-  setResolutionInterne,
+  availableAnisotropy,
+  applyTextureFiltering,
+  setInternalResolution,
   INTERNAL_HEIGHT,
   INTERNAL_WIDTH,
-  type FiltrageTexture,
+  type TextureFiltering,
 } from "../../render/pipeline/renderer";
 import { debugFindPath, spawnDirectorAt, spawnSuitAt, loadGltfLevel } from "../session/spawning";
 import { grantCard } from "../session/progression/cards";
 import { grantPerk, startKillRush, usePerkKiosk, type PerkPurchase } from "../session/progression/perks";
 import { publishCounters } from "../session/stream/streamFeed";
-import { triggerLevelComplete } from "../session/progression/doors";
-import { applyPlayerDamage, presentPlayerDamage } from "../session/player/feedback";
-import { type SessionStats } from "../session/progression/score";
+import type { SessionStats } from "../session/progression/score";
+import {
+  controllerCharge,
+  controllerConfig,
+  brigadeConfig,
+  CONTROLLER_VARIANTS,
+} from "../entities/controller/controllerConfig";
 import { useGameStore } from "../hud/state";
-import { type LevelRecap } from "../hud/hudTypes";
+import type { LevelRecap } from "../hud/hudTypes";
 import { setNotarget } from "./cheats";
 import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import type { Perk } from "../player/perks";
 import { BOISSON_VARIANTS, perkConfig, type PerkConfig } from "../player/perkConfig";
 import { startPlayback } from "./replay/recording";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
 import {
   applyCrosshairVariant,
@@ -80,6 +88,12 @@ import {
   type RenderBenchmark,
 } from "./replay/testHarness";
 import { levelSpaceAt } from "../level/navigation/levelSpaces";
+import { createCampaignDebug } from "./campaignDebug";
+import type { TrainSystem } from "../level/trains/trainSystem";
+import type { TrainLaneStatus } from "../level/trains/trainTypes";
+import type { TrainRideSystem } from "../level/trainRide/trainRideSystem";
+import { trainGymOf } from "../session/modes/trainGymMode";
+import { trainRideGymOf } from "../session/modes/trainRideGymMode";
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
@@ -91,9 +105,9 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.player;
     },
     recorder: inputRecorder,
-    pose: () => {
+    pose: (publish = true) => {
       const pose = readBlenderPose(engine);
-      void publishBlenderPose(pose);
+      if (publish) void publishBlenderPose(pose);
       return pose;
     },
     tp: (x, y, z, cap) => teleportBlender(engine, x, y, z, cap),
@@ -111,6 +125,39 @@ export function exposeDebugApi(engine: GameEngine): void {
     weaponConfig,
     kickConfig,
     kickVariants: KICK_VARIANTS,
+    trains: {
+      get config() {
+        return engine.session.gltfLevelSession?.current?.trains?.config ?? trainConfig;
+      },
+      variantes: TRAIN_VARIANTS,
+      get system() {
+        return engine.session.gltfLevelSession?.current?.trains?.system ?? trainGymOf(engine.session)?.system ?? null;
+      },
+      etat() {
+        const trains = engine.session.gltfLevelSession?.current?.trains;
+        return trains
+          ? {
+              voies: trains.data.lanes.map((lane) => trains.system.status(lane.id, engine.session.player.position)),
+              rames: trains.system.passes.map((pass) => ({
+                voie: pass.lane,
+                trajet: pass.route.id,
+                avant: pass.front,
+              })),
+              morts: engine.session.run.stats.trainDeaths,
+              ennemis: engine.session.run.stats.trainKills,
+              traversées: engine.session.run.stats.trainCrossings,
+            }
+          : null;
+      },
+    },
+    voyageRame: {
+      etat: () => engine.session.gltfLevelSession?.current?.metroBlockout?.snapshot() ?? null,
+      config: trainRideConfig,
+      variantes: TRAIN_RIDE_VARIANTS,
+      get system() {
+        return trainRideGymOf(engine.session)?.system ?? null;
+      },
+    },
     recoilVariants: RECOIL_VARIANTS,
     recoilInterpolationVariants: RECOIL_INTERPOLATION_VARIANTS,
     applyRecoilVariant,
@@ -130,8 +177,20 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     suitConfig,
     spawnSuit: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "costard", materialize),
-    spawnRampant: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "rampant", materialize),
+    spawnRampant: (x, y, z, materialize = false) =>
+      spawnSuitAt(engine, engine.session, x, y, z, "rampant", materialize),
     spawnVigile: (x, y, z, materialize = false) => spawnSuitAt(engine, engine.session, x, y, z, "vigile", materialize),
+    spawnControleur: (x, y, z, chief = false, materialize = false) =>
+      spawnSuitAt(engine, engine.session, x, y, z, chief ? "chef_brigade" : "controleur", materialize),
+    controleur: {
+      config: controllerConfig,
+      charge: controllerCharge,
+      variantes: CONTROLLER_VARIANTS,
+      appliquer: (variant: keyof typeof CONTROLLER_VARIANTS) => {
+        Object.assign(controllerCharge, CONTROLLER_VARIANTS[variant]);
+        Object.assign(brigadeConfig.charge!, CONTROLLER_VARIANTS[variant]);
+      },
+    },
     suitCount: () => engine.session.suitManager.suits.length,
     suitAliveCount: () => engine.session.suitManager.suits.filter((s) => s.isAlive).length,
     // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
@@ -141,13 +200,15 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     economie: {
       variantes: ECONOMY_VARIANTS,
-      appliquer: (nom) => applyEconomyVariant(nom),
-      journal: () => engine.session.stream.ledger,
-      releve: (profil = "normal", graines = 200) =>
+      appliquer: (name) => applyEconomyVariant(name),
+      journal: () => engine.session.run.stream.ledger,
+      releve: (profile = "normal", graines = 200) =>
         summarize(
-          profil,
+          profile,
           engine.session.difficulty,
-          pricesInPlay((engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) => (u.sells ? [u.sells] : []))),
+          pricesInPlay(
+            (engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) => (u.sells ? [u.sells] : [])),
+          ),
           graines,
         ),
     },
@@ -159,7 +220,12 @@ export function exposeDebugApi(engine: GameEngine): void {
         if (!suit) return false;
         // Un souffle parti d'entre le joueur et lui, qui n'atteint que lui : la vraie mort à gibs, dans l'axe du regard.
         const center = suit.position.clone().lerp(engine.session.player.position, 0.2);
-        engine.session.suitManager.applyBlast(center, () => Number.MAX_SAFE_INTEGER, (point) => point === suit.position, Infinity);
+        engine.session.suitManager.applyBlast(
+          center,
+          () => Number.MAX_SAFE_INTEGER,
+          (point) => point === suit.position,
+          Infinity,
+        );
         return true;
       },
     },
@@ -186,31 +252,32 @@ export function exposeDebugApi(engine: GameEngine): void {
     },
     level: {
       load: (name) => loadGltfLevel(engine, engine.session, name),
+      reload: () => engine.session.gltfLevelSession?.reload() ?? Promise.resolve(null),
       stats: () => engine.session.gltfLevelSession?.current?.stats ?? null,
     },
-    cards: () => LOYALTY_CARDS.filter((card) => engine.session.cards.has(card)),
+    cards: () => LOYALTY_CARDS.filter((card) => engine.session.run.cards.has(card)),
     giveCard: (card) => {
       grantCard(engine.session, card);
     },
     bornes: {
       liste: () =>
         (engine.session.gltfLevelSession?.current?.useObjects ?? []).flatMap((u) =>
-          u.sells ? [{ nom: u.name, ...u.sells, achete: engine.session.perks.has(u.sells.perk) }] : [],
+          u.sells ? [{ nom: u.name, ...u.sells, achete: engine.session.run.perks.has(u.sells.perk) }] : [],
         ),
       crediter: (euros) => {
-        engine.session.stream.wallet += euros;
-        publishCounters(engine.session.stream);
-        return engine.session.stream.wallet;
+        engine.session.run.stream.wallet += euros;
+        publishCounters(engine.session.run.stream);
+        return engine.session.run.stream.wallet;
       },
-      acheter: (nom) => {
-        const borne = engine.session.gltfLevelSession?.current?.useObjects.find((u) => u.name === nom);
+      acheter: (name) => {
+        const borne = engine.session.gltfLevelSession?.current?.useObjects.find((u) => u.name === name);
         return borne?.sells ? usePerkKiosk(engine.session, borne.sells) : null;
       },
       donner: (perk) => grantPerk(engine.session, perk),
-      perks: () => [...engine.session.perks],
+      perks: () => [...engine.session.run.perks],
       pointe: () => {
-        startKillRush(engine.session);
-        return engine.session.killRushRemaining;
+        startKillRush(engine.session.run);
+        return engine.session.run.killRushRemaining;
       },
     },
     perkConfig,
@@ -222,26 +289,26 @@ export function exposeDebugApi(engine: GameEngine): void {
       [...engine.session.suitSprites.values(), ...engine.session.directorSprites.values()].map((sprite) => sprite.mesh),
     // see: docs/decisions/0031-portes-animees-et-vitres.md
     doorSystem: {
-      liste: () => engine.session.doorSystem?.describe() ?? [],
-      ouvrir: (nom: string) => engine.session.doorSystem?.open(nom, engine.session.player.position) ?? false,
+      liste: () => engine.session.level.doorSystem?.describe() ?? [],
+      ouvrir: (name: string) => engine.session.level.doorSystem?.open(name, engine.session.player.position) ?? false,
       /** La touche E sur la porte manœuvrable la plus proche (`manuelle`), depuis la position du joueur — le verrouillage du pointeur met la vraie touche hors de portée de l'automatisation. */
-      actionner: () => engine.session.doorSystem?.actionner(engine.session.player.position) ?? null,
+      actionner: () => engine.session.level.doorSystem?.actionner(engine.session.player.position) ?? null,
     },
     /** Vitrages du niveau courant (`game/level/interactions/vitres.ts::VitreSystem`) :
      * `liste()` rend l'état de chaque vitre (PV, cassée, givre), `casser(nom)`
      * en détruit une sans tirer dessus — même précédent que `props`. */
     vitres: {
-      liste: () => engine.session.vitreSystem?.describe() ?? [],
-      casser: (nom: string) => engine.session.vitreSystem?.destroyByName(nom) ?? false,
+      liste: () => engine.session.level.vitreSystem?.describe() ?? [],
+      casser: (name: string) => engine.session.level.vitreSystem?.destroyByName(name) ?? false,
     },
     sanitaires: {
-      liste: () => engine.session.sanitaireSystem?.describe() ?? [],
-      casser: (nom: string) => engine.session.sanitaireSystem?.destroyByName(nom) ?? false,
-      jets: () => engine.session.sanitaireSystem?.activeJets ?? [],
-      delai: () => engine.session.sanitaireReliefCooldown,
+      liste: () => engine.session.level.sanitaireSystem?.describe() ?? [],
+      casser: (name: string) => engine.session.level.sanitaireSystem?.destroyByName(name) ?? false,
+      jets: () => engine.session.level.sanitaireSystem?.activeJets ?? [],
+      delai: () => engine.session.run.sanitaireReliefCooldown,
       forcerDelai: (secondes = 0) => {
-        engine.session.sanitaireReliefCooldown = secondes;
-        return engine.session.sanitaireReliefCooldown;
+        engine.session.run.sanitaireReliefCooldown = secondes;
+        return engine.session.run.sanitaireReliefCooldown;
       },
     },
     sfx: {
@@ -255,17 +322,19 @@ export function exposeDebugApi(engine: GameEngine): void {
      * `joue(cle)` en fait entendre une (`"heros_depart_a"`) sans provoquer la situation. */
     voix: {
       liste: () => listHeroVoices(),
-      joue: (cle: string) => playHeroVoice(cle),
+      joue: (key: string) => playHeroVoice(key),
     },
     /** `secret_*` du niveau glTF actuellement chargé — pour inspecter les volumes AABB depuis la console (même précédent que `doors`). */
     secrets: () => engine.session.gltfLevelSession?.current?.secrets ?? [],
     lieu: () => ({
-      espace: engine.session.levelSpaces ? levelSpaceAt(engine.session.levelSpaces, engine.session.player.position) : null,
-      repliques: [...engine.session.heroLinesSaid],
+      espace: engine.session.level.spaces
+        ? levelSpaceAt(engine.session.level.spaces, engine.session.player.position)
+        : null,
+      repliques: [...engine.session.run.heroLinesSaid],
     }),
     props: {
-      liste: () => engine.session.propSystem?.describe() ?? [],
-      casser: (nom: string) => engine.session.propSystem?.destroyByName(nom) ?? false,
+      liste: () => engine.session.level.propSystem?.describe() ?? [],
+      casser: (name: string) => engine.session.level.propSystem?.destroyByName(name) ?? false,
     },
     /** Boîtes de munitions (`use_*` portant `munitions`) du niveau courant — `visible: false` = déjà ramassée. */
     ammo: () => (engine.session.gltfLevelSession?.current?.useObjects ?? []).filter((u) => u.ammo !== null),
@@ -273,11 +342,11 @@ export function exposeDebugApi(engine: GameEngine): void {
     notarget: (on = true) => setNotarget(on),
     /** Trousses de soin (`use_*` portant `soin`) du niveau glTF actuellement chargé — `visible: false` = déjà ramassée (même précédent que `secrets`). */
     heals: () => (engine.session.gltfLevelSession?.current?.useObjects ?? []).filter((u) => u.heals !== null),
-    /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant. `graph()` expose le `NavGraph` brut (tableaux typés, voir sa doc), `stats()` un résumé lisible, `findPath(from, to)` calcule un chemin en direct (`null` si pas de graphe/chemin) — même précédent console que `doors`/`secrets`. */
+    /** Graphe de praticabilité du niveau glTF courant. `graph()` expose le `NavGraph` brut (tableaux typés, voir sa doc), `stats()` un résumé lisible, `findPath(from, to)` calcule un chemin en direct (`null` si pas de graphe/chemin) — même précédent console que `doors`/`secrets`. */
     pathfinding: {
-      graph: () => engine.session.currentNavGraph,
+      graph: () => engine.session.level.navGraph,
       stats: () => {
-        const graph = engine.session.currentNavGraph;
+        const graph = engine.session.level.navGraph;
         return graph ? navGraphStats(graph) : null;
       },
       findPath: (from, to) => debugFindPath(engine.session, from, to),
@@ -289,18 +358,18 @@ export function exposeDebugApi(engine: GameEngine): void {
     renderBench: (frames = 120) => benchmarkRender(engine.renderer, engine.scene, engine.camera, frames),
     // see: docs/decisions/0026-visibilite-par-espace-et-pool-de-lampes.md
     // see: docs/decisions/0027-filtrage-des-textures-reduites.md
-    filtrage: (mode: FiltrageTexture = "aniso") => ({
+    filtrage: (mode: TextureFiltering = "aniso") => ({
       mode,
-      textures: appliquerFiltrage(engine.scene, mode),
-      anisotropieMax: anisotropieDisponible(),
+      textures: applyTextureFiltering(engine.scene, mode),
+      anisotropieMax: availableAnisotropy(),
     }),
     /** Change la résolution de rendu INTERNE, pour comparer. Sans argument,
      * revient aux 640×360 de l'invariant #4. Les overlays 2D (réticule,
      * hitmarker) gardent leur propre taille et ne suivent pas. */
     resolution: (width = INTERNAL_WIDTH, height = INTERNAL_HEIGHT) =>
-      setResolutionInterne(engine.renderer, engine.camera, width, height),
+      setInternalResolution(engine.renderer, engine.camera, width, height),
     lightBudget: (n?: number | null) => {
-      const pool = engine.session.lightPool;
+      const pool = engine.session.level.lightPool;
       if (!pool) return applyLightBudget(engine.scene, engine.camera, n ?? null);
       // Sans argument, on RAPPORTE — `null` (tout rallumer) doit être demandé
       // explicitement. Un inspecteur qui modifie ce qu'il inspecte fausse la
@@ -311,13 +380,15 @@ export function exposeDebugApi(engine: GameEngine): void {
       }
       return pool.stats;
     },
+    campagne: createCampaignDebug(engine),
     recap: {
-      stats: () => engine.session.stats,
+      stats: () => engine.session.run.stats,
       recap: () => useGameStore.getState().recap,
-      completeLevel: () => triggerLevelComplete(engine, engine.session),
+      completeLevel: () => {
+        engine.session.run.devCompleteRequested = true;
+      },
       killPlayer: () => {
-        applyPlayerDamage(engine, engine.session, engine.session.playerHp);
-        presentPlayerDamage(engine.session.playerHp);
+        if (engine.flow.isPlaying()) engine.session.run.devCampaignCommands.push("death");
       },
     },
     pause: () => engine.flow.pause(),
@@ -362,8 +433,7 @@ function inspectLighting(engine: GameEngine) {
     if (attribute) {
       for (let i = 0; i < attribute.count; i += 1) {
         // Luminance Rec. 709, la même pondération que le rapport de bake.
-        const luma =
-          0.2126 * attribute.getX(i) + 0.7152 * attribute.getY(i) + 0.0722 * attribute.getZ(i);
+        const luma = 0.2126 * attribute.getX(i) + 0.7152 * attribute.getY(i) + 0.0722 * attribute.getZ(i);
         min = Math.min(min, luma);
         max = Math.max(max, luma);
         sum += luma;
@@ -371,7 +441,7 @@ function inspectLighting(engine: GameEngine) {
     }
     batches.push({
       name: mesh.name,
-      vertexColors: material.vertexColors === true,
+      vertexColors: material.vertexColors,
       hasColorAttribute: attribute !== undefined,
       min: attribute ? +min.toFixed(3) : 0,
       mean: attribute ? +(sum / attribute.count).toFixed(3) : 0,
@@ -385,11 +455,12 @@ function inspectLighting(engine: GameEngine) {
 declare global {
   interface Window {
     cassandre: {
+      campagne: ReturnType<typeof createCampaignDebug>;
       moveConfig: MoveConfig;
       player: PlayerController;
       recorder: typeof inputRecorder;
       /** Pose du joueur en coordonnées BLENDER, déposée aussi pour `C.shot("joueur")` (`devtools/blenderPose.ts`). */
-      pose: () => BlenderPose;
+      pose: (publish?: boolean) => BlenderPose;
       /** Place le joueur en coordonnées BLENDER (pieds à `z`, cap en degrés) — la commande que rend `C.shot`. */
       tp: (x: number, y: number, z: number, cap?: number) => BlenderPose;
       lastRecording: () => Recording | null;
@@ -403,6 +474,24 @@ declare global {
       weapons: WeaponSystem;
       kickConfig: typeof kickConfig;
       kickVariants: typeof KICK_VARIANTS;
+      trains: {
+        config: typeof trainConfig;
+        variantes: typeof TRAIN_VARIANTS;
+        readonly system: TrainSystem | null;
+        etat(): {
+          voies: TrainLaneStatus[];
+          rames: { voie: string; trajet: string; avant: number }[];
+          morts: number;
+          ennemis: number;
+          traversées: number;
+        } | null;
+      };
+      voyageRame: {
+        etat(): ReturnType<MetroBlockout["snapshot"]> | null;
+        config: typeof trainRideConfig;
+        variantes: typeof TRAIN_RIDE_VARIANTS;
+        readonly system: TrainRideSystem | null;
+      };
       weaponConfig: WeaponConfig;
       recoilVariants: typeof RECOIL_VARIANTS;
       recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;
@@ -427,6 +516,13 @@ declare global {
       spawnRampant: (x: number, y: number, z: number, materialize?: boolean) => Suit;
       /** Même chose pour un Vigile (lot B6) : lourd, lent, bouclier de face. */
       spawnVigile: (x: number, y: number, z: number, materialize?: boolean) => Suit;
+      spawnControleur: (x: number, y: number, z: number, chief?: boolean, materialize?: boolean) => Suit;
+      controleur: {
+        config: typeof controllerConfig;
+        charge: typeof controllerCharge;
+        variantes: typeof CONTROLLER_VARIANTS;
+        appliquer: (variant: keyof typeof CONTROLLER_VARIANTS) => void;
+      };
       /** Nombre de Costards jamais spawnés (vivants + cadavres), DANS LA SESSION COURANTE. */
       suitCount: () => number;
       /** Nombre de Costards encore en jeu (hors `dead`/`corpse`), DANS LA SESSION COURANTE. */
@@ -440,9 +536,9 @@ declare global {
       /** Économie du direct (lot B7) : `appliquer("A")` met une variante à l'essai (dons et prix des bornes), `journal()` rend chaque don et chaque achat de la partie en cours, `releve(profil)` simule 200 parties types avec les réglages en place — voir `pnpm economy`. */
       economie: {
         variantes: typeof ECONOMY_VARIANTS;
-        appliquer: (nom: EconomyVariantId) => ReturnType<typeof applyEconomyVariant>;
+        appliquer: (name: EconomyVariantId) => ReturnType<typeof applyEconomyVariant>;
         journal: () => readonly LedgerEntry[];
-        releve: (profil?: ProfileId, graines?: number) => ProfileSummary;
+        releve: (profile?: ProfileId, graines?: number) => ProfileSummary;
       };
       gore: {
         config: typeof goreConfig;
@@ -465,6 +561,7 @@ declare global {
       level: {
         /** Charge (ou recharge) `public/assets/levels/<name>.glb`, avec hot reload. */
         load: (name: string) => void;
+        reload: () => Promise<LevelLoadResult | null>;
         /** Compteurs du niveau glTF actuellement chargé, `null` si aucun. */
         stats: () => LevelStats | null;
       };
@@ -475,7 +572,7 @@ declare global {
       bornes: {
         liste: () => { nom: string; perk: Perk; price: number; achete: boolean }[];
         crediter: (euros: number) => number;
-        acheter: (nom: string) => PerkPurchase | null;
+        acheter: (name: string) => PerkPurchase | null;
         donner: (perk: Perk) => boolean;
         perks: () => Perk[];
         pointe: () => number;
@@ -490,18 +587,18 @@ declare global {
       /** Portes ANIMÉES du niveau courant — voir `game/level/doors/doors.ts::DoorSystem`. */
       doorSystem: {
         liste: () => ReturnType<DoorSystem["describe"]>;
-        ouvrir: (nom: string) => boolean;
+        ouvrir: (name: string) => boolean;
         actionner: () => ReturnType<DoorSystem["actionner"]>;
       };
       /** Vitrages du niveau courant — voir `game/level/interactions/vitres.ts::VitreSystem`. */
       vitres: {
         liste: () => ReturnType<VitreSystem["describe"]>;
-        casser: (nom: string) => boolean;
+        casser: (name: string) => boolean;
       };
       /** Sanitaires du niveau courant — voir `game/level/sanitaires/sanitaires.ts::SanitaireSystem`. */
       sanitaires: {
         liste: () => ReturnType<SanitaireSystem["describe"]>;
-        casser: (nom: string) => boolean;
+        casser: (name: string) => boolean;
         jets: () => SanitaireSystem["activeJets"];
         delai: () => number;
         forcerDelai: (secondes?: number) => number;
@@ -514,7 +611,7 @@ declare global {
       };
       voix: {
         liste: () => ReturnType<typeof listHeroVoices>;
-        joue: (cle: string) => void;
+        joue: (key: string) => void;
       };
       secrets: () => SecretZone[];
       /** Espace du plan de masse où se tient le joueur (`null` hors de tout espace ou sans manifeste) et répliques du héros déjà dites cette partie. */
@@ -524,11 +621,11 @@ declare global {
       /** Mobilier physique (`prop_*`) du niveau courant — voir `game/level/props/props.ts`. */
       props: {
         liste: () => ReturnType<PropSystem["describe"]>;
-        casser: (nom: string) => boolean;
+        casser: (name: string) => boolean;
       };
       /** Dev : rend les ennemis aveugles au joueur (voir `devtools/cheats.ts`). */
       notarget: (on?: boolean) => boolean;
-      /** Jalon M4 (PLAN_EFFECT_XSTATE.md) : graphe de praticabilité du niveau glTF courant, voir `game/level/navigation/pathfinding.ts`. */
+      /** Graphe de praticabilité du niveau glTF courant, voir `game/level/navigation/pathfinding.ts`. */
       pathfinding: {
         graph: () => NavGraph | null;
         stats: () => ReturnType<typeof navGraphStats> | null;
@@ -536,7 +633,7 @@ declare global {
       };
       lighting: () => ReturnType<typeof inspectLighting>;
       renderBench: (frames?: number) => RenderBenchmark;
-      filtrage: (mode?: FiltrageTexture) => { mode: FiltrageTexture; textures: number; anisotropieMax: number };
+      filtrage: (mode?: TextureFiltering) => { mode: TextureFiltering; textures: number; anisotropieMax: number };
       resolution: (width?: number, height?: number) => { width: number; height: number };
       lightBudget: (n?: number | null) => LightBudgetReport | LightPoolStats;
       /** Récap de fin de partie (`game/session/progression/score.ts`) — voir sa doc d'implémentation pour le détail de chaque champ. */

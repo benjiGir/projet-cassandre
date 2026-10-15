@@ -2,6 +2,7 @@ import * as THREE from "three";
 
 import { configureRetroTexture } from "../pipeline/renderer";
 import { applyMinimumLight } from "../materials/minimumLight";
+import type { EnemySpriteFrame, EnemySpriteLayout } from "./enemySpriteTypes";
 
 // see: docs/6-reference/notes-code-rendu.md#billboard-ennemi
 
@@ -15,8 +16,8 @@ const DEFAULT_FLASH_DURATION = 0.25; // s
 const FLASH_EPSILON = 1e-3;
 
 export interface BillboardSpriteOptions {
-
   rows?: number;
+  layout?: EnemySpriteLayout;
   // Largeur du quad, en mètres. Défaut 1.
   width?: number;
   // Hauteur du quad, en mètres. Défaut 1.8 (gabarit humain approximatif).
@@ -47,6 +48,10 @@ export class BillboardSprite {
   // Les offsets UV sont propres à chaque instance ; ne pas partager la texture.
   private texture: THREE.Texture;
   private readonly rows: number;
+  private readonly belowCenter: number;
+  private layout?: EnemySpriteLayout;
+  private currentFrame?: EnemySpriteFrame;
+  private currentRow = 0;
 
   private flashIntensity = 0;
 
@@ -56,6 +61,7 @@ export class BillboardSprite {
 
   private readonly scratchToCam = new THREE.Vector3();
   private readonly scratchForward = new THREE.Vector3();
+  private readonly cameraPosition = new THREE.Vector3();
 
   constructor(scene: THREE.Scene, atlas: THREE.Texture, options: BillboardSpriteOptions = {}) {
     this.scene = scene;
@@ -64,6 +70,8 @@ export class BillboardSprite {
     const width = options.width ?? DEFAULT_WIDTH;
     const height = options.height ?? DEFAULT_HEIGHT;
     const anchor = options.verticalAnchor ?? DEFAULT_VERTICAL_ANCHOR;
+    this.belowCenter = height * anchor;
+    this.layout = options.layout;
     const alphaTest = options.alphaTest ?? DEFAULT_ALPHA_TEST;
     const color = options.color ?? DEFAULT_COLOR;
 
@@ -77,7 +85,7 @@ export class BillboardSprite {
     geometry.translate(0, height * (0.5 - anchor), 0);
     const tilt = options.normalTilt ?? 0;
     if (tilt !== 0) {
-      const normals = geometry.attributes.normal!;
+      const normals = geometry.attributes.normal;
       for (let i = 0; i < normals.count; i++) normals.setXYZ(i, 0, Math.sin(tilt), Math.cos(tilt));
     }
 
@@ -93,6 +101,13 @@ export class BillboardSprite {
     this.material = material;
 
     this.mesh = new THREE.Mesh(geometry, material);
+    if (this.layout) {
+      this.expandBoundingSphere(this.layout);
+      this.mesh.onBeforeRender = (_renderer, _scene, camera) => {
+        this.updatePose(camera, this.mesh.position, this.scratchForward, this.currentRow);
+        this.mesh.updateMatrixWorld(true);
+      };
+    }
     this.scene.add(this.mesh);
   }
 
@@ -100,8 +115,9 @@ export class BillboardSprite {
   updatePose(camera: THREE.Camera, position: THREE.Vector3, forward: THREE.Vector3, row = 0): void {
     this.mesh.position.copy(position);
 
-    const dx = camera.position.x - position.x;
-    const dz = camera.position.z - position.z;
+    camera.getWorldPosition(this.cameraPosition);
+    const dx = this.cameraPosition.x - position.x;
+    const dz = this.cameraPosition.z - position.z;
 
     // Le yaw seul évite de pencher le personnage avec le regard vertical.
     this.mesh.rotation.y = Math.atan2(dx, dz);
@@ -119,22 +135,58 @@ export class BillboardSprite {
       const dot = this.scratchForward.x * this.scratchToCam.x + this.scratchForward.z * this.scratchToCam.z; // produit scalaire
       const angle = Math.atan2(cross, dot);
 
-      this.lastDirection =
-        Math.round(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4)) % BILLBOARD_COLUMNS;
+      this.lastDirection = Math.round(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 4)) % BILLBOARD_COLUMNS;
     }
     // Garder la dernière case évite un flash arbitraire lorsque la direction dégénère.
 
     const clampedRow = Math.max(0, Math.min(this.rows - 1, Math.floor(row)));
+    this.currentRow = clampedRow;
+    if (this.layout) {
+      this.applyFrame(this.layout.frames[clampedRow][this.lastDirection], this.layout);
+      return;
+    }
     // V est inversé : row 0 doit sélectionner le haut de l’image.
     this.texture.offset.set(this.lastDirection / BILLBOARD_COLUMNS, 1 - (clampedRow + 1) / this.rows);
+  }
+
+  private applyFrame(frame: EnemySpriteFrame, layout: EnemySpriteLayout): void {
+    this.texture.repeat.set(frame.width / layout.width, frame.height / layout.height);
+    this.texture.offset.set(frame.x / layout.width, 1 - (frame.y + frame.height) / layout.height);
+    if (this.currentFrame === frame) return;
+    this.currentFrame = frame;
+    const left = -frame.anchorX / layout.pixelsPerMeter;
+    const right = left + frame.width / layout.pixelsPerMeter;
+    const bottom = -this.belowCenter - frame.feetFromBottom / layout.pixelsPerMeter;
+    const top = bottom + frame.height / layout.pixelsPerMeter;
+    const positions = this.mesh.geometry.attributes.position;
+    positions.setXYZ(0, left, top, 0);
+    positions.setXYZ(1, right, top, 0);
+    positions.setXYZ(2, left, bottom, 0);
+    positions.setXYZ(3, right, bottom, 0);
+    positions.needsUpdate = true;
   }
 
   get direction(): number {
     return this.lastDirection;
   }
 
-  // Exige la même disposition et conserve la case courante.
-  setAtlas(atlas: THREE.Texture): void {
+  private expandBoundingSphere(layout: EnemySpriteLayout): void {
+    const geometry = this.mesh.geometry;
+    let radiusSquared = (geometry.boundingSphere?.radius ?? 0) ** 2;
+    for (const row of layout.frames) {
+      for (const frame of row) {
+        const ppm = layout.pixelsPerMeter;
+        const x = Math.max(frame.anchorX, frame.width - frame.anchorX) / ppm;
+        const bottom = -this.belowCenter - frame.feetFromBottom / ppm;
+        const y = Math.max(Math.abs(bottom), Math.abs(bottom + frame.height / ppm));
+        radiusSquared = Math.max(radiusSquared, x * x + y * y);
+      }
+    }
+    geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Math.sqrt(radiusSquared));
+  }
+
+  // Conserve la pose ; les rectangles peuvent différer entre peaux.
+  setAtlas(atlas: THREE.Texture, layout: EnemySpriteLayout | undefined = this.layout): void {
     const next = atlas.clone();
     next.needsUpdate = true;
     next.repeat.copy(this.texture.repeat);
@@ -142,6 +194,9 @@ export class BillboardSprite {
     this.texture.dispose();
     this.texture = next;
     this.material.map = next;
+    this.layout = layout;
+    this.currentFrame = undefined;
+    if (layout) this.expandBoundingSphere(layout);
   }
 
   setTint(color: number): void {
@@ -173,7 +228,6 @@ export class BillboardSprite {
     this.texture.dispose();
   }
 }
-
 
 const PLACEHOLDER_CELL_WIDTH = 32; // px, largement sous la limite 128×128/texture (invariant #4)
 const PLACEHOLDER_CELL_HEIGHT = 48; // px, portrait — gabarit humanoïde approximatif

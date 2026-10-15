@@ -251,7 +251,6 @@ trembler le sprite au ralenti dès que le framerate d'affichage dépasse 60 Hz.
 
 ## Sprites billboard 8 directions
 
-Voir le skill `billboard-sprites-8dir` pour les maths de sélection de
 direction et le contrat général du système. Ce qui suit couvre ce qui est
 spécifique à `src/render/sprites/billboard.ts`.
 

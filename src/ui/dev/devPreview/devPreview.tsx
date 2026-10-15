@@ -7,6 +7,7 @@ import type { HeroPortraitReaction } from "../../../game/hud/hudTypes";
 import { Hud } from "../../hud/Hud/Hud";
 import { HudMessage } from "../../hud/overlays/HudMessage/HudMessage";
 import { PerkOffer } from "../../hud/overlays/PerkOffer/PerkOffer";
+import { CrashScreen } from "../../screens/crash/CrashScreen/CrashScreen";
 import { DeathScreen } from "../../screens/death/DeathScreen/DeathScreen";
 import { DifficultyScreen } from "../../screens/difficulty/DifficultyScreen/DifficultyScreen";
 import { LevelCompleteScreen } from "../../screens/levelComplete/LevelCompleteScreen/LevelCompleteScreen";
@@ -19,6 +20,7 @@ import { difficultyOptions } from "../../../game/session/presentation/difficulty
 import { DebugPanel } from "../DebugPanel/DebugPanel";
 import { TuningPanel } from "../tuning/TuningPanel/TuningPanel";
 import { ZoneChooserLink } from "../ZoneChooserLink/ZoneChooserLink";
+import { WeaponCarouselPreview } from "./WeaponCarouselPreview/WeaponCarouselPreview";
 import styles from "./devPreview.module.css";
 
 // see: docs/4-technique/interface-react.md
@@ -33,7 +35,9 @@ const PREVIEW_SCREENS = [
   "storyOutro",
   "loading",
   "loadFailed",
+  "crash",
   "hud",
+  "weaponCarousel",
   "debug",
   "tuning",
 ] as const;
@@ -69,6 +73,8 @@ function seedHudState() {
     playerMaxHp: 100,
     shotgunAmmo: 4,
     shotgunMaxAmmo: 8,
+    flareAmmo: 3,
+    flareMaxAmmo: 18,
     pistolAmmo: 11,
     pistolMaxAmmo: 15,
     activeWeapon: "shotgun",
@@ -83,11 +89,28 @@ function seedHudState() {
     { id: 4, pseudo: "definitivement_humain", text: "ce magasin est très bien noté par ses clients", kind: "message" },
     { id: 5, pseudo: "pixel_baveux", text: "c'est quel jeu ?", kind: "message" },
   ]);
-  state.showDonation({ pseudo: "premier_abonne", amount: 50, text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.", mystery: true });
+  state.showDonation({
+    pseudo: "premier_abonne",
+    amount: 50,
+    text: "J'ai vu sa voiture sur la caméra 4. Il est donc là-haut.",
+    mystery: true,
+    verified: false,
+  });
   state.setCards(["argent", "or"]);
-  state.setPerkOffer({ key: "E", label: "Gilet Alu-Tactique", effect: "PV maximum augmentés", price: 100, sold: false });
+  state.setPerkOffer({
+    key: "E",
+    label: "Gilet Alu-Tactique",
+    effect: "PV maximum augmentés",
+    price: 100,
+    sold: false,
+  });
   state.showHudMessage("Porte déverrouillée");
   state.showHeroLine("Ils ne veulent pas que vous voyiez ça. Moi je filme.");
+}
+
+/** Panneaux du niveau nommé par `&level=`, ceux du magasin par défaut. */
+function previewStory() {
+  return levelStory(new URLSearchParams(window.location.search).get("level") ?? "niveau_v2");
 }
 
 /**
@@ -125,16 +148,22 @@ export function maybeRenderDevPreview(root: Root): boolean {
     case "levelComplete":
       useGameStore.setState({ flowState: "levelComplete" });
       useGameStore.getState().setDebug({ views: 612044 });
-      useGameStore.getState().setLiveRecap({ peakViewers: 612044, followers: 15501, followersGained: 15301, donations: 262, donationCount: 19 });
+      useGameStore.getState().setLiveRecap({
+        peakViewers: 612044,
+        followers: 15501,
+        followersGained: 15301,
+        donations: 262,
+        donationCount: 19,
+      });
       useGameStore.getState().setSecretsTotal(2);
       useGameStore.getState().incrementSecretsFound();
       root.render(<LevelCompleteScreen onReplay={noop} onReturnToMenu={noop} />);
       break;
     case "storyIntro":
-      root.render(<StoryPanels panels={levelStory("niveau_v2")?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />);
+      root.render(<StoryPanels panels={previewStory()?.intro ?? []} doneLabel="LANCER LE DIRECT" onDone={noop} />);
       break;
     case "storyOutro":
-      root.render(<StoryPanels panels={levelStory("niveau_v2")?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />);
+      root.render(<StoryPanels panels={previewStory()?.outro ?? []} doneLabel="VOIR LE BILAN" onDone={noop} />);
       break;
     case "loading":
       beginLoading("Chargement du niveau", 0.47);
@@ -144,6 +173,11 @@ export function maybeRenderDevPreview(root: Root): boolean {
       beginLoading("Chargement du niveau", 0.47);
       void waitForLoadingRetry(new Error("Le fichier du niveau est absent ou invalide."));
       root.render(<LoadingScreen />);
+      break;
+    case "crash":
+      root.render(
+        <CrashScreen detail="TypeError : Cannot read properties of undefined (reading 'position')" onReload={noop} />,
+      );
       break;
     case "hud":
       seedHudState();
@@ -156,6 +190,24 @@ export function maybeRenderDevPreview(root: Root): boolean {
         </>,
       );
       break;
+    case "weaponCarousel": {
+      seedHudState();
+      const state = useGameStore.getState();
+      const available = ["melee", "pistol", "shotgun", "flare"] as const;
+      const requestedWeapon = new URLSearchParams(window.location.search).get("carouselWeapon");
+      const active = available.find((weapon) => weapon === requestedWeapon) ?? "shotgun";
+      state.setFlowState("playing");
+      state.setWeaponCarousel({ active, available, visible: true, revision: 1 });
+      state.setDebug({ activeWeapon: active });
+      state.showDonation(null);
+      root.render(
+        <>
+          <GameBackdrop />
+          <WeaponCarouselPreview />
+        </>,
+      );
+      break;
+    }
     case "debug":
       seedHudState();
       root.render(

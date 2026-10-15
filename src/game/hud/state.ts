@@ -13,6 +13,7 @@ import type {
   PerkOfferView,
   StoreAnnouncement,
   StoryPanel,
+  WeaponCarouselView,
 } from "./hudTypes";
 import { INITIAL_HERO_PORTRAIT } from "../session/presentation/portraitState";
 
@@ -22,8 +23,12 @@ import { INITIAL_HERO_PORTRAIT } from "../session/presentation/portraitState";
 // see: docs/archive/systems-session.md#récapitulatif-de-fin-de-partie
 
 interface GameState {
+  campaign: { readonly levelId: string; readonly nextAvailable: boolean };
+  setCampaign: (state: GameState["campaign"]) => void;
   heroPortrait: HeroPortraitView;
   setHeroPortrait: (view: HeroPortraitView) => void;
+  weaponCarousel: WeaponCarouselView;
+  setWeaponCarousel: (view: WeaponCarouselView) => void;
   debug: DebugState;
   // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
   /** Au plus 10 Hz depuis la boucle ; aucun appel par frame. */
@@ -114,6 +119,8 @@ const INITIAL_DEBUG: DebugState = {
   shotgunMaxAmmo: 0,
   pistolAmmo: 0,
   pistolMaxAmmo: 0,
+  flareAmmo: 0,
+  flareMaxAmmo: 0,
   activeWeapon: "melee",
   secretsFound: 0,
   secretsTotal: 0,
@@ -123,15 +130,46 @@ const INITIAL_DEBUG: DebugState = {
   wallet: 0,
 };
 
+const INITIAL_WEAPON_CAROUSEL: WeaponCarouselView = {
+  active: "none",
+  available: [],
+  visible: false,
+  revision: 0,
+};
+
 export const useGameStore = create<GameState>((set) => ({
+  campaign: { levelId: "", nextAvailable: false },
+  weaponCarousel: INITIAL_WEAPON_CAROUSEL,
+  setWeaponCarousel: (view) =>
+    set((state) => {
+      const previous = state.weaponCarousel;
+      if (
+        previous.active === view.active &&
+        previous.visible === view.visible &&
+        previous.revision === view.revision &&
+        previous.available.length === view.available.length &&
+        previous.available.every((weapon, index) => weapon === view.available[index])
+      )
+        return state;
+      return { weaponCarousel: view };
+    }),
+  setCampaign: (campaign) => set({ campaign }),
   heroPortrait: INITIAL_HERO_PORTRAIT,
-  setHeroPortrait: (view) => set((state) => {
-    const previous = state.heroPortrait;
-    if (previous.sheet === view.sheet && previous.frame === view.frame && previous.reaction === view.reaction
-      && previous.healthBand === view.healthBand && previous.side === view.side && previous.impact === view.impact
-      && previous.combo === view.combo) return state;
-    return { heroPortrait: view };
-  }),
+  setHeroPortrait: (view) =>
+    set((state) => {
+      const previous = state.heroPortrait;
+      if (
+        previous.sheet === view.sheet &&
+        previous.frame === view.frame &&
+        previous.reaction === view.reaction &&
+        previous.healthBand === view.healthBand &&
+        previous.side === view.side &&
+        previous.impact === view.impact &&
+        previous.combo === view.combo
+      )
+        return state;
+      return { heroPortrait: view };
+    }),
   debug: { ...INITIAL_DEBUG },
   setDebug: (partial) => set((state) => ({ debug: { ...state.debug, ...partial } })),
   setPlayerHp: (hp) => set((state) => ({ debug: { ...state.debug, playerHp: hp } })),
@@ -168,7 +206,20 @@ export const useGameStore = create<GameState>((set) => ({
   story: null,
   setStory: (panels) => set({ story: panels }),
 
-  resetGameStore: () => set({ debug: { ...INITIAL_DEBUG }, heroPortrait: INITIAL_HERO_PORTRAIT,
-    hudMessage: null, heroLine: null, announcement: null, chat: [], donation: null, perkOffer: null, recap: null,
-    liveRecap: null, story: null }),
+  resetGameStore: () =>
+    set({
+      campaign: { levelId: "", nextAvailable: false },
+      debug: { ...INITIAL_DEBUG },
+      heroPortrait: INITIAL_HERO_PORTRAIT,
+      weaponCarousel: INITIAL_WEAPON_CAROUSEL,
+      hudMessage: null,
+      heroLine: null,
+      announcement: null,
+      chat: [],
+      donation: null,
+      perkOffer: null,
+      recap: null,
+      liveRecap: null,
+      story: null,
+    }),
 }));

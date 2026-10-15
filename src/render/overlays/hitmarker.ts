@@ -70,8 +70,26 @@ export class HitmarkerOverlay {
     const cy = this.canvas.height / 2;
 
     // Dessiner kill en dernier préserve sa priorité après un hit proche.
-    if (this.hit) this.drawMarker(ctx, cx, cy, this.hit, this.cfg.hitmarkerSize, this.cfg.hitmarkerThickness, this.cfg.hitmarkerColor);
-    if (this.kill) this.drawMarker(ctx, cx, cy, this.kill, this.cfg.hitmarkerKillSize, this.cfg.hitmarkerKillThickness, this.cfg.hitmarkerKillColor);
+    if (this.hit)
+      this.drawMarker(
+        ctx,
+        cx,
+        cy,
+        this.hit,
+        this.cfg.hitmarkerSize,
+        this.cfg.hitmarkerThickness,
+        this.cfg.hitmarkerColor,
+      );
+    if (this.kill)
+      this.drawMarker(
+        ctx,
+        cx,
+        cy,
+        this.kill,
+        this.cfg.hitmarkerKillSize,
+        this.cfg.hitmarkerKillThickness,
+        this.cfg.hitmarkerKillColor,
+      );
   }
 
   private drawMarker(

@@ -2,7 +2,7 @@
 title: Le projet
 tags: [introduction]
 status: stable
-updated: 2026-10-02
+updated: 2026-10-15
 ---
 
 # Le projet
@@ -17,15 +17,20 @@ ton est satirique : Costards en costume-cravate, marques de supermarché
 inventées, un Directeur dont la peau se déchire pour révéler le reptilien
 en dessous.
 
-## Le prototype
+## La campagne
 
-Un niveau (l'hypermarché, dix espaces reliés en hub à la Duke 3D), trois
-armes côté joueur — pied-de-biche (`meleeDamage`), pistolet et pompe, plus
-l'état désarmé de départ (`WeaponKind` dans
-`src/game/player/weapons/weapons.ts`) — et deux types d'ennemi : le Costard (`Suit`,
-ennemi de base) et le Directeur (`Director`, boss unique en fin de niveau).
-Durée visée : 8 à 10 minutes de jeu, chronométrée dans le récap de fin de
-partie sur le niveau complet (`parTime: 600` dans `src/game/level/catalog/levels.ts`).
+Deux niveaux : l'hypermarché, dix espaces reliés en hub à la Duke 3D, puis
+le métro, depuis le quartier jusqu'à l'arrivée au pied de la tour. Quatre
+armes côté joueur — pied-de-biche (`meleeDamage`), pistolet, pompe et
+pistolet de détresse, plus un coup de pied tant qu'aucune arme n'est
+équipée (`WeaponKind` dans
+`src/game/player/weapons/weaponTypes.ts`). Les ennemis sont le Costard (`Suit`,
+ennemi de base), le Rampant et le Vigile, qui partagent sa machine d'état, et
+le Directeur (`Director`, boss de l'hypermarché), puis le Contrôleur et son
+chef de brigade dans le métro.
+L'hypermarché vise 8 à 10 minutes de jeu, chronométrées dans le récap de fin
+de partie (`parTime: 600` dans `src/game/level/catalog/levels.ts`). La durée
+et l'équilibrage du métro restent à affiner avec les retours des joueurs.
 
 ## La stack
 
@@ -49,16 +54,25 @@ partie sur le niveau complet (`parTime: 600` dans `src/game/level/catalog/levels
 
 ## Où en est le projet
 
-**Version 1.0.0 livrée le 2026-10-02** : le MVP jouable, publié en open
-source sous licence MIT (`LICENSE` à la racine) et déployé sur GitHub Pages.
-Contenu : le niveau v2 (l'hypermarché, ses dix espaces et ses coulisses),
-trois armes, le Costard et le Directeur, le HUD « stream » et ses répliques
-voisées, une ambiance sonore par zone. Le détail des versions est dans
-`CHANGELOG.md`, l'historique daté des chantiers dans `journal/`.
+**Version préparée : 2.0.0-beta (2026-10-15).** La 1.0.0 (2026-10-02) a livré le
+MVP jouable, publié en open source sous licence MIT (`LICENSE` à la racine) et
+déployé sur GitHub Pages : le niveau v2 (l'hypermarché, ses dix espaces et ses
+coulisses), trois armes, le Costard et le Directeur, le HUD « stream » et ses
+répliques voisées, une ambiance sonore par zone. Les versions 1.1.0 « Le live »
+et 1.2.0 « Les sponsors » ont ajouté le direct, ses dons et les bornes ; la 1.3.0
+ajoute le coup de pied, de nouveaux modèles d'armes et des portes refaites.
+La 2.0.0-beta ajoute le métro et sa progression de campagne, le pistolet de
+détresse, les Contrôleurs, les sprites illustrés et une harmonisation des
+décors. Les sons et les répliques voisées supplémentaires sont reportés à
+novembre 2026 ; l'audio existant et les textes sont conservés. La bêta
+recueille les retours avant la finition et l'équilibrage final.
+Le détail des versions est dans `CHANGELOG.md`, l'historique daté des
+chantiers dans `journal/`.
 
-Restent ouverts après la 1.0.0 : l'amendement de l'invariant #4 sur le
-filtrage des textures réduites (ADR 0027, proposé) et la documentation du
-jalon N10 du niveau v2 (`docs/2-fonctionnel/le-niveau.md` à réécrire).
+Décisions encore ouvertes (statut `propose`) : l'[ADR 0006](../decisions/0006-air-strafing.md)
+(air strafing), l'[ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md)
+(amendement de l'invariant #4 sur le filtrage des textures réduites) et l'[ADR 0034](../decisions/0034-resolution-interne-configurable.md)
+(résolution interne configurable).
 
 ## Ce que le projet n'est pas
 
@@ -68,7 +82,7 @@ résolution interne au-delà de 640×360 par défaut. Liste complète et non né
 
 ## Pour aller plus loin
 
-- `1-introduction/demarrage-rapide.md` — installer et lancer le projet.
-- `1-introduction/glossaire.md` — les termes du jeu et du code.
-- `1-introduction/comment-lire-cette-doc.md` — comment naviguer le reste de
+- [Démarrage rapide](demarrage-rapide.md) — installer et lancer le projet.
+- [Glossaire](glossaire.md) — les termes du jeu et du code.
+- [Comment lire cette doc](comment-lire-cette-doc.md) — comment naviguer le reste de
   la documentation selon votre profil.

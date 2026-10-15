@@ -12,7 +12,8 @@ import { rampantConfig } from "../../../../src/game/entities/rampant/rampantConf
 import { NEUTRAL_ENEMY_TUNING, tuneEnemyConfig } from "../../../../src/game/entities/shared/enemyTuning";
 import { suitConfig } from "../../../../src/game/entities/suit/suitConfig";
 import { SuitManager } from "../../../../src/game/entities/suit/suitManager";
-import { DIFFICULTIES, difficultyConfig } from "../../../../src/game/session/progression/difficulty";
+import type { DIFFICULTIES } from "../../../../src/game/session/progression/difficulty";
+import { difficultyConfig } from "../../../../src/game/session/progression/difficulty";
 import { initPhysics, PhysicsWorld } from "../../../../src/physics/world";
 
 await initPhysics();
@@ -39,24 +40,27 @@ describe("tuneEnemyConfig", () => {
 });
 
 describe("PV et dégâts des ennemis d'une partie", () => {
-  it.each(["client", "lanceur"] as const)("%s : chaque espèce naît avec ses PV et ses dégâts multipliés", (difficulty) => {
-    const { enemyHp, enemyDamage } = difficultyConfig[difficulty];
-    const physics = new PhysicsWorld();
-    const suits = new SuitManager(physics, suitConfig, tuning(difficulty));
-    const directors = new DirectorManager(physics, directorConfig, tuning(difficulty));
+  it.each(["client", "lanceur"] as const)(
+    "%s : chaque espèce naît avec ses PV et ses dégâts multipliés",
+    (difficulty) => {
+      const { enemyHp, enemyDamage } = difficultyConfig[difficulty];
+      const physics = new PhysicsWorld();
+      const suits = new SuitManager(physics, suitConfig, tuning(difficulty));
+      const directors = new DirectorManager(physics, directorConfig, tuning(difficulty));
 
-    const costard = suits.spawnSuit(0, 0, 0);
-    const rampant = suits.spawnSuit(4, 0, 0, new THREE.Vector3(0, 0, 1), "rampant");
-    const directeur = directors.spawnDirector(8, 0, 0);
+      const costard = suits.spawnSuit(0, 0, 0);
+      const rampant = suits.spawnSuit(4, 0, 0, new THREE.Vector3(0, 0, 1), "rampant");
+      const directeur = directors.spawnDirector(8, 0, 0);
 
-    expect(costard.hp).toBe(Math.round(suitConfig.maxHp * enemyHp));
-    expect(costard.cfg.attackDamage).toBe(Math.round(suitConfig.attackDamage * enemyDamage));
-    expect(rampant.hp).toBe(Math.round(rampantConfig.maxHp * enemyHp));
-    expect(rampant.cfg.attackDamage).toBe(Math.round(rampantConfig.attackDamage * enemyDamage));
-    expect(directeur.hp).toBe(Math.round(directorConfig.maxHp * enemyHp));
-    expect(directeur.cfg.attackDamage).toBe(Math.round(directorConfig.attackDamage * enemyDamage));
-    // Le reste de la configuration ne bouge pas : même vitesse, même portée.
-    expect(costard.cfg.chaseSpeed).toBe(suitConfig.chaseSpeed);
-    expect(rampant.cfg.melee).toEqual(rampantConfig.melee);
-  });
+      expect(costard.hp).toBe(Math.round(suitConfig.maxHp * enemyHp));
+      expect(costard.cfg.attackDamage).toBe(Math.round(suitConfig.attackDamage * enemyDamage));
+      expect(rampant.hp).toBe(Math.round(rampantConfig.maxHp * enemyHp));
+      expect(rampant.cfg.attackDamage).toBe(Math.round(rampantConfig.attackDamage * enemyDamage));
+      expect(directeur.hp).toBe(Math.round(directorConfig.maxHp * enemyHp));
+      expect(directeur.cfg.attackDamage).toBe(Math.round(directorConfig.attackDamage * enemyDamage));
+      // Le reste de la configuration ne bouge pas : même vitesse, même portée.
+      expect(costard.cfg.chaseSpeed).toBe(suitConfig.chaseSpeed);
+      expect(rampant.cfg.melee).toEqual(rampantConfig.melee);
+    },
+  );
 });

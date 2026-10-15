@@ -6,6 +6,8 @@ Huit illustrations : quatre pour l'intro, quatre pour la fin du niveau
 que les générateurs suivent le mieux. Les légendes restent en français, parce
 que **c'est le jeu qui les affiche sous l'image, pas l'IA qui les dessine**.
 
+Les panneaux du niveau 2 ont leur fichier : [`PROMPTS_METRO.md`](PROMPTS_METRO.md).
+
 ## Pourquoi les prompts sont faits comme ça
 
 En jeu, un panneau est réduit à **640 × 360 px**, ramené à 64 couleurs, puis
@@ -15,7 +17,7 @@ dans chaque prompt :
 1. **Le même style que le portrait du héros** : pixel art peint à la main façon
    jeu PC des années 90, pixels durs, palette terreuse, formes lisibles.
 2. **Le même héros.** Chaque prompt où il apparaît redonne sa description, et
-   l'image de référence est à joindre : `docs/assets/portrait-stream-planche-v1.png`.
+   l'image de référence est à joindre : `assets_src/portrait_stream/portrait-stream-planche-v1.png`.
 3. **Aucun texte dans l'image.** Enseignes, écrans, tickets et affiches portent
    des formes vides ou des traits abstraits. Un texte d'IA réduit à 640 px
    devient une bouillie, et il serait en anglais.

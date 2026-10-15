@@ -48,6 +48,7 @@ reste conservé et renvoie à son successeur.
 | [0009](0009-machine-partagee-suit-director.md) | Une machine XState partagée pour le Costard et le Directeur | accepté |
 | [0014](0014-gameengine-persistentengine-separes.md) | Séparer le moteur persistant de la session de jeu | accepté |
 | [0019](0019-machine-xstate-flux-ecran.md) | Machine de flux d'écran plutôt qu'un rechargement de page | accepté |
+| [0045](0045-campagne-et-arrivee.md) | Campagne avec équipement d’arrivée figé et persistance hors du pas fixe | accepté |
 | [0020](0020-state-feuille-de-dependances.md) | Garder `game/hud/state.ts` comme feuille de dépendances | remplacé par 0036 |
 | [0036](0036-contrats-feuilles-et-store-hud.md) | Séparer les contrats feuilles du store HUD et des implémentations | accepté |
 
@@ -72,3 +73,5 @@ reste conservé et renvoie à son successeur.
 | [0040](0040-bornes-et-perks.md) | Bornes et perks : achat en partie, effets posés sur la session | accepté |
 | [0041](0041-explosifs.md) | Explosifs : une matière de prop, un souffle dans le pas fixe | accepté |
 | [0042](0042-difficulte.md) | Difficulté : trois niveaux posés sur la partie, records séparés | accepté |
+| [0044](0044-trains-de-niveau.md) | Trains pilotés par les données glTF, contacts balayés et ressources par niveau | accepté |
+| [0046](0046-projectile-du-joueur.md) | Projectile du joueur : une fusée balayée au pas fixe, un souffle partagé | accepté |

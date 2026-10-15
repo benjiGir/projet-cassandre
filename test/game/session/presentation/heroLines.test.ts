@@ -8,7 +8,12 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { HERO_BARKS, HERO_LINES, heroVoiceKey, type HeroLineDef } from "../../../../src/game/session/presentation/heroLines";
+import {
+  HERO_BARKS,
+  HERO_LINES,
+  heroVoiceKey,
+  type HeroLineDef,
+} from "../../../../src/game/session/presentation/heroLines";
 
 function lireJson<T>(chemin: string): T {
   return JSON.parse(new TextDecoder().decode(readFileSync(resolve(chemin)))) as T;

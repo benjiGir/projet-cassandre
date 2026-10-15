@@ -18,7 +18,7 @@ import lib_helpers as H
 
 SOURCE = ROOT / "assets_src/blender/niveau_v2.blend"
 EXPORT = ROOT / "public/assets/levels/niveau_v2.glb"
-OUT = ROOT / "docs/assets/agencement-etape-6-2026-09-30"
+OUT = ROOT / "renders/reviews/agencement-etape-6-2026-09-30"
 CANDIDATE = ROOT / "renders/_cassandre/direction_covers.blend"
 COVERS = (
     ("ouest", (-42.5, 153.0, 4.0, -40.1, 153.75, 5.2)),

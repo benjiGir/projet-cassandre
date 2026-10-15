@@ -12,6 +12,7 @@ export const DEFAULT_BINDINGS: Record<GameAction, string> = {
   switchMelee: "Digit1",
   switchPistol: "Digit2",
   switchShotgun: "Digit3",
+  switchFlare: "Digit4",
   use: "KeyE",
 };
 
@@ -28,6 +29,7 @@ export const ACTION_LABELS: Record<GameAction, string> = {
   switchMelee: "Arme : pied-de-biche",
   switchPistol: "Arme : pistolet",
   switchShotgun: "Arme : pompe",
+  switchFlare: "Arme : pistolet de détresse",
   use: "Utiliser",
 };
 

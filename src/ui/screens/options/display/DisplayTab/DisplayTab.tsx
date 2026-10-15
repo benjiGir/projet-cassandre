@@ -11,7 +11,7 @@ import {
 import { Button } from "../../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../../components/controls/ButtonRow/ButtonRow";
 import { ChoiceGroup } from "../../fields/ChoiceGroup/ChoiceGroup";
-import { FILTRAGE_CHOICES } from "./displayChoices";
+import { FILTERING_CHOICES } from "./displayChoices";
 import { OptionSection } from "../../fields/OptionSection/OptionSection";
 import { RangeField } from "../../fields/RangeField/RangeField";
 import styles from "./DisplayTab.module.css";
@@ -36,20 +36,20 @@ export function DisplayTab() {
     <>
       <OptionSection
         title="FILTRAGE DES TEXTURES LOINTAINES"
-        hint="Ne change rien à la netteté de près — le gros pixel franc reste la règle (invariant #4). Change seulement le rendu des surfaces vues de loin ou de biais."
+        hint="Ne change rien à la netteté de près — le gros pixel franc reste la règle. Change seulement le rendu des surfaces vues de loin ou de biais."
       >
         <ChoiceGroup
           label="Filtrage des textures lointaines"
           layout="column"
           value={settings.filtrage}
-          choices={FILTRAGE_CHOICES}
-          onChange={(filtrage) => update({ filtrage })}
+          choices={FILTERING_CHOICES}
+          onChange={(filtering) => update({ filtrage: filtering })}
         />
       </OptionSection>
 
       <OptionSection
         title="RÉSOLUTION INTERNE"
-        hint={`${ORIGIN.width}×${ORIGIN.height} est la résolution d'ORIGINE du jeu (invariant #4) — les valeurs au-delà sont une comparaison, pas une amélioration.`}
+        hint={`${ORIGIN.width}×${ORIGIN.height} est la résolution d'ORIGINE du jeu — les valeurs au-delà sont une comparaison, pas une amélioration.`}
       >
         <ChoiceGroup
           label="Résolution interne"

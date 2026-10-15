@@ -1,22 +1,28 @@
 import type { ChatMessage, DonationAlert, LiveRecap } from "../../hud/hudTypes";
 import {
-  CHAT_LINES,
-  DONATION_LINES,
   MYSTERY_TEXTS,
   MYSTERY_DONOR,
-  PSEUDOS,
+  STORE_STREAM_TEXTS,
   type ChatTopic,
   type DonationTopic,
   type MysteryBeat,
+  type StreamTexts,
 } from "./streamTexts";
 
 // see: docs/decisions/0038-simulation-du-direct.md
 
 /** Ce que le joueur vient de faire et que le direct remarque. */
-export type StreamEventKind = "kill" | "boss" | "secret" | "casse" | "degats" | "toilettes" | "carte" | "moment";
-
-/** Graine du flux RNG du direct : spectateurs, dons et chat, jamais les armes ni les ennemis. */
-export const STREAM_SEED = 0x71e75;
+export type StreamEventKind =
+  | "kill"
+  | "boss"
+  | "secret"
+  | "casse"
+  | "degats"
+  | "toilettes"
+  | "carte"
+  | "moment"
+  | "train"
+  | "controleur_rame";
 
 // Un barème, donc réglable : `devtools/economy/economyVariants.ts` y pose ses variantes.
 interface EventRule {
@@ -68,12 +74,28 @@ export const streamConfig = {
     toilettes: { audience: 0.5, donation: 0.7, amounts: [1, 2] },
     carte: { audience: 1.5, donation: 0.56, amounts: [5, 10] },
     moment: { audience: 1, donation: 0, amounts: [] },
+    train: { audience: 2, donation: 0, amounts: [] },
+    controleur_rame: { audience: 2, donation: 0.35, amounts: [2, 5, 10] },
   } satisfies Record<StreamEventKind | "serie", EventRule> as Record<StreamEventKind | "serie", EventRule>,
   /** Dons du donateur mystère, en euros : ils grossissent au fil de l'histoire, et ne dépendent ni du hasard ni de la difficulté. */
-  mystery: { depart: 10, carte_argent: 10, quai: 15, carte_or: 20, escalier: 45 } as Record<MysteryBeat, number>,
+  mystery: {
+    depart: 10,
+    carte_argent: 10,
+    quai: 15,
+    carte_or: 20,
+    escalier: 45,
+    // Métro : valeurs de départ, à régler par relevé avec les bornes du niveau (lot N8 de PLAN_V2.md).
+    metro_depart: 10,
+    metro_badge: 10,
+    metro_passage: 15,
+    metro_fret: 25,
+    metro_bord: 50,
+  } as Record<MysteryBeat, number>,
 };
 
 export interface StreamState {
+  /** Ce que le chat et les donateurs écrivent dans CE niveau. */
+  texts: StreamTexts;
   viewers: number;
   peakViewers: number;
   followers: number;
@@ -112,8 +134,9 @@ export interface LedgerEntry {
   readonly wallet: number;
 }
 
-export function createStreamState(generosity = 1): StreamState {
+export function createStreamState(generosity = 1, texts: StreamTexts = STORE_STREAM_TEXTS): StreamState {
   return {
+    texts,
     viewers: streamConfig.startViewers,
     peakViewers: streamConfig.startViewers,
     followers: streamConfig.startFollowers,
@@ -137,7 +160,7 @@ export function createStreamState(generosity = 1): StreamState {
 }
 
 function pick<T>(items: readonly T[], random: () => number): T {
-  return items[Math.min(items.length - 1, Math.floor(random() * items.length))]!;
+  return items[Math.min(items.length - 1, Math.floor(random() * items.length))];
 }
 
 function pushChat(state: StreamState, message: Omit<ChatMessage, "id">): ChatMessage {
@@ -152,12 +175,13 @@ function donate(state: StreamState, now: number, alert: DonationAlert): Donation
   state.donationCount++;
   state.lastDonationAt = now;
   state.ledger.push({ at: now, amount: alert.amount, source: alert.mystery ? "mystere" : "don", wallet: state.wallet });
-  pushChat(state, { pseudo: alert.pseudo, text: `a donné ${alert.amount} €`, kind: "don" });
+  pushChat(state, { pseudo: alert.pseudo, text: `a donné ${alert.amount} €`, kind: "don", verified: alert.verified });
   return alert;
 }
 
 function donationTopic(kind: StreamEventKind | "serie"): DonationTopic {
-  return kind === "degats" || kind === "moment" ? "generique" : kind;
+  if (kind === "controleur_rame") return "kill";
+  return kind === "degats" || kind === "moment" || kind === "train" ? "generique" : kind;
 }
 
 /**
@@ -189,17 +213,18 @@ export function notifyStream(
   state.peakViewers = Math.max(state.peakViewers, state.viewers);
   state.followers = streamConfig.startFollowers + Math.floor(state.gained / streamConfig.viewersPerFollower);
   state.lastEventAt = now;
-  state.lastTopic = effective;
+  state.lastTopic = effective === "controleur_rame" ? "kill" : effective;
 
   if (rule.amounts.length === 0 || now - state.lastDonationAt < streamConfig.donationCooldown) return null;
   if (random() >= rule.donation * state.generosity) return null;
   const topic = donationTopic(effective);
-  const lines = random() < 0.5 ? DONATION_LINES[topic] : DONATION_LINES.generique;
+  const lines = random() < 0.5 ? state.texts.donations[topic] : state.texts.donations.generique;
   return donate(state, now, {
-    pseudo: pick(PSEUDOS, random),
+    pseudo: pick(state.texts.pseudos, random),
     amount: pick(rule.amounts, random),
     text: pick(lines, random),
     mystery: false,
+    verified: false,
   });
 }
 
@@ -231,6 +256,7 @@ export function mysteryDonation(state: StreamState, beat: MysteryBeat, now: numb
     amount: streamConfig.mystery[beat],
     text: MYSTERY_TEXTS[beat],
     mystery: true,
+    verified: state.texts.verifiedDonor,
   });
 }
 
@@ -258,11 +284,16 @@ export function updateStream(state: StreamState, dt: number, now: number, random
   state.viewersAtLastChat = state.viewers;
 
   // Pas deux fois le même texte à l'écran : on retire jusqu'à trouver une ligne absente du chat.
-  let line = pick(CHAT_LINES[topic], random);
-  for (let attempt = 0; attempt < 3 && state.chat.some((m) => m.text === (typeof line === "string" ? line : line.text)); attempt++) {
-    line = pick(CHAT_LINES[topic], random);
+  const lines = state.texts.chat[topic];
+  let line = pick(lines, random);
+  for (
+    let attempt = 0;
+    attempt < 3 && state.chat.some((m) => m.text === (typeof line === "string" ? line : line.text));
+    attempt++
+  ) {
+    line = pick(lines, random);
   }
-  const pseudo = typeof line === "string" ? pick(PSEUDOS, random) : line.pseudo;
+  const pseudo = typeof line === "string" ? pick(state.texts.pseudos, random) : line.pseudo;
   pushChat(state, { pseudo, text: typeof line === "string" ? line : line.text, kind: "message" });
   return true;
 }

@@ -19,12 +19,16 @@ const LOWER_PITCH = -0.7;
 const PUMP_TRAVEL = 0.09;
 const PUMP_ROLL = 0.07;
 
+/** Les armes qui ont un canon : celles dont part un éclair de tir. */
+type MuzzleWeapon = "pistol" | "shotgun" | "flare";
+
 export class Viewmodel {
   private readonly kick: THREE.Group;
   private readonly crowbar: THREE.Group;
   private readonly pistol: THREE.Group;
   private readonly shotgun: THREE.Group;
   private readonly pump: THREE.Mesh;
+  private readonly flare: THREE.Group;
   private readonly models: WeaponModels;
   private readonly crowbarElbow: THREE.Vector3;
 
@@ -37,6 +41,7 @@ export class Viewmodel {
     sinceMeleeFire: 1e3,
     sincePistolFire: 1e3,
     sinceShotgunFire: 1e3,
+    sinceFlareFire: 1e3,
   };
   private readonly animation: ViewmodelAnimation = { weapon: "none", lowered: 0, swing: 0, pump: 0 };
 
@@ -48,7 +53,8 @@ export class Viewmodel {
     this.pistol = this.mount(camera, models.pistol, models.pistolPivot);
     this.shotgun = this.mount(camera, models.shotgun, models.shotgunPivot);
     this.pump = drawOverWorld(new THREE.Mesh(models.shotgunPump, models.material));
-    this.shotgun.children[0]!.add(this.pump);
+    this.shotgun.children[0].add(this.pump);
+    this.flare = this.mount(camera, models.flare, models.flarePivot);
   }
 
   private mount(camera: THREE.Camera, geometry: THREE.BufferGeometry, pivot: THREE.Vector3): THREE.Group {
@@ -69,6 +75,7 @@ export class Viewmodel {
     this.crowbar.visible = anim.weapon === "melee";
     this.pistol.visible = anim.weapon === "pistol";
     this.shotgun.visible = anim.weapon === "shotgun";
+    this.flare.visible = anim.weapon === "flare";
     const extension = kickExtensionAt(this.clocks.sinceKickFire ?? Infinity);
     this.kick.visible = this.clocks.active === "none" && extension > 0;
     if (this.kick.visible) {
@@ -100,21 +107,39 @@ export class Viewmodel {
       group.position.y -= LOWER_DROP * anim.lowered;
       group.rotation.set(this.scratchEuler.x + LOWER_PITCH * anim.lowered, 0, PUMP_ROLL * anim.pump);
       this.pump.position.copy(this.models.pumpAxis).multiplyScalar(-PUMP_TRAVEL * anim.pump);
+    } else if (anim.weapon === "flare") {
+      const group = this.flare;
+      group.position.copy(this.models.flarePivot).add(this.scratchPosition);
+      group.position.y -= LOWER_DROP * anim.lowered;
+      group.rotation.set(this.scratchEuler.x + LOWER_PITCH * anim.lowered, 0, 0);
     }
   }
 
   // Position mondiale du canon tel qu’affiché ; ne modifie pas le tir.
-  muzzleWorldPosition(out: THREE.Vector3, weapon: "pistol" | "shotgun" = "shotgun"): THREE.Vector3 {
-    const group = weapon === "pistol" ? this.pistol : this.shotgun;
-    const mesh = group.children[0]!;
+  muzzleWorldPosition(out: THREE.Vector3, weapon: MuzzleWeapon = "shotgun"): THREE.Vector3 {
+    const { mesh, muzzle } = this.barrel(weapon);
     mesh.updateWorldMatrix(true, false);
-    return mesh.localToWorld(out.copy(weapon === "pistol" ? this.models.pistolMuzzle : this.models.shotgunMuzzle));
+    return mesh.localToWorld(out.copy(muzzle));
   }
 
-  muzzleWorldDirection(out: THREE.Vector3, weapon: "pistol" | "shotgun"): THREE.Vector3 {
-    const mesh = (weapon === "pistol" ? this.pistol : this.shotgun).children[0]!;
+  muzzleWorldDirection(out: THREE.Vector3, weapon: MuzzleWeapon): THREE.Vector3 {
+    const { mesh, axis } = this.barrel(weapon);
     mesh.updateWorldMatrix(true, false);
-    return out.copy(weapon === "pistol" ? this.models.pistolAxis : this.models.pumpAxis).transformDirection(mesh.matrixWorld);
+    return out.copy(axis).transformDirection(mesh.matrixWorld);
+  }
+
+  private barrel(weapon: MuzzleWeapon): { mesh: THREE.Object3D; muzzle: THREE.Vector3; axis: THREE.Vector3 } {
+    const models = this.models;
+    switch (weapon) {
+      case "pistol":
+        return { mesh: this.pistol.children[0], muzzle: models.pistolMuzzle, axis: models.pistolAxis };
+      case "shotgun":
+        return { mesh: this.shotgun.children[0], muzzle: models.shotgunMuzzle, axis: models.pumpAxis };
+      case "flare":
+        return { mesh: this.flare.children[0], muzzle: models.flareMuzzle, axis: models.flareAxis };
+      default:
+        return weapon satisfies never;
+    }
   }
 }
 

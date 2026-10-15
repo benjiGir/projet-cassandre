@@ -25,7 +25,13 @@ export interface LoopCallbacks {
   render: () => void;
 }
 
-export function startLoop(callbacks: LoopCallbacks) {
+export interface LoopHandle {
+  /** Arrête la boucle pour de bon : plus aucune image n'est demandée. */
+  stop(): void;
+}
+
+export function startLoop(callbacks: LoopCallbacks): LoopHandle {
+  let stopped = false;
   let accumulator = 0;
   let last = performance.now();
   let lastRenderMs = 0;
@@ -34,6 +40,7 @@ export function startLoop(callbacks: LoopCallbacks) {
   let frameNumber = 0;
 
   function frame(now: number) {
+    if (stopped) return;
     requestAnimationFrame(frame);
 
     let frameTime = (now - last) / 1000;
@@ -65,7 +72,15 @@ export function startLoop(callbacks: LoopCallbacks) {
     const alpha = accumulator / FIXED_DT;
     const renderStart = performance.now();
     callbacks.interpolateVisuals(alpha);
-    callbacks.updateFx(frameTime, { steps, accumulator, alpha, gameplayMs, gameplayP95Ms, physicsMs, renderMs: lastRenderMs });
+    callbacks.updateFx(frameTime, {
+      steps,
+      accumulator,
+      alpha,
+      gameplayMs,
+      gameplayP95Ms,
+      physicsMs,
+      renderMs: lastRenderMs,
+    });
     callbacks.render();
     lastRenderMs = performance.now() - renderStart;
 
@@ -73,4 +88,9 @@ export function startLoop(callbacks: LoopCallbacks) {
   }
 
   requestAnimationFrame(frame);
+  return {
+    stop() {
+      stopped = true;
+    },
+  };
 }

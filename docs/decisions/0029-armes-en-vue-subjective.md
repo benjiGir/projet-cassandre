@@ -95,7 +95,7 @@ faute d'outil de capture en jeu pour cet agent) — un sujet de rendu
 
 ## Révision du 2026-10-04 — pistolet, pompe et mains
 
-La [planche de références](../assets/board-armes-mains.md) retient les vues
+La [planche de références](../6-reference/references-armes-mains.md) retient les vues
 Beretta 92FS Inox, Mossberg 590 Retrograde et les constructions anatomiques
 de Proko. Les modèles restent originaux, en couleurs de sommets : culasse
 ouverte et poignée sculptée, crosse complète en bois, fût rainuré et

@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import cassandre as C
 
-OUT=Path(__file__).resolve().parents[2]/"docs/assets/agencement-etape-5-2026-09-30"
+OUT=Path(__file__).resolve().parents[2]/"renders/reviews/agencement-etape-5-2026-09-30"
 OUT.mkdir(exist_ok=True)
 before="--before" in sys.argv
 views=(

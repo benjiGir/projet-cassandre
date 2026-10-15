@@ -33,7 +33,7 @@ src/ui/
     widgets/              vie, munitions, caméra, cartes, voix
     overlays/             messages et compteur FPS
   screens/                menus et écrans de partie
-    mainMenu/ difficulty/ loading/ death/ levelComplete/ pause/ story/
+    mainMenu/ difficulty/ loading/ death/ levelComplete/ pause/ story/ crash/
     options/               contrôles, affichage et champs
   dev/                    outils et réglage de développement
     tuning/                panneau, variantes, sections et contrôles
@@ -101,6 +101,7 @@ Ce que ce tableau interdit, et pourquoi :
 screens/options/
   OptionsScreen/     OptionsScreen.tsx   OptionsScreen.module.css
   OptionsTabs/       OptionsTabs.tsx     OptionsTabs.module.css
+  TabBody/           TabBody.tsx         TabBody.module.css      useScrollEdges.ts
   controls/          l'onglet CONTRÔLES
     ControlsTab/     ControlsTab.tsx  ControlsTab.module.css  useInputCapture.ts
     KeyBinding/      KeyBinding.tsx   KeyBinding.module.css

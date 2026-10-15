@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { useGameStore } from "../../../../game/hud/state";
 import { Button } from "../../../components/controls/Button/Button";
 import { ButtonRow } from "../../../components/controls/ButtonRow/ButtonRow";
@@ -9,28 +7,18 @@ import { Screen } from "../../../components/layout/Screen/Screen";
 import { ScreenTitle } from "../../../components/text/ScreenTitle/ScreenTitle";
 import { StatusFlag } from "../../../components/text/StatusFlag/StatusFlag";
 import { Vignette } from "../../../components/effects/Vignette/Vignette";
-import { OptionsScreen } from "../../options/OptionsScreen/OptionsScreen";
 import styles from "./PauseScreen.module.css";
 
 export interface PauseScreenProps {
   onResume: () => void;
+  onOptions: () => void;
   onReturnToMenu: () => void;
 }
 
 // see: docs/archive/systems-session.md#pause
-export function PauseScreen({ onResume, onReturnToMenu }: PauseScreenProps) {
+export function PauseScreen({ onResume, onOptions, onReturnToMenu }: PauseScreenProps) {
   const flowState = useGameStore((s) => s.flowState);
-  const [pane, setPane] = useState<"menu" | "options">("menu");
-
-  useEffect(() => {
-    if (flowState === "paused") setPane("menu");
-  }, [flowState]);
-
   if (flowState !== "paused") return null;
-
-  if (pane === "options") {
-    return <OptionsScreen backdrop="dim" onBack={() => setPane("menu")} />;
-  }
 
   return (
     <Screen backdrop="dim">
@@ -45,7 +33,7 @@ export function PauseScreen({ onResume, onReturnToMenu }: PauseScreenProps) {
           <Button className={styles.actionButton} variant="primary" onClick={onResume}>
             ▶ REPRENDRE
           </Button>
-          <Button className={styles.actionButton} onClick={() => setPane("options")}>
+          <Button className={styles.actionButton} onClick={onOptions}>
             ⚙ PARAMÈTRES
           </Button>
           <Button className={styles.actionButton} variant="danger" onClick={onReturnToMenu}>

@@ -1,6 +1,6 @@
 // see: docs/6-reference/valeurs-ennemis.md
 
-import { type LoyaltyCard } from "../../player/loyaltyCards";
+import type { LoyaltyCard } from "../../player/loyaltyCards";
 export interface DirectorConfig {
   /** Points de vie max. */
   maxHp: number;
@@ -73,7 +73,7 @@ export interface DirectorConfig {
 
   /** Teinte (`material.color`, voir `BillboardSprite.setTint`) tant que le Directeur porte encore son costume humain — blanc = atlas affiché sans teinte, identique au rendu du Costard. */
   humanTintColor: number;
-  /** Teinte appliquée dès la révélation (`Director.revealed === true`) — PLACEHOLDER explicite (pas d'art final). */
+  /** Teinte de repli à la révélation si l'atlas reptilien n'est pas disponible. */
   revealedTintColor: number;
   /** Amplitude du screenshake au moment de la révélation, en mètres (via `fx.triggerShake`, API publique existante). */
   revealShakeAmplitude: number;

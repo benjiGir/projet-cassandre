@@ -5,7 +5,7 @@ import {
   type DoorHinge,
   type DoorSens,
   type DoorAuto,
-  type DoorManuelle,
+  type DoorManualMode,
   type ParsedDoorConfig,
 } from "./doorTypes";
 
@@ -20,10 +20,10 @@ export function parseDoorMovement(raw: unknown): DoorMovement | null {
 }
 
 /** Portée de l'action manuelle, mètres — la même que celle d'un `use_*`, pour que « agir » ait une seule distance dans tout le jeu. */
-export const PORTEE_ACTION_MANUELLE = 2;
+export const MANUAL_ACTION_RANGE = 2;
 
 /** Durée d'ouverture par défaut, secondes — valeurs du contrat, une par mouvement. */
-const MOVEMENT_DEFAULT_DUREE: Record<DoorMovement, number> = {
+const MOVEMENT_DEFAULT_DURATION: Record<DoorMovement, number> = {
   battant: 0.5,
   coulisse: 0.45,
   monte: 1.4,
@@ -32,64 +32,61 @@ const MOVEMENT_DEFAULT_DUREE: Record<DoorMovement, number> = {
 
 const DEFAULT_ANGLE_DEG = 95;
 
-const DEFAULT_PORTEE = 2.5;
+const DEFAULT_RANGE = 2.5;
 
 /** |Δaltitude| max d'une porte `auto`, mètres — fixe, pas exposé en extra (le contrat ne le rend pas paramétrable). */
 export const AUTO_ALTITUDE_TOLERANCE = 2;
 
-const DEFAULT_DELAI = 1.2;
+const DEFAULT_DELAY = 1.2;
 
-export function parseDoorConfig(mouvement: DoorMovement, extras: Record<string, unknown>): ParsedDoorConfig {
+export function parseDoorConfig(movement: DoorMovement, extras: Record<string, unknown>): ParsedDoorConfig {
   const charniere: DoorHinge = extras.charniere === "max" ? "max" : "min";
 
-  const angleDeg =
-    typeof extras.angle === "number" && Number.isFinite(extras.angle) ? extras.angle : DEFAULT_ANGLE_DEG;
+  const angleDeg = typeof extras.angle === "number" && Number.isFinite(extras.angle) ? extras.angle : DEFAULT_ANGLE_DEG;
 
   const sens: DoorSens = extras.sens === "+" || extras.sens === "-" ? extras.sens : "auto";
 
   const course =
-    typeof extras.course === "number" && Number.isFinite(extras.course) && extras.course > 0
-      ? extras.course
-      : null;
+    typeof extras.course === "number" && Number.isFinite(extras.course) && extras.course > 0 ? extras.course : null;
 
-  const duree =
+  const duration =
     typeof extras.duree === "number" && Number.isFinite(extras.duree) && extras.duree > 0
       ? extras.duree
-      : MOVEMENT_DEFAULT_DUREE[mouvement];
+      : MOVEMENT_DEFAULT_DURATION[movement];
 
   const autoQui: DoorAuto = extras.auto === true ? "tous" : extras.auto === "ennemis" ? "ennemis" : "non";
   const auto = autoQui !== "non";
 
-  const manuelle: DoorManuelle =
+  const manual: DoorManualMode =
     extras.manuelle === true ? "les-deux" : extras.manuelle === "fermer" ? "fermer" : "non";
 
   const referme = typeof extras.referme === "boolean" ? extras.referme : true;
 
-  const delai =
+  const delay =
     typeof extras.delai === "number" && Number.isFinite(extras.delai) && extras.delai >= 0
       ? extras.delai
-      : DEFAULT_DELAI;
+      : DEFAULT_DELAY;
 
   const groupe = typeof extras.groupe === "string" && extras.groupe.trim() !== "" ? extras.groupe.trim() : null;
 
-  const portee =
+  const range =
     typeof extras.portee === "number" && Number.isFinite(extras.portee) && extras.portee > 0
       ? extras.portee
-      : DEFAULT_PORTEE;
+      : DEFAULT_RANGE;
 
   return {
     charniere,
     angleRad: THREE.MathUtils.degToRad(angleDeg),
     sens,
     autoQui,
-    manuelle,
+    manuelle: manual,
     course,
-    duree,
+    duree: duration,
     auto,
     referme,
-    delai,
+    delai: delay,
     groupe,
-    portee,
+    portee: range,
     ouverte: extras.ouverte === true,
   };
 }

@@ -13,6 +13,7 @@ Ce que fait le jeu, vu du joueur. Zéro code.
 
 - [Expérience de jeu](experience-de-jeu.md) — la boucle du joueur : explorer, combattre, trouver les cartes, les secrets, le Directeur, la sortie
 - [Histoire](histoire.md) — le héros, l'arc en cinq temps, le donateur mystère, les moments scriptés et les panneaux (bible de la v1.1, en attente de validation)
+- [Histoire — le métro](histoire-metro.md) — bible du second niveau (v2.0), un niveau de transition : le trajet, les indices semés, le compte vérifié ; rien n'est encore en jeu
 - [Déplacement et contrôles](deplacement-et-controles.md) — comment on se déplace et vise, les touches par défaut
 - [Armes](armes.md) — pied-de-biche, pompe, pistolet, munitions, ramassages
 - [Ennemis](ennemis.md) — Costard, Rampant, Vigile et Directeur : comportements observables, télégraphie, ce qui contre chacun

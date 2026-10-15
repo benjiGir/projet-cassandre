@@ -1,9 +1,9 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
 import * as THREE from "three";
 import { WATER_GEOMETRY, WATER_MATERIAL } from "./waterResources";
+import { GRAVITY_Y } from "../../physics/constants";
 
 // Même gravité visuelle, sans dépendance à Rapier.
-const TOY_GRAVITY = -25;
 
 const PARTICLE_LIFETIME = 0.4; // s
 const PARTICLES_PER_HIT_MELEE = 4;
@@ -21,7 +21,6 @@ const SHELL_RESTITUTION = 0.3;
 const SHELL_FRICTION = 0.6;
 // Plan de rebond approximé à y=0 ; une douille peut traverser marches et étages.
 const SHELL_GROUND_Y = 0;
-
 
 const DEBRIS_LIFETIME = 1.4; // s
 const DEBRIS_SIZE = 0.06; // m
@@ -53,6 +52,13 @@ const EMBER_GEOMETRY = new THREE.BoxGeometry(EMBER_SIZE, EMBER_SIZE, EMBER_SIZE)
 // Lambert émissif, pas Basic : le programme des autres débris, déjà compilé.
 const EMBER_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xf2891d });
 
+// Pistolet de détresse : les étincelles rouges semées en vol, puis la gerbe de l'éclatement.
+const FLARE_SPARK_LIFETIME = 0.45; // s
+const FLARE_SPARK_SIZE = 0.045; // m
+const FLARE_SPARK_GEOMETRY = new THREE.BoxGeometry(FLARE_SPARK_SIZE, FLARE_SPARK_SIZE, FLARE_SPARK_SIZE);
+const FLARE_SPARK_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x000000, emissive: 0xff5a3c });
+const FLARE_BURST_COUNT = 14;
+
 // see: docs/6-reference/notes-code-rendu.md#fontaines-permanentes
 
 const CERAMIC_LIFETIME = 1.1; // s
@@ -81,7 +87,6 @@ interface ToyParticle {
   gravityScale: number;
 }
 
-
 const PARTICLE_GEOMETRY = new THREE.BoxGeometry(PARTICLE_SIZE, PARTICLE_SIZE, PARTICLE_SIZE);
 
 const PARTICLE_MATERIAL = new THREE.MeshLambertMaterial({ color: 0x2c2620 });
@@ -90,7 +95,6 @@ const BLOOD_MATERIAL = new THREE.MeshLambertMaterial({ color: BLOOD_COLOR });
 const FLESH_SURFACE = "flesh";
 const SHELL_GEOMETRY = new THREE.CylinderGeometry(0.012, 0.012, 0.05, 6);
 const SHELL_MATERIAL = new THREE.MeshLambertMaterial({ color: 0xc98a2c }); // laiton
-
 
 const UP_DIRECTION = new THREE.Vector3(0, 1, 0);
 
@@ -106,8 +110,10 @@ export class ToyDebris {
   // Réutiliser le matériau par couleur pour éviter une allocation GPU à chaque casse.
   private readonly debrisMaterials = new Map<number, THREE.MeshLambertMaterial>();
 
-
-  constructor(private readonly scene: THREE.Scene, private readonly random: () => number) {}
+  constructor(
+    private readonly scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {}
 
   private clearToyParticles(list: ToyParticle[]): void {
     for (const particle of list) this.scene.remove(particle.mesh);
@@ -181,6 +187,30 @@ export class ToyDebris {
     });
   }
 
+  /** Une étincelle lâchée par une fusée en vol, vers l'arrière de sa course. */
+  spawnFlareSpark(point: THREE.Vector3, direction: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, direction, FLARE_SPARK_GEOMETRY, FLARE_SPARK_MATERIAL, {
+      count: 1,
+      lifetime: FLARE_SPARK_LIFETIME,
+      spread: 0.5,
+      speedMin: 0.6,
+      speedMax: 1.8,
+      gravityScale: 0.35,
+    });
+  }
+
+  /** Éclatement d'une fusée : moins d'éclats qu'une bonbonne, rouges, qui retombent lentement. */
+  spawnFlareBurst(point: THREE.Vector3) {
+    this.spawnChunks(this.embers, point, UP_DIRECTION, FLARE_SPARK_GEOMETRY, FLARE_SPARK_MATERIAL, {
+      count: FLARE_BURST_COUNT,
+      lifetime: EMBER_LIFETIME,
+      spread: EMBER_SPREAD,
+      speedMin: 3,
+      speedMax: 9,
+      gravityScale: 0.5,
+    });
+  }
+
   spawnFrostBurst(point: THREE.Vector3) {
     this.spawnChunks(this.frost, point, UP_DIRECTION, FROST_GEOMETRY, FROST_MATERIAL, {
       count: FROST_COUNT,
@@ -237,7 +267,7 @@ export class ToyDebris {
 
   private updateToyPhysics(list: ToyParticle[], realDt: number) {
     for (let i = list.length - 1; i >= 0; i--) {
-      const p = list[i]!;
+      const p = list[i];
       p.life -= realDt;
       if (p.life <= 0) {
         this.scene.remove(p.mesh);
@@ -245,7 +275,7 @@ export class ToyDebris {
         continue;
       }
 
-      p.velocity.y += TOY_GRAVITY * p.gravityScale * realDt;
+      p.velocity.y += GRAVITY_Y * p.gravityScale * realDt;
       p.mesh.position.addScaledVector(p.velocity, realDt);
 
       if (p.bounce && p.mesh.position.y <= SHELL_GROUND_Y && p.velocity.y < 0) {

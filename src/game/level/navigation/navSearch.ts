@@ -43,8 +43,8 @@ class MinHeap {
     let i = start;
     while (i > 0) {
       const parent = (i - 1) >> 1;
-      if (this.less(this.items[i]!, this.items[parent]!)) {
-        const tmp = this.items[i]!;
+      if (this.less(this.items[i], this.items[parent])) {
+        const tmp = this.items[i];
         this.items[i] = this.items[parent]!;
         this.items[parent] = tmp;
         i = parent;
@@ -59,10 +59,10 @@ class MinHeap {
       const left = i * 2 + 1;
       const right = i * 2 + 2;
       let smallest = i;
-      if (left < n && this.less(this.items[left]!, this.items[smallest]!)) smallest = left;
-      if (right < n && this.less(this.items[right]!, this.items[smallest]!)) smallest = right;
+      if (left < n && this.less(this.items[left], this.items[smallest])) smallest = left;
+      if (right < n && this.less(this.items[right], this.items[smallest])) smallest = right;
       if (smallest === i) break;
-      const tmp = this.items[i]!;
+      const tmp = this.items[i];
       this.items[i] = this.items[smallest]!;
       this.items[smallest] = tmp;
       i = smallest;
@@ -101,29 +101,68 @@ export function astarMetricsSnapshot(): Readonly<AStarMetrics> {
   return { ...astarMetrics };
 }
 
+// Tampons d'une recherche, gardés d'une requête à l'autre : les allouer à
+// chaque fois coûtait 13 octets par cellule de la grille (2,4 Mo sur le
+// magasin) et 0,15 ms, même pour deux cellules voisines. Une cellule n'est
+// lue que si son tampon de génération vaut la requête en cours : rien n'est
+// remis à zéro entre deux requêtes.
+// see: docs/4-technique/pathfinding.md#coût-dune-requête
+interface SearchScratch {
+  readonly size: number;
+  readonly gScore: Float64Array;
+  readonly cameFrom: Int32Array;
+  /** Génération à laquelle `gScore`/`cameFrom` de la cellule ont été écrits. */
+  readonly seenAt: Uint32Array;
+  /** Génération à laquelle la cellule a été fermée. */
+  readonly closedAt: Uint32Array;
+  generation: number;
+}
+
+const MAX_GENERATION = 0xffff_ffff;
+let scratch: SearchScratch | null = null;
+
+/** Les tampons de la grille demandée, prêts pour une requête neuve. A* n'est pas réentrant : un seul jeu suffit. */
+function beginSearch(size: number): SearchScratch {
+  if (!scratch || scratch.size !== size) {
+    scratch = {
+      size,
+      gScore: new Float64Array(size),
+      cameFrom: new Int32Array(size),
+      seenAt: new Uint32Array(size),
+      closedAt: new Uint32Array(size),
+      generation: 0,
+    };
+  }
+  if (scratch.generation === MAX_GENERATION) {
+    scratch.seenAt.fill(0);
+    scratch.closedAt.fill(0);
+    scratch.generation = 0;
+  }
+  scratch.generation++;
+  return scratch;
+}
+
 /** A* sur `graph`. Retourne `null` si `goalIdx` n'est pas atteignable depuis `startIdx` (composantes non connectées du graphe). */
 function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | null {
   const startedAt = performance.now();
   astarMetrics.queries++;
   let expandedNodes = 0;
-  const size = graph.cols * graph.rows;
-  const gScore = new Float64Array(size).fill(Infinity);
-  const cameFrom = new Int32Array(size).fill(-1);
-  const closed = new Uint8Array(size);
+  const { gScore, cameFrom, seenAt, closedAt, generation } = beginSearch(graph.cols * graph.rows);
   const open = new MinHeap();
 
   gScore[startIdx] = 0;
+  seenAt[startIdx] = generation;
   open.push({ index: startIdx, f: heuristic(graph, startIdx, goalIdx) });
 
   try {
     while (open.size > 0) {
       const current = open.pop()!;
-      if (closed[current.index] === 1) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
+      if (closedAt[current.index] === generation) continue; // entrée obsolète du tas (pas de decrease-key, voir la doc du module).
       expandedNodes++;
       if (current.index === goalIdx) return reconstructPath(cameFrom, startIdx, goalIdx);
-      closed[current.index] = 1;
+      closedAt[current.index] = generation;
 
-      const mask = graph.neighborMask[current.index]!;
+      const mask = graph.neighborMask[current.index];
       if (mask === 0) continue;
 
       const ix = current.index % graph.cols;
@@ -131,18 +170,19 @@ function astar(graph: NavGraph, startIdx: number, goalIdx: number): number[] | n
 
       for (let dirIndex = 0; dirIndex < DIRS.length; dirIndex++) {
         if ((mask & (1 << dirIndex)) === 0) continue;
-        const dir = DIRS[dirIndex]!;
+        const dir = DIRS[dirIndex];
         const nx = ix + dir.dx;
         const nz = iz + dir.dz;
         if (nx < 0 || nx >= graph.cols || nz < 0 || nz >= graph.rows) continue;
 
         const nIdx = nz * graph.cols + nx;
-        if (closed[nIdx] === 1) continue;
+        if (closedAt[nIdx] === generation) continue;
 
-        const tentativeG = gScore[current.index]! + dir.cost * graph.cellSize;
-        if (tentativeG < gScore[nIdx]!) {
+        const tentativeG = gScore[current.index] + dir.cost * graph.cellSize;
+        if (seenAt[nIdx] !== generation || tentativeG < gScore[nIdx]) {
           gScore[nIdx] = tentativeG;
           cameFrom[nIdx] = current.index;
+          seenAt[nIdx] = generation;
           open.push({ index: nIdx, f: tentativeG + heuristic(graph, nIdx, goalIdx) });
         }
       }

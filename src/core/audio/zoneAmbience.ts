@@ -4,10 +4,9 @@ import { decodeZoneAmbienceManifest, type AmbienceBoxData, type AmbienceZoneData
 import { assetUrl } from "../loading/assetPath";
 import { waitForAudioLoad } from "./audioPreparation";
 import type { Vec3Like } from "./waterAmbienceMix";
+import { fetchJson } from "../net/fetchJson";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
-
-const AMBIANCE_PATH = assetUrl("assets/audio/ambiances");
 
 const BED_VOLUME = 0.25;
 const EVENT_VOLUME = 0.25;
@@ -22,12 +21,21 @@ const VOLUME_EPSILON = 0.001;
 interface Bed {
   howl: Howl;
   playback: number | null;
+  started: boolean;
   gain: number;
   applied: number;
 }
 
-const beds = new Map<string, Bed>();
-const events = new Map<string, Howl>();
+interface PreparedProfile {
+  beds: Map<string, Bed>;
+  events: Map<string, Howl>;
+  zones: Record<string, AmbienceZoneData>;
+  boxes: { zone: string; box: AmbienceBoxData }[];
+  defaultZone: string;
+}
+
+let beds = new Map<string, Bed>();
+let events = new Map<string, Howl>();
 let zones: Record<string, AmbienceZoneData> = {};
 let boxes: { zone: string; box: AmbienceBoxData }[] = [];
 let defaultZone: string | null = null;
@@ -36,54 +44,82 @@ let clock = 0;
 let nextEventIn = EVENT_GAP[0];
 let channelGain = 1;
 let random: () => number = () => 0.5;
-let preparation: Promise<void> | null = null;
+const preparations = new Map<string, Promise<PreparedProfile | null>>();
+let selectionGeneration = 0;
+let currentProfile = "ambiances";
 
-function src(name: string): string[] {
-  return [`${AMBIANCE_PATH}/${name}.ogg`, `${AMBIANCE_PATH}/${name}.m4a`];
-}
-
-export function initZoneAmbience(): Promise<void> {
-  if (preparation) return preparation;
-  preparation = fetch(`${AMBIANCE_PATH}/ambiances.json`, { signal: AbortSignal.timeout(15000) })
-    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-    .then(decodeZoneAmbienceManifest)
-    .then(async (manifeste) => {
-      zones = manifeste.zones;
-      defaultZone = manifeste.defaut;
-      boxes = Object.entries(zones)
+function prepareProfile(profile: string): Promise<PreparedProfile | null> {
+  const path = assetUrl(`assets/audio/${profile}`);
+  const src = (name: string) => [`${path}/${name}.ogg`, `${path}/${name}.m4a`];
+  return fetchJson(`${path}/ambiances.json`, decodeZoneAmbienceManifest)
+    .then(async (manifest) => {
+      const profileBeds = new Map<string, Bed>();
+      const profileEvents = new Map<string, Howl>();
+      const profileBoxes = Object.entries(manifest.zones)
         .flatMap(([zone, def]) => def.espaces.map((box) => ({ zone, box })))
         .sort((a, b) => area(a.box) - area(b.box));
       const loads: Promise<boolean>[] = [];
-      for (const [zone, def] of Object.entries(zones)) {
+      for (const [zone, def] of Object.entries(manifest.zones)) {
         const bed: Bed = {
           howl: new Howl({
             src: src(def.nappe),
             sprite: { boucle: [def.boucle[0], def.boucle[1], true] },
-            volume: 1,
+            volume: 0,
             onload: () => {
               bed.playback = bed.howl.play("boucle");
-              bed.howl.volume(0, bed.playback);
+            },
+            onplay: () => {
+              bed.started = true;
             },
             onloaderror: () => console.warn(`[ambiance] nappe "${def.nappe}" introuvable — zone muette.`),
           }),
           playback: null,
+          started: false,
           gain: 0,
           applied: -1,
         };
-        beds.set(zone, bed);
+        profileBeds.set(zone, bed);
         loads.push(waitForAudioLoad(bed.howl));
         for (const name of def.evenements) {
+          if (profileEvents.has(name)) continue;
           const howl = new Howl({ src: src(name), volume: EVENT_VOLUME });
-          events.set(name, howl);
+          profileEvents.set(name, howl);
           loads.push(waitForAudioLoad(howl));
         }
       }
       await Promise.all(loads);
+      return {
+        beds: profileBeds,
+        events: profileEvents,
+        zones: manifest.zones,
+        boxes: profileBoxes,
+        defaultZone: manifest.defaut,
+      };
     })
     .catch((e) => {
-      console.warn(`[ambiance] manifeste illisible (${e}) — pas d'ambiance de zone.`);
+      console.warn(`[ambiance] profil ${profile} illisible (${e}) — pas d'ambiance de zone.`);
+      return null;
     });
-  return preparation;
+}
+
+// see: docs/4-technique/pilote-metro.md#ambiances-par-niveau
+export async function initZoneAmbience(profile = "ambiances"): Promise<void> {
+  const generation = ++selectionGeneration;
+  let prepared = preparations.get(profile);
+  if (!prepared) {
+    prepared = prepareProfile(profile);
+    preparations.set(profile, prepared);
+  }
+  const loaded = await prepared;
+  if (generation !== selectionGeneration) return;
+  clearZoneAmbienceSession();
+  currentProfile = profile;
+  beds = loaded?.beds ?? new Map();
+  events = loaded?.events ?? new Map();
+  zones = loaded?.zones ?? {};
+  boxes = loaded?.boxes ?? [];
+  defaultZone = loaded?.defaultZone ?? null;
+  clearZoneAmbienceSession();
 }
 
 function area(box: AmbienceBoxData): number {
@@ -92,7 +128,14 @@ function area(box: AmbienceBoxData): number {
 
 function zoneAt(p: Vec3Like): string | null {
   for (const { zone, box } of boxes) {
-    if (p.x >= box.x[0] && p.x <= box.x[1] && p.y >= box.y[0] && p.y <= box.y[1] && p.z >= box.z[0] && p.z <= box.z[1]) {
+    if (
+      p.x >= box.x[0] &&
+      p.x <= box.x[1] &&
+      p.y >= box.y[0] &&
+      p.y <= box.y[1] &&
+      p.z >= box.z[0] &&
+      p.z <= box.z[1]
+    ) {
       return zone;
     }
   }
@@ -112,7 +155,7 @@ function clearZoneAmbienceSession(): void {
     bed.gain = 0;
     bed.applied = 0;
     // Garder la boucle préchargée ; seule son enveloppe appartient à la partie.
-    if (bed.playback !== null) bed.howl.volume(0, bed.playback);
+    if (bed.started && bed.playback !== null && bed.howl.playing(bed.playback)) bed.howl.volume(0, bed.playback);
   }
 }
 
@@ -138,7 +181,8 @@ export function updateZoneAmbience(listener: Vec3Like, dt: number, active: boole
   for (const [zone, bed] of beds) {
     const target = active && zone === currentZone ? 1 : 0;
     bed.gain += (target - bed.gain) * k;
-    if (bed.playback === null) continue;
+    // Howler empile les volumes tant que le contexte attend le geste utilisateur.
+    if (!bed.started || bed.playback === null || !bed.howl.playing(bed.playback)) continue;
     const volume = bed.gain < VOLUME_EPSILON ? 0 : BED_VOLUME * channelGain * bed.gain * breath;
     if (Math.abs(volume - bed.applied) < VOLUME_EPSILON) continue;
     bed.howl.volume(volume, bed.playback);
@@ -159,12 +203,14 @@ export function updateZoneAmbience(listener: Vec3Like, dt: number, active: boole
 }
 
 export function zoneAmbienceDebugState(): {
+  profil: string;
   zone: string | null;
   nappes: Record<string, number>;
   horloge: number;
   prochainEvenementDans: number;
 } {
   return {
+    profil: currentProfile,
     zone: currentZone,
     nappes: Object.fromEntries([...beds].map(([zone, bed]) => [zone, Math.max(bed.applied, 0)])),
     horloge: clock,

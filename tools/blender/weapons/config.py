@@ -22,8 +22,13 @@ PALETTE = {
     "carcasse": "#3b3d44",
     "plaquettes": "#25262a",
     "point": "#f3f0e6",
+    # Pistolet de détresse : orange de signalisation, trois valeurs comme l'inox.
+    "orange_clair": "#f28a3c",
+    "orange": "#dc5f1a",
+    "orange_ombre": "#a2420f",
 }
 
 BOUT_CANON_PISTOLET = (0.0, 0.164, 0.077)
 BOUT_CANON_POMPE = (0.0, 0.68, 0.115)
+BOUT_CANON_DETRESSE = (0.0, 0.150, 0.080)
 CENTRE_FUT = (0.0, 0.32, 0.070)

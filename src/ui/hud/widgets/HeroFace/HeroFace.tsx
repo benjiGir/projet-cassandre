@@ -18,15 +18,29 @@ export function HeroFace() {
   const selectedFrame = dead ? 19 : frame;
 
   return (
-    <div className={styles.portrait} data-reaction={dead ? "dead" : reaction}
-      data-health={dead ? 4 : healthBand} data-paused={flow === "paused"} data-combo={combo}
-      role="img" aria-label={dead ? "Le héros s’effondre, signal perdu" : "Retour de stream du héros"}>
-      <div className={styles.impact} key={impact} data-hit={reaction === "hurt"}
-        style={cssVars({ "--hit-shift": side === "left" ? -1 : side === "right" ? 1 : 0 })}>
-        <div className={styles.face} data-atlas={atlas} style={cssVars({
-          "--face-x": `${(selectedFrame % columns) * 100 / (columns - 1)}%`,
-          "--face-y": `${Math.floor(selectedFrame / columns) * 25}%`,
-        })} />
+    <div
+      className={styles.portrait}
+      data-reaction={dead ? "dead" : reaction}
+      data-health={dead ? 4 : healthBand}
+      data-paused={flow === "paused"}
+      data-combo={combo}
+      role="img"
+      aria-label={dead ? "Le héros s’effondre, signal perdu" : "Retour de stream du héros"}
+    >
+      <div
+        className={styles.impact}
+        key={impact}
+        data-hit={reaction === "hurt"}
+        style={cssVars({ "--hit-shift": side === "left" ? -1 : side === "right" ? 1 : 0 })}
+      >
+        <div
+          className={styles.face}
+          data-atlas={atlas}
+          style={cssVars({
+            "--face-x": `${((selectedFrame % columns) * 100) / (columns - 1)}%`,
+            "--face-y": `${Math.floor(selectedFrame / columns) * 25}%`,
+          })}
+        />
       </div>
       {reaction === "hurt" && <div className={styles.interference} key={`hit-${impact}`} aria-hidden="true" />}
       {dead && <span className={styles.signalLost}>SIGNAL PERDU</span>}

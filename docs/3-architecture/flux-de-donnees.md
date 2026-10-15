@@ -2,7 +2,7 @@
 title: Flux de données
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Flux de données
@@ -13,7 +13,8 @@ Faire vivre deux mondes qui ne doivent jamais se toucher directement : la
 simulation (pas fixe, source de vérité dans `GameSession`) et l'interface
 React (`src/ui/`). Le pont entre les deux est le store zustand
 (`src/game/hud/state.ts`), une **feuille de dépendances**
-([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) — tout le
+([ADR 0036](../decisions/0036-contrats-feuilles-et-store-hud.md), qui remplace
+l'[ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) — tout le
 reste du jeu peut l'importer, lui n'importe rien du jeu. Dans le sens
 inverse (un bouton React qui doit agir sur le moteur), le pont est un petit
 nombre de modules nommés (`GameFlowPort`, `graphicsSettings.ts`,
@@ -95,9 +96,9 @@ concerne pas :
 | `debug.views`, `debug.followers`, `debug.wallet` | `game/session/stream/streamFeed.ts` (`setDebug`) | ponctuel, à l'évènement ; une fois par seconde au plus quand l'audience retombe | `ViewerCount`, `LiveCam`, `Wallet` |
 | `chat`, `donation` | `game/session/stream/streamFeed.ts` | à chaque message (toutes les 2 à 4 s) et à chaque don | `StreamChat`, `DonationAlert` |
 | `hudMessage` | `game/session/player/feedback.ts::showHudMessage`, `game/session/progression/doors.ts`/`cards.ts`/`sanitaires.ts` | ponctuel | `HudMessage` |
-| `heroLine` | `game/session/player/feedback.ts::triggerHeroLine` | ponctuel, cooldown 15 s côté appelant | `HeroLine` |
+| `heroLine` | `game/session/player/feedback.ts::triggerHeroLine` | ponctuel, cooldown de 15 s dans `triggerHeroLine` | `HeroLine` |
 | `flowState` | `main.ts` (`flowActor.subscribe`) | à chaque transition d'écran | `PauseScreen`, `DeathScreen`, `LevelCompleteScreen`, `Hud` |
-| `recap` | `game/session/progression/score.ts::publishLevelRecap` (`setRecap`) | ponctuel, mort ou fin de niveau | `RecapTable` |
+| `recap` | `game/session/progression/recap.ts::publishLevelRecap` (`setRecap`) | ponctuel, mort ou fin de niveau | `RecapTable` |
 
 Mesuré par `grep -rn "useGameStore(" src/ui` (un sélecteur par ligne
 ci-dessus) et `grep -rn "\.setDebug\|setPlayerHp\|incrementSecretsFound\|setCards\|setChat\|showDonation\|showHudMessage\|showHeroLine\|setFlowState\|setRecap" src/game`.
@@ -139,7 +140,7 @@ fonctions déjà exportées de ces trois modules.
 
 | Clé `localStorage` | Fichier | Contenu | Lu | Écrit |
 |---|---|---|---|---|
-| `cassandre.keybinds` | `src/core/input/input.ts` | Bindings action → code (`Record<GameAction, string>`) | Au chargement du module (initialiseur de champ de `InputManager`, avant `attach()`) | À chaque `rebind()`/`resetBindings()` |
+| `cassandre.keybinds` | `src/core/input/inputPersistence.ts` | Bindings action → code (`Record<GameAction, string>`) | Au chargement du module (initialiseur de champ de `InputManager`, avant `attach()`) | À chaque `rebind()`/`resetBindings()` |
 | `cassandre.graphics` | `src/game/settings/graphicsSettings.ts` | `{ filtrage, resolution, fovBase, shakeIntensity }` | `initGraphicsSettingsAtBoot()`, tout en haut de `main()` | À chaque `setGraphicsSettings(partial)` |
 | `cassandre.audio` | `src/game/settings/audioSettings.ts` | `{ general, effets, voix, ambiances, sousTitres, muetEnArrierePlan }` | `initAudioSettingsAtBoot()`, en haut de `main()`, avant la création des sons | À chaque `setAudioSettings(partial)` |
 
@@ -155,7 +156,7 @@ dégrade silencieusement vers les valeurs par défaut, qui restent la table
 - **React lit l'état moteur directement** (`GameSession`, `moveConfig`, le
   monde Rapier) : toujours par le store ou par un callback construit hors de
   `src/ui/` — un widget qui importerait `game/session/gameSession.ts` casse
-  la feuille de dépendances de l'ADR 0020 et rendrait le HUD inutilisable
+  la feuille de dépendances de l'ADR 0036 et rendrait le HUD inutilisable
   sans partie en cours (`ui/dev/devPreview`).
 - **`src/ui/` qui persiste ou pilote le moteur** — la règle citée plus haut ;
   un écran qui appellerait `localStorage` ou muterait `moveConfig` lui-même
@@ -178,4 +179,4 @@ dégrade silencieusement vers les valeurs par défaut, qui restent la table
 
 - [ADR 0003 — React en overlay DOM, jamais dans la boucle](../decisions/0003-react-hors-boucle.md)
 - [ADR 0019 — Machine XState de flux d'écran plutôt que rechargement de page](../decisions/0019-machine-xstate-flux-ecran.md)
-- [ADR 0020 — `game/hud/state.ts` comme feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md)
+- [ADR 0036 — Séparer les contrats feuilles du store HUD et des implémentations](../decisions/0036-contrats-feuilles-et-store-hud.md)

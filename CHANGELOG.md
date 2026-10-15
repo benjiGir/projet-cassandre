@@ -4,6 +4,75 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), numérotation
 [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+## [2.0.0-beta] — 2026-10-15
+
+Deuxième niveau de campagne : du quartier à la station privée, le métro
+prolonge l'enquête. Cette préversion est destinée aux retours des joueurs.
+
+### Limites de la bêta
+
+- Les nouveaux sons et les nouvelles répliques voisées ne sont pas
+  finalisés. Leur production est reportée à novembre 2026 ; l'audio déjà
+  présent est conservé et les textes du métro sont intégrés.
+- L'équilibrage final, la validation d'une partie complète et les retouches
+  de placement restent ouverts aux retours des joueurs. Cette sortie ne
+  vaut pas validation de toutes les étapes du plan V2.
+
+### Ajouté
+
+- Le métro comme deuxième niveau de campagne : quartier extérieur,
+  billetterie, quais, tunnels, galeries techniques, dépôt, voyage à bord
+  d'une rame de service et arrivée au pied de la tour.
+- Enchaînement depuis l'hypermarché avec conservation de l'équipement,
+  déblocage des niveaux et reprise de campagne.
+- Trains dangereux sur les voies, refuges, commandes d'arrêt et
+  d'aiguillage ; deux vagues d'ennemis pendant le voyage à bord.
+- Contrôleur qui charge et repousse le joueur, accompagné d'une variante
+  chef de brigade.
+- Quatre secrets et six bornes de sponsors dans le métro, une par perk ;
+  les bornes proposent des consommables après acquisition du perk.
+- Introduction et fin du métro illustrées, répliques et annonces en texte,
+  chat et dons propres au niveau.
+- Quatrième arme, trouvée dans le métro : le pistolet de détresse (touche
+  `4`). Sa fusée voyage au lieu de toucher à l'instant du tir, éclaire le
+  décor en rouge, puis éclate à l'impact ; le souffle blesse autour de lui,
+  passe le bouclier du Vigile, amorce les bonbonnes de gaz et n'épargne pas
+  le joueur. Six fusées avec l'arme, dix-huit au plus, rechargées par les
+  étuis orange « SOS » et les bornes de munitions.
+- Propriété de niveau `fusees` pour les étuis de fusées, et nom réservé
+  `use_flare` pour l'arme au sol.
+- Boîtes de cartouches pour le fusil à pompe.
+- Carrousel de sélection des armes en bas de l'écran à la molette.
+- Héros visible dans les miroirs des sanitaires, en sprite directionnel
+  animé cohérent avec son portrait.
+
+### Modifié
+
+- Ennemis en sprites directionnels illustrés : Costard, Rampant, Vigile et
+  Directeur, avec la même approche pour le Contrôleur.
+- Textures harmonisées entre l'hypermarché et le métro ; sanitaires avec
+  cabines accessibles, lavabos agrandis et miroirs, fours du fournil
+  détaillés, moquette et faux plafonds des bureaux retravaillés.
+- Fontaine du parvis avec eau et jet procéduraux en TSL.
+
+### Corrigé
+
+- Ramassage de soins et de munitions à l'arrivée dans le métro avec un
+  équipement partiellement rempli.
+- Ramassage d'objets à travers les murs et autres obstacles.
+- Proxies de collision du métro et accès aux secrets et aux bornes.
+  Le contrat Blender du niveau passe à zéro erreur et zéro avertissement.
+
+### Technique
+
+- Code réorganisé et harmonisé, règles de lint renforcées, formatage
+  unifié et documentation nettoyée des revues temporaires.
+- Outillage Blender dédié au métro : construction, reprises locales,
+  contrôles, export et subdivision des surfaces pour l'éclairage.
+- Le niveau exporté du métro pèse 41,9 Mo après subdivision.
+
 ## [1.3.0] — 2026-10-06
 
 Le combat gagne en lisibilité et les objets du magasin sont retravaillés.

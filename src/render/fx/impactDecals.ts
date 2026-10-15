@@ -12,8 +12,6 @@ interface DecalSlot {
   mesh: THREE.Mesh;
 }
 
-
-
 const PLANE_DEFAULT_NORMAL = new THREE.Vector3(0, 0, 1);
 
 export class ImpactDecals {
@@ -37,7 +35,7 @@ export class ImpactDecals {
   spawnImpactDecal(point: THREE.Vector3, normal: THREE.Vector3, material: string) {
     void material;
 
-    const slot = this.decals[this.decalCursor]!;
+    const slot = this.decals[this.decalCursor];
     this.decalCursor = (this.decalCursor + 1) % this.decals.length;
 
     slot.mesh.position.copy(point).addScaledVector(normal, DECAL_OFFSET);

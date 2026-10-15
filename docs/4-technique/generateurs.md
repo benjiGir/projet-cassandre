@@ -2,7 +2,7 @@
 title: Générateurs d'assets
 tags: [technique]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-13
 ---
 
 # Générateurs d'assets
@@ -24,7 +24,11 @@ Ils ne s'exécutent pas dans le navigateur.
 - `tools/textures/generate_portes.py` compose les textures d'ouvrants.
 - `tools/textures/generate_surgeles.py` génère les visuels du rayon surgelés.
 - `tools/textures/generate_ciel.py` génère les six faces du ciel de nuit.
-- `tools/blender/render_enemy_sprites.py` rend les sprites huit directions des ennemis.
+- `tools/blender/render_enemy_sprites.py` conserve les rendus historiques huit directions vers `renders/`.
+- `tools/sprites/describe_costard.py` mesure les sprites peints du Costard et écrit son manifeste, sans retoucher les originaux.
+- `tools/sprites/describe_rampant.py` fait de même pour le Rampant, via la mesure partagée de `describe_painted.py`.
+- `tools/sprites/describe_vigile.py` décrit les quatre carnations peintes du Vigile.
+- `tools/sprites/describe_directeur.py` décrit les formes humaine et révélée du Directeur.
 - `tools/blender/build_weapons.py` construit et exporte les armes.
 - `tools/blender/render_weapon_pickups.py` rend l'atlas des armes au sol.
 - `tools/textures/generate_card_pickups.py` dessine les trois sprites des cartes de fidélité.
@@ -71,12 +75,25 @@ La recette Cassandre `rework_vending(preview=…)` remplace localement huit mach
 
 ### Sprites et armes
 
-`render_enemy_sprites.py` utilise un modèle source et écrit les atlas et manifestes sous `public/assets/sprites/`.
+`render_enemy_sprites.py` utilise les modèles sources historiques. Il refuse d'écraser les quatre espèces peintes dans `public/assets/sprites/` ; un rendu des anciens modèles reste possible vers `renders/`.
+Le Costard est généré par Imagegen à partir du style du héros et du costume
+historique. Ses originaux et prompts vivent dans `assets_src/costard_sprites/`.
+`describe_costard.py` mesure douze lignes, huit directions par ligne et quatre
+carnations, puis copie les PNG et écrit `public/assets/sprites/costard.json`.
+Le Rampant utilise `assets_src/rampant_sprites/`, dont la planche et les prompts
+sont conservés. `describe_rampant.py` décrit douze poses et huit directions,
+avec une hauteur au repos de 1,2 m, et écrit `rampant.png` et `rampant.json`.
+Le Vigile utilise quatre planches dans `assets_src/vigile_sprites/`, mesurées
+par `describe_vigile.py`, avec une hauteur de repos de 2 m. Le Directeur
+utilise les deux planches de `assets_src/directeur_sprites/`, mesurées par
+`describe_directeur.py` à 2,05 m au repos. La mesure des quatre espèces est
+partagée dans `describe_painted.py`.
 Les manifestes associent les directions, animations et rectangles de texture lus par le moteur.
 `build_weapons.py` écrit le modèle glTF des armes dans `public/assets/weapons/armes.glb`.
 `render_weapon_pickups.py` écrit l'atlas des armes au sol et son manifeste sous `public/assets/sprites/`.
 `generate_card_pickups.py` écrit les trois PNG RGBA de 128×80 pixels sous `public/assets/sprites/cards/`. Il réutilise la police pixel de `generate_labels.py` ; ses sorties sont directement consommées par `src/render/pickups/cardPickups.ts`.
-Les modèles et textures d'ennemis passent par un rendu Blender, pas par le pipeline de texture 2D.
+Les originaux peints du Costard, du Rampant, du Vigile et du Directeur sont
+recopiés sans retouche des pixels.
 
 ### Déterminisme et provenance
 
@@ -117,14 +134,21 @@ La génération et l'export du niveau sont décrits dans [Outillage Blender](out
 ## Comment vérifier que ça marche
 
 Consulter l'en-tête du générateur pour ses arguments, ses sources et son répertoire de sortie avant de l'exécuter.
-Comparer les images et manifestes générés avec leurs spécifications puis recharger le consommateur correspondant.
 Après une modification de texture de niveau, reconstruire et exporter le fichier glTF, puis le charger dans le jeu.
 Après un changement d'atlas ennemi, vérifier les huit directions et les rectangles dans le manifeste.
 Après la régénération d'un atlas qui équipe le niveau, reconstruire le fichier Blender ou le niveau concerné avant d'inspecter le runtime.
-Comparer le résultat d'un manifeste au lecteur réellement utilisé par `src/render/sprites/enemySprites.ts` ou par le système d'armes.
 Pour les recettes et commandes audio, suivre [Studio audio](studio-audio.md).
 Conserver côte à côte le PNG et le manifeste générés pour repérer un décalage de rectangles ou d'identifiants.
 Pour les textures utilisées par Blender, confirmer que le fichier exporté reflète la nouvelle image et non une sortie précédente.
 Inspecter chaque atlas à son échelle native avant de le charger dans le jeu.
 Vérifier le nom des fichiers réellement chargés par le niveau avant de supprimer une sortie qui semble redondante.
 Garder les entrées brutes sous leur provenance documentée plutôt que de les confondre avec leurs versions quantifiées.
+
+### Contrôleur
+
+`tools/sprites/describe_controleur.py` mesure les cinq PNG de
+`assets_src/controleur_sprites/` et écrit le manifeste `controleur.json`.
+`tools/audio/sons_controleur.py` rend son appel vocal et son sifflet ;
+`build_sprite.py --nom controleur` les empaquette séparément, sans changer
+le sprite audio existant. Le placement Blender passe par
+`C.metro_controleurs()` et se retrouve dans `tools/metro/blockout/encounters.py`.

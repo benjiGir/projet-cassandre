@@ -2,7 +2,7 @@
 title: Objets interactifs
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-11
 ---
 
 # Objets interactifs
@@ -117,6 +117,10 @@ exploser d'un coup, sans lien avec sa résistance habituelle au tir.
 
 ### Les sanitaires
 
+Les toilettes du magasin ont trois cabines dans lesquelles on peut entrer.
+Leurs portes s’ouvrent et se ferment avec `E`. Les grands lavabos ont des
+miroirs qui reflètent la pièce ; voir la [revue des équipements](../4-technique/equipements-sanitaires.md).
+
 Une cuvette ou un urinoir intact se soulage en le visant vraiment — s'y tenir
 à proximité sans le regarder ne suffit pas — puis en appuyant sur `E`. La
 chasse d'eau part à chaque fois, mais l'effet ne se répète pas indéfiniment :
@@ -174,9 +178,13 @@ d'un coup à chaque gorgée qu'un vrai soulagement.
 
 ## Valeurs
 
-Cette page ne fixe aucun nombre. Détail chiffré (pourcentage de soin, durée
-du délai des sanitaires, points de vie des meubles et des vitres, portées) :
-`6-reference/valeurs-objets-interactifs.md`.
+Cette page ne fixe aucun nombre. Les valeurs vivent dans le code :
+
+- portée d'usage de 2 m : `USE_RANGE_METERS` (`src/game/level/loading/levelObjects.ts`) ;
+- rayon de ramassage au sol de 1,2 m : `HEAL_PICKUP_RADIUS` (`src/game/level/interactions/interactive.ts`), 3 m avec le perk `aimant` ;
+- soulagement d'un sanitaire : 10 % des PV max, délai de 220 s entre deux usages (`src/game/session/player/sanitaires.ts`) ;
+- soins des aliments : `src/game/level/interactions/food.ts` ;
+- casse des props et des vitres : `src/game/level/props/propConfig.ts`, `src/game/level/interactions/vitres.ts`.
 
 ## État
 

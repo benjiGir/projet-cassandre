@@ -1,5 +1,5 @@
 {
-  "atlasWidth": 184,
+  "atlasWidth": 216,
   "atlasHeight": 94,
   "icons": {
     "melee": {
@@ -21,6 +21,13 @@
       "y": 0,
       "width": 94,
       "height": 94,
+      "aspect": 1.0
+    },
+    "flare": {
+      "x": 186,
+      "y": 0,
+      "width": 30,
+      "height": 30,
       "aspect": 1.0
     }
   }

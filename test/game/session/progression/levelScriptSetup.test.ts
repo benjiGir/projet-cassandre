@@ -5,12 +5,24 @@ import { describe, expect, it } from "vitest";
 
 import type { NamedSpawn, TriggerVolume } from "../../../../src/game/level/loading/levelTypes";
 import type { Scenario } from "../../../../src/game/level/scripting/levelScript";
+import { METRO_ENCOUNTER_EVENTS } from "../../../../src/game/level/blockout/metroEncounterEvents";
 import { LEVEL_EVENTS } from "../../../../src/game/session/progression/levelEvents";
 import { readLevelScript } from "../../../../src/game/session/progression/levelScriptSetup";
-import { HERO_LINES, PLACE_LINES } from "../../../../src/game/session/presentation/heroLines";
+import {
+  HERO_LINES,
+  PLACE_LINES,
+  type HeroLineDef,
+  type HeroLineId,
+} from "../../../../src/game/session/presentation/heroLines";
 
 function trig(name: string, extras: Record<string, unknown>): TriggerVolume {
-  return { name, object: new THREE.Object3D(), min: new THREE.Vector3(0, 0, 0), max: new THREE.Vector3(2, 3, 4), extras };
+  return {
+    name,
+    object: new THREE.Object3D(),
+    min: new THREE.Vector3(0, 0, 0),
+    max: new THREE.Vector3(2, 3, 4),
+    extras,
+  };
 }
 
 function spawn(name: string, group: string | null): NamedSpawn {
@@ -65,7 +77,11 @@ describe("readLevelScript — arènes", () => {
     arene: [
       { delay: 0, action: { kind: "verrouiller", portes: ["door_nord", "door_sud"] } },
       { delay: 0, action: { kind: "reveiller", groupe: "vague" } },
-      { delay: 0, apres: { groupe: "vague", auPlusTard: 30 }, action: { kind: "deverrouiller", portes: ["door_nord", "door_sud"] } },
+      {
+        delay: 0,
+        apres: { groupe: "vague", auPlusTard: 30 },
+        action: { kind: "deverrouiller", portes: ["door_nord", "door_sud"] },
+      },
     ],
   };
 
@@ -76,7 +92,10 @@ describe("readLevelScript — arènes", () => {
 
   it("signale une porte absente du niveau et une attente sur un groupe sans spawn", () => {
     const fautive: Record<string, Scenario> = {
-      arene: [...arene.arene!, { delay: 0, apres: { groupe: "fantome", auPlusTard: 30 }, action: { kind: "replique", id: "quai" } }],
+      arene: [
+        ...arene.arene,
+        { delay: 0, apres: { groupe: "fantome", auPlusTard: 30 }, action: { kind: "replique", id: "quai" } },
+      ],
     };
     const setup = readLevelScript([], [spawn("spawn_suit_a", "vague")], [], fautive, ["door_nord"]);
     const texte = setup.problems.join("\n");
@@ -86,9 +105,14 @@ describe("readLevelScript — arènes", () => {
   });
 });
 
-describe("scénarios du niveau", () => {
+const registres: [string, Record<string, Scenario>][] = [
+  ["magasin", LEVEL_EVENTS],
+  ["métro", METRO_ENCOUNTER_EVENTS],
+];
+
+describe.each(registres)("scénarios du niveau — %s", (_nom, evenements) => {
   it("une arène rend toujours les portes qu'elle a prises, et chaque attente a son garde-fou", () => {
-    for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
+    for (const [event, steps] of Object.entries(evenements)) {
       const prises = steps.flatMap(({ action }) => (action.kind === "verrouiller" ? action.portes : []));
       const rendues = steps.flatMap(({ action }) => (action.kind === "deverrouiller" ? action.portes : []));
       expect([...rendues].sort(), event).toEqual([...prises].sort());
@@ -100,23 +124,43 @@ describe("scénarios du niveau", () => {
     }
   });
 
-  it("chaque réplique citée existe et ne dépend pas d'un tirage", () => {
-    for (const [event, steps] of Object.entries<Scenario>(LEVEL_EVENTS)) {
+  it("chaque réplique citée existe, passe devant les autres et ne dépend pas d'un tirage", () => {
+    for (const [event, steps] of Object.entries(evenements)) {
       for (const { action, delay } of steps) {
         expect(delay, event).toBeGreaterThanOrEqual(0);
         if (action.kind !== "replique") continue;
         expect(Object.hasOwn(HERO_LINES, action.id), `${event} : ${action.id}`).toBe(true);
+        const def: HeroLineDef = HERO_LINES[action.id as HeroLineId];
+        expect(def.priority, action.id).toBe(true);
+        expect(def.chance, action.id).toBeUndefined();
       }
     }
   });
+});
 
+describe("contrat avec le validateur Blender", () => {
   it("le validateur Blender lit ses listes dans les sources du jeu", () => {
     // `validate_level.py` retrouve les événements et les répliques par ces motifs :
     // un changement de mise en forme des deux fichiers doit faire échouer ce test.
     const lire = (chemin: string) => new TextDecoder().decode(readFileSync(resolve(chemin)));
-    const events = [...lire("src/game/session/progression/levelEvents.ts").matchAll(/^ {2}(\w+): \[/gm)].map((m) => m[1]);
-    const lines = [...lire("src/game/session/presentation/heroLines.ts").matchAll(/^ {2}(\w+): \{ text:/gm)].map((m) => m[1]);
+    const events = [...lire("src/game/session/progression/levelEvents.ts").matchAll(/^ {2}(\w+): \[/gm)].map(
+      (m) => m[1],
+    );
+    const lines = [...lire("src/game/session/presentation/heroLines.ts").matchAll(/^ {2}(\w+): \{ text:/gm)].map(
+      (m) => m[1],
+    );
     expect(events.sort()).toEqual(Object.keys(LEVEL_EVENTS).sort());
     expect(lines.sort()).toEqual(Object.keys(HERO_LINES).sort());
+
+    const metro = lire("src/game/level/blockout/metroEncounterEvents.ts");
+    expect([...metro.matchAll(/^ {2}(\w+): \[/gm)].map((m) => m[1]).sort()).toEqual(
+      Object.keys(METRO_ENCOUNTER_EVENTS).sort(),
+    );
+    const reveilles = Object.values<Scenario>(METRO_ENCOUNTER_EVENTS)
+      .flat()
+      .flatMap(({ action }) => (action.kind === "reveiller" ? [action.groupe] : []));
+    expect([...metro.matchAll(/kind: "reveiller", groupe: "(\w+)"/g)].map((m) => m[1]).sort()).toEqual(
+      reveilles.sort(),
+    );
   });
 });

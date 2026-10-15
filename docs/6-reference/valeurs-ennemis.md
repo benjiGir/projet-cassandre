@@ -2,7 +2,7 @@
 title: Valeurs des ennemis
 tags: [reference, ennemis]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-13
 ---
 
 # Valeurs des ennemis
@@ -132,3 +132,26 @@ Le harnais console propose trois variantes de recul et de flash du Costard :
 | C | 8 | 3 | 0,45 s |
 
 Les configs mutables et variantes sont exposées par `window.cassandre` en développement. Voir [Ennemis et IA](../4-technique/ennemis-et-ia.md), [Difficulté](../2-fonctionnel/difficulte.md) et [Valeurs de l'économie](valeurs-economie.md).
+
+## Contrôleur et chef de brigade
+
+Source : `src/game/entities/controller/controllerConfig.ts`. Les valeurs
+reprennent le plan V2 et attendent un playtest.
+
+| Paramètre | Contrôleur | Chef | Unité |
+|---|---:|---:|---|
+| PV avant difficulté | 70 | 210 | PV |
+| Anticipation | 0,8 | 0,8 | s |
+| Charge | 16 | 16 | m/s |
+| Longueur maximale | 12 | 12 | m |
+| Dégâts | 5 | 5 | PV |
+| Projection | 5 | 5 | m |
+| Durée de projection | 0,5 | 0,5 | s |
+| Récupération | 1 | 1 | s |
+| Charges par enchaînement | 1 | 2 | — |
+| Interruption par le pompe | ≤ 3 | ≤ 3 | m |
+
+Les variantes A/B/C règlent vitesse, projection et récupération :
+14/3/1,2 ; 16/5/1 ; 18/6/0,8 (m/s, m, s). La variante B est le point de
+départ du plan. La mécanique et les emplacements sont décrits dans les
+[rencontres du métro](../4-technique/rencontres-metro.md#contrôleurs-et-chef-de-brigade).

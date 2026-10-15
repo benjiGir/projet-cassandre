@@ -8,6 +8,7 @@ import { LoyaltyCards } from "../widgets/LoyaltyCards/LoyaltyCards";
 import { StreamChat } from "../widgets/StreamChat/StreamChat";
 import { ViewerCount } from "../widgets/ViewerCount/ViewerCount";
 import { Wallet } from "../widgets/Wallet/Wallet";
+import { WeaponCarousel } from "../widgets/WeaponCarousel/WeaponCarousel";
 
 // see: docs/archive/systems-hud.md#hud-de-production
 export function Hud() {
@@ -28,6 +29,7 @@ export function Hud() {
       <HudCorner position="bottomRight">
         <AmmoPanel />
       </HudCorner>
+      <WeaponCarousel />
     </>
   );
 }

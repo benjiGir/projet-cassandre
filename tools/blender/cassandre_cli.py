@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import cassandre  # noqa: E402
 
-COMMANDES = {"status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
+COMMANDES = {"metro_warnings", "metro_colliders", "metro_kiosks", "metro_secrets", "metro_controleurs", "art_direction_finish", "rework_office_finishes", "art_direction_annexes", "art_direction_service", "rework_fournil_ovens", "art_direction_workshops", "art_direction_offices", "art_direction_reserve", "rework_restrooms", "art_direction_restrooms", "art_direction_cafeteria", "art_direction_sales", "restore_store_lighting", "art_direction_store", "art_direction_quay", "metro_blockout", "quartier_pilot", "quartier_kit", "metro_trains", "metro_pilot", "metro_kit", "plan", "fingerprint", "manifest", "status", "build", "check", "shot", "export", "find", "where", "budget", "compose_public", "direction_covers", "orient_office_screens", "rework_checkouts", "rework_accesses", "rework_vending", "weapon_kick", "rework_backstage", "repair_backstage", "story_triggers", "perk_kiosks", "gas_props", "encounters", "store_sign", "sheet"}
 
 
 def _valeur(texte: str):
@@ -39,7 +39,10 @@ def main() -> int:
     for arg in args[1:]:
         cle, _, valeur = arg.partition("=")
         kwargs[cle] = _valeur(valeur)
-    res = getattr(cassandre, args[0])(**kwargs)
+    try:
+        res = getattr(cassandre, args[0])(**kwargs)
+    except (ValueError, TypeError) as exc:
+        res = {"ok": False, "error": str(exc)}
     print("[cassandre] " + cassandre.as_json(res))
     echec = res.get("ok") is False or res.get("code") not in (None, 0)
     return 1 if echec else 0

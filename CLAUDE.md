@@ -67,6 +67,28 @@ explication**, pas contournée.
     dépend de cette continuité.
 13. *(Retiré le 2026-09-25 — « XState sans temps mural ».)*
 
+## Conventions de code
+
+Les règles d'écriture du TypeScript sont dans
+[`docs/6-reference/conventions-code.md`](docs/6-reference/conventions-code.md),
+**pour l'agent principal comme pour chaque sous-agent**. L'essentiel :
+**les identifiants sont en anglais** (décidé le 2026-10-10) ; restent en
+français le texte joueur, les commentaires et la documentation, les noms des
+choses du jeu (`Costard`, `VitreSystem`…), les champs qui portent une
+propriété Blender (`matiere`, `portee`…), les identifiants de contenu, les
+clés des sauvegardes et des manifestes, et l'API de console `cassandre`. Une
+valeur partagée a un seul nom à un seul endroit (`physics/constants.ts`,
+`core/effect/seeds.ts`), et tout accès à `localStorage` passe par
+`core/storage/persisted.ts`.
+
+## Hygiène documentaire
+
+`docs/assets/` contient uniquement les visuels utiles à la documentation durable.
+Les pages de revue, captures avant/après, inventaires et relevés générés vont
+dans `renders/`, ignoré par Git, et sont retirés après utilisation. Regrouper
+les recettes et choix retenus dans les pages existantes ; les originaux
+graphiques non reproductibles et leurs prompts restent dans `assets_src/`.
+
 ## Conventions React — non négociables
 
 Tout code React (`src/ui/`) suit quatre règles écrites, **pour l'agent
@@ -86,23 +108,6 @@ lit ses propres données du store ; un module qui persiste ou pilote le moteur
 ne vit pas dans `src/ui/`. Adoptées le 2026-09-23 après un verdict sans appel
 de l'utilisateur sur l'état du dossier (« la qualité du code React est
 ignoble ») : ce n'est pas une préférence de style, c'est le niveau attendu.
-
-## TypeSafe (Jev) — écarté du jeu (2026-09-20)
-
-Le plugin `typesafe-ai` donne accès à `jev-1.13.0` : un modèle qui ne génère
-rien, il répond à des questions typées sur du texte (`Choice`, `Noul`,
-`Score`) par un appel réseau. **Il n'a pas sa place dans le jeu**, et trois
-invariants l'interdisent, chacun suffisant : un appel réseau est asynchrone
-alors que le pas fixe et le rendu passent par la frontière synchrone stricte
-(#1, #11) ; le rejeu d'input exige un déroulé identique à entrées identiques,
-or les probabilités du modèle ne sont pas déterministes (#12) ; et la clé
-d'API partirait dans le bundle client. Ça vaut aussi pour les répliques du
-héros — elles restent écrites, et tirées par le RNG déterministe.
-
-Restait l'outillage hors-jeu (garde-fou de satire sur les marques inventées,
-pré-tri des licences à confirmer, triage des retours de playtest) : **écarté
-par l'utilisateur le 2026-09-20**. Aucune clé, aucune dépendance, aucun appel
-dans le dépôt.
 
 ## Conventions de nommage glTF
 
@@ -142,7 +147,8 @@ Custom properties Blender lues sur un `use_*` (jalon N7) : `target` (nom du
 `target`), `message` (texte d'une porte LIBRE — `target` sans `requires` : le
 photomaton du secret 1, la porte coupe-feu ; le sens unique d'une porte tient à
 la place de son `use_*`, hors de portée depuis l'autre côté), `soin` (PV d'une
-trousse), `munitions` (recharge de pistolet), `perk` et `prix` (une BORNE de
+trousse), `munitions` (recharge de pistolet), `cartouches` (de pompe) et
+`fusees` (de pistolet de détresse) — une seule des trois par boîte —, `perk` et `prix` (une BORNE de
 sponsor : le perk vendu et son prix en euros, les deux requis,
 [ADR 0040](docs/decisions/0040-bornes-et-perks.md)) et `aliment` (chantier « Les
 coulisses », VARIANTE de `soin` — `donut`/`sandwich`/`jambon`/`poulet`/`pizza`,
@@ -203,42 +209,13 @@ lieu d'un log. Détail : [`tools/blender/README.md`](tools/blender/README.md).
   jetable.
 - **Mesurer en jeu, vérifier le dépôt** : `pnpm probe` rend en un JSON les draw
   calls de `tools/probe/poses.json` (Chrome headless, ~15 s ; `-- --pose x,y,z,cap`
-  pour un point) ; `pnpm verify` = typecheck +
-  tests, sortie réduite aux échecs (`-- --level`, `-- --docs` en plus).
+  pour un point) ; `pnpm verify` = typecheck + lint +
+  tests, sortie réduite aux échecs (`-- --format`, `-- --level`, `-- --docs` en plus).
+  Lint = Oxlint (`.oxlintrc.json`) : **erreur = garde-fou propre** (invariants #11/#12,
+  pas de `any`, pas de barrel, pas de `console.log`), **avertissement = dette**
+  plafonnée par `options.maxWarnings` — un nouvel avertissement casse `pnpm check`,
+  et le plafond se baisse quand on en corrige. Formatage = Oxfmt (`pnpm format`).
 - **Économie du direct** : `pnpm economy` relève le portefeuille sur trois
   parties types simulées (`-- --toutes` pour les variantes A/B/C et les trois
   difficultés) ; en jeu, `cassandre.economie.appliquer("A")` met une variante
   à l'essai et `cassandre.economie.journal()` rend les dons et achats réels.
-
-## Phase courante
-
-**v1.0.0 livrée le 2026-10-02** (MVP, open source MIT — `LICENSE`,
-`CHANGELOG.md`). Les coulisses du niveau v2 sont construites ; leur fiche de
-travail reste dans [`docs/assets/plan-coulisses.md`](docs/assets/plan-coulisses.md)
-et son [board de références](docs/assets/board-coulisses.md).
-Les plans de travail du niveau v2 et de la documentation ont été retirés du
-dépôt le 2026-10-02 (commit `4e88907`) ; ils restent lisibles dans
-l'historique (`git show 4e88907^:PLAN_NIVEAU_V2.md`, idem
-`PLAN_DOCUMENTATION.md`).
-
-**v1.2 « Les sponsors » : tous les lots livrés le 2026-10-04, en attente du
-playtest de l'utilisateur** — bornes et perks, explosifs, Rampant et Vigile,
-trois difficultés, trois rencontres, économie équilibrée par relevé simulé
-(variante B en place, choix A/B/C ouvert). Compte rendu daté :
-[`docs/journal/les-sponsors-2026-10.md`](docs/journal/les-sponsors-2026-10.md).
-
-**v1.1 « Le live »** (depuis le 2026-10-03) : l'histoire d'abord.
-Le plan de travail est [`PLAN_SUITE.md`](PLAN_SUITE.md), découpé en lots
-autonomes (A0-A8 pour la v1.1, B1-B8 pour la v1.2) ; son tableau de suivi dit
-où en est chaque lot. La bible d'histoire est
-[`docs/2-fonctionnel/histoire.md`](docs/2-fonctionnel/histoire.md) : héros
-sans nom civil (pseudo = la chaîne, « le Réveil »), enseigne Hyper Varan,
-donateur mystère lié à la plateforme, victoire amère, **pas de second niveau
-dans un magasin**. Les images des panneaux sont générées par l'utilisateur à
-partir de `assets_src/panneaux/PROMPTS.md`.
-
-Les sons sont générés avec ElevenLabs ou synthétisés (`tools/audio/`) ; la
-mention ElevenLabs du `README.md` est une condition de licence, à garder.
-L'état daté des chantiers livrés et des retours est conservé dans
-[`docs/journal/README.md`](docs/journal/README.md).
-

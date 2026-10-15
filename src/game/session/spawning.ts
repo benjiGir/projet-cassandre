@@ -7,7 +7,7 @@ import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { RaycastService } from "../../physics/raycast";
 import { GROUP, interactionGroups } from "../../physics/world";
 import { BillboardSprite } from "../../render/sprites/billboard";
-import { enemyHumanAtlas, enemySpriteQuad } from "../../render/sprites/enemySprites";
+import { enemyHumanAtlas, enemySpriteLayout, enemySpriteQuad } from "../../render/sprites/enemySprites";
 import { HUMAN_SPRITE_MINIMUM_LIGHT } from "../../render/sprites/enemySkinConfig";
 import {
   dressAmmoPickup,
@@ -24,11 +24,14 @@ import { VitreSystem } from "../level/interactions/vitres";
 import { SanitaireSystem } from "../level/sanitaires/sanitaires";
 import { EcranSystem } from "../level/interactions/ecrans";
 import { CameraViewSystem } from "../level/interactions/cameras";
-import { warmShaderDouches } from "../level/sanitaires/doucheShader";
+import { warmTrainModel } from "../../render/environment/metro/warmTrainModel";
+import { warmShowerShader } from "../level/sanitaires/doucheShader";
+import { warmLevelMirrors } from "../../render/environment/warmLevelMirrors";
+import { suspendPreviousFountainWater, warmFountainWater } from "../../render/environment/fountain/warmFountainWater";
 import { RenderService } from "../../render/pipeline/renderService";
-import { Suit } from "../entities/suit/suit";
+import type { Suit } from "../entities/suit/suit";
 import type { SuitKind } from "../entities/suit/suitConfig";
-import { Director } from "../entities/director/director";
+import type { Director } from "../entities/director/director";
 import { directorConfig } from "../entities/director/directorConfig";
 import { createLevelSession, type LevelSession } from "../level/loading/hotReload";
 import { loadLevelSpaces } from "../level/loading/loadLevelSpaces";
@@ -37,17 +40,25 @@ import { LEVEL_EVENTS } from "./progression/levelEvents";
 import { readLevelScript } from "./progression/levelScriptSetup";
 import { reportLoading, letBrowserPaint } from "../../core/loading/loadingProgress";
 import { PathfindingService } from "../level/navigation/pathfinding";
+import type { NavGraph } from "../level/navigation/pathfindingTypes";
+import type { PhysicsWorld } from "../../physics/world";
 import { navGraphStats } from "../level/navigation/navGraph";
+import { TrainLevelError } from "../level/trains/trainLevelData";
+import { auditTrainSafety } from "../level/trains/trainSafety";
+import { excludeTrainRails } from "../level/trains/trainNavigation";
 import { useGameStore } from "../hud/state";
-import { type GameSession } from "./gameSession";
-import { type PersistentEngine } from "./gameEngine";
+import type { GameSession } from "./gameSession";
+import type { PersistentEngine } from "./gameEngine";
 
 // see: docs/archive/systems-rendu.md#éclairage-des-sprites
 const ENEMY_SPRITE_NORMAL_TILT = Math.PI / 4;
 
 // see: docs/archive/systems-session.md#spawn-et-chargement-de-niveau
 /** Planche de sprites d'une espèce — le seul endroit qui associe les deux. */
-export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet">, kind: SuitKind) {
+export function suitSheetFor(
+  engine: Pick<PersistentEngine, "suitSheet" | "rampantSheet" | "vigileSheet" | "controllerSheet">,
+  kind: SuitKind,
+) {
   switch (kind) {
     case "costard":
       return engine.suitSheet;
@@ -55,6 +66,9 @@ export function suitSheetFor(engine: Pick<PersistentEngine, "suitSheet" | "rampa
       return engine.rampantSheet;
     case "vigile":
       return engine.vigileSheet;
+    case "controleur":
+    case "chef_brigade":
+      return engine.controllerSheet;
     default:
       return kind satisfies never;
   }
@@ -78,9 +92,15 @@ export function spawnSuitAt(
   // posent sur son bas, offset du KCC compris.
   const sheet = suitSheetFor(engine, kind);
   const cfg = suit.cfg;
-  const atlas = kind === "rampant" ? sheet.atlases.humain : enemyHumanAtlas(sheet, suit.appearanceIndex);
+  const atlas =
+    kind === "chef_brigade"
+      ? (sheet.atlases.chef ?? sheet.atlases.humain)
+      : kind === "rampant"
+        ? sheet.atlases.humain
+        : enemyHumanAtlas(sheet, suit.appearanceIndex);
   const sprite = new BillboardSprite(engine.scene, atlas, {
     rows: sheet.rows,
+    layout: enemySpriteLayout(sheet, atlas),
     normalTilt: ENEMY_SPRITE_NORMAL_TILT,
     minimumLight: kind === "rampant" ? 0 : HUMAN_SPRITE_MINIMUM_LIGHT,
     ...enemySpriteQuad(sheet, cfg.capsuleHalfHeight + cfg.capsuleRadius + cfg.colliderOffset),
@@ -110,7 +130,9 @@ export function spawnDirectorAt(
   const sheet = engine.directorSheet;
   const sprite = new BillboardSprite(engine.scene, sheet.atlases.humain, {
     rows: sheet.rows,
+    layout: enemySpriteLayout(sheet, sheet.atlases.humain),
     normalTilt: ENEMY_SPRITE_NORMAL_TILT,
+    minimumLight: HUMAN_SPRITE_MINIMUM_LIGHT,
     ...enemySpriteQuad(
       sheet,
       directorConfig.capsuleHalfHeight + directorConfig.capsuleRadius + directorConfig.colliderOffset,
@@ -175,27 +197,38 @@ export function loadGltfLevel(
       // `main.ts` se partage ce qui l'encadre.
       onProgress: (fraction) => reportLoading("Chargement du niveau", 0.3 + fraction * 0.55),
       prepare: async (handle, info) => {
+        const previousBlockout = session.gltfLevelSession?.current?.metroBlockout?.snapshot();
         // Le glTF est là mais tout ce qui suit est SYNCHRONE et bloque : on
         // annonce l'étape avant de la commencer pour laisser React l'afficher.
         reportLoading("Construction du décor et des portes", 0.86);
         const doorSystem = new DoorSystem(handle.doors);
-        const autoColliders = doorSystem.autoGroupColliders;
+        const autoColliders = [
+          ...doorSystem.autoGroupColliders,
+          ...(handle.metroBlockout
+            ? handle.doors.filter((door) => door.name === "door_n5_tunnel").map((door) => door.collider)
+            : []),
+        ];
         for (const collider of autoColliders) collider.setEnabled(false);
 
         reportLoading("Cuisson du graphe de navigation", 0.92);
         const navGraphBounds = new THREE.Box3().setFromObject(handle.root);
         session.physics.refreshSceneQueries();
+        if (handle.trains) {
+          handle.trains.setDifficulty(session.difficulty);
+          const safety = runGameplaySync(auditTrainSafety(session.physics, handle.trains.data, handle.trains.config));
+          console.info(`[trains] lisibilité : ${safety.samples} points contrôlés.`);
+        }
         let navGraph;
         try {
-          navGraph = runGameplaySync(
-            PathfindingService.use((pf) => pf.bake(session.physics, navGraphBounds)),
-          );
+          navGraph = bakeNavGraph(session.physics, navGraphBounds);
+          if (handle.trains)
+            excludeTrainRails(navGraph, handle.trains.data.navigationZones, handle.trains.data.crossings);
         } finally {
           for (const collider of autoColliders) collider.setEnabled(true);
         }
 
         // Les portes déjà déverrouillées restent ouvertes après hot reload.
-        for (const unlockedName of session.unlockedDoors) {
+        for (const unlockedName of session.run.unlockedDoors) {
           doorSystem.open(unlockedName, session.player.position, { silent: true });
         }
 
@@ -213,10 +246,15 @@ export function loadGltfLevel(
         const cardPickupBillboards: CardPickupBillboard[] = [];
         for (const useObject of handle.useObjects) {
           if (useObject.grantsCard) {
-            cardPickupBillboards.push(dressCardPickup(
-              useObject.object, useObject.grantsCard, groundBelow(session, useObject.position), engine.cardPickupTextures,
-            ));
-            if (session.cards.has(useObject.grantsCard)) useObject.object.visible = false;
+            cardPickupBillboards.push(
+              dressCardPickup(
+                useObject.object,
+                useObject.grantsCard,
+                groundBelow(session, useObject.position),
+                engine.cardPickupTextures,
+              ),
+            );
+            if (session.run.cards.has(useObject.grantsCard)) useObject.object.visible = false;
             continue;
           }
           if (useObject.heals !== null) {
@@ -226,7 +264,12 @@ export function loadGltfLevel(
             continue;
           }
           if (useObject.ammo !== null) {
-            dressAmmoPickup(useObject.object, groundBelow(session, useObject.position), pickupResources);
+            dressAmmoPickup(
+              useObject.object,
+              groundBelow(session, useObject.position),
+              pickupResources,
+              useObject.ammoWeapon,
+            );
             continue;
           }
           const weapon =
@@ -236,7 +279,9 @@ export function loadGltfLevel(
                 ? "pistol"
                 : useObject.name === "use_shotgun"
                   ? "shotgun"
-                  : null;
+                  : useObject.name === "use_flare"
+                    ? "flare"
+                    : null;
           if (!weapon) continue;
           weaponPickupBillboards.push(
             dressWeaponPickup(useObject.object, weapon, groundBelow(session, useObject.position), pickupResources),
@@ -244,14 +289,21 @@ export function loadGltfLevel(
         }
 
         const script = readLevelScript(
-          handle.triggers, handle.spawnSuits, handle.ecrans.map((ecran) => ecran.name), LEVEL_EVENTS,
+          handle.triggers,
+          handle.spawnSuits,
+          handle.ecrans.map((ecran) => ecran.name),
+          session.choice.scenarios ?? LEVEL_EVENTS,
           handle.doors.map((door) => door.name),
+          handle.trains?.data.lanes,
         );
+        if (handle.trains && script.problems.length > 0)
+          throw new TrainLevelError({ message: script.problems.join("\n") });
         for (const problem of script.problems) console.error(`[level] ${problem}`);
         const planSpaces = (await loadLevelSpaces(name)) ?? [];
-        const levelSpaces = planSpaces.length + script.placeSpaces.length > 0
-          ? sortLevelSpaces([...planSpaces, ...script.placeSpaces])
-          : null;
+        const levelSpaces =
+          planSpaces.length + script.placeSpaces.length > 0
+            ? sortLevelSpaces([...planSpaces, ...script.placeSpaces])
+            : null;
 
         const navStats = navGraphStats(navGraph);
         console.info(
@@ -275,36 +327,70 @@ export function loadGltfLevel(
 
         reportLoading("Préparation des effets d’eau", 0.96);
         if (info.isFirstLoad && !engine.flow.isPlaying()) await letBrowserPaint();
-        lightPool.update(info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position);
-        await warmShaderDouches(
-          engine.renderer, engine.scene, engine.camera, handle.root, session.gltfLevelSession?.current?.root,
+        lightPool.update(
+          info.isFirstLoad ? (handle.spawnPlayer?.position ?? session.player.position) : engine.camera.position,
         );
-        reportLoading("Préparation des effets", 0.97);
-        await warmFxShaders(engine, session.gltfLevelSession?.current?.root);
+        const previousRoot = session.gltfLevelSession?.current?.root;
+        const previousParent = previousRoot?.parent;
+        const restoreFountain = suspendPreviousFountainWater(previousRoot);
+        try {
+          previousRoot?.removeFromParent();
+          engine.fx.releaseShaderPrograms();
+          await warmShowerShader(engine.renderer, engine.scene, engine.camera, handle.root, previousRoot);
+          await warmLevelMirrors(engine.renderer, engine.scene, engine.camera, handle.root, (view) =>
+            engine.heroReflection.prepareWarmup(view),
+          );
+          if (handle.fountainWater)
+            await warmFountainWater(handle.fountainWater, engine.renderer, engine.scene, engine.camera, previousRoot);
+          if (handle.trains)
+            await warmTrainModel(
+              engine.renderer,
+              engine.scene,
+              engine.camera,
+              handle.trains.presentation.warmMeshes,
+              previousRoot,
+            );
+          reportLoading("Préparation des effets", 0.97);
+          await warmFxShaders(engine, previousRoot);
+        } finally {
+          if (previousRoot && previousParent) previousParent.add(previousRoot);
+          restoreFountain();
+        }
 
         return () => {
           // Toutes les affectations de session restent dans ce commit : tant
           // que la préparation n'est pas intégralement terminée, l'ancien
           // niveau et ses systèmes constituent encore un ensemble cohérent.
           engine.fx.clearWaterJets();
-          session.currentNavGraph = navGraph;
-          session.levelSpaces = levelSpaces;
-          session.placeLines = script.placeLines;
-          session.scriptTriggers = script.triggers;
-          session.doorSystem = doorSystem;
-          session.vitreSystem = vitreSystem;
-          session.sanitaireSystem = sanitaireSystem;
-          session.ecranSystem = ecranSystem;
-          session.cameraView = cameraView;
-          session.lightPool = lightPool;
-          session.propSystem = propSystem;
-          session.weaponPickupBillboards = weaponPickupBillboards;
-          session.cardPickupBillboards = cardPickupBillboards;
+          session.level = {
+            navGraph,
+            spaces: levelSpaces,
+            placeLines: script.placeLines,
+            scriptTriggers: script.triggers,
+            lightPool,
+            propSystem,
+            doorSystem,
+            vitreSystem,
+            sanitaireSystem,
+            ecranSystem,
+            cameraView,
+            weaponPickupBillboards,
+            cardPickupBillboards,
+            secretsTotal: handle.stats.secretCount,
+          };
+          handle.metroBlockout?.bind(doorSystem, previousBlockout);
+          session.suitManager.canChargeTo = handle.trains
+            ? (position) => handle.trains!.canEnemyChargeTo(position)
+            : undefined;
 
           // Seul le TOUT PREMIER chargement DE CETTE SESSION déplace le joueur
           // — un hot reload ne doit JAMAIS respawn (voir `hotReload.ts`).
           if (info.isFirstLoad && handle.spawnPlayer) {
-            session.player.spawn(handle.spawnPlayer.position.x, handle.spawnPlayer.position.y, handle.spawnPlayer.position.z);
+            session.player.spawn(
+              handle.spawnPlayer.position.x,
+              handle.spawnPlayer.position.y,
+              handle.spawnPlayer.position.z,
+            );
             engine.look.yaw = handle.spawnPlayer.yaw;
             engine.look.pitch = 0;
           }
@@ -322,8 +408,7 @@ export function loadGltfLevel(
             }
           }
 
-          session.secretsTotal = handle.stats.secretCount;
-          useGameStore.getState().setSecretsTotal(session.secretsTotal);
+          useGameStore.getState().setSecretsTotal(session.level.secretsTotal);
         };
       },
     });
@@ -336,10 +421,15 @@ export function loadGltfLevel(
 }
 
 export function debugFindPath(session: GameSession, from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3[] | null {
-  const graph = session.currentNavGraph;
+  const graph = session.level.navGraph;
   if (!graph) return null;
   const result = runGameplaySync(
     PathfindingService.use((pf) => pf.findPath(graph, from, to)).pipe(Effect.catch(() => Effect.succeed(null))),
   );
   return result ? Array.from(result) : null;
+}
+
+/** Cuit le graphe de navigation des ennemis sur une zone du monde physique. */
+export function bakeNavGraph(physics: PhysicsWorld, bounds: THREE.Box3): NavGraph {
+  return runGameplaySync(PathfindingService.use((pathfinding) => pathfinding.bake(physics, bounds)));
 }

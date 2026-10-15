@@ -2,12 +2,12 @@
 title: Contrôles et bindings
 tags: [reference, input]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-11
 ---
 
 # Contrôles et bindings
 
-Les actions de gameplay sont définies dans `src/core/input/input.ts`. Les touches de débogage sont séparées et ne peuvent pas être remappées depuis cette API.
+Les actions de gameplay sont définies dans `src/core/input/inputTypes.ts` (type `GameAction`) et liées à leurs touches par défaut dans `src/core/input/inputBindings.ts` (`DEFAULT_BINDINGS`). Les touches de débogage sont séparées et ne peuvent pas être remappées depuis cette API.
 
 ## Contrôles joueur par défaut
 
@@ -23,9 +23,17 @@ Les actions de gameplay sont définies dans `src/core/input/input.ts`. Les touch
 | Pied-de-biche | `Digit1` | 1 |
 | Pistolet | `Digit2` | 2 |
 | Pompe | `Digit3` | 3 |
+| Pistolet de détresse | `Digit4` | 4 |
+| Arme précédente / suivante | Molette verticale | Haut / bas |
 | Utiliser | `KeyE` | E |
 
 Le jeu lit `KeyboardEvent.code`, qui désigne la position physique de la touche. Le déplacement par défaut convient donc à ZQSD sur un clavier AZERTY. Le libellé de rebinding est dérivé du code QWERTY et affiche W/A, même si le capuchon physique porte Z/Q.
+
+La molette agit seulement lorsque le pointeur est verrouillé dans le jeu.
+Elle n’est pas remappable. Chaque événement vertical vaut un pas dans le
+carrousel ; les pas s’accumulent jusqu’à leur consommation au pas fixe.
+Les mouvements horizontaux et le zoom Ctrl + molette restent ignorés par le
+jeu. Une sortie du verrouillage efface les pas en attente.
 
 ## Persistance et remappage
 
@@ -48,4 +56,4 @@ Ces entrées ne sont pas des actions de gameplay. Elles sont disponibles uniquem
 
 F9/F10 enregistrent les entrées du joueur, pas la totalité de l'état du monde. Un enregistrement ne fige pas les décisions des ennemis, l'état des objets ou les variations d'environnement.
 
-Source du tableau : `src/core/input/input.ts` et `src/game/loop/devGameplayInput.ts`. Pour le contrat de capture et de rejeu, voir [Rejeu et déterminisme](../4-technique/rejeu-et-determinisme.md).
+Sources du tableau : `src/game/loop/devGameplayInput.ts` (F8, F9, F10), `src/game/loop/updateFx.ts` (V, B), `src/ui/dev/tuning/TuningPanel/TuningPanel.tsx` (accent grave, `TOGGLE_KEY`). Pour le contrat de capture et de rejeu, voir [Rejeu et déterminisme](../4-technique/rejeu-et-determinisme.md).

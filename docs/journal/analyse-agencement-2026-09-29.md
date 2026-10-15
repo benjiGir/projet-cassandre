@@ -58,10 +58,10 @@ avec un sondage des sols tous les 0,5 m. Il ne signale aucun trou de sol, bord
 ouvert sur le vide, chevauchement au-delà du seuil de l’outil, objet flottant ou
 point d’apparition encombré. Ce résultat ne mesure pas le confort en combat.
 
-Vues consultées : [espaces publics](../assets/agencement-2026-09-29/01-public.jpg),
-[coulisses](../assets/agencement-2026-09-29/02-coulisses.jpg),
-[annexes](../assets/agencement-2026-09-29/03-annexes.jpg) et
-[vues au sol](../assets/agencement-2026-09-29/04-au-sol.jpg).
+Vues consultées : espaces publics,
+coulisses,
+annexes et
+vues au sol.
 
 ### Mise en œuvre par étapes
 
@@ -94,12 +94,12 @@ textures, positions et propriétés des objets préexistants sont conservées.
 L’ajout représente 21 meshes, 660 sommets exportés et environ 39 ko. Le
 contrôle géométrique retrouve les 841 proxies et aucun défaut signalé.
 
-Vues de contrôle Blender : [hub vers la réserve](../assets/agencement-etape-1-2026-09-30/hub_sol.png),
-[retour dans le hub](../assets/agencement-etape-1-2026-09-30/hub_retour.png),
-[rampe du parking](../assets/agencement-etape-1-2026-09-30/souterrain_sol.png),
-[relais du parking](../assets/agencement-etape-1-2026-09-30/souterrain_retour.png),
-[arrivée dans le couloir](../assets/agencement-etape-1-2026-09-30/c_bu_sol.png) et
-[accès aux bureaux](../assets/agencement-etape-1-2026-09-30/c_bu_retour.png).
+Vues de contrôle Blender : hub vers la réserve,
+retour dans le hub,
+rampe du parking,
+relais du parking,
+arrivée dans le couloir et
+accès aux bureaux.
 Ces vues emploient une lumière de contrôle ; elles ne confirment pas la
 lisibilité sous l’éclairage du jeu.
 
@@ -128,15 +128,15 @@ sommets exportés reste identique.
 Le contrôle géométrique retrouve les 841 proxies et ne signale aucun trou
 de sol, bord ouvert, chevauchement, objet flottant ou spawn encombré.
 
-Vues du dessus : [parking](../assets/agencement-etape-2-2026-09-30/parking_ext.png),
-[caisses](../assets/agencement-etape-2-2026-09-30/caisses.png) et
-[électroménager](../assets/agencement-etape-2-2026-09-30/electro.png).
-Vues à hauteur du joueur : [approche du magasin](../assets/agencement-etape-2-2026-09-30/parking_ext_sol.png),
-[passage entre caisses](../assets/agencement-etape-2-2026-09-30/caisses_sol.png),
-[bout d’îlot](../assets/agencement-etape-2-2026-09-30/electro_sol.png),
-[pile près de la voiture](../assets/agencement-etape-2-2026-09-30/parking_ext_groupe.png),
-[réassort aux caisses](../assets/agencement-etape-2-2026-09-30/caisses_groupe.png) et
-[palette d’électroménager](../assets/agencement-etape-2-2026-09-30/electro_groupe.png).
+Vues du dessus : parking,
+caisses et
+électroménager.
+Vues à hauteur du joueur : approche du magasin,
+passage entre caisses,
+bout d’îlot,
+pile près de la voiture,
+réassort aux caisses et
+palette d’électroménager.
 Ces rendus de contrôle ne remplacent pas une traversée avec combats.
 
 **Étape 3 — compacteur et planque.** La presse verticale devient le point
@@ -187,17 +187,17 @@ d’avertissements qu’avant cette passe ; les comptes de meshes sans bake et
 de matériaux augmentent. Le mode strict reste donc non conforme. Le coût
 en lots de dessin et l’accès au secret restent à mesurer dans le jeu.
 
-Vues de contrôle : [compacteur du dessus](../assets/agencement-etape-3-2026-09-30/compacteur.png),
-[planque du dessus](../assets/agencement-etape-3-2026-09-30/secret4.png),
-[presse depuis l’entrée](../assets/agencement-etape-3-2026-09-30/compacteur_sol.png),
-[indice du secret](../assets/agencement-etape-3-2026-09-30/compacteur_retour.png),
-[coin télé](../assets/agencement-etape-3-2026-09-30/secret4_sol.png) et
-[coin canapé](../assets/agencement-etape-3-2026-09-30/secret4_retour.png).
-Silhouettes contrôlées : [presse](../assets/agencement-etape-3-2026-09-30/presse_silhouette.png),
-[benne](../assets/agencement-etape-3-2026-09-30/benne_silhouette.png) et
-[canapé](../assets/agencement-etape-3-2026-09-30/canape_silhouette.png).
-Les aperçus [du projecteur](../assets/agencement-etape-3-2026-09-30/compacteur_ambiance.png)
-et [de la télé](../assets/agencement-etape-3-2026-09-30/secret4_ambiance.png)
+Vues de contrôle : compacteur du dessus,
+planque du dessus,
+presse depuis l’entrée,
+indice du secret,
+coin télé et
+coin canapé.
+Silhouettes contrôlées : presse,
+benne et
+canapé.
+Les aperçus du projecteur
+et de la télé
 simulent les sources locales dans Blender, avec un réglage d’énergie de
 présentation ; ils ne sont pas des captures de l’éclairage en jeu.
 
@@ -214,7 +214,7 @@ Deux ensembles ponctuent les accès existants du couloir de 56 m :
   En face, un chariot bleu regroupe un carton et deux appareils en retour.
   Les petits appareils reprennent la bibliothèque d’électroménager existante.
 
-L’intention reprend les usages du [board des coulisses](../assets/board-coulisses.md) :
+L’intention reprend les usages du [board des coulisses](../6-reference/references-coulisses.md) :
 maintenance du froid et dépôt d’appareils. Les bandes et enseignes suivent le
 langage graphique de l’étape 1. Les ouvertures, les portes et leurs paramètres
 ne changent pas. Aucun nouvel interactif ou éclairage n’est ajouté. Une bande
@@ -240,16 +240,16 @@ propriétés de gameplay sont conservés. L’export ajoute 40 meshes, 1 868 som
 et environ 91 ko.
 
 Vues à 640 × 360 avec le rendu matériel Cassandre, à 1,6 m :
-[approche sud](../assets/agencement-etape-4-2026-09-30/approche_sud.png),
-[approche nord](../assets/agencement-etape-4-2026-09-30/approche_nord.png),
-[maintenance](../assets/agencement-etape-4-2026-09-30/maintenance.png) et
-[SAV](../assets/agencement-etape-4-2026-09-30/sav.png).
-Comparaisons avant : [sud](../assets/agencement-etape-4-2026-09-30/approche_sud_avant.png),
-[nord](../assets/agencement-etape-4-2026-09-30/approche_nord_avant.png).
-Le [dessus du couloir](../assets/agencement-etape-4-2026-09-30/couloir_dessus.png)
+approche sud,
+approche nord,
+maintenance et
+SAV.
+Comparaisons avant : sud,
+nord.
+Le dessus du couloir
 permet de suivre l’axe libre. Les silhouettes de conception
-[de l’escabeau](../assets/agencement-etape-4-2026-09-30/escabeau_silhouette.png)
-et [du chariot](../assets/agencement-etape-4-2026-09-30/chariot_silhouette.png)
+de l’escabeau
+et du chariot
 ont été examinées avant les derniers ajustements des roulettes et des panneaux.
 Ces images sont des aperçus Blender, pas des captures du jeu. La circulation
 avec les portes ouvertes, la lisibilité en mouvement et le coût en lots de
@@ -293,20 +293,20 @@ les mêmes compositions. La recette `cassandre.compose_public(preview=…)`
 l’export avant la mise à jour et passe par `cassandre.export()`.
 
 Vues à 640 × 360, à 1,6 m :
-[presse](../assets/agencement-etape-5-2026-09-30/galerie_presse.png),
-[réparation](../assets/agencement-etape-5-2026-09-30/galerie_reparation.png),
-[repas](../assets/agencement-etape-5-2026-09-30/cafeteria_repas.png),
-[pause](../assets/agencement-etape-5-2026-09-30/cafeteria_pause.png),
-[cola](../assets/agencement-etape-5-2026-09-30/rayons_cola.png) et
-[réassort](../assets/agencement-etape-5-2026-09-30/rayons_reassort.png).
-Comparaisons avant : [presse](../assets/agencement-etape-5-2026-09-30/galerie_presse_avant.png),
-[repas](../assets/agencement-etape-5-2026-09-30/cafeteria_repas_avant.png) et
-[cola](../assets/agencement-etape-5-2026-09-30/rayons_cola_avant.png).
-Dessus contrôlés : [galerie](../assets/agencement-etape-5-2026-09-30/galerie_dessus.png),
-[cafétéria](../assets/agencement-etape-5-2026-09-30/cafeteria_dessus.png) et
-[rayons](../assets/agencement-etape-5-2026-09-30/rayons_dessus.png).
-Silhouettes : [présentoir](../assets/agencement-etape-5-2026-09-30/presse_silhouette.png)
-et [plateau](../assets/agencement-etape-5-2026-09-30/repas_silhouette.png).
+presse,
+réparation,
+repas,
+pause,
+cola et
+réassort.
+Comparaisons avant : presse,
+repas et
+cola.
+Dessus contrôlés : galerie,
+cafétéria et
+rayons.
+Silhouettes : présentoir
+et plateau.
 Les rendus Workbench servent à juger la composition et les textures ; ils ne
 représentent pas l’éclairage en jeu. Le pipeline restaure les réglages de rendu
 et la visibilité après chaque vue.
@@ -330,7 +330,7 @@ L’axe entre les meubles mesure 5,65 m, l’entrée et l’approche de la sorti
 restent ouvertes. Deux meshes et deux proxies cuboid sont ajoutés uniquement
 au candidat `renders/_cassandre/direction_covers.blend`. La recette
 `cassandre.direction_covers()` reproduit la variante, les vues avant/après et
-les [mesures de l’essai](../assets/agencement-etape-6-2026-09-30/mesures.json).
+les mesures de l’essai.
 
 L’examen du gameplay révèle une limite à la recommandation initiale : aucune
 action d’accroupissement n’existe dans `src/core/input/input.ts`, les yeux du joueur
@@ -348,9 +348,9 @@ combat et une éventuelle variante avec des volumes plus hauts restent à
 évaluer en jeu. La source et le GLB livré ont gardé leurs empreintes SHA-256
 pendant l’essai. Aucun nouveau couvert n’est exporté.
 
-Vues de contrôle Blender : [comparaison](../assets/agencement-etape-6-2026-09-30/comparaison.png),
-[plan du candidat](../assets/agencement-etape-6-2026-09-30/dessus_candidat.png)
-et [silhouette du meuble](../assets/agencement-etape-6-2026-09-30/archives_silhouette.png).
+Vues de contrôle Blender : comparaison,
+plan du candidat
+et silhouette du meuble.
 Les rendus utilisent la lumière de contrôle Workbench ; ils ne représentent
 pas l’éclairage du jeu. Cette étude ne clôt pas le jalon N10.
 
@@ -362,8 +362,8 @@ l’ensemble dans le générateur et `cassandre.orient_office_screens()` appliqu
 la correction aux instances et aux quatre modèles locaux de bibliothèque.
 Les tables, sièges et colliders gardent leur place. La source Blender et le
 GLB du jeu sont mis à jour après sauvegarde. Vues de contrôle :
-[avant](../assets/bureaux-ecrans-2026-09-30/avant.png) et
-[corrigées](../assets/bureaux-ecrans-2026-09-30/corrige.png), depuis chaque
+avant et
+corrigées, depuis chaque
 fauteuil, sous la lumière de contrôle Workbench.
 
 ## Rejeté et raison

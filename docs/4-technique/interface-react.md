@@ -2,7 +2,7 @@
 title: Interface React
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-11
 ---
 
 # Interface React
@@ -21,7 +21,7 @@ Il ne pilote ni la boucle, ni Rapier, ni le chargement du niveau.
 - `src/game/hud/state.ts` contient le store Zustand ; `src/game/hud/hudTypes.ts` porte les contrats exposés à React.
 - `src/ui/hud/Hud/Hud.tsx` compose les widgets du HUD sans s'abonner lui-même au store.
 - `src/ui/hud/widgets/` regroupe les widgets qui lisent leurs propres données.
-- `src/ui/screens/` contient les écrans de pause, mort, chargement et fin de niveau.
+- `src/ui/screens/` contient les écrans de pause, mort, chargement, fin de niveau et l'écran de secours.
 - `src/ui/dev/` contient les panneaux de debug et de réglage réservés au développement.
 - `src/app/navigation/bootChoice.ts` gère le choix avant le montage de l'arbre React `App`.
 - [Structure React](../6-reference/react-structure.md) fixe l'organisation des composants et dossiers.
@@ -83,9 +83,30 @@ stateDiagram-v2
 - **Le temps de jeu ne tourne pas.** `isPlayingState` ne vaut que pour `playing` : le pas fixe ignore son contenu pendant les panneaux, et le chronomètre du récapitulatif n'avance pas. Le monde physique reste vivant derrière `outro`, pas derrière `intro`.
 - **Les données passent par le store.** La couche de session pose les panneaux dans `story`, puis `StoryScreen` les affiche quand `flowState` vaut sa séquence. `StoryPanels` est la visionneuse : elle ne lit pas le store, ce qui permet au menu principal de rejouer l'intro sans partie.
 - **Avancer et passer.** Espace, Entrée ou → avancent ; Échap et le bouton « Passer » terminent la séquence. Une touche maintenue n'avance qu'une fois.
-- **Images.** `tools/textures/generate_panneaux.py` réduit chaque image brute de `assets_src/panneaux/raw/` en 640×360 et 64 couleurs, puis inscrit le panneau dans `src/game/session/presentation/storyImages.json`. Un panneau absent de cette liste garde `image: null` et affiche un aplat numéroté ; un panneau livré s'agrandit en pixels francs. Les prompts sont dans `assets_src/panneaux/PROMPTS.md`.
+- **Images.** `tools/textures/generate_panneaux.py` réduit chaque image brute de `assets_src/panneaux/raw/` en 640×360 et 64 couleurs, puis inscrit le panneau dans `src/game/session/presentation/storyImages.json`. Un panneau absent de cette liste garde `image: null` et affiche un aplat numéroté ; un panneau livré s'agrandit en pixels francs. Les prompts sont dans `assets_src/panneaux/PROMPTS.md` (magasin) et `PROMPTS_METRO.md` (métro) ; `?uiPreview=storyIntro&level=metro` affiche ceux du métro.
 
 Les overlays canvas (viseur, marqueur de touche, vue caméra) suivent `#ui-root` dans le DOM et se peignent par-dessus lui. `index.html` les masque dès qu'un `Screen` est monté.
+
+### Écran de secours
+
+Une erreur dont le jeu ne se relève pas remplace toute l'interface par
+`CrashScreen` (`src/ui/screens/crash/`), qui montre le message de l'erreur et
+ne propose qu'une sortie : recharger la page. L'écran ne lit ni le store ni le
+moteur, qui sont peut-être ce qui a cassé. `src/app/runtime/fatalError.ts`
+décide de ce qui est fatal, `src/app/navigation/showCrashScreen.ts` arrête le
+son, libère le pointeur et monte l'écran ; `main.ts` arrête la boucle.
+
+| Source | Traitement |
+|---|---|
+| Exception non rattrapée (`window` `error`), dont une exception dans la boucle | fatale |
+| Erreur de rendu React que rien ne rattrape (`onUncaughtError` de la racine) | fatale |
+| Échec du démarrage (`main()`) ou d'un changement de partie (rejouer, niveau suivant, retour au menu) | fatale, signalée à sa source par `reportFatalError` |
+| Promesse rejetée sans suite (`unhandledrejection`) | journalisée, le jeu continue : il en existe d'inoffensives (lecture audio refusée, requête annulée) |
+| Évènement d'erreur sans objet d'erreur (script d'une extension) | ignoré |
+
+Seule la première erreur compte : une boucle cassée relancerait la même à
+chaque image. L'échec du chargement d'un niveau n'est pas fatal — il garde son
+propre écran, avec « Réessayer ». Aperçu : `?uiPreview=crash`.
 
 ### Store et abonnements
 
@@ -118,6 +139,26 @@ l'effondrement visible au-dessus de la superposition opaque.
 La pose initiale et son contrat vivent dans des feuilles sans Zustand (`portraitState.ts`, `hudTypes.ts`).
 Les atlas et limites des prises de voix sont décrits dans le
 [journal du portrait](../journal/portrait-stream-2026-10.md).
+
+### Carrousel d’armes
+
+`WeaponSystem` résout la molette et les raccourcis au pas fixe. Il expose les
+armes disponibles, une révision de sélection et un délai de présentation de
+1,6 seconde (`src/game/player/weapons/weaponSelection.ts`). Ce délai ne
+conditionne jamais un tir. Le coup de pied remplace la mêlée tant que le
+pied-de-biche n’est pas ramassé. Les armes à sec restent dans la liste.
+
+`publishDebugHud` publie `weaponCarousel` au plus à 10 Hz. Le setter ignore
+les vues identiques ; les munitions restent dans les champs existants du
+store. `WeaponCarousel` lit ce contrat et ne s’affiche que pendant `playing`.
+Chaque `WeaponSlot` sélectionne sa propre réserve. Les silhouettes SVG, les
+cadres et les transitions en CSS utilisent l’unité virtuelle du HUD et
+respectent la réduction des mouvements. Aucun écouteur de molette ni timer
+React ne pilote le changement d’arme.
+
+L’aperçu `?uiPreview=weaponCarousel` conserve le bandeau à l’écran et propose
+deux boutons pour regarder les différentes armes. Il reste réservé au
+développement. Il permet de revoir le bandeau avec le reste du HUD.
 
 ### Structure des composants
 

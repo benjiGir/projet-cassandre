@@ -2,7 +2,7 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Audio runtime
@@ -14,10 +14,10 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 
 ## Fichiers
 
-- `src/core/audio/audio.ts` charge le sprite des effets, définit `SFX_TABLE` et lance les lectures ponctuelles.
+- `src/core/audio/audio.ts` charge le sprite des effets et lance les lectures ponctuelles ; la table `SFX_TABLE` vit dans `src/core/audio/audioCatalog.ts`.
 - `src/core/audio/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
-- `src/core/audio/waterAmbience.ts` gère la boucle unique des jets d'eau positionnels.
-- `src/core/audio/showerAmbience.ts` gère la boucle localisée des douches.
+- `src/core/audio/loopedAmbience.ts` est la boucle d'ambiance spatialisée : chargement, lissage, volume et panoramique.
+- `src/core/audio/waterAmbience.ts` en déclare une pour les jets d'eau, `src/core/audio/showerAmbience.ts` une pour les douches : un fichier, un volume de crête et un temps de lissage chacune.
 - `src/core/audio/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
 - `src/core/loading/assetPath.ts` construit les chemins d'assets servis par le jeu.
 - `src/game/loop/updateFx.ts` consomme les faits de présentation et met à jour les ambiances.
@@ -123,14 +123,18 @@ et le délai avant le prochain événement (`horloge`, `prochainEvenementDans`).
 ### Jet d'eau positionnel
 
 `waterAmbienceMix.ts` reçoit la position des jets et la pose de caméra.
-Il retourne un gain et un panoramique bornés, lissés ensuite par `waterAmbience.ts`.
+Il retourne un gain et un panoramique bornés, lissés ensuite par `loopedAmbience.ts`.
 Le mix atteint son niveau maximal près de la source, décroît avec la distance et devient muet au-delà de sa portée.
 Plusieurs jets additionnent leurs gains jusqu'à un plafond.
 Un seul `Howl` Web Audio est amorcé à volume nul pendant le chargement,
 avec son panoramique. Il reste en boucle : le mix ne fait ensuite que régler
 volume et pan. Sous le seuil de silence, le volume est exactement nul.
 Le module s'actualise pendant le jeu ; les écrans de menu et de fin ne produisent pas de jet audible.
-La douche suit la même préparation dans `showerAmbience.ts`.
+La douche est une seconde boucle du même module, avec ses propres réglages.
+Les réglages de volume et de panoramique attendent la lecture effective
+du son. Un fichier décodé peut encore attendre le geste utilisateur ;
+envoyer les réglages à chaque image pendant cette attente accumule une
+file Howler, qui peut déborder à la reprise du contexte audio.
 
 ### Répliques
 

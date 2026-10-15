@@ -35,6 +35,8 @@ MAX_STEP = 0.35               # autostep du character controller
 MIN_CEILING = 2.0
 MIN_PASSAGE = 1.0
 MIN_PROXY_THICKNESS = 0.1
+# Les coordonnées glTF sont en float32 ; à 400 m, une cote de 10 cm est arrondie.
+PROXY_THICKNESS_TOLERANCE = 1e-4
 MAX_THIN_RATIO = 20.0
 # Budget MESURÉ, pas supposé : 1,45 million de triangles dans le champ coûtent
 # 4,94 ms GPU sur la machine de mesure, pour une image de 16,6 ms. Les 200 000
@@ -45,11 +47,13 @@ TRI_BUDGET = 1_500_000
 
 # Collections sources, jamais exportées (voir `export_level.py`).
 SOURCE_COLLECTIONS = {"_KIT", "_LIB"}
+LOGIC_MESH_PREFIXES = ("col_", "trig_", "secret_", "nav_voie_", "traversee_train_", "refuge_train_")
 
 PREFIXES = (
     "col_box_", "col_hull_", "col_mesh_", "col_",
     "spawn_", "trig_", "door_", "use_", "secret_", "kit_", "prop_", "vitre_",
-    "sanitaire_", "ecran_", "cam_",
+    "sanitaire_", "ecran_", "cam_", "voie_", "rail_", "train_modele_",
+    "signal_train_", "nav_voie_", "traversee_train_", "refuge_train_",
 )
 
 # Extras d'un `door_*` animé — doivent rester identiques à ce que lit
@@ -101,9 +105,9 @@ def _cles_ts(chemin: str, motif: str) -> tuple[str, ...]:
 # (`evenement`), répliques qu'il peut faire dire (`replique`) et groupes
 # d'ennemis qu'un scénario réveille (`groupe` sur un `spawn_suit_*`). Un test
 # du jeu (`levelScriptSetup.test.ts`) verrouille la mise en forme lue ici.
-EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[")
+EVENEMENTS = _cles_ts("src/game/session/progression/levelEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/trains/metroTrainEvents.ts", r"^  (\w+): \[") + _cles_ts("src/game/level/blockout/metroEncounterEvents.ts", r"^  (\w+): \[")
 REPLIQUES = _cles_ts("src/game/session/presentation/heroLines.ts", r"^  (\w+): \{ text:")
-GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
+GROUPES_REVEILLES = _cles_ts("src/game/session/progression/levelEvents.ts", r'kind: "reveiller", groupe: "(\w+)"') + _cles_ts("src/game/level/blockout/metroEncounterEvents.ts", r'kind: "reveiller", groupe: "(\w+)"')
 
 # Perks vendus par les bornes (`use_*` portant `perk` et `prix`) : les clés de
 # `PERK_INFO`. Un test du jeu (`bornes.test.ts`) verrouille la mise en forme lue ici.
@@ -148,9 +152,9 @@ def check_transforms(meshes) -> None:
         if any(abs(c - 1.0) > 1e-4 for c in s):
             err(f"{o.name}: scale non appliqué {tuple(round(c, 3) for c in s)}")
 
-        # Un vantail a son origine au CENTRE de sa boîte (le loader y pose son
-        # corps, ADR 0012) : elle dépend de ses dimensions, pas de la grille.
-        if base_name(o.name).startswith("door_"):
+        # Portes et interactifs portent un centre physique ou un point d'usage,
+        # distinct du coin de construction ; voir blockout-metro.md#finition-du-contrat.
+        if base_name(o.name).startswith(("door_", "use_")):
             continue
         loc = o.location
         off = [c for c in loc if abs(c / GRID - round(c / GRID)) > 1e-3]
@@ -190,12 +194,12 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 err(f"{o.name}: 'replique' = '{replique}' n'est pas une réplique du héros "
                     "(src/game/session/presentation/heroLines.ts)")
         # `spawn_rampant_*` (lot B4), `spawn_vigile_*` (lot B6) : même liste, mêmes règles qu'un Costard.
-        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_")) and str(o.get("groupe", "")).strip():
+        if n.startswith(("spawn_suit_", "spawn_rampant_", "spawn_vigile_", "spawn_controleur_", "spawn_chef_brigade_")) and str(o.get("groupe", "")).strip():
             groupe = str(o["groupe"]).strip()
             if groupe not in GROUPES_REVEILLES:
                 err(f"{o.name}: 'groupe' = '{groupe}' n'est réveillé par aucun scénario — "
                     "cet ennemi n'apparaîtrait jamais")
-        if n.startswith("use_") and n not in {"use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2"} and not {"target", "card", "soin", "munitions", "aliment", "cameras", "perk"} & set(o.keys()):
+        if n.startswith("use_") and n not in {"use_n5_aiguillage", "use_n5_courant", "use_n5_depart", "use_n5_fin", "use_n5_raccourci", "use_pointeuse", "use_sav_sonnette", "use_douche_1", "use_douche_2", "use_flare"} and not {"target", "card", "soin", "munitions", "cartouches", "fusees", "aliment", "cameras", "perk", "train"} & set(o.keys()):
             # "target" — PAS "use_target" : c'est la custom property que
             # `loader.ts::buildUseObject` lit réellement (`extras.target`,
             # voir gltf-level-conventions). Le nom précédent ne correspondait
@@ -243,7 +247,11 @@ def check_naming(objects, kit_mode: bool = False) -> None:
                 if valeur not in LOYALTY_CARDS:
                     err(f"{o.name}: '{cle}' = '{o[cle]}' n'est pas une carte "
                         f"({', '.join(LOYALTY_CARDS)})")
-        for cle, unite in (("soin", "PV"), ("munitions", "munitions")):
+        munitions_declarees = [cle for cle in ("munitions", "cartouches", "fusees") if cle in o.keys()]
+        if n.startswith("use_") and len(munitions_declarees) > 1:
+            err(f"{o.name}: {' et '.join(repr(cle) for cle in munitions_declarees)} sur le même ramassage")
+        for cle, unite in (("soin", "PV"), ("munitions", "munitions"), ("cartouches", "cartouches"),
+                           ("fusees", "fusées")):
             if n.startswith("use_") and cle in o.keys():
                 try:
                     quantite = float(o[cle])
@@ -512,7 +520,7 @@ def check_colliders(meshes) -> Counter:
                 warn(f"{o.name}: trimesh à {len(o.data.polygons)} faces — proxy plus simple ?")
 
         dims = o.dimensions
-        if min(dims) < MIN_PROXY_THICKNESS:
+        if min(dims) + PROXY_THICKNESS_TOLERANCE < MIN_PROXY_THICKNESS:
             err(f"{o.name}: épaisseur {min(dims):.3f} m < {MIN_PROXY_THICKNESS} — risque de tunneling")
 
     if kinds["trimesh"] and kinds.total() and kinds["trimesh"] / kinds.total() > 0.15:
@@ -551,7 +559,7 @@ def check_textures() -> None:
 def check_vertex_colors(meshes) -> None:
     missing = [
         o.name for o in meshes
-        if not base_name(o.name).startswith(("col_", "trig_"))
+        if not base_name(o.name).startswith(LOGIC_MESH_PREFIXES)
         and len(o.data.color_attributes) == 0
     ]
     if missing:
@@ -560,7 +568,7 @@ def check_vertex_colors(meshes) -> None:
     # Un mur en 2 triangles ne peut pas recevoir de bake utile
     for o in meshes:
         n = base_name(o.name)
-        if n.startswith(("col_", "trig_")):
+        if n.startswith(LOGIC_MESH_PREFIXES):
             continue
         area = sum(p.area for p in o.data.polygons)
         verts = len(o.data.vertices)
@@ -580,22 +588,14 @@ def check_budget(meshes) -> int:
 
 
 # --- 8. Matériaux ------------------------------------------------------------
-def check_materials() -> None:
-    """Seuil relevé de 8 à 24 : depuis l'ADR 0023, le décor statique est fusionné
-    PAR MATÉRIAU au chargement, donc un matériau vaut un lot de dessin pour tout
-    le niveau, et non plus un par objet. Viser le matériau unique n'a plus de
-    sens ; ce qui compte est de rester loin du budget de 200 lots."""
-    n = len(bpy.data.materials)
-    if n > 24:
-        warn(f"{n} matériaux — autant de lots de dessin après fusion (ADR 0023), "
-             f"budget 200")
+def material_count(meshes) -> int:
+    """Indicateur des matières rendues ; aucun plafond depuis l'ADR 0039."""
+    return len({m for obj in meshes if not base_name(obj.name).startswith(LOGIC_MESH_PREFIXES)
+                for m in obj.data.materials if m is not None})
 
 
 # --- Rapport -----------------------------------------------------------------
-def main() -> None:
-    strict = "--strict" in sys.argv
-    kit_mode = "--kit" in sys.argv
-
+def level_objects():
     # Les collections SOURCES (kit, bibliothèque v2) ne partent pas en jeu :
     # leurs originaux ne sont ni bakés ni exportés, les valider ferait du bruit.
     # La bibliothèque range un asset par SOUS-collection : il faut descendre
@@ -610,26 +610,33 @@ def main() -> None:
             coll = stack.pop()
             sources.add(coll)
             stack.extend(coll.children)
-    objects = [o for o in bpy.context.scene.objects
-               if not any(c in sources for c in o.users_collection)]
+    return [o for o in bpy.context.scene.objects if not any(c in sources for c in o.users_collection)]
+
+
+def main() -> None:
+    strict = "--strict" in sys.argv
+    kit_mode = "--kit" in sys.argv
+    objects = level_objects()
     meshes = [o for o in objects if o.type == "MESH"]
 
     check_units()
     check_transforms(meshes)
     check_naming(objects, kit_mode)
+    from validate_trains import check_trains
+    check_trains(objects, err)
     kinds = check_colliders(meshes)
     sanitaires = check_sanitaires(objects)
     check_textures()
     check_vertex_colors(meshes)
     tris = check_budget(meshes)
-    check_materials()
+    rendered_materials = material_count(meshes)
 
     print("\n" + "=" * 62)
     print("VALIDATION — PROJET_CASSANDRE" + ("  [mode KIT]" if kit_mode else ""))
     print("=" * 62)
     print(f"  Objets            {len(objects)}  ({len(meshes)} meshes)")
     print(f"  Triangles         {tris} / {TRI_BUDGET}")
-    print(f"  Matériaux         {len(bpy.data.materials)}")
+    print(f"  Matériaux         {rendered_materials} utilisés ({len(bpy.data.materials)} datablocks)")
     print(f"  Textures          {len(project_images())}")
     print("  Colliders         " + (
         "  ".join(f"{k}:{v}" for k, v in sorted(kinds.items())) or "aucun"

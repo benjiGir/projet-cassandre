@@ -19,7 +19,10 @@ export class EnemyAppearances {
   private readonly ringMaterial = createEnemyAppearanceRingMaterial();
   private serial = 0;
 
-  constructor(private readonly scene: THREE.Scene, atlases: readonly THREE.Texture[] = []) {
+  constructor(
+    private readonly scene: THREE.Scene,
+    atlases: readonly THREE.Texture[] = [],
+  ) {
     this.placeholderAtlas.colorSpace = THREE.SRGBColorSpace;
     this.placeholderAtlas.magFilter = THREE.NearestFilter;
     this.placeholderAtlas.minFilter = THREE.NearestFilter;
@@ -66,6 +69,11 @@ export class EnemyAppearances {
   reset(): void {
     for (const sprite of this.active.keys()) this.finish(sprite);
     this.serial = 0;
+  }
+
+  releaseShaderPrograms(): void {
+    this.material.dispose();
+    this.ringMaterial.dispose();
   }
 
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {

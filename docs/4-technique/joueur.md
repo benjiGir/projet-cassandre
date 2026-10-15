@@ -2,7 +2,7 @@
 title: Joueur
 tags: [technique]
 status: stable
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Joueur
@@ -21,7 +21,7 @@ collision : [Physique](physique.md)) ; ne dessine rien (caméra et viewmodel
 posés par `interpolateVisuals`, au taux d'affichage) ; ne décide pas des
 dégâts qu'il reçoit (ennemis et `game/level/*` produisent des `HitEvent`/
 soins, `feedback.ts::applyPlayerDamage` les applique) ; ne connaît aucune
-arme (D28).
+arme.
 
 ## Fichiers
 
@@ -36,8 +36,9 @@ arme (D28).
   fixe), `presentPlayerDamage` (publication au store, taux d'affichage).
 - `src/game/session/player/fallRescue.ts` — `recordSafeGround`, `shouldRescue`,
   `RESCUE_FALL_DEPTH` : le filet de chute.
-- `src/game/loop/updateGameplay.ts` — appelle `session.player.update`, lit
-  `weaponEyeOrigin` après coup, applique le filet de chute.
+- `src/game/loop/updateGameplay.ts` et `src/game/loop/steps/playerSteps.ts` —
+  appellent `session.player.update` (`movePlayer`), appliquent le filet de
+  chute (`rescueFromFall`) ; `fireWeapons` lit ensuite `eyeOrigin`.
 - `src/game/loop/interpolateVisuals.ts` / `stepPhysics.ts` — posent la
   caméra (position, FOV, head bob) et le `snapshotPrevious` du joueur.
 
@@ -53,7 +54,7 @@ Pour le joueur, dans le même pas fixe :
    gravité, résout le mouvement par `computeColliderMovement`, met à jour
    les grandeurs de vue (`updateViewState`).
 3. `updateGameplay` applique le filet de chute juste après, puis reconstruit
-   `weaponEyeOrigin` depuis `session.player.position` — après `player.update`,
+   `eyeOrigin` depuis `session.player.position` — après `player.update`,
    jamais une position interpolée : le rejeu d'input (F9/F10) doit tenir
    indépendamment du framerate d'affichage à l'enregistrement.
 4. `stepPhysics` avance le monde Rapier (translation déjà posée via
@@ -76,7 +77,7 @@ formule** à chaque pas (`jumpVelocity` = √(2·|g|·`jumpHeight`),
 `groundAcceleration`/`groundDeceleration` = vitesse cible ÷ temps visé,
 `wallNormalYThreshold` = cos(`maxSlopeClimbAngleDeg`)), ce qui permet un A/B
 à chaud sans recalcul manuel. La gravité n'y est **pas** : elle appartient au
-monde physique (`PhysicsWorld.gravityY`, −25 m/s², invariant #7), pour ne pas
+monde physique (`PhysicsWorld.gravityY`, −25 m/s², invariant #7, `GRAVITY_Y` de `src/physics/constants.ts`), pour ne pas
 désynchroniser la chute du joueur de celle des `prop_*`.
 `PlayerController.applyConfig()` réapplique la config au collider/KCC après
 une mutation à chaud — nécessaire pour les champs lus par Rapier (capsule,
@@ -124,10 +125,10 @@ Trois variantes (`FEEL_VARIANTS.A/B/C`, sobre/classique/charnu) via
 `cassandre.applyFeelVariant("A"|"B"|"C")` — aucune ne touche au déplacement.
 
 **PV, dégâts et mort.** Les dégâts sont appliqués **au pas fixe** :
-`applyPlayerDamage(engine, session, amount)` décrémente `session.playerHp`,
+`applyPlayerDamage(engine, session, amount)` décrémente `session.run.playerHp`,
 enregistre la perte au score, déclenche au premier franchissement du seuil
 la réplique « PV bas » (30 % des PV max), et sur la mort (`playerHp <= 0`,
-gardée idempotente par `session.deathHandled`) publie le récapitulatif
+gardée idempotente par `session.run.deathHandled`) publie le récapitulatif
 partiel puis appelle `engine.flow.playerDied()` — via `GameFlowPort`, jamais
 un accès direct à XState. Appelants actuels : `suitManager`/
 `directorManager`, qui posent un `HitEvent`. Le soin (sanitaire cassé,
@@ -147,8 +148,8 @@ dans le vide en ferait son « dernier sol sûr », et le filet y renverrait en
 boucle. Garde-fou, pas une mécanique : logge les coordonnées en console à
 chaque déclenchement, signal pour `tools/level_v2/audit_niveau.py`.
 
-**Cartes de fidélité.** `session.cards` (`Set<LoyaltyCard>`) est la source de
-vérité, jamais le store zustand ([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) ;
+**Cartes de fidélité.** `session.run.cards` (`Set<LoyaltyCard>`) est la source de
+vérité, jamais le store zustand ([ADR 0036](../decisions/0036-contrats-feuilles-et-store-hud.md)) ;
 `grantCard(session, card)` ignore silencieusement un doublon (hot reload) et
 pousse un message HUD, `parseLoyaltyCard` tolère casse/espaces d'une
 propriété Blender mais reste strict sinon (valeur inconnue → `null`).
@@ -179,7 +180,7 @@ ne rendaient donc pas le même pixel selon les pas fixes écoulés. `approach()`
 (rampe linéaire) atteint sa cible exactement. [ADR 0015](../decisions/0015-rampe-lineaire-lissage-vue.md).
 
 **L'origine de tir vient de la position du pas fixe, jamais interpolée.**
-`weaponEyeOrigin` est reconstruite depuis `session.player.position` après
+`eyeOrigin` est reconstruite depuis `session.player.position` après
 `player.update`, jamais depuis `player.eyePosition()` : sinon le rejeu
 d'input (F9/F10) diverge selon le framerate d'affichage à l'enregistrement —
 même piège que [Boucle et temps](../3-architecture/boucle-et-temps.md#lordre-exact-dune-image-lu-dans-le-code).

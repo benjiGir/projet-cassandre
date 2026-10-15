@@ -20,12 +20,16 @@ function partie(difficulty: Difficulty, kills: number): GameSession {
   return {
     choice: { id: "niveau_test", label: "Test", kind: "gltf" },
     difficulty,
-    stats,
     suitManager: { suits: [] },
     directorManager: { directors: [] },
-    secretsFound: 0,
-    secretsTotal: 0,
-    stream: createStreamState(),
+    run: {
+      stats,
+      secretsFound: 0,
+      stream: createStreamState(),
+    },
+    level: {
+      secretsTotal: 0,
+    },
   } as unknown as GameSession;
 }
 

@@ -32,7 +32,20 @@
   white-space: nowrap;
 }
 
+/* Le badge de compte vérifié : un pavé plein, collé au pseudo, que le montant repousse à droite. */
+.badge {
+  flex: none;
+  padding: 0 calc(var(--vpx) * 1.5);
+  color: #001214;
+  background: var(--accent);
+  font-size: calc(var(--vpx) * 6);
+  font-weight: bold;
+  line-height: 1.3;
+  text-shadow: none;
+}
+
 .amount {
+  margin-left: auto;
   font-size: calc(var(--vpx) * 11);
   font-weight: bold;
   white-space: nowrap;
@@ -45,10 +58,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .alert { animation: none; }
+  .alert {
+    animation: none;
+  }
 }
 
 @keyframes flash {
-  0%, 66% { background: rgba(255, 226, 122, 0.25); }
-  33%, 100% { background: rgba(20, 15, 0, 0.7); }
+  0%,
+  66% {
+    background: rgba(255, 226, 122, 0.25);
+  }
+  33%,
+  100% {
+    background: rgba(20, 15, 0, 0.7);
+  }
 }

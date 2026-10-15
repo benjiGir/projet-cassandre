@@ -21,8 +21,8 @@ export function DevCheats() {
           Ennemis passifs — notarget (F8)
         </TuningCheckbox>
         <TuningNote>
-          Les ennemis ne voient plus le joueur et leurs attaques ne font rien : pour parcourir un niveau et le
-          regarder. Un rejeu F9/F10 enregistré ainsi ne se rejoue pas à l'identique.
+          Les ennemis ne voient plus le joueur et leurs attaques ne font rien : pour parcourir un niveau et le regarder.
+          Un rejeu F9/F10 enregistré ainsi ne se rejoue pas à l'identique.
         </TuningNote>
       </TuningGroup>
     </TuningSection>

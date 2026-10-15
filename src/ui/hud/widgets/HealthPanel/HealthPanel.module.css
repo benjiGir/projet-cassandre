@@ -18,11 +18,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fill { transition: none; }
+  .fill {
+    transition: none;
+  }
 }
 
-.fill[data-level="warn"] { background: #fa3; }
-.fill[data-level="critical"] { background: #f44; }
+.fill[data-level="warn"] {
+  background: #fa3;
+}
+.fill[data-level="critical"] {
+  background: #f44;
+}
 
 .value {
   margin-top: calc(var(--vpx) * 1.5);

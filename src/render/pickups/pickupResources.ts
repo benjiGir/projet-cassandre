@@ -22,10 +22,16 @@ const KIT_SIZE = { width: 0.5, height: 0.32, depth: 0.36 } as const;
 const KIT_GLOW = 0.35;
 
 const AMMO_SIZE = { width: 0.42, height: 0.22, depth: 0.3 } as const;
+const SHOTGUN_AMMO_SIZE = { width: 0.54, height: 0.28, depth: 0.34 } as const;
+// Étui de fusées : plus haut que large, pour ne ressembler à aucune des deux autres boîtes.
+const FLARE_AMMO_SIZE = { width: 0.36, height: 0.34, depth: 0.26 } as const;
 
 const CELL = 32;
 
-function bakeIconRectUv(geometry: THREE.PlaneGeometry, rect: { x: number; y: number; width: number; height: number }): void {
+function bakeIconRectUv(
+  geometry: THREE.PlaneGeometry,
+  rect: { x: number; y: number; width: number; height: number },
+): void {
   const u0 = rect.x / WEAPON_ICON_ATLAS_SIZE.width;
   const u1 = (rect.x + rect.width) / WEAPON_ICON_ATLAS_SIZE.width;
   // V inversé : le haut de l’image correspond à v=1.
@@ -45,9 +51,13 @@ export class PickupResources {
   private readonly weaponGeometries = new Map<PickupWeaponKind, THREE.PlaneGeometry>();
   private kit: PickupModel | null = null;
   private ammo: PickupModel | null = null;
+  private shotgunAmmo: PickupModel | null = null;
+  private flareAmmo: PickupModel | null = null;
   private disposed = false;
   private clock = 0;
-  get weaponClock(): number { return this.clock; }
+  get weaponClock(): number {
+    return this.clock;
+  }
   readonly hiddenMaterial: THREE.MeshLambertMaterial;
   readonly weaponMaterial: THREE.MeshLambertMaterial;
 
@@ -55,22 +65,30 @@ export class PickupResources {
     this.own(atlas);
     try {
       this.hiddenMaterial = this.own(new THREE.MeshLambertMaterial({ visible: false }));
-      this.weaponMaterial = this.own(new THREE.MeshLambertMaterial({
-        map: atlas,
-        emissive: 0xffffff,
-        emissiveMap: atlas,
-        emissiveIntensity: WEAPON_GLOW_MIN,
-        alphaTest: 0.5,
-        transparent: false,
-        depthWrite: true,
-      }));
+      this.weaponMaterial = this.own(
+        new THREE.MeshLambertMaterial({
+          map: atlas,
+          emissive: 0xffffff,
+          emissiveMap: atlas,
+          emissiveIntensity: WEAPON_GLOW_MIN,
+          alphaTest: 0.5,
+          transparent: false,
+          depthWrite: true,
+        }),
+      );
       this.healModel();
       this.ammoModel();
+      this.shotgunAmmoModel();
+      this.flareAmmoModel();
       for (const item of FOOD_ITEMS) this.foodModel(item);
-      for (const weapon of ["melee", "pistol", "shotgun"] as const) this.weaponGeometry(weapon);
+      for (const weapon of ["melee", "pistol", "shotgun", "flare"] as const) this.weaponGeometry(weapon);
     } catch (error) {
-      try { this.dispose(); } catch (releaseError) {
-        throw new AggregateError([error, releaseError], "Préparation des ressources des ramassages interrompue");
+      try {
+        this.dispose();
+      } catch (releaseError) {
+        throw new AggregateError([error, releaseError], "Préparation des ressources des ramassages interrompue", {
+          cause: releaseError,
+        });
       }
       throw error;
     }
@@ -98,7 +116,11 @@ export class PickupResources {
     this.disposed = true;
     const errors: unknown[] = [];
     for (const resource of this.owned) {
-      try { resource.dispose(); } catch (error) { errors.push(error); }
+      try {
+        resource.dispose();
+      } catch (error) {
+        errors.push(error);
+      }
     }
     this.owned.clear();
     this.foodMaterials.clear();
@@ -106,6 +128,8 @@ export class PickupResources {
     this.weaponGeometries.clear();
     this.kit = null;
     this.ammo = null;
+    this.shotgunAmmo = null;
+    this.flareAmmo = null;
     if (errors.length > 0) throw new AggregateError(errors, "Libération incomplète des ressources des ramassages");
   }
 
@@ -148,16 +172,16 @@ export class PickupResources {
         break;
       case "sandwich":
         parts = [
-          this.foodPart(new THREE.BoxGeometry(0.28, 0.075, 0.20), "#d9a75d", [0, 0.055, 0]),
+          this.foodPart(new THREE.BoxGeometry(0.28, 0.075, 0.2), "#d9a75d", [0, 0.055, 0]),
           this.foodPart(new THREE.BoxGeometry(0.29, 0.035, 0.21), "#5d9b43", [0, 0.105, 0]),
           this.foodPart(new THREE.BoxGeometry(0.27, 0.035, 0.19), "#c64e3c", [0, 0.14, 0]),
-          this.foodPart(new THREE.BoxGeometry(0.28, 0.065, 0.20), "#edc27b", [0, 0.19, 0]),
+          this.foodPart(new THREE.BoxGeometry(0.28, 0.065, 0.2), "#edc27b", [0, 0.19, 0]),
         ];
         break;
       case "jambon":
         parts = [
-          this.foodPart(new THREE.BoxGeometry(0.30, 0.055, 0.22), "#b94e58", [0, 0.045, 0]),
-          this.foodPart(new THREE.BoxGeometry(0.28, 0.045, 0.20), "#d97878", [0.015, 0.095, -0.005]),
+          this.foodPart(new THREE.BoxGeometry(0.3, 0.055, 0.22), "#b94e58", [0, 0.045, 0]),
+          this.foodPart(new THREE.BoxGeometry(0.28, 0.045, 0.2), "#d97878", [0.015, 0.095, -0.005]),
           this.foodPart(new THREE.BoxGeometry(0.24, 0.025, 0.035), "#f0d6b8", [-0.01, 0.13, 0.01]),
         ];
         break;
@@ -177,7 +201,12 @@ export class PickupResources {
         break;
       }
       case "pizza": {
-        const toppings = [[-0.08, 0.115, -0.055], [0.045, 0.115, -0.07], [0.09, 0.115, 0.035], [-0.045, 0.115, 0.075]] as const;
+        const toppings = [
+          [-0.08, 0.115, -0.055],
+          [0.045, 0.115, -0.07],
+          [0.09, 0.115, 0.035],
+          [-0.045, 0.115, 0.075],
+        ] as const;
         parts = [
           this.foodPart(new THREE.CylinderGeometry(0.205, 0.205, 0.065, 12), "#bd6b34", [0, 0.04, 0]),
           this.foodPart(new THREE.CylinderGeometry(0.177, 0.177, 0.018, 12), "#edc34e", [0, 0.081, 0]),
@@ -191,8 +220,6 @@ export class PickupResources {
     this.foodParts.set(item, parts);
     return parts;
   }
-
-
 
   private kitFaceTexture(): THREE.CanvasTexture {
     const canvas = document.createElement("canvas");
@@ -238,17 +265,108 @@ export class PickupResources {
       const map = this.kitFaceTexture();
       this.kit = {
         geometry: this.own(new THREE.BoxGeometry(KIT_SIZE.width, KIT_SIZE.height, KIT_SIZE.depth)),
-        material: this.own(new THREE.MeshLambertMaterial({
-          map,
-          emissive: 0xffffff,
-          emissiveMap: map,
-          emissiveIntensity: KIT_GLOW,
-        })),
+        material: this.own(
+          new THREE.MeshLambertMaterial({
+            map,
+            emissive: 0xffffff,
+            emissiveMap: map,
+            emissiveIntensity: KIT_GLOW,
+          }),
+        ),
       };
 
       this.kit.geometry.translate(0, KIT_SIZE.height / 2, 0);
     }
     return this.kit;
+  }
+
+  private shotgunAmmoFaceTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = CELL;
+    canvas.height = CELL;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#572424";
+    ctx.fillRect(0, 0, CELL, CELL);
+    ctx.fillStyle = "#963e33";
+    ctx.fillRect(2, 2, CELL - 4, CELL - 4);
+    ctx.fillStyle = "#efe0bd";
+    ctx.fillRect(2, 3, CELL - 4, 11);
+    ctx.fillStyle = "#402225";
+    ctx.font = "bold 11px monospace";
+    ctx.fillText("12", 9, 12);
+    for (const x of [5, 13, 21]) {
+      ctx.fillStyle = "#371c1b";
+      ctx.fillRect(x - 1, 16, 8, 14);
+      ctx.fillStyle = "#ef6650";
+      ctx.fillRect(x, 17, 6, 8);
+      ctx.fillStyle = "#f5d578";
+      ctx.fillRect(x, 25, 6, 4);
+      ctx.fillStyle = "#b0823b";
+      ctx.fillRect(x, 28, 6, 1);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    configureRetroTexture(texture);
+    return this.own(texture);
+  }
+
+  shotgunAmmoModel(): PickupModel {
+    this.assertActive();
+    if (!this.shotgunAmmo) {
+      const map = this.shotgunAmmoFaceTexture();
+      const { width, height, depth } = SHOTGUN_AMMO_SIZE;
+      this.shotgunAmmo = {
+        geometry: this.own(new THREE.BoxGeometry(width, height, depth)),
+        material: this.own(
+          new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 }),
+        ),
+      };
+      this.shotgunAmmo.geometry.translate(0, height / 2, 0);
+    }
+    return this.shotgunAmmo;
+  }
+
+  private flareAmmoFaceTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement("canvas");
+    canvas.width = CELL;
+    canvas.height = CELL;
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#8a3a12";
+    ctx.fillRect(0, 0, CELL, CELL);
+    ctx.fillStyle = "#e0701f"; // orange de signalisation : la couleur de l'arme
+    ctx.fillRect(2, 2, CELL - 4, CELL - 4);
+    ctx.fillStyle = "#f4ead2";
+    ctx.fillRect(2, 4, CELL - 4, 8);
+    ctx.fillStyle = "#3a1c10";
+    ctx.font = "bold 8px monospace";
+    ctx.fillText("SOS", 8, 11);
+    // Deux fusées debout : un tube large à tête rouge, le seul motif lisible à 640×360.
+    for (const x of [7, 18]) {
+      ctx.fillStyle = "#3a1c10";
+      ctx.fillRect(x - 1, 14, 9, 16);
+      ctx.fillStyle = "#d8d2c4";
+      ctx.fillRect(x, 19, 7, 10);
+      ctx.fillStyle = "#e23a2c";
+      ctx.fillRect(x, 15, 7, 4);
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    configureRetroTexture(texture);
+    return this.own(texture);
+  }
+
+  flareAmmoModel(): PickupModel {
+    this.assertActive();
+    if (!this.flareAmmo) {
+      const map = this.flareAmmoFaceTexture();
+      const { width, height, depth } = FLARE_AMMO_SIZE;
+      this.flareAmmo = {
+        geometry: this.own(new THREE.BoxGeometry(width, height, depth)),
+        material: this.own(
+          new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 }),
+        ),
+      };
+      this.flareAmmo.geometry.translate(0, height / 2, 0);
+    }
+    return this.flareAmmo;
   }
 
   ammoModel(): PickupModel {
@@ -257,7 +375,9 @@ export class PickupResources {
       const map = this.ammoFaceTexture();
       this.ammo = {
         geometry: this.own(new THREE.BoxGeometry(AMMO_SIZE.width, AMMO_SIZE.height, AMMO_SIZE.depth)),
-        material: this.own(new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 })),
+        material: this.own(
+          new THREE.MeshLambertMaterial({ map, emissive: 0xffffff, emissiveMap: map, emissiveIntensity: 0.2 }),
+        ),
       };
       this.ammo.geometry.translate(0, AMMO_SIZE.height / 2, 0);
     }
@@ -281,7 +401,6 @@ export class PickupResources {
     this.weaponMaterial.emissiveIntensity =
       WEAPON_GLOW_MIN + (WEAPON_GLOW_MAX - WEAPON_GLOW_MIN) * (0.5 + 0.5 * Math.sin(this.clock * WEAPON_GLOW_SPEED));
   }
-
 }
 
 // Chargement attendu avant la construction des meshes, jamais dans le pas fixe.

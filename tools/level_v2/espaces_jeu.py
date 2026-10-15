@@ -16,7 +16,10 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "blender"))
+from level_spaces import boite as boite_niveau, manifeste as manifeste_niveau
 import plan_de_masse as P
 
 RACINE = Path(__file__).resolve().parents[2]
@@ -29,16 +32,11 @@ MARGE_HAUTEUR = 1.0
 
 def boite(espace: P.Space) -> dict:
     """Boîte de l'espace en repère du jeu, du sol au plafond, marge en hauteur comprise."""
-    sols = (espace.rampe[1], espace.rampe[2]) if espace.rampe else (espace.z, espace.z)
-    return {
-        "x": [espace.x[0], espace.x[1]],
-        "y": [min(sols) - MARGE_HAUTEUR, max(sols) + espace.hauteur + MARGE_HAUTEUR],
-        "z": [-espace.y[1], -espace.y[0]],
-    }
+    return boite_niveau(espace)
 
 
 def manifeste() -> dict:
-    return {"espaces": [{"id": espace.id, **boite(espace)} for espace in P.ALL]}
+    return manifeste_niveau(P)
 
 
 def rendu() -> str:

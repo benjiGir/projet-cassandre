@@ -48,12 +48,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheen { display: none; }
+  .sheen {
+    display: none;
+  }
 }
 
 @keyframes sheen {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(500%); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(500%);
+  }
 }
 
 .quip {

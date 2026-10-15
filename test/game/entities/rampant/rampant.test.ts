@@ -47,14 +47,19 @@ describe("SuitManager — espèces", () => {
     manager.update(1 / 60, new THREE.Vector3(0, 0, 50), new THREE.Vector3(0, 1.6, 50), [impact, impact]);
 
     expect(rampant.isAlive).toBe(false);
-    expect(manager.deathEvents.map((e) => e.suit)).toEqual([rampant]);
+    expect(manager.deathEvents.map((e) => e.enemy)).toEqual([rampant]);
   });
 
   it("le souffle d'une explosion le prend aussi", () => {
     const manager = new SuitManager(new PhysicsWorld());
     const rampant = manager.spawnSuit(1, 0, 0, new THREE.Vector3(0, 0, 1), "rampant");
 
-    manager.applyBlast(new THREE.Vector3(0, 0.6, 0), () => 60, () => true, 2.5);
+    manager.applyBlast(
+      new THREE.Vector3(0, 0.6, 0),
+      () => 60,
+      () => true,
+      2.5,
+    );
 
     expect(rampant.isAlive).toBe(false);
   });
@@ -64,7 +69,11 @@ describe("Convention glTF `spawn_rampant_*`", () => {
   function build(objects: THREE.Object3D[]) {
     const group = new THREE.Group();
     for (const obj of objects) group.add(obj);
-    return buildLevelFromGltf({ scene: group, animations: [] } as unknown as GLTF, new THREE.Scene(), new PhysicsWorld());
+    return buildLevelFromGltf(
+      { scene: group, animations: [] } as unknown as GLTF,
+      new THREE.Scene(),
+      new PhysicsWorld(),
+    );
   }
   function empty(name: string, x: number, extras: Record<string, unknown> = {}) {
     const obj = new THREE.Object3D();

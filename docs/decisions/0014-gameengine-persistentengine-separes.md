@@ -2,7 +2,7 @@
 title: GameEngine et PersistentEngine séparés plutôt qu'un champ session nullable
 tags: [adr, core]
 status: accepte
-updated: 2026-09-05
+updated: 2026-10-10
 ---
 
 # ADR 0014 — GameEngine et PersistentEngine séparés plutôt qu'un champ session nullable
@@ -70,3 +70,17 @@ séparation ne tient plus : reconsidérer si cette fonction devrait plutôt
 prendre `GameEngine` complet avec un `session: GameSession` en paramètre
 explicite séparé — le même patron que `spawnSuitAt` applique déjà pour une
 raison voisine.
+
+## Mise à jour du 2026-10-10
+
+L'audit de qualité du 2026-10-08 (action 9) proposait de supprimer
+`PersistentEngine`, lu comme un contournement de cycle (`Omit<GameEngine,
+"session">`). La décision est **maintenue** : le critère ci-dessus ne s'est pas
+déclenché, aucune fonction typée `PersistentEngine` n'a besoin de lire
+`engine.session`.
+
+Seule l'écriture change. `PersistentEngine` est désormais l'interface de
+premier rang, qui déclare ce qui vit autant que l'onglet, et `GameEngine`
+l'étend avec `session` (`interface GameEngine extends PersistentEngine`). La
+garantie est la même — un `PersistentEngine` ne peut pas exprimer
+`engine.session` —, sans type dérivé par soustraction.

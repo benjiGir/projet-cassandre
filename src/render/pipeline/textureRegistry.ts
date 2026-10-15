@@ -30,7 +30,11 @@ export function registerMaterialTextureInputs(material: THREE.Material, inputs: 
 
 function configurable(texture: THREE.Texture): boolean {
   // Les buffers d'effet et le ciel ont leur propre contrat de filtrage.
-  return !texture.isRenderTargetTexture && !(texture instanceof THREE.DepthTexture) && !(texture instanceof THREE.CubeTexture);
+  return (
+    !texture.isRenderTargetTexture &&
+    !(texture instanceof THREE.DepthTexture) &&
+    !(texture instanceof THREE.CubeTexture)
+  );
 }
 
 function addTexture(value: unknown, textures: Set<THREE.Texture>): void {
@@ -46,7 +50,8 @@ export function collectRetroTextures(scene: THREE.Object3D): Set<THREE.Texture> 
   const materials = new Set<THREE.Material>();
   scene.traverse((object) => {
     if (!(object instanceof THREE.Mesh)) return;
-    for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
+    for (const material of Array.isArray(object.material) ? object.material : [object.material])
+      materials.add(material);
   });
   for (const material of materials) {
     // Canaux classiques : map, normalMap, emissiveMap, alphaMap, roughnessMap…

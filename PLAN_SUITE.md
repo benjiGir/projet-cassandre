@@ -257,7 +257,7 @@ lieu.
     affiches : une image générée ne se retélécharge pas. La palette est propre
     à chaque panneau : celle des textures du jeu déformait les teintes.
 - **Cohérence du héros** : chaque prompt renvoie à la planche du portrait du
-  stream (`docs/assets/portrait-stream-animations-v1.png`) comme image de
+  stream (`assets_src/portrait_stream/portrait-stream-animations-v1.png`) comme image de
   référence.
 - **Les huit panneaux** :
 
@@ -500,6 +500,10 @@ trois difficultés, et le gate B8 est vert.
 ---
 
 ## 3. v2.0 — esquisse
+
+> Le second niveau a maintenant son propre plan, ouvert le 2026-10-05 :
+> [`PLAN_V2.md`](PLAN_V2.md) — le métro qui mène au siège. L'esquisse
+> ci-dessous reste pour mémoire.
 
 À détailler quand la v1.2 sera jouée. Rien ici n'est engagé.
 

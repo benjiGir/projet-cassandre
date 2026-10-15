@@ -63,7 +63,9 @@ function createFireballMaterial(): MeshBasicNodeMaterial {
 
   // Grain fin, au fragment : il casse les aplats et sert à ronger la surface.
   const grain = clamp(
-    mx_fractal_noise_float(vDirection.mul(4.6).add(flow.mul(1.6)).add(11.3), 2, 2, 0.55).mul(0.7).add(0.5),
+    mx_fractal_noise_float(vDirection.mul(4.6).add(flow.mul(1.6)).add(11.3), 2, 2, 0.55)
+      .mul(0.7)
+      .add(0.5),
     0,
     1,
   );
@@ -103,6 +105,8 @@ interface ExplosionSlot {
   light: THREE.PointLight | null;
   /** Secondes écoulées ; négatif = libre. */
   age: number;
+  /** Taille relative à une explosion de bonbonne. */
+  scale: number;
 }
 
 export class Explosions {
@@ -111,7 +115,10 @@ export class Explosions {
   private cursor = 0;
   private lightCursor = 0;
 
-  constructor(scene: THREE.Scene, private readonly random: () => number) {
+  constructor(
+    scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {
     const material = createFireballMaterial();
     for (let i = 0; i < POOL_SIZE; i++) {
       const ball = new THREE.Mesh(BALL_GEOMETRY, material);
@@ -120,7 +127,7 @@ export class Explosions {
       ball.frustumCulled = false;
       ball.scale.setScalar(MAX_RADIUS);
       scene.add(ball);
-      this.slots.push({ ball, origin: new THREE.Vector3(), light: null, age: -1 });
+      this.slots.push({ ball, origin: new THREE.Vector3(), light: null, age: -1, scale: 1 });
     }
     // Lampes toujours visibles, éteintes par leur intensité : en allumer une
     // changerait le nombre de lampes de la scène, donc recompilerait tous les
@@ -132,18 +139,21 @@ export class Explosions {
     }
   }
 
-  spawn(point: THREE.Vector3): void {
-    const slot = this.slots[this.cursor]!;
+  /** `scale` réduit la boule, sa montée et sa lampe : 1 pour une bonbonne, moins pour une fusée. */
+  spawn(point: THREE.Vector3, scale = 1): void {
+    const slot = this.slots[this.cursor];
     this.cursor = (this.cursor + 1) % this.slots.length;
     this.release(slot);
     slot.age = 0;
+    slot.scale = scale;
+    slot.ball.scale.setScalar(MAX_RADIUS * scale);
     slot.origin.copy(point);
     // Deux explosions voisines ne doivent pas montrer les mêmes volutes.
     slot.ball.userData.explosionSeed = this.random() * 40;
     slot.ball.rotation.y = this.random() * Math.PI * 2;
     slot.ball.visible = true;
 
-    const light = this.lights[this.lightCursor]!;
+    const light = this.lights[this.lightCursor];
     this.lightCursor = (this.lightCursor + 1) % this.lights.length;
     for (const other of this.slots) if (other.light === light) other.light = null;
     slot.light = light;
@@ -173,8 +183,12 @@ export class Explosions {
    * l'appelant en redessine une dernière ensuite, pour effacer celle-ci.
    * see: docs/4-technique/rendu.md#préparation-des-douches
    */
+  releaseShaderPrograms(): void {
+    this.slots[0].ball.material.dispose();
+  }
+
   async warm(camera: THREE.Camera, render: () => void): Promise<void> {
-    const ball = this.slots[0]!.ball;
+    const ball = this.slots[0].ball;
     const pose = { visible: ball.visible, position: ball.position.clone(), age: ball.userData.explosionAge as unknown };
     try {
       camera.getWorldDirection(ball.position).multiplyScalar(8).add(camera.getWorldPosition(new THREE.Vector3()));
@@ -202,7 +216,7 @@ export class Explosions {
     const t = slot.age / DURATION;
     slot.ball.userData.explosionAge = t;
     slot.ball.position.copy(slot.origin);
-    slot.ball.position.y += RISE * t;
-    if (slot.light) slot.light.intensity = LIGHT_INTENSITY * Math.max(0, 1 - slot.age / LIGHT_DURATION);
+    slot.ball.position.y += RISE * slot.scale * t;
+    if (slot.light) slot.light.intensity = LIGHT_INTENSITY * slot.scale * Math.max(0, 1 - slot.age / LIGHT_DURATION);
   }
 }

@@ -1,5 +1,5 @@
 import { moveConfig } from "../player/movement/moveConfig";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 
 // see: docs/6-reference/notes-code-gameplay-outils.md#console-et-harnais
 export interface BlenderPose {
@@ -32,13 +32,13 @@ export function readBlenderPose(engine: GameEngine): BlenderPose {
   const player = engine.session.player;
   // `moveConfig` : la config que porte le contrôleur du joueur (valeur par défaut de son constructeur).
   const cfg = moveConfig;
-  const centre = player.position;
-  const feet = threeToBlender(centre.x, centre.y - cfg.capsuleHalfHeight - cfg.capsuleRadius, centre.z);
+  const center = player.position;
+  const feet = threeToBlender(center.x, center.y - cfg.capsuleHalfHeight - cfg.capsuleRadius, center.z);
   return {
     x: round(feet.x, 2),
     y: round(feet.y, 2),
     z: round(feet.z, 2),
-    eye: round(centre.y + player.eyeOffset, 2),
+    eye: round(center.y + player.eyeOffset, 2),
     cap: round((((engine.look.yaw * DEG) % 360) + 360) % 360, 1),
     pitch: round(engine.look.pitch * DEG, 1),
   };

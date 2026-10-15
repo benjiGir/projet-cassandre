@@ -2,7 +2,7 @@ import { BOISSON_VARIANTS, perkConfig, type BoissonVariant } from "../../player/
 import * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 
-import { type Recording } from "../../../core/input/inputTypes";
+import type { Recording } from "../../../core/input/inputTypes";
 import { COLLISION_GROUPS, PhysicsWorld } from "../../../physics/world";
 import { PlayerController } from "../../player/movement/controller";
 import { FEEL_VARIANTS, fovForRunFactor, moveConfig, type MoveConfig } from "../../player/movement/moveConfig";
@@ -22,10 +22,7 @@ import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../../entities/s
 export function simulateRecording(rec: Recording, cfg: MoveConfig) {
   const world = new PhysicsWorld();
   const floor = world.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.1, 0));
-  world.world.createCollider(
-    RAPIER.ColliderDesc.cuboid(50, 0.1, 50).setCollisionGroups(COLLISION_GROUPS.WORLD),
-    floor,
-  );
+  world.world.createCollider(RAPIER.ColliderDesc.cuboid(50, 0.1, 50).setCollisionGroups(COLLISION_GROUPS.WORLD), floor);
 
   const sim = new PlayerController(world, cfg);
   const feetY = rec.start.position.y - (cfg.capsuleHalfHeight + cfg.capsuleRadius);
@@ -76,9 +73,7 @@ export function checkDeterminism(rec: Recording) {
   );
   const passed = delta < 1e-6;
   console.info(
-    `[determinism] ${rec.frames.length} pas fixes · écart max ${delta.toExponential(3)} · ${
-      passed ? "OK" : "ÉCHEC"
-    }`,
+    `[determinism] ${rec.frames.length} pas fixes · écart max ${delta.toExponential(3)} · ${passed ? "OK" : "ÉCHEC"}`,
   );
   return { passed, delta, a, b };
 }
@@ -108,7 +103,11 @@ export function applyFeelVariant(name: keyof typeof FEEL_VARIANTS): FeelVariantR
 /** Pointe de vitesse du perk boisson : même protocole que `applyFeelVariant`. */
 export function applyBoissonVariant(name: keyof typeof BOISSON_VARIANTS): BoissonVariant & { variant: string } {
   Object.assign(perkConfig, BOISSON_VARIANTS[name]);
-  const report = { variant: name, boissonSpeedScale: perkConfig.boissonSpeedScale, boissonDuration: perkConfig.boissonDuration };
+  const report = {
+    variant: name,
+    boissonSpeedScale: perkConfig.boissonSpeedScale,
+    boissonDuration: perkConfig.boissonDuration,
+  };
   console.info(`[feel] variante de boisson ${name} appliquée`, report);
   return report;
 }
@@ -234,6 +233,8 @@ export interface RenderBenchmark {
   triangles: number;
   /** Programmes GPU compilés — utile pour repérer une explosion de matériaux. */
   programmes: number;
+  geometries: number;
+  textures: number;
 }
 
 export function benchmarkRender(
@@ -253,14 +254,16 @@ export function benchmarkRender(
   const total = performance.now() - t0;
 
   const info = renderer.info;
-  const msParImage = total / frames;
+  const msPerFrame = total / frames;
   return {
     frames,
-    msParImage: Number(msParImage.toFixed(3)),
-    imagesParSecondeRendu: Number((1000 / msParImage).toFixed(1)),
+    msParImage: Number(msPerFrame.toFixed(3)),
+    imagesParSecondeRendu: Number((1000 / msPerFrame).toFixed(1)),
     drawCalls: info.render.calls,
     triangles: info.render.triangles,
     programmes: info.programs?.length ?? 0,
+    geometries: info.memory.geometries,
+    textures: info.memory.textures,
   };
 }
 
@@ -273,30 +276,26 @@ export interface LightBudgetReport {
   budget: number | null;
 }
 
-export function applyLightBudget(
-  scene: THREE.Scene,
-  camera: THREE.Camera,
-  budget: number | null,
-): LightBudgetReport {
-  const lampes: THREE.PointLight[] = [];
+export function applyLightBudget(scene: THREE.Scene, camera: THREE.Camera, budget: number | null): LightBudgetReport {
+  const lights: THREE.PointLight[] = [];
   scene.traverse((obj) => {
-    if ((obj as THREE.PointLight).isPointLight) lampes.push(obj as THREE.PointLight);
+    if ((obj as THREE.PointLight).isPointLight) lights.push(obj as THREE.PointLight);
   });
 
   if (budget === null) {
-    for (const l of lampes) l.visible = true;
-    return { total: lampes.length, actives: lampes.length, budget: null };
+    for (const l of lights) l.visible = true;
+    return { total: lights.length, actives: lights.length, budget: null };
   }
 
   const cameraPos = new THREE.Vector3();
   camera.getWorldPosition(cameraPos);
   const pos = new THREE.Vector3();
-  const classees = lampes
+  const ranked = lights
     .map((l) => ({ l, d: l.getWorldPosition(pos).distanceToSquared(cameraPos) }))
     .sort((a, b) => a.d - b.d);
 
-  classees.forEach((e, i) => {
+  ranked.forEach((e, i) => {
     e.l.visible = i < budget;
   });
-  return { total: lampes.length, actives: Math.min(budget, lampes.length), budget };
+  return { total: lights.length, actives: Math.min(budget, lights.length), budget };
 }

@@ -3,7 +3,7 @@ Armes du joueur en vue subjective — PROJET_CASSANDRE.
 
     blender -b --factory-startup -P tools/blender/build_weapons.py
 
-Construit les trois armes et leurs mains, y pose les avant-bras
+Construit les quatre armes et leurs mains, y pose les avant-bras
 du « Man in Long Sleeves » CC0 de Quaternius (voir
 `assets_src/LICENCES_ASSETS.md`), et exporte `public/assets/weapons/armes.glb` :
 
@@ -12,9 +12,11 @@ du « Man in Long Sleeves » CC0 de Quaternius (voir
     vm_pistol         pistolet + avant-bras droit
     vm_shotgun        pompe (carcasse, canon) + avant-bras droit
       vm_shotgun_pump   fût mobile + avant-bras gauche (glisse au pompage)
+    vm_flare          pistolet de détresse + avant-bras droit
     world_crowbar     pied-de-biche seul, à poser au sol
     world_pistol      pistolet seul
     world_shotgun     pompe seule, fût compris
+    world_flare       pistolet de détresse seul
 
 Les `vm_*` sont exprimés dans le REPÈRE DE L'ŒIL : origine à la caméra, X à
 droite, Y devant, Z en haut dans Blender — soit, après la conversion glTF,
@@ -45,10 +47,11 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from weapons.config import PALETTE, BOUT_CANON_PISTOLET, BOUT_CANON_POMPE, CENTRE_FUT
+from weapons.config import PALETTE, BOUT_CANON_PISTOLET, BOUT_CANON_POMPE, BOUT_CANON_DETRESSE, CENTRE_FUT
 from weapons.geometry import srgb_lineaire, nouveau_mesh, teindre, pave, tube, balayage, fusionner
 from weapons.pistol import construire_pistolet
 from weapons.shotgun import construire_pompe
+from weapons.flare import construire_pistolet_detresse
 from weapons.hands import construire_main
 from weapons.kick import construire_coup_de_pied
 
@@ -80,6 +83,11 @@ AXE_PISTOLET = (-0.07, 1.0, 0.10)      # plus relevé que le pompe : une arme de
 # l'écran : agrandi comme les bras le sont déjà (`GABARIT_BRAS`), il retrouve
 # le poids visuel du pompe. Le modèle au sol, lui, garde sa vraie taille.
 ECHELLE_PISTOLET_VM = 1.25
+# Pistolet de détresse : tenu plus bas et plus à droite que le pistolet, canon
+# plus relevé — on le pointe comme une lampe, pas comme une arme de tir.
+PRISE_DETRESSE = (0.18, 0.31, -0.20)
+AXE_DETRESSE = (-0.09, 1.0, 0.13)
+ECHELLE_DETRESSE_VM = 1.35
 
 def get_args() -> list[str]:
     return sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -375,6 +383,25 @@ def assembler(scene, arm, mesh, oeil: Oeil):
     vm_pistol = fusionner("vm_pistol", [pistolet, bras_pist, main])
     placer(vm_pistol, vers_oeil)
 
+    # Pistolet de détresse : la prise du pistolet, à sa propre place à l'écran.
+    prise_det = oeil.monde(PRISE_DETRESSE)
+    axe_det = oeil.direction(AXE_DETRESSE)
+    arme_det = repere(prise_det, axe_det.cross(oeil.haut), axe_det)
+    prise_main_det = arme_det @ Matrix.Scale(ECHELLE_DETRESSE_VM, 4)
+    detresse = construire_pistolet_detresse(vue_subjective=True)
+    placer(detresse, prise_main_det)
+    main_det = repere(prise_det, -Vector(arme_det.col[2][:3]), axe_det)
+    droit.poser(main_det, coude=oeil.monde((0.46, -0.05, -0.42)),
+                poignet=prise_main_det @ Vector((0.032, -0.078, -0.025)))
+    droit.fermer_poing(100, 30)
+    bpy.context.view_layer.update()
+    print("[armes] pistolet de détresse,", droit.ecart())
+    bras_det = extraire_avant_bras(scene, mesh, ("R",), "bras_detresse")
+    poignet = arm.matrix_world @ arm.pose.bones["Palm.R"].head
+    main = construire_main(prise_main_det, poignet, "pistol", "main_detresse")
+    vm_flare = fusionner("vm_flare", [detresse, bras_det, main])
+    placer(vm_flare, vers_oeil)
+
     # Pompe : poignée en bas à droite, canon pointé vers le réticule.
     prise_pompe = oeil.monde(PRISE_POMPE)
     axe_canon = oeil.direction(AXE_CANON)
@@ -421,8 +448,12 @@ def assembler(scene, arm, mesh, oeil: Oeil):
     vm_shotgun["prise"] = vers_gltf(PRISE_POMPE)
     vm_shotgun["bout_canon"] = vers_gltf(vers_oeil @ (arme @ Vector(BOUT_CANON_POMPE)))
     vm_pump["axe_glissiere"] = vers_gltf(Vector(AXE_CANON).normalized())
+    vm_flare["prise"] = vers_gltf(PRISE_DETRESSE)
+    vm_flare["axe_canon"] = vers_gltf(Vector(AXE_DETRESSE).normalized())
+    vm_flare["bout_canon"] = vers_gltf(
+        vers_oeil @ (arme_det @ (Matrix.Scale(ECHELLE_DETRESSE_VM, 4) @ Vector(BOUT_CANON_DETRESSE))))
 
-    return vm_crowbar, vm_pistol, vm_shotgun, vm_pump
+    return vm_crowbar, vm_pistol, vm_shotgun, vm_pump, vm_flare
 
 
 def armes_au_sol():
@@ -436,13 +467,16 @@ def armes_au_sol():
     carcasse, fut = construire_pompe()
     pompe = fusionner("world_shotgun", [carcasse, fut])
     placer(pompe, Matrix.Rotation(math.radians(90), 4, "Y"))
+    detresse = construire_pistolet_detresse(vue_subjective=False)
+    detresse.name = detresse.data.name = "world_flare"
+    placer(detresse, Matrix.Rotation(math.radians(90), 4, "Y"))
     pdb.name = pdb.data.name = "world_crowbar"
-    for ob in (pdb, pistolet, pompe):
+    for ob in (pdb, pistolet, pompe, detresse):
         coins = [v.co for v in ob.data.vertices]
         centre = Vector([(min(c[i] for c in coins) + max(c[i] for c in coins)) / 2 for i in range(3)])
         zmin = min(c.z for c in coins)
         ob.data.transform(Matrix.Translation((-centre.x, -centre.y, -zmin)))
-    return pdb, pistolet, pompe
+    return pdb, pistolet, pompe, detresse
 
 
 # --- Contrôle et export ------------------------------------------------------
@@ -568,13 +602,13 @@ def main() -> int:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene, arm, mesh = importer_heros()
     oeil = Oeil(arm)
-    vm_crowbar, vm_pistol, vm_shotgun, vm_pump = assembler(scene, arm, mesh, oeil)
+    vm_crowbar, vm_pistol, vm_shotgun, vm_pump, vm_flare = assembler(scene, arm, mesh, oeil)
 
     # Le héros n'a plus rien à faire dans la scène : seuls ses bras figés restent.
     for o in list(scene.objects):
         if o.type in {"ARMATURE", "EMPTY"} or o is mesh:
             bpy.data.objects.remove(o)
-    world_crowbar, world_pistol, world_shotgun = armes_au_sol()
+    world_crowbar, world_pistol, world_shotgun, world_flare = armes_au_sol()
     vm_kick = construire_coup_de_pied()
 
     vues = {
@@ -582,12 +616,13 @@ def main() -> int:
         "pied_de_biche": {"vm_crowbar"},
         "pistolet": {"vm_pistol"},
         "pompe": {"vm_shotgun", "vm_shotgun_pump"},
+        "pistolet_detresse": {"vm_flare"},
     }
     rendre_vues(scene, vues, renders)
     if "--debug" in args:
         rendre_debug(scene, vues, renders)
-    exporter(out, [vm_kick, vm_crowbar, vm_pistol, vm_shotgun, vm_pump,
-                   world_crowbar, world_pistol, world_shotgun])
+    exporter(out, [vm_kick, vm_crowbar, vm_pistol, vm_shotgun, vm_pump, vm_flare,
+                   world_crowbar, world_pistol, world_shotgun, world_flare])
     if "--blend" in args:
         sauver_source(scene, arg_value(args, "--blend", "assets_src/blender/armes.blend"))
     return 0

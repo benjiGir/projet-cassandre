@@ -5,6 +5,15 @@ description: Pipeline de textures rétro — densité de texels constante, tilin
 
 # Densité de texels et pipeline de textures
 
+## Référence courante — 10 octobre 2026
+
+Les instructions de `AGENTS.md` font foi en cas de divergence. Le code utilise
+actuellement mipmaps et anisotropie à la réduction (ADR 0027 encore proposé),
+et conserve nearest à l’agrandissement. L’exclusivité Lambert est retirée ;
+il n’y a plus de plafond de lots (ADR 0039). La charte artistique candidate
+et son étalon sont dans `docs/5-guides/direction-artistique.md` ; leur
+validation artistique appartient à l’utilisateur.
+
 ## La constante du projet
 
 **64 texels par mètre.** Une texture de 128×128 couvre exactement 2 × 2 m et se
@@ -34,7 +43,7 @@ générer le matériau de contrôle automatiquement.
 
 ## Tiling plutôt que grandes textures
 
-Le plafond de 128×128 tient parce que les textures **se répètent**. Un mur de
+Les matières répétées de référence en 128×128 tiennent parce que les textures **se répètent**. Les atlas, petits objets et illustrations ont des dimensions adaptées, documentées comme exceptions. Un mur de
 4 m répète sa texture deux fois. C'est exactement le fonctionnement de Build,
 et ça donne la bonne densité pour un coût mémoire nul.
 
@@ -63,7 +72,7 @@ couvre tout le vocabulaire architectural du niveau.
 
 ## Quantification de palette
 
-Pour l'homogénéité, toutes les textures passent par la même palette réduite.
+Pour l’homogénéité, les matières de décor partagent des familles de couleurs et des rampes. Le magasin utilise déjà une palette réduite commune ; les sous-palettes du métro restent adaptées à ses zones.
 
 ```bash
 # Palette commune de 64 couleurs générée depuis l'ensemble des sources
@@ -74,8 +83,7 @@ magick all.png -colors 64 -unique-colors palette.png
 magick input.png -resize 128x128 -dither None -remap palette.png output.png
 ```
 
-Le dithering est appliqué **au runtime** dans le pipeline image, pas dans les
-textures. L'appliquer deux fois produit des motifs d'interférence.
+Le renderer courant ne possède pas de passe de tramage global. Les motifs déjà peints se jugent à 640×360 ; leur superposition avec un futur tramage demande une comparaison visuelle.
 
 ## Atlas ou array texture
 
@@ -88,9 +96,7 @@ Deux options côté runtime, et l'array texture est probablement meilleure ici.
 | Mipmaps par case | contaminés | propres |
 | Contrainte | aucune | **dimensions identiques** |
 
-Toutes les textures du projet font 128×128. La contrainte de l'array texture
-est donc déjà satisfaite, et elle élimine le padding et les calculs d'UV
-d'atlas. Combinée à `BatchedMesh`, elle permet de rendre des objets à textures
+Une array texture est une option pour des couches de dimensions identiques. Le dépôt contient aussi des atlas et illustrations plus grands ; elle ne constitue pas une migration imposée du pipeline actuel. Combinée à `BatchedMesh`, elle permet de rendre des objets à textures
 différentes en un seul draw call.
 
 L'atlas reste nécessaire pour les **sprites 8 directions**, où les cases sont
@@ -101,8 +107,8 @@ avec une couche par direction est envisageable.
 
 ```ts
 texture.magFilter = THREE.NearestFilter;
-texture.minFilter = THREE.NearestFilter;
-texture.generateMipmaps = false;
+texture.minFilter = THREE.NearestMipmapLinearFilter;
+texture.generateMipmaps = true;
 texture.colorSpace = THREE.SRGBColorSpace;
 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 ```

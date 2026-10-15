@@ -35,7 +35,7 @@ function disposeImportedMaterials(scene: THREE.Object3D): void {
 }
 
 // Frontière asynchrone au démarrage ; repli si nœuds ou extras manquent.
-export async function loadWeaponModels(): Promise<WeaponModels> {
+async function loadWeaponModels(): Promise<WeaponModels> {
   const gltf = await new GLTFLoader().loadAsync(assetUrl("assets/weapons/armes.glb"));
   const material = new THREE.MeshLambertMaterial({ vertexColors: true });
   applyMinimumLight(material, 0.32);
@@ -55,12 +55,14 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       if (!mesh) throw new Error(`[armes] nœud "${name}" absent de armes.glb`);
       return mesh;
     };
-    const extra = (name: string, key: string): unknown => byName.get(name)?.find((obj) => key in obj.userData)?.userData[key];
+    const extra = (name: string, key: string): unknown =>
+      byName.get(name)?.find((obj) => key in obj.userData)?.userData[key];
 
     const crowbar = node("vm_crowbar");
     const pistol = node("vm_pistol");
     const shotgun = node("vm_shotgun");
     const pump = node("vm_shotgun_pump");
+    const flare = node("vm_flare");
 
     const models: WeaponModels = {
       kick: node("vm_kick").geometry,
@@ -69,9 +71,11 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       pistol: pistol.geometry,
       shotgun: shotgun.geometry,
       shotgunPump: pump.geometry,
+      flare: flare.geometry,
       worldCrowbar: node("world_crowbar").geometry,
       worldPistol: node("world_pistol").geometry,
       worldShotgun: node("world_shotgun").geometry,
+      worldFlare: node("world_flare").geometry,
       crowbarPivot: vec3(extra("vm_crowbar", "prise"), "vm_crowbar.prise"),
       pistolPivot: vec3(extra("vm_pistol", "prise"), "vm_pistol.prise"),
       pistolMuzzle: vec3(extra("vm_pistol", "bout_canon"), "vm_pistol.bout_canon"),
@@ -79,9 +83,23 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
       shotgunPivot: vec3(extra("vm_shotgun", "prise"), "vm_shotgun.prise"),
       shotgunMuzzle: vec3(extra("vm_shotgun", "bout_canon"), "vm_shotgun.bout_canon"),
       pumpAxis: vec3(extra("vm_shotgun_pump", "axe_glissiere"), "vm_shotgun_pump.axe_glissiere").normalize(),
+      flarePivot: vec3(extra("vm_flare", "prise"), "vm_flare.prise"),
+      flareMuzzle: vec3(extra("vm_flare", "bout_canon"), "vm_flare.bout_canon"),
+      flareAxis: vec3(extra("vm_flare", "axe_canon"), "vm_flare.axe_canon").normalize(),
       material,
     };
-    for (const geometry of [models.kick, models.crowbar, models.pistol, models.shotgun, models.shotgunPump, models.worldCrowbar, models.worldPistol, models.worldShotgun]) {
+    for (const geometry of [
+      models.kick,
+      models.crowbar,
+      models.pistol,
+      models.shotgun,
+      models.shotgunPump,
+      models.flare,
+      models.worldCrowbar,
+      models.worldPistol,
+      models.worldShotgun,
+      models.worldFlare,
+    ]) {
       geometries.delete(geometry);
     }
     return models;
@@ -94,26 +112,32 @@ export async function loadWeaponModels(): Promise<WeaponModels> {
   }
 }
 
-function coloredBox(size: [number, number, number], center: [number, number, number], color: number): THREE.BufferGeometry {
+function coloredBox(
+  size: [number, number, number],
+  center: [number, number, number],
+  color: number,
+): THREE.BufferGeometry {
   const geometry = new THREE.BoxGeometry(...size).translate(...center);
   const c = new THREE.Color(color);
-  const colors = new Float32Array(geometry.attributes.position!.count * 3);
+  const colors = new Float32Array(geometry.attributes.position.count * 3);
   for (let i = 0; i < colors.length; i += 3) colors.set([c.r, c.g, c.b], i);
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   return geometry;
 }
 
-export function placeholderWeaponModels(): WeaponModels {
+function placeholderWeaponModels(): WeaponModels {
   return {
-    kick: coloredBox([0.20, 0.28, 0.15], [0.12, -0.30, -0.72], 0x38342e),
+    kick: coloredBox([0.2, 0.28, 0.15], [0.12, -0.3, -0.72], 0x38342e),
     kickPivot: new THREE.Vector3(0.12, -0.45, -0.62),
     crowbar: coloredBox([0.06, 0.06, 0.7], [0.32, -0.28, -0.55], 0x8a5a34),
     pistol: coloredBox([0.06, 0.1, 0.26], [0.26, -0.26, -0.45], 0x3a3d44),
     shotgun: coloredBox([0.09, 0.12, 0.85], [0.3, -0.3, -0.65], 0x555a60),
     shotgunPump: coloredBox([0.001, 0.001, 0.001], [0.3, -0.3, -0.65], 0x555a60),
+    flare: coloredBox([0.08, 0.11, 0.24], [0.24, -0.25, -0.44], 0xd9601f),
     worldCrowbar: coloredBox([0.03, 0.03, 0.7], [0, 0.015, 0], 0x8a5a34),
     worldPistol: coloredBox([0.04, 0.05, 0.22], [0, 0.025, 0], 0x3a3d44),
     worldShotgun: coloredBox([0.05, 0.05, 0.8], [0, 0.025, 0], 0x555a60),
+    worldFlare: coloredBox([0.05, 0.06, 0.2], [0, 0.03, 0], 0xd9601f),
     crowbarPivot: new THREE.Vector3(0.32, -0.28, -0.4),
     pistolPivot: new THREE.Vector3(0.26, -0.26, -0.32),
     pistolMuzzle: new THREE.Vector3(0.26, -0.22, -0.6),
@@ -121,6 +145,9 @@ export function placeholderWeaponModels(): WeaponModels {
     shotgunPivot: new THREE.Vector3(0.3, -0.3, -0.4),
     shotgunMuzzle: new THREE.Vector3(0.3, -0.25, -1.05),
     pumpAxis: new THREE.Vector3(0, 0, -1),
+    flarePivot: new THREE.Vector3(0.24, -0.25, -0.32),
+    flareMuzzle: new THREE.Vector3(0.24, -0.21, -0.58),
+    flareAxis: new THREE.Vector3(0, 0, -1),
     material: new THREE.MeshLambertMaterial({ vertexColors: true }),
   };
 }

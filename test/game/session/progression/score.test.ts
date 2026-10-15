@@ -47,6 +47,14 @@ function baseInput(overrides: Partial<LevelRecapInput> = {}): LevelRecapInput {
 describe("createInitialStats", () => {
   it("démarre tous les compteurs à zéro", () => {
     expect(createInitialStats()).toEqual({
+      trainKills: 0,
+      trainCrossings: 0,
+      trainDeaths: 0,
+      lastDamageSource: null,
+      controllerHits: 0,
+      controllerPushesToRail: 0,
+      controllerTrainKills: 0,
+      controllerPushExpires: -Infinity,
       suitKills: 0,
       directorKills: 0,
       shotsFired: 0,
@@ -103,12 +111,12 @@ describe("les compteurs record*/advanceGameplayTime", () => {
   });
 });
 
-describe("buildLevelRecap — Costards/Directeur", () => {
-  it("un Costard vaut SCORE_SUIT_KILL points, la ligne mentionne le total du niveau", () => {
+describe("buildLevelRecap — ennemis/Directeur", () => {
+  it("un ennemi vaut SCORE_SUIT_KILL points, la ligne mentionne le total du niveau", () => {
     const stats = createInitialStats();
     recordSuitKills(stats, 15);
     const recap = buildLevelRecap(baseInput({ stats, suitTotal: 18 }));
-    const line = recap.lines.find((l) => l.label === "Costards éliminés");
+    const line = recap.lines.find((l) => l.label === "Ennemis éliminés");
     expect(line).toMatchObject({ detail: `15/18 × ${SCORE_SUIT_KILL}`, points: 15 * SCORE_SUIT_KILL });
   });
 

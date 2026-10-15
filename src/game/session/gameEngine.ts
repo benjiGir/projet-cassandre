@@ -1,11 +1,13 @@
 import * as THREE from "three";
 
 import { GameClock } from "../../core/loop/time";
-import { type Recording } from "../../core/input/inputTypes";
+import type { Recording } from "../../core/input/inputTypes";
 import { createRenderer, INTERNAL_WIDTH, INTERNAL_HEIGHT } from "../../render/pipeline/renderer";
 import { FxSystem } from "../../render/fx/fx";
 import { UseObjectCulling } from "../../render/environment/useObjectCulling";
 import { Viewmodel } from "../../render/viewmodel/viewmodel";
+import { HeroReflection } from "../../render/hero/heroReflection";
+import type { HeroAsset } from "../../render/hero/heroTypes";
 import type { WeaponModels } from "../../render/viewmodel/viewmodelTypes";
 import type { CardPickupTextures } from "../../render/pickups/cardPickups";
 import { createWireframeToggle } from "../../render/debug/debugView";
@@ -13,15 +15,20 @@ import { HitmarkerOverlay } from "../../render/overlays/hitmarker";
 import { CrosshairOverlay } from "../../render/overlays/crosshair";
 import { CameraViewOverlay } from "../../render/overlays/cameraView";
 import { BallisticsDebugOverlay } from "../../render/debug/ballisticsDebug";
-import { type EnemySpriteSheet } from "../../render/sprites/enemySpriteTypes";
+import type { EnemySpriteSheet } from "../../render/sprites/enemySpriteTypes";
 import { weaponConfig } from "../player/weapons/weaponConfig";
 import { moveConfig } from "../player/movement/moveConfig";
 import { InteractionSystem } from "../level/interactions/interactive";
 import type { GameFlowPort } from "./flowPort";
 import type { GameSession } from "./gameSession";
 
-// see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
-export interface GameEngine {
+/**
+ * Ce qui vit autant que l'onglet. Une fonction qui construit ou détruit une
+ * partie reçoit ce type : elle ne peut pas lire `engine.session`, donc pas
+ * confondre la partie en cours de remplacement avec celle qu'elle construit.
+ * see: docs/decisions/0014-gameengine-persistentengine-separes.md
+ */
+export interface PersistentEngine {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
@@ -33,6 +40,7 @@ export interface GameEngine {
   /** Rendu de l'impact de tir (muzzle flash, decals, particules, douilles, screenshake) — voir `render/fx/fx.ts`. */
   fx: FxSystem;
   viewmodel: Viewmodel;
+  heroReflection: HeroReflection;
   /** Élagage par distance des `use_*` — PERSISTANT, comme `fx`/`viewmodel` : il ne retient que des références faibles (voir `render/environment/useObjectCulling.ts`). */
   useObjectCulling: UseObjectCulling;
   /** Géométries des armes, partagées par le viewmodel et les ramassages posés dans les niveaux. */
@@ -53,14 +61,9 @@ export interface GameEngine {
   directorSheet: EnemySpriteSheet;
   rampantSheet: EnemySpriteSheet;
   vigileSheet: EnemySpriteSheet;
+  controllerSheet: EnemySpriteSheet;
   /** Sources des trois cartes, préchargées avant la boucle de jeu. */
   cardPickupTextures: CardPickupTextures;
-
-  /** Scratch de la balle de test (chemin "gym" seulement) — PARTAGÉ entre `loop/stepPhysics.ts` (écrit `ballCurr*` depuis la physique) et `loop/interpolateVisuals.ts` (lit `ballPrev*`/`ballCurr*` pour lerp/slerp). */
-  ballPrevPos: THREE.Vector3;
-  ballPrevQuat: THREE.Quaternion;
-  ballCurrPos: THREE.Vector3;
-  ballCurrQuat: THREE.Quaternion;
 
   /** Yaw/pitch de visée — mutés directement par `lifecycle.ts::bootGameSession` (respawn) et `spawning.ts::loadGltfLevel` (repositionnement sur `spawn_player`), jamais recréés en objet neuf : `loop/interpolateVisuals.ts` ferme dessus par référence. */
   look: { yaw: number; pitch: number };
@@ -72,9 +75,6 @@ export interface GameEngine {
   /** Interaction (`use_*`, touche E) — UNE SEULE instance pour toute la durée de l'onglet, voir `game/level/interactions/interactive.ts`. */
   interaction: InteractionSystem;
 
-  /** Session de partie COURANTE — remplace la variable mutable `currentSession` de `main()`. Réassigné par `lifecycle.ts::bootGameSession`/`replay`/`returnToMenu`, jamais par les fonctions qui construisent une NOUVELLE session (elles reçoivent cette nouvelle session en paramètre explicite tant qu'elle n'est pas encore devenue "la" session courante — voir la doc de `spawning.ts::spawnSuitAt`). */
-  session: GameSession;
-
   /** Dernier enregistrement F9/F10 (`core/input/inputRecorder.ts`), pour rejeu (F10) et pour `window.cassandre.lastRecording`/`playRecording`. */
   lastRecording: Recording | null;
   /** FPS lissé, publié au `DebugPanel` (voir `loop/updateFx.ts`). */
@@ -83,8 +83,11 @@ export interface GameEngine {
   debugAccumulator: number;
 }
 
-// see: docs/archive/systems-session.md#un-type-intermédiaire-pour-éviter-une-dépendance-circulaire-persistentengine
-export type PersistentEngine = Omit<GameEngine, "session">;
+// see: docs/archive/systems-session.md#létat-persistant-du-process-gameengine
+export interface GameEngine extends PersistentEngine {
+  /** Session de partie COURANTE — remplace la variable mutable `currentSession` de `main()`. Réassigné par `lifecycle.ts::bootGameSession`/`replay`/`returnToMenu`, jamais par les fonctions qui construisent une NOUVELLE session (elles reçoivent cette nouvelle session en paramètre explicite tant qu'elle n'est pas encore devenue "la" session courante — voir la doc de `spawning.ts::spawnSuitAt`). */
+  session: GameSession;
+}
 
 // see: docs/archive/systems-session.md#savoir-si-le-monde-physique-est-vivant-isphysicssessionlive
 export function isPhysicsSessionLive(engine: GameEngine): boolean {
@@ -94,9 +97,16 @@ export function isPhysicsSessionLive(engine: GameEngine): boolean {
 export function buildGameEngine(
   canvas: HTMLCanvasElement,
   flow: GameFlowPort,
-  sheets: { suit: EnemySpriteSheet; director: EnemySpriteSheet; rampant: EnemySpriteSheet; vigile: EnemySpriteSheet },
+  sheets: {
+    suit: EnemySpriteSheet;
+    director: EnemySpriteSheet;
+    rampant: EnemySpriteSheet;
+    vigile: EnemySpriteSheet;
+    controller: EnemySpriteSheet;
+  },
   weaponModels: WeaponModels,
   cardPickupTextures: CardPickupTextures,
+  heroAsset: HeroAsset,
 ): PersistentEngine {
   const scene = new THREE.Scene();
   // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
@@ -115,10 +125,13 @@ export function buildGameEngine(
   // L'objet reste vivant à travers un reset ; `bootGameSession` remet son
   // temps écoulé et tout hitstop actif à zéro.
   const clock = new GameClock();
-  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile]
-    .flatMap((sheet) => Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined));
+  const enemyAtlases = [sheets.suit, sheets.rampant, sheets.vigile, sheets.controller].flatMap((sheet) =>
+    Object.values(sheet.atlases).filter((atlas): atlas is THREE.Texture => atlas !== undefined),
+  );
   const fx = new FxSystem(scene, enemyAtlases);
   const viewmodel = new Viewmodel(camera, weaponModels);
+  const heroReflection = new HeroReflection(scene, heroAsset);
+  for (const atlas of Object.values(heroAsset.atlases)) renderer.initTexture(atlas.texture);
   const crosshair = new CrosshairOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const hitmarker = new HitmarkerOverlay(document.getElementById("app") as HTMLDivElement, weaponConfig);
   const ballisticsDebug = new BallisticsDebugOverlay(scene);
@@ -126,11 +139,6 @@ export function buildGameEngine(
   // même conteneur/canvas 2D que le réticule/hitmarker ci-dessus, voir
   // `render/overlays/cameraView.ts`.
   const cameraViewOverlay = new CameraViewOverlay(document.getElementById("app") as HTMLDivElement);
-
-  const ballPrevPos = new THREE.Vector3();
-  const ballPrevQuat = new THREE.Quaternion();
-  const ballCurrPos = new THREE.Vector3(3, 4, 0);
-  const ballCurrQuat = new THREE.Quaternion();
 
   const look = { yaw: 0, pitch: 0 };
   // Delta souris agrégé depuis le dernier pas fixe, pour l'enregistrement.
@@ -148,6 +156,7 @@ export function buildGameEngine(
     clock,
     fx,
     viewmodel,
+    heroReflection,
     useObjectCulling: new UseObjectCulling(),
     weaponModels,
     crosshair,
@@ -160,11 +169,8 @@ export function buildGameEngine(
     directorSheet: sheets.director,
     rampantSheet: sheets.rampant,
     vigileSheet: sheets.vigile,
+    controllerSheet: sheets.controller,
     cardPickupTextures,
-    ballPrevPos,
-    ballPrevQuat,
-    ballCurrPos,
-    ballCurrQuat,
     look,
     lookDelta,
     wireframeToggle,

@@ -22,9 +22,19 @@ interface Splat {
 }
 
 const UP = new THREE.Vector3(0, 1, 0);
-const QUAD_CORNERS: readonly (readonly [number, number])[] = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+const QUAD_CORNERS: readonly (readonly [number, number])[] = [
+  [-1, -1],
+  [1, -1],
+  [1, 1],
+  [-1, 1],
+];
 /** Points du pourtour vérifiés avant de poser une tache : elle ne dépasse pas d'une arête. */
-const FIT_PROBES: readonly (readonly [number, number])[] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const FIT_PROBES: readonly (readonly [number, number])[] = [
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
+];
 const FIT_REACH = 0.45;
 
 const scratchA = new THREE.Vector3();
@@ -108,7 +118,7 @@ export class GoreSplats {
   ): number {
     const floor = Math.abs(normal.y) > FLOOR_NORMAL_Y;
     const index = this.cursor;
-    const splat = this.splats[index]!;
+    const splat = this.splats[index];
     splat.stretch = 1;
 
     if (floor) {
@@ -191,11 +201,14 @@ export class GoreSplats {
   }
 
   private writeQuad(index: number, scale: number): void {
-    const splat = this.splats[index]!;
+    const splat = this.splats[index];
     const half = splat.size * scale * 0.5;
     for (let corner = 0; corner < 4; corner++) {
-      const [t, b] = QUAD_CORNERS[corner]!;
-      scratchC.copy(splat.center).addScaledVector(splat.tangent, t * half * splat.stretch).addScaledVector(splat.bitangent, b * half);
+      const [t, b] = QUAD_CORNERS[corner];
+      scratchC
+        .copy(splat.center)
+        .addScaledVector(splat.tangent, t * half * splat.stretch)
+        .addScaledVector(splat.bitangent, b * half);
       this.positions.setXYZ(index * 4 + corner, scratchC.x, scratchC.y, scratchC.z);
     }
     this.positions.needsUpdate = true;
@@ -203,7 +216,7 @@ export class GoreSplats {
 
   update(realDt: number): void {
     for (const index of this.growing) {
-      const splat = this.splats[index]!;
+      const splat = this.splats[index];
       splat.age += realDt;
       const t = Math.min(1, splat.age / splat.grow);
       // Part vite, finit lentement : un liquide qui s'étale.

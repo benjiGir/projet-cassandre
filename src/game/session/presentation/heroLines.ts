@@ -1,10 +1,7 @@
 import type { SuitKind } from "../../entities/suit/suitConfig";
+import type { LevelTexts } from "../../level/catalog/levels";
 
 // see: docs/6-reference/notes-code-gameplay.md#feedback-et-récap
-
-/** Graine du tirage des répliques occasionnelles (`GameSession.heroLineRandom`) — famille
- * `SHOTGUN_SPREAD_SEED`/`BASE_SUIT_SEED`, jamais dérivée de `Math.random()`/`Date.now()`. */
-export const HERO_LINE_SEED = 0x50111e77;
 
 export interface HeroLineDef {
   readonly text: string;
@@ -91,6 +88,7 @@ export const HERO_LINES = {
   arme_pied_biche: { text: "Ça ouvre les portes. Et les discussions.", priority: true, once: true },
   arme_pistolet: { text: "Là, ils vont m'écouter.", priority: true, once: true },
   arme_pompe: { text: "Ça, c'est pour les gros dossiers.", priority: true, once: true },
+  arme_fusee: { text: "En cas d'urgence : tirer dans le tas.", priority: true, once: true, textOnly: true },
   arme_double: { text: "J'ai déjà ce qu'il faut.", once: true },
   munitions_24: { text: "De quoi poursuivre la conversation.", chance: 0.5 },
   munitions_36: { text: "Voilà une réserve sérieuse.", chance: 0.5 },
@@ -125,9 +123,13 @@ export const HERO_LINES = {
   vigile_alerte: { text: "La sécurité. Enfin quelqu'un qui prend ça au sérieux.", priority: true, once: true, textOnly: true },
   vigile_coup: { text: "C'est ça, votre service client ?", once: true, textOnly: true },
   vigile_bouclier: { text: "De face, ça ne passe pas. Par-derrière, alors.", priority: true, once: true, textOnly: true },
+  controleur_alerte: { text: "Mon ticket ? Il est dans mon autre pantalon.", priority: true, once: true, textOnly: true },
+  controleur_poussee: { text: "Le contrôle, c'est sans les mains !", once: true, textOnly: true },
+  brigade_alerte: { text: "Les galons, c'est pour les amendes ?", priority: true, once: true, textOnly: true },
   premier_kill: { text: "Un de moins. Une preuve de plus.", once: true },
   kill_costard: { text: "Ton service est terminé.", chance: 0.35 },
   kill_pompe: { text: "Ça remet les idées en place.", chance: 0.5 },
+  kill_fusee: { text: "Signal reçu.", chance: 0.5, textOnly: true },
   touche: { text: "Ça, tu vas le payer.", chance: 0.15 },
   pv_bas: { text: "Ça va. Continuez de regarder.", priority: true, once: true },
   objet_pousse: { text: "Pousse-toi de là.", once: true },
@@ -150,6 +152,49 @@ export const HERO_LINES = {
   boss_revelation: { text: "Je le savais. Je le savais !", priority: true, once: true },
   boss_touche_hero: { text: "T'as de la force pour un bureaucrate.", chance: 0.3, once: true },
   boss_mort: { text: "Fin de mandat.", priority: true, once: true },
+
+  // --- Métro — voir `docs/6-reference/repliques-metro.md`. Aucune prise de voix pour l'instant. ---
+  metro_depart: { text: "Interrompu pour qui ? Je descends demander.", priority: true, once: true, textOnly: true },
+  metro_mort_rame: { text: "J'aurais dû attendre la suivante.", priority: true, once: true, textOnly: true },
+  metro_secret_atelier: { text: "Le service après-vente a du stock.", priority: true, once: true, textOnly: true },
+  metro_secret_archives: { text: "Sang-Froid. Ils ont même rangé les preuves.", priority: true, once: true, textOnly: true },
+  metro_secret_toit: { text: "Pas de supplément pour les bagages.", priority: true, once: true, textOnly: true },
+  metro_secret_entretien: { text: "Accès réservé ? Ça me concerne.", priority: true, once: true, textOnly: true },
+
+  // Lieux du métro — première visite, voir `PLACE_LINES`
+  metro_billets: { text: "Le plan de la ligne S s'arrête au Dépôt. On verra bien.", once: true, textOnly: true },
+  metro_descente: { text: "Personne dans l'escalier. Je n'ai jamais descendu aussi vite.", once: true, textOnly: true },
+  metro_quais: { text: "Quai désert, lumières allumées. Pour qui ?", once: true, textOnly: true },
+  metro_tunnel_a: { text: "Il fait tiède, là-dedans. Les murs transpirent plus que moi.", once: true, textOnly: true },
+  metro_galeries: { text: "Des conduites partout. Pas une seule de froide.", once: true, textOnly: true },
+  metro_vestiaire: { text: "Un vestiaire d'agents. Ils se changent en quoi, au juste ?", once: true, textOnly: true },
+  metro_tunnel_b: { text: "Second tunnel. Même chaleur, mêmes rails, toujours pas de travaux.", once: true, textOnly: true },
+  metro_depot: { text: "Le Dépôt. Terminus officiel. Alors qu'attend cette rame ?", once: true, textOnly: true },
+  metro_poste: { text: "Sur le tableau, une branche que le plan ne montre pas.", once: true, textOnly: true },
+  metro_machinerie: { text: "Ce ventilateur souffle vers le réseau. Pas vers la sortie.", once: true, textOnly: true },
+  metro_local_ventilation: { text: "Un local derrière le ventilateur. Quelqu'un aime la tranquillité.", once: true, textOnly: true },
+  metro_fret: { text: "Des bacs de produits frais. Les mêmes qu'au magasin.", once: true, textOnly: true },
+  metro_privee: { text: "Quai privé. Pas un nom, pas un horaire.", once: true, textOnly: true },
+  metro_remontee: { text: "Ça monte. Et l'air ne rafraîchit pas.", once: true, textOnly: true },
+  metro_parvis: { text: "La tour. De la vapeur aux grilles, et pas une enseigne.", once: true, textOnly: true },
+
+  // Moments scriptés du métro — voir `level/blockout/metroEncounterEvents.ts`
+  metro_sans_titre: { text: "Pas de ticket. J'ai mieux : des témoins.", priority: true, once: true, textOnly: true },
+  metro_nichee: { text: "Ils dormaient contre les tuyaux chauds. Frileux, les collègues.", priority: true, once: true, textOnly: true },
+  metro_aiguillage: { text: "Aiguillage rétabli. Reste à voir vers où.", priority: true, once: true, textOnly: true },
+  metro_courant: { text: "Le courant est revenu. Quelqu'un va recevoir la facture.", priority: true, once: true, textOnly: true },
+  metro_depart_refuse: { text: "Rien ne bouge. Il manque un aiguillage, ou du courant.", priority: true, once: true, textOnly: true },
+  metro_depart_rame: { text: "Livraison express. Le colis, c'est moi.", priority: true, once: true, textOnly: true },
+  metro_rame_vague_1: { text: "Ça gratte sur le toit. Drôles de contrôleurs.", priority: true, once: true, textOnly: true },
+  metro_rame_vague_2: { text: "Encore ! Ils voyagent sans billet, eux aussi.", priority: true, once: true, textOnly: true },
+  metro_arrivee: { text: "Terminus. Tout le monde descend. Surtout moi.", priority: true, once: true, textOnly: true },
+
+  // Rames et compte vérifié — voir `player/metroMoments.ts`, `player/levelTrainGameplay.ts`, `stream/streamFeed.ts`
+  metro_premier_passage: { text: "Trafic interrompu. Ça, c'était quoi, alors ?", priority: true, once: true, textOnly: true },
+  metro_traversee: { text: "On regarde à gauche, à droite. Et on court.", once: true, textOnly: true },
+  metro_ennemi_fauche: { text: "Fallait rester derrière la ligne jaune.", priority: true, once: true, textOnly: true },
+  metro_arret_urgence: { text: "L'arrêt d'urgence. J'en rêvais depuis l'école.", once: true, textOnly: true },
+  metro_don_verifie: { text: "Compte vérifié ! J'ai un allié dans la place.", priority: true, once: true, textOnly: true },
 } as const satisfies Record<string, HeroLineDef>;
 
 export type HeroLineId = keyof typeof HERO_LINES;
@@ -162,6 +207,12 @@ export const HERO_BARKS = {
 
 export type HeroBarkId = keyof typeof HERO_BARKS;
 
+/** Première réplique de la partie, selon le jeu de textes du niveau (`LevelDef.textes`). */
+export const OPENING_LINES: Readonly<Record<LevelTexts, HeroLineId>> = {
+  magasin: "depart",
+  metro: "metro_depart",
+};
+
 /** Clé de la prise dans le sprite `voix`. */
 export function heroVoiceKey(id: HeroLineId | HeroBarkId): string {
   return `heros_${id}_a`;
@@ -173,6 +224,8 @@ export const ALERT_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
   costard: "costard_alerte",
   rampant: "rampant_alerte",
   vigile: "vigile_alerte",
+  controleur: "controleur_alerte",
+  chef_brigade: "brigade_alerte",
 };
 
 /** Réplique à la première attaque d'un ennemi, selon son espèce. */
@@ -180,17 +233,24 @@ export const ATTACK_LINES: Readonly<Record<SuitKind, HeroLineId>> = {
   costard: "costard_tire",
   rampant: "rampant_griffe",
   vigile: "vigile_coup",
+  controleur: "controleur_poussee",
+  chef_brigade: "controleur_poussee",
 };
 
 export const SECRET_LINES: Readonly<Record<string, HeroLineId>> = {
+  secret_metro_atelier: "metro_secret_atelier",
+  secret_metro_sang_froid: "metro_secret_archives",
+  secret_metro_toit: "metro_secret_toit",
+  secret_metro_entretien: "metro_secret_entretien",
   secret_1_photomaton: "secret_photomaton",
   secret_3_aeration: "secret_aeration",
   secret_4_planque: "secret_vigile",
 };
 
 /**
- * Réplique de première visite par espace du plan de masse (`<niveau>.espaces.json`).
- * Les espaces absents ne disent rien : les secrets ont leur propre réplique.
+ * Réplique de première visite par lieu du plan de masse (`<niveau>.espaces.json`) :
+ * l'identifiant d'un espace, ou le `nom` commun aux morceaux d'un espace découpé.
+ * Les lieux absents ne disent rien : les secrets ont leur propre réplique.
  */
 export const PLACE_LINES: Readonly<Record<string, HeroLineId>> = {
   parking_ext: "parking",
@@ -224,6 +284,23 @@ export const PLACE_LINES: Readonly<Record<string, HeroLineId>> = {
   c_escalier: "escalier",
   bureaux: "bureaux",
   direction: "direction",
+
+  // Métro. Les deux locaux à l'écart (`secret_2`, `secret_4`) n'ont pas encore de volume `secret_*`.
+  billets: "metro_billets",
+  descente: "metro_descente",
+  quais: "metro_quais",
+  tunnel_a: "metro_tunnel_a",
+  galeries: "metro_galeries",
+  secret_2: "metro_vestiaire",
+  tunnel_b: "metro_tunnel_b",
+  depot: "metro_depot",
+  poste: "metro_poste",
+  machinerie: "metro_machinerie",
+  secret_4: "metro_local_ventilation",
+  fret: "metro_fret",
+  privee: "metro_privee",
+  remontee: "metro_remontee",
+  parvis: "metro_parvis",
 };
 
 /** Réplique d'ouverture par `use_*` de porte libre. */

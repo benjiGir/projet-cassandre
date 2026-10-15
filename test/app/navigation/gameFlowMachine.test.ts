@@ -1,17 +1,11 @@
 /**
- * Jalon M8 (PLAN_EFFECT_XSTATE.md, §10) — table de transitions complète de
- * `gameFlowMachine` (`src/app/navigation/gameFlowMachine.ts`), testée EN ISOLATION :
- * aucun DOM, aucun Three.js, aucun Rapier — l'acteur XState est une machine
- * pure (voir la doc de tête du fichier source pour la distinction entre
- * cette table COMPLÈTE et le câblage runtime plus grossier de `main.ts`).
+ * Table de transitions de `gameFlowMachine`
+ * (`src/app/navigation/gameFlowMachine.ts`), testée EN ISOLATION : aucun DOM,
+ * aucun Three.js, aucun Rapier — l'acteur XState est une machine pure.
  */
 import { describe, expect, it } from "vitest";
 
-import {
-  createGameFlowActor,
-  isPhysicsLiveState,
-  isPlayingState,
-} from "../../../src/app/navigation/gameFlowMachine";
+import { createGameFlowActor, isPhysicsLiveState, isPlayingState } from "../../../src/app/navigation/gameFlowMachine";
 
 describe("gameFlowMachine", () => {
   it("démarre sur boot", () => {
@@ -40,24 +34,6 @@ describe("gameFlowMachine", () => {
     expect(actor.getSnapshot().value).toBe("loading");
     actor.send({ type: "PLAY" });
     expect(actor.getSnapshot().value).toBe("playing");
-  });
-
-  it("mainMenu -> options via OPEN_OPTIONS, puis options -> mainMenu via BACK_TO_MENU", () => {
-    const actor = createGameFlowActor();
-    actor.send({ type: "ENTER_MENU" });
-    actor.send({ type: "OPEN_OPTIONS" });
-    expect(actor.getSnapshot().value).toBe("options");
-    actor.send({ type: "BACK_TO_MENU" });
-    expect(actor.getSnapshot().value).toBe("mainMenu");
-  });
-
-  it("mainMenu -> levelSelect via CHOOSE_ZONE, puis levelSelect -> loading", () => {
-    const actor = createGameFlowActor();
-    actor.send({ type: "ENTER_MENU" });
-    actor.send({ type: "CHOOSE_ZONE" });
-    expect(actor.getSnapshot().value).toBe("levelSelect");
-    actor.send({ type: "BEGIN_LOAD" });
-    expect(actor.getSnapshot().value).toBe("loading");
   });
 
   it("playing -> dead via DIED", () => {

@@ -50,7 +50,7 @@ export class BallisticsDebugOverlay {
 
     const positions = new Float32Array(endpoints.length * 6);
     for (let i = 0; i < endpoints.length; i++) {
-      const end = endpoints[i]!;
+      const end = endpoints[i];
       positions[i * 6 + 0] = origin.x;
       positions[i * 6 + 1] = origin.y;
       positions[i * 6 + 2] = origin.z;
@@ -109,7 +109,7 @@ export class BallisticsDebugOverlay {
   // Delta réel d’affichage ; la requête représentée reste figée au tir.
   update(realDt: number) {
     for (let i = this.traces.length - 1; i >= 0; i--) {
-      const trace = this.traces[i]!;
+      const trace = this.traces[i];
       trace.remaining -= realDt;
       if (trace.remaining <= 0) {
         this.scene.remove(trace.object);

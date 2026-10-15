@@ -55,7 +55,7 @@ export const goreConfig = {
   /** Giclée derrière un ennemi touché sans mourir. */
   hitSprayRange: 3.5,
   hitSpraySize: [0.3, 0.55] as Range,
-  hitSprayChance: { kick: 1, melee: 1, pistol: 1, shotgun: 0.4 } as Record<FiringWeapon, number>,
+  hitSprayChance: { kick: 1, melee: 1, pistol: 1, shotgun: 0.4, flare: 1 } satisfies Record<FiringWeapon, number>,
 };
 
 /** Au-delà de cette pente, une surface est un sol : la tache y est ronde et le morceau s'y pose. */

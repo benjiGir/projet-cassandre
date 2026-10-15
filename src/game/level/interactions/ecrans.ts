@@ -1,8 +1,8 @@
-import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import type * as THREE from "three";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import type { LevelResources } from "../loading/levelResources";
+import { mergeBreakableDecor } from "../loading/mergeBreakableDecor";
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
 
@@ -111,12 +111,11 @@ export interface EcranMergeResult {
   batchCount: number;
 }
 
-function materialKey(mat: THREE.MeshLambertMaterial): string {
-  return [mat.map?.uuid ?? "-", mat.color.getHexString(), mat.transparent, mat.opacity, mat.alphaTest].join("|");
-}
-
 function computeNormalizedUV(uv: THREE.BufferAttribute, start: number, count: number): Float32Array {
-  let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+  let uMin = Infinity,
+    uMax = -Infinity,
+    vMin = Infinity,
+    vMax = -Infinity;
   for (let i = start; i < start + count; i++) {
     const u = uv.getX(i);
     const v = uv.getY(i);
@@ -135,93 +134,30 @@ function computeNormalizedUV(uv: THREE.BufferAttribute, start: number, count: nu
   return out;
 }
 
-function passthroughEcranInfo(candidate: EcranCandidate): EcranInfo {
-  const uv = candidate.mesh.geometry.getAttribute("uv") as THREE.BufferAttribute;
-  return {
+export function mergeEcranDecor(
+  root: THREE.Object3D,
+  candidates: readonly EcranCandidate[],
+  resources?: LevelResources,
+): EcranMergeResult {
+  const merge = mergeBreakableDecor(root, candidates, "ecran_fusion", resources);
+  const ecrans = merge.ranges.map(({ candidate, batchGeometry, vertexStart, vertexCount }) => ({
     name: candidate.name,
     collider: candidate.collider,
     body: candidate.body,
     maxHp: candidate.maxHp,
     chaine: candidate.chaine,
     extras: candidate.extras,
-    batchGeometry: candidate.mesh.geometry,
-    vertexStart: 0,
-    vertexCount: uv.count,
-    normalizedUV: computeNormalizedUV(uv, 0, uv.count),
-  };
-}
-
-export function mergeEcranDecor(root: THREE.Object3D, candidates: readonly EcranCandidate[], resources?: LevelResources): EcranMergeResult {
-  const groups = new Map<string, EcranCandidate[]>();
-  for (const candidate of candidates) {
-    const key = materialKey(candidate.mesh.material);
-    const list = groups.get(key);
-    if (list) list.push(candidate);
-    else groups.set(key, [candidate]);
-  }
-
-  const rootInverse = root.matrixWorld.clone().invert();
-  const toRootSpace = new THREE.Matrix4();
-  const ecrans: EcranInfo[] = [];
-  let batchCount = 0;
-
-  for (const group of groups.values()) {
-    if (group.length < 2) {
-      ecrans.push(passthroughEcranInfo(group[0]!));
-      continue;
-    }
-
-    const geometries = group.map((candidate) => {
-      toRootSpace.multiplyMatrices(rootInverse, candidate.mesh.matrixWorld);
-      const geometry = candidate.mesh.geometry.clone();
-      resources?.geometry(geometry);
-      return geometry.applyMatrix4(toRootSpace);
-    });
-    const merged = mergeGeometries(geometries, false);
-    if (merged) resources?.geometry(merged);
-    if (!merged) {
-      for (const g of geometries) g.dispose();
-      for (const candidate of group) ecrans.push(passthroughEcranInfo(candidate));
-      continue;
-    }
-
-    const batch = new THREE.Mesh(merged, group[0]!.mesh.material);
-    batch.name = `ecran_fusion_${batchCount}`;
-    root.add(batch);
-    batch.updateMatrixWorld(true);
-    batchCount++;
-
-    let cursor = 0;
-    for (let i = 0; i < group.length; i++) {
-      const candidate = group[i]!;
-      const originalUv = candidate.mesh.geometry.getAttribute("uv") as THREE.BufferAttribute;
-      const count = originalUv.count;
-      ecrans.push({
-        name: candidate.name,
-        collider: candidate.collider,
-        body: candidate.body,
-        maxHp: candidate.maxHp,
-        chaine: candidate.chaine,
-        extras: candidate.extras,
-        batchGeometry: merged,
-        vertexStart: cursor,
-        vertexCount: count,
-        // Normalisé depuis l'UV D'ORIGINE (avant fusion) : la fusion ne
-        // touche pas les valeurs d'UV elles-mêmes, seulement leur buffer.
-        normalizedUV: computeNormalizedUV(originalUv, 0, count),
-      });
-      cursor += count;
-    }
-
-    for (const g of geometries) g.dispose();
-    for (const candidate of group) {
-      candidate.mesh.removeFromParent();
-      candidate.mesh.geometry.dispose();
-      if (candidate.mesh.material !== batch.material) candidate.mesh.material.dispose();
-    }
-  }
-
-  return { ecrans, batchCount };
+    batchGeometry,
+    vertexStart,
+    vertexCount,
+    // La fusion recopie les UV sans les modifier : la plage du lot porte les valeurs d'origine du mesh.
+    normalizedUV: computeNormalizedUV(
+      batchGeometry.getAttribute("uv") as THREE.BufferAttribute,
+      vertexStart,
+      vertexCount,
+    ),
+  }));
+  return { ecrans, batchCount: merge.batchCount };
 }
 
 export interface EcranHitEvent {
@@ -289,7 +225,7 @@ export class EcranSystem {
 
   update(dtFixed: number, hitEvents: ReadonlyArray<HitEvent>): void {
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.broken) continue;
 
@@ -347,12 +283,12 @@ export class EcranSystem {
  * courante — jamais la géométrie/position, voir la doc de tête. */
 function applyFrame(state: EcranState): void {
   const { info } = state;
-  const cellIndex = ECRAN_ATLAS[state.track][state.frameIndex]!;
+  const cellIndex = ECRAN_ATLAS[state.track][state.frameIndex];
   const { u0, v0 } = cellRect(cellIndex);
   const uv = info.batchGeometry.getAttribute("uv") as THREE.BufferAttribute;
   for (let i = 0; i < info.vertexCount; i++) {
-    const nu = info.normalizedUV[i * 2]!;
-    const nv = info.normalizedUV[i * 2 + 1]!;
+    const nu = info.normalizedUV[i * 2];
+    const nv = info.normalizedUV[i * 2 + 1];
     uv.setXY(info.vertexStart + i, u0 + nu * CELL_UV, v0 + nv * CELL_UV);
   }
   uv.needsUpdate = true;

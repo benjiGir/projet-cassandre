@@ -22,8 +22,9 @@ import { mergeVitreDecor, type VitreCandidate } from "../interactions/vitres";
 import { mergeSanitaireDecor, type SanitaireCandidate } from "../sanitaires/sanitaires";
 import { mergeEcranDecor, type EcranCandidate } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
-import { initialiserDouches } from "../sanitaires/douches";
+import { initShowers } from "../sanitaires/douches";
 import { initializeStoreSign } from "../../../render/environment/storeSign";
+import { createFountainWater } from "../../../render/environment/fountain/fountainWater";
 import { STORE_SIGN_PREFIX } from "../../../render/environment/storeSignConfig";
 import { LevelFetchError, validateSpawnPlayerCountEffect } from "./levelDiagnostics";
 import { blenderName, readSpawnGroup } from "./levelExtras";
@@ -45,6 +46,9 @@ import {
   buildSecretZone,
 } from "./levelObjects";
 import { convertToLambert, buildLevelLight } from "./levelPresentation";
+import { readTrainLevel, TrainLevelError } from "../trains/trainLevelData";
+import { LevelTrains } from "../trains/levelTrains";
+import { MetroBlockout } from "../blockout/metroBlockout";
 
 // Point d'entrée.
 
@@ -94,7 +98,13 @@ function buildLevelResourceEffect(
     const movableRoots = new Set(
       nodes.filter((o) => {
         const n = blenderName(o);
-        return n.startsWith("door_") || n.startsWith("use_") || n.startsWith("prop_");
+        return (
+          n.startsWith("door_") ||
+          n.startsWith("use_") ||
+          n.startsWith("prop_") ||
+          n.startsWith("train_modele_") ||
+          n.startsWith("stage_voyage_")
+        );
       }),
     );
     const animatedNodeNames = new Set(
@@ -111,6 +121,10 @@ function buildLevelResourceEffect(
     for (const obj of nodes) {
       // Nom "tel que tapé dans Blender", PAS `obj.name` — voir `blenderName`.
       const name = blenderName(obj);
+      if (/^(nav_voie_|traversee_train_|refuge_train_)/.test(name)) {
+        obj.visible = false;
+        continue;
+      }
 
       // Empties : jamais un THREE.Mesh, traités avant le filtre `instanceof`.
       if (name === "spawn_player") {
@@ -137,6 +151,17 @@ function buildLevelResourceEffect(
         spawnSuits.push({ name, position, group: readSpawnGroup(obj), kind: "vigile" });
         continue;
       }
+      if (name.startsWith("spawn_controleur_") || name.startsWith("spawn_chef_brigade_")) {
+        const position = new THREE.Vector3();
+        obj.getWorldPosition(position);
+        spawnSuits.push({
+          name,
+          position,
+          group: readSpawnGroup(obj),
+          kind: name.startsWith("spawn_chef_brigade_") ? "chef_brigade" : "controleur",
+        });
+        continue;
+      }
       if (name.startsWith("light_")) {
         // Attachée à `root` et non à la scène : elle disparaît avec le niveau,
         // comme tout le reste du `.glb`.
@@ -156,9 +181,10 @@ function buildLevelResourceEffect(
         const quaternion = new THREE.Quaternion();
         obj.getWorldPosition(position);
         obj.getWorldQuaternion(quaternion);
-        const label = typeof (obj.userData as Record<string, unknown>).nom === "string"
-          ? ((obj.userData as Record<string, unknown>).nom as string)
-          : name;
+        const label =
+          typeof (obj.userData as Record<string, unknown>).nom === "string"
+            ? ((obj.userData as Record<string, unknown>).nom as string)
+            : name;
         cams.push({ name, position, quaternion, label });
         continue;
       }
@@ -278,8 +304,25 @@ function buildLevelResourceEffect(
 
     // Après convertToLambert : le filet de douche remplace volontairement
     // son matériau classique par le matériau TSL ciblé (ADR 0035).
-    initialiserDouches(root);
+    initShowers(root);
     initializeStoreSign(root);
+    const fountainWater = createFountainWater(root, resources);
+    const trainData = yield* Effect.try({
+      try: () => readTrainLevel(nodes),
+      catch: (cause) => new TrainLevelError({ message: String(cause) }),
+    }).pipe(Effect.orDie);
+    let trains: LevelTrains | null = null;
+    if (trainData) {
+      const meshes: THREE.Mesh[] = [];
+      trainData.model.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) meshes.push(obj);
+      });
+      mergeStaticDecor(trainData.model, meshes, resources);
+      trainData.model.removeFromParent();
+      trainData.model.visible = false;
+      trains = new LevelTrains(root, physics, trainData, resources);
+    }
+    const metroBlockout = root.getObjectByName("n5_voyage_centre") ? new MetroBlockout(root, trains, resources) : null;
     resources.collect();
 
     yield* validateSpawnPlayerCountEffect(spawnPlayerCount);
@@ -305,7 +348,7 @@ function buildLevelResourceEffect(
       useCount: useObjects.length,
       secretCount: secrets.length,
       unprefixedMeshCount,
-      decorBatchCount: unprefixedMeshCount - decor.mergedMeshCount + decor.batchCount,
+      decorBatchCount: decorCandidates.length - decor.mergedMeshCount + decor.batchCount,
       lightCount: lights.length,
       propCount: props.length,
       vitreCount: vitreMerge.vitres.length,
@@ -318,6 +361,9 @@ function buildLevelResourceEffect(
     };
 
     return {
+      metroBlockout,
+      trains,
+      fountainWater,
       root,
       gltf,
       spawnPlayer,
@@ -359,6 +405,9 @@ function acquireLevelResourceEffect(
 function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHandle {
   let restoreSuspension: (() => void) | null = null;
   return {
+    metroBlockout: resource.metroBlockout,
+    trains: resource.trains,
+    fountainWater: resource.fountainWater,
     root: resource.root,
     gltf: resource.gltf,
     spawnPlayer: resource.spawnPlayer,
@@ -388,7 +437,7 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
         restored = true;
         resource.root.visible = rootWasVisible;
         for (let i = 0; i < resource.bodies.length; i++) {
-          resource.bodies[i]!.setEnabled(enabledBodies[i]!);
+          resource.bodies[i].setEnabled(enabledBodies[i]);
         }
         restoreSuspension = null;
       };
@@ -398,17 +447,13 @@ function toLevelHandle(resource: LevelResource, scope: Scope.Closeable): LevelHa
   };
 }
 
-export function buildLevelFromGltfEffect(
-  gltf: GLTF,
-  scene: THREE.Scene,
-  physics: PhysicsWorld,
-): Effect.Effect<LevelHandle> {
+function buildLevelFromGltfEffect(gltf: GLTF, scene: THREE.Scene, physics: PhysicsWorld): Effect.Effect<LevelHandle> {
   return Effect.gen(function* () {
     const scope = Scope.makeUnsafe();
     return yield* acquireLevelResourceEffect(gltf, scene, physics).pipe(
       Scope.provide(scope),
       Effect.map((resource) => toLevelHandle(resource, scope)),
-      Effect.onExit((exit) => Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void),
+      Effect.onExit((exit) => (Exit.isFailure(exit) ? Scope.close(scope, exit) : Effect.void)),
     );
   });
 }
@@ -418,7 +463,7 @@ export function buildLevelFromGltf(gltf: GLTF, scene: THREE.Scene, physics: Phys
 }
 
 /** Frontière asynchrone du chargement glTF ; la construction du niveau reste synchrone. */
-export function loadLevelEffect(
+function loadLevelEffect(
   url: string,
   scene: THREE.Scene,
   physics: PhysicsWorld,

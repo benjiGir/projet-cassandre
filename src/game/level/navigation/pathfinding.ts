@@ -13,7 +13,8 @@ export class PathfindingService extends Context.Service<PathfindingService, Path
     Effect.gen(function* () {
       const raycasts = yield* RaycastService;
       return PathfindingService.of({
-        bake: (physics, bounds) => bakeNavGraphEffect(physics, bounds).pipe(Effect.provideService(RaycastService, raycasts)),
+        bake: (physics, bounds) =>
+          bakeNavGraphEffect(physics, bounds).pipe(Effect.provideService(RaycastService, raycasts)),
         findPath: findPathEffect,
       });
     }),

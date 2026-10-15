@@ -1,8 +1,6 @@
 export type GameFlowState =
   | "boot"
   | "mainMenu"
-  | "options"
-  | "levelSelect"
   | "loading"
   | "loadFailed"
   | "intro"
@@ -14,9 +12,6 @@ export type GameFlowState =
 
 export type GameFlowEvent =
   | { type: "ENTER_MENU" }
-  | { type: "OPEN_OPTIONS" }
-  | { type: "BACK_TO_MENU" }
-  | { type: "CHOOSE_ZONE" }
   | { type: "BEGIN_LOAD" }
   | { type: "LOAD_FAILED" }
   | { type: "RETRY_LOAD" }
@@ -26,6 +21,7 @@ export type GameFlowEvent =
   | { type: "SHOW_OUTRO" }
   | { type: "LEVEL_COMPLETED" }
   | { type: "REPLAY" }
+  | { type: "NEXT_LEVEL" }
   | { type: "RETURN_TO_MENU" }
   | { type: "PAUSE" }
   | { type: "RESUME" };

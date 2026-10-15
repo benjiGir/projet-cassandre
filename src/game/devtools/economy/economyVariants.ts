@@ -1,7 +1,7 @@
 import { offerPrice, perkPrices } from "../../player/perkConfig";
 import { PERKS, type Perk, type PerkOffer } from "../../player/perks";
 import { streamConfig, type StreamEventKind } from "../../session/stream/streamSim";
-import type { MysteryBeat } from "../../session/stream/streamTexts";
+import type { StoreMysteryBeat } from "../../session/stream/streamTexts";
 
 // Variantes d'équilibrage de l'économie (lot B7) — même protocole que
 // `FEEL_VARIANTS` : `cassandre.applyEconomyVariant("A")` en jeu, `pnpm economy`
@@ -16,13 +16,24 @@ export interface EconomyVariant {
   readonly label: string;
   /** Multiplicateur de la probabilité de don des spectateurs, par rapport à `DONATION_REFERENCE`. */
   readonly generosity: number;
-  readonly mystery: Readonly<Record<MysteryBeat, number>>;
+  /** Dons du donateur mystère dans le magasin ; ceux du métro attendent ses bornes (lot N8 de PLAN_V2.md). */
+  readonly mystery: Readonly<Record<StoreMysteryBeat, number>>;
   readonly prices: Readonly<Record<Perk, number>>;
 }
 
 /** Probabilités de don d'avant le lot B7 : la base que chaque variante multiplie. */
-export const DONATION_REFERENCE: Readonly<Record<StreamEventKind | "serie", number>> = {
-  kill: 0.12, serie: 0.5, boss: 1, secret: 0.6, casse: 0.05, degats: 0.04, toilettes: 0.5, carte: 0.4, moment: 0,
+const DONATION_REFERENCE: Readonly<Record<StreamEventKind | "serie", number>> = {
+  kill: 0.12,
+  serie: 0.5,
+  boss: 1,
+  secret: 0.6,
+  casse: 0.05,
+  degats: 0.04,
+  toilettes: 0.5,
+  carte: 0.4,
+  moment: 0,
+  train: 0,
+  controleur_rame: 0.25,
 };
 
 /**

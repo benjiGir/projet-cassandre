@@ -3,10 +3,16 @@ import * as THREE from "three";
 import type { FoodItem } from "../../game/level/interactions/food";
 import type { PickupResources } from "./pickupResources";
 import type { PickupWeaponKind } from "./pickupTypes";
+import type { AmmoWeaponKind } from "../../game/player/weapons/weaponTypes";
 import { WEAPON_SPRITE_SIZE, WEAPON_BOB_AMPLITUDE, WEAPON_BOB_SPEED } from "./pickupConfig";
 
 // see: docs/6-reference/notes-code-rendu.md#ramassages
-export function dressFoodPickup(object: THREE.Object3D, groundY: number | null, item: FoodItem, resources: PickupResources): void {
+export function dressFoodPickup(
+  object: THREE.Object3D,
+  groundY: number | null,
+  item: FoodItem,
+  resources: PickupResources,
+): void {
   const bounds = new THREE.Box3().setFromObject(object);
   const center = bounds.getCenter(new THREE.Vector3());
   const marker = object as THREE.Mesh;
@@ -23,14 +29,19 @@ export function dressFoodPickup(object: THREE.Object3D, groundY: number | null, 
   object.attach(model);
 }
 
-function poser(object: THREE.Object3D, modele: { geometry: THREE.BufferGeometry; material: THREE.Material }, groundY: number | null, resources: PickupResources): void {
+function placeModel(
+  object: THREE.Object3D,
+  template: { geometry: THREE.BufferGeometry; material: THREE.Material },
+  groundY: number | null,
+  resources: PickupResources,
+): void {
   const box = new THREE.Box3().setFromObject(object);
   const center = box.getCenter(new THREE.Vector3());
 
   const mesh = object as THREE.Mesh;
   if (mesh.isMesh) mesh.material = resources.hiddenMaterial;
 
-  const model = new THREE.Mesh(modele.geometry, modele.material);
+  const model = new THREE.Mesh(template.geometry, template.material);
   model.position.set(center.x, groundY ?? box.min.y, center.z);
 
   model.rotation.y = Math.PI / 7;
@@ -38,11 +49,22 @@ function poser(object: THREE.Object3D, modele: { geometry: THREE.BufferGeometry;
 }
 
 export function dressHealPickup(object: THREE.Object3D, groundY: number | null, resources: PickupResources): void {
-  poser(object, resources.healModel(), groundY, resources);
+  placeModel(object, resources.healModel(), groundY, resources);
 }
 
-export function dressAmmoPickup(object: THREE.Object3D, groundY: number | null, resources: PickupResources): void {
-  poser(object, resources.ammoModel(), groundY, resources);
+export function dressAmmoPickup(
+  object: THREE.Object3D,
+  groundY: number | null,
+  resources: PickupResources,
+  weapon: AmmoWeaponKind = "pistol",
+): void {
+  const model =
+    weapon === "flare"
+      ? resources.flareAmmoModel()
+      : weapon === "shotgun"
+        ? resources.shotgunAmmoModel()
+        : resources.ammoModel();
+  placeModel(object, model, groundY, resources);
 }
 
 export class WeaponPickupBillboard {
@@ -54,7 +76,11 @@ export class WeaponPickupBillboard {
   private readonly bobPhase: number;
   private readonly scratchWorldPos = new THREE.Vector3();
 
-  constructor(weapon: PickupWeaponKind, worldPosition: THREE.Vector3, private readonly resources: PickupResources) {
+  constructor(
+    weapon: PickupWeaponKind,
+    worldPosition: THREE.Vector3,
+    private readonly resources: PickupResources,
+  ) {
     this.spriteMesh = new THREE.Mesh(resources.weaponGeometry(weapon), resources.weaponMaterial);
     // Position MONDE, posée avant tout rattachement — `attachTo` la convertit
     // en repère local et capture `baseLocalY` à ce moment-là, jamais ici.
@@ -93,7 +119,11 @@ export function dressWeaponPickup(
   const mesh = object as THREE.Mesh;
   if (mesh.isMesh) mesh.material = resources.hiddenMaterial;
 
-  const billboard = new WeaponPickupBillboard(weapon, new THREE.Vector3(center.x, groundY ?? box.min.y, center.z), resources);
+  const billboard = new WeaponPickupBillboard(
+    weapon,
+    new THREE.Vector3(center.x, groundY ?? box.min.y, center.z),
+    resources,
+  );
   billboard.attachTo(object);
   return billboard;
 }

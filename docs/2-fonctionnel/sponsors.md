@@ -2,7 +2,7 @@
 title: Sponsors — cagnotte, bornes et perks
 tags: [fonctionnel]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Sponsors — cagnotte, bornes et perks
@@ -62,7 +62,10 @@ retour du parking souterrain, avec la cagnotte du trajet en plus.
 ## Règles
 
 - Un achat ne fige jamais le joueur : ni menu, ni animation.
-- Une borne vend un seul produit, une seule fois par partie.
+- Une borne vend un seul produit, une seule fois par partie. Ensuite, elle ne
+  vend plus que sa recharge, pour de l'argent : une trousse de soins après une
+  boisson, un gilet ou un VPN, une recharge de munitions après une perche, un
+  aimant ou un abonnement.
 - Un achat refusé ne coûte rien.
 - Un produit dure jusqu'à la fin de la partie. Une nouvelle partie repart sans
   aucun produit, cagnotte à zéro.

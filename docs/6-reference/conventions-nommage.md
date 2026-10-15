@@ -2,7 +2,7 @@
 title: Conventions de nommage glTF
 tags: [reference, pipeline]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-11
 ---
 
 # Conventions de nommage glTF
@@ -20,6 +20,8 @@ Le loader interprète les noms et les propriétés glTF comme un contrat de game
 | `spawn_suit_*` | Point d'apparition d'un Costard ; avec `groupe`, il attend son réveil par le script de niveau. |
 | `spawn_rampant_*` | Point d'apparition d'un Rampant ; mêmes règles qu'un Costard. |
 | `spawn_vigile_*` | Point d'apparition d'un Vigile ; mêmes règles qu'un Costard. |
+| `spawn_controleur_*` | Contrôleur ; mêmes règles de groupe qu’un Costard. |
+| `spawn_chef_brigade_*` | Variante du Contrôleur ; mêmes règles de groupe. |
 | `spawn_director_*` | Point d'apparition du Directeur. |
 | `trig_*` | Boîte du script de niveau : lance un scénario (`evenement`) ou désigne une sous-zone à réplique (`replique`). |
 | `use_*` | Objet actionnable à portée de 2 m, ou ramassage spécialisé selon ses extras/nom. |
@@ -45,13 +47,15 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `soin` | `use_*` | Nombre de PV rendus par une trousse. |
 | `aliment` | `use_*` | Type de nourriture ; le runtime en déduit le soin. |
 | `munitions` | `use_*` | Quantité de munitions de pistolet donnée. |
+| `cartouches` | `use_*` | Quantité de cartouches de pompe donnée ; jamais sur la même boîte que `munitions`. |
+| `fusees` | `use_*` | Quantité de fusées du pistolet de détresse donnée ; jamais sur la même boîte que `munitions` ou `cartouches`. |
 | `cameras` | `use_*` | Noms de `cam_*` séparés par des virgules, dans l'ordre de défilement. |
 | `perk`, `prix` | `use_*` | Une borne : le perk vendu (`boisson`, `vpn`, `gilet`, `premium`, `perche`, `aimant`) et son prix en euros, strictement positif. Les deux sont requis. |
 | `color`, `intensity`, `distance`, `decay` | `light_*` | Couleur hexadécimale et paramètres de portée/intensité de la lampe. |
 | `secret_id` | `secret_*` | Identifiant stable du secret. |
 | `evenement` | `trig_*` | Nom d'un scénario de `src/game/session/progression/levelEvents.ts`, lancé une fois par partie à l'entrée du joueur. |
 | `replique` | `trig_*` | Identifiant d'une réplique du héros, dite à la première visite de la sous-zone. |
-| `groupe` | `spawn_suit_*`, `spawn_rampant_*`, `spawn_vigile_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. Un groupe se pose à sa taille la plus dure : les difficultés plus basses n'en réveillent que les premiers par ordre de nom. |
+| `groupe` | `spawn_suit_*`, `spawn_rampant_*`, `spawn_vigile_*`, `spawn_controleur_*`, `spawn_chef_brigade_*` | Nom du groupe ; l'ennemi n'apparaît qu'au réveil du groupe par un scénario. Un groupe se pose à sa taille la plus dure : les difficultés plus basses n'en réveillent que les premiers par ordre de nom. |
 | `masse`, `pv`, `matiere`, `contenu` | `prop_*` | Masse en kg (défaut 25), PV optionnels, matière de casse et contenu lâché. |
 | `mouvement`, `groupe`, `auto`, `manuelle`, `charniere`, `sens` | `door_*` | Mouvement et configuration du vantail, de l'ouverture auto et de l'action manuelle. |
 | `angle`, `course`, `duree`, `portee`, `delai`, `referme` | `door_*` | Géométrie et temporisation de l'ouverture ou de la refermeture. |
@@ -59,6 +63,7 @@ Les préfixes sont reconnus au début du nom. L'export glTF doit préserver un m
 | `pv`, `solide`, `givre` | `vitre_*` | Vie, présence d'un collider et effet de givre à la casse. |
 | `sorte`, `pv` | `sanitaire_*` | `sorte` est obligatoire : `cuvette` ou `urinoir`. PV facultatifs. |
 | `chaine`, `pv` | `ecran_*` | Boucle visuelle obligatoire à la validation et PV optionnels. |
+| `miroir` | Panneau de décor | `true` installe un reflet plan ; géométrie et cycle de vie : [Chargement — miroirs](../4-technique/chargement-de-niveau.md#miroirs). |
 | `nom` | `cam_*` | Libellé affiché pendant la vue caméra ; facultatif, mais un nom est recommandé. |
 
 Le validateur bloque les valeurs qu'il contrôle. Les propriétés reconnues dont
@@ -75,7 +80,7 @@ session concernés, leurs tests et cette référence. Le validateur ne peut pas
 détecter une faute de frappe dans un extra qu'il ne connaît pas.
 
 Le validateur couvre notamment les cartes, les aliments, les montants `soin`
-et `munitions`, les matières et contenus de prop, les valeurs de porte, la
+`munitions` et `cartouches`, les matières et contenus de prop, les valeurs de porte, la
 chaîne d'écran, les caméras référencées et la sorte de sanitaire. Certaines
 options facultatives de porte sont lues avec un défaut par le runtime ; une
 valeur mal formée peut donc retomber sur ce défaut.
@@ -89,8 +94,10 @@ valeur mal formée peut donc retomber sur ce défaut.
 | Porte libre | `use_*` + `target`, sans `requires` ; `message` facultatif. |
 | Trousse | `use_*` + `soin` strictement positif ; ramassage au contact. |
 | Nourriture | `use_*` + `aliment` reconnu ; ramassage au contact. |
-| Munitions | `use_*` + `munitions` strictement positif ; ramassage au contact. |
-| Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun` ; ramassage au contact. |
+| Munitions de pistolet | `use_*` + `munitions` strictement positif ; ramassage au contact. |
+| Cartouches de pompe | `use_*` + `cartouches` strictement positif ; ramassage au contact. |
+| Fusées de détresse | `use_*` + `fusees` strictement positif ; ramassage au contact. |
+| Arme au sol | Noms réservés `use_crowbar`, `use_pistol`, `use_shotgun`, `use_flare` ; ramassage au contact. |
 | Console vidéo | Un `use_*` avec `cameras` référençant des noms `cam_*` existants. |
 | Borne de sponsor | Un `use_*` avec `perk` et `prix`. Elle n'est jamais consommée ; une borne mal décrite ne vend rien et le loader le signale. |
 | Bonbonne explosive | Un `prop_*` avec `matiere: gaz` et des `pv`. |

@@ -1,13 +1,15 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
 import type { UseObject } from "../loading/levelTypes";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
+import { BLOCKOUT_CONTROLS } from "../blockout/blockoutConfig";
 
 // see: docs/archive/pipeline-niveau-blender.md#objets-interactifs
 
 // see: docs/6-reference/notes-code-gameplay-niveau.md#objets-cassables-et-interactions
 export interface InteractionHandlers {
+  onMetroBlockoutUse?(name: string): void;
   onExitDoorUse(targetName: string): void;
   /** `use_frozen_storage` (Zone B, secret 1) : ouvre `door_b_frozen` SANS
    * condition (pas de badge, contrairement à `onExitDoorUse`) — même
@@ -38,6 +40,7 @@ export interface InteractionHandlers {
    * consommée — un refus doit rester réessayable, et c'est l'appelant qui
    * sait si le perk est déjà acheté. */
   onPerkKioskUse(offer: PerkOffer): void;
+  onTrainUse?(name: string): void;
 }
 
 export interface WeaponPickupHandlers {
@@ -45,15 +48,18 @@ export interface WeaponPickupHandlers {
    * l'a déjà n'a rien à en tirer, l'appelant renvoie alors `false` et
    * l'objet reste au sol indéfiniment (voir `docs/4-technique/armes.md`). */
   onCrowbarPickup(): boolean;
-  /** `use_shotgun`. Même contrat que `onCrowbarPickup` — le pompe garde sa
-   * dotation unique (aucun mécanisme de recharge n'existe pour lui), donc un
-   * second ramassage n'a également rien à offrir : `false`, reste au sol. */
+  /** `use_shotgun`. Un deuxième fusil reste au sol ; les boîtes de
+   * cartouches assurent la recharge séparément. */
   onShotgunPickup(): boolean;
   onPistolPickup(): boolean;
+  /** `use_flare`. Même contrat que le pistolet : un second vaut sa dotation de fusées. */
+  onFlarePickup(): boolean;
 }
 
 /** Rayon des ramassages pris en marchant dessus, en mètres — celui d'une partie sans perk. */
 export const HEAL_PICKUP_RADIUS = 1.2;
+
+export type PickupAccessCheck = (useObject: UseObject) => boolean;
 
 export class InteractionSystem {
   /** Objets `use_*` déjà consommés, PAR RÉFÉRENCE DE MESH, pas par nom — un
@@ -113,33 +119,37 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     tryHeal: (amount: number, useObject: UseObject) => boolean,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.heals, tryHeal, radius, canCollect);
   }
 
-  /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions`). */
+  /** Même contrat que `collectHeals`, pour les boîtes de munitions (`munitions` ou `cartouches`). */
   collectAmmo(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
     tryTake: (amount: number, useObject: UseObject) => boolean,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
-    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake, radius);
+    this.collectWalkOver(useObjects, playerPosition, (u) => u.ammo, tryTake, radius, canCollect);
   }
 
   private collectWalkOver(
     useObjects: readonly UseObject[],
     playerPosition: THREE.Vector3,
-    quantite: (useObject: UseObject) => number | null,
-    prendre: (amount: number, useObject: UseObject) => boolean,
+    amountOf: (useObject: UseObject) => number | null,
+    take: (amount: number, useObject: UseObject) => boolean,
     radius: number,
+    canCollect?: PickupAccessCheck,
   ): void {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
-      const amount = quantite(useObject);
+      const amount = amountOf(useObject);
       if (amount === null || this.consumed.has(useObject.object)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!prendre(amount, useObject)) continue;
+      if (canCollect && !canCollect(useObject)) continue;
+      if (!take(amount, useObject)) continue;
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }
@@ -150,14 +160,15 @@ export class InteractionSystem {
     playerPosition: THREE.Vector3,
     handlers: WeaponPickupHandlers,
     radius = HEAL_PICKUP_RADIUS,
+    canCollect?: PickupAccessCheck,
   ): void {
     const radiusSq = radius * radius;
     for (const useObject of useObjects) {
       if (this.consumed.has(useObject.object)) continue;
-      const handler = weaponPickupHandlerFor(useObject.name, handlers);
-      if (!handler) continue;
+      if (!isWeaponPickupName(useObject.name)) continue;
       if (playerPosition.distanceToSquared(useObject.position) > radiusSq) continue;
-      if (!handler()) continue; // déjà possédée sans rien à offrir : reste au sol
+      if (canCollect && !canCollect(useObject)) continue;
+      if (!collectWeaponPickup(useObject.name, handlers)) continue; // déjà possédée sans rien à offrir : reste au sol
       useObject.object.visible = false;
       this.consumed.add(useObject.object);
     }
@@ -166,6 +177,10 @@ export class InteractionSystem {
   /** Dispatch : d'abord ce que le `.glb` DÉCLARE (cartes de fidélité),
    * ensuite par NOM Blender exact — voir la doc de tête de fichier. */
   private dispatch(useObject: UseObject, handlers: InteractionHandlers): void {
+    if ((BLOCKOUT_CONTROLS as readonly string[]).includes(useObject.name)) {
+      handlers.onMetroBlockoutUse?.(useObject.name);
+      return;
+    }
     // Console de caméras : déclarative comme une carte, mais JAMAIS
     // consommée — une console se réutilise pour cycler (voir
     // `CameraViewSystem.activate`).
@@ -186,6 +201,10 @@ export class InteractionSystem {
       handlers.onPerkKioskUse(useObject.sells);
       return;
     }
+    if (useObject.extras.train !== undefined) {
+      handlers.onTrainUse?.(useObject.name);
+      return;
+    }
 
     // Porte à carte : JAMAIS consommée, un refus doit rester réessayable —
     // même contrat que `use_exit_door`. Sans cible, il n'y a rien à ouvrir :
@@ -196,7 +215,6 @@ export class InteractionSystem {
     }
 
     switch (useObject.name) {
-
       case "use_exit_door":
         // PAS marqué consommé : un essai refusé doit rester réessayable —
         // `main.ts` a sa propre garde contre un ré-essai une fois déverrouillée.
@@ -244,13 +262,15 @@ export class InteractionSystem {
   }
 }
 
+const WEAPON_PICKUP_NAMES = ["use_crowbar", "use_shotgun", "use_pistol", "use_flare"] as const;
+type WeaponPickupName = (typeof WEAPON_PICKUP_NAMES)[number];
+
 /** `use_*` dont l'effet est câblé par NOM (armes au sol, `switch` de
  * `InteractionSystem`) : aucune `target` attendue dans le `.glb`, donc pas
  * d'avertissement « sans cible » au chargement (`loader.ts`). */
 export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
-  "use_crowbar",
-  "use_shotgun",
-  "use_pistol",
+  ...BLOCKOUT_CONTROLS,
+  ...WEAPON_PICKUP_NAMES,
   "use_exit_door",
   "use_frozen_storage",
   "use_pa_mic",
@@ -261,23 +281,23 @@ export const NAME_WIRED_USE_OBJECTS: ReadonlySet<string> = new Set([
   "use_toilet",
 ]);
 
-/** Les trois noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
-function isWeaponPickupName(name: string): boolean {
-  return name === "use_crowbar" || name === "use_shotgun" || name === "use_pistol";
+/** Les noms d'armes au sol câblés en dur — voir `WeaponPickupHandlers`. */
+function isWeaponPickupName(name: string): name is WeaponPickupName {
+  return (WEAPON_PICKUP_NAMES as readonly string[]).includes(name);
 }
 
-/** Résout le callback de `WeaponPickupHandlers` pour un nom donné, `null` si
- * ce n'est pas une arme au sol — factorisé pour que `isWeaponPickupName` et
- * `collectWeapons` ne puissent pas diverger sur la liste des trois noms. */
-function weaponPickupHandlerFor(name: string, handlers: WeaponPickupHandlers): (() => boolean) | null {
+/** Appelle le callback de `WeaponPickupHandlers` de cette arme ; rend ce qu'il rend. */
+function collectWeaponPickup(name: WeaponPickupName, handlers: WeaponPickupHandlers): boolean {
   switch (name) {
     case "use_crowbar":
-      return handlers.onCrowbarPickup;
+      return handlers.onCrowbarPickup();
     case "use_shotgun":
-      return handlers.onShotgunPickup;
+      return handlers.onShotgunPickup();
     case "use_pistol":
-      return handlers.onPistolPickup;
+      return handlers.onPistolPickup();
+    case "use_flare":
+      return handlers.onFlarePickup();
     default:
-      return null;
+      return name satisfies never;
   }
 }

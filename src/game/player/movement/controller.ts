@@ -18,13 +18,7 @@ import {
 const TAU = Math.PI * 2;
 
 // see: docs/archive/systems-joueur.md#rampe-linéaire-pas-exponentielle-approach
-export function approach(
-  current: number,
-  target: number,
-  responseTime: number,
-  dt: number,
-  range: number,
-): number {
+export function approach(current: number, target: number, responseTime: number, dt: number, range: number): number {
   if (responseTime <= 0 || range <= 0) return target;
   const diff = target - current;
   const step = (range / responseTime) * dt;
@@ -44,6 +38,9 @@ export class PlayerController {
   readonly previousPosition = new THREE.Vector3();
   /** Vitesse intégrée, m/s. Sa composante horizontale est reclippée par les collisions. */
   readonly velocity = new THREE.Vector3();
+  private readonly pushVelocity = new THREE.Vector3();
+  private pushDecay = 0;
+  private readonly pushStep = new THREE.Vector3();
   /** Normale du sol sous les pieds (0,1,0 si non au sol). */
   readonly groundNormal = new THREE.Vector3(0, 1, 0);
 
@@ -94,9 +91,7 @@ export class PlayerController {
 
     this.body = physics.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
     this.collider = physics.world.createCollider(
-      RAPIER.ColliderDesc.capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius).setCollisionGroups(
-        COLLISION_GROUPS.PLAYER,
-      ),
+      RAPIER.ColliderDesc.capsule(cfg.capsuleHalfHeight, cfg.capsuleRadius).setCollisionGroups(COLLISION_GROUPS.PLAYER),
       this.body,
     );
     this.kcc = physics.createCharacterController(cfg);
@@ -127,6 +122,8 @@ export class PlayerController {
     this.position.set(x, centerY, z);
     this.previousPosition.copy(this.position);
     this.velocity.set(0, 0, 0);
+    this.pushVelocity.set(0, 0, 0);
+    this.pushDecay = 0;
     this.groundNormal.set(0, 1, 0);
     this.isGrounded = false;
     this.numCollisions = 0;
@@ -153,6 +150,12 @@ export class PlayerController {
     this.previousLandingDip = this.landingDip;
   }
 
+  applyPush(displacement: THREE.Vector3, duration: number): void {
+    if (duration <= 0) return;
+    this.pushVelocity.copy(displacement).multiplyScalar(2 / duration);
+    this.pushDecay = this.pushVelocity.length() / duration;
+  }
+
   eyePosition(alpha: number, out: THREE.Vector3): THREE.Vector3 {
     out.lerpVectors(this.previousPosition, this.position, alpha);
     out.y += this.eyeOffset;
@@ -167,11 +170,7 @@ export class PlayerController {
 
     let cycle = 0;
     if (intensity > 0 && cfg.bobDistancePerCycle > 0) {
-      const distance = THREE.MathUtils.lerp(
-        this.previousDistanceTravelled,
-        this.distanceTravelled,
-        alpha,
-      );
+      const distance = THREE.MathUtils.lerp(this.previousDistanceTravelled, this.distanceTravelled, alpha);
       cycle = (distance / cfg.bobDistancePerCycle) * TAU;
     }
 
@@ -257,9 +256,7 @@ export class PlayerController {
       this.velocity.y = -cfg.groundStickSpeed;
     }
 
-    this.jumpBufferTimer = frame.jump
-      ? cfg.jumpBufferTime
-      : Math.max(0, this.jumpBufferTimer - dt);
+    this.jumpBufferTimer = frame.jump ? cfg.jumpBufferTime : Math.max(0, this.jumpBufferTimer - dt);
     const wantsJump = frame.jump || this.jumpBufferTimer > 0;
     const canJump = this.isGrounded || this.timeSinceGrounded <= cfg.coyoteTime;
     if (wantsJump && canJump && !this.jumpLatched) {
@@ -276,9 +273,10 @@ export class PlayerController {
     if (this.velocity.y > 0) this.kcc.disableSnapToGround();
     else this.kcc.enableSnapToGround(cfg.snapToGroundDistance);
 
-    this.desired.x = this.velocity.x * dt;
+    this.advancePush(dt);
+    this.desired.x = this.velocity.x * dt + this.pushStep.x;
     this.desired.y = this.velocity.y * dt;
-    this.desired.z = this.velocity.z * dt;
+    this.desired.z = this.velocity.z * dt + this.pushStep.z;
 
     this.kcc.computeColliderMovement(
       this.collider,
@@ -315,10 +313,7 @@ export class PlayerController {
       this.velocity.y = 0; // atterrissage
     }
 
-    if (hitWall && dt > 0) {
-      this.velocity.x = this.movement.x / dt;
-      this.velocity.z = this.movement.z / dt;
-    }
+    this.resolveWallVelocity(hitWall, dt);
 
     if (grounded) {
       this.jumpLatched = false;
@@ -341,6 +336,27 @@ export class PlayerController {
     this.updateViewState(dt, impactSpeed);
   }
 
+  private advancePush(dt: number): void {
+    const pushSpeed = this.pushVelocity.length();
+    const remainingPush = Math.max(0, pushSpeed - this.pushDecay * dt);
+    const pushTime = this.pushDecay > 0 ? Math.min(dt, pushSpeed / this.pushDecay) : 0;
+    this.pushStep
+      .copy(this.pushVelocity)
+      .multiplyScalar(pushSpeed > 0 ? ((pushSpeed + remainingPush) * 0.5 * pushTime) / pushSpeed : 0);
+    this.pushVelocity.multiplyScalar(pushSpeed > 0 ? remainingPush / pushSpeed : 0);
+  }
+
+  private resolveWallVelocity(hitWall: boolean, dt: number): void {
+    if (hitWall && dt > 0) {
+      if (this.pushStep.lengthSq() > 0) this.velocity.x = this.velocity.z = 0;
+      else {
+        this.velocity.x = this.movement.x / dt;
+        this.velocity.z = this.movement.z / dt;
+      }
+      this.pushVelocity.set(0, 0, 0);
+    }
+  }
+
   private updateViewState(dt: number, impactSpeed: number) {
     const cfg = this.cfg;
     const speed = this.horizontalSpeed;
@@ -354,21 +370,9 @@ export class PlayerController {
       1,
     );
 
-    this.runFactor = approach(
-      this.runFactor,
-      fovRunFactorTarget(cfg, speed),
-      cfg.fovResponseTime,
-      dt,
-      1,
-    );
+    this.runFactor = approach(this.runFactor, fovRunFactorTarget(cfg, speed), cfg.fovResponseTime, dt, 1);
 
-    this.landingDip = approach(
-      this.landingDip,
-      0,
-      cfg.landingDipRecoverTime,
-      dt,
-      cfg.landingDipMax,
-    );
+    this.landingDip = approach(this.landingDip, 0, cfg.landingDipRecoverTime, dt, cfg.landingDipMax);
     if (impactSpeed > 0) {
       this.lastLandingSpeed = impactSpeed;
       this.landingDip = Math.max(this.landingDip, landingDipFor(cfg, impactSpeed));

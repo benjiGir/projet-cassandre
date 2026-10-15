@@ -203,11 +203,6 @@ export function groundDeceleration(cfg: MoveConfig): number {
   return cfg.timeToStop > 0 ? cfg.runSpeed / cfg.timeToStop : Infinity;
 }
 
-/** Hauteur totale de la capsule, en mètres. */
-export function capsuleTotalHeight(cfg: MoveConfig): number {
-  return 2 * (cfg.capsuleHalfHeight + cfg.capsuleRadius);
-}
-
 // see: docs/archive/systems-joueur.md#distinction-mur-sol-pente-reclip-anti-vitesse-fantôme
 export function wallNormalYThreshold(cfg: MoveConfig): number {
   return Math.cos((cfg.maxSlopeClimbAngleDeg * Math.PI) / 180);
@@ -222,11 +217,7 @@ function saturate(t: number): number {
   return t < 0 ? 0 : t > 1 ? 1 : t;
 }
 
-export function bobIntensityTarget(
-  cfg: MoveConfig,
-  horizontalSpeed: number,
-  isGrounded: boolean,
-): number {
+export function bobIntensityTarget(cfg: MoveConfig, horizontalSpeed: number, isGrounded: boolean): number {
   if (!isGrounded) return 0;
   const span = cfg.runSpeed - cfg.bobSpeedFloor;
   if (span <= 0) return horizontalSpeed > cfg.bobSpeedFloor ? 1 : 0;

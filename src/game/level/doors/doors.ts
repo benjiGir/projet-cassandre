@@ -9,7 +9,7 @@ import type {
   DoorActor,
   DoorRuntimeState,
 } from "./doorTypes";
-import { parseDoorConfig, PORTEE_ACTION_MANUELLE } from "./doorConfig";
+import { parseDoorConfig, MANUAL_ACTION_RANGE } from "./doorConfig";
 import {
   buildDoorMember,
   resolveMemberOpenSign,
@@ -17,8 +17,8 @@ import {
   advanceDoorProgress,
   isActorBlockingClosedDoor,
   hingePivotInRootSpace,
-  composeBattantPose,
-  composeCoulissePose,
+  composeSwingPose,
+  composeSlidePose,
   composeVerticalPose,
 } from "./doorGeometry";
 
@@ -158,9 +158,9 @@ export class DoorSystem {
   }
 
   actionner(position: THREE.Vector3): { name: string; action: "ouverte" | "fermee" } | null {
-    const porteeSq = PORTEE_ACTION_MANUELLE * PORTEE_ACTION_MANUELLE;
-    let cible: DoorGroup | null = null;
-    let meilleure = Infinity;
+    const rangeSq = MANUAL_ACTION_RANGE * MANUAL_ACTION_RANGE;
+    let target: DoorGroup | null = null;
+    let closest = Infinity;
     for (const group of this.groups) {
       if (group.manuelle === "non" || group.locked) continue;
       for (const member of group.members) {
@@ -169,36 +169,36 @@ export class DoorSystem {
         const dy = position.y - t.y;
         const dz = position.z - t.z;
         const d = dx * dx + dy * dy + dz * dz;
-        if (d < meilleure && d <= porteeSq) {
-          meilleure = d;
-          cible = group;
+        if (d < closest && d <= rangeSq) {
+          closest = d;
+          target = group;
         }
       }
     }
-    if (!cible) return null;
+    if (!target) return null;
 
-    const nom = cible.members[0]!.info.name;
-    if (cible.target === 1) {
-      this.beginClosing(cible);
-      return { name: nom, action: "fermee" };
+    const doorName = target.members[0].info.name;
+    if (target.target === 1) {
+      this.beginClosing(target);
+      return { name: doorName, action: "fermee" };
     }
-    if (cible.manuelle !== "les-deux") return null; // « fermer » seulement : rien à faire sur une porte déjà fermée
-    this.beginOpening(cible, position, false);
-    return { name: nom, action: "ouverte" };
+    if (target.manuelle !== "les-deux") return null; // « fermer » seulement : rien à faire sur une porte déjà fermée
+    this.beginOpening(target, position, false);
+    return { name: doorName, action: "ouverte" };
   }
 
   private beginClosing(group: DoorGroup): void {
     group.permanent = false;
     group.idleTimer = 0;
     group.target = 0;
-    const representative = group.members[0]!;
+    const representative = group.members[0];
     this._movementEvents.push({ name: representative.info.name, movement: representative.info.movement });
   }
 
   private beginOpening(group: DoorGroup, openerPosition: THREE.Vector3, silent: boolean): void {
     const wasFullyClosed = group.progress === 0 && group.target === 0;
     if (wasFullyClosed && !silent) {
-      const representative = group.members[0]!;
+      const representative = group.members[0];
       this._movementEvents.push({ name: representative.info.name, movement: representative.info.movement });
     }
     if (wasFullyClosed) {
@@ -298,12 +298,19 @@ export class DoorSystem {
           pivotScratch,
         );
         const theta = member.openSign * member.config.angleRad * progress;
-        composeBattantPose(info.closedPosition, info.closedQuaternion, pivotWorld, theta, member.currPosition, member.currQuaternion);
+        composeSwingPose(
+          info.closedPosition,
+          info.closedQuaternion,
+          pivotWorld,
+          theta,
+          member.currPosition,
+          member.currQuaternion,
+        );
         break;
       }
       case "coulisse":
         member.currQuaternion.copy(info.closedQuaternion);
-        composeCoulissePose(
+        composeSlidePose(
           info.closedPosition,
           info.closedQuaternion,
           member.axis!,
@@ -330,9 +337,10 @@ export class DoorSystem {
         // Au repos, on n'écrit rien — mais UNE dernière fois après l'arrivée :
         // la pose écrite juste avant est une interpolation (alpha < 1), et le
         // vantail resterait arrêté quelques degrés avant sa butée.
-        const repos = member.prevPosition.equals(member.currPosition) && member.prevQuaternion.equals(member.currQuaternion);
-        if (repos && member.settled) continue;
-        member.settled = repos;
+        const atRest =
+          member.prevPosition.equals(member.currPosition) && member.prevQuaternion.equals(member.currQuaternion);
+        if (atRest && member.settled) continue;
+        member.settled = atRest;
         const object = member.info.object;
         object.position.lerpVectors(member.prevPosition, member.currPosition, alpha);
         object.quaternion.slerpQuaternions(member.prevQuaternion, member.currQuaternion, alpha);
@@ -353,12 +361,24 @@ export class DoorSystem {
   private readonly movedBatches = new Set<THREE.BatchedMesh>();
 
   /** Résumé lisible pour la console de dev (`cassandre.doors2()`/tests). */
-  describe(): Array<{ name: string; movement: DoorMovement; state: DoorRuntimeState; groupe: string; locked: boolean }> {
+  describe(): Array<{
+    name: string;
+    movement: DoorMovement;
+    state: DoorRuntimeState;
+    groupe: string;
+    locked: boolean;
+  }> {
     const out: ReturnType<DoorSystem["describe"]> = [];
     for (const group of this.groups) {
       const state = runtimeState(group);
       for (const member of group.members) {
-        out.push({ name: member.info.name, movement: member.info.movement, state, groupe: group.key, locked: group.locked });
+        out.push({
+          name: member.info.name,
+          movement: member.info.movement,
+          state,
+          groupe: group.key,
+          locked: group.locked,
+        });
       }
     }
     return out;

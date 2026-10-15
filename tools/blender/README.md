@@ -10,13 +10,34 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 
 | Commande | Rôle |
 |---|---|
-| `status()` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
-| `build(out=…, detail=False)` | rejoue `build_niveau.py` ; copie de sécurité si la session est modifiée, car le build vide la scène |
-| `check(strict=False, audit=True)` | `validate_level.py` + `audit_niveau.py`, verdicts seuls |
-| `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
+| `status(niveau=…)` | fichier ouvert, session périmée face au disque, sources plus récentes que le `.blend`, `.glb` en retard |
+| `build(out=…, detail=False, niveau=…)` | rejoue le générateur du niveau choisi ; copie de sécurité si la session est modifiée, car le build vide la scène |
+| `check(strict=False, audit=True, niveau=…)` | `validate_level.py` + audit du plan choisi, verdicts seuls |
+| `shot(vue, mode="solid"\|"material"\|"silhouette", nom=…, isoler=…)` | `"spawn"`, `"joueur"` (dernière `cassandre.pose()` du jeu), `(x, y, cap)` à hauteur d'yeux et FOV du jeu, `"dessus:<espace>"`, ou un nom d'objet ; `isoler` limite les meshes à un motif de nom ; `voyage="depart"` ou `"arrivee"` choisit l’environnement N5 pour éviter leur superposition ; ne laisse rien dans la scène ; une vue joueur rend aussi la commande `cassandre.tp(…)` qui montre la même chose en jeu |
 | `budget(vue=… \| cellule_de=(x, y))` | lots de dessin du décor dans le champ (estimation, −12 % à +5 % mesurés), ou matériaux déjà présents dans une cellule de 48 m, qu'on peut réutiliser pour 0 lot |
-| `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue |
-| `export(out=…)` | `export_level.py`, `ok` seulement si le contenu est vérifié |
+| `sheet(vues, cols=2, taille=(400, 225))` | plusieurs vues en UNE image (un seul `Read`) ; `cells` dit quelle case est quelle vue ; `voyage="depart"` ou `"arrivee"` applique le même environnement N5 à toutes les vues |
+| `export(out=…, niveau=…)` | `export_level.py`, sortie propre au profil, `ok` seulement si le contenu est vérifié |
+| `manifest(out=…, niveau=…)` | manifeste des espaces du plan choisi, conversion Blender → jeu |
+| `fingerprint()` | empreinte des poses, propriétés et surfaces du view layer sauvegardé ; comparaison des reconstructions dans un fichier voisin `.fingerprint.json` |
+| `plan(niveau="metro", out=…)` | produit le plan candidat N2, SVG et relevé calculé, sans remplacer la scène ; sortie par défaut dans `renders/reviews/plans/` |
+| `metro_blockout(apercus=True)` | reconstruit et exporte N5 avec ses vues ; `apercus=false` évite de rendre toutes les zones lors d’une retouche locale, puis `shot`/`sheet` produit les vues ciblées |
+| `restore_store_lighting()` | restitue les lampes et les luminaires du magasin depuis la copie avant éclairage |
+| `art_direction_sales()` | applique localement les sols et les matières du mobilier commercial, sauvegarde et exporte ; [revue](../../docs/5-guides/direction-artistique.md) |
+| `art_direction_finish(niveau="hypermarche", inspect=False)` | termine les matières des parkings et raccords du magasin, ou du quartier avec `niveau="metro"` ; conserve les couleurs des véhicules, sauvegarde et exporte vers les fichiers runtime ; inventaire seul avec `inspect` |
+| `art_direction_cafeteria()` | matières du sol, des murs, du plafond et du mobilier de la cafétéria ; conserve lampes et atlas, sauvegarde et exporte |
+| `rework_fournil_ovens()` | reconstruit deux fours à soles et la rôtissoire avec chambres visibles et vitres ; remplace leurs proxies, conserve les lampes, sauvegarde et exporte |
+| `art_direction_service(inspect=False)` | matières de la chambre froide et du compacteur ; préserve commandes, atlas de carton et éclairage, sauvegarde et exporte ; inventaire avec `inspect` |
+| `art_direction_workshops(inspect=False)` | matières du fournil, du labo et du SAV ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_offices(inspect=False)` | matières du personnel, de l’étage et de la direction ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_reserve(inspect=False)` | béton, enduit et mobilier industriel de la réserve ; inventaire avec `inspect`, sauvegarde et export sinon |
+| `art_direction_restrooms()` | faïence, cabines et métal des sanitaires ; conserve le sol partagé, les lampes et les appareils utilisables, sauvegarde et exporte |
+| `rework_restrooms()` | remplace les équipements par trois cabines accessibles, des portes manuelles, deux grandes vasques et des surfaces de miroir ; conserve les lampes, sauvegarde et exporte |
+| `art_direction_store()` | applique localement les matières de la galerie et des six caisses, sauvegarde et exporte le magasin ; [revue](../../docs/5-guides/direction-artistique.md) |
+| `art_direction_quay()` | construit deux exports du même quai pour comparer les matières actuelles et candidates ; [charte et comparaison](../../docs/5-guides/direction-artistique.md) |
+| `metro_pilot()` | construit, sauvegarde, exporte et rend le quai et le tube N4, dans une session neuve `--factory-startup` |
+| `metro_kit(out=…)` | bibliothèque et planche métro N3, depuis une session neuve `--factory-startup` ; régénère les pièces et textures originales |
+| `quartier_kit(out=…)` | bibliothèque et planche du quartier N3b, depuis une session neuve ; 20 pièces originales et deux voitures réemployées ; [fiche et rendus](../../docs/4-technique/kit-quartier.md) |
+| `quartier_pilot()` | construit, sauvegarde, exporte et rend la place N4b depuis une session neuve ; [pilote et limites](../../docs/4-technique/pilote-quartier.md) |
 | `find(motif, pres=(x, y), rayon=3)` | objets par motif `fnmatch`, avec position et dimensions |
 | `store_sign(preview=…)` | pose l'enseigne Hyper Varan au-dessus de l'entrée, sauvegarde et exporte ; aperçu isolé avec `preview`, rejouable |
 | `where(cible \| pres=(x, y[, z]), rayon=2)` | **quelle ligne a posé cet objet** : `site` (fichier:ligne fonction), `pile`, et pour une instance de la bibliothèque `patron_site` (où l'asset est défini) |
@@ -37,6 +58,24 @@ Le log complet et les images vont dans `renders/_cassandre/` (gitignoré).
 | `encounters(preview=…)` | pose les rencontres du lot B6 : rideau `door_reserve_nord` (ouvert au chargement), spawns à `groupe` de l'arène, de la meute du parking et du Vigile, et leurs trois `trig_*` ; retire quatre Costards du parking ; rejouable, aperçu isolé avec `preview`, sauvegarde et export sinon |
 | `repair_backstage(preview=…)` | rétablit les murs et néons du sas Argent, pose deux rideaux manuels au compacteur et raccorde les panneaux aux passages ; aperçu isolé avec `preview`, sauvegarde et export sinon |
 
+### Plusieurs niveaux
+
+Les profils sont `hypermarche` (générateur `tools/level_v2/`) et `metro`
+(`tools/metro/`). Sans `niveau`, le marqueur de scène ou le nom `metro.blend`
+fait le choix ; les scènes historiques gardent le magasin. Les sorties
+canoniques de l'autre profil sont protégées. Le panneau N › Cassandre
+offre le même sélecteur, après rechargement de l'extension.
+
+```bash
+blender -b --factory-startup -P tools/blender/cassandre_cli.py -- build niveau=metro out=renders/metro_n0/metro.blend
+blender -b renders/metro_n0/metro.blend -P tools/blender/cassandre_cli.py -- check strict=true
+blender -b renders/metro_n0/metro.blend -P tools/blender/cassandre_cli.py -- export out=renders/metro_n0/metro.glb
+python3 tools/blender/level_spaces.py --niveau metro --out renders/metro_n0/metro.espaces.json
+```
+
+Le métro contient pour l'instant l'atelier technique N0. Le tracé arrive au
+lot N2. [Contrats et limites](../../docs/4-technique/outillage-multi-niveaux.md).
+
 `where` lit le relevé écrit par le dernier `build()` dans
 `renders/_cassandre/provenance_<blend>.json`. Le relevé est fait par
 `provenance.py` (`sys.monitoring` sur `CollectionObjects.link`), sans rien
@@ -50,6 +89,10 @@ objet créé par un opérateur `bpy.ops`.
 `C.shot("joueur")` / `C.budget(vue="joueur")`. `cassandre.tp(x, y, z, cap)`
 fait l'inverse : il place le joueur au point vu dans Blender. Le budget exact
 reste `cassandre.renderBench(3).drawCalls` en jeu, ennemis compris.
+
+Pour une vue souterraine hors du plan de référence, `C.shot((x, y, sol, cap))`
+fixe explicitement l'altitude des pieds. `C.sheet` accepte les mêmes quadruplets.
+Le triplet `(x, y, cap)` conserve la recherche automatique du sol dans le plan.
 
 Pour trouver une fonction sans ouvrir une bibliothèque de 1 000 lignes, sans
 Blender : `python3 tools/blender/api_index.py [module | --grep motif] [--all]`.
@@ -93,8 +136,8 @@ installée comme **dépôt local** (Préférences › Get Extensions › Reposit
 | `build_salle_essai.py` | assemble la salle d'essai « rayons » du jalon N4 (`salle_essai_rayons.blend`) |
 | `render_preview.py` | quatre vues de contrôle d'un niveau (dessus, silhouette, première personne, trois-quarts) |
 | `render_ingame.py` | rendu **tel que le jeu l'affichera** — champ de vision et colorimétrie du jeu, texture × couleur cuite |
-| `render_enemy_sprites.py` | atlas 8 directions + manifeste des ennemis (`public/assets/sprites/`), rendus depuis le « Man in Suit » CC0 |
-| `build_weapons.py` | trois armes et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
+| `render_enemy_sprites.py` | rendus historiques 8 directions depuis les modèles CC0 vers `renders/` ; les quatre espèces runtime sont peintes |
+| `build_weapons.py` | quatre armes (dont le pistolet de détresse, `weapons/flare.py`) et mains originales, coup de pied avec chaussure et pantalon, manches du « Man in Long Sleeves » CC0 (`public/assets/weapons/armes.glb`) |
 
 ```bash
 # Bibliothèque d'assets du niveau v2 + salle d'essai « rayons » (jalon N4)
@@ -116,11 +159,22 @@ source ne s'éclaire pas elle-même). Leur raison d'être est dans
 
 ```bash
 # Sprites des ennemis (ADR 0028) — ~10 s par personnage
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage directeur
+python3 tools/sprites/describe_costard.py
+python3 tools/sprites/describe_rampant.py
+python3 tools/sprites/describe_vigile.py
+python3 tools/sprites/describe_directeur.py
+python3 tools/sprites/describe_controleur.py
 # Itération rapide : quelques animations et directions, écrit <personnage>_apercu.png
-blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage costard --anims aim,fire --directions 0,2 --out renders/sprites
+blender -b --factory-startup -P tools/blender/render_enemy_sprites.py -- --personnage vigile --anims aim,fire --directions 0,2 --out renders/sprites
 ```
+
+Les Costards, Rampants, Vigiles et Directeurs peints viennent de
+`assets_src/costard_sprites/`, `assets_src/rampant_sprites/`,
+`assets_src/vigile_sprites/` et `assets_src/directeur_sprites/`, avec leurs
+prompts de génération. Leurs outils
+`describe_*.py` partagent la mesure dans `describe_painted.py`, puis recopient
+les PNG sans les modifier ; ils requièrent Pillow. Le générateur Blender
+refuse d'écraser ces sprites dans le dossier runtime.
 
 Pièges payés en écrivant ce script, tous silencieux :
 
@@ -364,7 +418,7 @@ savoir comment s'en servir.
 
 ### Armes et mains — refonte 2026-10-04
 
-La [planche de références](../../docs/assets/board-armes-mains.md) documente
+La [planche de références](../../docs/6-reference/references-armes-mains.md) documente
 la culasse inox ouverte, le pompe à crosse bois et les doigts séparés.
 `build_weapons.py` garde assemblage, IK, cadrage et export ;
 `weapons/config.py`, `geometry.py`, `pistol.py`, `shotgun.py`, `hands.py`
@@ -385,3 +439,65 @@ Après régénération, recopier les dimensions et rectangles du manifeste
 `weapon_pickups.json` dans `src/render/pickups/pickupConfig.ts`.
 La refonte de septembre décrite plus haut reste un état historique :
 les budgets actuels sont consignés dans la révision de l'ADR 0029.
+
+La recette `metro_trains` construit le pilote T2 dans une session neuve (`--factory-startup`). Elle écrit `metro_trains.blend/.glb` ; contrat et commandes : `docs/4-technique/trains-metro.md`.
+
+La recette `metro_blockout` assemble N5 depuis le plan N2 et le quartier validé, dans une session neuve. Elle écrit `metro_blockout.blend/.glb` et le manifeste : [fonctionnement](../../docs/4-technique/blockout-metro.md).
+
+`art_direction_annexes inspect=true` inventorie la planque et la gaine VMC ;
+`art_direction_annexes` applique leurs matières, sauvegarde et exporte le magasin.
+
+`rework_office_finishes` remet une moquette bleue continue dans les bureaux
+et la direction, crée leurs ossatures de faux plafond, sauvegarde et exporte.
+
+Le héros des miroirs est un [billboard peint](../../docs/4-technique/reflet-du-heros.md).
+Ses planches et leur description passent par `tools/sprites/describe_hero.py` ;
+sa création ne passe plus par une recette Blender.
+
+### Contrôleurs du métro
+
+`C.metro_controleurs()` (CLI : `metro_controleurs`) pose les quatorze marqueurs
+sur `assets_src/blender/metro_blockout.blend`, contrôle appuis et dégagements,
+sauvegarde puis exporte par `C.export`. Les positions viennent de
+`tools/metro/blockout/encounters.py`, également utilisé lors d'une construction
+complète. La migration est rejouable et ne reconstruit pas la géométrie.
+
+### Secrets du métro
+
+`C.metro_secrets(apercus=False)` (CLI : `metro_secrets apercus=false`) pose
+les quatre caches et huit récompenses sur le `.blend` livré, contrôle les
+appuis et les dégagements des accès, sauvegarde puis exporte. La recette est
+rejouable ; le générateur complet utilise aussi `tools/metro/blockout/secrets.py`.
+`inspect=True` relève les objets voisins sans modifier la scène.
+Les emplacements et récompenses sont dans
+[Rencontres du métro](../../docs/4-technique/rencontres-metro.md#secrets).
+
+### Bornes du métro
+
+`C.metro_kiosks(apercus=False)` (CLI : `metro_kiosks apercus=false`) pose
+les six distributeurs de sponsor sur le `.blend` livré, contrôle les appuis,
+le dégagement et la portée devant chaque façade, sauvegarde puis exporte.
+La pose est rejouable ; elle remplace uniquement ses propres objets.
+Avec `apercus=True`, elle rend aussi une planche des six façades dans `renders/`.
+Le générateur complet utilise la même recette `tools/metro/blockout/kiosks.py`.
+[Implantation et offres](../../docs/4-technique/rencontres-metro.md#bornes-de-sponsor).
+
+### Collisions du métro
+
+`C.metro_colliders()` (CLI : `metro_colliders`) répare les proxies du métro
+livré, vérifie le contrat, les accès aux secrets et les positions devant les
+bornes, puis sauvegarde et exporte. `inspect=True` produit seulement un
+relevé dans `renders/`. Le générateur complet appelle la même réparation.
+Elle conserve les ouvertures et vérifie l'empreinte de la géométrie visible.
+[Recette et limites](../../docs/4-technique/blockout-metro.md#proxies-statiques).
+
+### Finition des avertissements du métro
+
+`C.metro_warnings(apercus=False)` (CLI : `metro_warnings apercus=false`)
+subdivise les surfaces de décor trop pauvres en sommets, conserve leurs UV,
+couleurs et normales, exige le contrat strict, puis sauvegarde et exporte.
+Les colliders et positions d'interaction sont comparés avant/après.
+`inspect=True` produit un relevé sans mutation ; avec les aperçus, quatre
+vues sont rendues et comparées à une planche précédente si elle existe.
+La recette est aussi appelée par le générateur complet.
+[Contrat, coût et revue](../../docs/4-technique/blockout-metro.md#finition-du-contrat).

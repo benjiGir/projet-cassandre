@@ -1,3 +1,4 @@
+import { persisted } from "../../core/storage/persisted";
 import { isDifficulty, type Difficulty } from "../session/progression/difficulty";
 
 // Les records : meilleur score et meilleur temps d'un niveau TERMINÉ, tenus
@@ -24,22 +25,19 @@ function isRecord(value: unknown): value is LevelRecord {
   return typeof score === "number" && Number.isFinite(score) && typeof seconds === "number" && Number.isFinite(seconds);
 }
 
-function loadPersisted(): RecordBook {
-  const book: RecordBook = new Map();
-  if (typeof localStorage === "undefined") return book;
-  try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-    if (typeof parsed !== "object" || parsed === null) return book;
-    for (const [key, value] of Object.entries(parsed)) {
-      if (isDifficulty(key.slice(key.lastIndexOf("/") + 1)) && isRecord(value)) book.set(key, value);
-    }
-  } catch {
-    // Un carnet illisible repart vide plutôt que d'empêcher le jeu de démarrer.
+/** Une ligne illisible est écartée sans faire perdre les autres ; un carnet illisible repart vide. */
+function decodeBook(stored: unknown): Record<string, LevelRecord> {
+  const records: Record<string, LevelRecord> = {};
+  if (typeof stored !== "object" || stored === null) return records;
+  for (const [key, value] of Object.entries(stored)) {
+    if (isDifficulty(key.slice(key.lastIndexOf("/") + 1)) && isRecord(value)) records[key] = value;
   }
-  return book;
+  return records;
 }
 
-const book = loadPersisted();
+const stored = persisted(STORAGE_KEY, decodeBook, () => ({}));
+
+const book: RecordBook = new Map(Object.entries(stored.load()));
 
 export function recordFor(levelId: string, difficulty: Difficulty): LevelRecord | null {
   return book.get(bookKey(levelId, difficulty)) ?? null;
@@ -60,13 +58,7 @@ export function submitRun(levelId: string, difficulty: Difficulty, score: number
     ? { score: Math.max(previous.score, score), seconds: Math.min(previous.seconds, seconds) }
     : { score, seconds };
   book.set(bookKey(levelId, difficulty), next);
-  if (typeof localStorage !== "undefined") {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(Object.fromEntries(book)));
-    } catch {
-      // Dégrade silencieusement, même discipline que `audioSettings.ts`.
-    }
-  }
+  stored.save(Object.fromEntries(book));
   return { best: next.score, isNew };
 }
 

@@ -11,8 +11,9 @@ import { suitConfig } from "../../../../src/game/entities/suit/suitConfig";
 import { SuitManager } from "../../../../src/game/entities/suit/suitManager";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { blastDamageAt, explosionConfig } from "../../../../src/game/level/props/propConfig";
-import { type GameEngine } from "../../../../src/game/session/gameEngine";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import { weaponConfig } from "../../../../src/game/player/weapons/weaponConfig";
+import type { GameEngine } from "../../../../src/game/session/gameEngine";
+import type { GameSession } from "../../../../src/game/session/gameSession";
 import { applyBlast } from "../../../../src/game/session/player/explosions";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
 import { createInitialStats } from "../../../../src/game/session/progression/score";
@@ -31,20 +32,22 @@ function session(joueur: THREE.Vector3): GameSession {
   return {
     physics,
     player: { position: joueur },
-    playerHp: 100,
-    playerMaxHp: 100,
     suitManager: new SuitManager(physics),
     directorManager: new DirectorManager(physics),
     heroPortrait: new HeroPortrait(),
-    lastHeroLineAt: -Infinity,
-    lastHeroBarkAt: -Infinity,
-    heroLinesSaid: new Set(),
-    heroLineRandom: () => 0.99,
-    deathHandled: false,
-    lowHpLineTriggered: false,
-    stats: createInitialStats(),
-    stream: createStreamState(),
     choice: {},
+    run: {
+      playerHp: 100,
+      playerMaxHp: 100,
+      lastHeroLineAt: -Infinity,
+      lastHeroBarkAt: -Infinity,
+      heroLinesSaid: new Set(),
+      heroLineRandom: () => 0.99,
+      deathHandled: false,
+      lowHpLineTriggered: false,
+      stats: createInitialStats(),
+      stream: createStreamState(),
+    },
   } as unknown as GameSession;
 }
 
@@ -75,7 +78,7 @@ describe("applyBlast — souffle d'une explosion", () => {
     expect(loin.hp).toBeLessThan(suitConfig.maxHp);
     expect(dehors.hp).toBe(suitConfig.maxHp);
     // À bout portant du souffle, le Costard part en morceaux.
-    expect(s.suitManager.deathEvents[0]!.gibs).toBe(true);
+    expect(s.suitManager.deathEvents[0].gibs).toBe(true);
   });
 
   it("un mur arrête le souffle : ni le Costard ni le joueur derrière lui ne sont touchés", () => {
@@ -88,7 +91,7 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     expect(bilan).toEqual({ suitKills: 0, directorKills: 0, playerDamage: 0 });
     expect(abrite.hp).toBe(suitConfig.maxHp);
-    expect(s.playerHp).toBe(100);
+    expect(s.run.playerHp).toBe(100);
   });
 
   it("le joueur encaisse une part des dégâts, publiée au HUD", () => {
@@ -99,8 +102,8 @@ describe("applyBlast — souffle d'une explosion", () => {
     const bilan = applyBlast(engine, s, CENTRE);
 
     expect(bilan.playerDamage).toBe(attendu);
-    expect(s.playerHp).toBe(100 - attendu);
-    expect(s.stats.hpLost).toBe(attendu);
+    expect(s.run.playerHp).toBe(100 - attendu);
+    expect(s.run.stats.hpLost).toBe(attendu);
     expect(useGameStore.getState().debug.playerHp).toBe(100 - attendu);
     expect(engine.flow.playerDied).not.toHaveBeenCalled();
   });
@@ -111,7 +114,7 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     applyBlast(engine, s, CENTRE);
 
-    expect(s.playerHp).toBeGreaterThan(0);
+    expect(s.run.playerHp).toBeGreaterThan(0);
   });
 
   it("le Directeur encaisse le souffle sans en mourir d'un coup", () => {
@@ -124,5 +127,35 @@ describe("applyBlast — souffle d'une explosion", () => {
 
     expect(bilan.directorKills).toBe(0);
     expect(directeur.hp).toBeLessThan(pvAvant);
+  });
+});
+
+describe("applyBlast — souffle d'une fusée du pistolet de détresse", () => {
+  const flare = weaponConfig.flareBlast;
+
+  it("plus court que celui d'une bonbonne : tue de près, n'atteint pas ce qu'une bonbonne aurait blessé", () => {
+    const s = session(new THREE.Vector3(0, 1, 50));
+    const near = s.suitManager.spawnSuit(1, 0, 0);
+    const far = s.suitManager.spawnSuit(4.2, 0, 0);
+    s.physics.step(0);
+    expect(far.position.distanceTo(CENTRE)).toBeLessThan(explosionConfig.radius);
+
+    const outcome = applyBlast(engine, s, CENTRE, flare);
+
+    expect(outcome.suitKills).toBe(1);
+    expect(near.isAlive).toBe(false);
+    expect(far.hp).toBe(suitConfig.maxHp);
+  });
+
+  it("le joueur qui tire à ses pieds en prend sa part", () => {
+    const s = session(CENTRE.clone().add(new THREE.Vector3(0, 0, 1)));
+    s.physics.step(0);
+    const expected = Math.round(blastDamageAt(1, flare) * flare.playerDamageScale);
+
+    const outcome = applyBlast(engine, s, CENTRE, flare);
+
+    expect(expected).toBeGreaterThan(0);
+    expect(outcome.playerDamage).toBe(expected);
+    expect(s.run.playerHp).toBe(100 - expected);
   });
 });

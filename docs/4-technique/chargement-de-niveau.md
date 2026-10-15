@@ -2,7 +2,7 @@
 title: Chargement de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-03
+updated: 2026-10-12
 ---
 
 # Chargement de niveau
@@ -53,7 +53,7 @@ flowchart TD
 
 `src/game/session/spawning.ts::loadGltfLevel` installe une fonction `prepare`.
 Elle construit les systèmes du niveau, cuit le graphe de navigation et
-amorce le shader des douches pendant que le candidat est isolé.
+amorce les shaders des douches et les reflets des miroirs pendant que le candidat est isolé.
 `LevelSession` attend cette préparation, qui peut être asynchrone, puis
 applique les changements de session par un commit synchrone.
 L'attente conserve les gardes d'annulation et la restauration du niveau
@@ -67,7 +67,7 @@ Dans une frame, `updateGameplay` relit `LevelSession.current` pour les objets qu
 
 Le loader ajoute d'abord la racine du glTF à la scène et actualise toute la hiérarchie `matrixWorld`. Il parcourt ensuite les nœuds et lit le nom Blender conservé par `GLTFLoader` dans `userData.name`. Un nœud est classé une seule fois : le préfixe est testé avant le cas générique.
 
-Chaque mesh est reconverti en `MeshLambertMaterial` avant son routage. Le loader conserve la couleur, la texture diffuse, la transparence et l'attribut de couleur de sommet ; les autres propriétés de matériau PBR ne font pas partie du rendu du jeu. Les effets ciblés peuvent ensuite remplacer ce matériau par du TSL. Le filtrage conserve l’[invariant #4](../3-architecture/invariants.md).
+Chaque mesh est reconverti en `MeshLambertMaterial` avant son routage. Le loader conserve la couleur, la texture diffuse, la transparence et l'attribut de couleur de sommet ; les autres propriétés de matériau PBR ne font pas partie du rendu du jeu. L’émission est conservée pour les familles explicites de luminaires du métro et du quartier, ainsi que pour les commandes et distributeurs. Les effets ciblés peuvent ensuite remplacer ce matériau par du TSL. Le filtrage conserve l’[invariant #4](../3-architecture/invariants.md).
 
 | Nœud glTF | Résultat du loader |
 |---|---|
@@ -85,6 +85,9 @@ Les formes des colliders statiques sont choisies selon le nom : cuboid pour `col
 
 `trig_*` doit être une boîte alignée dans sa géométrie locale ; il devient un capteur cuboid orienté par le transform monde. Son `TriggerVolume.min/max` est un résumé axis-aligned destiné à l'inspection et aux tests. Les règles d'extraction et les formes sont détaillées dans [Physique](physique.md).
 
+Le cycle de vie règle l’ambiante à 1,0 en bake, 0,18 en hybride et 0,4 en
+temps réel. Les teintes et portées locales restent portées par les `light_*`.
+
 ### Résultat public
 
 `LevelHandle` rassemble la racine Three.js, le glTF chargé, les spawns, triggers, portes, objets `use_*`, secrets, props, vitres, sanitaires, écrans, caméras, lampes et statistiques. Les systèmes spécialisés reçoivent ces listes lors de la préparation ; ils ne sont pas enfouis dans le loader.
@@ -94,6 +97,33 @@ Les formes des colliders statiques sont choisies selon le nom : cuboid pour `col
 `use_*` porte ses propriétés personnalisées dans les `extras` du glTF. Le loader convertit les valeurs connues en champs typés de `UseObject` : cible, carte donnée ou exigée, soin, munitions, aliment et liste ordonnée de caméras. Les détails et les valeurs acceptées figurent dans [Conventions de nommage](../6-reference/conventions-nommage.md).
 
 Les propriétés manquantes ont souvent un sens : `pv` absent rend un objet indestructible ; `target` absent donne `null`. Une valeur présente mais inconnue produit un avertissement explicite et un repli documenté. Les défauts de géométrie critiques, par exemple un trigger non cubique, sont journalisés et l'objet concerné est ignoré ; un échec de téléchargement ou de parsing fait échouer l'essai de chargement.
+
+### Miroirs
+
+Un panneau de décor vertical avec `miroir: true` reçoit un `Reflector` de Three.js
+avant la conversion Lambert (`src/render/environment/levelMirrors.ts`). Le
+panneau conserve sa transformation glTF ; son enfant porte la surface réfléchissante.
+La géométrie source doit avoir sa largeur sur X et sa hauteur sur Y ou Z,
+avec une normale dirigée vers la pièce. Aucun collider n'est créé par cet extra.
+
+Chaque miroir a une cible de 640×360, sans multisampling ni mipmaps, filtrée
+nearest. Le reflet cache les autres miroirs et les enfants de la caméra pour
+éviter la récursion et la présence des armes subjectives dans le reflet.
+Le panneau ne rejoint pas les lots fusionnés. `LevelResources` libère sa
+surface, son matériau et sa cible au remplacement du niveau.
+
+Le [corps du héros](reflet-du-heros.md) est chargé une fois avec les armes.
+`reflectionActors.ts` le rend visible uniquement pendant le rendu réfléchi,
+puis rétablit sa visibilité même en cas d'erreur. Ses mains et son équipement
+sont dessinés dans les poses du billboard ; les armes subjectives restent cachées.
+
+`src/render/environment/warmLevelMirrors.ts` rend chaque surface depuis une
+caméra temporaire pendant la préparation du candidat. Tous les appels de rendu
+passent par `runGameplaySync` et `RenderService`. Les attentes restent à la
+frontière asynchrone du chargement. Le corps est temporairement placé devant
+chaque surface pour préparer aussi son matériau de sprite. Sa pose est ensuite
+restaurée. Les équipements sont décrits dans la
+[fiche des sanitaires](equipements-sanitaires.md).
 
 ### Fusions et durée de vie
 

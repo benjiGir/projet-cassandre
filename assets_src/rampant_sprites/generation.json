@@ -1,0 +1,57 @@
+{
+  "tool": "OpenAI image_gen intégré à Codex",
+  "generatedOn": "2026-10-13",
+  "prompts": [
+    {
+      "role": "base",
+      "prompt": "Use case: stylized-concept.\nAsset type: PROJET_CASSANDRE painted retro FPS Rampant enemy animation atlas, true transparent RGBA.\nInput image 1 (painted Costard) is ONLY the already approved painting style, shading, crisp silhouette and animation atlas reference. Input image 2 (old green Rampant) is ONLY the creature's identity reference. Create entirely new painted sprites of the Rampant. Do NOT copy business clothes or weapons from the Costard. Do NOT render a 3D model.\nSubject: the SAME feral bipedal reptilian creature in every cell. Short hunched lizard humanoid, low head forward, broad crouched torso, bent hind legs, two powerful arms with THREE ivory claws per hand, two clawed feet, a lean tapering tail behind his hips, small angular olive crest from forehead along upper back, crocodile-like blunt muzzle with sharp teeth, intense YELLOW EYES. Olive and moss-green textured scales, lighter yellow green throat and segmented belly, dark green back. Bare scaly body, no human clothing, no weapons, no wings, no horns, no extra arms or extra legs, no props. Not a cute mascot: snarling predatory expression, sinewy folded anatomy, readable silhouette. Keep the head under an adult human's waist when crouching, approximately 1.2m tall versus a 1.8m adult; it is fast, low and dangerous. Preserve green against dark game environments with defined highlights. Illustrated pixel-painted game sprites in the same late 1990s painted shooter style as the Costard, thick controlled shading, tangible scales and claws, NOT low poly 3D, NOT photorealistic, NOT anime, NOT glossy.\nCRITICAL LAYOUT: exact EIGHT equal-width columns and TWELVE rows =96 isolated sprites. Tall rectangular 1024x1536 canvas. Uniform invisible grid, ample truly TRANSPARENT gaps between rows and columns. Each sprite entirely fits in its own column with padding, including the full TAIL and outstretched CLAWS; reduce all figures' scale enough to avoid clipping any limbs or tail. Every sprite has the same scale and proportions across all directions and actions. Feet at the same floor baseline within its row. Dead creatures stay LOW, not inflated to standing height. No grid lines, text, names, cell numbers, watermark, background, checkerboard, ground drop-shadow or grey gradient. Actual alpha=0 background.\nEIGHT DIRECTIONS, left to right in EVERY row: front; front three-quarter facing RIGHT on image; RIGHT profile; rear three-quarter facing RIGHT; directly back; rear three-quarter facing LEFT; LEFT profile; front three-quarter facing LEFT. Exact turnarounds, not eight copies of the same profile.\nTWELVE ROWS top to bottom:\n0 REST: low crouched poised stance, knees bent, both clawed hands forward close to thighs, muzzle forward, tail behind.\n1 ALERT: snarling on spotting prey, head raises slightly, mouth open, hands spread to sides.\n2 RUN LEFT STRIDE: fast low bipedal pursuit, left hind leg forward, right back, arms counter-swing, tail balanced.\n3 RUN PASSING: fast low pursuit, hind legs pass under hips, arms transition, tail balanced.\n4 RUN RIGHT STRIDE: fast low pursuit, right hind leg forward, left back, arms counter-swing, tail balanced.\n5 WIND-UP / ATTACK TELEGRAPH: body coiled before a claw swipe, RIGHT arm distinctly raised and drawn BACK over right shoulder, LEFT hand braces ahead, tail pulled back. Distinct anticipation readable at distance.\n6 CLAW STRIKE: torso lunges forward and RIGHT claw sweeps FORWARD and DOWN into the prey, left arm balances, jaws open. Same right arm as previous wind-up, no switched attacking hand, no magical slash trail or gun muzzle flash.\n7 HURT: recoils backwards from impact, head pulls away, claws contract towards chest, not falling yet.\n8 DEATH FIRST: knees buckle, bent torso sinks, clawed hands losing strength.\n9 DEATH FALL: collapsing onto one side close to ground, tail loosens and falls naturally.\n10 DEATH GROUND: nearly horizontal body, head lowered, limbs no longer attacking.\n11 CORPSE: motionless lying on side on floor, entire creature and whole tail contained in cell, limbs slack, only a small dark red blood patch beneath body.\nThe final sheet must contain all96 complete sprites with consistent identity, eight distinct directions per row, correct anatomical claws and full tails. Prioritize isolated alpha and pose legibility.",
+      "referenceImages": [
+        "assets_src/costard_sprites/costard.png",
+        "public/assets/sprites/rampant.png (version 9bececc, ancien rendu CC0)"
+      ]
+    }
+  ],
+  "specification": {
+    "columns": 8,
+    "rows": 12,
+    "restingHeightMeters": 1.2,
+    "directionOrder": [
+      "face",
+      "trois-quarts droit",
+      "profil droit",
+      "dos droit",
+      "dos",
+      "dos gauche",
+      "profil gauche",
+      "trois-quarts gauche"
+    ],
+    "appearance": [
+      "reptilien olive, ventre clair, yeux jaunes",
+      "deux bras griffus, deux jambes, crête et queue",
+      "sans vêtement ni arme"
+    ],
+    "animations": [
+      "repos",
+      "alerte",
+      "course gauche",
+      "course passage",
+      "course droite",
+      "élan de griffe",
+      "coup de griffe",
+      "impact",
+      "mort initiale",
+      "chute",
+      "au sol",
+      "cadavre"
+    ]
+  },
+  "notes": [
+    "Originaux conservés avec leur alpha. Le générateur décrit les rectangles sans retoucher les pixels.",
+    "Une densité commune à toutes les poses conserve la taille pendant la chute et le cadavre.",
+    "Les attaques, la capsule Rapier et la durée de mort restent celles du gameplay existant.",
+    "L'ancrage horizontal de repos est conservé jusqu'à la chute pour que la griffe levée ne décale pas le corps."
+  ],
+  "sha256": {
+    "rampant.png": "0b5eff024ee8938871ebf0044105be7325219b9af326022728045ef2349353dc"
+  }
+}

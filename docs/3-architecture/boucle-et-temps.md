@@ -2,7 +2,7 @@
 title: Boucle et temps
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Boucle et temps
@@ -70,20 +70,27 @@ Séquence de `frame()` dans `src/core/loop/loop.ts` :
 | `render` | `src/render/*` (appelé depuis `main.ts`) | affichage | Dessine la scène Three.js |
 | `input.endFrame()` | `src/core/input/input.ts` | affichage | Doit rester le dernier appel de l'image |
 
-`updateGameplay` lit l'input du pas fixe via `captureInputFrame` (nommé par
-action, `core/input/input.ts::GameAction`, pas par touche physique) ou par
-`inputRecorder.nextFrame()` en rejeu — jamais les deux à la fois. En dev
+`updateGameplay` n'est plus qu'une liste ordonnée d'étapes, `GAMEPLAY_STEPS`,
+exécutée dans un seul `Effect.sync` par pas. Chaque étape est une fonction
+nommée de `src/game/loop/steps/` (`movePlayer`, `useInteractions`,
+`fireWeapons`, `updateSuits`, `updateBreakables`, `findSecrets`…) qui reçoit le
+même `GameplayStep` : la partie, le pas de gameplay, l'entrée du pas et
+l'origine des tirs.
+
+L'entrée du pas fixe vient de `readInputFrame` (`steps/inputStep.ts`) : la
+capture en direct (nommée par action, `core/input/inputTypes.ts::GameAction`,
+pas par touche physique) ou `inputRecorder.nextFrame()` en rejeu — jamais les
+deux à la fois. En dev
 seulement (`import.meta.env.DEV`), `handleDevGameplayInput`
 (`src/game/loop/devGameplayInput.ts`) consomme F8-F10 (notarget, rejeu
 F9/F10) avant le reste du pas.
 
-Deux détails d'ordre à l'intérieur d'`updateGameplay` valent d'être notés
-puisqu'ils conditionnent le rejeu exact : l'origine de tir
-(`weaponEyeOrigin`) est reconstruite depuis `session.player.position` **après**
-`player.update`, jamais depuis la position interpolée du rendu ; et
-`suitManager.update`/`directorManager.update` s'exécutent après
-`weapons.update`, pour que les `hitEvents` d'un tir soient visibles aux
-ennemis dans le même pas.
+Deux détails de l'ordre de `GAMEPLAY_STEPS` valent d'être notés puisqu'ils
+conditionnent le rejeu exact : l'origine de tir (`GameplayStep.eyeOrigin`) est
+reconstruite par `fireWeapons` depuis `session.player.position` **après**
+`movePlayer`, jamais depuis la position interpolée du rendu ; et
+`updateSuits`/`updateDirectors` s'exécutent après `fireWeapons`, pour que les
+`hitEvents` d'un tir soient visibles aux ennemis dans le même pas.
 
 Si `!engine.flow.isPlaying()` (mort, fin de niveau, menu), `updateGameplay`
 retourne avant tout ce tableau — le pas fixe continue de s'exécuter
@@ -94,7 +101,7 @@ contenu est ignoré.
 
 Le hitstop ralentit le gameplay à l'impact sans jamais arrêter le pas fixe
 lui-même. `GameClock.tick(fixedDt)` (`src/core/loop/time.ts`) renvoie `fixedDt`
-inchangé la plupart du temps, ou `fixedDt * hitstopScale` (0,05 par défaut)
+inchangé la plupart du temps, ou `fixedDt * hitstopScale` (0,05 dans `weaponConfig`)
 tant que `hitstopRemaining > 0`, décrémenté à chaque appel. Ce résultat,
 `gameplayDt`, est ce que `updateGameplay` propage à tout ce qui doit
 ralentir : `advanceGameplayTime`, le délai de soulagement des sanitaires, et

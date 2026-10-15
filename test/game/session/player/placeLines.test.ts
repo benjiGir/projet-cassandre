@@ -4,15 +4,20 @@ import {
   createPlaceLineState,
   nextPlaceLine,
   PLACE_LINE_DWELL_SECONDS,
-} from "../../../../src/game/session/player/placeLines";
+} from "../../../../src/game/session/player/placeLineState";
 import { PLACE_LINES, type HeroLineId } from "../../../../src/game/session/presentation/heroLines";
 
 const DT = 1 / 60;
 const aucune: ReadonlySet<HeroLineId> = new Set();
 const lignes = new Map<string, HeroLineId>([...Object.entries(PLACE_LINES), ["trig_lieu_surgeles", "surgeles"]]);
 
-function attendre(state: ReturnType<typeof createPlaceLineState>, space: string | null, secondes: number,
-  said = aucune, engaged = false): HeroLineId | null {
+function attendre(
+  state: ReturnType<typeof createPlaceLineState>,
+  space: string | null,
+  secondes: number,
+  said = aucune,
+  engaged = false,
+): HeroLineId | null {
   let line: HeroLineId | null = null;
   for (let t = 0; t < secondes; t += DT) line = nextPlaceLine(state, space, DT, said, engaged, lignes);
   return line;

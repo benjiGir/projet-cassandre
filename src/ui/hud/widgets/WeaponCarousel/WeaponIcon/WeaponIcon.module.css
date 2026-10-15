@@ -1,0 +1,8 @@
+.icon {
+  width: calc(var(--vpx) * 62);
+  height: calc(var(--vpx) * 28);
+  margin-bottom: calc(var(--vpx) * 3);
+}
+.detail {
+  fill: var(--phosphor-faint);
+}

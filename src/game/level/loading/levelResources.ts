@@ -11,8 +11,13 @@ export class LevelResources {
   private readonly disposed = new WeakSet<GpuResource>();
   private readonly listeners = new Map<GpuResource, () => void>();
   private readonly batches = new Set<THREE.BatchedMesh>();
+  private readonly cleanups: Array<() => void> = [];
 
   constructor(readonly root: THREE.Object3D) {}
+
+  onCleanup(cleanup: () => void): void {
+    this.cleanups.push(cleanup);
+  }
 
   geometry<T extends THREE.BufferGeometry>(geometry: T): T {
     this.track(geometry);
@@ -43,8 +48,13 @@ export class LevelResources {
     this.root.removeFromParent();
     const errors: unknown[] = [];
     const release = (action: () => void): void => {
-      try { action(); } catch (error) { errors.push(error); }
+      try {
+        action();
+      } catch (error) {
+        errors.push(error);
+      }
     };
+    for (const cleanup of this.cleanups.splice(0).reverse()) release(cleanup);
     release(() => this.collect());
     for (const body of this.bodies) release(() => physics.world.removeRigidBody(body));
     this.bodies.length = 0;
@@ -65,7 +75,8 @@ export class LevelResources {
 
   private track(resource: GpuResource): void {
     // Les ramassages empruntent les ressources de session à travers plusieurs hot reloads.
-    if (resource.userData.pickupResourcesOwned === true || this.gpu.has(resource) || this.disposed.has(resource)) return;
+    if (resource.userData.pickupResourcesOwned === true || this.gpu.has(resource) || this.disposed.has(resource))
+      return;
     this.gpu.add(resource);
     const onDispose = (): void => {
       this.disposed.add(resource);

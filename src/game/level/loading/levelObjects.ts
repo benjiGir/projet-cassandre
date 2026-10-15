@@ -17,7 +17,12 @@ import {
 } from "../props/propConfig";
 import { FOOD_HEAL_AMOUNTS } from "../interactions/food";
 import { NAME_WIRED_USE_OBJECTS } from "../interactions/interactive";
-import { UntargetedUseObjectWarning, formatUntargetedUseObject } from "./levelDiagnostics";
+import {
+  UntargetedUseObjectWarning,
+  formatUntargetedUseObject,
+  AmbiguousAmmoPickupWarning,
+  formatAmbiguousAmmoPickup,
+} from "./levelDiagnostics";
 import {
   cleanExtras,
   readSanitaireKind,
@@ -134,17 +139,18 @@ export function buildVitreCandidateEffect(
 ): Effect.Effect<VitreCandidate> {
   return Effect.gen(function* () {
     const extras = cleanExtras(mesh);
-    const solide = extras.solide !== false;
-    const maxHp = solide ? yield* readVitrePv(name, extras.pv) : null;
+    const solid = extras.solide !== false;
+    const maxHp = solid ? yield* readVitrePv(name, extras.pv) : null;
     const givre = extras.givre === true;
     let matiere: PropMaterial = "verre";
     if (extras.matiere !== undefined && extras.matiere !== null && extras.matiere !== "") {
       const parsed = parsePropMaterial(extras.matiere);
       if (parsed) matiere = parsed;
-      else console.error(
-        `[level] "${name}" (vitre_*) : propriété "matiere" = "${String(extras.matiere)}" ` +
-        `inconnue (${PROP_MATERIALS.join(", ")}) — défaut "verre".`,
-      );
+      else
+        console.error(
+          `[level] "${name}" (vitre_*) : propriété "matiere" = "${String(extras.matiere)}" ` +
+            `inconnue (${PROP_MATERIALS.join(", ")}) — défaut "verre".`,
+        );
     }
 
     const material = mesh.material as THREE.MeshLambertMaterial;
@@ -153,7 +159,7 @@ export function buildVitreCandidateEffect(
 
     let collider: RAPIER.Collider | null = null;
     let body: RAPIER.RigidBody | null = null;
-    if (solide) {
+    if (solid) {
       mesh.geometry.computeBoundingBox();
       const bb = mesh.geometry.boundingBox!;
       const localSize = new THREE.Vector3().subVectors(bb.max, bb.min);
@@ -183,7 +189,6 @@ export function buildVitreCandidateEffect(
         ),
         body,
       );
-
     }
 
     return {
@@ -325,7 +330,7 @@ export function buildPropEffect(
     const matiere = yield* readPropMaterial(name, extras.matiere);
     const masse = yield* readPropNumber(name, "masse", extras.masse);
     const maxHp = yield* readPropNumber(name, "pv", extras.pv);
-    const contenu = yield* readPropContent(name, extras.contenu);
+    const content = yield* readPropContent(name, extras.contenu);
 
     root.attach(mesh);
     mesh.updateMatrixWorld(true);
@@ -367,7 +372,7 @@ export function buildPropEffect(
       body,
     );
 
-    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu, extras };
+    return { name, object: mesh, body, collider, halfExtents, centerOffset, maxHp, matiere, contenu: content, extras };
   });
 }
 
@@ -388,12 +393,26 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
     const grantsCard = yield* readCardProperty(name, "card", extras.card);
     const requiresCard = yield* readCardProperty(name, "requires", extras.requires);
     const explicitHeals = yield* readAmountProperty(name, "soin", extras.soin);
-    const ammo = yield* readAmountProperty(name, "munitions", extras.munitions);
+    const pistolAmmo = yield* readAmountProperty(name, "munitions", extras.munitions);
+    const shotgunAmmo = yield* readAmountProperty(name, "cartouches", extras.cartouches);
+    const flareAmmo = yield* readAmountProperty(name, "fusees", extras.fusees);
+    let ammo = flareAmmo ?? shotgunAmmo ?? pistolAmmo;
+    const declaredAmmoKinds = [extras.munitions, extras.cartouches, extras.fusees].filter((v) => v !== undefined);
+    if (declaredAmmoKinds.length > 1) {
+      ammo = null;
+      yield* Effect.fail(new AmbiguousAmmoPickupWarning({ name })).pipe(
+        Effect.catch((error) => Effect.sync(() => console.error(formatAmbiguousAmmoPickup(error)))),
+      );
+    }
+    const ammoWeapon = flareAmmo !== null ? "flare" : shotgunAmmo !== null ? "shotgun" : "pistol";
     const aliment = yield* readFoodItem(name, extras.aliment);
     const heals = explicitHeals ?? (aliment ? FOOD_HEAL_AMOUNTS[aliment] : null);
     const cameras =
       typeof extras.cameras === "string"
-        ? extras.cameras.split(",").map((c) => c.trim()).filter((c) => c.length > 0)
+        ? extras.cameras
+            .split(",")
+            .map((c) => c.trim())
+            .filter((c) => c.length > 0)
         : null;
     const sells = yield* readPerkOffer(name, extras.perk, extras.prix);
 
@@ -406,6 +425,7 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       ammo === null &&
       !cameras &&
       !sells &&
+      extras.train === undefined &&
       !NAME_WIRED_USE_OBJECTS.has(name)
     ) {
       yield* Effect.fail(new UntargetedUseObjectWarning({ name })).pipe(
@@ -413,7 +433,22 @@ export function buildUseObjectEffect(mesh: THREE.Mesh, name: string): Effect.Eff
       );
     }
 
-    return { name, object: mesh, position, range: USE_RANGE_METERS, targetName, grantsCard, requiresCard, heals, ammo, aliment, cameras, sells, extras };
+    return {
+      name,
+      object: mesh,
+      position,
+      range: USE_RANGE_METERS,
+      targetName,
+      grantsCard,
+      requiresCard,
+      heals,
+      ammo,
+      ammoWeapon,
+      aliment,
+      cameras,
+      sells,
+      extras,
+    };
   });
 }
 

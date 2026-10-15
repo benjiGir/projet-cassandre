@@ -13,15 +13,20 @@ import { hasSeenIntro, markIntroSeen } from "../../game/settings/storySettings";
 import { App, type AppProps } from "../../ui/App/App";
 import type { GameFlowActor } from "./gameFlowMachine";
 import { resolveBootChoice } from "./bootChoice";
+import { reportFatalError } from "../runtime/fatalError";
+import type { SessionEntry } from "../../game/session/campaign/campaignTypes";
+import { metroLevel, STORE_LEVEL_ID } from "../../game/session/campaign/campaignCatalog";
+import { flushCampaignSave } from "../../game/session/campaign/campaignStorage";
 
 export async function bootGameSessionWithRetry(
   engine: PersistentEngine,
   choice: LevelDef,
   actor: GameFlowActor,
+  entry: SessionEntry = { mode: "dev" },
 ): Promise<GameSession> {
   while (true) {
     try {
-      return await bootGameSession(engine, choice);
+      return await bootGameSession(engine, choice, entry);
     } catch (error) {
       actor.send({ type: "LOAD_FAILED" });
       await waitForLoadingRetry(error);
@@ -29,6 +34,11 @@ export async function bootGameSessionWithRetry(
       beginLoading("Préparation des ramassages", 0.3);
     }
   }
+}
+
+/** Ce que l'écran de chargement doit savoir du niveau : son jeu de textes. */
+export function loadingDestination(choice: LevelDef): string {
+  return choice.textes ?? "magasin";
 }
 
 /** L'intro du niveau reste à montrer : il en a une, et ce navigateur ne l'a pas encore vue. */
@@ -66,6 +76,7 @@ export async function waitForGameSessionReady(
 }
 
 export interface SessionFlow {
+  nextLevel(): Promise<void>;
   replay(): Promise<void>;
   returnToMenu(): Promise<void>;
   resume(): void;
@@ -96,29 +107,59 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
     return runTransition(returnToMenuSession);
   }
 
+  function nextLevel(): Promise<void> {
+    return runTransition(async () => {
+      const previous = engine.session;
+      const arrival = previous.run.completedArrival;
+      if (actor.getSnapshot().value !== "levelComplete" || previous.choice.id !== STORE_LEVEL_ID || !arrival) return;
+      flushCampaignSave();
+      actor.send({ type: "NEXT_LEVEL" });
+      clearLevelShortcut();
+      input.clearPendingEdges();
+      const metro = metroLevel();
+      beginLoading("Descente dans le métro", 0.02, loadingDestination(metro));
+      await letBrowserPaint();
+      await teardownGameSession(engine, previous);
+      engine.session = await bootGameSessionWithRetry(engine, metro, actor, { mode: "transition", arrival });
+      await waitForGameSessionReady(actor, engine.session, introPending(engine.session.choice));
+    });
+  }
+
   async function replaySession(): Promise<void> {
     const choice = engine.session.choice;
+    const entry: SessionEntry = {
+      mode: engine.session.entryMode,
+      arrival: engine.session.run.entryArrival ?? undefined,
+    };
     actor.send({ type: "REPLAY" });
-    beginLoading("Redémarrage de la partie", 0.02);
+    input.clearPendingEdges();
+    beginLoading("Redémarrage de la partie", 0.02, loadingDestination(choice));
     await letBrowserPaint();
     await teardownGameSession(engine, engine.session);
-    engine.session = await bootGameSessionWithRetry(engine, choice, actor);
+    engine.session = await bootGameSessionWithRetry(engine, choice, actor, entry);
     await waitForGameSessionReady(actor, engine.session);
   }
 
   async function returnToMenuSession(): Promise<void> {
+    flushCampaignSave();
     actor.send({ type: "RETURN_TO_MENU" });
     await teardownGameSession(engine, engine.session);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("level");
-    window.history.replaceState(null, "", url.toString());
-    const choice = await resolveBootChoice(root);
+    clearLevelShortcut();
+    const { choice, entry } = await resolveBootChoice(root);
     actor.send({ type: "BEGIN_LOAD" });
-    beginLoading("Démarrage", 0.02);
+    beginLoading("Démarrage", 0.02, loadingDestination(choice));
     root.render(createElement(App, appProps()));
     await letBrowserPaint();
-    engine.session = await bootGameSessionWithRetry(engine, choice, actor);
+    input.clearPendingEdges();
+    engine.session = await bootGameSessionWithRetry(engine, choice, actor, entry);
     await waitForGameSessionReady(actor, engine.session, introPending(choice));
+  }
+
+  function clearLevelShortcut(): void {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("level");
+    url.searchParams.delete("campaignProfile");
+    window.history.replaceState(null, "", url.toString());
   }
 
   function resume(): void {
@@ -142,13 +183,15 @@ export function createSessionFlow(engine: GameEngine, root: Root, actor: GameFlo
 
   function appProps(): AppProps {
     return {
-      onReplay: () => void replay(),
-      onReturnToMenu: () => void returnToMenu(),
+      // Un changement de partie qui échoue laisserait le joueur devant un chargement sans fin.
+      onReplay: () => void replay().catch(reportFatalError),
+      onNextLevel: () => void nextLevel().catch(reportFatalError),
+      onReturnToMenu: () => void returnToMenu().catch(reportFatalError),
       onResume: resume,
       onIntroDone: finishIntro,
       onOutroDone: finishOutro,
     };
   }
 
-  return { replay, returnToMenu, resume, finishIntro, finishOutro, appProps };
+  return { nextLevel, replay, returnToMenu, resume, finishIntro, finishOutro, appProps };
 }

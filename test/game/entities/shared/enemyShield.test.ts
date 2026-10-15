@@ -20,7 +20,8 @@ describe("isShieldedHit", () => {
   });
 
   it("laisse passer les flancs et le dos", () => {
-    for (const deg of [75, 90, 180, -75, -120]) expect(isShieldedHit(BOUCLIER, AVANT, cote(deg)), `${deg}°`).toBe(false);
+    for (const deg of [75, 90, 180, -75, -120])
+      expect(isShieldedHit(BOUCLIER, AVANT, cote(deg)), `${deg}°`).toBe(false);
   });
 
   it("suit l'orientation du porteur", () => {

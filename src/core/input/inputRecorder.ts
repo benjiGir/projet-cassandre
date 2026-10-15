@@ -14,6 +14,8 @@ export function emptyInputFrame(): InputFrame {
     switchToMelee: false,
     switchToPistol: false,
     switchToShotgun: false,
+    switchToFlare: false,
+    weaponCycle: 0,
     use: false,
     yaw: 0,
     pitch: 0,
@@ -60,7 +62,7 @@ class InputRecorder {
       this.playback = null;
       return null;
     }
-    return this.playback.frames[this.playbackIndex++]!;
+    return this.playback.frames[this.playbackIndex++];
   }
 
   stopPlayback() {

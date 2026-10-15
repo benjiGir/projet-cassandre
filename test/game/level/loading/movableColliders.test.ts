@@ -7,7 +7,12 @@ import { describe, expect, it } from "vitest";
 import type { LevelSession } from "../../../../src/game/level/loading/hotReload";
 import { isMovableOrBreakableHandle } from "../../../../src/game/level/loading/movableColliders";
 
-function niveau(parts: { doors?: number[]; vitres?: (number | null)[]; sanitaires?: number[]; props?: number[] }): LevelSession {
+function niveau(parts: {
+  doors?: number[];
+  vitres?: (number | null)[];
+  sanitaires?: number[];
+  props?: number[];
+}): LevelSession {
   const avec = (handles: number[] = []) => handles.map((handle) => ({ collider: { handle } }));
   return {
     current: {

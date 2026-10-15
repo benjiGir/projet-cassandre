@@ -1,6 +1,7 @@
 import type { NamedSpawn, TriggerVolume } from "../../level/loading/levelTypes";
 import type { LevelSpaceData } from "../../level/navigation/levelSpaces";
 import type { Scenario, ScriptTrigger } from "../../level/scripting/levelScript";
+import type { TrainLaneDef } from "../../level/trains/trainTypes";
 import { HERO_LINES, PLACE_LINES, type HeroLineId } from "../presentation/heroLines";
 
 // see: docs/decisions/0037-script-de-niveau.md
@@ -34,6 +35,7 @@ export function readLevelScript(
   ecranNames: readonly string[],
   scenarios: Readonly<Record<string, Scenario>>,
   doorNames: readonly string[] = [],
+  trainLanes: readonly TrainLaneDef[] = [],
 ): LevelScriptSetup {
   const setup: LevelScriptSetup = {
     triggers: [],
@@ -74,8 +76,14 @@ export function readLevelScript(
 
   const groups = new Set(spawns.flatMap((spawn) => (spawn.group === null ? [] : [spawn.group])));
   const woken = new Set<string>();
-  for (const [event, steps] of Object.entries(scenarios) as [string, Scenario][]) {
+  for (const [event, steps] of Object.entries(scenarios)) {
     for (const { action } of steps) {
+      if (action.kind === "train") {
+        const lane = trainLanes.find((candidate) => candidate.id === action.voie);
+        if (!lane) setup.problems.push(`Scénario ${event} : voie de train absente ${action.voie}.`);
+        else if (action.trajet && !lane.routes.some((route) => route.id === action.trajet))
+          setup.problems.push(`Scénario ${event} : trajet absent ${action.trajet}.`);
+      }
       if (action.kind === "reveiller") {
         woken.add(action.groupe);
         if (!groups.has(action.groupe)) {
@@ -86,9 +94,9 @@ export function readLevelScript(
         setup.problems.push(`Scénario "${event}" : aucun ecran_* ne commence par "${action.ecrans}".`);
       }
       if (action.kind === "verrouiller" || action.kind === "deverrouiller") {
-        for (const porte of action.portes) {
-          if (!doorNames.includes(porte)) {
-            setup.problems.push(`Scénario "${event}" : la porte "${porte}" n'existe pas dans le niveau.`);
+        for (const door of action.portes) {
+          if (!doorNames.includes(door)) {
+            setup.problems.push(`Scénario "${event}" : la porte "${door}" n'existe pas dans le niveau.`);
           }
         }
       }

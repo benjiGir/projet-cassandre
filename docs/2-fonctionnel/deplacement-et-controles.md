@@ -2,7 +2,7 @@
 title: Déplacement et contrôles
 tags: [fonctionnel]
 status: stable
-updated: 2026-09-25
+updated: 2026-10-11
 ---
 
 # Déplacement et contrôles
@@ -52,8 +52,9 @@ suit la souris à l'instant même où vous bougez.
 - La rotation de la caméra suit la souris sans aucun délai ; seuls les
   petits mouvements de vue cosmétiques (balancement des pas, élargissement du
   champ de vision à la course, tassement à la réception) sont progressifs.
-- La sensibilité de la souris se règle dans les options, séparément de tout
-  le reste.
+- La sensibilité de la souris n'a pas de réglage dans les options du jeu : elle
+  est fixée dans `moveConfig`, et ne se règle qu'en développement, dans le
+  panneau de tuning.
 
 ### Contrôles par défaut
 
@@ -64,24 +65,25 @@ suit la souris à l'instant même où vous bougez.
 | Sprint | Maj (gauche), maintenue |
 | Sauter | Espace |
 | Viser | Souris |
-| Tirer | Clic gauche |
+| Tirer (ou coup de pied, sans arme) | Clic gauche |
 | Utiliser | `E` |
-| Changer d'arme | `1` / `2` / `3` |
+| Changer d'arme | `1` / `2` / `3` / `4`, ou molette |
 
 Ce tableau donne les touches par défaut sur un clavier QWERTY. Le jeu lit la
 position physique de la touche plutôt que le caractère imprimé dessus : sur
 un clavier AZERTY, les mêmes emplacements donnent déjà ZQSD sans aucun
-réglage à faire. Toutes les actions ci-dessus se remappent librement dans
+réglage à faire. Les actions liées à une touche se remappent librement dans
 les options, et le remappage est conservé d'une session à l'autre. Seules
 les touches de débogage, jamais montrées au joueur, échappent à ce
-remappage.
+remappage. La molette garde son rôle précédent / suivant ; un carrousel
+temporaire indique le choix en bas de l’écran.
 
 ## Valeurs
 
 Détail chiffré (vitesses, hauteur de saut, gravité, distance de chute
 déclenchant le filet de sécurité, marges de franchissement) :
-`6-reference/valeurs-deplacement.md`. Table complète des actions et de
-leurs touches : `6-reference/controles.md`.
+[Valeurs de déplacement](../6-reference/valeurs-deplacement.md). Table complète
+des actions et de leurs touches : [Contrôles et bindings](../6-reference/controles.md).
 
 ## État
 
@@ -96,7 +98,7 @@ leurs touches : `6-reference/controles.md`.
 
 ## Pour aller plus loin
 
-- Le fonctionnement interne du contrôleur de déplacement : `4-technique/joueur.md`.
-- La physique et les collisions sous-jacentes : `4-technique/physique.md`.
-- La table complète des contrôles et leur remappage : `6-reference/controles.md`.
-- Toutes les valeurs numériques de déplacement : `6-reference/valeurs-deplacement.md`.
+- Le fonctionnement interne du contrôleur de déplacement : [Joueur](../4-technique/joueur.md).
+- La physique et les collisions sous-jacentes : [Physique](../4-technique/physique.md).
+- La table complète des contrôles et leur remappage : [Contrôles et bindings](../6-reference/controles.md).
+- Toutes les valeurs numériques de déplacement : [Valeurs de déplacement](../6-reference/valeurs-deplacement.md).

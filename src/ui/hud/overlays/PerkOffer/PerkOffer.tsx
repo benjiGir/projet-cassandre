@@ -16,7 +16,7 @@ export function PerkOffer() {
       {!offer.sold && <span className={styles.key}>{offer.key}</span>}
       <span>{offer.label}</span>
       <span className={styles.effect}>{offer.effect}</span>
-      <span className={styles.price}>{offer.sold ? "ÉPUISÉ" : `${offer.price} €`}</span>
+      <span className={styles.price}>{offer.sold ? "PLEIN" : `${offer.price} €`}</span>
     </div>
   );
 }

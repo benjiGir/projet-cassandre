@@ -2,7 +2,7 @@
 title: Où agir
 tags: [guide, navigation]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-08
 ---
 
 # Où agir
@@ -12,7 +12,7 @@ Repérez d'abord le comportement, puis modifiez sa source de vérité. Les fichi
 | Je veux modifier… | Où agir | Lire |
 |---|---|---|
 | Marche, sprint, saut, caméra, bob ou FOV | `src/game/player/movement/moveConfig.ts`, `src/game/player/movement/controller.ts` | [Joueur](../4-technique/joueur.md), [valeurs](../6-reference/valeurs-deplacement.md) |
-| Sensibilité et touches joueur | `src/core/input/input.ts`, options contrôles de `src/ui/screens/options/controls/ControlsTab/` | [Contrôles](../6-reference/controles.md) |
+| Touches joueur | `src/core/input/inputBindings.ts`, `src/core/input/input.ts`, options contrôles de `src/ui/screens/options/controls/ControlsTab/` | [Contrôles](../6-reference/controles.md) |
 | Gravité, capsule ou groupes de collision | `src/physics/world.ts`, `src/game/player/movement/controller.ts` | [Physique](../4-technique/physique.md), [Three.js et Rapier](../6-reference/threejs-rapier.md) |
 | Dégâts, portée, cadence ou recul d'une arme | `src/game/player/weapons/weaponConfig.ts`, `src/game/player/weapons/weapons.ts` | [Armes](../4-technique/armes.md) |
 | Modèle d'arme en vue subjective | `tools/blender/build_weapons.py`, puis asset généré `public/assets/weapons/armes.glb` | [Sprites et viewmodel](../4-technique/sprites-et-viewmodel.md) |

@@ -33,6 +33,6 @@ export interface PerkOffer {
 
 export function parsePerk(value: unknown): Perk | null {
   if (typeof value !== "string") return null;
-  const normalise = value.trim().toLowerCase();
-  return (PERKS as readonly string[]).includes(normalise) ? (normalise as Perk) : null;
+  const normalized = value.trim().toLowerCase();
+  return (PERKS as readonly string[]).includes(normalized) ? (normalized as Perk) : null;
 }

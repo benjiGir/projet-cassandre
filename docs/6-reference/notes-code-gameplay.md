@@ -2,7 +2,7 @@
 title: Contrats du gameplay conservés lors de l’audit
 tags: [gameplay, code, contrats]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-08
 ---
 
 # Contrats du gameplay conservés lors de l’audit
@@ -15,9 +15,10 @@ sont dans les références liées en fin de page.
 
 `GameEngine` contient les objets qui survivent à un reset : scène, caméra,
 renderer, overlays, planches de sprites, modèles, horloge et interactions.
-`PersistentEngine` exclut la session pour permettre sa première construction.
-`GameSession` contient le monde Rapier et l’état d’une partie. Les systèmes du
-niveau sont reconstruits ensemble après préparation du nouveau niveau.
+`PersistentEngine` est ce moteur sans la session, pour permettre sa première
+construction ; `GameEngine` l’étend avec `session`. `GameSession` contient le
+monde Rapier, l’état d’une partie (`run`) et ce que le niveau chargé y apporte
+(`level`), remplacé d’un bloc après préparation du nouveau niveau.
 
 Les fonctions de spawn reçoivent explicitement la session en construction.
 Lire `engine.session` à ce moment placerait les ennemis dans l’ancienne partie.
@@ -51,7 +52,7 @@ image. Chaque consommateur gameplay mémorise son curseur ; la présentation vid
 ces files après leurs lecteurs. Une lecture répétée de la totalité des impacts
 ferait appliquer plusieurs fois les dégâts pendant le rattrapage d’une image.
 Les compteurs du récap sont incrémentés au pas fixe, pas à la consommation visuelle.
-Le calcul pur vit dans `session/score.ts` et sa publication dans `session/recap.ts`.
+Le calcul pur vit dans `session/progression/score.ts` et sa publication dans `session/progression/recap.ts`.
 
 L’interpolation pose d’abord la caméra puis les props et billboards qui dépendent
 de sa distance. Les props sont relus après le pas Rapier. Les scratches sont
@@ -71,7 +72,7 @@ références mutables lues par les systèmes concernés.
 
 ## Progression et fin
 
-Les cartes vivent dans `session.cards` ; le store copie un inventaire ordonné
+Les cartes vivent dans `session.run.cards` ; le store copie un inventaire ordonné
 Argent, Or, Platine. Un ramassage en double est sans effet. Le hot reload garde
 l’inventaire et les portes déjà déverrouillées, puis masque les cartes possédées.
 Un `use_*` à carte reste réessayable tant que son exigence manque.

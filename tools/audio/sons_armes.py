@@ -29,8 +29,8 @@ from __future__ import annotations
 import numpy as np
 
 from catalogue import recette
-from physique import (SR, choc, db, eclats_qui_tombent, friedlander, gaz, melange,
-                      micro_sature, modes_barre, modes_coque, modes_denses, n_ech, place, unite)
+from physique import (SR, _passe_bas_variable, choc, db, eclats_qui_tombent, fracture, friedlander, gaz,
+                      melange, micro_sature, modes_barre, modes_coque, modes_denses, n_ech, place, unite)
 from synth import highpass, lowpass
 
 
@@ -287,3 +287,125 @@ def explosion(g, charge, coup_db, coup_hz, feu_db, feu_s, tole_db, debris_db, se
     sat = micro_sature(melange(duree, *couches), saturation)
     sat = _serre(sat, plafond=0.35 - 0.2 * serrage, part=1.2 * serrage) if serrage > 0 else sat
     return highpass(sat, 24, order=2)
+
+
+# ------------------------------------------------------ pistolet de detresse
+
+
+def _crepitement(g, duree: float, taux: float, demi_vie: float, aigu: float = 3500.0) -> np.ndarray:
+    """
+    La composition pyrotechnique qui brule : le magnesium ne siffle pas d'un
+    trait, il crepite — des micro-eclats tres brefs, serres au debut puis de
+    plus en plus rares. Meme modele que les fibres d'une planche qui cede
+    (`fracture`), avec un grain bien plus sec et plus aigu.
+    """
+    def grain(gg, niveau):
+        n = int(gg.integers(6, 22))
+        return gg.standard_normal(n) * np.exp(-np.arange(n) / (n / 3)) * niveau
+    return highpass(fracture(duree, taux, demi_vie, g, grain=grain), aigu, order=2)
+
+
+@recette("flare_fire", "weapon", variantes=3, lieu="magasin", distance=0.7, piece_db=2.0,
+         charge=(0.5, 0.2, 2.0, "x 9 mm", "charge propulsive : faible, le canon est a basse pression"),
+         tube_db=(-10.0, -30.0, 3.0, "dB", "le canon large qui resonne : le « poump » creux"),
+         tube_hz=(540.0, 300.0, 900.0, "Hz", "hauteur du canon (quart d'onde d'un tube de 15 cm)"),
+         coup_db=(-5.0, -40.0, 3.0, "dB", "le coup dans la poitrine"),
+         coup_hz=(62.0, 40.0, 120.0, "Hz", "hauteur du coup"),
+         fusee_db=(-9.0, -40.0, 0.0, "dB", "la fusee qui s'allume et s'eloigne : le sifflement"),
+         fusee_s=(0.55, 0.2, 1.2, "s", "duree du sifflement"),
+         crepite_db=(-16.0, -60.0, -3.0, "dB", "le crepitement du magnesium ; -60 = sans"),
+         chien_db=(-22.0, -40.0, -6.0, "dB", "le chien qui tombe, juste avant"),
+         serrage=(0.6, 0.0, 1.0, "", "compression parallele : fort de bout en bout"),
+         saturation=(0.45, 0.0, 1.0, "", "micro qui sature"))
+def pistolet_de_detresse(g, charge, tube_db, tube_hz, coup_db, coup_hz, fusee_db, fusee_s,
+                         crepite_db, chien_db, serrage, saturation):
+    """
+    Pistolet lance-fusees de 26,5 mm. Rien d'un coup de feu sec : la charge
+    est petite et le canon large, donc la pression est basse — un « poump »
+    creux, celui d'un lance-grenades, que le tube court colore de sa propre
+    note. Puis ce qu'aucune autre arme n'a : la fusee s'allume en sortant et
+    s'eloigne en sifflant et en crepitant.
+    """
+    k = charge ** (1 / 3)
+    duree = 0.25 + fusee_s
+    t0 = 0.004
+    chien = choc(modes_denses(1900, 7000, 8, "mecanisme", g), "mecanisme", g, duree=0.04,
+                 vitesse=0.7, contact_ms=0.07)
+    souffle = _souffle(g, charge, (150 / k, 700 / k), n=5, grave=0.5, part_resonance=0.8)
+    # Le tube : une colonne d'air fermee d'un cote, excitee par le depart de la
+    # fusee. Quart d'onde et son premier partiel impair — en amas de composantes
+    # desaccordees et tres amorties, jamais une sinusoide : une note pure
+    # s'entend comme une note, et la piece la prolonge en raie (voir `_souffle`).
+    n = n_ech(0.05)
+    t = np.arange(n) / SR
+    f = tube_hz * g.uniform(0.85, 1.15, 4) * np.array([1.0, 1.0, 3.0, 3.0])
+    amorti = np.array([0.007, 0.004, 0.0035, 0.002])
+    tube = np.sum(np.array([1.0, 0.7, 0.4, 0.3])[:, None]
+                  * np.sin(2 * np.pi * f[:, None] * t + g.uniform(0, 6.3, (4, 1)))
+                  * np.exp(-t / amorti[:, None]), axis=0) * (1 - np.exp(-t / 0.0005))
+    jet = _jet(g, 0.12, centre=750 / k, decroissance=38)
+    # La fusee : un jet aigu qui monte en 30 ms (l'allumage) puis s'eteint en
+    # s'eloignant — l'aigu tombe le premier, comme tout son qui part.
+    nf = n_ech(fusee_s)
+    tf = np.arange(nf) / SR
+    siffle = gaz(fusee_s, g, centre=3400, decroissance=0.0, souffle=0.25)
+    siffle = _passe_bas_variable(siffle, 9000 * np.exp(-tf / (fusee_s * 0.45)) + 1200)
+    # Fondu sur le dernier quart : une queue coupee net s'entend comme un clic.
+    siffle = (siffle * (1 - np.exp(-tf / 0.03)) * np.exp(-3.2 * tf / fusee_s)
+              * np.clip((1 - tf / fusee_s) / 0.25, 0, 1))
+    couches = [
+        (chien, 0.0, chien_db),
+        (souffle, t0, 0),
+        (_front(g, 0.5), t0, -9),
+        (tube, t0 + 0.0006, tube_db),
+        (jet, t0 + 0.0004, -8),
+        (_coup(g, coup_hz, 0.11, depart=2.0), t0, coup_db),
+        (siffle, t0 + 0.012, fusee_db),
+    ]
+    if crepite_db > -59:
+        couches.append((_crepitement(g, fusee_s, 420, fusee_s * 0.3), t0 + 0.02, crepite_db))
+    sat = micro_sature(melange(duree, *couches), saturation)
+    sat = _serre(sat, plafond=0.35 - 0.2 * serrage, part=1.2 * serrage) if serrage > 0 else sat
+    return highpass(sat, 30, order=2)
+
+
+@recette("flare_burst", "weapon", variantes=3, lieu="reserve", distance=5.0, piece_db=2.0,
+         charge=(18.0, 8.0, 120.0, "x 9 mm", "energie liberee : bien moins qu'une bonbonne, donc plus aigu et plus court"),
+         coup_db=(-5.0, -30.0, 6.0, "dB", "le coup dans la poitrine"),
+         coup_hz=(58.0, 30.0, 90.0, "Hz", "hauteur du coup"),
+         feu_db=(-14.0, -30.0, 3.0, "dB", "la boule de feu : le grondement court qui suit"),
+         feu_s=(0.35, 0.2, 1.2, "s", "duree du grondement"),
+         crepite_db=(-6.0, -60.0, -3.0, "dB", "la composition qui finit de bruler en crepitant ; -60 = sans"),
+         crepite_s=(0.9, 0.3, 1.6, "s", "duree du crepitement"),
+         serrage=(0.7, 0.0, 1.0, "", "compression parallele : fort de bout en bout"),
+         saturation=(0.7, 0.0, 1.0, "", "micro qui sature"))
+def fusee_qui_eclate(g, charge, coup_db, coup_hz, feu_db, feu_s, crepite_db, crepite_s, serrage, saturation):
+    """
+    La fusee qui eclate sur ce qu'elle touche, entendue a quelques metres. La
+    physique d'une explosion de bonbonne (`explosion`) a plus petite echelle :
+    un souffle plus court donc plus aigu — un « pan » lourd, pas un « boum » —,
+    une boule de feu qui ne dure pas, aucune tole. Sa signature est ailleurs :
+    le magnesium eparpille qui continue de crepiter pres d'une seconde.
+    """
+    k = charge ** (1 / 3)
+    duree = 0.3 + max(feu_s, crepite_s) + 0.3
+    t0 = 0.002
+    souffle = _souffle(g, charge, (300 / k, 1600 / k), n=6, grave=0.7, part_resonance=0.8)
+    n = n_ech(feu_s)
+    t = np.arange(n) / SR
+    feu = _jet(g, feu_s, centre=520, decroissance=3.4 / feu_s)
+    roulement = lowpass(g.standard_normal(n), 140, order=3)
+    tremble = 1 + 0.5 * lowpass(g.standard_normal(n), 16, order=2) / 0.05
+    roulement = roulement * np.clip(tremble, 0.2, 2.5) * np.exp(-3.2 * t / feu_s) * (1 - np.exp(-t / 0.004))
+    couches = [
+        (souffle, t0, 0),
+        (_front(g, 0.8), t0, 0),
+        (_coup(g, coup_hz, 0.16, depart=2.4), t0, coup_db),
+        (feu, t0 + 0.004, feu_db),
+        (roulement, t0 + 0.004, feu_db - 2),
+    ]
+    if crepite_db > -59:
+        couches.append((_crepitement(g, crepite_s, 650, crepite_s * 0.28, aigu=2600), t0 + 0.01, crepite_db))
+    sat = micro_sature(melange(duree, *couches), saturation)
+    sat = _serre(sat, plafond=0.35 - 0.2 * serrage, part=1.2 * serrage) if serrage > 0 else sat
+    return highpass(sat, 26, order=2)

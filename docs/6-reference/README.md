@@ -2,7 +2,7 @@
 title: Référence
 tags: [sommaire]
 status: brouillon
-updated: 2026-10-02
+updated: 2026-10-12
 ---
 
 # Référence
@@ -19,6 +19,8 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Valeurs des ennemis](valeurs-ennemis.md) — paramètres du Costard, du Rampant, du Vigile et du Directeur, multiplicateurs de difficulté, explosion.
 - [Valeurs de l'économie](valeurs-economie.md) — prix des bornes, effet des perks, dons, donateur mystère et relevé simulé.
 - [Catalogue de répliques](repliques-niveau-v2.md) — trois choix par situation du niveau, identifiants et consignes d'enregistrement.
+- [Catalogue de répliques du métro](repliques-metro.md) — ce que disent le héros, les annonces, le compte vérifié et le chat dans le second niveau.
+- [Conventions de code](conventions-code.md) — langue des identifiants, constantes partagées, modules à réutiliser.
 - [Conventions de nommage glTF](conventions-nommage.md) — préfixes et extras de niveau.
 - [Contrôles et bindings](controles.md) — touches joueur, remapping et raccourcis dev.
 - [React — structure et rangement](react-structure.md) — dossiers, frontières et imports.
@@ -33,3 +35,10 @@ Tables et contrats à consulter pendant une tâche. Ce dossier sert de recherche
 - [Gameplay et session](notes-code-gameplay.md), [joueur et armes](notes-code-gameplay-joueur.md), [ennemis](notes-code-gameplay-ennemis.md).
 - [Niveau](notes-code-gameplay-niveau.md) et [outils de développement](notes-code-gameplay-outils.md).
 - [Rendu](notes-code-rendu.md) et [interface](notes-code-interface.md).
+
+- [Références du métro](references-metro.md) — palette, cotes et silhouettes.
+- [Références des tunnels](references-tunnels.md) — infrastructure et critères des reprises locales.
+- [Références des coulisses](references-coulisses.md) — usages réels et intentions de composition historiques.
+- [Références des armes et mains](references-armes-mains.md) — proportions, palette et prises.
+- [Références des voitures](references-voitures.md) — silhouettes et variantes des véhicules.
+- [Références des motos](references-motos.md) — motocross, custom, roadster et scooter.

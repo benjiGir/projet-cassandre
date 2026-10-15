@@ -19,7 +19,11 @@ import {
   type InteractionHandlers,
   type WeaponPickupHandlers,
 } from "../../../../src/game/level/interactions/interactive";
-import { UseObjectCulling, USE_RENDER_DISTANCE, type CullableUseObject } from "../../../../src/render/environment/useObjectCulling";
+import {
+  UseObjectCulling,
+  USE_RENDER_DISTANCE,
+  type CullableUseObject,
+} from "../../../../src/render/environment/useObjectCulling";
 
 await initPhysics();
 
@@ -206,6 +210,7 @@ function armeHandlersDeTest(overrides: Partial<WeaponPickupHandlers> = {}): Weap
     onCrowbarPickup: () => false,
     onShotgunPickup: () => false,
     onPistolPickup: () => false,
+    onFlarePickup: () => false,
     ...overrides,
   };
 }

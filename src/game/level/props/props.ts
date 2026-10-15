@@ -1,13 +1,13 @@
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 
 import { damageForHit } from "../../player/weapons/weaponConfig";
 import type { HitEvent } from "../../player/weapons/weaponTypes";
-import { runGameplaySync } from "../../../app/runtime/gameRuntime";
-import { DeterministicRandom } from "../../../core/effect/random";
+import { seededRandom } from "../../../app/runtime/gameRuntime";
+import { FOOD_DROP_SEED } from "../../../core/effect/seeds";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "../interactions/food";
 import { HEAL_PICKUP_RADIUS } from "../interactions/interactive";
-import { explosionConfig } from "./propConfig";
+import { explosionConfig, type BlastConfig } from "./propConfig";
 
 // see: docs/decisions/0030-props-dynamiques.md
 
@@ -113,7 +113,6 @@ const localMatrixScratch = new THREE.Matrix4();
 const lerpPosScratch = new THREE.Vector3();
 const lerpQuatScratch = new THREE.Quaternion();
 
-const FOOD_DROP_SEED = 0x8f00d;
 /** Dispersion horizontale des drops autour du point de casse, mètres. */
 const FOOD_DROP_SCATTER_RADIUS = 0.5;
 /** Placeholder de rendu — géométrie/couleurs PARTAGÉES le temps que
@@ -155,9 +154,7 @@ export class PropSystem {
   private readonly pendingBlasts: PropExplosionEvent[] = [];
 
   /** Flux déterministe dédié aux drops de nourriture — voir `FOOD_DROP_SEED`. */
-  private readonly nextFoodRandom = runGameplaySync(
-    DeterministicRandom.useSync((random) => random.forSeed(FOOD_DROP_SEED)),
-  );
+  private readonly nextFoodRandom = seededRandom(FOOD_DROP_SEED);
 
   constructor(props: readonly PropInfo[], root: THREE.Object3D) {
     root.updateWorldMatrix(true, false);
@@ -250,7 +247,7 @@ export class PropSystem {
   update(hitEvents: ReadonlyArray<HitEvent>): void {
     this.burnFuses();
     for (let i = this.hitCursor; i < hitEvents.length; i++) {
-      const hit = hitEvents[i]!;
+      const hit = hitEvents[i];
       const state = this.byColliderHandle.get(hit.colliderHandle);
       if (!state || state.destroyed) continue;
 
@@ -260,7 +257,10 @@ export class PropSystem {
 
       // `normal` pointe VERS le tireur (convention `castRayAndGetNormal`) :
       // l'impulsion pousse dans l'autre sens, donc vers l'intérieur du prop.
-      impulseScratch.copy(hit.normal).negate().multiplyScalar(damage * IMPULSE_PER_DAMAGE);
+      impulseScratch
+        .copy(hit.normal)
+        .negate()
+        .multiplyScalar(damage * IMPULSE_PER_DAMAGE);
       state.info.body.applyImpulseAtPoint(
         { x: impulseScratch.x, y: impulseScratch.y, z: impulseScratch.z },
         { x: hit.point.x, y: hit.point.y, z: hit.point.z },
@@ -324,19 +324,27 @@ export class PropSystem {
     const event = { name: source.info.name, point: center };
     this._explosionEvents.push(event);
     this.pendingBlasts.push(event);
+    this.applyBlast(center);
+  }
 
+  /**
+   * Un souffle centré sur `center`, côté props : il pousse le mobilier à sa
+   * portée et amorce les bonbonnes. Sert aussi au souffle d'une fusée du
+   * pistolet de détresse, né hors de tout prop.
+   */
+  applyBlast(center: THREE.Vector3, blast: BlastConfig = explosionConfig): void {
     for (const state of this.states) {
       if (state.destroyed) continue;
       const p = state.info.body.translation();
       impulseScratch.set(p.x - center.x, p.y - center.y, p.z - center.z);
       const distance = impulseScratch.length();
-      if (distance >= explosionConfig.radius) continue;
+      if (distance >= blast.radius) continue;
 
       // Un prop exactement au centre n'a pas de direction : il part vers le haut.
       if (distance > 1e-4) impulseScratch.multiplyScalar(1 / distance);
       else impulseScratch.set(0, 0, 0);
-      impulseScratch.y += explosionConfig.impulseLift;
-      impulseScratch.multiplyScalar(explosionConfig.impulse * (1 - distance / explosionConfig.radius));
+      impulseScratch.y += blast.impulseLift;
+      impulseScratch.multiplyScalar(blast.impulse * (1 - distance / blast.radius));
       state.info.body.applyImpulse({ x: impulseScratch.x, y: impulseScratch.y, z: impulseScratch.z }, true);
 
       // Réaction en chaîne : une mèche déjà allumée n'est pas rallongée.
@@ -372,10 +380,7 @@ export class PropSystem {
         origin.z + Math.sin(angle) * radius,
       );
 
-      const mesh = new THREE.Mesh(
-        FOOD_DROP_GEOMETRY,
-        new THREE.MeshLambertMaterial({ color: FOOD_DROP_COLORS[item] }),
-      );
+      const mesh = new THREE.Mesh(FOOD_DROP_GEOMETRY, new THREE.MeshLambertMaterial({ color: FOOD_DROP_COLORS[item] }));
       mesh.position.copy(position).applyMatrix4(this.rootInverse);
       this.root.add(mesh);
 
@@ -429,8 +434,7 @@ export class PropSystem {
       const r = state.info.body.rotation();
       state.currPos.set(t.x, t.y, t.z);
       state.currQuat.set(r.x, r.y, r.z, r.w);
-      state.moving =
-        !state.prevPos.equals(state.currPos) || !state.prevQuat.equals(state.currQuat);
+      state.moving = !state.prevPos.equals(state.currPos) || !state.prevQuat.equals(state.currQuat);
     }
   }
 
@@ -441,13 +445,13 @@ export class PropSystem {
       // Élagage par distance AVANT tout le reste — c'est lui qui tient le
       // budget de lots de dessin (voir `PROP_RENDER_DISTANCE_SQ`).
       const visible = state.currPos.distanceToSquared(cameraPosition) <= PROP_RENDER_DISTANCE_SQ;
-      const reapparu = visible && !state.visible;
+      const reappeared = visible && !state.visible;
       state.visible = visible;
       if (state.info.object.visible !== visible) state.info.object.visible = visible;
 
       // Un prop qui revient dans la portée a pu bouger pendant qu'il était
       // élagué : sa pose est réécrite une fois, même s'il dort maintenant.
-      if (!visible || (!state.moving && !reapparu)) continue;
+      if (!visible || (!state.moving && !reappeared)) continue;
       lerpPosScratch.lerpVectors(state.prevPos, state.currPos, alpha);
       lerpQuatScratch.slerpQuaternions(state.prevQuat, state.currQuat, alpha);
       // Pose MONDE du CORPS, puis retour sur l'origine du mesh (voir
@@ -455,16 +459,19 @@ export class PropSystem {
       worldMatrixScratch.compose(lerpPosScratch, lerpQuatScratch, state.scale);
       worldMatrixScratch.multiply(state.offsetMatrix);
       localMatrixScratch.multiplyMatrices(this.rootInverse, worldMatrixScratch);
-      localMatrixScratch.decompose(
-        state.info.object.position,
-        state.info.object.quaternion,
-        state.info.object.scale,
-      );
+      localMatrixScratch.decompose(state.info.object.position, state.info.object.quaternion, state.info.object.scale);
     }
   }
 
   /** Résumé lisible pour la console de dev (`cassandre.props()`). */
-  describe(): Array<{ name: string; matiere: PropMaterial; hp: number; maxHp: number | null; destroyed: boolean; position: THREE.Vector3 }> {
+  describe(): Array<{
+    name: string;
+    matiere: PropMaterial;
+    hp: number;
+    maxHp: number | null;
+    destroyed: boolean;
+    position: THREE.Vector3;
+  }> {
     return this.states.map((state) => ({
       name: state.info.name,
       matiere: state.info.matiere,
@@ -474,5 +481,4 @@ export class PropSystem {
       position: state.currPos.clone(),
     }));
   }
-
 }

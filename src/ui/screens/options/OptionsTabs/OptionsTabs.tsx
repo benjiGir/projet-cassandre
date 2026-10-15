@@ -20,14 +20,23 @@ export function OptionsTabs({ value, onChange }: OptionsTabsProps) {
     const currentIndex = TABS.findIndex((tab) => tab.id === value);
     let nextIndex: number;
     switch (event.key) {
-      case "ArrowRight": nextIndex = (currentIndex + 1) % TABS.length; break;
-      case "ArrowLeft": nextIndex = (currentIndex - 1 + TABS.length) % TABS.length; break;
-      case "Home": nextIndex = 0; break;
-      case "End": nextIndex = TABS.length - 1; break;
-      default: return;
+      case "ArrowRight":
+        nextIndex = (currentIndex + 1) % TABS.length;
+        break;
+      case "ArrowLeft":
+        nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = TABS.length - 1;
+        break;
+      default:
+        return;
     }
     event.preventDefault();
-    const next = TABS[nextIndex]!;
+    const next = TABS[nextIndex];
     onChange(next.id);
     document.getElementById(`options-tab-${next.id}`)?.focus();
   }

@@ -335,11 +335,12 @@ SPACES: list[Space] = [
              "utilisables et cassables façon Duke — +10 PV en se soulageant (délai 220 s), "
              "+1 PV par gorgée à l'eau d'un sanitaire cassé",
         duree="0:10", arrivee=(57, 11),
-        ennemis="aucun — une cabine fermée, des chaussures dépassent sous la porte",
+        ennemis="aucun — trois cabines accessibles",
         notes=[
             "Jusqu'au 2026-09-24, les toilettes n'étaient qu'un `use_toilet` flottant au milieu "
             "de la cafétéria : un cube, pas une pièce.",
-            "Trois cabines au nord, deux lavabos et leurs miroirs au sud, deux urinoirs à l'est.",
+            "Trois cabines ouvrables au nord (passage 1,30 m), deux grands lavabos et "
+            "leurs miroirs au sud, deux urinoirs à l'est.",
             "Même jour, passe suivante : cuvettes et urinoirs deviennent des `sanitaire_*` — "
             "le +1 PV de la chasse d'eau (un `use_*` qui aurait volé l'appui sur E à la cuvette "
             "voisine) cède la place à la mécanique Duke, directement sur l'appareil. La plaque "
@@ -348,7 +349,7 @@ SPACES: list[Space] = [
         reperes=[
             # Position de la plaque de chasse d'eau (décor) au-dessus du réservoir
             # de la première cabine, sur le mur nord — plus un `use_*`.
-            ("toilettes +10 PV", 60.5, 15.75, "objet"),
+            ("toilettes +10 PV", 57.77, 15.75, "objet"),
         ],
     ),
     Space(
@@ -374,8 +375,8 @@ SPACES: list[Space] = [
 
     # ===== Les coulisses, v2 (2026-09-26) =====
     # v1 rejetée par l'utilisateur (« posé au pif, aucun plaisir à explorer »).
-    # Disposition v2 : docs/assets/board-coulisses.md section 4 +
-    # docs/assets/coulisses-plan-v2.py (mutations reportées ici en dur).
+    # Disposition v2 : intentions de docs/6-reference/references-coulisses.md,
+    # section 4 ; les coordonnées retenues sont reportées ci-dessous.
     Space(
         id="pc_secu", nom="PC sécurité",
         x=(20, 32), y=(140, 152), z=0, hauteur=3.0, densite="moyenne",

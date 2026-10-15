@@ -1,14 +1,16 @@
 import { FIXED_DT } from "../../../core/loop/loop";
 import { inputRecorder } from "../../../core/input/inputRecorder";
-import { type Recording } from "../../../core/input/inputTypes";
+import type { Recording } from "../../../core/input/inputTypes";
 import { moveConfig } from "../../player/movement/moveConfig";
-import { type GameSession } from "../../session/gameSession";
-import { type GameEngine } from "../../session/gameEngine";
+import type { GameSession } from "../../session/gameSession";
+import type { GameEngine } from "../../session/gameEngine";
 // Harnais F9/F10 (voir `game/loop/devGameplayInput.ts` pour la détection des
 // touches, `game/devtools/consoleApi.ts` pour l'exposition console).
 // see: docs/archive/systems-session.md#harnais-f9-et-f10
 
 export function startRecording(engine: GameEngine, session: GameSession): void {
+  session.gltfLevelSession?.current?.trains?.reset();
+  session.mode?.resetForReplay?.();
   inputRecorder.startRecording(
     {
       position: { x: session.player.position.x, y: session.player.position.y, z: session.player.position.z },
@@ -26,5 +28,7 @@ export function startPlayback(engine: GameEngine, session: GameSession, rec: Rec
   session.player.velocity.set(rec.start.velocity.x, rec.start.velocity.y, rec.start.velocity.z);
   engine.look.yaw = rec.start.yaw;
   engine.look.pitch = rec.start.pitch;
+  session.gltfLevelSession?.current?.trains?.reset();
+  session.mode?.resetForReplay?.();
   inputRecorder.startPlayback(rec);
 }

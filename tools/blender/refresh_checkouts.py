@@ -68,6 +68,9 @@ def main():
         shutil.copy2(path, backup / path.name)
     print(f"BACKUP={backup}", flush=True)
     report = rework_scene()
+    sys.path.insert(0, str(ROOT))
+    from tools.art_direction.store_checkout import apply, write_report
+    write_report(apply())
     library = bpy.context.view_layer.layer_collection.children.get("_LIB")
     if library:
         library.exclude = True

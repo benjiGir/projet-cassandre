@@ -61,3 +61,38 @@ describe("startLoop — ordre 0/1/N pas fixes", () => {
     expect(stats.steps).toBe(15);
   });
 });
+
+describe("startLoop — arrêt", () => {
+  it("une boucle arrêtée ne fait plus rien et ne redemande aucune image", () => {
+    const scheduled: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      scheduled.push(callback);
+      return scheduled.length;
+    });
+    vi.spyOn(performance, "now").mockReturnValue(0);
+    vi.spyOn(input, "beginFrame").mockImplementation(() => {});
+    vi.spyOn(input, "beginFixedStep").mockImplementation(() => {});
+    vi.spyOn(input, "endFrame").mockImplementation(() => {});
+    const render = vi.fn();
+    const noop = () => {};
+
+    const loop = startLoop({
+      updateDisplayInput: noop,
+      snapshotPrevious: noop,
+      updateGameplay: noop,
+      stepPhysics: noop,
+      interpolateVisuals: noop,
+      updateFx: noop,
+      render,
+    });
+    scheduled.shift()!(16);
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(scheduled).toHaveLength(1);
+
+    loop.stop();
+    scheduled.shift()!(32);
+
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(scheduled).toHaveLength(0);
+  });
+});

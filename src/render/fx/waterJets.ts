@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { WATER_GEOMETRY, WATER_MATERIAL, WATER_DROPLET_SIZE } from "./waterResources";
+import { GRAVITY_Y } from "../../physics/constants";
 
-const TOY_GRAVITY = -25;
 const WATER_MAX_JETS = 8;
 const WATER_DROPLETS_PER_JET = 28; // gouttes en l'air, en vol continu
 const WATER_SPLASHES_PER_JET = 6; // éclaboussures au sol, round-robin PAR JET
@@ -50,7 +50,6 @@ const IDENTITY_QUATERNION = new THREE.Quaternion();
 // Matrice à échelle nulle : cache une instance d'`InstancedMesh` sans la retirer du pool (voir `WATER_INSTANCE_COUNT`). Réutilisée en lecture seule, jamais mutée.
 const ZERO_SCALE_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
-
 export class WaterJets {
   private readonly waterJetMesh: THREE.InstancedMesh<THREE.BoxGeometry, THREE.MeshLambertMaterial>;
   private readonly waterJets: WaterJetSlot[] = [];
@@ -63,8 +62,10 @@ export class WaterJets {
   private readonly scratchScale = new THREE.Vector3();
   private readonly scratchMatrix = new THREE.Matrix4();
 
-
-  constructor(private readonly scene: THREE.Scene, private readonly random: () => number) {
+  constructor(
+    private readonly scene: THREE.Scene,
+    private readonly random: () => number,
+  ) {
     this.waterJetMesh = new THREE.InstancedMesh(WATER_GEOMETRY, WATER_MATERIAL, WATER_INSTANCE_COUNT);
     // Tenir la sphère des jets à jour : celle calculée initialement serait à l’origine.
     this.waterJetMesh.boundingSphere = new THREE.Sphere();
@@ -90,23 +91,23 @@ export class WaterJets {
     const jetIndex = this.waterJetCursor;
     this.waterJetCursor = (this.waterJetCursor + 1) % WATER_MAX_JETS;
 
-    const slot = this.waterJets[jetIndex]!;
+    const slot = this.waterJets[jetIndex];
     slot.active = true;
     slot.origin.copy(origin);
     slot.splashCursor = 0;
     this.updateWaterBounds();
 
     for (let d = 0; d < WATER_DROPLETS_PER_JET; d++) {
-      const droplet = this.waterDroplets[jetIndex * WATER_DROPLETS_PER_JET + d]!;
+      const droplet = this.waterDroplets[jetIndex * WATER_DROPLETS_PER_JET + d];
       this.resetWaterDroplet(droplet, slot.origin);
       // Déphaser les gouttes évite une bouffée synchrone à l’allumage.
-      const flight = this.random() * ((2 * droplet.velocity.y) / -TOY_GRAVITY);
+      const flight = this.random() * ((2 * droplet.velocity.y) / -GRAVITY_Y);
       droplet.position.addScaledVector(droplet.velocity, flight);
-      droplet.position.y += 0.5 * TOY_GRAVITY * flight * flight;
-      droplet.velocity.y += TOY_GRAVITY * flight;
+      droplet.position.y += 0.5 * GRAVITY_Y * flight * flight;
+      droplet.velocity.y += GRAVITY_Y * flight;
     }
     for (let s = 0; s < WATER_SPLASHES_PER_JET; s++) {
-      this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + s]!.life = 0;
+      this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + s].life = 0;
       this.waterJetMesh.setMatrixAt(WATER_DROPLET_TOTAL + jetIndex * WATER_SPLASHES_PER_JET + s, ZERO_SCALE_MATRIX);
     }
     this.waterJetMesh.instanceMatrix.needsUpdate = true;
@@ -141,18 +142,18 @@ export class WaterJets {
   private resetWaterDroplet(droplet: WaterDropletState, origin: THREE.Vector3) {
     droplet.position.copy(origin);
     const height = WATER_JET_HEIGHT_MIN + this.random() * (WATER_JET_HEIGHT_MAX - WATER_JET_HEIGHT_MIN);
-    const upSpeed = Math.sqrt(2 * -TOY_GRAVITY * height);
+    const upSpeed = Math.sqrt(2 * -GRAVITY_Y * height);
     const fanAngle = this.random() * Math.PI * 2;
     const fanSpeed = WATER_FAN_SPEED_MIN + this.random() * (WATER_FAN_SPEED_MAX - WATER_FAN_SPEED_MIN);
     droplet.velocity.set(Math.cos(fanAngle) * fanSpeed, upSpeed, Math.sin(fanAngle) * fanSpeed);
   }
 
   private triggerWaterSplash(jetIndex: number) {
-    const slot = this.waterJets[jetIndex]!;
+    const slot = this.waterJets[jetIndex];
     const local = slot.splashCursor;
     slot.splashCursor = (slot.splashCursor + 1) % WATER_SPLASHES_PER_JET;
 
-    const splash = this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + local]!;
+    const splash = this.waterSplashes[jetIndex * WATER_SPLASHES_PER_JET + local];
     splash.position.copy(slot.origin);
     splash.position.x += (this.random() * 2 - 1) * WATER_SPLASH_JITTER;
     splash.position.z += (this.random() * 2 - 1) * WATER_SPLASH_JITTER;
@@ -163,15 +164,15 @@ export class WaterJets {
     let matricesDirty = false;
 
     for (let j = 0; j < WATER_MAX_JETS; j++) {
-      const slot = this.waterJets[j]!;
+      const slot = this.waterJets[j];
       if (!slot.active) continue;
       matricesDirty = true;
 
       for (let d = 0; d < WATER_DROPLETS_PER_JET; d++) {
         const idx = j * WATER_DROPLETS_PER_JET + d;
-        const droplet = this.waterDroplets[idx]!;
+        const droplet = this.waterDroplets[idx];
 
-        droplet.velocity.y += TOY_GRAVITY * realDt;
+        droplet.velocity.y += GRAVITY_Y * realDt;
         droplet.position.addScaledVector(droplet.velocity, realDt);
 
         if (droplet.position.y <= slot.origin.y && droplet.velocity.y < 0) {
@@ -187,7 +188,7 @@ export class WaterJets {
 
       for (let s = 0; s < WATER_SPLASHES_PER_JET; s++) {
         const local = j * WATER_SPLASHES_PER_JET + s;
-        const splash = this.waterSplashes[local]!;
+        const splash = this.waterSplashes[local];
         if (splash.life <= 0) continue; // déjà éteinte, matrice déjà à échelle nulle
 
         splash.life -= realDt;
@@ -213,5 +214,7 @@ export class WaterJets {
 
     if (matricesDirty) this.waterJetMesh.instanceMatrix.needsUpdate = true;
   }
-  update(realDt: number): void { this.updateWaterJets(realDt); }
+  update(realDt: number): void {
+    this.updateWaterJets(realDt);
+  }
 }

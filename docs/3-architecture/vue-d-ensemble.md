@@ -2,7 +2,7 @@
 title: Vue d'ensemble
 tags: [architecture]
 status: stable
-updated: 2026-10-03
+updated: 2026-10-08
 ---
 
 # Vue d'ensemble
@@ -60,11 +60,11 @@ Affiche le HUD, les menus et les écrans (mort, fin de niveau, options) par-
 dessus le `<canvas>` du moteur. Ne participe jamais au calcul du jeu : il lit
 un état qu'on lui pousse.
 
-- Dossiers : `src/ui` (`App.tsx`, `hud/`, `screens/`, `components/`,
-  `gameFlowMachine.ts`, `theme/`).
+- Dossiers : `src/ui` (`App/`, `hud/`, `screens/`, `components/`,
+  `theme/`) ; le flux d'écran vit dans `src/app/navigation/`.
 - Langage : React 19 (DOM), CSS Modules. Lancer : même `pnpm dev`/`pnpm build`
   que le moteur — un seul bundle Vite, `src/main.ts` monte React au canvas.
-- Détail : `docs/4-technique/interface-react.md` (à écrire).
+- Détail : [Interface React](../4-technique/interface-react.md).
 
 ### L'outillage de contenu (Blender/Python)
 
@@ -77,10 +77,10 @@ livrable est un fichier dans `public/assets/`.
   `tools/textures` (atlas et bandeaux) ; sources dans `assets_src/blender`
   (kit et niveaux) et `assets_src/library`, jamais servies en runtime.
 - Langage : Python (`bpy`), scripts en ligne de commande.
-- Lancer : scripts headless (`python3 tools/blender/build_niveau.py …`, voir
+- Lancer : scripts headless (`python3 tools/level_v2/build_niveau.py …`, voir
   leurs `README.md`) ou pilotage d'une session Blender ouverte via le MCP.
-- Détail : `docs/4-technique/outillage-blender.md`,
-  `docs/4-technique/chargement-de-niveau.md` (à écrire).
+- Détail : [Outillage Blender](../4-technique/outillage-blender.md),
+  [Chargement de niveau](../4-technique/chargement-de-niveau.md).
 
 ### Le studio audio
 
@@ -92,7 +92,7 @@ l'audio sprite chargé par `src/core/audio/audio.ts`.
   `analyze_sfx.py`, `build_sprite.py`, `audition.py`).
 - Langage : Python (numpy/scipy). Lancer : scripts en ligne de commande, page
   d'écoute locale (`http://localhost:5173/audition/`).
-- Détail : `docs/4-technique/studio-audio.md` (à écrire).
+- Détail : [Studio audio](../4-technique/studio-audio.md).
 
 ### Les assets générés, entre les deux mondes
 
@@ -100,7 +100,7 @@ Seul lien entre l'outillage et le moteur : des fichiers statiques sous
 `public/assets/`, jamais réécrits à la main — `levels/*.glb` (niveaux et
 zones de test), `sprites/` (atlas 8 directions, manifestes JSON),
 `weapons/armes.glb` (viewmodels), `audio/sfx/sfx.{ogg,m4a,json}` (sprite
-audio) et `audio/sfx/amb_*.{ogg,m4a}` (ambiances). Le moteur ne lit jamais
+audio) et `audio/ambiances/*.{ogg,m4a}` (ambiances de zone). Le moteur ne lit jamais
 `assets_src/` (frontière détaillée plus bas).
 
 ## Ce qui tourne dans le navigateur

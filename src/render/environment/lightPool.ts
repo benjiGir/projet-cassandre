@@ -2,12 +2,11 @@ import * as THREE from "three";
 
 // see: docs/6-reference/notes-code-rendu.md#eclairage-et-elagage
 
-export const LIGHT_POOL_BUDGET = 48;
+const LIGHT_POOL_BUDGET = 48;
 
 const REEVALUATION_DISTANCE = 2.0;
 
 export interface LightPoolStats {
-
   readonly total: number;
 
   readonly actives: number;
@@ -73,7 +72,7 @@ export class LightPool {
 
     for (const entry of this.entries) entry.score = score(entry.light, cameraPosition);
     this.entries.sort(byScore);
-    for (let i = 0; i < this.entries.length; i++) this.entries[i]!.light.visible = i < this.budget;
+    for (let i = 0; i < this.entries.length; i++) this.entries[i].light.visible = i < this.budget;
     this.actives = Math.min(this.budget, this.entries.length);
   }
 

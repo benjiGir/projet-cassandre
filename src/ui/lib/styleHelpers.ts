@@ -10,5 +10,5 @@ export function cx(...classes: ReadonlyArray<string | false | null | undefined>)
  * see: docs/6-reference/react-css.md#la-règle-et-ses-deux-seules-exceptions
  */
 export function cssVars(vars: Readonly<Record<`--${string}`, string | number>>): CSSProperties {
-  return vars as CSSProperties;
+  return vars;
 }

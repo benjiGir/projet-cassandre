@@ -1,0 +1,56 @@
+{
+  "defaut": "quai",
+  "zones": {
+    "quai": {
+      "nappe": "quai",
+      "boucle": [
+        500,
+        20000
+      ],
+      "evenements": [],
+      "espaces": [
+        {
+          "x": [
+            -1,
+            19
+          ],
+          "y": [
+            -1,
+            8
+          ],
+          "z": [
+            -24,
+            1
+          ]
+        }
+      ]
+    },
+    "tunnel": {
+      "nappe": "tunnel",
+      "boucle": [
+        500,
+        20000
+      ],
+      "evenements": [
+        "goutte"
+      ],
+      "espaces": [
+        {
+          "x": [
+            0,
+            19
+          ],
+          "y": [
+            -1,
+            8
+          ],
+          "z": [
+            -88,
+            -24
+          ]
+        }
+      ]
+    }
+  },
+  "_note": "Généré par tools/audio/metro_ambiances.py ; indépendant des ambiances du magasin."
+}

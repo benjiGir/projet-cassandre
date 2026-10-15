@@ -1,10 +1,17 @@
-import { type LevelRecap } from "../../../../game/hud/hudTypes";
 import { cx, cssVars } from "../../../lib/styleHelpers";
 import { formatPoints } from "../../../lib/format";
 import styles from "./RecapTable.module.css";
 
+/** Ce que le tableau affiche d'un récapitulatif : la primitive ne connaît pas le type du jeu. */
+export interface RecapTableData {
+  readonly difficulty: string;
+  readonly lines: readonly { readonly label: string; readonly detail: string; readonly points: number }[];
+  readonly total: number;
+  readonly record: { readonly best: number; readonly isNew: boolean } | null;
+}
+
 export interface RecapTableProps {
-  recap: LevelRecap | null;
+  recap: RecapTableData | null;
   className?: string;
 }
 

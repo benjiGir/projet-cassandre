@@ -20,7 +20,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as THREE from "three";
-import RAPIER from "@dimforge/rapier3d-compat";
+import type RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 
 import { GameRuntime } from "../../../../src/app/runtime/gameRuntime";
@@ -32,7 +32,9 @@ import {
   SANITAIRE_RELIEF_COOLDOWN_SECONDS,
   SANITAIRE_AIM_RANGE_METERS,
 } from "../../../../src/game/session/player/sanitaires";
-import { type GameSession } from "../../../../src/game/session/gameSession";
+import type { GameSession } from "../../../../src/game/session/gameSession";
+import type { LevelState } from "../../../../src/game/session/levelState";
+import type { RunState } from "../../../../src/game/session/runState";
 import { useGameStore } from "../../../../src/game/hud/state";
 import { HERO_LINES } from "../../../../src/game/session/presentation/heroLines";
 import { HeroPortrait } from "../../../../src/game/session/presentation/heroPortrait";
@@ -57,7 +59,7 @@ function fakeHit(colliderHandle: number, timeOfImpact: number): RAPIER.RayCollid
   return {
     collider: { handle: colliderHandle } as unknown as RAPIER.Collider,
     timeOfImpact,
-  } as unknown as RAPIER.RayColliderHit;
+  };
 }
 
 interface FakeAimedResult {
@@ -79,24 +81,29 @@ function fakeSanitaireSystem(result: FakeAimedResult | null) {
   };
 }
 
-function sessionDeTest(overrides: Partial<GameSession> = {}): GameSession {
+/** `overrides` : champs de `run`, plus le `sanitaireSystem` du niveau. */
+function sessionDeTest(
+  overrides: Partial<RunState> & { sanitaireSystem?: LevelState["sanitaireSystem"] } = {},
+): GameSession {
+  const { sanitaireSystem = null, ...run } = overrides;
   return {
-    playerHp: 100,
-    playerMaxHp: 100,
-    secretsFound: 0,
-    secretsTotal: 0,
     heroPortrait: new HeroPortrait(),
-    stats: createInitialStats(),
-    sanitaireReliefCooldown: 0,
-    heroLineRandom: () => 0,
-    stream: createStreamState(),
-    streamRandom: () => 0.99,
-    heroLinesSaid: new Set(),
-    lastHeroLineAt: -Infinity,
-    lastHeroBarkAt: -Infinity,
-    sanitaireSystem: null,
     physics: {} as never, // ignoré par le rayon SCRIPTÉ (RaycastService.test), jamais un vrai monde Rapier ici
-    ...overrides,
+    run: {
+      playerHp: 100,
+      playerMaxHp: 100,
+      secretsFound: 0,
+      stats: createInitialStats(),
+      sanitaireReliefCooldown: 0,
+      heroLineRandom: () => 0,
+      stream: createStreamState(),
+      streamRandom: () => 0.99,
+      heroLinesSaid: new Set(),
+      lastHeroLineAt: -Infinity,
+      lastHeroBarkAt: -Infinity,
+      ...run,
+    },
+    level: { secretsTotal: 0, sanitaireSystem },
   } as unknown as GameSession;
 }
 
@@ -123,8 +130,8 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
 
     relieveAtSanitaire(session);
 
-    expect(session.playerHp).toBe(60); // 100 * 0.1 = 10
-    expect(session.sanitaireReliefCooldown).toBe(SANITAIRE_RELIEF_COOLDOWN_SECONDS);
+    expect(session.run.playerHp).toBe(60); // 100 * 0.1 = 10
+    expect(session.run.sanitaireReliefCooldown).toBe(SANITAIRE_RELIEF_COOLDOWN_SECONDS);
     expect(useGameStore.getState().debug.playerHp).toBe(60);
     expect(useGameStore.getState().hudMessage).toBe("+10 PV");
     expect(useGameStore.getState().heroLine).not.toBeNull();
@@ -135,7 +142,7 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
 
     relieveAtSanitaire(session);
 
-    expect(session.playerHp).toBe(100);
+    expect(session.run.playerHp).toBe(100);
     expect(useGameStore.getState().hudMessage).toBe("+5 PV");
   });
 
@@ -144,8 +151,8 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
 
     relieveAtSanitaire(session);
 
-    expect(session.playerHp).toBe(50); // aucun soin
-    expect(session.sanitaireReliefCooldown).toBe(137); // ni consommé ni prolongé
+    expect(session.run.playerHp).toBe(50); // aucun soin
+    expect(session.run.sanitaireReliefCooldown).toBe(137); // ni consommé ni prolongé
     expect(useGameStore.getState().hudMessage).toBe("Rien ne vient.");
     expect(useGameStore.getState().heroLine).toBe(HERO_LINES.toilettes_delai.text);
   });
@@ -155,7 +162,7 @@ describe("relieveAtSanitaire — soulagement (sanitaire intact)", () => {
 
     relieveAtSanitaire(session);
 
-    expect(session.sanitaireReliefCooldown).toBe(0); // toujours prêt pour la prochaine fois
+    expect(session.run.sanitaireReliefCooldown).toBe(0); // toujours prêt pour la prochaine fois
     expect(useGameStore.getState().hudMessage).toBe("Vous êtes déjà en pleine forme.");
     expect(useGameStore.getState().heroLine).toBeNull();
   });
@@ -180,7 +187,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
     expect(
       trySanitaire(session, false, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch),
     ).toBe(false);
-    expect(session.playerHp).toBe(100);
+    expect(session.run.playerHp).toBe(100);
     expect(system.resolveAim).not.toHaveBeenCalled();
   });
 
@@ -212,8 +219,8 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
     expect(
       trySanitaire(session, true, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch),
     ).toBe(true);
-    expect(session.playerHp).toBe(60);
-    expect(session.sanitaireReliefCooldown).toBe(SANITAIRE_RELIEF_COOLDOWN_SECONDS);
+    expect(session.run.playerHp).toBe(60);
+    expect(session.run.sanitaireReliefCooldown).toBe(SANITAIRE_RELIEF_COOLDOWN_SECONDS);
   });
 
   it("sanitaire CASSÉ visé : +1 PV par appui, illimité, consomme l'appui", () => {
@@ -225,13 +232,13 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
     expect(
       trySanitaire(session, true, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch),
     ).toBe(true);
-    expect(session.playerHp).toBe(51);
+    expect(session.run.playerHp).toBe(51);
     // Aucun délai de soulagement n'est posé par une gorgée — illimité.
-    expect(session.sanitaireReliefCooldown).toBe(0);
+    expect(session.run.sanitaireReliefCooldown).toBe(0);
 
     trySanitaire(session, true, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch);
     trySanitaire(session, true, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch);
-    expect(session.playerHp).toBe(53);
+    expect(session.run.playerHp).toBe(53);
   });
 
   it("sanitaire CASSÉ visé, PV déjà pleins : message dédié, aucun soin, appui quand même consommé", () => {
@@ -243,7 +250,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
     expect(
       trySanitaire(session, true, new THREE.Vector3(), AUCUNE_VISEE.eyeOffset, AUCUNE_VISEE.yaw, AUCUNE_VISEE.pitch),
     ).toBe(true);
-    expect(session.playerHp).toBe(100);
+    expect(session.run.playerHp).toBe(100);
     expect(useGameStore.getState().hudMessage).toBe("Vous êtes déjà en pleine forme.");
   });
 
@@ -260,7 +267,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       trySanitaire(session, true, new THREE.Vector3(1, 0, 2), 1.6, 0, 0);
 
       expect(system.resolveAim).toHaveBeenCalledTimes(1);
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toBeNull(); // worldHit
     });
 
@@ -276,7 +283,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       const consumed = trySanitaire(session, true, new THREE.Vector3(1, 0, 2), 1.6, 0, 0);
 
       expect(consumed).toBe(false);
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toEqual({ colliderHandle: 999, distance: 3 });
     });
 
@@ -291,7 +298,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
 
       trySanitaire(session, true, new THREE.Vector3(0, 0, 0), 1.6, 0, 0);
 
-      const args = system.resolveAim.mock.calls[0]!;
+      const args = system.resolveAim.mock.calls[0];
       expect(args[3]).toEqual({ colliderHandle: 42, distance: 0.6 });
     });
 
@@ -303,7 +310,7 @@ describe("trySanitaire — point d'entrée touche E, dispatch après visée", ()
       // yaw=0, pitch=0 : convention caméra/armes (Euler 'YXZ') -> visée droit devant, -z.
       trySanitaire(session, true, playerPosition, 1.6, 0, 0);
 
-      const [eyeOrigin, direction, range] = system.resolveAim.mock.calls[0]!;
+      const [eyeOrigin, direction, range] = system.resolveAim.mock.calls[0];
       expect(eyeOrigin.x).toBeCloseTo(3, 5);
       expect(eyeOrigin.y).toBeCloseTo(2.2, 5); // 0.6 + 1.6
       expect(eyeOrigin.z).toBeCloseTo(-2, 5);

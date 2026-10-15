@@ -28,7 +28,7 @@ def _resume(commande: str, res: dict) -> str:
     """Une ligne pour la barre d'état et le panneau — le détail est dans le log."""
     if commande == "status":
         drapeaux = [k for k in ("dirty", "disk_newer_than_session",
-                                "v2_sources_newer_than_blend", "v2_glb_older_than_blend")
+                                "sources_newer_than_blend", "glb_older_than_blend")
                     if res.get(k)]
         return f"{res.get('objects')} objets" + (f" — {', '.join(drapeaux)}" if drapeaux else " — à jour")
     if commande == "check":
@@ -43,10 +43,10 @@ def _resume(commande: str, res: dict) -> str:
 
 COMMANDES = [
     ("status", "État", "Fraîcheur de la session face au disque et aux sources", "INFO"),
-    ("build", "Construire", "Rejoue build_niveau.py dans la session (copie de sécurité si modifiée)", "MOD_BUILD"),
+    ("build", "Construire", "Reconstruit le niveau choisi (copie de sécurité si modifiée)", "MOD_BUILD"),
     ("check", "Vérifier", "validate_level + audit_niveau, verdicts seuls", "CHECKMARK"),
     ("shot", "Vue joueur", "Rend la vue depuis spawn_player, FOV du jeu", "RENDER_STILL"),
-    ("export", "Exporter", "export_level.py vers public/assets/levels/niveau_v2.glb", "EXPORT"),
+    ("export", "Exporter", "Exporte le GLB du niveau choisi", "EXPORT"),
 ]
 
 
@@ -59,7 +59,8 @@ class CASSANDRE_OT_run(bpy.types.Operator):
 
     def execute(self, context):
         try:
-            res = getattr(_cassandre(), self.commande)()
+            kwargs = {"niveau": context.window_manager.cassandre_niveau} if self.commande in {"status", "build", "check", "export"} else {}
+            res = getattr(_cassandre(), self.commande)(**kwargs)
         except Exception as exc:  # noqa: BLE001 — affiché, pas avalé
             self.report({"ERROR"}, f"{self.commande} : {exc}")
             return {"CANCELLED"}
@@ -88,6 +89,7 @@ class CASSANDRE_PT_panel(bpy.types.Panel):
     bl_category = "Cassandre"
 
     def draw(self, context):
+        self.layout.prop(context.window_manager, "cassandre_niveau", text="Niveau")
         col = self.layout.column(align=True)
         for cle, nom, _aide, icone in COMMANDES:
             col.operator("cassandre.run", text=nom, icon=icone).commande = cle
@@ -105,6 +107,8 @@ CLASSES = (CASSANDRE_OT_run, CASSANDRE_OT_reload, CASSANDRE_PT_panel)
 def register():
     if OUTILS not in sys.path:
         sys.path.insert(0, OUTILS)
+    bpy.types.WindowManager.cassandre_niveau = bpy.props.EnumProperty(items=[
+        ("hypermarche", "Magasin", "Niveau 1"), ("metro", "Métro", "Niveau 2 — atelier N0")])
     bpy.types.WindowManager.cassandre_dernier = bpy.props.StringProperty()
     for cls in CLASSES:
         bpy.utils.register_class(cls)
@@ -113,6 +117,7 @@ def register():
 def unregister():
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)
+    del bpy.types.WindowManager.cassandre_niveau
     del bpy.types.WindowManager.cassandre_dernier
     if OUTILS in sys.path:
         sys.path.remove(OUTILS)

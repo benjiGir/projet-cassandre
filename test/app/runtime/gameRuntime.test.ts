@@ -1,5 +1,5 @@
 /**
- * Jalon M1 (PLAN_EFFECT_XSTATE.md) : `runGameplaySync` est la frontière
+ * `runGameplaySync` est la frontière
  * synchrone stricte du pas fixe (principe transverse #1) — ce fichier
  * teste cette frontière elle-même en vitest nu (pas `@effect/vitest`),
  * car son rôle est précisément le pont entre du code Effect et du code
@@ -28,9 +28,7 @@ describe("runGameplaySync (garde-fou M1)", () => {
   it("relance l'erreur ET logue un message explicite si un Effect suspend", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
-      expect(() =>
-        runGameplaySync(Effect.promise(() => Promise.resolve(1))),
-      ).toThrow();
+      expect(() => runGameplaySync(Effect.promise(() => Promise.resolve(1)))).toThrow();
       expect(spy).toHaveBeenCalledTimes(1);
       expect(spy.mock.calls[0]?.[0]).toMatch(/tenté de suspendre/);
     } finally {

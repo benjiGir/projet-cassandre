@@ -1,11 +1,12 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 
+import { persisted } from "../../core/storage/persisted";
 import {
   INTERNAL_HEIGHT,
   INTERNAL_WIDTH,
-  appliquerFiltrage,
-  setResolutionInterne,
-  type FiltrageTexture,
+  applyTextureFiltering,
+  setInternalResolution,
+  type TextureFiltering,
 } from "../../render/pipeline/renderer";
 import { moveConfig } from "../player/movement/moveConfig";
 import { weaponConfig } from "../player/weapons/weaponConfig";
@@ -23,14 +24,34 @@ export interface ResolutionPreset {
 }
 
 export const RESOLUTION_PRESETS: readonly ResolutionPreset[] = [
-  { id: "origine", width: INTERNAL_WIDTH, height: INTERNAL_HEIGHT, label: `${INTERNAL_WIDTH}×${INTERNAL_HEIGHT} — résolution d'origine du jeu` },
-  { id: "x1.5", width: INTERNAL_WIDTH * 1.5, height: INTERNAL_HEIGHT * 1.5, label: `${INTERNAL_WIDTH * 1.5}×${INTERNAL_HEIGHT * 1.5}` },
-  { id: "x2", width: INTERNAL_WIDTH * 2, height: INTERNAL_HEIGHT * 2, label: `${INTERNAL_WIDTH * 2}×${INTERNAL_HEIGHT * 2}` },
-  { id: "x2.5", width: INTERNAL_WIDTH * 2.5, height: INTERNAL_HEIGHT * 2.5, label: `${INTERNAL_WIDTH * 2.5}×${INTERNAL_HEIGHT * 2.5}` },
+  {
+    id: "origine",
+    width: INTERNAL_WIDTH,
+    height: INTERNAL_HEIGHT,
+    label: `${INTERNAL_WIDTH}×${INTERNAL_HEIGHT} — résolution d'origine du jeu`,
+  },
+  {
+    id: "x1.5",
+    width: INTERNAL_WIDTH * 1.5,
+    height: INTERNAL_HEIGHT * 1.5,
+    label: `${INTERNAL_WIDTH * 1.5}×${INTERNAL_HEIGHT * 1.5}`,
+  },
+  {
+    id: "x2",
+    width: INTERNAL_WIDTH * 2,
+    height: INTERNAL_HEIGHT * 2,
+    label: `${INTERNAL_WIDTH * 2}×${INTERNAL_HEIGHT * 2}`,
+  },
+  {
+    id: "x2.5",
+    width: INTERNAL_WIDTH * 2.5,
+    height: INTERNAL_HEIGHT * 2.5,
+    label: `${INTERNAL_WIDTH * 2.5}×${INTERNAL_HEIGHT * 2.5}`,
+  },
 ];
 
 export interface GraphicsSettings {
-  filtrage: FiltrageTexture;
+  filtrage: TextureFiltering;
   resolution: ResolutionPresetId;
   /** Degrés. Valeur de BASE (`moveConfig.fovBase`) — l'élargissement à la course (`fovRunBoost`) s'ajoute par-dessus, inchangé. */
   fovBase: number;
@@ -55,7 +76,7 @@ const FACTORY_SHAKE_AMPLITUDES = {
   enemyShakeAmplitude: weaponConfig.enemyShakeAmplitude,
 };
 
-function isFiltrage(value: unknown): value is FiltrageTexture {
+function isTextureFiltering(value: unknown): value is TextureFiltering {
   return value === "nearest" || value === "mipmap" || value === "aniso";
 }
 
@@ -63,37 +84,24 @@ function isResolutionId(value: unknown): value is ResolutionPresetId {
   return RESOLUTION_PRESETS.some((p) => p.id === value);
 }
 
-/** Ne throw jamais, dégrade sur les valeurs d'origine — même discipline que `core/input/input.ts`. */
-function loadPersisted(): GraphicsSettings {
-  if (typeof localStorage === "undefined") return { ...FACTORY_DEFAULTS };
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...FACTORY_DEFAULTS };
-    const parsed = JSON.parse(raw) as Partial<GraphicsSettings>;
-    return {
-      filtrage: isFiltrage(parsed.filtrage) ? parsed.filtrage : FACTORY_DEFAULTS.filtrage,
-      resolution: isResolutionId(parsed.resolution) ? parsed.resolution : FACTORY_DEFAULTS.resolution,
-      fovBase: typeof parsed.fovBase === "number" && Number.isFinite(parsed.fovBase) ? parsed.fovBase : FACTORY_DEFAULTS.fovBase,
-      shakeIntensity:
-        typeof parsed.shakeIntensity === "number" && Number.isFinite(parsed.shakeIntensity)
-          ? Math.max(0, Math.min(SHAKE_SCALE_MAX, parsed.shakeIntensity))
-          : FACTORY_DEFAULTS.shakeIntensity,
-    };
-  } catch {
-    return { ...FACTORY_DEFAULTS };
-  }
+/** Un champ illisible ou hors bornes reprend sa valeur d'origine, sans faire perdre les autres. */
+function decodeSettings(stored: unknown): GraphicsSettings {
+  const parsed = stored as Partial<GraphicsSettings>;
+  return {
+    filtrage: isTextureFiltering(parsed.filtrage) ? parsed.filtrage : FACTORY_DEFAULTS.filtrage,
+    resolution: isResolutionId(parsed.resolution) ? parsed.resolution : FACTORY_DEFAULTS.resolution,
+    fovBase:
+      typeof parsed.fovBase === "number" && Number.isFinite(parsed.fovBase) ? parsed.fovBase : FACTORY_DEFAULTS.fovBase,
+    shakeIntensity:
+      typeof parsed.shakeIntensity === "number" && Number.isFinite(parsed.shakeIntensity)
+        ? Math.max(0, Math.min(SHAKE_SCALE_MAX, parsed.shakeIntensity))
+        : FACTORY_DEFAULTS.shakeIntensity,
+  };
 }
 
-function savePersisted(settings: GraphicsSettings): void {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
-    // Dégrade silencieusement, même discipline que `core/input/input.ts`.
-  }
-}
+const stored = persisted(STORAGE_KEY, decodeSettings, () => ({ ...FACTORY_DEFAULTS }));
 
-let current: GraphicsSettings = loadPersisted();
+let current: GraphicsSettings = stored.load();
 
 export function getGraphicsSettings(): GraphicsSettings {
   return current;
@@ -110,15 +118,15 @@ function applyNonRenderSettings(settings: GraphicsSettings): void {
   weaponConfig.enemyShakeAmplitude = FACTORY_SHAKE_AMPLITUDES.enemyShakeAmplitude * settings.shakeIntensity;
 }
 
-export function applyRenderSettings(
+function applyRenderSettings(
   settings: GraphicsSettings,
   scene: THREE.Object3D,
   camera: THREE.PerspectiveCamera,
   renderer: THREE.WebGLRenderer,
 ): void {
-  appliquerFiltrage(scene, settings.filtrage);
+  applyTextureFiltering(scene, settings.filtrage);
   const preset = RESOLUTION_PRESETS.find((p) => p.id === settings.resolution) ?? RESOLUTION_PRESETS[0];
-  setResolutionInterne(renderer, camera, preset.width, preset.height);
+  setInternalResolution(renderer, camera, preset.width, preset.height);
 }
 
 interface RenderTarget {
@@ -130,20 +138,24 @@ interface RenderTarget {
 /** `null` tant qu'aucun moteur n'est construit (menu principal, avant `buildGameEngine`) — voir `registerRenderTarget`. */
 let renderTarget: RenderTarget | null = null;
 
-export function registerRenderTarget(scene: THREE.Object3D, camera: THREE.PerspectiveCamera, renderer: THREE.WebGLRenderer): void {
+export function registerRenderTarget(
+  scene: THREE.Object3D,
+  camera: THREE.PerspectiveCamera,
+  renderer: THREE.WebGLRenderer,
+): void {
   renderTarget = { scene, camera, renderer };
   applyRenderSettings(current, scene, camera, renderer);
 }
 
 export function initGraphicsSettingsAtBoot(): GraphicsSettings {
-  current = loadPersisted();
+  current = stored.load();
   applyNonRenderSettings(current);
   return current;
 }
 
 export function setGraphicsSettings(partial: Partial<GraphicsSettings>): GraphicsSettings {
   current = { ...current, ...partial };
-  savePersisted(current);
+  stored.save(current);
   applyNonRenderSettings(current);
   if (renderTarget) applyRenderSettings(current, renderTarget.scene, renderTarget.camera, renderTarget.renderer);
   return current;

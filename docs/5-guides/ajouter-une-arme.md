@@ -2,7 +2,7 @@
 title: Ajouter une arme
 tags: [guide, recette]
 status: brouillon
-updated: 2026-09-26
+updated: 2026-10-11
 ---
 
 # Ajouter une arme
@@ -24,7 +24,7 @@ vérification.
   ses munitions sont gérées.
 - Vérifiez que son ajout ne viole pas le contrat du pas fixe, du RNG ou
   l'absence de rechargement bloquant.
-- Inspectez les unions et les événements de `src/game/player/weapons/weapons.ts`
+- Inspectez les unions de `src/game/player/weapons/weaponTypes.ts` et les événements de `src/game/player/weapons/weapons.ts`
   avant de décider des points d'extension.
 - Prévoyez un son d'arme via [Ajouter un son](ajouter-un-son.md) et un
   modèle avec le pipeline d'assets si nécessaire.
@@ -34,11 +34,11 @@ vérification.
 1. Ajoutez ses paramètres à `src/game/player/weapons/weaponConfig.ts`. Chaque
    valeur a une seule source de vérité.
 2. Étendez `WeaponKind` et `FiringWeapon` dans
-   `src/game/player/weapons/weapons.ts`, ainsi que l'identifiant d'événement de
+   `src/game/player/weapons/weaponTypes.ts`, ainsi que l'identifiant d'événement de
    tir si le nouveau type le demande.
-3. Ajoutez le binding ou le comportement de sélection dans
-   `src/core/input/input.ts` et la capture d'input dans
-   `src/game/loop/updateGameplay.ts`.
+3. Ajoutez le binding dans `src/core/input/inputBindings.ts` (type `GameAction`
+   dans `src/core/input/inputTypes.ts`), puis le comportement de sélection et la
+   capture d'input dans `src/game/loop/updateGameplay.ts`.
 4. Gardez la sélection accessible depuis l'arme active sans dupliquer la
    règle dans l'UI.
 5. Implémentez le coût de tir, la cadence, les munitions, la portée et
@@ -59,7 +59,7 @@ vérification.
 12. Ajoutez l'asset de prise en main et, si demandé, le modèle au sol
     via `tools/blender/render_weapon_pickups.py`.
 13. Ajoutez son identifiant de son au raccord entre jeu et studio audio
-    dans `src/core/audio/audio.ts`.
+    dans `src/core/audio/audioCatalog.ts` (`SFX_TABLE`).
 14. Projetez l'arme et ses munitions dans `src/game/hud/state.ts` si le HUD
     les présente ; ne faites pas lire toute l'arme au parent du HUD.
 15. Ajustez les libellés ou l'icône dans le composant de widget
@@ -104,3 +104,17 @@ Commit `d8dbf40`, « Armes et feel de tir (Phase 2) + wireframe debug +
 fix stutter déplacement » : il ajoute la première implémentation du
 pied-de-biche et du pompe, les paramètres d'arme, les événements de tir
 et le viewmodel.
+
+Le pistolet de détresse (2026-10-11) est l'exemple le plus complet, et le seul
+à projectile. Il touche, dans l'ordre de ce guide : `weaponConfig.ts` (`flare*`),
+`weaponTypes.ts`, `inputTypes.ts`/`inputBindings.ts`/`inputStep.ts` et le
+schéma des enregistrements, `weapons.ts` et `flareFlight.ts`,
+`breakableSteps.ts` (le souffle), `viewmodel.ts` et `weaponModels.ts`,
+`tools/blender/weapons/flare.py` et `build_weapons.py`,
+`render_weapon_pickups.py` puis `pickupConfig.ts`, `audioCatalog.ts` et
+`tools/audio/sons_armes.py`, `hudTypes.ts`/`hudFormat.ts`, `interactive.ts` et
+`levelObjects.ts` (ramassage `use_flare`, boîtes `fusees`),
+`campaignStorage.ts` (la sauvegarde), `validate_level.py`. Ce que ce guide ne
+disait pas : une arme ajoutée change la forme de la **sauvegarde de campagne**
+et des **enregistrements d'input** — les deux doivent rester lisibles sans le
+nouveau champ.

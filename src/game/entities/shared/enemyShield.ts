@@ -10,7 +10,11 @@ interface Horizontal {
  * du corps touché) tombe dans l'arc est arrêté. Vu de dessus seulement — on
  * ne passe pas par-dessus un bouclier en visant la tête.
  */
-export function isShieldedHit(shield: EnemyShieldConfig | undefined, forward: Horizontal, hitNormal: Horizontal): boolean {
+export function isShieldedHit(
+  shield: EnemyShieldConfig | undefined,
+  forward: Horizontal,
+  hitNormal: Horizontal,
+): boolean {
   if (!shield) return false;
   const length = Math.hypot(hitNormal.x, hitNormal.z);
   if (length < 1e-6) return false;

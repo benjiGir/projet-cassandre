@@ -1,8 +1,8 @@
-import type { FiltrageTexture } from "../../../../../render/pipeline/renderer";
+import type { TextureFiltering } from "../../../../../render/pipeline/renderer";
 import type { Choice } from "../../fields/ChoiceGroup/ChoiceGroup";
 
 // see: docs/decisions/0027-filtrage-des-textures-reduites.md
-export const FILTRAGE_CHOICES: ReadonlyArray<Choice<FiltrageTexture>> = [
+export const FILTERING_CHOICES: ReadonlyArray<Choice<TextureFiltering>> = [
   {
     id: "nearest",
     label: "Gros pixel partout, y compris au loin",

@@ -2,7 +2,7 @@
 title: Systèmes de niveau
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-10
 ---
 
 # Systèmes de niveau
@@ -27,7 +27,7 @@ Les systèmes de niveau font vivre les objets décrits dans le glTF : portes, ob
 - `src/game/session/progression/perks.ts` — achat à une borne et pose de l'effet du perk.
 - `src/game/level/navigation/levelSpaces.ts` — schéma du manifeste des espaces et recherche de l'espace qui contient un point.
 - `src/game/level/loading/loadLevelSpaces.ts` — charge le manifeste des espaces avec le niveau.
-- `src/game/session/player/placeLines.ts` — réplique de première visite d'un espace.
+- `src/game/session/player/placeLineState.ts` — réplique de première visite d'un espace : l'automate (`nextPlaceLine`) ; `placeLines.ts` le branche sur la partie.
 - `src/game/session/spawning.ts` — crée une instance de chaque système au commit du niveau.
 - `src/game/loop/updateGameplay.ts`, `stepPhysics.ts`, `interpolateVisuals.ts` et `updateFx.ts` — appels fixes, synchronisation physique, interpolation et retours visuels.
 - `src/render/environment/useObjectCulling.ts` — élague les objets utilisables et les lots de sanitaires éloignés.
@@ -63,7 +63,7 @@ Les poses de portes et de props sont décidées au pas fixe. `stepPhysics` mémo
 
 Le loader transforme un mesh `use_*` en `UseObject` avec une position monde et une portée de 2 m. `InteractionSystem.update` choisit le plus proche ; un seul objet reçoit l'appui. La liste d'objets doit être relue depuis `LevelSession.current` à chaque pas, car le hot reload remplace ses meshes.
 
-Les propriétés personnalisées donnent le comportement déclaratif : `target` nomme une porte, `card` donne une carte, `requires` en exige une, `message` fournit un retour de porte libre, `soin` et `munitions` indiquent un ramassage, `aliment` choisit une valeur de soin et `cameras` liste les points de vue. Les actions spécifiques historiques `use_pa_mic`, `use_toilet` et la sortie de niveau passent par des callbacks fournis par l'appelant.
+Les propriétés personnalisées donnent le comportement déclaratif : `target` nomme une porte, `card` donne une carte, `requires` en exige une, `message` fournit un retour de porte libre, `soin`, `munitions` (pistolet) et `cartouches` (pompe) indiquent un ramassage, `aliment` choisit une valeur de soin et `cameras` liste les points de vue. Les actions spécifiques historiques `use_pa_mic`, `use_toilet` et la sortie de niveau passent par des callbacks fournis par l'appelant.
 
 Les objets déjà consommés sont suivis par référence de mesh. Un refus d'accès ou une porte encore fermée reste réessayable ; une carte ou un ramassage accepté masque l'objet et le consomme. Un objet de soin ou d'arme reste au sol si l'inventaire ne peut rien recevoir.
 
@@ -97,6 +97,10 @@ Un `use_*` qui porte `perk` et `prix` est une borne ([ADR 0040](../decisions/004
 
 `usePerkKiosk` débite la cagnotte, range le perk dans la partie et pose son effet sur les objets de la session : le joueur, les armes, le gestionnaire des ennemis. `publishPerkOffer` tient l'invite du HUD à jour à chaque pas fixe et n'écrit dans le store que sur un changement.
 
+Depuis C1, un perk déjà possédé est remplacé par des soins ou des munitions,
+rechargeables tant qu’ils apportent un bénéfice. Une réserve pleine ne coûte
+rien. Les prix et règles sont dans la [fiche de campagne](campagne.md#consommables).
+
 Le prix d'une offre est celui du niveau, sauf quand une variante d'équilibrage est à l'essai : `offerPrice` rend alors le sien (voir [Session et score](session-et-score.md#économie-du-direct)).
 
 ### Vue par caméra
@@ -107,7 +111,7 @@ Un `cam_*` est un empty dont la position et l'orientation monde sont figées au 
 
 Un niveau qui déclare `spaces: true` dans `src/game/level/catalog/levels.ts` livre un manifeste `<niveau>.espaces.json` à côté de son `.glb`. `tools/level_v2/espaces_jeu.py` le produit depuis le plan de masse : une boîte par espace, dans le repère du jeu, avec un mètre de marge en hauteur. Le manifeste se charge pendant la préparation du niveau, à la frontière asynchrone ; s'il manque ou ne se décode pas, le niveau reste jouable sans répliques de lieu.
 
-`levelSpaceAt` rend l'identifiant de l'espace qui contient le joueur. Les boîtes sont triées par emprise au sol croissante : quand deux se recouvrent, la plus petite gagne.
+`levelSpaceAt` rend le lieu qui contient le joueur : l'identifiant de l'espace, ou son `nom` quand le plan a découpé un même lieu en plusieurs boîtes. Le métro découpe ainsi ses tunnels courbes en une centaine de tronçons, qui portent tous le `nom` `tunnel_a` : le temps d'observation ne repart pas de zéro à chaque tronçon. Les boîtes sont triées par emprise au sol croissante : quand deux se recouvrent, la plus petite gagne.
 
 `updatePlaceLine` tourne à la fin du pas fixe. Il propose la réplique de l'espace (`PLACE_LINES` dans `src/game/session/presentation/heroLines.ts`) selon quatre règles :
 

@@ -16,6 +16,7 @@ from espaces import chemins  # noqa: F401 — met tools/blender et tools/level_v
 import geo_utils                  # noqa: E402
 import lib_helpers as H           # noqa: E402
 import lib_rayons as L            # noqa: E402
+import lib_fournil_ovens           # noqa: E402
 import build_blockout as bo       # noqa: E402
 
 from espaces.commun import _fournil_mesh_aplat, blobs_fournil, cylindre_aplat, lampe
@@ -68,21 +69,7 @@ def habiller_fournil(space, gris, props, col_coll, logic) -> dict:
     def add(c, b):
         pieces[c].append((b, f"aplat:{c}"))
     decalage_four = .8
-    def add_four(c, b):
-        x0, y0, z0, x1, y1, z1 = b
-        add(c, (x0, y0 + decalage_four, z0, x1, y1 + decalage_four, z1))
-
-    # Four à sole focal, sur le mur nord : quatre étages et hublots orange.
-    add_four(noir, (11, 154, .2, 17, 154.85, 2.75))
-    for tier in range(4):
-        zz = .36 + tier * .54
-        add_four(inox, (11.25, 153.92, zz, 16.75, 154.02, zz + .42))
-        for door in range(4):
-            xx = 11.42 + door * 1.28
-            add_four(noir, (xx, 153.82, zz + .15, xx + 1.12, 153.9, zz + .38))
-            add_four(orange, (xx + .43, 153.79, zz + .20, xx + .72, 153.81, zz + .31))
-    add_four(inox, (11.2, 153.5, 2.9, 16.8, 154, 3.15))
-    add_four(noir, (12, 153.5, 3.15, 16, 154, 3.55))
+    lib_fournil_ovens.build(props, col_coll)
 
     # Pétrin à cuve ronde et deux plans contre le flanc ouest.
     add(inox, (8.8, 143, .91, 10.5, 144.3, 1.03))
@@ -201,26 +188,8 @@ def habiller_fournil(space, gris, props, col_coll, logic) -> dict:
     # Rôtissoire sur la ligne chaude au fond, hors du débouché des deux portes.
     # Ligne chaude plaquée au mur nord, alignée sur le four à sole.
     rot_y = 154.70
-    add(noir, (17, rot_y, .15, 19.1, rot_y + 1.05, 1.35))
-    add(inox, (17.08, rot_y - .07, .32, 19, rot_y, 1.22))
-    add(noir, (17.24, rot_y - .11, .36, 18.84, rot_y - .08, 1.17))
-    add(inox, (17.16, rot_y - .12, .30, 17.24, rot_y, 1.24))
-    add(inox, (18.84, rot_y - .12, .30, 18.92, rot_y, 1.24))
-    add(inox, (17.16, rot_y - .12, 1.20, 18.92, rot_y, 1.28))
-    add(inox, (17.16, rot_y - .12, .27, 18.92, rot_y, .34))
-    for xx in (17.55, 18.05, 18.55):
-        add("#b8612e", (xx, rot_y - .04, .54, xx + .16, rot_y - .01, 1.02))
-        add(inox, (xx + .07, rot_y - .07, .48, xx + .09, rot_y + .01, 1.08))
-    add(orange, (17.55, rot_y - .08, 1.08, 18.55, rot_y - .06, 1.15))
     for c, parts in pieces.items():
         if parts: H.boxes(f"fournil_{c[1:]}", parts, "palette", props)
-
-    # Vitre de la rôtissoire : on voit les broches et les poulets, le halo est
-    # une résistance fine en partie haute plutôt qu'un grand panneau orange.
-    vitre_rotissoire = H.box("vitre_fournil_rotissoire",
-                            (17.25, rot_y - .095, .36, 18.83, rot_y - .075, 1.17),
-                            "verre", props, uv=f"aplat:{H.VERRE_TEINTE}")
-    vitre_rotissoire["solide"] = False
 
     # Chariot à grilles dans l'étuve, puis roues des chariots de refroidissement.
     for no, x0, x1, y0, y1 in chariots:
@@ -366,9 +335,7 @@ def habiller_fournil(space, gris, props, col_coll, logic) -> dict:
         label.matrix_parent_inverse = sack.matrix_world.inverted()
 
     for name, origin, size in (
-        ("four", (11, 154 + decalage_four, 0), (6, .9, 2.85)),
         ("petrin", (8.8, 143, .1), (1.82, 1.3, 1.75)),
-        ("rotissoire", (17, rot_y, 0), (2.1, 1.05, 1.35)),
     ):
         col_coll.objects.link(geo_utils.build_proxy_object(f"col_box_fournil_{name}", "box", origin, size))
 

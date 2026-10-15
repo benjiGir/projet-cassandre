@@ -2,7 +2,7 @@
 title: Valeurs de l'économie
 tags: [reference, gameplay]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-09
 ---
 
 # Valeurs de l'économie
@@ -59,6 +59,12 @@ Cinq dons fixes, sans tirage, identiques dans les trois difficultés.
 | `escalier` | entrée dans l'escalier des bureaux | 45 € |
 
 Total : 100 €.
+
+Dans le métro, le même donateur écrit sous un compte vérifié. Ses cinq dons
+sont des valeurs de départ, à régler quand le niveau aura ses bornes :
+10, 10, 15, 25 et 50 €. Celui du premier badge dort tant que le niveau n'en
+pose pas : une partie reçoit donc 100 €. Les conditions et les textes sont
+dans le [catalogue du métro](repliques-metro.md#le-compte-vérifié).
 
 ## Relevé simulé
 

@@ -5,6 +5,15 @@ description: Reproduction du look Build/Ion Fury en Three.js — résolution int
 
 # Le look Build
 
+## Référence courante — 10 octobre 2026
+
+Les instructions de `AGENTS.md` font foi en cas de divergence. Le code utilise
+actuellement mipmaps et anisotropie à la réduction (ADR 0027 encore proposé),
+et conserve nearest à l’agrandissement. L’exclusivité Lambert est retirée ;
+il n’y a plus de plafond de lots (ADR 0039). La charte artistique candidate
+et son étalon sont dans `docs/5-guides/direction-artistique.md` ; leur
+validation artistique appartient à l’utilisateur.
+
 ## Les quatre ingrédients
 
 Le look ne vient pas du moteur — Ion Fury tourne sur EDuke32, mais Cultic,
@@ -12,8 +21,8 @@ Dusk et Wrath obtiennent le même registre en 3D moderne. Il tient à :
 
 1. **Résolution interne basse** (640×360) upscalée en nearest
 2. **Ennemis en sprites billboard** pixel art, 8 angles
-3. **Textures 128×128 max**, filtrage nearest, palette restreinte
-4. **Géométrie anguleuse**, pas de courbes, pas de PBR
+3. **Textures répétées de référence en 128×128**, nearest à l’agrandissement, rampes de couleurs contrôlées ; tailles adaptées pour atlas et illustrations
+4. **Silhouettes franches**, courbes segmentées utiles, matières mates
 
 ## Configuration
 
@@ -32,8 +41,8 @@ canvas { width: 100vw; height: 100vh; image-rendering: pixelated; }
 ```ts
 // Sur TOUTES les textures
 texture.magFilter = THREE.NearestFilter;
-texture.minFilter = THREE.NearestFilter;
-texture.generateMipmaps = false;
+texture.minFilter = THREE.NearestMipmapLinearFilter;
+texture.generateMipmaps = true;
 texture.colorSpace = THREE.SRGBColorSpace;
 ```
 
@@ -47,8 +56,8 @@ coût sur l'identité visuelle :
 
 | Technique | Pourquoi non |
 |---|---|
-| `MeshStandardMaterial` / PBR | la spécularité tue le look Build |
-| Mipmaps, filtrage trilinéaire/aniso | le fourmillement fait partie du rendu |
+| Spécularité brillante généralisée | concurrence le traitement mat proposé ; juger les effets ciblés dans leur contexte |
+| Lissage à l’agrandissement | efface le gros pixel ; mipmaps et anisotropie à la réduction restent compatibles |
 | SSAO / GTAO | l'occlusion douce contredit le pixel art |
 | Ombres cascadées | trop douces, trop chères, hors registre |
 | TAA / FXAA / MSAA | **le crénelage est intentionnel** |
@@ -86,12 +95,7 @@ généreuse. Le contraste vient des **textures**, pas de l'éclairage dynamique.
 Un niveau Build est éclairé par ses textures et sa lumière de secteur, pas par
 un système d'ombres.
 
-Un effet ciblé peut utiliser `MeshLambertNodeMaterial` et TSL via
-`WebGLNodesHandler`, sans changer le renderer. Ses uniformes animés avancent
-au pas fixe. Le reste du niveau garde le pipeline Lambert du loader.
-
 ## Diagnostic
 
 Vérifier systématiquement : résolution interne réelle du drawing buffer,
-présence de `NearestFilter` sur toutes les textures chargées, absence de
-`MeshStandardMaterial` dans la scène, compte de draw calls.
+présence de `NearestFilter` à l’agrandissement, filtrage de réduction conforme au réglage choisi, traitement visuel des matériaux classiques et TSL, compte de draw calls comme indicateur.

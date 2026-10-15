@@ -8,17 +8,24 @@
   background: var(--control-bg);
   border: 1px solid var(--control-border);
   cursor: pointer;
-  transition: background 120ms linear, color 120ms linear, box-shadow 120ms linear;
+  transition:
+    background 120ms linear,
+    color 120ms linear,
+    box-shadow 120ms linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .button { transition: none; }
+  .button {
+    transition: none;
+  }
 }
 
 .button:hover {
   color: var(--hover-text, var(--text-strong));
   background: var(--control-bg-hover);
-  box-shadow: 0 0 18px var(--glow) inset, 0 0 14px var(--glow);
+  box-shadow:
+    0 0 18px var(--glow) inset,
+    0 0 14px var(--glow);
 }
 
 .primary {

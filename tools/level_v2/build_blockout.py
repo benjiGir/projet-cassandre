@@ -532,7 +532,7 @@ PORTES = {
 # modélisé. Déclarée à la main pour cette raison.
 OUVERTURE_SORTIE = plan.Opening("direction", "_dehors", "y", 166.0, (-38.0, -36.0), 4.0, 4.0)
 # Petit palier DERRIÈRE la sortie, à l'altitude de l'étage. La partie se termine
-# au franchissement (`estPorteDeSortie`, `game/session/progression/doors.ts`), mais il
+# au franchissement (`isExitDoor`, `game/session/progression/doors.ts`), mais il
 # s'écoule un pas fixe entre le franchissement et l'écran de fin : sans sol, ce
 # pas-là est une chute.
 PALIER_SORTIE = ((-40.0, 166.0), (6.0, 3.0))
@@ -660,6 +660,7 @@ REGLES_REPERES = [
     ("micro-ondes", "rien", None),
     ("bouton compacteur", "rien", None),
     ("grille sur le quai", "rien", None),
+    ("rideau vers la réserve", "rien", None),
     ("balles de carton", "rien", None),
     ("balle mal cerclée", "rien", None),
     ("guichet + sonnette", "rien", None),

@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import type * as THREE from "three";
 import RAPIER from "@dimforge/rapier3d-compat";
 import { Effect } from "effect";
 import { GROUP, interactionGroups, type PhysicsWorld } from "../../../physics/world";
@@ -33,7 +33,10 @@ const IDENTITY_ROTATION: RAPIER.Rotation = { x: 0, y: 0, z: 0, w: 1 };
 /** Implémentation réelle de `PathfindingServiceShape.bake`. Toutes les
  * requêtes physiques passent par `RaycastService`, jamais un accès direct à
  * `physics.world.*`. see: docs/archive/systems-pathfinding.md#comment-le-graphe-est-construit */
-export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): Effect.Effect<NavGraph, never, RaycastService> =>
+export const bakeNavGraphEffect = (
+  physics: PhysicsWorld,
+  bounds: THREE.Box3,
+): Effect.Effect<NavGraph, never, RaycastService> =>
   Effect.gen(function* () {
     const raycast = yield* RaycastService;
 
@@ -107,7 +110,7 @@ export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): E
         if (walkable[idx] !== 1) continue;
 
         for (const dirIndex of FORWARD_DIR_INDICES) {
-          const dir = DIRS[dirIndex]!;
+          const dir = DIRS[dirIndex];
           const nx = ix + dir.dx;
           const nz = iz + dir.dz;
           if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) continue;
@@ -115,9 +118,9 @@ export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): E
           const nIdx = nz * cols + nx;
           if (walkable[nIdx] !== 1) continue;
 
-          const heightDiff = Math.abs(groundY[nIdx]! - groundY[idx]!);
+          const heightDiff = Math.abs(groundY[nIdx] - groundY[idx]);
           const horizontalDistance = cellSize * Math.hypot(dir.dx, dir.dz);
-          const touchesRamp = floorNormalY[idx]! < 0.999 || floorNormalY[nIdx]! < 0.999;
+          const touchesRamp = floorNormalY[idx] < 0.999 || floorNormalY[nIdx] < 0.999;
           const rampRise = Math.tan((suitConfig.maxSlopeClimbAngleDeg * Math.PI) / 180) * horizontalDistance;
           if (heightDiff > (touchesRamp ? rampRise + STAND_CLEARANCE : MAX_STEP_HEIGHT)) continue;
 
@@ -125,7 +128,7 @@ export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): E
           const fromZ = originZ + iz * cellSize;
           const toX = originX + nx * cellSize;
           const toZ = originZ + nz * cellSize;
-          const rayY = (groundY[idx]! + groundY[nIdx]!) / 2 + eyeHeight;
+          const rayY = (groundY[idx] + groundY[nIdx]) / 2 + eyeHeight;
 
           const dxw = toX - fromX;
           const dzw = toZ - fromZ;
@@ -150,16 +153,23 @@ export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): E
 
           if (!touchesRamp) {
             capsuleStart.x = fromX;
-            capsuleStart.y = Math.max(groundY[idx]!, groundY[nIdx]!) +
-              STAND_CLEARANCE + capsuleHalfHeight + capsuleRadius;
+            capsuleStart.y =
+              Math.max(groundY[idx], groundY[nIdx]) + STAND_CLEARANCE + capsuleHalfHeight + capsuleRadius;
             capsuleStart.z = fromZ;
             capsuleVelocity.x = dxw;
             capsuleVelocity.y = 0;
             capsuleVelocity.z = dzw;
             const blocked = yield* raycast.castShape(
-              physics, capsuleStart, IDENTITY_ROTATION, capsuleVelocity,
-              standingCapsule, 0, 1, false,
-              RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, WORLD_ONLY_RAY_GROUPS,
+              physics,
+              capsuleStart,
+              IDENTITY_ROTATION,
+              capsuleVelocity,
+              standingCapsule,
+              0,
+              1,
+              false,
+              RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+              WORLD_ONLY_RAY_GROUPS,
             );
             if (blocked) continue;
           }
@@ -176,17 +186,20 @@ export const bakeNavGraphEffect = (physics: PhysicsWorld, bounds: THREE.Box3): E
       for (let ix = 0; ix < cols; ix++) {
         const idx = iz * cols + ix;
         for (const dirIndex of [3, 5]) {
-          if ((neighborMask[idx]! & (1 << dirIndex)) === 0) continue;
-          const dir = DIRS[dirIndex]!;
+          if ((neighborMask[idx] & (1 << dirIndex)) === 0) continue;
+          const dir = DIRS[dirIndex];
           const nIdx = (iz + dir.dz) * cols + ix + dir.dx;
           const horizontal = dir.dx > 0 ? 2 : 6;
           const vertical = dir.dz > 0 ? 4 : 0;
           const oppositeHorizontal = (horizontal + 4) % 8;
           const oppositeVertical = (vertical + 4) % 8;
-          if ((neighborMask[idx]! & (1 << horizontal)) !== 0 &&
-              (neighborMask[idx]! & (1 << vertical)) !== 0 &&
-              (neighborMask[nIdx]! & (1 << oppositeHorizontal)) !== 0 &&
-              (neighborMask[nIdx]! & (1 << oppositeVertical)) !== 0) continue;
+          if (
+            (neighborMask[idx] & (1 << horizontal)) !== 0 &&
+            (neighborMask[idx] & (1 << vertical)) !== 0 &&
+            (neighborMask[nIdx] & (1 << oppositeHorizontal)) !== 0 &&
+            (neighborMask[nIdx] & (1 << oppositeVertical)) !== 0
+          )
+            continue;
           neighborMask[idx] &= ~(1 << dirIndex);
           neighborMask[nIdx] &= ~(1 << ((dirIndex + 4) % 8));
         }

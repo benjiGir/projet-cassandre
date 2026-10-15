@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import { runGameplaySync } from "../../app/runtime/gameRuntime";
 import { createEnemyAnimationInput, enemySpriteRow } from "../../render/sprites/enemySprites";
 import { fovForRunFactor, moveConfig } from "../player/movement/moveConfig";
-import { type GameEngine } from "../session/gameEngine";
+import type { GameEngine } from "../session/gameEngine";
 import { suitSheetFor } from "../session/spawning";
 // `engine` est injecté en paramètre explicite (jamais une fermeture sur
 // `main()`) depuis l'extraction de ce fichier hors de `main.ts`.
@@ -24,6 +24,7 @@ const suitForwardScratch = new THREE.Vector3();
 const directorPositionScratch = new THREE.Vector3();
 const directorForwardScratch = new THREE.Vector3();
 const enemyAnimationScratch = createEnemyAnimationInput();
+const flareMuzzle = new THREE.Vector3();
 
 // Tourne au taux d'affichage, pas le pas fixe — même frontière Effect
 // synchrone stricte (`runGameplaySync`) que le pas fixe.
@@ -32,13 +33,6 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
   const session = engine.session;
   runGameplaySync(
     Effect.gen(function* () {
-      yield* Effect.sync(() => {
-        if (session.ballMesh) {
-          session.ballMesh.position.lerpVectors(engine.ballPrevPos, engine.ballCurrPos, alpha);
-          session.ballMesh.quaternion.slerpQuaternions(engine.ballPrevQuat, engine.ballCurrQuat, alpha);
-        }
-      });
-
       // La rotation brute a déjà été capturée au taux d'affichage par
       // `updateDisplayInput`, AVANT les pas fixes. Ici elle est seulement
       // recopiée sur la caméra, sans interpolation (invariant #3).
@@ -65,17 +59,30 @@ export function interpolateVisuals(engine: GameEngine, alpha: number): void {
         }
 
         engine.viewmodel.update(alpha, session.weapons);
+        engine.heroReflection.update(
+          alpha,
+          session.player,
+          session.weapons,
+          engine.look.yaw,
+          engine.look.pitch,
+          moveConfig.eyeHeight,
+        );
+        engine.fx.poseFlares(session.weapons.flares, alpha, engine.viewmodel.muzzleWorldPosition(flareMuzzle, "flare"));
       });
 
       yield* Effect.sync(() => {
-        session.propSystem?.interpolate(alpha, engine.camera.position);
-        session.doorSystem?.interpolate(alpha);
+        session.mode?.interpolate?.(alpha, session.run.stats.gameplayElapsed);
+        const trains = session.gltfLevelSession?.current?.trains;
+        const blockout = session.gltfLevelSession?.current?.metroBlockout;
+        session.gltfLevelSession?.current?.fountainWater?.interpolate(engine.flow.isPlaying() ? alpha : 1);
+        blockout?.presentation.interpolate(blockout.system, alpha, session.run.stats.gameplayElapsed);
+        trains?.presentation.interpolate(trains.system, alpha, session.run.stats.gameplayElapsed);
+        trains?.beacons.update(trains.system, session.run.stats.gameplayElapsed);
+        session.level.propSystem?.interpolate(alpha, engine.camera.position);
+        session.level.doorSystem?.interpolate(alpha);
         // Objets interactifs : élagués par distance comme les props, pour la
         // même raison (voir `render/environment/useObjectCulling.ts`).
-        engine.useObjectCulling.update(
-          session.gltfLevelSession?.current?.useObjects ?? [],
-          engine.camera.position,
-        );
+        engine.useObjectCulling.update(session.gltfLevelSession?.current?.useObjects ?? [], engine.camera.position);
         // Sanitaires : même élagage, même portée — une cuvette est aussi
         // petite qu'une trousse (voir `SanitaireMergeResult.rendus`).
         engine.useObjectCulling.update(

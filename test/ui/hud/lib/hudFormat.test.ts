@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { ammoLabel, healthLevel } from "../../../../src/ui/hud/lib/hudFormat";
 
-const AMMO = { shotgunAmmo: 4, shotgunMaxAmmo: 8, pistolAmmo: 11, pistolMaxAmmo: 15 };
+const AMMO = { shotgunAmmo: 4, shotgunMaxAmmo: 8, pistolAmmo: 11, pistolMaxAmmo: 15, flareAmmo: 3, flareMaxAmmo: 18 };
 
 describe("ammoLabel", () => {
   it("affiche le chargeur de l'arme à feu en main", () => {
     expect(ammoLabel({ ...AMMO, activeWeapon: "shotgun" })).toBe("4 / 8");
     expect(ammoLabel({ ...AMMO, activeWeapon: "pistol" })).toBe("11 / 15");
+    expect(ammoLabel({ ...AMMO, activeWeapon: "flare" })).toBe("3 / 18");
   });
 
   it("nomme l'arme quand elle n'a pas de munitions", () => {

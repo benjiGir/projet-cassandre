@@ -38,7 +38,9 @@ export function DeathScreen({ onReplay, onReturnToMenu }: DeathScreenProps) {
         <p className={styles.body}>Ils ont eu ta connexion. Encore une preuve, pense les 200 abonnés restants.</p>
         <p className={styles.stat}>{`Spectateurs au moment de la coupure : ${formatViews(views)}`}</p>
 
-        {recap && <p className={styles.partialNote}>RÉCAPITULATIF PARTIEL — coupé avant la sortie, aucun bonus de rapidité</p>}
+        {recap && (
+          <p className={styles.partialNote}>RÉCAPITULATIF PARTIEL — coupé avant la sortie, aucun bonus de rapidité</p>
+        )}
         <RecapTable recap={recap} className={styles.recap} />
 
         <ButtonRow className={styles.actions}>

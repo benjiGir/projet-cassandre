@@ -13,9 +13,11 @@ export interface WeaponModels {
   pistol: THREE.BufferGeometry;
   shotgun: THREE.BufferGeometry;
   shotgunPump: THREE.BufferGeometry;
+  flare: THREE.BufferGeometry;
   worldCrowbar: THREE.BufferGeometry;
   worldPistol: THREE.BufferGeometry;
   worldShotgun: THREE.BufferGeometry;
+  worldFlare: THREE.BufferGeometry;
   crowbarPivot: THREE.Vector3;
   pistolPivot: THREE.Vector3;
   shotgunPivot: THREE.Vector3;
@@ -23,6 +25,9 @@ export interface WeaponModels {
   pistolAxis: THREE.Vector3;
   shotgunMuzzle: THREE.Vector3;
   pumpAxis: THREE.Vector3;
+  flarePivot: THREE.Vector3;
+  flareMuzzle: THREE.Vector3;
+  flareAxis: THREE.Vector3;
   // Un seul matériau pour tout : couleurs portées par les sommets.
   material: THREE.MeshLambertMaterial;
 }

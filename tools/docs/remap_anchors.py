@@ -63,7 +63,7 @@ JOURNAL_SOURCE_PATHS = {
     "docs/reference/etat-des-lieux-code-architecture.md",
 }
 # Added after the legacy-doc inventory; keep this active level-design reference.
-PROTECTED_CURRENT_DOCS = {"docs/assets/board-coulisses.md"}
+PROTECTED_CURRENT_DOCS = {"docs/6-reference/references-coulisses.md"}
 # Examples and fixtures intentionally contain fictional legacy paths.
 SKIP_SOURCE_FILES = {
     "tools/docs/remap_anchors.py",

@@ -17,7 +17,9 @@ export function HitFeedbackTuning() {
     <TuningSection
       separated
       title="Tuning — feedback de hit (Phase 3)"
-      hint={'Retour playtest : "le feedback est mauvais sur un hit". Harnais A/B — aucune valeur ici n\'est un choix tranché.'}
+      hint={
+        'Retour playtest : "le feedback est mauvais sur un hit". Harnais A/B — aucune valeur ici n\'est un choix tranché.'
+      }
     >
       <ImpactTuning weapon={weapon} />
       <RecoilTuning weapon={weapon} />

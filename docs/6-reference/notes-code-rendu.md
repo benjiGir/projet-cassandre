@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-05
+updated: 2026-10-13
 ---
 
 # Contrats locaux du rendu
@@ -93,13 +93,17 @@ zéro est en haut de l'image, donc son offset V est `1 - (row + 1) / rows`.
 
 Chaque instance clone la texture et possède sa géométrie. Partager les offsets
 modifierait toutes les entités en même temps ([ADR 0017](../decisions/0017-clone-texture-sprite-billboard.md)).
-`setAtlas` exige une disposition identique et conserve la case courante.
+`setAtlas` conserve la ligne et la direction courantes et accepte le `layout`
+de la nouvelle peau. Il étend la sphère de culling si ses poses dépassent les
+bornes précédentes ; aucun recalcul de bornes n'est fait par frame.
 `dispose` libère seulement les ressources propres à l'instance.
 
 Les dimensions par défaut sont 1 × 1,8 m, une ligne, teinte blanche et coupure
 alpha à 0,5. `verticalAnchor` mesure la fraction de hauteur sous `position.y` :
 0 pour le pied, 0,5 pour le centre, 1 pour le sommet. La géométrie se translate
-une fois ; elle ne change pas pendant l'interpolation.
+une fois pour les grilles régulières. Avec un `layout` peint, les quatre
+sommets suivent le rectangle de pose, son ancrage et sa densité, sans nouvelle
+géométrie. La caméra de chaque passe choisit la direction dans `onBeforeRender`.
 `normalTilt` incline uniquement les normales pour mieux capter une lampe au
 plafond. La silhouette et la pose du quad restent verticales.
 
@@ -139,14 +143,22 @@ Son repli numéroté comporte dix lignes, dont quatre pour la mort ; l'erreur es
 signalée en console et le jeu reste jouable.
 
 Les Costards et les Vigiles possèdent quatre carnations (`clair`, `humain`,
-`mate`, `fonce`), rendues avec les mêmes poses et uniformes par
-`tools/blender/render_enemy_sprites.py`. Visage et mains changent ensemble.
+`mate`, `fonce`). Les Costards sont peints par Imagegen, avec leurs originaux et
+prompts dans `assets_src/costard_sprites/`, puis décrits par
+`tools/sprites/describe_costard.py`. Les Vigiles sont également peints, avec
+leurs sources dans `assets_src/vigile_sprites/` et leur manifeste mesuré par
+`tools/sprites/describe_vigile.py` à une hauteur de repos de 2 m. Visage et mains changent ensemble.
 `SuitManager` attribue un `appearanceIndex` par ordre d'apparition dans chaque
 espèce ; `enemyHumanAtlas` choisit l'atlas une seule fois au spawn, dans l'ordre
 de `enemySkinConfig.ts`. Ce compteur ne consomme aucun tirage du RNG de combat,
 et la carnation reste identique jusque sur le cadavre. Les anciennes planches
-sans variantes retombent sur `humain`. Le Rampant et la transformation du
-Directeur gardent leurs atlas spécifiques.
+sans variantes retombent sur `humain`. Le Rampant garde un seul atlas reptilien
+peint, décrit par `tools/sprites/describe_rampant.py`, avec une hauteur de
+repos de 1,2 m. Le Directeur garde deux atlas peints de transformation,
+décrits par `tools/sprites/describe_directeur.py`, avec une hauteur de repos
+de 2,05 m. Son spawn utilise le layout humain et `presentDirectorEvents`
+remplace texture et layout à la révélation. Les mesures des quatre espèces
+sont partagées dans `describe_painted.py`.
 
 Les sprites humains ordinaires disposent aussi d'un plancher d'éclairage
 Lambert de 0,32 (`HUMAN_SPRITE_MINIMUM_LIGHT`). `BillboardSprite` borne le
@@ -347,7 +359,7 @@ L'update suit la caméra au taux d'affichage.
 `renderer.ts` conserve le voisin le plus proche à l'agrandissement. Les modes
 nearest/mipmap/aniso changent seulement la réduction ; aniso est le défaut.
 La limite d'anisotropie provient du renderer construit au démarrage.
-`appliquerFiltrage` déduplique les textures par identité et visite
+`applyTextureFiltering` déduplique les textures par identité et visite
 les textures enregistrées et tous les canaux classiques, uniformes shader
 et entrées TSL explicitement enregistrées.
 Changer la résolution interne met à jour le ratio caméra ; les overlays
@@ -393,7 +405,7 @@ avec leur valeur existante. La correction est appliquée après le calcul
 Lambert, avant fog et colorimétrie ; elle garde les couleurs, les lampes
 et les éclairs de tir. Aucun lot ni lampe supplémentaire.
 
-Voir la [planche de références](../assets/board-armes-mains.md) et la
+Voir la [planche de références](references-armes-mains.md) et la
 [révision de l'ADR 0029](../decisions/0029-armes-en-vue-subjective.md).
 
 

@@ -1,11 +1,10 @@
 import * as THREE from "three";
 
 import { FLOOR_NORMAL_Y, goreConfig, type SurfaceHit, type SurfaceProbe } from "./goreConfig";
+import { GRAVITY_Y } from "../../physics/constants";
 
 // Les morceaux d'un ennemi qui éclate : un `InstancedMesh`, dans une réserve
 // tournante. Ils volent, heurtent le décor et s'y posent.
-
-const GRAVITY = -25;
 
 interface Chunk {
   readonly position: THREE.Vector3;
@@ -44,7 +43,7 @@ export class GoreChunks {
         flight: 0,
       });
       this.mesh.setMatrixAt(i, HIDDEN);
-      this.mesh.setColorAt(i, CHUNK_COLORS[0]!);
+      this.mesh.setColorAt(i, CHUNK_COLORS[0]);
     }
     this.mesh.visible = false;
   }
@@ -64,7 +63,7 @@ export class GoreChunks {
     for (let i = 0; i < count; i++) {
       const index = this.cursor;
       this.cursor = (this.cursor + 1) % this.chunks.length;
-      const chunk = this.chunks[index]!;
+      const chunk = this.chunks[index];
       chunk.position.copy(point);
       chunk.velocity
         .set(
@@ -76,12 +75,16 @@ export class GoreChunks {
         .multiplyScalar(speedMin + this.random() * (speedMax - speedMin));
       const size = sizeMin + this.random() * (sizeMax - sizeMin);
       // Silhouette cassée : jamais un cube.
-      chunk.scale.set(size * (0.6 + this.random() * 0.8), size * (0.5 + this.random() * 0.6), size * (0.6 + this.random() * 0.8));
+      chunk.scale.set(
+        size * (0.6 + this.random() * 0.8),
+        size * (0.5 + this.random() * 0.6),
+        size * (0.6 + this.random() * 0.8),
+      );
       chunk.rotation.set(this.random() * Math.PI, this.random() * Math.PI, this.random() * Math.PI);
       chunk.active = true;
       chunk.flying = true;
       chunk.flight = 0;
-      this.mesh.setColorAt(index, CHUNK_COLORS[Math.floor(this.random() * CHUNK_COLORS.length) % CHUNK_COLORS.length]!);
+      this.mesh.setColorAt(index, CHUNK_COLORS[Math.floor(this.random() * CHUNK_COLORS.length) % CHUNK_COLORS.length]);
       this.write(index);
     }
     if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true;
@@ -89,7 +92,7 @@ export class GoreChunks {
   }
 
   private write(index: number): void {
-    const chunk = this.chunks[index]!;
+    const chunk = this.chunks[index];
     if (!chunk.active) {
       this.mesh.setMatrixAt(index, HIDDEN);
     } else {
@@ -102,7 +105,7 @@ export class GoreChunks {
   /** `onImpact` : un morceau vient de heurter le décor, à cet endroit. */
   update(realDt: number, probe: SurfaceProbe | null, onImpact: (hit: SurfaceHit) => void): void {
     for (let index = 0; index < this.chunks.length; index++) {
-      const chunk = this.chunks[index]!;
+      const chunk = this.chunks[index];
       if (!chunk.active || !chunk.flying) continue;
 
       chunk.flight += realDt;
@@ -112,11 +115,12 @@ export class GoreChunks {
         continue;
       }
 
-      chunk.velocity.y += GRAVITY * realDt;
+      chunk.velocity.y += GRAVITY_Y * realDt;
       const distance = chunk.velocity.length() * realDt;
-      const hit = probe && distance > 1e-6
-        ? probe(chunk.position, stepDirection.copy(chunk.velocity).normalize(), distance + chunk.scale.y * 0.5)
-        : null;
+      const hit =
+        probe && distance > 1e-6
+          ? probe(chunk.position, stepDirection.copy(chunk.velocity).normalize(), distance + chunk.scale.y * 0.5)
+          : null;
       if (!hit) {
         chunk.position.addScaledVector(chunk.velocity, realDt);
         chunk.rotation.x += realDt * 10;
@@ -139,7 +143,7 @@ export class GoreChunks {
 
   reset(): void {
     for (let index = 0; index < this.chunks.length; index++) {
-      this.chunks[index]!.active = false;
+      this.chunks[index].active = false;
       this.mesh.setMatrixAt(index, HIDDEN);
     }
     this.mesh.instanceMatrix.needsUpdate = true;

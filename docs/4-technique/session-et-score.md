@@ -2,7 +2,7 @@
 title: Session et score
 tags: [technique]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-08
 ---
 
 # Session et score
@@ -22,16 +22,18 @@ Ne fait pas : ne construit ni ne détruit la `GameSession` ([Cycle de
 vie](../3-architecture/cycle-de-vie.md)) ; ne décide pas des PV encaissés au
 combat (`feedback.ts` applique un montant déjà calculé par les managers
 d'ennemis, [Ennemis et IA](ennemis-et-ia.md)) ; ne connaît aucune arme,
-aucune géométrie de porte/vitre/sanitaire (déléguée à `session.doorSystem`/
+aucune géométrie de porte/vitre/sanitaire (déléguée à `session.level.doorSystem`/
 `vitreSystem`/`sanitaireSystem`, construits par `spawning.ts`, détail
-`4-technique/systemes-de-niveau.md`, pas encore écrit) ; ne rejoue rien
+[Systèmes de niveau](systemes-de-niveau.md)) ; ne rejoue rien
 lui-même (`recording.ts` positionne le joueur puis délègue à
-`inputRecorder`, détail `rejeu-et-determinisme.md`, pas encore écrit).
+`inputRecorder`, détail [Rejeu et déterminisme](rejeu-et-determinisme.md)).
 
 ## Fichiers
 
-- `src/game/session/gameSession.ts` — l'interface `GameSession` : champ →
-  rôle documenté ci-dessous.
+- `src/game/session/gameSession.ts` — l'interface `GameSession` : ses systèmes
+  à plat, `run` (`runState.ts`, l'état du joueur dans la partie) et `level`
+  (`levelState.ts`, ce que le niveau chargé apporte) — voir
+  [Trois durées de vie](../3-architecture/cycle-de-vie.md#trois-durées-de-vie).
 - `src/game/session/progression/score.ts` — `SessionStats`, les `record*`, le barème
   nommé (`SCORE_*`), `buildLevelRecap`/`publishLevelRecap`.
 - `src/game/session/player/feedback.ts` — `showHudMessage` (canal système),
@@ -55,7 +57,7 @@ lui-même (`recording.ts` positionne le joueur puis délègue à
 - `src/game/session/progression/cards.ts` — `hasCard`/`grantCard`/`syncCardsToStore` :
   inventaire des cartes de fidélité.
 - `src/game/session/progression/doors.ts` — `unlockDoor`/`tryOpenCardDoor`,
-  `estPorteDeSortie`, `setupExitDoorTracking`/`triggerLevelComplete`.
+  `isExitDoor`, `setupExitDoorTracking`/`triggerLevelComplete`.
 - `src/game/session/player/sanitaires.ts` — `trySanitaire` (visée + dispatch),
   `relieveAtSanitaire`/`drinkFromSanitaire` : la règle Duke 3D.
 - `src/game/devtools/replay/recording.ts` — `startRecording`/`startPlayback` : pose
@@ -78,15 +80,15 @@ Ordre complet du pas fixe : [Boucle et temps](../3-architecture/boucle-et-temps.
 Dans `updateGameplay` (`Effect.gen`, un seul `runGameplaySync` englobant) :
 
 1. `advanceGameplayTime` — avec le `gameplayDt` réel (hitstop compris).
-2. Décrément de `session.sanitaireReliefCooldown` par le même `gameplayDt`.
+2. Décrément de `session.run.sanitaireReliefCooldown` par le même `gameplayDt`.
 3. `player.update`, puis le filet de chute.
 4. `engine.interaction.update(...)` (`use_*` : cartes, portes, micro,
    `use_toilet`). Si rien n'est consommé, `trySanitaire` ; si toujours rien,
-   `session.doorSystem?.actionner(...)`. L'ordre est signifiant : sans lui,
+   `session.level.doorSystem?.actionner(...)`. L'ordre est signifiant : sans lui,
    le bouton d'une porte et la porte elle-même pourraient réagir au même
    appui.
 5. Ramassages sans touche (munitions, armes au sol, trousses).
-6. `weaponEyeOrigin` reconstruite depuis `session.player.position`, puis
+6. `eyeOrigin` reconstruite depuis `session.player.position`, puis
    `weapons.update(...)` : `recordShot` compare `hitEvents` avant/après pour
    savoir si CE tir a touché `FLESH_MATERIAL`.
 7. `suitManager`/`directorManager.update` (delta sur `deathEvents` →
@@ -117,12 +119,12 @@ depuis `game/loop/devGameplayInput.ts` (F9/F10, dev seulement).
 | `levelScript` | Déclencheurs franchis, scénarios en cours et ennemis réveillés par groupe. |
 | `physics`, `player`, `weapons` | Monde Rapier, contrôleur joueur, armes — pages dédiées. |
 | `suitManager`/`suitSprites`, `directorManager`/`directorSprites` | Ennemis et leur sprite — [Ennemis et IA](ennemis-et-ia.md). |
-| `gymRoot`/`ballMesh`/`ballBody` | Géométrie de la gym (chemin `"gym"`). |
+| `mode` | Ce qu'un niveau construit à la main ajoute à la partie — salle d'essai et sa balle témoin, essai des trains, voyage en rame (`src/game/session/modes/`). `null` pour un niveau glTF. La session, la boucle et les outils de dev n'appellent que le contrat `LevelMode` (`populate`, `fixedStep`, `interpolate`, `present`, `resetForReplay`, `dispose`). |
 | `gltfLevelSession` | Porte le `LevelHandle` affiché et le hot reload. |
 | `levelLoadGeneration` | Jeton anti-course d'un chargement différé. |
 | `currentNavGraph`, `lightPool`, `propSystem`, `doorSystem`, `vitreSystem`, `sanitaireSystem`, `weaponPickupBillboards` | Systèmes du niveau COURANT, reconstruits ensemble à chaque commit — jamais partiellement. |
 | `sanitaireReliefCooldown` | Délai global de soulagement — état de PARTIE, remis à 0 par `bootGameSession`. |
-| `droppedCardMesh`, `cards` | Carte au sol après la mort du Directeur ; inventaire réel (`Set`, jamais le store). |
+| `droppedCardBillboard`, `cards` | Carte au sol après la mort du Directeur (`directorManager.droppedCard`) ; inventaire réel (`Set`, jamais le store). |
 | `unlockedDoors`, `exitDoorTracking`, `foundSecrets` | Portes déjà déverrouillées ; suivi de franchissement de la sortie ; secrets trouvés (`WeakSet`). |
 | `lastSafeGround` | Filet de chute. |
 | `playerHp`, `firstKillTriggered`, `lowHpLineTriggered`, `stream`, `streamRandom`, `deathHandled`, `levelCompleteHandled`, `lastHeroLineAt`, `lastHeroBarkAt`, `heroLinesSaid`, `heroLineRandom` | PV, drapeaux d'idempotence, répliques déjà dites, deux flux `DeterministicRandom` DÉDIÉS (vues, tirage des répliques occasionnelles — jamais `Math.random()`, invariant #12). |
@@ -152,8 +154,8 @@ impur, appelé deux fois : `doors.ts::triggerLevelComplete` (`true`, récap
 COMPLET, avant l'évènement de flux) et `feedback.ts::applyPlayerDamage`
 (`false`, récap PARTIEL — une mort n'a pas gagné son bonus de chrono).
 
-**Cartes de fidélité** : `session.cards` (`Set<LoyaltyCard>`) est la source
-de vérité ([ADR 0020](../decisions/0020-state-feuille-de-dependances.md)) ;
+**Cartes de fidélité** : `session.run.cards` (`Set<LoyaltyCard>`) est la source
+de vérité ([ADR 0036](../decisions/0036-contrats-feuilles-et-store-hud.md)) ;
 `grantCard` ignore un doublon en silence (hot reload). Détail des trois
 cartes et de leurs portes : [Objets interactifs](../2-fonctionnel/objets-interactifs.md)
 et [Joueur](joueur.md#données-et-contrats) — pas répété ici.
@@ -161,7 +163,7 @@ et [Joueur](joueur.md#données-et-contrats) — pas répété ici.
 **Portes à carte et fin de niveau** : `unlockDoor` délègue au
 `doorSystem` et ouvre le GROUPE entier (porte double), `false` si le nom ne
 correspond à aucun `door_*`. `tryOpenCardDoor` refuse sans consommer si la
-carte manque (réessayable). `estPorteDeSortie` reconnaît `door_e_exit`
+carte manque (réessayable). `isExitDoor` reconnaît `door_e_exit`
 (Zone E) et `door_exit` (niveau v2). Seule une porte de sortie arme
 `ExitDoorTracking` : axe dérivé de la VRAIE rotation du corps, signe fixé à
 la position du joueur au déverrouillage. `triggerLevelComplete` gardé par
@@ -180,8 +182,8 @@ cassé → `drinkFromSanitaire` (+1 PV/appui, illimité). `onToiletUse`
 **Feedback joueur** : `showHudMessage` est FACTUEL, sans cooldown
 (1,8 s d'affichage). `triggerHeroLine` est une RÉACTION enregistrée
 (`heroLines.ts`) : cooldown global 15 s sauf pour les répliques
-prioritaires, tirage dans `session.heroLineRandom` pour les occasionnelles.
-Le direct (`session/stream/`, [ADR 0038](../decisions/0038-simulation-du-direct.md)) tire dans `session.streamRandom`
+prioritaires, tirage dans `session.run.heroLineRandom` pour les occasionnelles.
+Le direct (`session/stream/`, [ADR 0038](../decisions/0038-simulation-du-direct.md)) tire dans `session.run.streamRandom`
 (flux dédié) : audience, dons et chat — sans lien avec le score du récap.
 `applyPlayerDamage` décrémente `playerHp`, déclenche la réplique « PV bas »
 au premier franchissement de 30 % du max (sinon une réplique ou un cri de
@@ -247,6 +249,11 @@ profils sont des hypothèses, pas des mesures : le journal d'une vraie partie
 fait foi.
 
 ## Pièges
+
+La [campagne](campagne.md) conserve l’équipement de sortie du magasin et
+construit le métro avec cette arrivée. La mort emploie sa copie d’entrée,
+jamais l’inventaire au moment de mourir. Le mode `--campagne` du relevé
+économique ajoute un second parcours hypothétique jusqu’à N5.
 
 - Le don du Directeur arrive après la dernière borne : il compte pour le
   bilan, pas pour les achats. Le relevé distingue le total reçu de ce qui est
@@ -322,7 +329,7 @@ vérifiés en jeu via la console, pas par une suite permanente.
 
 ## Décisions
 
-- [ADR 0020 — État, feuille de dépendances](../decisions/0020-state-feuille-de-dependances.md) — l'inventaire de cartes et les PV vivent dans `GameSession`.
+- [ADR 0036 — Contrats feuilles et store HUD](../decisions/0036-contrats-feuilles-et-store-hud.md) — l'inventaire de cartes et les PV vivent dans `GameSession`.
 - [ADR 0031 — Portes animées et vitres](../decisions/0031-portes-animees-et-vitres.md) — le contrat `DoorSystem` que `doors.ts` pilote.
 - [ADR 0032 — Sanitaires utilisables](../decisions/0032-sanitaires-utilisables.md) — la règle complète et ses écarts volontaires à Duke 3D.
 - [ADR 0033 — RNG de présentation et portée du rejeu F9/F10](../decisions/0033-rng-presentation-et-portee-du-rejeu.md) — les flux dédiés (vues, réplique de soulagement).

@@ -4,13 +4,17 @@ import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { DoorInfo } from "../doors/doorTypes";
 import type { PropInfo } from "../props/props";
 import type { VitreInfo } from "../interactions/vitres";
-import type { SanitaireInfo, SanitaireRendu } from "../sanitaires/sanitaires";
+import type { SanitaireInfo, SanitaireVisual } from "../sanitaires/sanitaires";
 import type { EcranInfo } from "../interactions/ecrans";
 import type { CamPoint } from "../interactions/cameras";
 import type { FoodItem } from "../interactions/food";
 import type { LoyaltyCard } from "../../player/loyaltyCards";
 import type { PerkOffer } from "../../player/perks";
+import type { AmmoWeaponKind } from "../../player/weapons/weaponTypes";
 import type { SuitKind } from "../../entities/suit/suitConfig";
+import type { LevelTrains } from "../trains/levelTrains";
+import type { MetroBlockout } from "../blockout/metroBlockout";
+import type { FountainWater } from "../../../render/environment/fountain/fountainWater";
 export interface SpawnPoint {
   /** Position MONDE, pieds du joueur (pas les yeux).
    * see: docs/archive/pipeline-niveau-blender.md#convention-spawn_player */
@@ -25,7 +29,7 @@ export interface NamedSpawn {
   position: THREE.Vector3;
   /** Custom property Blender `groupe` : l'ennemi n'apparaît qu'au réveil de ce groupe par le script de niveau. `null` = présent dès le chargement. */
   group: string | null;
-  /** Espèce posée par le préfixe : `spawn_suit_*` un Costard (défaut), `spawn_rampant_*` un Rampant, `spawn_vigile_*` un Vigile. */
+  /** Espèce du marqueur d'apparition ; le chef de brigade est une variante du Contrôleur. */
   kind?: SuitKind;
 }
 
@@ -55,8 +59,10 @@ export interface UseObject {
    * `requires`) pour agir sur sa cible. `null` = aucune condition.
    * see: docs/archive/reference-conventions-nommage.md#cartes-de-fidélité */
   requiresCard: LoyaltyCard | null;
-  // see: docs/archive/reference-conventions-nommage.md#boîtes-de-munitions
+  // see: docs/6-reference/conventions-nommage.md#cartes-et-objets-automatiques
   ammo: number | null;
+  /** Absent dans les anciens objets : munitions de pistolet. */
+  ammoWeapon?: AmmoWeaponKind;
   // see: docs/archive/reference-conventions-nommage.md#trousses-de-soin
   heals: number | null;
   // see: docs/6-reference/conventions-nommage.md#nourriture
@@ -95,7 +101,7 @@ export interface LevelStats {
   secretCount: number;
   /** Meshes rendus tels quels, sans préfixe reconnu — le cas SILENCIEUX. Compté AVANT la fusion du décor. */
   unprefixedMeshCount: number;
-  /** Objets de décor réellement rendus après `mergeStaticDecor` : ordre de grandeur des draw calls du décor. */
+  /** Décor STATIQUE rendu après `mergeStaticDecor` (lots fusionnés + meshes restés seuls) : ordre de grandeur de ses draw calls. Un mesh mobile — enfant d'une porte, d'un prop, d'un `use_*` — n'y est pas compté. */
   decorBatchCount: number;
   /** `light_*` instanciées en `THREE.PointLight` — voir `buildLevelLight`. */
   lightCount: number;
@@ -116,6 +122,9 @@ export interface LevelStats {
 }
 
 export interface LevelHandle {
+  metroBlockout?: MetroBlockout | null;
+  trains?: LevelTrains | null;
+  fountainWater?: FountainWater | null;
   /** Racine ajoutée à `scene` (= `gltf.scene`). */
   root: THREE.Object3D;
   gltf: GLTF;
@@ -138,7 +147,7 @@ export interface LevelHandle {
   // see: docs/archive/reference-conventions-nommage.md#préfixe-sanitaire
   sanitaires: SanitaireInfo[];
   /** Meshes RENDUS des sanitaires (lots fusionnés), élagués par distance comme les `use_*` — voir `SanitaireMergeResult.rendus`. */
-  sanitaireRendus: SanitaireRendu[];
+  sanitaireRendus: SanitaireVisual[];
   /** Écrans `ecran_*` (chantier « Les coulisses ») — l'état de partie (PV,
    * frame courante, casse) vit dans `EcranSystem` (`game/level/interactions/ecrans.ts`),
    * reconstruit à chaque chargement comme `VitreSystem`. */
