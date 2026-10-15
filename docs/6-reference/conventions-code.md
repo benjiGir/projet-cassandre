@@ -2,14 +2,14 @@
 title: Conventions de code
 tags: [reference, code]
 status: brouillon
-updated: 2026-10-10
+updated: 2026-10-15
 ---
 
 # Conventions de code
 
 Les règles d'écriture du code TypeScript de `src/` et `test/`, pour l'agent
 principal comme pour chaque sous-agent. Elles viennent de l'audit de qualité du
-2026-10-08 (`AUDIT_QUALITE_SRC_2026-10-08.md`, §7) ; les règles propres à React
+2026-10-08, conservé dans l'historique Git ; les règles propres à React
 sont dans [structure](react-structure.md),
 [bonnes pratiques](react-bonnes-pratiques.md), [CSS](react-css.md) et
 [composition](react-composition.md).

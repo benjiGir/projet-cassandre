@@ -2,7 +2,7 @@
 title: Documentation PROJET_CASSANDRE
 tags: [index]
 status: stable
-updated: 2026-10-12
+updated: 2026-10-15
 ---
 
 # PROJET_CASSANDRE
@@ -115,3 +115,17 @@ Les plans documentaires vivent dans `assets/`. Les captures, comparaisons,
 rapports générés et aperçus de travail vont dans `renders/`, ignoré par Git,
 puis sont retirés après utilisation. Les références durables vivent dans
 `6-reference/` et les recettes dans `4-technique/` ou `5-guides/`.
+
+Les deux plans de développement et l'audit de qualité du 8 octobre ont été
+retirés de la racine après la sortie de la bêta. Les règles retenues sont
+dans les [conventions de code](6-reference/conventions-code.md) ; le métro
+est décrit dans [son fonctionnement](4-technique/blockout-metro.md),
+[ses rencontres](4-technique/rencontres-metro.md) et
+[sa campagne](4-technique/campagne.md). Les documents retirés restent
+consultables dans Git :
+
+```bash
+git show v2.0.0-beta:PLAN_SUITE.md
+git show v2.0.0-beta:PLAN_V2.md
+git show v2.0.0-beta:AUDIT_QUALITE_SRC_2026-10-08.md
+```

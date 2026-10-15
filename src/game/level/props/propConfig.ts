@@ -13,7 +13,7 @@ export const PROP_LINEAR_DAMPING = 0.6;
 
 export const PROP_ANGULAR_DAMPING = 0.8;
 
-// see: PLAN_SUITE.md, lot B3 — valeurs de départ, que le lot B7 règle.
+// see: docs/decisions/0041-explosifs.md
 /** Un souffle, d'où qu'il vienne : bonbonne `gaz` ou fusée du pistolet de détresse. */
 export interface BlastConfig {
   /** Rayon du souffle, en mètres. Au-delà, rien n'est touché. */

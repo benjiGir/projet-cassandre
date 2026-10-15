@@ -3,7 +3,7 @@ import { suitConfig, type SuitConfig } from "../suit/suitConfig";
 // Le Rampant : reptilien sans costume. Rapide, fragile, au corps-à-corps, en
 // meute — il force à reculer et à viser bas. Même machine d'état que le
 // Costard (`shared/enemyMachine.ts`), une autre configuration.
-// Valeurs de départ, à régler en playtest (lot B7 de PLAN_SUITE.md).
+// Valeurs de départ, à régler en playtest.
 export const rampantConfig: SuitConfig = {
   ...suitConfig,
 

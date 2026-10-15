@@ -1,4 +1,4 @@
-"""Bonbonnes de gaz explosives (lot B3 de PLAN_SUITE.md), posées localement via Cassandre.
+"""Bonbonnes de gaz explosives, posées localement via Cassandre.
 
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- gas_props
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- gas_props preview=/tmp/essai.blend

@@ -23,7 +23,7 @@ Track sur le bras droit par-dessus l'animation), l'éclair de tir (peint en
 pixels sur l'image réduite, toujours franc), et la peau reptilienne du
 Directeur.
 
-Le Rampant (lot B4 de PLAN_SUITE.md) part du « Man in Long Sleeves », même
+Le Rampant part du « Man in Long Sleeves », même
 squelette : peau verte, museau, crête, queue et griffes construits ici, et un
 buste penché vers l'avant par-dessus chaque animation — la silhouette basse
 qui oblige à viser bas.

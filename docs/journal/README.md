@@ -2,14 +2,15 @@
 title: Journal du projet
 tags: [sommaire, journal]
 status: stable
-updated: 2026-10-12
+updated: 2026-10-15
 ---
 
 # Journal
 
 Historique des chantiers, livraisons, playtests et corrections. Les pages
 conservent les constats datés ; l'état courant reste dans `CLAUDE.md`, les
-guides et les plans ouverts à la racine du dépôt.
+guides et les pages techniques. Les anciens plans de la racine sont
+consultables dans Git, comme indiqué dans l'[index documentaire](../README.md#état-du-chantier-documentaire).
 
 ## Octobre 2026
 

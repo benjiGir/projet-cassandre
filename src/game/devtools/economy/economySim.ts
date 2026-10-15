@@ -15,7 +15,7 @@ import { Effect } from "effect";
 import { DeterministicRandom } from "../../../core/effect/random";
 import { kioskOffer } from "../../player/kioskOffer";
 
-// Relevé du portefeuille (lot B7 de PLAN_SUITE.md) : une partie type, décrite
+// Relevé du portefeuille : une partie type, décrite
 // comme une suite d'étapes du niveau, rejouée à travers la VRAIE simulation
 // du direct (`streamSim.ts`) — mêmes règles, mêmes tirages. Ce que le relevé
 // mesure : combien le joueur a en poche devant chaque borne, et combien de

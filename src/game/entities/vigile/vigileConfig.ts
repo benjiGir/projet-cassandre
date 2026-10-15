@@ -3,7 +3,7 @@ import { suitConfig, type SuitConfig } from "../suit/suitConfig";
 // Le Vigile : lourd, lent, protégé de face par un bouclier. Il force à le
 // contourner ou à utiliser un explosif. Même machine d'état que le Costard
 // (`shared/enemyMachine.ts`), une autre configuration.
-// Valeurs de départ, à régler en playtest (lot B7 de PLAN_SUITE.md).
+// Valeurs de départ, à régler en playtest.
 export const vigileConfig: SuitConfig = {
   ...suitConfig,
 

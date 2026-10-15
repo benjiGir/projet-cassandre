@@ -84,7 +84,7 @@ export const streamConfig = {
     quai: 15,
     carte_or: 20,
     escalier: 45,
-    // Métro : valeurs de départ, à régler par relevé avec les bornes du niveau (lot N8 de PLAN_V2.md).
+    // Métro : valeurs de départ, à régler par relevé avec les bornes du niveau.
     metro_depart: 10,
     metro_badge: 10,
     metro_passage: 15,

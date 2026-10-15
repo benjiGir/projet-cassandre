@@ -16,7 +16,7 @@ export interface EconomyVariant {
   readonly label: string;
   /** Multiplicateur de la probabilité de don des spectateurs, par rapport à `DONATION_REFERENCE`. */
   readonly generosity: number;
-  /** Dons du donateur mystère dans le magasin ; ceux du métro attendent ses bornes (lot N8 de PLAN_V2.md). */
+  /** Dons du donateur mystère dans le magasin. */
   readonly mystery: Readonly<Record<StoreMysteryBeat, number>>;
   readonly prices: Readonly<Record<Perk, number>>;
 }

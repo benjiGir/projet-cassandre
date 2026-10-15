@@ -2,12 +2,12 @@
 title: Prototype des trains — salle d’essai T1
 tags: [technique, metro, trains, prototype]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-15
 ---
 
 # Prototype des trains — salle d’essai T1
 
-Premier lot de `PLAN_V2.md`. La salle sert à juger les règles des trains avant
+Premier prototype du métro. La salle sert à juger les règles des trains avant
 le décor du métro. Le principe du prototype a reçu un retour positif le 2026-10-06 ; les valeurs proposées restent à régler.
 Le magasin ne charge aucun de ces objets.
 
@@ -146,6 +146,17 @@ salle, avant d'autoriser le décor.
 Console de développement : `cassandre.trains.config`,
 `cassandre.trains.variantes` et `cassandre.trains.system`.
 
-Les réglages fins attendent les sept réponses de `PLAN_V2.md` §3. Le
-[prototype T4](prototype-voyage-rame.md) prépare le voyage à bord ; aucun
-habillage du métro n’est engagé.
+Les réglages fins restent à juger dans cette salle :
+
+| Question | Variantes à essayer |
+|---|---|
+| La rame fait-elle peur sans être injuste ? | Vitesse de 18, 24 ou 30 m/s |
+| Le préavis laisse-t-il le temps de décider ? | 4, 5 ou 7 s |
+| Le rythme tient-il ? | Intervalle de 20 ou 30 s |
+| L'arrêt d'urgence est-il une soupape ou une triche ? | 5, 8 ou 12 s ; avec et sans délai commun |
+| Sent-on la rame arriver de dos ? | Signal seul, son seul, les deux |
+| Attirer un ennemi sous une rame est-il faisable exprès ? | À l'essai |
+| Mourir sous une rame donne-t-il envie de recommencer ? | À l'essai |
+
+Le [prototype T4](prototype-voyage-rame.md) prépare le voyage à bord ; les
+trains du niveau actuel sont décrits dans [leur fonctionnement](trains-metro.md).

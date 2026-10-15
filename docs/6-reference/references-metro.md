@@ -2,12 +2,12 @@
 title: Métro — références, charte et cotes
 tags: [assets, references, metro, level-design]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-15
 ---
 
 # Métro — références, charte et cotes
 
-Lot N1 de `PLAN_V2.md`. **Board et charte validés par l'utilisateur le
+Références de conception du métro. **Board et charte validés par l'utilisateur le
 6 octobre 2026** (« je valide »). N2 et les kits N3/N3b suivent cette direction.
 Le principe de T1 et la sensation de T4 sont acceptés ;
 leur décor et toutes leurs dimensions ne le sont pas pour autant.

@@ -2,13 +2,13 @@
 title: Catalogue de répliques du métro
 tags: [reference, dialogues, niveau-2, direct]
 status: brouillon
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Catalogue de répliques du métro
 
 Tout ce qui se dit dans « Trafic interrompu » : le héros, les haut-parleurs
-du réseau, le compte vérifié, le chat et l'écran de chargement. C'est le lot H2 de `PLAN_V2.md`.
+du réseau, le compte vérifié, le chat et l'écran de chargement.
 
 **Ces textes sont en jeu, en texte seul, et attendent votre relecture.**
 Aucun n'a de prise de voix. Une réplique en texte seul ne s'affiche que si

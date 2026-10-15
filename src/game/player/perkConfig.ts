@@ -2,8 +2,8 @@ import type { Perk, PerkOffer } from "./perks";
 
 // Ce que chaque perk change. Ces valeurs sont le barème : à l'achat elles sont
 // recopiées sur les objets de la partie (`session/progression/perks.ts`), si
-// bien qu'une nouvelle partie repart sans perk. Valeurs de départ, que le lot
-// B7 de PLAN_SUITE.md règle.
+// bien qu'une nouvelle partie repart sans perk. Valeurs de départ, à régler
+// en playtest.
 export interface PerkConfig {
   /** Boisson : multiplicateur de la vitesse de marche et de course pendant la pointe. */
   boissonSpeedScale: number;

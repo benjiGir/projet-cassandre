@@ -2,14 +2,14 @@
 title: Les sponsors — perks, explosifs, nouveaux ennemis et difficulté
 tags: [journal, gameplay, niveau, ennemis]
 status: brouillon
-updated: 2026-10-04
+updated: 2026-10-15
 ---
 
 # Les sponsors — perks, explosifs, nouveaux ennemis et difficulté
 
 ## Période
 
-3 et 4 octobre 2026. Lots B1 à B8 du plan de travail `PLAN_SUITE.md`, étape
+3 et 4 octobre 2026. Lots B1 à B8 de l'étape
 v1.2 « Les sponsors ». S'y ajoute une passe de gore, demandée en cours de
 route.
 

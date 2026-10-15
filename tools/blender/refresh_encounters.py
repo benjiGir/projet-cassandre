@@ -1,4 +1,4 @@
-"""Rencontres du niveau (lot B6 de PLAN_SUITE.md), posées localement via Cassandre.
+"""Rencontres du niveau, posées localement via Cassandre.
 
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- encounters
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- encounters preview=/tmp/essai.blend

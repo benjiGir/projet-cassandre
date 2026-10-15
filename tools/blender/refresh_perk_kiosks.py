@@ -1,4 +1,4 @@
-"""Bornes de perks (lot B1 de PLAN_SUITE.md), posées localement via Cassandre.
+"""Bornes de perks, posées localement via Cassandre.
 
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- perk_kiosks
     blender -b assets_src/blender/niveau_v2.blend -P tools/blender/cassandre_cli.py -- perk_kiosks preview=/tmp/essai.blend

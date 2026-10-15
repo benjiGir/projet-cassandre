@@ -35,7 +35,7 @@ const MYSTERY_BEATS: readonly MysteryStep[] = [
 // Aucune étape ne dépend d'une réplique dite : couper les sous-titres ne doit pas changer le portefeuille.
 const METRO_MYSTERY_BEATS: readonly MysteryStep[] = [
   { beat: "metro_depart", reached: (session) => session.run.stats.gameplayElapsed >= 12 },
-  // En sommeil tant que le niveau ne pose aucun badge (lot C3 de PLAN_V2.md).
+  // En sommeil tant que le niveau ne pose aucun badge.
   { beat: "metro_badge", reached: (session) => session.run.cards.size > 0 },
   { beat: "metro_passage", reached: trainPassingPlatform },
   { beat: "metro_fret", reached: (session) => session.run.placeLine.space === "fret" },

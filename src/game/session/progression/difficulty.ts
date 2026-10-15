@@ -21,7 +21,7 @@ export interface DifficultyRules {
   donations: number;
 }
 
-// Valeurs de départ, à régler en playtest (lot B7 de PLAN_SUITE.md).
+// Valeurs de départ, à régler en playtest.
 export const difficultyConfig: Record<Difficulty, DifficultyRules> = {
   client: { enemyHp: 0.75, enemyDamage: 0.6, groupShare: 0.5, donations: 1.4 },
   habitue: { enemyHp: 1, enemyDamage: 1, groupShare: 0.75, donations: 1 },

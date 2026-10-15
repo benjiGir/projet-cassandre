@@ -6,6 +6,11 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 
 ## [Non publié]
 
+### Technique
+
+- Retrait des anciens plans et de l'audit de qualité à la racine ; renvois
+  adaptés à la documentation courante, originaux conservés dans Git.
+
 ## [2.0.0-beta] — 2026-10-15
 
 Deuxième niveau de campagne : du quartier à la station privée, le métro

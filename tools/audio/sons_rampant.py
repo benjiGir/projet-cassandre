@@ -1,5 +1,5 @@
 """
-Le Rampant : reptilien sans costume (lot B4 de PLAN_SUITE.md).
+Le Rampant : reptilien sans costume.
 
 Meme distance et meme piece que le Costard (`sons_costard.py`) : ces sons sont
 joues a plein volume, sans spatialisation.

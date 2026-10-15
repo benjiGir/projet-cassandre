@@ -2,7 +2,7 @@
 title: Métro — outillage pour un second niveau
 tags: [journal, blender, metro, outillage]
 status: brouillon
-updated: 2026-10-06
+updated: 2026-10-15
 ---
 
 # Métro — outillage pour un second niveau
@@ -10,7 +10,7 @@ updated: 2026-10-06
 ## Période et objectif
 
 6 octobre 2026. Après l'acceptation de la sensation de voyage du prototype
-T4, l'utilisateur autorise N0 du plan `PLAN_V2.md` : construire un second
+T4, l'utilisateur autorise le lot N0 du métro : construire un second
 niveau avec Cassandre et conserver le chemin de construction du magasin.
 
 ## Préparé

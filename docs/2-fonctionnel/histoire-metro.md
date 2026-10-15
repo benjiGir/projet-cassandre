@@ -2,7 +2,7 @@
 title: Histoire — le métro
 tags: [fonctionnel, histoire, niveau-2]
 status: brouillon
-updated: 2026-10-09
+updated: 2026-10-15
 ---
 
 # Histoire — le métro
@@ -220,7 +220,8 @@ Propositions à valider. Rien n'est figé dans le jeu.
   ils sont réunis dans le
   [catalogue du métro](../6-reference/repliques-metro.md). Les indices de
   décor ne sont encore que schématiques, et le don du premier badge attend
-  les badges. Le plan de travail est `PLAN_V2.md`, à la racine du dépôt.
+  les badges. L'implantation actuelle est décrite dans les
+  [rencontres du métro](../4-technique/rencontres-metro.md).
 
 ## Pour aller plus loin
 

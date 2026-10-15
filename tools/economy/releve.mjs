@@ -1,4 +1,4 @@
-// Relevé du portefeuille (lot B7 de PLAN_SUITE.md).
+// Relevé du portefeuille.
 //
 //   pnpm economy                      # les trois parties types, variante du jeu, difficulté « Habitué »
 //   pnpm economy -- --variante A      # une variante d'équilibrage (A, B, C, ou « avant » le lot B7)
