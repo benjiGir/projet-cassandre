@@ -2,7 +2,7 @@
 title: Le projet
 tags: [introduction]
 status: stable
-updated: 2026-10-08
+updated: 2026-10-15
 ---
 
 # Le projet
@@ -17,16 +17,20 @@ ton est satirique : Costards en costume-cravate, marques de supermarché
 inventées, un Directeur dont la peau se déchire pour révéler le reptilien
 en dessous.
 
-## Le prototype
+## La campagne
 
-Un niveau (l'hypermarché, dix espaces reliés en hub à la Duke 3D), trois
-armes côté joueur — pied-de-biche (`meleeDamage`), pistolet et pompe, plus un
-coup de pied tant qu'aucune arme n'est équipée (`WeaponKind` dans
+Deux niveaux : l'hypermarché, dix espaces reliés en hub à la Duke 3D, puis
+le métro, depuis le quartier jusqu'à l'arrivée au pied de la tour. Quatre
+armes côté joueur — pied-de-biche (`meleeDamage`), pistolet, pompe et
+pistolet de détresse, plus un coup de pied tant qu'aucune arme n'est
+équipée (`WeaponKind` dans
 `src/game/player/weapons/weaponTypes.ts`). Les ennemis sont le Costard (`Suit`,
 ennemi de base), le Rampant et le Vigile, qui partagent sa machine d'état, et
-le Directeur (`Director`, boss unique en fin de niveau).
-Durée visée : 8 à 10 minutes de jeu, chronométrée dans le récap de fin de
-partie sur le niveau complet (`parTime: 600` dans `src/game/level/catalog/levels.ts`).
+le Directeur (`Director`, boss de l'hypermarché), puis le Contrôleur et son
+chef de brigade dans le métro.
+L'hypermarché vise 8 à 10 minutes de jeu, chronométrées dans le récap de fin
+de partie (`parTime: 600` dans `src/game/level/catalog/levels.ts`). La durée
+et l'équilibrage du métro restent à affiner avec les retours des joueurs.
 
 ## La stack
 
@@ -50,15 +54,20 @@ partie sur le niveau complet (`parTime: 600` dans `src/game/level/catalog/levels
 
 ## Où en est le projet
 
-**Version courante : 1.3.0 (2026-10-06).** La 1.0.0 (2026-10-02) a livré le
+**Version préparée : 2.0.0-beta (2026-10-15).** La 1.0.0 (2026-10-02) a livré le
 MVP jouable, publié en open source sous licence MIT (`LICENSE` à la racine) et
 déployé sur GitHub Pages : le niveau v2 (l'hypermarché, ses dix espaces et ses
 coulisses), trois armes, le Costard et le Directeur, le HUD « stream » et ses
 répliques voisées, une ambiance sonore par zone. Les versions 1.1.0 « Le live »
 et 1.2.0 « Les sponsors » ont ajouté le direct, ses dons et les bornes ; la 1.3.0
-ajoute le coup de pied, de nouveaux modèles d'armes et des portes refaites. Le
-détail des versions est dans `CHANGELOG.md`, l'historique daté des chantiers
-dans `journal/`.
+ajoute le coup de pied, de nouveaux modèles d'armes et des portes refaites.
+La 2.0.0-beta ajoute le métro et sa progression de campagne, le pistolet de
+détresse, les Contrôleurs, les sprites illustrés et une harmonisation des
+décors. Les sons et les répliques voisées supplémentaires sont reportés à
+novembre 2026 ; l'audio existant et les textes sont conservés. La bêta
+recueille les retours avant la finition et l'équilibrage final.
+Le détail des versions est dans `CHANGELOG.md`, l'historique daté des
+chantiers dans `journal/`.
 
 Décisions encore ouvertes (statut `propose`) : l'[ADR 0006](../decisions/0006-air-strafing.md)
 (air strafing), l'[ADR 0027](../decisions/0027-filtrage-des-textures-reduites.md)

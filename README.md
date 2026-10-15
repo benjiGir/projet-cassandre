@@ -3,9 +3,16 @@
 Boomer shooter rétro façon Duke Nukem 3D / Ion Fury, en Three.js vanilla.
 Un youtubeur complotiste à 200 abonnés avait raison sur toute la ligne.
 
-Version 1.3.0 : un niveau (l'hypermarché), un coup de pied disponible dès le
-départ, trois armes (pied-de-biche, pistolet, pompe), trois types d'ennemis
-(Costard, Rampant, Vigile) et un boss, quelques minutes de jeu.
+Version 2.0.0-beta : deux niveaux de campagne (l'hypermarché et le métro),
+un coup de pied disponible dès le départ, quatre armes (pied-de-biche,
+pistolet, pompe et pistolet de détresse), les Costards, Rampants, Vigiles,
+le Directeur et les Contrôleurs avec leur chef de brigade.
+
+Cette bêta permet de découvrir le métro, ses trains, ses secrets et ses
+bornes de sponsors. Les nouveaux sons et les nouvelles répliques voisées
+restent à compléter ; leur production est reportée à novembre 2026.
+L'audio déjà présent est conservé. Les retours des joueurs serviront aux
+prochaines passes de finition et d'équilibrage.
 
 ## Stack
 

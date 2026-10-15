@@ -834,6 +834,13 @@ s'en servir dès le blockout.
 
 ## 8. Suivi
 
+**15 octobre 2026 — préparation de la sortie `v2.0.0-beta` à la demande de
+l'utilisateur.** Les sons et les répliques voisées supplémentaires sont
+reportés à novembre 2026. La bêta conserve l'audio déjà présent et les
+textes intégrés ; les retours des joueurs guideront les prochaines
+retouches. Les contrôles, l'équilibrage et la validation d'une partie
+complète encore ouverts restent identifiés ci-dessous.
+
 **9 octobre 2026 — passe de création du niveau clôturée à la demande de
 l'utilisateur.** La construction et l'habillage actuels du métro sont
 conservés comme base pour sa prochaine passe de playtest. Les retouches
