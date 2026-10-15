@@ -19,6 +19,7 @@ import {
 import { dressCardPickup, type CardPickupBillboard } from "../../render/pickups/cardPickups";
 import { LightPool } from "../../render/environment/lightPool";
 import { PropSystem } from "../level/props/props";
+import { hasClearWorldPath } from "../entities/shared/enemyPerception";
 import { DoorSystem } from "../level/doors/doors";
 import { VitreSystem } from "../level/interactions/vitres";
 import { SanitaireSystem } from "../level/sanitaires/sanitaires";
@@ -174,6 +175,7 @@ async function warmFxShaders(engine: PersistentEngine, previousRoot?: THREE.Obje
     await engine.fx.warmExplosions(engine.camera, render);
     await engine.fx.warmMuzzleFlashes(engine.camera, render);
     await engine.fx.warmEnemyAppearances(engine.camera, render);
+    engine.fx.warmPropFragments(engine.camera, render);
   } finally {
     if (previousRoot && previousParent) previousParent.add(previousRoot);
     // Efface l'image de préparation avant le prochain paint.
@@ -237,7 +239,10 @@ export function loadGltfLevel(
         const ecranSystem = new EcranSystem(handle.ecrans);
         const cameraView = new CameraViewSystem(handle.cams);
         const lightPool = new LightPool(handle.lights);
-        const propSystem = new PropSystem(handle.props, handle.root);
+        const propBlastRay = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 });
+        const propSystem = new PropSystem(handle.props, handle.root, (origin, target) =>
+          hasClearWorldPath(session.physics, origin, target, propBlastRay),
+        );
 
         // see: docs/6-reference/notes-code-gameplay.md#session-et-moteur
         const pickupResources = session.pickupResources;

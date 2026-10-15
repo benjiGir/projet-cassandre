@@ -147,6 +147,35 @@ des événements de mort. La simulation masque leurs restes avec `hasRemains` ;
 la présentation réutilise les taches et morceaux existants, sans nouvelle
 réserve graphique. Voir [Cadavres destructibles](../6-reference/notes-code-gameplay-ennemis.md#cadavres-destructibles).
 
+### Débris de carton et de bois
+
+`src/render/fx/propDebris/propDebris.ts` remplace les petits cubes temporaires
+pour les props `carton` et `bois`. La casse transmet le centre, la rotation,
+les demi-étendues physiques et la teinte moyenne du mesh depuis le pas fixe.
+Six pans froissés de carton ou dix planchettes déchirées prennent leur place.
+Les textures procédurales mates portent fibres, adhésif, marquage et veines.
+Une texture par matière conserve le filtrage rétro du renderer.
+
+`FragmentBatch` réutilise 96 emplacements par matière, dans deux
+`InstancedMesh`. Les fragments partent des faces du volume original. Le coup
+fatal règle leur projection : force 1 au pied-de-biche/pistolet, 1,8 au pompe,
+2,3 en impact direct de fusée et 2,6 au souffle. Les tailles sont plafonnées
+pour les grands meubles. Les débris traversent les personnages et restent
+purement cosmétiques, sans corps Rapier.
+
+En vol, ils interrogent la même sonde de décor statique que le gore ; les
+petits sous-pas et l’étendue du fragment limitent les traversées. Les murs
+renvoient les morceaux, les sols les arrêtent à plat selon leur normale.
+Les morceaux posés persistent sans nouvelle requête ; un emplacement ancien
+est repris si la réserve est pleine. Un fragment tombé hors du niveau disparaît
+après cinq secondes. Une nouvelle partie vide la réserve et sa sonde.
+
+`propDebrisConfig.ts` porte les réglages et les profils `SOBRE` et `DYNAMIQUE`,
+exposés avec leurs curseurs dans le panneau de tuning. Le replay F9/F10
+réutilise les gestes ; le niveau doit être rechargé entre les essais pour
+restaurer les objets. Les matériaux et textures sont rendus sous le chargement
+par `warmPropFragments`, sans consommer le RNG de présentation.
+
 ### Frontières des couches
 
 `src/render/` dépend de Three.js et reçoit des valeurs simples. Il ne lit pas directement les machines ennemies ni les contrôleurs joueur. `game/loop/` traduit l'état du jeu en poses et événements visuels ; l'architecture complète est décrite dans [Simulation et présentation](../3-architecture/simulation-et-presentation.md).

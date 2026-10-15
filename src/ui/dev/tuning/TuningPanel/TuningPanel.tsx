@@ -8,6 +8,7 @@ import { MoveTuning } from "../sections/MoveTuning/MoveTuning";
 import { PerkTuning } from "../sections/PerkTuning/PerkTuning";
 import { WeaponBalanceTuning } from "../sections/WeaponBalanceTuning/WeaponBalanceTuning";
 import { GoreTuning } from "../sections/GoreTuning/GoreTuning";
+import { PropDebrisTuning } from "../sections/PropDebrisTuning/PropDebrisTuning";
 import styles from "./TuningPanel.module.css";
 
 // see: docs/archive/reference-controles.md#touches-de-dev
@@ -40,6 +41,7 @@ export function TuningPanel() {
       <TrainRideTuning />
       <WeaponBalanceTuning />
       <GoreTuning />
+      <PropDebrisTuning />
       <MoveTuning />
       <HitFeedbackTuning />
       <PerkTuning />

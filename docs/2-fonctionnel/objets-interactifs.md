@@ -81,6 +81,14 @@ encaissent des coups avant de se briser en débris — bois, carton, verre ou
 métal, chacun avec son propre bruit de casse — quand d'autres résistent
 indéfiniment et se contentent de reculer sous la poussée.
 
+Un carton cassé s’affaisse en grands pans déchirés ; une caisse en bois laisse
+des planchettes. Les morceaux reprennent la taille et les teintes de l’objet,
+volent selon le coup, heurtent les murs et retombent sur le sol. Ils restent
+visibles et traversables ; les plus anciens sont remplacés si le lieu est
+couvert de débris. Le contenu prévu dans un carton tombe toujours normalement.
+Un souffle peut briser les cartons et meubles en bois destructibles à portée,
+avec des dégâts qui diminuent avec la distance et les murs qui les protègent.
+
 Une limite à connaître : un meuble physique, même massif, n'arrête jamais un
 tir ennemi. Il peut vous cacher à la vue, mais une balle le traverse comme
 si de rien n'était.

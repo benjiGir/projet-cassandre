@@ -31,8 +31,6 @@ export function updateBreakables(step: GameplayStep): void {
   const { session, dt } = step;
   const propsDestroyedBefore = session.level.propSystem?.destroyedEvents.length ?? 0;
   session.level.propSystem?.update(session.weapons.hitEvents);
-  const propsDestroyed = session.level.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
-  recordPropsDestroyed(session.run.stats, propsDestroyed.length);
   // Explosifs (`matiere: gaz`) : les props se sont déjà poussés et
   // amorcés entre eux, reste le souffle sur le joueur et les ennemis.
   for (const explosion of session.level.propSystem?.takeNewExplosions() ?? []) blastLiving(step, explosion.point);
@@ -42,6 +40,8 @@ export function updateBreakables(step: GameplayStep): void {
     session.level.propSystem?.applyBlast(detonation.point, weaponConfig.flareBlast);
     blastLiving(step, detonation.point, weaponConfig.flareBlast);
   }
+  const propsDestroyed = session.level.propSystem?.destroyedEvents.slice(propsDestroyedBefore) ?? [];
+  recordPropsDestroyed(session.run.stats, propsDestroyed.length);
   const breakLine = propsDestroyed.map((e) => PROP_BREAK_LINES[e.matiere]).find((l) => l !== undefined);
   if (breakLine) triggerHeroLine(session, breakLine);
   let casse = propsDestroyed.length > 0;

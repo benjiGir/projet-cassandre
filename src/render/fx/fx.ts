@@ -13,6 +13,8 @@ import { Gore } from "./gore";
 import { EnemyAppearances } from "./enemyAppearances";
 import type { BillboardSprite } from "../sprites/billboard";
 import type { SurfaceProbe } from "./goreConfig";
+import { PropDebris } from "./propDebris/propDebris";
+import type { FragmentMaterial, PropFragmentSource } from "./propDebris/propDebrisTypes";
 
 /** Taille de l'éclatement d'une fusée par rapport à l'explosion d'une bonbonne — le rapport de leurs rayons de souffle. */
 const FLARE_BURST_SCALE = 0.6;
@@ -29,6 +31,7 @@ export class FxSystem {
   private readonly flares: Flares;
   private readonly gore: Gore;
   private readonly appearances: EnemyAppearances;
+  private readonly propFragments: PropDebris;
 
   constructor(scene: THREE.Scene, enemyAtlases: readonly THREE.Texture[] = []) {
     // Une seule lecture du flux cosmétique, partagée dans le même ordre d'appels.
@@ -41,6 +44,7 @@ export class FxSystem {
     this.explosions = new Explosions(scene, nextRandom);
     this.flares = new Flares(scene, (point, direction) => this.debris.spawnFlareSpark(point, direction));
     this.gore = new Gore(scene, nextRandom);
+    this.propFragments = new PropDebris(scene, nextRandom);
     this.appearances = new EnemyAppearances(scene, enemyAtlases);
   }
 
@@ -57,6 +61,7 @@ export class FxSystem {
     this.explosions.reset();
     this.flares.reset();
     this.gore.reset();
+    this.propFragments.reset();
     this.appearances.reset();
     // La sonde appartient à la partie qui vient de finir : son monde physique va être libéré.
     this.gore.setSurfaceProbe(null);
@@ -65,6 +70,7 @@ export class FxSystem {
   /** Donne au gore de quoi trouver le décor de CETTE partie — voir `SurfaceProbe`. */
   setSurfaceProbe(probe: SurfaceProbe | null): void {
     this.gore.setSurfaceProbe(probe);
+    this.propFragments.setSurfaceProbe(probe);
   }
 
   triggerShake(amplitude: number, duration: number): void {
@@ -113,6 +119,12 @@ export class FxSystem {
   }
   spawnDebris(point: THREE.Vector3, direction: THREE.Vector3, color: number, count: number): void {
     this.debris.spawnDebris(point, direction, color, count);
+  }
+  spawnPropFragments(kind: FragmentMaterial, source: PropFragmentSource): void {
+    this.propFragments.spawn(kind, source);
+  }
+  warmPropFragments(camera: THREE.Camera, render: () => void): void {
+    this.propFragments.warm(camera, render);
   }
   spawnFrostBurst(point: THREE.Vector3): void {
     this.debris.spawnFrostBurst(point);
@@ -168,5 +180,6 @@ export class FxSystem {
     this.water.update(realDt);
     this.explosions.update(realDt);
     this.gore.update(realDt);
+    this.propFragments.update(realDt);
   }
 }

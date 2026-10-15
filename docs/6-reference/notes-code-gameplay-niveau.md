@@ -2,7 +2,7 @@
 title: Contrats de chargement et des objets de niveau
 tags: [gameplay, niveau, gltf, rapier, code]
 status: brouillon
-updated: 2026-10-14
+updated: 2026-10-15
 ---
 
 # Contrats de chargement et des objets de niveau
@@ -119,6 +119,16 @@ de la normale d’impact. À la casse, mesh, corps et collider sont désactivés
 restent possédés par le niveau pour sa libération. Le contenu `nom:nombre` peut
 créer des aliments, dispersés par un PRNG dédié. Les nouveaux pickups restent
 jusqu’à ce qu’un soin soit accepté ; être à PV pleins ne les consomme pas.
+`PropDestroyedEvent.shape` capture centre, rotation, demi-étendues et couleur
+moyenne de la géométrie ; `strength` distingue l’impact fatal et le souffle.
+La présentation utilise ces valeurs pour les pans de carton et planchettes
+persistants, sans réactiver l’ancien corps physique.
+
+`PropSystem` reçoit au chargement une fonction de visibilité statique pour les
+souffles. Les murs bloquent impulsions et amorçage des bonbonnes voisines. Les
+props destructibles en bois et carton perdent aussi les dégâts décroissants
+du souffle ; `pv` absent reste indestructible. Les destructions sont comptées
+après les souffles, y compris ceux d’une fusée dans le même pas.
 
 Chaque système cassable suit son propre curseur d’impacts. Les tirs ennemis
 peuvent briser directement vitres et sanitaires indépendamment de leur PV joueur.

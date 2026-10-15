@@ -7,7 +7,8 @@ import { seededRandom } from "../../../app/runtime/gameRuntime";
 import { FOOD_DROP_SEED } from "../../../core/effect/seeds";
 import { FOOD_HEAL_AMOUNTS, parseFoodItem, type FoodItem } from "../interactions/food";
 import { HEAL_PICKUP_RADIUS } from "../interactions/interactive";
-import { explosionConfig, type BlastConfig } from "./propConfig";
+import { blastDamageAt, explosionConfig, type BlastConfig } from "./propConfig";
+import { capturePropBreakShape, type PropBreakShape } from "./propAppearance";
 
 // see: docs/decisions/0030-props-dynamiques.md
 
@@ -67,6 +68,8 @@ export interface PropDestroyedEvent {
   /** Direction du coup fatal, unitaire — direction de base de la dispersion des débris. */
   direction: THREE.Vector3;
   matiere: PropMaterial;
+  shape: PropBreakShape;
+  strength: number;
 }
 
 /** Un prop `gaz` vient d'exploser. Poussé UNE SEULE FOIS par prop. */
@@ -156,7 +159,11 @@ export class PropSystem {
   /** Flux déterministe dédié aux drops de nourriture — voir `FOOD_DROP_SEED`. */
   private readonly nextFoodRandom = seededRandom(FOOD_DROP_SEED);
 
-  constructor(props: readonly PropInfo[], root: THREE.Object3D) {
+  constructor(
+    props: readonly PropInfo[],
+    root: THREE.Object3D,
+    private readonly blastReaches: (origin: THREE.Vector3, target: THREE.Vector3) => boolean = () => true,
+  ) {
     root.updateWorldMatrix(true, false);
     this.rootInverse = root.matrixWorld.clone().invert();
     this.root = root;
@@ -275,13 +282,19 @@ export class PropSystem {
         matiere: state.info.matiere,
         fatal,
       });
-      if (fatal) this.destroy(state, hit.point, impulseScratch);
+      if (fatal)
+        this.destroy(
+          state,
+          hit.point,
+          impulseScratch,
+          hit.weapon === "shotgun" ? 1.8 : hit.weapon === "flare" ? 2.3 : 1,
+        );
     }
     this.hitCursor = hitEvents.length;
   }
 
   // Garder le corps désactivé : son handle ne doit pas être réutilisé avant le teardown.
-  private destroy(state: PropState, point: THREE.Vector3, impulse: THREE.Vector3): void {
+  private destroy(state: PropState, point: THREE.Vector3, impulse: THREE.Vector3, strength = 1): void {
     state.destroyed = true;
     state.hp = 0;
     state.info.collider.setEnabled(false);
@@ -301,6 +314,8 @@ export class PropSystem {
       point: point.clone(),
       direction,
       matiere: state.info.matiere,
+      shape: capturePropBreakShape(state.info.object, state.info.body, state.info.halfExtents),
+      strength,
     });
 
     if (state.info.matiere === "gaz") this.explode(state);
@@ -339,6 +354,8 @@ export class PropSystem {
       impulseScratch.set(p.x - center.x, p.y - center.y, p.z - center.z);
       const distance = impulseScratch.length();
       if (distance >= blast.radius) continue;
+      const target = new THREE.Vector3(p.x, p.y, p.z);
+      if (!this.blastReaches(center, target)) continue;
 
       // Un prop exactement au centre n'a pas de direction : il part vers le haut.
       if (distance > 1e-4) impulseScratch.multiplyScalar(1 / distance);
@@ -349,6 +366,10 @@ export class PropSystem {
 
       // Réaction en chaîne : une mèche déjà allumée n'est pas rallongée.
       if (state.info.matiere === "gaz" && state.fuse === 0) state.fuse = explosionConfig.chainDelaySteps;
+      if ((state.info.matiere === "carton" || state.info.matiere === "bois") && state.info.maxHp !== null) {
+        state.hp -= blastDamageAt(distance, blast);
+        if (state.hp <= 0) this.destroy(state, target, impulseScratch, 2.6);
+      }
     }
   }
 

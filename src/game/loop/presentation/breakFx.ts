@@ -35,7 +35,13 @@ export function presentPropEvents({ engine, session }: FxFrame): void {
   if (props) {
     for (const event of props.destroyedEvents) {
       const debris = PROP_DEBRIS[event.matiere] ?? DEFAULT_PROP_DEBRIS;
-      engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
+      if (event.matiere === "carton" || event.matiere === "bois") {
+        engine.fx.spawnPropFragments(event.matiere, {
+          ...event.shape,
+          direction: event.direction,
+          strength: event.strength,
+        });
+      } else engine.fx.spawnDebris(event.point, event.direction, debris.color, debris.count);
       engine.fx.triggerShake(weaponConfig.shakeAmplitude, weaponConfig.shakeDuration);
       playPropBreakSfx(event.matiere);
     }

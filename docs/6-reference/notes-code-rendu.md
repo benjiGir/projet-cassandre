@@ -2,7 +2,7 @@
 title: Contrats locaux du rendu
 tags: [reference, rendu, contrats]
 status: brouillon
-updated: 2026-10-13
+updated: 2026-10-15
 ---
 
 # Contrats locaux du rendu
@@ -278,7 +278,11 @@ Seules les douilles rebondissent, sur un plan y=0 supposé : l'approximation
 peut traverser des marches ou étages. L'éjection presque verticale se rabat
 sur +X si sa direction horizontale dégénère.
 
-Les gibs changent taille, quantité et couleur ; les débris reçoivent une
+Le carton et le bois utilisent désormais deux réserves de fragments persistants,
+avec collision cosmétique sur le décor statique. Le détail est dans
+[Débris de carton et de bois](../4-technique/rendu.md#débris-de-carton-et-de-bois).
+
+Les gibs changent taille, quantité et couleur ; les autres débris reçoivent une
 couleur externe mise en cache pour éviter un matériau par casse. Le givre
 utilise 12 % de la gravité pour retomber lentement. La gerbe d'eau de casse
 part vers le haut et n'installe pas elle-même la fontaine permanente.
