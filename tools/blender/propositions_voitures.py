@@ -17,6 +17,9 @@ import os
 import bpy
 from mathutils import Vector
 
+from vehicle_geometry import (cabin_details, contoured_body, finish_glazing, rear_window,
+                              round_nose_lamp, seat_ceiling, suv_rear_lamps, wheels)
+
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_DIR = os.path.join(ROOT, "assets_src", "blender", "propositions_voitures")
@@ -95,6 +98,9 @@ class MeshBuilder:
 
     def prism_yz(self, profile, width, color, x_center=0,
                  chamfer_top_edges=(), chamfer_width=0.0, chamfer_height=0.0):
+        if chamfer_top_edges and len(profile) > 20 and x_center == 0:
+            return contoured_body(self, profile, width, color, chamfer_top_edges,
+                                  chamfer_width, chamfer_height)
         half = width * 0.5
         side_plus = [(x_center + half, y, z) for y, z in profile]
         side_minus = [(x_center - half, y, z) for y, z in reversed(profile)]
@@ -177,12 +183,20 @@ class MeshBuilder:
             self.face(points, color)
 
     def build(self, name, collection, material, location=(0, 0, 0), glass_material=None):
+        finish_glazing(self)
         mesh = bpy.data.meshes.new(f"{name}_mesh")
         mesh.from_pydata(self.vertices, [], self.faces)
         mesh.materials.append(material)
         if glass_material is not None:
             mesh.materials.append(glass_material)
         mesh.update()
+        if getattr(self, "custom_normals", None):
+            normals = [tuple(polygon.normal) for polygon in mesh.polygons
+                       for _ in polygon.loop_indices]
+            for index, values in self.custom_normals.items():
+                for loop, normal in zip(mesh.polygons[index].loop_indices, values):
+                    normals[loop] = tuple(normal)
+            mesh.normals_split_custom_set(normals)
         colors = mesh.color_attributes.new(name="Col", type="FLOAT_COLOR", domain="CORNER")
         mesh.color_attributes.active_color = colors
         for polygon in mesh.polygons:
@@ -265,11 +279,16 @@ def add_glass_side(builder, x, profile):
 
 
 def add_cabin_structure(builder, cabin, width, color, dashboard_y, seat_rows,
-                        roof_color=None):
+                        roof_color=None, rear_glazing=True):
+    builder.cabin = cabin
+    cabin_details(builder, cabin, width, dashboard_y)
     front_base, front_roof, rear_roof, rear_base = cabin
     roof_z = front_roof[1]
     roof_front = front_roof[0]
     roof_rear = rear_roof[0]
+    builder.cabin_color_face = len(builder.faces)
+    if rear_glazing:
+        rear_window(builder, cabin, width, color)
     builder.prism_yz([(roof_front + 0.045, roof_z - 0.075),
                       (roof_front, roof_z), (roof_rear, roof_z),
                       (roof_rear - 0.045, roof_z - 0.075)],
@@ -292,35 +311,20 @@ def add_cabin_structure(builder, cabin, width, color, dashboard_y, seat_rows,
     for seat_y in seat_rows:
         for side in (-1, 1):
             x = side * width * 0.24
-            floor_z = front_base[1]
+            floor_z = front_base[1] - .16
             builder.box((x, seat_y, floor_z + 0.095),
                         (width * 0.36, 0.37, 0.14), "#494b48")
             back_bottom = floor_z + 0.13
-            back_top = roof_z - 0.16
+            headrest_top = seat_ceiling(cabin, seat_y - .18)
+            back_top = headrest_top - .065
             builder.box((x, seat_y - 0.13, (back_bottom + back_top) * 0.5),
                         (width * 0.34, 0.095, back_top - back_bottom), "#424745")
-            headrest_top = roof_z - 0.105
             builder.box((x, seat_y - 0.13, (back_top + headrest_top) * 0.5),
                         (width * 0.18, 0.08, headrest_top - back_top), "#424745")
 
 
 def add_wheels(builder, spec):
-    for center_y in (-spec["wheelbase"] * 0.5, spec["wheelbase"] * 0.5):
-        for side in (-1, 1):
-            x = side * (spec["body_width"] * 0.5 - 0.15)
-            tire_width = (spec.get("rear_tire_width", spec["tire_width"])
-                          if center_y < 0 else spec["tire_width"])
-            builder.cylinder_x((x, center_y, spec["wheel_z"]), spec["wheel_radius"],
-                               tire_width, "#202122", segments=10)
-            hub_x = x + side * (tire_width * 0.48)
-            builder.cylinder_x((hub_x, center_y, spec["wheel_z"]),
-                               spec["wheel_radius"] * 0.52, 0.045, "#9ba09b", segments=8)
-            builder.cylinder_x((hub_x + side * 0.025, center_y, spec["wheel_z"]),
-                               spec["wheel_radius"] * 0.16, 0.05, "#555b5c", segments=8)
-            builder.arc_band(center_y, spec["wheel_z"],
-                             side * (spec["body_width"] * 0.5 + 0.008),
-                             spec["arch_radius"], spec["arch_radius"] - 0.055,
-                             spec["cladding"], segments=8)
+    wheels(builder, spec)
 
 
 def nose_surface_y(spec, z, offset=0.0):
@@ -360,18 +364,19 @@ def add_bumpers_and_lamps(builder, spec):
                        0.715, 0.925, "#292d2e", 0.016)
             nose_patch(builder, spec, center_x, lamp_width,
                        0.74, 0.90, "#e1d7b4", 0.024)
+            nose_patch(builder, spec, center_x, lamp_width - .025,
+                       .87, .89, "#f1ead4", .026)
+            nose_patch(builder, spec, side * (.50 + lamp_width / 2 + .055), .045,
+                       .75, .89, "#cb9148", .026)
         nose_patch(builder, spec, 0, 0.46, 0.565, 0.635, "#d6d1bd", 0.014)
     elif spec["round_lamps"]:
+        nose_patch(builder, spec, 0, width - .25, .80, 1.15, "#293437", .014)
         for side in (-1, 1):
-            builder.cylinder_y((side * 0.49, length * 0.5 - 0.095, 0.83),
-                               0.14, 0.04, "#d7d0a8", segments=8)
-            builder.cylinder_y((side * 0.49, length * 0.5 - 0.125, 0.83),
-                               0.08, 0.05, "#eee5be", segments=8)
-        builder.box((0, length * 0.5 - 0.11, 0.77), (0.57, 0.025, 0.20), "#25292b")
-        builder.box((0, length * 0.5 - 0.13, 0.81), (0.36, 0.03, 0.10), "#25292b")
-        for i in range(3):
-            z = 0.775 + i * 0.035
-            builder.box((0, length * 0.5 - 0.153, z), (0.27, 0.018, 0.012), "#798080")
+            round_nose_lamp(builder, spec, side * .57, .98, .153, "#9daaa6", nose_surface_y, .021)
+            round_nose_lamp(builder, spec, side * .57, .98, .125, "#ddd9bc", nose_surface_y, .027)
+            round_nose_lamp(builder, spec, side * .57, .98, .084, "#f0e8ca", nose_surface_y, .031)
+        for z in (.85, .91, .97, 1.03, 1.09):
+            nose_patch(builder, spec, 0, .63, z, z + .018, "#8b9997", .026)
     else:
         lamp_width = 0.34
         for side in (-1, 1):
@@ -382,14 +387,17 @@ def add_bumpers_and_lamps(builder, spec):
         for i in range(3):
             z = 0.775 + i * 0.035
             builder.box((0, length * 0.5 - 0.153, z), (0.27, 0.018, 0.012), "#798080")
-    for side in (-1, 1):
-        builder.box((side * (width * 0.34), -length * 0.5 + 0.10, 0.76),
-                    (0.20, 0.035, 0.35), "#a3463c")
-        builder.box((side * (width * 0.34), -length * 0.5 + 0.077, 0.64),
-                    (0.20, 0.035, 0.08), "#d18e35")
+    if spec["kind"] == "suv":
+        suv_rear_lamps(builder, spec)
+    else:
+        for side in (-1, 1):
+            builder.box((side * (width * 0.34), -length * 0.5 - 0.012, .71),
+                        (0.20, 0.035, .25), "#a3463c")
+            builder.box((side * (width * 0.34), -length * 0.5 - 0.033, .64),
+                        (0.20, 0.035, 0.055), "#d18e35")
     if spec["kind"] not in {"citadine", "berline"}:
         builder.box((0, length * 0.5 - 0.035, 0.55), (0.46, 0.018, 0.12), "#d6d1bd")
-    builder.box((0, -length * 0.5 + 0.035, 0.55), (0.46, 0.018, 0.12), "#d6d1bd")
+    builder.box((0, -length * 0.5 - 0.018, 0.55), (0.46, 0.018, 0.12), "#d6d1bd")
 
 
 def add_side_trim_and_doors(builder, spec):
@@ -426,7 +434,7 @@ def make_citadine(builder):
                      chamfer_top_edges=(1, 2, 3, 4),
                      chamfer_width=0.09, chamfer_height=0.055)
     cabin = [(0.77, 0.95), (0.34, 1.39 + cabin_raise),
-             (-0.64, 1.39 + cabin_raise), (-1.28, 0.93)]
+             (-1.03, 1.39 + cabin_raise), (-1.70, 0.93)]
     add_cabin_structure(builder, cabin, 1.39, spec["body_color"], 0.54, (0.12, -0.70))
     for side in (-1, 1):
         x = side * (1.39 * 0.5 + 0.008)
@@ -435,7 +443,7 @@ def make_citadine(builder):
         add_glass_side(builder, x, [(-0.15, 1.02), (-0.13, 1.33 + cabin_raise),
                                     (-0.53, 1.33 + cabin_raise), (-0.60, 1.02)])
         add_glass_side(builder, x, [(-0.67, 1.02), (-0.63, 1.32 + cabin_raise),
-                                    (-0.77, 1.32 + cabin_raise), (-1.14, 0.99)])
+                                    (-0.95, 1.32 + cabin_raise), (-1.56, 0.99)])
         builder.beam_yz(side * 0.67, (-0.095, 1.00), (-0.085, 1.37 + cabin_raise),
                         0.075, 0.095, spec["body_color"])
         builder.beam_yz(side * 0.67, (-0.635, 1.00), (-0.59, 1.37 + cabin_raise),
@@ -443,9 +451,6 @@ def make_citadine(builder):
     builder.quad([(-0.56, 0.70, 1.00), (0.56, 0.70, 1.00),
                   (0.54, 0.38, 1.34 + cabin_raise),
                   (-0.54, 0.38, 1.34 + cabin_raise)], "#ffffff", 1)
-    builder.quad([(-0.52, -1.10, 0.98), (0.52, -1.10, 0.98),
-                  (0.52, -0.67, 1.34 + cabin_raise),
-                  (-0.52, -0.67, 1.34 + cabin_raise)], "#ffffff", 1)
     builder.box((0, 0.83, 0.995), (0.88, 0.035, 0.018), "#343839")
     builder.box((0, -1.08, 0.96), (1.10, 0.035, 0.022), "#343839")
     add_wheels(builder, spec)
@@ -491,9 +496,6 @@ def make_berline(builder):
     builder.quad([(-0.61, 0.88, 1.02), (0.61, 0.88, 1.02),
                   (0.58, 0.55, 1.40 + cabin_raise),
                   (-0.58, 0.55, 1.40 + cabin_raise)], "#ffffff", 1)
-    builder.quad([(-0.58, -1.08, 1.02), (0.58, -1.08, 1.02),
-                  (0.56, -0.68, 1.40 + cabin_raise),
-                  (-0.56, -0.68, 1.40 + cabin_raise)], "#ffffff", 1)
     builder.box((0, 1.24, 0.99), (1.40, 0.025, 0.018), "#59646a")
     builder.box((0, -1.55, 0.99), (1.25, 0.025, 0.018), "#59646a")
     add_wheels(builder, spec)
@@ -535,8 +537,6 @@ def make_suv(builder):
                         0.085, 0.11, spec["body_color"])
     builder.quad([(-0.65, 0.96, 1.24), (0.65, 0.96, 1.24),
                   (0.62, 0.68, 1.72), (-0.62, 0.68, 1.72)], "#ffffff", 1)
-    builder.quad([(-0.62, -1.76, 1.26), (0.62, -1.76, 1.26),
-                  (0.62, -1.60, 1.71), (-0.62, -1.60, 1.71)], "#ffffff", 1)
     builder.box((0, 1.19, 1.22), (1.30, 0.025, 0.02), "#343a35")
     builder.box((0, -1.69, 1.22), (1.28, 0.025, 0.02), "#343a35")
     add_wheels(builder, spec)
@@ -551,9 +551,8 @@ def make_suv(builder):
     for y in (0.66, -0.86):
         builder.box((0, y, 1.825), (1.38, 0.07, 0.03), "#3a3d3a")
     for side in (-1, 1):
-        builder.box((side * 0.60, 2.21, 0.78), (0.12, 0.16, 0.10), "#d4c7a5")
-        builder.box((side * 0.62, 2.21, 0.61), (0.11, 0.16, 0.08), "#d18e35")
-        builder.box((side * 0.73, -2.18, 1.03), (0.17, 0.035, 0.40), "#a3463c")
+        nose_patch(builder, spec, side * .58, .24, .65, .77, "#293437", .018)
+        nose_patch(builder, spec, side * .58, .19, .675, .745, "#d4a25d", .024)
     return spec
 
 
@@ -587,9 +586,6 @@ def make_muscle(builder):
     builder.quad([(-0.69, 0.39, 0.98), (0.69, 0.39, 0.98),
                   (0.68, -0.02, 1.24 + cabin_raise),
                   (-0.68, -0.02, 1.24 + cabin_raise)], "#ffffff", 1)
-    builder.quad([(-0.66, -1.57, 0.96), (0.66, -1.57, 0.96),
-                  (0.67, -0.96, 1.24 + cabin_raise),
-                  (-0.67, -0.96, 1.24 + cabin_raise)], "#ffffff", 1)
     for side in (-1, 1):
         x = side * 0.24
         builder.quad([(x - 0.075, 2.10, 1.049), (x + 0.075, 2.10, 1.049),
@@ -651,7 +647,8 @@ def make_camion(builder):
                      chamfer_height=0.06)
 
     cabin = [(2.75, 1.30), (2.20, 2.20), (0.98, 2.20), (0.76, 1.30)]
-    add_cabin_structure(builder, cabin, 1.82, spec["body_color"], 2.48, (1.58,))
+    add_cabin_structure(builder, cabin, 1.82, spec["body_color"], 2.48, (1.58,),
+                        rear_glazing=False)
     for side in (-1, 1):
         glass_x = side * 0.918
         add_glass_side(builder, glass_x,

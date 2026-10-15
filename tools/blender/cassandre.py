@@ -945,6 +945,15 @@ def metro_colliders(inspect: bool = False) -> dict:
     return {"ok": res["code"] == 0, **res}
 
 
+def rework_vehicles(etape: str = "preview", niveau: str = "hypermarche", modele: str = "all") -> dict:
+    """Compare puis régénère les voitures originales et leurs variantes."""
+    if etape not in ("preview", "assets", "inspect", "level"):
+        raise ValueError("Étape attendue : preview, assets, inspect ou level")
+    if niveau not in ("hypermarche", "metro", "library"):
+        raise ValueError("Niveau attendu : hypermarche, metro ou library")
+    return run("tools/blender/refine_vehicles.py", etape, niveau, modele, keep="[vehicle-refinement]")
+
+
 def metro_warnings(inspect: bool = False, apercus: bool = True) -> dict:
     """Finit la subdivision du métro et exige un contrat sans avertissement."""
     args = ["--inspect"] if inspect else ([] if apercus else ["--sans-apercus"])

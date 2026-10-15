@@ -2,7 +2,7 @@
 title: Board de références — voitures du parking
 tags: [assets, references, voitures, parking]
 status: brouillon
-updated: 2026-09-29
+updated: 2026-10-15
 ---
 
 # Board de références — voitures du parking
@@ -137,3 +137,45 @@ source existante, ouvrir `niveau_v2.blend` avec Blender et exécuter
 `tools/blender/refresh_level_vehicles.py`. Le script sauvegarde une copie dans
 un dossier temporaire, remplace les meshes et leurs proxies, puis réexporte
 le niveau sans reconstruire son décor.
+
+## Finition des sept voitures — 15 octobre 2026
+
+La citadine, la berline, le SUV, la muscle car, le pickup, la sportive et le
+4×4 partagent une reprise de leurs carrosseries, roues et vitrages :
+
+- Flancs galbés, extrémités légèrement resserrées et épaules biseautées.
+  Les normales des flancs sont continues pour éviter les diagonales d'ombrage.
+- Pneus à épaules arrondies, jantes avec lèvre, moyeu et six ajours.
+- Habitacles resserrés au pavillon, joints de vitrage, reflets peints discrets,
+  essuie-glaces et volant visible. Les vitres restent transparentes.
+- Phares du SUV et feux arrière de la citadine, de la berline et du SUV
+  replacés devant la carrosserie ; clignotants distincts.
+- Pavillon de la citadine prolongé vers son hayon pour distinguer sa silhouette
+  de celle de la berline.
+- Lunettes arrière construites sur le plan des montants, cadres opaques complets
+  et raccords de custodes refermés ; pas de reflet peint sur les lunettes arrière.
+- Sièges abaissés et dossiers plafonnés suivant les pentes du pavillon pour
+  rester dans l’habitacle, y compris aux rangées arrière.
+- Blocs arrière du SUV appliqués sur sa face inclinée : boîtier sombre, zones
+  rouges, clignotants ambrés et feux de recul clairs séparés.
+- Feux du 4×4 descendus sous la lunette et plaqués sur la caisse, de part
+  et d’autre de la roue de secours, avec les trois sections dans un boîtier sombre.
+
+Les 21 livrées sont régénérées, ainsi que les deux sources Blender. Les
+modèles passent de 960–1 632 à 1 968–2 494 triangles. Les instances sont
+ajustées à l'encombrement de leurs anciens patrons : 21 voitures dans le
+magasin et deux dans le quartier du métro. Les collisions, poses et autres
+objets de scène sont conservés, avec comparaison d'empreintes avant sauvegarde.
+La bibliothèque du quartier est actualisée pour les prochaines reconstructions.
+
+La recette courante est `tools/blender/refine_vehicles.py`, appelée par
+`C.rework_vehicles()` : `etape="preview"` rend les comparaisons dans
+`renders/vehicles/` (trois quarts avant/arrière, profil et arrière axial),
+`etape="assets"` régénère les sources et GLB individuels,
+et `etape="level"` reprend les instances du fichier ouvert. Pour cette dernière
+étape, `niveau` vaut `hypermarche`, `metro` ou `library` pour la bibliothèque
+`assets_src/library/lib_quartier_N3b.blend`. `etape="inspect"` relève les poses
+sans modifier la scène. `modele="tout_terrain"` limite une reprise au 4×4
+(la valeur par défaut `all` reprend les sept voitures). Les exports runtime sont `niveau_v2.glb` et
+`metro_blockout.glb` ; les anciens PNG de propositions conservent leur rôle
+d'aperçus historiques.
