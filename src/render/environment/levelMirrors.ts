@@ -31,7 +31,7 @@ export function attachLevelMirror(mesh: THREE.Mesh, resources: LevelResources): 
   const peers = mirrorsByLevel.get(resources) ?? new Set<Reflector>();
   mirrorsByLevel.set(resources, peers);
   peers.add(mirror);
-  const drawReflection = mirror.onBeforeRender;
+  const drawReflection = mirror.onBeforeRender.bind(mirror);
   mirror.onBeforeRender = (renderer, scene, camera, geometry, material, group) => {
     if (renderer.getRenderTarget() === mirror.getRenderTarget()) return;
     const visibility = [...peers].map((peer) => [peer, peer.visible] as const);
@@ -40,7 +40,7 @@ export function attachLevelMirror(mesh: THREE.Mesh, resources: LevelResources): 
     for (const [child] of cameraVisibility) child.visible = false;
     const hideActors = revealReflectionActors(scene);
     try {
-      drawReflection.call(mirror, renderer, scene, camera, geometry, material, group);
+      drawReflection(renderer, scene, camera, geometry, material, group);
     } finally {
       hideActors();
       for (const [peer, visible] of visibility) peer.visible = visible;

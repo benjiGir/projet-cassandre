@@ -14,7 +14,7 @@ export async function loadLevelSpaces(gltfName: string): Promise<LevelSpaceData[
   try {
     return [...(await fetchJson(url, decodeLevelSpacesManifest)).espaces];
   } catch (error) {
-    console.warn(`[level] manifeste des espaces illisible ("${url}" : ${error}) — pas de répliques de lieu.`);
+    console.warn(`[level] manifeste des espaces illisible ("${url}") — pas de répliques de lieu.`, error);
     return null;
   }
 }

@@ -35,8 +35,8 @@ function decodeAtlas(raw: unknown, rows = 4): AtlasData {
   if (!Array.isArray(data.frames) || data.frames.length !== rows) throw new Error("[héros] nombre de poses invalide");
   const frames = data.frames.map((row: unknown) => {
     if (!Array.isArray(row) || row.length !== 8) throw new Error("[héros] huit directions attendues");
-    return row.map((raw: unknown): HeroSpriteFrame => {
-      const frame = object(raw);
+    return row.map((rawFrame: unknown): HeroSpriteFrame => {
+      const frame = object(rawFrame);
       const x = nonNegative(frame.x);
       const y = nonNegative(frame.y);
       const w = positive(frame.width);
@@ -68,7 +68,7 @@ export async function loadHero(): Promise<HeroAsset> {
       const atlas = data[kind];
       const texture = await loader.loadAsync(assetUrl(`assets/characters/${atlas.file}`));
       configureRetroTexture(texture);
-      return { ...atlas, texture };
+      return { texture, width: atlas.width, height: atlas.height, frames: atlas.frames };
     }),
   );
   const failed = results.find((result) => result.status === "rejected");

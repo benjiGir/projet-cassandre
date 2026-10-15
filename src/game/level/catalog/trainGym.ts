@@ -172,8 +172,8 @@ export function buildTrainGym(root: THREE.Group, physics: PhysicsWorld): TrainGy
     bodies,
     spawn: new THREE.Vector3(-6, 0.9, 10),
     spawnYaw: 0,
-    use(position) {
-      const control = controls.find((candidate) => candidate.position.distanceTo(position) <= 2);
+    use(playerPosition) {
+      const control = controls.find((candidate) => candidate.position.distanceTo(playerPosition) <= 2);
       if (!control) return false;
       system.enqueue(control.command);
       return true;
