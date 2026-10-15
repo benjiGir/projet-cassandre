@@ -69,6 +69,7 @@ import { LOYALTY_CARDS, type LoyaltyCard } from "../player/loyaltyCards";
 import type { Perk } from "../player/perks";
 import { BOISSON_VARIANTS, perkConfig, type PerkConfig } from "../player/perkConfig";
 import { startPlayback } from "./replay/recording";
+import { WEAPON_BALANCE_VARIANTS, type WeaponBalanceVariant } from "../player/weapons/weaponBalance";
 import type { GameEngine } from "../session/gameEngine";
 import { publishBlenderPose, readBlenderPose, teleportBlender, type BlenderPose } from "./blenderPose";
 import {
@@ -81,6 +82,7 @@ import {
   applyKnockbackVariant,
   applyLightBudget,
   applyRecoilVariant,
+  applyWeaponBalanceVariant,
   benchmarkRender,
   checkDeterminism,
   simulateRecording,
@@ -123,6 +125,8 @@ export function exposeDebugApi(engine: GameEngine): void {
       return engine.session.weapons;
     },
     weaponConfig,
+    weaponBalanceVariants: WEAPON_BALANCE_VARIANTS,
+    applyWeaponBalanceVariant,
     kickConfig,
     kickVariants: KICK_VARIANTS,
     trains: {
@@ -493,6 +497,8 @@ declare global {
         readonly system: TrainRideSystem | null;
       };
       weaponConfig: WeaponConfig;
+      weaponBalanceVariants: typeof WEAPON_BALANCE_VARIANTS;
+      applyWeaponBalanceVariant: (name: WeaponBalanceVariant) => ReturnType<typeof applyWeaponBalanceVariant>;
       recoilVariants: typeof RECOIL_VARIANTS;
       recoilInterpolationVariants: typeof RECOIL_INTERPOLATION_VARIANTS;
       applyRecoilVariant: (name: keyof typeof RECOIL_VARIANTS) => ReturnType<typeof applyRecoilVariant>;

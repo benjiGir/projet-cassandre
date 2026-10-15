@@ -15,6 +15,7 @@ import {
   type RecoilVariant,
 } from "../../player/weapons/weaponConfig";
 import { FLASH_VARIANTS, KNOCKBACK_VARIANTS, suitConfig } from "../../entities/suit/suitConfig";
+import { WEAPON_BALANCE_VARIANTS, type WeaponBalanceVariant } from "../../player/weapons/weaponBalance";
 // Origine de ce fichier (extraction du refactor main.ts, 2026-09-05) :
 // see: docs/archive/systems-debug.md#origine-du-module-gamedevtools
 
@@ -54,6 +55,12 @@ export function simulateRecording(rec: Recording, cfg: MoveConfig) {
 }
 
 const simBobScratch = new THREE.Vector3();
+
+export function applyWeaponBalanceVariant(name: WeaponBalanceVariant) {
+  const balance = WEAPON_BALANCE_VARIANTS[name];
+  Object.assign(weaponConfig, balance);
+  return { variant: name, ...balance };
+}
 
 export function checkDeterminism(rec: Recording) {
   const a = simulateRecording(rec, moveConfig);

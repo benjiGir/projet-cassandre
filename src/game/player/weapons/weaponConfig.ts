@@ -1,22 +1,13 @@
 import { FIXED_DT } from "../../../core/loop/loop";
 import { kickConfig } from "./kickConfig";
+import { WEAPON_BALANCE_VARIANTS, type WeaponBalanceConfig } from "./weaponBalance";
 import type { BlastConfig } from "../../level/props/propConfig";
 import type { FiringWeapon } from "./weaponTypes";
 
 // see: docs/6-reference/notes-code-gameplay-joueur.md#tuning
-export interface WeaponConfig {
-  /** Portée du coup, en mètres : distance entre les yeux et le centre de la sphère de test. */
-  meleeRange: number;
-  meleeHitRadius: number;
-  /** Temps entre deux coups, en secondes. Bloque uniquement le PROCHAIN coup, jamais le mouvement (invariant #10). */
-  meleeCooldown: number;
-  /** Dégâts par coup. Placeholder : aucun ennemi n'existe encore pour les consommer (Phase 3). */
-  meleeDamage: number;
-
-  pistolCooldown: number;
+export interface WeaponConfig extends WeaponBalanceConfig {
   /** Portée du rayon, en mètres. Plus loin que le pompe : c'est l'arme de la distance. */
   pistolRange: number;
-  pistolDamage: number;
   /** Dispersion, demi-angle en degrés. Faible mais non nulle : tirer vite doit coûter en précision. */
   pistolSpreadDeg: number;
   /** Munitions données par le ramassage de l'arme. */
@@ -137,14 +128,8 @@ export interface RecoilKick {
 const DEFAULT_HITSTOP_FRAMES = 3;
 
 export const weaponConfig: WeaponConfig = {
-  meleeRange: 2,
-  meleeHitRadius: 0.45,
-  meleeCooldown: 0.5,
-  meleeDamage: 40,
-
-  pistolCooldown: 0.22,
+  ...WEAPON_BALANCE_VARIANTS.REVISE,
   pistolRange: 60,
-  pistolDamage: 12,
   pistolSpreadDeg: 0.8,
   pistolStartingAmmo: 48,
   pistolMaxAmmo: 150,

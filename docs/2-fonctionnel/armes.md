@@ -2,7 +2,7 @@
 title: Armes
 tags: [fonctionnel]
 status: stable
-updated: 2026-10-11
+updated: 2026-10-15
 ---
 
 # Armes
@@ -68,7 +68,7 @@ du coup est bien senti, sans pour autant vous retarder au coup suivant.
 ### Le pistolet
 
 L'arme intermédiaire, précise et rapide, avec la plus longue portée des
-trois : cinq balles suffisent à abattre un Costard. Tirer vite élargit un
+trois : trois balles suffisent à abattre un Costard. Tirer vite élargit un
 peu la dispersion des tirs, mais reste maniable même en rafale. C'est
 l'arme qui recule le moins et dont la visée se stabilise le plus vite après
 un tir. Sa réserve se complète aux boîtes de munitions trouvées au sol, jusqu'à un
@@ -155,7 +155,7 @@ Comparaison qualitative des quatre armes :
 | Portée | Contact | La plus longue | Courte, chute vite avec la distance | Longue, mais la fusée met du temps à arriver |
 | Cadence | Intermédiaire | La plus rapide | Lente | La plus lente |
 | Précision | Sans objet (contact) | Bonne, se dégrade un peu en rafale | Dispersée en cône, imprévisible au-delà de la courte distance | Exacte, à condition d'anticiper ; le souffle pardonne |
-| Coups pour abattre un Costard | Deux | Cinq | Un seul à bout portant, plusieurs à distance | Un seul, et ses voisins avec |
+| Coups pour abattre un Costard | Deux | Trois | Un seul à bout portant, plusieurs à distance | Un seul, et ses voisins avec |
 | Munitions | Aucune, illimité | Réserve rechargeable au sol | Réserve de cartouches, renflouée seulement par une borne | Petite réserve de fusées, rechargeable au sol |
 | Recul ressenti | Modéré | Le plus léger | Le plus fort | Fort, lent à revenir |
 
@@ -163,6 +163,10 @@ Détail chiffré (dégâts, cadence, portée, dispersion, points de vie des
 ennemis et des objets cassables) : [Valeurs des armes](../6-reference/valeurs-armes.md).
 
 ## État
+
+- À essayer : le rééquilibrage mêlée / pistolet du 2026-10-15. Le pied-de-biche
+  frappe moins fort et moins loin ; le pistolet abat un Costard en trois balles.
+  Les profils historique et révisé restent comparables dans le panneau de tuning.
 
 - Validé en playtest : le combat rapproché au pied-de-biche puis au pompe
   contre plusieurs Costards, jugé fun malgré des armes encore provisoires

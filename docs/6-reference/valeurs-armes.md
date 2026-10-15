@@ -2,7 +2,7 @@
 title: Valeurs des armes
 tags: [reference, armes]
 status: brouillon
-updated: 2026-10-11
+updated: 2026-10-15
 ---
 
 # Valeurs des armes
@@ -14,8 +14,8 @@ configurées du prototype, pas un équilibrage final issu d'un playtest.
 
 | Arme | Dégâts par coup | Éléments par tir | Maximum théorique par tir | Unité |
 |---|---:|---:|---:|---|
-| Pied-de-biche | 40 | 1 | 40 | PV par coup |
-| Pistolet | 12 | 1 | 12 | PV par balle |
+| Pied-de-biche | 25 | 1 | 25 | PV par coup |
+| Pistolet | 18 | 1 | 18 | PV par balle |
 | Fusil à pompe | 6 | 9 plombs | 54 | PV si les 9 plombs touchent |
 | Pistolet de détresse | 35 | 1 fusée, puis son souffle | 125 | PV sur la cible touchée de plein fouet |
 
@@ -28,11 +28,47 @@ plomb, pas la somme de la gerbe.
 
 | Paramètre | Pied-de-biche | Pistolet | Fusil à pompe | Pistolet de détresse | Unité |
 |---|---:|---:|---:|---:|---|
-| Délai entre les tirs | 0,50 | 0,22 | 0,80 | 1,10 | s |
-| Portée | 2 | 60 | 30 | 85 environ | m |
+| Délai entre les tirs | 0,60 | 0,22 | 0,80 | 1,10 | s |
+| Portée | 1,6 | 60 | 30 | 85 environ | m |
 | Dispersion | — | 0,8 | 5 | aucune | degrés (cône pour le pompe) |
 | Munitions au départ | aucune | 48 | 48 | 6 | coups |
 | Réserve maximale | — | 150 | 96 | 18 | coups |
+
+## Comparaison des réglages
+
+Le réglage `REVISE` est actif par défaut, à essayer après le retour sur la mêlée
+trop forte. `HISTORIQUE` conserve les valeurs précédentes pour comparer.
+Les deux profils sont définis dans `src/game/player/weapons/weaponBalance.ts`
+et initialisent la même config mutable `weaponConfig`.
+
+| Paramètre | Historique | Révisé |
+|---|---:|---:|
+| Dégâts du pied-de-biche par cible | 40 | 25 |
+| Intervalle de mêlée | 0,50 s | 0,60 s |
+| Portée axiale de mêlée | 2 m | 1,60 m |
+| Rayon de la capsule de contact | 0,45 m | 0,30 m |
+| Dégâts par balle de pistolet | 12 | 18 |
+| Intervalle du pistolet | 0,22 s | 0,22 s |
+| Coups contre un Costard de 50 PV, mêlée / pistolet | 2 / 5 | 2 / 3 |
+| Coups contre un Rampant de 20 PV, mêlée / pistolet | 1 / 2 | 1 / 2 |
+| Coups contre un Vigile de 140 PV, hors bouclier, mêlée / pistolet | 4 / 12 | 6 / 8 |
+
+La capsule dépasse sa portée axiale de son rayon : son extrémité passe de
+2,45 m à 1,90 m depuis les yeux. La portée effective dépend aussi du volume
+de la cible. Un coup peut toujours toucher plusieurs cibles dans la capsule.
+La Perche Titane multiplie les dégâts de mêlée par 1,5 : le réglage révisé
+inflige 37,5 PV et ne tue plus un Costard intact d’un seul coup.
+
+Le panneau de tuning (touche accent grave) expose les six curseurs et les deux
+profils. En console, `cassandre.applyWeaponBalanceVariant("HISTORIQUE")` ou
+`cassandre.applyWeaponBalanceVariant("REVISE")` applique le profil à chaud.
+Les mouvements, le recul, le hitstop, les munitions et les autres armes restent
+aux valeurs de leur configuration.
+
+Pour comparer, enregistrez 15 secondes de déplacement et de tir avec F9,
+arrêtez avec F9, puis rejouez avec F10. Le rejeu restaure uniquement le joueur :
+remettez les cibles, l’équipement et les munitions dans le même état avant
+chaque essai. Le verdict de sensation reste à recueillir en jeu.
 
 ## Pistolet de détresse : la fusée et son souffle
 
