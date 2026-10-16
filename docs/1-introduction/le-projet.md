@@ -2,7 +2,7 @@
 title: Le projet
 tags: [introduction]
 status: stable
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # Le projet
@@ -54,7 +54,7 @@ et l'équilibrage du métro restent à affiner avec les retours des joueurs.
 
 ## Où en est le projet
 
-**Version préparée : 2.0.0-beta (2026-10-15).** La 1.0.0 (2026-10-02) a livré le
+**Version préparée : 2.1.0 (2026-10-16).** La 1.0.0 (2026-10-02) a livré le
 MVP jouable, publié en open source sous licence MIT (`LICENSE` à la racine) et
 déployé sur GitHub Pages : le niveau v2 (l'hypermarché, ses dix espaces et ses
 coulisses), trois armes, le Costard et le Directeur, le HUD « stream » et ses
@@ -63,9 +63,12 @@ et 1.2.0 « Les sponsors » ont ajouté le direct, ses dons et les bornes ; la 1
 ajoute le coup de pied, de nouveaux modèles d'armes et des portes refaites.
 La 2.0.0-beta ajoute le métro et sa progression de campagne, le pistolet de
 détresse, les Contrôleurs, les sprites illustrés et une harmonisation des
-décors. Les sons et les répliques voisées supplémentaires sont reportés à
-novembre 2026 ; l'audio existant et les textes sont conservés. La bêta
-recueille les retours avant la finition et l'équilibrage final.
+décors. La 2.1.0 ajoute les cadavres destructibles et les débris persistants
+par matière, affine les voitures et rééquilibre le pied-de-biche et le
+pistolet. Elle remplace Howler par fx-audio avec les mêmes sons. Les sons et
+les répliques voisées supplémentaires restent reportés à novembre 2026 ;
+l'audio existant et les textes sont conservés. Les retours des joueurs
+guident la finition et l'équilibrage.
 Le détail des versions est dans `CHANGELOG.md`, l'historique daté des
 chantiers dans `journal/`.
 

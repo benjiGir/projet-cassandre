@@ -6,10 +6,60 @@ Toutes les versions notables de PROJET_CASSANDRE. Format inspiré de
 
 ## [Non publié]
 
+## [2.1.0] — 2026-10-16
+
+Le décor garde les traces du combat : cadavres destructibles, débris par
+matière et véhicules retravaillés. Le moteur audio passe à fx-audio.
+
+### Ajouté
+
+- Cadavres des ennemis ordinaires destructibles après plusieurs coups :
+  projection de sang et de morceaux, sans bloquer le joueur. Les tirs et
+  les explosions peuvent aussi les déchiqueter ; le Directeur conserve
+  sa mise en scène de mort.
+- Ennemis ordinaires déchiquetés directement lorsqu'une bonbonne de gaz
+  les tue, avec une gerbe de sang et des morceaux plus marqués.
+- Débris persistants adaptés à la matière : pans de carton froissés,
+  planchettes, éclats de verre, tôles pliées et morceaux de coque avec
+  circuits imprimés. Les vitrages cassables produisent aussi des éclats.
+- Projections brèves et traces au sol pour la farine et l'eau. Les débris
+  et les résidus restent cosmétiques et utilisent des réserves limitées.
+- Le souffle des explosions peut briser les cartons et meubles en bois
+  destructibles, avec protection par les murs.
+
+### Modifié
+
+- Pied-de-biche moins dominant : dégâts réduits, portée et rayon de contact
+  resserrés, cadence ralentie. Le pistolet inflige davantage de dégâts.
+- Sept modèles de voitures retravaillés : carrosseries, roues, habitacles,
+  joints de vitrage et détails de finition.
+- Lecture des effets, voix et ambiances par fx-audio à la place de Howler,
+  avec les mêmes fichiers audio et réglages de volume.
+
+### Corrigé
+
+- Lunettes arrière et raccords de carrosserie des voitures ; sièges qui
+  dépassaient des habitacles.
+- Feux arrière du SUV et du 4×4 replacés et détaillés ; autres feux
+  masqués par la carrosserie repositionnés.
+- Impulsions et amorçage des bonbonnes bloqués par les murs lors d'un souffle.
+
 ### Technique
 
+- Effect et @effect/vitest passent à la version 4.0.5 ; fx-audio utilise
+  l'archive de sa release 1.0.0.
+- Ressources des débris préparées au chargement pour éviter une compilation
+  de matériau à la première casse ; identifiants internes en anglais et
+  conversion des anciennes valeurs de contenu à la frontière de présentation.
 - Retrait des anciens plans et de l'audit de qualité à la racine ; renvois
   adaptés à la documentation courante, originaux conservés dans Git.
+
+### À compléter
+
+- Les sons et répliques voisées supplémentaires du métro restent reportés à
+  novembre 2026. Le changement de moteur audio conserve les sons existants.
+- La migration audio n'a pas encore été écoutée sur Safari et Firefox ; les
+  contrôles réalisés portent sur Chromium.
 
 ## [2.0.0-beta] — 2026-10-15
 
