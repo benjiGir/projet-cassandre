@@ -6,7 +6,7 @@ Prototype : 1 niveau, 3 armes (pied-de-biche, pistolet, pompe), 8-10 minutes de 
 ## Stack
 
 Vite + TypeScript · three (vanilla) · @dimforge/rapier3d-compat · React DOM
-en overlay uniquement · zustand · howler · Blender → glTF · effect · xstate
+en overlay uniquement · zustand · fx-audio · Blender → glTF · effect · xstate
 (chantier d'architecture livré, voir `docs/journal/plan-effect-xstate-2026-09.md` et invariants
 #11-12 ci-dessous)
 

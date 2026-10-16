@@ -3,8 +3,6 @@ import type { DoorMovement } from "../../game/level/doors/doorTypes";
 import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice, SfxDef } from "./audioTypes";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
-export const POOL_LECTURES = 12;
-
 export const PITCH_VARIATION = 0.08;
 
 const SFX_DEFS = {

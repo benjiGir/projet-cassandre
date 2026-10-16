@@ -18,7 +18,7 @@ prochaines passes de finition et d'équilibrage.
 
 Vite + TypeScript · [three.js](https://threejs.org/) (vanilla) ·
 [@dimforge/rapier3d-compat](https://rapier.rs/) (physique) · React en overlay
-uniquement (HUD/menus) · zustand · howler (audio) · Blender → glTF ·
+uniquement (HUD/menus) · zustand · fx-audio (audio) · Blender → glTF ·
 [effect](https://effect.website/) · [xstate](https://stately.ai/docs/xstate)
 
 ## Lancer le projet

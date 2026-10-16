@@ -111,17 +111,17 @@ de profil remet à zéro et rend muettes les anciennes enveloppes. Un compteur
 de sélection empêche une préparation ancienne de remplacer la plus récente.
 Le reset de partie réinstalle le RNG déterministe existant et remet les
 événements au début. Un événement partagé entre zones n'est chargé qu'une fois.
-Les nappes naissent au volume zéro. L'enveloppe attend l'événement Howler
-de début de lecture avant d'appliquer les volumes : tant que le navigateur
-attend un geste utilisateur, aucune file de volumes ne s'accumule.
+Les nappes naissent au volume zéro. Une voix lancée avant le premier geste attend le
+contexte suspendu ; chaque réglage de volume remplace le précédent, sans
+file qui s'accumule.
 
 La nappe du quai contient un bourdon et un souffle plus large ; celle du
 tunnel est plus grave. Les événements sont une résonance métallique et une
 goutte à échos. Ils reprennent les gains, le fondu et les tirages du lecteur
-Howler existant. Aucun nouvel appel réseau de génération n'est effectué.
+audio existant. Aucun nouvel appel réseau de génération n'est effectué.
 
 Les nappes durent 20 s et portent 0,5 s de marge de chaque côté.
-Howler boucle la région `[500, 20000, true]` pour éviter les bords d'encodage.
+Le jeu boucle la région `[500, 20000, true]` pour éviter les bords d'encodage.
 Les deux formats OGG et M4A sont livrés. Le générateur choisit libvorbis si
 disponible, sinon l'encodeur Vorbis natif de FFmpeg.
 Mesures après décodage et

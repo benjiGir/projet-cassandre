@@ -64,7 +64,7 @@ journal.
 1. `2-fonctionnel/son.md` — ce qu'on entend et pourquoi
 2. `4-technique/studio-audio.md` — le pipeline `tools/audio/`, synthèse
    procédurale, mesures
-3. `4-technique/audio-runtime.md` — le sprite Howler, `SFX_TABLE`
+3. `4-technique/audio-runtime.md` — le sprite fx-audio, `SFX_TABLE`
 4. `5-guides/ajouter-un-son.md`
 
 ### Interface React (HUD, menus, écrans)

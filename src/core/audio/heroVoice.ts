@@ -1,8 +1,9 @@
-import { Howl } from "howler";
+import type { PromiseVoice } from "fx-audio/promise";
+import type { SpriteSheet } from "fx-audio";
 
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "../loading/assetPath";
-import { waitForAudioLoad } from "./audioPreparation";
+import { audioEngine, clampVolume, createdAudioEngine, loadFirstSound, spriteSheet } from "./audioEngine";
 import { fetchJson } from "../net/fetchJson";
 
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
@@ -10,15 +11,20 @@ import { fetchJson } from "../net/fetchJson";
 const VOICE_BASE_PATH = assetUrl("assets/audio/voix");
 const VOICE_VOLUME = 1.0;
 
-let atlas: Howl | null = null;
+let atlas: SpriteSheet | null = null;
 let durations = new Map<string, number>();
-let lectureEnCours: number | null = null;
+let lectureEnCours: PromiseVoice | null = null;
 let loading: Promise<void> | null = null;
 let gain = 1;
 
+// Un groupe à part : le gain voix s'applique aussi à la réplique déjà en cours.
+const voiceGroup = () => audioEngine().group("voix");
+
 export function setHeroVoiceGain(value: number): void {
   gain = value;
-  atlas?.volume(VOICE_VOLUME * gain);
+  createdAudioEngine()
+    ?.group("voix")
+    .setVolume(clampVolume(VOICE_VOLUME * gain));
 }
 
 export function initHeroVoice(): Promise<void> {
@@ -26,15 +32,10 @@ export function initHeroVoice(): Promise<void> {
   loading = fetchJson(`${VOICE_BASE_PATH}/voix.json`, decodeAudioSpriteManifest)
     .then(async (manifest) => {
       durations = new Map(Object.entries(manifest.sprite).map(([key, [, ms]]) => [key, ms / 1000]));
-      atlas = new Howl({
-        src: manifest.src.map((f) => `${VOICE_BASE_PATH}/${f}`),
-        sprite: manifest.sprite,
-        pool: 2,
-        volume: VOICE_VOLUME * gain,
-        onloaderror: () =>
-          console.warn(`[voix] atlas introuvable (${VOICE_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`),
-      });
-      await waitForAudioLoad(atlas);
+      voiceGroup().setVolume(clampVolume(VOICE_VOLUME * gain));
+      const sound = await loadFirstSound(manifest.src.map((f) => `${VOICE_BASE_PATH}/${f}`));
+      if (sound) atlas = spriteSheet(sound, manifest.sprite);
+      else console.warn(`[voix] atlas introuvable (${VOICE_BASE_PATH}/voix.{ogg,m4a}) — répliques muettes.`);
     })
     .catch((e) => {
       console.warn(`[voix] manifeste illisible (${e}) — répliques muettes.`);
@@ -47,15 +48,15 @@ export function heroVoiceDuration(key: string): number | null {
 }
 
 export function playHeroVoice(key: string): void {
-  if (!atlas || atlas.state() !== "loaded" || !durations.has(key)) return;
-  if (lectureEnCours !== null) atlas.stop(lectureEnCours);
-  lectureEnCours = atlas.play(key) ?? null;
+  if (!atlas || !durations.has(key)) return;
+  lectureEnCours?.stop();
+  lectureEnCours = voiceGroup().playSprite(atlas, key);
 }
 
 /** Les haut-parleurs ne sont pas la bouche du héros : une annonce ne coupe ni sa réplique ni la queue de l'annonce d'avant. */
 export function playAnnouncementVoice(key: string): void {
-  if (!atlas || atlas.state() !== "loaded" || !durations.has(key)) return;
-  atlas.play(key);
+  if (!atlas || !durations.has(key)) return;
+  voiceGroup().playSprite(atlas, key);
 }
 
 export function listHeroVoices(): { cle: string; duree: number }[] {

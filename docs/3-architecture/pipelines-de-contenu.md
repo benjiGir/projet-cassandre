@@ -163,7 +163,7 @@ git, un contributeur par famille de sons).
 **Outils** : `synth.py` (briques DSP), `enregistrements.py` (prises réelles :
 licence lue au registre, décodage, découpe), `render_sfx.py` (recettes →
 WAV), `analyze_sfx.py` (mesures : timbre, crête, masquage, boucle),
-`build_sprite.py` (empaquette en sprite Howler, encode `.ogg`/`.m4a`),
+`build_sprite.py` (empaquette en sprite (manifeste `{ nom: [début, durée] }` en ms), encode `.ogg`/`.m4a`),
 `audition.py` (page d'écoute locale).
 
 **Sortie** : `public/assets/audio/sfx/sfx.ogg`/`.m4a`/`.json` (sprite

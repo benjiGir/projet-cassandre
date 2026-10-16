@@ -75,3 +75,4 @@ reste conservé et renvoie à son successeur.
 | [0042](0042-difficulte.md) | Difficulté : trois niveaux posés sur la partie, records séparés | accepté |
 | [0044](0044-trains-de-niveau.md) | Trains pilotés par les données glTF, contacts balayés et ressources par niveau | accepté |
 | [0046](0046-projectile-du-joueur.md) | Projectile du joueur : une fusée balayée au pas fixe, un souffle partagé | accepté |
+| [0047](0047-fx-audio-remplace-howler.md) | fx-audio remplace Howler | accepté |

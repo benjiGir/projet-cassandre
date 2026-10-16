@@ -1,12 +1,12 @@
-import { Howl } from "howler";
+import type { PromiseVoice } from "fx-audio/promise";
 
 import { assetUrl } from "../loading/assetPath";
-import { waitForAudioLoad } from "./audioPreparation";
+import { audioEngine, clampVolume, loadFirstSound } from "./audioEngine";
 import { computeWaterAmbienceMix, smoothTowards, type Vec3Like, type WaterAmbienceMix } from "./waterAmbienceMix";
 
 // Une boucle d'ambiance spatialisée : elle joue en continu, muette, et son
 // volume comme son panoramique suivent les sources proches de l'auditeur.
-// Web Audio requis : le panoramique et les raccords ne sont pas fiables en HTML5.
+// Un son décodé (Web Audio), pas un flux HTML5 : le panoramique et les raccords de boucle y sont fiables.
 // see: docs/6-reference/notes-code-core.md#mixage-de-leau
 
 const AMBIENCE_BASE_PATH = assetUrl("assets/audio/sfx");
@@ -43,10 +43,7 @@ export interface LoopedAmbience {
 export function createLoopedAmbience({ file, label, peakVolume, gainSmoothTau }: LoopedAmbienceConfig): LoopedAmbience {
   const path = `${AMBIENCE_BASE_PATH}/${file}`;
   const targetMix: WaterAmbienceMix = { gain: 0, pan: 0 };
-  let howl: Howl | null = null;
-  let playbackId: number | null = null;
-  let loaded = false;
-  let warnedMissing = false;
+  let playback: PromiseVoice | null = null;
   let audible = false;
   let preparation: Promise<void> | null = null;
   let channelGain = 1;
@@ -56,24 +53,13 @@ export function createLoopedAmbience({ file, label, peakVolume, gainSmoothTau }:
   return {
     init() {
       if (preparation) return preparation;
-      const loop = new Howl({
-        src: [`${path}.ogg`, `${path}.m4a`],
-        loop: true,
-        html5: false,
-        volume: 0,
-        onload: () => {
-          loaded = true;
-          playbackId = loop.play();
-          loop.stereo(0, playbackId);
-        },
-        onloaderror: () => {
-          if (warnedMissing) return;
-          warnedMissing = true;
+      preparation = loadFirstSound([`${path}.ogg`, `${path}.m4a`]).then((sound) => {
+        if (!sound) {
           console.warn(`[audio] ${label} introuvable (${path}.{ogg,m4a}) — le jeu continue sans elle.`);
-        },
+          return;
+        }
+        playback = audioEngine().play(sound, { loop: true, volume: 0, pan: 0 });
       });
-      howl = loop;
-      preparation = waitForAudioLoad(loop).then(() => {});
       return preparation;
     },
     setGain(gain) {
@@ -88,14 +74,19 @@ export function createLoopedAmbience({ file, label, peakVolume, gainSmoothTau }:
       currentGain = smoothTowards(currentGain, targetMix.gain, dt, gainSmoothTau);
       currentPan = smoothTowards(currentPan, targetMix.pan, dt, PAN_SMOOTH_TAU);
 
-      if (!howl || !loaded || playbackId === null || !howl.playing(playbackId)) return;
+      if (!playback) return;
 
       audible = currentGain > AUDIBLE_GAIN_EPSILON;
-      howl.volume(audible ? currentGain * peakVolume * channelGain : 0, playbackId);
-      howl.stereo(currentPan, playbackId);
+      playback.setVolume(audible ? clampVolume(currentGain * peakVolume * channelGain) : 0);
+      playback.setPan(Math.max(-1, Math.min(1, currentPan)));
     },
     debugState() {
-      return { charge: loaded, joue: audible, volume: currentGain * peakVolume * channelGain, pan: currentPan };
+      return {
+        charge: playback !== null,
+        joue: audible,
+        volume: currentGain * peakVolume * channelGain,
+        pan: currentPan,
+      };
     },
   };
 }

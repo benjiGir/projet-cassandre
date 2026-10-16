@@ -18,9 +18,7 @@ const LevelSpacesManifest = Schema.Struct({ espaces: Schema.Array(LevelSpace) })
 
 export type LevelSpaceData = typeof LevelSpace.Type;
 
-export const decodeLevelSpacesManifest = Schema.decodeUnknownSync(LevelSpacesManifest, {
-  onExcessProperty: "preserve",
-});
+export const decodeLevelSpacesManifest = Schema.decodeUnknownSync(LevelSpacesManifest);
 
 function footprint(space: LevelSpaceData): number {
   return (space.x[1] - space.x[0]) * (space.z[1] - space.z[0]);

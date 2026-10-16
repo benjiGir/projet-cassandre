@@ -42,7 +42,7 @@ flowchart LR
   C --> D[Sprite et encodages]
   D --> E[Écoute dans audition]
   E -->|retour humain| A
-  D --> F[Runtime Howler]
+  D --> F[Runtime fx-audio]
 ```
 
 ## Données et contrats

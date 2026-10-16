@@ -42,7 +42,7 @@ et l'équilibrage du métro restent à affiner avec les retours des joueurs.
 - **React**, uniquement en overlay — HUD, menus, écrans ; jamais dans la
   boucle de jeu elle-même (voir `3-architecture/invariants.md`).
 - **zustand** — état partagé entre la boucle de jeu et l'overlay React.
-- **howler** — lecture audio, sprite unique pour tous les sons du jeu.
+- **fx-audio** — lecture audio sur Web Audio (bibliothèque maison bâtie sur Effect), sprite unique pour tous les sons du jeu.
 - **Effect** — orchestration de la boucle de jeu et des services (RNG,
   raycast, pathfinding) derrière une frontière synchrone stricte.
 - **XState** — machines à états des ennemis et du flux d'écran (menu → jeu →

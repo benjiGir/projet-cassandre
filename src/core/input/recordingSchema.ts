@@ -35,7 +35,7 @@ const RecordingSchema = Schema.Struct({
   frames: Schema.mutable(Schema.Array(InputFrameSchema)),
 });
 
-const decodeStoredRecording = Schema.decodeUnknownSync(RecordingSchema, { onExcessProperty: "preserve" });
+const decodeStoredRecording = Schema.decodeUnknownSync(RecordingSchema);
 
 function completeFrame(frame: typeof InputFrameSchema.Type): InputFrame {
   return { ...frame, switchToFlare: frame.switchToFlare ?? false, weaponCycle: frame.weaponCycle ?? 0 };

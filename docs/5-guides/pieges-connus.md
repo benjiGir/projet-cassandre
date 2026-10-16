@@ -44,7 +44,7 @@ Voir [Rendu](../4-technique/rendu.md) et [Budget de rendu](../4-technique/budget
 ## Audio
 
 - Un agent peut vérifier des mesures et la présence d'un son, mais ne peut pas juger à l'oreille s'il ressemble à l'objet attendu. Écoutez les résultats avant de conclure.
-- Howler choisit un format disponible ; fournissez le sprite Ogg et M4A. Un encodage avec pertes peut dépasser le pic de son entrée.
+- Le jeu charge `.ogg` puis, à défaut, `.m4a` ; fournissez le sprite Ogg et M4A. Un encodage avec pertes peut dépasser le pic de son entrée.
 - La synthèse donne une enveloppe et un spectre contrôlés, mais ne remplace pas le désordre d'un enregistrement d'objet. Suivez la direction de source indiquée dans [Studio audio](../4-technique/studio-audio.md).
 - Une prise CC0 manquante ou non inscrite au registre rend la génération audio non livrable.
 

@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "@dimforge/rapier3d-compat": "0.20.0",
-    "effect": "4.0.0-rc.112",
-    "howler": "2.2.4",
+    "effect": "4.0.5",
+    "fx-audio": "https://github.com/benjiGir/fx-audio/releases/download/v1.0.0/fx-audio-1.0.0.tgz",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "three": "0.185.1",
@@ -39,8 +39,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@effect/vitest": "4.0.0-rc.112",
-    "@types/howler": "2.2.13",
+    "@effect/vitest": "4.0.5",
     "@types/node": "^22.20.4",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",

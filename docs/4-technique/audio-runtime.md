@@ -2,12 +2,14 @@
 title: Audio runtime
 tags: [technique]
 status: brouillon
-updated: 2026-10-08
+updated: 2026-10-16
 ---
 
 # Audio runtime
 
 ## Responsabilité
+
+Le moteur de lecture est fx-audio, depuis l'[ADR 0047](../decisions/0047-fx-audio-remplace-howler.md).
 
 Le runtime audio transforme les événements de présentation en sons ponctuels et ambiances.
 Il ne décide pas quand un événement de gameplay arrive ; cette décision appartient au jeu et à `updateFx`.
@@ -15,7 +17,7 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 ## Fichiers
 
 - `src/core/audio/audio.ts` charge le sprite des effets et lance les lectures ponctuelles ; la table `SFX_TABLE` vit dans `src/core/audio/audioCatalog.ts`.
-- `src/core/audio/audioPreparation.ts` attend le décodage, amorce le pool et reprend Web Audio sur une interaction.
+- `src/core/audio/audioEngine.ts` possède l'unique moteur [fx-audio](https://benjigir.github.io/fx-audio/) (un seul contexte Web Audio, créé à la première demande), charge le premier fichier lisible d'une liste de formats, découpe un sprite en `SpriteSheet` et retient le gain général et la coupure globale tant que le moteur n'existe pas.
 - `src/core/audio/loopedAmbience.ts` est la boucle d'ambiance spatialisée : chargement, lissage, volume et panoramique.
 - `src/core/audio/waterAmbience.ts` en déclare une pour les jets d'eau, `src/core/audio/showerAmbience.ts` une pour les douches : un fichier, un volume de crête et un temps de lissage chacune.
 - `src/core/audio/waterAmbienceMix.ts` calcule le gain et le panoramique des jets.
@@ -29,12 +31,12 @@ Il ne décide pas quand un événement de gameplay arrive ; cette décision appa
 
 `main.ts` lance le chargement audio avant le menu, en parallèle du démarrage.
 Avant d'entrer en jeu, il attend le décodage du sprite et des deux boucles
-d'eau. Le contexte audio est repris sur `pointerdown` ou `keydown`, dès le
-menu. L'auto-suspension Howler après trente secondes est désactivée pour
-éviter un nouveau démarrage du moteur audio au prochain son.
+d'eau. fx-audio reprend le contexte au premier clic, à la première touche ou
+au premier toucher, puis après une interruption (onglet masqué, appel) : rien
+à installer côté jeu.
 Les faits de tir, d'impact, de casse et d'ennemi sont lus dans `updateFx`, au taux d'affichage.
 La boucle positionnelle d'eau calcule son mélange au même endroit.
-Le pas fixe n'appelle pas Howler et ne dépend pas de la lecture audio.
+Le pas fixe n'appelle pas fx-audio et ne dépend pas de la lecture audio.
 
 Le flux relie l'événement de jeu à sa lecture, sans faire entrer l'audio dans la simulation.
 
@@ -42,7 +44,7 @@ Le flux relie l'événement de jeu à sa lecture, sans faire entrer l'audio dans
 flowchart LR
   A[Pas fixe] -->|faits de présentation| B[updateFx]
   B -->|identifiant logique| C[Table SFX]
-  C --> D[Sprite Howler]
+  C --> D[Sprite fx-audio]
   B --> E[Mixage positionnel]
   E --> F[Boucle Web Audio]
   G[Réplique HUD] --> H[Duck du thème]
@@ -58,21 +60,20 @@ Le nom logique du jeu est distinct du nom de recette du studio.
 `playSfx` reçoit une échelle de volume facultative.
 Des fonctions spécialisées sélectionnent le son d'arme, d'impact, de matière, de porte ou d'ennemi.
 Une matière inconnue retombe sur le son d'impact ou de casse par défaut.
-Le pool Howler prévoit douze lectures simultanées par défaut.
+Chaque lecture est une source Web Audio à usage unique : il n'y a plus de pool à dimensionner ni à amorcer.
 
 `initAudio` est idempotente.
-Elle récupère le manifeste et crée le sprite Howler. Sa promesse se résout
-après le décodage. Des lectures muettes amorcent les voix du pool natif
-Howler ; elles sont arrêtées puis réutilisées par les vrais sons, sans
-consommer le RNG. Le manifeste réseau et l'attente du décodage sont bornés à
-quinze secondes chacun ; une panne reste non fatale.
+Elle récupère le manifeste, charge le premier format lisible (`.ogg`, puis
+`.m4a`) et en tire un `SpriteSheet`. Sa promesse se résout après le
+décodage. Le manifeste réseau et le chargement sont bornés à quinze
+secondes chacun ; une panne reste non fatale.
 Un appel avant disponibilité, ou une clé absente, ne bloque pas la partie ; un avertissement n'est émis qu'une fois par clé.
 Le manifeste est généré par `tools/audio/build_sprite.py` et ne se modifie pas à la main.
-Le générateur fournit Ogg et M4A car Howler choisit un format pris en charge sans repli d'une source à l'autre.
+Le générateur fournit Ogg et M4A : fx-audio charge une seule URL, donc `loadFirstSound` essaie les formats dans l'ordre et passe au suivant quand le navigateur n'en décode pas un.
 
 `window.cassandre.sfx.liste()` expose `present` pour chaque identifiant. Ce
 champ indique seulement que sa clé figure dans le manifeste JSON chargé ; il
-ne révèle pas si Howler a fini de télécharger ou décoder le fichier. Pour
+ne révèle pas si fx-audio a fini de télécharger ou décoder le fichier. Pour
 vérifier un son, contrôlez dans l'onglet Réseau que `sfx.json` et le format
 choisi par le navigateur (`.ogg` ou `.m4a`) se chargent sans erreur, vérifiez
 l'absence d'avertissement `[audio]` dans la console, puis déclenchez le son
@@ -108,13 +109,13 @@ la zone par défaut remplace la zone de la partie précédente.
 
 La pause, les écrans de fin et le menu figent l'horloge et le délai ; le
 fondu vers le silence continue. La destruction d'une partie arrête aussi
-les sons ponctuels en cours. Les Howl préchargés, les gains utilisateur et
+les sons ponctuels en cours. Les sons décodés, les gains utilisateur et
 les boucles des nappes sont conservés entre parties : le curseur de lecture
 audio reste continu. Le calendrier cosmétique dépend du delta d'affichage ;
 ce reset ne garantit pas un rejeu sonore identique à des fréquences différentes.
 
 Le fichier d'une nappe porte 0,5 s de marge de chaque côté et le jeu boucle sur
-la région du milieu (sprite Howler bouclé) : encodée en ogg ou m4a, une boucle
+la région du milieu (segment de sprite bouclé) : encodée en ogg ou m4a, une boucle
 propre en WAV sortait avec un clic au raccord, l'encodeur abîmant les bords du
 fichier. `finalize` mesure le raccord APRÈS décodage. `cassandre.sfx.ambiance()`
 donne la zone entendue, le volume de chaque nappe, l'horloge en secondes
@@ -126,15 +127,14 @@ et le délai avant le prochain événement (`horloge`, `prochainEvenementDans`).
 Il retourne un gain et un panoramique bornés, lissés ensuite par `loopedAmbience.ts`.
 Le mix atteint son niveau maximal près de la source, décroît avec la distance et devient muet au-delà de sa portée.
 Plusieurs jets additionnent leurs gains jusqu'à un plafond.
-Un seul `Howl` Web Audio est amorcé à volume nul pendant le chargement,
-avec son panoramique. Il reste en boucle : le mix ne fait ensuite que régler
+Une seule voix en boucle est amorcée à volume nul dès le décodage, avec son
+panoramique. Il reste en boucle : le mix ne fait ensuite que régler
 volume et pan. Sous le seuil de silence, le volume est exactement nul.
 Le module s'actualise pendant le jeu ; les écrans de menu et de fin ne produisent pas de jet audible.
 La douche est une seconde boucle du même module, avec ses propres réglages.
-Les réglages de volume et de panoramique attendent la lecture effective
-du son. Un fichier décodé peut encore attendre le geste utilisateur ;
-envoyer les réglages à chaque image pendant cette attente accumule une
-file Howler, qui peut déborder à la reprise du contexte audio.
+Une voix lancée avant le premier geste attend le contexte suspendu ; ses
+réglages de volume et de panoramique, envoyés à chaque image, remplacent
+simplement les précédents : rien ne s'empile.
 
 ### Répliques
 
@@ -153,21 +153,24 @@ et la probabilité de chaque réplique sont dans `game/session/presentation/hero
 
 Options › Audio (`ui/screens/options/audio/AudioTab/`) présente,
 `game/settings/audioSettings.ts` persiste (`cassandre.audio`) et applique. Quatre canaux
-— général (`Howler.volume`), effets, voix du héros, ambiances (nappe,
+— général (volume du master fx-audio), effets, voix du héros, ambiances (nappe,
 jets d'eau, douches) — chacun un gain multiplié au volume de repos de son
 module de `core/` : 100 % rend le mixage d'origine. Le gain est le carré de
 la valeur affichée (50 % ≈ −12 dB). S'y ajoutent les sous-titres des
 répliques (lus par `triggerHeroLine`) et la coupure du son quand la fenêtre
-perd le focus (`Howler.mute`). `initAudioSettingsAtBoot()` passe avant la
-création des `Howl`, qui reprennent les gains à leur construction.
+perd le focus (coupure du master). `initAudioSettingsAtBoot()` passe avant la
+création du moteur, qui reprend le gain général et la coupure à sa
+construction ; le gain voix vit dans un groupe `voix`.
 
 ## Pièges
 
-- Appeler Howler dans le pas fixe mélange une action de présentation à la simulation.
+- Appeler fx-audio dans le pas fixe mélange une action de présentation à la simulation.
 - Confondre « manifeste disponible » et « audio décodé » reporte le coût sur la première action.
 - Modifier les offsets du manifeste à la main est perdu au prochain build du sprite.
 - Fusionner les clés de recette et les identifiants du jeu casse leur frontière de nommage.
-- Une boucle d'eau HTML5 ne fournit pas le contrôle de panoramique requis par le mix.
+- Une boucle d'eau en flux HTML5 (`stream`) ne fournit pas les raccords de boucle ni le contrôle de panoramique requis par le mix : elle reste un son décodé.
+- fx-audio refuse un volume négatif ou non fini en levant une erreur : `clampVolume` protège les appelants dont le gain vient d'un réglage, une erreur de présentation ne doit pas arrêter la boucle.
+- Les réglages ne doivent pas créer le moteur à eux seuls (pas de `AudioContext` sous Vitest) : `createdAudioEngine()` rend `null` tant qu'aucun son n'a été chargé.
 - Un lissage exponentiel n'atteint jamais exactement zéro ; la mise au silence utilise donc un seuil.
 - Le flux d'aléa des variations audio doit rester indépendant du RNG de gameplay.
 - La lecture audio peut être muette si l'asset attendu manque ; le runtime avertit sans interrompre le jeu.
@@ -175,7 +178,7 @@ création des `Howl`, qui reprennent les gains à leur construction.
 ## Tests
 
 - `test/core/audio/waterAmbienceMix.test.ts` vérifie le calcul pur du gain, de la distance et du panoramique.
-- Le module Howler `audio.ts` n'a pas de suite de tests d'intégration dédiée.
+- Le module `audio.ts` n'a pas de suite de tests d'intégration dédiée.
 - L'analyse du studio et le contrôle des boucles sont décrits dans [Studio audio](studio-audio.md).
 
 ## Comment vérifier que ça marche

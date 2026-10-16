@@ -23,7 +23,8 @@ sans redéfinir leurs frontières.
 | `src/core/audio/audioTypes.ts` | Contrats de sons et événements sonores. |
 | `src/core/audio/audioCatalog.ts` | Tables de routage et valeurs du mix SFX. |
 | `src/core/audio/audioManifest.ts` | Schémas communs aux manifests SFX/voix et schéma des zones. |
-| `src/core/audio/audio.ts` | Chargement et lecture Howler des SFX. |
+| `src/core/audio/audio.ts` | Chargement et lecture des SFX sur fx-audio. |
+| `src/core/audio/audioEngine.ts` | Moteur fx-audio unique, chargement multi-format, découpe de sprite. |
 | `src/core/effect/runtime.ts` | Fabrique du garde-fou synchrone, sans services du jeu. |
 | `src/app/runtime/gameRuntime.ts` | Composition des services, runtime unique et runner lié. |
 | `src/app/navigation/gameFlowTypes.ts` | États et événements du flux d'écran. |
@@ -84,8 +85,8 @@ L'appelant du rejeu restaure la position, la vitesse et la visée de départ.
 Le recorder copie chaque frame et s'arrête à l'épuisement de la séquence.
 `fixedDt` conserve le pas utilisé à l'enregistrement, en secondes.
 L'import JSON valide par Schema la version 1, les vecteurs et nombres finis,
-le pas strictement positif et tous les booléens de frames. Il conserve les
-champs supplémentaires. Le format valide reste inchangé ; les payloads
+le pas strictement positif et tous les booléens de frames. Il écarte les
+champs supplémentaires (Effect 4.0.5 n'a plus l'option `preserve`). Le format valide reste inchangé ; les payloads
 malformés échouent à l'import, avant tout accès au pas fixe.
 
 `GameClock.tick` avance l'horloge avec le pas fixe et retourne un delta de
@@ -124,7 +125,7 @@ une fixture glTF brute. Cette URL court-circuite le menu aussi en production.
 Les fallbacks sur la première entrée servent au typage du registre.
 
 `src/main.ts` vérifie l'aperçu UI de développement avant toute construction
-physique ou de session. Il installe les gains audio avant les Howl et les
+physique ou de session. Il installe les gains audio avant le moteur audio et les
 réglages graphiques avant le menu. Le filtrage et la résolution, qui exigent
 le moteur, sont enregistrés avant le premier boot de session pour servir
 à toutes les textures futures, y compris après replay et hot reload.
@@ -163,9 +164,9 @@ les sources et les couples début/durée en millisecondes ; il se régénère pa
 le studio et ne s'édite pas à la main. Le gain effets multiplie chaque lecture,
 le gain général et la coupure globale couvrent tous les canaux.
 
-Volume et pitch se posent sur l'identifiant de lecture, jamais sur tout le
-Howl : les neuf plombs du pompe ne doivent pas modifier les lectures déjà
-en cours. Le pool par défaut de douze couvre ces chevauchements. Le pitch
+Volume et pitch se posent sur la lecture, jamais sur tout le sprite : les
+neuf plombs du pompe ne doivent pas modifier les lectures déjà en cours.
+Chaque lecture est une source à part, sans pool à dimensionner. Le pitch
 varie de ±8 % par défaut ; les armes enregistrées utilisent ±2,5 à 4 % pour
 éviter une variation de calibre perceptible. Une clé absente du sprite est
 signalée au chargement, une fois, puis la lecture reste non fatale.
@@ -184,13 +185,13 @@ pas des dépendances de l'adaptateur sur les types de matières du niveau.
 
 Les manifestes SFX et voix passent par le même Schema à la frontière réseau.
 Les sources sont une liste non vide de noms ; chaque sprite porte un offset
-fini positif ou nul et une durée strictement positive. Le pool facultatif
-est un entier positif. Le format Howler reste inchangé. Les champs inconnus
-comme _note sont conservés. Une erreur de validation rejoint le même
+fini positif ou nul et une durée strictement positive. Le format reste celui
+hérité de Howler (`{ src, sprite }`, millisecondes) ; les champs inconnus
+comme `_note` ou `pool` sont ignorés au décodage. Une erreur de validation rejoint le même
 avertissement non fatal qu'un manifeste absent.
 
 Le Schema d'ambiance valide aussi les boîtes à bornes ordonnées, les boucles,
-les listes d'événements et l'existence de la zone par défaut. Il conserve
+les listes d'événements et l'existence de la zone par défaut. Il ignore
 les métadonnées espace des boîtes. Ces validations tournent pendant le
 chargement, jamais dans le pas fixe ni à chaque mise à jour du mix.
 
@@ -198,13 +199,12 @@ Les voix utilisent un sprite distinct, une seule lecture à la fois et aucune
 variation de hauteur pour conserver le personnage. Les annonces du magasin
 partagent ce sprite (`annonce_*`) mais pas cette bouche : elles se jouent
 par-dessus le héros, sans rien couper. Les choix de réplique
-appartiennent au gameplay ; le module Howler ne connaît que la clé de prise.
+appartiennent au gameplay ; le module audio ne connaît que la clé de prise.
 Le gain voix s'applique immédiatement, la durée vient du manifeste.
 
 Le préchargement est idempotent et non fatal pour un fichier absent.
-`audioPreparation.ts` reprend Web Audio dans un geste utilisateur et évite
-l'auto-suspension entre deux actions. Il amorce les voix en silence sans
-consommer de RNG. Les ambiances de zone gardent une nappe par zone,
+`audioEngine.ts` ne crée le contexte audio qu'à la première demande ; fx-audio
+le reprend au premier geste et après une interruption. Les ambiances de zone gardent une nappe par zone,
 une respiration et des événements espacés de 6 à 14 s. La boîte de plus
 petite surface horizontale prime dans un chevauchement. Hors des boîtes,
 la zone précédente reste sélectionnée. Le fondu interzone a tau = 0,7 s ;
@@ -231,7 +231,7 @@ Voir [Audio runtime](../4-technique/audio-runtime.md).
 
 ## Mixage de l'eau
 
-`waterAmbienceMix.ts` reste pur et indépendant de Howler, du DOM et de Three.
+`waterAmbienceMix.ts` reste pur et indépendant de fx-audio, du DOM et de Three.
 Les vecteurs minimaux acceptent Vector3 par structure. Le mélange s'écrit
 dans out et retourne ce même objet ; l'appelant réutilise son scratch.
 Le gain est plein jusqu'à 1,5 m et muet après 11 m. Le smoothstep a une

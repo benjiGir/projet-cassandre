@@ -7,7 +7,6 @@ import "./ui/theme/tokens.css";
 import { initAudio } from "./core/audio/audio";
 import { initHeroVoice } from "./core/audio/heroVoice";
 import { initZoneAmbience } from "./core/audio/zoneAmbience";
-import { installAudioActivation } from "./core/audio/audioPreparation";
 import { input } from "./core/input/input";
 import { initWaterAmbience } from "./core/audio/waterAmbience";
 import { initShowerAmbience } from "./core/audio/showerAmbience";
@@ -61,7 +60,6 @@ async function main() {
 
   if (import.meta.env.DEV && maybeRenderDevPreview(root)) return;
 
-  installAudioActivation();
   initAudioSettingsAtBoot();
   const audioReady = Promise.all([
     initAudio(),

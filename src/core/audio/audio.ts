@@ -1,5 +1,5 @@
 import type { FiringWeapon } from "../../game/player/weapons/weaponTypes";
-import { Howl, Howler } from "howler";
+import type { SpriteSheet } from "fx-audio";
 import { prepareTrainWarning, playTrainWarning as playPreparedTrainWarning } from "./trainWarning";
 import { prepareControllerAudio, playControllerCue } from "./controllerAudio";
 
@@ -11,7 +11,6 @@ import {
   ENEMY_SFX,
   MATERIAL_IMPACT_SFX,
   PITCH_VARIATION,
-  POOL_LECTURES,
   PROP_BREAK_SFX,
   SFX_TABLE,
   WEAPON_FIRE_SFX,
@@ -20,11 +19,19 @@ import type { SfxId } from "./audioCatalog";
 import type { DoorSfxEvent, EnemySfxEvent, EnemyVoice } from "./audioTypes";
 import { decodeAudioSpriteManifest } from "./audioManifest";
 import { assetUrl } from "../loading/assetPath";
-import { waitForAudioLoad, warmAudioPool } from "./audioPreparation";
+import {
+  audioEngine,
+  clampVolume,
+  createdAudioEngine,
+  loadFirstSound,
+  setMasterMuted,
+  setMasterVolume,
+  spriteSheet,
+} from "./audioEngine";
 import type { DoorMovement } from "../../game/level/doors/doorTypes";
 import { fetchJson } from "../net/fetchJson";
 
-// Présentation : les lectures Howler restent hors du pas fixe.
+// Présentation : les lectures restent hors du pas fixe.
 // see: docs/6-reference/notes-code-core.md#adaptateurs-audio
 const SFX_BASE_PATH = assetUrl("assets/audio/sfx");
 
@@ -37,23 +44,23 @@ export function setSfxGain(gain: number): void {
 }
 
 export function setMasterGain(gain: number): void {
-  Howler.volume(gain);
+  setMasterVolume(gain);
 }
 
 export function setAllMuted(muted: boolean): void {
-  Howler.mute(muted);
+  setMasterMuted(muted);
 }
 
 /** Coupe tout ce qui joue, boucles comprises. Sans retour : c'est pour un jeu qui s'arrête. */
 export function stopAllAudio(): void {
-  Howler.stop();
+  createdAudioEngine()?.master.stopAll();
 }
 
 export function setAudioRandom(random: () => number): void {
   audioRandom = random;
 }
 
-let atlas: Howl | null = null;
+let atlas: SpriteSheet | null = null;
 let spriteKeys: Set<string> = new Set();
 let loading: Promise<void> | null = null;
 const warned = new Set<string>();
@@ -70,17 +77,9 @@ export function initAudio(): Promise<void> {
   loading = fetchJson(`${SFX_BASE_PATH}/sfx.json`, decodeAudioSpriteManifest)
     .then(async (manifest) => {
       spriteKeys = new Set(Object.keys(manifest.sprite));
-      const voices = manifest.pool ?? POOL_LECTURES;
-      atlas = new Howl({
-        src: manifest.src.map((f) => `${SFX_BASE_PATH}/${f}`),
-        sprite: manifest.sprite,
-        pool: voices,
-        onload: () => {
-          const sprite = Object.keys(manifest.sprite)[0];
-          if (sprite) warmAudioPool(atlas!, sprite, voices);
-        },
-        onloaderror: () => warnOnce("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`),
-      });
+      const sound = await loadFirstSound(manifest.src.map((f) => `${SFX_BASE_PATH}/${f}`));
+      if (sound) atlas = spriteSheet(sound, manifest.sprite);
+      else warnOnce("atlas", `atlas introuvable (${SFX_BASE_PATH}/sfx.{ogg,m4a})`);
 
       for (const id of Object.keys(SFX_TABLE) as SfxId[]) {
         const key = SFX_TABLE[id].sprite;
@@ -88,7 +87,7 @@ export function initAudio(): Promise<void> {
           warnOnce(id, `"${id}" pointe sur la recette "${key}", absente du sprite`);
         }
       }
-      await Promise.all([waitForAudioLoad(atlas), prepareTrainWarning(), prepareControllerAudio()]);
+      await Promise.all([prepareTrainWarning(), prepareControllerAudio()]);
     })
     .catch((e) => {
       warnOnce("manifeste", `manifeste audio illisible (${e})`);
@@ -98,15 +97,15 @@ export function initAudio(): Promise<void> {
 
 // Gain et pitch par lecture : ne pas modifier les sons déjà en cours.
 export function playSfx(id: SfxId, volumeScale = 1) {
-  if (!atlas || atlas.state() !== "loaded") return;
+  if (!atlas) return;
   const def = SFX_TABLE[id];
   if (!spriteKeys.has(def.sprite)) return;
 
-  const lecture = atlas.play(def.sprite);
-  if (lecture === undefined) return;
   const p = def.pitch ?? PITCH_VARIATION;
-  atlas.rate(1 - p + audioRandom() * p * 2, lecture);
-  atlas.volume(def.volume * volumeScale * sfxGain, lecture);
+  audioEngine().playSprite(atlas, def.sprite, {
+    rate: 1 - p + audioRandom() * p * 2,
+    volume: clampVolume(def.volume * volumeScale * sfxGain),
+  });
 }
 
 export function listSfx(): { id: SfxId; recette: string; present: boolean }[] {

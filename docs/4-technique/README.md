@@ -26,7 +26,7 @@ Un système par page, décrit de l'intérieur : fichiers, contrats de données, 
 - [Éclairage](eclairage.md) — éclairage hybride, bake vertex colors, pool de lampes
 - [Budget de rendu](budget-de-rendu.md) — lots de dessin, fusion par cellule, ce qui coûte
 - [Interface React](interface-react.md) — store, machine de flux, structure `src/ui/`
-- [Audio runtime](audio-runtime.md) — sprite Howler, `SFX_TABLE`, ambiances positionnelles
+- [Audio runtime](audio-runtime.md) — sprite fx-audio, `SFX_TABLE`, ambiances positionnelles
 - [Outillage Blender](outillage-blender.md) — scripts headless, session live, validation, export
 - [Outillage pour plusieurs niveaux](outillage-multi-niveaux.md) — profils magasin/métro, sorties protégées, manifestes et reconstruction.
 - [Studio audio](studio-audio.md) — synthèse procédurale, recettes, mesures, sprite

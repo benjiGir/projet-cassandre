@@ -166,7 +166,7 @@ reste à adapter à N5. La vapeur n'est pas encore animée.
 ### Ambiance
 
 Deux nappes originales de vent filtré, sans bourdon tonal : rue et service.
-Elles sont chargées via le profil `quartier_pilote` et les mécanismes Howler
+Elles sont chargées via le profil `quartier_pilote` et les mécanismes audio
 existants. Le profil du magasin et les sons de trains ne sont pas utilisés.
 
 Boucle utile de 20 s, marge de codec de 0,5 s à chaque bord, 44 100 Hz stéréo,

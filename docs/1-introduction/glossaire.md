@@ -168,13 +168,13 @@ des versions.
 |---|---|---|
 | Codec audio | Format ou méthode de compression utilisé pour distribuer un fichier sonore. | `tools/audio/build_sprite.py` |
 | Encodeur audio | Outil qui transforme le WAV source en format compressé lisible par les navigateurs. | `tools/audio/build_sprite.py` |
-| `Howl` / Howler | `Howl` est une instance de lecture ; Howler est la bibliothèque qui charge et joue les sources sonores du runtime. | `src/core/audio/audio.ts` |
+| fx-audio | Bibliothèque audio du runtime, bâtie sur Effect : un `Sound` est un son décodé, chaque lecture donne une `Voice` ; un `SpriteSheet` découpe un fichier en segments nommés. | `src/core/audio/audioEngine.ts` |
 | `localStorage` | Stockage navigateur persistant entre deux visites, utilisé pour mémoriser les réglages audio et graphiques. | `src/game/settings/audioSettings.ts`, `src/game/settings/graphicsSettings.ts` |
 | Manifeste d'asset | Fichier de données associé à un asset, qui décrit les clés, coordonnées ou durées dont le lecteur a besoin. | `public/assets/audio/sfx/sfx.json` |
 | Spectrogramme | Représentation de l'énergie d'un signal audio selon la fréquence et le temps. | `tools/audio/analyze_sfx.py` |
 | Test d'intégration | Test qui vérifie plusieurs modules assemblés dans un même parcours, au-delà d'une fonction isolée. | `test/game/integration/` |
 | Test unitaire | Test qui vérifie un contrat limité d'une fonction ou d'un module isolé. | `test/core/`, `test/game/` |
-| Web Audio | API audio du navigateur utilisée par Howler pour les effets qui demandent un contrôle de gain ou de panoramique. | `src/core/audio/waterAmbience.ts` |
+| Web Audio | API audio du navigateur utilisée par fx-audio pour les effets qui demandent un contrôle de gain ou de panoramique. | `src/core/audio/waterAmbience.ts` |
 
 ## Interface et affichage
 

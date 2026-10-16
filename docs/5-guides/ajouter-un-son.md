@@ -61,8 +61,8 @@ l'écoute.
     partielle : le rendu incomplet n'est pas un sprite livrable.
 15. Construisez le sprite : `python3 tools/audio/build_sprite.py
     /tmp/wav --out public/assets/audio/sfx`.
-16. Vérifiez les fichiers Ogg, M4A et le manifeste JSON. Howler
-    sélectionne un format selon le navigateur.
+16. Vérifiez les fichiers Ogg, M4A et le manifeste JSON. Le jeu
+    essaie `.ogg` puis `.m4a` selon ce que le navigateur décode.
 17. Lancez `python3 tools/audio/audition.py` ou ouvrez la page d'écoute
     locale, sélectionnez les variantes pertinentes et écoutez au casque.
 18. En jeu, utilisez `cassandre.sfx.liste()` et
@@ -93,7 +93,7 @@ l'écoute.
 
 ## Pièges
 
-- Howler ne garantit pas un repli entre formats : un sprite sans l'un
+- Le jeu ne retombe sur `.m4a` que si le `.ogg` échoue : un sprite sans l'un
   des codecs coupe une famille de navigateurs.
 - Un encodeur avec pertes peut augmenter le pic au-delà du WAV source.
   Analysez le résultat encodé.
