@@ -102,7 +102,7 @@ export class FragmentBatch {
       slot.velocity.y += GRAVITY_Y * recipe.gravity * dt;
       slot.velocity.multiplyScalar(Math.exp(-recipe.drag * dt));
       if (recipe.lifetime) {
-        const growth = this.kind === "farine" ? (slot.age < recipe.lifetime * 0.55 ? 0.9 : -8) : -1.5;
+        const growth = this.kind === "flour" ? (slot.age < recipe.lifetime * 0.55 ? 0.9 : -8) : -1.5;
         slot.scale.multiplyScalar(Math.exp(growth * dt));
       }
       const distance = slot.velocity.length() * dt;

@@ -2,7 +2,7 @@
 title: Rendu
 tags: [technique]
 status: brouillon
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # Rendu
@@ -161,7 +161,10 @@ Les textures procédurales mates portent fibres, adhésif, marquage et veines.
 Une texture par matière conserve le filtrage rétro du renderer.
 
 `fragmentRecipes.ts` regroupe forme, nombre, taille, vitesse, traînée et teinte
-par matière. `FragmentBatch` réutilise 96 emplacements dans chacun de ses neuf
+par matière. Les clés du rendu sont en anglais (`flour`, `water`, `wood`,
+`glass`…). `propDebrisMaterials.ts`, à la frontière de présentation du jeu,
+traduit les identifiants de contenu Blender sans modifier les assets.
+`FragmentBatch` réutilise 96 emplacements dans chacun de ses neuf
 `InstancedMesh` (dont les circuits, la poudre et les gouttes). Les fragments partent des faces du volume original. Le coup
 fatal règle leur projection : force 1 au pied-de-biche/pistolet, 1,8 au pompe,
 2,3 en impact direct de fusée et 2,6 au souffle. Les tailles sont plafonnées
@@ -180,7 +183,7 @@ réserves de 32 traces, sans collision. Le centre et les coins doivent être
 supportés par un sol statique proche ; la trace est réduite ou refusée si elle
 dépasse un rebord. Une nouvelle partie vide les réserves et leur sonde.
 
-`propDebrisConfig.ts` porte les réglages et les profils `SOBRE` et `DYNAMIQUE`,
+`propDebrisConfig.ts` porte les réglages et les profils `SUBTLE` et `DYNAMIC`,
 exposés avec leurs curseurs dans le panneau de tuning. Le replay F9/F10
 réutilise les gestes ; le niveau doit être rechargé entre les essais pour
 restaurer les objets. Les matériaux et textures sont rendus sous le chargement

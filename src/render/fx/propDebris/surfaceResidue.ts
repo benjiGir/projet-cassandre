@@ -3,7 +3,7 @@ import { configureRetroTexture } from "../../pipeline/renderer";
 import { FLOOR_NORMAL_Y, type SurfaceProbe } from "../goreConfig";
 import { propDebrisConfig } from "./propDebrisConfig";
 
-type ResidueKind = "farine" | "eau";
+type ResidueKind = "flour" | "water";
 const DOWN = new THREE.Vector3(0, -1, 0);
 const UP = new THREE.Vector3(0, 1, 0);
 const HIDDEN = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -26,9 +26,9 @@ function createResidue(kind: ResidueKind): THREE.InstancedMesh {
       const edge = 0.82 + Math.sin(angle * 5) * 0.1 + Math.cos(angle * 9) * 0.06;
       const distance = Math.hypot(dx, dy);
       const noise = ((x * 17 + y * 23 + x * y * 7) % 97) / 97;
-      if (distance > edge || (kind === "farine" && noise < distance * 0.5)) continue;
+      if (distance > edge || (kind === "flour" && noise < distance * 0.5)) continue;
       ctx.fillStyle =
-        kind === "farine" ? (noise > 0.6 ? "#e6dcc2" : "#c6bda7") : distance > edge - 0.07 ? "#647a78" : "#384f50";
+        kind === "flour" ? (noise > 0.6 ? "#e6dcc2" : "#c6bda7") : distance > edge - 0.07 ? "#647a78" : "#384f50";
       ctx.fillRect(x, y, 1, 1);
     }
   const texture = new THREE.CanvasTexture(canvas);
@@ -55,8 +55,8 @@ function createResidue(kind: ResidueKind): THREE.InstancedMesh {
 }
 
 export class SurfaceResidue {
-  readonly meshes = { farine: createResidue("farine"), eau: createResidue("eau") };
-  private readonly cursors = { farine: 0, eau: 0 };
+  readonly meshes = { flour: createResidue("flour"), water: createResidue("water") };
+  private readonly cursors = { flour: 0, water: 0 };
   private readonly origin = new THREE.Vector3();
   private readonly corner = new THREE.Vector3();
   private readonly inward = new THREE.Vector3();
@@ -96,7 +96,7 @@ export class SurfaceResidue {
   }
 
   reset(): void {
-    for (const kind of ["farine", "eau"] as const) {
+    for (const kind of ["flour", "water"] as const) {
       const mesh = this.meshes[kind];
       for (let i = 0; i < mesh.count; i++) mesh.setMatrixAt(i, HIDDEN);
       mesh.instanceMatrix.needsUpdate = true;

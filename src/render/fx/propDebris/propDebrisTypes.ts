@@ -1,6 +1,6 @@
 import type * as THREE from "three";
 
-export type PropDebrisMaterial = "carton" | "bois" | "verre" | "metal" | "electronique" | "gaz" | "farine" | "eau";
+export type PropDebrisMaterial = "cardboard" | "wood" | "glass" | "metal" | "electronics" | "gas" | "flour" | "water";
 export type FragmentMaterial = PropDebrisMaterial | "circuit";
 
 export interface PropFragmentSource {

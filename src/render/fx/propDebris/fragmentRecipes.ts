@@ -31,9 +31,9 @@ const PANEL = {
 };
 
 export const FRAGMENT_RECIPES: Record<FragmentMaterial, FragmentRecipe> = {
-  carton: PANEL,
-  bois: { ...PANEL, count: 10, width: 0.3, thickness: 0.035, maxWidth: 0.4, speed: 1.4, drag: 0.5, tint: 0x987447 },
-  verre: {
+  cardboard: PANEL,
+  wood: { ...PANEL, count: 10, width: 0.3, thickness: 0.035, maxWidth: 0.4, speed: 1.4, drag: 0.5, tint: 0x987447 },
+  glass: {
     ...PANEL,
     count: 14,
     width: 0.3,
@@ -58,7 +58,7 @@ export const FRAGMENT_RECIPES: Record<FragmentMaterial, FragmentRecipe> = {
     drag: 0.3,
     tint: 0x929b99,
   },
-  gaz: {
+  gas: {
     ...PANEL,
     count: 8,
     width: 0.5,
@@ -71,7 +71,7 @@ export const FRAGMENT_RECIPES: Record<FragmentMaterial, FragmentRecipe> = {
     tint: 0xffffff,
     sourceTint: false,
   },
-  electronique: {
+  electronics: {
     ...PANEL,
     count: 6,
     width: 0.45,
@@ -97,7 +97,7 @@ export const FRAGMENT_RECIPES: Record<FragmentMaterial, FragmentRecipe> = {
     tint: 0xffffff,
     sourceTint: false,
   },
-  farine: {
+  flour: {
     ...PANEL,
     count: 15,
     width: 0.16,
@@ -112,7 +112,7 @@ export const FRAGMENT_RECIPES: Record<FragmentMaterial, FragmentRecipe> = {
     tint: 0xe6dcc3,
     sourceTint: false,
   },
-  eau: {
+  water: {
     ...PANEL,
     count: 18,
     width: 0.07,

@@ -3,10 +3,10 @@ import { configureRetroTexture } from "../../pipeline/renderer";
 import type { FragmentMaterial } from "./propDebrisTypes";
 
 export function createFragmentGeometry(kind: FragmentMaterial): THREE.BufferGeometry {
-  if (kind === "farine") return new THREE.IcosahedronGeometry(0.5, 0);
-  if (kind === "eau") return new THREE.OctahedronGeometry(0.5, 0);
+  if (kind === "flour") return new THREE.IcosahedronGeometry(0.5, 0);
+  if (kind === "water") return new THREE.OctahedronGeometry(0.5, 0);
   const outline =
-    kind === "carton"
+    kind === "cardboard"
       ? [
           [-0.5, -0.46],
           [-0.1, -0.5],
@@ -27,8 +27,8 @@ export function createFragmentGeometry(kind: FragmentMaterial): THREE.BufferGeom
           [0.13, 0.42],
           [-0.5, 0.5],
         ];
-  if (kind === "verre") outline.splice(0, outline.length, [-0.5, -0.45], [0.5, -0.25], [-0.15, 0.5]);
-  else if (kind !== "carton" && kind !== "bois")
+  if (kind === "glass") outline.splice(0, outline.length, [-0.5, -0.45], [0.5, -0.25], [-0.15, 0.5]);
+  else if (kind !== "cardboard" && kind !== "wood")
     outline.splice(0, outline.length, [-0.5, -0.5], [0.3, -0.48], [0.5, -0.05], [0.38, 0.5], [-0.4, 0.4]);
   const positions: number[] = [],
     uvs: number[] = [];
@@ -36,7 +36,7 @@ export function createFragmentGeometry(kind: FragmentMaterial): THREE.BufferGeom
     positions.push(x, y, z);
     uvs.push(x + 0.5, z + 0.5);
   }
-  const bent = kind === "carton" || kind === "metal" || kind === "gaz" || kind === "electronique";
+  const bent = kind === "cardboard" || kind === "metal" || kind === "gas" || kind === "electronics";
   const borderY = bent ? -0.1 : 0.5;
   for (let i = 0; i < outline.length; i++) {
     const [x, z] = outline[i],
@@ -62,18 +62,18 @@ export function createFragmentGeometry(kind: FragmentMaterial): THREE.BufferGeom
 }
 
 export function createFragmentMaterial(kind: FragmentMaterial): THREE.MeshLambertMaterial {
-  if (kind !== "carton" && kind !== "bois") return createHardFragmentMaterial(kind);
+  if (kind !== "cardboard" && kind !== "wood") return createHardFragmentMaterial(kind);
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = kind === "carton" ? "#eee8d7" : "#e1d6bf";
+  ctx.fillStyle = kind === "cardboard" ? "#eee8d7" : "#e1d6bf";
   ctx.fillRect(0, 0, 64, 64);
   for (let i = 0; i < 64; i++) {
     ctx.fillStyle = i % 3 === 0 ? "#b6ac96" : "#d5ccb7";
-    if (kind === "carton") ctx.fillRect((i * 23) % 64, (i * 11) % 64, 2, 1);
+    if (kind === "cardboard") ctx.fillRect((i * 23) % 64, (i * 11) % 64, 2, 1);
     else ctx.fillRect(i, 0, i % 7 === 0 ? 2 : 1, 64);
   }
-  if (kind === "carton") {
+  if (kind === "cardboard") {
     ctx.fillStyle = "#c8b987";
     ctx.fillRect(27, 0, 10, 64);
     ctx.fillStyle = "#91866d";
@@ -94,11 +94,11 @@ export function createFragmentMaterial(kind: FragmentMaterial): THREE.MeshLamber
 }
 
 function createHardFragmentMaterial(kind: FragmentMaterial): THREE.MeshLambertMaterial {
-  if (kind === "farine" || kind === "eau") return new THREE.MeshLambertMaterial({ flatShading: true });
+  if (kind === "flour" || kind === "water") return new THREE.MeshLambertMaterial({ flatShading: true });
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = kind === "circuit" ? "#355d46" : kind === "gaz" ? "#a53829" : "#b7bdb7";
+  ctx.fillStyle = kind === "circuit" ? "#355d46" : kind === "gas" ? "#a53829" : "#b7bdb7";
   ctx.fillRect(0, 0, 64, 64);
   if (kind === "circuit") {
     ctx.strokeStyle = "#a19454";
@@ -117,7 +117,7 @@ function createHardFragmentMaterial(kind: FragmentMaterial): THREE.MeshLambertMa
     ctx.fillRect(38, 39, 10, 9);
     ctx.fillStyle = "#c4c1a7";
     for (let i = 0; i < 6; i++) ctx.fillRect(12, 15 + i * 3, 3, 1);
-  } else if (kind === "verre") {
+  } else if (kind === "glass") {
     ctx.fillStyle = "#dce8de";
     ctx.fillRect(2, 2, 3, 55);
     ctx.fillRect(2, 3, 49, 2);
@@ -132,11 +132,11 @@ function createHardFragmentMaterial(kind: FragmentMaterial): THREE.MeshLambertMa
     for (let i = 0; i < 12; i++) ctx.fillRect((i * 17) % 64, (i * 23) % 64, 11, 1);
     ctx.fillStyle = "#d9d9c9";
     ctx.fillRect(4, 3, 54, 2);
-    if (kind === "electronique") {
+    if (kind === "electronics") {
       ctx.fillStyle = "#424b49";
       for (let i = 0; i < 5; i++) ctx.fillRect(12, 15 + i * 6, 33, 2);
     }
-    if (kind === "gaz") {
+    if (kind === "gas") {
       ctx.fillStyle = "#b7a352";
       ctx.fillRect(0, 23, 64, 12);
       ctx.fillStyle = "#322d28";

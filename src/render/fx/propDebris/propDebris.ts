@@ -72,8 +72,8 @@ export class PropDebris {
 
   spawn(kind: PropDebrisMaterial, source: PropFragmentSource): void {
     this.spawnFragments(kind, source);
-    if (kind === "electronique") this.spawnFragments("circuit", source);
-    if (kind === "farine" || kind === "eau")
+    if (kind === "electronics") this.spawnFragments("circuit", source);
+    if (kind === "flour" || kind === "water")
       this.residue.add(
         kind,
         source.center,
