@@ -18,7 +18,7 @@ describe("FxSystem.resetSession", () => {
       CanvasRenderingContext2D,
       "fillRect" | "strokeRect" | "beginPath" | "moveTo" | "lineTo" | "stroke"
     >;
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as unknown as CanvasRenderingContext2D);
   });
 
   afterEach(() => {
